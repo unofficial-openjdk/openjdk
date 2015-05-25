@@ -78,7 +78,7 @@ public:
   void               set_exported(ModuleEntry* m);
 
   // returns true if the package is defined in the unnamed module
-  bool               in_unnamed_module() const  { return (_module == NULL); }
+  bool               in_unnamed_module() const  { return !_module->is_named(); }
 
   // returns true if the package specifies m as a qualified export
   bool               is_qexported_to(ModuleEntry* m) const;

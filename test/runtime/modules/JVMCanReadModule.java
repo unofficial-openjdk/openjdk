@@ -60,25 +60,9 @@ public class JVMCanReadModule {
             // Expected
         }
 
-        // Bad asking_module argument, expect an IAE
-        try {
-            result = ModuleHelper.CanReadModule(asking_cl, target_module);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
-            // Expected
-        }
-
-        // Bad target_module argument, expect an IAE
-        try {
-            result = ModuleHelper.CanReadModule(asking_module, asking_cl);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
-            // Expected
-        }
-
-        // Verify modules can always read the unnamed module
+        // Verify strict modules can not read the unnamed module
         result = ModuleHelper.CanReadModule(target_module, null);
-        assertTrue(result, "target_module can read unnamed module");
+        assertFalse(result, "target_module can not read unnamed module");
 
         // Verify asking_module can read itself
         result = ModuleHelper.CanReadModule(asking_module, asking_module);

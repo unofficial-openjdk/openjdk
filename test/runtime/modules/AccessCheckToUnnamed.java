@@ -39,9 +39,8 @@ import static com.oracle.java.testlibrary.Asserts.*;
 
 public class AccessCheckToUnnamed {
 
-    // Check that a class in a package in module1 can successfully access a
-    // class that is in the unnamed module.
-    // has been exported.
+    // Check that a class in a package in module1 cannot access a class
+    // that is in the unnamed module if the accessing package is strict.
     public static void main(String args[]) throws Throwable {
         Object m1;
 
@@ -63,10 +62,17 @@ public class AccessCheckToUnnamed {
         // Make package p1 in m1 visible to everyone.
         ModuleHelper.AddModuleExports(m1, "p1", null);
 
-        // p1.c1's ctor tries to call a method in p2.c2.  This should work because
-        // p2 is in the unnamed module.
-        Class p1_c1_class = Class.forName("p1.c1");
-        p1_c1_class.newInstance();
+        // p1.c1's ctor tries to call a method in p2.c2.  This should not work
+        // because p2 is in the unnamed module and p1.c1 is strict.
+        try {
+            Class p1_c1_class = Class.forName("p1.c1");
+            p1_c1_class.newInstance();
+        } catch (IllegalAccessError e) {
+            System.out.println(e.getMessage());
+            if (!e.getMessage().contains("cannot read Unnamed") ||
+                (!e.getMessage().contains("strict"))) {
+                throw new RuntimeException("Wrong message: " + e.getMessage());
+            }
+        }
     }
 }
-

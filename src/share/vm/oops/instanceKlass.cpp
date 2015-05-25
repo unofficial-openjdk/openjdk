@@ -2282,6 +2282,17 @@ const jbyte* InstanceKlass::package_from_name(Symbol* name, int& length) {
   }
 }
 
+ModuleEntry* InstanceKlass::module() const {
+  if (!in_unnamed_package()) {
+    return _package_entry->module();
+  }
+  const Klass* host = host_klass();
+  if (host == NULL) {
+    return class_loader_data()->modules()->unnamed_module();
+  }
+  return host->class_loader_data()->modules()->unnamed_module();
+}
+
 void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
   int length;
   const jbyte* base_name = package_from_name(name, length);
@@ -2297,7 +2308,9 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
     // been defined. Consider it defined within the unnamed module.
     if (_package_entry == NULL) {
       ResourceMark rm;
-      _package_entry = loader->packages()->lookup(pkg_name, NULL);
+      assert(loader->modules()->unnamed_module() != NULL, "unnamed module is NULL");
+      _package_entry = loader->packages()->lookup(pkg_name,
+                                                  loader->modules()->unnamed_module());
       // A package should have been successfully created
       assert(_package_entry != NULL, err_msg("Package entry for class %s not found, loader %s",
                                              name->as_C_string(), loader->loader_name()));
@@ -2306,10 +2319,11 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
     if (TracePackages) {
       ResourceMark rm;
       ModuleEntry* m = _package_entry->module();
-      tty->print_cr("[Setting package: class %s, package = %s, module = %s]",
+      tty->print_cr("[Setting package: class: %s, package: %s, loader: %s, module: %s]",
                     external_name(),
                     pkg_name->as_C_string(),
-                    ((m == NULL) ? "[unnamed]" : m->name()->as_C_string()));
+                    loader->loader_name(),
+                    (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
     }
   }
 }

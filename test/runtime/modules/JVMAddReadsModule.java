@@ -57,12 +57,11 @@ public class JVMAddReadsModule {
             // Expected
         }
 
-        // Null to_module argument, expect an NPE
+        // Null to_module argument, do not expect an NPE
         try {
             ModuleHelper.AddReadsModule(from_module, null);
-            throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
-            // Expected
+            throw new RuntimeException("Unexpected NPE was thrown");
         }
 
         // Null from_module and to_module arguments, expect an NPE
@@ -83,4 +82,3 @@ public class JVMAddReadsModule {
 
     static class MyClassLoader extends ClassLoader { }
 }
-

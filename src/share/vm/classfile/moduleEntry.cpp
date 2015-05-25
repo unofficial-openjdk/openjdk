@@ -38,10 +38,12 @@
 #include "utilities/hashtable.inline.hpp"
 
 bool ModuleEntryTable::_javabase_created = false;
+ModuleEntry* ModuleEntryTable::_java_base_module;
 
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this module's reads list");
+  if (!this->is_named()) return true; // Unnamed modules read everyone.
   MutexLocker m1(Module_lock);
   if (_reads == NULL) {
     return false;
@@ -52,14 +54,17 @@ bool ModuleEntry::can_read(ModuleEntry* m) const {
 
 // Add a new module to this module's reads list
 void ModuleEntry::add_read(ModuleEntry* m) {
-  assert(m != NULL, "No module to add to this module's reads list");
   MutexLocker m1(Module_lock);
-  if (_reads == NULL) {
-    // Lazily create a module's reads list
-    // Initial size is 101.
-    _reads = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(101, true);
+  if (m == NULL) {
+    set_can_read_unnamed();
+  } else {
+    if (_reads == NULL) {
+      // Lazily create a module's reads list
+      // Initial size is 101.
+      _reads = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(101, true);
+    }
+    _reads->append_if_missing(m);
   }
-  _reads->append_if_missing(m);
 }
 
 bool ModuleEntry::has_reads() const {
@@ -89,7 +94,7 @@ void ModuleEntry::delete_reads() {
 }
 
 ModuleEntryTable::ModuleEntryTable(int table_size)
-  : Hashtable<oop, mtClass>(table_size, sizeof(ModuleEntry))
+  : Hashtable<oop, mtClass>(table_size, sizeof(ModuleEntry)), _unnamed_module(NULL)
 {
 }
 
@@ -113,8 +118,12 @@ ModuleEntryTable::~ModuleEntryTable() {
 
       // Clean out the C heap allocated reads list first before freeing the entry
       to_remove->delete_reads();
-      to_remove->name()->decrement_refcount();
-      to_remove->version()->decrement_refcount();
+      if (to_remove->name() != NULL) {
+        to_remove->name()->decrement_refcount();
+      }
+      if (to_remove->version() != NULL) {
+        to_remove->version()->decrement_refcount();
+      }
       if (to_remove->location() != NULL) {
         to_remove->location()->decrement_refcount();
       }
@@ -127,6 +136,23 @@ ModuleEntryTable::~ModuleEntryTable() {
   assert(number_of_entries() == 0, "should have removed all entries");
   assert(new_entry_free_list() == NULL, "entry present on ModuleEntryTable's free list");
   free_buckets();
+}
+
+ModuleEntryTable* ModuleEntryTable::create_module_entry_table(ClassLoaderData* class_loader) {
+  assert_locked_or_safepoint(Module_lock);
+  JavaThread *THREAD = JavaThread::current();
+  ModuleEntryTable* modules =
+    new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
+
+  if (modules != NULL) {
+    // Create ModuleEntry for unnamed module. Module entry tables have exactly
+    // one unnamed module.
+    ModuleEntry* module_entry = modules->new_entry(0, NULL, NULL, NULL,
+                                                   NULL, class_loader);
+    modules->add_entry(0, module_entry);
+    modules->set_unnamed_module(module_entry);
+  }
+  return modules;
 }
 
 ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* name,
@@ -143,12 +169,18 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* 
 
   // Initialize fields specific to a ModuleEntry
   entry->init();
-  entry->set_name(name);
-  name->increment_refcount();
+  if (name != NULL) {
+    entry->set_name(name);
+    name->increment_refcount();
+  } else {
+    // Unnamed modules can read all other unnamed modules.
+    entry->set_can_read_unnamed();
+  }
   entry->set_loader(class_loader);
-  entry->set_version(version);
-  version->increment_refcount();
-  vmassert(entry->location() == NULL, "Unexpected value");
+  if (version != NULL) {
+    entry->set_version(version);
+    version->increment_refcount();
+  }
   if (location != NULL) {
     entry->set_location(location);
     location->increment_refcount();
@@ -295,10 +327,13 @@ void ModuleEntryTable::print() {
 
 void ModuleEntry::print() {
   ResourceMark rm;
-  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s location %s pkgs_with_qexports %d next "PTR_FORMAT,
-                p2i(this), p2i(literal()), name()->as_C_string(), loader()->loader_name(),
-                version()->as_C_string(), location() != NULL ? location()->as_C_string() : "NULL",
-                _pkgs_with_qexports, p2i(next()));
+  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s location %s strict %s pkgs_with_qexports %d next "PTR_FORMAT,
+                p2i(this), p2i(literal()),
+                name() == NULL ? UNNAMED_MODULE : name()->as_C_string(),
+                loader()->loader_name(),
+                version() != NULL ? version()->as_C_string() : "NULL",
+                location() != NULL ? location()->as_C_string() : "NULL",
+                BOOL_TO_STR(!can_read_unnamed()), _pkgs_with_qexports, p2i(next()));
 }
 #endif
 

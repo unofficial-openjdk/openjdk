@@ -645,7 +645,7 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
         st->print("j  %s", buf);
         st->print("+%d", this->interpreter_frame_bci());
         ModuleEntry* module = m->method_holder()->module();
-        if (module != NULL) {
+        if (module->is_named()) {
           module->name()->as_C_string(buf, buflen);
           st->print(" %s", buf);
           module->version()->as_C_string(buf, buflen);
@@ -673,7 +673,7 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
                   ((nm->compiler() != NULL) ? nm->compiler()->name() : ""),
                   buf);
         ModuleEntry* module = m->method_holder()->module();
-        if (module != NULL) {
+        if (module->is_named()) {
           module->name()->as_C_string(buf, buflen);
           st->print(" %s", buf);
           module->version()->as_C_string(buf, buflen);

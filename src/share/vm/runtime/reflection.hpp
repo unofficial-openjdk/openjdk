@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,8 +68,7 @@ class Reflection: public AllStatic {
     ACCESS_OK = 0,
     MODULE_NOT_READABLE = 1,
     TYPE_NOT_EXPORTED = 2,
-    TYPE_NOT_UNQ_EXPORTED = 3,
-    OTHER_PROBLEM = 4
+    OTHER_PROBLEM = 3
   };
 
   // Boxing. Returns boxed value of appropriate type. Throws IllegalArgumentException.

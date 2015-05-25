@@ -78,7 +78,8 @@ public class AccessCheckRead {
             throw new RuntimeException("Failed to get IAE (m1 can't read m2)");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
-            if (!e.getMessage().contains("cannot read")) {
+            if (!e.getMessage().contains("cannot read") ||
+                e.getMessage().contains("strict")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

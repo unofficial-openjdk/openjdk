@@ -1536,7 +1536,7 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
 
   char *module_name = NULL, *module_version = NULL;
   ModuleEntry* module = holder->module();
-  if (module != NULL) {
+  if (module->is_named()) {
     module_name = module->name()->as_C_string();
     buf_len += (int)strlen(module_name);
     module_version = module->version()->as_C_string();
@@ -1957,7 +1957,7 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
 
   // Fill in module name
   ModuleEntry* module = holder->module();
-  if (module != NULL) {
+  if (module->is_named()) {
     int len = module->name()->utf8_length() + module->version()->utf8_length() + 1 + 1;
     char* buf = NEW_RESOURCE_ARRAY(char, len);
     jio_snprintf(buf, len, "%s@%s", module->name()->as_utf8(), module->version()->as_utf8());

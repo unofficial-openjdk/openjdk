@@ -168,15 +168,12 @@ PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, Modu
   // Initialize fields specific to a PackageEntry
   entry->init();
   entry->name()->increment_refcount();
-  if (module == NULL) {
-    // Indicates the unnamed module.
+  if (!module->is_named()) {
     // Set the exported state to true because all packages
     // within the unnamed module are unqualifiedly exported
     entry->set_exported(true);
-  } else {
-    entry->set_module(module);
   }
-
+  entry->set_module(module);
   return entry;
 }
 
@@ -214,6 +211,7 @@ PackageEntry* PackageEntryTable::lookup(Symbol* name, ModuleEntry* module) {
       // A race occurred and another thread introduced the package.
       return test;
     } else {
+      assert(module != NULL, "module should never be null");
       PackageEntry* entry = new_entry(compute_hash(name), name, module);
       add_entry(index_for(name), entry);
       return entry;
@@ -266,7 +264,7 @@ void PackageEntry::print() {
   ResourceMark rm;
   tty->print_cr("package entry "PTR_FORMAT" name %s module %s is_exported %d next "PTR_FORMAT,
                 p2i(this), name()->as_C_string(),
-                ((module() == NULL) ? "[unnamed]" : module()->name()->as_C_string()),
+                (module()->is_named() ? module()->name()->as_C_string() : UNNAMED_MODULE),
                 _is_exported, p2i(next()));
 }
 #endif

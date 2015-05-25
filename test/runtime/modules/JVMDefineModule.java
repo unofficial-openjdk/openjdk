@@ -23,9 +23,9 @@
 
 /*
  * @test
- * @ignore
  * @library /testlibrary  /../../test/lib /compiler/whitebox ..
  * @modules java.base/sun.misc
+ * @ignore
  * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

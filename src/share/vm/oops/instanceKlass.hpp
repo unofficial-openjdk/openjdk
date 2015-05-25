@@ -407,7 +407,7 @@ class InstanceKlass: public Klass {
 
   // package
   PackageEntry* package() const     { return _package_entry; }
-  ModuleEntry* module() const       { return (in_unnamed_package() ? NULL : _package_entry->module()); }
+  ModuleEntry* module() const;
   bool in_unnamed_package() const   { return (_package_entry == NULL); }
   void set_package(PackageEntry* p) { _package_entry = p; }
   void set_package(Symbol* name, ClassLoaderData* loader, TRAPS);

@@ -1783,25 +1783,26 @@ char* SharedRuntime::generate_class_cast_message(
   Klass* c_klass = caster_klass->oop_is_objArray() ?
     ObjArrayKlass::cast(caster_klass)->bottom_klass() : caster_klass;
   ModuleEntry* caster_module;
+  const char* caster_module_name;
   if (c_klass->oop_is_instance()) {
     caster_module = InstanceKlass::cast(c_klass)->module();
+    caster_module_name = caster_module->is_named() ?
+      caster_module->name()->as_C_string() : UNNAMED_MODULE;
   } else {
-    caster_module = NULL;
+    caster_module_name = "java.base";
   }
-  const char* caster_module_name = caster_module == NULL ? "unnamed" :
-    caster_module->name()->as_C_string();
-
   const char* target_klass_name = target_klass->external_name();
   Klass* t_klass = target_klass->oop_is_objArray() ?
     ObjArrayKlass::cast(target_klass)->bottom_klass() : target_klass;
   ModuleEntry* target_module;
+  const char* target_module_name;
   if (t_klass->oop_is_instance()) {
     target_module = InstanceKlass::cast(t_klass)->module();
+    target_module_name = target_module->is_named() ?
+      target_module->name()->as_C_string(): UNNAMED_MODULE;
   } else {
-    target_module = NULL;
+    target_module_name = "java.base";
   }
-  const char* target_module_name = target_module == NULL ? "unnamed" :
-    target_module->name()->as_C_string();
 
   size_t msglen = strlen(caster_klass_name) + strlen(caster_module_name) +
      strlen(target_klass_name) + strlen(target_module_name) + 50;

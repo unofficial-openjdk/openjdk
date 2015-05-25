@@ -526,13 +526,19 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   if (java_mirror() == NULL) {
     Handle loader = loader_data->class_loader();
     ModuleEntry* module_entry = NULL;
+    Klass* k = this;
+    if (k->oop_is_objArray()) {
+      k = ObjArrayKlass::cast(k)->bottom_klass();
+    }
     // Obtain klass' module.
-    if (oop_is_instance()) {
-      InstanceKlass* ik = (InstanceKlass*) this;
+    if (k->oop_is_instance()) {
+      InstanceKlass* ik = (InstanceKlass*) k;
       module_entry = ik->module();
+    } else {
+      module_entry = ModuleEntryTable::java_base_module();
     }
     // Obtain j.l.r.Module if available
-    Handle class_module(THREAD, ((module_entry == NULL) ? (oop)NULL : module_entry->module()));
+    Handle class_module(THREAD, (module_entry->is_named() ? module_entry->module() : (oop)NULL));
     java_lang_Class::create_mirror(this, loader, class_module, protection_domain, CHECK);
   }
 }

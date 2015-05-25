@@ -49,6 +49,7 @@ public:
   // * Packages contains a duplicate package name
   // * A package already exists in another module for this class loader
   // * Class loader is not a subclass of java.lang.ClassLoader
+  // * Module is an unnamed module
   //  NullPointerExceptions are thrown if module is null.
   static void define_module(JNIEnv *env, jobject module, jstring version,
                              jstring location, jobjectArray packages);
@@ -66,12 +67,16 @@ public:
   static void add_module_exports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
   // add_reads_module adds module to_module to the list of modules that from_module
-  // can read.If from_module is the same as to_module then this is a no - op.
-  // An IllegalArgumentException is thrown if either from_module or to_module is null or does not exist.
+  // can read.  If from_module is the same as to_module then this is a no-op.
+  // If to_module is null then from_module is marked as a loose module (meaning that
+  // from_module can read all current and future unnamed  modules).
+  // An IllegalArgumentException is thrown if from_module is null or either (non-null)
+  // module does not exist.
   static void add_reads_module(JNIEnv *env, jobject from_module, jobject to_module);
 
-  // can_read_module returns TRUE if module asking_module can read module target_module
-  // or if they are the same module.
+  // can_read_module returns TRUE if module asking_module can read module target_module,
+  // or if they are the same module, or if the asking_module is loose and target_module
+  // is null.
   //
   // Throws IllegalArgumentException if:
   // * either asking_module or target_module is not a java.lang.reflect.Module
@@ -98,6 +103,7 @@ public:
   // This adds package to module.
   // It throws IllegalArgumentException if:
   // * Module is bad
+  // * Module is unnamed
   // * Package is not syntactically correct
   // * Package is already defined for module's class loader.
   static void add_module_package(JNIEnv *env, jobject module, jstring package);

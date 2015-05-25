@@ -3446,7 +3446,7 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
   HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
   jobject res;
   DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
-  res = Modules::get_module(env, clazz);;
+  res = Modules::get_module(env, clazz);
   return res;
 JNI_END
 

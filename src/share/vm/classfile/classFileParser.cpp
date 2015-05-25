@@ -4205,8 +4205,10 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
 
     // Obtain this_klass' module
     ModuleEntry* module_entry = this_klass->module();
-    // Check for unnamed module, obtain j.l.r.Module if available
-    Handle class_module(THREAD, ((module_entry == NULL) ? (oop)NULL : module_entry->module()));
+    assert(module_entry != NULL, "module_entry should always be set");
+    // Obtain j.l.r.Module
+    Handle class_module(THREAD, module_entry->is_named() ?
+                        module_entry->module() : (oop)NULL);
 
     // Allocate mirror and initialize static fields
     java_lang_Class::create_mirror(this_klass, class_loader, class_module, protection_domain,

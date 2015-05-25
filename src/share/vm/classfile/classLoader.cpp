@@ -470,6 +470,7 @@ static void process_javabase(const char* path) {
     jb_module = null_cld_modules->locked_create_entry_or_null(
       NULL, vmSymbols::java_base(), version_symbol, location_symbol, null_cld);
     assert(jb_module != NULL, "no entry created for java.base");
+    ModuleEntryTable::set_java_base_module(jb_module);
   }
 
   if (TraceModules) {
@@ -510,6 +511,7 @@ static void process_javabase(ClassPathImageEntry *entry) {
   ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(
     NULL, vmSymbols::java_base(), version_symbol, location_symbol, null_cld);
   assert(jb_module != NULL, "no entry created for java.base");
+  ModuleEntryTable::set_java_base_module(jb_module);
 
   if (TraceModules) {
     tty->print_cr("[Local packages for java.base:]");

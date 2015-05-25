@@ -421,16 +421,16 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
                         unnamed module          runtime module MT
  ------------------------------------------------------------------------------------------------
 
- Caller S in package         YES                  If same classloader/package (PS == PT): YES
+ Caller S in package     If MS is loose: YES      If same classloader/package (PS == PT): YES
  PS, runtime module MS                            If same runtime module: (MS == MT): YES
 
                                                   Else if (MS can read MT (Establish readability) &&
                                                     MT exports PT to MS or to all modules): YES
 
  ------------------------------------------------------------------------------------------------
- Caller S in unnamed         YES                   Readability exists because unnamed module
- module                                                "reads" all modules
-                                                   if (MT exports PT to all modules): YES
+ Caller S in unnamed         YES                  Readability exists because unnamed module
+ module UM                                            "reads" all modules
+                                                  if (MT exports PT to UM or to all modules): YES
 
  ------------------------------------------------------------------------------------------------
 */
@@ -461,31 +461,34 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
 
     // Find the module entry for current_class, the accessor
     ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
-
     // Find the module entry for new_class, the accessee
-    ModuleEntry* module_to = NULL;
     if (new_class->oop_is_objArray()) {
       new_class = ObjArrayKlass::cast(new_class)->bottom_klass();
     }
-    if (new_class->oop_is_instance()) {
-      module_to = InstanceKlass::cast(new_class)->module();
+    if (!new_class->oop_is_instance()) {
+      // Everyone can read a typearray.
+      return ACCESS_OK;
     }
+    ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
 
-    // both in same module or unnamed module.
+    // both in same (possibly unnamed) module
     if (module_from == module_to)
       return ACCESS_OK;
 
-    // Acceptable access to a type in the unamed module.
-    if (module_to == NULL)
+    // Acceptable access to a type in an unamed module.  Note that since
+    // unnamed modules can read all unnamed modules, this also handles the
+    // case where module_from is also unnamed but in a different class loader.
+    if (module_from->can_read_unnamed() && !module_to->is_named())
       return ACCESS_OK;
 
     // Establish readability, check if module_from is allowed to read module_to.
-    if (module_from != NULL && !module_from->can_read(module_to)) {
+    if (!module_from->can_read(module_to)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
         tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
           module_from->name()->as_C_string(), current_class->external_name(),
-          module_to->name()->as_C_string(), new_class->external_name());
+          module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE,
+          new_class->external_name());
       }
       return MODULE_NOT_READABLE;
     }
@@ -500,36 +503,23 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
       return ACCESS_OK;
     }
 
-    if (module_from != NULL) {
-      // Check the case where module_from, the requester, is in a named module.
-      // Access is allowed if both 1 & 2 hold:
-      //   1. Readability, module_from can read module_to (established above).
-      //   2. Either module_to exports T to module_from qualifiedly.
-      //      or
-      //      module_to exports T unqualifiedly to all modules (checked above).
-      bool okay = package_to->is_qexported_to(module_from);
-      if (!okay) {
-        if (TraceAccessControlErrors) {
-          ResourceMark rm;
-          tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
-            module_from->name()->as_C_string(), current_class->external_name(),
-            module_to->name()->as_C_string(), new_class->external_name());
-        }
-        return TYPE_NOT_EXPORTED;
-      }
-      return ACCESS_OK;
-    } else {
-      // Check the case where module_from, the requester, is in the unnamed module.
-      // Access is allowed if both 1 & 2 hold:
-      //   1. Readability, unnamed module can read all modules.
-      //   2. module_to exports T unqualifiedly to all modules (checked above).
+    // Access is allowed if both 1 & 2 hold:
+    //   1. Readability, module_from can read module_to (established above).
+    //   2. Either module_to exports T to module_from qualifiedly.
+    //      or
+    //      module_to exports T unqualifiedly to all modules (checked above).
+    if (!package_to->is_qexported_to(module_from)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifiedly exported",
-          current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
+          module_from->is_named() ? module_from->name()->as_C_string() : UNNAMED_MODULE,
+          current_class->external_name(),
+          module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE,
+          new_class->external_name());
       }
-      return TYPE_NOT_UNQ_EXPORTED;
+      return TYPE_NOT_EXPORTED;
     }
+    return ACCESS_OK;
   }
 
   if (can_relax_access_check_for(current_class, new_class, classloader_only)) {
@@ -547,56 +537,41 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
   char * msg = NULL;
   if (result != OTHER_PROBLEM && new_class != NULL && current_class != NULL) {
     ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
-    if (module_to != NULL) {
-      const char * new_class_name = new_class->external_name();
-      const char * current_class_name = current_class->external_name();
-      char * module_to_name = module_to->name()->as_C_string();
-      size_t len = 120 + strlen(current_class_name) + strlen(new_class_name) +
-        strlen(module_to_name);
+    const char * new_class_name = new_class->external_name();
+    const char * current_class_name = current_class->external_name();
+    const char * module_to_name = module_to->is_named() ?
+      module_to->name()->as_C_string() : UNNAMED_MODULE;
 
-      if (result == TYPE_NOT_UNQ_EXPORTED) {
-        if (InstanceKlass::cast(new_class)->package() != NULL) {
+    ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
+    const char * module_from_name = module_from->is_named() ?
+      module_from->name()->as_C_string() : UNNAMED_MODULE;
+    size_t len = 122 + strlen(current_class_name) + strlen(new_class_name) +
+      strlen(module_to_name) + 2 * strlen(module_from_name);
+
+    if (result == MODULE_NOT_READABLE) {
+      len = len + strlen(module_to_name);
+      msg = NEW_RESOURCE_ARRAY(char, len);
+      jio_snprintf(msg, len - 1,
+        "class %s (in%s module: %s) cannot access class %s (in module: %s), %s cannot read %s",
+        current_class_name,
+        module_to->is_named() ? "" : " strict",
+        module_from_name, new_class_name,
+        module_to_name, module_from_name, module_to_name);
+
+    } else if (result == TYPE_NOT_EXPORTED) {
+      if (InstanceKlass::cast(new_class)->package() != NULL) {
           const char * package_name =
             InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
           len = len + strlen(package_name);
           msg = NEW_RESOURCE_ARRAY(char, len);
           jio_snprintf(msg, len - 1,
-            "class %s (in module: unnamed) cannot access class %s (in module: %s), %s is not exported to the unnamed module",
-            current_class_name, new_class_name, module_to_name, package_name);
-        }
-
-      } else {
-        ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
-        if (module_from != NULL) {
-          char * module_from_name = module_from->name()->as_C_string();
-          len = len + 2 * strlen(module_from_name);
-
-          if (result == MODULE_NOT_READABLE) {
-            len = len + strlen(module_to_name);
-            msg = NEW_RESOURCE_ARRAY(char, len);
-            jio_snprintf(msg, len - 1,
-              "class %s (in module: %s) cannot access class %s (in module: %s), %s cannot read %s",
-              current_class_name, module_from_name, new_class_name,
-              module_to_name, module_from_name, module_to_name);
-
-          } else if (result == TYPE_NOT_EXPORTED) {
-            if (InstanceKlass::cast(new_class)->package() != NULL) {
-              const char * package_name =
-                InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
-              len = len + strlen(package_name);
-              msg = NEW_RESOURCE_ARRAY(char, len);
-              jio_snprintf(msg, len - 1,
-                "class %s (in module: %s) cannot access class %s (in module: %s), %s is not exported to %s",
-                current_class_name, module_from_name, new_class_name,
-                module_to_name, package_name, module_from_name);
-            }
-
-          } else {
-            ShouldNotReachHere();
-          }
-        }  // module_from != NULL
+            "class %s (in module: %s) cannot access class %s (in module: %s), %s is not exported to %s",
+            current_class_name, module_from_name, new_class_name,
+            module_to_name, package_name, module_from_name);
       }
-    }  // module_to != NULL
+    } else {
+        ShouldNotReachHere();
+    }
   }  // result != OTHER_PROBLEM...
   return msg;
 }

@@ -43,28 +43,35 @@ public class JVMIsExportedToModule {
         boolean result;
 
         from_module = ModuleHelper.ModuleObject("from_module", from_cl, new String[] { "mypackage", "this/package" });
-        assertNotNull(from_module, "Module should not be null");
+        assertNotNull(from_module, "Module from_module should not be null");
         ModuleHelper.DefineModule(from_module, "9.0", "from_module/here", new String[] { "mypackage", "this/package" });
         to_module = ModuleHelper.ModuleObject("to_module", to_cl, new String[] { "yourpackage", "that/package" });
-        assertNotNull(to_module, "Module should not be null");
+        assertNotNull(to_module, "Module to_module should not be null");
         ModuleHelper.DefineModule(to_module, "9.0", "to_module/here", new String[] { "yourpackage", "that/package" });
+
+        Object unnamed_module = JVMIsExportedToModule.class.getModule();
+        assertNotNull(unnamed_module, "Module unnamed_module should not be null");
 
         // Null from_module argument, expect an NPE
         try {
             result = ModuleHelper.IsExportedToModule(null, "mypackage", to_module);
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get the expected NPE for null from_module");
         } catch(NullPointerException e) {
             // Expected
         }
 
-        // Null to_module argument, expect normal return
-        result = ModuleHelper.IsExportedToModule(from_module, "mypackage", null);
-        assertTrue(!result, "Package has not been exported");
+        // Null to_module argument, expect an NPE
+        try {
+          result = ModuleHelper.IsExportedToModule(from_module, "mypackage", null);
+          throw new RuntimeException("Failed to get expected NPE for null to_module");
+        } catch(NullPointerException e) {
+            // Expected
+        }
 
         // Null package argument, expect an NPE
         try {
             result = ModuleHelper.IsExportedToModule(from_module, null, to_module);
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get the expected NPE for null package");
         } catch(NullPointerException e) {
             // Expected
         }
@@ -72,15 +79,7 @@ public class JVMIsExportedToModule {
         // Bad from_module argument, expect an IAE
         try {
             result = ModuleHelper.IsExportedToModule(to_cl, "mypackage", to_module);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
-            // Expected
-        }
-
-        // Bad to_module argument, expect an IAE
-        try {
-            result = ModuleHelper.IsExportedToModule(from_module, "mypackage", from_cl);
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get the expected IAE for bad from_module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -92,7 +91,7 @@ public class JVMIsExportedToModule {
         // Package is not in to_module, expect an IAE
         try {
             result = ModuleHelper.IsExportedToModule(from_module, "yourpackage", from_cl);
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get the expected IAE for package not in to_module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -101,14 +100,15 @@ public class JVMIsExportedToModule {
         ModuleHelper.AddModuleExports(from_module, "mypackage", null);
         result = ModuleHelper.IsExportedToModule(from_module, "mypackage", to_module);
         assertTrue(result, "Package exported to unnamed module is visible to named module");
-        result = ModuleHelper.IsExportedToModule(from_module, "mypackage", null);
+
+        result = ModuleHelper.IsExportedToModule(from_module, "mypackage", unnamed_module);
         assertTrue(result, "Package exported to unnamed module is visible to unnamed module");
 
         // Package is accessible only to named module when exported to named module
         ModuleHelper.AddModuleExports(from_module, "this/package", to_module);
         result = ModuleHelper.IsExportedToModule(from_module, "this/package", to_module);
         assertTrue(result, "Package exported to named module is visible to named module");
-        result = ModuleHelper.IsExportedToModule(from_module, "this/package", null);
+        result = ModuleHelper.IsExportedToModule(from_module, "this/package", unnamed_module);
         assertTrue(!result, "Package exported to named module is not visible to unnamed module");
     }
 

@@ -380,12 +380,13 @@ PackageEntryTable* ClassLoaderData::packages() {
 ModuleEntryTable* ClassLoaderData::modules() {
   // Lazily create the module entry table at first request.
   if (_modules == NULL) {
-    MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+    MutexLocker m1(Module_lock);
+    MutexLockerEx m2(metaspace_lock(), Mutex::_no_safepoint_check_flag);
     // Check again if _modules has been allocated while we were getting this lock.
     if (_modules != NULL) {
       return _modules;
     }
-    _modules = new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
+    _modules = ModuleEntryTable::create_module_entry_table(this);
   }
   return _modules;
 }

@@ -94,7 +94,6 @@ static ModuleEntry* get_module_entry_by_package_name(Symbol* package,
                                                      TRAPS) {
   const PackageEntry* const pkg_entry =
     get_package_entry_by_name(package, h_loader, THREAD);
-
   return pkg_entry != NULL ? pkg_entry->module() : NULL;
 }
 
@@ -160,6 +159,10 @@ static ModuleEntry* get_module_entry(jobject module, TRAPS) {
   Handle h_loader = Handle(loader);
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
   assert(module_table != NULL, "Unexpected null module entry table");
+  oop name_oop = java_lang_reflect_Module::name(h_module());
+  if (name_oop == NULL) {
+    return module_table->unnamed_module();
+  }
   return module_table->lookup_only(h_module());
 }
 
@@ -216,11 +219,15 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
   Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
 
   char* module_name = get_module_name(jlrM_handle(), CHECK);
+  if (module_name == NULL) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "Module name cannot be null");
+  }
   const char* module_version = get_module_version(version);
 
   if (TraceModules) {
     tty->print_cr("In define_module(): Start defining module %s, version: %s]",
-                  module_name, module_version);
+      module_name, module_version);
   }
 
   objArrayOop packages_oop = objArrayOop(JNIHandles::resolve(packages));
@@ -240,8 +247,8 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     char *package_name = java_lang_String::as_utf8_string(string_obj);
     if (!verify_package_name(package_name)) {
       THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-                 err_msg("Invalid package name: %s for module: %s",
-                         package_name, module_name));
+                err_msg("Invalid package name: %s for module: %s",
+                        package_name, module_name));
     }
     Symbol* pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
     // append_if_missing() returns FALSE if entry already exists.
@@ -327,7 +334,8 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
       } else {
         if (TraceModules) {
           tty->print("In define_module(): creation of module: %s, version: %s, location: %s, ",
-            module_name, module_version, module_location != NULL ? module_location : "NULL");
+            module_name, module_version,
+            module_location != NULL ? module_location : "NULL");
           loader_data->print_value();
           tty->print_cr(", package #: %d]", pkg_list->length());
         }
@@ -361,7 +369,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
   if (dupl_pkg_index != -1) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s for module %s already exists for class loader",
-                       pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
+                      pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
   }
 
   if (loader == NULL && !Universe::is_module_initialized()) {
@@ -390,11 +398,14 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "from_module cannot be found");
   }
+
+  // All packages in unnamed are exported by default.
+  if (!from_module_entry->is_named()) return;
+
   ModuleEntry* to_module_entry;
   if (to_module == NULL) {
-    to_module_entry = NULL;  // It's the unnamed module.
-  }
-  else {
+    to_module_entry = NULL;  // It's an unqualified export.
+  } else {
     to_module_entry = get_module_entry(to_module, CHECK);
     if (to_module_entry == NULL) {
       THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
@@ -425,7 +436,9 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
     tty->print_cr("[add_module_exports(): package:module %s:%s is exported to module %s]",
                   package_entry->name()->as_C_string(),
                   from_module_entry->name()->as_C_string(),
-                  ((to_module_entry == NULL) ? NULL : to_module_entry->name()->as_C_string()));
+                  to_module_entry == NULL ? "NULL" :
+                    to_module_entry->is_named() ?
+                      to_module_entry->name()->as_C_string() : UNNAMED_MODULE);
   }
 
   // If this is a qualified export, make sure the entry has not already been exported
@@ -450,31 +463,34 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "from_module is null");
   }
-  if (to_module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
-              "to_module is null");
-  }
 
   ModuleEntry* from_module_entry = get_module_entry(from_module, CHECK);
   if (from_module_entry == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "from_module is not valid");
   }
-  ModuleEntry* to_module_entry = get_module_entry(to_module, CHECK);
-  if (to_module_entry == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "to_module is invalid");
+
+  ModuleEntry* to_module_entry;
+  if (to_module != NULL) {
+    to_module_entry = get_module_entry(to_module, CHECK);
+    if (to_module_entry == NULL) {
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                "to_module is invalid");
+    }
+  } else {
+    to_module_entry = NULL;
   }
 
   if (TraceModules) {
     ResourceMark rm;
     tty->print_cr("[add_reads_module(): Adding read from module %s to module %s]",
-      from_module_entry->name()->as_C_string(),
-      to_module_entry->name()->as_C_string());
+      from_module_entry->is_named() ? from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+      to_module_entry == NULL ? "all unnamed" :
+        (to_module_entry->is_named() ? to_module_entry->name()->as_C_string() : UNNAMED_MODULE));
   }
 
-  // if modules are the same, no need to add the read.
-  if (from_module_entry != to_module_entry) {
+  // if modules are the same or if from_module is unnamed then no need to add the read.
+  if (from_module_entry != to_module_entry && from_module_entry->is_named()) {
     from_module_entry->add_read(to_module_entry);
   }
 }
@@ -493,8 +509,9 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
                "asking_module is invalid", JNI_FALSE);
   }
 
+  // Calling can_read_unnamed() with NULL tests if a module is loose.
   if (target_module == NULL) {
-    return JNI_TRUE;  // Unnamed module is always readable.
+    return asking_module_entry->can_read_unnamed();
   }
 
   ModuleEntry* target_module_entry = get_module_entry(target_module, CHECK_false);
@@ -506,13 +523,23 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
   if (TraceModules) {
     ResourceMark rm;
     tty->print_cr("[can_read_module(): module %s trying to read module %s, allowed = %s",
-                  asking_module_entry->name()->as_C_string(),
-                  target_module_entry->name()->as_C_string(),
-                  BOOL_TO_STR((asking_module_entry == target_module_entry) ||
-                    (asking_module_entry->can_read(target_module_entry))));
+      asking_module_entry->is_named() ?
+        asking_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+      target_module_entry->is_named() ?
+        target_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+      BOOL_TO_STR(asking_module_entry == target_module_entry ||
+                  (asking_module_entry->can_read_unnamed() &&
+                    !target_module_entry->is_named()) ||
+                  asking_module_entry->can_read(target_module_entry)));
   }
 
-  if (asking_module_entry == target_module_entry) {
+  // Return true if:
+  // 1. the modules are the same, or
+  // 2. the asking_module is unnamed (because unnamed modules read everybody), or
+  // 3. the asking_module is loose and the target module is unnamed, or
+  // 4. if can_read() returns true.
+  if (asking_module_entry == target_module_entry ||
+      (asking_module_entry->can_read_unnamed() && !target_module_entry->is_named())) {
     return true;
   }
   return asking_module_entry->can_read(target_module_entry);
@@ -536,14 +563,13 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
   }
   ModuleEntry* to_module_entry;
   if (to_module == NULL) {
-    to_module_entry = NULL;
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
+               "to_module is null", JNI_FALSE);
   }
-  else {
-    to_module_entry = get_module_entry(to_module, CHECK_false);
-    if (to_module_entry == NULL) {
-      THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
-                 "to_module is invalid", JNI_FALSE);
-    }
+  to_module_entry = get_module_entry(to_module, CHECK_false);
+  if (to_module_entry == NULL) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "to_module is invalid", JNI_FALSE);
   }
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
@@ -552,87 +578,115 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
     ResourceMark rm;
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                err_msg("Package not found in from_module: %s",
-                       from_module_entry->name()->as_C_string()), JNI_FALSE);
+                       from_module_entry->is_named() ?
+                         from_module_entry->name()->as_C_string() : UNNAMED_MODULE),
+               JNI_FALSE);
   }
   if (package_entry->module() != from_module_entry) {
     ResourceMark rm;
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                err_msg("Package: %s found in module %s, not in from_module: %s",
                        package_entry->name()->as_C_string(),
-                       package_entry->module()->name()->as_C_string(),
-                       from_module_entry->name()->as_C_string()), JNI_FALSE);
+                       package_entry->module()->is_named() ?
+                         package_entry->module()->name()->as_C_string() : UNNAMED_MODULE,
+                       from_module_entry->is_named() ?
+                         from_module_entry->name()->as_C_string() : UNNAMED_MODULE),
+               JNI_FALSE);
   }
 
   if (TracePackages) {
     ResourceMark rm;
     tty->print_cr("[is_exported_to_module: package %s from module %s checking if exported to module %s, exported? = %s",
                   package_entry->name()->as_C_string(),
-                  from_module_entry->name()->as_C_string(),
-                  to_module_entry != NULL ? to_module_entry->name()->as_C_string() : "unnamed",
-                  BOOL_TO_STR(package_entry->is_unqual_exported() ||
-                    (to_module != NULL && package_entry->is_qexported_to(to_module_entry)) ||
-                    (from_module_entry == to_module_entry)));
+                  from_module_entry->is_named() ?
+                    from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                  to_module_entry->is_named() ?
+                    to_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                  BOOL_TO_STR(!from_module_entry->is_named() ||
+                    package_entry->is_unqual_exported() ||
+                    from_module_entry == to_module_entry ||
+                    package_entry->is_qexported_to(to_module_entry)));
   }
 
-  return (package_entry->is_unqual_exported() ||
-          (from_module_entry == to_module_entry) ||
-          (to_module != NULL && package_entry->is_qexported_to(to_module_entry)));
+  // Return true if:
+  // 1. from_module is unnamed because unnamed modules export all their packages (by default), or
+  // 2. if the package is unqualifiedly exported, or
+  // 3. if the modules are the same, or
+  // 4. if the package is exported to to_module
+  return (!from_module_entry->is_named() ||
+          package_entry->is_unqual_exported() ||
+          from_module_entry == to_module_entry ||
+          package_entry->is_qexported_to(to_module_entry));
 }
 
+// This method is called by JFR and JNI.
 jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   oop mirror = JNIHandles::resolve_non_null(clazz);
-  if (mirror == NULL || java_lang_Class::is_primitive(mirror)) {
+  if (mirror == NULL) {
     if (TraceModules) {
       tty->print_cr("[get_module(): returning NULL]");
     }
     return NULL;
   }
 
-  Klass* klass = java_lang_Class::as_Klass(mirror);
-  assert(klass->oop_is_instance() || klass->oop_is_objArray() ||
-    klass->oop_is_typeArray(), "Bad Klass");
-
+  Klass* klass = NULL;
   oop module;
-  if (klass->oop_is_objArray()) {
-    ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(klass);
-    klass = obj_arr_klass->bottom_klass();
-    mirror = java_lang_Class::module(klass->java_mirror());
-  }
-  if (klass->oop_is_instance()) {
-    module = java_lang_Class::module(mirror);
-  } else if (klass->oop_is_typeArray()) {
+  if (java_lang_Class::is_primitive(mirror)) {
+    if (TraceModules) {
+      tty->print_cr("[get_module(): returning module java.base for primitive class]");
+    }
+    // Return java.lang.Object's module (java.base)
     Klass* obj_k = SystemDictionary::Object_klass();
     module = java_lang_Class::module(obj_k->java_mirror());
+
   } else {
-    ShouldNotReachHere();
+    Klass* klass = java_lang_Class::as_Klass(mirror);
+    assert(klass != NULL, "Null Klass");
+    assert(klass->oop_is_instance() || klass->oop_is_objArray() ||
+      klass->oop_is_typeArray(), "Bad Klass");
+
+    if (klass->oop_is_objArray()) {
+      ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(klass);
+      klass = obj_arr_klass->bottom_klass();
+      mirror = java_lang_Class::module(klass->java_mirror());
+    }
+    if (klass->oop_is_instance()) {
+      module = java_lang_Class::module(mirror);
+    } else {
+      // Return java.lang.Object's module (java.base)
+      Klass* obj_k = SystemDictionary::Object_klass();
+      module = java_lang_Class::module(obj_k->java_mirror());
+    }
   }
 
   if (TraceModules) {
     ResourceMark rm;
-    if (module != NULL) {
-      oop module_name = java_lang_reflect_Module::name(module);
+    oop module_name = java_lang_reflect_Module::name(module);
+    if (module_name != NULL) {
       tty->print("[get_module(): module ");
       java_lang_String::print(module_name, tty);
+    } else {
+      tty->print("[get_module(): Unamed Module");
     }
-    else {
-      tty->print("[get_module(): unamed module");
+    if (klass != NULL) {
+      tty->print_cr(" for class %s]", klass->external_name());
+    } else {
+      tty->print_cr(" for primitive class]");
     }
-    tty->print_cr(" for class %s]", klass->external_name());
   }
 
   return JNIHandles::make_local(env, module);
 }
 
+// This method is called by JFR.
 jobject Modules::get_module(Symbol* package_name,
                            Handle h_loader,
                            TRAPS) {
 
   const ModuleEntry* const module =
-    get_module_entry_by_package_name(package_name,
-                                     h_loader,
-                                     THREAD);
+    get_module_entry_by_package_name(package_name, h_loader, THREAD);
 
-  return module != NULL ?
+  return module->is_named() ?
     JNIHandles::make_local(THREAD, module->literal()) : NULL;
 }
 
@@ -652,6 +706,10 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
   if (module_entry == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "module is invalid");
+  }
+  if (!module_entry->is_named()) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "module cannot be an unnamed module");
   }
   char *package_name = java_lang_String::as_utf8_string(
     JNIHandles::resolve_non_null(package));

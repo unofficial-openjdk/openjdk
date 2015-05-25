@@ -34,6 +34,8 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.hpp"
 
+#define UNNAMED_MODULE "Unnamed Module"
+
 class ModuleClosure;
 
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
@@ -53,6 +55,7 @@ private:
   Symbol* _version;   // module version number
   Symbol* _location;  // module location
   bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
+  bool _can_read_unnamed;
   TRACE_DEFINE_TRACE_ID_FIELD;
 
 public:
@@ -63,6 +66,7 @@ public:
     _version = NULL;
     _location = NULL;
     _pkgs_with_qexports = false;
+    _can_read_unnamed = false;
   }
 
   oop                module() const                 { return literal(); }
@@ -86,6 +90,17 @@ public:
 
   bool               pkgs_with_qexports()           { return _pkgs_with_qexports; }
   void               set_pkgs_with_qexports(bool q) { _pkgs_with_qexports = q; }
+
+  bool               is_named() const               { return _name != NULL; }
+
+  bool can_read_unnamed() const {
+    assert(is_named() || _can_read_unnamed == true,
+           "unnamed modules can always read all unnamed modules");
+    return _can_read_unnamed;
+  }
+
+  // Modules can only go from strict to loose.
+  void               set_can_read_unnamed()          { _can_read_unnamed = true; }
 
   ModuleEntry* next() const {
     return (ModuleEntry*)HashtableEntry<oop, mtClass>::next();
@@ -143,6 +158,8 @@ public:
   };
 
 private:
+  static ModuleEntry* _java_base_module;
+  ModuleEntry* _unnamed_module;
   static bool _javabase_created;
 
   ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, Symbol* version,
@@ -153,6 +170,9 @@ private:
 public:
   ModuleEntryTable(int table_size);
   ~ModuleEntryTable();
+
+  ModuleEntry* unnamed_module() { return _unnamed_module; }
+  void set_unnamed_module(ModuleEntry* m) { _unnamed_module = m; }
 
   int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
 
@@ -177,6 +197,9 @@ public:
 
   static bool javabase_created() { return _javabase_created; }
   static void patch_javabase_entries(TRAPS);
+  static ModuleEntryTable* create_module_entry_table(ClassLoaderData* class_loader);
+  static ModuleEntry* java_base_module() { return _java_base_module; }
+  static void set_java_base_module(ModuleEntry* java_base) { _java_base_module = java_base; }
 
   unsigned int compute_hash(oop module) {
     if (module == NULL) {
