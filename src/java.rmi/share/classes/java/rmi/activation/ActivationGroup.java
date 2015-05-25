@@ -100,14 +100,6 @@ public abstract class ActivationGroup
         extends UnicastRemoteObject
         implements ActivationInstantiator
 {
-     static {
-         // java.rmi needs to be a loose module
-         Module thisModule = ActivationGroup.class.getModule();
-         PrivilegedAction<Void> pa =
-             () -> { thisModule.addReads(null); return null; };
-         AccessController.doPrivileged(pa);
-     }
-
     /**
      * @serial the group's identifier
      */
@@ -326,6 +318,9 @@ public abstract class ActivationGroup
                                                   cl0.getName());
                 }
             }
+
+            // Ensure module containing group class is readable
+            ActivationGroup.class.getModule().addReads(cl.getModule());
 
             // create group
             Constructor<? extends ActivationGroup> constructor =
