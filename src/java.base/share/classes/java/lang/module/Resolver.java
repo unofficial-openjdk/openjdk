@@ -191,6 +191,8 @@ final class Resolver {
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
+        checkExports(graph);
+
         return new Resolution(selected, nameToReference, graph);
     }
 
@@ -342,8 +344,11 @@ final class Resolver {
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
+        checkExports(graph);
+
         return new Resolution(selected, nameToReference, graph);
     }
+
 
     /**
      * Computes and sets the readability graph for the modules in the given
@@ -455,6 +460,7 @@ final class Resolver {
         return g1;
     }
 
+
     /**
      * Checks the hashes in the extended module descriptor to ensure that they
      * match the hash of the dependency's module reference.
@@ -496,6 +502,7 @@ final class Resolver {
         }
 
     }
+
 
     /**
      * Checks the given module graph for cycles.
@@ -549,6 +556,56 @@ final class Resolver {
                    .skip(index)
                    .map(ModuleDescriptor::name)
                    .collect(Collectors.joining(" -> "));
+    }
+
+
+    /**
+     * Checks that no two module exports the same package. If a module reads a
+     * module M in a parent Layer then it also checks that M does not export
+     * the same package as one of the selected modules.
+     *
+     * @apiNote For now, this method treats all exports as un-qualified and so
+     * will fail for cases like M1 exports p to M2 && M3 exports p to M4.
+     */
+    private void checkExports(Map<ModuleDescriptor, Set<ModuleDescriptor>> graph ) {
+
+        Map<String, ModuleDescriptor> packageToModule = new HashMap<>();
+
+        // records and checks that no two modules exports the same package
+        for (ModuleDescriptor descriptor : selected) {
+            for (ModuleDescriptor.Exports exports : descriptor.exports()) {
+                String pkg = exports.source();
+                ModuleDescriptor previous = packageToModule.putIfAbsent(pkg, descriptor);
+                if (previous != null) {
+                    fail("Module %s and %s export %s",
+                        descriptor.name(), previous.name(), pkg);
+                }
+            }
+        }
+
+        // nothing else to do when creating the configuration for the boot layer
+        if (layer == Layer.empty())
+            return;
+
+        // Next check modules read by the selected modules. This will catch
+        // readable modules in parent Layers that export the same package as
+        // modules in the candidate configuration.
+        for (ModuleDescriptor descriptor : selected) {
+            Set<ModuleDescriptor> reads = graph.get(descriptor);
+            if (reads == null)
+                continue;
+
+            for (ModuleDescriptor other : reads) {
+                for (ModuleDescriptor.Exports exports : other.exports()) {
+                    String pkg = exports.source();
+                    ModuleDescriptor previous = packageToModule.putIfAbsent(pkg, other);
+                    if (previous != null && previous != other) {
+                        fail("Module %s and %s export %s",
+                            other.name(), previous.name(), pkg);
+                    }
+                }
+            }
+        }
     }
 
 

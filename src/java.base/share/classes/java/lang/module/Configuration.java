@@ -87,6 +87,9 @@ public final class Configuration {
      *     <li> A cycle is detected, say where module {@code m1} requires module
      *          {@code m2} and {@code m2} requires {@code m1}. </li>
      *
+     *     <li> If two modules in the candidate configuration export the same
+     *          package. </li>
+     *
      *     <li> Implementation specific checks, for example referential integrity
      *          checks that fail where incompatible versions of modules may not
      *          be combined in the same configuration. </li>
