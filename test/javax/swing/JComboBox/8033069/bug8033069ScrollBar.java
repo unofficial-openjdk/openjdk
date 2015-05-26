@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,32 @@
  * questions.
  */
 
-// See dns.sh.
-import sun.security.krb5.Config;
-import sun.security.krb5.KrbException;
+import java.awt.AWTException;
 
-public class DNS {
+/* @test
+ * @bug 8033069
+ * @summary Checks that JComboBox popup does not close when mouse wheel is
+ *          rotated over combo box and over its popup. The case where
+ *          popup has scroll bar.
+ * @library ../../regtesthelpers
+ * @build Util
+ * @run main bug8033069ScrollBar
+ * @author Alexey Ivanov
+ */
+public class bug8033069ScrollBar extends bug8033069NoScrollBar {
+
+    private static final String[] SCROLL_ITEMS = new String[] {
+            "A", "B", "C", "D", "E", "F",
+            "G", "H", "I", "J", "K", "L",
+            "M", "N", "O", "P", "Q", "R"
+    };
+
     public static void main(String[] args) throws Exception {
-        System.setProperty("java.security.krb5.conf",
-                System.getProperty("test.src", ".") +"/no-such-file.conf");
-        Config config = Config.getInstance();
-        try {
-            String r = config.getDefaultRealm();
-            throw new Exception("What? There is a default realm " + r + "?");
-        } catch (KrbException ke) {
-            ke.printStackTrace();
-            if (ke.getCause() != null) {
-                throw new Exception("There should be no cause. Won't try DNS");
-            }
-        }
-        String kdcs = config.getKDCList("X");
-        if (!kdcs.equals("a.com.:88 b.com.:99") &&
-                !kdcs.equals("a.com. b.com.:99")) {
-            throw new Exception("Strange KDC: [" + kdcs + "]");
-        };
+        iterateLookAndFeels(new bug8033069ScrollBar(SCROLL_ITEMS));
     }
+
+    public bug8033069ScrollBar(String[] items) throws AWTException {
+        super(items);
+    }
+
 }
