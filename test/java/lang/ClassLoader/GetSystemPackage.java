@@ -180,7 +180,6 @@ public class GetSystemPackage {
     private static Package findPackage(String name) {
         Package[] packages = Package.getPackages();
         for (Package p : packages) {
-            System.out.println(p);
             if (p.getName().equals(name)) {
                 return p;
             }
