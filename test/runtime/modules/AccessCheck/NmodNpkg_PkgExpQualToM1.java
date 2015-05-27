@@ -91,9 +91,9 @@ public class NmodNpkg_PkgExpQualToM1 {
 
         // map each module to the same class loader for this test
         ClassLoader loader = new MyClassLoader();
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(mref_m1, loader);
-        map.put(mref_m2, loader);
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", loader);
+        map.put("m2", loader);
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);

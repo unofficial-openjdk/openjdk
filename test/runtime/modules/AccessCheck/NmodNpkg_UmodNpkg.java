@@ -98,8 +98,8 @@ public class NmodNpkg_UmodNpkg {
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, loader);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
@@ -146,8 +146,8 @@ public class NmodNpkg_UmodNpkg {
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, loader);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
@@ -199,8 +199,8 @@ public class NmodNpkg_UmodNpkg {
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, loader);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);

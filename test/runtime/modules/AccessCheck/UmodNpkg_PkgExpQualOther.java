@@ -111,10 +111,10 @@ public class UmodNpkg_PkgExpQualOther {
                                                  "m1");
 
         // map each module to differing class loaders for this test
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(mref_m1, MySameClassLoader.loader1);
-        map.put(mref_m2, MySameClassLoader.loader1);
-        map.put(mref_m3, MySameClassLoader.loader1);
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", MySameClassLoader.loader1);
+        map.put("m2", MySameClassLoader.loader1);
+        map.put("m3", MySameClassLoader.loader1);
 
         // Create Layer that contains m1, m2 and m3
         Layer layer = Layer.create(cf, map::get);

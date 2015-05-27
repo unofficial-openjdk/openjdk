@@ -100,9 +100,9 @@ public class NmodNpkgDiffCL_PkgExpUnqual {
                                                  "m1");
 
         // map each module to differing class loaders for this test
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(mref_m1, MyDiffClassLoader.loader1);
-        map.put(mref_m2, MyDiffClassLoader.loader2);
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", MyDiffClassLoader.loader1);
+        map.put("m2", MyDiffClassLoader.loader2);
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);

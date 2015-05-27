@@ -101,8 +101,8 @@ public class NmodNpkgDiffCL_UmodNpkg {
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader2
      // to achieve differing class loaders.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, MyDiffClassLoader.loader1);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
@@ -152,8 +152,8 @@ public class NmodNpkgDiffCL_UmodNpkg {
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader2
      // to achieve differing class loaders.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, MyDiffClassLoader.loader1);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
@@ -209,8 +209,8 @@ public class NmodNpkgDiffCL_UmodNpkg {
      // map module m1 to class loader.
      // class c2 will be loaded in the unnamed module/loader2
      // to achieve differing class loaders.
-     Map<ModuleReference, ClassLoader> map = new HashMap<>();
-     map.put(mref_m1, MyDiffClassLoader.loader1);
+     Map<String, ClassLoader> map = new HashMap<>();
+     map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);

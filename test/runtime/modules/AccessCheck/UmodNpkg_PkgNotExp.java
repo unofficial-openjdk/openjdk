@@ -98,9 +98,9 @@ public class UmodNpkg_PkgNotExp {
                                                  "m1");
 
         // map each module to the same class loader for this test
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(mref_m1, MySameClassLoader.loader1);
-        map.put(mref_m2, MySameClassLoader.loader1);
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", MySameClassLoader.loader1);
+        map.put("m2", MySameClassLoader.loader1);
 
         // Create Layer that contains m1 and m2
         Layer layer = Layer.create(cf, map::get);
