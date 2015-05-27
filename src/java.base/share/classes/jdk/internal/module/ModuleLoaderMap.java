@@ -62,14 +62,14 @@ final class ModuleLoaderMap {
         ClassLoader extClassLoader = ClassLoaders.extClassLoader();
         ClassLoader appClassLoader = ClassLoaders.appClassLoader();
 
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
+        Map<String, ClassLoader> map = new HashMap<>();
         cf.descriptors()
             .stream()
             .map(ModuleDescriptor::name)
             .filter(name -> !BOOT_MODULES.contains(name))
             .forEach(name -> {
                 ClassLoader cl = EXT_MODULES.contains(name) ? extClassLoader : appClassLoader;
-                map.put(cf.findReference(name).get(), cl);
+                map.put(name, cl);
             });
         return map::get;
     }

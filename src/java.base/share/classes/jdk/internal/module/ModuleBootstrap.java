@@ -168,14 +168,11 @@ public final class ModuleBootstrap {
         // mapping of modules to class loaders
         ClassLoaderFinder clf = ModuleLoaderMap.classLoaderFinder(cf);
 
-        // no overlapping packages allowed in the boot Layer
-        ensureNoOverlappedPackages(cf);
-
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
         for (ModuleReference mref : cf.references()) {
             String name = mref.descriptor().name();
-            ClassLoader cl = clf.loaderForModule(mref);
+            ClassLoader cl = clf.loaderForModule(name);
             if (cl == null) {
                 if (upgradeModulePath != null && upgradeModulePath.find(name).isPresent())
                     fail(name + ": cannot be loaded from upgrade module path");
@@ -240,24 +237,6 @@ public final class ModuleBootstrap {
                 return mrefs;
             }
         };
-    }
-
-    /**
-     * Sanity check the Configuration to ensure that no two modules have types
-     * in the same named package.
-     */
-    private static void ensureNoOverlappedPackages(Configuration cf) {
-        Map<String, String> packageToModule = new HashMap<>();
-        for (ModuleDescriptor md : cf.descriptors()) {
-            String name = md.name();
-            for (String p: md.packages()) {
-                String other = packageToModule.putIfAbsent(p, name);
-                if (other != null) {
-                    fail("Package " + p + " in both module " + name
-                         + " and module " + other);
-                }
-            }
-        }
     }
 
     /**

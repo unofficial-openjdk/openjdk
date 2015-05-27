@@ -55,6 +55,7 @@ import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
+import sun.security.util.SecurityConstants;
 
 /**
  * Represents a run-time module, either {@link #isNamed() named} or unnamed.
@@ -181,8 +182,7 @@ public final class Module {
     public ClassLoader getClassLoader() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            RuntimePermission perm = new RuntimePermission("getClassLoader");
-            sm.checkPermission(perm);
+            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
         }
         return loader;
     }
@@ -473,7 +473,7 @@ public final class Module {
         // with each class loader.
         for (ModuleReference mref : cf.references()) {
             String name = mref.descriptor().name();
-            ClassLoader loader = clf.loaderForModule(mref);
+            ClassLoader loader = clf.loaderForModule(name);
             Module m = defineModule(loader, mref);
             modules.put(name, m);
             loaders.put(name, loader);

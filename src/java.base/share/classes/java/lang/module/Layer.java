@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package java.lang.module;
 import java.lang.reflect.Module;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -78,7 +79,7 @@ public final class Layer {
     private final Map<String, Module> nameToModule;
 
     /**
-     * Finds the class loader for a module reference.
+     * Finds the class loader for a module.
      *
      * @see Layer#create
      * @since 1.9
@@ -86,9 +87,14 @@ public final class Layer {
     @FunctionalInterface
     public static interface ClassLoaderFinder {
         /**
-         * Returns the class loader for the given module reference.
+         * Returns the class loader for the given module.
+         *
+         * <p> If this method is invoked several times to locate the same
+         * module (by name) then it will return the same result each time.
+         * Failure to do so will lead to unspecified behavior when creating
+         * a Layer. </p>
          */
-        ClassLoader loaderForModule(ModuleReference mref);
+        ClassLoader loaderForModule(String moduleName);
     }
 
     /**
@@ -96,7 +102,7 @@ public final class Layer {
      */
     private Layer(Configuration cf, Map<String, Module> map) {
         this.cf = cf;
-        this.nameToModule = map;
+        this.nameToModule = map; // no need to create defensive copy
     }
 
     /**
@@ -108,32 +114,143 @@ public final class Layer {
      * class loader by invoking the class loader's {@link
      * ModuleCapableLoader#register register} method. </p>
      *
+     * <p> Creating a {@code Layer} can fail for several reasons: </p>
      *
-     * @throws Exception if a module is to be associated with a class loader that
-     * already has an associated module of the same name
+     * <ul>
+     *     <li> Two or more modules with the same package (exported or
+     *          concealed) are mapped to the same class loader. </li>
      *
-     * @throws Exception if a module is to be associated with a class loader that has
-     * already defined types in any of the packages that the module includes
+     *     <li> Two or more modules in the configuration export the same
+     *          package to a module that reads both. </li>
      *
-     * @apiNote The exact exceptions are TBD. Also need to discuss the topic of whether
-     * this method is assumed to be atomic. For now, an exception thrown will leave
-     * the VM in a state where some (but not all) modules may have been defined.
+     *     <li> A module is mapped to a class loader that already has a module
+     *          of the same name defined to it. </li>
+     *
+     *     <li> A module is mapped to a class loader that has already defined
+     *          types in any of the packages in the module. </li>
+     *
+     * </ul>
+     *
+     * @apiNote Need to decide if there is a permission check needed here. We
+     * can't have an untrusted ClassLoaderFinder returning null and have this
+     * method define modules to the boot loader. For now, the built-in class
+     * loaders does a permission check to defend against this.
+     *
+     * @implNote Some of the failure reasons listed cannot be detected in
+     * advance, hence it is possible for Layer.create to fail with some of the
+     * modules in the configuration defined to the run-time.
+     *
+     * @throws LayerInstantiationException
+     *         If creating the {@code Layer} fails for any of the reasons
+     *         listed above
      */
     public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
-        Layer layer = new Layer(cf, reflectAccess.defineModules(cf, clf));
+
+        checkForDuplicatePackages(cf, clf);
+
+        checkExportSuppliers(cf);
+
+        Layer layer;
+        try {
+            layer = new Layer(cf, reflectAccess.defineModules(cf, clf));
+        } catch (Exception | Error e) {
+            throw new LayerInstantiationException(e);
+        }
 
         // Update the readability graph so that every automatic module in the
         // newly created Layer reads every other module.
         // We do this here for now but it may move.
         cf.descriptors().stream()
-                .filter(ModuleDescriptor::isAutomatic)
-                .map(ModuleDescriptor::name)
-                .map(layer::findModule)
-                .forEach(om -> layer.fixupAutomaticModule(om.get()));
+            .filter(ModuleDescriptor::isAutomatic)
+            .map(ModuleDescriptor::name)
+            .map(layer::findModule)
+            .forEach(om -> layer.fixupAutomaticModule(om.get()));
 
         return layer;
+    }
+
+
+    /**
+     * Checks a configuration and the module-to-loader mapping to ensure that
+     * no two modules mapped to the same class loader have the same package.
+     *
+     * @throws LayerInstantiationException
+     */
+    private static void checkForDuplicatePackages(Configuration cf,
+                                                  ClassLoaderFinder clf)
+    {
+        // HashMap allows null keys
+        Map<ClassLoader, Set<String>> loaderToPackages = new HashMap<>();
+
+        for (ModuleDescriptor descriptor : cf.descriptors()) {
+            ClassLoader loader = clf.loaderForModule(descriptor.name());
+
+            Set<String> loaderPackages
+                = loaderToPackages.computeIfAbsent(loader, k -> new HashSet<>());
+
+            for (String pkg : descriptor.packages()) {
+                boolean added = loaderPackages.add(pkg);
+                if (!added) {
+                    throw fail("More than one module with package %s mapped" +
+                               " to the same class loader", pkg);
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks a configuration to ensure that no two modules export the same
+     * package to a module.
+     *
+     * @throws LayerInstantiationException
+     */
+    private static void checkExportSuppliers(Configuration cf) {
+
+        for (ModuleDescriptor descriptor1 : cf.descriptors()) {
+
+            // the map of packages that are local or exported to descriptor1
+            Map<String, ModuleDescriptor> packageToExporter = new HashMap<>();
+
+            // local packages
+            descriptor1.packages()
+                .forEach(p -> packageToExporter.put(p, descriptor1));
+
+            // descriptor1 reads descriptor2
+            for (ModuleDescriptor descriptor2 : cf.reads(descriptor1)) {
+
+                for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+
+                    Optional<Set<String>> otargets = export.targets();
+                    if (otargets.isPresent()) {
+                        if (!otargets.get().contains(descriptor1.name()))
+                            continue;
+                    }
+
+                    // pkg is exported to descriptor2
+                    String pkg = export.source();
+                    ModuleDescriptor other
+                        = packageToExporter.put(pkg, descriptor2);
+                    if (other != null) {
+                        throw fail("Modules %s and %s export package %s to module %s",
+                                    descriptor2.name(),
+                                    other.name(),
+                                    pkg,
+                                    descriptor1.name());
+                    }
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Creates a LayerInstantiationException with the a message formatted from
+     * the given format string and arguments.
+     */
+    private static LayerInstantiationException fail(String fmt, Object ... args) {
+        return new LayerInstantiationException(fmt, args);
     }
 
     /**

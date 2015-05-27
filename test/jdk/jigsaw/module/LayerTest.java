@@ -23,14 +23,13 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleReference;
-import java.lang.module.ModuleFinder;
+import java.lang.module.LayerInstantiationException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.Module;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -48,12 +47,14 @@ public class LayerTest {
     static class TestClassLoader
         extends ClassLoader implements ModuleCapableLoader
     {
+        TestClassLoader() { }
+
         @Override
         public void register(ModuleReference mref) { }
     }
 
     /**
-     * Exercise Layer#bootLayer
+     * Exercise Layer.bootLayer
      */
     public void testBootLayer() {
         Layer bootLayer = Layer.boot();
@@ -76,7 +77,7 @@ public class LayerTest {
     }
 
     /**
-     * Exercise Layer#emptyLayer
+     * Exercise Layer.emptyLayer
      */
     public void testEmptyLayer() {
         Layer emptyLayer = Layer.empty();
@@ -98,7 +99,7 @@ public class LayerTest {
     }
 
     /**
-     * Exercise Layer#create, created on an empty layer
+     * Exercise Layer.create, created on an empty layer
      */
     public void testLayerOnEmpty() {
         ModuleDescriptor descriptor1 =
@@ -128,10 +129,10 @@ public class LayerTest {
         ClassLoader loader1 = new TestClassLoader();
         ClassLoader loader2 = new TestClassLoader();
         ClassLoader loader3 = new TestClassLoader();
-        Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(cf.findReference("m1").get(), loader1);
-        map.put(cf.findReference("m2").get(), loader2);
-        map.put(cf.findReference("m3").get(), loader3);
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", loader1);
+        map.put("m2", loader2);
+        map.put("m3", loader3);
 
         Layer layer = Layer.create(cf, map::get);
 
@@ -159,7 +160,7 @@ public class LayerTest {
     }
 
     /**
-     * Exercise Layer#create, created over the boot layer
+     * Exercise Layer.create, created over the boot layer
      */
     public void testLayerOnBoot() {
         ModuleDescriptor descriptor1 =
@@ -204,8 +205,214 @@ public class LayerTest {
         assertTrue(layer.parent().get() == Layer.boot());
     }
 
-    public void testLayerOnLayer() {
-        // TBD
+    /**
+     * Layer.create with a configuration of two modules that have the same
+     * module-private package.
+     */
+    public void testSameConcealedPackage() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .conceals("p")
+                .build();
+
+        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 2);
+
+        // one loader per module, should be okay
+        Layer.create(cf, m -> new TestClassLoader());
+
+        // same class loader
+        try {
+            ClassLoader loader = new TestClassLoader();
+            Layer.create(cf, m -> loader);
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
     }
 
+    /**
+     * Layer.create with a configuration of two modules that export the
+     * same package.
+     */
+    public void testSameExportedPackage() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .exports("p")
+                .build();
+
+        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 2);
+
+        // one loader per module
+        try {
+            Layer.create(cf, m -> new TestClassLoader());
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
+
+        // same class loader
+        try {
+            ClassLoader loader = new TestClassLoader();
+            Layer.create(cf, m -> loader);
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
+    }
+
+    /**
+     * Layer.create with a configuration of two modules that export the
+     * same package to another module (that reads both).
+     */
+    public void testSameExportToModule() {
+
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        // exports p
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .exports("p")
+                .build();
+
+        // exports p to m1
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .exports("p", "m1")
+                .build();
+
+        ModuleFinder finder
+            = new ModuleLibrary(descriptor1, descriptor2, descriptor3);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 3);
+
+        // one loader per module
+        try {
+            Layer.create(cf, m -> new TestClassLoader());
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
+
+        // same class loader
+        try {
+            ClassLoader loader = new TestClassLoader();
+            Layer.create(cf, m -> loader);
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
+    }
+
+    /**
+     * Layer.create with a configuration with a partitioned graph. The same
+     * package is exported in both partitions.
+     */
+    public void testSameExportInPartitionedGraph() {
+
+        // m1 reads m2, m2 exports p to m1
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .build();
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports("p", "m1")
+                .build();
+
+        // m3 reads m4, m4 exports p to m3
+        ModuleDescriptor descriptor3
+            =  new ModuleDescriptor.Builder("m3")
+                .requires("m4")
+                .build();
+        ModuleDescriptor descriptor4
+            =  new ModuleDescriptor.Builder("m4")
+                .exports("p", "m3")
+                .build();
+
+        ModuleFinder finder
+            = new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(),
+                                    "m1", "m3");
+        assertTrue(cf.descriptors().size() == 4);
+
+        // one loader per module
+        Layer.create(cf, m -> new TestClassLoader());
+
+        // m1 & m2 in one loader, m3 & m4 in another loader
+        ClassLoader loader1 = new TestClassLoader();
+        ClassLoader loader2 = new TestClassLoader();
+        Map<String, ClassLoader> map = new HashMap<>();
+        map.put("m1", loader1);
+        map.put("m2", loader1);
+        map.put("m3", loader2);
+        map.put("m3", loader2);
+        Layer.create(cf, map::get);
+
+        // same loader
+        try {
+            ClassLoader loader = new TestClassLoader();
+            Layer.create(cf, m -> loader);
+            assertTrue(false);
+        } catch (LayerInstantiationException expected) { }
+    }
+
+    /**
+     * Layer.create with a configuration that contains a module that exports
+     * the same package as java.base.
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testExportSamePackageAsBootLayer() {
+        ModuleDescriptor descriptor
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("java.base")
+                .exports("java.lang")
+                .build();
+
+        ModuleFinder finder = new ModuleLibrary(descriptor);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 1);
+
+        Layer.create(cf, m -> new TestClassLoader());
+    }
+
+    /**
+     * Layer.create with a configuration that contains a module that has a
+     * module-private package that is the same a concealed packaged in
+     * java.base.
+     */
+    public void testConcealSamePackageAsBootLayer() {
+        ModuleDescriptor descriptor
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("java.base")
+                .conceals("sun.misc")
+                .build();
+
+        ModuleFinder finder = new ModuleLibrary(descriptor);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 1);
+
+        Layer.create(cf, m -> new TestClassLoader());
+    }
 }
