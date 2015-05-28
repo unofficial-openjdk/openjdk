@@ -55,5 +55,6 @@ module jdk.compiler {
         jdk.javadoc;
     exports com.sun.tools.javac.util to
         jdk.javadoc;
+    uses com.sun.source.util.Plugin;
 }
 
