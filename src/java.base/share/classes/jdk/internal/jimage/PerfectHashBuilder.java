@@ -28,7 +28,9 @@ package jdk.internal.jimage;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PerfectHashBuilder<E> {
     private final static int RETRY_LIMIT = 1000;
@@ -36,7 +38,7 @@ public class PerfectHashBuilder<E> {
     private Class<?> entryComponent;
     private Class<?> bucketComponent;
 
-    private final List<Entry<E>> list = new ArrayList<>();
+    private final Map<UTF8String, Entry<E>> map = new LinkedHashMap<>();
     private int[] redirect;
     private Entry<E>[] order;
     private int count = 0;
@@ -120,7 +122,7 @@ public class PerfectHashBuilder<E> {
     }
 
     public int getCount() {
-        return list.size();
+        return map.size();
     }
 
     public int[] getRedirect() {
@@ -131,17 +133,22 @@ public class PerfectHashBuilder<E> {
         return order;
     }
 
-    public void put(String key, E value) {
-        put(new UTF8String(key), value);
+    public Entry<E> put(String key, E value) {
+        return put(new UTF8String(key), value);
     }
 
-    public void put(UTF8String key, E value) {
-        put(new Entry<>(key, value));
+    public Entry<E> put(UTF8String key, E value) {
+        return put(new Entry<>(key, value));
     }
 
-    public void put(Entry<E> entry) {
-        list.add(entry);
-        count++;
+    public Entry<E> put(Entry<E> entry) {
+        Entry<E> old = map.put(entry.key, entry);
+
+        if (old == null) {
+            count++;
+        }
+
+        return old;
     }
 
     @SuppressWarnings("unchecked")
@@ -185,7 +192,7 @@ public class PerfectHashBuilder<E> {
     private Bucket<E>[] createBuckets() {
         Bucket<E>[] buckets = (Bucket<E>[])Array.newInstance(bucketComponent, count);
 
-        list.stream().forEach((entry) -> {
+        map.values().stream().forEach((entry) -> {
             int index = entry.hashCode() % count;
             Bucket<E> bucket = buckets[index];
 
