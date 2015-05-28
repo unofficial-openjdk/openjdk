@@ -387,6 +387,10 @@ public final class TemplatesImpl implements Templates, Serializable {
                     Modules.addExports(xmlModule, p, m);
                 });
 
+                // jdk.translate also needs to be loose as the XSL may bind to
+                // java types in an unnamed module
+                Modules.addReads(m, null);
+
                 // java.xml needs to instanitate the translate class
                 Modules.addReads(xmlModule, m);
                 Modules.addExports(m, pkg, xmlModule);
