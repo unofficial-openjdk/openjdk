@@ -94,6 +94,7 @@ public class DocletInvoker {
         docletClassName = docletClass.getName();
         appClassLoader = null;
         this.apiMode = apiMode;
+        ensureReadable(docletClass);
     }
 
     public DocletInvoker(Messager messager, JavaFileManager fileManager,
@@ -130,6 +131,7 @@ public class DocletInvoker {
             messager.exit();
         }
         docletClass = dc;
+        ensureReadable(docletClass);
     }
 
     /*
@@ -338,6 +340,27 @@ public class DocletInvoker {
             } finally {
                 Thread.currentThread().setContextClassLoader(savedCCL);
             }
+    }
+
+    /**
+     * Ensures that the module of the given class is readable to this
+     * module.
+     */
+    private void ensureReadable(Class<?> targetClass) {
+        try {
+
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(this.getClass());
+            Object targetModule = getModuleMethod.invoke(targetClass);
+
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+            addReadsMethod.invoke(thisModule, targetModule);
+        } catch (NoSuchMethodException e) {
+            // ignore
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
     }
 
     /**
