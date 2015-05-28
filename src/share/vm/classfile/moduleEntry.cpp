@@ -224,16 +224,6 @@ ModuleEntry* ModuleEntryTable::lookup_only(Symbol* name) {
   return NULL;
 }
 
-ModuleEntry* ModuleEntryTable::lookup_only(oop module) {
-  int index = index_for(module);
-  for (ModuleEntry* m = bucket(index); m != NULL; m = m->next()) {
-    if (m->module() == module) {
-      return m;
-    }
-  }
-  return NULL;
-}
-
 // Once a j.l.r.Module has been created for java.base during
 // VM initialization, set its corresponding ModuleEntry correctly.
 void ModuleEntryTable::set_javabase_entry(oop m) {
@@ -247,6 +237,10 @@ void ModuleEntryTable::set_javabase_entry(oop m) {
   // Set the j.l.r.M for java.base's ModuleEntry as well as the static
   // field within all ModuleEntryTables.
   jb_module->set_module(m);
+
+  // Store the ModuleEntry pointer in the oop.
+  java_lang_reflect_Module::set_module_entry(m, jb_module);
+
   _javabase_created = true;
 }
 

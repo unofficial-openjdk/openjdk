@@ -27,6 +27,7 @@
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
@@ -72,6 +73,14 @@ static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
   return loader_cld->packages();
+}
+
+static ModuleEntry* get_module_entry(jobject module, TRAPS) {
+  Handle module_h(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_reflect_Module::is_instance(module_h())) {
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(), "Bad module object");
+  }
+  return java_lang_reflect_Module::module_entry(module_h(), CHECK_NULL);
 }
 
 static PackageEntry* get_package_entry_by_name(Symbol* package,
@@ -153,18 +162,6 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
   }
 }
 
-static ModuleEntry* get_module_entry(jobject module, TRAPS) {
-  Handle h_module(THREAD, JNIHandles::resolve(module));
-  oop loader = java_lang_reflect_Module::loader(h_module());
-  Handle h_loader = Handle(loader);
-  ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
-  assert(module_table != NULL, "Unexpected null module entry table");
-  oop name_oop = java_lang_reflect_Module::name(h_module());
-  if (name_oop == NULL) {
-    return module_table->unnamed_module();
-  }
-  return module_table->lookup_only(h_module());
-}
 
 static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring package, TRAPS) {
   ResourceMark rm;
@@ -357,6 +354,9 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
           // by SymbolTable::new_symbol and as well by the PackageEntry creation.
           pkg_list->at(y)->decrement_refcount();
         }
+
+        // Store pointer to ModuleEntry record in java.lang.reflect.Module object.
+        java_lang_reflect_Module::set_module_entry(jlrM_handle(), module_entry);
       }
     }
   }  // Release the lock

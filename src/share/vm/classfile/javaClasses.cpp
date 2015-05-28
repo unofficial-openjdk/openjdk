@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/altHashing.hpp"
+#include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/stringTable.hpp"
@@ -2529,6 +2530,7 @@ void java_lang_reflect_Parameter::set_executable(oop param, oop value) {
 
 int java_lang_reflect_Module::loader_offset;
 int java_lang_reflect_Module::name_offset;
+int java_lang_reflect_Module::_module_entry_offset = -1;
 
 Handle java_lang_reflect_Module::create(Handle loader, Handle module_name, TRAPS) {
   assert(Universe::is_fully_initialized(), "Need to find another solution to the reflection problem");
@@ -2551,6 +2553,7 @@ void java_lang_reflect_Module::compute_offsets() {
   if(NULL != k) {
     compute_offset(loader_offset,  k, vmSymbols::loader_name(),  vmSymbols::classloader_signature());
     compute_offset(name_offset,    k, vmSymbols::name_name(),    vmSymbols::string_signature());
+    MODULE_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
   }
 }
 
@@ -2573,6 +2576,30 @@ oop java_lang_reflect_Module::name(oop module) {
 void java_lang_reflect_Module::set_name(oop module, oop value) {
   assert(Universe::is_fully_initialized(), "Need to find another solution to the reflection problem");
   module->obj_field_put(name_offset, value);
+}
+
+ModuleEntry* java_lang_reflect_Module::module_entry(oop module, TRAPS) {
+  assert(_module_entry_offset != -1, "Uninitialized module_entry_offset");
+  assert(module != NULL, "module can't be null");
+  assert(module->is_oop(), "module must be oop");
+
+  ModuleEntry* module_entry = (ModuleEntry*)module->address_field(_module_entry_offset);
+  if (module_entry == NULL) {
+    // If the inject field containing the ModuleEntry* is null then return the
+    // class loader's unnamed module.
+    oop loader = java_lang_reflect_Module::loader(module);
+    Handle h_loader = Handle(THREAD, loader);
+    ClassLoaderData* loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
+    return loader_cld->modules()->unnamed_module();
+  }
+  return module_entry;
+}
+
+void java_lang_reflect_Module::set_module_entry(oop module, ModuleEntry* module_entry) {
+  assert(_module_entry_offset != -1, "Uninitialized module_entry_offset");
+  assert(module != NULL, "module can't be null");
+  assert(module->is_oop(), "module must be oop");
+  module->address_field_put(_module_entry_offset, (address)module_entry);
 }
 
 Handle sun_reflect_ConstantPool::create(TRAPS) {

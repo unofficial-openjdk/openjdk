@@ -802,15 +802,25 @@ class java_lang_reflect_Parameter {
   friend class JavaClasses;
 };
 
+#define MODULE_INJECTED_FIELDS(macro)                            \
+  macro(java_lang_reflect_Module, module_entry, intptr_signature, false)
+
 class java_lang_reflect_Module {
   private:
     static int loader_offset;
     static int name_offset;
+    static int _module_entry_offset;
     static void compute_offsets();
 
   public:
     // Allocation
     static Handle create(Handle loader, Handle module_name, TRAPS);
+
+    // Testers
+    static bool is_subclass(Klass* klass) {
+      return klass->is_subclass_of(SystemDictionary::reflect_Module_klass());
+    }
+    static bool is_instance(oop obj);
 
     // Accessors
     static oop loader(oop module);
@@ -818,6 +828,9 @@ class java_lang_reflect_Module {
 
     static oop name(oop module);
     static void set_name(oop module, oop value);
+
+    static ModuleEntry* module_entry(oop module, TRAPS);
+    static void set_module_entry(oop module, ModuleEntry* module_entry);
 
   friend class JavaClasses;
 };
@@ -1445,7 +1458,8 @@ class InjectedField {
 #define ALL_INJECTED_FIELDS(macro)          \
   CLASS_INJECTED_FIELDS(macro)              \
   CLASSLOADER_INJECTED_FIELDS(macro)        \
-  MEMBERNAME_INJECTED_FIELDS(macro)
+  MEMBERNAME_INJECTED_FIELDS(macro)         \
+  MODULE_INJECTED_FIELDS(macro)
 
 // Interface to hard-coded offset checking
 

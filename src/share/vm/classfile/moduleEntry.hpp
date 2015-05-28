@@ -185,7 +185,6 @@ public:
 
   // only lookup module within loader's module entry table
   ModuleEntry* lookup_only(Symbol* name);
-  ModuleEntry* lookup_only(oop module);
 
   ModuleEntry* bucket(int i) {
     return (ModuleEntry*)Hashtable<oop, mtClass>::bucket(i);

@@ -60,6 +60,22 @@ public class JVMCanReadModule {
             // Expected
         }
 
+        // Bad asking_module argument, expect an IAE
+        try {
+            result = ModuleHelper.CanReadModule(asking_cl, target_module);
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Bad target_module argument, expect an IAE
+        try {
+            result = ModuleHelper.CanReadModule(asking_module, asking_cl);
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
         // Verify strict modules can not read the unnamed module
         result = ModuleHelper.CanReadModule(target_module, null);
         assertFalse(result, "target_module can not read unnamed module");

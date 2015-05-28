@@ -69,4 +69,8 @@ inline bool java_lang_invoke_DirectMethodHandle::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
+inline bool java_lang_reflect_Module::is_instance(oop obj) {
+  return obj != NULL && is_subclass(obj->klass());
+}
+
 #endif // SHARE_VM_CLASSFILE_JAVACLASSES_INLINE_HPP

@@ -420,6 +420,7 @@
   template(getProtectionDomain_name,                  "getProtectionDomain")                      \
   template(getProtectionDomain_signature,             "(Ljava/security/CodeSource;)Ljava/security/ProtectionDomain;") \
   template(url_code_signer_array_void_signature,      "(Ljava/net/URL;[Ljava/security/CodeSigner;)V") \
+  template(module_entry_name,                         "module_entry")                             \
                                                                                                   \
   /* non-intrinsic name/signature pairs: */                                                       \
   template(register_method_name,                      "register")                                 \

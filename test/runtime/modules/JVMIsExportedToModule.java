@@ -84,6 +84,14 @@ public class JVMIsExportedToModule {
             // Expected
         }
 
+        // Bad to_module argument, expect an IAE
+        try {
+            result = ModuleHelper.IsExportedToModule(from_module, "mypackage", from_cl);
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
         // Check that package is exported to its own module
         result = ModuleHelper.IsExportedToModule(from_module, "mypackage", from_module);
         assertTrue(result, "Package is always exported to itself");
