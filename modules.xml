@@ -256,6 +256,7 @@
     <export>
       <name>jdk.internal.module</name>
       <to>jdk.jlink</to>
+      <to>jdk.jartool</to>
     </export>
     <export>
       <name>sun.misc</name>
