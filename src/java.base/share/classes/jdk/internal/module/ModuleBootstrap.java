@@ -32,6 +32,7 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -270,8 +271,12 @@ public final class ModuleBootstrap {
                     fail("Unable to parse: " + expr);
                 String mn = s[0];
                 String pn = s[1];
-                bootLayer.findModule(mn)
-                    .ifPresent(m -> Modules.addExports(m, pn, null));
+                Optional<Module> om = bootLayer.findModule(mn);
+                if (om.isPresent()) {
+                    Modules.addExports(om.get(), pn, null);
+                } else {
+                    fail("Unknown module specified: " + expr);
+                }
             }
         }
     }

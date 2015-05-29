@@ -39,7 +39,7 @@ JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 
 rm -rf mods
 mkdir -p mods/test
-$JAVAC -XX:AddModuleExports=java.base/sun.misc -d mods/test `find $TESTSRC/src/test -name "*.java"`
+$JAVAC -XaddExports:java.base/sun.misc -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
 # unnamed module using sun.misc.Unsafe
 $JAVA -XaddExports:java.base/sun.misc -cp mods/test jdk.test.UsesUnsafe
@@ -47,4 +47,32 @@ $JAVA -XaddExports:java.base/sun.misc -cp mods/test jdk.test.UsesUnsafe
 # named module using sun.misc.Unsafe
 $JAVA -XaddExports:java.base/sun.misc -mp mods -m test/jdk.test.UsesUnsafe
 
-exit 0
+
+# Negative tests
+
+set +e
+failures=0
+
+go() {
+  sh -xc "$JAVA $*" 2>&1
+  if [ $? != 0 ]; then failures=`expr $failures + 1`; fi
+}
+
+# unknown module
+go -XaddExports:java.base/sun.misc,java.monkey/sun.monkey -cp mods/test jdk.test.UsesUnsafe
+
+# unknown package
+go -XaddExports:java.base/sun.misc,java.base/sun.monkey -cp mods/test jdk.test.UsesUnsafe
+
+# missing package
+go -XaddExports:java.base/sun.misc,java.base -cp mods/test jdk.test.UsesUnsafe
+
+echo ''
+if [ $failures -ne 3 ]; then
+  echo "$failures cases failed, expected 3"
+  exit 1
+else
+  echo "Failures as expected"
+  exit 0
+fi 
+
