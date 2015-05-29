@@ -303,7 +303,7 @@ public final class Module {
         // if the target is null then change this module to be loose.
         if (target == null) {
             if (syncVM)
-                jvmAddReadsModule(this, null);
+                addReadsModule0(this, null);
             this.loose = true;
             return;
         }
@@ -315,7 +315,7 @@ public final class Module {
 
         // update VM first, just in case it fails
         if (syncVM)
-            jvmAddReadsModule(this, target);
+            addReadsModule0(this, target);
 
         // add temporary read.
         WeakSet<Module> tr = this.transientReads;
@@ -452,7 +452,7 @@ public final class Module {
             String vs = descriptor.version().map(Version::toString).orElse("");
             String loc = mref.location().map(URI::toString).orElse(null);
 
-            jvmDefineModule(m, vs, loc, array);
+            defineModule0(m, vs, loc, array);
         }
 
         return m;
@@ -507,7 +507,7 @@ public final class Module {
                 reads.add(m2);
 
                 // update VM view
-                jvmAddReadsModule(m, m2);
+                addReadsModule0(m, m2);
             }
             m.reads = reads;
 
@@ -518,7 +518,7 @@ public final class Module {
                 if (!export.targets().isPresent()) {
                     exports.computeIfAbsent(source, k -> Collections.emptyMap());
                     // update VM view
-                    jvmAddModuleExports(m, source.replace('.', '/'), null);
+                    addModuleExports0(m, source.replace('.', '/'), null);
                 } else {
                     export.targets().get()
                         .forEach(mn -> {
@@ -528,7 +528,7 @@ public final class Module {
                                     exports.computeIfAbsent(source, k -> new HashMap<>())
                                         .put(m2, Boolean.TRUE);
                                     // update VM view
-                                    jvmAddModuleExports(m, source.replace('.', '/'), m2);
+                                    addModuleExports0(m, source.replace('.', '/'), m2);
                                 }
                             });
                 }
@@ -601,7 +601,7 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM)
-                jvmAddModulePackage(this, pn.replace('.', '/'));
+                addModulePackage0(this, pn.replace('.', '/'));
 
             // replace with new set
             this.packages = pns; // volatile write
@@ -738,7 +738,7 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM) {
-               jvmAddModuleExports(this, pn.replace('.', '/'), target);
+               addModuleExports0(this, pn.replace('.', '/'), target);
             }
 
             // copy existing map
@@ -861,19 +861,19 @@ public final class Module {
     // -- native methods --
 
     // JVM_DefineModule
-    private static native void jvmDefineModule(Module module,
-                                               String version,
-                                               String location,
-                                               String[] pns);
+    private static native void defineModule0(Module module,
+                                             String version,
+                                             String location,
+                                             String[] pns);
 
     // JVM_AddReadsModule
-    private static native void jvmAddReadsModule(Module from, Module to);
+    private static native void addReadsModule0(Module from, Module to);
 
     // JVM_AddModuleExports
-    private static native void jvmAddModuleExports(Module from, String pn, Module to);
+    private static native void addModuleExports0(Module from, String pn, Module to);
 
     // JVM_AddModulePackage
-    private static native void jvmAddModulePackage(Module m, String pn);
+    private static native void addModulePackage0(Module m, String pn);
 
     /**
      * Register shared secret to provide access to package-private methods

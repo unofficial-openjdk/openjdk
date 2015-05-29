@@ -269,23 +269,23 @@ public class Reflection {
                     return true;
 
                 // named module trying to access member in another named module
-                if (!jvmCanReadModule(m1, m2))
+                if (!canReadModule0(m1, m2))
                     return false;
             }
 
             // check that m2 exports the package to m1
             String pkg = packageName(memberClass).replace('.', '/');
-            return jvmIsExportedToModule(m2, pkg, m1);
+            return isExportedToModule0(m2, pkg, m1);
         }
 
     }
 
     // JVM_CanReadModule
-    private static native boolean jvmCanReadModule(Module from, Module to);
+    private static native boolean canReadModule0(Module from, Module to);
 
     // JVM_IsExportedToModule
-    private static native boolean jvmIsExportedToModule(Module from, String pkg,
-                                                        Module to);
+    private static native boolean isExportedToModule0(Module from, String pkg,
+                                                      Module to);
 
 
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {

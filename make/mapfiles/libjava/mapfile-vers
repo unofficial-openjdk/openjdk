@@ -271,10 +271,10 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_getegid;
                 Java_sun_misc_VM_initialize;
 
-                Java_java_lang_reflect_Module_jvmDefineModule;
-                Java_java_lang_reflect_Module_jvmAddReadsModule;
-                Java_java_lang_reflect_Module_jvmAddModuleExports;
-                Java_java_lang_reflect_Module_jvmAddModulePackage;
+                Java_java_lang_reflect_Module_defineModule0;
+                Java_java_lang_reflect_Module_addReadsModule0;
+                Java_java_lang_reflect_Module_addModuleExports0;
+                Java_java_lang_reflect_Module_addModulePackage0;
 
                 Java_jdk_internal_jimage_ImageNativeSubstrate_openImage;
                 Java_jdk_internal_jimage_ImageNativeSubstrate_closeImage;
@@ -288,8 +288,8 @@ SUNWprivate_1.1 {
                 Java_jdk_internal_jimage_ImageNativeSubstrate_attributeOffsets;
 
                 # for testing performance of access checks in VM
-                Java_sun_reflect_Reflection_jvmCanReadModule;
-                Java_sun_reflect_Reflection_jvmIsExportedToModule;
+                Java_sun_reflect_Reflection_canReadModule0;
+                Java_sun_reflect_Reflection_isExportedToModule0;
 
 		Java_sun_misc_BootLoader_getSystemPackageLocation;
 		Java_sun_misc_BootLoader_getSystemPackageNames;
