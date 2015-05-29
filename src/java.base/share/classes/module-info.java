@@ -86,9 +86,11 @@ module java.base {
     exports jdk.internal.jimage.decompressor to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
+        java.instrument,
         jdk.jlink,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
+        java.instrument,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
