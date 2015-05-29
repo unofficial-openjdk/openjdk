@@ -492,6 +492,8 @@ BOOT_JDK_MODULAR ?= @BOOT_JDK_MODULAR@
 ifeq ($(BOOT_JDK_MODULAR), true)
   INTERIM_OVERRIDE_MODULES_ARGS = -Xoverride:$(BUILDTOOLS_OUTPUTDIR)/override_modules
   INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS)
+  JAVAC_MAIN_CLASS = -m jdk.compiler/com.sun.tools.javac.Main
+  JAVADOC_MAIN_CLASS = -m jdk.javadoc/com.sun.tools.javadoc.Main
 else
   INTERIM_OVERRIDE_MODULES := java.compiler jdk.compiler \
       jdk.dev jdk.javadoc java.corba jdk.rmic
@@ -501,11 +503,13 @@ else
               $(INTERIM_OVERRIDE_MODULES)))
   INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS) \
       -cp $(BUILDTOOLS_OUTPUTDIR)/override_modules/jdk.compiler
+  JAVAC_MAIN_CLASS = com.sun.tools.javac.Main
+  JAVADOC_MAIN_CLASS = com.sun.tools.javadoc.Main
 endif
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
 # Use = assignment to be able to override in bootcycle-spec.gmk
-NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javac.Main
-NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javadoc.Main
+NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) $(JAVAC_MAIN_CLASS)
+NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) $(JAVADOC_MAIN_CLASS)
 
 # JLink/Jmod are run using the BUILD_JDK, which is normally the jdk output dir.
 JLINK = @FIXPATH@ $(BUILD_JDK)/bin/jlink $(JAVA_TOOL_FLAGS_SMALL)
