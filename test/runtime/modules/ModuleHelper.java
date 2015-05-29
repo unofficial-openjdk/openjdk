@@ -31,7 +31,7 @@ import java.lang.reflect.Module;
 import java.util.*;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
-import com.oracle.java.testlibrary.*;
+import jdk.test.lib.*;
 import sun.hotspot.WhiteBox;
 
 public class ModuleHelper {

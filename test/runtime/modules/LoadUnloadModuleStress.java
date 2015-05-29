@@ -35,7 +35,7 @@
 
 import java.lang.ref.WeakReference;
 
-import static com.oracle.java.testlibrary.Asserts.*;
+import static jdk.test.lib.Asserts.*;
 
 public class LoadUnloadModuleStress {
     private static long timeout;

@@ -34,9 +34,9 @@
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckRead
  */
 
-import com.oracle.java.testlibrary.*;
+import jdk.test.lib.*;
 import java.lang.reflect.Module;
-import static com.oracle.java.testlibrary.Asserts.*;
+import static jdk.test.lib.Asserts.*;
 
 public class AccessCheckRead {
 

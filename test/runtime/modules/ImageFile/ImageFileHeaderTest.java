@@ -34,7 +34,7 @@ import java.nio.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import sun.hotspot.WhiteBox;
-import static com.oracle.java.testlibrary.Asserts.*;
+import static jdk.test.lib.Asserts.*;
 
 public class ImageFileHeaderTest {
 

@@ -22,7 +22,7 @@
  */
 
 import java.lang.reflect.Module;
-import static com.oracle.java.testlibrary.Asserts.*;
+import static jdk.test.lib.Asserts.*;
 
 /*
  * @test
