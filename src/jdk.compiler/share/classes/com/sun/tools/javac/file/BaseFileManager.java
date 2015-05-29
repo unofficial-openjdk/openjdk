@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -212,7 +213,26 @@ public abstract class BaseFileManager implements JavaFileManager {
      * @return true if successful, and false otherwise
      */
     public boolean handleOption(Option option, String value) {
-        return locations.handleOption(option, value);
+        if (options.isSet("jakeBuildWorkAround")) {
+            switch (option) {
+                case D: case H: // output directory options
+                    value = Paths.get(value).getParent().toString();
+                    System.err.println("javac: using " + option.text + ": " + value);
+                    break;
+                case MODULESOURCEPATH:
+                    System.err.println("javac: using " + option.text + ": " + value);
+                    break;
+            }
+        }
+
+        switch (option) {
+            case ENCODING:
+                options.put(option, value);
+                return true;
+
+            default:
+                return locations.handleOption(option, value);
+        }
     }
 
     /**
@@ -222,8 +242,14 @@ public abstract class BaseFileManager implements JavaFileManager {
      */
     public boolean handleOptions(Map<Option, String> map) {
         boolean ok = true;
-        for (Map.Entry<Option, String> e: map.entrySet())
-            ok = ok & handleOption(e.getKey(), e.getValue());
+        for (Map.Entry<Option, String> e: map.entrySet()) {
+            try {
+                ok = ok & handleOption(e.getKey(), e.getValue());
+            } catch (IllegalArgumentException ex) {
+                log.error("illegal.argument.for.option", e.getKey().getText(), ex.getMessage());
+                ok = false;
+            }
+        }
         return ok;
     }
 

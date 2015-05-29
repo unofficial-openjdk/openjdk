@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,6 +175,21 @@ public enum Option {
     },
 
     SOURCEPATH("-sourcepath", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER),
+
+    MODULESOURCEPATH("-modulesourcepath", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER),
+
+    MODULEPATH("-modulepath", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER),
+
+    MP("-mp", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return super.process(helper, "-modulepath", arg);
+        }
+    },
+
+    UPGRADEMODULEPATH("-upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
+
+    SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
@@ -472,6 +487,29 @@ public enum Option {
             String key = (eq < 0) ? option : option.substring(0, eq);
             String value = (eq < 0) ? option : option.substring(eq+1);
             helper.put(key, value);
+            return false;
+        }
+    },
+
+    XADDEXPORTS("-XaddExports:", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XADDEXPORTS);
+            if (prev != null) {
+                helper.error("err.option.too.many", XADDEXPORTS.text);
+            }
+            String p = option.substring(option.indexOf(':') + 1);
+            helper.put(XADDEXPORTS.text, p);
+            return false;
+        }
+    },
+
+    XXADDMODULEEXPORTS("-XX:AddModuleExports=", null, HIDDEN, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf('=') + 1);
+            String prev = helper.get(XXADDMODULEEXPORTS);
+            helper.put(XXADDMODULEEXPORTS.text, (prev == null) ? p : prev + ' ' + p.trim());
             return false;
         }
     },

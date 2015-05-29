@@ -30,7 +30,7 @@
  *          jdk.compiler/com.sun.tools.classfile
  *          jdk.dev/com.sun.tools.jdeps
  * @build m.Bar m.Foo m.Gee b.B c.C c.I d.D e.E f.F g.G
- * @run main APIDeps
+ * @run main/othervm -XX:AddModuleExports=jdk.dev/com.sun.tools.jdeps APIDeps
  */
 
 import java.io.File;
