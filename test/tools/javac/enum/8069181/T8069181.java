@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,12 +23,23 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug     6214965 6365854 8068639
- * @summary Compiler crash on redefing nested annotation types
- * @compile CompilerAnnotationTest.java CompilerAnnotationTest2.java
- * @compile CompilerAnnotationTest2bad.java
- * @compile/ref=T6214965.out -XDrawDiagnostics -Xlint:classfile CompilerAnnotationTest2bad.java
- * @compile -Werror CompilerAnnotationTest2bad.java
+ * @bug 8069181
+ * @summary java.lang.AssertionError when compiling JDK 1.4 code in JDK 8
+ *
+ * @compile -source 1.4 T8069181.java
  */
+import java.util.Enumeration;
+import java.util.Hashtable;
+class T8069181 {
+    void test() {
+        Hashtable hTable = new Hashtable();
+        hTable.put("hello", "value");
+        for (Enumeration enum = hTable.keys();;){
+            if(!enum.hasMoreElements())
+                break;
+            enum.nextElement();
+        }
+    }
+}

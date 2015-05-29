@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,25 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug     6214965 6365854 8068639
- * @summary Compiler crash on redefing nested annotation types
- * @compile CompilerAnnotationTest.java CompilerAnnotationTest2.java
- * @compile CompilerAnnotationTest2bad.java
- * @compile/ref=T6214965.out -XDrawDiagnostics -Xlint:classfile CompilerAnnotationTest2bad.java
- * @compile -Werror CompilerAnnotationTest2bad.java
+ * @bug 8075520
+ * @summary Varargs access check mishandles capture variables
+ * @compile VarargsAndWildcardParameterizedTypeTest2.java
+ * @compile -source 8 VarargsAndWildcardParameterizedTypeTest2.java
+ * @compile -source 7 VarargsAndWildcardParameterizedTypeTest2.java
  */
+
+class VarargsAndWildcardParameterizedTypeTest2 {
+    interface I {
+        <T> void m(T... t);
+    }
+
+    interface Box<T> {
+        T get();
+    }
+
+    void m(I i, Box<? extends Number> b) {
+        i.m(b.get());
+    }
+}
