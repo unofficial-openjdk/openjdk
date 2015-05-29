@@ -532,6 +532,9 @@ class InstanceKlass: public Klass {
   ConstantPool* constants() const        { return _constants; }
   void set_constants(ConstantPool* c)    { _constants = c; }
 
+  objArrayOop     resolved_references() const;
+  void        set_resolved_references(objArrayOop obj_arr);
+
   // protection domain
   oop protection_domain() const;
 
@@ -1290,6 +1293,15 @@ class nmethodBucket: public CHeapObj<mtClass> {
   nmethodBucket* next()                   { return _next; }
   void set_next(nmethodBucket* b)         { _next = b; }
   nmethod* get_nmethod()                  { return _nmethod; }
+
+  static int mark_dependent_nmethods(nmethodBucket* deps, DepChange& changes);
+  static nmethodBucket* add_dependent_nmethod(nmethodBucket* deps, nmethod* nm);
+  static bool remove_dependent_nmethod(nmethodBucket* deps, nmethod* nm);
+  static nmethodBucket* clean_dependent_nmethods(nmethodBucket* deps);
+#ifndef PRODUCT
+  static void print_dependent_nmethods(nmethodBucket* deps, bool verbose);
+  static bool is_dependent_nmethod(nmethodBucket* deps, nmethod* nm);
+#endif //PRODUCT
 };
 
 // An iterator that's used to access the inner classes indices in the
