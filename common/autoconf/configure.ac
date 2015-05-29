@@ -144,6 +144,7 @@ JDKOPT_SETUP_JDK_VERSION_NUMBERS
 ###############################################################################
 
 BOOTJDK_SETUP_BOOT_JDK
+BOOTJDK_SETUP_BUILD_JDK
 
 ###############################################################################
 #
@@ -154,6 +155,8 @@ BOOTJDK_SETUP_BOOT_JDK
 SRCDIRS_SETUP_TOPDIRS
 SRCDIRS_SETUP_ALTERNATIVE_TOPDIRS
 SRCDIRS_SETUP_OUTPUT_DIRS
+
+SRCDIRS_SETUP_IMPORT_MODULES
 
 ###############################################################################
 #

@@ -322,14 +322,14 @@ define add_file_to_copy
   # already has one
   ifneq ($$($1_COPY_$$($2_TARGET)), 1)
     $1_COPY_$$($2_TARGET) := 1
-    # Now we can setup the depency that will trigger the copying.
-    $$($1_BIN)$$($2_TARGET) : $2
+    # Now we can setup the dependency that will trigger the copying.
+    $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET) : $2
 	$(MKDIR) -p $$(@D)
 	$(CP) $$< $$@
 	$(CHMOD) -f ug+w $$@
 
     # And do not forget this target
-    $1_ALL_COPY_TARGETS += $$($1_BIN)$$($2_TARGET)
+    $1_ALL_COPY_TARGETS += $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET)
   endif
 endef
 
@@ -368,7 +368,7 @@ define add_file_to_clean
   # already has one
   ifneq ($$($1_CLEAN_$$($2_TARGET)), 1)
     $1_CLEAN_$$($2_TARGET) := 1
-    $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET) : $2
+  $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET) : $2
 	$(MKDIR) -p $$(@D)
 	export LC_ALL=C ; ( $(CAT) $$< && $(ECHO) "" ) \
 	    | $(SED) -e 's/\([^\\]\):/\1\\:/g' -e 's/\([^\\]\)=/\1\\=/g' \
@@ -381,8 +381,8 @@ define add_file_to_clean
 	    | $(SORT) > $$@
 	$(CHMOD) -f ug+w $$@
 
-    # And do not forget this target
-    $1_ALL_COPY_CLEAN_TARGETS += $$($1_BIN)$$($2_TARGET)
+  # And do not forget this target
+  $1_ALL_COPY_CLEAN_TARGETS += $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET)
   endif
 endef
 
@@ -433,6 +433,10 @@ define SetupJavaCompilationBody
   endif
   $1_SJAVAC_PORTFILE := $$($$($1_SETUP)_SJAVAC_PORTFILE)
   $1_SERVER_JVM := $$($$($1_SETUP)_SERVER_JVM)
+ 
+  ifneq ($$($1_MODULE), )
+    $1_MODULE_SUBDIR := /$$($1_MODULE)
+  endif
 
   # Handle addons and overrides.
   $1_SRC:=$$(call ADD_SRCS,$$($1_SRC))
@@ -601,11 +605,12 @@ define SetupJavaCompilationBody
       $$($1_HEADERS)/_the.$1_headers: $$($1_BIN)/_the.$1_batch
 		$(MKDIR) -p $$(@D)
 		if [ -d "$$($1_HEADERS).$1.tmp" ]; then \
-		  for f in `ls $$($1_HEADERS).$1.tmp`; do \
+		  for f in `$(CD) $$($1_HEADERS).$1.tmp && $(FIND) . -type f`; do \
 		    if [ ! -f "$$($1_HEADERS)/$$$$f" ] \
 		        || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
-		    $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
-		  fi; \
+		      $(MKDIR) -p `$(DIRNAME) $$($1_HEADERS)/$$$$f`; \
+		      $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
+		    fi; \
 		  done; \
 		fi
 		$(RM) -r $$($1_HEADERS).$1.tmp

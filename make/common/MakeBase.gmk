@@ -99,6 +99,12 @@ EscapeDollar = $(subst $$,\$$,$(subst \$$,$$,$(strip $1)))
 DoubleDollar = $(subst $$,$$$$,$(strip $1))
 
 ################################################################################
+# Create a path string from a list of paths and surround it in quotes.
+# Param 1 - List of paths to combine
+CreatePath = \
+    "$(subst $(SPACE),$(PATH_SEP),$(strip $1))"
+
+################################################################################
 
 # If the variable that you want to send to stdout for piping into a file or otherwise,
 # is potentially long, for example the a list of file paths, eg a list of all package directories.
@@ -717,10 +723,10 @@ WriteFile = \
 
 # Defines the sub directory structure to store variable value file in
 DependOnVariableDirName = \
-    $(strip $(subst $(SRC_ROOT)/,,\
-        $(if $(filter /%, $(firstword $(MAKEFILE_LIST))), \
+    $(strip $(addsuffix $(if $(MODULE),/$(MODULE)), \
+        $(subst $(SRC_ROOT)/,, $(if $(filter /%, $(firstword $(MAKEFILE_LIST))), \
           $(firstword $(MAKEFILE_LIST)), \
-          $(CURDIR)/$(firstword $(MAKEFILE_LIST)))))
+          $(CURDIR)/$(firstword $(MAKEFILE_LIST))))))
 
 # Defines the name of the file to store variable value in. Generates a name
 # unless parameter 2 is given.
