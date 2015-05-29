@@ -69,14 +69,23 @@ import sun.misc.SharedSecrets;
 
 public final class Layer {
 
-    private static final JavaLangReflectAccess reflectAccess =
-        SharedSecrets.getJavaLangReflectAccess();
+    private static final JavaLangReflectAccess reflectAccess
+        = SharedSecrets.getJavaLangReflectAccess();
 
-    private static final Layer EMPTY_LAYER =
-        new Layer(null, Collections.emptyMap());
+    private static final Layer EMPTY_LAYER
+        = new Layer(null, Collections.emptyMap());
 
     private final Configuration cf;
     private final Map<String, Module> nameToModule;
+
+    /**
+     * Creates a new {@code Layer} object.
+     */
+    private Layer(Configuration cf, Map<String, Module> map) {
+        this.cf = cf;
+        this.nameToModule = map; // no need to create defensive copy
+    }
+
 
     /**
      * Finds the class loader for a module.
@@ -97,13 +106,6 @@ public final class Layer {
         ClassLoader loaderForModule(String moduleName);
     }
 
-    /**
-     * Creates a new {@code Layer} object.
-     */
-    private Layer(Configuration cf, Map<String, Module> map) {
-        this.cf = cf;
-        this.nameToModule = map; // no need to create defensive copy
-    }
 
     /**
      * Creates a {@code Layer} by defining the modules, as described in the
@@ -114,7 +116,7 @@ public final class Layer {
      * class loader by invoking the class loader's {@link
      * ModuleCapableLoader#register register} method. </p>
      *
-     * <p> Creating a {@code Layer} can fail for several reasons: </p>
+     * <p> Creating a {@code Layer} may fail for several reasons: </p>
      *
      * <ul>
      *     <li> Two or more modules with the same package (exported or
@@ -122,6 +124,9 @@ public final class Layer {
      *
      *     <li> Two or more modules in the configuration export the same
      *          package to a module that reads both. </li>
+     *
+     *     <li> A module {@code M} containing package {@code P} reads another
+     *          module that exports {@code P} to {@code M}. </li>
      *
      *     <li> A module is mapped to a class loader that already has a module
      *          of the same name defined to it. </li>
@@ -134,7 +139,7 @@ public final class Layer {
      * @apiNote Need to decide if there is a permission check needed here. We
      * can't have an untrusted ClassLoaderFinder returning null and have this
      * method define modules to the boot loader. For now, the built-in class
-     * loaders does a permission check to defend against this.
+     * loaders do a permission check to defend against this.
      *
      * @implNote Some of the failure reasons listed cannot be detected in
      * advance, hence it is possible for Layer.create to fail with some of the
@@ -148,9 +153,15 @@ public final class Layer {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
 
-        checkForDuplicatePackages(cf, clf);
-
-        checkExportSuppliers(cf);
+        // For now, no two modules in the boot Layer may contain the same
+        // package so we use a simple check for the boot Layer to keep
+        // the overhead at startup to a minimum
+        if (bootLayer == null) {
+            checkBootModulesForDuplicatePkgs(cf);
+        } else {
+            checkForDuplicatePkgs(cf, clf);
+            checkExportSuppliers(cf);
+        }
 
         Layer layer;
         try {
@@ -171,18 +182,41 @@ public final class Layer {
         return layer;
     }
 
+    /**
+     * Checks a configuration for the boot Layer to ensure that no two modules
+     * have the same package.
+     *
+     * @throws LayerInstantiationException
+     */
+    private static void checkBootModulesForDuplicatePkgs(Configuration cf) {
+        Map<String, String> packageToModule = new HashMap<>();
+        for (ModuleDescriptor md : cf.descriptors()) {
+            String name = md.name();
+            for (String p : md.packages()) {
+                String other = packageToModule.putIfAbsent(p, name);
+                if (other != null) {
+                    throw fail("Package " + p + " in both module "
+                               + name + " and module " + other);
+                }
+            }
+        }
+    }
 
     /**
      * Checks a configuration and the module-to-loader mapping to ensure that
      * no two modules mapped to the same class loader have the same package.
+     * It also checks that no two automatic modules have the same package.
      *
      * @throws LayerInstantiationException
      */
-    private static void checkForDuplicatePackages(Configuration cf,
-                                                  ClassLoaderFinder clf)
+    private static void checkForDuplicatePkgs(Configuration cf,
+                                              ClassLoaderFinder clf)
     {
         // HashMap allows null keys
         Map<ClassLoader, Set<String>> loaderToPackages = new HashMap<>();
+
+        // all packages in automatic modules, created lazily if needed
+        Map<String, ModuleDescriptor> allAutomaticModulePackages = null;
 
         for (ModuleDescriptor descriptor : cf.descriptors()) {
             ClassLoader loader = clf.loaderForModule(descriptor.name());
@@ -195,6 +229,20 @@ public final class Layer {
                 if (!added) {
                     throw fail("More than one module with package %s mapped" +
                                " to the same class loader", pkg);
+                }
+            }
+
+            // detect more than one automatic module with the same package
+            if (descriptor.isAutomatic()) {
+                if (allAutomaticModulePackages == null)
+                    allAutomaticModulePackages = new HashMap<>();
+                for (String pkg : descriptor.packages()) {
+                    ModuleDescriptor other
+                        = allAutomaticModulePackages.put(pkg, descriptor);
+                    if (other != null) {
+                        throw fail("Modules %s and %s both contain package %s",
+                                   descriptor.name(), other.name(), pkg);
+                    }
                 }
             }
         }
@@ -272,6 +320,7 @@ public final class Layer {
             l = l.parent().orElse(null);
         } while (l != null);
     }
+
 
     /**
      * Returns the {@code Configuration} used to create this layer unless this
