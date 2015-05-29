@@ -26,14 +26,26 @@
 package sun.tools.jar;
 
 import java.io.*;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.Version;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.zip.*;
 import java.util.jar.*;
 import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
+
+import jdk.internal.module.Hasher;
+import jdk.internal.module.ModuleInfoExtender;
 import sun.misc.JarIndex;
 import static sun.misc.JarIndex.INDEX_NAME;
 import static java.util.jar.JarFile.MANIFEST_NAME;
@@ -78,6 +90,29 @@ class Main {
      */
     boolean cflag, uflag, xflag, tflag, vflag, flag0, Mflag, iflag, nflag, pflag;
 
+    /* To support additional GNU Style information options */
+    enum Info {
+        HELP(GNUStyleOptions::printHelp),
+        USAGE(GNUStyleOptions::printUsage),
+        USAGE_SUMMARY(GNUStyleOptions::printUsageSummary),
+        VERSION(GNUStyleOptions::printVersion);
+
+        private Consumer<PrintStream> printFunction;
+        Info(Consumer<PrintStream> f) { this.printFunction = f; }
+        void print(PrintStream out) { printFunction.accept(out); }
+    };
+    Info info;
+
+    /* Modular jar related options */
+    Version moduleVersion;
+    Pattern dependencesToHash;
+    ModuleFinder moduleFinder = ModuleFinder.empty();
+
+    private static final String MODULE_INFO = "module-info.class";
+
+    Path moduleInfo;
+    private boolean isModularJar() { return moduleInfo != null; }
+
     static final String MANIFEST_DIR = "META-INF/";
     static final String VERSION = "1.0";
 
@@ -102,7 +137,7 @@ class Main {
         }
     }
 
-    private String getMsg(String key) {
+    static String getMsg(String key) {
         try {
             return (rsrc.getString(key));
         } catch (MissingResourceException e) {
@@ -110,14 +145,14 @@ class Main {
         }
     }
 
-    private String formatMsg(String key, String arg) {
+    static String formatMsg(String key, String arg) {
         String msg = getMsg(key);
         String[] args = new String[1];
         args[0] = arg;
         return MessageFormat.format(msg, (Object[]) args);
     }
 
-    private String formatMsg2(String key, String arg, String arg1) {
+    static String formatMsg2(String key, String arg, String arg1) {
         String msg = getMsg(key);
         String[] args = new String[2];
         args[0] = arg;
@@ -189,6 +224,16 @@ class Main {
                     }
                 }
                 expand(null, files, false);
+
+                byte[] moduleInfoBytes = null;
+                if (isModularJar()) {
+                    moduleInfoBytes = addExtendedModuleAttributes(
+                            new InputStreamSupplier(moduleInfo));
+                } else if (moduleVersion != null || dependencesToHash != null) {
+                    error(getMsg("error.module.options.without.info"));
+                    return false;
+                }
+
                 OutputStream out;
                 if (fname != null) {
                     out = new FileOutputStream(fname);
@@ -210,7 +255,7 @@ class Main {
                     tmpfile = createTemporaryFile(tmpbase, ".jar");
                     out = new FileOutputStream(tmpfile);
                 }
-                create(new BufferedOutputStream(out, 4096), manifest);
+                create(new BufferedOutputStream(out, 4096), manifest, moduleInfoBytes);
                 if (in != null) {
                     in.close();
                 }
@@ -267,8 +312,18 @@ class Main {
                 InputStream manifest = (!Mflag && (mname != null)) ?
                     (new FileInputStream(mname)) : null;
                 expand(null, files, true);
+
+                byte[] moduleInfoBytes = null;
+                if (isModularJar()) {
+                    moduleInfoBytes = addExtendedModuleAttributes(
+                            new InputStreamSupplier(moduleInfo));
+                } else if (moduleVersion != null || dependencesToHash != null) {
+                    error(getMsg("error.module.options.without.info"));
+                    return false;
+                }
+
                 boolean updateOk = update(in, new BufferedOutputStream(out),
-                                          manifest, null);
+                                          manifest, moduleInfoBytes, null);
                 if (ok) {
                     ok = updateOk;
                 }
@@ -362,83 +417,110 @@ class Main {
         int count = 1;
         try {
             String flags = args[0];
-            if (flags.startsWith("-")) {
-                flags = flags.substring(1);
-            }
-            for (int i = 0; i < flags.length(); i++) {
-                switch (flags.charAt(i)) {
-                case 'c':
-                    if (xflag || tflag || uflag || iflag) {
-                        usageError();
-                        return false;
+
+            // Note: flags.length == 2 can be treated as the short version of
+            // the GNU option since the there cannot be any other options,
+            // excluding -C, as per the old way.
+            if (flags.startsWith("--")
+                || (flags.startsWith("-") && flags.length() == 2)) {
+                try {
+                    count = GNUStyleOptions.parseOptions(this, args);
+                } catch (GNUStyleOptions.BadArgs x) {
+                    if (info != null) {
+                        info.print(out);
+                        return true;
                     }
-                    cflag = true;
-                    break;
-                case 'u':
-                    if (cflag || xflag || tflag || iflag) {
-                        usageError();
-                        return false;
-                    }
-                    uflag = true;
-                    break;
-                case 'x':
-                    if (cflag || uflag || tflag || iflag) {
-                        usageError();
-                        return false;
-                    }
-                    xflag = true;
-                    break;
-                case 't':
-                    if (cflag || uflag || xflag || iflag) {
-                        usageError();
-                        return false;
-                    }
-                    tflag = true;
-                    break;
-                case 'M':
-                    Mflag = true;
-                    break;
-                case 'v':
-                    vflag = true;
-                    break;
-                case 'f':
-                    fname = args[count++];
-                    break;
-                case 'm':
-                    mname = args[count++];
-                    break;
-                case '0':
-                    flag0 = true;
-                    break;
-                case 'i':
-                    if (cflag || uflag || xflag || tflag) {
-                        usageError();
-                        return false;
-                    }
-                    // do not increase the counter, files will contain rootjar
-                    rootjar = args[count++];
-                    iflag = true;
-                    break;
-                case 'n':
-                    nflag = true;
-                    break;
-                case 'e':
-                     ename = args[count++];
-                     break;
-                case 'P':
-                     pflag = true;
-                     break;
-                default:
-                    error(formatMsg("error.illegal.option",
-                                String.valueOf(flags.charAt(i))));
-                    usageError();
+                    error(x.getMessage());
+                    if (x.showUsage)
+                        Info.USAGE_SUMMARY.print(err);
                     return false;
+                }
+            } else {
+                // Legacy/compatibility options
+                if (flags.startsWith("-")) {
+                    flags = flags.substring(1);
+                }
+                for (int i = 0; i < flags.length(); i++) {
+                    switch (flags.charAt(i)) {
+                        case 'c':
+                            if (xflag || tflag || uflag || iflag) {
+                                usageError();
+                                return false;
+                            }
+                            cflag = true;
+                            break;
+                        case 'u':
+                            if (cflag || xflag || tflag || iflag) {
+                                usageError();
+                                return false;
+                            }
+                            uflag = true;
+                            break;
+                        case 'x':
+                            if (cflag || uflag || tflag || iflag) {
+                                usageError();
+                                return false;
+                            }
+                            xflag = true;
+                            break;
+                        case 't':
+                            if (cflag || uflag || xflag || iflag) {
+                                usageError();
+                                return false;
+                            }
+                            tflag = true;
+                            break;
+                        case 'M':
+                            Mflag = true;
+                            break;
+                        case 'v':
+                            vflag = true;
+                            break;
+                        case 'f':
+                            fname = args[count++];
+                            break;
+                        case 'm':
+                            mname = args[count++];
+                            break;
+                        case '0':
+                            flag0 = true;
+                            break;
+                        case 'i':
+                            if (cflag || uflag || xflag || tflag) {
+                                usageError();
+                                return false;
+                            }
+                            // do not increase the counter, files will contain rootjar
+                            rootjar = args[count++];
+                            iflag = true;
+                            break;
+                        case 'n':
+                            nflag = true;
+                            break;
+                        case 'e':
+                            ename = args[count++];
+                            break;
+                        case 'P':
+                            pflag = true;
+                            break;
+                        default:
+                            error(formatMsg("error.illegal.option",
+                                    String.valueOf(flags.charAt(i))));
+                            usageError();
+                            return false;
+                    }
                 }
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             usageError();
             return false;
         }
+
+        if (info != null) {
+            info.print(out);
+            return true;
+        }
+
         if (!cflag && !tflag && !xflag && !uflag && !iflag) {
             error(getMsg("error.bad.option"));
             usageError();
@@ -493,7 +575,7 @@ class Main {
      * Expands list of files to process into full list of all files that
      * can be found by recursively descending directories.
      */
-    void expand(File dir, String[] files, boolean isUpdate) {
+    void expand(File dir, String[] files, boolean isUpdate) throws IOException {
         if (files == null) {
             return;
         }
@@ -505,7 +587,21 @@ class Main {
                 f = new File(dir, files[i]);
             }
             if (f.isFile()) {
-                if (entries.add(f)) {
+                if (f.getPath().endsWith(MODULE_INFO)) {
+                    String path = f.getPath();
+//                    int idx;
+//                    if ((idx = path.indexOf(File.separator)) != -1) {
+//                        if (!(idx == 1 && path.charAt(0) == '.')) {
+//                            throw new IOException(formatMsg("error.unexpected.module-info", path));
+//                        }
+//                    }
+                    if (moduleInfo != null) {
+                        throw new IOException(formatMsg("error.unexpected.module-info", path));
+                    }
+                    moduleInfo = f.toPath();
+                    if (isUpdate)
+                        entryMap.put(entryName(f.getPath()), f);
+                } else if (entries.add(f)) {
                     if (isUpdate)
                         entryMap.put(entryName(f.getPath()), f);
                 }
@@ -529,13 +625,14 @@ class Main {
     /**
      * Creates a new JAR file.
      */
-    void create(OutputStream out, Manifest manifest)
+    void create(OutputStream out, Manifest manifest, byte[] moduleInfoBytes)
         throws IOException
     {
         ZipOutputStream zos = new JarOutputStream(out);
         if (flag0) {
             zos.setMethod(ZipOutputStream.STORED);
         }
+        // TODO: check module-info attributes against manifest ??
         if (manifest != null) {
             if (vflag) {
                 output(getMsg("out.added.manifest"));
@@ -552,6 +649,25 @@ class Main {
             }
             zos.putNextEntry(e);
             manifest.write(zos);
+            zos.closeEntry();
+        }
+        if (moduleInfoBytes != null) {
+            if (vflag) {
+                output(getMsg("out.added.module-info"));
+            }
+            ZipEntry e = new ZipEntry("./");
+            e.setTime(System.currentTimeMillis());
+            e.setSize(0);
+            e.setCrc(0);
+            zos.putNextEntry(e);
+            e = new ZipEntry(MODULE_INFO);
+            e.setTime(System.currentTimeMillis());
+            if (flag0) {
+                crc32ModuleInfo(e, moduleInfoBytes);
+            }
+            zos.putNextEntry(e);
+            ByteArrayInputStream in = new ByteArrayInputStream(moduleInfoBytes);
+            in.transferTo(zos);
             zos.closeEntry();
         }
         for (File file: entries) {
@@ -589,12 +705,14 @@ class Main {
      */
     boolean update(InputStream in, OutputStream out,
                    InputStream newManifest,
+                   byte[] newModuleInfoBytes,
                    JarIndex jarIndex) throws IOException
     {
         ZipInputStream zis = new ZipInputStream(in);
         ZipOutputStream zos = new JarOutputStream(out);
         ZipEntry e = null;
         boolean foundManifest = false;
+        boolean foundModuleInfo = false;
         boolean updateOk = true;
 
         if (jarIndex != null) {
@@ -606,6 +724,7 @@ class Main {
             String name = e.getName();
 
             boolean isManifestEntry = equalsIgnoreCase(name, MANIFEST_NAME);
+            boolean isModuleInfoEntry = name.equals(MODULE_INFO);
 
             if ((jarIndex != null && equalsIgnoreCase(name, INDEX_NAME))
                 || (Mflag && isManifestEntry)) {
@@ -631,6 +750,23 @@ class Main {
                     old.read(newManifest);
                 }
                 if (!updateManifest(old, zos)) {
+                    return false;
+                }
+            } else if (isModuleInfoEntry
+                       && ((newModuleInfoBytes != null) || (ename != null)
+                           || moduleVersion != null || dependencesToHash != null)) {
+                // Update/Replace existing module-info.class
+                foundModuleInfo = true;
+
+                if (newModuleInfoBytes == null) {
+                    // Update existing module-info.class
+                    newModuleInfoBytes = addExtendedModuleAttributes(
+                            new InputStreamSupplier(zis));
+                }
+                // TODO: check manifest main classes, etc
+                // ## there be no merging of module-info attributes
+
+                if (!updateModuleInfo(newModuleInfoBytes, zos)) {
                     return false;
                 }
             } else {
@@ -675,6 +811,18 @@ class Main {
                 }
             }
         }
+        if (!foundModuleInfo) {
+            if (newModuleInfoBytes != null) {
+                // TODO: check manifest main classes, etc
+                if (!updateModuleInfo(newModuleInfoBytes, zos)) {
+                    updateOk = false;
+                }
+
+            } else if ( moduleVersion != null || dependencesToHash != null) {
+                error(getMsg("error.module.options.without.info"));
+                updateOk = false;
+            }
+        }
         zis.close();
         zos.close();
         return updateOk;
@@ -694,6 +842,22 @@ class Main {
         zos.putNextEntry(e);
         index.write(zos);
         zos.closeEntry();
+    }
+
+    private boolean updateModuleInfo(byte[] moduleInfoBytes, ZipOutputStream zos)
+        throws IOException
+    {
+        ZipEntry e = new ZipEntry(MODULE_INFO);
+        e.setTime(System.currentTimeMillis());
+        if (flag0) {
+            crc32ModuleInfo(e, moduleInfoBytes);
+        }
+        zos.putNextEntry(e);
+        zos.write(moduleInfoBytes);
+        if (vflag) {
+            output(getMsg("out.update.module-info"));
+        }
+        return true;
     }
 
     private boolean updateManifest(Manifest m, ZipOutputStream zos)
@@ -833,6 +997,8 @@ class Main {
                 output(formatMsg("out.ignore.entry", name));
             }
             return;
+        } else if (name.equals(MODULE_INFO)) {
+            throw new Error("Unexpected module info: " + name);
         }
 
         long size = isDir ? 0 : file.length();
@@ -925,6 +1091,17 @@ class Main {
         } finally {
             out.close();
         }
+    }
+
+    /**
+     * Computes the crc32 of a module-info.class.  This is necessary when the
+     * ZipOutputStream is in STORED mode.
+     */
+    private void crc32ModuleInfo(ZipEntry e, byte[] bytes) throws IOException {
+        CRC32OutputStream os = new CRC32OutputStream();
+        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+        in.transferTo(os);
+        os.updateEntry(e);
     }
 
     /**
@@ -1151,7 +1328,7 @@ class Main {
         try {
             if (update(Files.newInputStream(jarPath),
                        Files.newOutputStream(tmpPath),
-                       null, index)) {
+                       null, null, index)) {
                 try {
                     Files.move(tmpPath, jarPath, REPLACE_EXISTING);
                 } catch (IOException e) {
@@ -1368,5 +1545,120 @@ class Main {
             }
         }
         return tmpfile;
+    }
+
+
+    static class InputStreamSupplier implements Supplier<InputStream> {
+        private final byte[] bytes;
+        InputStreamSupplier(InputStream zis) throws IOException {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                zis.transferTo(baos);
+                bytes = baos.toByteArray();
+            }
+        }
+        InputStreamSupplier(Path path) throws IOException {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 InputStream is = Files.newInputStream(path)) {
+                is.transferTo(baos);
+                bytes = baos.toByteArray();
+            }
+        }
+        @Override public InputStream get() {
+            return new ByteArrayInputStream(bytes);
+        }
+    }
+
+    // Modular jar support
+
+    /**
+     * Returns a byte array containin the module-info.class.
+     *
+     * If --module-version, --main-class, or other options were provided
+     * then the corresponding class file attributes are added to the
+     * module-info here.
+     */
+    private byte[] addExtendedModuleAttributes(Supplier<InputStream> miSupplier)
+        throws IOException
+    {
+        assert isModularJar();
+
+        String name = null;
+        Set<ModuleDescriptor.Requires> dependences = null;
+
+        // if --hash-dependences is specified then retrieve the module name
+        // and dependences
+        if (dependencesToHash != null) {
+            ModuleDescriptor md = null;
+            try (InputStream in = miSupplier.get()) {
+                md = ModuleDescriptor.read(in);
+            }
+            name = md.name();
+            dependences = md.requires();
+        }
+
+        // copy the module-info.class into the jmod with the additional
+        // attributes for the version, main class and other meta data
+        try (InputStream in = miSupplier.get();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
+
+            // --main-class
+            if (ename != null)
+                extender.mainClass(ename);
+
+            // --module-version
+            if (moduleVersion != null)
+                extender.version(moduleVersion);
+
+            // --hash-dependences
+            if (dependencesToHash != null)
+                extender.hashes(hashDependences(name, dependences));
+
+            extender.write(baos);
+            return baos.toByteArray();
+        }
+    }
+
+    /**
+     * Examines the module dependences of the given module and computes the
+     * hash of any module that matches the pattern {@code dependencesToHash}.
+     */
+    private Hasher.DependencyHashes
+    hashDependences(String name,
+                    Set<ModuleDescriptor.Requires> moduleDependences)
+        throws IOException
+    {
+        Map<String, Path> map = new HashMap<>();
+        for (ModuleDescriptor.Requires md: moduleDependences) {
+            String dn = md.name();
+            if (dependencesToHash.matcher(dn).find()) {
+                Optional<ModuleReference> omref = moduleFinder.find(dn);
+                if (!omref.isPresent()) {
+                    throw new IOException(formatMsg2("error.hash.dep", name , dn));
+                }
+                map.put(dn, modRefToPath(omref.get()));
+            }
+        }
+
+        if (map.size() == 0) {
+            return null;
+        } else {
+            return Hasher.generate(map, "SHA-256");
+        }
+    }
+
+    private static Path modRefToPath(ModuleReference mref) {
+        URI location = mref.location().get();
+        String scheme = location.getScheme();
+        if (!scheme.equalsIgnoreCase("jar")) {
+            throw new RuntimeException("Selected module "
+                    + mref.descriptor().name() + " (" + location
+                    + ") not a modular jar format ");
+        }
+
+        // convert to file URI, then Path
+        // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
+        String s = location.toString();
+        return Paths.get(URI.create(s.substring(4, s.length() - 2)));
     }
 }

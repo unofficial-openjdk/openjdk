@@ -97,6 +97,7 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.internal.module to
+        jdk.jartool,
         jdk.jlink;
     exports sun.misc to
         java.corba,
