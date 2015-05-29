@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/dictionary.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
@@ -180,7 +181,7 @@ Klass::Klass() {
   set_subklass(NULL);
   set_next_sibling(NULL);
   set_next_link(NULL);
-  TRACE_INIT_ID(this);
+  TRACE_INIT_KLASS_ID(this);
 
   set_prototype_header(markOopDesc::prototype());
   set_biased_lock_revocation_count(0);
@@ -346,7 +347,6 @@ GrowableArray<Klass*>* Klass::compute_secondary_supers(int num_extra_slots) {
   return NULL;
 }
 
-
 InstanceKlass* Klass::superklass() const {
   assert(super() == NULL || super()->oop_is_instance(), "must be instance klass");
   return _super == NULL ? NULL : InstanceKlass::cast(_super);
@@ -507,7 +507,7 @@ void Klass::remove_unshareable_info() {
 }
 
 void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS) {
-  TRACE_INIT_ID(this);
+  TRACE_INIT_KLASS_ID(this);
   // If an exception happened during CDS restore, some of these fields may already be
   // set.  We leave the class on the CLD list, even if incomplete so that we don't
   // modify the CLD list outside a safepoint.
@@ -525,7 +525,21 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   // gotten an OOM later but keep the mirror if it was created.
   if (java_mirror() == NULL) {
     Handle loader = loader_data->class_loader();
-    java_lang_Class::create_mirror(this, loader, protection_domain, CHECK);
+    ModuleEntry* module_entry = NULL;
+    Klass* k = this;
+    if (k->oop_is_objArray()) {
+      k = ObjArrayKlass::cast(k)->bottom_klass();
+    }
+    // Obtain klass' module.
+    if (k->oop_is_instance()) {
+      InstanceKlass* ik = (InstanceKlass*) k;
+      module_entry = ik->module();
+    } else {
+      module_entry = ModuleEntryTable::java_base_module();
+    }
+    // Obtain j.l.r.Module if available
+    Handle class_module(THREAD, (module_entry->is_named() ? module_entry->module() : (oop)NULL));
+    java_lang_Class::create_mirror(this, loader, class_module, protection_domain, CHECK);
   }
 }
 
