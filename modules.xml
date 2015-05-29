@@ -227,6 +227,7 @@
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm</name>
+      <to>java.instrument</to>
       <to>jdk.jlink</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
