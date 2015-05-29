@@ -21,6 +21,8 @@
  * questions.
  */
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.LayerInstantiationException;
@@ -28,8 +30,12 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Module;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -414,5 +420,52 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 1);
 
         Layer.create(cf, m -> new TestClassLoader());
+    }
+
+    /**
+     * Layer.create with a configuration that contains two automatic modules
+     * mapped to different class loaders but containing the same package.
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testAutomaticModulesWithSamePackage() throws IOException {
+        ModuleDescriptor descriptor
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        // m2 and m3 are simple JAR files
+        Path dir = Files.createTempDirectory("layertest");
+        createDummyJarFile(dir.resolve("m2.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("m3.jar"), "p/T.class");
+
+        // module finder locates m1 and the modules in the directory
+        ModuleFinder finder
+            = ModuleFinder.concat(new ModuleLibrary(descriptor),
+                                  ModuleFinder.of(dir));
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
+        assertTrue(cf.descriptors().size() == 3);
+
+        // each module gets its own loader
+        Layer.create(cf, m -> new TestClassLoader());
+    }
+
+    /**
+     * Creates a JAR file containing the give entries. The entries will be
+     * empty in the resulting JAR file.
+     */
+    private static void createDummyJarFile(Path file, String... entries)
+        throws IOException
+    {
+        try (OutputStream out = Files.newOutputStream(file)) {
+            try (JarOutputStream jos = new JarOutputStream(out)) {
+                for (String entry : entries) {
+                    JarEntry je = new JarEntry(entry);
+                    jos.putNextEntry(je);
+                }
+            }
+        }
     }
 }
