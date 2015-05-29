@@ -28,21 +28,25 @@ include LauncherCommon.gmk
 $(eval $(call SetupLauncher,javac, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javac.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.compiler/com.sun.tools.javac.Main"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,javah, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javah.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.compiler/com.sun.tools.javah.Main"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,javap, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javap.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.compiler/com.sun.tools.javap.Main"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.compiler/sun.tools.serialver.SerialVer"$(COMMA) }'))
 
 ifeq ($(ENABLE_SJAVAC), yes)
   # Build sjavac directly to the exploded image so that it does not get included
@@ -50,6 +54,7 @@ ifeq ($(ENABLE_SJAVAC), yes)
   $(eval $(call SetupLauncher,sjavac, \
       -DEXPAND_CLASSPATH_WILDCARDS \
       -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.sjavac.Main"$(COMMA) }',,,,,,, \
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+          "-m"$(COMMA) "jdk.compiler/com.sun.tools.sjavac.Main"$(COMMA) }',,,,,,, \
       $(JDK_OUTPUTDIR)/bin))
 endif

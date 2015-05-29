@@ -26,8 +26,10 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,schemagen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.xml.bind/com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,xjc, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.xml.bind/com.sun.tools.internal.xjc.Driver"$(COMMA) }'))
 
