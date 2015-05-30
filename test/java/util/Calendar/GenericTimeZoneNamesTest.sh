@@ -31,7 +31,7 @@
 # This test is locale data-dependent and assumes that both JRE and CLDR
 # have the same geneic time zone names in English.
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
+EXTRAOPTS="-XaddExports:java.base/sun.util.locale.provider"
 STATUS=0
 echo "Locale providers: default"
 if ! ${TESTJAVA}/bin/java -esa ${TESTVMOPTS} ${EXTRAOPTS} -cp "${TESTCLASSES}" GenericTimeZoneNamesTest en-US; then

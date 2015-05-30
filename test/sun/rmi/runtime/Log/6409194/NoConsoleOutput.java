@@ -68,7 +68,7 @@ public class NoConsoleOutput {
         // (neither on standard output, nor on standard err streams).
         JavaVM vm = new JavaVM(
                 DoRMIStuff.class.getName(),
-                "-XX:AddModuleExports=java.rmi/sun.rmi.registry,"
+                "-XaddExports:java.rmi/sun.rmi.registry,"
                 + "java.rmi/sun.rmi.server,java.rmi/sun.rmi.transport,"
                 + "java.rmi/sun.rmi.transport.tcp"
                 + " -Djava.util.logging.config.file="

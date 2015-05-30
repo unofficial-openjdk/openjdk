@@ -51,9 +51,9 @@ $JAVAC -d mods/jdk.naming.dns `find $TESTSRC/src/com/sun/jndi/dns -name "*.java"
 mkdir -p mods/jdk.compiler
 $JAVAC -d mods/jdk.compiler `find $TESTSRC/src/com/sun/tools/javac -name "*.java"`
 
-# Need to use -XX:AddModuleExports as com.sun.jndi.dns is not exported
+# Need to use -XaddExports as com.sun.jndi.dns is not exported
 $JAVAC -d $TESTCLASSES $TESTSRC/Basic.java
-$JAVA -Xoverride:mods -XX:AddModuleExports=jdk.naming.dns/com.sun.jndi.dns \
+$JAVA -Xoverride:mods -XaddExports:jdk.naming.dns/com.sun.jndi.dns \
   -cp $TESTCLASSES Basic
 
 exit 0

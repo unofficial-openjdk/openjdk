@@ -62,7 +62,7 @@ public class CheckOrigin {
 
             ProcessBuilder pb = ProcessTools.
                 createJavaProcessBuilder(
-                    "-XX:AddModuleExports=jdk.attach/sun.tools.attach",
+                    "-XaddExports:jdk.attach/sun.tools.attach",
                     "-XX:+UseConcMarkSweepGC",  // this will cause UseParNewGC to be FLAG_SET_ERGO
                     "-XX:+PrintGCDetails",
                     "-XX:Flags=" + flagsFile.getAbsolutePath(),

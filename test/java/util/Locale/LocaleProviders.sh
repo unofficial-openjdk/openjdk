@@ -121,7 +121,7 @@ tznp
 tznp8013086
 EOF
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.util.locale,java.base/sun.util.locale.provider"
+EXTRAOPTS="-XaddExports:java.base/sun.util.locale,java.base/sun.util.locale.provider"
 
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${SPIDIR}${FS}dest \
     ${SPIDIR}${FS}src${FS}tznp.java \

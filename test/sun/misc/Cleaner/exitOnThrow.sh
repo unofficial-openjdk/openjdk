@@ -40,7 +40,7 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES=`pwd`
 fi
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.misc"
+EXTRAOPTS="-XaddExports:java.base/sun.misc"
 
 if $TESTJAVA/bin/java ${TESTVMOPTS} ${EXTRAOPTS} -cp $TESTCLASSES ExitOnThrow; then
   echo Failed: VM exited normally

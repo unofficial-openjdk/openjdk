@@ -42,7 +42,7 @@ $JAVAC -d mods/bananascript `find $TESTSRC/src/bananascript -name "*.java"`
 
 # the test that exercises ServiceLoader.load
 mkdir -p classes
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.misc"
+EXTRAOPTS="-XaddExports:java.base/sun.misc"
 $JAVAC ${EXTRAOPTS} -d classes ${TESTSRC}/CustomLayerTest.java
 $JAVA ${EXTRAOPTS} -cp classes CustomLayerTest bananascript BananaScriptEngine mods
 

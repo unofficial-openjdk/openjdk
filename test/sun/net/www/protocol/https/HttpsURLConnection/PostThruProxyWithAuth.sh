@@ -51,7 +51,7 @@ case "$OS" in
     ;;
 esac
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.net.www"
+EXTRAOPTS="-XaddExports:java.base/sun.net.www"
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} \
     -d . ${TESTSRC}${FS}OriginServer.java \
     ${TESTSRC}${FS}ProxyTunnelServer.java \

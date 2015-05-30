@@ -41,7 +41,7 @@ JAVA="$TESTJAVA/bin/java"
 
 # This test is temporarily converted to use ResourceBundleProviderSupport class
 # to avoid calling Control.newBundle
-EXTRA_OPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
+EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider"
 
 rm -rf mods
 

@@ -57,7 +57,7 @@ case "$OS" in
     ;;
 esac
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.security.tools.keytool,java.base/sun.security.util,java.base/sun.security.x509"
+EXTRAOPTS="-XaddExports:java.base/sun.security.tools.keytool,java.base/sun.security.util,java.base/sun.security.x509"
 
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} -d . -XDignore.symbol.file ${TESTSRC}${FS}KeyToolTest.java || exit 10
 

@@ -79,7 +79,7 @@ $KT -delete -alias user
 # 5. Build and run test. Make sure the CA certs are ignored for validity check.
 # Check both, one of them might be dropped out of map in old codes.
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.security.validator"
+EXTRAOPTS="-XaddExports:java.base/sun.security.validator"
 $JAVAC ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} -d . ${TESTSRC}${FS}CertReplace.java
 $JAVA ${TESTVMOPTS} ${EXTRAOPTS} CertReplace samedn.jks samedn1.certs || exit 1
 $JAVA ${TESTVMOPTS} ${EXTRAOPTS} CertReplace samedn.jks samedn2.certs || exit 2

@@ -132,7 +132,7 @@ public class LocalManagementTest {
             ProcessBuilder client = ProcessTools.createJavaProcessBuilder(
                 "-cp",
                 TEST_CLASSPATH,
-                "-XX:AddModuleExports=java.management/sun.management",
+                "-XaddExports:java.management/sun.management",
                 "TestManager",
                 String.valueOf(serverPrc.getPid()),
                 port.get(),

@@ -63,7 +63,7 @@ echo "NEW_EXT_DIR=${NEW_EXT_DIR}"
 
 cd ${TESTSRC}
 echo 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.util"
+EXTRAOPTS="-XaddExports:java.base/sun.util"
 ${TESTJAVA}/bin/java ${TESTVMOPTS} ${EXTRAOPTS} \
     -cp ${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}awtres.jar Bug6299235Test
 

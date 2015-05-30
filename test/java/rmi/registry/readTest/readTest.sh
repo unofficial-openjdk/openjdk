@@ -93,7 +93,7 @@ case "$OS" in
     ;;
 esac
 # trailing / after code base is important for rmi codebase property.
-TESTVMOPTS="${TESTVMOPTS}  -XX:AddModuleExports=java.rmi/sun.rmi.registry,java.rmi/sun.rmi.server,java.rmi/sun.rmi.transport,java.rmi/sun.rmi.transport.tcp"
+TESTVMOPTS="${TESTVMOPTS}  -XaddExports:java.rmi/sun.rmi.registry,java.rmi/sun.rmi.server,java.rmi/sun.rmi.transport,java.rmi/sun.rmi.transport.tcp"
 ${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -cp $TEST_CLASSPATH ${ARGS} -Djava.rmi.server.codebase=${FILEURL}$CODEBASE/ readTest > OUT.TXT 2>&1 &
 TEST_PID=$!
 #bulk of testcase - let it run for a while

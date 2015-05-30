@@ -93,7 +93,7 @@ case "$1" in
 esac
 
 
-EXTRA_OPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
+EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider"
 
 # compile
 cp ${TESTSRC}${FS}ProviderTest.java .

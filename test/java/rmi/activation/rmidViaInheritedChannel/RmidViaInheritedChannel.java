@@ -92,7 +92,7 @@ public class RmidViaInheritedChannel implements Callback {
             rmid = RMID.createRMID(System.out, System.err, true, false,
                                    TestLibrary.RMIDVIAINHERITEDCHANNEL_ACTIVATION_PORT);
             rmid.addOptions(
-                "-XX:AddModuleExports=java.base/sun.nio.ch",
+                "-XaddExports:java.base/sun.nio.ch",
                 "-Djava.nio.channels.spi.SelectorProvider=RmidViaInheritedChannel$RmidSelectorProvider");
             if (System.getProperty("os.name").startsWith("Windows") &&
                 System.getProperty("os.version").startsWith("5."))

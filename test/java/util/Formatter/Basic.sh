@@ -23,7 +23,7 @@
 
 #
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.misc"
+EXTRAOPTS="-XaddExports:java.base/sun.misc"
 ${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} -cp ${TESTSRC} -d . \
     ${TESTSRC}/Basic.java
 
