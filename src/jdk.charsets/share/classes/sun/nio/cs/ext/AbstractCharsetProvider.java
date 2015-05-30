@@ -23,11 +23,9 @@
  * questions.
  */
 
-package sun.nio.cs;
+package sun.nio.cs.ext;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.charset.spi.CharsetProvider;
 import java.util.ArrayList;
@@ -151,13 +149,10 @@ public class AbstractCharsetProvider
                                        true,
                                        this.getClass().getClassLoader());
 
-            Constructor<?> ctor = c.getConstructor();
-            ctor.setAccessible(true);
-            Charset cs = (Charset)ctor.newInstance();
+            Charset cs = (Charset)c.newInstance();
             cache.put(csn, new SoftReference<Charset>(cs));
             return cs;
-        } catch (ClassNotFoundException | NoSuchMethodException |
-                 InvocationTargetException x) {
+        } catch (ClassNotFoundException x) {
             return null;
         } catch (IllegalAccessException x) {
             return null;
