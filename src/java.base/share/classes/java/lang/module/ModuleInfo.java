@@ -161,38 +161,36 @@ final class ModuleInfo {
             classFormatError("Bad #fields");
 
         int attributes_count = in.readUnsignedShort();
-        boolean foundModule = false;
-        boolean foundVersion = false;
-        boolean foundMainClass = false;
-        boolean foundHashes = false;
+
+
+        // the names of the attributes found in the class file
+        Set<String> namesFound = new HashSet<>();
+
         for (int i = 0; i < attributes_count ; i++) {
             int name_index = in.readUnsignedShort();
             String name = cpool.getUtf8(name_index);
             int length = in.readInt();
+
+            boolean added = namesFound.add(name);
+            if (!added) {
+                classFormatError("More than one " + name + " attribute");
+            }
+
             switch (name) {
                 case MODULE :
-                    if (foundModule)
-                        classFormatError("More than one " + MODULE + " attribute");
                     readModuleAttribute(in, cpool);
-                    foundModule = true;
+                    break;
+                case CONCEALED_PACKAGES :
+                    readConcealedPackagesAttribute(in, cpool);
                     break;
                 case VERSION :
-                    if (foundVersion)
-                        classFormatError("More than one " + VERSION + " attribute");
-                    foundVersion = true;
                     readVersionAttribute(in, cpool);
                     break;
                 case MAIN_CLASS :
-                    if (foundMainClass)
-                        classFormatError("More than one " + MAIN_CLASS + " attribute");
-                    foundMainClass = true;
                     readMainClassAttribute(in, cpool);
                     break;
                 case HASHES :
                     if (parseHashes) {
-                        if (foundHashes)
-                            classFormatError("More than one " + HASHES + " attribute");
-                        foundHashes = true;
                         readHashesAttribute(in, cpool);
                         break;
                     }
@@ -203,14 +201,15 @@ final class ModuleInfo {
                     in.skipBytes(length);
             }
         }
-        if (!foundModule)
-            classFormatError("Missing Module attribute");
-        // ## We'll eventually define a CONCEALED_PACKAGES attribute.  If that
-        //    attribute is present but has a length of zero then the module has
-        //    no concealed packages.  If that attribute is not present then the
-        //    module might have concealed packages so the packageFinder, if
-        //    provided, should be invoked in order to discover them.
-        if (packageFinder != null) {    // ## AND no CONCEALED_PACKAGES attr
+
+        // the Module attribute is required
+        if (!namesFound.contains(MODULE)) {
+            classFormatError(MODULE + " attribute not found");
+        }
+
+        // If the ConcealedPackages attribute is not present then the
+        // packageFinder is used to to find any non-exported packages.
+        if (!namesFound.contains(CONCEALED_PACKAGES) && packageFinder != null) {
             Set<String> pkgs;
             try {
                 pkgs = new HashSet<>(packageFinder.get());
@@ -220,6 +219,7 @@ final class ModuleInfo {
             pkgs.removeAll(builder.exportedPackages());
             builder.conceals(pkgs);
         }
+
         return builder.build();
     }
 
@@ -291,6 +291,22 @@ final class ModuleInfo {
             }
             pm.entrySet().forEach(e -> builder.provides(e.getKey(),e.getValue()));
         }
+    }
+
+    /**
+     * Reads the ConcealedPackages attribute
+     */
+    private void readConcealedPackagesAttribute(DataInput in, ConstantPool cpool)
+        throws IOException
+    {
+        int package_count = in.readUnsignedShort();
+        Set<String> packages = new HashSet<>();
+        for (int i=0; i<package_count; i++) {
+            int index = in.readUnsignedShort();
+            String pkg = cpool.getUtf8(index).replace('/', '.');
+            packages.add(pkg);
+        }
+        builder.conceals(packages);
     }
 
     /**

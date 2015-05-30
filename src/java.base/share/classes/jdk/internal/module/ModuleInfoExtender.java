@@ -30,7 +30,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.module.Version;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -45,6 +47,9 @@ public final class ModuleInfoExtender {
     // the input stream to read the original module-info.class
     private final InputStream in;
 
+    // the packages in the ConcealedPackages attribute
+    private Set<String> conceals;
+
     // the value of the Version attribute
     private Version version;
 
@@ -56,6 +61,14 @@ public final class ModuleInfoExtender {
 
     private ModuleInfoExtender(InputStream in) {
         this.in = in;
+    }
+
+    /**
+     * Sets the set of packages for the ConcealedPackages attribute
+     */
+    public ModuleInfoExtender conceals(Set<String> packages) {
+        this.conceals = Collections.unmodifiableSet(packages);
+        return this;
     }
 
     /**
@@ -100,6 +113,8 @@ public final class ModuleInfoExtender {
         attrs.add(new ClassFileAttributes.ModuleAttribute());
 
         // pass through existing attributes if we aren't changing them
+        if (conceals == null)
+            attrs.add(new ClassFileAttributes.ConcealedPackagesAttribute());
         if (version == null)
             attrs.add(new ClassFileAttributes.VersionAttribute());
         if (mainClass == null)
@@ -110,6 +125,8 @@ public final class ModuleInfoExtender {
         cr.accept(cv, attrs.toArray(new Attribute[0]), 0);
 
         // add new attributes
+        if (conceals != null)
+            cv.visitAttribute(new ClassFileAttributes.ConcealedPackagesAttribute(conceals));
         if (version != null)
             cv.visitAttribute(new ClassFileAttributes.VersionAttribute(version));
         if (mainClass != null)

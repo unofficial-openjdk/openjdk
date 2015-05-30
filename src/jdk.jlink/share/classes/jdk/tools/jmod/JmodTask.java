@@ -28,7 +28,6 @@ package jdk.tools.jmod;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,11 +65,11 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import jdk.internal.module.Hasher;
@@ -435,7 +434,7 @@ class JmodTask {
             try (ZipOutputStream zos = new ZipOutputStream(out)) {
 
                 // module-info.class
-                writeModuleInfo(zos);
+                writeModuleInfo(zos, findPackages(classpath));
 
                 // classes
                 processClasses(zos, classpath);
@@ -478,35 +477,43 @@ class JmodTask {
         }
 
         /**
-         * Writes the module-info.class to the given ZIP output stream.
+         * Writes the updated module-info.class to the ZIP output stream.
+         *
+         * The updated module-info.class will have a ConcealedPackages attribute
+         * with the set of module-private/non-exported packages.
          *
          * If --module-version, --main-class, or other options were provided
          * then the corresponding class file attributes are added to the
          * module-info here.
          */
-        void writeModuleInfo(ZipOutputStream zos) throws IOException {
-
+        void writeModuleInfo(ZipOutputStream zos, Set<String> packages)
+            throws IOException
+        {
             Supplier<InputStream> miSupplier = newModuleInfoSupplier();
             if (miSupplier == null) {
                 throw new IOException(MODULE_INFO + " not found");
             }
 
-            // if --hash-dependences  is specified then we need the module name
-            // and dependences from the Module attribute
-            String name = null;
-            Set<Requires> dependences = null;
-            if (dependencesToHash != null) {
-                try (InputStream in = miSupplier.get()) {
-                    ModuleDescriptor md = ModuleDescriptor.read(in);
-                    name = md.name();
-                    dependences = md.requires();
-                }
+            ModuleDescriptor descriptor;
+            try (InputStream in = miSupplier.get()) {
+                descriptor = ModuleDescriptor.read(in);
             }
 
             // copy the module-info.class into the jmod with the additional
             // attributes for the version, main class and other meta data
             try (InputStream in = miSupplier.get()) {
                 ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
+
+                // Add (or replace) the ConcealedPackages attribute
+                if (packages != null) {
+                    Set<String> exported = descriptor.exports().stream()
+                        .map(ModuleDescriptor.Exports::source)
+                        .collect(Collectors.toSet());
+                    Set<String> concealed = packages.stream()
+                        .filter(p -> !exported.contains(p))
+                        .collect(Collectors.toSet());
+                    extender.conceals(concealed);
+                }
 
                 // --main-class
                 if (mainClass != null)
@@ -517,8 +524,11 @@ class JmodTask {
                     extender.version(moduleVersion);
 
                 // --hash-dependences
-                if (dependencesToHash != null)
+                if (dependencesToHash != null) {
+                    String name = descriptor.name();
+                    Set<Requires> dependences = descriptor.requires();
                     extender.hashes(hashDependences(name, dependences));
+                }
 
                 // write the (possibly extended or modified) module-info.class
                 String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
@@ -557,6 +567,76 @@ class JmodTask {
             } else {
                 // use SHA-256 for now, easy to make this configurable if needed
                 return Hasher.generate(map, "SHA-256");
+            }
+        }
+
+        /**
+         * Returns the set of all packages on the given class path.
+         */
+        Set<String> findPackages(List<Path> classpath) {
+            Set<String> packages = new HashSet<>();
+            for (Path path : classpath) {
+                if (Files.isDirectory(path)) {
+                    packages.addAll(findPackages(path));
+                } else if (Files.isRegularFile(path) && path.toString().endsWith(".jar")) {
+                    try (JarFile jf = new JarFile(path.toString())) {
+                        packages.addAll(findPackages(jf));
+                    } catch (IOException ioe) {
+                        throw new UncheckedIOException(ioe);
+                    }
+                }
+            }
+            return packages;
+        }
+
+        /**
+         * Returns the set of packages in the given directory tree.
+         */
+        Set<String> findPackages(Path dir) {
+            try {
+                return Files.find(dir, Integer.MAX_VALUE,
+                        ((path, attrs) -> attrs.isRegularFile() &&
+                                path.toString().endsWith(".class")))
+                        .map(path -> toPackageName(dir.relativize(path)))
+                        .filter(pkg -> pkg.length() > 0)   // module-info
+                        .distinct()
+                        .collect(Collectors.toSet());
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+        }
+
+        /**
+         * Returns the set of packages in the given JAR file.
+         */
+        Set<String> findPackages(JarFile jf) {
+            return jf.stream()
+                .filter(e -> e.getName().endsWith(".class"))
+                .map(e -> toPackageName(e))
+                .filter(pkg -> pkg.length() > 0)   // module-info
+                .distinct()
+                .collect(Collectors.toSet());
+        }
+
+        String toPackageName(Path path) {
+            String name = path.toString();
+            assert name.endsWith(".class");
+            int index = name.lastIndexOf(File.separatorChar);
+            if (index != -1) {
+                return name.substring(0, index).replace(File.separatorChar, '.');
+            } else {
+                return "";
+            }
+        }
+
+        String toPackageName(ZipEntry entry) {
+            String name = entry.getName();
+            assert name.endsWith(".class");
+            int index = name.lastIndexOf("/");
+            if (index != -1) {
+                return name.substring(0, index).replace('/', '.');
+            } else {
+                return "";
             }
         }
 

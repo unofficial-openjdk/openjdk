@@ -234,6 +234,78 @@ class ClassFileAttributes {
     }
 
     /**
+     * ConcealedPackages_attribute {
+     *   // index to CONSTANT_utf8_info structure in constant pool representing
+     *   // the string "ConcealedPackages"
+     *   u2 attribute_name_index;
+     *   u4 attribute_length;
+     *
+     *   // the number of entries in the packages table
+     *   u2 package_count;
+     *   { // index to CONSTANT_CONSTANT_utf8_info structure with the package name
+     *     u2 package_index
+     *   } package[package_count];
+     */
+    static class ConcealedPackagesAttribute extends Attribute {
+        private final Set<String> packages;
+
+        ConcealedPackagesAttribute(Set<String> packages) {
+            super(CONCEALED_PACKAGES);
+            this.packages = packages;
+        }
+
+        ConcealedPackagesAttribute() {
+            this(null);
+        }
+
+        @Override
+        protected Attribute read(ClassReader cr,
+                                 int off,
+                                 int len,
+                                 char[] buf,
+                                 int codeOff,
+                                 Label[] labels)
+        {
+            // package count
+            int package_count = cr.readUnsignedShort(off);
+            off += 2;
+
+            // packages
+            Set<String> packages = new HashSet<>();
+            for (int i=0; i<package_count; i++) {
+                String pkg = cr.readUTF8(off, buf).replace('/', '.');
+                packages.add(pkg);
+                off += 2;
+            }
+
+            return new ConcealedPackagesAttribute(packages);
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter cw,
+                                   byte[] code,
+                                   int len,
+                                   int maxStack,
+                                   int maxLocals)
+        {
+            assert packages != null;
+
+            ByteVector attr = new ByteVector();
+
+            // package_count
+            attr.putShort(packages.size());
+
+            // packages
+            packages.stream()
+                .map(p -> p.replace('.', '/'))
+                .forEach(p -> attr.putShort(cw.newUTF8(p)));
+
+            return attr;
+        }
+
+    }
+
+    /**
      * Version_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "Version"
@@ -379,9 +451,10 @@ class ClassFileAttributes {
             Map<String, String> map = new HashMap<>();
             for (int i=0; i<hash_count; i++) {
                 String dn = cr.readUTF8(off, buf);
-                String hash = cr.readUTF8(off, buf);
-                map.put(dn, hash);
                 off += 2;
+                String hash = cr.readUTF8(off, buf);
+                off += 2;
+                map.put(dn, hash);
             }
 
             DependencyHashes hashes = new DependencyHashes(algorithm, map);

@@ -33,10 +33,11 @@ public class ClassFileConstants {
     private ClassFileConstants() { }
 
     // Attribute names
-    public static final String MODULE        = "Module";
-    public static final String MAIN_CLASS    = "MainClass";
-    public static final String VERSION       = "Version";
-    public static final String HASHES        = "Hashes";
+    public static final String MODULE             = "Module";
+    public static final String CONCEALED_PACKAGES = "ConcealedPackages";
+    public static final String MAIN_CLASS         = "MainClass";
+    public static final String VERSION            = "Version";
+    public static final String HASHES             = "Hashes";
 
     // access and requires flags
     public static final int ACC_MODULE       = 0x8000;
