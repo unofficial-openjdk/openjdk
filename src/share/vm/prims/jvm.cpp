@@ -447,11 +447,6 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     PUTPROP(props, "jdk.runtime.override", Arguments::override_dir());
   }
 
-  // Additional module exports; will be removed once -XaddExports is established
-  if (AddModuleExports != NULL) {
-    PUTPROP(props, "jdk.launcher.addexports", AddModuleExports);
-  }
-
   return properties;
 JVM_END
 

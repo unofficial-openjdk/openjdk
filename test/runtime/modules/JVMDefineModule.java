@@ -29,8 +29,8 @@
  * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMDefineModule
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMDefineModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XaddExports:java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMDefineModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XaddExports:java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMDefineModule
  */
 
 import static com.oracle.java.testlibrary.Asserts.*;

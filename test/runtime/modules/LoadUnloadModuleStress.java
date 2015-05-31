@@ -29,8 +29,8 @@
  * @build LoadUnloadModuleStress
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true -Xmx64m LoadUnloadModuleStress 15000
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false -Xmx64m LoadUnloadModuleStress 15000
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -Dsun.reflect.useHotSpotAccessCheck=true -Xmx64m LoadUnloadModuleStress 15000
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -Dsun.reflect.useHotSpotAccessCheck=false -Xmx64m LoadUnloadModuleStress 15000
  */
 
 import java.lang.ref.WeakReference;

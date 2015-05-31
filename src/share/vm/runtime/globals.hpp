@@ -1316,9 +1316,6 @@ class CommandLineFlags {
   develop(bool, UseModuleBoundaries, true,                                  \
           "Use access control to enforce module boundaries")                \
                                                                             \
-  product(ccstr, AddModuleExports, NULL,                                    \
-          "Additional module exports, for example java.base/sun.misc")      \
-                                                                            \
   /* tracing */                                                             \
                                                                             \
   notproduct(bool, TraceRuntimeCalls, false,                                \
