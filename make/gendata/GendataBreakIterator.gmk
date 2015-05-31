@@ -63,7 +63,7 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
 
 ifeq ($(BOOT_JDK_MODULAR), true)
   BREAK_ITERATOR_BOOTCLASSPATH := -Xoverride:$(BREAK_ITERATOR_CLASSES) \
-      -XX:AddModuleExports=$(subst $(SPACE),$(COMMA),$(strip \
+      -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
           java.base/sun.text \
           java.base/sun.text.resources \
           jdk.localedata/sun.text.resources.th \

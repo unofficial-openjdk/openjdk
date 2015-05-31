@@ -61,7 +61,7 @@ TOOL_BUILDMETAINDEX = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classe
     build.tools.buildmetaindex.BuildMetaIndex
 
 ifeq ($(BOOT_JDK_MODULAR), true)
-  COMPILEFONTCONFIG_ADD_EXPORTS := -XX:AddModuleExports=java.desktop/sun.awt
+  COMPILEFONTCONFIG_ADD_EXPORTS := -XaddExports:java.desktop/sun.awt
 endif
 
 TOOL_COMPILEFONTCONFIG = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
