@@ -81,7 +81,7 @@ ifeq ($(BOOT_JDK_MODULAR), true)
   NASGEN_BOOTCLASSPATH := \
       -Xoverride:$(SUPPORT_OUTPUTDIR)/misc/intermediate-modules \
       -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
-      -XX:AddModuleExports=$(subst $(SPACE),$(COMMA),$(strip \
+      -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
           java.base/jdk.internal.org.objectweb.asm \
           jdk.scripting.nashorn/jdk.nashorn.internal.objects.annotations \
           jdk.scripting.nashorn/jdk.nashorn.internal.runtime \

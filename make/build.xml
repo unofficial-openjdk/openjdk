@@ -137,7 +137,7 @@
       <compilerarg value="-XDignore.symbol.file"/>
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
-      <compilerarg value="-XX:AddModuleExports=${nashorn.module.imports}"/>
+      <compilerarg value="-XaddExports:${nashorn.module.imports}"/>
     </javac>
     <copy todir="${build.classes.dir}/META-INF/services">
        <fileset dir="${meta.inf.dir}/services/"/>
@@ -273,7 +273,7 @@
         <compilerarg value="-Xlint:unchecked"/>
         <compilerarg value="-Xlint:deprecation"/>
         <compilerarg value="-Xdiags:verbose"/>
-        <compilerarg value="-XX:AddModuleExports=${test.module.imports}"/>
+        <compilerarg value="-XaddExports:${test.module.imports}"/>
     </javac>
 
     <copy todir="${build.test.classes.dir}/META-INF/services">
