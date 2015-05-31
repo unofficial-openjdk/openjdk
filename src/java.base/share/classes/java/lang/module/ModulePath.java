@@ -26,9 +26,11 @@
 package java.lang.module;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
@@ -43,6 +45,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -175,6 +178,9 @@ class ModulePath implements ModuleFinder {
         }
     }
 
+
+    // -- jmod files --
+
     private Set<String> jmodPackages(ZipFile zf) {
         return zf.stream()
             .filter(e -> e.getName().startsWith("classes/") &&
@@ -206,13 +212,46 @@ class ModulePath implements ModuleFinder {
         }
     }
 
-    private Set<String> jarPackages(JarFile jf) {
-        return jf.stream()
-            .filter(e -> e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e))
-            .filter(pkg -> pkg.length() > 0)   // module-info
-            .distinct()
-            .collect(Collectors.toSet());
+
+    // -- JAR files --
+
+    private static final String SERVICES_PREFIX = "META-INF/services/";
+
+    /**
+     * Returns a container with the service type corresponding to the name of
+     * a services configuration file.
+     *
+     * For example, if called with "META-INF/services/p.S" then this method
+     * returns a container with the value "p.S".
+     */
+    private Optional<String> toServiceName(String cf) {
+        assert cf.startsWith(SERVICES_PREFIX);
+        int index = cf.lastIndexOf("/") + 1;
+        if (index < cf.length()) {
+            String prefix = cf.substring(0, index);
+            if (prefix.equals(SERVICES_PREFIX)) {
+                String sn = cf.substring(index);
+                return Optional.of(sn);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Reads the next line from the given reader and trims it of comments and
+     * leading/trailing white space.
+     *
+     * Returns null if the reader is at EOF.
+     */
+    private String nextLine(BufferedReader reader) throws IOException {
+        String ln = reader.readLine();
+        if (ln != null) {
+            int ci = ln.indexOf('#');
+            if (ci >= 0)
+                ln = ln.substring(0, ci);
+            ln = ln.trim();
+        }
+        return ln;
     }
 
     /**
@@ -239,7 +278,85 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a {@code ModuleReference} to represent a module jar on the
+     * Treat the given JAR file as a module as follows:
+     *
+     * 1. The module name is derived from the file name of the JAR file
+     * 2. The packages of all .class files in the JAR file are exported
+     * 3. It has no module-private/concealed packages
+     * 4. The contents of any META-INF/services configuration files are mapped
+     *    to "provides" declarations
+     */
+    private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
+        throws IOException
+    {
+        // module name
+        String fn = jf.getName();
+        int i = fn.lastIndexOf(File.separator);
+        if (i != -1)
+            fn = fn.substring(i+1);
+        String mn = deriveModuleNameFromJarName(fn);
+
+        // Builder throws IAE if module name is empty or invalid
+        ModuleDescriptor.Builder builder
+            = new ModuleDescriptor.Builder(mn, true).requires("java.base");
+
+        // scan the entries in the JAR file to locate the .class and service
+        // configuration file
+        Stream<String> stream = jf.stream()
+            .map(e -> e.getName())
+            .filter(e -> (e.endsWith(".class") || e.startsWith(SERVICES_PREFIX)))
+            .distinct();
+        Map<Boolean, Set<String>> map
+            = stream.collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
+                             Collectors.toSet()));
+        Set<String> classFiles = map.get(Boolean.TRUE);
+        Set<String> configFiles = map.get(Boolean.FALSE);
+
+        // all packages are exported
+        classFiles.stream()
+            .map(c -> toPackageName(c))
+            .distinct()
+            .forEach(p -> builder.exports(p));
+
+        // map names of service configuration files to service names
+        Set<String> serviceNames = configFiles.stream()
+            .map(this::toServiceName)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toSet());
+
+        // parse each service configuration file
+        for (String sn : serviceNames) {
+            JarEntry entry = jf.getJarEntry(SERVICES_PREFIX + sn);
+            Set<String> providerClasses = new HashSet<>();
+            try (InputStream in = jf.getInputStream(entry)) {
+                BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                String cn;
+                while ((cn = nextLine(reader)) != null) {
+                    if (cn.length() > 0) {
+                        providerClasses.add(cn);
+                    }
+                }
+            }
+            if (!providerClasses.isEmpty())
+                builder.provides(sn, providerClasses);
+        }
+
+        return builder.build();
+    }
+
+    private Set<String> jarPackages(JarFile jf) {
+        return jf.stream()
+            .filter(e -> e.getName().endsWith(".class"))
+            .map(e -> toPackageName(e))
+            .filter(pkg -> pkg.length() > 0)   // module-info
+            .distinct()
+            .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns a {@code ModuleReference} to represent a modular JAR  on the
      * file system.
      */
     private ModuleReference readJar(Path file) throws IOException {
@@ -248,21 +365,8 @@ class ModulePath implements ModuleFinder {
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
-
-                // no module-info.class so treat as automatic module
-                // Builder throws IAE if module name is empty
-                String fn = file.getFileName().toString();
-                String mn = deriveModuleNameFromJarName(fn);
-                ModuleDescriptor.Builder builder
-                    = new ModuleDescriptor.Builder(mn, true).requires("java.base");
-
-                // all packages are exported
-                jarPackages(jf).stream().forEach(p -> builder.exports(p));
-
-                // TBD: Need to scan META-INF/services for any configuration files
-
-                md = builder.build();
-
+                // no module-info.class so treat it as automatic module
+                md = deriveModuleDescriptor(jf);
             } else {
                 md = ModuleDescriptor.read(jf.getInputStream(entry),
                                            () -> jarPackages(jf));
@@ -274,6 +378,9 @@ class ModulePath implements ModuleFinder {
             return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
+
+
+    // -- exploded directories --
 
     private Set<String> explodedPackages(Path dir) {
         try {
@@ -306,6 +413,21 @@ class ModulePath implements ModuleFinder {
                                        () -> explodedPackages(dir));
         }
         return ModuleReferences.newModuleReference(md, location, null);
+    }
+
+
+    //
+
+    // p/q/T.class => p.q
+    private String toPackageName(String cn) {
+        assert cn.endsWith(".class");
+        int start = 0;
+        int index = cn.lastIndexOf("/");
+        if (index > start) {
+            return cn.substring(start, index).replace('/', '.');
+        } else {
+            return "";
+        }
     }
 
     private String toPackageName(ZipEntry entry) {

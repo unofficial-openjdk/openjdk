@@ -21,6 +21,6 @@
  * questions.
  */
 
-module test {
+module basictest {
     requires httpserver;  // automatic module
 }

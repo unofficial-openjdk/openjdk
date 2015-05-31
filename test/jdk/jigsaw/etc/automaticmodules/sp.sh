@@ -22,7 +22,8 @@
 #
 
 # @test
-# @summary Basic test for automatic modules
+# @summary Test that a service provider packaged as a JAR file on the module
+#          path is treated as an automatic module
 
 
 set -e
@@ -39,32 +40,18 @@ JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 JAR="$TESTJAVA/bin/jar ${TESTTOOLVMOPTS}"
 
-rm -rf mods
+rm -rf classes mods
+mkdir classes mods
 
-# Compile logging and http server libraries as modules as javac doesn't
-# support automatic modules yet
+# Create JAR file with a service provider and services configuration file
+$JAVAC -d classes `find $TESTSRC/src/bananascript -name "*.java"`
+$JAR cf mods/bananascript-0.9.jar -C $TESTSRC/src/bananascript META-INF -C classes .
 
-mkdir -p mods/logging
-$JAVAC -d mods/logging `find $TESTSRC/src/logging -name "*.java"`
-
-mkdir -p mods/httpserver
-$JAVAC -d mods/httpserver -mp mods `find $TESTSRC/src/httpserver -name "*.java"`
-
-mkdir -p mods/basictest
-$JAVAC -d mods/basictest -mp mods `find $TESTSRC/src/basictest -name "*.java"`
-
-
-# Create regular (non-modular JAR files)
-
-$JAR cf mods/logging-1.0.jar -C mods/logging logging
-rm -rf mods/logging
-
-$JAR cf mods/http-server-9.0.0.jar -C mods/httpserver http
-rm -rf mods/httpserver
-
+# Create test module
+mkdir -p mods/sptest
+$JAVAC -d mods/sptest `find $TESTSRC/src/sptest -name "*.java"`
 
 # Run the test
-$JAVA -mp mods -m basictest/test.Main
-
+$JAVA -mp mods -m sptest/test.Main
 
 exit 0
