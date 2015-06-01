@@ -93,7 +93,7 @@ ifneq ($(MOD_FILES), )
   ALL_MODULES := $(call FindAllModules)
   # Workaround until deploy is fully converted to new build
   ifeq ($(BUILD_DEPLOY), true)
-    ALL_MODUDULES += jdk.javaws jdk.plugin jdk.deploy
+    ALL_MODULES += jdk.javaws jdk.plugin jdk.deploy
   endif
 
   # Read the contents of all the files into a variable. Replace space with / to
