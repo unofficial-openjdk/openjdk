@@ -69,7 +69,7 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
  *          jdk.jlink/jdk.tools.jimage
  * @run build AsmPluginTest
  * @run build tests.*
- * @run main AsmPluginTest
+ * @run main/othervm AsmPluginTest
 */
 public class AsmPluginTest {
 

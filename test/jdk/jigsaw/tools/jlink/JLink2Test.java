@@ -42,7 +42,7 @@ import tests.JImageValidator;
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  * @build tests.JImageGenerator tests.JImageValidator
- * @run main JLink2Test
+ * @run main/othervm JLink2Test
  */
 public class JLink2Test {
 

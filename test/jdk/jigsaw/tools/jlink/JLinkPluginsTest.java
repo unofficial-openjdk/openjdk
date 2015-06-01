@@ -37,7 +37,7 @@ import jdk.tools.jlink.plugins.PluginProvider;
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  * @build tests.JImageGenerator tests.JImageValidator
- * @run main JLinkPluginsTest
+ * @run main/othervm JLinkPluginsTest
  */
 public class JLinkPluginsTest {
 
