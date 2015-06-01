@@ -25,6 +25,7 @@
  * @test
  * @bug 8044537
  * @summary Checking ACC_SYNTHETIC flag is generated for package-info.
+ * @modules jdk.compiler/com.sun.tools.classfile
  * @library /tools/lib /tools/javac/lib ../lib
  * @build TestBase TestResult InMemoryFileManager ToolBox
  * @build SyntheticTestDriver ExpectedClass ExpectedClasses
