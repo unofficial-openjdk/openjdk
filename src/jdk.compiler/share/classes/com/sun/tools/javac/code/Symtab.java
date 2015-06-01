@@ -660,7 +660,7 @@ public class Symtab {
         }
         if (p.modle == null && currModule != null) {
             p.modleHint = currModule;
-            if (p.completer == null)
+            if (p.completer.isTerminal())
                 p.completer = initialCompleter;
         }
         return p;
