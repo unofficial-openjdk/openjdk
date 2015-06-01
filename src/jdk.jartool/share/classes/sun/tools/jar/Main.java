@@ -42,6 +42,7 @@ import java.util.zip.*;
 import java.util.jar.*;
 import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.text.MessageFormat;
 
 import jdk.internal.module.Hasher;
@@ -72,6 +73,8 @@ class Main {
 
     // All files need to be added/updated.
     Set<File> entries = new LinkedHashSet<File>();
+    // All packages.
+    Set<String> packages = new HashSet<>();
 
     // Directories specified by "-C" operation.
     Set<String> paths = new HashSet<String>();
@@ -313,17 +316,13 @@ class Main {
                     (new FileInputStream(mname)) : null;
                 expand(null, files, true);
 
-                byte[] moduleInfoBytes = null;
+                InputStreamSupplier moduleInfoSupplier = null;
                 if (isModularJar()) {
-                    moduleInfoBytes = addExtendedModuleAttributes(
-                            new InputStreamSupplier(moduleInfo));
-                } else if (moduleVersion != null || dependencesToHash != null) {
-                    error(getMsg("error.module.options.without.info"));
-                    return false;
+                    moduleInfoSupplier = (new InputStreamSupplier(moduleInfo));
                 }
 
                 boolean updateOk = update(in, new BufferedOutputStream(out),
-                                          manifest, moduleInfoBytes, null);
+                                          manifest, moduleInfoSupplier, null);
                 if (ok) {
                     ok = updateOk;
                 }
@@ -571,6 +570,29 @@ class Main {
         return true;
     }
 
+    private static Set<String> findPackages(ZipFile zf) {
+        return zf.stream()
+                 .filter(e -> e.getName().endsWith(".class"))
+                 .map(e -> toPackageName(e))
+                 .filter(pkg -> pkg.length() > 0)
+                 .distinct()
+                 .collect(Collectors.toSet());
+    }
+
+    private static String toPackageName(ZipEntry entry) {
+        return toPackageName(entry.getName());
+    }
+
+    private static String toPackageName(String path) {
+        assert path.endsWith(".class");
+        int index = path.lastIndexOf('/');
+        if (index != -1) {
+            return path.substring(0, index).replace('/', '.');
+        } else {
+            return "";
+        }
+    }
+
     /**
      * Expands list of files to process into full list of all files that
      * can be found by recursively descending directories.
@@ -587,8 +609,8 @@ class Main {
                 f = new File(dir, files[i]);
             }
             if (f.isFile()) {
-                if (f.getPath().endsWith(MODULE_INFO)) {
-                    String path = f.getPath();
+                String path = f.getPath();
+                if (path.endsWith(MODULE_INFO)) {  // TODO: must be in the root
 //                    int idx;
 //                    if ((idx = path.indexOf(File.separator)) != -1) {
 //                        if (!(idx == 1 && path.charAt(0) == '.')) {
@@ -600,8 +622,10 @@ class Main {
                     }
                     moduleInfo = f.toPath();
                     if (isUpdate)
-                        entryMap.put(entryName(f.getPath()), f);
+                        entryMap.put(entryName(path), f);
                 } else if (entries.add(f)) {
+                    if (path.endsWith(".class"))
+                        packages.add(toPackageName(entryName(path)));
                     if (isUpdate)
                         entryMap.put(entryName(f.getPath()), f);
                 }
@@ -705,7 +729,7 @@ class Main {
      */
     boolean update(InputStream in, OutputStream out,
                    InputStream newManifest,
-                   byte[] newModuleInfoBytes,
+                   InputStreamSupplier newModuleInfo,
                    JarIndex jarIndex) throws IOException
     {
         ZipInputStream zis = new ZipInputStream(in);
@@ -753,21 +777,11 @@ class Main {
                     return false;
                 }
             } else if (isModuleInfoEntry
-                       && ((newModuleInfoBytes != null) || (ename != null)
+                       && ((newModuleInfo == null) || (ename != null)
                            || moduleVersion != null || dependencesToHash != null)) {
-                // Update/Replace existing module-info.class
-                foundModuleInfo = true;
-
-                if (newModuleInfoBytes == null) {
+                if (newModuleInfo == null) {
                     // Update existing module-info.class
-                    newModuleInfoBytes = addExtendedModuleAttributes(
-                            new InputStreamSupplier(zis));
-                }
-                // TODO: check manifest main classes, etc
-                // ## there be no merging of module-info attributes
-
-                if (!updateModuleInfo(newModuleInfoBytes, zos)) {
-                    return false;
+                    newModuleInfo = (new InputStreamSupplier(zis));
                 }
             } else {
                 if (!entryMap.containsKey(name)) { // copy the old stuff
@@ -789,6 +803,9 @@ class Main {
                     entryMap.remove(name);
                     entries.remove(f);
                 }
+
+                if (name.endsWith(".class"))
+                    packages.add(toPackageName(name));
             }
         }
 
@@ -811,18 +828,20 @@ class Main {
                 }
             }
         }
-        if (!foundModuleInfo) {
-            if (newModuleInfoBytes != null) {
-                // TODO: check manifest main classes, etc
-                if (!updateModuleInfo(newModuleInfoBytes, zos)) {
-                    updateOk = false;
-                }
 
-            } else if ( moduleVersion != null || dependencesToHash != null) {
-                error(getMsg("error.module.options.without.info"));
+        // write the module-info.class
+        if (newModuleInfo != null) {
+            byte[] moduleInfoBytes = addExtendedModuleAttributes(newModuleInfo);
+
+            // TODO: check manifest main classes, etc
+            if (!updateModuleInfo(moduleInfoBytes, zos)) {
                 updateOk = false;
             }
+        } else if (moduleVersion != null || dependencesToHash != null) {
+            error(getMsg("error.module.options.without.info"));
+            updateOk = false;
         }
+
         zis.close();
         zos.close();
         return updateOk;
@@ -1582,25 +1601,29 @@ class Main {
     {
         assert isModularJar();
 
-        String name = null;
-        Set<ModuleDescriptor.Requires> dependences = null;
-
-        // if --hash-dependences is specified then retrieve the module name
-        // and dependences
-        if (dependencesToHash != null) {
-            ModuleDescriptor md = null;
-            try (InputStream in = miSupplier.get()) {
-                md = ModuleDescriptor.read(in);
-            }
-            name = md.name();
-            dependences = md.requires();
+        ModuleDescriptor md = null;
+        try (InputStream in = miSupplier.get()) {
+            md = ModuleDescriptor.read(in);
         }
+        String name = md.name();
+        Set<ModuleDescriptor.Requires> dependences = md.requires();
+        Set<String> exported = md.exports()
+                                 .stream()
+                                 .map(ModuleDescriptor.Exports::source)
+                                 .collect(Collectors.toSet());
 
         // copy the module-info.class into the jmod with the additional
         // attributes for the version, main class and other meta data
         try (InputStream in = miSupplier.get();
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
+
+            // Add (or replace) the ConcealedPackages attribute
+            Set<String> conceals = packages.stream()
+                                            .filter(p -> !exported.contains(p))
+                                            .collect(Collectors.toSet());
+
+            extender.conceals(conceals);
 
             // --main-class
             if (ename != null)

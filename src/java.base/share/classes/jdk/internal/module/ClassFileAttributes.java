@@ -233,6 +233,14 @@ class ClassFileAttributes {
         }
     }
 
+    static abstract class OptionalAttribute extends Attribute {
+        protected boolean isPresent;
+        boolean isPresent() { return isPresent; }
+        OptionalAttribute(String type) {
+            super(type);
+        }
+    }
+
     /**
      * ConcealedPackages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
@@ -246,7 +254,7 @@ class ClassFileAttributes {
      *     u2 package_index
      *   } package[package_count];
      */
-    static class ConcealedPackagesAttribute extends Attribute {
+    static class ConcealedPackagesAttribute extends OptionalAttribute {
         private final Set<String> packages;
 
         ConcealedPackagesAttribute(Set<String> packages) {
@@ -278,6 +286,9 @@ class ClassFileAttributes {
                 off += 2;
             }
 
+            isPresent = true;
+            if (this.packages != null)
+                packages = this.packages;
             return new ConcealedPackagesAttribute(packages);
         }
 
@@ -316,7 +327,7 @@ class ClassFileAttributes {
      *   u2 version_index;
      * }
      */
-    static class VersionAttribute extends Attribute {
+    static class VersionAttribute extends OptionalAttribute {
         private final Version version;
 
         VersionAttribute(Version version) {
@@ -336,8 +347,11 @@ class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
-            String value = cr.readUTF8(off, buf);
-            return new VersionAttribute(Version.parse(value));
+            Version version = Version.parse(cr.readUTF8(off, buf));
+            isPresent = true;
+            if (this.version != null)
+                version = this.version;
+            return new VersionAttribute(version);
         }
 
         @Override
@@ -365,7 +379,7 @@ class ClassFileAttributes {
      *   u2 main_class_index;
      * }
      */
-    static class MainClassAttribute extends Attribute {
+    static class MainClassAttribute extends OptionalAttribute {
         private final String mainClass;
 
         MainClassAttribute(String mainClass) {
@@ -386,6 +400,9 @@ class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readClass(off, buf);
+            isPresent = true;
+            if (this.mainClass != null)
+                value = this.mainClass;
             return new MainClassAttribute(value);
         }
 
@@ -422,7 +439,7 @@ class ClassFileAttributes {
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
      * should be changed to be an array of u1.
      */
-    static class HashesAttribute extends Attribute {
+    static class HashesAttribute extends OptionalAttribute {
         private final DependencyHashes hashes;
 
         HashesAttribute(DependencyHashes hashes) {
@@ -458,7 +475,9 @@ class ClassFileAttributes {
             }
 
             DependencyHashes hashes = new DependencyHashes(algorithm, map);
-
+            isPresent = true;
+            if (this.hashes != null)
+                hashes = this.hashes;
             return new HashesAttribute(hashes);
         }
 

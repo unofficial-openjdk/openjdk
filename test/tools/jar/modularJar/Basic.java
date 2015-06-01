@@ -28,9 +28,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -61,21 +61,28 @@ public class Basic {
         static TestModuleData FOO = new TestModuleData("foo",
                                                        "1.123",
                                                        "jdk.test.foo.Foo",
-                                                       "Hello World!!!");
+                                                       "Hello World!!!", null,
+                                                       "jdk.test.foo.internal");
         static TestModuleData BAR = new TestModuleData("bar",
                                                        "4.5.6.7",
                                                        "jdk.test.bar.Bar",
-                                                       "Hello from Bar!");
+                                                       "Hello from Bar!", null,
+                                                       "jdk.test.bar",
+                                                       "jdk.test.bar.internal");
         final String moduleName;
         final String mainClass;
         final String version;
         final String message;
         final String hashes;
-        TestModuleData(String mn, String v, String mc, String m) {
-            this(mn, v, mc, m, null);
-        }
-        TestModuleData(String mn, String v, String mc, String m, String h) {
+        final Set<String> conceals;
+        TestModuleData(String mn, String v, String mc, String m, String h, String... pkgs) {
             moduleName = mn; mainClass = mc; version = v; message = m; hashes = h;
+            conceals = new HashSet<>();
+            Stream.of(pkgs).forEach(conceals::add);
+        }
+        TestModuleData(String mn, String v, String mc, String m, String h, Set<String> pkgs) {
+            moduleName = mn; mainClass = mc; version = v; message = m; hashes = h;
+            conceals = pkgs;
         }
         static TestModuleData from(String s) {
             try {
@@ -84,6 +91,7 @@ public class Basic {
                 String message = null;
                 String name = null, version = null, mainClass = null;
                 String hashes = null;
+                Set<String> conceals = null;
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("message:")) {
                         message = line.substring("message:".length());
@@ -100,12 +108,22 @@ public class Basic {
                         mainClass = line.substring("mainClass:".length());
                     } else if (line.startsWith("hashes:")) {
                         hashes = line.substring("hashes:".length());
+                    }  else if (line.startsWith("conceals:")) {
+                        line = line.substring("conceals:".length());
+                        conceals = new HashSet<>();
+                        int i = line.indexOf(',');
+                        if (i != -1) {
+                            String[] p = line.split(",");
+                            Stream.of(p).forEach(conceals::add);
+                        } else {
+                            conceals.add(line);
+                        }
                     } else {
                         throw new AssertionError("Unknown value " + line);
                     }
                 }
 
-                return new TestModuleData(name, version, mainClass, message, hashes);
+                return new TestModuleData(name, version, mainClass, message, hashes, conceals);
             } catch (IOException x) {
                 throw new UncheckedIOException(x);
             }
@@ -127,6 +145,10 @@ public class Basic {
                 "Expected version: ", expected.version, ", got:", received.version);
         check(expected.mainClass.equals(received.mainClass),
                 "Expected mainClass: ", expected.mainClass, ", got:", received.mainClass);
+        expected.conceals.forEach(p -> check(received.conceals.contains(p),
+                                             "Expected ", p, ", in ", received.conceals));
+        received.conceals.forEach(p -> check(expected.conceals.contains(p),
+                                            "Expected ", p, ", in ", expected.conceals));
     };
     static final BiConsumer<Result,TestModuleData> BAR_PASS = (r,expected) -> {
         PASS.accept(r, expected);
@@ -145,6 +167,7 @@ public class Basic {
 
         testCreate(TestModuleData.FOO, PASS);
         testUpdate(TestModuleData.FOO, PASS);
+        testUpdatePartial(TestModuleData.FOO, PASS);
         testDependences(TestModuleData.FOO, TestModuleData.BAR, BAR_PASS);
 
         testBadOptions(TestModuleData.FOO, FAIL);
@@ -196,6 +219,83 @@ public class Basic {
 
         Result r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
 
+        resultChecker.accept(r, testModule);
+    }
+
+    static void testUpdatePartial(TestModuleData testModule,
+                                  BiConsumer<Result,TestModuleData> resultChecker)
+        throws IOException
+    {
+        Path mp = Paths.get(testModule.moduleName + "-updatePartial");
+        out.println("---Testing " + mp.getFileName());
+        createTestDir(mp);
+        Path modClasses = TEST_CLASSES.resolve(testModule.moduleName);
+        Path modularJar = mp.resolve(testModule.moduleName + ".jar");
+
+        // just the main class in first create
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + "IAmNotAnEntryPoint",  // no all attributes
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");  // includes module-info.class
+
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + testModule.mainClass,
+            "--module-version=" + testModule.version,
+            "--no-manifest");
+        Result r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
+        resultChecker.accept(r, testModule);
+
+        // just the version in first create
+        FileUtils.deleteFileWithRetry(modularJar);
+        jar("--create",
+                "--archive=" + modularJar.toString(),
+                "--module-version=" + "100000000",  // no all attributes
+                "--no-manifest",
+                "-C", modClasses.toString(), ".");  // includes module-info.class
+
+        jar("--update",
+                "--archive=" + modularJar.toString(),
+                "--main-class=" + testModule.mainClass,
+                "--module-version=" + testModule.version,
+                "--no-manifest");
+        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
+        resultChecker.accept(r, testModule);
+
+        // just some files, no concealed packages, in first create
+        FileUtils.deleteFileWithRetry(modularJar);
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--no-manifest",
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class");
+
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + testModule.mainClass,
+            "--module-version=" + testModule.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class");
+        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
+        resultChecker.accept(r, testModule);
+
+        // all attributes and files
+        FileUtils.deleteFileWithRetry(modularJar);
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + testModule.mainClass,
+            "--module-version=" + testModule.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");
+
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + testModule.mainClass,
+            "--module-version=" + testModule.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");
+        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
         resultChecker.accept(r, testModule);
     }
 
@@ -397,7 +497,6 @@ public class Basic {
             throw new RuntimeException(
                     format("Process hasn't finished '%s'", pb.command()), e);
         }
-
         return new Result(p.exitValue(), output);
     }
 

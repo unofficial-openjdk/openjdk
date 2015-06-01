@@ -28,6 +28,7 @@ package jdk.test.bar;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import jdk.internal.module.Hasher;
 import jdk.test.bar.internal.Message;
@@ -47,5 +48,8 @@ public class Bar {
 
         System.out.println("hashes:" + optHashes.get().hashFor("foo"));
 
+        StringJoiner sj = new StringJoiner(",");
+        md.conceals().forEach(sj::add);
+        System.out.println("conceals:" + sj.toString());
     }
 }

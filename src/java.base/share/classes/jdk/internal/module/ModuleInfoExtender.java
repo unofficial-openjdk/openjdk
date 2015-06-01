@@ -110,28 +110,22 @@ public final class ModuleInfoExtender {
         ClassReader cr = new ClassReader(in);
 
         List<Attribute> attrs = new ArrayList<>();
+        ClassFileAttributes.OptionalAttribute ca, va, mc, ha;
         attrs.add(new ClassFileAttributes.ModuleAttribute());
-
-        // pass through existing attributes if we aren't changing them
-        if (conceals == null)
-            attrs.add(new ClassFileAttributes.ConcealedPackagesAttribute());
-        if (version == null)
-            attrs.add(new ClassFileAttributes.VersionAttribute());
-        if (mainClass == null)
-            attrs.add(new ClassFileAttributes.MainClassAttribute());
-        if (hashes == null)
-            attrs.add(new ClassFileAttributes.HashesAttribute());
+        attrs.add((ca = new ClassFileAttributes.ConcealedPackagesAttribute(conceals)));
+        attrs.add((va = new ClassFileAttributes.VersionAttribute(version)));
+        attrs.add((mc = new ClassFileAttributes.MainClassAttribute(mainClass)));
+        attrs.add((ha = new ClassFileAttributes.HashesAttribute(hashes)));
 
         cr.accept(cv, attrs.toArray(new Attribute[0]), 0);
 
-        // add new attributes
-        if (conceals != null)
+        if (conceals != null && !ca.isPresent())
             cv.visitAttribute(new ClassFileAttributes.ConcealedPackagesAttribute(conceals));
-        if (version != null)
+        if (version != null && !va.isPresent())
             cv.visitAttribute(new ClassFileAttributes.VersionAttribute(version));
-        if (mainClass != null)
+        if (mainClass != null && !mc.isPresent())
             cv.visitAttribute(new ClassFileAttributes.MainClassAttribute(mainClass));
-        if (hashes != null)
+        if (hashes != null && !ha.isPresent())
             cv.visitAttribute(new ClassFileAttributes.HashesAttribute(hashes));
 
         // emit to the output stream

@@ -26,6 +26,8 @@
 package jdk.test.foo;
 
 import java.lang.module.ModuleDescriptor;
+import java.util.StringJoiner;
+
 import jdk.test.foo.internal.Message;
 
 public class Foo {
@@ -35,5 +37,9 @@ public class Foo {
         ModuleDescriptor md = Foo.class.getModule().getDescriptor();
         System.out.println("nameAndVersion:" + md.toNameAndVersion());
         System.out.println("mainClass:" + md.mainClass().get());
+
+        StringJoiner sj = new StringJoiner(",");
+        md.conceals().forEach(sj::add);
+        System.out.println("conceals:" + sj.toString());
     }
 }

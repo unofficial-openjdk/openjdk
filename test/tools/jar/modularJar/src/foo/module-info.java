@@ -24,5 +24,5 @@
  */
 
 module foo {
-    exports jdk.test;
+    exports jdk.test.foo;
 }
