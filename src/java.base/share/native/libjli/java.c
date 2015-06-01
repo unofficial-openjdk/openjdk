@@ -104,6 +104,7 @@ static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
 static void SetAddExportsProp(const char *s);
+static void SetOverrideProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -925,6 +926,14 @@ SetAddExportsProp(const char *s) {
     AddOption(prop, NULL);
 }
 
+static void
+SetOverrideProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.override=%s", s);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1149,6 +1158,18 @@ ParseArguments(int *pargc, char ***pargv,
                 char *value = arg + 13;
                 SetAddExportsProp(value);
                 haveAddExports = JNI_TRUE;
+            }
+        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0) {
+            static jboolean haveOverride = JNI_FALSE;
+            /* Unlike other arguments, -Xoverride only allowed once */
+            if (haveOverride) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-Xoverride");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 11;
+                SetOverrideProp(value);
+                haveOverride = JNI_TRUE;
             }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||

@@ -71,7 +71,7 @@ public class ClassLoaders {
             ucp = toURLClassPath(cp);
 
         // is -Xoverride specified?
-        s = System.getProperty("jdk.runtime.override");
+        s = System.getProperty("jdk.launcher.override");
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the class loaders
