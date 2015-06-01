@@ -31,7 +31,9 @@ import java.io.OutputStream;
 import java.lang.module.Version;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jdk.internal.org.objectweb.asm.Attribute;
@@ -40,6 +42,8 @@ import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.module.Hasher.DependencyHashes;
+
+import static jdk.internal.module.ClassFileAttributes.*;
 
 
 public final class ModuleInfoExtender {
@@ -98,35 +102,78 @@ public final class ModuleInfoExtender {
     }
 
     /**
+     * A ClassVisitor that supports adding class file attributes. If an
+     * attribute already exists then the first occurence of the attribute
+     * is replaced.
+     */
+    private static class AttributeAddingClassVisitor extends ClassVisitor {
+        private Map<String, Attribute> attrs = new HashMap<>();
+
+        AttributeAddingClassVisitor(int api, ClassVisitor cv) {
+            super(api, cv);
+        }
+
+        void addAttribute(Attribute attr) {
+            attrs.put(attr.type, attr);
+        }
+
+        @Override
+        public void visitAttribute(Attribute attr) {
+            String name = attr.type;
+            Attribute replacement = attrs.get(name);
+            if (replacement != null) {
+                attr = replacement;
+                attrs.remove(name);
+            }
+            super.visitAttribute(attr);
+        }
+
+        /**
+         * Adds any remaining attributes that weren't replaced to the
+         * class file.
+         */
+        void finish() {
+            attrs.values().forEach(a -> super.visitAttribute(a));
+            attrs.clear();
+        }
+    }
+
+    /**
      * Outputs the modified module-info.class to the given output stream.
      * Once this method has been called then the Extender object should
      * be discarded.
      */
     public void write(OutputStream out) throws IOException {
-        ClassWriter cw =
-            new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
-        ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) { };
+        ClassWriter cw
+            = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
+
+        AttributeAddingClassVisitor cv
+            = new AttributeAddingClassVisitor(Opcodes.ASM5, cw);
 
         ClassReader cr = new ClassReader(in);
 
+        if (conceals != null)
+            cv.addAttribute(new ConcealedPackagesAttribute(conceals));
+        if (version != null)
+            cv.addAttribute(new VersionAttribute(version));
+        if (mainClass != null)
+            cv.addAttribute(new MainClassAttribute(mainClass));
+        if (hashes != null)
+            cv.addAttribute(new HashesAttribute(hashes));
+
         List<Attribute> attrs = new ArrayList<>();
-        ClassFileAttributes.OptionalAttribute ca, va, mc, ha;
-        attrs.add(new ClassFileAttributes.ModuleAttribute());
-        attrs.add((ca = new ClassFileAttributes.ConcealedPackagesAttribute(conceals)));
-        attrs.add((va = new ClassFileAttributes.VersionAttribute(version)));
-        attrs.add((mc = new ClassFileAttributes.MainClassAttribute(mainClass)));
-        attrs.add((ha = new ClassFileAttributes.HashesAttribute(hashes)));
+
+        // prototypes of attributes that should be parsed
+        attrs.add(new ModuleAttribute());
+        attrs.add(new ConcealedPackagesAttribute());
+        attrs.add(new VersionAttribute());
+        attrs.add(new MainClassAttribute());
+        attrs.add(new HashesAttribute());
 
         cr.accept(cv, attrs.toArray(new Attribute[0]), 0);
 
-        if (conceals != null && !ca.isPresent())
-            cv.visitAttribute(new ClassFileAttributes.ConcealedPackagesAttribute(conceals));
-        if (version != null && !va.isPresent())
-            cv.visitAttribute(new ClassFileAttributes.VersionAttribute(version));
-        if (mainClass != null && !mc.isPresent())
-            cv.visitAttribute(new ClassFileAttributes.MainClassAttribute(mainClass));
-        if (hashes != null && !ha.isPresent())
-            cv.visitAttribute(new ClassFileAttributes.HashesAttribute(hashes));
+        // add any attributes that didn't replace previous attributes
+        cv.finish();
 
         // emit to the output stream
         out.write(cw.toByteArray());
