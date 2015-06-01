@@ -442,11 +442,6 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     }
   }
 
-  // -Xoverride
-  if (Arguments::override_dir() != NULL) {
-    PUTPROP(props, "jdk.runtime.override", Arguments::override_dir());
-  }
-
   return properties;
 JVM_END
 

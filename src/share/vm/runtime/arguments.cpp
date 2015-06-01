@@ -2986,6 +2986,16 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         return JNI_ERR;
 #endif
       }
+      if (match_option(option, "-Djdk.launcher.override=", &tail)) {
+        // -Xoverride
+        size_t len = strlen(tail);
+        char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
+        sprintf(dir, "%s%sjava.base", tail, os::file_separator());
+        scp_p->add_prefix(dir);
+        *scp_assembly_required_p = true;
+        dir[len] = '\0';
+        set_override_dir(dir);
+      }
     // -Xint
     } else if (match_option(option, "-Xint")) {
           set_mode_flags(_int);
@@ -3026,15 +3036,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       } else if (is_bad_option(option, args->ignoreUnrecognized, "verification")) {
         return JNI_EINVAL;
       }
-    // -Xoverride
-    } else if (match_option(option, "-Xoverride:", &tail)) {
-      size_t len = strlen(tail);
-      char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
-      sprintf(dir, "%s%sjava.base", tail, os::file_separator());
-      scp_p->add_prefix(dir);
-      *scp_assembly_required_p = true;
-      dir[len] = '\0';
-      set_override_dir(dir);
     // -Xdebug
     } else if (match_option(option, "-Xdebug")) {
       // note this flag has been used, then ignore
