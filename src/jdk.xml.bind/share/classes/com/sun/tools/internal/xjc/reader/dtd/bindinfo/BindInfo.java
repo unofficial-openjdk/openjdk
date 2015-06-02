@@ -26,14 +26,12 @@
 package com.sun.tools.internal.xjc.reader.dtd.bindinfo;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.ValidatorHandler;
 
 import com.sun.codemodel.internal.ClassType;
@@ -291,18 +289,7 @@ public class BindInfo
     /**
      * Lazily parsed schema for the binding file.
      */
-    private static SchemaCache bindingFileSchema = new SchemaCache(newStreamSource("bindingfile", "com/sun/tools/internal/xjc/reader/dtd/bindinfo/bindingfile.xsd"));
-
-    private static StreamSource newStreamSource(String systemId, String path) {
-        try {
-            InputStream is = ResourceLoaderUtil.getInputStream(BindInfo.class, path);
-            StreamSource schema = new StreamSource(is);
-            schema.setSystemId(systemId);
-            return schema;
-        } catch (IOException t) {
-            throw new InternalError(t);
-        }
-    }
+    private static SchemaCache bindingFileSchema = new SchemaCache("bindingfile.xsd", BindInfo.class);
 
     /**
      * Parses an InputSource into dom4j Document.
