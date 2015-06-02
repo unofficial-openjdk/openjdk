@@ -28,6 +28,7 @@ package java.util.prefs;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
@@ -237,29 +238,37 @@ public abstract class Preferences {
             // not use the context classloader, to avoid being
             // dependent on the invoking thread.
             // Checking AllPermission also seems wrong.
+            Class<?> factoryClass = null;
             try {
-                return (PreferencesFactory)
-                    Class.forName(factoryName, false,
-                                  ClassLoader.getSystemClassLoader())
-                    .newInstance();
-            } catch (Exception ex) {
-                try {
-                    // workaround for javaws, plugin,
-                    // load factory class using non-system classloader
-                    SecurityManager sm = System.getSecurityManager();
-                    if (sm != null) {
-                        sm.checkPermission(new java.security.AllPermission());
-                    }
-                    return (PreferencesFactory)
-                        Class.forName(factoryName, false,
-                                      Thread.currentThread()
-                                      .getContextClassLoader())
-                        .newInstance();
-                } catch (Exception e) {
-                    throw new InternalError(
-                        "Can't instantiate Preferences factory "
-                        + factoryName, e);
+                factoryClass
+                    = Class.forName(factoryName, false,
+                        ClassLoader.getSystemClassLoader());
+            } catch (Exception e) {
+                // workaround for javaws, plugin,
+                // load factory class using non-system classloader
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null) {
+                    sm.checkPermission(new java.security.AllPermission());
                 }
+                try {
+                    ClassLoader loader
+                        = Thread.currentThread().getContextClassLoader();
+                    factoryClass = Class.forName(factoryName, false, loader);
+                } catch (Exception e2) {
+                    throw new InternalError(
+                        "Unable to load Preferences factory "
+                        + factoryName, e2);
+                }
+            }
+
+            try {
+                Module thisModule = Preferences.class.getModule();
+                thisModule.addReads(factoryClass.getModule());
+                return (PreferencesFactory) factoryClass.newInstance();
+            } catch (Exception e) {
+                throw new InternalError(
+                    "Can't instantiate Preferences factory "
+                    + factoryName, e);
             }
         }
 
