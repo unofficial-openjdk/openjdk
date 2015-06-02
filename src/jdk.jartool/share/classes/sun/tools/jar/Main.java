@@ -598,28 +598,21 @@ class Main {
      * can be found by recursively descending directories.
      */
     void expand(File dir, String[] files, boolean isUpdate) throws IOException {
-        if (files == null) {
+        if (files == null)
             return;
-        }
+
         for (int i = 0; i < files.length; i++) {
             File f;
-            if (dir == null) {
+            if (dir == null)
                 f = new File(files[i]);
-            } else {
+            else
                 f = new File(dir, files[i]);
-            }
+
             if (f.isFile()) {
                 String path = f.getPath();
-                if (path.endsWith(MODULE_INFO)) {  // TODO: must be in the root
-//                    int idx;
-//                    if ((idx = path.indexOf(File.separator)) != -1) {
-//                        if (!(idx == 1 && path.charAt(0) == '.')) {
-//                            throw new IOException(formatMsg("error.unexpected.module-info", path));
-//                        }
-//                    }
-                    if (moduleInfo != null) {
-                        throw new IOException(formatMsg("error.unexpected.module-info", path));
-                    }
+                if (entryName(path).equals(MODULE_INFO)) {
+                    if (moduleInfo != null && vflag)
+                        output(formatMsg("error.unexpected.module-info", path));
                     moduleInfo = f.toPath();
                     if (isUpdate)
                         entryMap.put(entryName(path), f);
@@ -1464,7 +1457,7 @@ class Main {
      * Prints usage message.
      */
     void usageError() {
-        error(getMsg("usage"));
+        Info.USAGE_SUMMARY.print(err);
     }
 
     /**
