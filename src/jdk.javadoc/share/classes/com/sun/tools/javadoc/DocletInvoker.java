@@ -348,7 +348,6 @@ public class DocletInvoker {
      */
     private void ensureReadable(Class<?> targetClass) {
         try {
-
             Method getModuleMethod = Class.class.getMethod("getModule");
             Object thisModule = getModuleMethod.invoke(this.getClass());
             Object targetModule = getModuleMethod.invoke(targetClass);
