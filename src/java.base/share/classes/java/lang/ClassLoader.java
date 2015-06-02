@@ -1745,20 +1745,23 @@ public abstract class ClassLoader {
         if (packages.values().isEmpty()) {
             return new Package[0];
         }
-        return packages.values().stream()
-                       .toArray(Package[]::new);
+        return getPackageStream().toArray(Package[]::new);
     }
 
     // package-private
 
+    Stream<Package> getPackageStream() {
+        return packages.values().stream();
+    }
+
     Stream<Package> packagesFromAncestors() {
-        Stream<Package> pkgs = packages.values().stream();
+        Stream<Package> pkgs = getPackageStream();
         ClassLoader ld = parent;
         while (ld != null) {
-            pkgs = Stream.concat(packages.values().stream(), pkgs);
+            pkgs = Stream.concat(ld.getPackageStream(), pkgs);
             ld = ld.parent;
         }
-        return Stream.concat(BootLoader.packages(), pkgs);
+        return Stream.concat(BootLoader.getPackageStream(), pkgs);
     }
 
     Package findPackageFromAncestors(String name) {

@@ -36,6 +36,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.stream.Stream;
 
 import sun.nio.ch.Interruptible;
 import sun.reflect.CallerSensitive;
@@ -1331,8 +1332,8 @@ public final class System {
             {
                 return cl.getResourceAsStream(moduleName, name);
             }
-            public Package[] getPackages(ClassLoader cl) {
-                return cl.getPackages();
+            public Stream<Package> getPackageStream(ClassLoader cl) {
+                return cl.getPackageStream();
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

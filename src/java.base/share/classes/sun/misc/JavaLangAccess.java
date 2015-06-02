@@ -31,6 +31,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
 import java.security.AccessControlContext;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
 import sun.reflect.ConstantPool;
@@ -162,7 +163,7 @@ public interface JavaLangAccess {
     /**
      * Returns the Packages for the given class loader.
      */
-    Package[] getPackages(ClassLoader cl);
+    Stream<Package> getPackageStream(ClassLoader cl);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

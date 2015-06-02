@@ -230,11 +230,9 @@ public final class Module {
             // unnamed module
             Stream<Package> packages;
             if (loader == null) {
-                packages = BootLoader.packages();
+                packages = BootLoader.getPackageStream();
             } else {
-                Package[] pkgs
-                    = SharedSecrets.getJavaLangAccess().getPackages(loader);
-                packages = Arrays.stream(pkgs);
+                packages = SharedSecrets.getJavaLangAccess().getPackageStream(loader);
             }
             return packages.map(Package::getName).toArray(String[]::new);
         }
