@@ -535,14 +535,14 @@ public final class Module {
         }
 
         // register the modules in the service catalog if they provide services
-        // and set the "defined" field to mark as fully defined.
+        // ## FIXME: Need to decide whether to skip this if the configuration is
+        //           not the result of service binding
         for (ModuleDescriptor descriptor: cf.descriptors()) {
-            String name = descriptor.name();
-            Module m = modules.get(name);
-            ClassLoader loader = loaders.get(name);
-
             Map<String, Provides> services = descriptor.provides();
             if (!services.isEmpty()) {
+                String name = descriptor.name();
+                Module m = modules.get(name);
+                ClassLoader loader = loaders.get(name);
                 ServicesCatalog catalog;
                 if (loader == null) {
                     catalog = BootLoader.getServicesCatalog();

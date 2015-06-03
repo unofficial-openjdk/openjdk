@@ -197,6 +197,18 @@ public final class Configuration {
         return reads;
     }
 
+    /**
+     * Returns an immutable set of the module descriptors in this {@code
+     * Configuration} that provide one of more implementations of the given
+     * service.
+     *
+     * If this {@code Configuration} is not the result of {@link #bind()
+     * binding} then an empty set is returned.
+     */
+    public Set<ModuleDescriptor> provides(String sn) {
+        return resolution.provides(sn);
+    }
+
     @Override
     public String toString() {
         return descriptors().stream()

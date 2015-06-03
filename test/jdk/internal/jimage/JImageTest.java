@@ -47,7 +47,7 @@ import tests.JImageValidator;
  *          jdk.jlink/jdk.tools.jimage
  * @run build JImageTest
  * @run build tests.*
- * @run main JImageTest
+ * @run main/othervm -verbose:gc -Xmx1g JImageTest
 */
 public class JImageTest {
 

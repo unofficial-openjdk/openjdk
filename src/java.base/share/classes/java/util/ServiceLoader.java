@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -549,6 +550,7 @@ public final class ServiceLoader<S>
     private class LayerLookupIterator
         extends RestrictedIterator<S>
     {
+        final String serviceName;
         Layer currentLayer;
         Iterator<ModuleDescriptor> descriptorIterator;
         Iterator<String> providersIterator;
@@ -557,12 +559,13 @@ public final class ServiceLoader<S>
         String nextProvider;
 
         LayerLookupIterator() {
+            serviceName = service.getName();
             currentLayer = layer;
 
             // need to get us started
             Configuration cf = layer.configuration().orElse(null);
             if (cf != null) {
-                descriptorIterator = cf.descriptors().iterator();
+                descriptorIterator = cf.provides(serviceName).iterator();
             }
         }
 
@@ -584,16 +587,16 @@ public final class ServiceLoader<S>
                 // next descriptor
                 if (descriptorIterator != null && descriptorIterator.hasNext()) {
                     ModuleDescriptor descriptor = descriptorIterator.next();
-                    nextModule = currentLayer.findModule(descriptor.name()).orElse(null);
-                    ModuleDescriptor.Provides provides
-                        = descriptor.provides().get(service.getName());
-                    if (provides != null)
-                        providersIterator = provides.providers().iterator();
+
+                    nextModule = currentLayer.findModule(descriptor.name()).get();
+
+                    Provides provides = descriptor.provides().get(serviceName);
+                    providersIterator = provides.providers().iterator();
 
                     continue;
                 }
 
-                // next layer)
+                // next layer
                 Layer parent = currentLayer.parent().orElse(null);
                 if (parent == null)
                     return false;
@@ -605,7 +608,7 @@ public final class ServiceLoader<S>
                 if (cf == null)
                     return false;
 
-                descriptorIterator = cf.descriptors().iterator();
+                descriptorIterator = cf.provides(service.getName()).iterator();
             }
         }
 

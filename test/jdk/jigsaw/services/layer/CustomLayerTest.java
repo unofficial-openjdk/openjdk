@@ -50,6 +50,8 @@ public class CustomLayerTest {
                                                  ModuleFinder.empty(),
                                                  moduleName);
 
+        cf = cf.bind();
+
         // create the Layer with the module loaded by the system class loader
         ClassLoader scl = ClassLoader.getSystemClassLoader();
         ModuleReference mref = cf.findReference(moduleName).get();

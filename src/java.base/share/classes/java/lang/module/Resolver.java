@@ -26,6 +26,7 @@
 package java.lang.module;
 
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,9 +49,6 @@ import jdk.internal.module.Hasher.DependencyHashes;
  * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.
  *
  * TODO:
- * - decide on representation of service-use graph, if any. A method that takes a
- *   service type (by class name) and returns a sequence of Module and provider
- *   class is sufficient for ServiceLoader.
  * - avoid most of the cost of bind for the cases where augmenting the module
  *   graph does not add any modules
  * - replace makeGraph with efficient implementation for multiple layers
@@ -78,15 +76,20 @@ final class Resolver {
         // the readability graph
         private final Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
+        // maps a service type (by name) to the set of modules that provide
+        private final Map<String, Set<ModuleDescriptor>> serviceToProviders;
+
         Resolution(Set<ModuleDescriptor> selected,
                    Map<String, ModuleReference> nameToReference,
-                   Map<ModuleDescriptor, Set<ModuleDescriptor>> graph)
+                   Map<ModuleDescriptor, Set<ModuleDescriptor>> graph,
+                   Map<String, Set<ModuleDescriptor>> serviceToProviders)
         {
             this.selected = Collections.unmodifiableSet(selected);
             this.nameToReference = Collections.unmodifiableMap(nameToReference);
             Set<ModuleReference> refs = new HashSet<>(nameToReference.values());
             this.references = Collections.unmodifiableSet(refs);
             this.graph = graph; // no need to make defensive copy
+            this.serviceToProviders = serviceToProviders; // no need to make copy
         }
 
         Set<ModuleDescriptor> selected() {
@@ -107,6 +110,15 @@ final class Resolver {
                 return null;
             } else {
                 return Collections.unmodifiableSet(reads);
+            }
+        }
+
+        Set<ModuleDescriptor> provides(String sn) {
+            Set<ModuleDescriptor> provides = serviceToProviders.get(sn);
+            if (provides == null) {
+                return Collections.emptySet();
+            } else {
+                return Collections.unmodifiableSet(provides);
             }
         }
 
@@ -177,7 +189,7 @@ final class Resolver {
                 }
             }
 
-            trace("Module %s located (%s)", root, mref.location().orElse(null));
+            trace("Root module %s located (%s)", root, mref.location().orElse(null));
 
             nameToReference.put(root, mref);
             q.push(mref.descriptor());
@@ -191,7 +203,7 @@ final class Resolver {
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
-        return new Resolution(selected, nameToReference, graph);
+        return new Resolution(selected, nameToReference, graph, Collections.emptyMap());
     }
 
     /**
@@ -309,7 +321,6 @@ final class Resolver {
 
         // Where there is a consumer of a service then resolve all modules
         // that provide an implementation of that service
-        // ### TBD to to record the service-use graph
         do {
             for (ModuleDescriptor descriptor : candidateConsumers) {
                 if (!descriptor.uses().isEmpty()) {
@@ -319,9 +330,11 @@ final class Resolver {
                             for (ModuleReference mref : mrefs) {
                                 ModuleDescriptor provider = mref.descriptor();
                                 if (!provider.equals(descriptor)) {
+
+                                    trace("Module %s provides %s, used by %s",
+                                          provider.name(), service, descriptor.name());
+
                                     if (!selected.contains(provider)) {
-                                        trace("Module %s provides %s, used by %s",
-                                                provider.name(), service, descriptor.name());
                                         nameToReference.put(provider.name(), mref);
                                         q.push(provider);
                                     }
@@ -336,13 +349,43 @@ final class Resolver {
 
         } while (!candidateConsumers.isEmpty());
 
+
+        // For debugging purposes, print out the service consumers in the
+        // selected set that use providers in a parent layer
+        if (tracing) {
+            Set<ModuleDescriptor> allModules = layer.allModuleDescriptors();
+            for (ModuleDescriptor descriptor : selected) {
+                if (!descriptor.uses().isEmpty()) {
+                    for (String service : descriptor.uses()) {
+                        for (ModuleDescriptor other : allModules) {
+                            if (other.provides().get(service) != null) {
+                                trace("Module %s provides %s, used by %s",
+                                        other.name(), service, descriptor.name());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Finally create the map of service -> provider modules
+        Map<String, Set<ModuleDescriptor>> serviceToProviders = new HashMap<>();
+        for (ModuleDescriptor descriptor : selected) {
+            Map<String, Provides> provides = descriptor.provides();
+            for (Map.Entry<String, Provides> entry : provides.entrySet()) {
+                String sn = entry.getKey();
+                serviceToProviders.computeIfAbsent(sn, k -> new HashSet<>())
+                                  .add(descriptor);
+            }
+        }
+
         detectCycles();
 
         checkHashes();
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
-        return new Resolution(selected, nameToReference, graph);
+        return new Resolution(selected, nameToReference, graph, serviceToProviders);
     }
 
 
@@ -592,10 +635,10 @@ final class Resolver {
         }
     }
 
-    private static final boolean debug = false;
+    private static final boolean tracing = false;
 
     private static void trace(String fmt, Object ... args) {
-        if (debug) {
+        if (tracing) {
             System.out.format(fmt, args);
             System.out.println();
         }

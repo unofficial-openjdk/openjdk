@@ -83,6 +83,11 @@ public class ConfigurationTest {
 
         // m3 reads nothing
         assertTrue(cf.reads(descriptor3).size() == 0);
+
+        // toString
+        assertTrue(cf.toString().contains("m1"));
+        assertTrue(cf.toString().contains("m2"));
+        assertTrue(cf.toString().contains("m3"));
     }
 
     /**
@@ -134,11 +139,11 @@ public class ConfigurationTest {
                     .build();
         ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
 
-
         Configuration cf;
         try {
             cf = Configuration.resolve(finder, boot(), empty(), "m1");
             assertTrue(cf.descriptors().size() == 1);
+            assertTrue(cf.provides("java.security.Provider").isEmpty());
         } catch (ResolutionException e) {
             throw new RuntimeException(e);
         }
@@ -194,27 +199,29 @@ public class ConfigurationTest {
      */
     public void testBasicBinding() {
 
-        ModuleDescriptor descriptor1 =
-            new ModuleDescriptor.Builder("m1")
-                    .requires("m2")
-                    .uses("S")
-                    .build();
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .uses("S")
+                .build();
 
-        ModuleDescriptor descriptor2 =
-            new ModuleDescriptor.Builder("m2").build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .provides("S", "p.S2")
+                .build();
 
         // service provider
-        ModuleDescriptor descriptor3 =
-            new ModuleDescriptor.Builder("m3")
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
                 .requires("m1")
-                .provides("S", "p.S1").build();
+                .provides("S", "q.S3").build();
 
         // unused module
-        ModuleDescriptor descriptor4 =
-            new ModuleDescriptor.Builder("m4").build();
+        ModuleDescriptor descriptor4
+            = new ModuleDescriptor.Builder("m4").build();
 
-        ModuleFinder finder =
-            new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
+        ModuleFinder finder
+            = new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
 
         Configuration cf = Configuration.resolve(finder, boot(), empty(), "m1");
 
@@ -227,6 +234,8 @@ public class ConfigurationTest {
         assertTrue(cf.reads(descriptor1).contains(descriptor2));
 
         assertTrue(cf.reads(descriptor2).size() == 0);
+
+        assertTrue(cf.provides("S").isEmpty());
 
         // bind services, should augment graph with m3
         cf = cf.bind();
@@ -243,6 +252,14 @@ public class ConfigurationTest {
 
         assertTrue(cf.reads(descriptor3).size() == 1);
         assertTrue(cf.reads(descriptor3).contains(descriptor1));
+
+        assertTrue(cf.provides("S").size() == 2);
+        assertTrue(cf.provides("S").contains(descriptor2));
+        assertTrue(cf.provides("S").contains(descriptor3));
+
+        assertTrue(cf.toString().contains("m1"));
+        assertTrue(cf.toString().contains("m2"));
+        assertTrue(cf.toString().contains("m3"));
     }
 
     /**
