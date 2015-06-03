@@ -23,7 +23,7 @@
 
 /*
  *  @test
- *  @bug 6741606 7146431 8000450 8022945
+ *  @bug 6741606 7146431 8000450 8022945 8078427
  *  @summary Make sure all restricted packages listed in the package.access
  *           property in the java.security file are blocked
  *  @run main/othervm CheckPackageAccess
@@ -73,6 +73,7 @@ public class CheckPackageAccess {
         "com.sun.org.apache.xalan.internal.xsltc.util.",
         "com.sun.org.apache.xml.internal.res.",
         "com.sun.org.apache.xml.internal.security.",
+        "com.sun.org.apache.xml.internal.serializer.dom3.",
         "com.sun.org.apache.xml.internal.serializer.utils.",
         "com.sun.org.apache.xml.internal.utils.",
         "com.sun.org.glassfish.",
