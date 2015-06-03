@@ -47,8 +47,7 @@ public final class ReflectUtil {
 
     public static Object newInstance(Class<?> cls)
         throws InstantiationException, IllegalAccessException {
-        checkPackageAccess(cls);
-        return cls.newInstance();
+        throw new InternalError("should call ReflectUtil.checkPackageAccess and Class.newInstance separately");
     }
 
     /*

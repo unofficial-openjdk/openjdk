@@ -24,6 +24,8 @@
  */
 package javax.sql.rowset.serial;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Map;
@@ -477,7 +479,13 @@ public class SQLInputImpl implements SQLInput {
                 // create new instance of the class
                 SQLData obj = null;
                 try {
-                    obj = (SQLData)ReflectUtil.newInstance(c);
+                    ReflectUtil.checkPackageAccess(c);
+                    PrivilegedAction<Void> pa = () -> {
+                        SQLInputImpl.class.getModule().addReads(c.getModule());
+                        return null;
+                    };
+                    AccessController.doPrivileged(pa);
+                    obj = (SQLData)c.newInstance();
                 } catch (Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
                 }

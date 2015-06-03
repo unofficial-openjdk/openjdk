@@ -25,6 +25,8 @@
 
 package com.sun.rowset;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.sql.*;
 import javax.sql.*;
 import java.io.*;
@@ -2960,7 +2962,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 // create new instance of the class
                 SQLData obj = null;
                 try {
-                    obj = (SQLData) ReflectUtil.newInstance(c);
+                    ReflectUtil.checkPackageAccess(c);
+                    PrivilegedAction<Void> pa = () -> {
+                        CachedRowSetImpl.class.getModule().addReads(c.getModule());
+                        return null;
+                    };
+                    AccessController.doPrivileged(pa);
+                    obj = (SQLData) c.newInstance();
                 } catch(Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
                 }
@@ -5707,7 +5715,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 // create new instance of the class
                 SQLData obj = null;
                 try {
-                    obj = (SQLData) ReflectUtil.newInstance(c);
+                    ReflectUtil.checkPackageAccess(c);
+                    obj = (SQLData) c.newInstance();
                 } catch(Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
                 }
