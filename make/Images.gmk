@@ -128,7 +128,7 @@ $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact1 jimage
 	$(RM) -r $(JRE_COMPACT1_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
 	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
-	    --addmods $(call SubstComma, java.compact1 $(COMPACT_EXTRA_MODULES)) \
+            --limitmods $(call SubstComma, java.compact1 $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT1_IMAGE_DIR) \
 	    > $(JRE_COMPACT1_SORTED_MODULES)
 	$(TOUCH) $@
@@ -137,7 +137,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
 	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
-	    --addmods $(call SubstComma, java.compact2 $(COMPACT_EXTRA_MODULES)) \
+            --limitmods $(call SubstComma, java.compact2 $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR) \
 	    > $(JRE_COMPACT2_SORTED_MODULES)
 	$(TOUCH) $@
@@ -146,7 +146,7 @@ $(JRE_COMPACT3_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact3 jimage
 	$(RM) -r $(JRE_COMPACT3_IMAGE_DIR) $(JRE_COMPACT3_SORTED_MODULES)
 	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
-	    --addmods $(call SubstComma, $(JDK_COMPACT3_MODULES) $(COMPACT_EXTRA_MODULES)) \
+            --limitmods $(call SubstComma, $(JDK_COMPACT3_MODULES) $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT3_IMAGE_DIR) \
 	    > $(JRE_COMPACT3_SORTED_MODULES)
 	$(TOUCH) $@
