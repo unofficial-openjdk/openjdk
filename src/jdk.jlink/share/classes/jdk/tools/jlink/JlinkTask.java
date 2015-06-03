@@ -49,11 +49,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -114,9 +114,19 @@ class JlinkTask {
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
-                    throw taskHelper.newBadArgs("err.jmod.not.found", mn);
+                    throw taskHelper.newBadArgs("err.mods.must.be.specified",
+                                                "--limitmods");
                 }
-                task.options.jmods.add(mn);
+                task.options.limitMods.add(mn);
+            }
+        }, "--limitmods"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            for (String mn : arg.split(",")) {
+                if (mn.isEmpty()) {
+                    throw taskHelper.newBadArgs("err.mods.must.be.specified",
+                                                "--addmods");
+                }
+                task.options.addMods.add(mn);
             }
         }, "--addmods"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
@@ -157,8 +167,8 @@ class JlinkTask {
         boolean version;
         boolean fullVersion;
         ModuleFinder moduleFinder;
-        Set<String> jmods = new TreeSet<>();
-        boolean compress = false;
+        Set<String> limitMods = new HashSet<>();
+        Set<String> addMods = new HashSet<>();
         Path output;
     }
 
@@ -190,8 +200,13 @@ class JlinkTask {
             if (Files.list(output).findFirst().isPresent())
                 throw taskHelper.newBadArgs("err.dir.not.empty", output);
 
-            if (options.jmods.isEmpty())  // ## default to jdk.base ??
-                throw taskHelper.newBadArgs("err.mods.must.be.specified").showUsage(true);
+            // --addmods and/or --limitmods must be specified
+            if (options.addMods.isEmpty()) {
+                if (options.limitMods.isEmpty())
+                    throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
+                                    .showUsage(true);
+                options.addMods = options.limitMods;
+            }
 
             // additional option combination validation
 
@@ -256,10 +271,19 @@ class JlinkTask {
     private void createImage() throws IOException {
         final Path output = options.output;
 
-        Configuration cf = Configuration.resolve(options.moduleFinder,
+        ModuleFinder finder = options.moduleFinder;
+
+        // if --limitmods is specified then limit the universe
+        if (!options.limitMods.isEmpty())
+            finder = limitFinder(finder, options.limitMods);
+
+        Configuration cf
+            = Configuration.resolve(finder,
                 Layer.empty(),
                 ModuleFinder.empty(),
-                options.jmods);
+                options.addMods);
+
+        cf = cf.bind();
 
         Map<String, Path> mods = modulesToPath(cf.descriptors());
 
@@ -269,6 +293,39 @@ class JlinkTask {
         if (options.genbom) {
             genBOM(options.output);
         }
+    }
+
+    /**
+     * Returns a ModuleFinder that locates modules via the given ModuleFinder
+     * but limits what can be found to the given modules and their transitive
+     * dependences.
+     */
+    private ModuleFinder limitFinder(ModuleFinder finder, Set<String> mods) {
+        Configuration cf
+            = Configuration.resolve(finder,
+                Layer.empty(),
+                ModuleFinder.empty(),
+                mods);
+
+        // module name -> reference
+        Map<String, ModuleReference> map = new HashMap<>();
+        cf.descriptors().forEach(md -> {
+            String name = md.name();
+            map.put(name, finder.find(name).get());
+        });
+
+        Set<ModuleReference> mrefs = new HashSet<>(map.values());
+
+        return new ModuleFinder() {
+            @Override
+            public Optional<ModuleReference> find(String name) {
+                return Optional.ofNullable(map.get(name));
+            }
+            @Override
+            public Set<ModuleReference> findAll() {
+                return mrefs;
+            }
+        };
     }
 
     private void genBOM(Path root) throws IOException {
