@@ -42,6 +42,7 @@ public abstract class Attribute {
     public static final String BootstrapMethods         = "BootstrapMethods";
     public static final String CharacterRangeTable      = "CharacterRangeTable";
     public static final String Code                     = "Code";
+    public static final String ConcealedPackages        = "ConcealedPackages";
     public static final String ConstantValue            = "ConstantValue";
     public static final String CompilationID            = "CompilationID";
     public static final String Deprecated               = "Deprecated";
@@ -113,6 +114,7 @@ public abstract class Attribute {
             standardAttributes.put(CharacterRangeTable, CharacterRangeTable_attribute.class);
             standardAttributes.put(Code,              Code_attribute.class);
             standardAttributes.put(CompilationID,     CompilationID_attribute.class);
+            standardAttributes.put(ConcealedPackages, ConcealedPackages_attribute.class);
             standardAttributes.put(ConstantValue,     ConstantValue_attribute.class);
             standardAttributes.put(Deprecated,        Deprecated_attribute.class);
             standardAttributes.put(EnclosingMethod,   EnclosingMethod_attribute.class);
@@ -174,6 +176,7 @@ public abstract class Attribute {
         R visitCharacterRangeTable(CharacterRangeTable_attribute attr, P p);
         R visitCode(Code_attribute attr, P p);
         R visitCompilationID(CompilationID_attribute attr, P p);
+        R visitConcealedPackages(ConcealedPackages_attribute attr, P p);
         R visitConstantValue(ConstantValue_attribute attr, P p);
         R visitDeprecated(Deprecated_attribute attr, P p);
         R visitEnclosingMethod(EnclosingMethod_attribute attr, P p);

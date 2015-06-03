@@ -419,6 +419,14 @@ public class ClassWriter {
         }
 
         @Override
+        public Void visitConcealedPackages(ConcealedPackages_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.packages_count);
+            for (int i: attr.packages_index)
+                out.writeShort(i);
+            return null;
+        }
+
+        @Override
         public Void visitConstantValue(ConstantValue_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.constantvalue_index);
             return null;

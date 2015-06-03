@@ -34,6 +34,7 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.CharacterRangeTable_attribute.Entry;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
+import com.sun.tools.classfile.ConcealedPackages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.ConstantValue_attribute;
@@ -232,6 +233,27 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitCompilationID(CompilationID_attribute attr, Void ignore) {
         constantWriter.write(attr.compilationID_index);
+        return null;
+    }
+
+    private String getJavaPackage(ConcealedPackages_attribute attr, int index) {
+        try {
+            return getJavaName(attr.getPackage(index, constant_pool));
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    @Override
+    public Void visitConcealedPackages(ConcealedPackages_attribute attr, Void ignore) {
+        println("ConcealedPackages: ");
+        indent(+1);
+        for (int i = 0; i < attr.packages_count; i++) {
+            print("#" + attr.packages_index[i]);
+            tab();
+            println("// " + getJavaPackage(attr, i));
+        }
+        indent(-1);
         return null;
     }
 
