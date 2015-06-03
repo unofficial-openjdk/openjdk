@@ -325,6 +325,7 @@ public final class GenModuleInfo {
         public R visitCharacterRangeTable(CharacterRangeTable_attribute attr, P p) { return null; }
         public R visitCode(Code_attribute attr, P p) { return null; }
         public R visitCompilationID(CompilationID_attribute attr, P p) { return null; }
+        public R visitConcealedPackages(ConcealedPackages_attribute attr, P p) { return null; }
         public R visitConstantValue(ConstantValue_attribute attr, P p) { return null; }
         public R visitDeprecated(Deprecated_attribute attr, P p) { return null; }
         public R visitEnclosingMethod(EnclosingMethod_attribute attr, P p) { return null; }
