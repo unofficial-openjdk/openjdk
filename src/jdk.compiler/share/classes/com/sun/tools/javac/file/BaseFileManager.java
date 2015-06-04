@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
@@ -56,11 +57,10 @@ import javax.tools.JavaFileObject.Kind;
 
 import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.code.Source;
-import com.sun.tools.javac.file.FSInfo;
-import com.sun.tools.javac.file.Locations;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.main.OptionHelper;
 import com.sun.tools.javac.main.OptionHelper.GrumpyHelper;
+import com.sun.tools.javac.util.Abort;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -138,12 +138,34 @@ public abstract class BaseFileManager implements JavaFileManager {
                         Class.forName(classLoaderClass).asSubclass(ClassLoader.class);
                 Class<?>[] constrArgTypes = { URL[].class, ClassLoader.class };
                 Constructor<? extends ClassLoader> constr = loader.getConstructor(constrArgTypes);
-                return constr.newInstance(urls, thisClassLoader);
+                return ensureReadable(constr.newInstance(urls, thisClassLoader));
             } catch (ReflectiveOperationException t) {
                 // ignore errors loading user-provided class loader, fall through
             }
         }
-        return new URLClassLoader(urls, thisClassLoader);
+        return ensureReadable(new URLClassLoader(urls, thisClassLoader));
+    }
+
+    /**
+     * Ensures that the unnamed module of the given classloader is readable to this
+     * module.
+     */
+    private ClassLoader ensureReadable(ClassLoader targetLoader) {
+        try {
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(this.getClass());
+            Method getUnnamedModuleMethod = ClassLoader.class.getMethod("getUnnamedModule");
+            Object targetModule = getUnnamedModuleMethod.invoke(targetLoader);
+
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+            addReadsMethod.invoke(thisModule, targetModule);
+        } catch (NoSuchMethodException e) {
+            // ignore
+        } catch (Exception e) {
+            throw new Abort(e);
+        }
+        return targetLoader;
     }
 
     public boolean isDefaultBootClassPath() {

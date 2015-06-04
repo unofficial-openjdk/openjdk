@@ -42,6 +42,10 @@ import com.sun.tools.javac.util.*;
 @ProcessingEnvAnnoDiscovery.Anno1
 public class ProcessingEnvAnnoDiscovery<@ProcessingEnvAnnoDiscovery.Anno4 T>
         extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.javac.util");
+    }
+
     private int round = 0;
 
     public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
