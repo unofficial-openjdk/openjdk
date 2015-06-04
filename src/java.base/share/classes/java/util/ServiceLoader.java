@@ -499,6 +499,19 @@ public final class ServiceLoader<S>
     }
 
     /**
+     * Uses Class.forName to load a class in a module.
+     */
+    private static Class<?> loadClassInModule(Module module, String cn) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            return Class.forName(module, cn);
+        } else {
+            PrivilegedAction<Class<?>> pa = () -> Class.forName(module, cn);
+            return AccessController.doPrivileged(pa);
+        }
+    }
+
+    /**
      * An Iterator that runs the next and hasNext methods with permissions
      * restricted by the {@code AccessControlContext} obtained when the
      * ServiceLoader was created.
@@ -623,7 +636,7 @@ public final class ServiceLoader<S>
             nextProvider = null;
 
             // attempt to load the provider
-            Class<?> c = Class.forName(nextModule, cn);
+            Class<?> c = loadClassInModule(nextModule, cn);
             if (c == null)
                 fail(service, "Provider " + cn  + " not found");
             if (!service.isAssignableFrom(c))
@@ -715,23 +728,16 @@ public final class ServiceLoader<S>
             nextProvider = null;
 
             // attempt to load the provider
+            Module module = provider.module();
             String cn = provider.providerName();
-            Class<?> c = null;
-            try {
-                c = Class.forName(cn, false, currentLoader);
-            } catch (ClassNotFoundException x) {
-                fail(service, "Provider " + cn + " not found");
+
+            Class<?> c = loadClassInModule(module, cn);
+            if (c == null) {
+                fail(service,
+                    "Provider " + cn + " not found in " + module.getName());
             }
             if (!service.isAssignableFrom(c)) {
                 fail(service, "Provider " + cn  + " not a subtype");
-            }
-
-            // check provider loaded from the expected module
-            Module m = c.getModule();
-            if (m != provider.module()) {
-                fail(service,
-                     "Provider " + cn  + " loaded from " + m +
-                     " expected " + provider.module());
             }
 
             // instantiate the provider
