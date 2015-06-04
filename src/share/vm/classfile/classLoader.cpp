@@ -570,35 +570,75 @@ const char* ClassPathImageEntry::name() {
   return _image ? _image->name() : "";
 }
 
+// For a class in a named module, look it up in the jimage file using this syntax:
+//    /<module-name>/<package-name>/<base-class>
+//
+// Assumptions:
+//     1. There are no unnamed modules in the jimage file.
+//     2. A package is in at most one module in the jimage file.
+//
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
-  u1* buffer;
-  u8 size;
-  _image->get_resource(name, buffer, size);
+  // Do not put a ResourceMark in this method.  Otherwise, memory that this
+  // method's caller depends on may get deallocated.
+  const char *pslash = strrchr(name, '/');
+  if (pslash != NULL) {
+    // There's a package. So, the class might be in the jimage file.
+    u1* buffer = NULL;
+    u8 size;
+    char path[JVM_MAXPATHLEN];
+    int len = pslash - name;
+    assert(len > 0, "Bad length for package name");
 
-  if (!buffer) {
-    const char *pslash = strrchr(name, '/');
+    if (!Universe::is_module_initialized()) {
+      // Module must be java.base (except when dumping CDS archive)
+      jio_snprintf(path, JVM_MAXPATHLEN - 1, "/java.base/%s", name);
+      _image->get_resource(path, buffer, size);
 
-    if (pslash) {
-      char path[JVM_MAXPATHLEN];
-      int len = pslash - name;
+#if INCLUDE_CDS
+      // CDS uses the boot class loader to load classes whose packages are in
+      // modules defined for other class loaders.  So, for now, get their module
+      // names from the .jimage file.
+      if (DumpSharedSpaces && buffer == NULL) {
+        strncpy(path, name, len);
+        path[len] = '\0';
+        const char* module_name = _module_data->package_to_module(path);
+        if (module_name) {
+          jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s", module_name, name);
+          _image->get_resource(path, buffer, size);
+        }
+      }
+#endif
+
+    } else {
       strncpy(path, name, len);
       path[len] = '\0';
-      const char* moduleName = _module_data->package_to_module(path);
 
-      if (moduleName) {
-        jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s", moduleName, name);
+      // Get boot class loader's package entry table
+      PackageEntryTable* pkgEntryTable =
+        ClassLoaderData::the_null_class_loader_data()->packages();
+      // Get package's package entry
+      TempNewSymbol pkg_symbol = SymbolTable::new_symbol(path, CHECK_NULL);
+      PackageEntry* packageEntry = pkgEntryTable->lookup_only(pkg_symbol);
+
+      if (packageEntry != NULL) {
+        // Get the module name
+        ModuleEntry* module = packageEntry->module();
+        assert(module != NULL, "Boot classLoader package missing module");
+        assert(module->is_named(), "Boot classLoader package is in unnamed module");
+
+        jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s",
+          module->name()->as_C_string(), name);
         _image->get_resource(path, buffer, size);
       }
     }
-  }
 
-  if (buffer) {
-    if (UsePerfData) {
-      ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
+    if (buffer != NULL) { // Found the class in .jimage file
+      if (UsePerfData) {
+        ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
+      }
+      return new ClassFileStream(buffer, (int)size, _image->name());  // Resource allocated
     }
-    return new ClassFileStream(buffer, (int)size, _image->name());  // Resource allocated
   }
-
   return NULL;
 }
 
