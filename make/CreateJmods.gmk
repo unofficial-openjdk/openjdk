@@ -72,10 +72,11 @@ DEPS += $(patsubst %, $(IMAGES_OUTPUTDIR)/jmods/%.jmod, \
 $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(ECHO) Creating $(notdir $@)
 	$(MKDIR) -p $(@D)
-	$(RM) $@
+	$(RM) $@.tmp
 	$(JMOD) create --module-version 9.0 \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences '.*' \
-	    $(JMOD_FLAGS) $@
+	    $(JMOD_FLAGS) $@.tmp
+	$(MV) $@.tmp $@
 
 TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 
