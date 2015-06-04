@@ -72,8 +72,9 @@ IMPORTED_MODULES := $(call FindImportedModules)
 JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
 JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES) $(IMPORTED_MODULES)
 
-# compact3 builds have additional modules
-JDK_COMPACT3_MODULES := java.compact3 java.smartcardio jdk.httpserver jdk.management \
+# compact2 and compact3 builds have additional modules
+JDK_COMPACT2_MODULES := java.compact2 jdk.xml.dom jdk.httpserver
+JDK_COMPACT3_MODULES := $(JDK_COMPACT2_MODULES) java.compact3 java.smartcardio jdk.management \
                         jdk.naming.dns jdk.naming.rmi jdk.sctp jdk.security.auth
 
 # Replacing double-comma with a single comma is to workaround the issue
@@ -137,7 +138,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
 	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
-            --limitmods $(call SubstComma, java.compact2 $(COMPACT_EXTRA_MODULES)) \
+            --limitmods $(call SubstComma, $(JDK_COMPACT2_MODULES) $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR) \
 	    > $(JRE_COMPACT2_SORTED_MODULES)
 	$(TOUCH) $@
