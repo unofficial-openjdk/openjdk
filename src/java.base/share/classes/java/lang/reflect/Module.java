@@ -513,10 +513,11 @@ public final class Module {
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();
             for (Exports export: descriptor.exports()) {
                 String source = export.source();
+                String sourceInternalForm = source.replace('.', '/');
                 if (!export.targets().isPresent()) {
                     exports.computeIfAbsent(source, k -> Collections.emptyMap());
                     // update VM view
-                    addModuleExports0(m, source.replace('.', '/'), null);
+                    addModuleExports0(m, sourceInternalForm , null);
                 } else {
                     export.targets().get()
                         .forEach(mn -> {
@@ -526,7 +527,7 @@ public final class Module {
                                     exports.computeIfAbsent(source, k -> new HashMap<>())
                                         .put(m2, Boolean.TRUE);
                                     // update VM view
-                                    addModuleExports0(m, source.replace('.', '/'), m2);
+                                    addModuleExports0(m, sourceInternalForm, m2);
                                 }
                             });
                 }
@@ -736,7 +737,7 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM) {
-               addModuleExports0(this, pn.replace('.', '/'), target);
+                addModuleExports0(this, pn.replace('.', '/'), target);
             }
 
             // copy existing map
