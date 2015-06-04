@@ -424,6 +424,12 @@ final class ModuleInfo {
             for (int i = 1; i < count; i++) {
                 int tag = in.readUnsignedByte();
                 switch (tag) {
+
+                    case CONSTANT_Utf8:
+                        String svalue = in.readUTF();
+                        pool[i] = new ValueEntry(tag, svalue);
+                        break;
+
                     case CONSTANT_Class:
                     case CONSTANT_String:
                         int index = in.readUnsignedShort();
@@ -471,11 +477,6 @@ final class ModuleInfo {
                         long lvalue = in.readLong();
                         pool[i] = new ValueEntry(tag, lvalue);
                         i++;
-                        break;
-
-                    case CONSTANT_Utf8:
-                        String svalue = in.readUTF();
-                        pool[i] = new ValueEntry(tag, svalue);
                         break;
 
                     default:
