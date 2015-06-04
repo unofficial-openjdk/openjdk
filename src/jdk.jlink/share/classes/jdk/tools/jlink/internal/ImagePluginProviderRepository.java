@@ -64,7 +64,7 @@ public final class ImagePluginProviderRepository {
     public static Plugin[] newPlugins(Properties properties, String name,
             ClassLoader loader) throws IOException {
         Objects.requireNonNull(name);
-        PluginProvider fact = getImageWriterProvider(name, loader);
+        PluginProvider fact = getPluginProvider(name, loader);
         return fact.newPlugins(properties);
     }
 
@@ -76,7 +76,7 @@ public final class ImagePluginProviderRepository {
      * @return A provider.
      * @throws IOException
      */
-    public static PluginProvider getImageWriterProvider(String name,
+    public static PluginProvider getPluginProvider(String name,
             ClassLoader loader) throws IOException {
         Objects.requireNonNull(name);
         PluginProvider provider = registeredProviders.get(name);
@@ -101,7 +101,7 @@ public final class ImagePluginProviderRepository {
      * The list of all the providers accessible in the current context.
      * @return A list of all the providers.
      */
-    public static List<PluginProvider> getImageWriterProviders(ClassLoader loader) {
+    public static List<PluginProvider> getPluginProviders(ClassLoader loader) {
         List<PluginProvider> factories = new ArrayList<>();
         Iterator<PluginProvider> javaProviders = getJavaPluginProviders(loader);
         while (javaProviders.hasNext()) {
@@ -115,7 +115,8 @@ public final class ImagePluginProviderRepository {
     }
 
     /**
-     * Explicit registration of a provider in the repository.
+     * Explicit registration of a provider in the repository. Used by unit tests
+     *
      * @param provider The provider to register.
      */
     public synchronized static void registerPluginProvider(PluginProvider provider) {
@@ -123,6 +124,16 @@ public final class ImagePluginProviderRepository {
         registeredProviders.put(provider.getName(), provider);
     }
 
+    /**
+     * Explicit unregistration of a provider in the repository. Used by unit
+     * tests
+     *
+     * @param name Provider name
+     */
+    public synchronized static void unregisterPluginProvider(String name) {
+        Objects.requireNonNull(name);
+        registeredProviders.remove(name);
+    }
 
     public static ImageBuilder newImageBuilder(Properties properties, Path outputDir,
             String name, ClassLoader loader) throws IOException {

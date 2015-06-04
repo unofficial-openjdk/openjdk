@@ -74,7 +74,6 @@ public final class TaskHelper {
     public static class Option<T> {
 
         public interface Processing<T> {
-
             void process(T task, String opt, String arg) throws BadArgs;
         }
 
@@ -140,10 +139,19 @@ public final class TaskHelper {
         private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
-        private PluginsOptions() {
-
-            for (PluginProvider provider : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+        private PluginsOptions() throws BadArgs {
+            Map<String, List<String>> seen = new HashMap<>();
+            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(null)) {
                 if (provider.getToolOption() != null) {
+                    for (Entry<String, List<String>> entry : seen.entrySet()) {
+                        if (entry.getKey().equals(provider.getToolOption())
+                                || entry.getValue().contains(provider.getToolOption())) {
+                            throw new BadArgs("err.plugin.mutiple.options",
+                                    provider.getToolOption());
+                        }
+                    }
+                    List<String> optional = new ArrayList<>();
+                    seen.put(provider.getToolOption(), optional);
                     PluginOption option
                             = new PluginOption(provider.getToolArgument() != null,
                                     (task, opt, arg) -> {
@@ -158,6 +166,7 @@ public final class TaskHelper {
                     pluginsOptions.add(option);
                     if (provider.getAdditionalOptions() != null) {
                         for (String other : provider.getAdditionalOptions().keySet()) {
+                            optional.add(other);
                             PluginOption otherOption = new PluginOption(true,
                                     (task, opt, arg) -> {
                                         Map<String, String> m = plugins.get(provider);
@@ -442,7 +451,7 @@ public final class TaskHelper {
             log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
-            for (PluginProvider provider : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(null)) {
                 if (provider.getToolOption() != null) {
                     StringBuilder line = new StringBuilder();
                     line.append(" --").append(provider.getToolOption());
@@ -465,7 +474,7 @@ public final class TaskHelper {
         }
 
         public void showPlugins(PrintWriter log) {
-            for (PluginProvider fact : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+            for (PluginProvider fact : ImagePluginProviderRepository.getPluginProviders(null)) {
                 log.println("\n" + bundleHelper.getMessage("main.plugin.name")
                         + ": " + fact.getName());
                 Integer[] range = ImagePluginConfiguration.getRange(fact);

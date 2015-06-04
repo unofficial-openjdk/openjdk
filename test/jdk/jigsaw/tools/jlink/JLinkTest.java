@@ -54,7 +54,7 @@ public class JLinkTest {
         }
 
         int num = 0;
-        for (PluginProvider pf : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+        for (PluginProvider pf : ImagePluginProviderRepository.getPluginProviders(null)) {
             num += 1;
         }
         if (num != 8) {

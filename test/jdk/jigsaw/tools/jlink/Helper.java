@@ -45,15 +45,17 @@ import tests.JImageValidator;
  */
 public class Helper {
 
+    private final Map<String, List<String>> moduleClassDependencies
+            = new HashMap<>();
     private final Map<String, List<String>> moduleDependencies
             = new HashMap<>();
 
     private final List<String> bootClasses = new ArrayList<>();
 
     private final JImageGenerator generator;
+    private static FileSystem fs;
 
     public static Helper newHelper() throws Exception {
-        FileSystem fs;
         try {
             fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
@@ -81,11 +83,7 @@ public class Helper {
         };
 
         Path javabase = fs.getPath("/modules/java.base");
-        Path mgtbase = fs.getPath("/modules/java.management");
         try (Stream<Path> stream = Files.walk(javabase)) {
-            stream.forEach(c);
-        }
-        try (Stream<Path> stream = Files.walk(mgtbase)) {
             stream.forEach(c);
         }
 
@@ -110,6 +108,11 @@ public class Helper {
     public final void generateJModule(String module,
             String... dependencies)
             throws Exception {
+        List<String> deps = new ArrayList<>();
+        for (String d : dependencies) {
+            deps.add(d);
+        }
+        moduleDependencies.put(module, deps);
         generator.generateJModule(module, getClasses(module), dependencies);
     }
 
@@ -120,6 +123,11 @@ public class Helper {
     public final void generateJarModule(String module,
             String... dependencies)
             throws Exception {
+        List<String> deps = new ArrayList<>();
+        for (String d : dependencies) {
+            deps.add(d);
+        }
+        moduleDependencies.put(module, deps);
         generator.generateJarModule(module, getClasses(module), dependencies);
     }
 
@@ -135,7 +143,7 @@ public class Helper {
         }
         String moduleClazz = toLocation(module, "module-info");
         appClasses.add(moduleClazz);
-        moduleDependencies.put(module, appClasses);
+        moduleClassDependencies.put(module, appClasses);
         return classes;
     }
 
@@ -170,7 +178,26 @@ public class Helper {
         File image = generator.generateImage(userOptions, module);
         List<String> expectedLocations = new ArrayList<>();
         expectedLocations.addAll(bootClasses);
-        List<String> appClasses = moduleDependencies.get(module);
+
+        Consumer<Path> c = (p) -> {
+            // take only the .class resources.
+            if (Files.isRegularFile(p) && p.toString().endsWith(".class")
+                    && !p.toString().endsWith("module-info.class")) {
+                String loc = p.toString().substring("/modules".length());
+                expectedLocations.add(loc);
+            }
+        };
+        List<String> modules = moduleDependencies.get(module);
+        for (String dep : modules) {
+            Path path = fs.getPath("/modules/" + dep);
+            if (Files.exists(path)) {
+                try (Stream<Path> stream = Files.walk(path)) {
+                    stream.forEach(c);
+                }
+            }
+        }
+
+        List<String> appClasses = moduleClassDependencies.get(module);
         if (appClasses != null) {
             expectedLocations.addAll(appClasses);
         }
