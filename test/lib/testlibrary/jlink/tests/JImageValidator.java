@@ -130,7 +130,7 @@ public class JImageValidator {
             ProcessBuilder builder = new ProcessBuilder(javalauncher.getAbsolutePath(),
                     "-version");
             long t = System.currentTimeMillis();
-            Process process = builder.inheritIO().start();
+            Process process = builder.start();
             int ret = process.waitFor();
             javaExecutionTime += System.currentTimeMillis() - t;
             if (ret != 0) {

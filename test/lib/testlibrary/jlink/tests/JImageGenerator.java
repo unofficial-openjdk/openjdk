@@ -89,7 +89,7 @@ public class JImageGenerator {
             + "                    }\n"
             + "                });\n"
             + "    double res = (double) total_time / num_classes;\n"
-            + "    System.out.println(\"Total time \" + total_time + \" num classes \" + num_classes + \" average \" + res);\n"
+            + "    // System.out.println(\"Total time \" + total_time + \" num classes \" + num_classes + \" average \" + res);\n"
             + "    }\n"
             + "}\n";
 
@@ -98,6 +98,7 @@ public class JImageGenerator {
     private static final String CLASS_PATH_OPTION = "--class-path";
     private static final String MODULE_PATH_OPTION = "--modulepath";
     private static final String ADD_MODS_OPTION = "--addmods";
+    private static final String LIMIT_MODS_OPTION = "--limitmods";
 
     private static final String COMPILER_SRC_PATH_OPTION = "-sourcepath";
     private static final String COMPILER_MODULE_PATH_OPTION = "-modulepath";
@@ -284,6 +285,8 @@ public class JImageGenerator {
         opt.add(OUTPUT_OPTION);
         opt.add(output.toString());
         opt.add(ADD_MODS_OPTION);
+        opt.add(module);
+        opt.add(LIMIT_MODS_OPTION);
         opt.add(module);
         opt.add(MODULE_PATH_OPTION);
         // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
