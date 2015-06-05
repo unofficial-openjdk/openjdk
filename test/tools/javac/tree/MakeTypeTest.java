@@ -54,6 +54,14 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
 public class MakeTypeTest extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.api",
+            "com.sun.tools.javac.code",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.tree",
+            "com.sun.tools.javac.util");
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
