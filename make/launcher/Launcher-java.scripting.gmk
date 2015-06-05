@@ -26,5 +26,6 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,jrunscript, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.scripting/com.sun.tools.script.shell.Main"$(COMMA) }'))
 

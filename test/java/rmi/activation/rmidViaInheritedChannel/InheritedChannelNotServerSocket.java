@@ -104,9 +104,9 @@ public class InheritedChannelNotServerSocket {
             RMID.removeLog();
             rmid = RMID.createRMID(System.out, System.err, true, true,
                                    TestLibrary.INHERITEDCHANNELNOTSERVERSOCKET_ACTIVATION_PORT);
-            rmid.addOptions(new String[]{
-                "-Djava.nio.channels.spi.SelectorProvider=" +
-                "InheritedChannelNotServerSocket$SP"});
+            rmid.addOptions(
+                "-XaddExports:java.base/sun.nio.ch",
+                "-Djava.nio.channels.spi.SelectorProvider=InheritedChannelNotServerSocket$SP");
             rmid.start();
 
             /*

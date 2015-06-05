@@ -38,6 +38,8 @@ if [ "${TESTSRC}" = "" ] ; then
    TESTSRC="."
 fi
 
+TESTVMOPTS="${TESTVMOPTS} -XaddExports:java.security.jgss/sun.security.krb5,jdk.naming.dns/com.sun.jndi.dns"
+
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
    ${TESTSRC}/NamingManager.java ${TESTSRC}/DNS.java
 $TESTJAVA/bin/java ${TESTVMOPTS} -Xbootclasspath/p:. DNS

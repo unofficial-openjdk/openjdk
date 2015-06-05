@@ -29,6 +29,6 @@ BUILD_LAUNCHER_jconsole_CFLAGS_windows := -DJAVAW
 BUILD_LAUNCHER_jconsole_LDFLAGS_windows := user32.lib
 
 $(eval $(call SetupLauncher,jconsole, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "-J-Djconsole.showOutputViewer"$(COMMA) "sun.tools.jconsole.JConsole"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/jconsole.jar"$(COMMA) "/lib/tools.jar"$(COMMA) "/classes" }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "-J-Djconsole.showOutputViewer"$(COMMA) \
+        "-m"$(COMMA) "jdk.jconsole/sun.tools.jconsole.JConsole"$(COMMA) }'))
 

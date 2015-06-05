@@ -51,5 +51,6 @@ rm classes/ExtLoadedImpl.class classes/ExtLoadedImpl_Stub.class classes/CheckLoa
 mkdir -p ext
 $COMPILEJAVA/bin/jar ${TESTTOOLVMOPTS} cf ext/ext.jar -C $TESTCLASSES ExtLoadedImpl.class -C $TESTCLASSES ExtLoadedImpl_Stub.class -C $TESTCLASSES CheckLoader.class
 
+TESTVMOPTS="${TESTVMOPTS}  -XaddExports:java.rmi/sun.rmi.registry,java.rmi/sun.rmi.server,java.rmi/sun.rmi.transport,java.rmi/sun.rmi.transport.tcp"
 $TESTJAVA/bin/java ${TESTVMOPTS} -cp classes -Dtest.src=$TESTSRC -Dtest.classes=$TESTCLASSES -Djava.security.policy=$TESTSRC/security.policy -Djava.ext.dirs=ext ExtLoadedImplTest
 

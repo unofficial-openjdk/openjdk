@@ -27,6 +27,9 @@ package javax.imageio.metadata;
 
 import org.w3c.dom.Node;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * An abstract class to be extended by objects that represent metadata
@@ -395,45 +398,35 @@ public abstract class IIOMetadata {
             throw new IllegalArgumentException("Unsupported format name");
         }
         try {
-            Class<?> cls = null;
             final Object o = this;
-
-            // firstly we try to use classloader used for loading
-            // the IIOMetadata implemantation for this plugin.
-            ClassLoader loader =
-                java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedAction<ClassLoader>() {
-                            public ClassLoader run() {
-                                return o.getClass().getClassLoader();
-                            }
-                        });
-
-            try {
-                cls = Class.forName(formatClassName, true,
-                                    loader);
-            } catch (ClassNotFoundException e) {
+            // First try to load from the module of the IIOMetadata implementation
+            // for this plugin.
+            Module module = o.getClass().getModule();
+            Class<?> cls = Class.forName(module, formatClassName);
+            if (cls == null) {
                 // we failed to load IIOMetadataFormat class by
                 // using IIOMetadata classloader.Next try is to
                 // use thread context classloader.
-                loader =
-                    java.security.AccessController.doPrivileged(
-                        new java.security.PrivilegedAction<ClassLoader>() {
-                                public ClassLoader run() {
-                                    return Thread.currentThread().getContextClassLoader();
-                                }
-                        });
+                ClassLoader loader =
+                        java.security.AccessController.doPrivileged(
+                                new java.security.PrivilegedAction<ClassLoader>() {
+                                    public ClassLoader run() {
+                                        return Thread.currentThread().getContextClassLoader();
+                                    }
+                                });
                 try {
                     cls = Class.forName(formatClassName, true,
-                                        loader);
+                            loader);
                 } catch (ClassNotFoundException e1) {
                     // finally we try to use system classloader in case
                     // if we failed to load IIOMetadataFormat implementation
                     // class above.
                     cls = Class.forName(formatClassName, true,
-                                        ClassLoader.getSystemClassLoader());
+                            ClassLoader.getSystemClassLoader());
                 }
             }
 
+            IIOMetadata.class.getModule().addReads(cls.getModule());
             Method meth = cls.getMethod("getInstance");
             return (IIOMetadataFormat) meth.invoke(null);
         } catch (Exception e) {

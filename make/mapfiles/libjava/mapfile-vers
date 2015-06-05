@@ -163,8 +163,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_StrictMath_expm1;
 		Java_java_lang_Object_getClass;
 		Java_java_lang_Object_registerNatives;
-		Java_java_lang_Package_getSystemPackage0;
-		Java_java_lang_Package_getSystemPackages0;
 		Java_java_lang_ProcessEnvironment_environ;
 		Java_java_lang_reflect_Array_get;
 		Java_java_lang_reflect_Array_getBoolean;
@@ -191,11 +189,11 @@ SUNWprivate_1.1 {
 		Java_java_lang_reflect_Executable_getTypeAnnotationBytes0;
 		Java_java_lang_reflect_Field_getTypeAnnotationBytes0;
 		Java_java_lang_Runtime_freeMemory;
-                Java_java_lang_Runtime_maxMemory;
+		Java_java_lang_Runtime_maxMemory;
 		Java_java_lang_Runtime_gc;
 		Java_java_lang_Runtime_runFinalization0;
 		Java_java_lang_Runtime_totalMemory;
-                Java_java_lang_Runtime_availableProcessors;
+		Java_java_lang_Runtime_availableProcessors;
 		Java_java_lang_SecurityManager_classDepth;
 		Java_java_lang_SecurityManager_classLoaderDepth0;
 		Java_java_lang_SecurityManager_currentClassLoader0;
@@ -212,18 +210,18 @@ SUNWprivate_1.1 {
 		Java_java_lang_System_setOut0;
 		Java_java_lang_Thread_registerNatives;
 		Java_java_lang_Throwable_fillInStackTrace;
-                Java_java_lang_Throwable_getStackTraceDepth;
-                Java_java_lang_Throwable_getStackTraceElement;
+		Java_java_lang_Throwable_getStackTraceDepth;
+		Java_java_lang_Throwable_getStackTraceElement;
 		Java_java_lang_ProcessImpl_init;
 		Java_java_lang_ProcessImpl_waitForProcessExit;
 		Java_java_lang_ProcessImpl_forkAndExec;
 		Java_java_lang_ProcessImpl_destroyProcess;
-                Java_java_nio_Bits_copyFromShortArray;
-                Java_java_nio_Bits_copyToShortArray;
-                Java_java_nio_Bits_copyFromIntArray;
-                Java_java_nio_Bits_copyToIntArray;
-                Java_java_nio_Bits_copyFromLongArray;
-                Java_java_nio_Bits_copyToLongArray;
+		Java_java_nio_Bits_copyFromShortArray;
+		Java_java_nio_Bits_copyToShortArray;
+		Java_java_nio_Bits_copyFromIntArray;
+		Java_java_nio_Bits_copyToIntArray;
+		Java_java_nio_Bits_copyFromLongArray;
+		Java_java_nio_Bits_copyToLongArray;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2Ljava_security_AccessControlContext_2;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedExceptionAction_2;
@@ -239,20 +237,20 @@ SUNWprivate_1.1 {
 		Java_sun_misc_Signal_findSignal;
 		Java_sun_misc_Signal_handle0;
 		Java_sun_misc_Signal_raise0;
-              Java_sun_reflect_ConstantPool_getClassAt0;
-              Java_sun_reflect_ConstantPool_getClassAtIfLoaded0;
-              Java_sun_reflect_ConstantPool_getDoubleAt0;
-              Java_sun_reflect_ConstantPool_getFieldAt0;
-              Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0;
-              Java_sun_reflect_ConstantPool_getFloatAt0;
-              Java_sun_reflect_ConstantPool_getIntAt0;
-              Java_sun_reflect_ConstantPool_getLongAt0;
-              Java_sun_reflect_ConstantPool_getMemberRefInfoAt0;
-              Java_sun_reflect_ConstantPool_getMethodAt0;
-              Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0;
-              Java_sun_reflect_ConstantPool_getSize0;
-              Java_sun_reflect_ConstantPool_getStringAt0;
-              Java_sun_reflect_ConstantPool_getUTF8At0;
+                Java_sun_reflect_ConstantPool_getClassAt0;
+                Java_sun_reflect_ConstantPool_getClassAtIfLoaded0;
+                Java_sun_reflect_ConstantPool_getDoubleAt0;
+                Java_sun_reflect_ConstantPool_getFieldAt0;
+                Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0;
+                Java_sun_reflect_ConstantPool_getFloatAt0;
+                Java_sun_reflect_ConstantPool_getIntAt0;
+                Java_sun_reflect_ConstantPool_getLongAt0;
+                Java_sun_reflect_ConstantPool_getMemberRefInfoAt0;
+                Java_sun_reflect_ConstantPool_getMethodAt0;
+                Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0;
+                Java_sun_reflect_ConstantPool_getSize0;
+                Java_sun_reflect_ConstantPool_getStringAt0;
+                Java_sun_reflect_ConstantPool_getUTF8At0;
 		Java_java_io_Console_istty;
 		Java_java_io_Console_encoding;
                 Java_java_io_Console_echo;
@@ -272,12 +270,33 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_getgid;
                 Java_sun_misc_VM_getegid;
                 Java_sun_misc_VM_initialize;
+
+                Java_java_lang_reflect_Module_defineModule0;
+                Java_java_lang_reflect_Module_addReadsModule0;
+                Java_java_lang_reflect_Module_addModuleExports0;
+                Java_java_lang_reflect_Module_addModulePackage0;
+
+                Java_jdk_internal_jimage_ImageNativeSubstrate_openImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_closeImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getIndexAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getDataAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_read;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_readCompressed;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getStringBytes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_findAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_attributeOffsets;
+
+                # for testing performance of access checks in VM
+                Java_sun_reflect_Reflection_canReadModule0;
+                Java_sun_reflect_Reflection_isExportedToModule0;
+
+		Java_sun_misc_BootLoader_getSystemPackageLocation;
+		Java_sun_misc_BootLoader_getSystemPackageNames;
+
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;
 
-                Java_jdk_internal_jimage_concurrent_ConcurrentPReader_initIDs;
-                Java_jdk_internal_jimage_concurrent_ConcurrentPReader_pread;
-		
                 # ZipFile.c needs this one
 		throwFileNotFoundException;
                 # zip_util.c needs this one

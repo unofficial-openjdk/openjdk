@@ -37,6 +37,7 @@ import java.util.StringTokenizer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import com.sun.jmx.util.Modules;
 import com.sun.jmx.remote.util.ClassLogger;
 import com.sun.jmx.remote.util.EnvHelp;
 import sun.reflect.misc.ReflectUtil;
@@ -532,6 +533,7 @@ public class JMXConnectorFactory {
 
             // We have just proved that this cast is correct
             Class<? extends T> providerClassT = Util.cast(providerClass);
+            Modules.ensureReadable(providerClass.getModule());
             try {
                 return providerClassT.newInstance();
             } catch (Exception e) {

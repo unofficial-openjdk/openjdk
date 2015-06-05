@@ -100,11 +100,11 @@ env
 set -vx
 #
 #Compile.  tools.jar is required on the classpath.
-${TESTJAVA}/bin/javac -d "${TESTCLASSES}" ${CP} -g \
+${TESTJAVA}/bin/javac -XaddExports:jdk.jdi/com.sun.tools.example.debug.tty -d "${TESTCLASSES}" ${CP} -g \
                          "${TESTSRC}"/"${TARGETCLASS}".java
 #
 #Run the test class, again with the classpath we need:
-${TESTJAVA}/bin/java ${CP} ${TARGETCLASS}
+${TESTJAVA}/bin/java -XaddExports:jdk.jdi/com.sun.tools.example.debug.tty ${CP} ${TARGETCLASS}
 status=$?
 echo "test status was: $status"
 if [ $status -eq "0" ];

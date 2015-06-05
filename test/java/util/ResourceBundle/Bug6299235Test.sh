@@ -25,6 +25,7 @@
 # @test
 # @bug 6299235
 # @summary test Bug 6299235 to make sure the third-party provided sun resources could be picked up.
+# @modules java.base/sun.util
 # @build Bug6299235Test
 # @run shell Bug6299235Test.sh
 
@@ -62,7 +63,9 @@ echo "NEW_EXT_DIR=${NEW_EXT_DIR}"
 
 cd ${TESTSRC}
 echo 
-${TESTJAVA}/bin/java ${TESTVMOPTS} -cp ${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}awtres.jar Bug6299235Test
+EXTRAOPTS="-XaddExports:java.base/sun.util"
+${TESTJAVA}/bin/java ${TESTVMOPTS} ${EXTRAOPTS} \
+    -cp ${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}awtres.jar Bug6299235Test
 
 if [ $? -ne 0 ]
     then
