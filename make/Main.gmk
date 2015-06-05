@@ -481,6 +481,8 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
+  jdk.jdeps-gendata: java.rmic  
+  
   # Declare dependencies from <module>-strip to libs, launchers, gendata and copy
   $(foreach m, $(LIBS_MODULES), $(eval $m-strip: $m-libs))
   $(foreach m, $(LAUNCHER_MODULES), $(eval $m-strip: $m-launchers))
@@ -506,7 +508,6 @@ else
 
   # To generate modules.xml all classes and a runnable image must be
   # present.
-  jdk.dev-gendata: java rmic
 
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
       $(filter jdk.crypto%, $(JAVA_TARGETS))
