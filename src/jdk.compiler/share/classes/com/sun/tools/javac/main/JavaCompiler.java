@@ -668,6 +668,7 @@ public class JavaCompiler {
             }
             JCCompilationUnit toplevel =
                 make.TopLevel(List.<JCTree>nil());
+            toplevel.modle = syms.unnamedModule;
             toplevel.packge = syms.unnamedPackage;
             return attr.attribIdent(tree, toplevel);
         } finally {
