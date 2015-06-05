@@ -32,7 +32,7 @@
  * @build jdk.test.lib.*
  * @build jdk.test.lib.dcmd.*
  * @build MethodIdentifierParser
- * @run testng CodelistTest
+ * @run testng/othervm CodelistTest
  * @summary Test of diagnostic command Compiler.codelist
  */
 

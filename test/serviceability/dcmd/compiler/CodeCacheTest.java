@@ -31,9 +31,9 @@
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.*
  * @build jdk.test.lib.dcmd.*
- * @run testng/othervm -XX:+SegmentedCodeCache CodeCacheTest
- * @run testng/othervm -XX:-SegmentedCodeCache CodeCacheTest
- * @run testng/othervm -Xint -XX:+SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -XX:+SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -XX:-SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -Xint -XX:+SegmentedCodeCache CodeCacheTest
  * @summary Test of diagnostic command Compiler.codecache
  */
 

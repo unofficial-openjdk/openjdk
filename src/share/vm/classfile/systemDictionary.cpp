@@ -27,6 +27,7 @@
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/loaderConstraints.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/placeholders.hpp"
 #include "classfile/resolutionErrors.hpp"
 #include "classfile/stringTable.hpp"
@@ -46,6 +47,7 @@
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
+#include "oops/symbol.hpp"
 #include "oops/typeArrayKlass.hpp"
 #include "prims/jvmtiEnvBase.hpp"
 #include "prims/methodHandles.hpp"
@@ -169,7 +171,7 @@ bool SystemDictionary::is_ext_class_loader(Handle class_loader) {
   if (class_loader.is_null()) {
     return false;
   }
-  return (class_loader->klass()->name() == vmSymbols::sun_misc_Launcher_ExtClassLoader());
+  return (class_loader->klass()->name() == vmSymbols::sun_misc_ClassLoaders_ExtClassLoader());
 }
 
 // ----------------------------------------------------------------------------
@@ -1263,22 +1265,81 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
 
 instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Handle class_loader, TRAPS) {
   instanceKlassHandle nh = instanceKlassHandle(); // null Handle
+
   if (class_loader.is_null()) {
+    int length;
+    TempNewSymbol pkg_name = NULL;
+    PackageEntry* pkg_entry = NULL;
+    bool search_only_bootloader_append = false;
+    ClassLoaderData *loader_data = class_loader_data(class_loader);
+
+    // Find the package in the boot loader's package entry table.
+    const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+    if (pkg_string != NULL) {
+      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
+      pkg_entry = loader_data->packages()->lookup_only(pkg_name);
+    }
+
+    // Prior to attempting to load the class, enforce the boot loader's
+    // visibility boundaries.
+    if (!Universe::is_module_initialized()) {
+      // During bootstrapping, prior to module initialization, any
+      // class attempting to be loaded must be checked against the
+      // java.base packages in the boot loader's PackageEntryTable.
+      // No class outside of java.base is allowed to be loaded during
+      // this bootstrapping window.
+      if (!DumpSharedSpaces) {
+        if (pkg_entry == NULL || pkg_entry->in_unnamed_module()) {
+          // Class is either in the unnamed package or in
+          // a named package within the unnamed module.  Either
+          // case is outside of java.base, do not attempt to
+          // load the class.
+          return nh;
+        } else {
+          // Check that the class' package is defined within java.base.
+          ModuleEntry* mod_entry = pkg_entry->module();
+          Symbol* mod_entry_name = mod_entry->name();
+          if (mod_entry_name->fast_compare(vmSymbols::java_base()) != 0) {
+            return nh;
+          }
+        }
+      }
+    } else {
+      assert(!DumpSharedSpaces, "Archive dumped after module system initialization");
+      // After the module system has been initialized, check if the class'
+      // package is in a module defined to the boot loader.
+      if (pkg_string == NULL || pkg_entry == NULL || pkg_entry->in_unnamed_module()) {
+        // Class is either in the unnamed package, in a named package
+        // within a module not defined to the boot loader or in a
+        // a named package within the unnamed module.  In all cases,
+        // limit visibility to search for the class only in the boot
+        // loader's append path.
+        search_only_bootloader_append = true;
+      }
+    }
+
+    // Prior to bootstrapping's module initialization, never load a class outside
+    // of the boot loader's module path
+    assert(Universe::is_module_initialized() || DumpSharedSpaces ||
+           !search_only_bootloader_append,
+           "Attempt to load a class outside of boot loader's module path");
 
     // Search the shared system dictionary for classes preloaded into the
     // shared spaces.
     instanceKlassHandle k;
     {
 #if INCLUDE_CDS
-      PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
-      k = load_shared_class(class_name, class_loader, THREAD);
+      if (!search_only_bootloader_append) {
+        PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
+        k = load_shared_class(class_name, class_loader, THREAD);
+      }
 #endif
     }
 
     if (k.is_null()) {
       // Use VM class loader
       PerfTraceTime vmtimer(ClassLoader::perf_sys_classload_time());
-      k = ClassLoader::load_classfile(class_name, CHECK_(nh));
+      k = ClassLoader::load_classfile(class_name, search_only_bootloader_append, CHECK_(nh));
     }
 
     // find_or_define_instance_class may return a different InstanceKlass
@@ -1603,7 +1664,7 @@ Klass* SystemDictionary::find_class(Symbol* class_name, ClassLoaderData* loader_
 }
 
 
-// Get the next class in the diictionary.
+// Get the next class in the dictionary.
 Klass* SystemDictionary::try_get_next_class() {
   return dictionary()->try_get_next_class();
 }
@@ -1872,6 +1933,12 @@ void SystemDictionary::initialize_wk_klasses_until(WKID limit_id, WKID &start_id
 
 void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   assert(WK_KLASS(Object_klass) == NULL, "preloaded classes should only be initialized once");
+
+  // Define packages for module java.base from either the exploded build or the
+  // bootmodules.jimage file. This call needs to be done here, after vmSymbols::initialize()
+  // is called but before any classes are pre-loaded.
+  ClassLoader::define_javabase();
+
   // Preload commonly used klasses
   WKID scan = FIRST_WKID;
   // first do Object, then String, Class
