@@ -33,6 +33,8 @@ import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
+import com.sun.xml.internal.Modules;
+
 /**
  * <p>Implements pluggable streams.</p>
  *
@@ -190,6 +192,7 @@ class FactoryFinder {
             if (!type.isAssignableFrom(providerClass)) {
                 throw new ClassCastException(className + " cannot be cast to " + type.getName());
             }
+            Modules.ensureReadable(providerClass.getModule());
             Object instance = providerClass.newInstance();
             if (debug) {    // Extra check to avoid computing cl strings
                 dPrint("created new instance of " + providerClass +
