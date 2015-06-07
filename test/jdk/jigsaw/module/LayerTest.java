@@ -124,7 +124,7 @@ public class LayerTest {
                         .build();
 
         ModuleFinder finder =
-                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
+                ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.empty(),
@@ -182,7 +182,7 @@ public class LayerTest {
                         .build();
 
         ModuleFinder finder =
-                new ModuleLibrary(descriptor1, descriptor2);
+                ModuleLibrary.of(descriptor1, descriptor2);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.boot(),
@@ -227,7 +227,7 @@ public class LayerTest {
                 .conceals("p")
                 .build();
 
-        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
+        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -260,7 +260,7 @@ public class LayerTest {
                 .exports("p")
                 .build();
 
-        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
+        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -305,7 +305,7 @@ public class LayerTest {
                 .build();
 
         ModuleFinder finder
-            = new ModuleLibrary(descriptor1, descriptor2, descriptor3);
+            = ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -352,7 +352,7 @@ public class LayerTest {
                 .build();
 
         ModuleFinder finder
-            = new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
+            =  ModuleLibrary.of(descriptor1, descriptor2, descriptor3, descriptor4);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(),
@@ -392,7 +392,7 @@ public class LayerTest {
                 .exports("java.lang")
                 .build();
 
-        ModuleFinder finder = new ModuleLibrary(descriptor);
+        ModuleFinder finder = ModuleLibrary.of(descriptor);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
@@ -413,7 +413,7 @@ public class LayerTest {
                 .conceals("sun.misc")
                 .build();
 
-        ModuleFinder finder = new ModuleLibrary(descriptor);
+        ModuleFinder finder = ModuleLibrary.of(descriptor);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
@@ -436,12 +436,12 @@ public class LayerTest {
 
         // m2 and m3 are simple JAR files
         Path dir = Files.createTempDirectory("layertest");
-        createDummyJarFile(dir.resolve("m2.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m3.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("m2.jar"), "p/T1.class");
+        createDummyJarFile(dir.resolve("m3.jar"), "p/T2.class");
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(new ModuleLibrary(descriptor),
+            = ModuleFinder.concat(ModuleLibrary.of(descriptor),
                                   ModuleFinder.of(dir));
 
         Configuration cf

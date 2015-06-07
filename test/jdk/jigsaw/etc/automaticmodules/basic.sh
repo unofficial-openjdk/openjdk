@@ -64,7 +64,6 @@ rm -rf mods/httpserver
 
 
 # Run the test
-$JAVA -mp mods -m basictest/test.Main
-
+$JAVA -mp mods -addmods logging -m basictest/test.Main
 
 exit 0

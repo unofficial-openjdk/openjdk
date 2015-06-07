@@ -49,12 +49,10 @@ import jdk.internal.module.Hasher.DependencyHashes;
  * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.
  *
  * TODO:
- * - avoid most of the cost of bind for the cases where augmenting the module
- *   graph does not add any modules
  * - replace makeGraph with efficient implementation for multiple layers
  * - replace cycle detection. The current DFS is fast at startup for the boot
  *   layer but isn't generally scalable
- * - sort out relationship to Configuration
+ * - automatic modules => self references in readability graph
  */
 
 final class Resolver {
@@ -144,6 +142,9 @@ final class Resolver {
     // map of module names to references
     private final Map<String, ModuleReference> nameToReference = new HashMap<>();
 
+    // cached by resolve
+    private Map<ModuleDescriptor, Set<ModuleDescriptor>> cachedGraph;
+
 
     private Resolver(ModuleFinder beforeFinder,
                      Layer layer,
@@ -202,6 +203,7 @@ final class Resolver {
         checkHashes();
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
+        cachedGraph = graph;
 
         return new Resolution(selected, nameToReference, graph, Collections.emptyMap());
     }
@@ -216,9 +218,6 @@ final class Resolver {
      */
     private Set<ModuleDescriptor> resolve(Deque<ModuleDescriptor> q) {
         Set<ModuleDescriptor> newlySelected = new HashSet<>();
-
-        // true if all modules are selected
-        boolean allModulesSelected = false;
 
         while (!q.isEmpty()) {
             ModuleDescriptor descriptor = q.poll();
@@ -259,28 +258,6 @@ final class Resolver {
                     q.offer(other);
                 }
             }
-
-            // If an automatic module is encountered then its dependences are
-            // not known so this requires resolving all modules. We do this at
-            // most once.
-            if (descriptor.isAutomatic() && !allModulesSelected) {
-
-                findAll().forEach(mref -> {
-                    ModuleDescriptor other = mref.descriptor();
-                    if (!selected.contains(other) && !newlySelected.contains(other)) {
-
-                        trace("Module %s located (%s), implicitly required by %s",
-                                other.name(), mref.location().orElse(null), descriptor.name());
-
-                        newlySelected.add(other);
-                        nameToReference.put(other.name(), mref);
-                        q.offer(other);
-                    }
-                });
-
-                allModulesSelected = true;
-            }
-
         }
 
         // add the newly selected modules the selected set
@@ -305,6 +282,8 @@ final class Resolver {
                     availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
             }
         });
+
+        int initialSize = selected.size();
 
         // create the visit stack
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
@@ -368,6 +347,23 @@ final class Resolver {
             }
         }
 
+        Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
+
+        // If the number of selected modules has increased then the post
+        // resolution checks need to be repeated and the readability graph
+        // re-generated.
+        if (selected.size() > initialSize) {
+
+            detectCycles();
+
+            checkHashes();
+
+            graph = makeGraph();
+
+        } else {
+            graph = cachedGraph;
+        }
+
         // Finally create the map of service -> provider modules
         Map<String, Set<ModuleDescriptor>> serviceToProviders = new HashMap<>();
         for (ModuleDescriptor descriptor : selected) {
@@ -375,15 +371,9 @@ final class Resolver {
             for (Map.Entry<String, Provides> entry : provides.entrySet()) {
                 String sn = entry.getKey();
                 serviceToProviders.computeIfAbsent(sn, k -> new HashSet<>())
-                                  .add(descriptor);
+                        .add(descriptor);
             }
         }
-
-        detectCycles();
-
-        checkHashes();
-
-        Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
         return new Resolution(selected, nameToReference, graph, serviceToProviders);
     }
@@ -398,16 +388,14 @@ final class Resolver {
      * dependence graph has m1 requires m2 && m2 requires public m3 then the
      * resulting readability graph will contain m1 requires requires m2, m1
      * requires m3, and m2 requires m3.
-     *
-     * ###TBD Replace this will be more efficient implementation
      */
     private Map<ModuleDescriptor, Set<ModuleDescriptor>> makeGraph() {
 
-        // name -> ModuleDescriptor lookup for newly selected modules
-        Map<String, ModuleDescriptor> nameToModule = new HashMap<>();
-        selected.forEach(d -> nameToModule.put(d.name(), d));
+        // name -> ModuleDescriptor lookup
+        Map<String, ModuleDescriptor> nameToDescriptor = new HashMap<>();
+        selected.forEach(d -> nameToDescriptor.put(d.name(), d));
 
-        // the "requires" graph starts as a module dependence graph and
+        // the "reads" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
         Map<ModuleDescriptor, Set<ModuleDescriptor>> g1 = new HashMap<>();
 
@@ -416,53 +404,83 @@ final class Resolver {
 
         // need "requires public" from the modules in parent layers as
         // there may be selected modules that have a dependence.
-        Layer current = this.layer;
-        while (current != null) {
-            Configuration cf = current.configuration().orElse(null);
+        Layer l = this.layer;
+        while (l != null) {
+            Configuration cf = l.configuration().orElse(null);
             if (cf != null) {
                 for (ModuleDescriptor descriptor: cf.descriptors()) {
-                    // requires
-                    //Set<ModuleDescriptor> reads = cf.readDependences(descriptor);
-                    //g1.put(descriptor, reads);
-
-                    // requires public
-                    g2.put(descriptor, new HashSet<>());
+                    Set<ModuleDescriptor> requiresPublic = new HashSet<>();
+                    g2.put(descriptor, requiresPublic);
                     for (Requires d: descriptor.requires()) {
-                        if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
-                            String dn = d.name();
-                            ModuleReference mref
-                                = current.findReference(dn).orElse(null);
+                        String dn = d.name();
+                        if (nameToDescriptor.get(dn) == null
+                            && d.modifiers().contains(Requires.Modifier.PUBLIC))
+                        {
+                            ModuleReference mref = l.findReference(dn).orElse(null);
                             if (mref == null)
                                 throw new InternalError();
-                            g2.get(descriptor).add(mref.descriptor());
+                            requiresPublic.add(mref.descriptor());
                         }
                     }
                 }
             }
-            current = current.parent().orElse(null);
+            l = l.parent().orElse(null);
         }
 
         // add the module dependence edges from the newly selected modules
         for (ModuleDescriptor m : selected) {
-            g1.put(m, new HashSet<>());
-            g2.put(m, new HashSet<>());
+
+            Set<ModuleDescriptor> reads = new HashSet<>();
+            g1.put(m, reads);
+
+            Set<ModuleDescriptor> requiresPublic = new HashSet<>();
+            g2.put(m, requiresPublic);
+
             for (Requires d: m.requires()) {
                 String dn = d.name();
-                ModuleDescriptor other = nameToModule.get(dn);
+                ModuleDescriptor other = nameToDescriptor.get(dn);
                 if (other == null && layer != null)
                     other = layer.findReference(dn)
-                        .map(ModuleReference::descriptor).orElse(null);
+                                 .map(ModuleReference::descriptor)
+                                 .orElse(null);
                 if (other == null)
                     throw new InternalError(dn + " not found??");
 
-                // requires (and requires public)
-                g1.get(m).add(other);
+                // m requires other => m reads other
+                reads.add(other);
 
-                // requires public only
+                // m requires public other
                 if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
-                    g2.get(m).add(other);
+                    requiresPublic.add(other);
                 }
             }
+
+            // if m is an automatic module then it requires public all
+            // selected module and all (non-shadowed) modules in parent layers
+            if (m.isAutomatic()) {
+                for (ModuleDescriptor other : nameToDescriptor.values()) {
+                    if (!other.equals(m)) {
+                        reads.add(other);
+                        requiresPublic.add(other);
+                    }
+                }
+
+                l = this.layer;
+                while (l != null) {
+                    Configuration cf = layer.configuration().orElse(null);
+                    if (cf != null) {
+                        for (ModuleDescriptor other : cf.descriptors()) {
+                            String name = other.name();
+                            if (nameToDescriptor.putIfAbsent(name, other) == null) {
+                                reads.add(other);
+                                requiresPublic.add(other);
+                            }
+                        }
+                    }
+                    l = l.parent().orElse(null);
+                }
+            }
+
         }
 
         // add to g1 until there are no more requires public to propagate
@@ -472,11 +490,11 @@ final class Resolver {
             changed = false;
             for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> entry: g1.entrySet()) {
                 ModuleDescriptor m1 = entry.getKey();
-                Set<ModuleDescriptor> m1_requires = entry.getValue();
-                for (ModuleDescriptor m2: m1_requires) {
-                    Set<ModuleDescriptor> m2_requires_public = g2.get(m2);
-                    for (ModuleDescriptor m3: m2_requires_public) {
-                        if (!m1_requires.contains(m3)) {
+                Set<ModuleDescriptor> m1Reads = entry.getValue();
+                for (ModuleDescriptor m2: m1Reads) {
+                    Set<ModuleDescriptor> m2RequiresPublic = g2.get(m2);
+                    for (ModuleDescriptor m3 : m2RequiresPublic) {
+                        if (!m1Reads.contains(m3)) {
                             changes.computeIfAbsent(m1, k -> new HashSet<>()).add(m3);
                             changed = true;
                         }
@@ -492,9 +510,6 @@ final class Resolver {
             }
 
         } while (changed);
-
-        // TBD - for each m1 -> m2 then need to check that m2 exports something to
-        // m1. Need to watch out for the "hollowed-out case" where m2 is an aggregator.
 
         return g1;
     }
@@ -619,15 +634,26 @@ final class Resolver {
     }
 
     /**
-     * Invokes the finder's allModules to find all modules.
+     * Returns a Stream of all modules.
      */
     private Stream<ModuleReference> findAll() {
         try {
-            Stream<ModuleReference> s1
-                = beforeFinder.findAll().stream();
+
+            // only one source of modules?
+            Set<ModuleReference> preModules = beforeFinder.findAll();
+            Set<ModuleReference> postModules = afterFinder.findAll();
+            if (layer == Layer.empty()) {
+                if (preModules.isEmpty())
+                    return postModules.stream();
+                if (postModules.isEmpty())
+                   return preModules.stream();
+            }
+
+            Stream<ModuleReference> s1 = preModules.stream();
             Stream<ModuleReference> s2
-                = afterFinder.findAll().stream().filter(m -> !inParentLayer(m));
+                = postModules.stream().filter(m -> !inParentLayer(m));
             return Stream.concat(s1, s2);
+
         } catch (UncheckedIOException e) {
             throw new ResolutionException(e.getCause());
         } catch (RuntimeException | Error e) {

@@ -41,11 +41,9 @@ import java.util.Set;
 class ModuleLibrary implements ModuleFinder {
     private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
-    ModuleLibrary(ModuleDescriptor... descriptors) {
-        addAll(descriptors);
-    }
+    private ModuleLibrary() { }
 
-    void addAll(ModuleDescriptor... descriptors) {
+    void add(ModuleDescriptor... descriptors) {
         for (ModuleDescriptor descriptor: descriptors) {
             String name = descriptor.name();
             if (!namesToReference.containsKey(name)) {
@@ -63,6 +61,12 @@ class ModuleLibrary implements ModuleFinder {
                 namesToReference.put(name, mref);
             }
         }
+    }
+
+    static ModuleLibrary of(ModuleDescriptor... descriptors) {
+        ModuleLibrary ml = new ModuleLibrary();
+        ml.add(descriptors);
+        return ml;
     }
 
     @Override
