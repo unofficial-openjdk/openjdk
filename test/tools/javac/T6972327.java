@@ -32,7 +32,6 @@ import com.sun.source.tree.*;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.api.*;
 import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.tree.JCTree.*;
 import java.net.URI;
 import java.util.Arrays;
 import javax.tools.*;

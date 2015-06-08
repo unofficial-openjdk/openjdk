@@ -25,6 +25,7 @@
  * @test
  * @bug 6993301
  * @summary catch parameters do not have correct kind (i.e. ElementKind.EXCEPTION_PARAMETER)
+ * @modules jdk.compiler/com.sun.tools.javac.api
  */
 
 import com.sun.source.tree.CompilationUnitTree;
@@ -44,9 +45,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
 /**
- *
  * @author Jan Lahoda
- * @modules jdk.compiler/com.sun.tools.javac.api
  */
 public class T6993301 {
     public static void main(String... args) throws Exception {
