@@ -22,8 +22,12 @@
  */
 
 import com.sun.tools.javac.util.Assert;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
