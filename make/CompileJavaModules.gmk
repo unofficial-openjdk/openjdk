@@ -42,7 +42,8 @@ java.activation_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 
 ################################################################################
 
-java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
+# TODO: This needs to be reenabled before integration into jdk9
+#java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
 java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-umalqura.properties
 java.base_CLEAN := intrinsic.properties
 
@@ -83,7 +84,8 @@ endif
 
 ################################################################################
 
-java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
+# TODO: This needs to be reenabled before integration into jdk9
+#java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
 
 ################################################################################
 
@@ -364,7 +366,8 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*'
+# TODO: This needs to be reenabled before integration into jdk9
+#jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*'
 jdk.compiler_COPY := javax.tools.JavaCompilerTool
 jdk.compiler_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
@@ -513,7 +516,7 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
     BIN := $(JDK_OUTPUTDIR)/modules, \
     HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
-        $($1_ADD_JAVAC_FLAGS) \
+        $($(MODULE)_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
         $(if $(MODULECLASSPATH), -modulepath "$(MODULECLASSPATH)") \
         -systemmodulepath none, \
