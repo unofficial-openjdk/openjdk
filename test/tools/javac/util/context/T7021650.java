@@ -49,6 +49,15 @@ import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
 
 public class T7021650 extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.comp",
+            "com.sun.tools.javac.file",
+            "com.sun.tools.javac.main",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
+
     public static void main(String... args) throws Exception {
         new T7021650().run();
     }
@@ -85,6 +94,12 @@ public class T7021650 extends JavacTestingAbstractProcessor {
         MyAttr.preRegister(context, myAttrCounter);
 
         String[] args = {
+            "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.comp,"
+                + "jdk.compiler/com.sun.tools.javac.file,"
+                + "jdk.compiler/com.sun.tools.javac.main,"
+                + "jdk.compiler/com.sun.tools.javac.processing,"
+                + "jdk.compiler/com.sun.tools.javac.util",
             "-d", ".",
             "-processor", T7021650.class.getName(),
             "-XprintRounds",
