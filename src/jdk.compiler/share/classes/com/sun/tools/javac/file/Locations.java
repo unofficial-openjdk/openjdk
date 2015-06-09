@@ -73,9 +73,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.StringUtils;
 
-import static javax.tools.StandardLocation.CLASS_PATH;
 import static javax.tools.StandardLocation.PLATFORM_CLASS_PATH;
-import static javax.tools.StandardLocation.SOURCE_PATH;
 
 import static com.sun.tools.javac.main.Option.BOOTCLASSPATH;
 import static com.sun.tools.javac.main.Option.DJAVA_ENDORSED_DIRS;
