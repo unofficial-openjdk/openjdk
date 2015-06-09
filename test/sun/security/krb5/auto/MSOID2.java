@@ -25,6 +25,15 @@
  * @test
  * @bug 8078439
  * @summary SPNEGO auth fails if client proposes MS krb5 OID
+ * @modules java.base/sun.misc
+ *          java.base/sun.net.spi.nameservice
+ *          java.base/sun.security.util
+ *          java.security.jgss/sun.security.jgss
+ *          java.security.jgss/sun.security.krb5
+ *          java.security.jgss/sun.security.krb5.internal
+ *          java.security.jgss/sun.security.krb5.internal.ccache
+ *          java.security.jgss/sun.security.krb5.internal.crypto
+ *          java.security.jgss/sun.security.krb5.internal.ktab
  * @compile -XDignore.symbol.file MSOID2.java
  * @run main/othervm MSOID2
  */
@@ -59,7 +68,14 @@ public class MSOID2 {
                 nt[0x1d] = (byte)0x82;  // change the 1st to MS OID
                 // Length bytes to be tweaked
                 for (int pos: new int[] {3, 0xf, 0x13, 0x15, 0x17}) {
-                    nt[pos] = (byte)(nt[pos] + 11);
+                    int newLen = (nt[pos]&0xff) + 11;
+                    // The length byte at nt[pos] might overflow. It's
+                    // unlikely for nt[pos-1] to overflow, which means the size
+                    // of token is bigger than 65535.
+                    if (newLen >= 256) {
+                        nt[pos-1] = (byte)(nt[pos-1] + 1);
+                    }
+                    nt[pos] = (byte)newLen;
                 }
                 t = nt;
                 new sun.misc.HexDumpEncoder().encodeBuffer(t, System.out);
