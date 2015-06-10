@@ -235,18 +235,6 @@ public abstract class BaseFileManager implements JavaFileManager {
      * @return true if successful, and false otherwise
      */
     public boolean handleOption(Option option, String value) {
-        if (options.isSet("jakeBuildWorkAround")) {
-            switch (option) {
-                case D: case H: // output directory options
-                    value = Paths.get(value).getParent().toString();
-                    System.err.println("javac: using " + option.text + ": " + value);
-                    break;
-                case MODULESOURCEPATH:
-                    System.err.println("javac: using " + option.text + ": " + value);
-                    break;
-            }
-        }
-
         switch (option) {
             case ENCODING:
                 options.put(option, value);
