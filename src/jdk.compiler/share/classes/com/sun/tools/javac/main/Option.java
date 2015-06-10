@@ -191,6 +191,8 @@ public enum Option {
 
     SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
 
+    XOVERRIDE("-Xoverride:", "opt.arg.path", "opt.xoverride", EXTENDED, FILEMANAGER),
+
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {

@@ -495,7 +495,7 @@ public class Locations {
                 l = new ModuleLocationHandler(location.getName() + "[" + name + "]",
                         name,
                         Collections.singleton(outputDir.resolve(name)),
-                        true);
+                        true, false);
                 moduleLocations.put(name, l);
             }
             return l;
@@ -813,18 +813,40 @@ public class Locations {
      * A LocationHander to represent modules found from a module-oriented
      * location such as MODULE_SOURCE_PATH, UPGRADE_MODULE_PATH,
      * SYSTEM_MODULE_PATH and MODULE_PATH.
+     *
+     * The Location can be specified to accept overriding classes from the
+     * -Xoverride:dir parameter.
      */
     private class ModuleLocationHandler extends LocationHandler implements Location {
         protected final String name;
         protected final String moduleName;
         protected final Collection<Path> searchPath;
+        protected final Collection<Path> searchPathWithOverrides;
         protected final boolean output;
 
-        ModuleLocationHandler(String name, String moduleName, Collection<Path> searchPath, boolean output) {
+        ModuleLocationHandler(String name, String moduleName, Collection<Path> searchPath,
+                boolean output, boolean allowOverrides) {
             this.name = name;
             this.moduleName = moduleName;
             this.searchPath = searchPath;
             this.output = output;
+
+            Set<Path> overrides = new LinkedHashSet<>();
+            if (allowOverrides && moduleOverrideSearchPath != null) {
+               for (Path p: moduleOverrideSearchPath) {
+                   Path o = p.resolve(moduleName);
+                   if (Files.isDirectory(o)) {
+                       overrides.add(o);
+                   }
+               }
+            }
+
+            if (!overrides.isEmpty()) {
+                overrides.addAll(searchPath);
+                searchPathWithOverrides = overrides;
+            } else {
+                searchPathWithOverrides = searchPath;
+            }
         }
 
         @Override // defined by Location
@@ -844,7 +866,10 @@ public class Locations {
 
         @Override // defined by LocationHandler
         Collection<Path> getPaths() {
-            return searchPath;
+            // For now, we always return searchPathWithOverrides. This may differ from the
+            // JVM behavior if there is a module-info.class to be found in the overriding
+            // classes.
+            return searchPathWithOverrides;
         }
 
         @Override // defined by LocationHandler
@@ -928,7 +953,7 @@ public class Locations {
                                     String name = location.getName()
                                             + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
                                     ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
-                                            Collections.singleton(modulePath), false);
+                                            Collections.singleton(modulePath), false, true);
                                     result.add(l);
                                 }
                             } catch (DirectoryIteratorException | IOException ignore) {
@@ -1070,7 +1095,7 @@ public class Locations {
             pathLocations.clear();
             map.forEach((k, v) -> {
                 String name = location.getName() + "[" + k + "]";
-                ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false);
+                ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false, false);
                 moduleLocations.put(k, h);
                 v.forEach(p -> pathLocations.put(p, h));
             });
@@ -1284,7 +1309,7 @@ public class Locations {
                     String moduleName = entry.getFileName().toString();
                     String name = location.getName() + "[" + moduleName + "]";
                     ModuleLocationHandler h = new ModuleLocationHandler(name, moduleName,
-                            Collections.singleton(entry), false);
+                            Collections.singleton(entry), false, true);
                     systemModules.add(h);
                 }
             }
@@ -1309,6 +1334,7 @@ public class Locations {
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
             new ModuleSourcePathLocationHandler(),
+            // TODO: should UPGRADE_MODULE_PATH be merged with SystemModulePath?
             new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
             new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
             new SystemModulePathLocationHandler(),
@@ -1322,9 +1348,18 @@ public class Locations {
         }
     }
 
+    private SearchPath moduleOverrideSearchPath;
+
     boolean handleOption(Option option, String value) {
-        LocationHandler h = handlersForOption.get(option);
-        return (h == null ? false : h.handleOption(option, value));
+        switch (option) {
+            case XOVERRIDE:
+                moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                break;
+            default:
+                LocationHandler h = handlersForOption.get(option);
+                return (h == null ? false : h.handleOption(option, value));
+        }
+        return false;
     }
 
     boolean hasLocation(Location location) {
