@@ -90,11 +90,11 @@ public class AsmPluginTest {
                     throw new IOException("Invalid module name " +
                             pool.getModuleName() + " should be "+ m);
                 }
-                if(pool.getClassReaders().length == 0 && !m.equals(TEST_MODULE)) {
+                if (pool.getClasses().size() == 0 && !m.equals(TEST_MODULE)) {
                     throw new IOException("Empty pool " + m);
                 }
                 pool.addPackage("toto");
-                if(pool.getTransformedClasses().getClassReaders().length != 0) {
+                if (pool.getTransformedClasses().getClasses().size() != 0) {
                     throw new IOException("Should be empty");
                 }
                 for(String res : MODULES.get(m)) {
@@ -118,7 +118,8 @@ public class AsmPluginTest {
                 {
                     List<String> remain = new ArrayList<>();
                     remain.addAll(expected);
-                    for (ClassReader reader : pools.getGlobalPool().getClassReaders()) {
+                    for (Resource res : pools.getGlobalPool().getClasses()) {
+                        ClassReader reader = pools.getGlobalPool().getClassReader(res);
                         if (!expected.contains(reader.getClassName())) {
                             throw new IOException("Class is not expected " +
                                     reader.getClassName() + " expected " + expected);
@@ -200,7 +201,8 @@ public class AsmPluginTest {
         public void visit(AsmPools pools, StringTable strings) throws IOException {
             this.pools = pools;
 
-            for (ClassReader reader : pools.getGlobalPool().getClassReaders()) {
+            for (Resource res : pools.getGlobalPool().getClasses()) {
+                ClassReader reader = pools.getGlobalPool().getClassReader(res);
                 ClassWriter writer = new ClassWriter(reader,
                         ClassWriter.COMPUTE_FRAMES);
                 IdentityClassVisitor visitor = new IdentityClassVisitor(writer);
@@ -242,7 +244,8 @@ public class AsmPluginTest {
                 throws IOException {
             this.pools = pools;
 
-            for (ClassReader reader : pools.getGlobalPool().getClassReaders()) {
+            for (Resource res : pools.getGlobalPool().getClasses()) {
+                ClassReader reader = pools.getGlobalPool().getClassReader(res);
                 ClassWriter writer = new ClassWriter(reader,
                         ClassWriter.COMPUTE_FRAMES);
                 RenamerClassVisitor visitor = new RenamerClassVisitor(writer);
@@ -257,7 +260,8 @@ public class AsmPluginTest {
             }
             // Rename the resource Files
             for (Entry<String, List<String>> mod : MODULES.entrySet()) {
-                for (ResourceFile resFile : pools.getModulePool(mod.getKey()).getResourceFiles()) {
+                for (Resource res : pools.getModulePool(mod.getKey()).getResourceFiles()) {
+                    ResourceFile resFile = pools.getModulePool(mod.getKey()).getResourceFile(res);
                     if (resFile.getPath().startsWith("META-INF/services/")) {
                         ByteBuffer content = resFile.getContent();
                         content.rewind();
@@ -426,7 +430,7 @@ public class AsmPluginTest {
             throw new Exception("Resources not visited");
         }
         if (testAsm2.pools.getGlobalPool().getTransformedClasses().
-                getClassReaders().length != expected.size()) {
+                getClasses().size() != expected.size()) {
             throw new Exception("Number of transformed classes not equal to expected");
         }
         for (String className : expected) {
@@ -463,7 +467,7 @@ public class AsmPluginTest {
             throw new Exception("Resources not visited");
         }
         if (testAsm3.pools.getGlobalPool().getTransformedClasses().
-                getClassReaders().length != expected.size()) {
+                getClasses().size() != expected.size()) {
             throw new Exception("Number of transformed classes not equal to expected");
         }
         // Check that only renamed classes and resource files are in the result.

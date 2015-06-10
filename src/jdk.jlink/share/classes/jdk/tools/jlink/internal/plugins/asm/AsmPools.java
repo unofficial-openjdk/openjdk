@@ -26,6 +26,7 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +63,6 @@ public final class AsmPools {
 
     private class AsmGlobalPoolImpl implements AsmGlobalPool {
 
-        private ClassReader[] allReaders = null;
-        private ResourceFile[] allFiles = null;
         private Sorter sorter = null;
 
         private class GlobalWritableClassPool implements WritableClassPool {
@@ -90,16 +89,21 @@ public final class AsmPools {
             }
 
             @Override
-            public ClassReader[] getClassReaders() {
-                List<ClassReader> all = new ArrayList<>();
+            public Collection<Resource> getClasses() {
+                List<Resource> all = new ArrayList<>();
                 visitAllPools((AsmModulePool pool) -> {
-                    for (ClassReader rf : pool.getTransformedClasses().getClassReaders()) {
+                    for (Resource rf : pool.getTransformedClasses().getClasses()) {
                         all.add(rf);
                     }
                 });
-                ClassReader[] ret = new ClassReader[all.size()];
-                all.toArray(ret);
-                return ret;
+                return all;
+            }
+
+            @Override
+            public ClassReader getClassReader(Resource res) {
+                return visitPools((AsmModulePool pool) -> {
+                    return pool.getTransformedClasses().getClassReader(res);
+                });
             }
 
         }
@@ -128,16 +132,21 @@ public final class AsmPools {
             }
 
             @Override
-            public ResourceFile[] getResourceFiles() {
-                List<ResourceFile> all = new ArrayList<>();
+            public Collection<Resource> getResourceFiles() {
+                List<Resource> all = new ArrayList<>();
                 visitAllPools((AsmModulePool pool) -> {
-                    for (ResourceFile rf : pool.getTransformedResourceFiles().getResourceFiles()) {
+                    for (Resource rf : pool.getTransformedResourceFiles().getResourceFiles()) {
                         all.add(rf);
                     }
                 });
-                ResourceFile[] ret = new ResourceFile[all.size()];
-                all.toArray(ret);
-                return ret;
+                return all;
+            }
+
+            @Override
+            public ResourceFile getResourceFile(Resource res) {
+                return visitPools((AsmModulePool pool) -> {
+                    return pool.getTransformedResourceFiles().getResourceFile(res);
+                });
             }
 
         }
@@ -158,33 +167,25 @@ public final class AsmPools {
         }
 
         @Override
-        public ClassReader[] getClassReaders() {
-            if (allReaders == null) {
-                List<ClassReader> all = new ArrayList<>();
-                visitAllPools((AsmModulePool pool) -> {
-                    for (ClassReader rf : pool.getClassReaders()) {
-                        all.add(rf);
-                    }
-                });
-                allReaders = new ClassReader[all.size()];
-                all.toArray(allReaders);
-            }
-            return allReaders;
+        public Collection<Resource> getClasses() {
+            List<Resource> all = new ArrayList<>();
+            visitAllPools((AsmModulePool pool) -> {
+                for (Resource rf : pool.getClasses()) {
+                    all.add(rf);
+                }
+            });
+            return all;
         }
 
         @Override
-        public AsmPool.ResourceFile[] getResourceFiles() {
-            if (allFiles == null) {
-                List<ResourceFile> all = new ArrayList<>();
-                visitAllPools((AsmModulePool pool) -> {
-                    for (ResourceFile rf : pool.getResourceFiles()) {
-                        all.add(rf);
-                    }
-                });
-                allFiles = new ResourceFile[all.size()];
-                all.toArray(allFiles);
-            }
-            return allFiles;
+        public Collection<Resource> getResourceFiles() {
+            List<Resource> all = new ArrayList<>();
+            visitAllPools((AsmModulePool pool) -> {
+                for (Resource rf : pool.getResourceFiles()) {
+                    all.add(rf);
+                }
+            });
+            return all;
         }
 
         @Override
@@ -198,6 +199,20 @@ public final class AsmPools {
         public ClassReader getClassReader(String binaryName) throws IOException {
             return visitPoolsEx((AsmModulePool pool) -> {
                 return pool.getClassReader(binaryName);
+            });
+        }
+
+        @Override
+        public ResourceFile getResourceFile(Resource res) {
+            return visitPools((AsmModulePool pool) -> {
+                return pool.getResourceFile(res);
+            });
+        }
+
+        @Override
+        public ClassReader getClassReader(Resource res) throws IOException {
+            return visitPoolsEx((AsmModulePool pool) -> {
+                return pool.getClassReader(res);
             });
         }
 
@@ -248,7 +263,6 @@ public final class AsmPools {
         P visit(AsmModulePool pool) throws IOException;
     }
 
-    private final ResourcePool inputResources;
     private final Map<String, AsmModulePool> pools = new LinkedHashMap<>();
     private final AsmModulePool[] poolsArray;
     private final AsmGlobalPoolImpl global;
@@ -263,7 +277,6 @@ public final class AsmPools {
      */
     public AsmPools(ResourcePool inputResources) throws Exception {
         Objects.requireNonNull(inputResources);
-        this.inputResources = inputResources;
         Map<String, ResourcePool> resPools = new LinkedHashMap<>();
         for (Resource res : inputResources.getResources()) {
             ResourcePool p = resPools.get(res.getModule());

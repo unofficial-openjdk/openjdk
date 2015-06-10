@@ -441,12 +441,13 @@ public class PluginsTest {
             System.out.println("zipped/unzipped " + covered.size() + " classes");
         }
 
-        // Strip debug
-        List<Path> covered2 = new ArrayList<>();
         JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
         String[] classes = {"toto.Main", "toto.com.foo.bar.X"};
-        File moduleFile = helper.generateModuleCompiledClasses("leaf1", classes);
+        File moduleFile = helper.generateModuleCompiledClasses("composite2", classes);
+
+        // Strip debug
         // Classes have been compiled in debug.
+        List<Path> covered2 = new ArrayList<>();
         try (java.util.stream.Stream<Path> stream = Files.walk(moduleFile.toPath())) {
             stream.forEach((p) -> {
                 if (Files.isRegularFile(p) && p.toString().endsWith(".class")) {
@@ -496,6 +497,9 @@ public class PluginsTest {
                 }
             }
         };
+        try (java.util.stream.Stream<Path> stream = Files.walk(moduleFile.toPath())) {
+            stream.forEach(c);
+        }
         ResourcePlugin plugin = new StringSharingProvider().newPlugins(null, null)[0];
         Map<String, Integer> map = new HashMap<>();
         Map<Integer, String> reversedmap = new HashMap<>();
@@ -520,11 +524,15 @@ public class PluginsTest {
             }
         });
 
+        if (result.isEmpty()) {
+            throw new Exception("No result");
+        }
+
         for (Resource res : result.getResources()) {
             if (res.getPath().endsWith(".class")) {
                 byte[] uncompacted = StringSharingDecompressor.normalize((int offset) -> {
                     return reversedmap.get(offset);
-                }, res.getByteArray(), 0);
+                }, res.getByteArray(), CompressedResourceHeader.getSize());
                 JImageValidator.readClass(uncompacted);
             }
         }
