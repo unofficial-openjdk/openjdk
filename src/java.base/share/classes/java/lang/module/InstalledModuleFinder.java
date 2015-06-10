@@ -67,8 +67,10 @@ class InstalledModuleFinder implements ModuleFinder {
             URI location = URI.create("jrt:/" + name);
             ModuleReference mref =
                 ModuleReferences.newModuleReference(md, location, null);
-            installedModulesCount.increment();
-            installedModulesTime.addElapsedTimeFrom(t0);
+            mrefCount.increment();
+            mrefInitTime.addElapsedTimeFrom(t0);
+            packageCount.add(md.packages().size());
+            exportsCount.add(md.exports().size());
             return mref;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -144,10 +146,13 @@ class InstalledModuleFinder implements ModuleFinder {
     }
 
     private static final PerfCounter initTime =
-            PerfCounter.newPerfCounter("jdk.module.installedModules.initTime");
-    private static final PerfCounter installedModulesTime =
-            PerfCounter.newPerfCounter("jdk.module.installedModules.initReferenceTime");
-    private static final PerfCounter installedModulesCount =
-            PerfCounter.newPerfCounter("jdk.module.installedModules.mrefs");
-
+        PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
+    private static final PerfCounter mrefInitTime =
+        PerfCounter.newPerfCounter("jdk.module.finder.jimage.mrefsInitTime");
+    private static final PerfCounter mrefCount =
+        PerfCounter.newPerfCounter("jdk.module.finder.jimage.mrefs");
+    private static final PerfCounter packageCount =
+        PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
+    private static final PerfCounter exportsCount =
+        PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
 }

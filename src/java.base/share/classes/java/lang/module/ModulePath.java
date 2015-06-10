@@ -51,6 +51,7 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.HashSupplier;
+import sun.misc.PerfCounter;
 
 
 /**
@@ -196,6 +197,7 @@ class ModulePath implements ModuleFinder {
      * file system.
      */
     private ModuleReference readJMod(Path file) throws IOException {
+        long t0 = System.nanoTime();
         try (ZipFile zf = new ZipFile(file.toString())) {
             ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
             if (ze == null) {
@@ -208,7 +210,10 @@ class ModulePath implements ModuleFinder {
             // jmod URI - syntax not defined yet
             URI location = URI.create("jmod:" + file.toUri() + "!/");
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleReferences.newModuleReference(md, location, hasher);
+            ModuleReference mref = ModuleReferences.newModuleReference(md, location, hasher);
+            mrefCount.increment();
+            mrefInitTime.addElapsedTimeFrom(t0);
+            return mref;
         }
     }
 
@@ -360,6 +365,7 @@ class ModulePath implements ModuleFinder {
      * file system.
      */
     private ModuleReference readJar(Path file) throws IOException {
+        long t0 = System.nanoTime();
         try (JarFile jf = new JarFile(file.toString())) {
 
             ModuleDescriptor md;
@@ -375,7 +381,10 @@ class ModulePath implements ModuleFinder {
             URI location = URI.create("jar:" + file.toUri() + "!/");
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
 
-            return ModuleReferences.newModuleReference(md, location, hasher);
+            ModuleReference mref = ModuleReferences.newModuleReference(md, location, hasher);
+            mrefCount.increment();
+            mrefInitTime.addElapsedTimeFrom(t0);
+            return mref;
         }
     }
 
@@ -401,6 +410,7 @@ class ModulePath implements ModuleFinder {
      * on the file system.
      */
     private ModuleReference readExploded(Path dir) throws IOException {
+        long t0 = System.nanoTime();
         Path mi = dir.resolve(MODULE_INFO);
         if (Files.notExists(mi)) {
             // no module-info in directory
@@ -412,7 +422,10 @@ class ModulePath implements ModuleFinder {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
         }
-        return ModuleReferences.newModuleReference(md, location, null);
+        ModuleReference mref = ModuleReferences.newModuleReference(md, location, null);
+        mrefCount.increment();
+        mrefInitTime.addElapsedTimeFrom(t0);
+        return mref;
     }
 
 
@@ -453,4 +466,11 @@ class ModulePath implements ModuleFinder {
             return "";
         }
     }
+
+    private static final PerfCounter initTime =
+        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.initTime");
+    private static final PerfCounter mrefInitTime =
+        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.mrefsInitTime");
+    private static final PerfCounter mrefCount =
+        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.mrefs");
 }

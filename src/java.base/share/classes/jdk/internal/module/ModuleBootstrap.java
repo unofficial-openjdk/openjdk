@@ -196,9 +196,6 @@ public final class ModuleBootstrap {
         // time to reify modules
         PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
-        // time to define modules to class loaders
-        PerfCounters.mapModuleCLTime.addElapsedTimeFrom(t2);
-
         // set the boot Layer
         SharedSecrets.getJavaLangModuleAccess().setBootLayer(bootLayer);
 
@@ -294,8 +291,6 @@ public final class ModuleBootstrap {
             PerfCounter.newPerfCounter("jdk.module.bootstrap.time");
         static PerfCounter bootLayerTime =
             PerfCounter.newPerfCounter("jdk.module.bootLayer.createTime");
-        static PerfCounter mapModuleCLTime =
-            PerfCounter.newPerfCounter("jdk.module.moduleToLoader.time");
         static PerfCounter configTime =
             PerfCounter.newPerfCounter("jdk.module.configuration.time");
     }
