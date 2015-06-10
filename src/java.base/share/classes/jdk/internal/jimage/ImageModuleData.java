@@ -223,7 +223,7 @@ final public class ImageModuleData {
         if (index != NOT_FOUND) {
             int count = get(index + mtpDataCountOffset);
             int base = get(index + mtpDataOffsetOffset) + mtpPackagesOffset;
-            List<String> packages = new ArrayList<>();
+            List<String> packages = new ArrayList<>(count);
 
             for (int i = 0; i < count; i++) {
                 packages.add(stringAt(base + i));
