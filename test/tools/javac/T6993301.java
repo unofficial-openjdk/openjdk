@@ -65,15 +65,13 @@ public class T6993301 {
     }
 
     public void testExceptionParameterCorrectKind() throws IOException {
-        final String bootPath = System.getProperty("sun.boot.class.path");
         final JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         assert tool != null;
 
         String code = "package test; public class Test { { try { } catch (NullPointerException ex) {} } }";
 
         final JavacTaskImpl ct = (JavacTaskImpl)tool.getTask(null, null, null,
-                Arrays.asList("-bootclasspath",  bootPath),
-                null, Arrays.asList(new MyFileObject(code)));
+                null, null, Arrays.asList(new MyFileObject(code)));
         CompilationUnitTree cut = ct.parse().iterator().next();
 
         ct.analyze();
