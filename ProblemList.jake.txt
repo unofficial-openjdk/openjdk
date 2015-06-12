@@ -14,8 +14,6 @@ tools/javac/Object2.java     							0 generic-all	need -Xmodule to be able to re
 tools/javac/Paths/Diagnostics.sh     						0 generic-all	needs rewrite
 tools/javac/Paths/MineField.sh     						0 generic-all	needs rewrite
 tools/javac/T4093617/T4093617.java     						0 generic-all	need -Xmodule to be able to redefine java.lang.Object
-tools/javac/T5003235/T5003235a.java     					0 generic-all	compiler message file broken; module access issues
-tools/javac/T5003235/T5003235b.java     					0 generic-all	compiler message file broken; module access issues
 tools/javac/T8003967/DetectMutableStaticFields.java     			0 generic-all	uses URI to determine location of class files
 tools/javac/api/6411333/T6411333.java     					0 generic-all	problem in JavacFileManager.inferBinaryName
 tools/javac/api/6418694/T6418694.java     					0 generic-all	need to update for new StandardLocations
@@ -26,8 +24,6 @@ tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
 tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
 tools/javac/diags/CheckExamples.java    					0 generic-all	NPE from CCW; need to update for new messages
 tools/javac/diags/CheckResourceKeys.java     					0 generic-all	legacy getBundle can't be used
-tools/javac/diags/MessageInfo.java     						0 generic-all	NPE from CCW
-tools/javac/diags/RunExamples.java     						0 generic-all	NPE from CCW
 tools/javac/fatalErrors/NoJavaLangTest.java     				0 generic-all	need to replace -bcp with -systemmodulepath
 tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
 tools/javac/file/ExplodedImage.java      					0 generic-all   "Did not load java.util.List from correct place"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,27 @@
  * questions.
  */
 
-import com.sun.tools.classfile.*;
-import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
-import com.sun.tools.classfile.ConstantPool.CONSTANT_Utf8_info;
-import com.sun.tools.classfile.ConstantPool.CPInfo;
 import java.io.*;
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
 import java.util.*;
 import javax.annotation.processing.*;
 import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
 
+import com.sun.tools.classfile.*;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Utf8_info;
+import com.sun.tools.classfile.ConstantPool.CPInfo;
+
 /* Create an invalid classfile with version 51.0 and a static method in an interface.*/
 @SupportedAnnotationTypes("*")
 public class CreateBadClassFile extends AbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.classfile");
+    }
+
     public boolean process(Set<? extends TypeElement> elems, RoundEnvironment renv) {
         if (++round == 1) {
             ConstantPool cp = new ConstantPool(new CPInfo[] {
@@ -83,4 +90,18 @@ public class CreateBadClassFile extends AbstractProcessor {
     }
 
     int round = 0;
+
+    protected void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, getClass().getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
+        }
+    }
 }
