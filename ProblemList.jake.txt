@@ -9,7 +9,6 @@ com/sun/javadoc/testTaglets/TestTaglets.java     				0 generic-all	need addExpor
 tools/javac/4846262/CheckEBCDICLocaleTest.java     				0 generic-all	need fix from jdk9/dev
 tools/javac/6330997/T6330997.java    						0 generic-all	NPE in Resolve
 tools/javac/6589361/T6589361.java     						0 generic-all	problem in JavacFileManager.inferBinaryName
-tools/javac/ExtDirs/ExtDirTest.java     					0 generic-all	test of -extdirs: should restrict to -target 8
 tools/javac/Object1.java     							0 generic-all	need -Xmodule to be able to redefine java.lang.Object
 tools/javac/Object2.java     							0 generic-all	need -Xmodule to be able to redefine java.lang.Object
 tools/javac/Paths/Diagnostics.sh     						0 generic-all	needs rewrite
@@ -31,7 +30,7 @@ tools/javac/diags/CheckExamples.java    					0 generic-all	NPE from CCW; need to
 tools/javac/diags/CheckResourceKeys.java     					0 generic-all	legacy getBundle can't be used
 tools/javac/diags/MessageInfo.java     						0 generic-all	NPE from CCW
 tools/javac/diags/RunExamples.java     						0 generic-all	NPE from CCW
-tools/javac/fatalErrors/NoJavaLangTest.java     				0 generic-all	need to replave -bcp with -systemmodulepath
+tools/javac/fatalErrors/NoJavaLangTest.java     				0 generic-all	need to replace -bcp with -systemmodulepath
 tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
 tools/javac/file/ExplodedImage.java      					0 generic-all   "Did not load java.util.List from correct place"
 tools/javac/generics/diamond/neg/T8078473_2.java      				0 generic-all	need -Xmodule to be able to define class in java.util.stream
