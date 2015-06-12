@@ -26,6 +26,7 @@
 package sun.misc;
 
 import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 
 
 /**
@@ -39,5 +40,11 @@ public interface JavaLangModuleAccess {
      * @see Layer#boot()
      */
     void setBootLayer(Layer layer);
+
+    /**
+     * Returns {@code true} if the module descriptor is for an
+     * automatic module.
+     */
+    boolean isAutomatic(ModuleDescriptor descriptor);
 
 }

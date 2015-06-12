@@ -277,6 +277,23 @@ public final class Module {
     }
 
     /**
+     * Updates this module to read the target module and all modules that it
+     * reads in the original readability graph.
+     *
+     * This method is for use by Proxy for dynamic modules
+     */
+    void addReadsAll(Module target) {
+        if (!target.isNamed()) {
+            throw new IllegalArgumentException("can't require unnamed module");
+        }
+        if (this.isNamed()) {
+            // add target and its dependences
+            implAddReads(target, true);
+            target.reads.stream().forEach(m -> implAddReads(m, true));
+        }
+    }
+
+    /**
      * Makes the given {@code Module} readable to this module without
      * notifying the VM.
      *
@@ -402,17 +419,6 @@ public final class Module {
         }
     }
 
-    // for dynamic module to use
-    void addReadsAll(Module target) {
-        if (!target.isNamed()) {
-            throw new IllegalArgumentException("can't require unnamed module");
-        }
-        if (this.isNamed()) {
-            // add target and its dependences
-            implAddReads(target, true);
-            target.reads.stream().forEach(m -> implAddReads(m, true));
-        }
-    }
 
     // -- creating Module objects --
 
@@ -517,6 +523,11 @@ public final class Module {
                 addReadsModule0(m, m2);
             }
             m.reads = reads;
+
+            // automatic modules reads all unnamed modules
+            if (SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor)) {
+                m.implAddReads(null, true);
+            }
 
             // exports
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();

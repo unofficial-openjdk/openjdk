@@ -51,7 +51,7 @@ public class Main {
                 .forEach(om -> assertTrue(httpModule.canRead(om.get())));
 
         // run code in the automatic modue, ensures access is allowed
-        HttpServer http = new HttpServer(80);
+        HttpServer http = HttpServer.create(80);
         http.start();
     }
 

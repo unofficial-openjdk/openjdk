@@ -26,7 +26,6 @@
 package java.lang.module;
 
 import java.lang.reflect.Module;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +36,6 @@ import java.util.Set;
 
 import sun.misc.JavaLangModuleAccess;
 import sun.misc.JavaLangReflectAccess;
-import sun.misc.Modules;
 import sun.misc.SharedSecrets;
 
 /**
@@ -169,14 +167,6 @@ public final class Layer {
         } catch (Exception | Error e) {
             throw new LayerInstantiationException(e);
         }
-
-        // automatic modules need to be loose modules.
-        cf.descriptors().stream()
-            .filter(ModuleDescriptor::isAutomatic)
-            .map(ModuleDescriptor::name)
-            .map(layer::findModule)
-            .map(Optional::get)
-            .forEach(m -> Modules.addReads(m, null));
 
         return layer;
     }
@@ -404,6 +394,10 @@ public final class Layer {
             @Override
             public void setBootLayer(Layer layer) {
                 bootLayer = layer;
+            }
+            @Override
+            public boolean isAutomatic(ModuleDescriptor descriptor) {
+                return descriptor.isAutomatic();
             }
         });
     }

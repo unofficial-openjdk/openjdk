@@ -21,8 +21,13 @@
  * questions.
  */
 
-module httpserver {
-    requires logging;
-    exports http;
-    exports http.spi;
+package http.spi;
+
+import http.HttpServer;
+
+public abstract class HttpServerProvider {
+
+    protected HttpServerProvider() { }
+
+    public abstract HttpServer createHttpServer(int port);
 }
