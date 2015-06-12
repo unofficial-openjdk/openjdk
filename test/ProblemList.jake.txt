@@ -21,8 +21,8 @@ tools/javac/api/T6397104.java     						0 generic-all	need to update for new Sta
 tools/javac/api/T6430241.java     						0 generic-all	test for disabling symbol file through API; delete test?
 tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
 tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
-tools/javac/diags/CheckExamples.java    					0 generic-all	legacy getBundle can't be used
-tools/javac/diags/CheckResourceKeys.java     					0 generic-all	legacy getBundle can't be used
+tools/javac/diags/CheckExamples.java    					0 generic-all	need to update resource files
+tools/javac/diags/CheckResourceKeys.java     					0 generic-all	need to update resource files
 tools/javac/fatalErrors/NoJavaLangTest.java     				0 generic-all	need to replace -bcp with -systemmodulepath
 tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
 tools/javac/file/ExplodedImage.java      					0 generic-all   "Did not load java.util.List from correct place"
@@ -37,12 +37,6 @@ tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determ
 tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
 tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
 tools/javac/warnings/6594914/T6594914b.java     				0 generic-all	uses -Xlint:sunapi; should this go away or be limited to 8?
-tools/javac/warnings/VerifyLintDescriptions.java     				0 generic-all   legacy getBundle can't be used
-
-
-##### javadoc ##################################################################
-
-tools/javadoc/CheckResourceKeys.java     					0 generic-all   legacy getBundle can't be used
 
 
 ##### javah ##################################################################
