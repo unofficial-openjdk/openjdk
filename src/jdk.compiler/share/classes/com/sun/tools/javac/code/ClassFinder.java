@@ -47,7 +47,6 @@ import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.comp.Annotate;
-import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.file.JRTIndex;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.jvm.ClassReader;
@@ -503,6 +502,7 @@ public class ClassFinder {
 
         ModuleSymbol msym = (p.modle != null) ? p.modle : p.modleHint;
         if (msym != null) { // TODO: This needs to become an assert
+            msym.complete();
             // new code
             if (msym == syms.noModule) {
                 preferCurrent = false;
