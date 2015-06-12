@@ -33,7 +33,6 @@ tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java     	0 ge
 tools/javac/processing/model/TestSymtabItems.java     				0 generic-all	getting UnsupportedOperationException from unnamed module
 tools/javac/processing/model/testgetallmembers/Main.java     			0 generic-all	NPE in test in getPackage method
 tools/javac/processing/options/testCommandLineClasses/Test.java     		0 generic-all	problem locating nested classes
-tools/javac/processing/rounds/BaseClassesNotReRead.java     			0 generic-all	NPE in ForwardingFileManager
 tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determine future of -profile option (JDK 8 only? JDK 9)
 tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
 tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
