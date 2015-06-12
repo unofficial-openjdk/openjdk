@@ -52,8 +52,3 @@ tools/javadoc/CheckResourceKeys.java     					0 generic-all   legacy getBundle c
 tools/javah/T7185778.java     							0 generic-all	Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
 
 
-##### jdeps ##################################################################
-
-tools/jdeps/APIDeps.java     							0 generic-all	Error: -XaddExports can only be specified once
-tools/jdeps/DotFileTest.java     						0 generic-all	Error: -XaddExports can only be specified once
-
