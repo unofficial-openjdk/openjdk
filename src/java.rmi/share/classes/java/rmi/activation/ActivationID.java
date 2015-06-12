@@ -275,9 +275,9 @@ public class ActivationID implements Serializable {
             RemoteRef ref = refClass.newInstance();
             ref.readExternal(in);
             activator = (Activator)
-                Proxy.newModuleProxyInstance(Activator.class.getModule(),
-                                             new RemoteObjectInvocationHandler(ref),
-                                             Activator.class);
+                Proxy.newProxyInstance(Activator.class.getModule(),
+                                       new RemoteObjectInvocationHandler(ref),
+                                       Activator.class);
         } catch (InstantiationException e) {
             throw (IOException)
                 new InvalidObjectException(

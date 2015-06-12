@@ -403,7 +403,17 @@ public final class Module {
         }
     }
 
-
+    // for dynamic module to use
+    void addReadsAll(Module target) {
+        if (!target.isNamed()) {
+            throw new IllegalArgumentException("can't require unnamed module");
+        }
+        if (this.isNamed()) {
+            // add target and its dependences
+            implAddReads(target, true);
+            target.reads.stream().forEach(m -> implAddReads(m, true));
+        }
+    }
 
     // -- creating Module objects --
 

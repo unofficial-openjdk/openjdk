@@ -24,5 +24,4 @@
 module m3 {
     requires m2;
     exports p.three;
-    exports p.three.internal to test;
 }

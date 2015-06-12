@@ -21,8 +21,7 @@
  * questions.
  */
 
-module test {
-    requires m1;
-    requires m2;
-    requires m3;
+package jdk.test.internal;
+
+public interface R {
 }

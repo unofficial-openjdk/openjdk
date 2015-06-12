@@ -22,7 +22,7 @@
 #
 
 # @test
-# @summary Basic test of dynamic proxies with modules
+# @summary Basic test of dynamic proxies with modules calling from unnamed module
 
 set -e
 
@@ -58,14 +58,14 @@ $JAVAC -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/m3 -name "*.jav
 mkdir -p classes
 $JAVAC -d classes `find $TESTSRC/src/q -name "*.java"`
 
-$JAVAC -d classes -mp mods -cp classes $TESTSRC/src/ProxyAccess.java
-
 mkdir -p mods/test
 
-$JAVAC -d mods/test -mp mods -cp classes \
+$JAVAC -d classes -mp mods -cp classes \
        `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -cp classes -mp mods -m test/jdk.test.Main
+$JAVAC -d classes -mp mods -cp classes $TESTSRC/src/*.java
+
+echo "Running ProxyAccess"
 $JAVA -cp classes -mp mods -addmods m1,m2,m3 ProxyAccess
 
 exit 0
