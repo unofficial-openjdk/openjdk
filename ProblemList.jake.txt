@@ -16,14 +16,12 @@ tools/javac/Paths/MineField.sh     						0 generic-all	needs rewrite
 tools/javac/T4093617/T4093617.java     						0 generic-all	need -Xmodule to be able to redefine java.lang.Object
 tools/javac/T5003235/T5003235a.java     					0 generic-all	compiler message file broken; module access issues
 tools/javac/T5003235/T5003235b.java     					0 generic-all	compiler message file broken; module access issues
-tools/javac/T6942649.java     							0 generic-all	need to use getResourceAsStream
 tools/javac/T8003967/DetectMutableStaticFields.java     			0 generic-all	uses URI to determine location of class files
 tools/javac/api/6411333/T6411333.java     					0 generic-all	problem in JavacFileManager.inferBinaryName
 tools/javac/api/6418694/T6418694.java     					0 generic-all	need to update for new StandardLocations
 tools/javac/api/T6397104.java     						0 generic-all	need to update for new StandardLocations
 tools/javac/api/T6430241.java     						0 generic-all	test for disabling symbol file through API; delete test?
 tools/javac/api/TestClientCodeWrapper.java     					0 generic-all	lots of NPE; probably need to update for new methods
-tools/javac/api/TestJavacTaskScanner.java     					0 generic-all	need addExports
 tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
 tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
 tools/javac/diags/CheckExamples.java    					0 generic-all	NPE from CCW; need to update for new messages
@@ -37,12 +35,12 @@ tools/javac/generics/diamond/neg/T8078473_2.java      				0 generic-all	need -Xm
 tools/javac/importscope/dependencies/DependenciesTest.java     			0 generic-all	NPE in test's internal scanner
 tools/javac/options/xprefer/XPreferTest.java     				0 generic-all	tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
 tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java     	0 generic-all	?? need more investigation 
-tools/javac/processing/model/TestSymtabItems.java     				0 generic-all	getting UnsupportedOPerationException from unnamed module
+tools/javac/processing/model/TestSymtabItems.java     				0 generic-all	getting UnsupportedOperationException from unnamed module
 tools/javac/processing/model/testgetallmembers/Main.java     			0 generic-all	NPE in test in getPackage method
 tools/javac/processing/options/testCommandLineClasses/Test.java     		0 generic-all	problem locating nested classes
 tools/javac/processing/rounds/BaseClassesNotReRead.java     			0 generic-all	NPE in ForwardingFileManager
 tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determine future of -profile option (JDK 8 only? JDK 9)
-tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath
+tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
 tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
 tools/javac/warnings/6594914/T6594914b.java     				0 generic-all	uses -Xlint:sunapi; should this go away or be limited to 8?
 tools/javac/warnings/VerifyLintDescriptions.java     				0 generic-all   legacy getBundle can't be used

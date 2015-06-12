@@ -27,6 +27,7 @@ package com.sun.tools.javac.main;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.NoSuchFileException;
@@ -350,28 +351,28 @@ public class Main {
     void showClass(String className) {
         PrintWriter pw = log.getWriter(WriterKind.NOTICE);
         pw.println("javac: show class: " + className);
+
         URL url = getClass().getResource('/' + className.replace('.', '/') + ".class");
-        if (url == null)
-            pw.println("  class not found");
-        else {
+        if (url != null) {
             pw.println("  " + url);
-            try {
-                final String algorithm = "MD5";
-                byte[] digest;
-                MessageDigest md = MessageDigest.getInstance(algorithm);
-                try (DigestInputStream in = new DigestInputStream(url.openStream(), md)) {
-                    byte[] buf = new byte[8192];
-                    int n;
-                    do { n = in.read(buf); } while (n > 0);
-                    digest = md.digest();
-                }
-                StringBuilder sb = new StringBuilder();
-                for (byte b: digest)
-                    sb.append(String.format("%02x", b));
-                pw.println("  " + algorithm + " checksum: " + sb);
-            } catch (NoSuchAlgorithmException | IOException e) {
-                pw.println("  cannot compute digest: " + e);
+        }
+
+        try (InputStream in = getClass().getResourceAsStream('/' + className.replace('.', '/') + ".class")) {
+            final String algorithm = "MD5";
+            byte[] digest;
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+            try (DigestInputStream din = new DigestInputStream(in, md)) {
+                byte[] buf = new byte[8192];
+                int n;
+                do { n = din.read(buf); } while (n > 0);
+                digest = md.digest();
             }
+            StringBuilder sb = new StringBuilder();
+            for (byte b: digest)
+                sb.append(String.format("%02x", b));
+            pw.println("  " + algorithm + " checksum: " + sb);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            pw.println("  cannot compute digest: " + e);
         }
     }
 
