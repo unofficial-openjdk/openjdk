@@ -19,10 +19,9 @@ tools/javac/api/6411333/T6411333.java     					0 generic-all	problem in JavacFil
 tools/javac/api/6418694/T6418694.java     					0 generic-all	need to update for new StandardLocations
 tools/javac/api/T6397104.java     						0 generic-all	need to update for new StandardLocations
 tools/javac/api/T6430241.java     						0 generic-all	test for disabling symbol file through API; delete test?
-tools/javac/api/TestClientCodeWrapper.java     					0 generic-all	lots of NPE; probably need to update for new methods
 tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
 tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
-tools/javac/diags/CheckExamples.java    					0 generic-all	NPE from CCW; need to update for new messages
+tools/javac/diags/CheckExamples.java    					0 generic-all	legacy getBundle can't be used
 tools/javac/diags/CheckResourceKeys.java     					0 generic-all	legacy getBundle can't be used
 tools/javac/fatalErrors/NoJavaLangTest.java     				0 generic-all	need to replace -bcp with -systemmodulepath
 tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
