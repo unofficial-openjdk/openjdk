@@ -1332,8 +1332,8 @@ public final class System {
             {
                 return cl.getResourceAsStream(moduleName, name);
             }
-            public Stream<Package> getPackageStream(ClassLoader cl) {
-                return cl.getPackageStream();
+            public Stream<Package> packages(ClassLoader cl) {
+                return cl.packages();
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

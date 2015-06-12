@@ -163,7 +163,7 @@ public interface JavaLangAccess {
     /**
      * Returns the Packages for the given class loader.
      */
-    Stream<Package> getPackageStream(ClassLoader cl);
+    Stream<Package> packages(ClassLoader cl);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

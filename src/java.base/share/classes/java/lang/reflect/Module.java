@@ -37,7 +37,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -230,9 +229,9 @@ public final class Module {
             // unnamed module
             Stream<Package> packages;
             if (loader == null) {
-                packages = BootLoader.getPackageStream();
+                packages = BootLoader.packages();
             } else {
-                packages = SharedSecrets.getJavaLangAccess().getPackageStream(loader);
+                packages = SharedSecrets.getJavaLangAccess().packages(loader);
             }
             return packages.map(Package::getName).toArray(String[]::new);
         }

@@ -282,7 +282,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     public static Package[] getPackages() {
         ClassLoader cl = ClassLoader.getClassLoader(Reflection.getCallerClass());
         Stream<Package> pkgs = cl != null ? cl.packagesFromAncestors()
-                                          : sun.misc.BootLoader.getPackageStream();
+                                          : sun.misc.BootLoader.packages();
         return pkgs.toArray(Package[]::new);
     }
 
