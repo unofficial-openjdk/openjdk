@@ -61,8 +61,8 @@
 #endif
 
 address os::current_stack_pointer() {
-  address dummy = (address) &dummy;
-  return dummy;
+  // return the address of the current function
+  return (address)__builtin_frame_address(0);
 }
 
 frame os::get_sender_for_C_frame(frame* fr) {
