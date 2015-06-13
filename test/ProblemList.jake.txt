@@ -95,7 +95,6 @@ demo/jvmti/hprof/CpuTimesDefineClassTest.java			generic-all
 demo/jvmti/hprof/CpuTimesTest.java				generic-all
 demo/jvmti/hprof/OptionsTest.java				generic-all
 demo/jvmti/hprof/StackMapTableTest.java				generic-all
-sun/tools/jhat/HatHeapDump1Test.java                            generic-all
 
 ############################################################################
 
