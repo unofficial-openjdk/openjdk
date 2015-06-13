@@ -62,8 +62,6 @@ public class CustomTag extends BaseTaglet {
                 (Tag[]) inlineTags.toArray(new Tag[] {}));
     }
 
-
-
     private void addExports(String moduleName, String packageName) {
         try {
             Layer layer = Layer.boot();

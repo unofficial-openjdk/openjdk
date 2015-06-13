@@ -1,7 +1,6 @@
 ##### doclets ##################################################################
 
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java     	0 generic-all	javadoc can't find {@link java.math}
-com/sun/javadoc/testTaglets/TestTaglets.java     				0 generic-all	need addExports for taglet
 
 
 ##### javac ####################################################################
