@@ -30,6 +30,10 @@ public class T6589361 {
                 if (file.getName().replace(File.separatorChar, '/').contains("java/lang/Object.class")) {
                     String str = fm.inferBinaryName(StandardLocation.CLASS_PATH, file);
                     if (!str.equals("java.lang.Object")) {
+                        System.err.println("file object: " + file);
+                        System.err.println("      class: " + file.getClass());
+                        System.err.println("       name: " + file.getName());
+                        System.err.println("binary name: " + str);
                         throw new AssertionError("Error in JavacFileManager.inferBinaryName method!");
                     }
                     else {
