@@ -26,7 +26,6 @@ tools/javac/generics/diamond/neg/T8078473_2.java      				0 generic-all	need -Xm
 tools/javac/importscope/dependencies/DependenciesTest.java     			0 generic-all	NPE in test's internal scanner
 tools/javac/options/xprefer/XPreferTest.java     				0 generic-all	tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
 tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java     	0 generic-all	?? need more investigation 
-tools/javac/processing/model/TestSymtabItems.java     				0 generic-all	getting UnsupportedOperationException from unnamed module
 tools/javac/processing/model/testgetallmembers/Main.java     			0 generic-all	NPE in test in getPackage method
 tools/javac/processing/options/testCommandLineClasses/Test.java     		0 generic-all	problem locating nested classes
 tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determine future of -profile option (JDK 8 only? JDK 9)

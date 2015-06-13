@@ -904,7 +904,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @Override
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            return v.visitUnknown(this, p); // for now
         }
 
     }
