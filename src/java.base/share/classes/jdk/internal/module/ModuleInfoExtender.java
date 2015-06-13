@@ -45,6 +45,9 @@ import jdk.internal.module.Hasher.DependencyHashes;
 
 import static jdk.internal.module.ClassFileAttributes.*;
 
+/**
+ * Utility class to extend a module-info.class with additional attributes.
+ */
 
 public final class ModuleInfoExtender {
 
