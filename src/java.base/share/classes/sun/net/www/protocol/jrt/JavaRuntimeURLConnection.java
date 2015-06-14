@@ -91,9 +91,8 @@ public class JavaRuntimeURLConnection extends URLConnection {
      */
     private static Resource findResource(String module, String name) {
         if (reader != null) {
-            String rn = "/" + module + "/" + name;
             URL url = toJrtURL(module, name);
-            ImageLocation location = reader.findLocation(rn);
+            ImageLocation location = reader.findLocation(module, name);
             if (location != null && URLClassPath.checkURL(url) != null) {
                 return new Resource() {
                     @Override

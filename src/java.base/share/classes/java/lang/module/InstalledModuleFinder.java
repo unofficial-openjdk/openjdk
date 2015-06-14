@@ -134,8 +134,7 @@ class InstalledModuleFinder implements ModuleFinder {
          * image.
          */
         ModuleDescriptor readDescriptor(String name) throws IOException {
-            String rn = "/" + name + "/" + MODULE_INFO;
-            ImageLocation loc = imageReader.findLocation(rn);
+            ImageLocation loc = imageReader.findLocation(name, MODULE_INFO);
             ByteBuffer bb = imageReader.getResourceBuffer(loc);
             try {
                 return ModuleInfo.readIgnoringHashes(bb, () -> packages(name));
