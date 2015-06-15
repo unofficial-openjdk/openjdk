@@ -204,7 +204,10 @@ void Arguments::init_system_properties() {
   _java_library_path = new SystemProperty("java.library.path", NULL,  true);
   _java_home =  new SystemProperty("java.home", NULL,  true);
   _sun_boot_class_path = new SystemProperty("sun.boot.class.path", NULL,  true);
-  _jdk_boot_class_path_append = new SystemProperty("jdk.boot.class.path.append", NULL, true);
+
+  // jdk.boot.class.path.append will only get set if -XX+bootclass/a: is specified.
+  // So, make sure it is initialized with a non-null value.
+  _jdk_boot_class_path_append = new SystemProperty("jdk.boot.class.path.append", "", true);
 
   _java_class_path = new SystemProperty("java.class.path", "",  true);
 

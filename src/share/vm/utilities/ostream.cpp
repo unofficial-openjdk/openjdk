@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -986,8 +986,10 @@ void defaultStream::start_log() {
       for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
         // Print in two stages to avoid problems with long
         // keys/values.
+        assert(p->key() != NULL, "p->key() is NULL");
         text->print_raw(p->key());
         text->put('=');
+        assert(p->value() != NULL, "p->value() is NULL");
         text->print_raw_cr(p->value());
       }
       xs->tail("properties");
