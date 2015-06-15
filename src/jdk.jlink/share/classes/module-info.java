@@ -26,6 +26,7 @@
 module jdk.jlink {
     exports jdk.tools.jlink.plugins;
     requires jdk.compiler;
+    requires jdk.jdeps;
     uses jdk.tools.jlink.plugins.PluginProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileReplacerProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StringSharingProvider;
