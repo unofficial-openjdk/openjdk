@@ -496,7 +496,7 @@ ifeq ($(BOOT_JDK_MODULAR), true)
   JAVADOC_MAIN_CLASS = -m jdk.javadoc/com.sun.tools.javadoc.Main
 else
   INTERIM_OVERRIDE_MODULES := java.compiler jdk.compiler \
-      jdk.dev jdk.javadoc java.corba jdk.rmic
+      jdk.jdeps jdk.javadoc java.corba jdk.rmic
   INTERIM_OVERRIDE_MODULES_ARGS = \
       -Xbootclasspath/p:$(call CreatePath, \
           $(addprefix $(BUILDTOOLS_OUTPUTDIR)/override_modules/, \
