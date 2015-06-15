@@ -145,9 +145,10 @@ public class VM {
 
 
     // the init level when the VM is fully initialized
-    private static final int JAVA_LANG_SYSTEM_INIT_LEVEL = 1;
-    private static final int MODULE_SYSTEM_INIT_LEVEL    = 2;
-    private static final int BOOTED_INIT_LEVEL           = 3;
+    private static final int JAVA_LANG_SYSTEM_INITED     = 1;
+    private static final int MODULE_SYSTEM_INITED        = 2;
+    private static final int SYSTEM_LOADER_INITIALIZING  = 3;
+    private static final int SYSTEM_BOOTED               = 4;
 
     // 0, 1, 2, ...
     private static volatile int initLevel;
@@ -162,7 +163,7 @@ public class VM {
      */
     public static void initLevel(int value) {
         synchronized (lock) {
-            if (value <= initLevel || value > BOOTED_INIT_LEVEL)
+            if (value <= initLevel || value > SYSTEM_BOOTED)
                 throw new InternalError();
             initLevel = value;
             lock.notifyAll();
@@ -194,14 +195,14 @@ public class VM {
      * @see java.lang.System#initPhase2
      */
     public static boolean isModuleSystemInited() {
-        return VM.initLevel() >= MODULE_SYSTEM_INIT_LEVEL;
+        return VM.initLevel() >= MODULE_SYSTEM_INITED;
     }
 
     /**
      * Returns {@code true} if the VM is fully initialized.
      */
     public static boolean isBooted() {
-        return initLevel >= BOOTED_INIT_LEVEL;
+        return initLevel >= SYSTEM_BOOTED;
     }
 
     // A user-settable upper limit on the maximum amount of allocatable direct
