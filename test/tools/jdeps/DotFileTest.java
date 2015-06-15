@@ -28,7 +28,7 @@
  * @modules java.management
  *          jdk.jdeps/com.sun.tools.jdeps
  * @build Test p.Foo p.Bar javax.activity.NotCompactProfile
- * @run main DotFileTest
+ * @run main/othervm -XaddExports:jdk.dev/com.sun.tools.jdeps DotFileTest
  */
 
 import java.io.File;

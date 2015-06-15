@@ -20,7 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.*;
@@ -56,6 +60,13 @@ import static com.sun.tools.javac.comp.CompileStates.CompileState;
 
 @SupportedAnnotationTypes("*")
 public class PackageProcessor extends AbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.comp",
+            "com.sun.tools.javac.main",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
 
     private final AttributionTaskListener listener = new AttributionTaskListener();
     private final Set<Name> elements = new HashSet<Name>();
@@ -82,6 +93,20 @@ public class PackageProcessor extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
+    }
+
+    protected void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, getClass().getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
+        }
     }
 
     private final class AttributionTaskListener implements TaskListener {

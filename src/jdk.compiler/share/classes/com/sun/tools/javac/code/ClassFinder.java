@@ -37,11 +37,13 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.comp.Annotate;
@@ -58,6 +60,7 @@ import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
 import static com.sun.tools.javac.main.Option.*;
+
 import com.sun.tools.javac.util.Dependencies.CompletionCause;
 
 /**
@@ -172,7 +175,7 @@ public class ClassFinder {
         return instance;
     }
 
-    /** Construct a new class reader. */
+    /** Construct a new class finder. */
     protected ClassFinder(Context context) {
         context.put(classFinderKey, this);
         reader = ClassReader.instance(context);
@@ -321,7 +324,7 @@ public class ClassFinder {
     /** Fill in definition of class `c' from corresponding class or
      *  source file.
      */
-    private void fillIn(ClassSymbol c) {
+    void fillIn(ClassSymbol c) {
         if (completionFailureName == c.fullname) {
             throw new CompletionFailure(c, "user-selected completion failure by class name");
         }
@@ -335,7 +338,7 @@ public class ClassFinder {
                 }
                 currentClassFile = classfile;
                 if (verbose) {
-                    log.printVerbose("loading", currentClassFile.toString());
+                    log.printVerbose("loading", currentClassFile.getName());
                 }
                 if (classfile.getKind() == JavaFileObject.Kind.CLASS) {
                     reader.readClassFile(c);
@@ -413,6 +416,9 @@ public class ClassFinder {
      *             is older.
      */
     protected void includeClassFile(PackageSymbol p, JavaFileObject file) {
+        if (p.modle == null && p.modleHint != null)
+            p.modle = p.modleHint;
+
         if ((p.flags_field & EXISTS) == 0)
             for (Symbol q = p; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
@@ -430,7 +436,7 @@ public class ClassFinder {
             ? p.package_info
             : (ClassSymbol) p.members_field.findFirst(classname);
         if (c == null) {
-            c = syms.enterClass(classname, p);
+            c = syms.enterClass(p.modle, classname, p);
             if (c.classfile == null) // only update the file if's it's newly created
                 c.classfile = file;
             if (isPkgInfo) {
@@ -471,6 +477,7 @@ public class ClassFinder {
     /**
      * specifies types of files to be read when filling in a package symbol
      */
+    // Note: overridden by JavadocClassFinder
     protected EnumSet<JavaFileObject.Kind> getPackageFileKinds() {
         return EnumSet.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.SOURCE);
     }
@@ -494,16 +501,80 @@ public class ClassFinder {
         if (p.members_field == null)
             p.members_field = WriteableScope.create(p);
 
-        preferCurrent = false;
-        if (userPathsFirst) {
-            scanUserPaths(p);
-            preferCurrent = true;
-            scanPlatformPath(p);
+        ModuleSymbol msym = (p.modle != null) ? p.modle : p.modleHint;
+        if (msym != null) { // TODO: This needs to become an assert
+            // new code
+            if (msym == syms.noModule) {
+                preferCurrent = false;
+                if (userPathsFirst) {
+                    scanUserPaths(p);
+                    preferCurrent = true;
+                    scanPlatformPath(p);
+                } else {
+                    scanPlatformPath(p);
+                    scanUserPaths(p);
+                }
+            } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
+                // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
+                scanUserPaths(p);
+            } else {
+                scanModulePaths(p, msym);
+            }
+            return;
+        }
+
+        // old code, to go away
+        if (p.modle != null && p.modle.classLocation != null) {
+            scanModulePaths(p, p.modle);
         } else {
-            scanPlatformPath(p);
-            scanUserPaths(p);
+            preferCurrent = false;
+            if (userPathsFirst) {
+                scanUserPaths(p);
+                preferCurrent = true;
+                scanPlatformPath(p);
+            } else {
+                scanPlatformPath(p);
+                scanUserPaths(p);
+            }
         }
         verbosePath = false;
+    }
+
+    // TODO: for now, this is a much simplified form of scanUserPaths
+    // and (deliberately) does not default sourcepath to classpath.
+    // But, we need to think about retaining existing behavior for
+    // -classpath and -sourcepath for single module mode.
+    // One plausible solution is to detect if the module's sourceLocation
+    // is the same as the module's classLocation.
+    private void scanModulePaths(PackageSymbol p, ModuleSymbol msym) throws IOException {
+        Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
+
+        Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
+        classKinds.remove(JavaFileObject.Kind.SOURCE);
+        boolean wantClassFiles = !classKinds.isEmpty();
+
+        Set<JavaFileObject.Kind> sourceKinds = EnumSet.copyOf(kinds);
+        sourceKinds.remove(JavaFileObject.Kind.CLASS);
+        boolean wantSourceFiles = !sourceKinds.isEmpty();
+
+        Location classLocn = msym.classLocation;
+        Location sourceLocn = msym.sourceLocation;
+
+        String packageName = p.fullname.toString();
+        if (wantClassFiles && (classLocn != null)) {
+            fillIn(p, classLocn,
+                   fileManager.list(classLocn,
+                                    packageName,
+                                    classKinds,
+                                    false));
+        }
+        if (wantSourceFiles && (sourceLocn != null)) {
+            fillIn(p, sourceLocn,
+                   fileManager.list(sourceLocn,
+                                    packageName,
+                                    sourceKinds,
+                                    false));
+        }
     }
 
     /**

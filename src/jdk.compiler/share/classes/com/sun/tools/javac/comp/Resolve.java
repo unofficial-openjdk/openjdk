@@ -94,10 +94,13 @@ public class Resolve {
     JCDiagnostic.Factory diags;
     public final boolean allowMethodHandles;
     public final boolean allowFunctionalInterfaceMostSpecific;
+    public final boolean allowModules;
     public final boolean checkVarargsAccessAfterResolution;
     private final boolean debugResolve;
     private final boolean compactMethodDiags;
     final EnumSet<VerboseResolutionMode> verboseResolutionMode;
+
+    private final boolean checkModuleAccess;
 
     WriteableScope polymorphicSignatureScope;
 
@@ -133,6 +136,12 @@ public class Resolve {
         polymorphicSignatureScope = WriteableScope.create(syms.noSymbol);
 
         inapplicableMethodException = new InapplicableMethodException(diags);
+
+        allowModules = source.allowModules();
+
+        // The following is required, for now, to support building
+        // Swing beaninfo via javadoc.
+        checkModuleAccess = !options.isSet("noModules");
     }
 
     /** error symbols, which are returned when resolution fails
@@ -311,8 +320,17 @@ public class Resolve {
                     (env.enclMethod.mods.flags & ANONCONSTR) != 0;
                 break;
             default: // error recovery
-            case PUBLIC:
                 isAccessible = true;
+                break;
+            case PUBLIC:
+                if (allowModules && checkModuleAccess) {
+                    ModuleSymbol currModule = env.toplevel.modle;
+                    PackageSymbol p = c.packge();
+                    isAccessible =
+                        (currModule == p.modle) || currModule.visiblePackages.contains(p);
+                } else {
+                    isAccessible = true;
+                }
                 break;
             case PROTECTED:
                 isAccessible =
@@ -2089,7 +2107,7 @@ public class Resolve {
         }
 
         if (kind.contains(KindSelector.PCK))
-            return syms.enterPackage(name);
+            return syms.enterPackage(env.toplevel.modle, name);
         else return bestSoFar;
     }
 
@@ -2105,7 +2123,7 @@ public class Resolve {
         Symbol bestSoFar = typeNotFound;
         PackageSymbol pack = null;
         if (kind.contains(KindSelector.PCK)) {
-            pack = syms.enterPackage(fullname);
+            pack = syms.enterPackage(env.toplevel.modle, fullname);
             if (pack.exists()) return pack;
         }
         if (kind.contains(KindSelector.TYP)) {
@@ -3854,9 +3872,15 @@ public class Resolve {
             else if ((sym.flags() & PUBLIC) != 0
                 || (env != null && this.site != null
                     && !isAccessible(env, this.site))) {
-                return diags.create(dkind, log.currentSource(),
-                        pos, "not.def.access.class.intf.cant.access",
-                    sym, sym.location());
+                if (sym.owner.kind == PCK) {
+                    return diags.create(dkind, log.currentSource(),
+                            pos, "not.def.access.package.cant.access",
+                        sym, sym.location());
+                } else {
+                    return diags.create(dkind, log.currentSource(),
+                            pos, "not.def.access.class.intf.cant.access",
+                        sym, sym.location());
+                }
             }
             else if ((sym.flags() & (PRIVATE | PROTECTED)) != 0) {
                 return diags.create(dkind, log.currentSource(),
@@ -3868,6 +3892,18 @@ public class Resolve {
                 return diags.create(dkind, log.currentSource(),
                         pos, "not.def.public.cant.access", sym, sym.location());
             }
+        }
+
+        private String toString(Type type) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(type);
+            if (type != null) {
+                sb.append("[tsym:").append(type.tsym);
+                if (type.tsym != null)
+                    sb.append("packge:").append(type.tsym.packge());
+                sb.append("]");
+            }
+            return sb.toString();
         }
     }
 

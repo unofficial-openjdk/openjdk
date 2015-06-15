@@ -34,6 +34,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -56,6 +59,9 @@ import com.sun.tools.javac.code.Symbol.VarSymbol;
 @SupportedAnnotationTypes("Foo")
 @SupportedSourceVersion(SourceVersion.RELEASE_9)
 public class ArrayTypeToString extends AbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.javac.code");
+    }
 
     @Foo(0) String @Foo(1)[] @Foo(2)[] @Foo(3)[] field;
 
@@ -72,5 +78,19 @@ public class ArrayTypeToString extends AbstractProcessor {
             }
         }
         return true;
+    }
+
+    protected void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, getClass().getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
+        }
     }
 }

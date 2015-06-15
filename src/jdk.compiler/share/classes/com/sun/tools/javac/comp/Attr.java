@@ -36,6 +36,7 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
@@ -61,6 +62,7 @@ import com.sun.tools.javac.util.Dependencies.AttributionKind;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.Fragment;
 import com.sun.tools.javac.util.List;
+
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.code.Flags.BLOCK;
@@ -4154,13 +4156,19 @@ public class Attr extends JCTree.Visitor {
     }
 
     /**
-     * Attribute an env for either a top level tree or class declaration.
+     * Attribute an env for either a top level tree or class or module declaration.
      */
     public void attrib(Env<AttrContext> env) {
-        if (env.tree.hasTag(TOPLEVEL))
-            attribTopLevel(env);
-        else
-            attribClass(env.tree.pos(), env.enclClass.sym);
+        switch (env.tree.getTag()) {
+            case MODULEDEF:
+                attribModule(env.tree.pos(), ((JCModuleDecl)env.tree).sym);
+                break;
+            case TOPLEVEL:
+                attribTopLevel(env);
+                break;
+            default:
+                attribClass(env.tree.pos(), env.enclClass.sym);
+        }
     }
 
     /**
@@ -4174,6 +4182,22 @@ public class Attr extends JCTree.Visitor {
         } catch (CompletionFailure ex) {
             chk.completionError(toplevel.pos(), ex);
         }
+    }
+
+    public void attribModule(DiagnosticPosition pos, ModuleSymbol m) {
+        try {
+            annotate.flush();
+            attribModule(m);
+        } catch (CompletionFailure ex) {
+            chk.completionError(pos, ex);
+        }
+    }
+
+    void attribModule(ModuleSymbol m) {
+        // Get environment current at the point of module definition.
+        Env<AttrContext> env = enter.typeEnvs.get(m);
+//        System.err.println("Attr.attribModule: " + env + " " + env.tree);
+        attribStat(env.tree, env);
     }
 
     /** Main method: attribute class definition associated with given class symbol.
@@ -4272,6 +4296,57 @@ public class Attr extends JCTree.Visitor {
 
     public void visitImport(JCImport tree) {
         // nothing to do
+    }
+
+    public void visitModuleDef(JCModuleDecl tree) {
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = List.nil();
+        msym.provides = List.nil();
+        msym.uses = List.nil();
+        attribStats(tree.directives, env);
+        msym.directives = msym.directives.reverse();
+        msym.provides = msym.provides.reverse();
+        msym.uses = msym.uses.reverse();
+
+        if (msym.requires.nonEmpty() && msym.requires.head.flags.contains(RequiresFlag.MANDATED))
+            msym.directives = msym.directives.prepend(msym.requires.head);
+    }
+
+    public void visitExports(JCExports tree) {
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = msym.directives.prepend(tree.directive);
+    }
+
+    public void visitProvides(JCProvides tree) {
+        ModuleSymbol msym = env.toplevel.modle;
+
+//        syms.enterPackage(msym, Convert.packagePart(TreeInfo.fullName(tree.implName))).complete();
+
+        Type st = attribType(tree.serviceName, env, syms.objectType);
+        Type it = attribType(tree.implName, env, st);
+        if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            ClassSymbol impl = (ClassSymbol) it.tsym;
+            Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+            msym.provides = msym.provides.prepend(d);
+            msym.directives = msym.directives.prepend(d);
+        }
+    }
+
+    public void visitRequires(JCRequires tree) {
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = msym.directives.prepend(tree.directive);
+    }
+
+    public void visitUses(JCUses tree) {
+        ModuleSymbol msym = env.toplevel.modle;
+        Type st = attribType(tree.qualid, env, syms.objectType);
+        if (st.hasTag(CLASS)) {
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            Directive.UsesDirective d = new Directive.UsesDirective(service);
+            msym.uses = msym.uses.prepend(d);
+            msym.directives = msym.directives.prepend(d);
+        }
     }
 
     /** Finish the attribution of a class. */

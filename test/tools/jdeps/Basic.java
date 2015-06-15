@@ -28,6 +28,7 @@
  * @modules java.management
  *          jdk.jdeps/com.sun.tools.jdeps
  * @build Test p.Foo p.Bar p.C p.SubClass q.Gee javax.activity.NotCompactProfile
+ * @build Test p.Foo p.Bar javax.activity.NotCompactProfile
  * @run main Basic
  */
 
