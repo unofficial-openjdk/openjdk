@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,14 +34,12 @@ import com.sun.jmx.util.Modules;
 import com.sun.jmx.remote.util.EnvHelp;
 
 import java.io.InvalidObjectException;
-import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -1143,61 +1141,13 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
         to getters.  */
     private static final class CompositeBuilderViaConstructor
             extends CompositeBuilder {
-        static class AnnotationHelper {
-            private static Class<? extends Annotation> constructorPropertiesClass;
-            private static Method valueMethod;
-            static {
-                findConstructorPropertiesClass();
-            }
-
-            @SuppressWarnings("unchecked")
-            private static void findConstructorPropertiesClass() {
-                try {
-                    constructorPropertiesClass = (Class<? extends Annotation>)
-                        Class.forName("java.beans.ConstructorProperties", false,
-                                      DefaultMXBeanMappingFactory.class.getClassLoader());
-                    valueMethod = constructorPropertiesClass.getMethod("value");
-                    AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                        public Void run() {
-                            valueMethod.setAccessible(true);
-                            return null;
-                        }
-                    });
-                } catch (ClassNotFoundException cnf) {
-                    // java.beans not present
-                } catch (NoSuchMethodException e) {
-                    // should not reach here
-                    throw new InternalError(e);
-                }
-            }
-
-            static boolean isAvailable() {
-                return constructorPropertiesClass != null;
-            }
-
-            static String[] getPropertyNames(Constructor<?> constr) {
-                if (!isAvailable())
-                    return null;
-
-                Annotation a = constr.getAnnotation(constructorPropertiesClass);
-                if (a == null) return null;
-
-                try {
-                    return (String[]) valueMethod.invoke(a);
-                } catch (InvocationTargetException e) {
-                    throw new InternalError(e);
-                } catch (IllegalAccessException e) {
-                    throw new InternalError(e);
-                }
-            }
-        }
 
         CompositeBuilderViaConstructor(Class<?> targetClass, String[] itemNames) {
             super(targetClass, itemNames);
         }
 
         String applicable(Method[] getters) throws InvalidObjectException {
-            if (!AnnotationHelper.isAvailable())
+            if (!JavaBeansAccessor.isAvailable())
                 return "@ConstructorProperties annotation not available";
 
             Class<?> targetClass = getTargetClass();
@@ -1207,7 +1157,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             List<Constructor<?>> annotatedConstrList = newList();
             for (Constructor<?> constr : constrs) {
                 if (Modifier.isPublic(constr.getModifiers())
-                        && AnnotationHelper.getPropertyNames(constr) != null)
+                        && JavaBeansAccessor.getConstructorPropertiesValue(constr) != null)
                     annotatedConstrList.add(constr);
             }
 
@@ -1236,7 +1186,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             // so we can test unambiguity.
             Set<BitSet> getterIndexSets = newSet();
             for (Constructor<?> constr : annotatedConstrList) {
-                String[] propertyNames = AnnotationHelper.getPropertyNames(constr);
+                String[] propertyNames = JavaBeansAccessor.getConstructorPropertiesValue(constr);
 
                 Type[] paramTypes = constr.getGenericParameterTypes();
                 if (paramTypes.length != propertyNames.length) {

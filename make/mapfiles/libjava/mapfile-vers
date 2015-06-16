@@ -163,6 +163,16 @@ SUNWprivate_1.1 {
 		Java_java_lang_Object_getClass;
 		Java_java_lang_Object_registerNatives;
 		Java_java_lang_ProcessEnvironment_environ;
+		Java_java_lang_ProcessHandleImpl_getCurrentPid0;
+		Java_java_lang_ProcessHandleImpl_parent0;
+		Java_java_lang_ProcessHandleImpl_isAlive0;
+		Java_java_lang_ProcessHandleImpl_getProcessPids0;
+		Java_java_lang_ProcessHandleImpl_destroy0;
+		Java_java_lang_ProcessHandleImpl_waitForProcessExit0;
+		Java_java_lang_ProcessHandleImpl_00024Info_initIDs;
+		Java_java_lang_ProcessHandleImpl_00024Info_info0;
+		Java_java_lang_ProcessImpl_init;
+		Java_java_lang_ProcessImpl_forkAndExec;
 		Java_java_lang_reflect_Array_get;
 		Java_java_lang_reflect_Array_getBoolean;
 		Java_java_lang_reflect_Array_getByte;
@@ -211,10 +221,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_Throwable_fillInStackTrace;
 		Java_java_lang_Throwable_getStackTraceDepth;
 		Java_java_lang_Throwable_getStackTraceElement;
-		Java_java_lang_ProcessImpl_init;
-		Java_java_lang_ProcessImpl_waitForProcessExit;
-		Java_java_lang_ProcessImpl_forkAndExec;
-		Java_java_lang_ProcessImpl_destroyProcess;
 		Java_java_nio_Bits_copyFromShortArray;
 		Java_java_nio_Bits_copyToShortArray;
 		Java_java_nio_Bits_copyFromIntArray;
