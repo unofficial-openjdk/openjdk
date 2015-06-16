@@ -1141,12 +1141,6 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
         to getters.  */
     private static final class CompositeBuilderViaConstructor
             extends CompositeBuilder {
-                    AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                        public Void run() {
-                            valueMethod.setAccessible(true);
-                            return null;
-                        }
-                    });
 
         CompositeBuilderViaConstructor(Class<?> targetClass, String[] itemNames) {
             super(targetClass, itemNames);
