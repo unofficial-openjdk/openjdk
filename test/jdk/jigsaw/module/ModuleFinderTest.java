@@ -60,7 +60,7 @@ public class ModuleFinderTest {
      * One finder used as left and also as right for a concatenation.
      */
     public void testDuplicateSame() {
-        ModuleFinder finder = new ModuleLibrary(build("m1"));
+        ModuleFinder finder = ModuleLibrary.of(build("m1"));
         ModuleFinder concat = ModuleFinder.concat(finder, finder);
         assertModules(concat, "m1");
     }
@@ -71,8 +71,8 @@ public class ModuleFinderTest {
      */
     public void testDuplicateDifferent() {
         ModuleDescriptor descriptor1 = build("m1");
-        ModuleFinder finder1 = new ModuleLibrary(descriptor1);
-        ModuleFinder finder2 = new ModuleLibrary(build("m1"));
+        ModuleFinder finder1 = ModuleLibrary.of(descriptor1);
+        ModuleFinder finder2 = ModuleLibrary.of(build("m1"));
         ModuleFinder concat = ModuleFinder.concat(finder1, finder2);
         assertModules(concat, "m1");
         assertSame(concat.find("m1").get().descriptor(), descriptor1);
@@ -89,9 +89,9 @@ public class ModuleFinderTest {
             leftFinders.add(build("m" + i*2));
             rightFinders.add(build("m" + (i*2 + 1)));
         }
-        ModuleLibrary left = new ModuleLibrary(
+        ModuleLibrary left = ModuleLibrary.of(
             leftFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
-        ModuleLibrary right = new ModuleLibrary(
+        ModuleLibrary right = ModuleLibrary.of(
             rightFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
         ModuleFinder concat = ModuleFinder.concat(left, right);
         assertEquals(concat.findAll().size(), BIG_NUMBER_OF_MODULES*2);
@@ -127,7 +127,7 @@ public class ModuleFinderTest {
             assertTrue(e.getMessage().contains(ALL_MODULES_MSG));
         }
         try {
-            concat.find("inexistant module");
+            concat.find("non-existent module");
             fail("No exception from find(String)");
         } catch (RuntimeException e) {
             assertTrue(e.getMessage().contains(FIND_MSG));

@@ -253,6 +253,18 @@ public class ModuleDescriptor
         public String service() { return service; }
         public Set<String> providers() { return providers; }
 
+        public int hashCode() {
+            return hash(service, providers);
+        }
+
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Provides))
+                return false;
+            Provides other = (Provides)obj;
+            return Objects.equals(this.service, other.service) &&
+                    Objects.equals(this.providers, other.providers);
+        }
+
     }
 
 
@@ -641,6 +653,7 @@ public class ModuleDescriptor
                    .append(" with ")
                    .append(entry.getValue());
             }
+            sb.append("]");
         }
         sb.append(" }");
         return sb.toString();

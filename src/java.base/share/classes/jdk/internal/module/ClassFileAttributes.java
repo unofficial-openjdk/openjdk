@@ -64,7 +64,12 @@ class ClassFileAttributes {
 
         private ModuleDescriptor descriptor;
 
-        protected ModuleAttribute() {
+        ModuleAttribute(ModuleDescriptor descriptor) {
+            super(MODULE);
+            this.descriptor = descriptor;
+        }
+
+        ModuleAttribute() {
             super(MODULE);
         }
 

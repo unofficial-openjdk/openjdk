@@ -378,9 +378,6 @@ JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module);
 JNIEXPORT jboolean JNICALL
 JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
-JNIEXPORT jobject JNICALL
-JVM_GetModule(JNIEnv* env, jclass clazz);
-
 JNIEXPORT void JNICALL
 JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
 

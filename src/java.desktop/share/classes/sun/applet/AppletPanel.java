@@ -806,7 +806,9 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             repaint();
         }
         if (code != null) {
-            applet = (Applet)loader.loadCode(code).newInstance();
+            Class<?> appletClass = loader.loadCode(code);
+            this.getClass().getModule().addReads(appletClass.getModule());
+            applet = (Applet)appletClass.newInstance();
             doInit = true;
         } else {
             // serName is not null;

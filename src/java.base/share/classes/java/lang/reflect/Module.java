@@ -37,7 +37,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -230,9 +229,9 @@ public final class Module {
             // unnamed module
             Stream<Package> packages;
             if (loader == null) {
-                packages = BootLoader.getPackageStream();
+                packages = BootLoader.packages();
             } else {
-                packages = SharedSecrets.getJavaLangAccess().getPackageStream(loader);
+                packages = SharedSecrets.getJavaLangAccess().packages(loader);
             }
             return packages.map(Package::getName).toArray(String[]::new);
         }
@@ -275,6 +274,23 @@ public final class Module {
             implAddReads(target, true);
         }
         return this;
+    }
+
+    /**
+     * Updates this module to read the target module and all modules that it
+     * reads in the original readability graph.
+     *
+     * This method is for use by Proxy for dynamic modules
+     */
+    void addReadsAll(Module target) {
+        if (!target.isNamed()) {
+            throw new IllegalArgumentException("can't require unnamed module");
+        }
+        if (this.isNamed()) {
+            // add target and its dependences
+            implAddReads(target, true);
+            target.reads.stream().forEach(m -> implAddReads(m, true));
+        }
     }
 
     /**
@@ -404,7 +420,6 @@ public final class Module {
     }
 
 
-
     // -- creating Module objects --
 
     /**
@@ -508,6 +523,11 @@ public final class Module {
                 addReadsModule0(m, m2);
             }
             m.reads = reads;
+
+            // automatic modules reads all unnamed modules
+            if (SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor)) {
+                m.implAddReads(null, true);
+            }
 
             // exports
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();

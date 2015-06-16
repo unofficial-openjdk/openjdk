@@ -136,7 +136,7 @@ public class BootLoader {
     /**
      * Returns a stream of the packages defined to the boot loader.
      */
-    public static Stream<Package> getPackageStream() {
+    public static Stream<Package> packages() {
         return Arrays.stream(getSystemPackageNames())
             .map(name -> {
                 String pn = name.substring(0, name.length() - 1).replace('/', '.');

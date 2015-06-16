@@ -21,7 +21,16 @@
  * questions.
  */
 
-package jdk.test;
+import java.lang.reflect.Module;
 
-public interface R {
+public class Test {
+    public static void main(String... args) {
+        SecurityManager sm = System.getSecurityManager();
+        Module module = sm.getClass().getModule();
+        String s = System.getProperty("java.security.manager");
+        String expected = s.isEmpty() ? "java.base" : "m";
+        if (!module.isNamed() || !module.getName().equals(expected)) {
+            throw new RuntimeException(module + " expected module m instead");
+        }
+    }
 }

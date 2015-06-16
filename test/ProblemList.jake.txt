@@ -61,9 +61,6 @@ java/text/BreakIterator/Bug7104012.java                         generic-all
 sun/util/resources/TimeZone/Bug4640234.java                     generic-all
 sun/text/resources/LocaleDataTest.java                          generic-all
 
-# legacy getBundle can't be used to find sun.awt.resources.awt in module java.desktop
-java/util/ResourceBundle/Bug6299235Test.sh                      generic-all
-
 # Can't find bundle for base name sun.text.resources.cldr.* type, locale ja_JP
 java/util/Calendar/CldrFormatNamesTest.java                     generic-all
 java/util/Calendar/GenericTimeZoneNamesTest.sh                  generic-all
@@ -98,7 +95,6 @@ demo/jvmti/hprof/CpuTimesDefineClassTest.java			generic-all
 demo/jvmti/hprof/CpuTimesTest.java				generic-all
 demo/jvmti/hprof/OptionsTest.java				generic-all
 demo/jvmti/hprof/StackMapTableTest.java				generic-all
-sun/tools/jhat/HatHeapDump1Test.java                            generic-all
 
 ############################################################################
 

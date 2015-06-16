@@ -88,9 +88,6 @@ class BuiltinClassLoader
         ClassLoader.registerAsParallelCapable();
     }
 
-    // the initial module reader for modules defined to this class loader
-    private static final ModuleReader NULL_MODULE_READER = new NullModuleReader();
-
     // parent ClassLoader
     private final BuiltinClassLoader parent;
 
@@ -128,21 +125,26 @@ class BuiltinClassLoader
         URL location() { return url; }
     }
 
-    // maps package name to a loaded module for the modules defined to this class loader
-    private final Map<String, LoadedModule> packageToModule = new ConcurrentHashMap<>();
+    // maps package name to a module loaded by this class loader
+    private final Map<String, LoadedModule> packageToModule;
 
     // maps a module name to a module reference
-    private final Map<String, ModuleReference> nameToModule = new ConcurrentHashMap<>();
+    private final Map<String, ModuleReference> nameToModule;
 
     // maps a module reference to a module reader
-    private final Map<ModuleReference, ModuleReader> moduleToReader = new ConcurrentHashMap<>();
+    private final Map<ModuleReference, ModuleReader> moduleToReader;
 
     /**
      * Create a new instance.
+     *
+     * @param nModules an estimate on the number of modules
+     * @param nPackages an estimate for the total number of packages
      */
     BuiltinClassLoader(BuiltinClassLoader parent,
                        Path overrideDir,
-                       URLClassPath ucp)
+                       URLClassPath ucp,
+                       int nModules,
+                       int nPackages)
     {
         // ensure getParent() returns null when the parent is the boot loader
         super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
@@ -150,6 +152,10 @@ class BuiltinClassLoader
         this.parent = parent;
         this.overrideDir = overrideDir;
         this.ucp = ucp;
+
+        this.packageToModule = new ConcurrentHashMap<>(nPackages);
+        this.nameToModule = new ConcurrentHashMap<>(nModules);
+        this.moduleToReader = new ConcurrentHashMap<>(nModules);
     }
 
     /**
@@ -173,9 +179,6 @@ class BuiltinClassLoader
         LoadedModule loadedModule = new LoadedModule(mref);
         mref.descriptor().packages()
             .forEach(p -> packageToModule.put(p, loadedModule));
-
-        // Use NULL_MODULE_READER initially to avoid opening eagerly
-        moduleToReader.put(mref, NULL_MODULE_READER);
     }
 
     // -- finding resources
@@ -654,23 +657,10 @@ class BuiltinClassLoader
     // -- miscellaneous supporting methods
 
     /**
-     * Returns the ModuleReader for the given module, creating it
-     * and replacing the NULL_MODULE_READER if needed.
+     * Returns the ModuleReader for the given module.
      */
     private ModuleReader moduleReaderFor(ModuleReference mref) {
-        ModuleReader reader = moduleToReader.get(mref);
-        assert reader != null;
-        if (reader == NULL_MODULE_READER) {
-            // replace NULL_MODULE_READER with an actual module reader
-            reader = moduleToReader.computeIfPresent(mref, (k, v) -> {
-                if (v == NULL_MODULE_READER) {
-                    return createModuleReader(mref);
-                } else {
-                    return v;
-                }
-            });
-        }
-        return reader;
+        return moduleToReader.computeIfAbsent(mref, m -> createModuleReader(mref));
     }
 
     /**
@@ -682,8 +672,8 @@ class BuiltinClassLoader
         try {
             reader = mref.open();
         } catch (IOException e) {
-            // We can't return NULL_MODULE_READER here as that would cause
-            // a future class load to attempt to open the module again.
+            // Return a null module reader to avoid a future class load
+            // attempting to open the module again.
             return new NullModuleReader();
         }
 

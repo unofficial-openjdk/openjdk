@@ -26,7 +26,6 @@
 package java.lang.module;
 
 import java.lang.reflect.Module;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +36,6 @@ import java.util.Set;
 
 import sun.misc.JavaLangModuleAccess;
 import sun.misc.JavaLangReflectAccess;
-import sun.misc.Modules;
 import sun.misc.SharedSecrets;
 
 /**
@@ -170,15 +168,6 @@ public final class Layer {
             throw new LayerInstantiationException(e);
         }
 
-        // Update the readability graph so that every automatic module in the
-        // newly created Layer reads every other module.
-        // We do this here for now but it may move.
-        cf.descriptors().stream()
-            .filter(ModuleDescriptor::isAutomatic)
-            .map(ModuleDescriptor::name)
-            .map(layer::findModule)
-            .forEach(om -> layer.fixupAutomaticModule(om.get()));
-
         return layer;
     }
 
@@ -215,9 +204,6 @@ public final class Layer {
         // HashMap allows null keys
         Map<ClassLoader, Set<String>> loaderToPackages = new HashMap<>();
 
-        // all packages in automatic modules, created lazily if needed
-        Map<String, ModuleDescriptor> allAutomaticModulePackages = null;
-
         for (ModuleDescriptor descriptor : cf.descriptors()) {
             ClassLoader loader = clf.loaderForModule(descriptor.name());
 
@@ -229,20 +215,6 @@ public final class Layer {
                 if (!added) {
                     throw fail("More than one module with package %s mapped" +
                                " to the same class loader", pkg);
-                }
-            }
-
-            // detect more than one automatic module with the same package
-            if (descriptor.isAutomatic()) {
-                if (allAutomaticModulePackages == null)
-                    allAutomaticModulePackages = new HashMap<>();
-                for (String pkg : descriptor.packages()) {
-                    ModuleDescriptor other
-                        = allAutomaticModulePackages.put(pkg, descriptor);
-                    if (other != null) {
-                        throw fail("Modules %s and %s both contain package %s",
-                                   descriptor.name(), other.name(), pkg);
-                    }
                 }
             }
         }
@@ -300,27 +272,6 @@ public final class Layer {
     private static LayerInstantiationException fail(String fmt, Object ... args) {
         return new LayerInstantiationException(fmt, args);
     }
-
-    /**
-     * Changes an automatic module to be a "loose" module, and adds a
-     * read edge to every module in the Layer (and all parent Layers).
-     */
-    private void fixupAutomaticModule(Module autoModule) {
-        assert autoModule.getDescriptor().isAutomatic();
-
-        // automatic modules read all unnamed modules
-        // (use Modules.addReads to skip permission check)
-        Modules.addReads(autoModule, null);
-
-        // automatic modules read all modules in this, and parent, layers
-        Layer l = this;
-        do {
-            Collection<Module> modules = l.nameToModule.values();
-            modules.forEach(m -> Modules.addReads(autoModule, m));
-            l = l.parent().orElse(null);
-        } while (l != null);
-    }
-
 
     /**
      * Returns the {@code Configuration} used to create this layer unless this
@@ -443,6 +394,10 @@ public final class Layer {
             @Override
             public void setBootLayer(Layer layer) {
                 bootLayer = layer;
+            }
+            @Override
+            public boolean isAutomatic(ModuleDescriptor descriptor) {
+                return descriptor.isAutomatic();
             }
         });
     }

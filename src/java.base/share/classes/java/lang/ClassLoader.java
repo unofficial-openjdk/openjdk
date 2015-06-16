@@ -1514,11 +1514,12 @@ public abstract class ClassLoader {
         switch (VM.initLevel()) {
             case 0:
             case 1:
+            case 2:
                 // the system class loader is the built-in app class loader during startup
                 return getBuiltinAppClassLoader();
-            case 2:
-                throw new InternalError("getSystemClassLoader should only be called after VM booted");
             case 3:
+                throw new InternalError("getSystemClassLoader should only be called after VM booted");
+            case 4:
                 // system fully initialized
                 assert VM.isBooted() && scl != null;
                 SecurityManager sm = System.getSecurityManager();
@@ -1542,7 +1543,7 @@ public abstract class ClassLoader {
      * @see java.lang.System#initPhase3
      */
     static synchronized ClassLoader initSystemClassLoader() {
-        if (VM.initLevel() != 2) {
+        if (VM.initLevel() != 3) {
             throw new InternalError("system class loader cannot be set at initLevel " +
                                     VM.initLevel());
         }
@@ -1558,6 +1559,7 @@ public abstract class ClassLoader {
         String cn = System.getProperty("java.system.class.loader");
         if (cn != null) {
             try {
+                // custom class loader is only supported to be loaded from unnamed module
                 Constructor<?> ctor = Class.forName(cn, false, builtinLoader)
                                            .getDeclaredConstructor(ClassLoader.class);
                 scl = (ClassLoader) ctor.newInstance(builtinLoader);
@@ -1745,23 +1747,23 @@ public abstract class ClassLoader {
         if (packages.values().isEmpty()) {
             return new Package[0];
         }
-        return getPackageStream().toArray(Package[]::new);
+        return packages().toArray(Package[]::new);
     }
 
     // package-private
 
-    Stream<Package> getPackageStream() {
+    Stream<Package> packages() {
         return packages.values().stream();
     }
 
     Stream<Package> packagesFromAncestors() {
-        Stream<Package> pkgs = getPackageStream();
+        Stream<Package> pkgs = packages();
         ClassLoader ld = parent;
         while (ld != null) {
-            pkgs = Stream.concat(ld.getPackageStream(), pkgs);
+            pkgs = Stream.concat(ld.packages(), pkgs);
             ld = ld.parent;
         }
-        return Stream.concat(BootLoader.getPackageStream(), pkgs);
+        return Stream.concat(BootLoader.packages(), pkgs);
     }
 
     Package findPackageFromAncestors(String name) {

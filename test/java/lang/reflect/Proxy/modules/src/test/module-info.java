@@ -25,4 +25,6 @@ module test {
     requires m1;
     requires m2;
     requires m3;
+
+    exports jdk.test;
 }

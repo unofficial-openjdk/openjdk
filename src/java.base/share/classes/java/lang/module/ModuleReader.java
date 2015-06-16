@@ -153,8 +153,8 @@ public interface ModuleReader extends Closeable {
 
     /**
      * Closes the module reader. Once closed then subsequent calls to locate or
-     * read a resource will fail by returning {@code null} or throwing {@code
-     * IOException}.
+     * read a resource will fail by returning {@code Optional.empty()} or
+     * throwing {@code IOException}.
      *
      * <p> A module reader is not required to be asynchronously closeable. If a
      * thread is reading a resource and another thread invokes the close method,

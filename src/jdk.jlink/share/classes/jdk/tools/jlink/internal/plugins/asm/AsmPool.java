@@ -26,10 +26,12 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
 
 /**
  * A pool of ClassReader and other resource files.
@@ -126,15 +128,25 @@ public interface AsmPool {
          *
          * @param binaryName The java class binary name
          * @return The ClassReader or null if the class is not found.
+         * @throws java.io.IOException
          */
-        public ClassReader getClassReader(String binaryName);
+        public ClassReader getClassReader(String binaryName) throws IOException;
+
+        /**
+         * Get a transformed class.
+         *
+         * @param res A class resource.
+         * @return The ClassReader or null if the class is not found.
+         * @throws java.io.IOException
+         */
+        public ClassReader getClassReader(Resource res) throws IOException;
 
         /**
          * Returns all the classes contained in the writable pool.
          *
-         * @return The array of transformed classes.
+         * @return The collection of classes.
          */
-        public ClassReader[] getClassReaders();
+        public Collection<Resource> getClasses();
     }
 
     /**
@@ -166,12 +178,21 @@ public interface AsmPool {
          * @return The Resource or null if the resource is not found.
          */
         public ResourceFile getResourceFile(String name);
+
+        /**
+         * Get a transformed resource.
+         *
+         * @param res The java resource
+         * @return The Resource or null if the resource is not found.
+         */
+        public ResourceFile getResourceFile(Resource res);
+
         /**
          * Returns all the resources contained in the writable pool.
          *
-         * @return The array of transformed classes.
+         * @return The array of resources.
          */
-        public ResourceFile[] getResourceFiles();
+        public Collection<Resource> getResourceFiles();
     }
 
     /**
@@ -214,17 +235,17 @@ public interface AsmPool {
     /**
      * Returns the classes contained in the pool.
      *
-     * @return The array of classes.
+     * @return The classes.
      */
-    public ClassReader[] getClassReaders();
+    public Collection<Resource> getClasses();
 
     /**
      * Returns the resources contained in the pool. Resources are all the file
      * that are not classes (eg: properties file, binary files, ...)
      *
-     * @return The array of classes.
+     * @return The array of resource files.
      */
-    public ResourceFile[] getResourceFiles();
+    public Collection<Resource> getResourceFiles();
 
     /**
      * Retrieves a resource based on the binary name. This name doesn't contain
@@ -240,6 +261,14 @@ public interface AsmPool {
     public ResourceFile getResourceFile(String binaryName);
 
     /**
+     * Retrieves a resource for the passed resource.
+     *
+     * @param res The resource
+     * @return The resource file or null if it doesn't exist.
+     */
+    public ResourceFile getResourceFile(Resource res);
+
+    /**
      * Retrieve a ClassReader from the pool.
      *
      * @param binaryName Class binary name
@@ -247,6 +276,15 @@ public interface AsmPool {
      * @throws IOException
      */
     public ClassReader getClassReader(String binaryName) throws IOException;
+
+    /**
+     * Retrieve a ClassReader from the pool.
+     *
+     * @param res A resource.
+     * @return A reader or null if the class is unknown
+     * @throws IOException
+     */
+    public ClassReader getClassReader(Resource res) throws IOException;
 
     /**
      * To visit the set of ClassReaders.

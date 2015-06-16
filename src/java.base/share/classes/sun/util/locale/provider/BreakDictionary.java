@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ package sun.util.locale.provider;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -135,13 +136,13 @@ class BreakDictionary {
     // deserialization
     //=========================================================================
 
-    BreakDictionary(String dictionaryName)
+    BreakDictionary(Module module, String dictionaryName)
         throws IOException, MissingResourceException {
 
-        readDictionaryFile(dictionaryName);
+        readDictionaryFile(module, dictionaryName);
     }
 
-    private void readDictionaryFile(final String dictionaryName)
+    private void readDictionaryFile(final Module module, final String dictionaryName)
         throws IOException, MissingResourceException {
 
         BufferedInputStream in;
@@ -150,7 +151,9 @@ class BreakDictionary {
                 new PrivilegedExceptionAction<BufferedInputStream>() {
                     @Override
                     public BufferedInputStream run() throws Exception {
-                        return new BufferedInputStream(getClass().getResourceAsStream("/sun/text/resources/" + dictionaryName));
+                        return new BufferedInputStream(
+                            module.getResourceAsStream("sun/text/resources/" +
+                            dictionaryName));
                     }
                 }
             );

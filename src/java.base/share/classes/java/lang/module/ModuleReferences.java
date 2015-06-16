@@ -182,8 +182,7 @@ class ModuleReferences {
          */
         private ImageLocation findImageLocation(String name) {
             if (imageReader != null) {
-                String rn = "/" + module + "/" + name;
-                return imageReader.findLocation(rn);
+                return imageReader.findLocation(module, name);
             } else {
                 // not an images build
                 return null;

@@ -24,4 +24,5 @@
 module httpserver {
     requires logging;
     exports http;
+    exports http.spi;
 }

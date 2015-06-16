@@ -24,9 +24,20 @@
  */
 package java.lang;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.Console;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.util.Properties;
@@ -1248,10 +1259,19 @@ public final class System {
                 System.setSecurityManager(new SecurityManager());
             } else {
                 try {
-                    ClassLoader cl = ClassLoader.getBuiltinAppClassLoader();
-                    Class<?> c = Class.forName(cn, false, cl);
-                    System.class.getModule().addReads(c.getModule());
-                    SecurityManager sm = (SecurityManager) c.newInstance();
+                    Class<?> c = Class.forName(cn, false, ClassLoader.getBuiltinAppClassLoader());
+                    Constructor<?> ctor = c.getConstructor();
+                    // Must be a public subclass of SecurityManager with
+                    // a public no-arg constructor
+                    if (!SecurityManager.class.isAssignableFrom(c) ||
+                            !Modifier.isPublic(c.getModifiers()) ||
+                            !Modifier.isPublic(ctor.getModifiers())) {
+                        throw new Error("Could not create SecurityManager: " + ctor.toString());
+                    }
+                    // custom security manager implementation may be in unnamed module
+                    // or a named module but non-exported package
+                    ctor.setAccessible(true);
+                    SecurityManager sm = (SecurityManager) ctor.newInstance();
                     System.setSecurityManager(sm);
                 } catch (Exception e) {
                     throw new Error("Could not create SecurityManager", e);
@@ -1259,14 +1279,17 @@ public final class System {
             }
         }
 
+        // initializing the system class loader
+        sun.misc.VM.initLevel(3);
+
         // system class loader initialized
         ClassLoader scl = ClassLoader.initSystemClassLoader();
 
         // set TCCL
         Thread.currentThread().setContextClassLoader(scl);
 
-        // system is full initialized
-        sun.misc.VM.initLevel(3);
+        // system is fully initialized
+        sun.misc.VM.initLevel(4);
     }
 
     private static void setJavaLangAccess() {
@@ -1332,8 +1355,8 @@ public final class System {
             {
                 return cl.getResourceAsStream(moduleName, name);
             }
-            public Stream<Package> getPackageStream(ClassLoader cl) {
-                return cl.getPackageStream();
+            public Stream<Package> packages(ClassLoader cl) {
+                return cl.packages();
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);
