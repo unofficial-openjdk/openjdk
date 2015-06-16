@@ -41,6 +41,7 @@ import jdk.testlibrary.ProcessTools;
  * @summary Makes sure that the current management agent status is reflected
  *          in the related performance counters.
  * @library /lib/testlibrary
+ * @modules java.management/sun.management
  * @build jdk.testlibrary.* PortAllocator TestApp ManagementAgentJcmd
  * @run testng/othervm -XX:+UsePerfData JMXStatusPerfCountersTest
  */
