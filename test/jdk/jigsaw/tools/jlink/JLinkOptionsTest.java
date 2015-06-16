@@ -31,7 +31,7 @@ import jdk.tools.jlink.plugins.ResourcePluginProvider;
  * @test
  * @summary Test jlink options
  * @author Jean-Francois Denise
- * @library /lib/testlibrary/jlink
+ * @library lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink

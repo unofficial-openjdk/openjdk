@@ -79,7 +79,7 @@ import tests.JImageValidator;
  * @test
  * @summary Test jlink plugins
  * @author Jean-Francois Denise
- * @library /lib/testlibrary/jlink
+ * @library lib
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.jimage.decompressor
  *          jdk.jdeps/com.sun.tools.classfile

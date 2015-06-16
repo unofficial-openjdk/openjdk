@@ -29,7 +29,7 @@ import jdk.tools.jlink.plugins.PluginProvider;
  * @test
  * @summary Test image creation
  * @author Jean-Francois Denise
- * @library /lib/testlibrary/jlink
+ * @library lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
