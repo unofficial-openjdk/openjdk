@@ -68,6 +68,14 @@ java/util/Calendar/NarrowNamesTest.sh                           generic-all
 java/util/Locale/LocaleProviders.sh                             generic-all
 java/util/TimeZone/CLDRDisplayNamesTest.java                    generic-all
 
+java/util/PluggableLocale/BreakIteratorProviderTest.sh          generic-all
+java/util/PluggableLocale/CollatorProviderTest.sh               generic-all
+java/util/PluggableLocale/CurrencyNameProviderTest.sh           generic-all
+java/util/PluggableLocale/DateFormatProviderTest.sh             generic-all
+java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh      generic-all
+java/util/PluggableLocale/LocaleNameProviderTest.sh             generic-all
+java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
+
 ############################################################################
  
 # svc_tools
