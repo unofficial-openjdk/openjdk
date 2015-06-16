@@ -82,7 +82,7 @@ import tests.JImageValidator;
  * @library /lib/testlibrary/jlink
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.jimage.decompressor
- *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins

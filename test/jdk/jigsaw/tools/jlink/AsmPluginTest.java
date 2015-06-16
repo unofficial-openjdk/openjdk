@@ -61,7 +61,7 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.jimage.decompressor
  *          java.base/jdk.internal.org.objectweb.asm
- *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins.asm

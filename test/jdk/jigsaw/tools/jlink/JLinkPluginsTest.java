@@ -31,7 +31,7 @@ import jdk.tools.jlink.plugins.PluginProvider;
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
  * @modules java.base/jdk.internal.jimage
- *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod

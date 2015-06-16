@@ -69,7 +69,7 @@ public class ProxyModuleMapping {
         Class<?> c = getProxyClass();
         Module m = c.getModule();
         if (!m.isNamed() || !m.getName().startsWith("jdk.proxy")) {
-            throw new RuntimeException();
+            throw new RuntimeException("Unexpected:" + m);
         }
 
         try {
