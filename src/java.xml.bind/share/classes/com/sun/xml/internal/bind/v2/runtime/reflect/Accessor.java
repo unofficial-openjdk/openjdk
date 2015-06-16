@@ -44,6 +44,7 @@ import com.sun.istack.internal.Nullable;
 import com.sun.xml.internal.bind.Util;
 import com.sun.xml.internal.bind.api.AccessorException;
 import com.sun.xml.internal.bind.api.JAXBRIContext;
+import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
 import com.sun.xml.internal.bind.v2.model.core.Adapter;
 import com.sun.xml.internal.bind.v2.model.impl.RuntimeModelBuilder;
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
@@ -219,6 +220,7 @@ public abstract class Accessor<BeanT, ValueT> implements Receiver {
 
         public FieldReflection(Field f) {
             this(f, false);
+            ModuleAccessHelper.ensureAccess(Accessor.class, f.getDeclaringClass());
         }
 
         public FieldReflection(Field f, boolean supressAccessorWarnings) {
