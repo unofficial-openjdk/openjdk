@@ -81,8 +81,6 @@ public class GenGraphs {
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
             switch (name) {
-            case "jdk.dev":
-            case "jdk.runtime":
             case "jdk.deploy":
                 continue;
             }
