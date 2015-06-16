@@ -39,7 +39,7 @@ import com.sun.tools.classfile.ConstantPool.CPInfo;
 @SupportedAnnotationTypes("*")
 public class CreateBadClassFile extends AbstractProcessor {
     {
-        addExports("jdk.compiler", "com.sun.tools.classfile");
+        addExports("jdk.jdeps", "com.sun.tools.classfile");
     }
 
     public boolean process(Set<? extends TypeElement> elems, RoundEnvironment renv) {

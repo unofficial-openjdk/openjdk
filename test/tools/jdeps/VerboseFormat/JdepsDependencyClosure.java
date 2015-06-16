@@ -44,6 +44,7 @@ import java.util.stream.Stream;
  *          are found within the same archive. For each testcase, compare the
  *          result obtained from jdeps with the expected result.
  * @modules jdk.jdeps/com.sun.tools.jdeps
+ *          java.base/sun.misc
  * @build use.indirect.DontUseUnsafe2
  * @build use.indirect.UseUnsafeIndirectly
  * @build use.indirect2.DontUseUnsafe3

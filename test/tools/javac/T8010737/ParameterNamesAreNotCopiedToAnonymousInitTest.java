@@ -144,7 +144,7 @@ public class ParameterNamesAreNotCopiedToAnonymousInitTest {
                     this.getClass().getName() + ".java")));
             java.util.List<String> options = Arrays.asList(
                 "-XaddExports:"
-                    + "jdk.compiler/com.sun.tools.classfile,"
+                    + "jdk.jdeps/com.sun.tools.classfile,"
                     + "jdk.compiler/com.sun.tools.javac.api,"
                     + "jdk.compiler/com.sun.tools.javac.code,"
                     + "jdk.compiler/com.sun.tools.javac.tree,"

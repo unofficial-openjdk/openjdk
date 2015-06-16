@@ -26,7 +26,7 @@
  * @bug 8044537
  * @summary Checking ACC_SYNTHETIC flag is generated for access method
  *          generated to access to private methods and fields.
- * @modules jdk.compiler/com.sun.tools.classfile
+ * @modules jdk.jdeps/com.sun.tools.classfile
  * @library /tools/lib /tools/javac/lib ../lib
  * @build TestBase TestResult InMemoryFileManager ToolBox
  * @build AccessToPrivateInnerClassMembersTest SyntheticTestDriver ExpectedClass ExpectedClasses
