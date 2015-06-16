@@ -40,7 +40,6 @@ import jdk.testlibrary.ProcessTools;
 /**
  * @test
  * @bug 6434402 8004926
- * @modules java.management/sun.management
  * @library /lib/testlibrary
  * @modules java.management/sun.management
  *          java.management

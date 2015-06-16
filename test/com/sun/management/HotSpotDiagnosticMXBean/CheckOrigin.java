@@ -25,7 +25,6 @@
  * @test
  * @bug 8028994
  * @author Staffan Larsen
- * @modules jdk.attach/sun.tools.attach
  * @library /lib/testlibrary
  * @modules jdk.attach/sun.tools.attach
  *          jdk.management

@@ -26,8 +26,6 @@
 # @bug     6528083
 # @summary Test RMI Bootstrap
 #
-# @modules java.management/sun.management
-#          java.management/sun.management.jmxremote
 # @library /lib/testlibrary
 # @modules java.management/sun.management
 #          java.management/sun.management.jmxremote
