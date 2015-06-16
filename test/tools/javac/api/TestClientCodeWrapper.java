@@ -60,7 +60,7 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             defaultFileManager = fm;
 
-            for (Method m: getMethodsExcept(JavaFileManager.class, "close", "getJavaFileForInput")) {
+            for (Method m: getMethodsExcept(JavaFileManager.class, "close", "getJavaFileForInput", "getModuleLocation")) {
                 test(m);
             }
 
@@ -131,6 +131,7 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
 
         List<String> javacOptions = Arrays.asList(
+                "-XaddExports:jdk.compiler/com.sun.tools.javac.api",
                 "-extdirs", extDirs.getPath(), // for use by filemanager handleOption
                 "-processor", TestClientCodeWrapper.class.getName()
                 );
@@ -391,8 +392,33 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
             return super.isSupportedOption(option);
         }
 
+        @Override
+        public Location getModuleLocation(Location location, String moduleName) throws IOException {
+            throwUserExceptionIfNeeded(fileManagerMethod, "getModuleLocation");
+            return super.getModuleLocation(location, moduleName);
+        }
+
+        @Override
+        public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+            throwUserExceptionIfNeeded(fileManagerMethod, "getModuleLocation");
+            return super.getModuleLocation(location, fo, pkgName);
+        }
+
+        @Override
+        public String inferModuleName(Location location) throws IOException {
+            throwUserExceptionIfNeeded(fileManagerMethod, "inferModuleName");
+            return super.inferModuleName(location);
+        }
+
+        @Override
+        public Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+            throwUserExceptionIfNeeded(fileManagerMethod, "listModuleLocations");
+            return super.listModuleLocations(location);
+        }
+
+
         public FileObject wrap(FileObject fo) {
-            if (fileObjectMethod == null)
+            if (fileObjectMethod == null || fo == null)
                 return fo;
             return new UserFileObject(fileObjectMethod, (JavaFileObject)fo);
         }
@@ -405,7 +431,7 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         public JavaFileObject wrap(JavaFileObject fo) {
-            if (fileObjectMethod == null)
+            if (fileObjectMethod == null || fo == null)
                 return fo;
             return new UserFileObject(fileObjectMethod, fo);
         }

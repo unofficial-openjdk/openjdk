@@ -1,0 +1,41 @@
+##### doclets ##################################################################
+
+com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java     	0 generic-all	javadoc can't find {@link java.math}
+
+
+##### javac ####################################################################
+
+tools/javac/4846262/CheckEBCDICLocaleTest.java     				0 generic-all	need fix from jdk9/dev
+tools/javac/6330997/T6330997.java    						0 generic-all	NPE in Resolve
+tools/javac/Object1.java     							0 generic-all	need -Xmodule to be able to redefine java.lang.Object
+tools/javac/Object2.java     							0 generic-all	need -Xmodule to be able to redefine java.lang.Object
+tools/javac/Paths/Diagnostics.sh     						0 generic-all	needs rewrite
+tools/javac/Paths/MineField.sh     						0 generic-all	needs rewrite
+tools/javac/T4093617/T4093617.java     						0 generic-all	need -Xmodule to be able to redefine java.lang.Object
+tools/javac/T8003967/DetectMutableStaticFields.java     			0 generic-all	uses URI to determine location of class files
+tools/javac/api/6418694/T6418694.java     					0 generic-all	need to update for new StandardLocations
+tools/javac/api/T6397104.java     						0 generic-all	need to update for new StandardLocations
+tools/javac/api/T6430241.java     						0 generic-all	test for disabling symbol file through API; delete test?
+tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
+tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
+tools/javac/diags/CheckExamples.java    					0 generic-all	need to update resource files
+tools/javac/diags/CheckResourceKeys.java     					0 generic-all	need to update resource files
+tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
+tools/javac/file/ExplodedImage.java      					0 generic-all   "Did not load java.util.List from correct place"
+tools/javac/generics/diamond/neg/T8078473_2.java      				0 generic-all	need -Xmodule to be able to define class in java.util.stream
+tools/javac/importscope/dependencies/DependenciesTest.java     			0 generic-all	NPE in test's internal scanner
+tools/javac/options/xprefer/XPreferTest.java     				0 generic-all	tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
+tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java     	0 generic-all	?? need more investigation 
+tools/javac/processing/model/testgetallmembers/Main.java     			0 generic-all	NPE in test in getPackage method
+tools/javac/processing/options/testCommandLineClasses/Test.java     		0 generic-all	problem locating nested classes
+tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determine future of -profile option (JDK 8 only? JDK 9)
+tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
+tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
+tools/javac/warnings/6594914/T6594914b.java     				0 generic-all	uses -Xlint:sunapi; should this go away or be limited to 8?
+
+
+##### javah ##################################################################
+
+tools/javah/T7185778.java     							0 generic-all	Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
+
+

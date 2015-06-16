@@ -3900,7 +3900,7 @@ public class Types {
      * Return the class that boxes the given primitive.
      */
     public ClassSymbol boxedClass(Type t) {
-        return syms.enterClass(syms.boxedName[t.getTag().ordinal()]);
+        return syms.enterClass(syms.javaBase, syms.boxedName[t.getTag().ordinal()]);
     }
 
     /**
@@ -3919,7 +3919,7 @@ public class Types {
         for (int i=0; i<syms.boxedName.length; i++) {
             Name box = syms.boxedName[i];
             if (box != null &&
-                asSuper(t, syms.enterClass(box)) != null)
+                asSuper(t, syms.enterClass(syms.javaBase, box)) != null)
                 return syms.typeOfTag[i];
         }
         return Type.noType;
@@ -4498,6 +4498,7 @@ public class Types {
         public R visitArrayType(ArrayType t, S s)       { return visitType(t, s); }
         public R visitMethodType(MethodType t, S s)     { return visitType(t, s); }
         public R visitPackageType(PackageType t, S s)   { return visitType(t, s); }
+        public R visitModuleType(ModuleType t, S s)     { return visitType(t, s); }
         public R visitTypeVar(TypeVar t, S s)           { return visitType(t, s); }
         public R visitCapturedType(CapturedType t, S s) { return visitType(t, s); }
         public R visitForAll(ForAll t, S s)             { return visitType(t, s); }

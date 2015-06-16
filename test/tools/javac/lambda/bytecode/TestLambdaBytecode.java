@@ -56,8 +56,6 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 
-import static com.sun.tools.javac.jvm.ClassFile.*;
-
 public class TestLambdaBytecode
     extends JavacTestingAbstractThreadedTest
     implements Runnable {

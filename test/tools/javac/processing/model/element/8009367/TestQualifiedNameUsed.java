@@ -43,6 +43,10 @@ import com.sun.tools.javac.util.Assert;
 import java.util.Arrays;
 
 public class TestQualifiedNameUsed extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.javac.util");
+    }
+
     @Q
     @p.Q
     @p.R.Q

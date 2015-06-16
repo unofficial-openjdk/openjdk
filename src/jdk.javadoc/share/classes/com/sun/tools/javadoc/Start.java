@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import javax.tools.JavaFileObject;
 import com.sun.javadoc.*;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.CommandLine;
-import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Context;
@@ -287,6 +286,11 @@ public class Start extends ToolOption.Helper {
         compOpts = Options.instance(context);
         // Make sure no obsolete source/target messages are reported
         compOpts.put("-Xlint:-options", "-Xlint:-options");
+
+        /*
+         *TEMPORARY: disable module processing for now in javadoc
+         */
+        compOpts.put("noModules", "true");
 
         // Parse arguments
         for (int i = 0 ; i < argv.length ; i++) {

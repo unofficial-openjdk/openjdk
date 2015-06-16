@@ -27,9 +27,16 @@
  * @summary Basic tests for jdeps tool
  * @modules java.management
  *          jdk.jdeps/com.sun.tools.jdeps
+ * @clean javax.activity.NotCompactProfile
  * @build Test p.Foo p.Bar p.C p.SubClass q.Gee javax.activity.NotCompactProfile
  * @run main Basic
  */
+
+// The @clean in the preceding test description is to force
+// the class to be recompiled if p.Bar is being recompiled.
+// This is necessary because otherwise javac finds package
+// javax.activity exported from java.corba, and so ignores
+// javax.activity.NotComnpactProfile on the classpath.
 
 import java.io.File;
 import java.io.IOException;
