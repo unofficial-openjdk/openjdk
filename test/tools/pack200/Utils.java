@@ -101,7 +101,7 @@ class Utils {
 
         compiler("-d",
                 XCLASSES.getName(),
-                "-XaddExports:jdk.compiler/com.sun.tools.classfile",
+                "-XaddExports:jdk.jdeps/com.sun.tools.classfile",
                 "@" + tmpFile.getAbsolutePath());
 
         jar("cvfe",
@@ -138,7 +138,7 @@ class Utils {
         init();
         List<String> cmds = new ArrayList<String>();
         cmds.add(getJavaCmd());
-        cmds.add("-XaddExports:jdk.compiler/com.sun.tools.classfile");
+        cmds.add("-XaddExports:jdk.jdeps/com.sun.tools.classfile");
         cmds.add("-cp");
         cmds.add(VerifierJar.getName());
         cmds.add("sun.tools.pack.verify.Main");
