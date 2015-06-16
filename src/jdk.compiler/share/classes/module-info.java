@@ -31,10 +31,6 @@ module jdk.compiler {
     exports com.sun.source.util;
     exports com.sun.tools.javac;
     exports com.sun.tools.javah;
-    exports com.sun.tools.javap;
-    exports com.sun.tools.classfile to
-        jdk.dev,
-        jdk.jlink;
     exports com.sun.tools.doclint to
         jdk.javadoc;
     exports com.sun.tools.javac.api to
@@ -44,6 +40,7 @@ module jdk.compiler {
     exports com.sun.tools.javac.comp to
         jdk.javadoc;
     exports com.sun.tools.javac.file to
+        jdk.jdeps,
         jdk.javadoc;
     exports com.sun.tools.javac.jvm to
         jdk.javadoc;
@@ -54,6 +51,7 @@ module jdk.compiler {
     exports com.sun.tools.javac.tree to
         jdk.javadoc;
     exports com.sun.tools.javac.util to
+        jdk.jdeps,
         jdk.javadoc;
     uses com.sun.source.util.Plugin;
 }

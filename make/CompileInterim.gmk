@@ -60,7 +60,8 @@ endef
 
 $(eval $(call SetupInterimModule, java.compiler))
 $(eval $(call SetupInterimModule, jdk.compiler, java.compiler))
-$(eval $(call SetupInterimModule, jdk.dev, jdk.compiler))
+#$(eval $(call SetupInterimModule, jdk.jdeps, jdk.compiler java.compiler java.xml))
+$(eval $(call SetupInterimModule, jdk.jdeps, jdk.compiler java.compiler))
 $(eval $(call SetupInterimModule, jdk.javadoc, java.compiler jdk.compiler))
 
 all: $(TARGETS)
