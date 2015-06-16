@@ -252,6 +252,7 @@ module java.base {
     uses java.util.spi.TimeZoneNameProvider;
     uses javax.security.auth.spi.LoginModule;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
+    uses sun.security.ssl.ClientKeyExchangeService;
     uses sun.text.resources.BreakIteratorInfoProvider;
     uses sun.text.resources.BreakIteratorRulesProvider;
     uses sun.text.resources.FormatDataProvider;
