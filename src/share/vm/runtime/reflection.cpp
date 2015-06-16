@@ -478,7 +478,8 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     // Acceptable access to a type in an unamed module.  Note that since
     // unnamed modules can read all unnamed modules, this also handles the
     // case where module_from is also unnamed but in a different class loader.
-    if (module_from->can_read_unnamed() && !module_to->is_named())
+    if (!module_to->is_named() &&
+          (module_from->can_read_unnamed() || module_from->can_read(module_to)))
       return ACCESS_OK;
 
     // Establish readability, check if module_from is allowed to read module_to.
