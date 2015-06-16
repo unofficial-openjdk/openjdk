@@ -30,6 +30,7 @@ import static com.sun.jmx.mbeanserver.MXBeanIntrospector.typeName;
 
 import static javax.management.openmbean.SimpleType.*;
 
+import com.sun.jmx.util.Modules;
 import com.sun.jmx.remote.util.EnvHelp;
 
 import java.io.InvalidObjectException;
@@ -44,6 +45,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -653,6 +656,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                 throws InvalidObjectException {
             final Object[] openArray = (Object[]) openValue;
             final Collection<Object> valueCollection;
+            Modules.ensureReadable(collectionClass.getModule());
             try {
                 valueCollection = cast(collectionClass.newInstance());
             } catch (Exception e) {
@@ -1113,6 +1117,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             try {
                 final Class<?> targetClass = getTargetClass();
                 ReflectUtil.checkPackageAccess(targetClass);
+                Modules.ensureReadable(targetClass.getModule());
                 o = targetClass.newInstance();
                 for (int i = 0; i < itemNames.length; i++) {
                     if (cd.containsKey(itemNames[i])) {
@@ -1136,6 +1141,12 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
         to getters.  */
     private static final class CompositeBuilderViaConstructor
             extends CompositeBuilder {
+                    AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                        public Void run() {
+                            valueMethod.setAccessible(true);
+                            return null;
+                        }
+                    });
 
         CompositeBuilderViaConstructor(Class<?> targetClass, String[] itemNames) {
             super(targetClass, itemNames);
@@ -1326,6 +1337,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                     params[index] = javaItem;
             }
 
+            Modules.ensureReadable(max.constructor.getDeclaringClass().getModule());
             try {
                 ReflectUtil.checkPackageAccess(max.constructor.getDeclaringClass());
                 return max.constructor.newInstance(params);

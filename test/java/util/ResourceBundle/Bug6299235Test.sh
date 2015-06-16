@@ -62,7 +62,8 @@ echo "NEW_EXT_DIR=${NEW_EXT_DIR}"
 
 cd ${TESTSRC}
 echo 
-${TESTJAVA}/bin/java ${TESTVMOPTS} -cp ${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}awtres.jar Bug6299235Test
+${TESTJAVA}/bin/java ${TESTVMOPTS} \
+    -cp ${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}awtres.jar Bug6299235Test
 
 if [ $? -ne 0 ]
     then

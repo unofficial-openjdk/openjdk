@@ -26,10 +26,12 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,rmid, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.server.Activation"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.rmi/sun.rmi.server.Activation"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,rmiregistry, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.rmi/sun.rmi.registry.RegistryImpl"$(COMMA) }'))
 
 ##########################################################################################
 

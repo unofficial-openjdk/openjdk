@@ -26,7 +26,8 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,pack200, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.base/com.sun.java.util.jar.pack.Driver"$(COMMA) }'))
 
 ################################################################################
 # The order of the object files on the link command line affects the size of the resulting

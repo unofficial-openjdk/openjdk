@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import javax.management.JMX;
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
@@ -101,6 +102,8 @@ public class RedefineMethodInBacktraceApp {
             System.out.println(ti);
         }
 
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("com.sun.management:type=DiagnosticCommand");
         String[] threadPrintArgs = {};
         Object[] dcmdArgs = {threadPrintArgs};
         String[] signature = {String[].class.getName()};

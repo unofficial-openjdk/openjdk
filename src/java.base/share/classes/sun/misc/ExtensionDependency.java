@@ -355,11 +355,8 @@ public class ExtensionDependency {
             if (eip!=null) {
                 // delegate the installation to the provider
                 if (eip.installExtension(reqInfo, instInfo)) {
-                    debug(reqInfo.name + " installation successful");
-                    Launcher.ExtClassLoader cl = (Launcher.ExtClassLoader)
-                        Launcher.getLauncher().getClassLoader().getParent();
-                    addNewExtensionsToClassLoader(cl);
-                    return true;
+                    debug(reqInfo.name + " installation not supported");
+                    return false;
                 }
             }
         }
@@ -483,57 +480,6 @@ public class ExtensionDependency {
                      }
                  }
             });
-    }
-
-    /*
-     * Add the newly installed jar file to the extension class loader.
-     *
-     * @param cl the current installed extension class loader
-     *
-     * @return true if successful
-     */
-    private Boolean addNewExtensionsToClassLoader(Launcher.ExtClassLoader cl) {
-        try {
-            File[] installedExts = getInstalledExtensions();
-            for (int i=0;i<installedExts.length;i++) {
-                final File instFile = installedExts[i];
-                URL instURL = AccessController.doPrivileged(
-                    new PrivilegedAction<URL>() {
-                        public URL run() {
-                            try {
-                                return ParseUtil.fileToEncodedURL(instFile);
-                            } catch (MalformedURLException e) {
-                                debugException(e);
-                                return null;
-                            }
-                        }
-                    });
-                if (instURL != null) {
-                    URL[] urls = cl.getURLs();
-                    boolean found=false;
-                    for (int j = 0; j<urls.length; j++) {
-                        debug("URL["+j+"] is " + urls[j] + " looking for "+
-                                           instURL);
-                        if (urls[j].toString().compareToIgnoreCase(
-                                    instURL.toString())==0) {
-                            found=true;
-                            debug("Found !");
-                        }
-                    }
-                    if (!found) {
-                        debug("Not Found ! adding to the classloader " +
-                              instURL);
-                        cl.addExtURL(instURL);
-                    }
-                }
-            }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-            // let's continue with the next installed extension
-        }
-        return Boolean.TRUE;
     }
 
     // True to display all debug and trace messages

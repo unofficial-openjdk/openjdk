@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,28 +25,15 @@
 
 package java.lang;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URL;
-import java.net.MalformedURLException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.util.stream.Stream;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.jar.Attributes.Name;
-import java.util.Map;
-
-import sun.net.www.ParseUtil;
+import sun.misc.BootLoader;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
-import java.lang.annotation.Annotation;
 
 /**
  * {@code Package} objects contain version information
@@ -255,84 +242,48 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     }
 
     /**
-     * Find a package by name in the callers {@code ClassLoader} instance.
-     * The callers {@code ClassLoader} instance is used to find the package
-     * instance corresponding to the named class. If the callers
-     * {@code ClassLoader} instance is null then the set of packages loaded
-     * by the system {@code ClassLoader} instance is searched to find the
-     * named package. <p>
+     * Find a package by name in the caller's {@code ClassLoader} instance.
+     * The caller's {@code ClassLoader} instance is used to find the package
+     * instance corresponding to the named package. If the caller's
+     * {@code ClassLoader} instance is the bootstrap {@code ClassLoader},
+     * only packages corresponding to classes loaded by the bootstrap
+     * {@code ClassLoader} will be searched to find the named package.
      *
-     * Packages have attributes for versions and specifications only if the class
+     * <p>Packages have attributes for versions and specifications only if the class
      * loader created the package instance with the appropriate attributes. Typically,
      * those attributes are defined in the manifests that accompany the classes.
      *
      * @param name a package name, for example, java.lang.
-     * @return the package of the requested name. It may be null if no package
+     * @return the package of the requested name. It may be {@code null} if no package
      *          information is available from the archive or codebase.
      */
     @CallerSensitive
     public static Package getPackage(String name) {
         ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
         if (l != null) {
-            return l.getPackage(name);
+            return l.findPackageFromAncestors(name);
         } else {
-            return getSystemPackage(name);
+            return sun.misc.BootLoader.getPackage(name);
         }
     }
 
     /**
      * Get all the packages currently known for the caller's {@code ClassLoader}
-     * instance.  Those packages correspond to classes loaded via or accessible by
+     * instance.  Those packages correspond to classes loaded via or visible by
      * name to that {@code ClassLoader} instance.  If the caller's
-     * {@code ClassLoader} instance is the bootstrap {@code ClassLoader}
-     * instance, which may be represented by {@code null} in some implementations,
+     * {@code ClassLoader} instance is the bootstrap {@code ClassLoader},
      * only packages corresponding to classes loaded by the bootstrap
      * {@code ClassLoader} instance will be returned.
      *
-     * @return a new array of packages known to the callers {@code ClassLoader}
+     * @return a new array of packages known to the caller's {@code ClassLoader}
      * instance.  An zero length array is returned if none are known.
      */
     @CallerSensitive
     public static Package[] getPackages() {
-        ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
-        if (l != null) {
-            return l.getPackages();
-        } else {
-            return getSystemPackages();
-        }
-    }
-
-    /**
-     * Get the package for the specified class.
-     * The class's class loader is used to find the package instance
-     * corresponding to the specified class. If the class loader
-     * is the bootstrap class loader, which may be represented by
-     * {@code null} in some implementations, then the set of packages
-     * loaded by the bootstrap class loader is searched to find the package.
-     * <p>
-     * Packages have attributes for versions and specifications only
-     * if the class loader created the package
-     * instance with the appropriate attributes. Typically those
-     * attributes are defined in the manifests that accompany
-     * the classes.
-     *
-     * @param c the class to get the package of.
-     * @return the package of the class. It may be null if no package
-     *          information is available from the archive or codebase.  */
-    static Package getPackage(Class<?> c) {
-        String name = c.getName();
-        int i = name.lastIndexOf('.');
-        if (i != -1) {
-            name = name.substring(0, i);
-            ClassLoader cl = c.getClassLoader();
-            if (cl != null) {
-                return cl.getPackage(name);
-            } else {
-                return getSystemPackage(name);
-            }
-        } else {
-            return null;
-        }
+        ClassLoader cl = ClassLoader.getClassLoader(Reflection.getCallerClass());
+        Stream<Package> pkgs = cl != null ? cl.packagesFromAncestors()
+                                          : sun.misc.BootLoader.packages();
+        return pkgs.toArray(Package[]::new);
     }
 
     /**
@@ -366,9 +317,13 @@ public class Package implements java.lang.reflect.AnnotatedElement {
 
     private Class<?> getPackageInfo() {
         if (packageInfo == null) {
-            try {
-                packageInfo = Class.forName(pkgName + ".package-info", false, loader);
-            } catch (ClassNotFoundException ex) {
+            // find package-info.class defined by loader
+            String cn = pkgName + ".package-info";
+            Class<?> c = loader != null ? loader.loadLocalClassOrNull(cn)
+                                        : BootLoader.loadClassOrNull(cn);
+            if (c != null) {
+                packageInfo = c;
+            } else {
                 // store a proxy for the package info that has no annotations
                 class PackageInfoProxy {}
                 packageInfo = PackageInfoProxy.class;
@@ -439,6 +394,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     /**
      * Construct a package instance with the specified version
      * information.
+     *
      * @param name the name of the package
      * @param spectitle the title of the specification
      * @param specversion the version of the specification
@@ -446,204 +402,24 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @param impltitle the title of the implementation
      * @param implversion the version of the implementation
      * @param implvendor the organization that maintains the implementation
+     * @param sealbase code source where this Package comes from
+     * @param loader the class loader defining this Package
      */
     Package(String name,
             String spectitle, String specversion, String specvendor,
             String impltitle, String implversion, String implvendor,
             URL sealbase, ClassLoader loader)
     {
-        pkgName = name;
-        implTitle = impltitle;
-        implVersion = implversion;
-        implVendor = implvendor;
-        specTitle = spectitle;
-        specVersion = specversion;
-        specVendor = specvendor;
-        sealBase = sealbase;
+        this.pkgName = name;
+        this.implTitle = impltitle;
+        this.implVersion = implversion;
+        this.implVendor = implvendor;
+        this.specTitle = spectitle;
+        this.specVersion = specversion;
+        this.specVendor = specvendor;
+        this.sealBase = sealbase;
         this.loader = loader;
     }
-
-    /*
-     * Construct a package using the attributes from the specified manifest.
-     *
-     * @param name the package name
-     * @param man the optional manifest for the package
-     * @param url the optional code source url for the package
-     */
-    private Package(String name, Manifest man, URL url, ClassLoader loader) {
-        String path = name.replace('.', '/').concat("/");
-        String sealed = null;
-        String specTitle= null;
-        String specVersion= null;
-        String specVendor= null;
-        String implTitle= null;
-        String implVersion= null;
-        String implVendor= null;
-        URL sealBase= null;
-        Attributes attr = man.getAttributes(path);
-        if (attr != null) {
-            specTitle   = attr.getValue(Name.SPECIFICATION_TITLE);
-            specVersion = attr.getValue(Name.SPECIFICATION_VERSION);
-            specVendor  = attr.getValue(Name.SPECIFICATION_VENDOR);
-            implTitle   = attr.getValue(Name.IMPLEMENTATION_TITLE);
-            implVersion = attr.getValue(Name.IMPLEMENTATION_VERSION);
-            implVendor  = attr.getValue(Name.IMPLEMENTATION_VENDOR);
-            sealed      = attr.getValue(Name.SEALED);
-        }
-        attr = man.getMainAttributes();
-        if (attr != null) {
-            if (specTitle == null) {
-                specTitle = attr.getValue(Name.SPECIFICATION_TITLE);
-            }
-            if (specVersion == null) {
-                specVersion = attr.getValue(Name.SPECIFICATION_VERSION);
-            }
-            if (specVendor == null) {
-                specVendor = attr.getValue(Name.SPECIFICATION_VENDOR);
-            }
-            if (implTitle == null) {
-                implTitle = attr.getValue(Name.IMPLEMENTATION_TITLE);
-            }
-            if (implVersion == null) {
-                implVersion = attr.getValue(Name.IMPLEMENTATION_VERSION);
-            }
-            if (implVendor == null) {
-                implVendor = attr.getValue(Name.IMPLEMENTATION_VENDOR);
-            }
-            if (sealed == null) {
-                sealed = attr.getValue(Name.SEALED);
-            }
-        }
-        if ("true".equalsIgnoreCase(sealed)) {
-            sealBase = url;
-        }
-        pkgName = name;
-        this.specTitle = specTitle;
-        this.specVersion = specVersion;
-        this.specVendor = specVendor;
-        this.implTitle = implTitle;
-        this.implVersion = implVersion;
-        this.implVendor = implVendor;
-        this.sealBase = sealBase;
-        this.loader = loader;
-    }
-
-    /*
-     * Returns the loaded system package for the specified name.
-     */
-    static Package getSystemPackage(String name) {
-        Package pkg = pkgs.get(name);
-        if (pkg == null) {
-            name = name.replace('.', '/').concat("/");
-            String fn = getSystemPackage0(name);
-            if (fn != null) {
-                pkg = defineSystemPackage(name, fn);
-            }
-        }
-        return pkg;
-    }
-
-    /*
-     * Return an array of loaded system packages.
-     */
-    static Package[] getSystemPackages() {
-        // First, update the system package map with new package names
-        String[] names = getSystemPackages0();
-        for (String name : names) {
-            if (!pkgs.containsKey(name)) {
-                defineSystemPackage(name, getSystemPackage0(name));
-            }
-        }
-        return pkgs.values().toArray(new Package[pkgs.size()]);
-    }
-
-    private static Package defineSystemPackage(final String iname,
-                                               final String fn)
-    {
-        // Convert to "."-separated package name
-        String name = iname.substring(0, iname.length() - 1).replace('/', '.');
-        // Creates a cached manifest for the file name, allowing
-        // only-once, lazy reads of manifest from jar files
-        CachedManifest cachedManifest = createCachedManifest(fn);
-        pkgs.putIfAbsent(name, new Package(name, cachedManifest.getManifest(),
-                                           cachedManifest.getURL(), null));
-        // Ensure we only expose one Package object
-        return pkgs.get(name);
-    }
-
-    private static CachedManifest createCachedManifest(String fn) {
-        if (!manifests.containsKey(fn)) {
-            manifests.putIfAbsent(fn, new CachedManifest(fn));
-        }
-        return manifests.get(fn);
-    }
-
-    // The map of loaded system packages
-    private static final ConcurrentHashMap<String, Package> pkgs
-            = new ConcurrentHashMap<>();
-
-    // Maps each directory or zip file name to its corresponding manifest, if
-    // it exists
-    private static final ConcurrentHashMap<String, CachedManifest> manifests
-            = new ConcurrentHashMap<>();
-
-    private static class CachedManifest {
-        private static final Manifest EMPTY_MANIFEST = new Manifest();
-        private final String fileName;
-        private final URL url;
-        private volatile Manifest manifest;
-
-        CachedManifest(final String fileName) {
-            this.fileName = fileName;
-            this.url = AccessController.doPrivileged(new PrivilegedAction<>() {
-                public URL run() {
-                    final File file = new File(fileName);
-                    if (file.isFile()) {
-                        try {
-                            return ParseUtil.fileToEncodedURL(file);
-                        } catch (MalformedURLException e) {
-                        }
-                    }
-                    return null;
-                }
-            });
-        }
-
-        public URL getURL() {
-            return url;
-        }
-
-        public Manifest getManifest() {
-            if (url == null) {
-                return EMPTY_MANIFEST;
-            }
-            Manifest m = manifest;
-            if (m != null) {
-                return m;
-            }
-            synchronized (this) {
-                m = manifest;
-                if (m != null) {
-                    return m;
-                }
-                m = AccessController.doPrivileged(new PrivilegedAction<>() {
-                    public Manifest run() {
-                        try (FileInputStream fis = new FileInputStream(fileName);
-                             JarInputStream jis = new JarInputStream(fis, false)) {
-                            return jis.getManifest();
-                        } catch (IOException e) {
-                            return null;
-                        }
-                    }
-                });
-                manifest = m = (m == null ? EMPTY_MANIFEST : m);
-            }
-            return m;
-        }
-    }
-
-    private static native String getSystemPackage0(String name);
-    private static native String[] getSystemPackages0();
 
     /*
      * Private storage for the package name and attributes.

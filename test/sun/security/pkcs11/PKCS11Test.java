@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 
 import java.io.*;
 import java.util.*;
-import java.lang.reflect.*;
 
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
@@ -70,12 +69,26 @@ public abstract class PKCS11Test {
     // for quick checking for generic testing than many if-else statements.
     static double softoken3_version = -1;
     static double nss3_version = -1;
+    static Provider sunpkcs11 = getSunPKCS11();
 
-    static Provider getSunPKCS11(String config) throws Exception {
-        Class clazz = Class.forName("sun.security.pkcs11.SunPKCS11");
-        Constructor cons = clazz.getConstructor(new Class[] {String.class});
-        Object obj = cons.newInstance(new Object[] {config});
-        return (Provider)obj;
+    public static Provider getSunPKCS11() {
+        ServiceLoader sl = ServiceLoader.load(java.security.Provider.class);
+        Iterator<Provider> iter = sl.iterator();
+        while (iter.hasNext()) {
+            Provider p = iter.next();
+            if (p.getName().startsWith("SunPKCS11")) {
+                return p;
+            };
+        }
+        return null;
+    }
+
+    static Provider getCustomizedPKCS11(String config) throws Exception {
+        if (sunpkcs11 != null) {
+            return sunpkcs11.configure(config);
+        } else {
+            return null;
+        }
     }
 
     public abstract void main(Provider p) throws Exception;
@@ -129,7 +142,7 @@ public abstract class PKCS11Test {
         }
         String base = getBase();
         String p11config = base + SEP + "nss" + SEP + "p11-deimos.txt";
-        Provider p = getSunPKCS11(p11config);
+        Provider p = getCustomizedPKCS11(p11config);
         test.premain(p);
     }
 
@@ -399,7 +412,7 @@ public abstract class PKCS11Test {
 
         System.setProperty("pkcs11test.nss.lib", libfile);
         System.setProperty("pkcs11test.nss.db", dbdir);
-        Provider p = getSunPKCS11(p11config);
+        Provider p = getCustomizedPKCS11(p11config);
         test.premain(p);
     }
 
@@ -576,8 +589,7 @@ public abstract class PKCS11Test {
         if ((b == null) || (b.length == 0)) {
             return a;
         }
-        T[] r = (T[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), a.length + b.length);
-        System.arraycopy(a, 0, r, 0, a.length);
+        T[] r = Arrays.copyOf(a, a.length + b.length);
         System.arraycopy(b, 0, r, a.length, b.length);
         return r;
     }

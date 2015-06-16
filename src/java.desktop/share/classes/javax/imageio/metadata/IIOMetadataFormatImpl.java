@@ -963,27 +963,29 @@ public abstract class IIOMetadataFormatImpl implements IIOMetadataFormat {
          * If that throws MissingResourceException, then try the
          * system class loader.
          */
-        ClassLoader loader =
-            java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction<ClassLoader>() {
-                   public ClassLoader run() {
-                       return Thread.currentThread().getContextClassLoader();
-                   }
-            });
+        // ClassLoader loader =
+        //     java.security.AccessController.doPrivileged(
+        //         new java.security.PrivilegedAction<ClassLoader>() {
+        //            public ClassLoader run() {
+        //                return Thread.currentThread().getContextClassLoader();
+        //            }
+        //     });
 
-        ResourceBundle bundle = null;
-        try {
-            bundle = ResourceBundle.getBundle(resourceBaseName,
-                                              locale, loader);
-        } catch (MissingResourceException mre) {
-            try {
-                bundle = ResourceBundle.getBundle(resourceBaseName, locale);
-            } catch (MissingResourceException mre1) {
-                return null;
-            }
-        }
+        // ResourceBundle bundle = null;
+        // try {
+        //     bundle = ResourceBundle.getBundle(resourceBaseName,
+        //                                       locale, loader);
+        // } catch (MissingResourceException mre) {
+        //     try {
+        //         bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+        //     } catch (MissingResourceException mre1) {
+        //         return null;
+        //     }
+        // }
 
         try {
+            ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale,
+                                                            this.getClass().getModule());
             return bundle.getString(key);
         } catch (MissingResourceException e) {
             return null;

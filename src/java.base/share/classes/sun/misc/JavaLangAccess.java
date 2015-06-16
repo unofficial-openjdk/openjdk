@@ -25,11 +25,15 @@
 
 package sun.misc;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
 import java.security.AccessControlContext;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import jdk.internal.module.ServicesCatalog;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -132,6 +136,34 @@ public interface JavaLangAccess {
      * Invokes the finalize method of the given object.
      */
     void invokeFinalize(Object o) throws Throwable;
+
+    /**
+     * Returns the ServicesCatalog for the given class loader.
+     */
+    ServicesCatalog getServicesCatalog(ClassLoader cl);
+
+    /**
+     * Returns the ServicesCatalog for the given class loader, creating it
+     * if doesn't already exist.
+     */
+    ServicesCatalog createOrGetServicesCatalog(ClassLoader cl);
+
+    /**
+     * Returns a class loaded by the bootstrap class loader.
+     */
+    Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
+
+    /**
+     * Returns an input stream to a resource with the given name in a module
+     * that is defined to the given class loader.
+     */
+    InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
+        throws IOException;
+
+    /**
+     * Returns the Packages for the given class loader.
+     */
+    Stream<Package> packages(ClassLoader cl);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

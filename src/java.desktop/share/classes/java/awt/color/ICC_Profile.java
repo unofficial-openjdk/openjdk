@@ -1893,7 +1893,7 @@ public class ICC_Profile implements Serializable {
     private static boolean standardProfileExists(final String fileName) {
         return AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
                 public Boolean run() {
-                    return PCMM.class.getResource("profiles/"+fileName) != null;
+                    return PCMM.class.getResourceAsStream("profiles/"+fileName) != null;
                 }
             });
     }

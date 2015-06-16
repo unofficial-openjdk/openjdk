@@ -48,7 +48,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import sun.nio.ch.DirectBuffer;
 import java.nio.ByteBuffer;
-import sun.security.rsa.RSAPadding;
 
 /**
  * Signature implementation class. This class currently supports the

@@ -344,6 +344,7 @@ public class ReliableLog {
                         });
                 Class<? extends LogFile> cl =
                     loader.loadClass(logClassName).asSubclass(LogFile.class);
+                ReliableLog.class.getModule().addReads(cl.getModule());
                 return cl.getConstructor(String.class, String.class);
             } catch (Exception e) {
                 System.err.println("Exception occurred:");

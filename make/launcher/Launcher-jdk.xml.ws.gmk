@@ -26,8 +26,10 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,wsgen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.xml.ws/com.sun.tools.internal.ws.WsGen"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,wsimport, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsImport"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.xml.ws/com.sun.tools.internal.ws.WsImport"$(COMMA) }'))
 

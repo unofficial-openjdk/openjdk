@@ -29,32 +29,33 @@ $(eval $(call SetupLauncher,jinfo, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useProcDebugger"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
-        "sun.tools.jinfo.JInfo"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jinfo.JInfo"$(COMMA) }' \
     ,,,,,,,,,Info-privileged.plist))
 
 $(eval $(call SetupLauncher,jmap, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useProcDebugger"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
-        "sun.tools.jmap.JMap"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jmap.JMap"$(COMMA) }' \
     ,,,,,,,,,Info-privileged.plist))
 
 $(eval $(call SetupLauncher,jps, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jps.Jps"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,jstack, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useProcDebugger"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
-        "sun.tools.jstack.JStack"$(COMMA) }' \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jstack.JStack"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
     ,,,,,,,,,Info-privileged.plist))
 
 $(eval $(call SetupLauncher,jstat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jstat.Jstat"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.jcmd/sun.tools.jcmd.JCmd"$(COMMA) }'))
 
