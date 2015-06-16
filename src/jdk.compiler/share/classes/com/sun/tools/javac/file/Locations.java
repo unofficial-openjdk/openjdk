@@ -64,8 +64,6 @@ import javax.tools.JavaFileManager.Location;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.util.ListBuffer;
@@ -110,6 +108,8 @@ public class Locations {
      * Whether to warn about non-existent path elements
      */
     private boolean warn;
+
+    private ModuleNameReader moduleNameReader;
 
     // Used by Locations(for now) to indicate that the PLATFORM_CLASS_PATH
     // should use the jrt: file system.
@@ -993,17 +993,10 @@ public class Locations {
 
                 if (p.getFileName().toString().endsWith(".jar")) {
                     try (FileSystem fs = FileSystems.newFileSystem(p, null)) {
-                        ClassFile cf = ClassFile.read(fs.getPath("module-info.class"));
-                        String className = cf.getName();
-                        String MODULE_INFO = "/module-info";
-                        if (className.endsWith(MODULE_INFO)) {
-                            String moduleName = className
-                                    .substring(0, className.length() - MODULE_INFO.length())
-                                    .replace('/', '.');
-                            return new Pair<>(moduleName, p);
-                        }
+                        String moduleName = readModuleName(fs.getPath("module-info.class"));
+                        return new Pair<>(moduleName, p);
                     } catch (IOException ignore) {
-                    } catch (ConstantPoolException ignore) {
+                    } catch (ModuleNameReader.BadClassFile ignore) {
                     }
                     return null;
                 }
@@ -1015,31 +1008,31 @@ public class Locations {
                             URI uri = URI.create("jar:" + p.toUri());
                             fs = FileSystems.newFileSystem(uri, Collections.emptyMap(), null);
                             try {
-                                ClassFile cf = ClassFile.read(fs.getPath("classes/module-info.class"));
-                                String className = cf.getName();
-                                String MODULE_INFO = "/module-info";
-                                if (className.endsWith(MODULE_INFO)) {
-                                    String moduleName = className
-                                            .substring(0, className.length() - MODULE_INFO.length())
-                                            .replace('/', '.');
-                                    fileSystems.put(p, fs);
-                                    Path modulePath = fs.getPath("classes");
-                                    fs = null; // prevent fs being closed in the finally clause
-                                    return new Pair<>(moduleName, modulePath);
-                                }
+                                String moduleName = readModuleName(fs.getPath("classes/module-info.class"));
+                                Path modulePath = fs.getPath("classes");
+                                fileSystems.put(p, fs);
+                                fs = null; // prevent fs being closed in the finally clause
+                                return new Pair<>(moduleName, modulePath);
                             } finally {
                                 if (fs != null)
                                     fs.close();
                             }
                         }
                     } catch (IOException ignore) {
-                    } catch (ConstantPoolException ignore) {
+                    } catch (ModuleNameReader.BadClassFile ignore) {
                     }
                 }
 
                 return null;
             }
+
+            private String readModuleName(Path path) throws IOException, ModuleNameReader.BadClassFile {
+                if (moduleNameReader == null)
+                    moduleNameReader = new ModuleNameReader();
+                return moduleNameReader.readModuleName(path);
+            }
         }
+
     }
 
     private class ModuleSourcePathLocationHandler extends BasicLocationHandler {
