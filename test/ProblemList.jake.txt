@@ -173,6 +173,13 @@ java/util/regex/PatternStreamTest.java						generic-all
 
 ############################################################################
 
+# jdk_rmi
+
+# 8078484
+sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
+
+############################################################################
+
 # jdk_other
 
 # 8098518
@@ -180,6 +187,14 @@ javax/xml/jaxp/Encodings/CheckEncodingPropertiesFile.java                       
 
 # waiting for javac/jtreg support
 javax/xml/jaxp/common/8035437/run.sh                                            generic-all
+
+# 8047822
+javax/script/GetInterfaceTest.java                              generic-all
+javax/script/Test4.java                                         generic-all
+javax/script/Test7.java                                         generic-all
+
+# 8085789
+javax/rmi/PortableRemoteObject/ConcurrentHashMapTest.java       generic-all
 
 ############################################################################
 
