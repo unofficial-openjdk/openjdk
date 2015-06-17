@@ -582,12 +582,8 @@ public class SyncFactory {
              * there.
              **/
             c = Class.forName(providerID, true, cl);
-
-            if (c != null) {
-                return (SyncProvider) c.newInstance();
-            } else {
-                return new com.sun.rowset.providers.RIOptimisticProvider();
-            }
+            SyncFactory.class.getModule().addReads(c.getModule());
+            return (SyncProvider) c.newInstance();
 
         } catch (IllegalAccessException e) {
             throw new SyncFactoryException("IllegalAccessException: " + e.getMessage());
