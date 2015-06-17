@@ -33,12 +33,15 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -806,6 +809,8 @@ public class DataFlavorUtil {
          * of the given object.
          */
         public static Object newMarshalledObject(Object obj) throws IOException {
+            if (marshallObjectClass == null) return null;
+            ensureReadable(marshallObjectClass.getModule());
             try {
                 return marshallCtor == null ? null : marshallCtor.newInstance(obj);
             } catch (InstantiationException | IllegalAccessException x) {
@@ -823,6 +828,8 @@ public class DataFlavorUtil {
          */
         public static Object getMarshalledObject(Object obj)
                 throws IOException, ClassNotFoundException {
+            if (marshallObjectClass == null) return null;
+            ensureReadable(marshallObjectClass.getModule());
             try {
                 return marshallGet == null ? null : marshallGet.invoke(obj);
             } catch (IllegalAccessException x) {
@@ -837,5 +844,11 @@ public class DataFlavorUtil {
             }
         }
 
+        private static void ensureReadable(Module targetModule) {
+            Module thisModule = DataFlavor.class.getModule();
+            PrivilegedAction<Void> pa =
+                    () -> { thisModule.addReads(targetModule); return null; };
+            AccessController.doPrivileged(pa);
+        }
     }
 }
