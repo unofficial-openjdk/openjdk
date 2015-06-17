@@ -42,6 +42,7 @@ sun/security/krb5/auto/SSL.java                                generic-all
 sun/security/krb5/auto/UnboundSSL.java                         generic-all
 sun/security/krb5/auto/UnboundSSLMultipleKeys.java             generic-all
 sun/security/krb5/auto/UnboundSSLPrincipalProperty.java        generic-all
+sun/security/krb5/auto/SSLwithPerms.java		       generic-all
 sun/security/pkcs11/Provider/Login.sh                          generic-all
 sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
 
