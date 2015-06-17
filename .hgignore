@@ -7,4 +7,3 @@
 ^make/netbeans/.*/dist/
 ^.hgtip
 .DS_Store
-^src_shuffled/
