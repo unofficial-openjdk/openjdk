@@ -258,7 +258,7 @@ final class ModuleInfo {
                 String pkg = cpool.getUtf8(index).replace('/', '.');
                 int exports_to_count = in.readUnsignedShort();
                 if (exports_to_count > 0) {
-                    Set<String> targets = new HashSet<>();
+                    Set<String> targets = new HashSet<>(exports_to_count);
                     for (int j=0; j<exports_to_count; j++) {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
@@ -300,7 +300,7 @@ final class ModuleInfo {
         throws IOException
     {
         int package_count = in.readUnsignedShort();
-        Set<String> packages = new HashSet<>();
+        Set<String> packages = new HashSet<>(package_count);
         for (int i=0; i<package_count; i++) {
             int index = in.readUnsignedShort();
             String pkg = cpool.getUtf8(index).replace('/', '.');
@@ -345,7 +345,7 @@ final class ModuleInfo {
 
         int hash_count = in.readUnsignedShort();
 
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new HashMap<>(hash_count);
         for (int i=0; i<hash_count; i++) {
             index = in.readUnsignedShort();
             String dn = cpool.getUtf8(index);
