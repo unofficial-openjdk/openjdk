@@ -104,10 +104,11 @@ public interface ModuleFinder {
      * @apiNote Need to decide if this method needs a permission check.
      */
     public static ModuleFinder ofInstalled() {
-        if (InstalledModuleFinder.isModularImage()) {
+        String home = System.getProperty("java.home");
+        Path libModules = Paths.get(home, "lib", "modules");
+        if (Files.isDirectory(libModules)) {
             return new InstalledModuleFinder();
         } else {
-            String home = System.getProperty("java.home");
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
                 return of(mlib);

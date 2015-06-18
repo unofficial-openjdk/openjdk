@@ -79,8 +79,7 @@ public final class ModuleBootstrap {
             createModulePathFinder("java.upgrade.module.path");
 
         // system module path, aka the installed modules
-        ModuleFinder systemModulePath =
-            ModuleFinder.ofInstalled();
+        ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath =

@@ -1248,7 +1248,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                             String tName = tClass.getName();
                             String tResource = tName.substring(tName.lastIndexOf('.')+1)+".class";
                             try (java.io.InputStream in = tClass.getResourceAsStream(tResource)) {
-                                values[0] = sun.misc.IOUtils.readFully(in, -1, true);
+                                values[0] = in.readAllBytes();
                             }
                         } catch (java.io.IOException ex) {
                             throw new InternalError(ex);

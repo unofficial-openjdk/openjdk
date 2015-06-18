@@ -29,9 +29,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -75,12 +72,6 @@ class InstalledModuleFinder implements ModuleFinder {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    static boolean isModularImage() {
-        String home = System.getProperty("java.home");
-        Path libModules = Paths.get(home, "lib", "modules");
-        return Files.isDirectory(libModules);
     }
 
     @Override

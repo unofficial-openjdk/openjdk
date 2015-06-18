@@ -332,7 +332,7 @@ public final class MethodUtil extends SecureClassLoader {
             InputStream in = Object.class.getModule().getResourceAsStream(path);
             if (in != null) {
                 try (in) {
-                    byte[] b = IOUtils.readFully(in, -1, true);
+                    byte[] b = in.readAllBytes();
                     return defineClass(name, b);
                 }
             }
