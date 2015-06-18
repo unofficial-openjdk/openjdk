@@ -426,7 +426,11 @@ public abstract class IIOMetadata {
                 }
             }
 
-            IIOMetadata.class.getModule().addReads(cls.getModule());
+            Module thisModule = IIOMetadata.class.getModule();
+            Module targetModule = cls.getModule();
+            PrivilegedAction<Void> pa =
+                () -> { thisModule.addReads(targetModule); return null; };
+            AccessController.doPrivileged(pa);
             Method meth = cls.getMethod("getInstance");
             return (IIOMetadataFormat) meth.invoke(null);
         } catch (Exception e) {
