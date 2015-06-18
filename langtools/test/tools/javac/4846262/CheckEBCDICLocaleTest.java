@@ -34,8 +34,12 @@
  */
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -64,31 +68,47 @@ public class CheckEBCDICLocaleTest {
 
     public void test() throws Exception {
         ToolBox tb = new ToolBox();
-        Path native2asciiBinary = tb.getJDKTool("native2ascii");
-
         tb.writeFile("Test.java", TestSrc);
         tb.createDirectories("output");
 
-        tb.new ExecTask(native2asciiBinary)
-                .args("-reverse", "-encoding", "IBM1047", "Test.java", "output/Test.java")
-                .run();
+        Charset ebcdic = Charset.forName("IBM1047");
+        Native2Ascii n2a = new Native2Ascii(ebcdic);
+        n2a.asciiToNative(Paths.get("Test.java"), Paths.get("output", "Test.java"));
 
-        tb.new JavacTask(ToolBox.Mode.EXEC)
-                .redirect(ToolBox.OutputKind.STDERR, "Test.tmp")
-                .options("-J-Duser.language=en",
-                        "-J-Duser.region=US",
-                        "-J-Dfile.encoding=IBM1047")
-                .files("output/Test.java")
-                .run(ToolBox.Expect.FAIL);
+        // Use -encoding to specify the encoding with which to read source files
+        // Use a suitable configured output stream for javac diagnostics
+        int rc;
+        try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream("Test.tmp"), ebcdic))) {
+            String[] args = { "-encoding", ebcdic.name(), "output/Test.java" };
+            rc = com.sun.tools.javac.Main.compile(args, out);
+            if (rc != 1)
+                throw new Exception("unexpected exit from javac: " + rc);
+        }
 
-        tb.new ExecTask(native2asciiBinary)
-                .args("-encoding", "IBM1047", "Test.tmp", "Test.out")
-                .run();
+        n2a.nativeToAscii(Paths.get("Test.tmp"), Paths.get("Test.out"));
 
         List<String> expectLines = Arrays.asList(
                 String.format(TestOutTemplate, File.separator).split("\n"));
         List<String> actualLines = Files.readAllLines(Paths.get("Test.out"));
-        tb.checkEqual(expectLines, actualLines);
-    }
+        try {
+            tb.checkEqual(expectLines, actualLines);
+        } catch (Throwable tt) {
+            PrintStream out = tb.out;
+            out.println("Output mismatch:");
 
+            out.println("Expected output:");
+            for (String s: expectLines) {
+                out.println(s);
+            }
+            out.println();
+
+            out.println("Actual output:");
+            for (String s : actualLines) {
+                out.println(s);
+            }
+            out.println();
+
+            throw tt;
+        }
+    }
 }

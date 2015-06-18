@@ -110,8 +110,10 @@ public class Config {
      * java.security.krb5.kdc not specified, error reading configuration file.
      */
 
-    public static synchronized void refresh() throws KrbException {
-        singleton = new Config();
+    public static void refresh() throws KrbException {
+        synchronized (Config.class) {
+            singleton = new Config();
+        }
         KdcComm.initStatic();
         EType.initStatic();
         Checksum.initStatic();
@@ -258,7 +260,11 @@ public class Config {
     }
 
     /**
-     * Gets all values for the specified keys.
+     * Gets all values (at least one) for the specified keys separated by
+     * a whitespace, or null if there is no such keys.
+     * The values can either be provided on a single line, or on multiple lines
+     * using the same key. When provided on a single line, the value can be
+     * comma or space separated.
      * @throws IllegalArgumentException if any of the keys is illegal
      *         (See {@link #get})
      */
@@ -268,6 +274,7 @@ public class Config {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (String s: v) {
+            s = s.replaceAll("[\\s,]+", " ");
             if (first) {
                 sb.append(s);
                 first = false;

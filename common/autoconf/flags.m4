@@ -338,14 +338,16 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
       # no adjustment
       ;;
     slowdebug )
-      # Add runtime stack smashing and undefined behavior checks
-      CFLAGS_DEBUG_OPTIONS="-fstack-protector-all --param ssp-buffer-size=1"
-      CXXFLAGS_DEBUG_OPTIONS="-fstack-protector-all --param ssp-buffer-size=1"
+      # Add runtime stack smashing and undefined behavior checks.
+      # Not all versions of gcc support -fstack-protector
+      STACK_PROTECTOR_CFLAG="-fstack-protector-all"
+      FLAGS_COMPILER_CHECK_ARGUMENTS([$STACK_PROTECTOR_CFLAG], [], [STACK_PROTECTOR_CFLAG=""])
+
+      CFLAGS_DEBUG_OPTIONS="$STACK_PROTECTOR_CFLAG --param ssp-buffer-size=1"
+      CXXFLAGS_DEBUG_OPTIONS="$STACK_PROTECTOR_CFLAG --param ssp-buffer-size=1"
       ;;
     esac
   fi
-  AC_SUBST(CFLAGS_DEBUG_OPTIONS)
-  AC_SUBST(CXXFLAGS_DEBUG_OPTIONS)
 
   # Optimization levels
   if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
@@ -559,6 +561,7 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
         -Zi -MD -Zc:wchar_t- -W3 -wd4800 \
         -DWIN32_LEAN_AND_MEAN \
         -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE \
+        -D_WINSOCK_DEPRECATED_NO_WARNINGS \
         -DWIN32 -DIAL"
     if test "x$OPENJDK_TARGET_CPU" = xx86_64; then
       COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_AMD64_ -Damd64"

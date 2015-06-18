@@ -108,11 +108,10 @@ extern void print_alias_types();
 
 #endif
 
-static bool membar_for_arraycopy_helper(const TypeOopPtr *t_oop, MergeMemNode* mm, PhaseTransform *phase) {
-  if (mm->memory_at(Compile::AliasIdxRaw)->is_Proj()) {
-    Node* n = mm->memory_at(Compile::AliasIdxRaw)->in(0);
-    if ((n->is_ArrayCopy() && n->as_ArrayCopy()->may_modify(t_oop, phase)) ||
-        (n->is_CallLeaf() && n->as_CallLeaf()->may_modify(t_oop, phase))) {
+static bool membar_for_arraycopy_helper(const TypeOopPtr *t_oop, Node* n, PhaseTransform *phase) {
+  if (n->is_Proj()) {
+    n = n->in(0);
+    if (n->is_Call() && n->as_Call()->may_modify(t_oop, phase)) {
       return true;
     }
   }
@@ -121,16 +120,22 @@ static bool membar_for_arraycopy_helper(const TypeOopPtr *t_oop, MergeMemNode* m
 
 static bool membar_for_arraycopy(const TypeOopPtr *t_oop, MemBarNode* mb, PhaseTransform *phase) {
   Node* mem = mb->in(TypeFunc::Memory);
+
   if (mem->is_MergeMem()) {
-    return membar_for_arraycopy_helper(t_oop, mem->as_MergeMem(), phase);
-  } else if (mem->is_Phi()) {
-    // after macro expansion of an ArrayCopyNode we may have a Phi
-    for (uint i = 1; i < mem->req(); i++) {
-      if (mem->in(i) != NULL && mem->in(i)->is_MergeMem() && membar_for_arraycopy_helper(t_oop, mem->in(i)->as_MergeMem(), phase)) {
-        return true;
+    Node* n = mem->as_MergeMem()->memory_at(Compile::AliasIdxRaw);
+    if (membar_for_arraycopy_helper(t_oop, n, phase)) {
+      return true;
+    } else if (n->is_Phi()) {
+      for (uint i = 1; i < n->req(); i++) {
+        if (n->in(i) != NULL) {
+          if (membar_for_arraycopy_helper(t_oop, n->in(i), phase)) {
+            return true;
+          }
+        }
       }
     }
   }
+
   return false;
 }
 
@@ -784,6 +789,9 @@ void LoadNode::dump_spec(outputStream *st) const {
     // standard dump does this in Verbose and WizardMode
     st->print(" #"); _type->dump_on(st);
   }
+  if (!_depends_only_on_test) {
+    st->print(" (does not depend only on test)");
+  }
 }
 #endif
 
@@ -800,7 +808,7 @@ bool LoadNode::is_immutable_value(Node* adr) {
 
 //----------------------------LoadNode::make-----------------------------------
 // Polymorphic factory method:
-Node *LoadNode::make(PhaseGVN& gvn, Node *ctl, Node *mem, Node *adr, const TypePtr* adr_type, const Type *rt, BasicType bt, MemOrd mo) {
+Node *LoadNode::make(PhaseGVN& gvn, Node *ctl, Node *mem, Node *adr, const TypePtr* adr_type, const Type *rt, BasicType bt, MemOrd mo, ControlDependency control_dependency) {
   Compile* C = gvn.C;
 
   // sanity check the alias category against the created node type
@@ -816,39 +824,39 @@ Node *LoadNode::make(PhaseGVN& gvn, Node *ctl, Node *mem, Node *adr, const TypeP
           rt->isa_oopptr() || is_immutable_value(adr),
           "raw memory operations should have control edge");
   switch (bt) {
-  case T_BOOLEAN: return new LoadUBNode(ctl, mem, adr, adr_type, rt->is_int(),  mo);
-  case T_BYTE:    return new LoadBNode (ctl, mem, adr, adr_type, rt->is_int(),  mo);
-  case T_INT:     return new LoadINode (ctl, mem, adr, adr_type, rt->is_int(),  mo);
-  case T_CHAR:    return new LoadUSNode(ctl, mem, adr, adr_type, rt->is_int(),  mo);
-  case T_SHORT:   return new LoadSNode (ctl, mem, adr, adr_type, rt->is_int(),  mo);
-  case T_LONG:    return new LoadLNode (ctl, mem, adr, adr_type, rt->is_long(), mo);
-  case T_FLOAT:   return new LoadFNode (ctl, mem, adr, adr_type, rt,            mo);
-  case T_DOUBLE:  return new LoadDNode (ctl, mem, adr, adr_type, rt,            mo);
-  case T_ADDRESS: return new LoadPNode (ctl, mem, adr, adr_type, rt->is_ptr(),  mo);
+  case T_BOOLEAN: return new LoadUBNode(ctl, mem, adr, adr_type, rt->is_int(),  mo, control_dependency);
+  case T_BYTE:    return new LoadBNode (ctl, mem, adr, adr_type, rt->is_int(),  mo, control_dependency);
+  case T_INT:     return new LoadINode (ctl, mem, adr, adr_type, rt->is_int(),  mo, control_dependency);
+  case T_CHAR:    return new LoadUSNode(ctl, mem, adr, adr_type, rt->is_int(),  mo, control_dependency);
+  case T_SHORT:   return new LoadSNode (ctl, mem, adr, adr_type, rt->is_int(),  mo, control_dependency);
+  case T_LONG:    return new LoadLNode (ctl, mem, adr, adr_type, rt->is_long(), mo, control_dependency);
+  case T_FLOAT:   return new LoadFNode (ctl, mem, adr, adr_type, rt,            mo, control_dependency);
+  case T_DOUBLE:  return new LoadDNode (ctl, mem, adr, adr_type, rt,            mo, control_dependency);
+  case T_ADDRESS: return new LoadPNode (ctl, mem, adr, adr_type, rt->is_ptr(),  mo, control_dependency);
   case T_OBJECT:
 #ifdef _LP64
     if (adr->bottom_type()->is_ptr_to_narrowoop()) {
-      Node* load  = gvn.transform(new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), mo));
+      Node* load  = gvn.transform(new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), mo, control_dependency));
       return new DecodeNNode(load, load->bottom_type()->make_ptr());
     } else
 #endif
     {
       assert(!adr->bottom_type()->is_ptr_to_narrowoop() && !adr->bottom_type()->is_ptr_to_narrowklass(), "should have got back a narrow oop");
-      return new LoadPNode(ctl, mem, adr, adr_type, rt->is_oopptr(), mo);
+      return new LoadPNode(ctl, mem, adr, adr_type, rt->is_oopptr(), mo, control_dependency);
     }
   }
   ShouldNotReachHere();
   return (LoadNode*)NULL;
 }
 
-LoadLNode* LoadLNode::make_atomic(Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, const Type* rt, MemOrd mo) {
+LoadLNode* LoadLNode::make_atomic(Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, const Type* rt, MemOrd mo, ControlDependency control_dependency) {
   bool require_atomic = true;
-  return new LoadLNode(ctl, mem, adr, adr_type, rt->is_long(), mo, require_atomic);
+  return new LoadLNode(ctl, mem, adr, adr_type, rt->is_long(), mo, control_dependency, require_atomic);
 }
 
-LoadDNode* LoadDNode::make_atomic(Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, const Type* rt, MemOrd mo) {
+LoadDNode* LoadDNode::make_atomic(Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, const Type* rt, MemOrd mo, ControlDependency control_dependency) {
   bool require_atomic = true;
-  return new LoadDNode(ctl, mem, adr, adr_type, rt, mo, require_atomic);
+  return new LoadDNode(ctl, mem, adr, adr_type, rt, mo, control_dependency, require_atomic);
 }
 
 

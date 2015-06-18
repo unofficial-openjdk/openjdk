@@ -226,52 +226,6 @@ Java_java_lang_ProcessImpl_init(JNIEnv *env, jclass clazz)
 #define WTERMSIG(status) ((status)&0x7F)
 #endif
 
-/* Block until a child process exits and return its exit code.
-   Note, can only be called once for any given pid. */
-JNIEXPORT jint JNICALL
-Java_java_lang_ProcessImpl_waitForProcessExit(JNIEnv* env,
-                                              jobject junk,
-                                              jint pid)
-{
-    /* We used to use waitid() on Solaris, waitpid() on Linux, but
-     * waitpid() is more standard, so use it on all POSIX platforms. */
-    int status;
-    /* Wait for the child process to exit.  This returns immediately if
-       the child has already exited. */
-    while (waitpid(pid, &status, 0) < 0) {
-        switch (errno) {
-        case ECHILD: return 0;
-        case EINTR: break;
-        default: return -1;
-        }
-    }
-
-    if (WIFEXITED(status)) {
-        /*
-         * The child exited normally; get its exit code.
-         */
-        return WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-        /* The child exited because of a signal.
-         * The best value to return is 0x80 + signal number,
-         * because that is what all Unix shells do, and because
-         * it allows callers to distinguish between process exit and
-         * process death by signal.
-         * Unfortunately, the historical behavior on Solaris is to return
-         * the signal number, and we preserve this for compatibility. */
-#ifdef __solaris__
-        return WTERMSIG(status);
-#else
-        return 0x80 + WTERMSIG(status);
-#endif
-    } else {
-        /*
-         * Unknown exit code; pass it through.
-         */
-        return status;
-    }
-}
-
 static const char *
 getBytes(JNIEnv *env, jbyteArray arr)
 {
@@ -286,12 +240,14 @@ releaseBytes(JNIEnv *env, jbyteArray arr, const char* parr)
         (*env)->ReleaseByteArrayElements(env, arr, (jbyte*) parr, JNI_ABORT);
 }
 
+#define IOE_FORMAT "error=%d, %s"
+
 static void
 throwIOException(JNIEnv *env, int errnum, const char *defaultDetail)
 {
-    static const char * const format = "error=%d, %s";
     const char *detail = defaultDetail;
     char *errmsg;
+    size_t fmtsize;
     jstring s;
 
     if (errnum != 0) {
@@ -300,11 +256,12 @@ throwIOException(JNIEnv *env, int errnum, const char *defaultDetail)
             detail = s;
     }
     /* ASCII Decimal representation uses 2.4 times as many bits as binary. */
-    errmsg = NEW(char, strlen(format) + strlen(detail) + 3 * sizeof(errnum));
+    fmtsize = sizeof(IOE_FORMAT) + strlen(detail) + 3 * sizeof(errnum);
+    errmsg = NEW(char, fmtsize);
     if (errmsg == NULL)
         return;
 
-    sprintf(errmsg, format, errnum, detail);
+    snprintf(errmsg, fmtsize, IOE_FORMAT, errnum, detail);
     s = JNU_NewStringPlatform(env, errmsg);
     if (s != NULL) {
         jobject x = JNU_NewObjectByName(env, "java/io/IOException",
@@ -683,12 +640,3 @@ Java_java_lang_ProcessImpl_forkAndExec(JNIEnv *env,
     goto Finally;
 }
 
-JNIEXPORT void JNICALL
-Java_java_lang_ProcessImpl_destroyProcess(JNIEnv *env,
-                                          jobject junk,
-                                          jint pid,
-                                          jboolean force)
-{
-    int sig = (force == JNI_TRUE) ? SIGKILL : SIGTERM;
-    kill(pid, sig);
-}
