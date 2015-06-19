@@ -25,7 +25,6 @@
 
 package sun.tools.jconsole;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.awt.*;
@@ -95,9 +94,7 @@ public class Utilities {
             throw new InternalError("Unable to locate: " + name);
         }
         try (in) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            in.transferTo(baos);
-            return new ImageIcon(baos.toByteArray());
+            return new ImageIcon(in.readAllBytes());
         } catch (IOException ioe) {
             throw new InternalError(ioe);
         }

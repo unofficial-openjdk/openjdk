@@ -48,7 +48,6 @@ $(eval $(call SetupLauncher,jstack, \
         "-J-Dsun.jvm.hotspot.debugger.useProcDebugger"$(COMMA) \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "-m"$(COMMA) "jdk.jcmd/sun.tools.jstack.JStack"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
     ,,,,,,,,,Info-privileged.plist))
 
 $(eval $(call SetupLauncher,jstat, \

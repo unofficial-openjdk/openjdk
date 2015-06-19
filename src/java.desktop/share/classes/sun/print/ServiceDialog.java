@@ -47,7 +47,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.print.PrinterJob;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.InputStream;
@@ -569,9 +568,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         }
 
         try (in) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            in.transferTo(baos);
-            return baos.toByteArray();
+            return in.readAllBytes();
         } catch (IOException ioe) {
             throw new Error(ioe);
         }
