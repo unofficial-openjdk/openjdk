@@ -176,6 +176,8 @@ final class Resolver {
      */
     private Resolution resolve(Collection<String> roots) {
 
+        long start = trace_start("Resolve");
+
         // create the visit stack to get us started
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
         for (String root : roots) {
@@ -186,11 +188,15 @@ final class Resolver {
                 //    a finder other than the beforeFinder?
                 mref = find(afterFinder, root);
                 if (mref == null) {
-                    fail("Module %s does not exist", root);
+                    fail("Module %s not found", root);
                 }
             }
 
-            trace("Root module %s located (%s)", root, mref.location().orElse(null));
+            if (TRACE) {
+                trace("Root module %s located", root);
+                if (mref.location().isPresent())
+                    trace("  (%s)", mref.location().get());
+            }
 
             nameToReference.put(root, mref);
             q.push(mref.descriptor());
@@ -205,7 +211,23 @@ final class Resolver {
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
         cachedGraph = graph;
 
-        return new Resolution(selected, nameToReference, graph, Collections.emptyMap());
+        Resolution r = new Resolution(selected,
+                                      nameToReference,
+                                      graph,
+                                      Collections.emptyMap());
+
+        if (TRACE) {
+            long duration = System.currentTimeMillis() - start;
+            Set<String> names
+                = selected.stream()
+                    .map(ModuleDescriptor::name)
+                    .sorted()
+                    .collect(Collectors.toSet());
+            trace("Resolve completed in %s ms", duration);
+            names.stream().sorted().forEach(name -> trace("  %s", name));
+        }
+
+        return r;
     }
 
     /**
@@ -233,6 +255,7 @@ final class Resolver {
 
                 // already defined to the runtime
                 if (mref == null && layer.findModule(dn).isPresent()) {
+                    trace("Module %s in parent Layer", dn);
                     continue;
                 }
 
@@ -243,18 +266,25 @@ final class Resolver {
 
                 // not found
                 if (mref == null) {
-                    fail("%s requires unknown module %s", descriptor.name(), dn);
+                    fail("Module %s not found, required by %s",
+                        dn, descriptor.name());
                 }
 
                 // check if module descriptor has already been seen
                 ModuleDescriptor other = mref.descriptor();
                 if (!selected.contains(other) && !newlySelected.contains(other)) {
 
-                    trace("Module %s located (%s), required by %s",
-                            dn, mref.location().orElse(null), descriptor.name());
+                    if (nameToReference.put(dn, mref) == null) {
+                        if (TRACE) {
+                            trace("Module %s located, required by %s",
+                                dn, descriptor.name());
+                            if (mref.location().isPresent())
+                                trace("  (%s)", mref.location().get());
+                        }
+                    }
 
                     newlySelected.add(other);
-                    nameToReference.put(dn, mref);
+
                     q.offer(other);
                 }
             }
@@ -271,6 +301,8 @@ final class Resolver {
      * that are induced by service-use relationships.
      */
     private Resolution bind() {
+
+        long start = trace_start("Bind");
 
         // Scan the finders for all available service provider modules. As java.base
         // uses services then all finders will need to be scanned anyway.
@@ -314,7 +346,12 @@ final class Resolver {
                                           provider.name(), service, descriptor.name());
 
                                     if (!selected.contains(provider)) {
-                                        nameToReference.put(provider.name(), mref);
+                                        if (nameToReference.put(provider.name(), mref) == null) {
+
+                                            if (TRACE && mref.location().isPresent())
+                                                trace("  (%s)", mref.location().get());
+
+                                        }
                                         q.push(provider);
                                     }
                                 }
@@ -331,7 +368,7 @@ final class Resolver {
 
         // For debugging purposes, print out the service consumers in the
         // selected set that use providers in a parent layer
-        if (tracing) {
+        if (TRACE) {
             Set<ModuleDescriptor> allModules = layer.allModuleDescriptors();
             for (ModuleDescriptor descriptor : selected) {
                 if (!descriptor.uses().isEmpty()) {
@@ -375,7 +412,22 @@ final class Resolver {
             }
         }
 
-        return new Resolution(selected, nameToReference, graph, serviceToProviders);
+        Resolution r = new Resolution(selected,
+                                      nameToReference,
+                                      graph,
+                                      serviceToProviders);
+
+        if (TRACE) {
+            long duration = System.currentTimeMillis() - start;
+            Set<String> names = selected.stream()
+                .map(ModuleDescriptor::name)
+                .sorted()
+                .collect(Collectors.toSet());
+            trace("Bind completed in %s ms", duration);
+            names.stream().sorted().forEach(name -> trace("  %s", name));
+        }
+
+        return r;
     }
 
 
@@ -661,16 +713,33 @@ final class Resolver {
         }
     }
 
-    private static final boolean tracing = false;
 
-    private static void trace(String fmt, Object ... args) {
-        if (tracing) {
+    /**
+     * Tracing support, limited to boot layer for now.
+     */
+
+    private final boolean TRACE
+        = Boolean.getBoolean("jdk.launcher.traceResolver")
+            && (Layer.boot() == null);
+
+    private String op;
+
+    private long trace_start(String op) {
+        this.op = op;
+        return System.currentTimeMillis();
+    }
+
+    private void trace(String fmt, Object ... args) {
+        if (TRACE) {
+            System.out.print("[" + op + "] ");
             System.out.format(fmt, args);
             System.out.println();
         }
     }
 
+
     private static void fail(String fmt, Object ... args) {
         throw new ResolutionException(fmt, args);
     }
+
 }

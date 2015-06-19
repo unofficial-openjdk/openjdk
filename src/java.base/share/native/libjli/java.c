@@ -1193,6 +1193,9 @@ ParseArguments(int *pargc, char ***pargv,
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
+            AddOption("-Djdk.launcher.traceResolver=true", NULL);
+        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0) {
+            AddOption("-Djdk.launcher.traceResolver=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
  * command line options.
