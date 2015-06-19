@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.PropertyPermission;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
@@ -135,6 +136,12 @@ public final class Options {
         return options.toString();
     }
 
+    private static void checkPropertyName(final String name) {
+        if (! Objects.requireNonNull(name).startsWith("nashorn.")) {
+            throw new IllegalArgumentException(name);
+        }
+    }
+
     /**
      * Convenience function for getting system properties in a safe way
 
@@ -143,11 +150,7 @@ public final class Options {
      * @return true if set to true, default value if unset or set to false
      */
     public static boolean getBooleanProperty(final String name, final Boolean defValue) {
-        name.getClass(); // null check
-        if (!name.startsWith("nashorn.")) {
-            throw new IllegalArgumentException(name);
-        }
-
+        checkPropertyName(name);
         return AccessController.doPrivileged(
                 new PrivilegedAction<Boolean>() {
                     @Override
@@ -184,11 +187,7 @@ public final class Options {
      * @return string property if set or default value
      */
     public static String getStringProperty(final String name, final String defValue) {
-        name.getClass(); // null check
-        if (! name.startsWith("nashorn.")) {
-            throw new IllegalArgumentException(name);
-        }
-
+        checkPropertyName(name);
         return AccessController.doPrivileged(
                 new PrivilegedAction<String>() {
                     @Override
@@ -211,11 +210,7 @@ public final class Options {
      * @return integer property if set or default value
      */
     public static int getIntProperty(final String name, final int defValue) {
-        name.getClass(); // null check
-        if (! name.startsWith("nashorn.")) {
-            throw new IllegalArgumentException(name);
-        }
-
+        checkPropertyName(name);
         return AccessController.doPrivileged(
                 new PrivilegedAction<Integer>() {
                     @Override
@@ -423,9 +418,17 @@ public final class Options {
     public void process(final String[] args) {
         final LinkedList<String> argList = new LinkedList<>();
         addSystemProperties(NASHORN_ARGS_PREPEND_PROPERTY, argList);
+        processArgList(argList);
+        assert argList.isEmpty();
         Collections.addAll(argList, args);
+        processArgList(argList);
+        assert argList.isEmpty();
         addSystemProperties(NASHORN_ARGS_PROPERTY, argList);
+        processArgList(argList);
+        assert argList.isEmpty();
+    }
 
+    private void processArgList(final LinkedList<String> argList) {
         while (!argList.isEmpty()) {
             final String arg = argList.remove(0);
 
