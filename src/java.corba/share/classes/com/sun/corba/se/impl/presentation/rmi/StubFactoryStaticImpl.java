@@ -28,6 +28,7 @@ package com.sun.corba.se.impl.presentation.rmi;
 import java.lang.reflect.InvocationHandler ;
 
 import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
+import com.sun.corba.se.impl.util.Modules;
 
 public class StubFactoryStaticImpl extends StubFactoryBase
 {
@@ -43,6 +44,7 @@ public class StubFactoryStaticImpl extends StubFactoryBase
     {
         org.omg.CORBA.Object stub = null;
         try {
+            Modules.ensureReadable(stubClass);
             stub = (org.omg.CORBA.Object) stubClass.newInstance();
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
