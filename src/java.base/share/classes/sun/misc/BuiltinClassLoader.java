@@ -177,8 +177,10 @@ class BuiltinClassLoader
                                             + " already defined in this class loader");
         nameToModule.put(mn, mref);
         LoadedModule loadedModule = new LoadedModule(mref);
-        mref.descriptor().packages()
-            .forEach(p -> packageToModule.put(p, loadedModule));
+
+        for (String pn : mref.descriptor().packages()) {
+            packageToModule.put(pn, loadedModule);
+        }
     }
 
     // -- finding resources

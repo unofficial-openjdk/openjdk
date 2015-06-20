@@ -287,9 +287,17 @@ final class ModuleInfo {
                 int with_index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
                 String cn = cpool.getClassName(with_index).replace('/', '.');
-                pm.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
+                // computeIfAbsent
+                Set<String> providers = pm.get(sn);
+                if (providers == null) {
+                    providers = new HashSet<>();
+                    pm.put(sn, providers);
+                }
+                providers.add(cn);
             }
-            pm.entrySet().forEach(e -> builder.provides(e.getKey(),e.getValue()));
+            for (Map.Entry<String, Set<String>> e : pm.entrySet()) {
+                builder.provides(e.getKey(), e.getValue());
+            }
         }
     }
 

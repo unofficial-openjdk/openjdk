@@ -27,15 +27,14 @@ package jdk.internal.module;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
-import sun.misc.ClassLoaders;
-
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import sun.misc.ClassLoaders;
+
 
 /**
  * The module to class loader map.  The list of boot modules and ext modules
@@ -45,32 +44,48 @@ final class ModuleLoaderMap {
     /*
      * The list of boot modules and ext modules are generated at build time.
      */
-    private static final Set<String> BOOT_MODULES =
-        Arrays.stream(new String[] {
-            "@@BOOT_MODULE_NAMES@@"
-        }).collect(Collectors.toSet());
-    private static final Set<String> EXT_MODULES =
-        Arrays.stream(new String[] {
-            "@@EXT_MODULE_NAMES@@"
-        }).collect(Collectors.toSet());
+    private static final String[] BOOT_MODULES
+        = new String[] { "@@BOOT_MODULE_NAMES@@" };
+    private static final String[] EXT_MODULES
+        = new String[] { "@@EXT_MODULE_NAMES@@" };
 
     /**
      * Returns the ClassLoaderFinder that maps modules in the given
      * Configuration to a ClassLoader.
      */
     static Layer.ClassLoaderFinder classLoaderFinder(Configuration cf) {
+
+        Set<String> bootModules = new HashSet<>(BOOT_MODULES.length);
+        for (String mn : BOOT_MODULES) {
+            bootModules.add(mn);
+        }
+
+        Set<String> extModules = new HashSet<>(EXT_MODULES.length);
+        for (String mn : EXT_MODULES) {
+            extModules.add(mn);
+        }
+
         ClassLoader extClassLoader = ClassLoaders.extClassLoader();
         ClassLoader appClassLoader = ClassLoaders.appClassLoader();
 
         Map<String, ClassLoader> map = new HashMap<>();
-        cf.descriptors()
-            .stream()
-            .map(ModuleDescriptor::name)
-            .filter(name -> !BOOT_MODULES.contains(name))
-            .forEach(name -> {
-                ClassLoader cl = EXT_MODULES.contains(name) ? extClassLoader : appClassLoader;
-                map.put(name, cl);
-            });
-        return map::get;
+
+        for (ModuleDescriptor descriptor : cf.descriptors()) {
+            String mn = descriptor.name();
+            if (!bootModules.contains(mn)) {
+                if (extModules.contains(mn)) {
+                    map.put(mn, extClassLoader);
+                } else {
+                    map.put(mn, appClassLoader);
+                }
+            }
+        }
+
+        return new Layer.ClassLoaderFinder() {
+            @Override
+            public ClassLoader loaderForModule(String mn) {
+                return map.get(mn);
+            }
+        };
     }
 }

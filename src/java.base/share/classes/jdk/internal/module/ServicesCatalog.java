@@ -86,15 +86,17 @@ public class ServicesCatalog {
             // extend the services map
             for (Provides ps : descriptor.provides().values()) {
                 String service = ps.service();
-                Set<String> names = ps.providers();
+                Set<String> providerNames = ps.providers();
 
                 // create a new set to replace the existing
-                Set<ServiceProvider> providers = loaderServices.get(service);
                 Set<ServiceProvider> result = new HashSet<>();
+                Set<ServiceProvider> providers = loaderServices.get(service);
                 if (providers != null) {
                     result.addAll(providers);
                 }
-                names.forEach(pn -> result.add(new ServiceProvider(m, pn)));
+                for (String pn : providerNames) {
+                    result.add(new ServiceProvider(m, pn));
+                }
                 loaderServices.put(service, Collections.unmodifiableSet(result));
             }
 

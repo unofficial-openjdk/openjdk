@@ -31,7 +31,6 @@ import java.lang.module.Layer;
 import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +40,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import sun.misc.BootLoader;
 import sun.misc.Modules;
@@ -82,8 +80,7 @@ public final class ModuleBootstrap {
         ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
 
         // -modulepath option specified to the launcher
-        ModuleFinder appModulePath =
-            createModulePathFinder("java.module.path");
+        ModuleFinder appModulePath = createModulePathFinder("java.module.path");
 
         // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
         ModuleFinder finder = systemModulePath;
@@ -138,10 +135,11 @@ public final class ModuleBootstrap {
         Set<String> input = Collections.emptySet();
         String cp = System.getProperty("java.class.path");
         if (mainModule == null || (cp != null && cp.length() > 0)) {
-            input = finder.findAll()
-                          .stream()
-                          .map(md -> md.descriptor().name())
-                          .collect(Collectors.toSet());
+            Set<ModuleReference> allModules = finder.findAll();
+            input = new HashSet<>(allModules.size());
+            for (ModuleReference mref : allModules) {
+                input.add(mref.descriptor().name());
+            }
         }
 
         // If -m or -addmods is specified then these module names must be resolved
@@ -286,11 +284,11 @@ public final class ModuleBootstrap {
     }
 
     static class PerfCounters {
-        static PerfCounter bootstrapTime =
-            PerfCounter.newPerfCounter("jdk.module.bootstrap.time");
-        static PerfCounter bootLayerTime =
-            PerfCounter.newPerfCounter("jdk.module.bootLayer.createTime");
-        static PerfCounter configTime =
-            PerfCounter.newPerfCounter("jdk.module.configuration.time");
+        static PerfCounter bootstrapTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.totalTime");
+        static PerfCounter configTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.configTime");
+        static PerfCounter bootLayerTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.createLayerTime");
     }
 }

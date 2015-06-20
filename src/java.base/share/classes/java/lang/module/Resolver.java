@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -255,7 +256,7 @@ final class Resolver {
 
                 // already defined to the runtime
                 if (mref == null && layer.findModule(dn).isPresent()) {
-                    trace("Module %s in parent Layer", dn);
+                    trace("Module %s found in parent Layer", dn);
                     continue;
                 }
 
@@ -307,13 +308,20 @@ final class Resolver {
         // Scan the finders for all available service provider modules. As java.base
         // uses services then all finders will need to be scanned anyway.
         Map<String, Set<ModuleReference>> availableProviders = new HashMap<>();
-        findAll().forEach(mref -> {
+        for (ModuleReference mref : findAll()) {
             ModuleDescriptor descriptor = mref.descriptor();
             if (!descriptor.provides().isEmpty()) {
-                descriptor.provides().keySet().forEach(s ->
-                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
+                for (String sn : descriptor.provides().keySet()) {
+                    // computeIfAbsent
+                    Set<ModuleReference> providers = availableProviders.get(sn);
+                    if (providers == null) {
+                        providers = new HashSet<>();
+                        availableProviders.put(sn, providers);
+                    }
+                    providers.add(mref);
+                }
             }
-        });
+        }
 
         int initialSize = selected.size();
 
@@ -407,8 +415,15 @@ final class Resolver {
             Map<String, Provides> provides = descriptor.provides();
             for (Map.Entry<String, Provides> entry : provides.entrySet()) {
                 String sn = entry.getKey();
-                serviceToProviders.computeIfAbsent(sn, k -> new HashSet<>())
-                        .add(descriptor);
+
+                // computeIfAbsent
+                Set<ModuleDescriptor> providers = serviceToProviders.get(sn);
+                if (providers == null) {
+                    providers = new HashSet<>();
+                    serviceToProviders.put(sn, providers);
+                }
+                providers.add(descriptor);
+
             }
         }
 
@@ -444,8 +459,11 @@ final class Resolver {
     private Map<ModuleDescriptor, Set<ModuleDescriptor>> makeGraph() {
 
         // name -> ModuleDescriptor lookup
-        Map<String, ModuleDescriptor> nameToDescriptor = new HashMap<>();
-        selected.forEach(d -> nameToDescriptor.put(d.name(), d));
+        int size = selected.size();
+        Map<String, ModuleDescriptor> nameToDescriptor = new HashMap<>(size);
+        for (ModuleDescriptor d : selected) {
+            nameToDescriptor.put(d.name(), d);
+        }
 
         // the "reads" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
@@ -540,23 +558,31 @@ final class Resolver {
         Map<ModuleDescriptor, Set<ModuleDescriptor>> changes = new HashMap<>();
         do {
             changed = false;
-            for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> entry: g1.entrySet()) {
-                ModuleDescriptor m1 = entry.getKey();
-                Set<ModuleDescriptor> m1Reads = entry.getValue();
+            for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> e : g1.entrySet()) {
+                ModuleDescriptor m1 = e.getKey();
+                Set<ModuleDescriptor> m1Reads = e.getValue();
                 for (ModuleDescriptor m2: m1Reads) {
                     Set<ModuleDescriptor> m2RequiresPublic = g2.get(m2);
                     for (ModuleDescriptor m3 : m2RequiresPublic) {
                         if (!m1Reads.contains(m3)) {
-                            changes.computeIfAbsent(m1, k -> new HashSet<>()).add(m3);
+
+                            // computeIfAbsent
+                            Set<ModuleDescriptor> s = changes.get(m1);
+                            if (s == null) {
+                                s = new HashSet<>();
+                                changes.put(m1, s);
+                            }
+                            s.add(m3);
+
                             changed = true;
                         }
                     }
                 }
             }
             if (changed) {
-                for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> entry: changes.entrySet()) {
-                    ModuleDescriptor m1 = entry.getKey();
-                    g1.get(m1).addAll(entry.getValue());
+                for (Entry<ModuleDescriptor, Set<ModuleDescriptor>> e : changes.entrySet()) {
+                    ModuleDescriptor m1 = e.getKey();
+                    g1.get(m1).addAll(e.getValue());
                 }
                 changes.clear();
             }
@@ -620,7 +646,9 @@ final class Resolver {
     private void detectCycles() {
         visited = new HashSet<>();
         visitPath = new LinkedHashSet<>(); // preserve insertion order
-        selected.forEach(d -> visit(d));
+        for (ModuleDescriptor descriptor : selected) {
+            visit(descriptor);
+        }
     }
 
     // the modules that were visited
@@ -686,9 +714,9 @@ final class Resolver {
     }
 
     /**
-     * Returns a Stream of all modules.
+     * Returns the set of all modules.
      */
-    private Stream<ModuleReference> findAll() {
+    private Set<ModuleReference> findAll() {
         try {
 
             // only one source of modules?
@@ -696,15 +724,15 @@ final class Resolver {
             Set<ModuleReference> postModules = afterFinder.findAll();
             if (layer == Layer.empty()) {
                 if (preModules.isEmpty())
-                    return postModules.stream();
+                    return postModules;
                 if (postModules.isEmpty())
-                   return preModules.stream();
+                   return preModules;
             }
 
             Stream<ModuleReference> s1 = preModules.stream();
             Stream<ModuleReference> s2
                 = postModules.stream().filter(m -> !inParentLayer(m));
-            return Stream.concat(s1, s2);
+            return Stream.concat(s1, s2).collect(Collectors.toSet());
 
         } catch (UncheckedIOException e) {
             throw new ResolutionException(e.getCause());

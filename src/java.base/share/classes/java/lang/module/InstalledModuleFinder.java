@@ -29,11 +29,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
@@ -42,107 +43,95 @@ import jdk.internal.jimage.ImageReaderFactory;
 import sun.misc.PerfCounter;
 
 /**
- * A {@code ModuleFinder} that finds modules that are
- * linked into the modular image.
+ * A {@code ModuleFinder} that finds modules that are linked into the
+ * run-time image.
+ *
+ * The modules linked into the run-time image are assumed to have the
+ * ConcealedPackages attribute.
  */
+
 class InstalledModuleFinder implements ModuleFinder {
 
-    // the module name to reference map of modules already located
-    private final Map<String, ModuleReference> cachedModules = new ConcurrentHashMap<>();
-    private final Image bootImage;
+    private static final String MODULE_INFO = "module-info.class";
 
+    // the set of modules in the run-time image
+    private final Set<ModuleReference> modules;
+
+    // maps module name to module reference
+    private final Map<String, ModuleReference> nameToModule;
+
+    /**
+     * Creates the ModuleFinder. For now, the module references are created
+     * eagerly on the assumption that service binding will require all
+     * modules to be located.
+     */
     InstalledModuleFinder() {
         long t0 = System.nanoTime();
-        bootImage = new Image();
-        initTime.addElapsedTimeFrom(t0);
-    }
 
-    private ModuleReference toModuleReference(String name) {
-        long t0 = System.nanoTime();
+        ImageReader imageReader = ImageReaderFactory.getImageReader();
+
+        ImageModuleData mdata = new ImageModuleData(imageReader);
+        Set<String> moduleNames = mdata.allModuleNames();
+
+        int n = moduleNames.size();
+
+        moduleCount.add(n);
+
+        Set<ModuleReference> modules = new HashSet<>(n);
+        Map<String, ModuleReference> nameToModule = new HashMap<>(n);
+
         try {
-            ModuleDescriptor md = bootImage.readDescriptor(name);
-            URI location = URI.create("jrt:/" + name);
-            ModuleReference mref =
-                ModuleReferences.newModuleReference(md, location, null);
-            mrefCount.increment();
-            mrefInitTime.addElapsedTimeFrom(t0);
-            packageCount.add(md.packages().size());
-            exportsCount.add(md.exports().size());
-            return mref;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            for (String mn : moduleNames) {
+                ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
+                ByteBuffer bb = imageReader.getResourceBuffer(loc);
+                try {
+
+                    // parse the module-info.class file and create the
+                    // module reference.
+                    ModuleDescriptor descriptor
+                        = ModuleInfo.readIgnoringHashes(bb, null);
+                    URI uri = URI.create("jrt:/" + mn);
+                    ModuleReference mref
+                        = ModuleReferences.newModuleReference(descriptor,
+                                                              uri,
+                                                              null);
+                    modules.add(mref);
+                    nameToModule.put(mn, mref);
+
+                    // counters
+                    packageCount.add(descriptor.packages().size());
+                    exportsCount.add(descriptor.exports().size());
+
+                } finally {
+                    ImageReader.releaseByteBuffer(bb);
+                }
+            }
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
+
+        this.modules = Collections.unmodifiableSet(modules);
+        this.nameToModule = nameToModule;
+
+        initTime.addElapsedTimeFrom(t0);
     }
 
     @Override
     public Optional<ModuleReference> find(String name) {
-        if (!bootImage.modules.contains(name))
-            return Optional.empty();
-
-        // try cached modules
-        ModuleReference m = cachedModules.get(name);
-        if (m != null)
-            return Optional.of(m);
-
-        // create ModuleReference from module descriptor
-        m = toModuleReference(name);
-        ModuleReference previous = cachedModules.putIfAbsent(name, m);
-        if (previous == null) {
-            return Optional.of(m);
-        } else {
-            return Optional.of(previous);
-        }
+        return Optional.ofNullable(nameToModule.get(name));
     }
 
     @Override
     public Set<ModuleReference> findAll() {
-        // ensure ModuleReference for all modules are created
-        return (bootImage.modules.stream()
-                .map(this::find).map(Optional::get).collect(Collectors.toSet()));
+        return modules;
     }
 
-    class Image {
-        private static final String MODULE_INFO = "module-info.class";
-
-        final ImageReader imageReader;
-        final ImageModuleData mdata;
-        final Set<String> modules;
-
-        Image() {
-            this.imageReader = ImageReaderFactory.getImageReader();
-            this.mdata = new ImageModuleData(imageReader);
-            this.modules = mdata.allModuleNames();
-        }
-
-        private Set<String> packages(String name) {
-            return mdata.moduleToPackages(name).stream()
-                .map(pn -> pn.replace('/', '.'))
-                .collect(Collectors.toSet());
-        }
-
-        /**
-         * Returns the module descriptor for the given module in the
-         * image.
-         */
-        ModuleDescriptor readDescriptor(String name) throws IOException {
-            ImageLocation loc = imageReader.findLocation(name, MODULE_INFO);
-            ByteBuffer bb = imageReader.getResourceBuffer(loc);
-            try {
-                return ModuleInfo.readIgnoringHashes(bb, () -> packages(name));
-            } finally {
-                ImageReader.releaseByteBuffer(bb);
-            }
-        }
-    }
-
-    private static final PerfCounter initTime =
-        PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
-    private static final PerfCounter mrefInitTime =
-        PerfCounter.newPerfCounter("jdk.module.finder.jimage.mrefsInitTime");
-    private static final PerfCounter mrefCount =
-        PerfCounter.newPerfCounter("jdk.module.finder.jimage.mrefs");
-    private static final PerfCounter packageCount =
-        PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
-    private static final PerfCounter exportsCount =
-        PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
+    private static final PerfCounter initTime
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
+    private static final PerfCounter moduleCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.modules");
+    private static final PerfCounter packageCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
+    private static final PerfCounter exportsCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
 }

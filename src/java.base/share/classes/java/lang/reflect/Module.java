@@ -462,8 +462,11 @@ public final class Module {
                 array[i++] = pn.replace('.', '/');
             }
 
-            String vs = descriptor.version().map(Version::toString).orElse("");
-            String loc = mref.location().map(URI::toString).orElse(null);
+            Version version = descriptor.version().orElse(null);
+            String vs = Objects.toString(version, "");
+
+            URI uri = mref.location().orElse(null);
+            String loc = Objects.toString(uri, null);
 
             defineModule0(m, vs, loc, array);
         }
@@ -534,22 +537,27 @@ public final class Module {
             for (Exports export: descriptor.exports()) {
                 String source = export.source();
                 String sourceInternalForm = source.replace('.', '/');
+
                 if (!export.targets().isPresent()) {
-                    exports.computeIfAbsent(source, k -> Collections.emptyMap());
-                    // update VM view
+
+                    // unqualified export
+                    exports.put(source, Collections.emptyMap());
                     addModuleExports0(m, sourceInternalForm , null);
+
                 } else {
-                    export.targets().get()
-                        .forEach(mn -> {
-                                // only export to modules that are in this configuration
-                                Module m2 = modules.get(mn);
-                                if (m2 != null) {
-                                    exports.computeIfAbsent(source, k -> new HashMap<>())
-                                        .put(m2, Boolean.TRUE);
-                                    // update VM view
-                                    addModuleExports0(m, sourceInternalForm, m2);
-                                }
-                            });
+
+                    // qualified export
+                    Map<Module, Boolean> targets = new HashMap<>();
+                    for (String target : export.targets().get()) {
+                        // only export to modules that are in this configuration
+                        Module m2 = modules.get(target);
+                        if (m2 != null) {
+                            targets.put(m2, Boolean.TRUE);
+                            addModuleExports0(m, sourceInternalForm, m2);
+                        }
+                    }
+                    exports.put(source, targets);
+
                 }
             }
             m.exports = exports;

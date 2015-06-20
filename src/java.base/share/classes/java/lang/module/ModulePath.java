@@ -55,9 +55,8 @@ import sun.misc.PerfCounter;
 
 
 /**
- * A {@code ModuleFinder} that locates module references on the file
- * system by searching a sequence of directories for jmod, modular JAR or
- * exploded modules.
+ * A {@code ModuleFinder} that locates modules on the file system by searching
+ * a sequence of directories for jmod, modular JAR or exploded modules.
  *
  * @apiNote This class is currently not safe for use by multiple threads.
  */
@@ -69,7 +68,7 @@ class ModulePath implements ModuleFinder {
     private final Path[] dirs;
     private int next;
 
-    // the module name to reference map of modules already located
+    // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
     public ModulePath(Path... dirs) {
@@ -130,6 +129,8 @@ class ModulePath implements ModuleFinder {
      * a module (need to decide on a better exception for this case).
      */
     private void scan(Path dir) {
+        long t0 = System.nanoTime();
+
         // the set of module names found in this directory
         Set<String> namesInThisDirectory = new HashSet<>();
 
@@ -154,8 +155,10 @@ class ModulePath implements ModuleFinder {
                     mref = readExploded(entry);
                 }
 
-                // module reference found
+                // module found
                 if (mref != null) {
+                    moduleCount.increment();
+
                     // check that there is only one version of the module
                     // in this directory
                     String name = mref.descriptor().name();
@@ -177,6 +180,8 @@ class ModulePath implements ModuleFinder {
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
+
+        scanTime.addElapsedTimeFrom(t0);
     }
 
 
@@ -193,11 +198,10 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a {@code ModuleReference} to represent a jmod file on the
+     * Returns a {@code ModuleReference} to a module in jmod file on the
      * file system.
      */
     private ModuleReference readJMod(Path file) throws IOException {
-        long t0 = System.nanoTime();
         try (ZipFile zf = new ZipFile(file.toString())) {
             ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
             if (ze == null) {
@@ -210,10 +214,7 @@ class ModulePath implements ModuleFinder {
             // jmod URI - syntax not defined yet
             URI location = URI.create("jmod:" + file.toUri() + "!/");
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            ModuleReference mref = ModuleReferences.newModuleReference(md, location, hasher);
-            mrefCount.increment();
-            mrefInitTime.addElapsedTimeFrom(t0);
-            return mref;
+            return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
 
@@ -361,11 +362,10 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a {@code ModuleReference} to represent a modular JAR  on the
-     * file system.
+     * Returns a {@code ModuleReference} to a module in modular JAR file on
+     * the file system.
      */
     private ModuleReference readJar(Path file) throws IOException {
-        long t0 = System.nanoTime();
         try (JarFile jf = new JarFile(file.toString())) {
 
             ModuleDescriptor md;
@@ -381,10 +381,7 @@ class ModulePath implements ModuleFinder {
             URI location = URI.create("jar:" + file.toUri() + "!/");
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
 
-            ModuleReference mref = ModuleReferences.newModuleReference(md, location, hasher);
-            mrefCount.increment();
-            mrefInitTime.addElapsedTimeFrom(t0);
-            return mref;
+            return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
 
@@ -406,11 +403,10 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a {@code ModuleReference} to represent an exploded module
-     * on the file system.
+     * Returns a {@code ModuleReference} to an exploded module on the file
+     * system.
      */
     private ModuleReference readExploded(Path dir) throws IOException {
-        long t0 = System.nanoTime();
         Path mi = dir.resolve(MODULE_INFO);
         if (Files.notExists(mi)) {
             // no module-info in directory
@@ -422,10 +418,7 @@ class ModulePath implements ModuleFinder {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
         }
-        ModuleReference mref = ModuleReferences.newModuleReference(md, location, null);
-        mrefCount.increment();
-        mrefInitTime.addElapsedTimeFrom(t0);
-        return mref;
+        return ModuleReferences.newModuleReference(md, location, null);
     }
 
 
@@ -467,10 +460,8 @@ class ModulePath implements ModuleFinder {
         }
     }
 
-    private static final PerfCounter initTime =
-        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.initTime");
-    private static final PerfCounter mrefInitTime =
-        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.mrefsInitTime");
-    private static final PerfCounter mrefCount =
-        PerfCounter.newPerfCounter("jdk.module.finder.modulepath.mrefs");
+    private static final PerfCounter scanTime
+        = PerfCounter.newPerfCounter("jdk.module.finder.modulepath.scanTime");
+    private static final PerfCounter moduleCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.modulepath.modules");
 }
