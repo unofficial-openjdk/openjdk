@@ -556,7 +556,9 @@ public final class Module {
                             addModuleExports0(m, sourceInternalForm, m2);
                         }
                     }
-                    exports.put(source, targets);
+                    if (!targets.isEmpty()) {
+                        exports.put(source, targets);
+                    }
 
                 }
             }
