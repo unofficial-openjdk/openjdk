@@ -318,7 +318,9 @@ public class DynamicLinkerFactory {
         addClasses(knownLinkerClasses, fallbackLinkers);
 
         final ClassLoader effectiveClassLoader = classLoaderExplicitlySet ? classLoader : getThreadContextClassLoader();
-        final List<GuardingDynamicLinker> discovered = AutoDiscovery.loadLinkers(effectiveClassLoader);
+        // FIXME: disabled auto-disconvery to avoid module world issue for service loader
+        // final List<GuardingDynamicLinker> discovered = AutoDiscovery.loadLinkers(effectiveClassLoader);
+        final List<GuardingDynamicLinker> discovered = new ArrayList<>();
         // Now, concatenate ...
         final List<GuardingDynamicLinker> linkers =
                 new ArrayList<>(prioritizedLinkers.size() + discovered.size()

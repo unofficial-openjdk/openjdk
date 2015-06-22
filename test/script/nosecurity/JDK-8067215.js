@@ -28,6 +28,7 @@
  * @run
  * @option -Dnashorn.debug=true
  * @fork
+ * @runif context.reflection.issue
  */
 
 var intType    = Java.type("int");
