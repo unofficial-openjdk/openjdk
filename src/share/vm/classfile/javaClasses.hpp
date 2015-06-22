@@ -1219,8 +1219,6 @@ class java_lang_invoke_CallSite: AllStatic {
 private:
   static int _target_offset;
   static int _context_offset;
-  static int _default_context_offset;
-
 
   static void compute_offsets();
 
@@ -1230,11 +1228,7 @@ public:
   static void         set_target(          oop site, oop target);
   static void         set_target_volatile( oop site, oop target);
 
-  static oop              context_volatile(oop site);
-  static void         set_context_volatile(oop site, oop context);
-  static bool         set_context_cas     (oop site, oop context, oop expected);
-
-  static oop default_context();
+  static oop              context(oop site);
 
   // Testers
   static bool is_subclass(Klass* klass) {
@@ -1244,6 +1238,31 @@ public:
 
   // Accessors for code generation:
   static int target_offset_in_bytes()           { return _target_offset; }
+};
+
+// Interface to java.lang.invoke.MethodHandleNatives$CallSiteContext objects
+
+#define CALLSITECONTEXT_INJECTED_FIELDS(macro) \
+  macro(java_lang_invoke_MethodHandleNatives_CallSiteContext, vmdependencies, intptr_signature, false)
+
+class java_lang_invoke_MethodHandleNatives_CallSiteContext : AllStatic {
+  friend class JavaClasses;
+
+private:
+  static int _vmdependencies_offset;
+
+  static void compute_offsets();
+
+public:
+  // Accessors
+  static nmethodBucket* vmdependencies(oop context);
+  static void       set_vmdependencies(oop context, nmethodBucket* bucket);
+
+  // Testers
+  static bool is_subclass(Klass* klass) {
+    return klass->is_subclass_of(SystemDictionary::Context_klass());
+  }
+  static bool is_instance(oop obj);
 };
 
 // Interface to java.security.AccessControlContext objects
@@ -1459,6 +1478,7 @@ class InjectedField {
   CLASS_INJECTED_FIELDS(macro)              \
   CLASSLOADER_INJECTED_FIELDS(macro)        \
   MEMBERNAME_INJECTED_FIELDS(macro)         \
+  CALLSITECONTEXT_INJECTED_FIELDS(macro)    \
   MODULE_INJECTED_FIELDS(macro)
 
 // Interface to hard-coded offset checking
