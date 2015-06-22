@@ -288,6 +288,7 @@ public class CheckResourceKeys {
             "rt.jar",
             "jfxrt.jar",
             "bootmodules.jimage",
+            "module-info.class",
             // -XD option names
             "process.packages",
             "ignore.symbol.file",
@@ -298,7 +299,8 @@ public class CheckResourceKeys {
             "count.",
             "illegal.",
             "javac.",
-            "verbose."
+            "verbose.",
+            "locn."
     ));
 
     /**
