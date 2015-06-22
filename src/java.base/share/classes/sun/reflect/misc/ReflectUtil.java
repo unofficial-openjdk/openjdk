@@ -45,11 +45,6 @@ public final class ReflectUtil {
         return Class.forName(name);
     }
 
-    public static Object newInstance(Class<?> cls)
-        throws InstantiationException, IllegalAccessException {
-        throw new InternalError("should call ReflectUtil.checkPackageAccess and Class.newInstance separately");
-    }
-
     /*
      * Reflection.ensureMemberAccess is overly-restrictive
      * due to a bug. We awkwardly work around it for now.
