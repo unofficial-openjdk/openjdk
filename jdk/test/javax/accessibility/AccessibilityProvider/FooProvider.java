@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,26 @@
  * questions.
  */
 
-/* @test
-   @bug 7173464
-   @summary Clipboard.getAvailableDataFlavors: Comparison method violates contract
-   @author Petr Pchelko
-   @run main DataFlavorComparatorTest
-*/
+import javax.accessibility.AccessibilityProvider;
+import java.io.UncheckedIOException;
+import java.io.IOException;
+import java.io.PrintWriter;
 
-import java.util.Comparator;
-import sun.datatransfer.DataFlavorUtil;
-import java.awt.datatransfer.DataFlavor;
+public final class FooProvider extends AccessibilityProvider {
 
-public class DataFlavorComparatorTest {
+    private final String name = "FooProvider";
 
-    public static void main(String[] args) {
-        Comparator<DataFlavor> comparator = DataFlavorUtil.getDataFlavorComparator();
-        DataFlavor flavor1 = DataFlavor.imageFlavor;
-        DataFlavor flavor2 = DataFlavor.selectionHtmlFlavor;
-        if (comparator.compare(flavor1, flavor2) == 0) {
-            throw new RuntimeException(flavor1.getMimeType() + " and " + flavor2.getMimeType() +
-                " should not be equal");
+    public String getName() {
+        return name;
+    }
+
+    public void activate() {
+        // Write to log to indicate activate was called.
+        try (PrintWriter writer = new PrintWriter("FooProvider.txt")) {
+            writer.println("FooProvider-activated");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
-}
 
+}
