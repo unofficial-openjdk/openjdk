@@ -168,14 +168,19 @@ public final class ModuleBootstrap {
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
-        for (ModuleReference mref : cf.references()) {
-            String name = mref.descriptor().name();
-            ClassLoader cl = clf.loaderForModule(name);
-            if (cl == null) {
-                if (upgradeModulePath != null && upgradeModulePath.find(name).isPresent())
-                    fail(name + ": cannot be loaded from upgrade module path");
-                if (!systemModulePath.find(name).isPresent())
-                    fail(name + ": cannot be loaded from application module path");
+        if (finder != systemModulePath) {
+            for (ModuleReference mref : cf.references()) {
+                String name = mref.descriptor().name();
+                ClassLoader cl = clf.loaderForModule(name);
+                if (cl == null) {
+
+                    if (upgradeModulePath != null
+                            && upgradeModulePath.find(name).isPresent())
+                        fail(name + ": cannot be loaded from upgrade module path");
+
+                    if (!systemModulePath.find(name).isPresent())
+                        fail(name + ": cannot be loaded from application module path");
+                }
             }
         }
 
