@@ -185,6 +185,14 @@ public class LocaleData {
         });
     }
 
+    public static ResourceBundle.Control getLocaleDataResourceBundleControl() {
+        return LocaleDataResourceBundleControl.INSTANCE;
+    }
+
+    public static ResourceBundle.Control getSupplementaryResourceBundleControl() {
+        return SupplementaryResourceBundleControl.INSTANCE;
+    }
+
     private static class LocaleDataResourceBundleControl extends ResourceBundle.Control {
         /* Singlton instance of ResourceBundle.Control. */
         private static final LocaleDataResourceBundleControl INSTANCE =

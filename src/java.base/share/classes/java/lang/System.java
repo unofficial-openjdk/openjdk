@@ -24,24 +24,39 @@
  */
 package java.lang;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.Console;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
-import java.util.StringTokenizer;
 import java.util.Map;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.AllPermission;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.stream.Stream;
+
 import sun.nio.ch.Interruptible;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
+
+import jdk.internal.module.ModuleBootstrap;
+import jdk.internal.module.ServicesCatalog;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -57,7 +72,6 @@ import sun.reflect.annotation.AnnotationType;
  * @since   1.0
  */
 public final class System {
-
     /* register the natives via the static initializer.
      *
      * VM will invoke the initializeSystemClass method to complete
@@ -1137,11 +1151,10 @@ public final class System {
         return new PrintStream(new BufferedOutputStream(fos, 128), true);
     }
 
-
     /**
      * Initialize the system class.  Called after thread initialization.
      */
-    private static void initializeSystemClass() {
+    private static void initPhase1() {
 
         // VM might invoke JNU_NewStringPlatform() to set those encoding
         // sensitive properties (user.home, user.name, boot.class.path, etc.)
@@ -1169,7 +1182,6 @@ public final class System {
         // can only be accessed by the internal implementation.  Remove
         // certain system properties that are not intended for public access.
         sun.misc.VM.saveAndRemoveProperties(props);
-
 
         lineSeparator = props.getProperty("line.separator");
         sun.misc.Version.init();
@@ -1204,9 +1216,80 @@ public final class System {
 
         // Subsystems that are invoked during initialization can invoke
         // sun.misc.VM.isBooted() in order to avoid doing things that should
-        // wait until the application class loader has been set up.
+        // wait until the VM is fully initialized. The initialization level
+        // is incremented from 0 to 1 here to indicate the first phase of
+        // initialization has completed.
         // IMPORTANT: Ensure that this remains the last initialization action!
-        sun.misc.VM.booted();
+        sun.misc.VM.initLevel(1);
+    }
+
+    /*
+     * Invoked by VM.  Phase 2 module system initialization.
+     * Only classes in java.base can be loaded in this phase.
+     */
+    private static void initPhase2() {
+        // initialize the module system
+        ModuleBootstrap.boot();
+
+        // base module needs to be loose
+        Module base = Object.class.getModule();
+        if (base == null)
+            throw new InternalError();
+        sun.misc.Modules.addReads(base, null);
+
+        // module system initialized
+        sun.misc.VM.initLevel(2);
+    }
+
+    /*
+     * Invoked by VM.  Phase 3 is the final system initialization:
+     * 1. set security manager
+     * 2. set system class loader
+     * 3. set TCCL
+     *
+     * This method must be called after the module system initialization.
+     * The security manager and system class loader may be custom class from
+     * the application classpath or modulepath.
+     */
+    private static void initPhase3() {
+        // set security manager
+        String cn = System.getProperty("java.security.manager");
+        if (cn != null) {
+            if (cn.isEmpty() || "default".equals(cn)) {
+                System.setSecurityManager(new SecurityManager());
+            } else {
+                try {
+                    Class<?> c = Class.forName(cn, false, ClassLoader.getBuiltinAppClassLoader());
+                    Constructor<?> ctor = c.getConstructor();
+                    // Must be a public subclass of SecurityManager with
+                    // a public no-arg constructor
+                    if (!SecurityManager.class.isAssignableFrom(c) ||
+                            !Modifier.isPublic(c.getModifiers()) ||
+                            !Modifier.isPublic(ctor.getModifiers())) {
+                        throw new Error("Could not create SecurityManager: " + ctor.toString());
+                    }
+                    // custom security manager implementation may be in unnamed module
+                    // or a named module but non-exported package
+                    ctor.setAccessible(true);
+                    SecurityManager sm = (SecurityManager) ctor.newInstance();
+                    System.setSecurityManager(sm);
+                } catch (Exception e) {
+                    throw new Error("Could not create SecurityManager", e);
+                }
+            }
+        }
+
+        // initializing the system class loader
+        sun.misc.VM.initLevel(3);
+
+        // system class loader initialized
+        ClassLoader scl = ClassLoader.initSystemClassLoader();
+
+        // set TCCL
+        Thread.currentThread().setContextClassLoader(scl);
+
+        // system is fully initialized
+        sun.misc.VM.initLevel(4);
     }
 
     private static void setJavaLangAccess() {
@@ -1257,6 +1340,23 @@ public final class System {
             }
             public void invokeFinalize(Object o) throws Throwable {
                 o.finalize();
+            }
+            public ServicesCatalog getServicesCatalog(ClassLoader cl) {
+                return cl.getServicesCatalog();
+            }
+            public ServicesCatalog createOrGetServicesCatalog(ClassLoader cl) {
+                return cl.createOrGetServicesCatalog();
+            }
+            public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
+                return cl.findBootstrapClassOrNull(name);
+            }
+            public InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
+                throws IOException
+            {
+                return cl.getResourceAsStream(moduleName, name);
+            }
+            public Stream<Package> packages(ClassLoader cl) {
+                return cl.packages();
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

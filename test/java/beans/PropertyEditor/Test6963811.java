@@ -26,6 +26,7 @@
  * @bug 6963811
  * @summary Tests deadlock in PropertyEditorManager
  * @author Sergey Malenkov
+ * @modules java.desktop/com.sun.beans.editors
  * @compile -XDignore.symbol.file Test6963811.java
  * @run main Test6963811
  */

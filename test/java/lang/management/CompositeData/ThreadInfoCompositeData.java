@@ -39,6 +39,7 @@ import javax.management.openmbean.*;
 import java.lang.management.LockInfo;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
+import java.util.Objects;
 
 public class ThreadInfoCompositeData {
     private static StackTraceElement[] ste = new StackTraceElement[1];
@@ -172,6 +173,10 @@ public class ThreadInfoCompositeData {
         if (!s1.getClassName().equals(s2.getClassName())) {
             throw new RuntimeException("Class name = " +
                 s2.getClassName() + " expected = " + s1.getClassName());
+        }
+        if (!Objects.equals(s1.getModuleId(), s2.getModuleId())) {
+            throw new RuntimeException("ModuleId = " +
+                s2.getModuleId() + " expected = " + s1.getModuleId());
         }
         if (!s1.getMethodName().equals(s2.getMethodName())) {
             throw new RuntimeException("Method name = " +
@@ -329,6 +334,7 @@ public class ThreadInfoCompositeData {
 
     private static final String[] steItemNames = {
         "className",
+        "moduleId",
         "methodName",
         "fileName",
         "lineNumber",
@@ -352,6 +358,7 @@ public class ThreadInfoCompositeData {
 
             final Object[] steValue = {
                 ste[0].getClassName(),
+                ste[0].getModuleId(),
                 ste[0].getMethodName(),
                 ste[0].getFileName(),
                 new Integer(ste[0].getLineNumber()),

@@ -65,6 +65,7 @@ public class CheckSecurityProvider {
         expected.add("com.sun.crypto.provider.SunJCE");
         expected.add("sun.security.jgss.SunProvider");
         expected.add("com.sun.security.sasl.Provider");
+        expected.add("com.sun.security.sasl.gsskerb.JdkSASL");
         expected.add("org.jcp.xml.dsig.internal.dom.XMLDSigRI");
         expected.add("sun.security.smartcardio.SunPCSC");
         expected.add("sun.security.provider.certpath.ldap.JdkLDAP");

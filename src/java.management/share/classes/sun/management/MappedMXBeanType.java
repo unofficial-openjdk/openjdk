@@ -40,6 +40,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import javax.management.openmbean.*;
 import static javax.management.openmbean.SimpleType.*;
+import com.sun.jmx.util.Modules;
 
 /**
  * A mapped mxbean type maps a Java type to an open type.
@@ -702,6 +703,8 @@ public abstract class MappedMXBeanType {
                         nameArray, // field descriptions
                         types.toArray(new OpenType<?>[0]));
             }
+
+            Modules.ensureReadable(c.getModule());
         }
 
         Type getJavaType() {

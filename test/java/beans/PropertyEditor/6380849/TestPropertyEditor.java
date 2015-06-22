@@ -26,6 +26,7 @@
  * @bug 6380849
  * @summary Tests PropertyEditor finder
  * @author Sergey Malenkov
+ * @modules java.desktop/com.sun.beans.editors
  * @compile -XDignore.symbol.file TestPropertyEditor.java
  * @run main TestPropertyEditor
  */

@@ -337,7 +337,7 @@ public class Cursor implements java.io.Serializable {
 
                 cursor = AccessController.doPrivileged(
                         (PrivilegedExceptionAction<Cursor>) () -> {
-                            URL url = Cursor.class.getResource(file);
+                            URL url = new URL("jrt:/java.desktop" + file);
                             Image image = toolkit.getImage(url);
                             return toolkit.createCustomCursor(image, hotPoint,
                                                               localized);

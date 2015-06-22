@@ -25,6 +25,7 @@
 
 package javax.sql.rowset;
 
+import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.sql.SQLException;
@@ -132,9 +133,17 @@ public class RowSetProvider {
             factoryClassName = getSystemProperty(ROWSET_FACTORY_NAME);
             if (factoryClassName != null) {
                 trace("Found system property, value=" + factoryClassName);
-                factory = (RowSetFactory) ReflectUtil.newInstance(getFactoryClass(factoryClassName, null, true));
+                Class<?> c = getFactoryClass(factoryClassName, null, true);
+                Module module = RowSetProvider.class.getModule();
+                if (c.getModule() != module) {
+                    ReflectUtil.checkPackageAccess(c);
+                }
+                PrivilegedAction<Void> pa = () -> { module.addReads(c.getModule());
+                                                    return null; };
+                AccessController.doPrivileged(pa);
+                factory = (RowSetFactory) c.newInstance();
             }
-        }  catch (Exception e) {
+        } catch (Exception e) {
             throw new SQLException( "RowSetFactory: " + factoryClassName +
                     " could not be instantiated: ", e);
         }
@@ -193,6 +202,10 @@ public class RowSetProvider {
 
         try {
             Class<?> providerClass = getFactoryClass(factoryClassName, cl, false);
+            Module module = RowSetProvider.class.getModule();
+            PrivilegedAction<Void> pa = () -> { module.addReads(providerClass.getModule());
+                                                return null; };
+            AccessController.doPrivileged(pa);
             RowSetFactory instance = (RowSetFactory) providerClass.newInstance();
             if (debug) {
                 trace("Created new instance of " + providerClass +

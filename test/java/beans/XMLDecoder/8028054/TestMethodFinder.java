@@ -33,6 +33,7 @@ import java.util.List;
  * @bug 8028054
  * @summary Tests that cached methods have synchronized access
  * @author Sergey Malenkov
+ * @modules java.desktop/com.sun.beans.finder
  * @compile -XDignore.symbol.file TestMethodFinder.java
  * @run main TestMethodFinder
  */
