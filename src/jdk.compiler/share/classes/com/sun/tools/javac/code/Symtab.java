@@ -331,7 +331,9 @@ public class Symtab {
     // Enter a synthetic class that is used to mark classes in ct.sym.
     // This class does not have a class file.
     private Type enterSyntheticAnnotation(String name) {
-        ClassType type = (ClassType)enterClass(name);
+        // for now, leave the module null, to prevent problems from synthesizing the
+        // existence of a class in any specific module, including noModule
+        ClassType type = (ClassType)enterClass(null, names.fromString(name)).type;
         ClassSymbol sym = (ClassSymbol)type.tsym;
         sym.completer = Completer.NULL_COMPLETER;
         sym.flags_field = PUBLIC|ACYCLIC|ANNOTATION|INTERFACE;
