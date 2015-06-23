@@ -25,7 +25,6 @@
  * JDK-8044851: nashorn properties leak memory
  *
  * @test
- * @runif findproperty.access.issue
  * @option -Dnashorn.debug=true
  * @fork
  */
