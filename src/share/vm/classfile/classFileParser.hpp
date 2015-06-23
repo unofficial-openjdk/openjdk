@@ -204,8 +204,10 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
 
   ClassFileStream* _stream;              // Actual input stream
 
-  enum { LegalClass, LegalField, LegalMethod }; // used to verify unqualified names
+  public:
+  enum { LegalClass, LegalField, LegalMethod, LegalModule }; // used to verify unqualified names
 
+  private:
   // Accessors
   ClassFileStream* stream()                        { return _stream; }
   void set_stream(ClassFileStream* st)             { _stream = st; }
@@ -379,7 +381,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   void verify_legal_class_modifiers(jint flags, TRAPS);
   void verify_legal_field_modifiers(jint flags, bool is_interface, TRAPS);
   void verify_legal_method_modifiers(jint flags, bool is_interface, Symbol* name, TRAPS);
-  bool verify_unqualified_name(char* name, unsigned int length, int type);
+
   char* skip_over_field_name(char* name, bool slash_ok, unsigned int length);
   char* skip_over_field_signature(char* signature, bool void_ok, unsigned int length, TRAPS);
 
@@ -483,6 +485,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   static void check_super_interface_access(instanceKlassHandle this_klass, TRAPS);
   static void check_final_method_override(instanceKlassHandle this_klass, TRAPS);
   static void check_illegal_static_method(instanceKlassHandle this_klass, TRAPS);
+  static bool verify_unqualified_name(char* name, unsigned int length, int type);
 };
 
 #endif // SHARE_VM_CLASSFILE_CLASSFILEPARSER_HPP

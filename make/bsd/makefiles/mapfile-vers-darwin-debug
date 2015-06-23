@@ -139,6 +139,16 @@
                 _JVM_Halt
                 _JVM_HoldsLock
                 _JVM_IHashCode
+                _JVM_ImageAttributeOffsets
+                _JVM_ImageClose
+                _JVM_ImageFindAttributes
+                _JVM_ImageGetAttributes
+                _JVM_ImageGetDataAddress
+                _JVM_ImageGetIndexAddress
+                _JVM_ImageGetStringBytes
+                _JVM_ImageOpen
+                _JVM_ImageRead
+                _JVM_ImageReadCompressed
                 _JVM_InitAgentProperties
                 _JVM_InitProperties
                 _JVM_InternString
@@ -188,7 +198,14 @@
                 _JVM_Yield
                 _JVM_handle_bsd_signal
 
-                # miscellaneous functions
+                # Modules
+                _JVM_DefineModule
+                _JVM_AddReadsModule
+                _JVM_AddModuleExports
+                _JVM_CanReadModule
+                _JVM_IsExportedToModule
+                _JVM_AddModulePackage
+
                 _jio_fprintf
                 _jio_printf
                 _jio_snprintf

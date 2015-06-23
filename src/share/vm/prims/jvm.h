@@ -390,6 +390,29 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
                               jboolean verify);
 
 /*
+ * Module support funcions
+ */
+
+JNIEXPORT void JNICALL
+JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
+                 jobjectArray packages);
+
+JNIEXPORT void JNICALL
+JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+
+JNIEXPORT void JNICALL
+JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module);
+
+JNIEXPORT jboolean JNICALL
+JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module);
+
+JNIEXPORT jboolean JNICALL
+JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+
+JNIEXPORT void JNICALL
+JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
+
+/*
  * Reflection support functions
  */
 
@@ -570,6 +593,43 @@ JVM_AssertionStatusDirectives(JNIEnv *env, jclass unused);
  */
 JNIEXPORT jboolean JNICALL
 JVM_SupportsCX8(void);
+
+/*
+ * jdk.internal.jimage
+ */
+
+JNIEXPORT jlong JNICALL
+JVM_ImageOpen(JNIEnv *env, jstring path, jboolean big_endian);
+
+JNIEXPORT void JNICALL
+JVM_ImageClose(JNIEnv *env, jlong id);
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetIndexAddress(JNIEnv *env, jlong id);
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetDataAddress(JNIEnv *env,jlong id);
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
+          jobject uncompressedBuffer, jlong uncompressed_size);
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageReadCompressed(JNIEnv *env, jlong id, jlong offset,
+                    jobject compressedBuffer, jlong compressed_size,
+                    jobject uncompressedBuffer, jlong uncompressed_size);
+
+JNIEXPORT jbyteArray JNICALL
+JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset);
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageGetAttributes(JNIEnv *env, jlong id, jint offset);
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageFindAttributes(JNIEnv *env, jlong id, jbyteArray utf8);
+
+JNIEXPORT jintArray JNICALL
+JVM_ImageAttributeOffsets(JNIEnv *env, jlong id);
 
 /*************************************************************************
  PART 2: Support for the Verifier and Class File Format Checker
@@ -881,6 +941,7 @@ JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2);
 #define JVM_ACC_SYNTHETIC     0x1000  /* compiler-generated class, method or field */
 #define JVM_ACC_ANNOTATION    0x2000  /* annotation type */
 #define JVM_ACC_ENUM          0x4000  /* field is declared as element of enum */
+#define JVM_ACC_MODULE        0x8000  /* module-info class file */
 
 #define JVM_ACC_PUBLIC_BIT        0
 #define JVM_ACC_PRIVATE_BIT       1

@@ -86,6 +86,8 @@ const char*  Arguments::_java_vendor_url_bug    = DEFAULT_VENDOR_URL_BUG;
 const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
 bool   Arguments::_sun_java_launcher_is_altjvm  = false;
+const char*  Arguments::_override_dir           = NULL;
+int    Arguments::_bootclassloader_append_index = -1;
 
 // These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
@@ -110,6 +112,7 @@ SystemProperty *Arguments::_java_library_path = NULL;
 SystemProperty *Arguments::_java_home = NULL;
 SystemProperty *Arguments::_java_class_path = NULL;
 SystemProperty *Arguments::_sun_boot_class_path = NULL;
+SystemProperty *Arguments::_jdk_boot_class_path_append = NULL;
 
 char* Arguments::_ext_dirs = NULL;
 
@@ -202,6 +205,10 @@ void Arguments::init_system_properties() {
   _java_home =  new SystemProperty("java.home", NULL,  true);
   _sun_boot_class_path = new SystemProperty("sun.boot.class.path", NULL,  true);
 
+  // jdk.boot.class.path.append will only get set if -XX+bootclass/a: is specified.
+  // So, make sure it is initialized with a non-null value.
+  _jdk_boot_class_path_append = new SystemProperty("jdk.boot.class.path.append", "", true);
+
   _java_class_path = new SystemProperty("java.class.path", "",  true);
 
   // Add to System Property list.
@@ -209,7 +216,10 @@ void Arguments::init_system_properties() {
   PropertyList_add(&_system_properties, _java_library_path);
   PropertyList_add(&_system_properties, _java_home);
   PropertyList_add(&_system_properties, _java_class_path);
+  // Delete the next line to set property sun.boot.class.path to NULL.
   PropertyList_add(&_system_properties, _sun_boot_class_path);
+
+  PropertyList_add(&_system_properties, _jdk_boot_class_path_append);
 
   // Set OS specific system properties values
   os::init_system_properties_values();
@@ -338,7 +348,7 @@ private:
   // Array indices for the items that make up the sysclasspath.  All except the
   // base are allocated in the C heap and freed by this class.
   enum {
-    _scp_prefix,        // from -Xbootclasspath/p:...
+    _scp_prefix,        // was -Xbootclasspath/p:...
     _scp_base,          // the default sysclasspath
     _scp_suffix,        // from -Xbootclasspath/a:...
     _scp_nitems         // the number of items, must be last.
@@ -406,6 +416,10 @@ char* SysClassPath::combined_path() {
   // Get the lengths.
   int i;
   for (i = 0; i < _scp_nitems; ++i) {
+    if (i == _scp_suffix) {
+      // Record index of boot loader's append path.
+      Arguments::set_bootclassloader_append_index((int)total_len);
+    }
     if (_items[i] != NULL) {
       lengths[i] = strlen(_items[i]);
       // Include space for the separator char (or a NULL for the last item).
@@ -2670,16 +2684,18 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       JavaAssertions::setSystemClassDefault(enable);
     // -bootclasspath:
     } else if (match_option(option, "-Xbootclasspath:", &tail)) {
-      scp_p->reset_path(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -bootclasspath/a:
     } else if (match_option(option, "-Xbootclasspath/a:", &tail)) {
       scp_p->add_suffix(tail);
       *scp_assembly_required_p = true;
     // -bootclasspath/p:
     } else if (match_option(option, "-Xbootclasspath/p:", &tail)) {
-      scp_p->add_prefix(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath/p is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -Xrun
     } else if (match_option(option, "-Xrun", &tail)) {
       if (tail != NULL) {
@@ -2970,6 +2986,16 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
           "-Dcom.sun.management is not supported in this VM.\n");
         return JNI_ERR;
 #endif
+      }
+      if (match_option(option, "-Djdk.launcher.override=", &tail)) {
+        // -Xoverride
+        size_t len = strlen(tail);
+        char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
+        sprintf(dir, "%s%sjava.base", tail, os::file_separator());
+        scp_p->add_prefix(dir);
+        *scp_assembly_required_p = true;
+        dir[len] = '\0';
+        set_override_dir(dir);
       }
     // -Xint
     } else if (match_option(option, "-Xint")) {
@@ -3292,6 +3318,18 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
   return JNI_OK;
 }
 
+// Set property jdk.boot.class.path.append to the contents of the bootclasspath
+// that follows either the jimage file or exploded module directories.  The
+// property will contain -Xbootclasspath/a and/or jvmti appended additions.
+void Arguments::set_jdkbootclasspath_append() {
+  char *sysclasspath = get_sysclasspath();
+  assert(sysclasspath != NULL, "NULL sysclasspath");
+  int bcp_a_idx = bootclassloader_append_index();
+  if (bcp_a_idx != -1 && bcp_a_idx < (int)strlen(sysclasspath)) {
+    _jdk_boot_class_path_append->set_value(sysclasspath + bcp_a_idx);
+  }
+}
+
 // Remove all empty paths from the app classpath (if IgnoreEmptyClassPaths is enabled)
 //
 // This is necessary because some apps like to specify classpath like -cp foo.jar:${XYZ}:bar.jar
@@ -3421,6 +3459,11 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
   if (scp_assembly_required) {
     // Assemble the bootclasspath elements into the final path.
     Arguments::set_sysclasspath(scp_p->combined_path());
+  } else {
+    // At this point in sysclasspath processing anything
+    // added would be considered in the boot loader's append path.
+    // Record this index, including +1 for the file separator character.
+    Arguments::set_bootclassloader_append_index(((int)strlen(Arguments::get_sysclasspath()))+1);
   }
 
   // This must be done after all arguments have been processed.
@@ -3602,6 +3645,11 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
+    if (Arguments::override_dir() != NULL) {
+      vm_exit_during_initialization(
+        "Cannot use -Xoverride when dumping the shared archive.", NULL);
+    }
+
     if (RequireSharedSpaces) {
       warning("cannot dump shared archive while using shared archive");
     }
