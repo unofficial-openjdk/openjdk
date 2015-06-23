@@ -19,22 +19,13 @@ java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  gener
 
 ############################################################################
 
-# jdk_jdi
-
-# 8076544
-com/sun/jdi/RedefineCrossEvent.java				generic-all
-
-############################################################################
-
 # jdk_security
 
-# 8079767
-sun/net/www/protocol/https/ChunkedOutputStream.java            generic-all
-com/sun/crypto/provider/Cipher/AES/TestAESCiphers/TestAESWithProviderChange.java      generic-all
-com/sun/crypto/provider/Cipher/AES/TestAESCiphers/TestAESWithRemoveAddProvider.java   generic-all
-java/security/KeyRep/Serial.java                               generic-all
+# 8075890
 javax/xml/crypto/dsig/GenerationTests.java                     generic-all
 javax/xml/crypto/dsig/ValidationTests.java                     generic-all
+
+# 8079767
 sun/security/krb5/auto/BasicProc.java                          generic-all
 sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 sun/security/krb5/auto/ReplayCacheTestProc.java                generic-all
@@ -45,7 +36,6 @@ sun/security/krb5/auto/UnboundSSLPrincipalProperty.java        generic-all
 sun/security/krb5/auto/SSLwithPerms.java		       generic-all
 sun/security/pkcs11/Provider/Login.sh                          generic-all
 sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
-
 sun/security/ssl/SSLSocketImpl/NotifyHandshakeTest.sh          generic-all
 sun/security/tools/keytool/autotest.sh                         generic-all
 
@@ -81,8 +71,11 @@ java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
  
 # svc_tools
 
-# 8077708
-sun/tools/jconsole/ResourceCheckTest.java			generic-all
+# 8129594
+sun/tools/jstatd/TestJstatdDefaults.java			generic-all
+sun/tools/jstatd/TestJstatdPort.java				generic-all
+sun/tools/jstatd/TestJstatdPortAndServer.java			generic-all
+sun/tools/jstatd/TestJstatdServer.java				generic-all
 
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
@@ -189,13 +182,7 @@ javax/xml/jaxp/Encodings/CheckEncodingPropertiesFile.java                       
 # waiting for javac/jtreg support
 javax/xml/jaxp/common/8035437/run.sh                                            generic-all
 
-# 8047822
-javax/script/GetInterfaceTest.java                              generic-all
-javax/script/Test4.java                                         generic-all
-javax/script/Test7.java                                         generic-all
-
 # 8085789
 javax/rmi/PortableRemoteObject/ConcurrentHashMapTest.java       generic-all
 
 ############################################################################
-
