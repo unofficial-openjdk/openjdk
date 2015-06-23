@@ -30,6 +30,8 @@ module java.xml.bind {
     requires java.desktop;
     requires java.logging;
 
+    uses javax.xml.bind.JAXBContextFactory;
+
     exports javax.xml.bind;
     exports javax.xml.bind.annotation;
     exports javax.xml.bind.annotation.adapters;
