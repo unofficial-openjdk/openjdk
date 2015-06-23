@@ -58,7 +58,8 @@ import jdk.nashorn.internal.runtime.Undefined;
  */
 public final class JavaAdapterServices {
     private static final ThreadLocal<ScriptObject> classOverrides = new ThreadLocal<>();
-    private static final MethodHandle NO_PERMISSIONS_INVOKER = createNoPermissionsInvoker();
+    // FIXME: can't get method handle of public method of a class of unnamed module
+    private static final MethodHandle NO_PERMISSIONS_INVOKER = null; // createNoPermissionsInvoker();
 
     private JavaAdapterServices() {
     }
@@ -131,7 +132,7 @@ public final class JavaAdapterServices {
      * @throws Throwable if anything goes wrong.
      */
     public static void invokeNoPermissions(final MethodHandle method, final Object arg) throws Throwable {
-        NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
+        // NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
     }
 
     /**
