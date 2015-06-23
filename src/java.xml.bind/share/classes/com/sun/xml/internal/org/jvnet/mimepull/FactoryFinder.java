@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
 
 class FactoryFinder {
 
@@ -54,6 +55,7 @@ class FactoryFinder {
     static Object newInstance(String className) throws ClassNotFoundException,
             InstantiationException, IllegalAccessException {
         Class providerClass = cl.loadClass(className);
+        ModuleAccessHelper.ensureAccess(FactoryFinder.class, providerClass);
         Object instance = providerClass.newInstance();
         return instance;
     }

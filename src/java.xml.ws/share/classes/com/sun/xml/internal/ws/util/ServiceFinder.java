@@ -27,6 +27,7 @@ package com.sun.xml.internal.ws.util;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
+import com.sun.xml.internal.ws.ModuleAccessHelper;
 import com.sun.xml.internal.ws.api.Component;
 import com.sun.xml.internal.ws.api.ComponentEx;
 import com.sun.xml.internal.ws.api.server.ContainerResolver;
@@ -505,7 +506,9 @@ public final class ServiceFinder<T> implements Iterable<T> {
             String cn = sn.className;
             URL currentConfig = sn.config;
             try {
-                return service.cast(Class.forName(cn, true, loader).newInstance());
+                Class<?> clazz = Class.forName(cn, true, loader);
+                ModuleAccessHelper.ensureAccess(ServiceFinder.class, clazz);
+                return (T) service.cast(clazz.newInstance());
             } catch (ClassNotFoundException x) {
                 fail(service, "Provider " + cn + " is specified in "+currentConfig+" but not found");
             } catch (Exception x) {
