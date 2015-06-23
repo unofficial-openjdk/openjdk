@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,34 +23,35 @@
  * questions.
  */
 
-package com.sun.corba.se.impl.presentation.rmi;
+package com.sun.corba.se.impl.util;
 
-import java.lang.reflect.InvocationHandler ;
+import org.omg.CORBA.ORB;
+import java.lang.reflect.Method;
 
-import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-import com.sun.corba.se.impl.util.Modules;
+/**
+ * Utility class to aid calling java.lang.reflect.Module.addReads.
+ *
+ * @implNote The implementation uses core reflection to call addReads. This
+ * is because of bootstrapping issues in the build where the interim corba
+ * build is compiled with the boot JDK.
+ */
 
-public class StubFactoryStaticImpl extends StubFactoryBase
-{
-    private Class stubClass ;
+public class Modules {
+    private Modules() { }
 
-    public StubFactoryStaticImpl(Class cls)
-    {
-        super( null ) ;
-        this.stubClass = cls;
-    }
-
-    public org.omg.CORBA.Object makeStub()
-    {
-        org.omg.CORBA.Object stub = null;
+    /**
+     * Ensures that module java.corba that read the module of the given class.
+     */
+    public static void ensureReadable(Class<?> targetClass) {
         try {
-            Modules.ensureReadable(stubClass);
-            stub = (org.omg.CORBA.Object) stubClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(ORB.class);
+            Object targetModule = getModuleMethod.invoke(targetClass);
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+            addReadsMethod.invoke(thisModule, targetModule);
+        } catch (Exception e) {
+            throw new InternalError(e);
         }
-        return stub ;
     }
 }
