@@ -126,7 +126,6 @@ public final class PropertyInfo {
                 put(Name.visualUpdate, annotation.visualUpdate());
                 put(Name.description, annotation.description());
                 String[] values = annotation.enumerationValues();
-                if (0 < values.length) {
                     try {
                         Object[] array = new Object[3 * values.length];
                         int index = 0;
@@ -162,7 +161,6 @@ public final class PropertyInfo {
                 }
             }
         }
-    }
 
     public Class<?> getPropertyType() {
         return this.type;
