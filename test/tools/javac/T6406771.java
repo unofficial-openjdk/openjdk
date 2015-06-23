@@ -8,25 +8,29 @@
  */
 
 // WARNING: White-space and layout is important in this file, especially tab characters.
+// Editing the imports and other leading text may affect the golden text in the tests field.
+// Also beware of scripts that auto-expand tabs to spaces.
 
 import java.io.*;
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
 import java.util.*;
 import javax.annotation.processing.*;
 import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
-import com.sun.tools.javac.api.*;
+
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
+import com.sun.tools.javac.api.*;
 import com.sun.tools.javac.tree.JCTree;
-
 
 @SupportedAnnotationTypes("*")
 public class T6406771 extends AbstractProcessor {
     String[] tests = {
-        "line:27",
-        "line:28",
-        "line:29", "line:29",
+        "line:31",
+        "line:32",
+        "line:33", "line:33",
 //       1         2         3         4         5         6
 //3456789012345678901234567890123456789012345678901234567890
       "col:7", "col:16", "col:26",                 // this line uses spaces
@@ -35,6 +39,12 @@ public class T6406771 extends AbstractProcessor {
     };
 
     // White-space after this point does not matter
+
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.api",
+            "com.sun.tools.javac.tree");
+    }
 
     public static void main(String[] args) throws IOException {
         String self = T6406771.class.getName();
@@ -45,7 +55,13 @@ public class T6406771 extends AbstractProcessor {
         try (StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null)) {
             JavaFileObject f = fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, self+".java"))).iterator().next();
 
-            List<String> opts = Arrays.asList("-d", ".", "-processorpath", testClasses, "-processor", self, "-proc:only");
+            List<String> opts = Arrays.asList(
+                "-XaddExports:"
+                    + "jdk.compiler/com.sun.tools.javac.api,jdk.compiler/com.sun.tools.javac.tree",
+                "-d", ".",
+                "-processorpath", testClasses,
+                "-processor", self,
+                "-proc:only");
 
             JavacTask task = tool.getTask(null, fm, null, opts, null, Arrays.asList(f));
 
@@ -102,5 +118,19 @@ public class T6406771 extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
+    }
+
+    protected void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, getClass().getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
+        }
     }
 }

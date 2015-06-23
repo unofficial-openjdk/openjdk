@@ -150,7 +150,7 @@ public class DocEnv {
         finder = JavadocClassFinder.instance(context);
         enter = JavadocEnter.instance(context);
         names = Names.instance(context);
-        externalizableSym = syms.enterClass(names.fromString("java.io.Externalizable"));
+        externalizableSym = syms.enterClass(syms.javaBase, names.fromString("java.io.Externalizable"));
         chk = Check.instance(context);
         types = Types.instance(context);
         fileManager = context.get(JavaFileManager.class);

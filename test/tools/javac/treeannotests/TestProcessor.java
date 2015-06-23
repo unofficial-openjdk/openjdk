@@ -21,6 +21,8 @@
  * questions.
  */
 
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
 import java.io.*;
 import java.util.*;
 import javax.annotation.processing.*;
@@ -50,6 +52,13 @@ import com.sun.tools.javac.util.List;
  */
 @SupportedAnnotationTypes({"Test"})
 public class TestProcessor extends AbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.code",
+            "com.sun.tools.javac.tree",
+            "com.sun.tools.javac.util");
+    }
+
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
@@ -129,6 +138,20 @@ public class TestProcessor extends AbstractProcessor {
             return line;
         } catch (IOException e) {
             return -1;
+        }
+    }
+
+    protected void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, getClass().getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
         }
     }
 

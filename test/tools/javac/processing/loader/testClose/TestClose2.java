@@ -92,6 +92,10 @@ public class TestClose2 extends AbstractProcessor implements TaskListener {
         Iterable<? extends JavaFileObject> files =
                 fm.getJavaFileObjects(new File(testSrc, TestClose2.class.getName() + ".java"));
         List<String> options = Arrays.asList(
+                "-XaddExports:"
+                    + "jdk.compiler/com.sun.tools.javac.api,"
+                    + "jdk.compiler/com.sun.tools.javac.file,"
+                    + "jdk.compiler/com.sun.tools.javac.util",
                 "-processor", TestClose2.class.getName());
 
         JavacTask task = tool.getTask(null, fm, null, options, null, files);

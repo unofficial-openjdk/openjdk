@@ -35,18 +35,19 @@ import com.sun.source.util.TaskListener;
 import com.sun.tools.javac.api.ClientCodeWrapper.Trusted;
 import com.sun.tools.javac.api.BasicJavacTask;
 import com.sun.tools.javac.api.JavacTool;
-import com.sun.tools.javac.processing.JavacProcessingEnvironment;
-import com.sun.tools.javac.util.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.module.Layer;
 import java.lang.reflect.Field;
+import java.lang.reflect.Module;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -133,7 +134,12 @@ public class TestClose implements TaskListener {
                 List<? extends JavaFileObject> files = Arrays.asList(
                         new MemFile("AnnoProc.java", annoProc),
                         new MemFile("Callback.java", callback));
-                JavacTask task = tool.getTask(null, fm, null, null, null, files);
+                List<String> options = Arrays.asList(
+                    "-XaddExports:"
+                        + "jdk.compiler/com.sun.tools.javac.processing,"
+                        + "jdk.compiler/com.sun.tools.javac.util"
+                );
+                JavacTask task = tool.getTask(null, fm, null, options, null, files);
                 check(task.call());
             }
 
@@ -189,6 +195,8 @@ public class TestClose implements TaskListener {
     }
 
     public static void add(ProcessingEnvironment env, Runnable r) {
+        // ensure this class in this class loader can access javac internals
+        addExports("jdk.compiler", "com.sun.tools.javac.api");
         try {
             JavacTask task = JavacTask.instance(env);
             TaskListener l = ((BasicJavacTask) task).getTaskListeners().iterator().next();
@@ -206,6 +214,20 @@ public class TestClose implements TaskListener {
             runnables.add(r);
         } catch (Throwable t) {
             t.printStackTrace();
+        }
+    }
+
+    private static void addExports(String moduleName, String... packageNames) {
+        for (String packageName : packageNames) {
+            try {
+                Layer layer = Layer.boot();
+                Optional<Module> m = layer.findModule(moduleName);
+                if (!m.isPresent())
+                    throw new Error("module not found: " + moduleName);
+                m.get().addExports(packageName, TestClose.class.getModule());
+            } catch (Exception e) {
+                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
+            }
         }
     }
 

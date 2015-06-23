@@ -39,7 +39,6 @@ import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
-
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JavacMessages;
@@ -51,6 +50,12 @@ public class T6597678 extends JavacTestingAbstractProcessor {
         new T6597678().run();
     }
 
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
+
     void run() throws Exception {
         String myName = T6597678.class.getSimpleName();
         File testSrc = new File(System.getProperty("test.src"));
@@ -60,6 +65,7 @@ public class T6597678 extends JavacTestingAbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
 
         compile(sw, pw,
+            "-XaddExports:jdk.compiler/com.sun.tools.javac.processing,jdk.compiler/com.sun.tools.javac.util",
             "-proc:only",
             "-processor", myName,
             "-AWriterString=" + pw.toString(),
