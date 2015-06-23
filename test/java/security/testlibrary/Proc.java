@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -183,13 +184,23 @@ public class Proc {
                         "java").getPath());
         }
         cmd.add("-cp");
+
         StringBuilder cp = new StringBuilder();
-        for (URL url: ((URLClassLoader)Proc.class.getClassLoader()).getURLs()) {
-            if (cp.length() != 0) {
-                cp.append(File.pathSeparatorChar);
+
+        String[] cpaths = System.getProperty("test.classes", ".")
+                                .split(File.pathSeparator);
+        for (String p : cpaths) {
+            try {
+                URL url = Paths.get(p).toUri().toURL();
+                if (cp.length() != 0) {
+                    cp.append(File.pathSeparatorChar);
+                }
+                cp.append(url.getFile());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
             }
-            cp.append(url.getFile());
         }
+
         cmd.add(cp.toString());
         for (Entry<String,String> e: prop.entrySet()) {
             cmd.add("-D" + e.getKey() + "=" + e.getValue());

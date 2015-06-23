@@ -28,6 +28,7 @@ import com.sun.beans.util.Cache;
  * @bug 8039137
  * @summary Tests Cache recursion
  * @author Sergey Malenkov
+ * @modules java.desktop/com.sun.beans.util
  * @compile -XDignore.symbol.file TestCacheRecursion.java
  * @run main TestCacheRecursion
  */

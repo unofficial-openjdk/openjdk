@@ -27,12 +27,15 @@ include LauncherCommon.gmk
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Kinit"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+          "-m"$(COMMA) "java.security.jgss/sun.security.krb5.internal.tools.Kinit"$(COMMA) }'))
 
   $(eval $(call SetupLauncher,klist, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Klist"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+          "-m"$(COMMA) "java.security.jgss/sun.security.krb5.internal.tools.Klist"$(COMMA) }'))
 
   $(eval $(call SetupLauncher,ktab, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Ktab"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+          "-m"$(COMMA) "java.security.jgss/sun.security.krb5.internal.tools.Ktab"$(COMMA) }'))
 endif
 

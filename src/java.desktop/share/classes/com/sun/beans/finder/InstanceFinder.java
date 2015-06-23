@@ -24,6 +24,8 @@
  */
 package com.sun.beans.finder;
 
+import com.sun.beans.util.Modules;
+
 /**
  * This is utility class that provides basic functionality
  * to find an auxiliary class for a JavaBean specified by its type.
@@ -93,6 +95,7 @@ class InstanceFinder<T> {
                     type = ClassFinder.findClass(name, type.getClassLoader());
                 }
                 if (this.type.isAssignableFrom(type)) {
+                    Modules.ensureReadable(type.getModule());
                     @SuppressWarnings("unchecked")
                     T tmp = (T) type.newInstance();
                     return tmp;

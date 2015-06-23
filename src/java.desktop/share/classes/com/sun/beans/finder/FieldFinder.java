@@ -27,6 +27,7 @@ package com.sun.beans.finder;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import com.sun.beans.util.Modules;
 import static sun.reflect.misc.ReflectUtil.isPackageAccessible;
 
 /**
@@ -53,6 +54,9 @@ public final class FieldFinder {
     public static Field findField(Class<?> type, String name) throws NoSuchFieldException {
         if (name == null) {
             throw new IllegalArgumentException("Field name is not set");
+        }
+        if (!Modules.isExported(type)) {
+            throw new NoSuchFieldException("Field '" + name + "' is not accessible");
         }
         Field field = type.getField(name);
         if (!Modifier.isPublic(field.getModifiers())) {

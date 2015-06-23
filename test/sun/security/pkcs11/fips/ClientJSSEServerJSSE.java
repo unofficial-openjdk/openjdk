@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public class ClientJSSEServerJSSE extends SecmodTest {
         }
 
         String configName = BASE + SEP + "fips.cfg";
-        Provider p = getSunPKCS11(configName);
+        Provider p = getCustomizedPKCS11(configName);
 
         System.out.println(p);
         Security.addProvider(p);

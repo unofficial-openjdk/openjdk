@@ -1956,6 +1956,13 @@ public abstract class ImageWriter implements ImageTranscoder {
                 locale = Locale.getDefault();
             }
 
+            ResourceBundle bundle = null;
+            try {
+                bundle = ResourceBundle.getBundle(baseName, locale, this.getClass().getModule());
+            } catch (MissingResourceException mre) {
+                throw new IllegalArgumentException("Bundle not found!");
+            }
+
             /**
              * If an applet supplies an implementation of ImageWriter and
              * resource bundles, then the resource bundle will need to be
@@ -1964,24 +1971,24 @@ public abstract class ImageWriter implements ImageTranscoder {
              * If that throws MissingResourceException, then try the
              * system class loader.
              */
-            ClassLoader loader =
-                java.security.AccessController.doPrivileged(
-                   new java.security.PrivilegedAction<ClassLoader>() {
-                      public ClassLoader run() {
-                        return Thread.currentThread().getContextClassLoader();
-                      }
-                });
+            // ClassLoader loader =
+            //     java.security.AccessController.doPrivileged(
+            //        new java.security.PrivilegedAction<ClassLoader>() {
+            //           public ClassLoader run() {
+            //             return Thread.currentThread().getContextClassLoader();
+            //           }
+            //     });
 
-            ResourceBundle bundle = null;
-            try {
-                bundle = ResourceBundle.getBundle(baseName, locale, loader);
-            } catch (MissingResourceException mre) {
-                try {
-                    bundle = ResourceBundle.getBundle(baseName, locale);
-                } catch (MissingResourceException mre1) {
-                    throw new IllegalArgumentException("Bundle not found!");
-                }
-            }
+            // ResourceBundle bundle = null;
+            // try {
+            //     bundle = ResourceBundle.getBundle(baseName, locale, loader);
+            // } catch (MissingResourceException mre) {
+            //     try {
+            //         bundle = ResourceBundle.getBundle(baseName, locale);
+            //     } catch (MissingResourceException mre1) {
+            //         throw new IllegalArgumentException("Bundle not found!");
+            //     }
+            // }
 
             String warning = null;
             try {
