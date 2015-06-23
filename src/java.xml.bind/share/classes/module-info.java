@@ -131,5 +131,6 @@ module java.xml.bind {
         java.xml.ws,
         jdk.xml.bind,
         jdk.xml.ws;
-}
 
+    uses javax.xml.bind.JAXBContextFactory;
+}
