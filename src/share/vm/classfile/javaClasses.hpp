@@ -1478,8 +1478,8 @@ class InjectedField {
   CLASS_INJECTED_FIELDS(macro)              \
   CLASSLOADER_INJECTED_FIELDS(macro)        \
   MEMBERNAME_INJECTED_FIELDS(macro)         \
-  MODULE_INJECTED_FIELDS(macro)             \
-  CALLSITECONTEXT_INJECTED_FIELDS(macro)
+  CALLSITECONTEXT_INJECTED_FIELDS(macro)    \
+  MODULE_INJECTED_FIELDS(macro)
 
 // Interface to hard-coded offset checking
 
