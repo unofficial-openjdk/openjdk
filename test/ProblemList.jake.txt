@@ -182,7 +182,4 @@ javax/xml/jaxp/Encodings/CheckEncodingPropertiesFile.java                       
 # waiting for javac/jtreg support
 javax/xml/jaxp/common/8035437/run.sh                                            generic-all
 
-# 8085789
-javax/rmi/PortableRemoteObject/ConcurrentHashMapTest.java       generic-all
-
 ############################################################################
