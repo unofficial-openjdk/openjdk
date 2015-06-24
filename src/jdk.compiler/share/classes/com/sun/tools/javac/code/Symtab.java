@@ -244,7 +244,7 @@ public class Symtab {
 
     /** A hashtable giving the encountered modules.
      */
-    public final Map<Name, ModuleSymbol> modules = new LinkedHashMap<>();
+    private final Map<Name, ModuleSymbol> modules = new LinkedHashMap<>();
 
     public void initType(Type type, ClassSymbol c) {
         type.tsym = c;
@@ -604,7 +604,7 @@ public class Symtab {
 //        return enterClass(null, flatName, classFile);
 //    }
 
-    public ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
+    private ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
         ClassSymbol cs = classes.get(flatName);
         if (cs != null) {
             String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
