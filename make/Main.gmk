@@ -374,16 +374,6 @@ test-make:
 ALL_TARGETS += test test-hotspot-jtreg-native test-jdk-jtreg-native test-make
 
 ################################################################################
-# Verification targets
-
-verify-modules:
-	@$(call TargetEnter)
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CheckModules.gmk)
-	@$(call TargetExit)
-
-ALL_TARGETS += verify-modules
-
-################################################################################
 # Install targets
 
 install:
@@ -530,8 +520,6 @@ else
 
   test: jimages test-image
 
-  verify-modules: exploded-image
-
   test-make: clean-test-make
 
   build-test-hotspot-jtreg-native: buildtools-jdk
@@ -591,7 +579,7 @@ exploded-image: $(ALL_MODULES)
 
 # This target builds the product images, e.g. the JRE and JDK image
 # (and possibly other, more specific versions)
-product-images: jimages demos samples zip-security verify-modules generate-summary
+product-images: jimages demos samples zip-security generate-summary
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   product-images: mac-bundles
