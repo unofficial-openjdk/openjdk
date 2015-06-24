@@ -429,7 +429,7 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitExports(JCExports tree) {
             Name name = TreeInfo.fullName(tree.qualid);
-            PackageSymbol packge = syms.enterPackage(name);
+            PackageSymbol packge = syms.enterPackage(sym, name);
             if (!allExports.add(packge)) {
                 log.error(tree.qualid.pos(), "duplicate.exports", packge);
             }

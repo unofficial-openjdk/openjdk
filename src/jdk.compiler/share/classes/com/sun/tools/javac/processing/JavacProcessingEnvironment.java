@@ -163,6 +163,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final Enter enter;
     private final Completer initialCompleter;
     private final Check chk;
+    private final ModuleSymbol defaultModule;
 
     private final Context context;
 
@@ -211,6 +212,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         initialCompleter = ClassFinder.instance(context).getCompleter();
         chk = Check.instance(context);
         initProcessorClassLoader();
+
+        defaultModule = source.allowModules() && options.isUnset("noModules")
+                ? symtab.unnamedModule : symtab.noModule;
+
     }
 
     public void setProcessors(Iterable<? extends Processor> processors) {
@@ -1004,7 +1009,9 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 ClassSymbol cs;
                 if (isPkgInfo(file, JavaFileObject.Kind.CLASS)) {
                     Name packageName = Convert.packagePart(name);
-                    PackageSymbol p = symtab.enterPackage(packageName);
+                    // TODO: for now, we assume that generated code is in a default module;
+                    // in time, we need a way to be able to specify the module for generated code
+                    PackageSymbol p = symtab.enterPackage(defaultModule, packageName);
                     if (p.package_info == null)
                         p.package_info = symtab.enterClass(Convert.shortName(name), p);
                     cs = p.package_info;

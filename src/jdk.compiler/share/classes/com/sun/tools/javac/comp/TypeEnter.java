@@ -325,7 +325,7 @@ public class TypeEnter implements Completer {
                                          chk.importAccessible(sym, packge);
 
                 // Import-on-demand java.lang.
-                importAll(tree.pos, syms.enterPackage(names.java_lang), env);
+                importAll(tree.pos, syms.enterPackage(syms.java_base, names.java_lang), env);
 
                 // Process the package def and all import clauses.
                 if (tree.getPackage() != null)

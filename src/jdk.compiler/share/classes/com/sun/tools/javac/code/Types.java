@@ -3900,7 +3900,7 @@ public class Types {
      * Return the class that boxes the given primitive.
      */
     public ClassSymbol boxedClass(Type t) {
-        return syms.enterClass(syms.javaBase, syms.boxedName[t.getTag().ordinal()]);
+        return syms.enterClass(syms.java_base, syms.boxedName[t.getTag().ordinal()]);
     }
 
     /**
@@ -3919,7 +3919,7 @@ public class Types {
         for (int i=0; i<syms.boxedName.length; i++) {
             Name box = syms.boxedName[i];
             if (box != null &&
-                asSuper(t, syms.enterClass(syms.javaBase, box)) != null)
+                asSuper(t, syms.enterClass(syms.java_base, box)) != null)
                 return syms.typeOfTag[i];
         }
         return Type.noType;

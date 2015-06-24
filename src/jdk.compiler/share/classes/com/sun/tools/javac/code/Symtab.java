@@ -155,7 +155,7 @@ public class Symtab {
 
     /** A symbol for the java.base module.
      */
-    public final ModuleSymbol javaBase;
+    public final ModuleSymbol java_base;
 
     /** Predefined types.
      */
@@ -271,7 +271,7 @@ public class Symtab {
      *  @param s The name of the class.
      */
     private Type enterClass(String s) {
-        return enterClass(javaBase, names.fromString(s)).type;
+        return enterClass(java_base, names.fromString(s)).type;
     }
 
     public void synthesizeEmptyInterfaceIfMissing(final Type type) {
@@ -295,7 +295,7 @@ public class Symtab {
     }
 
     public void synthesizeBoxTypeIfMissing(final Type type) {
-        ClassSymbol sym = enterClass(javaBase, boxedName[type.getTag().ordinal()]);
+        ClassSymbol sym = enterClass(java_base, boxedName[type.getTag().ordinal()]);
         final Completer completer = sym.completer;
         sym.completer = new Completer() {
             @Override
@@ -448,7 +448,7 @@ public class Symtab {
         Source source = Source.instance(context);
         Options options = Options.instance(context);
         boolean noModules = options.isSet("noModules");
-        javaBase = source.allowModules() && !noModules
+        java_base = source.allowModules() && !noModules
                 ? enterModule(names.java_base)
                 : noModule;
 
@@ -478,7 +478,7 @@ public class Symtab {
         cloneNotSupportedExceptionType = enterClass("java.lang.CloneNotSupportedException");
         annotationType = enterClass("java.lang.annotation.Annotation");
         classLoaderType = enterClass("java.lang.ClassLoader");
-        enumSym = enterClass(javaBase, names.java_lang_Enum);
+        enumSym = enterClass(java_base, names.java_lang_Enum);
         enumFinalFinalize =
             new MethodSymbol(PROTECTED|FINAL|HYPOTHETICAL,
                              names.finalize,
@@ -660,17 +660,16 @@ public class Symtab {
             p.completer = initialCompleter;
             packages.put(fullname, p);
         }
-        if (p.modle == null && currModule != null) {
+        // TEMPORARY WORKAROUND: for now, until we fully support distinct packages of the same
+        // name in different modules, p.modle is only set when we actually find types
+        // in a package. If no types have been found and if the completer has already run
+        // we reset the completer.
+        if (p.modle == null && currModule != null && p.modleHint != currModule) {
             p.modleHint = currModule;
             if (p.completer.isTerminal())
                 p.completer = initialCompleter;
         }
         return p;
-    }
-
-    // temporary, for compatibility
-    public PackageSymbol enterPackage(Name fullname) {
-        return enterPackage(null, fullname);
     }
 
     public ModuleSymbol enterModule(Name name) {

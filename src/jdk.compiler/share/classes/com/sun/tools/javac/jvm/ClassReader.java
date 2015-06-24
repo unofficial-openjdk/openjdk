@@ -1204,7 +1204,7 @@ public class ClassReader {
                         int nexports = nextChar();
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
-                            PackageSymbol p = syms.enterPackage(names.fromUtf(internalize(n)));
+                            PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
