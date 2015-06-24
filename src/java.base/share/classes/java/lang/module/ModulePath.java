@@ -42,8 +42,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -291,6 +293,8 @@ class ModulePath implements ModuleFinder {
      * 3. It has no module-private/concealed packages
      * 4. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
+     * 5. The Main-Class attribute in the main attributes of the JAR manifest
+     *    is mapped to the module descriptor mainClass
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
         throws IOException
@@ -347,6 +351,15 @@ class ModulePath implements ModuleFinder {
             }
             if (!providerClasses.isEmpty())
                 builder.provides(sn, providerClasses);
+        }
+
+        // Main-Class attribute if it exists
+        Manifest man = jf.getManifest();
+        if (man != null) {
+            Attributes attrs = man.getMainAttributes();
+            String mainClass = attrs.getValue(Attributes.Name.MAIN_CLASS);
+            if (mainClass != null)
+                builder.mainClass(mainClass);
         }
 
         return builder.build();
