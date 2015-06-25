@@ -730,6 +730,9 @@ public:
   product(bool, UseSHA, false,                                              \
           "Control whether SHA instructions can be used on SPARC")          \
                                                                             \
+  product(bool, UseGHASHIntrinsics, false,                                  \
+          "Use intrinsics for GHASH versions of crypto")                    \
+                                                                            \
   product(size_t, LargePageSizeInBytes, 0,                                  \
           "Large page size (0 to let VM choose the page size)")             \
                                                                             \
