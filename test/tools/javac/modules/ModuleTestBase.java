@@ -34,8 +34,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Base class for module tests.
@@ -81,19 +81,19 @@ class ModuleTestBase {
     // move to ToolBox?
     // change returntyp to List<Path> -- means updating ToolBox methods
     Path[] findJavaFiles(Path p) throws IOException {
-        List<Path> list = new ArrayList<>();
+        Set<Path> files = new TreeSet<>();
         Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
                 if (file.getFileName().toString().endsWith(".java")) {
-                    list.add(file);
+                    files.add(file);
                 }
                 return FileVisitResult.CONTINUE;
             }
 
         });
-        return list.toArray(new Path[list.size()]);
+        return files.toArray(new Path[files.size()]);
     }
 
     void error(String message) {

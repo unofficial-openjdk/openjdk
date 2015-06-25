@@ -188,7 +188,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:22: compiler.err.cyclic.requires: m2"))
+        if (!log.contains("module-info.java:1:22: compiler.err.cyclic.requires: m1"))
             throw new Exception("expected output not found");
     }
 
