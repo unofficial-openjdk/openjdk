@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Red Hat Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,25 +20,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
 
-/**
- * @test
- * @bug 8035968
- * @summary Verify UseSHA512Intrinsics option processing on supported CPU.
- * @library /testlibrary /../../test/lib /compiler/testlibrary testcases
- * @modules java.base/sun.misc
- *          java.management
- * @build TestUseSHA512IntrinsicsOptionOnSupportedCPU
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI
- *                   TestUseSHA512IntrinsicsOptionOnSupportedCPU
- */
-public class TestUseSHA512IntrinsicsOptionOnSupportedCPU {
-    public static void main(String args[]) throws Throwable {
-        new SHAOptionsBase(new GenericTestCaseForSupportedCPU(
-                SHAOptionsBase.USE_SHA512_INTRINSICS_OPTION)).test();
-    }
+package sun.jvm.hotspot.runtime.aarch64;
+
+import java.util.*;
+import sun.jvm.hotspot.debugger.*;
+import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.runtime.*;
+
+public class AARCH64JavaCallWrapper extends JavaCallWrapper {
+  private static AddressField lastJavaFPField;
+
+  static {
+    VM.registerVMInitializedObserver(new Observer() {
+        public void update(Observable o, Object data) {
+          initialize(VM.getVM().getTypeDataBase());
+        }
+      });
+  }
+
+  private static synchronized void initialize(TypeDataBase db) {
+    Type type = db.lookupType("JavaFrameAnchor");
+
+    lastJavaFPField  = type.getAddressField("_last_Java_fp");
+  }
+
+  public AARCH64JavaCallWrapper(Address addr) {
+    super(addr);
+  }
+
+  public Address getLastJavaFP() {
+    return lastJavaFPField.getValue(addr.addOffsetTo(anchorField.getOffset()));
+  }
 }
