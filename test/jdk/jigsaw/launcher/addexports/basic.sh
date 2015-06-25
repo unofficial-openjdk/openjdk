@@ -42,10 +42,10 @@ mkdir -p mods/test
 $JAVAC -XaddExports:java.base/sun.misc -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
 # unnamed module using sun.misc.Unsafe
-$JAVA -XaddExports:java.base/sun.misc -cp mods/test jdk.test.UsesUnsafe
+$JAVA -XaddExports:java.base/sun.misc=ALL-UNNAMED -cp mods/test jdk.test.UsesUnsafe
 
 # named module using sun.misc.Unsafe
-$JAVA -XaddExports:java.base/sun.misc -mp mods -m test/jdk.test.UsesUnsafe
+$JAVA -XaddExports:java.base/sun.misc=test -mp mods -m test/jdk.test.UsesUnsafe
 
 
 # Negative tests

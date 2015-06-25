@@ -259,22 +259,57 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Parse the value of -XaddExports into a sequence of $MODULE/$PACKAGE,
-     * updating each $MODULE to unconditionally export $PACKAGE.
+     * The value of -XaddExports is a sequence of $MODULE/$PACKAGE=$TARGET
+     * where $TARGET is a module name or the token "ALL-UNNAMED".
+     *
+     * If the sequence contains $MODULE/$PACKAGE (no =$TARGET) then an
+     * unqualified export is created. This is temporary and will be removed
+     * once jtreg and tests have been updated to export to ALL-UNNAMED.
      */
     private static void addMoreExports(Layer bootLayer, String moreExports) {
         for (String expr: moreExports.split(",")) {
             if (expr.length() > 0) {
-                String[] s = expr.split("/");
-                if (s.length != 2)
+
+                String[] s = expr.split("=");
+                if (s.length < 1 || s.length > 2)
                     fail("Unable to parse: " + expr);
-                String mn = s[0];
-                String pn = s[1];
+
+                // $MODULE/$PACKAGE
+                String[] moduleAndPackage = s[0].split("/");
+                if (moduleAndPackage.length != 2)
+                    fail("Unable to parse: " + expr);
+
+                String mn = moduleAndPackage[0];
+                String pn = moduleAndPackage[1];
+
+                // source module
+                Module source;
                 Optional<Module> om = bootLayer.findModule(mn);
-                if (om.isPresent()) {
-                    Modules.addExports(om.get(), pn, null);
+                if (!om.isPresent())
+                    fail("Unknown source module: " + mn);
+                source = om.get();
+
+                // $TARGET
+                boolean allUnnamed = false;
+                Module target = null;
+                if (s.length == 2) {
+                    String tn = s[1];
+                    if (tn.equals("ALL-UNNAMED")) {
+                        allUnnamed = true;
+                    } else {
+                        om = bootLayer.findModule(tn);
+                        if (om.isPresent()) {
+                            target = om.get();
+                        } else {
+                            fail("Unknown target module: " + tn);
+                        }
+                    }
+                }
+
+                if (allUnnamed) {
+                    Modules.addExportsToAllUnnamed(source, pn);
                 } else {
-                    fail("Unknown module specified: " + expr);
+                    Modules.addExports(source, pn, target);
                 }
             }
         }

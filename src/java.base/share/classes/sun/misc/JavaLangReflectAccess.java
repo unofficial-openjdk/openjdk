@@ -70,9 +70,14 @@ public interface JavaLangReflectAccess {
     void addReadsModule(Module m1, Module m2);
 
     /**
-     * Causes module m1 to export a package to module m2. If m2 is {@code null}
+     * Updates module m1 to export a package to module m2. If m2 is {@code null}
      * then the package is exported to all module that read m1. The export does
      * not result in a strong reference to m2 (m2 can be GC'ed).
      */
     void addExports(Module m1, String pkg, Module m2);
+
+    /**
+     * Updates a module m to export a package to all unnamed modules.
+     */
+    void addExportsToAllUnnamed(Module m, String pkg);
 }
