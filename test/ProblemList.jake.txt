@@ -67,6 +67,22 @@ java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh      generic-all
 java/util/PluggableLocale/LocaleNameProviderTest.sh             generic-all
 java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
 
+java/text/Format/DateFormat/LocaleDateFormats.java		generic-all
+
+############################################################################
+
+# jdk_instrument
+
+# 8129832
+java/lang/instrument/NativeMethodPrefixAgent.java		generic-all
+
+############################################################################
+
+# core_tools
+
+# waiting for javac/jtreg support
+tools/launcher/ToolsOpts.java					generic-all
+
 ############################################################################
  
 # svc_tools
