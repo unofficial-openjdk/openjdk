@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,6 +77,9 @@ public class ElementFilter {
 
     private static final Set<ElementKind> PACKAGE_KIND =
         Collections.unmodifiableSet(EnumSet.of(ElementKind.PACKAGE));
+
+    private static final Set<ElementKind> MODULE_KIND =
+        Collections.unmodifiableSet(EnumSet.of(ElementKind.MODULE));
 
     private static final Set<ElementKind> TYPE_KINDS =
         Collections.unmodifiableSet(EnumSet.of(ElementKind.CLASS,
@@ -181,6 +184,26 @@ public class ElementFilter {
     public static Set<PackageElement>
             packagesIn(Set<? extends Element> elements) {
         return setFilter(elements, PACKAGE_KIND, PackageElement.class);
+    }
+
+    /**
+     * Returns a list of modules in {@code elements}.
+     * @return a list of modules in {@code elements}
+     * @param elements the elements to filter
+     */
+    public static List<ModuleElement>
+            modulesIn(Iterable<? extends Element> elements) {
+        return listFilter(elements, MODULE_KIND, ModuleElement.class);
+    }
+
+    /**
+     * Returns a set of modules in {@code elements}.
+     * @return a set of modules in {@code elements}
+     * @param elements the elements to filter
+     */
+    public static Set<ModuleElement>
+            modulesIn(Set<? extends Element> elements) {
+        return setFilter(elements, MODULE_KIND, ModuleElement.class);
     }
 
     // Assumes targetKinds and E are sensible.

@@ -25,14 +25,20 @@
 
 package com.sun.tools.javac.code;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
 
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
+import com.sun.tools.javac.util.DefinedBy;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.ListBuffer;
 
 
 /**
@@ -44,12 +50,6 @@ import com.sun.tools.javac.util.ListBuffer;
  *  deletion without notice.</b>
  */
 public abstract class Directive {
-    public enum Kind {
-        EXPORTS,
-        PROVIDES,
-        REQUIRES,
-        USES
-    }
 
     /** Flags for RequiresDirective. */
     public enum RequiresFlag {
@@ -72,14 +72,11 @@ public abstract class Directive {
         public final int value;
     }
 
-    public abstract Kind getKind();
-
-    abstract <R, P> R accept(Visitor<R, P> visitor, P data);
-
     /**
      * 'exports' Package ';'
      */
-    public static class ExportsDirective extends Directive {
+    public static class ExportsDirective extends Directive
+            implements ModuleElement.ExportsDirective {
         public final PackageSymbol packge;
         public final List<ModuleSymbol> modules;
 
@@ -88,9 +85,14 @@ public abstract class Directive {
             this.modules = modules;
         }
 
-        @Override
-        public Kind getKind() {
-            return Kind.EXPORTS;
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public PackageElement getPackage() {
+            return packge;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<? extends ModuleElement> getTargetModules() {
+            return Collections.unmodifiableList(modules);
         }
 
         @Override
@@ -100,17 +102,13 @@ public abstract class Directive {
             else
                 return "Exports[" + packge + ":" + modules + "]";
         }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitExports(this, data);
-        }
     }
 
     /**
      * 'provides' ServiceName 'with' QualifiedIdentifer ';'
      */
-    public static class ProvidesDirective extends Directive {
+    public static class ProvidesDirective extends Directive
+            implements ModuleElement.ProvidesDirective {
         public final ClassSymbol service;
         public final ClassSymbol impl;
 
@@ -119,26 +117,27 @@ public abstract class Directive {
             this.impl = impl;
         }
 
-        @Override
-        public Kind getKind() {
-            return Kind.PROVIDES;
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public TypeElement getService() {
+            return service;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public TypeElement getImplementation() {
+            return impl;
         }
 
         @Override
         public String toString() {
             return "Provides[" + service + "," + impl + "]";
         }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitProvides(this, data);
-        }
     }
 
     /**
      * 'requires' ['public'] ModuleName ';'
      */
-    public static class RequiresDirective extends Directive {
+    public static class RequiresDirective extends Directive
+            implements ModuleElement.RequiresDirective {
         public final ModuleSymbol module;
         public final Set<RequiresFlag> flags;
 
@@ -151,158 +150,41 @@ public abstract class Directive {
             this.flags = flags;
         }
 
-        @Override
-        public Kind getKind() {
-            return Kind.REQUIRES;
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isPublic() {
+            return flags.contains(RequiresFlag.PUBLIC);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement getDependency() {
+            return module;
         }
 
         @Override
         public String toString() {
             return "Requires[" + flags + "," + module + "]";
         }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitRequires(this, data);
-        }
     }
 
     /**
      * 'uses' ServiceName ';'
      */
-    public static class UsesDirective extends Directive {
+    public static class UsesDirective extends Directive
+            implements ModuleElement.UsesDirective {
         public final ClassSymbol service;
 
         public UsesDirective(ClassSymbol service) {
             this.service = service;
         }
 
-        @Override
-        public Kind getKind() {
-            return Kind.USES;
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public TypeElement getService() {
+            return service;
         }
 
         @Override
         public String toString() {
             return "Uses[" + service + "]";
         }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitUses(this, data);
-        }
-    }
-
-    public static interface Visitor<R, P> {
-        R visitRequires(RequiresDirective d, P p);
-        R visitExports(ExportsDirective d, P p);
-        R visitProvides(ProvidesDirective d, P p);
-        R visitUses(UsesDirective d, P p);
-    }
-
-    public static class SimpleVisitor<R, P> implements Visitor<R, P> {
-        protected final R DEFAULT_VALUE;
-
-        protected SimpleVisitor() {
-            DEFAULT_VALUE = null;
-        }
-
-        protected SimpleVisitor(R defaultValue) {
-            DEFAULT_VALUE = defaultValue;
-        }
-
-        protected R defaultAction(Directive d, P p) {
-            return DEFAULT_VALUE;
-        }
-
-        public final R visit(Directive d, P p) {
-            return (d == null) ? null : d.accept(this, p);
-        }
-
-        public final R visit(Iterable<? extends Directive> ds, P p) {
-            R r = null;
-            if (ds != null)
-                for (Directive d : ds)
-                    r = visit(d, p);
-            return r;
-        }
-
-        @Override
-        public R visitExports(ExportsDirective d, P p) {
-            return defaultAction(d, p);
-        }
-
-        @Override
-        public R visitProvides(ProvidesDirective d, P p) {
-            return defaultAction(d, p);
-        }
-
-        @Override
-        public R visitRequires(RequiresDirective d, P p) {
-            return defaultAction(d, p);
-        }
-
-        @Override
-        public R visitUses(UsesDirective d, P p) {
-            return defaultAction(d, p);
-        }
-    }
-
-    public static class Scanner<R, P> implements Visitor<R, P> {
-
-
-        /** Scan a single node.
-         */
-        public R scan(Directive d, P p) {
-            return (d == null) ? null : d.accept(this, p);
-        }
-
-        private R scanAndReduce(Directive d, P p, R r) {
-            return reduce(scan(d, p), r);
-        }
-
-        /** Scan a list of nodes.
-         */
-        public R scan(Iterable<? extends Directive> ds, P p) {
-            R r = null;
-            if (ds != null) {
-                boolean first = true;
-                for (Directive d : ds) {
-                    r = (first ? scan(d, p) : scanAndReduce(d, p, r));
-                    first = false;
-                }
-            }
-            return r;
-        }
-
-        /**
-         * Reduces two results into a combined result.
-         * The default implementation is to return the first parameter.
-         * The general contract of the method is that it may take any action whatsoever.
-         */
-        public R reduce(R r1, R r2) {
-            return r1;
-        }
-
-        @Override
-        public R visitExports(ExportsDirective d, P p) {
-            return null;
-        }
-
-        @Override
-        public R visitProvides(ProvidesDirective d, P p) {
-            return null;
-        }
-
-        @Override
-        public R visitRequires(RequiresDirective d, P p) {
-            return null;
-        }
-
-        @Override
-        public R visitUses(UsesDirective d, P p) {
-            return null;
-        }
-
     }
 }

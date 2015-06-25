@@ -27,10 +27,12 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.*;
 import javax.tools.JavaFileManager;
@@ -850,7 +852,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for module symbols.
      */
     public static class ModuleSymbol extends TypeSymbol
-            /*implements ModuleElement*/ {
+            implements ModuleElement {
 
         public Name version;
         public JavaFileManager.Location sourceLocation;
@@ -858,10 +860,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         /** All directives, in natural order. */
         public List<Directive> directives;
-        public List<RequiresDirective> requires;
-        public List<ExportsDirective> exports;
-        public List<ProvidesDirective> provides;
-        public List<UsesDirective> uses;
+        public List<Directive.RequiresDirective> requires;
+        public List<Directive.ExportsDirective> exports;
+        public List<Directive.ProvidesDirective> provides;
+        public List<Directive.UsesDirective> uses;
 
         public ClassSymbol module_info;
 
@@ -890,6 +892,31 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public ModuleSymbol(Name name, Symbol owner) {
             super(MDL, 0, name, null, owner);
             this.type = new ModuleType(this);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isUnnamed() {
+            return name.isEmpty() && owner != null;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<RequiresDirective> getRequiresDirectives() {
+            return Collections.unmodifiableList(requires);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<ExportsDirective> getExportsDirectives() {
+            return Collections.unmodifiableList(exports);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<ProvidesDirective> getProvidesDirectives() {
+            return Collections.unmodifiableList(provides);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<UsesDirective> getUses() {
+            return Collections.unmodifiableList(uses);
         }
 
         @Override

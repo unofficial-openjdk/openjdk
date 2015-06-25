@@ -63,6 +63,15 @@ public interface Elements {
     TypeElement getTypeElement(CharSequence name);
 
     /**
+     * Returns a module element given its fully qualified name.
+     *
+     * @param name  the name
+     * @return the named module element, or {@code null} if it cannot be found
+     * @since 1.9
+     */
+    ModuleElement getModuleElement(CharSequence name);
+
+    /**
      * Returns the values of an annotation's elements, including defaults.
      *
      * @see AnnotationMirror#getElementValues()
@@ -126,6 +135,16 @@ public interface Elements {
      * @return the package of an element
      */
     PackageElement getPackageOf(Element type);
+
+    /**
+     * Returns the module of an element.  The module of a module is
+     * itself.
+     *
+     * @param type the element being examined
+     * @return the module of an element
+     * @since 1.9
+     */
+    ModuleElement getModuleOf(Element type);
 
     /**
      * Returns all members of a type element, whether inherited or
