@@ -91,7 +91,7 @@ public class JavacElements implements Elements {
         String strName = name.toString();
         if (strName.equals(""))
             return syms.unnamedModule;
-        throw new UnsupportedOperationException();
+        return syms.getModule(names.fromString(strName));
     }
 
     @DefinedBy(Api.LANGUAGE_MODEL)

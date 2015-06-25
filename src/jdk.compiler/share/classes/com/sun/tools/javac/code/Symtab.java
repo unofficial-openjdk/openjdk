@@ -697,4 +697,8 @@ public class Symtab {
         modules.put(name, msym);
     }
 
+    public ModuleSymbol getModule(Name name) {
+        return modules.get(name);
+    }
+
 }
