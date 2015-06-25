@@ -413,8 +413,18 @@ final class JrtClassPathEntry extends ClassPathEntry {
                             // get package subdirectory under /modules/$MODULE/
                             Path pkgDir = fs.getPath(modDir.toString() + "/" + pkgName);
                             if (Files.isDirectory(pkgDir)) {
-                                pkgDirs.put(pkgName, pkgDir);
-                                return pkgDir;
+                                // it is a package directory only if contains
+                                // at least one .class file
+                                try (DirectoryStream<Path> pstream =
+                                        Files.newDirectoryStream(pkgDir)) {
+                                    for (Path f : pstream) {
+                                        if (Files.isRegularFile(f)
+                                                && f.toString().endsWith(".class")) {
+                                            pkgDirs.put(pkgName, pkgDir);
+                                            return pkgDir;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
