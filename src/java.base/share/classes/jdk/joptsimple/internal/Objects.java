@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -51,29 +53,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
-
-import static java.util.Collections.*;
+package jdk.joptsimple.internal;
 
 /**
- * <p>Thrown when the option parser discovers a cluster of short options in which
- * at least one of the short options can accept arguments.</p>
- *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: IllegalOptionClusterException.java,v 1.8 2008/12/16 04:09:08 pholser Exp $
  */
-class IllegalOptionClusterException extends OptionException {
-    private static final long serialVersionUID = -1L;
-
-    IllegalOptionClusterException( String option ) {
-        super( singletonList( option ) );
+public final class Objects {
+    private Objects() {
+        throw new UnsupportedOperationException();
     }
 
     /**
-     * {@inheritDoc}
+     * Rejects {@code null} references.
+     *
+     * @param target reference to check
+     * @throws NullPointerException if {@code target} is {@code null}
      */
-    @Override
-    public String getMessage() {
-        return "Option cluster containing " + singleOptionMessage() + " is illegal";
+    public static void ensureNotNull( Object target ) {
+        if ( target == null )
+            throw new NullPointerException();
     }
 }

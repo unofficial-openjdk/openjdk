@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -56,21 +58,20 @@ package jdk.joptsimple.internal;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 import static java.lang.reflect.Modifier.*;
 
-import jdk.joptsimple.internal.ValueConverter;
+import jdk.joptsimple.ValueConverter;
+
+import static jdk.joptsimple.internal.Classes.*;
 
 /**
- * <p>Helper methods for reflection.</p>
+ * Helper methods for reflection.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: Reflection.java,v 1.12 2008/12/27 04:02:50 pholser Exp $
  */
-public class Reflection {
-    /**
-     * <p>Do not instantiate -- statics only.</p>
-     */
-    Reflection() {
+public final class Reflection {
+    private Reflection() {
         throw new UnsupportedOperationException();
     }
 
@@ -82,50 +83,35 @@ public class Reflection {
      * @return a converter method or constructor
      */
     public static <V> ValueConverter<V> findConverter( Class<V> clazz ) {
-        ValueConverter<V> valueOf = valueOfConverter( clazz );
+        Class<V> maybeWrapper = wrapperOf( clazz );
+
+        ValueConverter<V> valueOf = valueOfConverter( maybeWrapper );
         if ( valueOf != null )
             return valueOf;
 
-        ValueConverter<V> constructor = constructorConverter( clazz );
+        ValueConverter<V> constructor = constructorConverter( maybeWrapper );
         if ( constructor != null )
             return constructor;
 
         throw new IllegalArgumentException( clazz + " is not a value type" );
     }
 
-    private static <V> ValueConverter<V> valueOfConverter( final Class<V> clazz ) {
+    private static <V> ValueConverter<V> valueOfConverter( Class<V> clazz ) {
         try {
-            final Method valueOf = clazz.getDeclaredMethod( "valueOf", String.class );
-            if ( !meetsConverterRequirements( valueOf, clazz ) )
-                return null;
+            Method valueOf = clazz.getDeclaredMethod( "valueOf", String.class );
+            if ( meetsConverterRequirements( valueOf, clazz ) )
+                return new MethodInvokingValueConverter<V>( valueOf, clazz );
 
-            return new ValueConverter<V>() {
-                public V convert( String value ) {
-                    return clazz.cast( invoke( valueOf, value ) );
-                }
-
-                public Class<V> valueType() {
-                    return clazz;
-                }
-            };
+            return null;
         }
         catch ( NoSuchMethodException ignored ) {
             return null;
         }
     }
 
-    private static <V> ValueConverter<V> constructorConverter( final Class<V> clazz ) {
+    private static <V> ValueConverter<V> constructorConverter( Class<V> clazz ) {
         try {
-            final Constructor<V> ctor = clazz.getConstructor( String.class );
-            return new ValueConverter<V>() {
-                public V convert( String value ) {
-                    return instantiate( ctor, value );
-                }
-
-                public Class<V> valueType() {
-                    return clazz;
-                }
-            };
+            return new ConstructorInvokingValueConverter<V>( clazz.getConstructor( String.class ) );
         }
         catch ( NoSuchMethodException ignored ) {
             return null;
@@ -167,13 +153,14 @@ public class Reflection {
         }
     }
 
-    private static boolean meetsConverterRequirements( Method method,
-        Class<?> expectedReturnType ) {
+    @SuppressWarnings( "unchecked" )
+    public static <V> V convertWith( ValueConverter<V> converter, String raw ) {
+        return converter == null ? (V) raw : converter.convert( raw );
+    }
 
+    private static boolean meetsConverterRequirements( Method method, Class<?> expectedReturnType ) {
         int modifiers = method.getModifiers();
-        return isPublic( modifiers )
-            && isStatic( modifiers )
-            && expectedReturnType.equals( method.getReturnType() );
+        return isPublic( modifiers ) && isStatic( modifiers ) && expectedReturnType.equals( method.getReturnType() );
     }
 
     private static RuntimeException reflectionException( Exception ex ) {

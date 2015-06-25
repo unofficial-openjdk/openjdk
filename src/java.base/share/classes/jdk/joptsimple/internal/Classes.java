@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,26 +55,51 @@
 
 package jdk.joptsimple.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: Classes.java,v 1.5 2008/12/16 04:09:08 pholser Exp $
  */
-public class Classes {
-    /**
-     * <p>Do not instantiate -- statics only.</p>
-     */
-    Classes() {
+public final class Classes {
+    private static final Map<Class<?>, Class<?>> WRAPPERS = new HashMap<Class<?>, Class<?>>( 13 );
+
+    static {
+        WRAPPERS.put( boolean.class, Boolean.class );
+        WRAPPERS.put( byte.class, Byte.class );
+        WRAPPERS.put( char.class, Character.class );
+        WRAPPERS.put( double.class, Double.class );
+        WRAPPERS.put( float.class, Float.class );
+        WRAPPERS.put( int.class, Integer.class );
+        WRAPPERS.put( long.class, Long.class );
+        WRAPPERS.put( short.class, Short.class );
+        WRAPPERS.put( void.class, Void.class );
+    }
+
+    private Classes() {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * Gives the "short name" of the given class.  Somewhat naive to inner classes.
+     * Gives the "short version" of the given class name.  Somewhat naive to inner classes.
      *
-     * @param aClass class to query
+     * @param className class name to chew on
      * @return the short name of the class
      */
-    public static String shortNameOf( Class<?> aClass ) {
-        String name = aClass.getName();
-        return name.substring( name.lastIndexOf( '.' ) + 1 );
+    public static String shortNameOf( String className ) {
+        return className.substring( className.lastIndexOf( '.' ) + 1 );
+    }
+
+    /**
+     * Gives the primitive wrapper class for the given class. If the given class is not
+     * {@linkplain Class#isPrimitive() primitive}, returns the class itself.
+     *
+     * @param <T> generic class type
+     * @param clazz the class to check
+     * @return primitive wrapper type if {@code clazz} is primitive, otherwise {@code clazz}
+     */
+    @SuppressWarnings( "unchecked" )
+    public static <T> Class<T> wrapperOf( Class<T> clazz ) {
+        return clazz.isPrimitive() ? (Class<T>) WRAPPERS.get( clazz ) : clazz;
     }
 }

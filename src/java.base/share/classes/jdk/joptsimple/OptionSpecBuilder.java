@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,26 +55,26 @@
 
 package jdk.joptsimple;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * <p>Allows callers to specify whether a given option accepts arguments (required or
- * optional).</p>
+ * Allows callers to specify whether a given option accepts arguments (required or optional).
  *
- * <p>Instances are returned from {@link OptionParser#accepts(String)} to allow the
- * formation of parser directives as sentences in a fluent interface language.  For
- * example:</p>
+ * <p>Instances are returned from {@link OptionParser#accepts(String)} to allow the formation of parser directives as
+ * sentences in a "fluent interface" language.  For example:</p>
  *
  * <pre><code>
  *   OptionParser parser = new OptionParser();
  *   parser.accepts( "c" ).<strong>withRequiredArg()</strong>.ofType( Integer.class );
  * </code></pre>
  *
- * <p>If no methods are invoked on an instance of this class, then that instance's option
- * will accept no argument.</p>
+ * <p>If no methods are invoked on an instance of this class, then that instance's option will accept no argument.</p>
  *
- * <p>Note that you should not use the fluent interface clauses in a way that would
- * defeat the typing of option arguments:</p>
+ * <p>Note that you should not use the fluent interface clauses in a way that would defeat the typing of option
+ * arguments:</p>
  *
  * <pre><code>
  *   OptionParser parser = new OptionParser();
@@ -80,27 +82,27 @@ import java.util.Collection;
  *       parser.accepts( "c" ).withRequiredArg();
  *   <strong>optionC.ofType( Integer.class );  // DON'T THROW AWAY THE TYPE!</strong>
  *
- *   // raises ClassCastException
- *   String value = parser.parse( "-c", "2" ).valueOf( optionC );
+ *   String value = parser.parse( "-c", "2" ).valueOf( optionC );  // ClassCastException
  * </code></pre>
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: OptionSpecBuilder.java,v 1.14 2008/12/27 23:24:03 pholser Exp $
  */
 public class OptionSpecBuilder extends NoArgumentOptionSpec {
     private final OptionParser parser;
 
-    OptionSpecBuilder( OptionParser parser, Collection<String> options,
-        String description ) {
-
+    OptionSpecBuilder( OptionParser parser, Collection<String> options, String description ) {
         super( options, description );
 
         this.parser = parser;
+        attachToParser();
+    }
+
+    private void attachToParser() {
         parser.recognize( this );
     }
 
     /**
-     * <p>Informs an option parser that this builder's option requires an argument.</p>
+     * Informs an option parser that this builder's option requires an argument.
      *
      * @return a specification for the option
      */
@@ -113,8 +115,7 @@ public class OptionSpecBuilder extends NoArgumentOptionSpec {
     }
 
     /**
-     * <p>Informs an option parser that this builder's option accepts an optional
-     * argument.</p>
+     * Informs an option parser that this builder's option accepts an optional argument.
      *
      * @return a specification for the option
      */
@@ -124,5 +125,101 @@ public class OptionSpecBuilder extends NoArgumentOptionSpec {
         parser.recognize( newSpec );
 
         return newSpec;
+    }
+
+    /**
+     * <p>Informs an option parser that this builder's option is required if the given option is present on the command
+     * line.</p>
+     *
+     * <p>For a given option, you <em>should not</em> mix this with {@link #requiredUnless(String, String...)
+     * requiredUnless} to avoid conflicts.</p>
+     *
+     * @param dependent an option whose presence on a command line makes this builder's option required
+     * @param otherDependents other options whose presence on a command line makes this builder's option required
+     * @return self, so that the caller can add clauses to the fluent interface sentence
+     * @throws OptionException if any of the dependent options haven't been configured in the parser yet
+     */
+    public OptionSpecBuilder requiredIf( String dependent, String... otherDependents ) {
+        List<String> dependents = validatedDependents( dependent, otherDependents );
+        for ( String each : dependents ) {
+            parser.requiredIf( options(), each );
+        }
+
+        return this;
+    }
+
+    /**
+     * <p>Informs an option parser that this builder's option is required if the given option is present on the command
+     * line.</p>
+     *
+     * <p>For a given option, you <em>should not</em> mix this with {@link #requiredUnless(OptionSpec, OptionSpec[])
+     * requiredUnless} to avoid conflicts.</p>
+     *
+     * <p>This method recognizes only instances of options returned from the fluent interface methods.</p>
+     *
+     * @param dependent the option whose presence on a command line makes this builder's option required
+     * @param otherDependents other options whose presence on a command line makes this builder's option required
+     * @return self, so that the caller can add clauses to the fluent interface sentence
+     */
+    public OptionSpecBuilder requiredIf( OptionSpec<?> dependent, OptionSpec<?>... otherDependents ) {
+        parser.requiredIf( options(), dependent );
+        for ( OptionSpec<?> each : otherDependents )
+            parser.requiredIf( options(), each );
+
+        return this;
+    }
+
+    /**
+     * <p>Informs an option parser that this builder's option is required if the given option is absent on the command
+     * line.</p>
+     *
+     * <p>For a given option, you <em>should not</em> mix this with {@link #requiredIf(OptionSpec, OptionSpec[])
+     * requiredIf} to avoid conflicts.</p>
+     *
+     * @param dependent an option whose absence on a command line makes this builder's option required
+     * @param otherDependents other options whose absence on a command line makes this builder's option required
+     * @return self, so that the caller can add clauses to the fluent interface sentence
+     * @throws OptionException if any of the dependent options haven't been configured in the parser yet
+     */
+    public OptionSpecBuilder requiredUnless( String dependent, String... otherDependents ) {
+        List<String> dependents = validatedDependents( dependent, otherDependents );
+        for ( String each : dependents ) {
+            parser.requiredUnless( options(), each );
+        }
+        return this;
+    }
+
+    /**
+     * <p>Informs an option parser that this builder's option is required if the given option is absent on the command
+     * line.</p>
+     *
+     * <p>For a given option, you <em>should not</em> mix this with {@link #requiredIf(OptionSpec, OptionSpec[])
+     * requiredIf} to avoid conflicts.</p>
+     *
+     * <p>This method recognizes only instances of options returned from the fluent interface methods.</p>
+     *
+     * @param dependent the option whose absence on a command line makes this builder's option required
+     * @param otherDependents other options whose absence on a command line makes this builder's option required
+     * @return self, so that the caller can add clauses to the fluent interface sentence
+     */
+    public OptionSpecBuilder requiredUnless( OptionSpec<?> dependent, OptionSpec<?>... otherDependents ) {
+        parser.requiredUnless( options(), dependent );
+        for ( OptionSpec<?> each : otherDependents )
+            parser.requiredUnless( options(), each );
+
+        return this;
+    }
+
+    private List<String> validatedDependents( String dependent, String... otherDependents ) {
+        List<String> dependents = new ArrayList<String>();
+        dependents.add( dependent );
+        Collections.addAll( dependents, otherDependents );
+
+        for ( String each : dependents ) {
+            if ( !parser.isRecognized( each ) )
+                throw new UnconfiguredOptionException( each );
+        }
+
+        return dependents;
     }
 }

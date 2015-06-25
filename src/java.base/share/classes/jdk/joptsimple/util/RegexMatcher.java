@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,69 +53,61 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.regex.Pattern;
 
-import static java.util.Collections.*;
+import static java.util.regex.Pattern.*;
 
-import static jdk.joptsimple.internal.Strings.*;
+import jdk.joptsimple.ValueConversionException;
+import jdk.joptsimple.ValueConverter;
 
 /**
- * Thrown when a problem occurs during option parsing.
+ * Ensures that values entirely match a regular expression.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
+public class RegexMatcher implements ValueConverter<String> {
+    private final Pattern pattern;
 
-    private final List<String> options = new ArrayList<String>();
-
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
-    }
-
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
+    /**
+     * Creates a matcher that uses the given regular expression, modified by the given flags.
+     *
+     * @param pattern the regular expression pattern
+     * @param flags modifying regex flags
+     * @throws IllegalArgumentException if bit values other than those corresponding to the defined match flags are
+     * set in {@code flags}
+     * @throws java.util.regex.PatternSyntaxException if the expression's syntax is invalid
+     */
+    public RegexMatcher( String pattern, int flags ) {
+        this.pattern = compile( pattern, flags );
     }
 
     /**
-     * Gives the option being considered when the exception was created.
+     * Gives a matcher that uses the given regular expression.
      *
-     * @return the option being considered when the exception was created
+     * @param pattern the regular expression pattern
+     * @return the new converter
+     * @throws java.util.regex.PatternSyntaxException if the expression's syntax is invalid
      */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
+    public static ValueConverter<String> regex( String pattern ) {
+        return new RegexMatcher( pattern, 0 );
     }
 
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
-    }
-
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
-    }
-
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
-
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
+    public String convert( String value ) {
+        if ( !pattern.matcher( value ).matches() ) {
+            throw new ValueConversionException(
+                "Value [" + value + "] did not match regex [" + pattern.pattern() + ']' );
         }
 
-        buffer.append( ']' );
-
-        return buffer.toString();
+        return value;
     }
 
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+    public Class<String> valueType() {
+        return String.class;
+    }
+
+    public String valuePattern() {
+        return pattern.pattern();
     }
 }

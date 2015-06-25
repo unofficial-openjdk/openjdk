@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,21 +55,25 @@
 
 package jdk.joptsimple;
 
-import static java.util.Collections.*;
-import static jdk.joptsimple.internal.Strings.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static java.util.Collections.*;
+
+import jdk.joptsimple.internal.Reflection;
+import jdk.joptsimple.internal.ReflectionException;
+
+import static jdk.joptsimple.internal.Strings.*;
+
 /**
  * @param <V> represents the type of the arguments this option accepts
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: AbstractOptionSpec.java,v 1.10 2008/12/26 03:47:25 pholser Exp $
  */
-abstract class AbstractOptionSpec<V> implements OptionSpec<V> {
+abstract class AbstractOptionSpec<V> implements OptionSpec<V>, OptionDescriptor {
     private final List<String> options = new ArrayList<String>();
     private final String description;
+    private boolean forHelp;
 
     protected AbstractOptionSpec( String option ) {
         this( singletonList( option ), EMPTY );
@@ -80,7 +86,7 @@ abstract class AbstractOptionSpec<V> implements OptionSpec<V> {
     }
 
     public final Collection<String> options() {
-        return unmodifiableCollection( options );
+        return unmodifiableList( options );
     }
 
     public final List<V> values( OptionSet detectedOptions ) {
@@ -91,40 +97,47 @@ abstract class AbstractOptionSpec<V> implements OptionSpec<V> {
         return detectedOptions.valueOf( this );
     }
 
-    String description() {
+    public String description() {
         return description;
+    }
+
+    public final AbstractOptionSpec<V> forHelp() {
+        forHelp = true;
+        return this;
+    }
+
+    public final boolean isForHelp() {
+        return forHelp;
+    }
+
+    public boolean representsNonOptions() {
+        return false;
     }
 
     protected abstract V convert( String argument );
 
-    abstract void handleOption( OptionParser parser, ArgumentList arguments,
-        OptionSet detectedOptions, String detectedArgument );
-
-    abstract boolean acceptsArguments();
-
-    abstract boolean requiresArgument();
-
-    abstract void accept( OptionSpecVisitor visitor );
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals( Object that ) {
-        if ( !( that instanceof AbstractOptionSpec ) )
-            return false;
-
-        AbstractOptionSpec<?> other = (AbstractOptionSpec<?>) that;
-        return options.equals( other.options );
+    protected V convertWith( ValueConverter<V> converter, String argument ) {
+        try {
+            return Reflection.convertWith( converter, argument );
+        }
+        catch ( ReflectionException ex ) {
+            throw new OptionArgumentConversionException( options(), argument, ex );
+        }
+        catch ( ValueConversionException ex ) {
+            throw new OptionArgumentConversionException( options(), argument, ex );
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return options.hashCode();
+    protected String argumentTypeIndicatorFrom( ValueConverter<V> converter ) {
+        if ( converter == null )
+            return null;
+
+        String pattern = converter.valuePattern();
+        return pattern == null ? converter.valueType().getName() : pattern;
     }
+
+    abstract void handleOption( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions,
+        String detectedArgument );
 
     private void arrangeOptions( Collection<String> unarranged ) {
         if ( unarranged.size() == 1 ) {
@@ -147,6 +160,20 @@ abstract class AbstractOptionSpec<V> implements OptionSpec<V> {
 
         options.addAll( shortOptions );
         options.addAll( longOptions );
+    }
+
+    @Override
+    public boolean equals( Object that ) {
+        if ( !( that instanceof AbstractOptionSpec<?> ) )
+            return false;
+
+        AbstractOptionSpec<?> other = (AbstractOptionSpec<?>) that;
+        return options.equals( other.options );
+    }
+
+    @Override
+    public int hashCode() {
+        return options.hashCode();
     }
 
     @Override

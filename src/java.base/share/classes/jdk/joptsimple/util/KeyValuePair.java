@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -58,11 +60,10 @@ import static jdk.joptsimple.internal.Strings.*;
 /**
  * <p>A simple string key/string value pair.</p>
  *
- * <p>This is useful as an argument type for options whose values take on the form
- * <kbd>key=value</kbd>, such as JVM command line system properties.</p>
+ * <p>This is useful as an argument type for options whose values take on the form <kbd>key=value</kbd>, such as JVM
+ * command line system properties.</p>
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: KeyValuePair.java,v 1.7 2008/12/16 04:09:09 pholser Exp $
  */
 public final class KeyValuePair {
     public final String key;
@@ -76,29 +77,21 @@ public final class KeyValuePair {
     /**
      * Parses a string assumed to be of the form <kbd>key=value</kbd> into its parts.
      *
-     * @param stringRepresentation key-value string
+     * @param asString key-value string
      * @return a key-value pair
      * @throws NullPointerException if {@code stringRepresentation} is {@code null}
      */
-    public static KeyValuePair valueOf( String stringRepresentation ) {
-        int equalsIndex = stringRepresentation.indexOf( '=' );
+    public static KeyValuePair valueOf( String asString ) {
+        int equalsIndex = asString.indexOf( '=' );
         if ( equalsIndex == -1 )
-            return new KeyValuePair( stringRepresentation, EMPTY );
+            return new KeyValuePair( asString, EMPTY );
 
-        String aKey = stringRepresentation.substring( 0, equalsIndex );
-        String aValue;
-
-        if ( equalsIndex == stringRepresentation.length() - 1 )
-            aValue = EMPTY;
-        else
-            aValue = stringRepresentation.substring( equalsIndex + 1 );
+        String aKey = asString.substring( 0, equalsIndex );
+        String aValue = equalsIndex == asString.length() - 1 ? EMPTY : asString.substring( equalsIndex + 1 );
 
         return new KeyValuePair( aKey, aValue );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean equals( Object that ) {
         if ( !( that instanceof KeyValuePair ) )
@@ -108,17 +101,11 @@ public final class KeyValuePair {
         return key.equals( other.key ) && value.equals( other.value );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int hashCode() {
         return key.hashCode() ^ value.hashCode();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
         return key + '=' + value;

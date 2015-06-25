@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,14 +55,12 @@
 
 package jdk.joptsimple.internal;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * <p>A map whose keys are strings; when a key/value pair is added to the map,
- * the longest unique abbreviations of that key are added as well, and associated with
- * the value.  Thus:</p>
+ * <p>A map whose keys are strings; when a key/value pair is added to the map, the longest unique abbreviations of that
+ * key are added as well, and associated with the value. Thus:</p>
  *
  * <pre>
  *   <code>
@@ -68,33 +68,28 @@ import java.util.TreeMap;
  *   </code>
  * </pre>
  *
- * <p>would make it such that you could retrieve the value {@code "bye"} from the map
- * using the keys {@code "good"}, {@code "goo"}, {@code "go"}, and {@code "g"}.
- * A subsequent invocation of:</p>
+ * <p>would make it such that you could retrieve the value {@code "bye"} from the map using the keys {@code "good"},
+ * {@code "goo"}, {@code "go"}, and {@code "g"}. A subsequent invocation of:</p>
  * <pre>
  *   <code>
  *   abbreviations.put( "go", "fish" );
  *   </code>
  * </pre>
  *
- * <p>would make it such that you could retrieve the value {@code "bye"} using the keys
- * {@code "good"} and {@code "goo"}, and the value {@code "fish"} using the key
- * {@code "go"}.  The key {@code "g"} would yield {@code null}, since it would no longer
- * be a unique abbreviation.</p>
+ * <p>would make it such that you could retrieve the value {@code "bye"} using the keys {@code "good"} and
+ * {@code "goo"}, and the value {@code "fish"} using the key {@code "go"}.  The key {@code "g"} would yield
+ * {@code null}, since it would no longer be a unique abbreviation.</p>
  *
  * <p>The data structure is much like a "trie".</p>
  *
  * @param <V> a constraint on the types of the values in the map
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: AbbreviationMap.java,v 1.10 2008/12/19 00:11:00 pholser Exp $
- * @see <a href="http://www.perldoc.com/perl5.8.0/lib/Text/Abbrev.html"> Perl's
- * Text::Abbrev module</a>
+ * @see <a href="http://www.perldoc.com/perl5.8.0/lib/Text/Abbrev.html">Perl's Text::Abbrev module</a>
  */
 public class AbbreviationMap<V> {
     private String key;
     private V value;
-    private final Map<Character, AbbreviationMap<V>> children =
-        new TreeMap<Character, AbbreviationMap<V>>();
+    private final Map<Character, AbbreviationMap<V>> children = new TreeMap<Character, AbbreviationMap<V>>();
     private int keysBeyond;
 
     /**
@@ -159,7 +154,7 @@ public class AbbreviationMap<V> {
      * @throws NullPointerException if {@code keys} or {@code newValue} is {@code null}
      * @throws IllegalArgumentException if any of {@code keys} is a zero-length string
      */
-    public void putAll( Collection<String> keys, V newValue ) {
+    public void putAll( Iterable<String> keys, V newValue ) {
         for ( String each : keys )
             put( each, newValue );
     }
@@ -224,8 +219,7 @@ public class AbbreviationMap<V> {
     }
 
     private void setValueToThatOfOnlyChild() {
-        Map.Entry<Character, AbbreviationMap<V>> entry =
-            children.entrySet().iterator().next();
+        Map.Entry<Character, AbbreviationMap<V>> entry = children.entrySet().iterator().next();
         AbbreviationMap<V> onlyChild = entry.getValue();
         value = onlyChild.value;
     }
@@ -244,7 +238,7 @@ public class AbbreviationMap<V> {
     }
 
     /**
-    * Gives a Java map representation of this abbreviation map.
+     * Gives a Java map representation of this abbreviation map.
      *
      * @return a Java map corresponding to this abbreviation map
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -56,20 +58,17 @@ package jdk.joptsimple;
 import static jdk.joptsimple.ParserRules.*;
 
 /**
- * <p>Abstraction of parser state; mostly serves to model how a parser behaves depending
- * on whether end-of-options has been detected.</p>
+ * Abstraction of parser state; mostly serves to model how a parser behaves depending on whether end-of-options
+ * has been detected.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: OptionParserState.java,v 1.5 2008/12/16 04:09:08 pholser Exp $
  */
 abstract class OptionParserState {
     static OptionParserState noMoreOptions() {
         return new OptionParserState() {
             @Override
-            protected void handleArgument( OptionParser parser, ArgumentList arguments,
-                OptionSet detectedOptions ) {
-
-                detectedOptions.addNonOptionArgument( arguments.next() );
+            protected void handleArgument( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions ) {
+                parser.handleNonOptionArgument( arguments.next(), arguments, detectedOptions );
             }
         };
     }
@@ -77,27 +76,31 @@ abstract class OptionParserState {
     static OptionParserState moreOptions( final boolean posixlyCorrect ) {
         return new OptionParserState() {
             @Override
-            protected void handleArgument( OptionParser parser, ArgumentList arguments,
-                OptionSet detectedOptions ) {
-
+            protected void handleArgument( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions ) {
                 String candidate = arguments.next();
-                if ( isOptionTerminator( candidate ) )
-                    parser.noMoreOptions();
-                else if ( isLongOptionToken( candidate ) )
-                    parser.handleLongOptionToken( candidate, arguments, detectedOptions );
-                else if ( isShortOptionToken( candidate ) )
-                    parser.handleShortOptionToken( candidate, arguments,
-                        detectedOptions );
-                else {
-                    if ( posixlyCorrect )
+                try {
+                    if ( isOptionTerminator( candidate ) ) {
                         parser.noMoreOptions();
-
-                    detectedOptions.addNonOptionArgument( candidate );
+                        return;
+                    } else if ( isLongOptionToken( candidate ) ) {
+                        parser.handleLongOptionToken( candidate, arguments, detectedOptions );
+                        return;
+                    } else if ( isShortOptionToken( candidate ) ) {
+                        parser.handleShortOptionToken( candidate, arguments, detectedOptions );
+                        return;
+                    }
+                } catch ( UnrecognizedOptionException e ) {
+                    if ( !parser.doesAllowsUnrecognizedOptions() )
+                        throw e;
                 }
+
+                if ( posixlyCorrect )
+                    parser.noMoreOptions();
+
+                parser.handleNonOptionArgument( candidate, arguments, detectedOptions );
             }
         };
     }
 
-    protected abstract void handleArgument( OptionParser parser, ArgumentList arguments,
-        OptionSet detectedOptions );
+    protected abstract void handleArgument( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions );
 }

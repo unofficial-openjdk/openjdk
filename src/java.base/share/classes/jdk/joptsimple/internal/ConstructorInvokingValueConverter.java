@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -51,20 +53,34 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.internal;
+
+import java.lang.reflect.Constructor;
+
+import jdk.joptsimple.ValueConverter;
+
+import static jdk.joptsimple.internal.Reflection.*;
 
 /**
- * <p>Visitor interface for option specifications.</p>
- *
+ * @param <V> constraint on the type of values being converted to
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: OptionSpecVisitor.java,v 1.4 2008/12/16 04:09:08 pholser Exp $
  */
-interface OptionSpecVisitor {
-    void visit( NoArgumentOptionSpec spec );
+class ConstructorInvokingValueConverter<V> implements ValueConverter<V> {
+    private final Constructor<V> ctor;
 
-    void visit( RequiredArgumentOptionSpec<?> spec );
+    ConstructorInvokingValueConverter( Constructor<V> ctor ) {
+        this.ctor = ctor;
+    }
 
-    void visit( OptionalArgumentOptionSpec<?> spec );
+    public V convert( String value ) {
+        return instantiate( ctor, value );
+    }
 
-    void visit( AlternativeLongOptionSpec spec );
+    public Class<V> valueType() {
+        return ctor.getDeclaringClass();
+    }
+
+    public String valuePattern() {
+        return null;
+    }
 }

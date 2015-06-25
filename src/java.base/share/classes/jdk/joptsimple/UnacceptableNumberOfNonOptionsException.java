@@ -55,67 +55,30 @@
 
 package jdk.joptsimple;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
 import static java.util.Collections.*;
 
-import static jdk.joptsimple.internal.Strings.*;
-
 /**
- * Thrown when a problem occurs during option parsing.
+ * Thrown when the option parser detects an unacceptable number of {@code linkplain NonOptionArgumentSpec
+ * non-option arguments}.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
+class UnacceptableNumberOfNonOptionsException extends OptionException {
     private static final long serialVersionUID = -1L;
+    private final int minimum;
+    private final int maximum;
+    private final int actual;
 
-    private final List<String> options = new ArrayList<String>();
+    UnacceptableNumberOfNonOptionsException( int minimum, int maximum, int actual ) {
+        super( singletonList( NonOptionArgumentSpec.NAME ) );
 
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
+        this.minimum = minimum;
+        this.maximum = maximum;
+        this.actual = actual;
     }
 
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
-    }
-
-    /**
-     * Gives the option being considered when the exception was created.
-     *
-     * @return the option being considered when the exception was created
-     */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
-    }
-
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
-    }
-
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
-    }
-
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
-
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
-        }
-
-        buffer.append( ']' );
-
-        return buffer.toString();
-    }
-
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+    @Override
+    public String getMessage() {
+        return String.format( "actual = %d, minimum = %d, maximum = %d", actual, minimum, maximum );
     }
 }

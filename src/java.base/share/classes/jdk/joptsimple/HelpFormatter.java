@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,113 +55,21 @@
 
 package jdk.joptsimple;
 
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import jdk.joptsimple.internal.ColumnarData;
-import static jdk.joptsimple.ParserRules.*;
-import static jdk.joptsimple.internal.Classes.*;
-import static jdk.joptsimple.internal.Strings.*;
 
 /**
+ * <p>Represents objects charged with taking a set of option descriptions and producing some help text from them.</p>
+ *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: HelpFormatter.java,v 1.11 2008/12/19 00:11:00 pholser Exp $
  */
-class HelpFormatter implements OptionSpecVisitor {
-    private final ColumnarData grid;
-
-    HelpFormatter() {
-        grid = new ColumnarData( "Option", "Description" );
-    }
-
-    String format( Map<String, AbstractOptionSpec<?>> options ) {
-        if ( options.isEmpty() )
-            return "No options specified";
-
-        grid.clear();
-
-        Comparator<AbstractOptionSpec<?>> comparator =
-            new Comparator<AbstractOptionSpec<?>>() {
-                public int compare( AbstractOptionSpec<?> first,
-                    AbstractOptionSpec<?> second ) {
-
-                    return first.options().iterator().next().compareTo(
-                        second.options().iterator().next() );
-                }
-            };
-
-        Set<AbstractOptionSpec<?>> sorted =
-            new TreeSet<AbstractOptionSpec<?>>( comparator );
-        sorted.addAll( options.values() );
-
-        for ( AbstractOptionSpec<?> each : sorted )
-            each.accept( this );
-
-        return grid.format();
-    }
-
-    void addHelpLineFor( AbstractOptionSpec<?> spec, String additionalInfo ) {
-        grid.addRow(
-            createOptionDisplay( spec ) + additionalInfo,
-            spec.description() );
-    }
-
-    public void visit( NoArgumentOptionSpec spec ) {
-        addHelpLineFor( spec, "" );
-    }
-
-    public void visit( RequiredArgumentOptionSpec<?> spec ) {
-        visit( spec, '<', '>' );
-    }
-
-    public void visit( OptionalArgumentOptionSpec<?> spec ) {
-        visit( spec, '[', ']' );
-    }
-
-    private void visit( ArgumentAcceptingOptionSpec<?> spec, char begin, char end ) {
-        String argDescription = spec.argumentDescription();
-        String argType = nameOfArgumentType( spec );
-        StringBuilder collector = new StringBuilder();
-
-        if ( argType.length() > 0 ) {
-            collector.append( argType );
-
-            if ( argDescription.length() > 0 )
-                collector.append( ": " ).append( argDescription );
-        }
-        else if ( argDescription.length() > 0 )
-            collector.append( argDescription );
-
-        String helpLine = collector.length() == 0
-            ? ""
-            : ' ' + surround( collector.toString(), begin, end );
-        addHelpLineFor( spec, helpLine );
-    }
-
-    public void visit( AlternativeLongOptionSpec spec ) {
-        addHelpLineFor( spec, ' ' + surround( spec.argumentDescription(), '<', '>' ) );
-    }
-
-    private String createOptionDisplay( AbstractOptionSpec<?> spec ) {
-        StringBuilder buffer = new StringBuilder();
-
-        for ( Iterator<String> iter = spec.options().iterator(); iter.hasNext(); ) {
-            String option = iter.next();
-            buffer.append( option.length() > 1 ? DOUBLE_HYPHEN : HYPHEN );
-            buffer.append( option );
-
-            if ( iter.hasNext() )
-                buffer.append( ", " );
-        }
-
-        return buffer.toString();
-    }
-
-    private static String nameOfArgumentType( ArgumentAcceptingOptionSpec<?> spec ) {
-        Class<?> argType = spec.argumentType();
-        return String.class.equals( argType ) ? "" : shortNameOf( argType );
-    }
+public interface HelpFormatter {
+    /**
+     * Produces help text, given a set of option descriptors.
+     *
+     * @param options descriptors for the configured options of a parser
+     * @return text to be used as help
+     * @see OptionParser#printHelpOn(java.io.Writer)
+     * @see OptionParser#formatHelpWith(HelpFormatter)
+     */
+    String format( Map<String, ? extends OptionDescriptor> options );
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,69 +53,85 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.internal;
 
+import java.text.BreakIterator;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
-import static java.util.Collections.*;
+import static java.text.BreakIterator.*;
 
 import static jdk.joptsimple.internal.Strings.*;
 
 /**
- * Thrown when a problem occurs during option parsing.
- *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
+class Columns {
+    private static final int INDENT_WIDTH = 2;
 
-    private final List<String> options = new ArrayList<String>();
+    private final int optionWidth;
+    private final int descriptionWidth;
 
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
+    Columns( int optionWidth, int descriptionWidth ) {
+        this.optionWidth = optionWidth;
+        this.descriptionWidth = descriptionWidth;
     }
 
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
+    List<Row> fit( Row row ) {
+        List<String> options = piecesOf( row.option, optionWidth );
+        List<String> descriptions = piecesOf( row.description, descriptionWidth );
 
-        this.options.addAll( options );
+        List<Row> rows = new ArrayList<Row>();
+        for ( int i = 0; i < Math.max( options.size(), descriptions.size() ); ++i )
+            rows.add( new Row( itemOrEmpty( options, i ), itemOrEmpty( descriptions, i ) ) );
+
+        return rows;
     }
 
-    /**
-     * Gives the option being considered when the exception was created.
-     *
-     * @return the option being considered when the exception was created
-     */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
+    private static String itemOrEmpty( List<String> items, int index ) {
+        return index >= items.size() ? "" : items.get( index );
     }
 
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
+    private List<String> piecesOf( String raw, int width ) {
+        List<String> pieces = new ArrayList<String>();
+
+        for ( String each : raw.trim().split( LINE_SEPARATOR ) )
+            pieces.addAll( piecesOfEmbeddedLine( each, width ) );
+
+        return pieces;
     }
 
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
+    private List<String> piecesOfEmbeddedLine( String line, int width ) {
+        List<String> pieces = new ArrayList<String>();
+
+        BreakIterator words = BreakIterator.getLineInstance( Locale.US );
+        words.setText( line );
+
+        StringBuilder nextPiece = new StringBuilder();
+
+        int start = words.first();
+        for ( int end = words.next(); end != DONE; start = end, end = words.next() )
+            nextPiece = processNextWord( line, nextPiece, start, end, width, pieces );
+
+        if ( nextPiece.length() > 0 )
+            pieces.add( nextPiece.toString() );
+
+        return pieces;
     }
 
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
+    private StringBuilder processNextWord( String source, StringBuilder nextPiece, int start, int end, int width,
+                                           List<String> pieces ) {
+        StringBuilder augmented = nextPiece;
 
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
+        String word = source.substring( start, end );
+        if ( augmented.length() + word.length() > width ) {
+            pieces.add( augmented.toString().replaceAll( "\\s+$", "" ) );
+            augmented = new StringBuilder( repeat( ' ', INDENT_WIDTH ) ).append( word );
         }
+        else
+            augmented.append( word );
 
-        buffer.append( ']' );
-
-        return buffer.toString();
-    }
-
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+        return augmented;
     }
 }

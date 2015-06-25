@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,69 +53,33 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-import static java.util.Collections.*;
-
-import static jdk.joptsimple.internal.Strings.*;
+import jdk.joptsimple.ValueConversionException;
+import jdk.joptsimple.ValueConverter;
 
 /**
- * Thrown when a problem occurs during option parsing.
+ * Converts values to {@link java.net.InetAddress} using {@link InetAddress#getByName(String) getByName}.
  *
- * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
+ * @author <a href="mailto:r@ymund.de">Raymund F\u00FCl\u00F6p</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
-
-    private final List<String> options = new ArrayList<String>();
-
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
-    }
-
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
-    }
-
-    /**
-     * Gives the option being considered when the exception was created.
-     *
-     * @return the option being considered when the exception was created
-     */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
-    }
-
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
-    }
-
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
-    }
-
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
-
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
+public class InetAddressConverter implements ValueConverter<InetAddress> {
+    public InetAddress convert( String value ) {
+        try {
+            return InetAddress.getByName( value );
+        } catch ( UnknownHostException e ) {
+            throw new ValueConversionException( "Cannot convert value [" + value + " into an InetAddress", e );
         }
-
-        buffer.append( ']' );
-
-        return buffer.toString();
     }
 
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+    public Class<InetAddress> valueType() {
+        return InetAddress.class;
+    }
+
+    public String valuePattern() {
+        return null;
     }
 }

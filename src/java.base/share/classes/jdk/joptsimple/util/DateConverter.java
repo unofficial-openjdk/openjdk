@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,69 +53,78 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import static java.util.Collections.*;
-
-import static jdk.joptsimple.internal.Strings.*;
+import jdk.joptsimple.ValueConversionException;
+import jdk.joptsimple.ValueConverter;
 
 /**
- * Thrown when a problem occurs during option parsing.
+ * Converts values to {@link Date}s using a {@link DateFormat} object.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
+public class DateConverter implements ValueConverter<Date> {
+    private final DateFormat formatter;
 
-    private final List<String> options = new ArrayList<String>();
+    /**
+     * Creates a converter that uses the given date formatter/parser.
+     *
+     * @param formatter the formatter/parser to use
+     * @throws NullPointerException if {@code formatter} is {@code null}
+     */
+    public DateConverter( DateFormat formatter ) {
+        if ( formatter == null )
+            throw new NullPointerException( "illegal null formatter" );
 
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
-    }
-
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
+        this.formatter = formatter;
     }
 
     /**
-     * Gives the option being considered when the exception was created.
+     * Creates a converter that uses a {@link SimpleDateFormat} with the given date/time pattern.  The date formatter
+     * created is not {@link SimpleDateFormat#setLenient(boolean) lenient}.
      *
-     * @return the option being considered when the exception was created
+     * @param pattern expected date/time pattern
+     * @return the new converter
+     * @throws NullPointerException if {@code pattern} is {@code null}
+     * @throws IllegalArgumentException if {@code pattern} is invalid
      */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
+    public static DateConverter datePattern( String pattern ) {
+        SimpleDateFormat formatter = new SimpleDateFormat( pattern );
+        formatter.setLenient( false );
+
+        return new DateConverter( formatter );
     }
 
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
+    public Date convert( String value ) {
+        ParsePosition position = new ParsePosition( 0 );
+
+        Date date = formatter.parse( value, position );
+        if ( position.getIndex() != value.length() )
+            throw new ValueConversionException( message( value ) );
+
+        return date;
     }
 
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
+    public Class<Date> valueType() {
+        return Date.class;
     }
 
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
-
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
-        }
-
-        buffer.append( ']' );
-
-        return buffer.toString();
+    public String valuePattern() {
+        return formatter instanceof SimpleDateFormat
+            ? ( (SimpleDateFormat) formatter ).toPattern()
+            : "";
     }
 
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+    private String message( String value ) {
+        String message = "Value [" + value + "] does not match date/time pattern";
+        if ( formatter instanceof SimpleDateFormat )
+            message += " [" + ( (SimpleDateFormat) formatter ).toPattern() + ']';
+
+        return message;
     }
 }

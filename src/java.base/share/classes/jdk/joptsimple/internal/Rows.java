@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,69 +53,80 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple;
+package jdk.joptsimple.internal;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-import static java.util.Collections.*;
+import static java.lang.Math.*;
 
 import static jdk.joptsimple.internal.Strings.*;
 
 /**
- * Thrown when a problem occurs during option parsing.
- *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
+public class Rows {
+    private final int overallWidth;
+    private final int columnSeparatorWidth;
+    private final Set<Row> rows = new LinkedHashSet<Row>();
+    private int widthOfWidestOption;
+    private int widthOfWidestDescription;
 
-    private final List<String> options = new ArrayList<String>();
-
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
+    public Rows( int overallWidth, int columnSeparatorWidth ) {
+        this.overallWidth = overallWidth;
+        this.columnSeparatorWidth = columnSeparatorWidth;
     }
 
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
+    public void add( String option, String description ) {
+        add( new Row( option, description ) );
     }
 
-    /**
-     * Gives the option being considered when the exception was created.
-     *
-     * @return the option being considered when the exception was created
-     */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
+    private void add( Row row ) {
+        rows.add( row );
+        widthOfWidestOption = max( widthOfWidestOption, row.option.length() );
+        widthOfWidestDescription = max( widthOfWidestDescription, row.description.length() );
     }
 
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
+    private void reset() {
+        rows.clear();
+        widthOfWidestOption = 0;
+        widthOfWidestDescription = 0;
     }
 
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
+    public void fitToWidth() {
+        Columns columns = new Columns( optionWidth(), descriptionWidth() );
+
+        Set<Row> fitted = new LinkedHashSet<Row>();
+        for ( Row each : rows )
+            fitted.addAll( columns.fit( each ) );
+
+        reset();
+
+        for ( Row each : fitted )
+            add( each );
     }
 
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
+    public String render() {
+        StringBuilder buffer = new StringBuilder();
 
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
+        for ( Row each : rows ) {
+            pad( buffer, each.option, optionWidth() ).append( repeat( ' ', columnSeparatorWidth ) );
+            pad( buffer, each.description, descriptionWidth() ).append( LINE_SEPARATOR );
         }
-
-        buffer.append( ']' );
 
         return buffer.toString();
     }
 
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
+    private int optionWidth() {
+        return min( ( overallWidth - columnSeparatorWidth ) / 2, widthOfWidestOption );
+    }
+
+    private int descriptionWidth() {
+        return min( ( overallWidth - columnSeparatorWidth ) / 2, widthOfWidestDescription );
+    }
+
+    private StringBuilder pad( StringBuilder buffer, String s, int length ) {
+        buffer.append( s ).append( repeat( ' ', length - s.length() ) );
+        return buffer;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -58,31 +60,22 @@ import static java.util.Collections.*;
 import static jdk.joptsimple.ParserRules.*;
 
 /**
- * <p>Represents the <kbd>"-W"</kbd> form of long option specification.</p>
+ * Represents the <kbd>"-W"</kbd> form of long option specification.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: AlternativeLongOptionSpec.java,v 1.8 2008/12/19 00:11:00 pholser Exp $
  */
 class AlternativeLongOptionSpec extends ArgumentAcceptingOptionSpec<String> {
     AlternativeLongOptionSpec() {
-        super( singletonList( RESERVED_FOR_EXTENSIONS ), true,
-            "Alternative form of long options" );
+        super( singletonList( RESERVED_FOR_EXTENSIONS ), true, "Alternative form of long options" );
 
         describedAs( "opt=value" );
     }
 
     @Override
-    protected void detectOptionArgument( OptionParser parser, ArgumentList arguments,
-        OptionSet detectedOptions ) {
-
+    protected void detectOptionArgument( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions ) {
         if ( !arguments.hasMore() )
             throw new OptionMissingRequiredArgumentException( options() );
 
         arguments.treatNextAsLongOption();
-    }
-
-    @Override
-    void accept( OptionSpecVisitor visitor ) {
-        visitor.visit( this );
     }
 }

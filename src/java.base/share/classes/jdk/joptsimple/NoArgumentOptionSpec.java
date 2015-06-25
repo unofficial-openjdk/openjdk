@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -54,13 +56,14 @@
 package jdk.joptsimple;
 
 import java.util.Collection;
+import java.util.List;
+
 import static java.util.Collections.*;
 
 /**
- * <p>A specification for an option that does not accept arguments.</p>
+ * A specification for an option that does not accept arguments.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: NoArgumentOptionSpec.java,v 1.12 2008/12/17 04:10:57 pholser Exp $
  */
 class NoArgumentOptionSpec extends AbstractOptionSpec<Void> {
     NoArgumentOptionSpec( String option ) {
@@ -72,29 +75,38 @@ class NoArgumentOptionSpec extends AbstractOptionSpec<Void> {
     }
 
     @Override
-    void handleOption( OptionParser parser, ArgumentList arguments,
-        OptionSet detectedOptions, String detectedArgument ) {
+    void handleOption( OptionParser parser, ArgumentList arguments, OptionSet detectedOptions,
+        String detectedArgument ) {
 
         detectedOptions.add( this );
     }
 
-    @Override
-    boolean acceptsArguments() {
+    public boolean acceptsArguments() {
         return false;
     }
 
-    @Override
-    boolean requiresArgument() {
+    public boolean requiresArgument() {
         return false;
     }
 
-    @Override
-    void accept( OptionSpecVisitor visitor ) {
-        visitor.visit( this );
+    public boolean isRequired() {
+        return false;
+    }
+
+    public String argumentDescription() {
+        return "";
+    }
+
+    public String argumentTypeIndicator() {
+        return "";
     }
 
     @Override
     protected Void convert( String argument ) {
         return null;
+    }
+
+    public List<Void> defaultValues() {
+        return emptyList();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -56,10 +58,9 @@ package jdk.joptsimple;
 import static java.util.Collections.*;
 
 /**
- * <p>Thrown when the option parser encounters an unrecognized option.</p>
+ * Thrown when the option parser encounters an unrecognized option.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: UnrecognizedOptionException.java,v 1.7 2008/12/16 04:09:08 pholser Exp $
  */
 class UnrecognizedOptionException extends OptionException {
     private static final long serialVersionUID = -1L;
@@ -68,9 +69,6 @@ class UnrecognizedOptionException extends OptionException {
         super( singletonList( option ) );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getMessage() {
         return singleOptionMessage() + " is not a recognized option";

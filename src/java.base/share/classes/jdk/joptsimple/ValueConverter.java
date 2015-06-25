@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -51,29 +53,36 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple.internal;
+package jdk.joptsimple;
 
 /**
- * Instances of this interface are used to convert arguments of options into specific
- * Java types.
+ * Instances of this interface are used to convert arguments of options into specific Java types.
  *
- * @param <T> constraint on the type of values being converted to
+ * @param <V> constraint on the type of values being converted to
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: ValueConverter.java,v 1.5 2008/12/27 04:02:50 pholser Exp $
  */
-public interface ValueConverter<T> {
+public interface ValueConverter<V> {
     /**
      * Converts the given string value into a Java type.
      *
      * @param value the string to convert
      * @return the converted value
+     * @throws ValueConversionException if a problem occurs while converting the value
      */
-    T convert( String value );
+    V convert( String value );
 
     /**
      * Gives the class of the type of values this converter converts to.
      *
      * @return the target class for conversion
      */
-    Class<T> valueType();
+    Class<V> valueType();
+
+    /**
+     * Gives a string that describes the pattern of the values this converter expects, if any.  For example, a date
+     * converter can respond with a {@link java.text.SimpleDateFormat date format string}.
+     *
+     * @return a value pattern, or {@code null} if there's nothing interesting here
+     */
+    String valuePattern();
 }

@@ -55,67 +55,77 @@
 
 package jdk.joptsimple;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
-import static java.util.Collections.*;
-
-import static jdk.joptsimple.internal.Strings.*;
-
 /**
- * Thrown when a problem occurs during option parsing.
+ * Describes options that an option parser recognizes, in ways that might be useful to {@linkplain HelpFormatter
+ * help screens}.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
  */
-public abstract class OptionException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
-
-    private final List<String> options = new ArrayList<String>();
-
-    protected OptionException( Collection<String> options ) {
-        this.options.addAll( options );
-    }
-
-    protected OptionException( Collection<String> options, Throwable cause ) {
-        super( cause );
-
-        this.options.addAll( options );
-    }
+public interface OptionDescriptor {
+    /**
+     * A set of options that are mutually synonymous.
+     *
+     * @return synonymous options
+     */
+    Collection<String> options();
 
     /**
-     * Gives the option being considered when the exception was created.
+     * Description of this option's purpose.
      *
-     * @return the option being considered when the exception was created
+     * @return a description for the option
      */
-    public Collection<String> options() {
-        return unmodifiableCollection( options );
-    }
+    String description();
 
-    protected final String singleOptionMessage() {
-        return singleOptionMessage( options.get( 0 ) );
-    }
+    /**
+     * What values will the option take if none are specified on the command line?
+     *
+     * @return any default values for the option
+     */
+    List<?> defaultValues();
 
-    protected final String singleOptionMessage( String option ) {
-        return SINGLE_QUOTE + option + SINGLE_QUOTE;
-    }
+    /**
+     * Is this option {@linkplain ArgumentAcceptingOptionSpec#required() required} on a command line?
+     *
+     * @return whether the option is required
+     */
+    boolean isRequired();
 
-    protected final String multipleOptionMessage() {
-        StringBuilder buffer = new StringBuilder( "[" );
+    /**
+     * Does this option {@linkplain ArgumentAcceptingOptionSpec accept arguments}?
+     *
+     * @return whether the option accepts arguments
+     */
+    boolean acceptsArguments();
 
-        for ( Iterator<String> iter = options.iterator(); iter.hasNext(); ) {
-            buffer.append( singleOptionMessage( iter.next() ) );
-            if ( iter.hasNext() )
-                buffer.append( ", " );
-        }
+    /**
+     * Does this option {@linkplain OptionSpecBuilder#withRequiredArg() require an argument}?
+     *
+     * @return whether the option requires an argument
+     */
+    boolean requiresArgument();
 
-        buffer.append( ']' );
+    /**
+     * Gives a short {@linkplain ArgumentAcceptingOptionSpec#describedAs(String) description} of the option's argument.
+     *
+     * @return a description for the option's argument
+     */
+    String argumentDescription();
 
-        return buffer.toString();
-    }
+    /**
+     * Gives an indication of the {@linkplain ArgumentAcceptingOptionSpec#ofType(Class) expected type} of the option's
+     * argument.
+     *
+     * @return a description for the option's argument type
+     */
+    String argumentTypeIndicator();
 
-    static OptionException unrecognizedOption( String option ) {
-        return new UnrecognizedOptionException( option );
-    }
+    /**
+     * Tells whether this object represents the non-option arguments of a command line.
+     *
+     * @return {@code true} if this represents non-option arguments
+     */
+    boolean representsNonOptions();
 }

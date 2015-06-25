@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -58,14 +60,13 @@ import java.util.NoSuchElementException;
 import static jdk.joptsimple.ParserRules.*;
 
 /**
- * <p>Tokenizes a short option specification string as expected by {@link
- * OptionParser#OptionParser(java.lang.String)}.</p>
+ * Tokenizes a short option specification string.
  *
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: OptionSpecTokenizer.java,v 1.8 2008/12/16 04:09:08 pholser Exp $
  */
 class OptionSpecTokenizer {
     private static final char POSIXLY_CORRECT_MARKER = '+';
+    private static final char HELP_MARKER = '*';
 
     private String specification;
     private int index;
@@ -85,10 +86,11 @@ class OptionSpecTokenizer {
         if ( !hasMore() )
             throw new NoSuchElementException();
 
+
+        String optionCandidate = String.valueOf( specification.charAt( index ) );
+        index++;
+
         AbstractOptionSpec<?> spec;
-
-        String optionCandidate = String.valueOf( specification.charAt( index++ ) );
-
         if ( RESERVED_FOR_EXTENSIONS.equals( optionCandidate ) ) {
             spec = handleReservedForExtensionsToken();
 
@@ -98,11 +100,18 @@ class OptionSpecTokenizer {
 
         ensureLegalOption( optionCandidate );
 
-        if ( !hasMore() )
-            spec = new NoArgumentOptionSpec( optionCandidate );
-        else if ( specification.charAt( index ) == ':' )
-            spec = handleArgumentAcceptingOption( optionCandidate );
-        else
+        if ( hasMore() ) {
+            boolean forHelp = false;
+            if ( specification.charAt( index ) == HELP_MARKER ) {
+                forHelp = true;
+                ++index;
+            }
+            spec = hasMore() && specification.charAt( index ) == ':'
+                ? handleArgumentAcceptingOption( optionCandidate )
+                : new NoArgumentOptionSpec( optionCandidate );
+            if ( forHelp )
+                spec.forHelp();
+        } else
             spec = new NoArgumentOptionSpec( optionCandidate );
 
         return spec;

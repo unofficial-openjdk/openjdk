@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -51,20 +53,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package jdk.joptsimple.internal;
+package jdk.joptsimple;
+
+import java.util.Collection;
 
 /**
- * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: ColumnWidthCalculator.java,v 1.2 2008/12/16 04:09:08 pholser Exp $
+ * Thrown when an option is marked as required, but not specified on the command line.
+ *
+ * @author <a href="https://github.com/TC1">Emils Solmanis</a>
  */
-class ColumnWidthCalculator {
-    int calculate( int totalWidth, int numberOfColumns ) {
-        if ( numberOfColumns == 1 )
-            return totalWidth;
+class MissingRequiredOptionException extends OptionException {
+    private static final long serialVersionUID = -1L;
 
-        int remainder = totalWidth % numberOfColumns;
-        if ( remainder == numberOfColumns - 1 )
-            return totalWidth / numberOfColumns;
-        return totalWidth / numberOfColumns - 1;
+    protected MissingRequiredOptionException( Collection<String> options ) {
+        super( options );
+    }
+
+    @Override
+    public String getMessage() {
+        return "Missing required option(s) " + multipleOptionMessage();
     }
 }

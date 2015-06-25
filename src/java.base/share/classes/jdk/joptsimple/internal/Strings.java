@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
  * However, the following notice accompanied the original version of this
  * file:
  *
- * Copyright (c) 2004-2009 Paul R. Holser, Jr.
+ * The MIT License
+ *
+ * Copyright (c) 2004-2014 Paul R. Holser, Jr.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -55,28 +57,24 @@ package jdk.joptsimple.internal;
 
 import java.util.Iterator;
 import java.util.List;
+
 import static java.lang.System.*;
 import static java.util.Arrays.*;
 
 /**
  * @author <a href="mailto:pholser@alumni.rice.edu">Paul Holser</a>
- * @version $Id: Strings.java,v 1.11 2008/12/16 04:09:08 pholser Exp $
  */
-public class Strings {
+public final class Strings {
     public static final String EMPTY = "";
     public static final String SINGLE_QUOTE = "'";
     public static final String LINE_SEPARATOR = getProperty( "line.separator" );
 
-    /**
-     * <p>Do not instantiate -- statics only.</p>
-     */
-    Strings() {
+    private Strings() {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * <p>Gives a string consisting of the given character repeated the given number of
-     * times.</p>
+     * Gives a string consisting of the given character repeated the given number of times.
      *
      * @param ch the character to repeat
      * @param count how many times to repeat the character
@@ -92,8 +90,7 @@ public class Strings {
     }
 
     /**
-     * <p>Tells whether the given string is either {@code} or consists solely of
-     * whitespace characters.</p>
+     * Tells whether the given string is either {@code} or consists solely of whitespace characters.
      *
      * @param target string to check
      * @return {@code true} if the target string is null or empty
@@ -104,8 +101,7 @@ public class Strings {
 
 
     /**
-     * <p>Gives a string consisting of a given string prepended and appended with
-     * surrounding characters.</p>
+     * Gives a string consisting of a given string prepended and appended with surrounding characters.
      *
      * @param target a string
      * @param begin character to prepend
@@ -117,8 +113,8 @@ public class Strings {
     }
 
     /**
-     * Gives a string consisting of the elements of a given array of strings, each
-     * separated by a given separator string.
+     * Gives a string consisting of the elements of a given array of strings, each separated by a given separator
+     * string.
      *
      * @param pieces the strings to join
      * @param separator the separator
@@ -129,8 +125,8 @@ public class Strings {
     }
 
     /**
-     * Gives a string consisting of the string representations of the elements of a
-     * given array of objects, each separated by a given separator string.
+     * Gives a string consisting of the string representations of the elements of a given array of objects,
+     * each separated by a given separator string.
      *
      * @param pieces the elements whose string representations are to be joined
      * @param separator the separator
