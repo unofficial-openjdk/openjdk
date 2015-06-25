@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ public class JavacElements implements Elements {
         // First check cache.
         Symbol sym = (clazz == ClassSymbol.class)
                     ? syms.classes.get(name)
-                    : syms.packages.get(name);
+                    : syms.getPackage(null, name);
 
         try {
             if (sym == null)

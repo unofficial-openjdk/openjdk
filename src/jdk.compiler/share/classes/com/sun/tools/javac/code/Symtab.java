@@ -240,7 +240,7 @@ public class Symtab {
      *  the table should be updated from outside to reflect packages defined
      *  by compiled source files.
      */
-    public final Map<Name, PackageSymbol> packages = new HashMap<>();
+    private final Map<Name, PackageSymbol> packages = new HashMap<>();
 
     /** A hashtable giving the encountered modules.
      */
@@ -670,6 +670,11 @@ public class Symtab {
                 p.completer = initialCompleter;
         }
         return p;
+    }
+
+    public PackageSymbol getPackage(ModuleSymbol module, Name fullname) {
+        // for now, ignore the module
+        return packages.get(fullname);
     }
 
     public ModuleSymbol enterModule(Name name) {

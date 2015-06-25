@@ -200,7 +200,7 @@ public class DocEnv {
         //### to avoid a compiler bug.  Most likely
         //### instead a dummy created for error recovery.
         //### Should investigate this.
-        PackageSymbol p = syms.packages.get(names.fromString(name));
+        PackageSymbol p = syms.getPackage(null, names.fromString(name));
         ClassSymbol c = getClassSymbol(name);
         if (p != null && c == null) {
             return getPackageDoc(p);
