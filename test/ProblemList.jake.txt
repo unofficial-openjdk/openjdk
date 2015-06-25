@@ -192,9 +192,6 @@ sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 
 # jdk_other
 
-# 8098518
-javax/xml/jaxp/Encodings/CheckEncodingPropertiesFile.java                       generic-all
-
 # waiting for javac/jtreg support
 javax/xml/jaxp/common/8035437/run.sh                                            generic-all
 
