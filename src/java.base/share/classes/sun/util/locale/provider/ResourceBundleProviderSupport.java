@@ -25,6 +25,7 @@
 
 package sun.util.locale.provider;
 
+import sun.misc.BootLoader;
 import sun.misc.Unsafe;
 
 import java.io.IOException;
@@ -110,10 +111,10 @@ public class ResourceBundleProviderSupport {
                 InputStream in = module.getResourceAsStream(resourceName);
                 if (in == null) {
                     // for migration, find .properties bundle from unnamed module
-                    ClassLoader ld = module.getClassLoader();
-                    in = ld != null
-                            ? ld.getResourceAsStream(resourceName)
-                            : ClassLoader.getSystemResourceAsStream(resourceName);
+                    Module unnamed = module.getClassLoader() != null
+                            ? module.getClassLoader().getUnnamedModule()
+                            : BootLoader.getUnnamedModule();
+                    return unnamed.getResourceAsStream(resourceName);
                 }
                 return in;
             } catch (IOException e) {
