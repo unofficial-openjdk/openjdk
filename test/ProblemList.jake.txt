@@ -68,6 +68,9 @@ java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
 
 java/text/Format/DateFormat/LocaleDateFormats.java		generic-all
 
+java/util/ResourceBundle/Control/Bug6530694.java:		generic-all
+java/util/ResourceBundle/Bug6299235Test.sh			generic-all
+
 ############################################################################
 
 # jdk_instrument
