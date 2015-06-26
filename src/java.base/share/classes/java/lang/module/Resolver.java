@@ -28,6 +28,8 @@ package java.lang.module;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -746,9 +748,10 @@ final class Resolver {
      * Tracing support, limited to boot layer for now.
      */
 
-    private final boolean TRACE
-        = Boolean.getBoolean("jdk.launcher.traceResolver")
-            && (Layer.boot() == null);
+    private final boolean TRACE = AccessController.doPrivileged(
+        (PrivilegedAction<Boolean>)() ->  {
+            return Boolean.getBoolean("jdk.launcher.traceResolver") && (Layer.boot() == null);
+        });
 
     private String op;
 

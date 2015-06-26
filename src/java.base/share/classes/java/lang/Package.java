@@ -28,6 +28,7 @@ package java.lang;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.net.URL;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import sun.misc.BootLoader;
@@ -419,6 +420,18 @@ public class Package implements java.lang.reflect.AnnotatedElement {
         this.specVendor = specvendor;
         this.sealBase = sealbase;
         this.loader = loader;
+    }
+
+    static boolean equals(Package p1, Package p2) {
+        return Objects.equals(p1.pkgName, p2.pkgName) &&
+               Objects.equals(p1.specTitle, p2.specTitle) &&
+               Objects.equals(p1.specVersion, p2.specVersion) &&
+               Objects.equals(p1.specVendor, p2.specVendor) &&
+               Objects.equals(p1.implTitle, p2.implTitle) &&
+               Objects.equals(p1.implVersion, p2.implVersion) &&
+               Objects.equals(p1.implVendor, p2.implVendor) &&
+               Objects.equals(p1.sealBase, p2.sealBase) &&
+               p1.loader == p2.loader;
     }
 
     /*

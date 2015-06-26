@@ -1682,18 +1682,16 @@ public abstract class ClassLoader {
                                     String implTitle, String implVersion,
                                     String implVendor, URL sealBase)
     {
-        Package pkg = packages.get(name);
-        if (pkg != null) {
-            throw new IllegalArgumentException(name);
-        }
         // definePackage is not final and may be overridden by custom class loader
-        pkg = new Package(name, specTitle, specVersion, specVendor,
-                          implTitle, implVersion, implVendor,
-                          sealBase, this);
-        if (packages.putIfAbsent(name, pkg) != null) {
+        Package p = new Package(name, specTitle, specVersion, specVendor,
+                                implTitle, implVersion, implVendor,
+                                sealBase, this);
+
+        Package pkg = packages.putIfAbsent(name, p);
+        if (pkg != null && !Package.equals(pkg, p)) {
             throw new IllegalArgumentException(name);
         }
-        return pkg;
+        return pkg != null ? pkg : p;
     }
 
     /**
@@ -1708,8 +1706,9 @@ public abstract class ClassLoader {
      * @implSpec The default implementation defines the package that is
      * not sealed.
      *
-     * @apiNote Should this method be consistent with the legacy definePackage
-     * method and throw IAE when the package has already been defined?
+     * @throws IllegalArgumentException if a duplicated {@code Package} of
+     *         the given name is defined from a different code source by
+     *         this class loader.
      *
      * @since 1.9
      */
@@ -1717,6 +1716,12 @@ public abstract class ClassLoader {
         Package pkg = new Package(name, null, null, null,
                                   null, null, null, null, this);
         Package previous = packages.putIfAbsent(name, pkg);
+        // if a Package is already defined with other attributes but not sealed,
+        // return the defined one and no IAE thrown
+        if (previous.isSealed()) {
+            throw new IllegalArgumentException(name +
+                    " has been defined with a different location");
+        }
         return (previous == null) ? pkg : previous;
     }
 
