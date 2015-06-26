@@ -229,13 +229,13 @@ ALL_TARGETS += hotspot
 ################################################################################
 # Build demos and samples targets
 
-demos:
+demos-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileDemos.gmk)
 
-samples:
+samples-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopySamples.gmk)
 
-ALL_TARGETS += demos samples
+ALL_TARGETS += demos-jdk samples-jdk
 
 ################################################################################
 # Jigsaw specific data and analysis targets.
@@ -310,11 +310,11 @@ jimages:
 profiles:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk profiles)
 
-mac-bundles:
+mac-bundles-jdk:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f MacBundles.gmk)
 
 ALL_TARGETS += source-tips bootcycle-images zip-security zip-source \
-    jrtfs-jar jimages profiles mac-bundles
+    jrtfs-jar jimages profiles mac-bundles-jdk
 
 ################################################################################
 # Docs targets
@@ -418,6 +418,8 @@ else
 
   $(RMIC_TARGETS): interim-langtools interim-corba
 
+  $(JAVA_TARGETS): interim-langtools
+
   import-hotspot: hotspot
 
   $(LIBS_TARGETS): import-hotspot
@@ -427,7 +429,7 @@ else
   # The demos are currently linking to libjvm and libjava, just like all other
   # jdk libs, even though they don't need to. To avoid warnings, make sure they
   # aren't built until after libjava and libjvm are available to link to.
-  demos: $(JAVA_TARGETS)
+  demos-jdk: $(JAVA_TARGETS)
 
   # Declare dependency from <module>-java to <module>-gensrc
   $(foreach m, $(GENSRC_MODULES), $(eval $m-java: $m-gensrc))
@@ -471,8 +473,8 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
-  jdk.jdeps-gendata: java rmic  
-  
+  jdk.jdeps-gendata: java rmic
+
   # Declare dependencies from <module>-strip to libs, launchers, gendata and copy
   $(foreach m, $(LIBS_MODULES), $(eval $m-strip: $m-libs))
   $(foreach m, $(LAUNCHER_MODULES), $(eval $m-strip: $m-launchers))
@@ -510,7 +512,7 @@ else
 
   profiles: jmods zip-source source-tips jrtfs-jar
 
-  mac-bundles: jimages
+  mac-bundles-jdk: jimages
 
   bootcycle-images: jimages
 
@@ -571,8 +573,14 @@ $(foreach m, $(LIBS_MODULES), $(eval $m: $m-libs))
 $(foreach m, $(LAUNCHER_MODULES), $(eval $m: $m-launchers))
 $(foreach m, $(ALL_COPY_MODULES), $(eval $m: $m-copy))
 
+demos: demos-jdk
+
+samples: samples-jdk
+
 # The "exploded image" is a locally runnable JDK in $(BUILD_OUTPUT)/jdk.
 exploded-image: $(ALL_MODULES)
+
+mac-bundles: mac-bundles-jdk
 
 # The $(BUILD_OUTPUT)/images directory contain the resulting deliverables,
 # and in line with this, our targets for creating these are named *-image[s].
@@ -596,8 +604,8 @@ test-image: prepare-test-image test-image-hotspot-jtreg-native \
 all-images: product-images test-image docs-image
 
 ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
-    jdk.jdwp.agent-gensrc $(ALL_MODULES) exploded-image \
-    product-images docs-image test-image all-images
+    jdk.jdwp.agent-gensrc $(ALL_MODULES) demos samples exploded-image \
+    mac-bundles product-images docs-image test-image all-images
 
 ################################################################################
 
