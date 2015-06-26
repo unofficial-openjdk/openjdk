@@ -518,8 +518,8 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
     SRC := $(wildcard $(MODULE_SRC_DIRS)), \
-    INCLUDES := $(JDK_USER_DEFINED_FILTER),\
-    BIN := $(JDK_OUTPUTDIR)/modules, \
+    INCLUDES:=$(JDK_USER_DEFINED_FILTER),\
+    BIN := $(if $($(MODULE)_BIN), $($(MODULE)_BIN), $(JDK_OUTPUTDIR)/modules), \
     HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
@@ -533,10 +533,10 @@ TARGETS += $($(MODULE)) $(COPY_EXTRA)
 # Declare dependencies between java compilations of different modules.
 # Since the other modules are declared in different invocations of this file,
 # use the macro to find the correct target file to depend on.
-# Only the javac compilation actually depends on other modules so limit
-# dependency declaration to that by using the *_COMPILE_TARGET variable.
+  # Only the javac compilation actually depends on other modules so limit
+  # dependency declaration to that by using the *_COMPILE_TARGET variable.
 $($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
-    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules))
+    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules/$d))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW
@@ -546,8 +546,8 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 
 CreateHkTargets = \
     $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules, \
-      $(subst /share/classes,, \
-        $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
+    $(subst /share/classes,, \
+      $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 
 ifeq ($(MODULE), java.sql.rowset)
   TARGETS += $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
@@ -575,6 +575,10 @@ ifneq ($(wildcard $(IMPORT_MODULES_CLASSES)/$(MODULE)), )
   # importing the classes.
   $($(MODULE)_COMPILE_TARGETS): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
 endif
+
+################################################################################
+
+$(eval $(call IncludeCustomExtension, , CompileJavaModules-post.gmk))
 
 ################################################################################
 
