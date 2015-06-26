@@ -65,6 +65,14 @@ public class VerifyJimage {
     private static final Deque<String> failed = new ConcurrentLinkedDeque<>();
 
     public static void main(String... args) throws Exception {
+
+        String home = System.getProperty("java.home");
+        Path bootimagePath = Paths.get(home, "lib", "modules", "bootmodules.jimage");
+        if (Files.notExists(bootimagePath)) {
+             System.out.println("Test skipped, not an images build");
+             return;
+        }
+
         long start = System.nanoTime();
         int numThreads = Integer.getInteger("jdk.test.threads", 1);
         List<JImageReader> readers = newJImageReaders();

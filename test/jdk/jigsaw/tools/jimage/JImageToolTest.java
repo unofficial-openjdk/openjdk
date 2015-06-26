@@ -55,9 +55,9 @@ public class JImageToolTest {
     }
 
     public static void main(String[] args) throws Exception {
-        final String JAVA_HOME = System.getProperty("java.home");
-        Path jimagePath = Paths.get(JAVA_HOME, "bin", "jimage");
-        Path bootimagePath = Paths.get(JAVA_HOME, "lib", "modules", "bootmodules.jimage");
+        String home = System.getProperty("java.home");
+        Path jimagePath = Paths.get(home, "bin", "jimage");
+        Path bootimagePath = Paths.get(home, "lib", "modules", "bootmodules.jimage");
 
         if (Files.exists(jimagePath) && Files.exists(bootimagePath)) {
             String jimage = jimagePath.toAbsolutePath().toString();
@@ -70,7 +70,7 @@ public class JImageToolTest {
 
             System.out.println("Test successful");
          } else {
-            System.out.println("Test skipped, no module image");
+            System.out.println("Test skipped, not an images build");
          }
     }
 }
