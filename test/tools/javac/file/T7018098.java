@@ -21,7 +21,7 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 7018098
  * @summary CacheFSInfo persists too long
@@ -52,6 +52,13 @@ public class T7018098 extends JavacTestingAbstractProcessor {
 
     static File testDir = new File("T7018098.dir");
 
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.file",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
+
     void run() throws Exception {
         String myName = T7018098.class.getSimpleName();
         File testSrc = new File(System.getProperty("test.src"));
@@ -60,6 +67,10 @@ public class T7018098 extends JavacTestingAbstractProcessor {
         _assert(!testDir.exists());
 
         compile(
+            "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.file,"
+                + "jdk.compiler/com.sun.tools.javac.processing,"
+                + "jdk.compiler/com.sun.tools.javac.util",
             "-proc:only",
             "-processor", myName,
             "-Aexpect=false",
@@ -69,6 +80,10 @@ public class T7018098 extends JavacTestingAbstractProcessor {
         _assert(testDir.exists());
 
         compile(
+            "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.file,"
+                + "jdk.compiler/com.sun.tools.javac.processing,"
+                + "jdk.compiler/com.sun.tools.javac.util",
             "-proc:only",
             "-processor", myName,
             "-Aexpect=true",

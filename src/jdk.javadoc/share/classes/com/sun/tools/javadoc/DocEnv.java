@@ -150,7 +150,7 @@ public class DocEnv {
         finder = JavadocClassFinder.instance(context);
         enter = JavadocEnter.instance(context);
         names = Names.instance(context);
-        externalizableSym = syms.enterClass(names.fromString("java.io.Externalizable"));
+        externalizableSym = syms.enterClass(syms.java_base, names.fromString("java.io.Externalizable"));
         chk = Check.instance(context);
         types = Types.instance(context);
         fileManager = context.get(JavaFileManager.class);
@@ -200,7 +200,7 @@ public class DocEnv {
         //### to avoid a compiler bug.  Most likely
         //### instead a dummy created for error recovery.
         //### Should investigate this.
-        PackageSymbol p = syms.packages.get(names.fromString(name));
+        PackageSymbol p = syms.getPackage(null, names.fromString(name));
         ClassSymbol c = getClassSymbol(name);
         if (p != null && c == null) {
             return getPackageDoc(p);

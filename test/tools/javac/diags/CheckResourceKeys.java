@@ -30,6 +30,8 @@
  */
 
 import java.io.*;
+import java.lang.module.Layer;
+import java.lang.reflect.Module;
 import java.util.*;
 import javax.tools.*;
 import com.sun.tools.classfile.*;
@@ -286,6 +288,7 @@ public class CheckResourceKeys {
             "rt.jar",
             "jfxrt.jar",
             "bootmodules.jimage",
+            "module-info.class",
             // -XD option names
             "process.packages",
             "ignore.symbol.file",
@@ -296,7 +299,8 @@ public class CheckResourceKeys {
             "count.",
             "illegal.",
             "javac.",
-            "verbose."
+            "verbose.",
+            "locn."
     ));
 
     /**
@@ -382,10 +386,11 @@ public class CheckResourceKeys {
      * Get the set of keys from the javac resource bundles.
      */
     Set<String> getResourceKeys() {
+        Module jdk_compiler = Layer.boot().findModule("jdk.compiler").get();
         Set<String> results = new TreeSet<String>();
         for (String name : new String[]{"javac", "compiler"}) {
             ResourceBundle b =
-                    ResourceBundle.getBundle("com.sun.tools.javac.resources." + name);
+                    ResourceBundle.getBundle("com.sun.tools.javac.resources." + name, jdk_compiler);
             results.addAll(b.keySet());
         }
         return results;

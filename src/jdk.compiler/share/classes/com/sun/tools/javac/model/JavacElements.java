@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,14 @@ public class JavacElements implements Elements {
         enter = Enter.instance(context);
     }
 
+    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+    public ModuleSymbol getModuleElement(CharSequence name) {
+        String strName = name.toString();
+        if (strName.equals(""))
+            return syms.unnamedModule;
+        return syms.getModule(names.fromString(strName));
+    }
+
     @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageSymbol getPackageElement(CharSequence name) {
         String strName = name.toString();
@@ -113,7 +121,7 @@ public class JavacElements implements Elements {
         // First check cache.
         Symbol sym = (clazz == ClassSymbol.class)
                     ? syms.classes.get(name)
-                    : syms.packages.get(name);
+                    : syms.getPackage(null, name);
 
         try {
             if (sym == null)
@@ -331,6 +339,12 @@ public class JavacElements implements Elements {
     @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageElement getPackageOf(Element e) {
         return cast(Symbol.class, e).packge();
+    }
+
+    @DefinedBy(Api.LANGUAGE_MODEL)
+    public ModuleElement getModuleOf(Element e) {
+        Symbol sym = cast(Symbol.class, e);
+        return (sym.kind == MDL) ? ((ModuleElement) e) : sym.packge().modle;
     }
 
     @DefinedBy(Api.LANGUAGE_MODEL)
