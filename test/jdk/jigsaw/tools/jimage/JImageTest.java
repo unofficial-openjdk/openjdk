@@ -39,7 +39,7 @@ import tests.JImageValidator;
  * jimage testing.
  * @test
  * @summary Test jimage tool
- * @library /lib/testlibrary/jlink
+ * @library ../jlink/lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jmod
