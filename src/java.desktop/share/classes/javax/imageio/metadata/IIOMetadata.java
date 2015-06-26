@@ -26,6 +26,7 @@
 package javax.imageio.metadata;
 
 import org.w3c.dom.Node;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.security.AccessController;
@@ -398,11 +399,11 @@ public abstract class IIOMetadata {
             throw new IllegalArgumentException("Unsupported format name");
         }
         try {
-            final Object o = this;
+            final String className = formatClassName;
             // First try to load from the module of the IIOMetadata implementation
             // for this plugin.
-            Module module = o.getClass().getModule();
-            Class<?> cls = Class.forName(module, formatClassName);
+            PrivilegedAction<Class<?>> pa = () -> { return getMetadataFormatClass(className); };
+            Class<?> cls = AccessController.doPrivileged(pa);
             if (cls == null) {
                 // we failed to load IIOMetadataFormat class by
                 // using IIOMetadata classloader.Next try is to
@@ -426,11 +427,6 @@ public abstract class IIOMetadata {
                 }
             }
 
-            Module thisModule = IIOMetadata.class.getModule();
-            Module targetModule = cls.getModule();
-            PrivilegedAction<Void> pa =
-                () -> { thisModule.addReads(targetModule); return null; };
-            AccessController.doPrivileged(pa);
             Method meth = cls.getMethod("getInstance");
             return (IIOMetadataFormat) meth.invoke(null);
         } catch (Exception e) {
@@ -439,7 +435,27 @@ public abstract class IIOMetadata {
             ex.initCause(e);
             throw ex;
         }
+    }
 
+    private Class<?> getMetadataFormatClass(String formatClassName) {
+        Module thisModule = IIOMetadata.class.getModule();
+        Module targetModule = this.getClass().getModule();
+        Class<?> c = Class.forName(targetModule, formatClassName);
+        if (c == null) {
+            return null;
+        }
+        if (!thisModule.canRead(targetModule)) {
+            thisModule.addReads(targetModule);
+        }
+
+        if (thisModule.isNamed()) {
+            int i = formatClassName.lastIndexOf(".");
+            String pn = i > 0 ? formatClassName.substring(0, i) : "";
+            if (!targetModule.isExported(pn, thisModule)) {
+                targetModule.addExports(pn, thisModule);
+            }
+        }
+        return c;
     }
 
     /**

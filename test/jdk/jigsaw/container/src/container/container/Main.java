@@ -31,7 +31,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 /**
  * Exercises dynamic configuration.

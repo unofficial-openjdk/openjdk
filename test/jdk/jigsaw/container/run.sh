@@ -73,3 +73,9 @@ $JAR cf applib/app2.jar -C mods/app2 .
 # launch the container
 $JAVA -mp mlib -m container
 
+# launch the container with a security manager
+MLIB=`pwd -P`/mlib
+$JAVA -Dmlib=$MLIB -Djava.security.manager \
+    -Djava.security.policy=${TESTSRC}/test.policy \
+    -mp mlib -m container
+

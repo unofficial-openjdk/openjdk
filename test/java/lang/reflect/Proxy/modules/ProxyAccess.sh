@@ -66,6 +66,6 @@ $JAVAC -d classes -mp mods -cp classes \
 $JAVAC -d classes -mp mods -cp classes $TESTSRC/src/*.java
 
 echo "Running ProxyAccess"
-$JAVA -cp classes -mp mods -addmods m1,m2,m3 ProxyAccess
+$JAVA -verbose:gc -cp classes -mp mods -addmods m1,m2,m3 ProxyAccess
 
 exit 0

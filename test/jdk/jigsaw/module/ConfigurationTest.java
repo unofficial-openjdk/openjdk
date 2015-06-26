@@ -33,13 +33,16 @@ import java.lang.module.ResolutionException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import static java.lang.module.Layer.*;
 import static java.lang.module.ModuleFinder.*;
 import static java.lang.module.ModuleFinder.empty;
+import static java.util.jar.JarFile.MANIFEST_NAME;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -217,7 +220,7 @@ public class ConfigurationTest {
     /**
      * Basic test of a configuration created with automatic modules.
      */
-    public void testAutomaticModule() throws IOException {
+    public void testAutomaticModules() throws IOException {
         ModuleDescriptor m1
             =  new ModuleDescriptor.Builder("m1")
                 .requires("m2")
@@ -271,6 +274,33 @@ public class ConfigurationTest {
         assertTrue(cf.reads(m3).contains(m1));
         assertTrue(cf.reads(m3).contains(m2));
         assertTrue(cf.reads(m3).containsAll(bootModules));
+    }
+
+    /**
+     * Basic test of an automatic module with a Main-Class attribute
+     * in the JAR manifest.
+     */
+    public void testAutomaticMainModule() throws IOException {
+
+        String mainClass = "p.Main";
+
+        Manifest man = new Manifest();
+        Attributes attrs = man.getMainAttributes();
+        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
+        attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
+
+        Path dir = Files.createTempDirectory("configtest");
+        createDummyJarFile(dir.resolve("m1.jar"), man, "p/Main.class");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+
+        Configuration cf
+            = Configuration.resolve(finder, boot(), empty(), "m1");
+
+        ModuleDescriptor m1 = cf.findDescriptor("m1").get();
+
+        assertTrue(m1.mainClass().isPresent());
+        assertEquals(m1.mainClass().get(), mainClass);
     }
 
     /**
@@ -382,20 +412,33 @@ public class ConfigurationTest {
     }
 
     /**
-     * Creates a JAR file containing the give entries. The entries will be
-     * empty in the resulting JAR file.
+     * Creates a JAR file, optionally with a manifest, and with the given
+     * entries. The entries will be empty in the resulting JAR file.
      */
-    private static void createDummyJarFile(Path file, String... entries)
+    private static void createDummyJarFile(Path file, Manifest man, String... entries)
         throws IOException
     {
         try (OutputStream out = Files.newOutputStream(file)) {
             try (JarOutputStream jos = new JarOutputStream(out)) {
+                if (man != null) {
+                    JarEntry je = new JarEntry(MANIFEST_NAME);
+                    jos.putNextEntry(je);
+                    man.write(jos);
+                    jos.closeEntry();
+                }
                 for (String entry : entries) {
                     JarEntry je = new JarEntry(entry);
                     jos.putNextEntry(je);
+                    jos.closeEntry();
                 }
             }
         }
+    }
+
+    private static void createDummyJarFile(Path file, String... entries)
+        throws IOException
+    {
+        createDummyJarFile(file, null, entries);
     }
 
 }

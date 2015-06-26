@@ -746,7 +746,7 @@ final class Resolver {
      * Tracing support, limited to boot layer for now.
      */
 
-    private final boolean TRACE
+    private final static boolean TRACE
         = Boolean.getBoolean("jdk.launcher.traceResolver")
             && (Layer.boot() == null);
 

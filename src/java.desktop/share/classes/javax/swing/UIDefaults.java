@@ -768,7 +768,6 @@ public class UIDefaults extends Hashtable<Object,Object>
                     put(uiClass, m);
                 }
 
-                // ## workaround until JDK-8046200 is resolved
                 if (uiClass.getModule() == ComponentUI.class.getModule()) {
                     // uiClass is a system LAF if it's in java.desktop module
                     uiObject = m.invoke(null, new Object[]{target});

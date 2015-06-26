@@ -25,6 +25,7 @@
 
 package sun.reflect.misc;
 
+import java.lang.reflect.Module;
 import java.security.AllPermission;
 import java.security.AccessController;
 import java.security.PermissionCollection;
@@ -67,6 +68,19 @@ class Trampoline {
     private static Object invoke(Method m, Object obj, Object[] params)
         throws InvocationTargetException, IllegalAccessException
     {
+        // throw exception if the method is non-exported API to help catching issue
+        Module module = m.getDeclaringClass().getModule();
+        if (module.isNamed()) {
+            String cn = m.getDeclaringClass().getName();
+            int i = cn.lastIndexOf(".");
+            assert i > 0;
+            String pn = cn.substring(0, i);
+            if (!module.isExported(pn)) {
+                throw new InternalError("MethodUtil.invoke doesn't support non-exported API: " +
+                        m.toString());
+            }
+        }
+
         ensureInvocableMethod(m);
         return m.invoke(obj, params);
     }

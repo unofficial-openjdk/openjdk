@@ -91,4 +91,11 @@ public class Modules {
     public static void addExports(Module m1, String pn, Module m2) {
         SharedSecrets.getJavaLangReflectAccess().addExports(m1, pn, m2);
     }
+
+    /**
+     * Updates a module to export a package to all unnamed modules.
+     */
+    public static void addExportsToAllUnnamed(Module m, String pn) {
+        SharedSecrets.getJavaLangReflectAccess().addExportsToAllUnnamed(m, pn);
+    }
 }

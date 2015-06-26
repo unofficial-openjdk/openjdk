@@ -685,8 +685,21 @@ public final class Module {
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
         Map<Module, Boolean> targets = exports.get(pn);
         if (targets != null) {
-            // unqualified export or exported to 'target'
-            if (targets.isEmpty() || targets.containsKey(target)) return true;
+
+            // unqualified export
+            if (targets.isEmpty())
+                return true;
+
+            if (target != null) {
+
+                // exported to target
+                if (targets.containsKey(target))
+                    return true;
+
+                // target is an unnamed module && exported to all unnamed modules
+                if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
+                    return true;
+            }
         }
 
         // not exported
@@ -767,7 +780,11 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM) {
-                addModuleExports0(this, pn.replace('.', '/'), target);
+                if (target == ALL_UNNAMED_MODULE) {
+                    throw new InternalError("Not implemented yet");
+                } else {
+                    addModuleExports0(this, pn.replace('.', '/'), target);
+                }
             }
 
             // copy existing map
@@ -820,6 +837,11 @@ public final class Module {
 
         }
     }
+
+    // Sentinel module that is the target for a qualified export. If a package
+    // is exported to this module this is indicates that the package is exported
+    // to all unnamed modules.
+    private static final Module ALL_UNNAMED_MODULE = new Module(null);
 
     // Dummy module that is the target for a qualified export. The dummy
     // module is strongly reachable and thus prevents the set of exports
@@ -933,6 +955,11 @@ public final class Module {
                 @Override
                 public void addExports(Module m, String pn, Module target) {
                     m.implAddExports(pn, target, true);
+                }
+                @Override
+                public void addExportsToAllUnnamed(Module m, String pn) {
+                    // VM support not ready yet
+                    m.implAddExports(pn, null /*Module.ALL_UNNAMED_MODULE*/, true);
                 }
             });
     }
