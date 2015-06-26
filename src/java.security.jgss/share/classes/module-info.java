@@ -38,5 +38,7 @@ module java.security.jgss {
     exports sun.security.krb5.internal.ktab to
         jdk.security.auth;
     provides java.security.Provider with sun.security.jgss.SunProvider;
+    provides sun.security.ssl.ClientKeyExchangeService
+        with sun.security.krb5.internal.ssl.Krb5KeyExchangeService;
 }
 
