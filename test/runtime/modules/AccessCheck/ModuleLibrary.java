@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,32 +21,52 @@
  * questions.
  */
 
-import java.lang.module.ModuleDescriptor;
+import java.io.IOException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleReader;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * A container of modules that acts as a ModuleFinder for testing
+ * purposes.
+ */
 
-// Utility class to set up a ModuleFinder containing all the modules
-// for a given Layer. This utility class is helpful because a ModuleFinder
-// usually locates modules on the file system by searching a sequence of
-// directories containing module mrefs.  We want to set up our own modules
-// and have a ModuleLibrary find those module mrefs within a test.
-
-public class ModuleLibrary implements ModuleFinder {
-
+class ModuleLibrary implements ModuleFinder {
     private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
-    ModuleLibrary(ModuleReference... mrefs) {
-        for (ModuleReference mref: mrefs) {
-            ModuleDescriptor emd = mref.descriptor();
-            String name = emd.name();
-            namesToReference.put(name, mref);
+    private ModuleLibrary() { }
+
+    void add(ModuleDescriptor... descriptors) {
+        for (ModuleDescriptor descriptor: descriptors) {
+            String name = descriptor.name();
+            if (!namesToReference.containsKey(name)) {
+                //modules.add(descriptor);
+
+                URI uri = URI.create("module:/" + descriptor.name());
+
+                ModuleReference mref = new ModuleReference(descriptor, uri) {
+                    @Override
+                    public ModuleReader open() throws IOException {
+                        throw new IOException("No module reader for: " + uri);
+                    }
+                };
+
+                namesToReference.put(name, mref);
+            }
         }
+    }
+
+    static ModuleLibrary of(ModuleDescriptor... descriptors) {
+        ModuleLibrary ml = new ModuleLibrary();
+        ml.add(descriptors);
+        return ml;
     }
 
     @Override
@@ -58,5 +78,5 @@ public class ModuleLibrary implements ModuleFinder {
     public Set<ModuleReference> findAll() {
         return new HashSet<>(namesToReference.values());
     }
-
 }
+

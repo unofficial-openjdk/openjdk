@@ -25,36 +25,35 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2.
- *          Access is denied since even though the unnamed module can read all modules, p2
- *          in module m2 is not exported in a unqualified manner.
+ * @summary class p1.c1 defined in unnamed module tries to access p2.c2 defined in m2.
+ *          Access is denied since even though unnamed module can read all modules, p2
+ *          in module m2 is not exported at all.
+ * @library /testlibrary /../../test/lib
  * @compile p1/c1.java
  * @build UmodNpkgDiffCL_PkgNotExp
  * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_PkgNotExp
  */
 
+import static jdk.test.lib.Asserts.*;
+
 import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 //
-// ClassLoader1 --> defines m1 --> packages m1_pinternal
-// ClassLoader2 --> defines m2 --> packages p2, m2_pinternal
+// ClassLoader1 --> defines m1 --> no packages
+// ClassLoader2 --> defines m2 --> packages p2
 //
 // m1 can read m2
 // package p2 in m2 is not exported
 //
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
-// Access denied since even though the unnamed module can read all modules, p2
-// in module m2 is not exported in a unqualified manner.
+// class p1.c1 defined in unnamed module tries to access p2.c2 defined in m2
+// Access denied since even though unnamed module can read all modules, p2
+// in module m2 is not exported at all.
 //
 public class UmodNpkgDiffCL_PkgNotExp {
 
@@ -64,32 +63,27 @@ public class UmodNpkgDiffCL_PkgNotExp {
     public void createLayerOnBoot() throws Throwable {
 
         // Define module:     m1
-        // Can read:          module m2 and java.base
-        // Packages:          m1_pinternal
+        // Can read:          java.base, m2
+        // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires("m2")
                         .requires("java.base")
-                        .conceals("m1_pinternal")
+                        .requires("m2")
                         .build();
-        ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
         // Define module:     m2
         // Can read:          java.base
-        // Packages:          p2, m2_pinternal
+        // Packages:          p2
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
                         .conceals("p2")
-                        .conceals("m2_pinternal")
                         .build();
-        ModuleReference mref_m2 = MyModuleReference.newModuleReference(descriptor_m2);
 
         // Set up a ModuleFinder containing all modules for this layer.
-        ModuleFinder finder =
-                new ModuleLibrary(mref_m1, mref_m2);
+        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -106,6 +100,10 @@ public class UmodNpkgDiffCL_PkgNotExp {
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);
+
+        assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
+        assertTrue(layer.findLoader("java.base") == null);
 
         // now use the same loader to load class p1.c1
         // NOTE: module m1 does not define a package named p1.

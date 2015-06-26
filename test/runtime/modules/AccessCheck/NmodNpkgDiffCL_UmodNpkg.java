@@ -25,32 +25,31 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in the unnamed module.
+ * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in unnamed module.
+ * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build NmodNpkgDiffCL_UmodNpkg
  * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_UmodNpkg
  */
 
+import static jdk.test.lib.Asserts.*;
+
 import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 //
-// ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
+// ClassLoader1 --> defines m1 --> packages p1
 //                  package p1 in m1 is exported unqualifiedly
 //
 // class p1.c1 defined in m1 tries to access p2.c2 defined in
-// in the unnamed module.
+// in unnamed module.
 //
 // Three access attempts occur in this test:
 //   1. The first access is not allowed because a strict module
@@ -73,19 +72,16 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1, m1_pinternal
+     // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
                      .exports("p1")
-                     .conceals("m1_pinternal")
                      .build();
-     ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
      // Set up a ModuleFinder containing all modules for this layer.
-     ModuleFinder finder =
-             new ModuleLibrary(mref_m1);
+     ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
      // Resolves a module named "m1" that results in a configuration.  It
      // then augments that configuration with additional modules (and edges) induced
@@ -106,6 +102,9 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
+
+     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("java.base") == null);
 
      // now use the same loader to load class p1.c1
      Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
@@ -124,19 +123,16 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1, m1_pinternal
+     // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
                      .exports("p1")
-                     .conceals("m1_pinternal")
                      .build();
-     ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
      // Set up a ModuleFinder containing all modules for this layer.
-     ModuleFinder finder =
-             new ModuleLibrary(mref_m1);
+     ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
      // Resolves a module named "m1" that results in a configuration.  It
      // then augments that configuration with additional modules (and edges) induced
@@ -157,6 +153,9 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
+
+     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("java.base") == null);
 
      // now use the same loader to load class p1.c1
      Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
@@ -181,19 +180,16 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1, m1_pinternal
+     // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
                      .exports("p1")
-                     .conceals("m1_pinternal")
                      .build();
-     ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
      // Set up a ModuleFinder containing all modules for this layer.
-     ModuleFinder finder =
-             new ModuleLibrary(mref_m1);
+     ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
      // Resolves a module named "m1" that results in a configuration.  It
      // then augments that configuration with additional modules (and edges) induced
@@ -214,6 +210,9 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, map::get);
+
+     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("java.base") == null);
 
      // now use the same loader to load class p1.c1
      Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
