@@ -1718,7 +1718,7 @@ public abstract class ClassLoader {
         Package previous = packages.putIfAbsent(name, pkg);
         // if a Package is already defined with other attributes but not sealed,
         // return the defined one and no IAE thrown
-        if (previous.isSealed()) {
+        if (previous != null && previous.isSealed()) {
             throw new IllegalArgumentException(name +
                     " has been defined with a different location");
         }
