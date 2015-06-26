@@ -58,8 +58,7 @@ import jdk.nashorn.internal.runtime.Undefined;
  */
 public final class JavaAdapterServices {
     private static final ThreadLocal<ScriptObject> classOverrides = new ThreadLocal<>();
-    // FIXME: can't get method handle of public method of a class of unnamed module
-    private static final MethodHandle NO_PERMISSIONS_INVOKER = null; // createNoPermissionsInvoker();
+    private static final MethodHandle NO_PERMISSIONS_INVOKER = createNoPermissionsInvoker();
 
     private JavaAdapterServices() {
     }
@@ -196,7 +195,7 @@ public final class JavaAdapterServices {
         });
 
         try {
-            return MethodHandles.lookup().findStatic(Class.forName(className, true, loader), "invoke",
+            return MethodHandles.publicLookup().findStatic(Class.forName(className, true, loader), "invoke",
                     MethodType.methodType(void.class, MethodHandle.class, Object.class));
         } catch(final ReflectiveOperationException e) {
             throw new AssertionError(e.getMessage(), e);
