@@ -141,28 +141,24 @@ public final class ModuleBootstrap {
 
         } else {
 
-            // If there is no initial module specified but there is a class
-            // path then assume that the initial module is the unnamed module
-            // of the application class loader. By convention, and for
-            // compatibility, this is implemented by putting the names of all
-            // modules on the system module path into the set of modules to
-            // resolve. If the -limitmods option is specified then it may be
-            // a subset of the system module path.
-            String cp = System.getProperty("java.class.path");
-            if (cp != null && cp.length() > 0) {
-                Set<ModuleReference> mrefs = systemModulePath.findAll();
-                if (limitmods) {
-                    ModuleFinder f = finder;
-                    mrefs = mrefs.stream()
-                        .filter(m -> f.find(m.descriptor().name()).isPresent())
-                        .collect(Collectors.toSet());
-                }
-                // map to module names
-                for (ModuleReference mref : mrefs) {
-                    roots.add(mref.descriptor().name());
-                }
+            // If there is no initial module specified then assume that the
+            // initial module is the unnamed module of the application class
+            // loader. By convention, and for compatibility, this is
+            // implemented by putting the names of all modules on the system
+            // module path into the set of modules to resolve. If the
+            // -limitmods option is specified then it may be a subset of the
+            // system module path.
+            Set<ModuleReference> mrefs = systemModulePath.findAll();
+            if (limitmods) {
+                ModuleFinder f = finder;
+                mrefs = mrefs.stream()
+                    .filter(m -> f.find(m.descriptor().name()).isPresent())
+                    .collect(Collectors.toSet());
             }
-
+            // map to module names
+            for (ModuleReference mref : mrefs) {
+                roots.add(mref.descriptor().name());
+            }
         }
 
         // If -addmods is specified then these module names must be resolved
