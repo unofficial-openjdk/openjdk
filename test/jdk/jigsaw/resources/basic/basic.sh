@@ -45,6 +45,6 @@ $JAVAC -modulesourcepath $TESTSRC/src -d mods `find $TESTSRC/src -name "*.java"`
 
 # compile and run the test
 $JAVAC -mp mods -d . $TESTSRC/Basic.java
-$JAVA -mp mods Basic
+$JAVA -mp mods -addmods m1,m2,m3 Basic
 
 exit 0

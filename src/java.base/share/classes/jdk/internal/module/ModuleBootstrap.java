@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import sun.misc.BootLoader;
 import sun.misc.Modules;
@@ -118,6 +119,7 @@ public final class ModuleBootstrap {
         }
 
         // -limitmods
+        boolean limitmods = false;
         propValue = System.getProperty("jdk.launcher.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
@@ -127,37 +129,53 @@ public final class ModuleBootstrap {
             if (mainModule != null)
                 mods.add(mainModule);
             finder = limitFinder(finder, mods);
+            limitmods = true;
         }
 
-        // If the class path is set then assume the unnamed module is observable.
-        // We implement this here by putting the names of all observable (named)
-        // modules into the set of modules to resolve.
-        Set<String> input = Collections.emptySet();
-        String cp = System.getProperty("java.class.path");
-        if (mainModule == null || (cp != null && cp.length() > 0)) {
-            Set<ModuleReference> allModules = finder.findAll();
-            input = new HashSet<>(allModules.size());
-            for (ModuleReference mref : allModules) {
-                input.add(mref.descriptor().name());
+        // The root modules to resolve
+        Set<String> roots = new HashSet<>();
+        if (mainModule != null) {
+
+            // main/initial module
+            roots.add(mainModule);
+
+        } else {
+
+            // If there is no initial module specified but there is a class
+            // path then assume that the initial module is the unnamed module
+            // of the application class loader. By convention, and for
+            // compatibility, this is implemented by putting the names of all
+            // modules on the system module path into the set of modules to
+            // resolve. If the -limitmods option is specified then it may be
+            // a subset of the system module path.
+            String cp = System.getProperty("java.class.path");
+            if (cp != null && cp.length() > 0) {
+                Set<ModuleReference> mrefs = systemModulePath.findAll();
+                if (limitmods) {
+                    ModuleFinder f = finder;
+                    mrefs = mrefs.stream()
+                        .filter(m -> f.find(m.descriptor().name()).isPresent())
+                        .collect(Collectors.toSet());
+                }
+                // map to module names
+                for (ModuleReference mref : mrefs) {
+                    roots.add(mref.descriptor().name());
+                }
             }
+
         }
 
-        // If -m or -addmods is specified then these module names must be resolved
-        if (mainModule != null || additionalMods != null) {
-            input = new HashSet<>(input);
-            if (mainModule != null)
-                input.add(mainModule);
-            if (additionalMods != null)
-                input.addAll(additionalMods);
-        }
+        // If -addmods is specified then these module names must be resolved
+        if (additionalMods != null)
+            roots.addAll(additionalMods);
 
         long t1 = System.nanoTime();
 
         // run the resolver to create the configuration
         Configuration cf = (Configuration.resolve(finder,
-                                                 Layer.empty(),
-                                                 ModuleFinder.empty(),
-                                                 input)
+                                                  Layer.empty(),
+                                                  ModuleFinder.empty(),
+                                                  roots)
                             .bind());
 
         // time to create configuration
