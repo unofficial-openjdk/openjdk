@@ -332,7 +332,7 @@ public class Basic {
             "-C", modClasses.toString(), ".");
 
         Result r = java(mp, barData.moduleName + "/" + barData.mainClass,
-                        "-XaddExports:java.base/jdk.internal.module");
+                        "-XaddExports:java.base/jdk.internal.module=bar");
 
         resultChecker.accept(r, barData);
     }
