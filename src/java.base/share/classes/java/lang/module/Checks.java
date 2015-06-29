@@ -48,13 +48,17 @@ final class Checks {
         if (!Character.isJavaIdentifierStart(id.codePointAt(0)))
             fail(what, id, 0);
         int cp = id.codePointAt(0);
-        for (int i = Character.charCount(cp);
-                i < n;
-                i += Character.charCount(cp)) {
+        int i = Character.charCount(cp);
+        int last = 0;
+        for (; i < n; i += Character.charCount(cp)) {
             cp = id.codePointAt(i);
             if (!Character.isJavaIdentifierPart(cp) && id.charAt(i) != '.')
                 fail(what, id, i);
+            last = i;
         }
+        if (cp == '.')
+            fail(what, id, last);
+
         return id;
     }
 
