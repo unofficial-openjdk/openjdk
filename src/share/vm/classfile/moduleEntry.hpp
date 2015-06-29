@@ -54,7 +54,6 @@ private:
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   Symbol* _version;   // module version number
   Symbol* _location;  // module location
-  bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
   bool _can_read_unnamed;
   TRACE_DEFINE_TRACE_ID_FIELD;
 
@@ -65,7 +64,6 @@ public:
     _reads = NULL;
     _version = NULL;
     _location = NULL;
-    _pkgs_with_qexports = false;
     _can_read_unnamed = false;
   }
 
@@ -87,9 +85,6 @@ public:
   bool               can_read(ModuleEntry* m) const;
   bool               has_reads() const;
   void               add_read(ModuleEntry* m);
-
-  bool               pkgs_with_qexports()           { return _pkgs_with_qexports; }
-  void               set_pkgs_with_qexports(bool q) { _pkgs_with_qexports = q; }
 
   bool               is_named() const               { return _name != NULL; }
 

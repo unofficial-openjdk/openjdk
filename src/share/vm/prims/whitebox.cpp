@@ -1092,6 +1092,10 @@ WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstrin
   Modules::add_module_package(env, module, package);
 WB_END
 
+WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
+  Modules::add_module_exports_to_all_unnamed(env, module, package);
+WB_END
+
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
   if (inc < 0) {
@@ -1485,6 +1489,8 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_IsExportedToModule },
   {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
+  {CC"AddModuleExportsToAllUnnamed", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
+                                                      (void*)&WB_AddModuleExportsToAllUnnamed },
   {CC"readImageFile",      CC"(Ljava/lang/String;)Z", (void*)&WB_ReadImageFile },
   {CC"imageOpenImage",     CC"(Ljava/lang/String;Z)J",(void*)&WB_imageOpenImage },
   {CC"imageCloseImage",    CC"(J)V",                  (void*)&WB_imageCloseImage },

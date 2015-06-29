@@ -37,7 +37,11 @@
 bool PackageEntry::is_qexported_to(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this package's qualified exports list");
   MutexLocker m1(Module_lock);
-  if (!_is_exported || _qualified_exports == NULL) {
+  if (!_is_exported) {
+    return false;
+  } else if (_is_exported_allUnnamed && !m->is_named()) {
+    return true;
+  } else if (_qualified_exports == NULL) {
     return false;
   } else {
     return _qualified_exports->contains(m);
@@ -46,22 +50,22 @@ bool PackageEntry::is_qexported_to(ModuleEntry* m) const {
 
 // Add a module to the package's qualified export list.
 void PackageEntry::add_qexport(ModuleEntry* m) {
+  assert_locked_or_safepoint(Module_lock);
   assert(_is_exported == true, "Adding a qualified export to a package that is not exported");
-  MutexLocker m1(Module_lock);
   if (_qualified_exports == NULL) {
     // Lazily create a package's qualified exports list.
     // Initial size is 43, do not anticipate export lists to be large.
     _qualified_exports = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(43, true);
   }
   _qualified_exports->append_if_missing(m);
-  m->set_pkgs_with_qexports(true);
 }
 
 // Set the package's exported state based on the value of the ModuleEntry.
 void PackageEntry::set_exported(ModuleEntry* m) {
-  if (_exported_pending_delete != NULL) {
-    // The qualified exports lists is pending safepoint deletion, a prior
-    // transition occurred from qualified to unqualified.
+  MutexLocker m1(Module_lock);
+  if (is_unqual_exported()) {
+    // An exception could be thrown, but choose to simply ignore.
+    // Illegal to convert an unqualified exported package to be qualifiedly exported
     return;
   }
 
@@ -75,16 +79,9 @@ void PackageEntry::set_exported(ModuleEntry* m) {
     }
 
     // Mark package as unqualifiedly exported
-    _is_exported = true;
-    _qualified_exports = NULL;
+    set_unqual_exported();
 
   } else {
-    if (_is_exported && _qualified_exports == NULL) {
-      // An exception could be thrown, but choose to simply ignore.
-      // Illegal to convert an unqualified exported package to be qualifiedly exported
-      return;
-    }
-
     // Add the exported module
     _is_exported = true;
     add_qexport(m);
@@ -262,10 +259,10 @@ void PackageEntryTable::print() {
 
 void PackageEntry::print() {
   ResourceMark rm;
-  tty->print_cr("package entry "PTR_FORMAT" name %s module %s is_exported %d next "PTR_FORMAT,
+  tty->print_cr("package entry "PTR_FORMAT" name %s module %s is_exported %d is_exported_allUnnamed: %d next "PTR_FORMAT,
                 p2i(this), name()->as_C_string(),
                 (module()->is_named() ? module()->name()->as_C_string() : UNNAMED_MODULE),
-                _is_exported, p2i(next()));
+                _is_exported, _is_exported_allUnnamed, p2i(next()));
 }
 #endif
 

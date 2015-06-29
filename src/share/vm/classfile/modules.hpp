@@ -108,6 +108,12 @@ public:
   // * Package is already defined for module's class loader.
   static void add_module_package(JNIEnv *env, jobject module, jstring package);
 
+  // Marks the specified package as exported to all unnamed modules.
+  // If either module or package is null then NullPointerException is thrown.
+  // If module or package is bad, or module is unnamed, or package is not in
+  // module then IllegalArgumentException is thrown.
+  static void add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jstring package);
+
   // Return TRUE if package_name is syntactically valid, false otherwise.
   static bool verify_package_name(char *package_name);
 

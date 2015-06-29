@@ -508,6 +508,8 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     //   1. Readability, module_from can read module_to (established above).
     //   2. Either module_to exports T to module_from qualifiedly.
     //      or
+    //      module_to exports T to all unnamed modules and module_from is unnamed.
+    //      or
     //      module_to exports T unqualifiedly to all modules (checked above).
     if (!package_to->is_qexported_to(module_from)) {
       if (TraceAccessControlErrors) {

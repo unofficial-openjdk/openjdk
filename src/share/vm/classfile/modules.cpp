@@ -417,9 +417,10 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
 
   if (package_entry == NULL) {
     ResourceMark rm;
+    const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s not found in from_module %s",
-                      java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package)),
+                      package_name != NULL ? package_name : "",
                       from_module_entry->name()->as_C_string()));
   }
   if (package_entry->module() != from_module_entry) {
@@ -746,6 +747,53 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
   if (pkg_exists) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s already exists for class loader", package_name));
+  }
+}
+
+// Export package in module to all unnamed modules.
+void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jstring package) {
+  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+
+  if (module == NULL) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
+              "module is null");
+  }
+  if (package == NULL) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
+              "package is null");
+  }
+  ModuleEntry* module_entry = get_module_entry(module, CHECK);
+  if (module_entry == NULL) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "module is invalid");
+  }
+  if (!module_entry->is_named()) {  // TBD: Should this be a no-op instead of an IAE ?
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "module cannot be unnamed");
+  }
+
+  PackageEntry *package_entry = get_package_entry(module_entry, package, CHECK);
+  if (package_entry == NULL) {
+    ResourceMark rm;
+    const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              err_msg("Package %s not found in module %s",
+                      package_name != NULL ? package_name : "",
+                      module_entry->name()->as_C_string()));
+  }
+  if (package_entry->module() != module_entry) {
+    ResourceMark rm;
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              err_msg("Package: %s found in module %s, not in module: %s",
+                      package_entry->name()->as_C_string(),
+                      package_entry->module()->name()->as_C_string(),
+                      module_entry->name()->as_C_string()));
+  }
+
+  // Mark package as exported to all unnamed modules, unless already
+  // unqualifiedly exported.
+  if (!package_entry->is_unqual_exported()) {
+    package_entry->set_is_exported_allUnnamed();
   }
 }
 

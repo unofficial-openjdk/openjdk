@@ -321,13 +321,13 @@ void ModuleEntryTable::print() {
 
 void ModuleEntry::print() {
   ResourceMark rm;
-  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s location %s strict %s pkgs_with_qexports %d next "PTR_FORMAT,
+  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s location %s strict %s next "PTR_FORMAT,
                 p2i(this), p2i(literal()),
                 name() == NULL ? UNNAMED_MODULE : name()->as_C_string(),
                 loader()->loader_name(),
                 version() != NULL ? version()->as_C_string() : "NULL",
                 location() != NULL ? location()->as_C_string() : "NULL",
-                BOOL_TO_STR(!can_read_unnamed()), _pkgs_with_qexports, p2i(next()));
+                BOOL_TO_STR(!can_read_unnamed()), p2i(next()));
 }
 #endif
 

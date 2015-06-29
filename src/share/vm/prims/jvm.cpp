@@ -1003,6 +1003,11 @@ JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring p
   Modules::add_module_exports(env, from_module, package, to_module);
 JVM_END
 
+JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))
+  JVMWrapper("JVM_AddModuleExportsToAllUnnamed");
+  Modules::add_module_exports_to_all_unnamed(env, from_module, package);
+JVM_END
+
 JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module))
   JVMWrapper("JVM_AddReadsModule");
   Modules::add_reads_module(env, from_module, to_module);
@@ -1022,7 +1027,6 @@ JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring packa
   JVMWrapper("JVM_AddModulePackage");
   Modules::add_module_package(env, module, package);
 JVM_END
-
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
 

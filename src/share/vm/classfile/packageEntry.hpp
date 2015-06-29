@@ -41,13 +41,14 @@
 //
 // Packages that are:
 //   - not exported:        _qualified_exports = NULL  && _is_exported is false
-//   - qualified exports:   _qualified_exports != NULL && _is_exported is true
-//   - unqualified exports: _qualified_exports = NULL  && _is_exported is true
+//   - qualified exports:   (_qualified_exports != NULL || _is_exported_allUnnamed is true) && _is_exported is true
+//   - unqualified exports: (_qualified_exports = NULL && _is_exported_allUnnamed is false) && _is_exported is true
 //
 class PackageEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   ModuleEntry* _module;
   bool _is_exported;
+  bool _is_exported_allUnnamed;
   GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
   GrowableArray<ModuleEntry*>* _qualified_exports;
   TRACE_DEFINE_TRACE_ID_FIELD;
@@ -56,6 +57,7 @@ public:
   void init() {
     _module = NULL;
     _is_exported = false;
+    _is_exported_allUnnamed = false;
     _exported_pending_delete = NULL;
     _qualified_exports = NULL;
   }
@@ -70,12 +72,33 @@ public:
 
   // package's export state
   bool               is_exported() const                 { return _is_exported; } // qualifiedly or unqualifiedly exported
-  bool               is_qual_exported() const            { return (_is_exported && (_qualified_exports != NULL)); }
-  bool               is_unqual_exported() const          { return (_is_exported && (_qualified_exports == NULL)); }
+  bool is_qual_exported() const {
+    return (_is_exported && (_qualified_exports != NULL || _is_exported_allUnnamed));
+  }
+  bool is_unqual_exported() const {
+    return (_is_exported && (_qualified_exports == NULL && !_is_exported_allUnnamed));
+  }
+  void set_unqual_exported() {
+    _is_exported = true;
+    _is_exported_allUnnamed = false;
+    _qualified_exports = NULL;
+  }
   bool               exported_pending_delete() const     { return (_exported_pending_delete != NULL); }
 
   void               set_exported(bool e)                { _is_exported = e; }
   void               set_exported(ModuleEntry* m);
+
+  void set_is_exported_allUnnamed() {
+    if (!is_unqual_exported()) {
+     _is_exported_allUnnamed = true;
+     _is_exported = true;
+    }
+  }
+  bool is_exported_allUnnamed() const {
+    assert(_is_exported || !_is_exported_allUnnamed,
+           "is_allUnnamed set without is_exported being set");
+    return _is_exported_allUnnamed;
+  }
 
   // returns true if the package is defined in the unnamed module
   bool               in_unnamed_module() const  { return !_module->is_named(); }
