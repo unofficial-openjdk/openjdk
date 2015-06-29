@@ -38,7 +38,8 @@
 // class p1.c1 defined in the unnamed module tries to access p2.c2 defined in
 // in the unnamed module.
 // Access allowed since unnamed module can read unnamed module even when
-//                class p1.c1 is loaded by a different loader than p2.c2.
+//                class p1.c1 is loaded by a different loader than p2.c2
+//                and all packages in an unnamed module are exported unqualifiedly.
 public class UmodNpkgDiffCL_UmodNpkg {
 
     public static void main(String args[]) throws Throwable {

@@ -27,27 +27,26 @@
  * @test
  * @summary Test if package p2 in module m2 is exported unqualifiedly,
  *          then class p1.c1 in the unnamed module can read p2.c2 in module m2.
+ * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build UmodNpkg_PkgExpUnqual
  * @run main/othervm -Xbootclasspath/a:. UmodNpkg_PkgExpUnqual
  */
 
+import static jdk.test.lib.Asserts.*;
+
 import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 //
-// ClassLoader1 --> defines m1 --> packages m1_pinternal
-//                  defines m2 --> packages p2, m2_pinternal
+// ClassLoader1 --> defines m1 --> no packages
+//                  defines m2 --> packages p2
 //
 // m1 can read m2
 // package p2 in m2 is exported unqualifiedly
@@ -64,32 +63,27 @@ public class UmodNpkg_PkgExpUnqual {
     public void createLayerOnBoot() throws Throwable {
 
         // Define module:     m1
-        // Can read:          module m2 and java.base
-        // Packages:          m1_pinternal
+        // Can read:          java.base, m2
+        // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires("m2")
                         .requires("java.base")
-                        .conceals("m1_pinternal")
+                        .requires("m2")
                         .build();
-        ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
         // Define module:     m2
         // Can read:          java.base
-        // Packages:          p2, m2_pinternal
+        // Packages:          p2
         // Packages exported: p2 is exported unqualifiedly
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
                         .exports("p2")
-                        .conceals("m2_pinternal")
                         .build();
-        ModuleReference mref_m2 = MyModuleReference.newModuleReference(descriptor_m2);
 
         // Set up a ModuleFinder containing all modules for this layer.
-        ModuleFinder finder =
-                new ModuleLibrary(mref_m1, mref_m2);
+        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -106,6 +100,10 @@ public class UmodNpkg_PkgExpUnqual {
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);
+
+        assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("java.base") == null);
 
         // now use the same loader to load class p1.c1
         Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
