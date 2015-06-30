@@ -67,6 +67,7 @@ public class MyResourcesProvider extends AbstractResourceBundleProvider {
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
+            }
         }
         return bundle;
     }
