@@ -65,7 +65,7 @@ java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
 
 java/text/Format/DateFormat/LocaleDateFormats.java		generic-all
 
-java/util/ResourceBundle/Control/Bug6530694.java:		generic-all
+java/util/ResourceBundle/Control/Bug6530694.java		generic-all
 java/util/ResourceBundle/Bug6299235Test.sh			generic-all
 
 ############################################################################
@@ -81,6 +81,9 @@ java/lang/instrument/NativeMethodPrefixAgent.java		generic-all
 
 # waiting for javac/jtreg support
 tools/launcher/ToolsOpts.java					generic-all
+
+# 8048100
+tools/pack200/Pack200Test.java					generic-all
 
 ############################################################################
  
