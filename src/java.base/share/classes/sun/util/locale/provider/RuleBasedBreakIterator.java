@@ -41,6 +41,7 @@
 package sun.util.locale.provider;
 
 import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Module;
 import java.security.AccessController;
@@ -442,18 +443,19 @@ class RuleBasedBreakIterator extends BreakIterator {
 
         BufferedInputStream is;
         try {
-            is = AccessController.doPrivileged(
-                new PrivilegedExceptionAction<BufferedInputStream>() {
-                    @Override
-                    public BufferedInputStream run() throws Exception {
-                        return new BufferedInputStream(
-                            module.getResourceAsStream("sun/text/resources/" +
-                                datafile));
-                    }
+            PrivilegedExceptionAction<BufferedInputStream> pa = () -> {
+                InputStream in = module.getResourceAsStream("sun/text/resources/" + datafile);
+                if (in == null) {
+                    // Try to load the file with "java.base" module instance. Assumption
+                    // here is that the fall back data files to be read should reside in
+                    // java.base.
+                    in = RuleBasedBreakIterator.class.getModule().getResourceAsStream("sun/text/resources/" + datafile);
                 }
-            );
-        }
-        catch (PrivilegedActionException e) {
+
+                return new BufferedInputStream(in);
+            };
+            is = AccessController.doPrivileged(pa);
+        } catch (PrivilegedActionException e) {
             throw new InternalError(e.toString(), e);
         }
 
