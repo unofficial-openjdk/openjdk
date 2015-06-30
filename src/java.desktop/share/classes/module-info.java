@@ -87,7 +87,6 @@ module java.desktop {
     uses javax.imageio.spi.ImageInputStreamSpi;
     uses javax.imageio.spi.ImageOutputStreamSpi;
     uses javax.imageio.spi.ImageReaderSpi;
-    uses javax.imageio.spi.ImageReaderWriterSpi;
     uses javax.imageio.spi.ImageTranscoderSpi;
     uses javax.imageio.spi.ImageWriterSpi;
     uses javax.print.PrintServiceLookup;
