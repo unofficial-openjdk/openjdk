@@ -23,26 +23,30 @@
 
 package jdk.test.resources.eu;
 
+import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import jdk.test.resources.MyResourcesProviderImpl;
+import jdk.test.resources.MyResourcesProvider;
 
-public class MyResourcesEU extends MyResourcesProviderImpl {
+import sun.util.locale.provider.AbstractResourceBundleProvider;
+
+public class MyResourcesEU extends MyResourcesProvider {
     @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle bundle = null;
-        if (locale.equals(Locale.GERMAN) || locale.equals(Locale.FRENCH)) {
-            int index = baseName.lastIndexOf('.');
-            String bundleName = baseName.substring(0, index) + ".eu" + baseName.substring(index)
-                                    + '_' + locale.getLanguage();
-            ClassLoader loader = MyResourcesEU.class.getClassLoader();
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends ResourceBundle> cl = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
-                bundle = cl.newInstance();
-            } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
-            }
-        }
-        return bundle;
+    protected String toBundleName(String baseName, Locale locale) {
+        int index = baseName.lastIndexOf('.');
+        String bundleName = baseName.substring(0, index) + ".eu" + baseName.substring(index)
+                                + '_' + locale.getLanguage();
+        return bundleName;
+    }
+
+    @Override
+    protected boolean isSupportedInModule(Locale locale) {
+        return locale.equals(Locale.GERMAN) || locale.equals(Locale.FRENCH);
+    }
+
+    @Override
+    protected String getFormat() {
+        return "java.class";
     }
 }

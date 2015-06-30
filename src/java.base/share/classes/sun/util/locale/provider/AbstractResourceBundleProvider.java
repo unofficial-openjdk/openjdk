@@ -37,27 +37,72 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.spi.ResourceBundleProvider;
 
 /**
  * Support class for ResourceBundleProvider implementation
  */
-public class ResourceBundleProviderSupport {
+public abstract class AbstractResourceBundleProvider implements ResourceBundleProvider {
+    private final List<String> formats;
+
+    protected AbstractResourceBundleProvider() {
+        formats = ResourceBundle.Control.FORMAT_DEFAULT;
+    }
+
+    protected AbstractResourceBundleProvider(List<String> formats) {
+        Objects.requireNonNull(formats);
+        this.formats = formats;
+    }
+
+    protected List<String> getFormats() {
+        return formats;
+    }
+
+    protected abstract String toBundleName(String baseName, Locale locale);
+
+    @Override
+    public ResourceBundle getBundle(String baseName, Locale locale) {
+        String bundleName = toBundleName(baseName, locale);
+        ResourceBundle bundle = null;
+        for (String format : getFormats()) {
+            try {
+                bundle = loadResourceBundle(format, this.getClass().getModule(), bundleName);
+                if (bundle != null) {
+                    break;
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return bundle;
+    }
+
+    public static ResourceBundle loadResourceBundle(String format,
+                                                    Module module,
+                                                    String bundleName)
+                                                throws IOException {
+        switch (format) {
+        case "java.class":
+            return loadResourceBundle(module, bundleName);
+        case "java.properties":
+            return loadPropertyResourceBundle(module, bundleName);
+        }
+        throw new IllegalArgumentException("Unsupported format: " + format);
+    }
+
     /**
-     * Load a {@code ResourceBundle} of the given bundleName local to the given module
-     *
-     * @apiNote Perhaps no need to take baseName and locale parameters
+     * Load a {@code ResourceBundle} of the given bundleName local to the given module.
      *
      * @param module the module from which the {@code ResourceBundle} is loaded
-     * @param baseName the base name of the resource bundle, a full qualified class name
-     * @param locale the locale for which a resource bundle should be loaded
      * @param bundleName bundle name
-     * @return the resource bundle
+     * @return the {@code ResourceBundle}, or null if no {@code ResourceBundle} is found
      */
-    public static ResourceBundle loadResourceBundle(Module module, String baseName,
-                                                    Locale locale, String bundleName)
+    public static ResourceBundle loadResourceBundle(Module module, String bundleName)
     {
         PrivilegedAction<Class<?>> pa = () -> Class.forName(module, bundleName);
         Class<?> c = AccessController.doPrivileged(pa);
@@ -88,18 +133,13 @@ public class ResourceBundleProviderSupport {
 
     /**
      * Load a properties {@code ResourceBundle} of the given bundleName
-     * local to the given module
-     *
-     * @apiNote Perhaps no need to take baseName and locale parameters
+     * local to the given module.
      *
      * @param module the module from which the {@code ResourceBundle} is loaded
-     * @param baseName the base name of the resource bundle, a full qualified class name
-     * @param locale the locale for which a resource bundle should be loaded
      * @param bundleName bundle name
-     * @return the resource bundle
+     * @return the java.util.ResourceBundle
      */
-    public static ResourceBundle loadPropertyResourceBundle(Module module, String baseName,
-                                                            Locale locale, String bundleName)
+    public static ResourceBundle loadPropertyResourceBundle(Module module, String bundleName)
             throws IOException
     {
         String resourceName = toResourceName(bundleName, "properties");
@@ -133,6 +173,9 @@ public class ResourceBundleProviderSupport {
     }
 
     private static String toResourceName(String bundleName, String suffix) {
+        if (bundleName.contains("://")) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder(bundleName.length() + 1 + suffix.length());
         sb.append(bundleName.replace('.', '/')).append('.').append(suffix);
         return sb.toString();

@@ -23,32 +23,16 @@
 
 package jdk.test.resources.asia;
 
-import java.lang.reflect.Module;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import jdk.test.resources.MyControl;
 import jdk.test.resources.MyResourcesProvider;
 
 /**
  *
  */
-public class MyResourcesAsia extends MyControl implements MyResourcesProvider {
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        if (isAsiaLocale(locale)) {
-            Module module = this.getClass().getModule();
-            String bundleName = toBundleName(baseName, locale);
-            try {
-                // temporarily use ResourceBundleProviderSupport to avoid use of
-                // Control.newBundle until API is further examined
-                return sun.util.locale.provider.ResourceBundleProviderSupport
-                       .loadPropertyResourceBundle(module, baseName, locale, bundleName);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-        return null;
+public class MyResourcesAsia extends MyResourcesProvider {
+    public MyResourcesAsia() {
+        super(ResourceBundle.Control.FORMAT_PROPERTIES, "asia",
+              Locale.JAPANESE, Locale.CHINESE, Locale.TAIWAN, new Locale("vi"));
     }
 }

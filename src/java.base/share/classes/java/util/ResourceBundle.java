@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
@@ -68,7 +67,7 @@ import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.util.locale.BaseLocale;
 import sun.util.locale.LocaleObjectCache;
-import sun.util.locale.provider.ResourceBundleProviderSupport;
+import sun.util.locale.provider.AbstractResourceBundleProvider;
 
 
 /**
@@ -552,14 +551,12 @@ public abstract class ResourceBundle {
      * value.
      */
     private static class CacheKey implements Cloneable {
-        // These three are the actual keys for lookup in Map.
+        // These four are the actual keys for lookup in Map.
         private String name;
         private Locale locale;
-        private LoaderReference loaderRef;
-        private final Module module;
+        private KeyElementReference<ClassLoader> loaderRef;
+        private KeyElementReference<Module> moduleRef;
 
-        // ResourceBundleProviders for loading an ResourceBundle
-        private final ServiceLoader<ResourceBundleProvider> providers;
 
         // bundle format which is necessary for calling
         // Control.needsReload().
@@ -582,6 +579,12 @@ public abstract class ResourceBundle {
         // of this instance.
         private int hashCodeCache;
 
+        // ResourceBundleProviders for loading ResourceBundles
+        private ServiceLoader<ResourceBundleProvider> providers;
+
+        // Boolean.TRUE if the factory method caller provides a ResourceBundleProvier.
+        private Boolean callerHasProvider;
+
         CacheKey(String baseName, Locale locale, ClassLoader loader, Module module) {
             Objects.requireNonNull(module);
 
@@ -590,9 +593,9 @@ public abstract class ResourceBundle {
             if (loader == null) {
                 this.loaderRef = null;
             } else {
-                loaderRef = new LoaderReference(loader, referenceQueue, this);
+                this.loaderRef = new KeyElementReference<>(loader, referenceQueue, this);
             }
-            this.module = module;
+            this.moduleRef = new KeyElementReference<>(module, referenceQueue, this);
             this.providers = getServiceLoader(module, baseName);
             calculateHashCode();
         }
@@ -625,10 +628,23 @@ public abstract class ResourceBundle {
             return (loaderRef != null) ? loaderRef.get() : null;
         }
 
+        Module getModule() {
+            return moduleRef.get();
+        }
+
         ServiceLoader<ResourceBundleProvider> getProviders() {
             return providers;
         }
 
+        boolean hasProviders() {
+            return providers != null;
+        }
+
+        boolean callerHasProvider() {
+            return callerHasProvider == Boolean.TRUE;
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -647,26 +663,26 @@ public abstract class ResourceBundle {
                 if (!locale.equals(otherEntry.locale)) {
                     return false;
                 }
-                // are modules the same
-                if (!Objects.equals(this.module, otherEntry.module)) {
-                    return false;
-                }
                 //are refs (both non-null) or (both null)?
                 if (loaderRef == null) {
                     return otherEntry.loaderRef == null;
                 }
-                ClassLoader loader = loaderRef.get();
+                ClassLoader loader = getLoader();
+                Module module = getModule();
                 return (otherEntry.loaderRef != null)
                         // with a null reference we can no longer find
-                        // out which class loader was referenced; so
+                        // out which class loader or module was referenced; so
                         // treat it as unequal
                         && (loader != null)
-                        && (loader == otherEntry.loaderRef.get());
-            } catch (    NullPointerException | ClassCastException e) {
+                        && (loader == otherEntry.getLoader())
+                        && (module != null)
+                        && (module.equals(otherEntry.getModule()));
+            } catch (NullPointerException | ClassCastException e) {
             }
             return false;
         }
 
+        @Override
         public int hashCode() {
             return hashCodeCache;
         }
@@ -678,20 +694,28 @@ public abstract class ResourceBundle {
             if (loader != null) {
                 hashCodeCache ^= loader.hashCode();
             }
+            Module module = getModule();
             if (module != null) {
                 hashCodeCache ^= module.hashCode();
             }
         }
 
+        @Override
         public Object clone() {
             try {
                 CacheKey clone = (CacheKey) super.clone();
                 if (loaderRef != null) {
-                    clone.loaderRef = new LoaderReference(loaderRef.get(),
-                                                          referenceQueue, clone);
+                    clone.loaderRef = new KeyElementReference<>(getLoader(),
+                                                                referenceQueue, clone);
                 }
+                clone.moduleRef = new KeyElementReference<>(getModule(),
+                                                            referenceQueue, clone);
+                // Clear the reference to ResourceBundleProviders
+                clone.providers = null;
                 // Clear the reference to a Throwable
                 clone.cause = null;
+                // Clear callerHasProvider
+                clone.callerHasProvider = null;
                 return clone;
             } catch (CloneNotSupportedException e) {
                 //this should never happen
@@ -723,6 +747,7 @@ public abstract class ResourceBundle {
             return cause;
         }
 
+        @Override
         public String toString() {
             String l = locale.toString();
             if (l.length() == 0) {
@@ -746,19 +771,19 @@ public abstract class ResourceBundle {
     }
 
     /**
-     * References to class loaders are weak references, so that they can be
-     * garbage collected when nobody else is using them. The ResourceBundle
-     * class has no reason to keep class loaders alive.
+     * References to a CacheKey element as a WeakReference so that it can be
+     * garbage collected when nobody else is using it.
      */
-    private static class LoaderReference extends WeakReference<ClassLoader>
-                                         implements CacheKeyReference {
-        private CacheKey cacheKey;
+    private static class KeyElementReference<T> extends WeakReference<T>
+                                                implements CacheKeyReference {
+        private final CacheKey cacheKey;
 
-        LoaderReference(ClassLoader referent, ReferenceQueue<Object> q, CacheKey key) {
+        KeyElementReference(T referent, ReferenceQueue<Object> q, CacheKey key) {
             super(referent, q);
             cacheKey = key;
         }
 
+        @Override
         public CacheKey getCacheKey() {
             return cacheKey;
         }
@@ -770,13 +795,14 @@ public abstract class ResourceBundle {
      */
     private static class BundleReference extends SoftReference<ResourceBundle>
                                          implements CacheKeyReference {
-        private CacheKey cacheKey;
+        private final CacheKey cacheKey;
 
         BundleReference(ResourceBundle referent, ReferenceQueue<Object> q, CacheKey key) {
             super(referent, q);
             cacheKey = key;
         }
 
+        @Override
         public CacheKey getCacheKey() {
             return cacheKey;
         }
@@ -1608,7 +1634,7 @@ public abstract class ResourceBundle {
 
             try {
                 if (module.isNamed()) {
-                    bundle = loadBundle(cacheKey, module, control, expiredBundle);
+                    bundle = loadBundle(cacheKey, formats, control, module);
                 } else {
                     bundle = loadBundle(cacheKey, formats, control, expiredBundle);
                 }
@@ -1639,22 +1665,39 @@ public abstract class ResourceBundle {
      * Loads a ResourceBundle in named modules
      */
     private static ResourceBundle loadBundle(CacheKey cacheKey,
-                                             Module module,
+                                             List<String> formats,
                                              Control control,
-                                             boolean reload) {
+                                             Module module) {
         String baseName = cacheKey.getName();
         Locale targetLocale = cacheKey.getLocale();
-        String bundleName = control.toBundleName(baseName, targetLocale);
-        ResourceBundle bundle = loadBundleInModule(module, baseName,
-                                                   targetLocale, bundleName,
-                                                   cacheKey.getProviders(),
-                                                   cacheKey::setCause);
-        if (bundle != null) {
-            // Set the format to "" (unknown)
-            cacheKey.setFormat(UNKNOWN_FORMAT);
-            bundle.name = cacheKey.getName();
-            bundle.locale = targetLocale;
-            bundle.expired = false;
+
+        ResourceBundle bundle = null;
+        if (cacheKey.hasProviders()) {
+            bundle = loadBundleFromProviders(baseName, targetLocale,
+                                             cacheKey.getProviders(), cacheKey);
+            if (bundle != null) {
+                cacheKey.setFormat(UNKNOWN_FORMAT);
+            }
+        }
+        // If none of providers returned a bundle and the caller has no provider,
+        // look up module-local bundles.
+        if (bundle == null && !cacheKey.callerHasProvider()) {
+            String bundleName = control.toBundleName(baseName, targetLocale);
+            for (String format : formats) {
+                try {
+                    bundle = AbstractResourceBundleProvider.loadResourceBundle(format, module, bundleName);
+                    if (bundle != null) {
+                        cacheKey.setFormat(format);
+                        break;
+                    }
+                } catch (IllegalArgumentException | IOException e) {
+                    cacheKey.setCause(e);
+                } catch (Exception e) {
+                    // TODO: Current behavior is to silent ignore all exceptions
+                    // For now throw InternalError for better diagnosibility
+                    throw new InternalError(e);
+                }
+            }
         }
         return bundle;
     }
@@ -1706,7 +1749,7 @@ public abstract class ResourceBundle {
     private static ResourceBundle loadBundleFromProviders(String baseName,
                                                           Locale locale,
                                                           ServiceLoader<ResourceBundleProvider> providers,
-                                                          Consumer<Throwable> setCause)
+                                                          CacheKey cacheKey)
     {
         if (providers == null) return null;
 
@@ -1716,58 +1759,27 @@ public abstract class ResourceBundle {
                         for (Iterator<ResourceBundleProvider> itr = providers.iterator(); itr.hasNext(); ) {
                             try {
                                 ResourceBundleProvider provider = itr.next();
+                                if (cacheKey != null && cacheKey.callerHasProvider == null
+                                        && cacheKey.getModule() == provider.getClass().getModule()) {
+                                    cacheKey.callerHasProvider = Boolean.TRUE;
+                                }
                                 ResourceBundle bundle = provider.getBundle(baseName, locale);
                                 if (bundle != null) {
                                     return bundle;
                                 }
                             } catch (ServiceConfigurationError | SecurityException e) {
-                                if (setCause != null) setCause.accept(e);
+                                if (cacheKey != null) {
+                                    cacheKey.setCause(e);
+                                }
                             }
+                        }
+                        if (cacheKey != null && cacheKey.callerHasProvider == null) {
+                            cacheKey.callerHasProvider = Boolean.FALSE;
                         }
                         return null;
                     }
                 });
 
-    }
-
-    /*
-     * Loads ResourceBundle for a named module.  First it loads from the
-     * service providers.  If not found, it will load the bundle local
-     * in the named module (.class or .properties).
-     */
-    private static ResourceBundle loadBundleInModule(Module module, String baseName,
-                                                     Locale locale, String bundleName,
-                                                     ServiceLoader<ResourceBundleProvider> providers,
-                                                     Consumer<Throwable> setCause)
-    {
-        Objects.requireNonNull(module);
-        if (!module.isNamed()) {
-            throw new InternalError(module + " is not a named module");
-        }
-
-        ResourceBundle bundle = null;
-        if (providers != null) {
-            bundle = loadBundleFromProviders(baseName, locale, providers, setCause);
-        }
-
-        if (bundle == null) {
-            // If not found in providers, find from the caller module
-            try {
-                bundle = ResourceBundleProviderSupport
-                            .loadResourceBundle(module, baseName, locale, bundleName);
-                if (bundle == null) {
-                    bundle = ResourceBundleProviderSupport
-                                .loadPropertyResourceBundle(module, baseName, locale, bundleName);
-                }
-            } catch (IOException e) {
-                setCause.accept(e);
-            } catch (Exception e) {
-                // TODO: Current behavior is to silent ignore all exceptions
-                // For now throw InternalError for better diagnosibility
-                throw new InternalError(e);
-            }
-        }
-        return bundle;
     }
 
     /*

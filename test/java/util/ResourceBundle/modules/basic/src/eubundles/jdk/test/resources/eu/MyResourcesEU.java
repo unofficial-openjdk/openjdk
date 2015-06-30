@@ -23,27 +23,16 @@
 
 package jdk.test.resources.eu;
 
-import java.lang.reflect.Module;
-import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import jdk.test.resources.MyControl;
 import jdk.test.resources.MyResourcesProvider;
 
 /**
  *
  */
-public class MyResourcesEU extends MyControl implements MyResourcesProvider {
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        if (isEULocale(locale)) {
-            Module module = this.getClass().getModule();
-            String bundleName = toBundleName(baseName, locale);
-            // temporarily use ResourceBundleProviderSupport to avoid use of
-            // Control.newBundle until API is further examined
-            return sun.util.locale.provider.ResourceBundleProviderSupport
-                       .loadResourceBundle(module, baseName, locale, bundleName);
-        }
-        return null;
+public class MyResourcesEU extends MyResourcesProvider {
+    public MyResourcesEU() {
+        super(ResourceBundle.Control.FORMAT_CLASS, "eu",
+              Locale.GERMAN, Locale.FRENCH, new Locale("es"));
     }
 }

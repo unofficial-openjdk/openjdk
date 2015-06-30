@@ -42,12 +42,6 @@ sun/security/tools/keytool/autotest.sh                         generic-all
 
 # 8044767
 
-java/util/ResourceBundle/ReferencesTest.java                    generic-all
-
-# legacy getBundle can't be used to find sun.util.resources.LocaleNames in module java.base
-sun/util/resources/TimeZone/Bug4640234.java                     generic-all
-sun/text/resources/LocaleDataTest.java                          generic-all
-
 # Can't find bundle for base name sun.text.resources.cldr.* type, locale ja_JP
 java/util/Calendar/CldrFormatNamesTest.java                     generic-all
 java/util/Calendar/GenericTimeZoneNamesTest.sh                  generic-all

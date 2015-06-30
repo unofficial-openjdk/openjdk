@@ -23,24 +23,26 @@
 
 package jdk.test.resources;
 
+import java.io.UncheckedIOException;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public class MyResourcesProviderImpl implements MyResourcesProvider {
+import sun.util.locale.provider.AbstractResourceBundleProvider;
+
+public class MyResourcesProviderImpl extends MyResourcesProvider {
     @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle bundle = null;
-        if (locale.equals(Locale.ENGLISH) || locale.equals(Locale.ROOT)) {
-            String bundleName = locale.equals(Locale.ROOT) ? baseName : baseName + '_' + locale.getLanguage();
-            ClassLoader loader = MyResourcesProviderImpl.class.getClassLoader();
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends ResourceBundle> cl = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
-                bundle = cl.newInstance();
-            } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
-            }
-        }
-        return bundle;
+    protected String toBundleName(String baseName, Locale locale) {
+        return locale.equals(Locale.ROOT) ? baseName : baseName + '_' + locale.getLanguage();
+    }
+
+    @Override
+    protected boolean isSupportedInModule(Locale locale) {
+        return locale.equals(Locale.ENGLISH) || locale.equals(Locale.ROOT);
+    }
+
+    @Override
+    protected String getFormat() {
+        return "java.class";
     }
 }

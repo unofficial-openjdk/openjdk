@@ -23,36 +23,12 @@
 
 package jdk.test.resources;
 
-import java.lang.reflect.Module;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
 
-public class MyResourcesProviderImpl extends MyControl implements ResourceBundleControlProvider,
-                                                                  MyResourcesProvider {
-    // ResourceBundleControlProvider
-    @Override
-    public ResourceBundle.Control getControl(String baseName) {
-        return "jdk.test.resources.MyResources".equals(baseName) ? this : null;
+public class MyResourcesMain extends MyResourcesProvider {
+    public MyResourcesMain() {
+        super(ResourceBundle.Control.FORMAT_CLASS, "", Locale.ROOT, Locale.ENGLISH);
     }
-
-    // MyResourcesProvider
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        if (isMainLocale(locale)) {
-            Module module = this.getClass().getModule();
-            String bundleName = toBundleName(baseName, locale);
-            // temporarily use ResourceBundleProviderSupport to avoid use of
-            // Control.newBundle until API is further examined
-            return sun.util.locale.provider.ResourceBundleProviderSupport
-                       .loadResourceBundle(module, baseName, locale, bundleName);
-        }
-        return null;
-    }
-
 }

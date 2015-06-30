@@ -23,7 +23,29 @@
 
 package jdk.test.resources;
 
-import java.util.spi.ResourceBundleProvider;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
-public interface MyResourcesProvider extends ResourceBundleProvider {
+import sun.util.locale.provider.AbstractResourceBundleProvider;
+
+public abstract class MyResourcesProvider extends AbstractResourceBundleProvider {
+    @Override
+    public ResourceBundle getBundle(String baseName, Locale locale) {
+        ResourceBundle bundle = null;
+        if (isSupportedInModule(locale)) {
+            String bundleName = toBundleName(baseName, locale);
+            try {
+                bundle = loadResourceBundle(getFormat(), this.getClass().getModule(), bundleName);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return bundle;
+    }
+
+    protected abstract boolean isSupportedInModule(Locale locale);
+
+    protected abstract String getFormat();
 }

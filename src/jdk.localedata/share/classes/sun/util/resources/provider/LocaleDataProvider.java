@@ -28,8 +28,6 @@ package sun.util.resources.provider;
 import java.lang.reflect.Module;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
-import sun.util.locale.provider.ResourceBundleProviderSupport;
 import sun.util.resources.LocaleData;
 
 /**
@@ -38,19 +36,23 @@ import sun.util.resources.LocaleData;
  * service agent between {@code ResourceBundle.getBundle} callers in java.base
  * and resource bundles in jdk.localedata.
  */
-public class LocaleDataProvider implements sun.text.resources.BreakIteratorInfoProvider,
-                                           sun.text.resources.BreakIteratorRulesProvider,
-                                           sun.text.resources.FormatDataProvider,
-                                           sun.text.resources.CollationDataProvider,
-                                           sun.util.resources.LocaleNamesProvider,
-                                           sun.util.resources.TimeZoneNamesProvider,
-                                           sun.util.resources.CalendarDataProvider,
-                                           sun.util.resources.CurrencyNamesProvider {
+public class LocaleDataProvider extends LocaleData.BaseResourceBundleProvider {
+    @Override
+    protected boolean isSupportedInModule(String baseName, Locale locale) {
+        // The assumption here is that there are two modules containing
+        // resource bundles for locale support. If resource bundles are split
+        // into more modules, this method will need to be changed to determine
+        // what locales are exactly supported.
+        return !super.isSupportedInModule(baseName, locale);
+    }
+
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle.Control control = LocaleData.getLocaleDataResourceBundleControl();
-        Module module = LocaleDataProvider.class.getModule();
-        String bundleName = control.toBundleName(baseName, locale);
-        return ResourceBundleProviderSupport.loadResourceBundle(module, baseName, locale, bundleName);
+        if (isSupportedInModule(baseName, locale)) {
+            Module module = LocaleDataProvider.class.getModule();
+            String bundleName = toBundleName(baseName, locale);
+            return loadResourceBundle(module, bundleName);
+        }
+        return null;
     }
 }

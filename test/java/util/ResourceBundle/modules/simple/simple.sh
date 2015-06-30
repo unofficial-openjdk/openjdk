@@ -37,6 +37,10 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
+# This test is temporarily converted to use AbstractResourceBundleProvider class
+# to avoid calling Control.newBundle
+EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider"
+
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
@@ -48,7 +52,7 @@ B=bundles
 mkdir -p mods/$B
 CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
 if [ "x$CLASSES" != x ]; then
-    $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CLASSES
+    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CLASSES
 fi
 PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
 if [ "x$PROPS" != x ]; then
@@ -60,8 +64,8 @@ if [ "x$PROPS" != x ]; then
     done
 fi
 
-$JAVAC -g -d mods -modulesourcepath $TESTSRC/src -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
+$JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?
