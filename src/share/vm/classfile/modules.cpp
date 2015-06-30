@@ -434,7 +434,7 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
 
   if (TraceModules) {
     ResourceMark rm;
-    tty->print_cr("[add_module_exports(): package:module %s:%s is exported to module %s]",
+    tty->print_cr("[add_module_exports(): package %s in module %s is exported to module %s]",
                   package_entry->name()->as_C_string(),
                   from_module_entry->name()->as_C_string(),
                   to_module_entry == NULL ? "NULL" :
@@ -788,6 +788,13 @@ void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jst
                       package_entry->name()->as_C_string(),
                       package_entry->module()->name()->as_C_string(),
                       module_entry->name()->as_C_string()));
+  }
+
+  if (TraceModules) {
+    ResourceMark rm;
+    tty->print_cr("[add_module_exports_to_all_unnamed(): package %s in module %s is exported to all unnamed modules]",
+                  package_entry->name()->as_C_string(),
+                  module_entry->name()->as_C_string());
   }
 
   // Mark package as exported to all unnamed modules, unless already
