@@ -135,6 +135,8 @@ public class RowSetProvider {
                 if (factoryClassName.equals(ROWSET_FACTORY_IMPL)) {
                     return defaultRowSetFactory();
                 }
+                // getFactoryClass takes care of adding the read edge if
+                // necessary
                 Class<?> c = getFactoryClass(factoryClassName, null, false);
                 factory = (RowSetFactory) c.newInstance();
             }
@@ -198,6 +200,8 @@ public class RowSetProvider {
         }
 
         try {
+            // getFactoryClass takes care of adding the read edge if
+            // necessary
             Class<?> providerClass = getFactoryClass(factoryClassName, cl, false);
             RowSetFactory instance = (RowSetFactory) providerClass.newInstance();
             if (debug) {

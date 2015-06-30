@@ -5723,6 +5723,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 SQLData obj = null;
                 try {
                     ReflectUtil.checkPackageAccess(c);
+                    ensureReadable(c.getModule());
                     obj = (SQLData) c.newInstance();
                 } catch(Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
