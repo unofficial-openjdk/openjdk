@@ -32,8 +32,8 @@ module java.rmi {
     exports java.rmi.registry;
     exports java.rmi.server;
     exports javax.rmi.ssl;
-    // rmid checks ExecPermission, need to determine if this is a supported
-    // interface - see JDK-8044626.
+    // com.sun.rmi.rmid contains permissions classes that must be
+    // accessible to the security manager at initialization time
     exports com.sun.rmi.rmid to java.base;
     exports sun.rmi.registry to
         java.management;
