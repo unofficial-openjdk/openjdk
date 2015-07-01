@@ -220,6 +220,7 @@ public class TypeEnter implements Completer {
             resolve.run();
             chk.checkImportsUnique(toplevel);
             chk.checkImportsResolvable(toplevel);
+            chk.checkImportedPackagesObservable(toplevel);
             toplevel.namedImportScope.finalizeScope();
             toplevel.starImportScope.finalizeScope();
         } finally {
@@ -326,6 +327,9 @@ public class TypeEnter implements Completer {
 
                 // Import-on-demand java.lang.
                 importAll(tree.pos, syms.enterPackage(syms.java_base, names.java_lang), env);
+                if (javaLang.members().isEmpty() && !javaLang.exists())
+                    throw new FatalError(diags.fragment("fatal.err.no.java.lang"));
+                importAll(tree.pos, javaLang, env);
 
                 // Process the package def and all import clauses.
                 if (tree.getPackage() != null)
@@ -416,16 +420,6 @@ public class TypeEnter implements Completer {
         private void importAll(int pos,
                                final TypeSymbol tsym,
                                Env<AttrContext> env) {
-            // Check that packages imported from exist (JLS ???).
-            if (tsym.kind == PCK && tsym.members().isEmpty() && !tsym.exists()) {
-                // If we can't find java.lang, exit immediately.
-                if (((PackageSymbol)tsym).fullname.equals(names.java_lang)) {
-                    JCDiagnostic msg = diags.fragment("fatal.err.no.java.lang");
-                    throw new FatalError(msg);
-                } else {
-                    log.error(DiagnosticFlag.RESOLVE_ERROR, pos, "doesnt.exist", tsym);
-                }
-            }
             env.toplevel.starImportScope.importAll(types, tsym.members(), typeImportFilter, false);
         }
 
