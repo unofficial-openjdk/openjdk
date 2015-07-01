@@ -53,6 +53,7 @@ module jdk.compiler {
     exports com.sun.tools.javac.util to
         jdk.jdeps,
         jdk.javadoc;
+    uses com.sun.tools.javac.platform.PlatformProvider;
     uses com.sun.source.util.Plugin;
 }
 
