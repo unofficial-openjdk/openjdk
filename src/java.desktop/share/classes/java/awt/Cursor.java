@@ -330,12 +330,12 @@ public class Cursor implements java.io.Serializable {
             } catch (NumberFormatException nfe) {
                 throw new AWTException("failed to parse hotspot property for cursor: " + name);
             }
-            final Toolkit toolkit = Toolkit.getDefaultToolkit();
-            final String file = RESOURCE_PREFIX + fileName;
+                final Toolkit toolkit = Toolkit.getDefaultToolkit();
+                final String file = RESOURCE_PREFIX + fileName;
             final InputStream in = AccessController.doPrivileged(
                     (PrivilegedAction<InputStream>) () -> {
                         return Cursor.class.getResourceAsStream(file);
-                    });
+                        });
             try (in) {
                 Image image = toolkit.createImage(in.readAllBytes());
                 cursor = toolkit.createCustomCursor(image, hotPoint, localized);
