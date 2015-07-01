@@ -49,7 +49,7 @@ public class AddPrivateKey extends SecmodTest {
         }
 
         String configName = BASE + SEP + "nss.cfg";
-        Provider p = getCustomizedPKCS11(configName);
+        Provider p = getSunPKCS11(configName);
 
         boolean supportsEC = (p.getService("KeyFactory", "EC") != null);
 

@@ -53,7 +53,7 @@ public class TrustAnchors extends SecmodTest {
         }
 
         String configName = BASE + SEP + "nsstrust.cfg";
-        Provider p = getCustomizedPKCS11(configName);
+        Provider p = getSunPKCS11(configName);
 
         System.out.println(p);
         Security.addProvider(p);

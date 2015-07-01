@@ -23,7 +23,7 @@
 /**
  * @test
  * @library ..
- * @bug 6581254 6986789 7196009 8062170
+ * @bug 6581254 6986789 7196009 8062170 7191662
  * @summary Allow '~', '+', and quoted paths in config file
  * @author Valerie Peng
  */
@@ -38,32 +38,31 @@ public class ConfigShortPath {
     };
 
     public static void main(String[] args) throws Exception {
-        Provider p = PKCS11Test.getSunPKCS11();
-        if (p == null) {
-            System.out.println("Skipping test - no PKCS11 provider available");
-            return;
-        }
-        String testSrc = System.getProperty("test.src", ".");
-        for (int i = 0; i < configNames.length; i++) {
-            String configFile = testSrc + File.separator + configNames[i];
+        try {
+            String testSrc = System.getProperty("test.src", ".");
+            for (int i = 0; i < configNames.length; i++) {
+                String configFile = testSrc + File.separator + configNames[i];
+                System.out.println("Testing against " + configFile);
 
-            System.out.println("Testing against " + configFile);
-            try {
-                Provider pkcs11 = p.configure(configFile);
-            } catch (ProviderException pe) {
-                System.out.println(pe);
-                String causeMsg = pe.getMessage();
-                // Indicate failure if due to parsing config
-                if (causeMsg.indexOf("Unexpected") != -1) {
-                    throw pe;
+                Provider p = PKCS11Test.getSunPKCS11(configFile);
+                if (p == null) {
+                    System.out.println("Skipping test - no PKCS11 provider available");
+                    return;
                 }
-                // Consider the test passes if the exception is
-                // thrown after parsing, i.e. due to the absolute
-                // path requirement or the non-existent path.
-            } catch (Exception ex) {
-                // unexpected exception
-                throw new RuntimeException("Unexpected Exception", ex);
             }
+        } catch (InvalidParameterException ipe) {
+            System.out.println(ipe);
+            String causeMsg = ipe.getMessage();
+            // Indicate failure if due to parsing config
+            if (causeMsg.indexOf("Unexpected") != -1) {
+                throw ipe;
+            }
+            // Consider the test passes if the exception is
+            // thrown after parsing, i.e. due to the absolute
+            // path requirement or the non-existent path.
+        } catch (Exception ex) {
+            // unexpected exception
+            throw new RuntimeException("Unexpected Exception", ex);
         }
     }
 }

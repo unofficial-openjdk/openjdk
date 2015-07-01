@@ -59,7 +59,7 @@ public class ClientJSSEServerJSSE extends SecmodTest {
         }
 
         String configName = BASE + SEP + "fips.cfg";
-        Provider p = getCustomizedPKCS11(configName);
+        Provider p = getSunPKCS11(configName);
 
         System.out.println(p);
         Security.addProvider(p);

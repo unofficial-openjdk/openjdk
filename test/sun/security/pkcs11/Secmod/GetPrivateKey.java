@@ -45,7 +45,7 @@ public class GetPrivateKey extends SecmodTest {
         }
 
         String configName = BASE + SEP + "nss.cfg";
-        Provider p = getCustomizedPKCS11(configName);
+        Provider p = getSunPKCS11(configName);
 
         System.out.println(p);
         Security.addProvider(p);

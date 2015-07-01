@@ -22,7 +22,7 @@
  */
 /**
  * @test
- * @bug 7003952
+ * @bug 7003952 7191662
  * @library ..
  * @summary load DLLs and launch executables using fully qualified path
  */
@@ -34,21 +34,20 @@ public class Absolute {
         String config =
             System.getProperty("test.src", ".") + "/Absolute.cfg";
 
-        Provider p = PKCS11Test.getSunPKCS11();
-        if (p == null) {
-            System.out.println("Skipping test - no PKCS11 provider available");
-        }
         try {
-            Provider pkcs11 = p.configure(config);
-        } catch (Exception ex) {
-            if (ex instanceof ProviderException) {
-                if (ex.getMessage().startsWith(
-                         "Absolute path required for library value:")) {
-                    System.out.println("Test Passed: expected exception thrown");
-                }
+            Provider p = PKCS11Test.getSunPKCS11(config);
+            if (p == null) {
+                System.out.println("Skipping test - no PKCS11 provider available");
             }
-            // rethrow
-            throw ex;
+        } catch (InvalidParameterException ipe) {
+            Throwable ex = ipe.getCause();
+            if (ex.getMessage().indexOf(
+                    "Absolute path required for library value:") != -1) {
+                System.out.println("Test Passed: expected exception thrown");
+            } else {
+                // rethrow
+                throw ipe;
+            }
         }
     }
 }

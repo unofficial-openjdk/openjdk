@@ -43,7 +43,7 @@ public class Crypto extends SecmodTest {
         }
 
         String configName = BASE + SEP + "nsscrypto.cfg";
-        Provider p = getCustomizedPKCS11(configName);
+        Provider p = getSunPKCS11(configName);
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", p);
         KeyPair kp = kpg.generateKeyPair();

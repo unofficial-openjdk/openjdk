@@ -67,7 +67,7 @@
 #
 #ifdef solaris
 security.provider.tbd=OracleUcrypto
-security.provider.tbd=SunPKCS11-Solaris
+security.provider.tbd=SunPKCS11 ${java.home}/conf/security/sunpkcs11-solaris.cfg
 #endif
 security.provider.tbd=SUN
 security.provider.tbd=SunRsaSign
@@ -76,10 +76,10 @@ security.provider.tbd=SunJSSE
 security.provider.tbd=SunJCE
 security.provider.tbd=SunJGSS
 security.provider.tbd=SunSASL
-security.provider.tbd=JdkSASL
 security.provider.tbd=XMLDSig
 security.provider.tbd=SunPCSC
 security.provider.tbd=JdkLDAP
+security.provider.tbd=JdkSASL
 #ifdef windows
 security.provider.tbd=SunMSCAPI
 #endif
@@ -87,7 +87,7 @@ security.provider.tbd=SunMSCAPI
 security.provider.tbd=Apple
 #endif
 #ifndef solaris
-security.provider.tbd=sun.security.pkcs11.SunPKCS11
+security.provider.tbd=SunPKCS11
 #endif
 
 
