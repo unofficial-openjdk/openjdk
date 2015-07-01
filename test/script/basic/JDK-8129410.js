@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,18 @@
  */
 
 /**
- * JDK-8075454: Anonymous functions have internal names exposed via parser API
+ * JDK-8129410: Java adapters with class-level overrides should preserve variable arity constructors
  *
  * @test
- * @option -scripting
  * @run
  */
 
-var Parser = Java.type("jdk.nashorn.api.tree.Parser");
-var parser = Parser.create();
+var VarArgConstructor = Java.type("jdk.nashorn.test.models.VarArgConstructor");
+var VarArgConstructorExtended = Java.extend(VarArgConstructor, {});
 
-var ast = parser.parse("test.js", <<EOF
+// If the fix didn't work we wouldn't even get past the constructor invocation
+// as it'd complain there's no matching arity constructor.
+var newExtended = new VarArgConstructorExtended(1, true, "a", "b");
 
-function(x) {
-  return x*x
-}
-
-EOF, print);
-
-Assert.assertNull(ast.sourceElements[0].expression.name);
+// Assert the expected constructor was invoked.
+Assert.assertEquals("vararg", newExtended.indicator);
