@@ -46,6 +46,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -263,52 +265,61 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Derive a module name from the given JAR file name.
-     *
-     * @apiNote This needs to move to somewhere where it can be used by tools,
-     * maybe even a standard API if automatic modules are a Java SE feature.
-     */
-    private String deriveModuleNameFromJarName(String name) {
-        // drop .jar
-        name = name.substring(0, name.length()-4);
-
-        // drop -${VERSION}
-        int index = name.lastIndexOf('-');
-        if (index > 0) {
-            String tail = name.substring(index+1);
-            if (tail.matches("^(\\d+\\.)?(\\d+\\.)?(\\*|\\d+)$")) {
-                name = name.substring(0, index);
-            }
-        }
-
-        // drop all non-alphanumeric chars
-        return name.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    /**
      * Treat the given JAR file as a module as follows:
      *
-     * 1. The module name is derived from the file name of the JAR file
+     * 1. The module name (and optionally the version) is derived from the file
+     *    name of the JAR file
      * 2. The packages of all .class files in the JAR file are exported
      * 3. It has no module-private/concealed packages
      * 4. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
      * 5. The Main-Class attribute in the main attributes of the JAR manifest
      *    is mapped to the module descriptor mainClass
+     *
+     * @apiNote This needs to move to somewhere where it can be used by tools,
+     * maybe even a standard API if automatic modules are a Java SE feature.
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
         throws IOException
     {
-        // module name
+        // Derive module name and version from JAR file name
+
         String fn = jf.getName();
         int i = fn.lastIndexOf(File.separator);
         if (i != -1)
             fn = fn.substring(i+1);
-        String mn = deriveModuleNameFromJarName(fn);
+
+        // drop .jar
+        String mn = fn.substring(0, fn.length()-4);
+        String vs = null;
+
+        // find first occurrence of -${NUMBER}. or -${NUMBER}$
+        Matcher matcher = Pattern.compile("-(\\d+(\\.|$))").matcher(mn);
+        if (matcher.find()) {
+            int start = matcher.start();
+
+            // attempt to parse the tail as a version string
+            try {
+                String tail = mn.substring(start+1);
+                Version.parse(tail);
+                vs = tail;
+            } catch (IllegalArgumentException ignore) { }
+
+            mn = mn.substring(0, start);
+        }
+
+        // finally clean up the module name
+        mn =  mn.replaceAll("[^A-Za-z0-9]", ".")  // replace non-alphanumeric
+                .replaceAll("(\\.)(\\1)+", ".")   // collapse repeating dots
+                .replaceAll("^\\.", "")           // drop leading dots
+                .replaceAll("\\.$", "");          // drop trailing dots
+
 
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
             = new ModuleDescriptor.Builder(mn, true).requires("java.base");
+        if (vs != null)
+            builder.version(vs);
 
         // scan the entries in the JAR file to locate the .class and service
         // configuration file

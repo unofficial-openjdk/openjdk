@@ -24,6 +24,8 @@
  */
 package com.sun.security.sasl;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidParameterException;
 import java.security.ProviderException;
@@ -98,24 +100,30 @@ public final class Provider extends java.security.Provider {
     public Provider() {
         super("SunSASL", 1.9d, info);
 
-        // Client mechanisms
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "EXTERNAL", "com.sun.security.sasl.ClientFactoryImpl"));
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "PLAIN", "com.sun.security.sasl.ClientFactoryImpl"));
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "CRAM-MD5", "com.sun.security.sasl.ClientFactoryImpl"));
+        final Provider p = this;
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                // Client mechanisms
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "EXTERNAL", "com.sun.security.sasl.ClientFactoryImpl"));
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "PLAIN", "com.sun.security.sasl.ClientFactoryImpl"));
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "CRAM-MD5", "com.sun.security.sasl.ClientFactoryImpl"));
 
-        // Server mechanisms
-        putService(new ProviderService(this, "SaslServerFactory",
-                    "CRAM-MD5", "com.sun.security.sasl.ServerFactoryImpl"));
-        putService(new ProviderService(this, "SaslServerFactory",
-                    "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
-        putService(new ProviderService(this, "SaslServerFactory",
-                    "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
+                // Server mechanisms
+                putService(new ProviderService(p, "SaslServerFactory",
+                           "CRAM-MD5", "com.sun.security.sasl.ServerFactoryImpl"));
+                putService(new ProviderService(p, "SaslServerFactory",
+                           "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
+                putService(new ProviderService(p, "SaslServerFactory",
+                           "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
+                return null;
+            }
+        });
     }
 }

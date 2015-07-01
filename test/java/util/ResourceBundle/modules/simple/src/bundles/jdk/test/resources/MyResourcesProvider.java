@@ -23,16 +23,18 @@
 
 package jdk.test.resources;
 
-import java.io.InputStream;
+import java.lang.reflect.Module;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Locale;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.spi.ResourceBundleProvider;
 
-public class MyResourcesProvider implements ResourceBundleProvider {
+import sun.util.locale.provider.AbstractResourceBundleProvider;
+
+public class MyResourcesProvider extends AbstractResourceBundleProvider {
     @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
+    protected String toBundleName(String baseName, Locale locale) {
         StringBuilder sb = new StringBuilder(baseName);
         String lang = locale.getLanguage();
         if (!lang.isEmpty()) {
@@ -42,43 +44,6 @@ public class MyResourcesProvider implements ResourceBundleProvider {
                 sb.append('_').append(country);
             }
         }
-        String bundleName = sb.toString();
-        ClassLoader loader = MyResourcesProvider.class.getClassLoader();
-        ResourceBundle bundle = null;
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends ResourceBundle> cl = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
-            bundle = cl.newInstance();
-        } catch (IllegalAccessException | InstantiationException e) {
-            System.out.println(e);
-            return null;
-        } catch (ClassNotFoundException cnf) {
-        }
-
-        String resourceName = "/" + sb.toString().replace('.', '/') + ".properties";
-        try (InputStream stream = MyResourcesProvider.class.getResourceAsStream(resourceName)) {
-            if (stream != null) {
-                bundle = new PropertyResourceBundle(stream);
-            }
-        } catch (IOException e) {
-            System.out.println(e);
-        }
-        return bundle;
-
-        /* Use ResourceBundle.Control as a utility class
-        ResourceBundle.Control control = new ResourceBundle.Control();
-        ResourceBundle bundle = null;
-        try {
-            for (String format : ResourceBundle.Control.FORMAT_DEFAULT) {
-                bundle = control.newBundle(baseName, locale, format, loader, false);
-                if (bundle != null) {
-                    break;
-                }
-            }
-        } catch (IllegalAccessException | InstantiationException | IOException e) {
-            System.out.println(e);
-        }
-        return bundle;
-        */
+        return sb.toString();
     }
 }

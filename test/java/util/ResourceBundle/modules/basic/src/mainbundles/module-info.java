@@ -24,7 +24,5 @@
 module mainbundles {
     exports jdk.test.resources to test, eubundles, asiabundles;
     provides jdk.test.resources.MyResourcesProvider
-        with jdk.test.resources.MyResourcesProviderImpl;
-    provides java.util.spi.ResourceBundleControlProvider
-        with jdk.test.resources.MyResourcesProviderImpl;
+        with jdk.test.resources.MyResourcesMain;
 }

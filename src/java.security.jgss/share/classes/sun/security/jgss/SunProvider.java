@@ -26,6 +26,8 @@
 package sun.security.jgss;
 
 import java.security.Provider;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidParameterException;
 import java.security.ProviderException;
@@ -101,11 +103,17 @@ public final class SunProvider extends Provider {
         /* We are the Sun JGSS provider */
         super("SunJGSS", 1.9d, INFO);
 
-        putService(new ProviderService(this, "GssApiMechanism",
-                    "1.2.840.113554.1.2.2",
-                    "sun.security.jgss.krb5.Krb5MechFactory"));
-        putService(new ProviderService(this, "GssApiMechanism",
-                    "1.3.6.1.5.5.2",
-                    "sun.security.jgss.spnego.SpNegoMechFactory"));
+        final Provider p = this;
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                putService(new ProviderService(p, "GssApiMechanism",
+                           "1.2.840.113554.1.2.2",
+                           "sun.security.jgss.krb5.Krb5MechFactory"));
+                putService(new ProviderService(p, "GssApiMechanism",
+                           "1.3.6.1.5.5.2",
+                           "sun.security.jgss.spnego.SpNegoMechFactory"));
+                return null;
+            }
+        });
     }
 }

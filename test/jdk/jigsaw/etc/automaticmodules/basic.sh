@@ -59,7 +59,7 @@ $JAVAC -d mods/basictest -mp mods `find $TESTSRC/src/basictest -name "*.java"`
 $JAR cf mods/logging-1.0.jar -C mods/logging logging
 rm -rf mods/logging
 
-$JAR cf mods/http-server-9.0.0.jar -C mods/httpserver http
+$JAR cf mods/httpserver-9.0.0.jar -C mods/httpserver http
 rm -rf mods/httpserver
 
 

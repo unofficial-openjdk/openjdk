@@ -83,7 +83,8 @@ public enum UcryptoMech {
              "1.2.840.113549.1.1.4", "OID.1.2.840.113549.1.1.4") }),
     CRYPTO_SHA1_RSA_PKCS(34, new ServiceDesc[]
         { sd("Signature", "SHA1withRSA", "com.oracle.security.ucrypto.NativeRSASignature$SHA1",
-             "1.2.840.113549.1.1.5,1.3.14.3.2.29", "OID.1.2.840.113549.1.1.5,1.3.14.3.2.29") }),
+             "1.2.840.113549.1.1.5", "OID.1.2.840.113549.1.1.5",
+             "1.3.14.3.2.29") }),
     CRYPTO_SHA256_RSA_PKCS(35, new ServiceDesc[]
         { sd("Signature", "SHA256withRSA", "com.oracle.security.ucrypto.NativeRSASignature$SHA256",
              "1.2.840.113549.1.1.11", "OID.1.2.840.113549.1.1.11") }),

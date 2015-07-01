@@ -33,11 +33,8 @@ import java.security.Provider.Service;
 /**
  * List of Providers. Used to represent the provider preferences.
  *
- * The system starts out with a ProviderList that only has the names
- * of the Providers.
- * When using ServiceLoader to load the providers, Providers are created
- * semi-eagerly as we iterate through them looking for a match.
- * VALTBD: support the legacy signed jars for maximum backward compatibility.
+ * The system starts out with a ProviderList that only has the classNames
+ * of the Providers. Providers are loaded on demand only when needed.
  *
  * For compatibility reasons, Providers that could not be loaded are ignored
  * and internally presented as the instance EMPTY_PROVIDER. However, those
@@ -182,8 +179,8 @@ public final class ProviderList {
                 config = new ProviderConfig(entry);
             } else {
                 String provName = entry.substring(0, k);
-                String arguments = entry.substring(k + 1).trim();
-                config = new ProviderConfig(provName, arguments);
+                String argument = entry.substring(k + 1).trim();
+                config = new ProviderConfig(provName, argument);
             }
 
             // Get rid of duplicate providers.
@@ -203,10 +200,10 @@ public final class ProviderList {
      * bootclasspath and cannot be in signed JAR files. This is to avoid
      * possible recursion and deadlock during verification.
      */
-    ProviderList getJarList(String[] jarClassNames) {
+    ProviderList getJarList(String[] jarProvNames) {
         List<ProviderConfig> newConfigs = new ArrayList<>();
-        for (String className : jarClassNames) {
-            ProviderConfig newConfig = new ProviderConfig(className);
+        for (String provName : jarProvNames) {
+            ProviderConfig newConfig = new ProviderConfig(provName);
             for (ProviderConfig config : configs) {
                 // if the equivalent object is present in this provider list,
                 // use the old object rather than the new object.

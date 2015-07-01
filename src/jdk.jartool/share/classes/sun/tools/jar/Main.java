@@ -75,6 +75,9 @@ class Main {
     Set<File> entries = new LinkedHashSet<File>();
     // All packages.
     Set<String> packages = new HashSet<>();
+    // All actual entries added, or existing, in the jar file ( excl manifest
+    // and module-info.class ). Populated during create or update.
+    Set<String> jarEntries = new HashSet<>();
 
     // Directories specified by "-C" operation.
     Set<String> paths = new HashSet<String>();
@@ -259,6 +262,13 @@ class Main {
                     out = new FileOutputStream(tmpfile);
                 }
                 create(new BufferedOutputStream(out, 4096), manifest, moduleInfoBytes);
+
+                // Consistency checks for modular jars.
+                if (isModularJar()) {
+                    if(!checkServices(new InputStreamSupplier(moduleInfo)))
+                        return false;
+                }
+
                 if (in != null) {
                     in.close();
                 }
@@ -323,6 +333,13 @@ class Main {
 
                 boolean updateOk = update(in, new BufferedOutputStream(out),
                                           manifest, moduleInfoSupplier, null);
+
+                // Consistency checks for modular jars.
+                if (isModularJar()) {
+                    if(!checkServices(new InputStreamSupplier(moduleInfo)))
+                        return false;
+                }
+
                 if (ok) {
                     ok = updateOk;
                 }
@@ -617,6 +634,7 @@ class Main {
                     if (isUpdate)
                         entryMap.put(entryName(path), f);
                 } else if (entries.add(f)) {
+                    jarEntries.add(entryName(path));
                     if (path.endsWith(".class"))
                         packages.add(toPackageName(entryName(path)));
                     if (isUpdate)
@@ -797,6 +815,7 @@ class Main {
                     entries.remove(f);
                 }
 
+                jarEntries.add(name);
                 if (name.endsWith(".class"))
                     packages.add(toPackageName(name));
             }
@@ -1581,6 +1600,31 @@ class Main {
     }
 
     // Modular jar support
+
+    private static String toBinaryName(String classname) {
+        return (classname.replace('.', '/')) + ".class";
+    }
+
+    private boolean checkServices(Supplier<InputStream> miSupplier)
+        throws IOException
+    {
+        ModuleDescriptor md = null;
+        try (InputStream in = miSupplier.get()) {
+            md = ModuleDescriptor.read(in);
+        }
+        Set<String> missing = md.provides()
+                                .values()
+                                .stream()
+                                .map(p -> p.providers())
+                                .flatMap(p -> p.stream())
+                                .filter(p -> !jarEntries.contains(toBinaryName(p)))
+                                .collect(Collectors.toSet());
+        if (missing.size() > 0) {
+            missing.stream().forEach(s -> fatalError(formatMsg("error.missing.provider", s)));
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Returns a byte array containin the module-info.class.

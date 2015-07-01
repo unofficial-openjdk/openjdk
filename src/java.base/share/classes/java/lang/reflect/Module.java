@@ -780,10 +780,11 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM) {
+                String pkgInternalForm = pn.replace('.', '/');
                 if (target == ALL_UNNAMED_MODULE) {
-                    throw new InternalError("Not implemented yet");
+                    addModuleExportsToAllUnnamed0(this, pkgInternalForm);
                 } else {
-                    addModuleExports0(this, pn.replace('.', '/'), target);
+                    addModuleExports0(this, pkgInternalForm, target);
                 }
             }
 
@@ -923,6 +924,9 @@ public final class Module {
     // JVM_AddModuleExports
     private static native void addModuleExports0(Module from, String pn, Module to);
 
+    // JVM_AddModuleExportsToAllUnnamed
+    private static native void addModuleExportsToAllUnnamed0(Module from, String pn);
+
     // JVM_AddModulePackage
     private static native void addModulePackage0(Module m, String pn);
 
@@ -958,8 +962,7 @@ public final class Module {
                 }
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
-                    // VM support not ready yet
-                    m.implAddExports(pn, null /*Module.ALL_UNNAMED_MODULE*/, true);
+                    m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
                 }
             });
     }

@@ -298,7 +298,7 @@ public class ModuleDescriptor
                              DependencyHashes hashes)
     {
 
-        this.name = requireModuleName(name);
+        this.name = name;
         this.automatic = automatic;
 
         Set<Requires> rqs = new HashSet<>(requires.values());
@@ -317,11 +317,7 @@ public class ModuleDescriptor
         this.provides = Collections.unmodifiableMap(provides);
 
         this.version = Optional.ofNullable(version);
-        if (mainClass != null)
-            this.mainClass = Optional.of(requireJavaIdentifier("main class name",
-                                                               mainClass));
-        else
-            this.mainClass = Optional.empty();
+        this.mainClass = Optional.ofNullable(mainClass);
         this.hashes = Optional.ofNullable(hashes);
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
@@ -452,7 +448,7 @@ public class ModuleDescriptor
         }
 
         /* package */ Builder(String name, boolean automatic) {
-            this.name = name;
+            this.name = requireModuleName(name);
             this.automatic = automatic;
         }
 
@@ -540,7 +536,8 @@ public class ModuleDescriptor
         }
 
         public Builder mainClass(String mainClass) {
-            this.mainClass = mainClass;
+            this.mainClass
+                = requireJavaIdentifier("main class name", mainClass);
             return this;
         }
 

@@ -43,6 +43,13 @@ Java_java_lang_reflect_Module_addModuleExports0(JNIEnv *env, jclass cls, jobject
 }
 
 JNIEXPORT void JNICALL
+Java_java_lang_reflect_Module_addModuleExportsToAllUnnamed0(JNIEnv *env, jclass cls,
+                                                            jobject from, jstring pkg)
+{
+    JVM_AddModuleExportsToAllUnnamed(env, from, pkg);
+}
+
+JNIEXPORT void JNICALL
 Java_java_lang_reflect_Module_addReadsModule0(JNIEnv *env, jclass cls, jobject from, jobject to)
 {
     JVM_AddReadsModule(env, from, to);

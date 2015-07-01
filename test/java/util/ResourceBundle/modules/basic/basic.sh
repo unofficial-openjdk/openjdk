@@ -23,7 +23,6 @@
 
 # @test
 # @summary Basic test for ResourceBundle with modules;
-#          ResourceBundle.Control is provided by a ResourceBundleControlProvider,
 #          resource bundles are grouped in main, EU, and Asia.
 
 set -e
@@ -37,9 +36,10 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
+JAR="$COMPILEJAVA/bin/jar"
 JAVA="$TESTJAVA/bin/java"
 
-# This test is temporarily converted to use ResourceBundleProviderSupport class
+# This test is temporarily converted to use AbstractResourceBundleProvider class
 # to avoid calling Control.newBundle
 EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider"
 
@@ -70,6 +70,6 @@ mkdir -p mods/test
 $JAVAC ${EXTRA_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de 
 
 exit $?

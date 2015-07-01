@@ -69,26 +69,44 @@ public abstract class PKCS11Test {
     // for quick checking for generic testing than many if-else statements.
     static double softoken3_version = -1;
     static double nss3_version = -1;
-    static Provider sunpkcs11 = getSunPKCS11();
+    static Provider pkcs11;
 
-    public static Provider getSunPKCS11() {
+    // Goes through ServiceLoader instead of Provider.getInstance() since it
+    // works on all platforms
+    static {
         ServiceLoader sl = ServiceLoader.load(java.security.Provider.class);
         Iterator<Provider> iter = sl.iterator();
+        Provider p = null;
+        boolean found = false;
         while (iter.hasNext()) {
-            Provider p = iter.next();
-            if (p.getName().startsWith("SunPKCS11")) {
-                return p;
-            };
+            try {
+                p = iter.next();
+                if (p.getName().equals("SunPKCS11")) {
+                    found = true;
+                    break;
+                };
+            } catch (Exception e) {
+                // ignore and move on to the next one
+            }
         }
-        return null;
+        // Nothing found through ServiceLoader; fall back to reflection
+        if (!found) {
+            try {
+                Class clazz = Class.forName("sun.security.pkcs11.SunPKCS11");
+                p = (Provider) clazz.newInstance();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        pkcs11 = p;
     }
 
-    static Provider getCustomizedPKCS11(String config) throws Exception {
-        if (sunpkcs11 != null) {
-            return sunpkcs11.configure(config);
-        } else {
-            return null;
+    // Return a SunPKCS11 provider configured with the specified config file
+    static Provider getSunPKCS11(String config) throws Exception {
+        if (pkcs11 == null) {
+            throw new NoSuchProviderException("No PKCS11 provider available");
         }
+        return pkcs11.configure(config);
     }
 
     public abstract void main(Provider p) throws Exception;
@@ -98,7 +116,8 @@ public abstract class PKCS11Test {
         System.out.println("Running test with provider " + p.getName() + "...");
         main(p);
         long stop = System.currentTimeMillis();
-        System.out.println("Completed test with provider " + p.getName() + " (" + (stop - start) + " ms).");
+        System.out.println("Completed test with provider " + p.getName() +
+            " (" + (stop - start) + " ms).");
     }
 
     public static void main(PKCS11Test test) throws Exception {
@@ -142,7 +161,7 @@ public abstract class PKCS11Test {
         }
         String base = getBase();
         String p11config = base + SEP + "nss" + SEP + "p11-deimos.txt";
-        Provider p = getCustomizedPKCS11(p11config);
+        Provider p = getSunPKCS11(p11config);
         test.premain(p);
     }
 
@@ -412,7 +431,7 @@ public abstract class PKCS11Test {
 
         System.setProperty("pkcs11test.nss.lib", libfile);
         System.setProperty("pkcs11test.nss.db", dbdir);
-        Provider p = getCustomizedPKCS11(p11config);
+        Provider p = getSunPKCS11(p11config);
         test.premain(p);
     }
 

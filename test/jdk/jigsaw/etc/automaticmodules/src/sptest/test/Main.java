@@ -51,7 +51,7 @@ public class Main {
 
         // requires java.base
         Set<String> requires
-                = descriptor.requires().stream()
+            = descriptor.requires().stream()
                 .map(Requires::name)
                 .collect(Collectors.toSet());
         assertTrue(requires.size() == 1);

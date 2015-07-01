@@ -58,8 +58,8 @@ public class Providers {
         // empty
     }
 
-    // After the switch to modules, JDK no longer loads signed jars during
-    // start up as SUN, SunRsaSign, and SunEC are all in modules.
+    // After the switch to modules, JDK providers are all in modules and JDK
+    // no longer needs to load signed jars during start up.
     //
     // However, for earlier releases, it need special handling to resolve
     // circularities when loading signed JAR files during startup. The code
@@ -79,33 +79,24 @@ public class Providers {
     // The code here is used by sun.security.util.SignatureFileVerifier.
     // See there for details.
 
-    private static final String BACKUP_PROVIDER_CLASSNAME =
-        "sun.security.provider.VerificationProvider";
-
     // Hardcoded names of providers to use for JAR verification.
     // MUST NOT be on the bootclasspath and not in signed JAR files.
     private static final String[] jarVerificationProviders = {
         "SUN",
         "SunRsaSign",
-        // Note: SunEC *is* in a signed JAR file, but it's not signed
-        // by EC itself. So it's still safe to be listed here.
-        "SunEC",
+        // Note: when SunEC is in a signed JAR file, it's not signed
+        // by EC algorithms. So it's still safe to be listed here.
+        // Need to use class name here, otherwise it cannot be loaded for
+        // jar verification. Only those providers in java.base are created
+        // directly by ProviderConfig class.
+        "sun.security.ec.SunEC",
     };
 
-    // Return to Sun provider or its backup.
+    // Return Sun provider.
     // This method should only be called by
     // sun.security.util.ManifestEntryVerifier and java.security.SecureRandom.
     public static Provider getSunProvider() {
-        try {
-            return new sun.security.provider.Sun();
-        } catch (Exception e) {
-            try {
-                Class<?> clazz = Class.forName(BACKUP_PROVIDER_CLASSNAME);
-                return (Provider)clazz.newInstance();
-            } catch (Exception ee) {
-                throw new RuntimeException("Sun provider not found", e);
-            }
-        }
+        return new sun.security.provider.Sun();
     }
 
     /**
@@ -117,9 +108,15 @@ public class Providers {
     public static Object startJarVerification() {
         ProviderList currentList = getProviderList();
         ProviderList jarList = currentList.getJarList(jarVerificationProviders);
-        if (jarList.size() < 3) {
+        if (jarList.getProvider("SUN") == null) {
             // add backup provider
-            ProviderList.add(jarList, getSunProvider());
+            Provider p;
+            try {
+                p = new sun.security.provider.VerificationProvider();
+            } catch (Exception e) {
+                throw new RuntimeException("Missing provider for jar verification", e);
+            }
+            ProviderList.add(jarList, p);
         }
         // return the old thread-local provider list, usually null
         return beginThreadProviderList(jarList);

@@ -164,6 +164,7 @@ public class Basic {
     public static void main(String[] args) throws Throwable {
         compileModule(TestModuleData.FOO.moduleName);
         compileModule(TestModuleData.BAR.moduleName, TEST_CLASSES);
+        compileModule("baz");  // for service provider consistency checking
 
         testCreate(TestModuleData.FOO, PASS);
         testUpdate(TestModuleData.FOO, PASS);
@@ -171,6 +172,7 @@ public class Basic {
         testDependences(TestModuleData.FOO, TestModuleData.BAR, BAR_PASS);
 
         testBadOptions(TestModuleData.FOO, FAIL);
+        testServices();
     }
 
     static void testCreate(TestModuleData testModule,
@@ -330,7 +332,7 @@ public class Basic {
             "-C", modClasses.toString(), ".");
 
         Result r = java(mp, barData.moduleName + "/" + barData.mainClass,
-                        "-XaddExports:java.base/jdk.internal.module");
+                        "-XaddExports:java.base/jdk.internal.module=bar");
 
         resultChecker.accept(r, barData);
     }
@@ -358,6 +360,55 @@ public class Basic {
                            "-C", modClasses.toString(), "jdk");
 
         resultChecker.accept(r, null);  // TODO: expected failure message
+    }
+
+    static void testServices() throws IOException {
+        Path mp = Paths.get("baz" + "-services");
+        out.println("---Testing " + mp.getFileName());
+        createTestDir(mp);
+        Path modClasses = TEST_CLASSES.resolve("baz");
+        Path modularJar = mp.resolve("baz" + ".jar");
+
+        // Positive test, create
+        Result r = jarWithResult("--create",
+                                 "--archive=" + modularJar.toString(),
+                                 "-C", modClasses.toString(), "module-info.class",
+                                 "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+                                 "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
+        out.printf("%s%n", r.output);
+        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+
+        FileUtils.deleteFileWithRetry(modularJar);
+        // Omit service impl
+        r = jarWithResult("--create",
+                          "--archive=" + modularJar.toString(),
+                          "-C", modClasses.toString(), "module-info.class",
+                          "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
+
+        out.printf("%s%n", r.output);
+        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
+
+        // Positive test, update
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
+        r = jarWithResult("--update",
+                          "--archive=" + modularJar.toString(),
+                          "-C", modClasses.toString(), "module-info.class");
+        out.printf("%s%n", r.output);
+        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+
+        FileUtils.deleteFileWithRetry(modularJar);
+        // Omit service impl
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
+        r = jarWithResult("--update",
+                          "--archive=" + modularJar.toString(),
+                          "-C", modClasses.toString(), "module-info.class");
+        out.printf("%s%n", r.output);
+        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
     }
 
     static void jar(String... args) {

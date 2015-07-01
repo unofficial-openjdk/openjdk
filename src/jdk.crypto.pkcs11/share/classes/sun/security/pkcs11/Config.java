@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,12 +75,6 @@ final class Config {
         if (DEBUG) {
             System.out.println(o);
         }
-    }
-
-    private static final Config DUMMY = new Config();
-
-    static Config getDummyConfig() {
-        return DUMMY;
     }
 
     // file name containing this configuration
@@ -185,11 +179,6 @@ final class Config {
     // Flag to indicate whether NSS should favour performance (false) or
     // memory footprint (true).
     private boolean nssOptimizeSpace = false;
-
-    private Config() {
-        name = "Dummy";
-        description = "Unconfigured and unusable PKCS11 provider";
-    }
 
     Config(String fn) throws IOException {
         this.filename = fn;

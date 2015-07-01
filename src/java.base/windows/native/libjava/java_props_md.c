@@ -388,8 +388,8 @@ GetJavaProperties(JNIEnv* env)
         DWORD platformId;
         {
             OSVERSIONINFOEX ver;
-            ver.dwOSVersionInfoSize = sizeof(ver);
-            GetVersionEx((OSVERSIONINFO *) &ver);
+        ver.dwOSVersionInfoSize = sizeof(ver);
+        GetVersionEx((OSVERSIONINFO *) &ver);
             majorVersion = ver.dwMajorVersion;
             minorVersion = ver.dwMinorVersion;
             is_workstation = (ver.wProductType == VER_NT_WORKSTATION);
@@ -399,7 +399,7 @@ GetJavaProperties(JNIEnv* env)
 
         {
             SYSTEM_INFO si;
-            ZeroMemory(&si, sizeof(SYSTEM_INFO));
+        ZeroMemory(&si, sizeof(SYSTEM_INFO));
             GetNativeSystemInfo(&si);
 
             is_64bit = (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
@@ -408,6 +408,8 @@ GetJavaProperties(JNIEnv* env)
             // Read the major and minor version number from kernel32.dll
             VS_FIXEDFILEINFO *file_info;
             WCHAR kernel32_path[MAX_PATH];
+            DWORD version_size;
+            LPTSTR version_info;
             UINT len, ret;
 
             // Get the full path to \Windows\System32\kernel32.dll and use that for
@@ -419,12 +421,12 @@ GetJavaProperties(JNIEnv* env)
             }
             wcsncat(kernel32_path, L"\\kernel32.dll", MAX_PATH - ret);
 
-            DWORD version_size = GetFileVersionInfoSizeW(kernel32_path, NULL);
+            version_size = GetFileVersionInfoSizeW(kernel32_path, NULL);
             if (version_size == 0) {
                 break;
             }
 
-            LPTSTR version_info = (LPTSTR)malloc(version_size);
+            version_info = (LPTSTR)malloc(version_size);
             if (version_info == NULL) {
                 break;
             }

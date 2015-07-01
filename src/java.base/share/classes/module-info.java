@@ -269,5 +269,23 @@ module java.base {
     provides java.security.Provider with sun.security.rsa.SunRsaSign;
     provides java.security.Provider with com.sun.crypto.provider.SunJCE;
     provides java.security.Provider with com.sun.net.ssl.internal.ssl.Provider;
+    provides sun.text.resources.BreakIteratorInfoProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.text.resources.BreakIteratorRulesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.text.resources.FormatDataProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.text.resources.CollationDataProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.text.resources.JavaTimeSupplementaryProvider with
+        sun.util.resources.LocaleData.SupplementaryResourceBundleProvider;
+    provides sun.util.resources.LocaleNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.TimeZoneNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.CalendarDataProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.CurrencyNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
 }
 

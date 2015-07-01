@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
 
-
 public class Bug4640234  {
     static SimpleDateFormat sdfEn = new SimpleDateFormat("zzzz", Locale.US);
     static SimpleDateFormat sdfEnShort = new SimpleDateFormat("z", Locale.US);
@@ -85,7 +84,8 @@ public class Bug4640234  {
             String[] languages = locEn.getISOLanguages();
 
             ResourceBundle resEn = ResourceBundle.getBundle(
-                    "sun.util.resources.LocaleNames", locEn);
+                        "sun.util.resources.LocaleNames",
+                        locEn, Object.class.getModule());
             Map<String, String> countryMapEn = getList(resEn, true);
             Map<String, String> languageMapEn = getList(resEn, false);
 
@@ -95,7 +95,8 @@ public class Bug4640234  {
 
             for (Locale locale : locales2Test) {
                 resLoc = ResourceBundle.getBundle(
-                    "sun.util.resources.LocaleNames", locale);
+                        "sun.util.resources.LocaleNames",
+                        locale, Object.class.getModule());
 
                 sdfLoc = new SimpleDateFormat("zzzz", locale);
                 sdfLocShort = new SimpleDateFormat("z", locale);
@@ -257,18 +258,20 @@ public class Bug4640234  {
 
         if (nameEn == null) {
             // We should not get here but test is a MUST have
-            return new String[] {"", MessageFormat.format(notFoundMessage,
-                new String[] {"English", ISOCode})};
+            return new String[] {"",
+                                 MessageFormat.format(notFoundMessage, "English", ISOCode)};
         }
 
         if (nameLoc == null) {
-            return new String[] {"", MessageFormat.format(notFoundMessage,
-                new String[] {locale.getDisplayName(), ISOCode})};
+            return new String[] {"",
+                                 MessageFormat.format(notFoundMessage,
+                                                      locale.getDisplayName(), ISOCode)};
         }
 
         if (nameEn.equals(nameLoc)) {
             return new String[] {MessageFormat.format(notLocalizedMessage,
-                new String[] {locale.getDisplayName(), ISOCode}), ""};
+                                                      locale.getDisplayName(), ISOCode),
+                                 ""};
         }
 
         return new String[] {"", ""};

@@ -90,25 +90,32 @@ public final class SunPKCS11 extends AuthProvider {
     }
 
     public SunPKCS11() {
-        this(defConfig);
+        super("SunPKCS11", 1.9d, "Unconfigured and unusable PKCS11 provider");
+        p11 = null;
+        config = null;
+        slotID = 0;
+        pHandler = null;
+        removable = false;
+        nssModule = null;
+        nssUseSecmodTrust = false;
+        token = null;
+        poller = null;
     }
 
     @Override
-    public Provider configure(String... configArgs) throws InvalidParameterException {
-        if (configArgs == null || (configArgs.length != 1)) {
-            throw new InvalidParameterException("SunPKCS11 requires a configuration file");
-        }
+    public Provider configure(String configArg) throws InvalidParameterException {
+        final String newConfigName = checkNull(configArg);
         try {
             return AccessController.doPrivileged(new PrivilegedExceptionAction<Provider>() {
                 @Override
                 public Provider run() throws Exception {
-                    String newConfigName = configArgs[0];
-                    return new SunPKCS11(new Config(checkNull(newConfigName)));
+                    return new SunPKCS11(new Config(newConfigName));
                 }
             });
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
+        } catch (PrivilegedActionException pae) {
+            InvalidParameterException ipe =
+                new InvalidParameterException("Error configuring SunPKCS11 provider");
+            throw (InvalidParameterException) ipe.initCause(pae.getException());
         }
     }
 
@@ -119,45 +126,10 @@ public final class SunPKCS11 extends AuthProvider {
         return obj;
     }
 
-    private static final Config defConfig;
-    static {
-        Config c = null;
-        if (System.getProperty("os.name").startsWith("SunOS")) {
-            try {
-                c = new Config(AccessController.doPrivileged(new PrivilegedAction<String>() {
-                    public String run() {
-                        String sep = System.getProperty("file.separator");
-                        String javaHome = System.getProperty("java.home");
-                        return javaHome + sep + "conf" + sep + "security" + sep +
-                            "sunpkcs11-solaris.cfg";
-                    }
-                }));
-            } catch (IOException ioe) {
-                if (debug != null) {
-                    System.out.println("Error parsing default config: " + ioe);
-                    ioe.printStackTrace();
-                }
-            }
-        }
-        defConfig = (c == null? Config.getDummyConfig() : c);
-    }
-
+    // Used by Secmod
     SunPKCS11(Config c) {
         super("SunPKCS11-" + c.getName(), 1.9d, c.getDescription());
         this.config = c;
-
-        // stop here with minimum initialization when Config.DUMMY is used
-        if (c == Config.getDummyConfig()) {
-            p11 = null;
-            slotID = -1;
-            removable = false;
-            nssModule = null;
-            nssUseSecmodTrust = false;
-            if (debug != null) {
-                System.out.println("SunPKCS11 loading Config.DUMMY");
-            }
-            return;
-        }
 
         if (debug != null) {
             System.out.println("SunPKCS11 loading " + config.getFileName());
@@ -838,7 +810,7 @@ public final class SunPKCS11 extends AuthProvider {
         if (poller != null) {
             return;
         }
-        TokenPoller poller = new TokenPoller(this);
+        final TokenPoller poller = new TokenPoller(this);
         Thread t = new ManagedLocalsThread(poller, "Poller " + getName());
         t.setDaemon(true);
         t.setPriority(Thread.MIN_PRIORITY);

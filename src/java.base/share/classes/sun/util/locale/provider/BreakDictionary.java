@@ -40,6 +40,7 @@
 package sun.util.locale.provider;
 
 import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Module;
 import java.security.AccessController;
@@ -147,16 +148,18 @@ class BreakDictionary {
 
         BufferedInputStream in;
         try {
-            in = AccessController.doPrivileged(
-                new PrivilegedExceptionAction<BufferedInputStream>() {
-                    @Override
-                    public BufferedInputStream run() throws Exception {
-                        return new BufferedInputStream(
-                            module.getResourceAsStream("sun/text/resources/" +
-                            dictionaryName));
-                    }
+            PrivilegedExceptionAction<BufferedInputStream> pa = () -> {
+                InputStream is = module.getResourceAsStream("sun/text/resources/" + dictionaryName);
+                if (is == null) {
+                    // Try to load the file with "java.base" module instance. Assumption
+                    // here is that the fall back data files to be read should reside in
+                    // java.base.
+                    is = BreakDictionary.class.getModule().getResourceAsStream("sun/text/resources/" + dictionaryName);
                 }
-            );
+
+                return new BufferedInputStream(is);
+            };
+            in = AccessController.doPrivileged(pa);
         }
         catch (PrivilegedActionException e) {
             throw new InternalError(e.toString(), e);

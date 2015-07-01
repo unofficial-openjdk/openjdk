@@ -25,10 +25,7 @@
 
 package sun.security.smartcardio;
 
-import java.security.Provider;
-import java.security.NoSuchAlgorithmException;
-import java.security.InvalidParameterException;
-import java.security.ProviderException;
+import java.security.*;
 
 import javax.smartcardio.*;
 
@@ -69,8 +66,15 @@ public final class SunPCSC extends Provider {
 
     public SunPCSC() {
         super("SunPCSC", 1.9d, "Sun PC/SC provider");
-        putService(new ProviderService(this, "TerminalFactory",
-            "PC/SC", "sun.security.smartcardio.SunPCSC$Factory"));
+
+        final Provider p = this;
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                putService(new ProviderService(p, "TerminalFactory",
+                           "PC/SC", "sun.security.smartcardio.SunPCSC$Factory"));
+                return null;
+            }
+        });
     }
 
     public static final class Factory extends TerminalFactorySpi {

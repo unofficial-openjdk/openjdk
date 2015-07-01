@@ -29,9 +29,7 @@ import java.lang.reflect.Module;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import sun.util.locale.provider.ResourceBundleProviderSupport;
 import sun.util.resources.LocaleData;
-import sun.text.resources.JavaTimeSupplementaryProvider;
 
 /**
  * {@code SupplementaryLocaleDataProvider} in module jdk.localedata implements
@@ -39,12 +37,20 @@ import sun.text.resources.JavaTimeSupplementaryProvider;
  * service agent between {@code ResourceBundle.getBundle} callers in java.base
  * and resource bundles in jdk.localedata.
  */
-public class SupplementaryLocaleDataProvider implements JavaTimeSupplementaryProvider {
+public class SupplementaryLocaleDataProvider extends LocaleData.SupplementaryResourceBundleProvider {
+    @Override
+    protected boolean isSupportedInModule(String baseName, Locale locale) {
+        // The assumption here is that there are two modules containing
+        // resource bundles for locale support. If resource bundles are split
+        // into more modules, this method will need to be changed to determine
+        // what locales are exactly supported.
+        return !super.isSupportedInModule(baseName, locale);
+    }
+
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle.Control control = LocaleData.getSupplementaryResourceBundleControl();
         Module module = LocaleDataProvider.class.getModule();
-        String bundleName = control.toBundleName(baseName, locale);
-        return ResourceBundleProviderSupport.loadResourceBundle(module, baseName, locale, bundleName);
+        String bundleName = toBundleName(baseName, locale);
+        return loadResourceBundle(module, bundleName);
     }
 }

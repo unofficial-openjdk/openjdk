@@ -23,7 +23,70 @@
 
 package jdk.test.resources;
 
+import java.lang.reflect.Module;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.ResourceBundle.Control;
+import java.util.Set;
 import java.util.spi.ResourceBundleProvider;
 
-public interface MyResourcesProvider extends ResourceBundleProvider {
+import sun.util.locale.provider.AbstractResourceBundleProvider;
+
+public class MyResourcesProvider extends AbstractResourceBundleProvider {
+    private final String region;
+    private final Set<Locale> supportedLocales;
+
+    protected MyResourcesProvider() {
+        region = "";
+        supportedLocales = null;
+    }
+
+    protected MyResourcesProvider(List<String> formats, String region, Locale... locales) {
+        super(formats);
+        this.region = region;
+        supportedLocales = new HashSet<>(Arrays.asList(locales));
+    }
+
+    @Override
+    public ResourceBundle getBundle(String baseName, Locale locale) {
+        ResourceBundle bundle = null;
+        if (isSupportedInModule(locale)) {
+            Module module = this.getClass().getModule();
+            String bundleName = toBundleName(baseName, locale);
+            for (String format : getFormats()) {
+                try {
+                    bundle = loadResourceBundle(format, module, bundleName);
+                    if (bundle != null) {
+                        break;
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+        return bundle;
+    }
+
+    @Override
+    protected String toBundleName(String baseName, Locale locale) {
+        String name = addRegion(baseName);
+        return Control.getControl(Control.FORMAT_DEFAULT).toBundleName(name, locale);
+    }
+
+    private String addRegion(String baseName) {
+        if (region.isEmpty()) {
+            return baseName;
+        }
+        int index = baseName.lastIndexOf('.');
+        return baseName.substring(0, index + 1) + region + baseName.substring(index);
+    }
+
+    protected boolean isSupportedInModule(Locale locale) {
+        return supportedLocales.contains(locale);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,8 @@
  * @modules java.base/sun.reflect.generics.reflectiveObjects
  *          java.desktop/com.sun.beans
  * @author Eamonn McManus
+ * @modules java.base/sun.reflect.generics.reflectiveObjects
+ *          java.desktop/com.sun.beans
  */
 
 import com.sun.beans.TypeResolver;

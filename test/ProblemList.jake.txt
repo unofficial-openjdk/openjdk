@@ -28,14 +28,12 @@ javax/xml/crypto/dsig/ValidationTests.java                     generic-all
 sun/security/krb5/auto/BasicProc.java                          generic-all
 sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 sun/security/krb5/auto/ReplayCacheTestProc.java                generic-all
-sun/security/krb5/auto/SSL.java                                generic-all
 sun/security/krb5/auto/UnboundSSL.java                         generic-all
 sun/security/krb5/auto/UnboundSSLMultipleKeys.java             generic-all
 sun/security/krb5/auto/UnboundSSLPrincipalProperty.java        generic-all
 sun/security/krb5/auto/SSLwithPerms.java		       generic-all
 sun/security/pkcs11/Provider/Login.sh                          generic-all
 sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
-sun/security/ssl/SSLSocketImpl/NotifyHandshakeTest.sh          generic-all
 sun/security/tools/keytool/autotest.sh                         generic-all
 
 ############################################################################
@@ -43,13 +41,6 @@ sun/security/tools/keytool/autotest.sh                         generic-all
 # jdk_util and jdk_text
 
 # 8044767
-
-java/util/ResourceBundle/ReferencesTest.java                    generic-all
-java/text/BreakIterator/Bug7104012.java                         generic-all
-
-# legacy getBundle can't be used to find sun.util.resources.LocaleNames in module java.base
-sun/util/resources/TimeZone/Bug4640234.java                     generic-all
-sun/text/resources/LocaleDataTest.java                          generic-all
 
 # Can't find bundle for base name sun.text.resources.cldr.* type, locale ja_JP
 java/util/Calendar/CldrFormatNamesTest.java                     generic-all
@@ -68,7 +59,7 @@ java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
 
 java/text/Format/DateFormat/LocaleDateFormats.java		generic-all
 
-java/util/ResourceBundle/Control/Bug6530694.java:		generic-all
+java/util/ResourceBundle/Control/Bug6530694.java		generic-all
 java/util/ResourceBundle/Bug6299235Test.sh			generic-all
 
 ############################################################################
@@ -84,6 +75,9 @@ java/lang/instrument/NativeMethodPrefixAgent.java		generic-all
 
 # waiting for javac/jtreg support
 tools/launcher/ToolsOpts.java					generic-all
+
+# 8048100
+tools/pack200/Pack200Test.java					generic-all
 
 ############################################################################
  
