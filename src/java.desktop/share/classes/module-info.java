@@ -84,6 +84,7 @@ module java.desktop {
         jdk.accessibility;
 
     uses java.awt.im.spi.InputMethodDescriptor;
+    uses javax.accessibility.AccessibilityProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;
     uses javax.imageio.spi.ImageOutputStreamSpi;
     uses javax.imageio.spi.ImageReaderSpi;
