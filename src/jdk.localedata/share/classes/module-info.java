@@ -33,6 +33,6 @@ module jdk.localedata {
     provides sun.util.resources.TimeZoneNamesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.resources.CalendarDataProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.resources.CurrencyNamesProvider with sun.util.resources.provider.LocaleDataProvider;
-    provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo;
-    provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonEnLocaleDataMetaInfo;
+    provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo_jdk_localedata;
+    provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonBaseLocaleDataMetaInfo;
 }
