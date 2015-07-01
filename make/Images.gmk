@@ -95,7 +95,6 @@ JRE_COMPACT1_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact1-sorted-modules
 JRE_COMPACT2_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact2-sorted-modules
 JRE_COMPACT3_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact3-sorted-modules
 
-    $(SUPPORT_OUTPUTDIR)/modules_conf \
 # Use this file inside the image as target for make rule
 JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
