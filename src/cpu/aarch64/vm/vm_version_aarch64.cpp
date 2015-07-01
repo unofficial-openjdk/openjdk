@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2015, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -190,6 +190,11 @@ void VM_Version::get_processor_features() {
     }
   }
 
+  if (UseGHASHIntrinsics) {
+    warning("GHASH intrinsics are not available on this CPU");
+    FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
+  }
+
   if (FLAG_IS_DEFAULT(UseCRC32Intrinsics)) {
     UseCRC32Intrinsics = true;
   }
@@ -227,6 +232,9 @@ void VM_Version::get_processor_features() {
     if (UseSHA512Intrinsics) {
       warning("SHA512 instruction (for SHA-384 and SHA-512) is not available on this CPU.");
       FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
+    }
+    if (!(UseSHA1Intrinsics || UseSHA256Intrinsics || UseSHA512Intrinsics)) {
+      FLAG_SET_DEFAULT(UseSHA, false);
     }
   }
 

@@ -950,8 +950,7 @@ void ClassFileParser::parse_field_attributes(u2 attributes_count,
         assert(runtime_visible_annotations != NULL, "null visible annotations");
         parse_annotations(runtime_visible_annotations,
                           runtime_visible_annotations_length,
-                          parsed_annotations,
-                          CHECK);
+                          parsed_annotations);
         cfs->skip_u1(runtime_visible_annotations_length, CHECK);
       } else if (attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
@@ -1644,7 +1643,6 @@ int ClassFileParser::skip_annotation_value(u1* buffer, int limit, int index) {
     index = skip_annotation(buffer, limit, index);
     break;
   default:
-    assert(false, "annotation tag");
     return limit;  //  bad tag byte
   }
   return index;
@@ -1652,8 +1650,7 @@ int ClassFileParser::skip_annotation_value(u1* buffer, int limit, int index) {
 
 // Sift through annotations, looking for those significant to the VM:
 void ClassFileParser::parse_annotations(u1* buffer, int limit,
-                                        ClassFileParser::AnnotationCollector* coll,
-                                        TRAPS) {
+                                        ClassFileParser::AnnotationCollector* coll) {
   // annotations := do(nann:u2) {annotation}
   int index = 0;
   if ((index += 2) >= limit)  return;  // read nann
@@ -1743,6 +1740,10 @@ ClassFileParser::AnnotationCollector::annotation_index(ClassLoaderData* loader_d
     if (_location != _in_method)  break;  // only allow for methods
     if (!privileged)              break;  // only allow in privileged code
     return _method_DontInline;
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_InjectedProfile_signature):
+    if (_location != _in_method)  break;  // only allow for methods
+    if (!privileged)              break;  // only allow in privileged code
+    return _method_InjectedProfile;
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_LambdaForm_Compiled_signature):
     if (_location != _in_method)  break;  // only allow for methods
     if (!privileged)              break;  // only allow in privileged code
@@ -1784,6 +1785,8 @@ void ClassFileParser::MethodAnnotationCollector::apply_to(methodHandle m) {
     m->set_force_inline(true);
   if (has_annotation(_method_DontInline))
     m->set_dont_inline(true);
+  if (has_annotation(_method_InjectedProfile))
+    m->set_has_injected_profile(true);
   if (has_annotation(_method_LambdaForm_Compiled) && m->intrinsic_id() == vmIntrinsics::_none)
     m->set_intrinsic_id(vmIntrinsics::_compiledLambdaForm);
   if (has_annotation(_method_LambdaForm_Hidden))
@@ -2281,8 +2284,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
         parse_annotations(runtime_visible_annotations,
-            runtime_visible_annotations_length, &parsed_annotations,
-            CHECK_(nullHandle));
+            runtime_visible_annotations_length, &parsed_annotations);
         cfs->skip_u1(runtime_visible_annotations_length, CHECK_(nullHandle));
       } else if (method_attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
@@ -2946,8 +2948,7 @@ void ClassFileParser::parse_classfile_attributes(ClassFileParser::ClassAnnotatio
         assert(runtime_visible_annotations != NULL, "null visible annotations");
         parse_annotations(runtime_visible_annotations,
                           runtime_visible_annotations_length,
-                          parsed_annotations,
-                          CHECK);
+                          parsed_annotations);
         cfs->skip_u1(runtime_visible_annotations_length, CHECK);
       } else if (tag == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {

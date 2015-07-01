@@ -287,6 +287,7 @@
   template(java_lang_invoke_LambdaForm,               "java/lang/invoke/LambdaForm")              \
   template(java_lang_invoke_ForceInline_signature,    "Ljava/lang/invoke/ForceInline;")           \
   template(java_lang_invoke_DontInline_signature,     "Ljava/lang/invoke/DontInline;")            \
+  template(java_lang_invoke_InjectedProfile_signature, "Ljava/lang/invoke/InjectedProfile;")      \
   template(java_lang_invoke_Stable_signature,         "Ljava/lang/invoke/Stable;")                \
   template(java_lang_invoke_LambdaForm_Compiled_signature, "Ljava/lang/invoke/LambdaForm$Compiled;") \
   template(java_lang_invoke_LambdaForm_Hidden_signature, "Ljava/lang/invoke/LambdaForm$Hidden;")  \
@@ -856,6 +857,12 @@
   do_intrinsic(_digestBase_implCompressMB, sun_security_provider_digestbase, implCompressMB_name, implCompressMB_signature, F_R)   \
    do_name(     implCompressMB_name,                               "implCompressMultiBlock")                            \
    do_signature(implCompressMB_signature,                          "([BII)I")                                           \
+                                                                                                                        \
+  /* support for com.sun.crypto.provider.GHASH */                                                                       \
+  do_class(com_sun_crypto_provider_ghash, "com/sun/crypto/provider/GHASH")                                              \
+  do_intrinsic(_ghash_processBlocks, com_sun_crypto_provider_ghash, processBlocks_name, ghash_processBlocks_signature, F_S) \
+   do_name(processBlocks_name, "processBlocks")                                                                         \
+   do_signature(ghash_processBlocks_signature, "([BII[J[J)V")                                                           \
                                                                                                                         \
   /* support for java.util.zip */                                                                                       \
   do_class(java_util_zip_CRC32,           "java/util/zip/CRC32")                                                        \
