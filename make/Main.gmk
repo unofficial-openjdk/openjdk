@@ -604,7 +604,7 @@ test-image: prepare-test-image test-image-hotspot-jtreg-native \
 all-images: product-images test-image docs-image
 
 ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
-    jdk.jdwp.agent-gensrc $(ALL_MODULES) exploded-image \
+    jdk.jdwp.agent-gensrc $(ALL_MODULES) demos samples exploded-image \
     mac-bundles product-images docs-image test-image all-images
 
 ################################################################################
