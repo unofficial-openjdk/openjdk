@@ -3589,13 +3589,13 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // cache the system class loader
   SystemDictionary::compute_java_system_loader(CHECK_JNI_ERR);
 
-  if (TRACE_START() != JNI_OK) {
-    vm_exit_during_initialization("Failed to start tracing backend.");
-  }
-
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution
   JvmtiExport::enter_live_phase();
+
+  if (TRACE_START() != JNI_OK) {
+    vm_exit_during_initialization("Failed to start tracing backend.");
+  }
 
   // Notify JVMTI agents that VM initialization is complete - nop if no agents.
   JvmtiExport::post_vm_initialized();
