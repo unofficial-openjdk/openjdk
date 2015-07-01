@@ -39,7 +39,8 @@ $(eval $(call IncludeCustomExtension, , Images-pre.gmk))
 ############################################################################
 
 MAIN_MODULES += java.se java.smartcardio jdk.httpserver jdk.sctp \
-               jdk.security.auth jdk.security.jgss jdk.pack200 jdk.xml.dom
+               jdk.security.auth jdk.security.jgss jdk.pack200 jdk.xml.dom \
+               jdk.accessibility
 
 # providers
 PROVIDER_MODULES += jdk.charsets jdk.crypto.ec jdk.crypto.pkcs11 jdk.jvmstat jdk.localedata \
@@ -56,10 +57,6 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   PROVIDER_MODULES += jdk.crypto.ucrypto
-endif
-
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  MAIN_MODULES += jdk.accessibility
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
@@ -98,6 +95,7 @@ JRE_COMPACT1_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact1-sorted-modules
 JRE_COMPACT2_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact2-sorted-modules
 JRE_COMPACT3_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact3-sorted-modules
 
+    $(SUPPORT_OUTPUTDIR)/modules_conf \
 # Use this file inside the image as target for make rule
 JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
@@ -440,10 +438,10 @@ endif
 # /sample dir
 
 $(eval $(call SetupCopyFiles,COPY_SAMPLES, \
-    SRC := $(SUPPORT_OUTPUTDIR)/sample, \
+    SRC := $(SUPPORT_OUTPUTDIR)/sample/image, \
     DEST := $(JDK_IMAGE_DIR)/sample, \
-    FILES := $(if $(wildcard $(SUPPORT_OUTPUTDIR)/sample), \
-        $(call CacheFind,$(SUPPORT_OUTPUTDIR)/sample))))
+    FILES := $(if $(wildcard $(SUPPORT_OUTPUTDIR)/sample/image), \
+        $(call CacheFind,$(SUPPORT_OUTPUTDIR)/sample/image))))
 
 JDK_TARGETS += $(COPY_SAMPLES)
 
