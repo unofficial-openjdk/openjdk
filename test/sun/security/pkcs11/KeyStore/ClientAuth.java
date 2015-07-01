@@ -222,7 +222,7 @@ public class ClientAuth extends PKCS11Test {
         System.setProperty("javax.net.ssl.trustStorePassword", JKS_PWD);
 
         // perform Security.addProvider of P11 provider
-        Security.addProvider(getCustomizedPKCS11(System.getProperty("CUSTOM_P11_CONFIG")));
+        Security.addProvider(getSunPKCS11(System.getProperty("CUSTOM_P11_CONFIG")));
 
         if (debug) {
             System.setProperty("javax.net.debug", "all");

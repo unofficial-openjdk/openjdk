@@ -86,6 +86,10 @@ security.provider.tbd=SunMSCAPI
 #ifdef macosx
 security.provider.tbd=Apple
 #endif
+#ifndef solaris
+security.provider.tbd=sun.security.pkcs11.SunPKCS11
+#endif
+
 
 #
 # Sun Provider SecureRandom seed source.

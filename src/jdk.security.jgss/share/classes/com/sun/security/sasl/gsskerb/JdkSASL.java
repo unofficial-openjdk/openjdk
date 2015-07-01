@@ -24,6 +24,8 @@
  */
 package com.sun.security.sasl.gsskerb;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidParameterException;
@@ -73,9 +75,15 @@ public final class JdkSASL extends Provider {
     public JdkSASL() {
         super("JdkSASL", 1.9d, info);
 
-        putService(new ProviderService(this, "SaslClientFactory",
-                    "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
-        putService(new ProviderService(this, "SaslServerFactory",
-                    "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
+        final Provider p = this;
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                putService(new ProviderService(p, "SaslClientFactory",
+                           "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
+                putService(new ProviderService(p, "SaslServerFactory",
+                           "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
+                return null;
+            }
+        });
     }
 }

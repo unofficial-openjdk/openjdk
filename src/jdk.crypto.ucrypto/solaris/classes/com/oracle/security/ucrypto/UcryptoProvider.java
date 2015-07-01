@@ -26,6 +26,7 @@
 package com.oracle.security.ucrypto;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.*;
 import java.security.*;
 
@@ -40,7 +41,7 @@ public final class UcryptoProvider extends Provider {
 
     private static boolean DEBUG = false;
     private static HashMap<String, ServiceDesc> provProp = null;
-    private static String defConfigName = null;
+    private static String defConfigName = "";
 
     static {
         try {
@@ -59,7 +60,7 @@ public final class UcryptoProvider extends Provider {
                                 defConfigName = javaHome + sep + "conf" + sep + "security" + sep +
                                     "ucrypto-solaris.cfg";
                                 System.loadLibrary("j2ucrypto");
-                                return new HashMap<String, ServiceDesc>();
+                                return new HashMap<>();
                             } catch (Error err) {
                                 if (DEBUG) err.printStackTrace();
                                 return null;
@@ -148,50 +149,23 @@ public final class UcryptoProvider extends Provider {
             String algo = getAlgorithm();
             try {
                 if (type.equals("Cipher")) {
-                    int keySize = 0;
+                    int keySize = -1;
                     if (algo.charAt(3) == '_') {
-                        keySize = Integer.parseInt(algo.substring(4, 7));
+                        keySize = Integer.parseInt(algo.substring(4, 7))/8;
                         algo = algo.substring(0, 3) + algo.substring(7);
                     }
                     if (algo.equals("AES/ECB/NoPadding")) {
-                        switch (keySize) {
-                            case 128:
-                                return new NativeCipher.Aes128EcbNoPadding();
-                            case 192:
-                                return new NativeCipher.Aes192EcbNoPadding();
-                            case 256:
-                                return new NativeCipher.Aes256EcbNoPadding();
-                            default:
-                                return new NativeCipher.AesEcbNoPadding();
-                        }
+                        return new NativeCipher.AesEcbNoPadding(keySize);
                     } else if (algo.equals("AES/ECB/PKCS5Padding")) {
                         return new NativeCipherWithJavaPadding.AesEcbPKCS5();
                     } else if (algo.equals("AES/CBC/NoPadding")) {
-                        switch (keySize) {
-                            case 128:
-                                return new NativeCipher.Aes128CbcNoPadding();
-                            case 192:
-                                return new NativeCipher.Aes192CbcNoPadding();
-                            case 256:
-                                return new NativeCipher.Aes256CbcNoPadding();
-                            default:
-                                return new NativeCipher.AesCbcNoPadding();
-                        }
+                        return new NativeCipher.AesCbcNoPadding(keySize);
                     } else if (algo.equals("AES/CBC/PKCS5Padding")) {
                         return new NativeCipherWithJavaPadding.AesCbcPKCS5();
                     } else if (algo.equals("AES/CTR/NoPadding")) {
                         return new NativeCipher.AesCtrNoPadding();
                     } else if (algo.equals("AES/GCM/NoPadding")) {
-                        switch (keySize) {
-                            case 128:
-                                return new NativeGCMCipher.Aes128GcmNoPadding();
-                            case 192:
-                                return new NativeGCMCipher.Aes192GcmNoPadding();
-                            case 256:
-                                return new NativeGCMCipher.Aes256GcmNoPadding();
-                            default:
-                                return new NativeGCMCipher.AesGcmNoPadding();
-                        }
+                        return new NativeGCMCipher.AesGcmNoPadding(keySize);
                     } else if (algo.equals("AES/CFB128/NoPadding")) {
                         return new NativeCipher.AesCfb128NoPadding();
                     } else if (algo.equals("AES/CFB128/PKCS5Padding")) {
@@ -252,27 +226,51 @@ public final class UcryptoProvider extends Provider {
     public UcryptoProvider() {
         super("OracleUcrypto", 1.9d, "Provider using Oracle Ucrypto API");
 
-        if (provProp != null) {
-            try {
-                Config c = new Config(defConfigName);
-                debug("Prov: configuration file " + defConfigName);
-                String[] disabledServices = c.getDisabledServices();
-                for (String ds : disabledServices) {
-                    if (provProp.remove(ds) != null) {
-                        debug("Prov: remove config-disabled service " + ds);
-                    } else {
-                        debug("Prov: ignore unsupported service " + ds);
-                    }
-                }
-            } catch (IOException ioe) { // thrown by Config
-                throw new UcryptoException("Error parsing Config", ioe);
+        AccessController.doPrivileged(new PrivilegedAction<>() {
+            public Void run() {
+                init(defConfigName);
+                return null;
             }
+        });
+        if (provider == null) provider = this;
+    }
+
+    private void init(final String configName) {
+        if (provProp != null) {
+            debug("Prov: configuration file " + configName);
+            Config c;
+            try {
+                c = new Config(configName);
+            } catch (Exception ex) {
+                throw new UcryptoException("Error parsing Config", ex);
+            }
+
+            String[] disabledServices = c.getDisabledServices();
+            for (String ds : disabledServices) {
+                if (provProp.remove(ds) != null) {
+                    debug("Prov: remove config-disabled service " + ds);
+                } else {
+                    debug("Prov: ignore unsupported service " + ds);
+                }
+            }
+
             for (ServiceDesc s: provProp.values()) {
                 debug("Prov: add service for " + s);
                 putService(new ProviderService(this, s));
             }
         }
-        if (provider == null) provider = this;
+    }
+
+    @Override
+    public Provider configure(String configArg) throws InvalidParameterException {
+        // default policy entry only grants read access to default config
+        if (!defConfigName.equals(configArg)) {
+            throw new InvalidParameterException("Ucrypto provider can only be " +
+                "configured with default configuration file");
+        }
+        // re-read the config
+        init(defConfigName);
+        return this;
     }
 
     public boolean equals(Object obj) {

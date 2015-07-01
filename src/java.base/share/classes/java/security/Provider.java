@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,29 +41,21 @@ import java.util.function.Function;
  *
  * <ul>
  *
- * <li>Algorithms (such as DSA, RSA, MD5 or SHA-1).
+ * <li>Algorithms (such as DSA, RSA, or SHA-256).
  *
  * <li>Key generation, conversion, and management facilities (such as for
  * algorithm-specific keys).
  *
- *</ul>
- *
- * <p>Each provider has a name and a version number, and is configured
- * in each runtime it is installed in.
- *
- * <p>See <a href =
- * "../../../technotes/guides/security/crypto/CryptoSpec.html#Provider">The Provider Class</a>
- * in the "Java Cryptography Architecture API Specification &amp; Reference"
- * for information about how a particular type of provider, the
- * cryptographic service provider, works and is installed. However,
- * please note that a provider can be used to implement any security
- * service in Java that uses a pluggable architecture with a choice
- * of implementations that fit underneath.
+ * </ul>
  *
  * <p>Some provider implementations may encounter unrecoverable internal
  * errors during their operation, for example a failure to communicate with a
  * security token. A {@link ProviderException} should be used to indicate
  * such errors.
+ *
+ * <p>Please note that a provider can be used to implement any security
+ * service in Java that uses a pluggable architecture with a choice
+ * of implementations that fit underneath.
  *
  * <p>The service type {@code Provider} is reserved for use by the
  * security framework. Services of this type cannot be added, removed,
@@ -81,6 +73,28 @@ import java.util.function.Function;
  * <tr><td>{@code Provider.id className}</td>
  *     <td>{@code provider.getClass().getName()}</td>
  * </table>
+ *
+ * <p>Each provider has a name and a version number. A provider normally
+ * identifies itself with a file named {@code java.security.Provider}
+ * in the resource directory {@code META-INF/services}.
+ * Security providers are looked up via the {@link ServiceLoader} mechanism
+ * using the {@link ClassLoader#getSystemClassLoader application class loader}.
+ *
+ * <p>Providers may be configured such that they are automatically
+ * installed and made available at runtime via the
+ * {@link Security#getProviders() Security.getProviders()} method.
+ * The mechanism for configuring and installing security providers is
+ * implementation-specific.
+ *
+ * @implNote
+ * The JDK implementation supports static registration of the security
+ * providers via the {@code conf/security/java.security} file in the Java
+ * installation directory. These providers are automatically installed by
+ * the JDK runtime, see <a href =
+ * "../../../technotes/guides/security/crypto/CryptoSpec.html#Provider">The Provider Class</a>
+ * in the "Java Cryptography Architecture API Specification &amp; Reference"
+ * for information about how a particular type of provider, the cryptographic
+ * service provider, works and is installed.
  *
  * @author Benjamin Renaud
  * @author Andreas Sterbenz
@@ -152,36 +166,31 @@ public abstract class Provider extends Properties {
     }
 
     /**
-     * Apply the supplied configuration arguments to this provider
-     * instance and return the configured provider.
+     * Apply the supplied configuration argument to this provider instance
+     * and return the configured provider. Note that if this provider cannot
+     * be configured in-place, a new provider will be created and returned.
+     * Therefore, callers should always use the returned provider.
      *
-     * <p>By default, this method throws UnsupportedOperationException.
-     * Subclasses should override this method only if configuration arguments
-     * are supported.
+     * @implSpec
+     * The default implementation throws {@code UnsupportedOperationException}.
+     * Subclasses should override this method only if a configuration argument
+     * is supported.
      *
-     * @param configArgs the configuration information for configuring this
+     * @param configArg the configuration information for configuring this
      *         provider.
      *
-     * @throws UnsupportedOperationException if no configuration argument is
-     *         supported.
-     * @throws NullPointerException if configArgs is null
-     * @throws InvalidParameterException if the supplied configuration arguments
-     *         are invalid.
-     * @return a provider configured with the supplied configuration arguments.
+     * @throws UnsupportedOperationException if a configuration argument is
+     *         not supported.
+     * @throws NullPointerException if the supplied configuration argument is
+               null.
+     * @throws InvalidParameterException if the supplied configuration argument
+     *         is invalid.
+     * @return a provider configured with the supplied configuration argument.
      *
      * @since 1.9
      */
-    public Provider configure(String... configArgs) {
+    public Provider configure(String configArg) {
         throw new UnsupportedOperationException("configure is not supported");
-    }
-
-    /**
-     * Return the configuration parameter used for configuring this provider instance.
-     *
-     * @return the string values passed into the Provider.configure call if any.
-     */
-    public String[] getArguments() {
-       return null;
     }
 
     /**

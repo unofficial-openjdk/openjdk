@@ -43,10 +43,6 @@ public class MiscTests extends TestHelper {
 
     // 6856415: Checks to ensure that proper exceptions are thrown by java
     static void test6856415() throws IOException {
-        // No pkcs library on win-x64, so we bail out.
-        if (is64Bit && isWindows) {
-            return;
-        }
 
         List<String> scratch = new ArrayList<>();
         scratch.add("public class Foo {");

@@ -92,22 +92,28 @@ public final class SunEC extends Provider {
             String algo = getAlgorithm();
             try {
                 if (type.equals("Signature")) {
-                    boolean inP1363Format = algo.endsWith("inP1363Format");
-                    if (inP1363Format) {
+                    boolean inP1363 = algo.endsWith("inP1363Format");
+                    if (inP1363) {
                         algo = algo.substring(0, algo.length() - 13);
                     }
                     if (algo.equals("SHA1withECDSA")) {
-                        return new ECDSASignature.SHA1();
+                        return (inP1363? new ECDSASignature.SHA1inP1363Format() :
+                            new ECDSASignature.SHA1());
                     } else if (algo.equals("SHA224withECDSA")) {
-                        return new ECDSASignature.SHA224();
+                        return (inP1363? new ECDSASignature.SHA224inP1363Format() :
+                            new ECDSASignature.SHA224());
                     } else if (algo.equals("SHA256withECDSA")) {
-                        return new ECDSASignature.SHA256();
+                        return (inP1363? new ECDSASignature.SHA256inP1363Format() :
+                            new ECDSASignature.SHA256());
                     } else if (algo.equals("SHA384withECDSA")) {
-                        return new ECDSASignature.SHA384();
+                        return (inP1363? new ECDSASignature.SHA384inP1363Format() :
+                            new ECDSASignature.SHA384());
                     } else if (algo.equals("SHA512withECDSA")) {
-                        return new ECDSASignature.SHA512();
+                        return (inP1363? new ECDSASignature.SHA512inP1363Format() :
+                            new ECDSASignature.SHA512());
                     } else if (algo.equals("NONEwithECDSA")) {
-                        return new ECDSASignature.Raw();
+                        return (inP1363? new ECDSASignature.RawinP1363Format() :
+                            new ECDSASignature.Raw());
                     }
                 } else  if (type.equals("KeyFactory")) {
                     if (algo.equals("EC")) {
@@ -137,7 +143,12 @@ public final class SunEC extends Provider {
 
     public SunEC() {
         super("SunEC", 1.9d, "Sun Elliptic Curve provider (EC, ECDSA, ECDH)");
-        putEntries(useFullImplementation);
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                putEntries(useFullImplementation);
+                return null;
+            }
+        });
     }
 
     void putEntries(boolean useFullImplementation) {
@@ -212,25 +223,33 @@ public final class SunEC extends Provider {
             ATTRS));
         putService(new ProviderService(this, "Signature",
             "SHA224withECDSA", "sun.security.ec.ECDSASignature$SHA224",
-            new String[] { "1.2.840.10045.4.3.1", "OID.1.2.840.10045.4.3.1"}, ATTRS));
+            new String[] { "1.2.840.10045.4.3.1", "OID.1.2.840.10045.4.3.1"},
+            ATTRS));
         putService(new ProviderService(this, "Signature",
             "SHA256withECDSA", "sun.security.ec.ECDSASignature$SHA256",
-            new String[] { "1.2.840.10045.4.3.2", "OID.1.2.840.10045.4.3.2"}, ATTRS));
+            new String[] { "1.2.840.10045.4.3.2", "OID.1.2.840.10045.4.3.2"},
+            ATTRS));
         putService(new ProviderService(this, "Signature",
             "SHA384withECDSA", "sun.security.ec.ECDSASignature$SHA384",
-            new String[] { "1.2.840.10045.4.3.3", "OID.1.2.840.10045.4.3.3" }, ATTRS));
+            new String[] { "1.2.840.10045.4.3.3", "OID.1.2.840.10045.4.3.3" },
+            ATTRS));
         putService(new ProviderService(this, "Signature",
             "SHA512withECDSA", "sun.security.ec.ECDSASignature$SHA512",
-            new String[] { "1.2.840.10045.4.3.4", "OID.1.2.840.10045.4.3.4" }, ATTRS));
+            new String[] { "1.2.840.10045.4.3.4", "OID.1.2.840.10045.4.3.4" },
+            ATTRS));
 
         putService(new ProviderService(this, "Signature",
-             "NONEwithECDSAinP1363Format", "sun.security.ec.ECDSASignature$RawinP1363Format"));
+             "NONEwithECDSAinP1363Format",
+             "sun.security.ec.ECDSASignature$RawinP1363Format"));
         putService(new ProviderService(this, "Signature",
-             "SHA1withECDSAinP1363Format", "sun.security.ec.ECDSASignature$SHA1inP1363Format"));
+             "SHA1withECDSAinP1363Format",
+             "sun.security.ec.ECDSASignature$SHA1inP1363Format"));
         putService(new ProviderService(this, "Signature",
-             "SHA224withECDSAinP1363Format", "sun.security.ec.ECDSASignature$SHA224inP1363Format"));
+             "SHA224withECDSAinP1363Format",
+             "sun.security.ec.ECDSASignature$SHA224inP1363Format"));
         putService(new ProviderService(this, "Signature",
-             "SHA256withECDSAinP1363Format", "sun.security.ec.ECDSASignature$SHA256inP1363Format"));
+             "SHA256withECDSAinP1363Format",
+             "sun.security.ec.ECDSASignature$SHA256inP1363Format"));
         putService(new ProviderService(this, "Signature",
             "SHA384withECDSAinP1363Format",
             "sun.security.ec.ECDSASignature$SHA384inP1363Format"));
