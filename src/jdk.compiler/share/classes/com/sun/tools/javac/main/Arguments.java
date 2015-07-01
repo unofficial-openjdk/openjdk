@@ -650,7 +650,6 @@ public class Arguments {
                   .filter(options :: isSet)
                   .forEach(r :: report);
         }
-        }
     }
 
     void error(String key, Object... args) {

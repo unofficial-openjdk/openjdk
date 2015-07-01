@@ -326,7 +326,7 @@ public class TypeEnter implements Completer {
                                          chk.importAccessible(sym, packge);
 
                 // Import-on-demand java.lang.
-                importAll(tree.pos, syms.enterPackage(syms.java_base, names.java_lang), env);
+                PackageSymbol javaLang = syms.enterPackage(syms.java_base, names.java_lang);
                 if (javaLang.members().isEmpty() && !javaLang.exists())
                     throw new FatalError(diags.fragment("fatal.err.no.java.lang"));
                 importAll(tree.pos, javaLang, env);
