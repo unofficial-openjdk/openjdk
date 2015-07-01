@@ -176,6 +176,8 @@ java/util/stream/test/org/openjdk/tests/java/util/stream/TeeOpTest.java		generic
 java/util/stream/test/org/openjdk/tests/java/util/stream/ToArrayOpTest.java	generic-all
 
 java/util/regex/PatternStreamTest.java						generic-all
+java/nio/file/Files/StreamLinesTest.java					generic-all
+
 
 ############################################################################
 
