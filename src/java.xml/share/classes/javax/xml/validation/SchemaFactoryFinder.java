@@ -28,7 +28,6 @@ package javax.xml.validation;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -418,30 +417,8 @@ class SchemaFactoryFinder  {
     private static final Class<SchemaFactory> SERVICE_CLASS = SchemaFactory.class;
 
 
+    // Used for debugging purposes
     private static String which( Class<?> clazz ) {
-        return which( clazz.getName(), clazz.getClassLoader() );
-    }
-
-    /**
-     * <p>Search the specified classloader for the given classname.</p>
-     *
-     * @param classname the fully qualified name of the class to search for
-     * @param loader the classloader to search
-     *
-     * @return the source location of the resource, or null if it wasn't found
-     */
-    private static String which(String classname, ClassLoader loader) {
-
-        String classnameAsResource = classname.replace('.', '/') + ".class";
-
-        if( loader==null )  loader = ClassLoader.getSystemClassLoader();
-
-        //URL it = loader.getResource(classnameAsResource);
-        URL it = ss.getResourceAsURL(loader, classnameAsResource);
-        if (it != null) {
-            return it.toString();
-        } else {
-            return null;
-        }
+        return ss.getClassSource(clazz);
     }
 }
