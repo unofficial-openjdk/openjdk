@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-print("Hello World");
-var System = Java.type("java.lang.System");
-print(System.getProperty("jdk.launcher.override"));
+// Using a Java map with Javascript "with" statement
+
+var map = new java.util.HashMap();
+map.put("foo", 34);
+map.put("bar", "hello");
+
+var obj = {
+    __noSuchProperty__: function(name) {
+        return map.get(name);
+    }
+};
+
+with(obj) {
+   print(foo);
+   print(bar);
+}

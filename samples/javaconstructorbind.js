@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,41 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-print("Hello World");
-var System = Java.type("java.lang.System");
-print(System.getProperty("jdk.launcher.override"));
+// bind on a Java constructor
+
+// See Function.prototype.bind:
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
+var bind = Function.prototype.bind;
+
+var URL = Java.type("java.net.URL");
+
+// get the constructor that accepts URL, String parameters.
+// constructor signatures are properties of type object.
+var newURL = URL["(URL, String)"];
+
+// bind "context" URL parameter.
+var TwitterURL = bind.call(newURL, null, new URL('https://www.twitter.com'));
+
+// now you can create context relative URLs using the bound constructor
+print(new TwitterURL("sundararajan_a"));
+
+// read the URL content and print (optional part)
+
+var BufferedReader = Java.type("java.io.BufferedReader");
+var InputStreamReader = Java.type("java.io.InputStreamReader");
+
+// function to retrieve text content of the given URL
+function readTextFromURL(url) {
+    var str = '';
+    var u = new URL(url);
+    var reader = new BufferedReader(
+        new InputStreamReader(u.openStream()));
+    try {
+        reader.lines().forEach(function(x) str += x);
+        return str;
+    } finally {
+        reader.close();
+    }
+}
+
+print(readTextFromURL(new TwitterURL("sundararajan_a")));
