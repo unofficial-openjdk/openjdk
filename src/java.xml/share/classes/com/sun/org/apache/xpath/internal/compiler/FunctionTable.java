@@ -24,8 +24,8 @@
  */
 package com.sun.org.apache.xpath.internal.compiler;
 
-import com.sun.org.apache.xpath.internal.Expression;
 import com.sun.org.apache.xpath.internal.functions.Function;
+import com.sun.xml.internal.Modules;
 import java.util.HashMap;
 import javax.xml.transform.TransformerException;
 
@@ -341,11 +341,13 @@ public class FunctionTable
           throws javax.xml.transform.TransformerException
   {
           try{
-              if (which < NUM_BUILT_IN_FUNCS)
+              if (which < NUM_BUILT_IN_FUNCS) {
                   return (Function) m_functions[which].newInstance();
-              else
-                  return (Function) m_functions_customer[
-                      which-NUM_BUILT_IN_FUNCS].newInstance();
+              } else {
+                  Class<?> c =  m_functions_customer[which-NUM_BUILT_IN_FUNCS];
+                  Modules.ensureReadable(c.getModule());
+                  return (Function) c.newInstance();
+              }
           }catch (IllegalAccessException ex){
                   throw new TransformerException(ex.getMessage());
           }catch (InstantiationException ex){
@@ -377,6 +379,12 @@ public class FunctionTable
 
     int funcIndex;
     Object funcIndexObj = getFunctionID(name);
+
+    if (func != null && !Function.class.isAssignableFrom(func)) {
+        throw new ClassCastException(func.getName()
+                  + " cannot be cast to "
+                  + Function.class.getName());
+    }
 
     if (null != funcIndexObj)
     {

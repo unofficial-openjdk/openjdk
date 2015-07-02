@@ -28,13 +28,14 @@ package javax.xml.xpath;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+
+import com.sun.xml.internal.Modules;
 
 /**
  * Implementation of {@link XPathFactory#newInstance(String)}.
@@ -297,6 +298,7 @@ class XPathFactoryFinder  {
                 xPathFactory = newInstanceNoServiceLoader(clazz);
             }
             if (xPathFactory == null) {
+                Modules.ensureReadable(clazz.getModule());
                 xPathFactory = (XPathFactory) clazz.newInstance();
             }
         } catch (ClassCastException classCastException) {
@@ -349,6 +351,8 @@ class XPathFactoryFinder  {
             // declared to return an instance of XPathFactory.
             final Class<?> returnType = creationMethod.getReturnType();
             if (SERVICE_CLASS.isAssignableFrom(returnType)) {
+                // We actually only need to support that on our own
+                // implementation classes: XPathFactoryImpl.java
                 return SERVICE_CLASS.cast(creationMethod.invoke(null, (Object[])null));
             } else {
                 // Should not happen since
