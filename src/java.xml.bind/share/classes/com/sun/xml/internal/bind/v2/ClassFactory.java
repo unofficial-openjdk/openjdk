@@ -122,7 +122,7 @@ public final class ClassFactory {
 
             m.put(clazz,new WeakReference<Constructor>(cons));
         }
-
+        ModuleAccessHelper.ensureAccess(ClassFactory.class, clazz);
         return cons.newInstance(emptyObject);
     }
 
