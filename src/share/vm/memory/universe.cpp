@@ -144,6 +144,7 @@ int             Universe::_verify_count = 0;
 
 int             Universe::_base_vtable_size = 0;
 bool            Universe::_bootstrapping = false;
+bool            Universe::_module_initialized = false;
 bool            Universe::_fully_initialized = false;
 
 size_t          Universe::_heap_capacity_at_last_gc;
@@ -311,6 +312,7 @@ void Universe::genesis(TRAPS) {
              SystemDictionary::Cloneable_klass(), "u3");
       assert(_the_array_interfaces_array->at(1) ==
              SystemDictionary::Serializable_klass(), "u3");
+      MetaspaceShared::fixup_shared_string_regions();
     } else {
       // Set up shared interfaces array.  (Do this before supers are set up.)
       _the_array_interfaces_array->at_put(0, SystemDictionary::Cloneable_klass());
@@ -754,7 +756,7 @@ jint Universe::initialize_heap() {
     Universe::set_narrow_ptrs_base(Universe::narrow_oop_base());
 
     if (PrintCompressedOopsMode || (PrintMiscellaneous && Verbose)) {
-      Universe::print_compressed_oops_mode();
+      Universe::print_compressed_oops_mode(tty);
     }
 
     // Tell tests in which mode we run.
@@ -781,27 +783,24 @@ jint Universe::initialize_heap() {
   return JNI_OK;
 }
 
-void Universe::print_compressed_oops_mode() {
-  tty->cr();
-  tty->print("heap address: " PTR_FORMAT ", size: " SIZE_FORMAT " MB",
+void Universe::print_compressed_oops_mode(outputStream* st) {
+  st->print("heap address: " PTR_FORMAT ", size: " SIZE_FORMAT " MB",
               p2i(Universe::heap()->base()), Universe::heap()->reserved_region().byte_size()/M);
 
-  tty->print(", Compressed Oops mode: %s", narrow_oop_mode_to_string(narrow_oop_mode()));
+  st->print(", Compressed Oops mode: %s", narrow_oop_mode_to_string(narrow_oop_mode()));
 
   if (Universe::narrow_oop_base() != 0) {
-    tty->print(": " PTR_FORMAT, p2i(Universe::narrow_oop_base()));
+    st->print(": " PTR_FORMAT, p2i(Universe::narrow_oop_base()));
   }
 
   if (Universe::narrow_oop_shift() != 0) {
-    tty->print(", Oop shift amount: %d", Universe::narrow_oop_shift());
+    st->print(", Oop shift amount: %d", Universe::narrow_oop_shift());
   }
 
   if (!Universe::narrow_oop_use_implicit_null_checks()) {
-    tty->print(", no protected page in front of the heap");
+    st->print(", no protected page in front of the heap");
   }
-
-  tty->cr();
-  tty->cr();
+  st->cr();
 }
 
 ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
@@ -894,6 +893,10 @@ void universe2_init() {
   Universe::genesis(CATCH);
 }
 
+// Set after initialization of the module runtime, call_initModuleRuntime
+void universe_post_module_init() {
+  Universe::_module_initialized = true;
+}
 
 bool universe_post_init() {
   assert(!is_init_completed(), "Error: initialization not yet completed!");

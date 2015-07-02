@@ -1619,6 +1619,9 @@ void LIRGenerator::CardTableModRef_post_barrier(LIR_OprDesc* addr, LIR_OprDesc* 
   LIR_Opr dirty = LIR_OprFact::intConst(CardTableModRefBS::dirty_card_val());
   if (UseCondCardMark) {
     LIR_Opr cur_value = new_register(T_INT);
+    if (UseConcMarkSweepGC) {
+      __ membar_storeload();
+    }
     __ move(card_addr, cur_value);
 
     LabelObj* L_already_dirty = new LabelObj();
@@ -3069,7 +3072,7 @@ void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
     LIR_Opr klass = new_pointer_register();
     __ move(new LIR_Address(arg.result(), java_lang_Class::klass_offset_in_bytes(), klass_pointer_type), klass, info);
     LIR_Opr id = new_register(T_LONG);
-    ByteSize offset = TRACE_ID_OFFSET;
+    ByteSize offset = TRACE_KLASS_TRACE_ID_OFFSET;
     LIR_Address* trace_id_addr = new LIR_Address(klass, in_bytes(offset), T_LONG);
     __ move(trace_id_addr, id);
     __ logical_or(id, LIR_OprFact::longConst(0x01l), id);

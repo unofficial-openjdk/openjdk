@@ -1987,7 +1987,17 @@ JNI_ENTRY_CHECKED(jint,
     return result;
 JNI_END
 
-
+JNI_ENTRY_CHECKED(jobject,
+  checked_jni_GetModule(JNIEnv *env,
+                        jclass clazz))
+    functionEnter(thr);
+    IN_VM(
+        jniCheck::validate_class(thr, clazz, false);
+    )
+    jobject result = UNCHECKED()->GetModule(env,clazz);
+    functionExit(thr);
+    return result;
+JNI_END
 
 /*
  * Structure containing all checked jni functions
@@ -2270,7 +2280,11 @@ struct JNINativeInterface_  checked_jni_NativeInterface = {
 
     // New 1.6 Features
 
-    checked_jni_GetObjectRefType
+    checked_jni_GetObjectRefType,
+
+    // Module Features
+
+    checked_jni_GetModule
 };
 
 

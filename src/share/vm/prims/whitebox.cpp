@@ -27,10 +27,13 @@
 #include <new>
 
 #include "classfile/classLoaderData.hpp"
+#include "classfile/modules.hpp"
+#include "classfile/imageFile.hpp"
 #include "classfile/stringTable.hpp"
 #include "code/codeCache.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/metadataFactory.hpp"
+#include "memory/metaspaceShared.hpp"
 #include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"
@@ -87,6 +90,10 @@ WB_END
 
 WB_ENTRY(jint, WB_GetVMPageSize(JNIEnv* env, jobject o))
   return os::vm_page_size();
+WB_END
+
+WB_ENTRY(jlong, WB_GetVMAllocationGranularity(JNIEnv* env, jobject o))
+  return os::vm_allocation_granularity();
 WB_END
 
 WB_ENTRY(jlong, WB_GetVMLargePageSize(JNIEnv* env, jobject o))
@@ -630,27 +637,27 @@ WB_ENTRY(void, WB_ClearMethodState(JNIEnv* env, jobject o, jobject method))
 WB_END
 
 template <typename T>
-static bool GetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, bool (*TAt)(const char*, T*, bool, bool)) {
+static bool GetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, Flag::Error (*TAt)(const char*, T*, bool, bool)) {
   if (name == NULL) {
     return false;
   }
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
   const char* flag_name = env->GetStringUTFChars(name, NULL);
-  bool result = (*TAt)(flag_name, value, true, true);
+  Flag::Error result = (*TAt)(flag_name, value, true, true);
   env->ReleaseStringUTFChars(name, flag_name);
-  return result;
+  return (result == Flag::SUCCESS);
 }
 
 template <typename T>
-static bool SetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, bool (*TAtPut)(const char*, T*, Flag::Flags)) {
+static bool SetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, Flag::Error (*TAtPut)(const char*, T*, Flag::Flags)) {
   if (name == NULL) {
     return false;
   }
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
   const char* flag_name = env->GetStringUTFChars(name, NULL);
-  bool result = (*TAtPut)(flag_name, value, Flag::INTERNAL);
+  Flag::Error result = (*TAtPut)(flag_name, value, Flag::INTERNAL);
   env->ReleaseStringUTFChars(name, flag_name);
-  return result;
+  return (result == Flag::SUCCESS);
 }
 
 template <typename T>
@@ -1093,6 +1100,36 @@ WB_ENTRY(void, WB_FreeMetaspace(JNIEnv* env, jobject wb, jobject class_loader, j
   MetadataFactory::free_array(cld, (Array<u1>*)(uintptr_t)addr);
 WB_END
 
+WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring version, jstring location,
+                                jobjectArray packages))
+  Modules::define_module(env, module, version, location, packages);
+WB_END
+
+WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
+  Modules::add_module_exports(env, from_module, package, to_module);
+WB_END
+
+WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject to_module))
+  Modules::add_reads_module(env, from_module, to_module);
+WB_END
+
+WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject target_module))
+  return Modules::can_read_module(env, asking_module, target_module);
+WB_END
+
+WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
+WB_END
+
+WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
+  Modules::add_module_package(env, module, package);
+WB_END
+
+WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
+  Modules::add_module_exports_to_all_unnamed(env, module, package);
+WB_END
+
+
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
   if (inc < 0) {
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(),
@@ -1118,6 +1155,72 @@ WB_END
 
 WB_ENTRY(jlong, WB_MetaspaceCapacityUntilGC(JNIEnv* env, jobject wb))
   return (jlong) MetaspaceGC::capacity_until_GC();
+WB_END
+
+WB_ENTRY(jboolean, WB_ReadImageFile(JNIEnv* env, jobject wb, jstring imagefile))
+  const char* filename = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(imagefile));
+  return ImageFileReader::open(filename) != NULL;
+WB_END
+
+WB_ENTRY(jlong, WB_imageOpenImage(JNIEnv *env, jobject wb, jstring path, jboolean big_endian))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageOpen(env, path, big_endian);
+WB_END
+
+WB_ENTRY(void, WB_imageCloseImage(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  JVM_ImageClose(env, id);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetIndexAddress(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetIndexAddress(env, id);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetDataAddress(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+ return JVM_ImageGetDataAddress(env, id);
+WB_END
+
+WB_ENTRY(jboolean, WB_imageRead(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject uncompressedBuffer, jlong uncompressed_size))
+  ThreadToNativeFromVM ttn(thread);
+    return JVM_ImageRead(env, id, offset, uncompressedBuffer, uncompressed_size);
+WB_END
+
+WB_ENTRY(jboolean, WB_imageReadCompressed(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject compressedBuffer, jlong compressed_size, jobject uncompressedBuffer, jlong uncompressed_size))
+  ThreadToNativeFromVM ttn(thread);
+    return JVM_ImageReadCompressed(env, id, offset, compressedBuffer, compressed_size, uncompressedBuffer, uncompressed_size);
+WB_END
+
+WB_ENTRY(jbyteArray, WB_imageGetStringBytes(JNIEnv *env, jobject wb, jlong id, jlong offset))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetStringBytes(env, id, offset);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetStringsSize(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  return reader? reader->strings_size() : 0L;
+WB_END
+
+WB_ENTRY(jlongArray, WB_imageGetAttributes(JNIEnv *env, jobject wb, jlong id, jint offset))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetAttributes(env, id, offset);
+WB_END
+
+WB_ENTRY(jlongArray, WB_imageFindAttributes(JNIEnv *env, jobject wb, jlong id, jbyteArray utf8))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageFindAttributes(env, id, utf8);
+WB_END
+
+WB_ENTRY(jintArray, WB_imageAttributeOffsets(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageAttributeOffsets(env, id);
+WB_END
+
+WB_ENTRY(jint, WB_imageGetIntAtAddress(JNIEnv *env, jobject wb, jlong address, jint offset))
+  ThreadToNativeFromVM ttn(thread);
+  return *((jint*)(address + offset));
 WB_END
 
 WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))
@@ -1207,6 +1310,15 @@ WB_ENTRY(jobject, WB_GetMethodStringOption(JNIEnv* env, jobject wb, jobject meth
   return NULL;
 WB_END
 
+WB_ENTRY(jboolean, WB_IsShared(JNIEnv* env, jobject wb, jobject obj))
+  oop obj_oop = JNIHandles::resolve(obj);
+  return MetaspaceShared::is_in_shared_space((void*)obj_oop);
+WB_END
+
+WB_ENTRY(jboolean, WB_AreSharedStringsIgnored(JNIEnv* env))
+  return StringTable::shared_string_ignored();
+WB_END
+
 //Some convenience methods to deal with objects from java
 int WhiteBox::offset_for_field(const char* field_name, oop object,
     Symbol* signature_symbol) {
@@ -1291,13 +1403,14 @@ void WhiteBox::register_methods(JNIEnv* env, jclass wbclass, JavaThread* thread,
 #define CC (char*)
 
 static JNINativeMethod methods[] = {
-  {CC"getObjectAddress0",   CC"(Ljava/lang/Object;)J", (void*)&WB_GetObjectAddress  },
-  {CC"getObjectSize0",      CC"(Ljava/lang/Object;)J", (void*)&WB_GetObjectSize     },
-  {CC"isObjectInOldGen0",   CC"(Ljava/lang/Object;)Z", (void*)&WB_isObjectInOldGen  },
-  {CC"getHeapOopSize",     CC"()I",                   (void*)&WB_GetHeapOopSize    },
-  {CC"getVMPageSize",      CC"()I",                   (void*)&WB_GetVMPageSize     },
-  {CC"getVMLargePageSize", CC"()J",                   (void*)&WB_GetVMLargePageSize},
-  {CC"isClassAlive0",      CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
+  {CC"getObjectAddress0",                CC"(Ljava/lang/Object;)J", (void*)&WB_GetObjectAddress  },
+  {CC"getObjectSize0",                   CC"(Ljava/lang/Object;)J", (void*)&WB_GetObjectSize     },
+  {CC"isObjectInOldGen0",                CC"(Ljava/lang/Object;)Z", (void*)&WB_isObjectInOldGen  },
+  {CC"getHeapOopSize",                   CC"()I",                   (void*)&WB_GetHeapOopSize    },
+  {CC"getVMPageSize",                    CC"()I",                   (void*)&WB_GetVMPageSize     },
+  {CC"getVMAllocationGranularity",       CC"()J",                   (void*)&WB_GetVMAllocationGranularity },
+  {CC"getVMLargePageSize",               CC"()J",                   (void*)&WB_GetVMLargePageSize},
+  {CC"isClassAlive0",                    CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
   {CC"parseCommandLine0",
       CC"(Ljava/lang/String;C[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",
       (void*) &WB_ParseCommandLine
@@ -1413,8 +1526,37 @@ static JNINativeMethod methods[] = {
   {CC"getCodeBlob",        CC"(J)[Ljava/lang/Object;",(void*)&WB_GetCodeBlob        },
   {CC"getThreadStackSize", CC"()J",                   (void*)&WB_GetThreadStackSize },
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
+  {CC"DefineModule",       CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)V",
+                                                      (void*)&WB_DefineModule },
+  {CC"AddModuleExports",   CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)V",
+                                                      (void*)&WB_AddModuleExports },
+  {CC"AddReadsModule",     CC"(Ljava/lang/Object;Ljava/lang/Object;)V",
+                                                      (void*)&WB_AddReadsModule },
+  {CC"CanReadModule",      CC"(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                                                      (void*)&WB_CanReadModule },
+  {CC"IsExportedToModule", CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z",
+                                                      (void*)&WB_IsExportedToModule },
+  {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
+                                                      (void*)&WB_AddModulePackage },
+  {CC"AddModuleExportsToAllUnnamed", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
+                                                      (void*)&WB_AddModuleExportsToAllUnnamed },
+  {CC"readImageFile",      CC"(Ljava/lang/String;)Z", (void*)&WB_ReadImageFile },
+  {CC"imageOpenImage",     CC"(Ljava/lang/String;Z)J",(void*)&WB_imageOpenImage },
+  {CC"imageCloseImage",    CC"(J)V",                  (void*)&WB_imageCloseImage },
+  {CC"imageGetIndexAddress",CC"(J)J",                 (void*)&WB_imageGetIndexAddress},
+  {CC"imageGetDataAddress",CC"(J)J",                  (void*)&WB_imageGetDataAddress},
+  {CC"imageRead",          CC"(JJLjava/nio/ByteBuffer;J)Z",
+                                                      (void*)&WB_imageRead    },
+  {CC"imageReadCompressed",CC"(JJLjava/nio/ByteBuffer;JLjava/nio/ByteBuffer;J)Z",
+                                                      (void*)&WB_imageReadCompressed},
+  {CC"imageGetStringBytes",CC"(JI)[B",                (void*)&WB_imageGetStringBytes},
+  {CC"imageGetStringsSize",CC"(J)J",                  (void*)&WB_imageGetStringsSize},
+  {CC"imageGetAttributes", CC"(JI)[J",                (void*)&WB_imageGetAttributes},
+  {CC"imageFindAttributes",CC"(J[B)[J",               (void*)&WB_imageFindAttributes},
+  {CC"imageAttributeOffsets",CC"(J)[I",               (void*)&WB_imageAttributeOffsets},
+  {CC"imageGetIntAtAddress",CC"(JI)I",                (void*)&WB_imageGetIntAtAddress},
   {CC"assertMatchingSafepointCalls", CC"(ZZ)V",       (void*)&WB_AssertMatchingSafepointCalls },
-  {CC"isMonitorInflated0",  CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
+  {CC"isMonitorInflated0", CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
   {CC"forceSafepoint",     CC"()V",                   (void*)&WB_ForceSafepoint     },
   {CC"getMethodBooleanOption",
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/Boolean;",
@@ -1431,6 +1573,8 @@ static JNINativeMethod methods[] = {
   {CC"getMethodStringOption",
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/String;",
                                                       (void*)&WB_GetMethodStringOption},
+  {CC"isShared",           CC"(Ljava/lang/Object;)Z", (void*)&WB_IsShared },
+  {CC"areSharedStringsIgnored",           CC"()Z",    (void*)&WB_AreSharedStringsIgnored },
 };
 
 #undef CC

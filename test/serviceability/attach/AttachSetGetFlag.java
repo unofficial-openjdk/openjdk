@@ -32,7 +32,7 @@
  *          jdk.attach/sun.tools.attach
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.* AttachSetGetFlag
- * @run driver AttachSetGetFlag
+ * @run main/othervm AttachSetGetFlag
  */
 
 import java.io.BufferedReader;
@@ -61,6 +61,9 @@ public class AttachSetGetFlag {
     // Since it is not manageable, we can't test the setFlag functionality.
     testGetFlag("ArrayAllocatorMallocLimit", "128");
     // testSetFlag("ArrayAllocatorMallocLimit", "64", "128");
+
+    // Test a uint flag.
+    testGetFlag("ParallelGCThreads", "10");
   }
 
   public static ProcessBuilder runTarget(String flagName, String flagValue) throws Exception {

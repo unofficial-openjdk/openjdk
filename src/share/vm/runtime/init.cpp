@@ -29,6 +29,7 @@
 #include "interpreter/bytecodes.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/init.hpp"
@@ -81,6 +82,7 @@ void stubRoutines_init2(); // note: StubRoutines need 2-phase init
 // during VM shutdown
 void perfMemory_exit();
 void ostream_exit();
+bool image_decompressor_init();
 
 void vm_init_globals() {
   check_ThreadShadow();
@@ -114,6 +116,9 @@ jint init_globals() {
   templateTable_init();
   InterfaceSupport_init();
   SharedRuntime::generate_stubs();
+  if (!image_decompressor_init()) {
+    return JNI_ERR;
+  }
   universe2_init();  // dependent on codeCache_init and stubRoutines_init1
   referenceProcessor_init();
   jni_handles_init();
@@ -141,8 +146,8 @@ jint init_globals() {
 
   // All the flags that get adjusted by VM_Version_init and os::init_2
   // have been set so dump the flags now.
-  if (PrintFlagsFinal) {
-    CommandLineFlags::printFlags(tty, false);
+  if (PrintFlagsFinal || PrintFlagsRanges) {
+    CommandLineFlags::printFlags(tty, false, PrintFlagsRanges);
   }
 
   return JNI_OK;

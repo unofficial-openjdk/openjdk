@@ -189,7 +189,8 @@ class TestStringDeduplicationTools {
             "-Xmx" + Xmx + "m",
             "-XX:+UseG1GC",
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:+VerifyAfterGC" // Always verify after GC
+            "-XX:+VerifyAfterGC", // Always verify after GC
+            "-XaddExports:java.base/sun.misc"
         };
 
         ArrayList<String> args = new ArrayList<String>();
@@ -412,16 +413,14 @@ class TestStringDeduplicationTools {
         output = DeduplicationTest.run(SmallNumberOfStrings,
                                        TooLowAgeThreshold,
                                        YoungGC);
-        output.shouldContain("StringDeduplicationAgeThreshold of " + TooLowAgeThreshold +
-                             " is invalid; must be between " + MinAgeThreshold + " and " + MaxAgeThreshold);
+        output.shouldContain("outside the allowed range");
         output.shouldHaveExitValue(1);
 
         // Test with too high age threshold
         output = DeduplicationTest.run(SmallNumberOfStrings,
                                        TooHighAgeThreshold,
                                        YoungGC);
-        output.shouldContain("StringDeduplicationAgeThreshold of " + TooHighAgeThreshold +
-                             " is invalid; must be between " + MinAgeThreshold + " and " + MaxAgeThreshold);
+        output.shouldContain("outside the allowed range");
         output.shouldHaveExitValue(1);
     }
 
