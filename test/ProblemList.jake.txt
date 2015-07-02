@@ -21,7 +21,7 @@ java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  gener
 
 # jdk_security
 
-# 8079767
+# 8079767 / 8129891
 sun/security/krb5/auto/BasicProc.java                          generic-all
 sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 sun/security/krb5/auto/ReplayCacheTestProc.java                generic-all
@@ -29,6 +29,9 @@ sun/security/krb5/auto/UnboundSSL.java                         generic-all
 sun/security/krb5/auto/UnboundSSLMultipleKeys.java             generic-all
 sun/security/krb5/auto/UnboundSSLPrincipalProperty.java        generic-all
 sun/security/krb5/auto/SSLwithPerms.java		       generic-all
+sun/security/krb5/config/dns.sh				       generic-all
+sun/security/krb5/auto/principalProperty/PrincipalSystemPropTest.java  generic-all
+
 sun/security/pkcs11/Provider/Login.sh                          generic-all
 sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
 sun/security/tools/keytool/autotest.sh                         generic-all
