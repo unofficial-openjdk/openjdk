@@ -54,7 +54,7 @@ public final class TaskHelper {
 
     public class BadArgs extends Exception {
 
-        static final long serialVersionUID = 8765093759964640721L;  // ## re-generate
+        static final long serialVersionUID = 8765093759964640721L;
 
         private BadArgs(String key, Object... args) {
             super(bundleHelper.getMessage(key, args));

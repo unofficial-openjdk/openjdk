@@ -100,6 +100,9 @@ public interface Archive {
 
     /**
      * Stream of Entry.
+     * The stream of entries needs to be closed after use
+     * since it might cover lazy I/O based resources.
+     * So callers need to use a try-with-resources block.
      */
     Stream<Entry> entries();
 

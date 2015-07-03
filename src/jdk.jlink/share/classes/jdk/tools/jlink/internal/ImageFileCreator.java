@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.Archive.Entry;
 import jdk.internal.jimage.Archive.Entry.EntryType;
@@ -110,9 +111,11 @@ public final class ImageFileCreator {
     private void readAllEntries(Map<String, Set<String>> modulePackagesMap,
                                   Set<Archive> archives) {
         archives.stream().forEach((archive) -> {
-            Map<Boolean, List<Entry>> es = archive.entries()
-                    .collect(Collectors.partitioningBy(n -> n.type()
-                                    == EntryType.CLASS_OR_RESOURCE));
+            Map<Boolean, List<Entry>> es;
+            try(Stream<Entry> entries = archive.entries()) {
+                es = entries.collect(Collectors.partitioningBy(n -> n.type()
+                        == EntryType.CLASS_OR_RESOURCE));
+            }
             String mn = archive.moduleName();
             List<Entry> all = new ArrayList<>();
             all.addAll(es.get(false));
@@ -139,7 +142,11 @@ public final class ImageFileCreator {
         Map<String, List<Entry>> entriesForModule
                 = archives.stream().collect(Collectors.toMap(
                                 Archive::moduleName,
-                                a -> a.entries().collect(Collectors.toList())));
+                                a -> {
+                                    try(Stream<Entry> entries = a.entries()) {
+                                        return entries.collect(Collectors.toList());
+                                    }
+                                }));
         ByteOrder order = ByteOrder.nativeOrder();
         Pools pools = createPools(modulePackages, entriesForModule, order);
         try (OutputStream fos = Files.newOutputStream(jimageFile);
