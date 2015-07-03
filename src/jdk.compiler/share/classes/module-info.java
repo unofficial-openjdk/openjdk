@@ -55,5 +55,6 @@ module jdk.compiler {
         jdk.javadoc;
     uses com.sun.tools.javac.platform.PlatformProvider;
     uses com.sun.source.util.Plugin;
+    provides com.sun.tools.javac.platform.PlatformProvider with com.sun.tools.javac.platform.JDKPlatformProvider;
 }
 
