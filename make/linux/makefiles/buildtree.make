@@ -459,6 +459,10 @@ test_gamma:  $(BUILDTREE_MAKE) $(GAMMADIR)/make/test/Queens.java
 	echo "  GAMMA_PROG=gamma_g"; \
 	echo "fi"; \
 	echo ""; \
+	echo "if [ -x \"$(PAX_COMMAND)\" ]; then "; \
+	echo "  $(PAX_COMMAND) $(PAX_COMMAND_ARGS) ./\$${GAMMA_PROG}"; \
+	echo "fi"; \
+	echo ""; \
 	echo "if [ \"$(OS_VENDOR)\" = \"Darwin\" ]; then "; \
 	echo "  # Ensure architecture for gamma and JAVA_HOME is the same."; \
 	echo "  # NOTE: gamma assumes the OpenJDK directory layout."; \
