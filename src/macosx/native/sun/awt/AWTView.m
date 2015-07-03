@@ -42,6 +42,10 @@
 @interface AWTView()
 @property (retain) CDropTarget *_dropTarget;
 @property (retain) CDragSource *_dragSource;
+
+-(void) deliverResize: (NSRect) rect;
+-(void) resetTrackingArea;
+-(void) deliverJavaKeyEventHelper: (NSEvent*) event;
 @end
 
 // Uncomment this line to see fprintfs of each InputMethod API being called on this View
