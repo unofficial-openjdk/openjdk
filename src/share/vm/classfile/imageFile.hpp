@@ -28,6 +28,7 @@
 #include "classfile/classLoader.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
+#include "runtime/thread.inline.hpp"
 #include "utilities/endian.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/growableArray.hpp"
@@ -268,7 +269,22 @@ private:
   }
 
 public:
-  ImageLocation(u1* data);
+  ImageLocation() {
+    clear_data();
+  }
+
+  ImageLocation(u1* data) {
+    clear_data();
+    set_data(data);
+  }
+
+  // Inflates the attribute stream into individual values stored in the long
+  // array _attributes. This allows an attribute value to be quickly accessed by
+  // direct indexing. Unspecified values default to zero.
+  void set_data(u1* data);
+
+  // Zero all attribute values.
+  void clear_data();
 
   // Retrieve an attribute value from the inflated array.
   inline u8 get_attribute(u1 kind) const {
@@ -286,7 +302,7 @@ public:
 // NOTE: needs revision.
 // Each loader requires set of module meta data to identify which modules and
 // packages are managed by that loader.  Currently, there is one image file per
-// loader, so only one  module meta data resource per file.
+// builtin loader, so only one  module meta data resource per file.
 //
 // Each element in the module meta data is a native endian 4 byte integer.  Note
 // that entries with zero offsets for string table entries should be ignored (
@@ -416,6 +432,10 @@ public:
   u4 strings_size(Endian* endian) const { return endian->get(_strings_size); }
   void set_strings_size(Endian* endian, u4 size) { return endian->set(_strings_size, size); }
 };
+
+// Max path length limit independent of platform.  Windows max path is 1024,
+// other platforms use 4096.  The JCK fails several tests when 1024 is used.
+#define IMAGE_MAX_PATH 4096
 
 // Manage the image file.
 // ImageFileReader manages the content of an image file.
@@ -567,8 +587,9 @@ public:
     return get_location_offset_data(offset);
   }
 
-  // Return the attribute stream for a named resourced.
-  u1* find_location_data(const char* path) const;
+  // Find the location attributes associated with the path.  Returns true if
+  // the location is found, false otherwise.
+  bool find_location(const char* path, ImageLocation& location) const;
 
   // Assemble the location path.
   void location_path(ImageLocation& location, char* path, size_t max) const;
@@ -577,10 +598,6 @@ public:
   bool verify_location(ImageLocation& location, const char* path) const;
 
   // Return the resource for the supplied path.
-  u1* get_resource(ImageLocation& location, bool is_C_heap) const;
-
-  // Return the resource associated with the path else NULL if not found.
-  void get_resource(const char* path, u1*& buffer, u8& size,
-        bool is_C_heap = false) const;
+  void get_resource(ImageLocation& location, u1* uncompressed_data) const;
 };
 #endif // SHARE_VM_CLASSFILE_IMAGEFILE_HPP

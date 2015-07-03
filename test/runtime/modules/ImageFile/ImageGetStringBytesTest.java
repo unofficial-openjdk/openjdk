@@ -22,9 +22,9 @@
  */
 
 /*
+ * Test that the string referenced by an attribute is retrieved.
  * @test ImageGetStringBytesTest
  * @summary Unit test for JVM_ImageGetStringBytes() method
- * @author sergei.pikalev@oracle.com
  * @library /testlibrary /../../test/lib
  * @build LocationConstants ImageGetStringBytesTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
@@ -35,6 +35,7 @@
 import java.io.File;
 import java.nio.ByteOrder;
 import sun.hotspot.WhiteBox;
+import static jdk.test.lib.Asserts.*;
 
 public class ImageGetStringBytesTest implements LocationConstants {
 
@@ -42,53 +43,37 @@ public class ImageGetStringBytesTest implements LocationConstants {
 
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+        String imageFile = javaHome + File.separator + "lib" + File.separator
+                + "modules" + File.separator + "bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
             System.out.printf("Test skipped.");
             return;
         }
 
-        if (!testImageGetStringBytes(imageFile))
-            throw new RuntimeException("Some cases are failed");
-    }
-
-    private static boolean testImageGetStringBytes(String imageFile) {
         boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
         long id = wb.imageOpenImage(imageFile, bigEndian);
-        boolean passed = true;
 
         String className = "/java.base/java/lang/String.class";
         long[] offsetArr = wb.imageFindAttributes(id, className.getBytes());
 
         // Module
-        passed = checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_MODULE, "Module");
+        assertTrue(checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_MODULE, "Module"));
 
         // Parent
-        passed = checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_PARENT, "Parent");
+        assertTrue(checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_PARENT, "Parent"));
 
         // Base
-        passed = checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_BASE, "Base");
+        assertTrue(checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_BASE, "Base"));
 
         // Extension
-        passed = checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_EXTENSION, "Extension");
+        assertTrue(checkAttribute(id, offsetArr, LOCATION_ATTRIBUTE_EXTENSION, "Extension"));
 
         wb.imageCloseImage(id);
-        return passed;
     }
 
     private static boolean checkAttribute(long id, long[] offsetArr, int attrId, String attrName) {
         long offset = offsetArr[attrId];
-        byte[] buf = wb.imageGetStringBytes(id, (int)offset);
-        boolean passed = true;
-
-        if (buf != null) {
-            System.out.printf("Passed. Retieved %s string: %s\n", attrName, new String(buf));
-        } else {
-            System.out.printf("Failed. Could not retrieve %s string. Offset = %d\n", offset);
-            passed = false;
-        }
-
-        return passed;
+        return wb.imageGetStringBytes(id, (int) offset) != null;
     }
 }

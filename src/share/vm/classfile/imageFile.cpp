@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/imageDecompressor.hpp"
 #include "classfile/imageFile.hpp"
+#include "memory/resourceArea.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/os.inline.hpp"
@@ -98,13 +99,10 @@ const char* ImageStrings::starts_with(const char* string, const char* start) {
   return string;
 }
 
-// ImageLocation constructor inflates the attribute stream into individual
-// values stored in the long array _attributes. This allows an attribute value
-// to be quickly accessed by direct indexing. Unspecified values default to
-// zero.
-ImageLocation::ImageLocation(u1* data) {
-  // Set defaults to zero.
-  memset(_attributes, 0, sizeof(_attributes));
+// Inflates the attribute stream into individual values stored in the long
+// array _attributes. This allows an attribute value to be quickly accessed by
+// direct indexing.  Unspecified values default to zero (from constructor.)
+void ImageLocation::set_data(u1* data) {
   // Deflate the attribute stream into an array of attributes.
   u1 byte;
   // Repeat until end header is found.
@@ -121,6 +119,12 @@ ImageLocation::ImageLocation(u1* data) {
   }
 }
 
+// Zero all attribute values.
+void ImageLocation::clear_data() {
+  // Set defaults to zero.
+  memset(_attributes, 0, sizeof(_attributes));
+}
+
 // ImageModuleData constructor maps out sub-tables for faster access.
 ImageModuleData::ImageModuleData(const ImageFileReader* image_file,
         const char* module_data_name) :
@@ -128,10 +132,14 @@ ImageModuleData::ImageModuleData(const ImageFileReader* image_file,
     _endian(image_file->endian()),
     _strings(image_file->get_strings()) {
   // Retrieve the resource containing the module data for the image file.
-  _image_file->get_resource(module_data_name, _data, _data_size, true);
-  guarantee(_data, "missing module data");
+  ImageLocation location;
+  bool found = image_file->find_location(module_data_name, location);
+  guarantee(found, "missing module data");
+  u8 data_size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+  _data = (u1*)NEW_C_HEAP_ARRAY(char, data_size, mtClass);
+  _image_file->get_resource(location, _data);
   // Map out the header.
-  _header = (Header*)(_data + 0);
+  _header = (Header*)_data;
   // Get the package to module entry count.
   u4 ptm_count = _header->ptm_count(_endian);
   // Get the module to package entry count.
@@ -235,7 +243,7 @@ GrowableArray<ImageFileReader*>* ImageFileReader::_reader_table =
 // Open an image file, reuse structure if file already open.
 ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
   // Lock out _reader_table.
-  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(ImageFileReaderTable_lock);
   ImageFileReader* reader;
   // Search for an exist image file.
   for (int i = 0; i < _reader_table->length(); i++) {
@@ -264,7 +272,7 @@ ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
 // Close an image file if the file is not in use elsewhere.
 void ImageFileReader::close(ImageFileReader *reader) {
   // Lock out _reader_table.
-  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(ImageFileReaderTable_lock);
   // If last use then remove from table and then close.
   if (reader->dec_use()) {
     _reader_table->remove(reader);
@@ -281,7 +289,7 @@ u8 ImageFileReader::readerToID(ImageFileReader *reader) {
 // Validate the image id.
 bool ImageFileReader::idCheck(u8 id) {
   // Make sure the ID is a managed (_reader_table) reader.
-  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(ImageFileReaderTable_lock);
   return _reader_table->contains((ImageFileReader*)id);
 }
 
@@ -299,8 +307,9 @@ ImageFileReader* ImageFileReader::idToReader(u8 id) {
 // Constructor intializes to a closed state.
 ImageFileReader::ImageFileReader(const char* name, bool big_endian) {
   // Copy the image file name.
-  _name = NEW_C_HEAP_ARRAY(char, strlen(name) + 1, mtClass);
-  strcpy(_name, name);
+   int len = (int) strlen(name) + 1;
+  _name = NEW_C_HEAP_ARRAY(char, len, mtClass);
+  strncpy(_name, name, len);
   // Initialize for a closed file.
   _fd = -1;
   _endian = Endian::get_handler(big_endian);
@@ -391,16 +400,21 @@ bool ImageFileReader::read_at(u1* data, u8 size, u8 offset) const {
   return os::read_at(_fd, data, size, offset) == size;
 }
 
-// Return the attribute stream for a named resource.
-u1* ImageFileReader::find_location_data(const char* path) const {
+// Find the location attributes associated with the path.  Returns true if
+// the location is found, false otherwise.
+bool ImageFileReader::find_location(const char* path, ImageLocation& location) const {
   // Locate the entry in the index perfect hash table.
   s4 index = ImageStrings::find(_endian, path, _redirect_table, table_length());
-  // If is not found.
-  if (index == ImageStrings::NOT_FOUND) {
-    return NULL;
+  // If is found.
+  if (index != ImageStrings::NOT_FOUND) {
+    // Get address of first byte of location attribute stream.
+    u1* data = get_location_data(index);
+    // Expand location attributes.
+    location.set_data(data);
+    // Make sure result is not a false positive.
+    return verify_location(location, path);
   }
-  // Return address of first byte of location attribute stream.
-  return get_location_data(index);
+  return false;
 }
 
 // Assemble the location path from the string fragments indicated in the location attributes.
@@ -421,7 +435,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     guarantee(next - path + length + 2 < max, "buffer overflow");
     // Append '/module/'.
     *next++ = '/';
-    strcpy(next, module); next += length;
+    strncpy(next, module, length); next += length;
     *next++ = '/';
   }
   // Get parent (package) string.
@@ -433,7 +447,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     // Make sure there is no buffer overflow.
     guarantee(next - path + length + 1 < max, "buffer overflow");
     // Append 'patent/' .
-    strcpy(next, parent); next += length;
+    strncpy(next, parent, length); next += length;
     *next++ = '/';
   }
   // Get base name string.
@@ -443,7 +457,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
   // Make sure there is no buffer overflow.
   guarantee(next - path + length < max, "buffer overflow");
   // Append base name.
-  strcpy(next, base); next += length;
+  strncpy(next, base, length); next += length;
   // Get extension string.
   const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
   // If extension string is not empty string.
@@ -454,7 +468,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     guarantee(next - path + length + 1 < max, "buffer overflow");
     // Append '.extension' .
     *next++ = '.';
-    strcpy(next, extension); next += length;
+    strncpy(next, extension, length); next += length;
   }
   // Make sure there is no buffer overflow.
   guarantee((size_t)(next - path) < max, "buffer overflow");
@@ -502,71 +516,37 @@ bool ImageFileReader::verify_location(ImageLocation& location, const char* path)
 }
 
 // Return the resource for the supplied location.
-u1* ImageFileReader::get_resource(ImageLocation& location, bool is_C_heap) const {
+void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_data) const {
   // Retrieve the byte offset and size of the resource.
   u8 offset = location.get_attribute(ImageLocation::ATTRIBUTE_OFFSET);
   u8 uncompressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
   u8 compressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_COMPRESSED);
   // If the resource is compressed.
-  if (compressed_size) {
-    // If memory mapped use address otherwise allocate temporary buffer.
-    u1* compressed_data = MemoryMapImage ? get_data_address() + offset
-                                         : NEW_RESOURCE_ARRAY(u1, compressed_size);
+  if (compressed_size != 0) {
+    ResourceMark rm;
+    u1* compressed_data;
     // If not memory mapped read in bytes.
     if (!MemoryMapImage) {
+      // Allocate buffer for compression.
+      compressed_data = NEW_RESOURCE_ARRAY(u1, compressed_size);
       // Read bytes from offset beyond the image index.
       bool is_read = read_at(compressed_data, compressed_size, _index_size + offset);
       guarantee(is_read, "error reading from image or short read");
+    } else {
+      compressed_data = get_data_address() + offset;
     }
-    // Alloate buffer for result.
-    u1* uncompressed_data = is_C_heap ? NEW_C_HEAP_ARRAY(u1, uncompressed_size, mtClass)
-                                      : NEW_RESOURCE_ARRAY(u1, uncompressed_size);
-    // Get image strig table.
+    // Get image string table.
     const ImageStrings strings = get_strings();
     // Decompress resource.
     ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, uncompressed_size,
-            &strings, is_C_heap);
+            &strings, false);
     // If not memory mapped then release temporary buffer.
     if (!MemoryMapImage) {
         FREE_RESOURCE_ARRAY(u1, compressed_data, compressed_size);
     }
-    return uncompressed_data;
   } else {
-    // Not a compressed resource.
-    // If memory mapped then return the map address.
-    if (MemoryMapImage && !is_C_heap) {
-      return get_data_address() + offset;
-    }
-    // Allocate buffer for result.
-    u1* uncompressed_data = is_C_heap ? NEW_C_HEAP_ARRAY(u1, uncompressed_size, mtClass)
-                                      : NEW_RESOURCE_ARRAY(u1, uncompressed_size);
     // Read bytes from offset beyond the image index.
     bool is_read = read_at(uncompressed_data, uncompressed_size, _index_size + offset);
     guarantee(is_read, "error reading from image or short read");
-    return uncompressed_data;
   }
 }
-
-// Return the resource for the supplied path.
-void ImageFileReader::get_resource(const char* path, u1*& buffer, u8& size, bool is_C_heap) const {
-  // Preset for failed result.
-  buffer = NULL;
-  size = 0;
-  // Locate location attributes.
-  u1* data = find_location_data(path);
-  // If path is found.
-  if (data) {
-    // Expanded location attributes.
-    ImageLocation location(data);
-    // Make sure it is not a false positive.
-    if (verify_location(location, path)) {
-      // Expanded size of resource.
-      size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-      // Get resource bytes.
-      buffer = get_resource(location, is_C_heap);
-    }
-  }
-}
-
-
-

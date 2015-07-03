@@ -22,9 +22,9 @@
  */
 
 /*
+ * Test closing image opened multiple time. Test closing mutiple time an image.
  * @test ImageCloseTest
  * @summary Unit test for JVM_ImageClose() method
- * @author sergei.pikalev@oracle.com
  * @library /testlibrary /../../test/lib
  * @build ImageCloseTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
@@ -42,35 +42,27 @@ public class ImageCloseTest {
 
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+        String imageFile = javaHome + File.separator + "lib" + File.separator
+                + "modules" + File.separator + "bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
             System.out.printf("Test skipped.");
             return;
         }
 
-        if (!testImageClose(imageFile))
-            throw new RuntimeException("Some cases are failed");
-    }
-
-    private static boolean testImageClose(String imageFile) {
         boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
         long id = 0;
-        boolean passed = true;
 
         // too many opens
         for (int i = 0; i < 100; i++) {
             id = wb.imageOpenImage(imageFile, bigEndian);
         }
         wb.imageCloseImage(id);
-        System.out.println("Passed. Too many opens");
 
         // too many closes
         id = wb.imageOpenImage(imageFile, bigEndian);
         for (int i = 0; i < 100; i++) {
             wb.imageCloseImage(id);
         }
-        System.out.println("Passed. Too many closes");
-        return passed;
     }
 }

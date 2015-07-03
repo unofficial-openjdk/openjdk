@@ -22,7 +22,8 @@
  */
 
 /*
- * @test
+ * Test that opening image containing wrong headers fails.
+ * @test ImageFileHeaderTest
  * @library /testlibrary /../../test/lib
  * @build ImageFileHeaderTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

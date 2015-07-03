@@ -22,9 +22,9 @@
  */
 
 /*
+ * Test the address of the jimage index.
  * @test ImageGetIndexAddressTest
  * @summary Unit test for JVM_ImageGetIndexAddress() method
- * @author sergei.pikalev@oracle.com
  * @library /testlibrary /../../test/lib
  * @build ImageGetIndexAddressTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
@@ -35,6 +35,7 @@
 import java.io.File;
 import java.nio.ByteOrder;
 import sun.hotspot.WhiteBox;
+import static jdk.test.lib.Asserts.*;
 
 public class ImageGetIndexAddressTest {
 
@@ -42,41 +43,25 @@ public class ImageGetIndexAddressTest {
 
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+        String imageFile = javaHome + File.separator + "lib" + File.separator
+                + "modules" + File.separator + "bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
             System.out.printf("Test skipped.");
             return;
         }
 
-        if (!testImageGetIndexAddress(imageFile))
-            throw new RuntimeException("Some cases are failed");
-    }
-
-    private static boolean testImageGetIndexAddress(String imageFile) {
         boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
         long id = wb.imageOpenImage(imageFile, bigEndian);
-        boolean passed = true;
 
         // get index for valid id
         long indexAddr = wb.imageGetIndexAddress(id);
-        if (indexAddr != 0) {
-            System.out.printf("Passed. Index address is %d for valid id\n", indexAddr);
-        } else {
-            System.out.println("Failed. Index address is zero for valid id");
-            passed = false;
-        }
+        assertFalse(indexAddr == 0, "Failed. Index address is zero for valid id");
 
         // get index for invalid id == 0
         indexAddr = wb.imageGetIndexAddress(0);
-        if (indexAddr == 0) {
-            System.out.println("Passed. Index address is zero for zero id");
-        } else {
-            System.out.printf("Failed. Index address is %d for zero id\n", indexAddr);
-            passed = false;
-        }
+        assertTrue(indexAddr == 0, "Failed. Index address is" + indexAddr + " for zero id\n");
 
         wb.imageCloseImage(id);
-        return passed;
     }
 }

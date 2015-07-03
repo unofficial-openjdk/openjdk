@@ -1596,6 +1596,9 @@ void Arguments::set_ergonomics_flags() {
   // in vm_version initialization code.
 #endif // _LP64
 #endif // !ZERO
+
+  // Set up runtime image flags.
+  set_runtime_image_flags();
 }
 
 void Arguments::set_parallel_gc_flags() {
@@ -1849,6 +1852,17 @@ void Arguments::set_heap_size() {
       }
     }
   }
+}
+
+
+  // Set up runtime image flags
+void Arguments::set_runtime_image_flags() {
+#ifdef _LP64
+  // Memory map image file by default on 64 bit machines.
+  if (FLAG_IS_DEFAULT(MemoryMapImage)) {
+    FLAG_SET_ERGO(bool, MemoryMapImage, true);
+  }
+#endif
 }
 
 // This must be called after ergonomics.

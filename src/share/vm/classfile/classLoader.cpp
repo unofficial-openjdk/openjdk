@@ -546,12 +546,11 @@ ClassPathImageEntry::ClassPathImageEntry(ImageFileReader* image) :
   ClassPathEntry(),
   _image(image),
   _module_data(NULL) {
+  guarantee(image != NULL, "image file is null");
 
-  if (is_open()) {
-    char module_data_name[JVM_MAXPATHLEN];
-    ImageModuleData::module_data_name(module_data_name, _image->name());
-    _module_data = new ImageModuleData(_image, module_data_name);
-  }
+  char module_data_name[JVM_MAXPATHLEN];
+  ImageModuleData::module_data_name(module_data_name, _image->name());
+  _module_data = new ImageModuleData(_image, module_data_name);
 }
 
 ClassPathImageEntry::~ClassPathImageEntry() {
@@ -578,67 +577,81 @@ const char* ClassPathImageEntry::name() {
 //     2. A package is in at most one module in the jimage file.
 //
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
-  // Do not put a ResourceMark in this method.  Otherwise, memory that this
-  // method's caller depends on may get deallocated.
-  const char *pslash = strrchr(name, '/');
-  if (pslash != NULL) {
-    // There's a package. So, the class might be in the jimage file.
-    u1* buffer = NULL;
-    u8 size;
-    char path[JVM_MAXPATHLEN];
+  ImageLocation location;
+  bool found = _image->find_location(name, location);
+
+  if (!found) {
+    const char *pslash = strrchr(name, '/');
     int len = pslash - name;
     assert(len > 0, "Bad length for package name");
 
-    if (!Universe::is_module_initialized()) {
-      // Module must be java.base (except when dumping CDS archive)
-      jio_snprintf(path, JVM_MAXPATHLEN - 1, "/java.base/%s", name);
-      _image->get_resource(path, buffer, size);
+    // NOTE: IMAGE_MAX_PATH is used here since this path is internal to the jimage
+    // (effectively unlimited.)  There are several JCK tests that use paths over
+    // 1024 characters long, the limit on Windows systems.
+    if (pslash && 0 < len && len < IMAGE_MAX_PATH) {
+      char path[IMAGE_MAX_PATH];
 
-#if INCLUDE_CDS
-      // CDS uses the boot class loader to load classes whose packages are in
-      // modules defined for other class loaders.  So, for now, get their module
-      // names from the .jimage file.
-      if (DumpSharedSpaces && buffer == NULL) {
-        strncpy(path, name, len);
-        path[len] = '\0';
-        const char* module_name = _module_data->package_to_module(path);
-        if (module_name) {
-          jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s", module_name, name);
-          _image->get_resource(path, buffer, size);
+      if (!Universe::is_module_initialized()) {
+        const char* base_module = "java.base";
+        if ((len + strlen(base_module) + 2) < IMAGE_MAX_PATH) {
+            // Module must be java.base (except when dumping CDS archive)
+            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", base_module, name);
+            location.clear_data();
+            found = _image->find_location(path, location);
         }
-      }
+#if INCLUDE_CDS
+        // CDS uses the boot class loader to load classes whose packages are in
+        // modules defined for other class loaders.  So, for now, get their module
+        // names from the .jimage file.
+        if (DumpSharedSpaces && !found) {
+          strncpy(path, name, len);
+          path[len] = '\0';
+          const char* module_name = _module_data->package_to_module(path);
+          if (module_name && (len + strlen(module_name) + 2) < IMAGE_MAX_PATH) {
+            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", module_name, name);
+            location.clear_data();
+            found = _image->find_location(path, location);
+          }
+        }
 #endif
 
-    } else {
-      strncpy(path, name, len);
-      path[len] = '\0';
+      } else {
+        strncpy(path, name, len);
+        path[len] = '\0';
 
-      // Get boot class loader's package entry table
-      PackageEntryTable* pkgEntryTable =
-        ClassLoaderData::the_null_class_loader_data()->packages();
-      // Get package's package entry
-      TempNewSymbol pkg_symbol = SymbolTable::new_symbol(path, CHECK_NULL);
-      PackageEntry* packageEntry = pkgEntryTable->lookup_only(pkg_symbol);
+        // Get boot class loader's package entry table
+        PackageEntryTable* pkgEntryTable =
+          ClassLoaderData::the_null_class_loader_data()->packages();
+        // Get package's package entry
+        TempNewSymbol pkg_symbol = SymbolTable::new_symbol(path, CHECK_NULL);
+        PackageEntry* packageEntry = pkgEntryTable->lookup_only(pkg_symbol);
 
-      if (packageEntry != NULL) {
-        // Get the module name
-        ModuleEntry* module = packageEntry->module();
-        assert(module != NULL, "Boot classLoader package missing module");
-        assert(module->is_named(), "Boot classLoader package is in unnamed module");
-
-        jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s",
-          module->name()->as_C_string(), name);
-        _image->get_resource(path, buffer, size);
+        if (packageEntry != NULL) {
+          // Get the module name
+          ModuleEntry* module = packageEntry->module();
+          assert(module != NULL, "Boot classLoader package missing module");
+          assert(module->is_named(), "Boot classLoader package is in unnamed module");
+          const char* moduleName = module->name()->as_C_string();
+          if (moduleName != NULL && (len + strlen(moduleName) + 2) < IMAGE_MAX_PATH) {
+            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", moduleName, name);
+            location.clear_data();
+            found = _image->find_location(path, location);
+          }
+        }
       }
-    }
-
-    if (buffer != NULL) { // Found the class in .jimage file
-      if (UsePerfData) {
-        ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
-      }
-      return new ClassFileStream(buffer, (int)size, _image->name());  // Resource allocated
     }
   }
+
+  if (found) {
+    u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+    if (UsePerfData) {
+      ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
+    }
+    u1* data = NEW_RESOURCE_ARRAY(u1, size);
+    _image->get_resource(location, data);
+    return new ClassFileStream(data, (int)size, _image->name());  // Resource allocated
+  }
+
   return NULL;
 }
 
@@ -654,8 +667,8 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 
     if (location_data) {
        ImageLocation location(location_data);
-       char path[JVM_MAXPATHLEN];
-       _image->location_path(location, path, JVM_MAXPATHLEN);
+       char path[IMAGE_MAX_PATH];
+       _image->location_path(location, path, IMAGE_MAX_PATH);
        ClassLoader::compile_the_world_in(path, loader, CHECK);
     }
   }

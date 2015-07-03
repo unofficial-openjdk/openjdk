@@ -599,10 +599,12 @@ JVM_SupportsCX8(void);
 
 /*
  * jdk.internal.jimage
+ * WARNING: This API is experimental and temporary during JDK 9 development
+ * cycle. It will not be supported in the eventual JDK 9 release.
  */
 
 JNIEXPORT jlong JNICALL
-JVM_ImageOpen(JNIEnv *env, jstring path, jboolean big_endian);
+JVM_ImageOpen(JNIEnv *env, const char *nativePath, jboolean big_endian);
 
 JNIEXPORT void JNICALL
 JVM_ImageClose(JNIEnv *env, jlong id);
@@ -615,24 +617,31 @@ JVM_ImageGetDataAddress(JNIEnv *env,jlong id);
 
 JNIEXPORT jboolean JNICALL
 JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
-          jobject uncompressedBuffer, jlong uncompressed_size);
+            unsigned char* uncompressedAddress, jlong uncompressed_size);
+
 
 JNIEXPORT jboolean JNICALL
 JVM_ImageReadCompressed(JNIEnv *env, jlong id, jlong offset,
-                    jobject compressedBuffer, jlong compressed_size,
-                    jobject uncompressedBuffer, jlong uncompressed_size);
+            unsigned char* compressedBuffer, jlong compressed_size,
+            unsigned char* uncompressedBuffer, jlong uncompressed_size);
 
-JNIEXPORT jbyteArray JNICALL
+JNIEXPORT const char* JNICALL
 JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset);
 
-JNIEXPORT jlongArray JNICALL
-JVM_ImageGetAttributes(JNIEnv *env, jlong id, jint offset);
+JNIEXPORT jlong* JNICALL
+JVM_ImageGetAttributes(JNIEnv *env, jlong* rawAttributes, jlong id, jint offset);
 
-JNIEXPORT jlongArray JNICALL
-JVM_ImageFindAttributes(JNIEnv *env, jlong id, jbyteArray utf8);
+JNIEXPORT jsize JNICALL
+JVM_ImageGetAttributesCount(JNIEnv *env);
 
-JNIEXPORT jintArray JNICALL
-JVM_ImageAttributeOffsets(JNIEnv *env, jlong id);
+JNIEXPORT jlong* JNICALL
+JVM_ImageFindAttributes(JNIEnv *env, jlong* rawAttributes, jbyte* rawBytes, jsize size, jlong id);
+
+JNIEXPORT jint* JNICALL
+JVM_ImageAttributeOffsets(JNIEnv *env, jint* rawOffsets, unsigned int length, jlong id);
+
+JNIEXPORT unsigned int JNICALL
+JVM_ImageAttributeOffsetsLength(JNIEnv *env, jlong id);
 
 /*************************************************************************
  PART 2: Support for the Verifier and Class File Format Checker

@@ -127,7 +127,10 @@ void ZipDecompressor::decompress_resource(u1* data, u1* uncompressed,
 // END Zip Decompressor
 
 // Shared String decompressor
-const u1* SharedStringDecompressor::sizes = get_cp_entry_sizes();
+
+// array index is the constant pool tag. value is size.
+// eg: array[5]  = 8; means size of long is 8 bytes.
+const u1 SharedStringDecompressor::sizes[] = {-1, -1, -1, 4, 4, 8, 8, 2, 2, 4, 4, 4, 4, -1, -1, 3, 2, -1, 4};
 /**
  * Recreate the class by reconstructing the constant pool.
  */
@@ -179,10 +182,20 @@ void SharedStringDecompressor::decompress_resource(u1* data,
             *uncompressed_resource = c;
             uncompressed_resource++;
             desc_length += 1;
+            /*
+             * Every L character is the marker we are looking at in order
+             * to reconstruct the descriptor. Each time an L is found, then
+             * we retrieve the couple token/token at the current index and
+             * add it to the descriptor.
+             * "(L;I)V" and "java/lang","String" couple of tokens,
+             * this becomes "(Ljava/lang/String;I)V"
+             */
             if (c == 'L') {
               int index = decompress_int(indexes_base);
               const char * pkg = strings->get(index);
               int str_length = (int) strlen(pkg);
+              // the case where we have a package.
+              // reconstruct the type full name
               if (str_length > 0) {
                 int len = str_length + 1;
                 char* fullpkg = NEW_C_HEAP_ARRAY(char, len, mtOther);
@@ -259,6 +272,7 @@ void SharedStringDecompressor::decompress_resource(u1* data,
  * If positive, the integer is not decompressed.
  * If negative, length extracted from the first byte, then reconstruct the integer
  * from the following bytes.
+ * Example of compression: 1 is compressed on 1 byte: 10100001
  */
 int SharedStringDecompressor::decompress_int(unsigned char*& value) {
   int len = 4;

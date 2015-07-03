@@ -22,9 +22,9 @@
  */
 
 /*
+ * Test getting all attributes,
  * @test ImageGetAttributesTest
  * @summary Unit test for JVM_ImageGetAttributes() method
- * @author sergei.pikalev@oracle.com
  * @library /testlibrary /../../test/lib
  * @build LocationConstants ImageGetAttributesTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
@@ -35,6 +35,7 @@
 import java.io.File;
 import java.nio.ByteOrder;
 import sun.hotspot.WhiteBox;
+import static jdk.test.lib.Asserts.*;
 
 public class ImageGetAttributesTest implements LocationConstants {
 
@@ -42,101 +43,86 @@ public class ImageGetAttributesTest implements LocationConstants {
 
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+        String imageFile = javaHome + File.separator + "lib" + File.separator
+                + "modules" + File.separator + "bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
             System.out.printf("Test skipped.");
             return;
         }
 
-        if (!testImageGetAttributes(imageFile))
-            throw new RuntimeException("Some cases are failed");
+        testImageGetAttributes(imageFile);
     }
 
-    private static boolean testImageGetAttributes(String imageFile) {
-        boolean passed = true;
+    private static void testImageGetAttributes(String imageFile) {
+
         boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
         long id = wb.imageOpenImage(imageFile, bigEndian);
-        long stringsSize = wb.imageGetStringsSize(id);
-        if (stringsSize == 0) {
-            System.out.println("strings size is 0");
-            wb.imageCloseImage(id);
-            return false;
-        }
-        int[] array = wb.imageAttributeOffsets(id);
-        if (array == null) {
-            System.out.println("Failed. Offsets\' array is NULL");
-            wb.imageCloseImage(id);
-            return false;
-        }
+        try {
+            long stringsSize = wb.imageGetStringsSize(id);
+            assertNE(stringsSize, 0, "strings size is 0");
 
-        // Get non-null attributes
-        boolean attFound = false;
-        int[] idx = { -1, -1, -1 };
-        // first non-null attribute
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] != 0) {
-                attFound = true;
-                idx[0] = i;
-                break;
-            }
-        }
+            int[] array = wb.imageAttributeOffsets(id);
+            assertNotNull(array, "Could not retrieve offsets of array");
 
-        // middle non-null attribute
-        for (int i = array.length/2; i < array.length; i++) {
-            if (array[i] != 0) {
-                attFound = true;
-                idx[1] = i;
-                break;
-            }
-        }
-
-        // last non-null attribute
-        for (int i = array.length - 1; i >= 0; i--) {
-            if (array[i] != 0) {
-                attFound = true;
-                idx[2] = i;
-                break;
-            }
-        }
-
-        if (attFound == false) {
-            System.out.println("Failed. No non-null offset attributes");
-            passed = false;
-        } else {
-            // test cases above
-            for (int i = 0; i < 3; i++) {
-                if (idx[i] != -1) {
-                    long[] attrs = wb.imageGetAttributes(id, (int)array[idx[i]]);
-                    long module = attrs[LOCATION_ATTRIBUTE_MODULE];
-                    long parent = attrs[LOCATION_ATTRIBUTE_PARENT];
-                    long base = attrs[LOCATION_ATTRIBUTE_BASE];
-                    long ext = attrs[LOCATION_ATTRIBUTE_EXTENSION];
-
-                    if ((module >=0) && (module < stringsSize) &&
-                        (parent >=0) && (parent < stringsSize) &&
-                        (base != 0) &&
-                        (ext >=0) && (ext < stringsSize)) {
-                        System.out.printf("Passed. Read attribute offset %d (position %d)\n",
-                                array[idx[i]], idx[i]);
-                        System.out.printf("    offsets: module = %d parent = %d base = %d extention = %d\n",
-                                module, parent, base, ext);
-                    } else {
-                        System.out.printf("Failed. Read attribute offset %d (position %d) but wrong offsets\n",
-                                array[idx[i]], idx[i]);
-                        System.out.printf("    offsets: module = %d parent = %d base = %d extention = %d\n",
-                                module, parent, base, ext);
-                        passed = false;
-                    }
-                } else {
-                    System.out.printf("Failed. Could not read attribute offset %d (position %d)\n",
-                            array[idx[i]], idx[i]);
-                    passed = false;
+            // Get non-null attributes
+            boolean attFound = false;
+            int[] idx = {-1, -1, -1};
+            // first non-null attribute
+            for (int i = 0; i < array.length; i++) {
+                if (array[i] != 0) {
+                    attFound = true;
+                    idx[0] = i;
+                    break;
                 }
             }
-        }
 
-        wb.imageCloseImage(id);
-        return passed;
+            // middle non-null attribute
+            for (int i = array.length / 2; i < array.length; i++) {
+                if (array[i] != 0) {
+                    attFound = true;
+                    idx[1] = i;
+                    break;
+                }
+            }
+
+            // last non-null attribute
+            for (int i = array.length - 1; i >= 0; i--) {
+                if (array[i] != 0) {
+                    attFound = true;
+                    idx[2] = i;
+                    break;
+                }
+            }
+            assertTrue(attFound, "Failed. No non-null offset attributes");
+                // test cases above
+                for (int i = 0; i < 3; i++) {
+                    if (idx[i] != -1) {
+                        long[] attrs = wb.imageGetAttributes(id, (int) array[idx[i]]);
+                        long module = attrs[LOCATION_ATTRIBUTE_MODULE];
+                        long parent = attrs[LOCATION_ATTRIBUTE_PARENT];
+                        long base = attrs[LOCATION_ATTRIBUTE_BASE];
+                        long ext = attrs[LOCATION_ATTRIBUTE_EXTENSION];
+
+                        if ((module >= 0) && (module < stringsSize)
+                                && (parent >= 0) && (parent < stringsSize)
+                                && (base != 0)
+                                && (ext >= 0) && (ext < stringsSize)) {
+                        } else {
+                            System.out.printf("Failed. Read attribute offset %d (position %d) but wrong offsets\n",
+                                    array[idx[i]], idx[i]);
+                            System.out.printf("    offsets: module = %d parent = %d base = %d extention = %d\n",
+                                    module, parent, base, ext);
+                            throw new RuntimeException("Read attribute offset error");
+                        }
+                    } else {
+                        System.out.printf("Failed. Could not read attribute offset %d (position %d)\n",
+                                array[idx[i]], idx[i]);
+                        throw new RuntimeException("Read attribute offset error");
+                    }
+                }
+        } finally {
+            wb.imageCloseImage(id);
+        }
     }
 }

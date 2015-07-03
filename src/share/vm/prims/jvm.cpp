@@ -3711,99 +3711,111 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
 JVM_END
 
 // jdk.internal.jimage /////////////////////////////////////////////////////////
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
 
 // Java entry to open an image file for sharing.
-JNIEXPORT jlong JNICALL
-JVM_ImageOpen(JNIEnv *env, jstring path, jboolean big_endian) {
-  // Convert java.lang.String to UTF-8 c string.
-  const char *nativePath = env->GetStringUTFChars(path, NULL);
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jlong,
+JVM_ImageOpen(JNIEnv *env, const char *nativePath, jboolean big_endian)) {
+  JVMWrapper("JVM_ImageOpen");
   // Open image file for reading.
   ImageFileReader* reader = ImageFileReader::open(nativePath, big_endian != JNI_FALSE);
-  // Release converted name.
-  env->ReleaseStringUTFChars(path, nativePath);
   // Return image ID as a jlong.
   return ImageFileReader::readerToID(reader);
 }
+JVM_END
 
 // Java entry for closing a shared image file.
-JNIEXPORT void JNICALL
-JVM_ImageClose(JNIEnv *env, jlong id) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(void,
+JVM_ImageClose(JNIEnv *env, jlong id)) {
+  JVMWrapper("JVM_ImageClose");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // If valid reader the close.
-  if (reader) {
+  if (reader != NULL) {
     ImageFileReader::close(reader);
   }
 }
+JVM_END
 
 // Java entry for accessing the base address of the image index.
-JNIEXPORT jlong JNICALL
-JVM_ImageGetIndexAddress(JNIEnv *env, jlong id) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jlong,
+JVM_ImageGetIndexAddress(JNIEnv *env, jlong id)) {
+  JVMWrapper("JVM_ImageGetIndexAddress");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // If valid reader return index base address (as jlong) else zero.
-  return  reader ? (jlong)reader->get_index_address() : 0L;
+  return  reader != NULL ? (jlong)reader->get_index_address() : 0L;
 }
+JVM_END
 
 // Java entry for accessing the base address of the image data.
-JNIEXPORT jlong JNICALL
-JVM_ImageGetDataAddress(JNIEnv *env, jlong id) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jlong,
+JVM_ImageGetDataAddress(JNIEnv *env, jlong id)) {
+  JVMWrapper("JVM_ImageGetDataAddress");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // If valid reader return data base address (as jlong) else zero.
-  return MemoryMapImage && reader ? (jlong)reader->get_data_address() : 0L;
+  return MemoryMapImage && reader != NULL ? (jlong)reader->get_data_address() : 0L;
 }
+JVM_END
 
 // Java entry for reading an uncompressed resource from the image.
-JNIEXPORT jboolean JNICALL
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jboolean,
 JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
-              jobject uncompressedBuffer, jlong uncompressed_size) {
+              unsigned char* uncompressedAddress, jlong uncompressed_size)) {
+  JVMWrapper("JVM_ImageRead");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);\
   // If not a valid reader the fail the read.
-  if (!reader) return false;
+  if (reader == NULL) return false;
   // Get the file offset of resource data.
   u8 file_offset = reader->get_index_size() + offset;
   // Check validity of arguments.
-  if (uncompressedBuffer == NULL ||
-      offset < 0 ||
+  if (offset < 0 ||
       uncompressed_size < 0 ||
       file_offset > reader->file_size() - uncompressed_size) {
       return false;
   }
-  // Get address of direct buffer.
-  u1* uncompressedAddress = (u1*)env->GetDirectBufferAddress(uncompressedBuffer);
   // Read file content into buffer.
-  return (jboolean)reader->read_at(uncompressedAddress, uncompressed_size,
+  return (jboolean)reader->read_at((u1*)uncompressedAddress, uncompressed_size,
                                    file_offset);
 }
+JVM_END
 
 // Java entry for reading a compressed resource from the image.
-JNIEXPORT jboolean JNICALL
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jboolean,
 JVM_ImageReadCompressed(JNIEnv *env,
                     jlong id, jlong offset,
-                    jobject compressedBuffer, jlong compressed_size,
-                    jobject uncompressedBuffer, jlong uncompressed_size) {
+                    unsigned char* compressedAddress, jlong compressed_size,
+                    unsigned char* uncompressedAddress, jlong uncompressed_size)) {
+  JVMWrapper("JVM_ImageReadCompressed");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // If not a valid reader the fail the read.
-  if (!reader) return false;
+  if (reader == NULL) return false;
   // Get the file offset of resource data.
   u8 file_offset = reader->get_index_size() + offset;
   // Check validity of arguments.
-  if (uncompressedBuffer == NULL ||
-      compressedBuffer == NULL ||
-      uncompressedBuffer == NULL ||
-      offset < 0 ||
+  if (offset < 0 ||
       compressed_size < 0 ||
       uncompressed_size < 0 ||
       file_offset > reader->file_size() - compressed_size) {
       return false;
   }
-  // Get address of read direct buffer.
-  u1* compressedAddress = (u1*)env->GetDirectBufferAddress(compressedBuffer);
-  // Get address of decompression direct buffer.
-  u1* uncompressedAddress = (u1*)env->GetDirectBufferAddress(uncompressedBuffer);
+
   // Read file content into buffer.
   bool is_read = reader->read_at(compressedAddress, compressed_size,
                                  file_offset);
@@ -3815,116 +3827,127 @@ JVM_ImageReadCompressed(JNIEnv *env,
   }
   return (jboolean)is_read;
 }
+JVM_END
 
 // Java entry for retrieving UTF-8 bytes from image string table.
-JNIEXPORT jbyteArray JNICALL
-JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(const char*, JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset)) {
+  JVMWrapper("JVM_ImageGetStringBytes");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // Fail if not valid reader.
-  if (!reader) return NULL;
+  if (reader == NULL) return NULL;
   // Manage image string table.
   ImageStrings strings = reader->get_strings();
   // Retrieve string adrress from table.
   const char* data = strings.get(offset);
-  // Determine String length.
-  size_t size = strlen(data);
-  // Allocate byte array.
-  jbyteArray byteArray = env->NewByteArray((jsize)size);
-  // Get array base address.
-  jbyte* rawBytes = env->GetByteArrayElements(byteArray, NULL);
-  // Copy bytes from image string table.
-  memcpy(rawBytes, data, size);
-  // Release byte array base address.
-  env->ReleaseByteArrayElements(byteArray, rawBytes, 0);
-  return byteArray;
+  return data;
 }
+JVM_END
 
 // Utility function to copy location information into a jlong array.
-static jlongArray image_expand_location(JNIEnv *env, ImageLocation& location) {
-  // Allocate a jlong large enough for all location attributes.
-  jlongArray attributes = env->NewLongArray(ImageLocation::ATTRIBUTE_COUNT);
-  // Get base address for jlong array.
-  jlong* rawAttributes = env->GetLongArrayElements(attributes, NULL);
+// WARNING: This function is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+static void image_expand_location(JNIEnv *env, jlong* rawAttributes, ImageLocation& location) {
   // Copy attributes from location.
   for (int kind = ImageLocation::ATTRIBUTE_END + 1;
            kind < ImageLocation::ATTRIBUTE_COUNT;
            kind++) {
     rawAttributes[kind] = location.get_attribute(kind);
   }
-  // Release jlong array base address.
-  env->ReleaseLongArrayElements(attributes, rawAttributes, 0);
-  return attributes;
 }
 
 // Java entry for retrieving location attributes for attribute offset.
-JNIEXPORT jlongArray JNICALL
-JVM_ImageGetAttributes(JNIEnv *env, jlong id, jint offset) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jlong*, JVM_ImageGetAttributes(JNIEnv *env, jlong* rawAttributes, jlong id, jint offset)) {
+  JVMWrapper("JVM_ImageGetAttributes");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // Fail if not valid reader.
-  if (!reader) return NULL;
+  if (reader == NULL) return NULL;
   // Retrieve first byte address of resource's location attribute stream.
   u1* data = reader->get_location_offset_data(offset);
   // Fail if not valid offset.
-  if (!data) return NULL;
+  if (data == NULL) return NULL;
   // Expand stream into array.
   ImageLocation location(data);
-  // Return as jlong array.
-  return image_expand_location(env, location);
+  image_expand_location(env, rawAttributes, location);
+  return rawAttributes;
 }
+JVM_END
+
+// Java entry for retrieving location attributes count for attribute offset.
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jsize, JVM_ImageGetAttributesCount(JNIEnv *env)) {
+  JVMWrapper("JVM_ImageGetAttributesCount");
+  return ImageLocation::ATTRIBUTE_COUNT;
+}
+JVM_END
 
 // Java entry for retrieving location attributes for named resource.
-JNIEXPORT jlongArray JNICALL
-JVM_ImageFindAttributes(JNIEnv *env, jlong id, jbyteArray utf8) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jlong*,
+JVM_ImageFindAttributes(JNIEnv *env, jlong* rawAttributes, jbyte* rawBytes, jsize size, jlong id)) {
+  JVMWrapper("JVM_ImageFindAttributes");
   // Mark for temporary buffers.
   ResourceMark rm;
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // Fail if not valid reader.
-  if (!reader) return NULL;
+  if (reader == NULL) return NULL;
   // Convert byte array to a cstring.
-  jsize size = env->GetArrayLength(utf8);
   char* path = NEW_RESOURCE_ARRAY(char, size + 1);
-  jbyte* rawBytes = env->GetByteArrayElements(utf8, NULL);
   memcpy(path, rawBytes, size);
-  env->ReleaseByteArrayElements(utf8, rawBytes, 0);
   path[size] = '\0';
   // Locate resource location data.
-  u1* data = reader->find_location_data(path);
+  ImageLocation location;
+  bool found = reader->find_location(path, location);
   // Resource not found.
-  if (!data) return NULL;
+  if (!found) return NULL;
   // Expand stream into array.
-  ImageLocation location(data);
-  // Verify result agaibst false positive.
-  if (!reader->verify_location(location, path)) return NULL;
-  // Expand stream into array.
-  return image_expand_location(env, location);
+  image_expand_location(env, rawAttributes, location);
+  return rawAttributes;
 }
+JVM_END
 
 // Java entry for retrieving all the attribute stream offsets from an image.
-JNIEXPORT jintArray JNICALL
-JVM_ImageAttributeOffsets(JNIEnv *env, jlong id) {
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(jint*, JVM_ImageAttributeOffsets(JNIEnv *env, jint* rawOffsets, unsigned int length, jlong id)) {
+  JVMWrapper("JVM_ImageAttributeOffsets");
   // Convert image ID to image reader structure.
   ImageFileReader* reader = ImageFileReader::idToReader(id);
   // Fail if not valid reader.
-  if (!reader) return NULL;
+  if (reader == NULL) return NULL;
   // Determine endian for reader.
   Endian* endian = reader->endian();
-  // Get perfect hash table length.
-  u4 length = reader->table_length();
   // Get base address of attribute stream offsets table.
   u4* offsets_table = reader->offsets_table();
   // Allocate int array result.
-  jintArray offsets = env->NewIntArray(length);
-  // Get base address of result.
-  jint* rawOffsets = env->GetIntArrayElements(offsets, NULL);
   // Copy values to result (converting endian.)
   for (u4 i = 0; i < length; i++) {
     rawOffsets[i] = endian->get(offsets_table[i]);
   }
-  // Release result base address.
-  env->ReleaseIntArrayElements(offsets, rawOffsets, 0);
-  return offsets;
+  return rawOffsets;
 }
+JVM_END
+
+// Java entry for retrieving all the attribute stream offsets length from an image.
+// WARNING: This API is experimental and temporary during JDK 9 development
+// cycle. It will not be supported in the eventual JDK 9 release.
+JVM_ENTRY(unsigned int, JVM_ImageAttributeOffsetsLength(JNIEnv *env, jlong id)) {
+  JVMWrapper("JVM_ImageAttributeOffsetsLength");
+  // Convert image ID to image reader structure.
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  // Fail if not valid reader.
+  if (reader == NULL) return 0;
+  // Get perfect hash table length.
+  u4 length = reader->table_length();
+  return (jint) length;
+}
+JVM_END
 

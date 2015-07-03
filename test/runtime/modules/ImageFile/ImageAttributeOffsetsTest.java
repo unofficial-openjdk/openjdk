@@ -22,20 +22,21 @@
  */
 
 /*
+ * Retrieves the array of offsets once with MemoryMapImage enabled once disabled.
  * @test ImageAttributeOffsetsTest
  * @summary Unit test for JVM_ImageAttributeOffsets() method
- * @author sergei.pikalev@oracle.com
  * @library /testlibrary /../../test/lib
  * @build ImageAttributeOffsetsTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:+MemoryMapImage ImageAttributeOffsetsTest +
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-MemoryMapImage ImageAttributeOffsetsTest -
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:+MemoryMapImage ImageAttributeOffsetsTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-MemoryMapImage ImageAttributeOffsetsTest
  */
 
 import java.io.File;
 import java.nio.ByteOrder;
 import sun.hotspot.WhiteBox;
+import static jdk.test.lib.Asserts.*;
 
 public class ImageAttributeOffsetsTest {
 
@@ -43,37 +44,21 @@ public class ImageAttributeOffsetsTest {
 
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+        String imageFile = javaHome + File.separator + "lib" + File.separator
+                + "modules" + File.separator + "bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
             System.out.printf("Test skipped.");
             return;
         }
 
-        boolean isMMap = true;
-        for (String arg : args)
-            if (arg.equals("-"))
-                isMMap = false;
-
-        if (!testImageAttributeOffsets(imageFile, isMMap))
-            throw new RuntimeException("Some cases are failed");
-    }
-
-    private static boolean testImageAttributeOffsets(String imageFile, boolean isMMap) {
         boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
         long id = wb.imageOpenImage(imageFile, bigEndian);
         boolean passed = true;
-        String mm = isMMap? "-XX:+MemoryMapImage" : "-XX:-MemoryMapImage";
         // Get offsets
         int[] array = wb.imageAttributeOffsets(id);
-        if (array != null) {
-            System.out.printf("Passed. Offsets\' array retrieved  with %s flag", mm);
-        } else {
-            System.out.printf("Failed. Could not retrieve offsets\' array with %s flag", mm);
-            passed = false;
-        }
+        assertNotNull(array, "Could not retrieve offsets of array");
 
         wb.imageCloseImage(id);
-        return passed;
     }
 }
