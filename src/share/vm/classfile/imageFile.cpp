@@ -242,26 +242,43 @@ GrowableArray<ImageFileReader*>* ImageFileReader::_reader_table =
 
 // Open an image file, reuse structure if file already open.
 ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
-  // Lock out _reader_table.
-  MutexLocker ml(ImageFileReaderTable_lock);
-  ImageFileReader* reader;
-  // Search for an exist image file.
-  for (int i = 0; i < _reader_table->length(); i++) {
-    // Retrieve table entry.
-    reader = _reader_table->at(i);
-    // If name matches, then reuse (bump up use count.)
-    if (strcmp(reader->name(), name) == 0) {
-      reader->inc_use();
-      return reader;
+  {
+    // Lock out _reader_table.
+    MutexLocker ml(ImageFileReaderTable_lock);
+    // Search for an exist image file.
+    for (int i = 0; i < _reader_table->length(); i++) {
+      // Retrieve table entry.
+      ImageFileReader* reader = _reader_table->at(i);
+      // If name matches, then reuse (bump up use count.)
+      if (strcmp(reader->name(), name) == 0) {
+        reader->inc_use();
+        return reader;
+      }
     }
-  }
+  } // Unlock the mutex
+
   // Need a new image reader.
-  reader = new ImageFileReader(name, big_endian);
+  ImageFileReader* reader = new ImageFileReader(name, big_endian);
   bool opened = reader->open();
   // If failed to open.
   if (!opened) {
     delete reader;
     return NULL;
+  }
+
+  // Lock to update
+  MutexLocker ml(ImageFileReaderTable_lock);
+  // Search for an exist image file.
+  for (int i = 0; i < _reader_table->length(); i++) {
+    // Retrieve table entry.
+    ImageFileReader* existing_reader = _reader_table->at(i);
+    // If name matches, then reuse (bump up use count.)
+    if (strcmp(existing_reader->name(), name) == 0) {
+      existing_reader->inc_use();
+      reader->close();
+      delete reader;
+      return existing_reader;
+    }
   }
   // Bump use count and add to table.
   reader->inc_use();
