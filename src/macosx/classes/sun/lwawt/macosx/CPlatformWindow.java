@@ -64,6 +64,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSynthesizeMouseEnteredExitedEvents();
     private static native void nativeDispose(long nsWindowPtr);
     private static native CPlatformWindow nativeGetTopmostPlatformWindowUnderMouse();
+    private static native void nativeEnterFullScreenMode(long nsWindowPtr);
+    private static native void nativeExitFullScreenMode(long nsWindowPtr);
 
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
@@ -446,10 +448,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override // PlatformWindow
     public Insets getInsets() {
-        if (!isFullScreenMode) {
-            return nativeGetNSWindowInsets(getNSWindowPtr());
-        }
-        return new Insets(0, 0, 0, 0);
+        return nativeGetNSWindowInsets(getNSWindowPtr());
     }
 
     @Override // PlatformWindow
@@ -785,18 +784,12 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public void enterFullScreenMode() {
         isFullScreenMode = true;
-        contentView.enterFullScreenMode();
-        // the move/size notification from the underlying system comes
-        // but it contains a bounds smaller than the whole screen
-        // and therefore we need to create the synthetic notifications
-        Rectangle screenBounds = getPeer().getGraphicsConfiguration().getBounds();
-        responder.handleReshapeEvent(screenBounds.x, screenBounds.y, screenBounds.width,
-                           screenBounds.height);
+        nativeEnterFullScreenMode(getNSWindowPtr());
     }
 
     @Override
     public void exitFullScreenMode() {
-        contentView.exitFullScreenMode();
+        nativeExitFullScreenMode(getNSWindowPtr());
         isFullScreenMode = false;
     }
 
@@ -971,14 +964,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     protected void deliverMoveResizeEvent(int x, int y, int width, int height,
                                         boolean byUser) {
-        // when the content view enters the full-screen mode, the native
-        // move/resize notifications contain a bounds smaller than
-        // the whole screen and therefore we ignore the native notifications
-        // and the content view itself creates correct synthetic notifications
-        if (isFullScreenMode) {
-            return;
-        }
-
         final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
         if (peer != null) {
