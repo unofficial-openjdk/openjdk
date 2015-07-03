@@ -2154,7 +2154,15 @@ void LIRGenerator::do_UnsafePutRaw(UnsafePutRaw* x) {
 #ifdef _LP64
     }
 #endif
-    __ shift_left(index_op, log2_scale, index_op);
+    LIR_Opr tmp = new_pointer_register();
+    if (TwoOperandLIRForm) {
+      __ move(index_op, tmp);
+      index_op = tmp;
+    }
+    __ shift_left(index_op, log2_scale, tmp);
+    if (!TwoOperandLIRForm) {
+      index_op = tmp;
+    }
   }
 #ifdef _LP64
   else if(!index_op->is_illegal() && index_op->type() == T_INT) {
