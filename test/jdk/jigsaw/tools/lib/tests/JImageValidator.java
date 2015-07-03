@@ -56,11 +56,20 @@ public class JImageValidator {
     private long javaExecutionTime;
     private final List<String> unexpectedPaths;
     private final List<String> unexpectedFiles;
+    private final String[] expectedFiles;
 
     public JImageValidator(String module, List<String> expectedLocations,
             File rootDir,
             List<String> unexpectedPaths,
             List<String> unexpectedFiles) throws Exception {
+        this(module, expectedLocations, rootDir, unexpectedPaths, unexpectedFiles, null);
+    }
+
+    public JImageValidator(String module, List<String> expectedLocations,
+            File rootDir,
+            List<String> unexpectedPaths,
+            List<String> unexpectedFiles,
+            String[] expectedFiles) throws Exception {
         if (!rootDir.exists()) {
             throw new Exception("Image root dir not found " +
                     rootDir.getAbsolutePath());
@@ -70,6 +79,7 @@ public class JImageValidator {
         this.module = module;
         this.unexpectedPaths = unexpectedPaths;
         this.unexpectedFiles = unexpectedFiles;
+        this.expectedFiles = expectedFiles == null ? new String[0] : expectedFiles;
     }
 
     public void validate() throws Exception {
@@ -110,6 +120,13 @@ public class JImageValidator {
             if (ret != 0) {
                 throw new Exception("Image " + module +
                         " execution failed, check logs.");
+            }
+        }
+
+        for (String f : expectedFiles) {
+            File dd = new File(rootDir, f);
+            if (!dd.exists()) {
+                throw new Exception("Expected File " + f + " not found");
             }
         }
 

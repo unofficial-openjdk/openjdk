@@ -153,6 +153,22 @@ public final class ImagePluginProviderRepository {
         return builder;
     }
 
+    /**
+     * The image builder providers accessible in the current context.
+     *
+     * @param loader A classloader or null for default loader.
+     * @return The image builder provider or null if no provider.
+     */
+    public static List<ImageBuilderProvider> getImageBuilderProviders(ClassLoader loader) {
+        List<ImageBuilderProvider> factories = new ArrayList<>();
+        Iterator<ImageBuilderProvider> providers =
+                ServiceLoader.load(ImageBuilderProvider.class, loader).iterator();
+        while (providers.hasNext()) {
+            factories.add(providers.next());
+        }
+        return factories;
+    }
+
     private static Iterator<PluginProvider> getJavaPluginProviders(ClassLoader loader) {
         return ServiceLoader.load(PluginProvider.class, loader).iterator();
     }

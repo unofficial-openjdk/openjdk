@@ -29,7 +29,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-final class PluginsResourceBundle {
+public final class PluginsResourceBundle {
 
     static final String DESCRIPTION = "description";
     static final String ARGUMENT = "argument";
@@ -49,19 +49,19 @@ final class PluginsResourceBundle {
     private PluginsResourceBundle() {
     }
 
-    static String getArgument(String name) {
+    public static String getArgument(String name) {
         return getMessage(name + "." + ARGUMENT);
     }
 
-    static String getDescription(String name) {
+    public static String getDescription(String name) {
         return getMessage(name + "." + DESCRIPTION, name);
     }
 
-    static String getOption(String name, String option) {
+    public static String getOption(String name, String option) {
         return getMessage(name + "." + option);
     }
 
-    static String getMessage(String key, Object... args) throws MissingResourceException {
+    public static String getMessage(String key, Object... args) throws MissingResourceException {
         String val = pluginsBundle.getString(key);
         return MessageFormat.format(val, args);
     }

@@ -163,6 +163,14 @@ public class Helper {
             String[] userOptions, String[] paths,
             String[] files)
             throws Exception {
+        return checkImage(module, userOptions, paths, files, null);
+    }
+
+    public File checkImage(String module,
+            String[] userOptions, String[] paths,
+            String[] files,
+            String[] expectedFiles)
+            throws Exception {
         List<String> unexpectedPaths = new ArrayList<>();
         if (paths != null) {
             for (String un : paths) {
@@ -204,7 +212,8 @@ public class Helper {
         JImageValidator validator = new JImageValidator(module, expectedLocations,
                 image,
                 unexpectedPaths,
-                unexpectedFiles);
+                unexpectedFiles,
+                expectedFiles);
         System.out.println("*** Validate Image " + module);
         validator.validate();
         long moduleExecutionTime = validator.getModuleLauncherExecutionTime();

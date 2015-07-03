@@ -147,7 +147,7 @@ public final class ImagePluginConfiguration {
      */
     public static ImagePluginStack parseConfiguration(Properties p)
             throws IOException {
-        return parseConfiguration(null, null, p);
+        return parseConfiguration(null, null, p, null);
     }
 
     /**
@@ -156,15 +156,17 @@ public final class ImagePluginConfiguration {
      * Used to build an ImageBuilder.
      * @param mods
      * @param p Properties file.
+     * @param bom The tooling config data
      * @return A stack of plugins.
      * @throws IOException
      */
     public static ImagePluginStack parseConfiguration(Path outDir,
             Map<String, Path> mods,
-            Properties p)
+            Properties p,
+            String bom)
             throws IOException {
         if (p == null) {
-            return new ImagePluginStack();
+            return new ImagePluginStack(bom);
         }
         String path = (String) p.remove(PATH_PROPERTY);
         String lastSorterName = (String) p.remove(RESOURCES_LAST_SORTER_PROPERTY);
@@ -199,7 +201,8 @@ public final class ImagePluginConfiguration {
             builder = new ImageBuilder() {
 
                 @Override
-                public void storeFiles(ImageFilePool files, Set<String> modules)
+                public void storeFiles(ImageFilePool files, Set<String> modules,
+                        String bom)
                         throws IOException {
                     throw new IOException("No directory setup to store files");
                 }
@@ -221,7 +224,7 @@ public final class ImagePluginConfiguration {
             }
         }
         return new ImagePluginStack(builder, resourcePluginsList,
-                lastSorter, filePluginsList);
+                lastSorter, filePluginsList, bom);
     }
 
     private static Properties filter(Properties p, String name) {

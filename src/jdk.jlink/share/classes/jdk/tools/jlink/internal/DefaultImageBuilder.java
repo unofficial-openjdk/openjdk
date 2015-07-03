@@ -33,12 +33,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.CopyOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import java.nio.file.Path;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Map;
@@ -58,23 +66,81 @@ import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
  */
 public class DefaultImageBuilder implements ImageBuilder {
 
+    private static class DirectoryCopy implements FileVisitor<Path> {
+
+        private final Path source;
+        private final Path destination;
+
+        DirectoryCopy(Path source, Path destination) {
+            this.source = source;
+            this.destination = destination;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            Path newdir = destination.resolve(source.relativize(dir));
+            copy(dir, newdir);
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            copy(file, destination.resolve(source.relativize(file)));
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            if (exc != null) {
+                throw exc;
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            throw exc;
+        }
+    }
+
+    static void copy(Path source, Path destination) throws IOException {
+        CopyOption[] options = {COPY_ATTRIBUTES, NOFOLLOW_LINKS};
+        Files.copy(source, destination, options);
+    }
+
     private final Path root;
     private final Path mdir;
     private final Map<String, Path> mods;
     private final String jimage;
+    private final String[] filesToCopy;
+    private final boolean genBom;
+
     public DefaultImageBuilder(Properties properties, Path root,
             Map<String, Path> mods) throws IOException {
         Objects.requireNonNull(root);
         Objects.requireNonNull(mods);
         String img = properties.getProperty(DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY);
-        jimage= img == null ? BasicImageWriter.BOOT_IMAGE_NAME : img;
+        jimage = img == null ? BasicImageWriter.BOOT_IMAGE_NAME : img;
+
+        String lst = properties.getProperty(DefaultImageBuilderProvider.COPY_FILES);
+        String[] files = new String[0];
+        if (lst != null) {
+            files = lst.split(",");
+            for (int i = 0; i < files.length; i++) {
+                files[i] = files[i].trim();
+            }
+        }
+        filesToCopy = files;
+
+        genBom = properties.getProperty(DefaultImageBuilderProvider.GEN_BOM) != null;
+
         this.root = root;
         this.mdir = root.resolve(root.getFileSystem().getPath("lib", "modules"));
         this.mods = mods;
         Files.createDirectories(mdir);
     }
 
-    private void storeRelease(Set<String> modules) throws IOException {
+    private void storeFiles(Set<String> modules, String bom) throws IOException {
         // Retrieve release file from JDK home dir.
         String path = System.getProperty("java.home");
         File f = new File(path, "release");
@@ -97,6 +163,25 @@ public class DefaultImageBuilder implements ImageBuilder {
                 release.store(fo, null);
             }
         }
+        for (String file : filesToCopy) {
+            File p = new File(path, file);
+            File dest = new File(root.toFile(), p.getName());
+            if (p.exists()) {
+                if (p.isFile()) {
+                    copy(p.toPath(), dest.toPath());
+                } else {
+                    if (p.isDirectory()) {
+                        Files.walkFileTree(p.toPath(),
+                                new DirectoryCopy(p.toPath(), dest.toPath()));
+                    }
+                }
+            }
+        }
+        // Generate bom
+        if (genBom) {
+            File bomFile = new File(root.toFile(), "bom");
+            createUtf8File(bomFile, bom);
+        }
     }
 
     private void addModules(Properties release, Set<String> modules) throws IOException {
@@ -115,13 +200,11 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(ImageFilePool files, Set<String> modules) throws IOException {
+    public void storeFiles(ImageFilePool files, Set<String> modules, String bom) throws IOException {
         for (ImageFile f : files.getFiles()) {
             accept(f);
         }
-        // XXX TODO, what about other files src.zip, licenses, ....
-        // Do we make that configurable?
-        storeRelease(modules);
+        storeFiles(modules, bom);
 
          // launchers in the bin directory need execute permission
         Path bin = root.resolve("bin");
@@ -263,6 +346,13 @@ public class DefaultImageBuilder implements ImageBuilder {
             Files.setPosixFilePermissions(file, perms);
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
+        }
+    }
+
+    private static void createUtf8File(File file, String content) throws IOException {
+        try (OutputStream fout = new FileOutputStream(file);
+                Writer output = new OutputStreamWriter(fout, "UTF-8")) {
+            output.write(content);
         }
     }
 }

@@ -156,14 +156,17 @@ public final class ImagePluginStack {
 
     private final ImageBuilder imageBuilder;
 
-    public ImagePluginStack() {
-        this(null, Collections.emptyList(), null, Collections.emptyList());
+    private final String bom;
+
+    public ImagePluginStack(String bom) {
+        this(null, Collections.emptyList(), null, Collections.emptyList(), null);
     }
 
     ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
-            List<ImageFilePlugin> filePlugins) {
+            List<ImageFilePlugin> filePlugins,
+            String bom) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
         this.lastSorter = lastSorter;
@@ -179,6 +182,7 @@ public final class ImagePluginStack {
             this.filePlugins.add(p);
         }
         this.imageBuilder = imageBuilder;
+        this.bom = bom;
     }
 
     public DataOutputStream getJImageFileOutputStream() throws IOException {
@@ -267,6 +271,6 @@ public final class ImagePluginStack {
             }
             current = output;
         }
-        imageBuilder.storeFiles(current, modules);
+        imageBuilder.storeFiles(current, modules, bom);
     }
 }

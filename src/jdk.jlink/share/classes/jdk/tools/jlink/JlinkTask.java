@@ -99,9 +99,6 @@ class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
-        new Option<JlinkTask>(false, (task, opt, arg) -> {
-            task.options.genbom = true;
-        }, "--genbom"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             String[] dirs = arg.split(File.pathSeparator);
             Path[] paths = new Path[dirs.length];
@@ -162,7 +159,6 @@ class JlinkTask {
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
     static class OptionsValues {
-        boolean genbom;
         boolean help;
         boolean version;
         boolean fullVersion;
@@ -179,7 +175,7 @@ class JlinkTask {
         try {
             optionsHelper.handleOptions(this, args);
             if (options.help) {
-                optionsHelper.showHelp(PROGNAME, "jimage creation only options:");
+                optionsHelper.showHelp(PROGNAME, "jimage creation only options:", true);
                 return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
@@ -187,7 +183,7 @@ class JlinkTask {
                 return EXIT_OK;
             }
             if(optionsHelper.listPlugins()) {
-                 optionsHelper.showPlugins(log);
+                optionsHelper.showPlugins(log, true);
                  return EXIT_OK;
             }
             if (options.moduleFinder == null)
@@ -289,10 +285,6 @@ class JlinkTask {
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
         imageHelper.createModularImage(output, mods);
-
-        if (options.genbom) {
-            genBOM(options.output);
-        }
     }
 
     /**
@@ -328,8 +320,7 @@ class JlinkTask {
         };
     }
 
-    private void genBOM(Path root) throws IOException {
-        File bom = new File(root.toFile(), "bom");
+    private String genBOMContent() throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("#").append(new Date()).append("\n");
         sb.append("#Please DO NOT Modify this file").append("\n");
@@ -360,19 +351,7 @@ class JlinkTask {
             sb.append("\n").append("# Plugins configuration\n");
             sb.append(pluginsContent);
         }
-        try {
-            createUtf8File(bom, sb.toString());
-        } catch (IOException ex) {
-            fail(RuntimeException.class, taskHelper.getMessage("err.bom.generation",
-                    ex.toString()));
-        }
-    }
-
-    private static void createUtf8File(File file, String content) throws IOException {
-        try (OutputStream fout = new FileOutputStream(file);
-             Writer output = new OutputStreamWriter(fout, "UTF-8")) {
-            output.write(content);
-        }
+        return sb.toString();
     }
 
     private class ImageFileHelper {
@@ -390,7 +369,7 @@ class JlinkTask {
                     .collect(Collectors.toSet());
             ImagePluginStack pc = ImagePluginConfiguration.
                     parseConfiguration(output, mods,
-                            taskHelper.getPluginsProperties());
+                            taskHelper.getPluginsProperties(), genBOMContent());
             ImageFileCreator.create(archives, pc);
         }
 

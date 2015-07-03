@@ -25,6 +25,7 @@
 package jdk.tools.jlink.plugins;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -45,4 +46,11 @@ public interface ImageBuilderProvider {
      * @return The builder.
      */
     public ImageBuilder newBuilder(Properties properties, Path imageOutDir);
+
+    /**
+     * Options to configure the image builder.
+     *
+     * @return The option name / description mapping
+     */
+    public abstract Map<String, String> getOptions();
 }

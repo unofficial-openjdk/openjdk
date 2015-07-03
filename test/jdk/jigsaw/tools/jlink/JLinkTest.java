@@ -69,7 +69,13 @@ public class JLinkTest {
         String[] opts = {"--list-plugins"};
         jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
 
-        helper.checkImage("composite2", null, null, null);
+        //Add jre files.
+        String copied = "ASSEMBLY_EXCEPTION,LICENSE,man,THIRD_PARTY_README";
+        String[] arr = copied.split(",");
+        String[] copyFiles = new String[2];
+        copyFiles[0] = "--copy-files";
+        copyFiles[1] = copied;
+        helper.checkImage("composite2", copyFiles, null, null, arr);
 
         // filter out files and resources + Skip debug + compress
         {

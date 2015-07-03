@@ -428,12 +428,9 @@ final class AsmPoolImpl implements AsmModulePool {
     @Override
     public void visitClassReaders(ClassReaderVisitor visitor) throws IOException {
         Objects.requireNonNull(visitor);
-        System.out.println("VISIT CLASSES ");
         for (Resource res : getClasses()) {
-            System.out.println("VISIT " + res.getPath());
             ClassReader reader = newClassReader(res.getByteArray());
             ClassWriter writer = visitor.visit(reader);
-            System.out.println("RETURNED WRITER " + writer);
             if (writer != null) {
 
                 getTransformedClasses().addClass(writer);

@@ -41,6 +41,8 @@ import java.util.Map.Entry;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+import jdk.tools.jlink.plugins.ImageBuilderProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
@@ -137,6 +139,7 @@ public final class TaskHelper {
         private String pluginsProperties;
         private boolean listPlugins;
         private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
+        private final Map<String, String> defaultBuilder = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
         private PluginsOptions() throws BadArgs {
@@ -192,6 +195,19 @@ public final class TaskHelper {
                         listPlugins = true;
                     },
                     "--list-plugins"));
+
+            Map<String, String> options = DefaultImageBuilderProvider.getOptions();
+            if (options != null && !options.isEmpty()) {
+                for (Entry<String, String> o : options.entrySet()) {
+                    PluginOption option
+                            = new PluginOption(DefaultImageBuilderProvider.hasArgument(o.getKey()),
+                                    (task, opt, arg) -> {
+                                        defaultBuilder.put(o.getKey(), arg);
+                                    },
+                                    "--" + o.getKey());
+                    pluginsOptions.add(option);
+                }
+            }
         }
 
         private PluginOption getOption(String name) throws BadArgs {
@@ -226,6 +242,11 @@ public final class TaskHelper {
                         }
                     }
                 }
+            }
+            for (Entry<String, String> entry : defaultBuilder.entrySet()) {
+                props.setProperty(DefaultImageBuilderProvider.NAME + "."
+                        + entry.getKey(), entry.getValue() == null ? ""
+                                : entry.getValue());
             }
             return props;
         }
@@ -436,7 +457,8 @@ public final class TaskHelper {
             return null;
         }
 
-        public void showHelp(String progName, String pluginsHeader) {
+        public void showHelp(String progName, String pluginsHeader,
+                boolean showsImageBuilder) {
             log.println(bundleHelper.getMessage("main.usage", progName));
             // First configuration
             log.println(bundleHelper.getMessage("main.opt." + CONFIGURATION));
@@ -471,9 +493,12 @@ public final class TaskHelper {
                     log.println(line.toString() + "\n");
                 }
             }
+            if (showsImageBuilder) {
+                logBuilderOptions(DefaultImageBuilderProvider.getOptions());
+            }
         }
 
-        public void showPlugins(PrintWriter log) {
+        public void showPlugins(PrintWriter log, boolean showsImageBuilder) {
             for (PluginProvider fact : ImagePluginProviderRepository.getPluginProviders(null)) {
                 log.println("\n" + bundleHelper.getMessage("main.plugin.name")
                         + ": " + fact.getName());
@@ -506,6 +531,27 @@ public final class TaskHelper {
                 if (option != null) {
                     log.println(bundleHelper.getMessage("main.plugin.option")
                             + ": --" + option);
+                }
+            }
+            if (showsImageBuilder) {
+                Map<String, String> defOptions = DefaultImageBuilderProvider.getOptions();
+                if (defOptions != null && !defOptions.isEmpty()) {
+                    log.println("\n" + bundleHelper.getMessage("main.default.image.builder.name"));
+                    logBuilderOptions(defOptions);
+                }
+                for (ImageBuilderProvider prov
+                        : ImagePluginProviderRepository.getImageBuilderProviders(null)) {
+                    log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
+                            + ": " + prov.getName());
+                    logBuilderOptions(prov.getOptions());
+                }
+            }
+        }
+
+        private void logBuilderOptions(Map<String, String> options) {
+            if (options != null && !options.isEmpty()) {
+                for (Entry<String, String> opt : options.entrySet()) {
+                    log.println(" --" + opt.getKey() + " " + opt.getValue() + "\n");
                 }
             }
         }

@@ -227,9 +227,8 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
                 try (InputStream stream = new ByteArrayInputStream(content)) {
                     cf = ClassFile.read(stream);
                 } catch (ConstantPoolException ex) {
-                    System.err.println("Compressor EX " + ex + " for "
-                            + resource.getPath() + " content.length " + content.length);
-                    throw new IOException(ex);
+                    throw new IOException("Compressor EX " + ex + " for "
+                            + resource.getPath() + " content.length " + content.length, ex);
                 }
                 DescriptorsScanner scanner = new DescriptorsScanner(cf);
                 return optimize(resource, out, strings, scanner.scan(), content);

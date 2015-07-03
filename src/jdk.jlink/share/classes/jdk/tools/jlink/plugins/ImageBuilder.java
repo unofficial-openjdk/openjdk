@@ -38,9 +38,11 @@ public interface ImageBuilder {
     /**
      * Store the external files.
      * @param files Set of module names that are composing this image.
+     * @param modules The set of modules added to the image
+     * @param bom The options used to build the image
      * @throws java.io.IOException
      */
-    public void storeFiles(ImageFilePool files, Set<String> modules) throws IOException;
+    public void storeFiles(ImageFilePool files, Set<String> modules, String bom) throws IOException;
 
     /**
      * The OutputStream to store the jimage file

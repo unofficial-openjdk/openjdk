@@ -26,8 +26,10 @@ package jdk.tools.jlink.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.plugins.ImageBuilder;
 
 /**
@@ -35,12 +37,29 @@ import jdk.tools.jlink.plugins.ImageBuilder;
  */
 public class DefaultImageBuilderProvider {
 
+    public static final String COPY_FILES = "copy-files";
+    public static final String GEN_BOM = "genbom";
     public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
     public static final String NAME = "jlink-default-image-builder";
+
+    private static final Map<String, String> OPTIONS = new HashMap<>();
+
+    static {
+        OPTIONS.put(COPY_FILES, PluginsResourceBundle.getOption(NAME, COPY_FILES));
+        OPTIONS.put(GEN_BOM, PluginsResourceBundle.getOption(NAME, GEN_BOM));
+    }
     public ImageBuilder newBuilder(Properties properties,
             Path imageOutDir,
             Map<String, Path> mods) throws IOException {
         return new DefaultImageBuilder(properties, imageOutDir, mods);
+    }
+
+    public static Map<String, String> getOptions() {
+        return OPTIONS;
+    }
+
+    public static boolean hasArgument(String option) {
+        return option.equals(COPY_FILES);
     }
 
 }

@@ -91,7 +91,7 @@ public final class ImageFileCreator {
             ByteOrder byteOrder)
             throws IOException {
         return ImageFileCreator.create(archives, byteOrder,
-                new ImagePluginStack());
+                new ImagePluginStack(null));
     }
 
     public static ImageFileCreator create(Set<Archive> archives,

@@ -162,13 +162,13 @@ class JImageTask {
                 }
             }
             if (options.help) {
-                optionsHelper.showHelp(PROGNAME, "recreate only options:");
+                optionsHelper.showHelp(PROGNAME, "recreate only options:", false);
             }
             if (options.version || options.fullVersion) {
                 taskHelper.showVersion(options.fullVersion);
             }
             if(optionsHelper.listPlugins()) {
-                optionsHelper.showPlugins(log);
+                optionsHelper.showPlugins(log, false);
             }
             boolean ok = run();
             return ok ? EXIT_OK : EXIT_ERROR;
