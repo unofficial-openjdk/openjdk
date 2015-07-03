@@ -46,12 +46,17 @@ final class FileReplacerPlugin implements ImageFilePlugin {
         for (int i = 0; i < arguments.length; i++) {
             String path = arguments[i];
             i++;
-            File replacement = new File(arguments[i]);
-            if (!replacement.exists()) {
-                throw new RuntimeException("Replacement file " + replacement
-                        + " doesn't exist.");
+            if (i < arguments.length) {
+                File replacement = new File(arguments[i]);
+                if (!replacement.exists()) {
+                    throw new RuntimeException("Replacement file " + replacement
+                            + " doesn't exist.");
+                }
+                mapping.put(path, replacement);
+            } else {
+                throw new RuntimeException("Replacing file, "
+                        + "invalid number of arguments");
             }
-            mapping.put(path, replacement);
         }
     }
 

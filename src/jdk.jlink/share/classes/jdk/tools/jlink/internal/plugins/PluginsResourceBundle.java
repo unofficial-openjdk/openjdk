@@ -54,7 +54,7 @@ final class PluginsResourceBundle {
     }
 
     static String getDescription(String name) {
-        return getMessage(name + "." + DESCRIPTION);
+        return getMessage(name + "." + DESCRIPTION, name);
     }
 
     static String getOption(String name, String option) {

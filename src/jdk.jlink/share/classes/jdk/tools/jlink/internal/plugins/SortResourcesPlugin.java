@@ -113,7 +113,7 @@ final class SortResourcesPlugin implements ResourcePlugin {
             try {
                 outResources.addResource(sw.getResource());
             } catch (Exception ex) {
-                ex.printStackTrace(System.err);
+                throw new RuntimeException(ex);
             }
         });
     }
