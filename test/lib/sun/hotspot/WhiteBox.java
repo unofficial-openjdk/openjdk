@@ -347,9 +347,6 @@ public class WhiteBox {
   public native void AddModulePackage(Object module, String pkg);
   public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
 
-  // Image File
-  public native boolean readImageFile(String imagefile);
-
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
     int offset = getOffsetForName0(name);
@@ -379,6 +376,8 @@ public class WhiteBox {
   // Safepoint Checking
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
+  // Image File
+  public native boolean readImageFile(String imagePath);
   public native long imageOpenImage(String imagePath, boolean bigEndian);
   public native void imageCloseImage(long id);
   public native long imageGetIndexAddress(long id);
@@ -396,6 +395,6 @@ public class WhiteBox {
   public native long[] imageGetAttributes(long id, int offset);
   public native long[] imageFindAttributes(long id, byte[] path);
   public native int[] imageAttributeOffsets(long id);
-  public native int imageGetIntAtAddress(long address, int offset);
+  public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
 }
 
