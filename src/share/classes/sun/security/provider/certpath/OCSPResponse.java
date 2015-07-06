@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,8 +154,8 @@ public final class OCSPResponse {
     private static final int DEFAULT_MAX_CLOCK_SKEW = 900000;
 
     /**
-     * Integer value indicating the maximum allowable clock skew, in seconds,
-     * to be used for the OCSP check.
+     * Integer value indicating the maximum allowable clock skew,
+     * in milliseconds, to be used for the OCSP check.
      */
     private static final int MAX_CLOCK_SKEW = initializeClockSkew();
 
@@ -709,12 +709,18 @@ public final class OCSPResponse {
                 if (nextUpdate != null) {
                     until = " until " + nextUpdate;
                 }
-                DEBUG.println("Response's validity interval is from " +
-                    thisUpdate + until);
+                DEBUG.println("OCSP response validity interval is from " +
+                              thisUpdate + until);
             }
             // Check that the test date is within the validity interval
             if ((thisUpdate != null && nowPlusSkew.before(thisUpdate)) ||
                 (nextUpdate != null && nowMinusSkew.after(nextUpdate))) {
+            // Check that the test date is within the validity interval:
+            //   [ thisUpdate - MAX_CLOCK_SKEW,
+            //     MAX(thisUpdate, nextUpdate) + MAX_CLOCK_SKEW ]
+            if (nowPlusSkew.before(thisUpdate) ||
+                nowMinusSkew.after(
+                    nextUpdate != null ? nextUpdate : thisUpdate))
 
                 if (DEBUG != null) {
                     DEBUG.println("Response is unreliable: its validity " +
