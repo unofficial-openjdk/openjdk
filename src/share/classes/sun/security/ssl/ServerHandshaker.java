@@ -32,6 +32,7 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.interfaces.*;
 import java.security.spec.ECParameterSpec;
+import java.math.BigInteger;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -1393,7 +1394,13 @@ final class ServerHandshaker extends Handshaker {
         if (debug != null && Debug.isOn("handshake")) {
             mesg.print(System.out);
         }
-        return dh.getAgreedSecret(mesg.getClientPublicKey(), false);
+
+        BigInteger publicKeyValue = mesg.getClientPublicKey();
+
+        // check algorithm constraints
+        dh.checkConstraints(algorithmConstraints, publicKeyValue);
+
+        return dh.getAgreedSecret(publicKeyValue, false);
     }
 
     private SecretKey clientKeyExchange(ECDHClientKeyExchange mesg)
@@ -1402,7 +1409,13 @@ final class ServerHandshaker extends Handshaker {
         if (debug != null && Debug.isOn("handshake")) {
             mesg.print(System.out);
         }
-        return ecdh.getAgreedSecret(mesg.getEncodedPoint());
+
+        byte[] publicPoint = mesg.getEncodedPoint();
+
+        // check algorithm constraints
+        ecdh.checkConstraints(algorithmConstraints, publicPoint);
+
+        return ecdh.getAgreedSecret(publicPoint);
     }
 
     /*

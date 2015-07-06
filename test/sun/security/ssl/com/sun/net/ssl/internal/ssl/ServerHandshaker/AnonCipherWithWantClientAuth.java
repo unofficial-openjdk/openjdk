@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,11 @@
 // system properties in samevm/agentvm mode.
 //
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4392475
@@ -36,6 +41,7 @@
 import java.io.*;
 import java.net.*;
 import javax.net.ssl.*;
+import java.security.Security;
 
 public class AnonCipherWithWantClientAuth {
 
@@ -158,6 +164,11 @@ public class AnonCipherWithWantClientAuth {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
+        // reset security properties to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+        Security.setProperty("jdk.certpath.disabledAlgorithms", "");
+
         String keyFilename =
             System.getProperty("test.src", "./") + "/" + pathToStores +
                 "/" + keyStoreFile;
