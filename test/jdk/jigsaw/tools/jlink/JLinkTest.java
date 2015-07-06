@@ -61,16 +61,16 @@ public class JLinkTest {
             throw new Exception("Plugins not found. " + num);
         }
 
-        //Help
+        // Help
         String[] opts2 = {"--help"};
         jdk.tools.jlink.Main.run(opts2, new PrintWriter(System.out));
 
-        //List plugins
+        // List plugins
         String[] opts = {"--list-plugins"};
         jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
 
-        //Add jre files.
-        String copied = "ASSEMBLY_EXCEPTION,LICENSE,man,THIRD_PARTY_README";
+        // License files
+        String copied = "LICENSE,THIRDPARTYLICENSEREADME.txt";
         String[] arr = copied.split(",");
         String[] copyFiles = new String[2];
         copyFiles[0] = "--copy-files";
