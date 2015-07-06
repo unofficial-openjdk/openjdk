@@ -105,7 +105,7 @@ public class JVMIsExportedToModule {
         }
 
         // Package is accessible when exported to unnamed module
-        ModuleHelper.AddModuleExports(from_module, "mypackage", null);
+        ModuleHelper.AddModuleExportsUnqualified(from_module, "mypackage");
         result = ModuleHelper.IsExportedToModule(from_module, "mypackage", to_module);
         assertTrue(result, "Package exported to unnamed module is visible to named module");
 

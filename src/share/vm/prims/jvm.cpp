@@ -1000,12 +1000,21 @@ JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
+  if (to_module == NULL) {
+// TBD: Uncomment next statement (and remove this one) when JDK starts using JVM_AddModuleExportsUnqualified
+    // THROW_(vmSymbols::java_lang_NullPointerException(), NULL);
+  }
   Modules::add_module_exports(env, from_module, package, to_module);
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))
   JVMWrapper("JVM_AddModuleExportsToAllUnnamed");
   Modules::add_module_exports_to_all_unnamed(env, from_module, package);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddModuleExportsUnqualified(JNIEnv *env, jobject from_module, jstring package))
+  JVMWrapper("JVM_AddModuleExportsUnqualified");
+  Modules::add_module_exports(env, from_module, package, NULL);
 JVM_END
 
 JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module))

@@ -65,6 +65,12 @@ public class ModuleHelper {
         // TBD: invoke(findMethod("addModExpAllUnnNoSync"), m, pkg);
     }
 
+    public static void AddModuleExportsUnqualified(Object m, String pkg) throws Throwable {
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        wb.AddModuleExportsUnqualified(m, pkg);
+        invoke(findMethod("addExportsNoSync"), m, pkg, null);
+    }
+
     public static boolean CanReadModule(Object from, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         return wb.CanReadModule(from, to);

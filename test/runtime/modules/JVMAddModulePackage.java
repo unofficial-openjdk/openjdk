@@ -57,7 +57,7 @@ public class JVMAddModulePackage {
 
         // Add a package and export it
         ModuleHelper.AddModulePackage(module1, "package/num3");
-        ModuleHelper.AddModuleExports(module1, "package/num3", null);
+        ModuleHelper.AddModuleExportsUnqualified(module1, "package/num3");
 
         // Null module argument, expect an NPE
         try {

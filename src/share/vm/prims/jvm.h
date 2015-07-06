@@ -404,6 +404,9 @@ JNIEXPORT void JNICALL
 JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package);
 
 JNIEXPORT void JNICALL
+JVM_AddModuleExportsUnqualified(JNIEnv *env, jobject from_module, jstring package);
+
+JNIEXPORT void JNICALL
 JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module);
 
 JNIEXPORT jboolean JNICALL

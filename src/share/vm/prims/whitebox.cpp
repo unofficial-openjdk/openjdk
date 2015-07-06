@@ -1106,6 +1106,9 @@ WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring v
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
+  if (to_module == NULL) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Parameter to_module is null");
+  }
   Modules::add_module_exports(env, from_module, package, to_module);
 WB_END
 
@@ -1129,6 +1132,9 @@ WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass mo
   Modules::add_module_exports_to_all_unnamed(env, module, package);
 WB_END
 
+WB_ENTRY(void, WB_AddModuleExportsUnqualified(JNIEnv* env, jobject o, jclass module, jstring package))
+  Modules::add_module_exports(env, module, package, NULL);
+WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
   if (inc < 0) {
@@ -1600,6 +1606,8 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_AddModulePackage },
   {CC"AddModuleExportsToAllUnnamed", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModuleExportsToAllUnnamed },
+  {CC"AddModuleExportsUnqualified", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
+                                                      (void*)&WB_AddModuleExportsUnqualified },
   {CC"readImageFile",      CC"(Ljava/lang/String;)Z", (void*)&WB_ReadImageFile },
   {CC"imageOpenImage",     CC"(Ljava/lang/String;Z)J",(void*)&WB_imageOpenImage },
   {CC"imageCloseImage",    CC"(J)V",                  (void*)&WB_imageCloseImage },

@@ -52,13 +52,18 @@ public class JVMAddModuleExports {
         // Null from_module argument, expect an NPE
         try {
             ModuleHelper.AddModuleExports((Module)null, "mypackage", to_module);
-            throw new RuntimeException("Failed to get the expected NPE");
+            throw new RuntimeException("Failed to get the expected NPE for null from_module");
         } catch(NullPointerException e) {
             // Expected
         }
 
-        // Normal export to null module
-        ModuleHelper.AddModuleExports(to_module, "yourpackage", (Module)null);
+        // Null to_module argument, expect an NPE
+        try {
+            ModuleHelper.AddModuleExports(from_module, "mypackage", (Module)null);
+            throw new RuntimeException("Failed to get the expected NPE for null to_module");
+        } catch(NullPointerException e) {
+            // Expected
+        }
 
         // Bad from_module argument, expect an IAE
         try {
@@ -132,7 +137,7 @@ public class JVMAddModuleExports {
         }
 
         // Export a package to the unnamed module and then to a specific module.
-        ModuleHelper.AddModuleExports(to_module, "that/package", (Module)null);
+        ModuleHelper.AddModuleExportsUnqualified(to_module, "that/package");
         try {
             ModuleHelper.AddModuleExports(to_module, "that/package", from_module);
             throw new RuntimeException("Failed to get the expected IAE");

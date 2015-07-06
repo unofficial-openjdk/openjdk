@@ -74,7 +74,7 @@ public class ExportTwice {
         ModuleHelper.AddReadsModule(m3, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        ModuleHelper.AddModuleExports(m1, "p1", null);
+        ModuleHelper.AddModuleExportsUnqualified(m1, "p1");
 
         // Try to export p1 only to m2 after it was exported unqualifiedly.
         try {
@@ -88,7 +88,7 @@ public class ExportTwice {
 
         // Export p2 to m3 then export it again unqualifiedly.
         ModuleHelper.AddModuleExports(m2, "p2", m3);
-        ModuleHelper.AddModuleExports(m2, "p2", null);
+        ModuleHelper.AddModuleExportsUnqualified(m2, "p2");
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should work because
         // p1's module can read p2's module and p2 is now exported unqualifiedly.

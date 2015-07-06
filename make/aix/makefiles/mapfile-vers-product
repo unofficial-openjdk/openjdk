@@ -206,6 +206,7 @@ SUNWprivate_1.1 {
                 JVM_AddReadsModule;
                 JVM_AddModuleExports;
                 JVM_AddModuleExportsToAllUnnamed;
+                JVM_AddModuleExportsUnqualified;
                 JVM_CanReadModule;
                 JVM_IsExportedToModule;
                 JVM_AddModulePackage;

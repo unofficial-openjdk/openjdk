@@ -67,7 +67,7 @@ public class AccessCheckExp {
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        ModuleHelper.AddModuleExports(m1, "p1", null);
+        ModuleHelper.AddModuleExportsUnqualified(m1, "p1");
 
         // p1.c1's ctor tries to call a method in p2.c2, but p2.c2 is not
         // exported.  So should get IllegalAccessError.
