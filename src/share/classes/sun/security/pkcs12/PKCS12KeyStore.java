@@ -1347,7 +1347,7 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
                 m.update(authSafeData);
                 byte[] macResult = m.doFinal();
 
-                if (!Arrays.equals(macData.getDigest(), macResult)) {
+                if (!MessageDigest.isEqual(macData.getDigest(), macResult)) {
                    throw new SecurityException("Failed PKCS12" +
                                         " integrity checking");
                 }
