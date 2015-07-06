@@ -2385,16 +2385,10 @@ public final class Class<T> implements java.io.Serializable,
 
         // this Caller and caller not in the same named module
         ClassLoader cl = getClassLoader0();
-        URL url;
         if (cl == null) {
-            url = ClassLoader.getSystemResource(name);
+            return ClassLoader.getSystemResourceAsStream(name);
         } else {
-            url = cl.getResource(name);
-        }
-        try {
-            return url != null ? url.openStream() : null;
-        } catch (IOException e) {
-            return null;
+            return cl.getResourceAsStream(name);
         }
     }
 
