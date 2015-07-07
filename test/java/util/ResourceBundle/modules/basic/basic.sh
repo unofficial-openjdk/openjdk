@@ -70,6 +70,19 @@ mkdir -p mods/test
 $JAVAC ${EXTRA_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de 
+# Create a jar to be added to the class path. Expected only properties files are
+# picked up from the class path.
+rm -f extra.jar
+mkdir -p classes
+$JAVAC -d classes $TESTSRC/src/extra/jdk/test/resources/eu/*.java
+$JAR -cf extra.jar -C classes jdk/test/resources/eu \
+                   -C $TESTSRC/src/extra jdk/test/resources/asia
+$JAR -tvf extra.jar
+
+$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
+    # properties files on the class path should be picked up.
+    $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
+    # classes on the class path shouldn't.
+    ! $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
 
 exit $?
