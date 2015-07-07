@@ -197,17 +197,18 @@ public class LocaleData {
         abstract protected boolean isSupportedInModule(String baseName, Locale locale);
 
         /**
-         * Changes baseName to its per-language package name and
+         * Changes baseName to its per-language/country package name and
          * calls the super class implementation. For example,
          * if the baseName is "sun.text.resources.FormatData" and locale is ja_JP,
-         * the baseName is changed to "sun.text.resources.ja.FormatData". If
+         * the baseName is changed to "sun.text.resources.ja.JP.FormatData". If
          * baseName contains "cldr", such as "sun.text.resources.cldr.FormatData",
-         * the name is changed to "sun.text.resources.cldr.jp.FormatData".
+         * the name is changed to "sun.text.resources.cldr.ja.JP.FormatData".
          */
         @Override
         protected String toBundleName(String baseName, Locale locale) {
             String newBaseName = baseName;
             String lang = locale.getLanguage();
+            String ctry = locale.getCountry();
             if (lang.length() > 0) {
                 if (baseName.startsWith(JRE.getUtilResourcesPackage())
                         || baseName.startsWith(JRE.getTextResourcesPackage())) {
@@ -218,7 +219,8 @@ public class LocaleData {
                     if (baseName.indexOf(DOTCLDR, index) > 0) {
                         index += DOTCLDR.length();
                     }
-                    newBaseName = baseName.substring(0, index + 1) + lang
+                    ctry = (ctry.length() == 2) ? ("." + ctry) : "";
+                    newBaseName = baseName.substring(0, index + 1) + lang + ctry
                                       + baseName.substring(index);
                 }
             }
@@ -241,14 +243,23 @@ public class LocaleData {
                                                               sun.text.resources.BreakIteratorRulesProvider,
                                                               sun.text.resources.FormatDataProvider,
                                                               sun.text.resources.CollationDataProvider,
+                                                              sun.text.resources.cldr.FormatDataProvider,
                                                               sun.util.resources.LocaleNamesProvider,
                                                               sun.util.resources.TimeZoneNamesProvider,
                                                               sun.util.resources.CalendarDataProvider,
-                                                              sun.util.resources.CurrencyNamesProvider {
+                                                              sun.util.resources.CurrencyNamesProvider,
+                                                              sun.util.resources.cldr.LocaleNamesProvider,
+                                                              sun.util.resources.cldr.TimeZoneNamesProvider,
+                                                              sun.util.resources.cldr.CalendarDataProvider,
+                                                              sun.util.resources.cldr.CurrencyNamesProvider {
         @Override
         protected boolean isSupportedInModule(String baseName, Locale locale) {
-            // TODO: add CLDR support and avoid hard-coded Locales
-            return locale.equals(Locale.ROOT) || locale.getLanguage() == "en";
+            // TODO: avoid hard-coded Locales
+            return locale.equals(Locale.ROOT) ||
+                (locale.getLanguage() == "en" &&
+                    (locale.getCountry() == "" ||
+                     locale.getCountry() == "US" ||
+                     locale.getCountry().length() == 3)); // UN.M49
         }
     }
 

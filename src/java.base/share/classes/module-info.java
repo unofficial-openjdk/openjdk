@@ -215,6 +215,8 @@ module java.base {
         java.desktop;
     exports sun.text.resources to
         jdk.localedata;
+    exports sun.text.resources.cldr to
+        jdk.localedata;
     exports sun.util to
         java.desktop;
     exports sun.util.locale.provider to
@@ -226,6 +228,8 @@ module java.base {
         java.management,
         java.prefs;
     exports sun.util.resources to
+        jdk.localedata;
+    exports sun.util.resources.cldr to
         jdk.localedata;
     uses java.net.spi.URLStreamHandlerProvider;
     uses java.nio.channels.spi.AsynchronousChannelProvider;
@@ -286,6 +290,25 @@ module java.base {
     provides sun.util.resources.CalendarDataProvider with
         sun.util.resources.LocaleData.BaseResourceBundleProvider;
     provides sun.util.resources.CurrencyNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+
+    // Workaround until JDK-8130365 is resolved.
+    // There should be one set of resource bundle providers
+    // instead of separate CLDR and JRE bundles.
+    uses sun.text.resources.cldr.FormatDataProvider;
+    uses sun.util.resources.cldr.LocaleNamesProvider;
+    uses sun.util.resources.cldr.TimeZoneNamesProvider;
+    uses sun.util.resources.cldr.CalendarDataProvider;
+    uses sun.util.resources.cldr.CurrencyNamesProvider;
+    provides sun.text.resources.cldr.FormatDataProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.cldr.LocaleNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.cldr.TimeZoneNamesProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.cldr.CalendarDataProvider with
+        sun.util.resources.LocaleData.BaseResourceBundleProvider;
+    provides sun.util.resources.cldr.CurrencyNamesProvider with
         sun.util.resources.LocaleData.BaseResourceBundleProvider;
 }
 

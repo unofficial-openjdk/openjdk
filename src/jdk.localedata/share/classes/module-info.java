@@ -27,12 +27,17 @@ module jdk.localedata {
     provides sun.text.resources.BreakIteratorInfoProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.text.resources.BreakIteratorRulesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.text.resources.FormatDataProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.text.resources.cldr.FormatDataProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.text.resources.CollationDataProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.text.resources.JavaTimeSupplementaryProvider with sun.util.resources.provider.SupplementaryLocaleDataProvider;
     provides sun.util.resources.LocaleNamesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.cldr.LocaleNamesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.resources.TimeZoneNamesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.cldr.TimeZoneNamesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.resources.CalendarDataProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.cldr.CalendarDataProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.resources.CurrencyNamesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.cldr.CurrencyNamesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo_jdk_localedata;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonBaseLocaleDataMetaInfo;
 }
