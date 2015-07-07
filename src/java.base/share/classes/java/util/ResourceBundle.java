@@ -1685,7 +1685,17 @@ public abstract class ResourceBundle {
             String bundleName = control.toBundleName(baseName, targetLocale);
             for (String format : formats) {
                 try {
-                    bundle = AbstractResourceBundleProvider.loadResourceBundle(format, module, bundleName);
+                    switch (format) {
+                        case "java.class":
+                            bundle = AbstractResourceBundleProvider.loadResourceBundle(module, bundleName);
+                            break;
+                        case "java.properties":
+                            bundle = AbstractResourceBundleProvider.loadPropertyResourceBundle(module, bundleName);
+                            break;
+                        default:
+                            throw new InternalError("unexpected format: " + format);
+                    }
+
                     if (bundle != null) {
                         cacheKey.setFormat(format);
                         break;

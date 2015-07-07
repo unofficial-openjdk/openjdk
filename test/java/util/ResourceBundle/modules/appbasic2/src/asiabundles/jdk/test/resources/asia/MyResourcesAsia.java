@@ -23,16 +23,14 @@
 
 package jdk.test.resources.asia;
 
-import java.io.UncheckedIOException;
-import java.io.IOException;
 import java.util.Locale;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
 import jdk.test.resources.MyResourcesProvider;
 
-import sun.util.locale.provider.AbstractResourceBundleProvider;
-
 public class MyResourcesAsia extends MyResourcesProvider {
+    public MyResourcesAsia() {
+        super("java.properties");
+    }
+
     @Override
     protected String toBundleName(String baseName, Locale locale) {
         // Convert baseName to its properties resource name for the given locale
@@ -57,10 +55,5 @@ public class MyResourcesAsia extends MyResourcesProvider {
     protected boolean isSupportedInModule(Locale locale) {
         return locale.equals(Locale.JAPANESE)
             || locale.equals(Locale.CHINESE) || locale.equals(Locale.TAIWAN);
-    }
-
-    @Override
-    protected String getFormat() {
-        return "java.properties";
     }
 }

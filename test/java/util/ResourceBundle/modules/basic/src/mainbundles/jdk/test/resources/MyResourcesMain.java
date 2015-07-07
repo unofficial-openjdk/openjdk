@@ -24,11 +24,9 @@
 package jdk.test.resources;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.spi.ResourceBundleProvider;
 
 public class MyResourcesMain extends MyResourcesProvider {
     public MyResourcesMain() {
-        super(ResourceBundle.Control.FORMAT_CLASS, "", Locale.ROOT, Locale.ENGLISH);
+        super("java.class", "", Locale.ROOT, Locale.ENGLISH);
     }
 }

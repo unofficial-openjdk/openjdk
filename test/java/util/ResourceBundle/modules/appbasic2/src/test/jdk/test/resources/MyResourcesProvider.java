@@ -23,29 +23,24 @@
 
 package jdk.test.resources;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import sun.util.locale.provider.AbstractResourceBundleProvider;
 
 public abstract class MyResourcesProvider extends AbstractResourceBundleProvider {
+    protected MyResourcesProvider(String... formats) {
+        super(formats);
+    }
+
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle bundle = null;
         if (isSupportedInModule(locale)) {
-            String bundleName = toBundleName(baseName, locale);
-            try {
-                bundle = loadResourceBundle(getFormat(), this.getClass().getModule(), bundleName);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            return super.getBundle(baseName, locale);
         }
-        return bundle;
+        return null;
     }
 
     protected abstract boolean isSupportedInModule(Locale locale);
-
-    protected abstract String getFormat();
 }

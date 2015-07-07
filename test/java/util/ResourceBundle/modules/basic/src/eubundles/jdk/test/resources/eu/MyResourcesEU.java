@@ -24,7 +24,6 @@
 package jdk.test.resources.eu;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 import jdk.test.resources.MyResourcesProvider;
 
 /**
@@ -32,7 +31,7 @@ import jdk.test.resources.MyResourcesProvider;
  */
 public class MyResourcesEU extends MyResourcesProvider {
     public MyResourcesEU() {
-        super(ResourceBundle.Control.FORMAT_CLASS, "eu",
+        super("java.class", "eu",
               Locale.GERMAN, Locale.FRENCH, new Locale("es"));
     }
 }

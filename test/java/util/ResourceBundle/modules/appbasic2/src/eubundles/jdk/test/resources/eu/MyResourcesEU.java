@@ -23,15 +23,14 @@
 
 package jdk.test.resources.eu;
 
-import java.io.UncheckedIOException;
-import java.io.IOException;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import jdk.test.resources.MyResourcesProvider;
 
-import sun.util.locale.provider.AbstractResourceBundleProvider;
-
 public class MyResourcesEU extends MyResourcesProvider {
+    public MyResourcesEU() {
+        super("java.class");
+    }
+
     @Override
     protected String toBundleName(String baseName, Locale locale) {
         int index = baseName.lastIndexOf('.');
@@ -43,10 +42,5 @@ public class MyResourcesEU extends MyResourcesProvider {
     @Override
     protected boolean isSupportedInModule(Locale locale) {
         return locale.equals(Locale.GERMAN) || locale.equals(Locale.FRENCH);
-    }
-
-    @Override
-    protected String getFormat() {
-        return "java.class";
     }
 }

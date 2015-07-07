@@ -24,7 +24,6 @@
 package jdk.test.resources.asia;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 import jdk.test.resources.MyResourcesProvider;
 
 /**
@@ -32,7 +31,7 @@ import jdk.test.resources.MyResourcesProvider;
  */
 public class MyResourcesAsia extends MyResourcesProvider {
     public MyResourcesAsia() {
-        super(ResourceBundle.Control.FORMAT_PROPERTIES, "asia",
+        super("java.properties", "asia",
               Locale.JAPANESE, Locale.CHINESE, Locale.TAIWAN, new Locale("vi"));
     }
 }

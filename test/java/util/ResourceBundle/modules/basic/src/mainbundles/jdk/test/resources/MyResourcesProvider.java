@@ -27,49 +27,40 @@ import java.lang.reflect.Module;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
 import java.util.Set;
-import java.util.spi.ResourceBundleProvider;
 
 import sun.util.locale.provider.AbstractResourceBundleProvider;
 
 public class MyResourcesProvider extends AbstractResourceBundleProvider {
     private final String region;
     private final Set<Locale> supportedLocales;
+    private final List<String> formats;
 
     protected MyResourcesProvider() {
         region = "";
         supportedLocales = null;
+        formats = Collections.emptyList();
     }
 
-    protected MyResourcesProvider(List<String> formats, String region, Locale... locales) {
-        super(formats);
+    protected MyResourcesProvider(String format, String region, Locale... locales) {
+        super(format);
         this.region = region;
-        supportedLocales = new HashSet<>(Arrays.asList(locales));
+        this.supportedLocales = new HashSet<>(Arrays.asList(locales));
+        this.formats = Collections.singletonList(format);
     }
 
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
-        ResourceBundle bundle = null;
         if (isSupportedInModule(locale)) {
-            Module module = this.getClass().getModule();
-            String bundleName = toBundleName(baseName, locale);
-            for (String format : getFormats()) {
-                try {
-                    bundle = loadResourceBundle(format, module, bundleName);
-                    if (bundle != null) {
-                        break;
-                    }
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
+           return super.getBundle(baseName, locale);
         }
-        return bundle;
+        return null;
     }
 
     @Override
