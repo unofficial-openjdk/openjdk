@@ -96,7 +96,11 @@ abstract class NashornLoader extends SecureClassLoader {
     protected static void addModuleExports(final Module from, final String pkg, final Module to) {
         // FIXME try..catch to faciliate test run
         try {
-            Modules.addExports(from, pkg, to);
+            if (to == null) {
+                Modules.addExportsToAll(from, pkg);
+            } else {
+                Modules.addExports(from, pkg, to);
+            }
         } catch (IllegalArgumentException iae) {}
     }
 

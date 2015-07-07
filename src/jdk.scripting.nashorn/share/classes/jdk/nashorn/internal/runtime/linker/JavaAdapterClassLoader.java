@@ -97,7 +97,11 @@ final class JavaAdapterClassLoader {
         // FIXME: jtreg tests need to add @module which results in blanket export
         // and this specific export fails because of such blanket export!
         try {
-            Modules.addExports(from, pkg, to);
+            if (to == null) {
+                Modules.addExportsToAll(from, pkg);
+            } else {
+                Modules.addExports(from, pkg, to);
+            }
         } catch (final IllegalArgumentException ignore) {}
     }
 
