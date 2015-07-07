@@ -460,7 +460,9 @@ test_gamma:  $(BUILDTREE_MAKE) $(GAMMADIR)/make/test/Queens.java
 	echo "fi"; \
 	echo ""; \
 	echo "if [ -x \"$(PAX_COMMAND)\" ]; then "; \
-	echo "  $(PAX_COMMAND) $(PAX_COMMAND_ARGS) ./\$${GAMMA_PROG}"; \
+	echo "  if cat /proc/self/status | grep '^PaX' > /dev/null ; then "; \
+	echo "    $(PAX_COMMAND) $(PAX_COMMAND_ARGS) ./\$${GAMMA_PROG}"; \
+	echo "  fi"; \
 	echo "fi"; \
 	echo ""; \
 	echo "if [ \"$(OS_VENDOR)\" = \"Darwin\" ]; then "; \
