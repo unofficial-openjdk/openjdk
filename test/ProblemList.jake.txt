@@ -38,29 +38,45 @@ sun/security/tools/keytool/autotest.sh                         generic-all
 
 ############################################################################
 
-# jdk_util and jdk_text
+# i18n/ResourceBundle/CLDR breakage
 
-# 8044767
-
-# Can't find bundle for base name sun.text.resources.cldr.* type, locale ja_JP
-java/util/Calendar/CldrFormatNamesTest.java                     generic-all
-java/util/Calendar/GenericTimeZoneNamesTest.sh                  generic-all
-java/util/Calendar/NarrowNamesTest.sh                           generic-all
-java/util/Locale/LocaleProviders.sh                             generic-all
-java/util/TimeZone/CLDRDisplayNamesTest.java                    generic-all
-
-java/util/PluggableLocale/BreakIteratorProviderTest.sh          generic-all
-java/util/PluggableLocale/CollatorProviderTest.sh               generic-all
-java/util/PluggableLocale/CurrencyNameProviderTest.sh           generic-all
-java/util/PluggableLocale/DateFormatProviderTest.sh             generic-all
-java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh      generic-all
-java/util/PluggableLocale/LocaleNameProviderTest.sh             generic-all
-java/util/PluggableLocale/TimeZoneNameProviderTest.sh           generic-all
-
-java/text/Format/DateFormat/LocaleDateFormats.java		generic-all
-
-java/util/ResourceBundle/Control/Bug6530694.java		generic-all
-java/util/ResourceBundle/Bug6299235Test.sh			generic-all
+java/text/Format/DateFormat/LocaleDateFormats.java			generic-all
+java/text/Format/DecimalFormat/RoundingAndPropertyTest.java		generic-all
+java/time/test/java/time/format/TestDateTimeFormatterBuilder.java	generic-all
+java/time/test/java/time/format/TestDateTimeTextProvider.java		generic-all
+java/time/test/java/time/format/TestNonIsoFormatter.java		generic-all
+java/time/test/java/time/format/TestTextParser.java			generic-all
+java/time/test/java/time/format/TestTextPrinter.java			generic-all
+java/util/Calendar/CldrFormatNamesTest.java				generic-all
+java/util/Calendar/NarrowNamesTest.sh					generic-all
+java/util/Currency/CurrencyTest.java					generic-all
+java/util/Formatter/Basic.java						generic-all
+java/util/Locale/InternationalBAT.java					generic-all
+java/util/Locale/LocaleTest.java					generic-all
+java/util/Locale/ThaiGov.java						generic-all
+java/util/PluggableLocale/BreakIteratorProviderTest.sh			generic-all
+java/util/PluggableLocale/CollatorProviderTest.sh			generic-all
+java/util/PluggableLocale/CurrencyNameProviderTest.sh			generic-all
+java/util/PluggableLocale/DateFormatProviderTest.sh			generic-all
+java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh		generic-all
+java/util/PluggableLocale/LocaleNameProviderTest.sh			generic-all
+java/util/PluggableLocale/TimeZoneNameProviderTest.sh			generic-all
+java/util/ResourceBundle/Bug6299235Test.sh				generic-all
+java/util/ResourceBundle/Control/Bug6530694.java			generic-all
+#java/util/ResourceBundle/modules/appbasic2/appbasic2.sh			generic-all
+#java/util/ResourceBundle/modules/basic/basic.sh				generic-all
+#java/util/ResourceBundle/modules/simple/simple.sh			generic-all
+java/util/TimeZone/CLDRDisplayNamesTest.java				generic-all
+sun/text/resources/Format/Bug4442855.java				generic-all
+sun/text/resources/Format/Bug4621320.java				generic-all
+sun/text/resources/Format/Bug8037343.java				generic-all
+sun/text/resources/Format/Bug8074791.java				generic-all
+sun/text/resources/LocaleDataTest.java					generic-all
+sun/util/resources/Calendar/Bug4518811.java				generic-all
+sun/util/resources/TimeZone/Bug4938846.java				generic-all
+sun/util/resources/TimeZone/Bug6271396.java				generic-all
+sun/util/resources/TimeZone/Bug6317929.java				generic-all
+sun/util/resources/TimeZone/Bug6377794.java				generic-all
 
 ############################################################################
 

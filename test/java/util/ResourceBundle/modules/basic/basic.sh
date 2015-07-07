@@ -41,7 +41,9 @@ JAVA="$TESTJAVA/bin/java"
 
 # This test is temporarily converted to use AbstractResourceBundleProvider class
 # to avoid calling Control.newBundle
-EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider"
+
+EXTRA_JAVAC_OPTS="-XaddExports:java.base/sun.util.locale.provider"
+EXTRA_JAVA_OPTS="-XaddExports:java.base/sun.util.locale.provider=mainbundles"
 
 rm -rf mods
 
@@ -52,7 +54,7 @@ do
   mkdir -p mods/$B
   CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
   if [ "x$CLASSES" != x ]; then
-    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
+    $JAVAC ${EXTRA_JAVAC_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
   fi
   PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
   if [ "x$PROPS" != x ]; then
@@ -67,7 +69,7 @@ do
 done
 
 mkdir -p mods/test
-$JAVAC ${EXTRA_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
+$JAVAC ${EXTRA_JAVAC_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
 # Create a jar to be added to the class path. Expected only properties files are
@@ -79,10 +81,12 @@ $JAR -cf extra.jar -C classes jdk/test/resources/eu \
                    -C $TESTSRC/src/extra jdk/test/resources/asia
 $JAR -tvf extra.jar
 
-$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
-    # properties files on the class path should be picked up.
-    $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
-    # classes on the class path shouldn't.
-    ! $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
+$JAVA ${EXTRA_JAVA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
+
+# properties files on the class path should be picked up.
+$JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
+
+# classes on the class path shouldn't.
+! $JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
 
 exit $?
