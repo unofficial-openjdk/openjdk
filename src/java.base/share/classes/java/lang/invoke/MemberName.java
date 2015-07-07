@@ -851,11 +851,17 @@ import java.util.Objects;
     public IllegalAccessException makeAccessException(String message, Object from) {
         message = message + ": "+ toString();
         if (from != null)  {
-            message += ", from " + from;
-            if (from instanceof MethodHandles.Lookup) {
-                MethodHandles.Lookup lookup = (MethodHandles.Lookup)from;
-                Module m = lookup.lookupClass().getModule();
-                if (m != null) message += " (" + m + ")";
+            if (from == MethodHandles.publicLookup()) {
+                message += ", from public Lookup";
+            } else {
+                Module m;
+                if (from instanceof MethodHandles.Lookup) {
+                    MethodHandles.Lookup lookup = (MethodHandles.Lookup)from;
+                    m = lookup.lookupClass().getModule();
+                } else {
+                    m = from.getClass().getModule();
+                }
+                message += ", from " + from + " (" + m + ")";
             }
         }
         return new IllegalAccessException(message);

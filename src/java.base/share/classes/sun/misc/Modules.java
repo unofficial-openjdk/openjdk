@@ -52,8 +52,8 @@ public class Modules {
     public static Module defineModule(ClassLoader loader, String name,
                                       Set<String> packages)
     {
-        ModuleDescriptor descriptor =
-            new ModuleDescriptor.Builder(name).conceals(packages).build();
+        ModuleDescriptor descriptor
+            = new ModuleDescriptor.Builder(name).conceals(packages).build();
         ModuleReference mref = new ModuleReference(descriptor, null) {
             @Override
             public ModuleReader open() throws IOException {
@@ -65,37 +65,41 @@ public class Modules {
     }
 
     /**
-     * Adds a package to a module's content.
-     *
-     * This method is a no-op if the module already contains the package.
-     */
-    public static void addPackage(Module m, String pn) {
-        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pn);
-    }
-
-    /**
      * Adds a read-edge so that module {@code m1} reads module {@code m1}.
      * Same as m1.addReads(m2) but without a permission check.
      */
     public static void addReads(Module m1, Module m2) {
-        SharedSecrets.getJavaLangReflectAccess().addReadsModule(m1, m2);
+        SharedSecrets.getJavaLangReflectAccess().addReads(m1, m2);
     }
 
     /**
-     * Update a module to export a package.
-     * Same as m1.addExports(pkg, m2) but with the awesome power to
-     * add unqualified exports, all without a permission check.
-     *
-     * @throws IllegalArgumentException if pkg is not a package in m1
+     * Updates module m1 to export a package to module m2.
+     * Same as m1.addExports(pkg, m2) but without a permission check.
      */
     public static void addExports(Module m1, String pn, Module m2) {
         SharedSecrets.getJavaLangReflectAccess().addExports(m1, pn, m2);
     }
 
     /**
-     * Updates a module to export a package to all unnamed modules.
+     * Updates a module m to export a package to all modules.
+     */
+    public static void addExportsToAll(Module m, String pn) {
+        SharedSecrets.getJavaLangReflectAccess().addExportsToAll(m, pn);
+    }
+
+    /**
+     * Updates module m to export a package to all unnamed modules.
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
         SharedSecrets.getJavaLangReflectAccess().addExportsToAllUnnamed(m, pn);
+    }
+
+    /**
+     * Adds a package to a module's content.
+     *
+     * This method is a no-op if the module already contains the package.
+     */
+    public static void addPackage(Module m, String pn) {
+        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pn);
     }
 }

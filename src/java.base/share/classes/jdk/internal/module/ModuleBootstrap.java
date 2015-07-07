@@ -34,7 +34,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -306,17 +305,15 @@ public final class ModuleBootstrap {
                 // $TARGET
                 boolean allUnnamed = false;
                 Module target = null;
-                if (s.length == 2) {
+                if (s.length == 1 || "ALL-UNNAMED".equals(s[1])) {
+                    allUnnamed = true;
+                } else {
                     String tn = s[1];
-                    if (tn.equals("ALL-UNNAMED")) {
-                        allUnnamed = true;
+                    om = bootLayer.findModule(tn);
+                    if (om.isPresent()) {
+                        target = om.get();
                     } else {
-                        om = bootLayer.findModule(tn);
-                        if (om.isPresent()) {
-                            target = om.get();
-                        } else {
-                            fail("Unknown target module: " + tn);
-                        }
+                        fail("Unknown target module: " + tn);
                     }
                 }
 

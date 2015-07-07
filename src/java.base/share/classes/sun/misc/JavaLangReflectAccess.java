@@ -57,27 +57,31 @@ public interface JavaLangReflectAccess {
     Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf);
 
     /**
-     * Add a package to the given module.
-     */
-    void addPackage(Module m, String pkg);
-
-    /**
      * Updates the readability so that module m1 reads m2. The new read edge
      * does not result in a strong reference to m2 (m2 can be GC'ed).
      *
      * This method is the same as m1.addReads(m2) but without a permission check.
      */
-    void addReadsModule(Module m1, Module m2);
+    void addReads(Module m1, Module m2);
 
     /**
-     * Updates module m1 to export a package to module m2. If m2 is {@code null}
-     * then the package is exported to all module that read m1. The export does
+     * Updates module m1 to export a package to module m2. The export does
      * not result in a strong reference to m2 (m2 can be GC'ed).
      */
     void addExports(Module m1, String pkg, Module m2);
 
     /**
+     * Updates a module m to export a package to all modules.
+     */
+    void addExportsToAll(Module m, String pkg);
+
+    /**
      * Updates a module m to export a package to all unnamed modules.
      */
     void addExportsToAllUnnamed(Module m, String pkg);
+
+    /**
+     * Add a package to the given module.
+     */
+    void addPackage(Module m, String pkg);
 }
