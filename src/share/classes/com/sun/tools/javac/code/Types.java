@@ -47,6 +47,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.*;
 import static com.sun.tools.javac.code.BoundKind.*;
 import static com.sun.tools.javac.code.Flags.*;
+import static com.sun.tools.javac.code.Kinds.MTH;
 import static com.sun.tools.javac.code.Scope.*;
 import static com.sun.tools.javac.code.Symbol.*;
 import static com.sun.tools.javac.code.Type.*;
@@ -85,6 +86,7 @@ public class Types {
     final boolean allowBoxing;
     final boolean allowCovariantReturns;
     final boolean allowObjectToPrimitiveCast;
+    final boolean allowDefaultMethods;
     final ClassReader reader;
     final Check chk;
     final Enter enter;
@@ -111,6 +113,7 @@ public class Types {
         allowBoxing = source.allowBoxing();
         allowCovariantReturns = source.allowCovariantReturns();
         allowObjectToPrimitiveCast = source.allowObjectToPrimitiveCast();
+        allowDefaultMethods = source.allowDefaultMethods();
         reader = ClassReader.instance(context);
         chk = Check.instance(context);
         enter = Enter.instance(context);
@@ -2691,76 +2694,153 @@ public class Types {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="compute transitive closure of all members in given site">
-    class MembersClosureCache extends SimpleVisitor<CompoundScope, Boolean> {
+    class MembersClosureCache extends SimpleVisitor<Scope.CompoundScope, Void> {
 
-        private WeakHashMap<TypeSymbol, Entry> _map =
-                new WeakHashMap<TypeSymbol, Entry>();
+        private Map<TypeSymbol, CompoundScope> _map = new HashMap<>();
 
-        class Entry {
-            final boolean skipInterfaces;
-            final CompoundScope compoundScope;
+        Set<TypeSymbol> seenTypes = new HashSet<>();
 
-            public Entry(boolean skipInterfaces, CompoundScope compoundScope) {
-                this.skipInterfaces = skipInterfaces;
-                this.compoundScope = compoundScope;
+        class MembersScope extends CompoundScope {
+
+            CompoundScope scope;
+
+            public MembersScope(CompoundScope scope) {
+                super(scope.owner);
+                this.scope = scope;
             }
 
-            boolean matches(boolean skipInterfaces) {
-                return this.skipInterfaces == skipInterfaces;
+            Filter<Symbol> combine(final Filter<Symbol> sf) {
+                return new Filter<Symbol>() {
+                    @Override
+                    public boolean accepts(Symbol s) {
+                        return !s.owner.isInterface() && (sf == null || sf.accepts(s));
+                    }
+                };
+            }
+
+            @Override
+            public Iterable<Symbol> getElements(Filter<Symbol> sf) {
+                return scope.getElements(combine(sf));
+            }
+
+            @Override
+            public Iterable<Symbol> getElementsByName(Name name, Filter<Symbol> sf) {
+                return scope.getElementsByName(name, combine(sf));
+            }
+
+            @Override
+            public int getMark() {
+                return scope.getMark();
             }
         }
 
-        List<TypeSymbol> seenTypes = List.nil();
+        CompoundScope nilScope;
 
         /** members closure visitor methods **/
 
-        public CompoundScope visitType(Type t, Boolean skipInterface) {
-            return null;
+        public CompoundScope visitType(Type t, Void _unused) {
+            if (nilScope == null) {
+                nilScope = new CompoundScope(syms.noSymbol);
+            }
+            return nilScope;
         }
 
         @Override
-        public CompoundScope visitClassType(ClassType t, Boolean skipInterface) {
-            if (seenTypes.contains(t.tsym)) {
+        public CompoundScope visitClassType(ClassType t, Void _unused) {
+            if (!seenTypes.add(t.tsym)) {
                 //this is possible when an interface is implemented in multiple
-                //superclasses, or when a classs hierarchy is circular - in such
+                //superclasses, or when a class hierarchy is circular - in such
                 //cases we don't need to recurse (empty scope is returned)
                 return new CompoundScope(t.tsym);
             }
             try {
-                seenTypes = seenTypes.prepend(t.tsym);
+                seenTypes.add(t.tsym);
                 ClassSymbol csym = (ClassSymbol)t.tsym;
-                Entry e = _map.get(csym);
-                if (e == null || !e.matches(skipInterface)) {
-                    CompoundScope membersClosure = new CompoundScope(csym);
-                    if (!skipInterface) {
-                        for (Type i : interfaces(t)) {
-                            membersClosure.addSubScope(visit(i, skipInterface));
-                        }
+                CompoundScope membersClosure = _map.get(csym);
+                if (membersClosure == null) {
+                    membersClosure = new CompoundScope(csym);
+                    for (Type i : interfaces(t)) {
+                        membersClosure.addSubScope(visit(i, null));
                     }
-                    membersClosure.addSubScope(visit(supertype(t), skipInterface));
+                    membersClosure.addSubScope(visit(supertype(t), null));
                     membersClosure.addSubScope(csym.members());
-                    e = new Entry(skipInterface, membersClosure);
-                    _map.put(csym, e);
+                    _map.put(csym, membersClosure);
                 }
-                return e.compoundScope;
+                return membersClosure;
             }
             finally {
-                seenTypes = seenTypes.tail;
+                seenTypes.remove(t.tsym);
             }
         }
 
         @Override
-        public CompoundScope visitTypeVar(TypeVar t, Boolean skipInterface) {
-            return visit(t.getUpperBound(), skipInterface);
+        public CompoundScope visitTypeVar(TypeVar t, Void _unused) {
+            return visit(t.getUpperBound(), null);
         }
     }
 
     private MembersClosureCache membersCache = new MembersClosureCache();
 
     public CompoundScope membersClosure(Type site, boolean skipInterface) {
-        return membersCache.visit(site, skipInterface);
+        CompoundScope cs = membersCache.visit(site, null);
+        if (cs == null)
+            Assert.error("type " + site);
+        return skipInterface ? membersCache.new MembersScope(cs) : cs;
     }
     // </editor-fold>
+
+
+    /** Return first abstract member of class `sym'.
+     */
+    public MethodSymbol firstUnimplementedAbstract(ClassSymbol sym) {
+        try {
+            return firstUnimplementedAbstractImpl(sym, sym);
+        } catch (CompletionFailure ex) {
+            chk.completionError(enter.getEnv(sym).tree.pos(), ex);
+            return null;
+        }
+    }
+        //where:
+        private MethodSymbol firstUnimplementedAbstractImpl(ClassSymbol impl, ClassSymbol c) {
+            MethodSymbol undef = null;
+            // Do not bother to search in classes that are not abstract,
+            // since they cannot have abstract members.
+            if (c == impl || (c.flags() & (ABSTRACT | INTERFACE)) != 0) {
+                Scope s = c.members();
+                for (Scope.Entry e = s.elems;
+                     undef == null && e != null;
+                     e = e.sibling) {
+                    if (e.sym.kind == MTH &&
+                        (e.sym.flags() & (ABSTRACT|IPROXY|DEFAULT)) == ABSTRACT) {
+                        MethodSymbol absmeth = (MethodSymbol)e.sym;
+                        MethodSymbol implmeth = absmeth.implementation(impl, this, true);
+                        if (implmeth == null || implmeth == absmeth) {
+                            //look for default implementations
+                            if (allowDefaultMethods) {
+                                MethodSymbol prov = interfaceCandidates(impl.type, absmeth).head;
+                                if (prov != null && prov.overrides(absmeth, impl, this, true)) {
+                                    implmeth = prov;
+                                }
+                            }
+                        }
+                        if (implmeth == null || implmeth == absmeth) {
+                            undef = absmeth;
+                        }
+                    }
+                }
+                if (undef == null) {
+                    Type st = supertype(c.type);
+                    if (st.hasTag(CLASS))
+                        undef = firstUnimplementedAbstractImpl(impl, (ClassSymbol)st.tsym);
+                }
+                for (List<Type> l = interfaces(c.type);
+                     undef == null && l.nonEmpty();
+                     l = l.tail) {
+                    undef = firstUnimplementedAbstractImpl(impl, (ClassSymbol)l.head.tsym);
+                }
+            }
+            return undef;
+        }
 
 
     //where
