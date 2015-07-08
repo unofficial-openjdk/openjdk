@@ -400,33 +400,10 @@ public abstract class IIOMetadata {
         }
         try {
             final String className = formatClassName;
-            // First try to load from the module of the IIOMetadata implementation
-            // for this plugin.
+            // Try to load from the module of the IIOMetadata implementation
+            // for this plugin since the IIOMetadataImpl is part of the plugin
             PrivilegedAction<Class<?>> pa = () -> { return getMetadataFormatClass(className); };
             Class<?> cls = AccessController.doPrivileged(pa);
-            if (cls == null) {
-                // we failed to load IIOMetadataFormat class by
-                // using IIOMetadata classloader.Next try is to
-                // use thread context classloader.
-                ClassLoader loader =
-                        java.security.AccessController.doPrivileged(
-                                new java.security.PrivilegedAction<ClassLoader>() {
-                                    public ClassLoader run() {
-                                        return Thread.currentThread().getContextClassLoader();
-                                    }
-                                });
-                try {
-                    cls = Class.forName(formatClassName, true,
-                            loader);
-                } catch (ClassNotFoundException e1) {
-                    // finally we try to use system classloader in case
-                    // if we failed to load IIOMetadataFormat implementation
-                    // class above.
-                    cls = Class.forName(formatClassName, true,
-                            ClassLoader.getSystemClassLoader());
-                }
-            }
-
             Method meth = cls.getMethod("getInstance");
             return (IIOMetadataFormat) meth.invoke(null);
         } catch (Exception e) {
