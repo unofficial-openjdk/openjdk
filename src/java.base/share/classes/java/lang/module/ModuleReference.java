@@ -79,7 +79,7 @@ public abstract class ModuleReference {
     }
 
     /**
-     * Return the reference's extended module descriptor.
+     * Returns the module descriptor.
      */
     public ModuleDescriptor descriptor() {
         return descriptor;
