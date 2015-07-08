@@ -75,8 +75,8 @@ class ModulePath implements ModuleFinder {
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
-    public ModulePath(Path... dirs) {
-        this.dirs = dirs; // no need to clone
+    ModulePath(Path... dirs) {
+        this.dirs = dirs.clone();
     }
 
     @Override
