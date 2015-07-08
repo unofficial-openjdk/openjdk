@@ -53,7 +53,7 @@ JNIEXPORT void JNICALL
 Java_java_lang_reflect_Module_addExportsToAll0(JNIEnv *env, jclass cls, jobject from,
                                                jstring pkg)
 {
-    JVM_AddModuleExportsUnqualified(env, from, pkg);
+    JVM_AddModuleExportsToAll(env, from, pkg);
 }
 
 JNIEXPORT void JNICALL

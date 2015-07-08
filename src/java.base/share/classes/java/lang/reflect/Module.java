@@ -931,7 +931,7 @@ public final class Module {
     // JVM_AddModuleExports
     private static native void addExports0(Module from, String pn, Module to);
 
-    // JVM_AddModuleExportsUnqualified
+    // JVM_AddModuleExportsToAll
     private static native void addExportsToAll0(Module from, String pn);
 
     // JVM_AddModuleExportsToAllUnnamed
