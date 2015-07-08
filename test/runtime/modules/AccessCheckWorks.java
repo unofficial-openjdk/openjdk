@@ -67,7 +67,7 @@ public class AccessCheckWorks {
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        ModuleHelper.AddModuleExportsUnqualified(m1, "p1");
+        ModuleHelper.AddModuleExportsToAll(m1, "p1");
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should work because
         // p1's module can read p2's module and p2 is exported to p1's module.

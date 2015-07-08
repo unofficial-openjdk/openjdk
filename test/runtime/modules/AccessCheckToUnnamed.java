@@ -60,7 +60,7 @@ public class AccessCheckToUnnamed {
         ModuleHelper.AddReadsModule(m1, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        ModuleHelper.AddModuleExportsUnqualified(m1, "p1");
+        ModuleHelper.AddModuleExportsToAll(m1, "p1");
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should not work
         // because p2 is in the unnamed module and p1.c1 is strict.

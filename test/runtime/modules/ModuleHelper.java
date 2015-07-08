@@ -65,9 +65,9 @@ public class ModuleHelper {
         // TBD: invoke(findMethod("addModExpAllUnnNoSync"), m, pkg);
     }
 
-    public static void AddModuleExportsUnqualified(Object m, String pkg) throws Throwable {
+    public static void AddModuleExportsToAll(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
-        wb.AddModuleExportsUnqualified(m, pkg);
+        wb.AddModuleExportsToAll(m, pkg);
         invoke(findMethod("addExportsNoSync"), m, pkg, null);
     }
 
@@ -87,7 +87,7 @@ public class ModuleHelper {
         if (pkgs != null) {
             for (String pkg: pkgs) {
                 pkg_set.add(pkg.replace('/', '.'));
-           }
+            }
         } else {
             pkg_set = Collections.emptySet();
         }

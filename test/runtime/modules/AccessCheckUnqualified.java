@@ -39,7 +39,7 @@ import static jdk.test.lib.Asserts.*;
 
 public class AccessCheckUnqualified {
 
-    // Test a series of error conditions for API JVM_AddModuleExportsUnqualified
+    // Test a series of error conditions for API JVM_AddModuleExportsToAll()
     // and then test that a class in the unnamed module can access a package in
     // a named module that has been exported unqualifiedly.
     public static void main(String args[]) throws Throwable {
@@ -67,42 +67,42 @@ public class AccessCheckUnqualified {
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         try {
-            ModuleHelper.AddModuleExportsUnqualified((Module)null, "p2");
+            ModuleHelper.AddModuleExportsToAll((Module)null, "p2");
             throw new RuntimeException("Failed to get the expected NPE for null module");
         } catch(NullPointerException e) {
             // Expected
         }
 
         try {
-            ModuleHelper.AddModuleExportsUnqualified(m2, null);
+            ModuleHelper.AddModuleExportsToAll(m2, null);
             throw new RuntimeException("Failed to get the expected NPE for null package");
         } catch(NullPointerException e) {
             // Expected
         }
 
         try { // Expect IAE when passing a ClassLoader object instead of a java.lang.reflect.Module object.
-            ModuleHelper.AddModuleExportsUnqualified(this_cldr, "p2");
+            ModuleHelper.AddModuleExportsToAll(this_cldr, "p2");
             throw new RuntimeException("Failed to get the expected IAE for bad module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         try {
-            ModuleHelper.AddModuleExportsUnqualified(m2, "p3");
+            ModuleHelper.AddModuleExportsToAll(m2, "p3");
             throw new RuntimeException("Failed to get the expected IAE for package that is in another module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         try {
-            ModuleHelper.AddModuleExportsUnqualified(m2, "p4");
+            ModuleHelper.AddModuleExportsToAll(m2, "p4");
             throw new RuntimeException("Failed to get the expected IAE for package not in any module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         // Export package p2 in m2 unqualifiedly.
-        ModuleHelper.AddModuleExportsUnqualified(m2, "p2");
+        ModuleHelper.AddModuleExportsToAll(m2, "p2");
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should succeed because
         // p1 is in an unnamed module and p2.c2 is exported unqualifiedly.

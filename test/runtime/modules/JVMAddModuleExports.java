@@ -137,7 +137,7 @@ public class JVMAddModuleExports {
         }
 
         // Export a package to the unnamed module and then to a specific module.
-        ModuleHelper.AddModuleExportsUnqualified(to_module, "that/package");
+        ModuleHelper.AddModuleExportsToAll(to_module, "that/package");
         try {
             ModuleHelper.AddModuleExports(to_module, "that/package", from_module);
             throw new RuntimeException("Failed to get the expected IAE");

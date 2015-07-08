@@ -67,7 +67,7 @@ public class AccessCheckRead {
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        ModuleHelper.AddModuleExportsUnqualified(m1, "p1");
+        ModuleHelper.AddModuleExportsToAll(m1, "p1");
 
         Class p1_c1_class = Class.forName("p1.c1");
 
