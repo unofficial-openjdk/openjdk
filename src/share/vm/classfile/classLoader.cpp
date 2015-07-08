@@ -794,7 +794,7 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
     char* path = NEW_RESOURCE_ARRAY(char, end - start + 1);
     strncpy(path, &class_path[start], end - start);
     path[end - start] = '\0';
-    update_class_path_entry_list(path, false, mark_append_entry);
+    update_class_path_entry_list(path, false, mark_append_entry, false);
 
     // Check on the state of the boot loader's append path
     if (mark_append_entry && (_first_append_entry == NULL)) {
@@ -964,14 +964,31 @@ void ClassLoader::add_to_list(ClassPathEntry *new_entry) {
   _num_entries ++;
 }
 
+void ClassLoader::prepend_to_list(ClassPathEntry *new_entry) {
+  if (new_entry != NULL) {
+    if (_last_entry == NULL) {
+      _first_entry = _last_entry = new_entry;
+    } else {
+      new_entry->set_next(_first_entry);
+      _first_entry = new_entry;
+    }
+  }
+  _num_entries ++;
+}
+
 void ClassLoader::add_to_list(const char *apath) {
-  update_class_path_entry_list((char*)apath, false, false);
+  update_class_path_entry_list((char*)apath, false, false, false);
+}
+
+void ClassLoader::prepend_to_list(const char *apath) {
+  update_class_path_entry_list((char*)apath, false, false, true);
 }
 
 // Returns true IFF the file/dir exists and the entry was successfully created.
 bool ClassLoader::update_class_path_entry_list(const char *path,
                                                bool check_for_duplicates,
                                                bool mark_append_entry,
+                                               bool prepend_entry,
                                                bool throw_exception) {
   struct stat st;
   if (os::stat(path, &st) == 0) {
@@ -998,7 +1015,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     // (see PackageInfo).
     // Add new entry to linked list
     if (!check_for_duplicates || !contains_entry(new_entry)) {
-      ClassLoaderExt::add_class_path_entry(path, check_for_duplicates, new_entry);
+      ClassLoaderExt::add_class_path_entry(path, check_for_duplicates, new_entry, prepend_entry);
       if (mark_append_entry) {
         set_first_append_entry(new_entry);
       }

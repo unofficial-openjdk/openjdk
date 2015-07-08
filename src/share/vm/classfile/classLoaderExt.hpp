@@ -62,8 +62,12 @@ public:
 
 
   static void add_class_path_entry(const char* path, bool check_for_duplicates,
-                                   ClassPathEntry* new_entry) {
-    ClassLoader::add_to_list(new_entry);
+                                   ClassPathEntry* new_entry, bool prepend_entry) {
+    if (prepend_entry) {
+      ClassLoader::prepend_to_list(new_entry);
+    } else {
+      ClassLoader::add_to_list(new_entry);
+    }
   }
   static void append_boot_classpath(ClassPathEntry* new_entry) {
     ClassLoader::add_to_list(new_entry);

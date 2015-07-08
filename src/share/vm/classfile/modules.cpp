@@ -153,7 +153,7 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
 
     if (prefix_path != NULL) {
       if (TraceClassLoading) tty->print_cr("[Opened -Xoverride %s]", prefix_path);
-      ClassLoader::add_to_list(prefix_path);
+      ClassLoader::prepend_to_list(prefix_path);
     }
     if (path != NULL) {
       if (TraceClassLoading) tty->print_cr("[Opened %s]", path);

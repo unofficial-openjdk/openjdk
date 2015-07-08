@@ -258,6 +258,7 @@ class ClassLoader: AllStatic {
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
                                            bool mark_append_entry,
+                                           bool prepend_entry,
                                            bool throw_exception=true);
   static void print_bootclasspath();
 
@@ -399,11 +400,17 @@ class ClassLoader: AllStatic {
   // adds a class path list
   static void add_to_list(ClassPathEntry* new_entry);
 
+  // prepends a class path list
+  static void prepend_to_list(ClassPathEntry* new_entry);
+
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
 
   // add a path to class path list
   static void add_to_list(const char* apath);
+
+  // prepend a path to class path list
+  static void prepend_to_list(const char* apath);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;
