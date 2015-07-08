@@ -346,7 +346,7 @@ public class WhiteBox {
   public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
   public native void AddModulePackage(Object module, String pkg);
   public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
-  public native void AddModuleExportsUnqualified(Object module, String pkg);
+  public native void AddModuleExportsToAll(Object module, String pkg);
 
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
