@@ -37,8 +37,31 @@ final class Checks {
                                            + " at index " + i);
     }
 
-    // Legal Java identifiers
-    //
+    /**
+     * Returns {@code true} if the given identifier is a legal Java identifier.
+     */
+    static boolean isJavaIdentifier(String id) {
+        int n = id.length();
+        if (n == 0)
+            return false;
+        if (!Character.isJavaIdentifierStart(id.codePointAt(0)))
+            return false;
+        int cp = id.codePointAt(0);
+        int i = Character.charCount(cp);
+        for (; i < n; i += Character.charCount(cp)) {
+            cp = id.codePointAt(i);
+            if (!Character.isJavaIdentifierPart(cp) && id.charAt(i) != '.')
+                return false;
+        }
+        if (cp == '.')
+            return false;
+
+        return true;
+    }
+
+    /**
+     * Checks if a given identifier is a legal Java identifier.
+     */
     static String requireJavaIdentifier(String what, String id) {
         if (id == null)
             throw new IllegalArgumentException("Null " + what);

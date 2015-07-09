@@ -241,7 +241,8 @@ class ModulePath implements ModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                return Optional.of(sn);
+                if (Checks.isJavaIdentifier(sn))
+                    return Optional.of(sn);
             }
         }
         return Optional.empty();
@@ -355,7 +356,7 @@ class ModulePath implements ModuleFinder {
                     = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                 String cn;
                 while ((cn = nextLine(reader)) != null) {
-                    if (cn.length() > 0) {
+                    if (Checks.isJavaIdentifier(cn)) {
                         providerClasses.add(cn);
                     }
                 }
