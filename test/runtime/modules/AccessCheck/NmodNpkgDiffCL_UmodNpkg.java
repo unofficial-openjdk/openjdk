@@ -53,7 +53,7 @@ import java.util.Map;
 //
 // Three access attempts occur in this test:
 //   1. The first access is not allowed because a strict module
-//      cannot read the unnamed module.
+//      cannot read an unnamed module.
 //   2. In this scenario a strict module establishes readability
 //      to the particular unnamed module it is trying to access.
 //      Access is allowed.
@@ -67,7 +67,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
  // accessing scenarios of a named module to an unnamed module.
 
  // Module m1 is a strict module and has not established
- // readability to the unnamed module that p2.c2 is defined in.
+ // readability to an unnamed module that p2.c2 is defined in.
  public void test_strictModuleLayer() throws Throwable {
 
      // Define module:     m1
@@ -95,7 +95,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
 
      // map module m1 to class loader.
-     // class c2 will be loaded in the unnamed module/loader2
+     // class c2 will be loaded in an unnamed module/loader2
      // to achieve differing class loaders.
      Map<String, ClassLoader> map = new HashMap<>();
      map.put("m1", MyDiffClassLoader.loader1);
@@ -118,7 +118,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
 }
 
  // Module m1 is a strict module and has established
- // readability to the unnamed module that p2.c2 is defined in.
+ // readability to an unnamed module that p2.c2 is defined in.
  public void test_strictModuleUnnamedReadableLayer() throws Throwable {
 
      // Define module:     m1
@@ -146,7 +146,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
 
      // map module m1 to class loader.
-     // class c2 will be loaded in the unnamed module/loader2
+     // class c2 will be loaded in an unnamed module/loader2
      // to achieve differing class loaders.
      Map<String, ClassLoader> map = new HashMap<>();
      map.put("m1", MyDiffClassLoader.loader1);
@@ -203,7 +203,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
 
      // map module m1 to class loader.
-     // class c2 will be loaded in the unnamed module/loader2
+     // class c2 will be loaded in an unnamed module/loader2
      // to achieve differing class loaders.
      Map<String, ClassLoader> map = new HashMap<>();
      map.put("m1", MyDiffClassLoader.loader1);

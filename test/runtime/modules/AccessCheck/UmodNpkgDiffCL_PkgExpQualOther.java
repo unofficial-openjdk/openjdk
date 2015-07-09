@@ -25,8 +25,8 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2.
- *          Access is denied, since the unnamed module can read all modules but p2 in module
+ * @summary class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2.
+ *          Access is denied, since an unnamed module can read all modules but p2 in module
  *          m2 is exported specifically to module m1, not to all modules.
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
@@ -52,8 +52,8 @@ import java.util.Map;
 // m1 can read m2
 // package p2 in m2 is not exported
 //
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
-// Access denied, the unnamed module can read all modules but p2 in module
+// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
+// Access denied, an unnamed module can read all modules but p2 in module
 //             m2 is exported specifically to module m1 not to all modules.
 //
 public class UmodNpkgDiffCL_PkgExpQualOther {
@@ -108,7 +108,7 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
 
         // now use the same loader to load class p1.c1
         // NOTE: module m1 does not define a package named p1.
-        //       p1 will be loaded in the unnamed module.
+        //       p1 will be loaded in an unnamed module.
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();

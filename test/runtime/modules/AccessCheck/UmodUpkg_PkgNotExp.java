@@ -25,13 +25,13 @@
 
 /*
  * @test
- * @summary Test if package p2 in module m2 is exported unqualifiedly,
- *          then class p1.c1 in an unnamed module can read p2.c2 in module m2.
+ * @summary Test if package p6 in module m2 is not exported, then class c5
+ *          in an unnamed module can not access p6.c2 in module m2.
  * @library /testlibrary /../../test/lib
- * @compile p2/c2.java
- * @compile p1/c1.java
- * @build UmodNpkg_PkgExpUnqual
- * @run main/othervm -Xbootclasspath/a:. UmodNpkg_PkgExpUnqual
+ * @compile p6/c6.java
+ * @compile c5.java
+ * @build UmodUpkg_PkgNotExp
+ * @run main/othervm -Xbootclasspath/a:. UmodUpkg_PkgNotExp
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -44,18 +44,16 @@ import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
 
-//
 // ClassLoader1 --> defines m1 --> no packages
-//                  defines m2 --> packages p2
+//                  defines m2 --> packages p6
 //
 // m1 can read m2
-// package p2 in m2 is exported unqualifiedly
+// package p6 in m2 is not exported
 //
-// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
-// Access allowed, an unnamed module can read all modules and p2 in module
-//           m2 which is exported unqualifiedly.
-
-public class UmodNpkg_PkgExpUnqual {
+// class c5 defined in an unnamed module tries to access p6.c2 defined in m2
+// Access denied since p6 is not exported.
+//
+public class UmodUpkg_PkgNotExp {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -74,12 +72,12 @@ public class UmodNpkg_PkgExpUnqual {
 
         // Define module:     m2
         // Can read:          java.base
-        // Packages:          p2
-        // Packages exported: p2 is exported unqualifiedly
+        // Packages:          p6
+        // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p2")
+                        .conceals("p6")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
@@ -93,29 +91,33 @@ public class UmodNpkg_PkgExpUnqual {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        // map each module to differing class loaders for this test
+        // map each module to the same class loader for this test
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", MySameClassLoader.loader1);
         map.put("m2", MySameClassLoader.loader1);
 
-        // Create Layer that contains m1 & m2
+        // Create Layer that contains m1 and m2
         Layer layer = Layer.create(cf, map::get);
 
         assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
         assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
         assertTrue(layer.findLoader("java.base") == null);
 
-        // now use the same loader to load class p1.c1
-        Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
+        // now use the same loader to load class c5
+        Class c5_class = MySameClassLoader.loader1.loadClass("c5");
         try {
-            p1_c1_class.newInstance();
+            c5_class.newInstance();
+            throw new RuntimeException("Failed to get IAE (p6 in m2 is not exported)");
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, an unnamed module can access public type p2.c2 since it is exported unqualifiedly");
+          System.out.println(e.getMessage());
+          if (!e.getMessage().contains("not exported")) {
+              throw new RuntimeException("Wrong message: " + e.getMessage());
+          }
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodNpkg_PkgExpUnqual test = new UmodNpkg_PkgExpUnqual();
+      UmodUpkg_PkgNotExp test = new UmodUpkg_PkgNotExp();
       test.createLayerOnBoot();
     }
 }

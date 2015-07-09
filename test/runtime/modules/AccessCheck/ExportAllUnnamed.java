@@ -26,7 +26,7 @@
 /*
  * @test
  * @summary Test if package p2 in module m2 is exported to all unnamed,
- *          then class p1.c1 in the unnamed module can read p2.c2 in module m2.
+ *          then class p1.c1 in an unnamed module can read p2.c2 in module m2.
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
@@ -52,8 +52,8 @@ import java.util.Map;
 // m1 can read m2
 // package p2 in m2 is exported unqualifiedly
 //
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
-// Access allowed, the unnamed module can read all modules and p2 in module
+// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
+// Access allowed, an unnamed module can read all modules and p2 in module
 //           m2 is exported to all unnamed modules.
 
 public class ExportAllUnnamed {

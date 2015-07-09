@@ -25,29 +25,30 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in an unnamed module tries to access p2.c2
- *          defined in an unnamed module. Access allowed since unnamed module
- *          can read unnamed module even when class p1.c1 is loaded by
- *          a different loader than p2.c2.
- * @compile p2/c2.java
- * @compile p1/c1.java
- * @build UmodNpkgDiffCL_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_UmodNpkg
+ * @summary class p3.c3 defined in an unnamed module tries to access c4 defined in an unnamed package
+ *          and an unnamed module.
+ *          Access allowed since any class in an unnamed module can read an unnamed module.
+ * @compile c4.java
+ * @compile p3/c3.jcod
+ * @build UmodNpkg_UmodUpkg
+ * @run main/othervm -Xbootclasspath/a:. UmodNpkg_UmodUpkg
  */
 
-// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in
-// in an unnamed module.
-// Access allowed since unnamed module can read unnamed module even when
-//                class p1.c1 is loaded by a different loader than p2.c2
-//                and all packages in an unnamed module are exported unqualifiedly.
-public class UmodNpkgDiffCL_UmodNpkg {
+public class UmodNpkg_UmodUpkg {
+
+    public void testAccess() throws Throwable {
+
+        Class p3_c3_class = MySameClassLoader.loader1.loadClass("p3.c3");
+        try {
+            p3_c3_class.newInstance();
+        } catch (IllegalAccessError e) {
+          System.out.println(e.getMessage());
+              throw new RuntimeException("Test Failed, public type c3 defined in an unnamed module should be able to access public type c4 defined in an unnamed module");
+        }
+    }
 
     public static void main(String args[]) throws Throwable {
-        Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
-        try {
-            p1_c1_class.newInstance();
-        } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, unnamed module can access unnamed module");
-        }
+      UmodNpkg_UmodUpkg test = new UmodNpkg_UmodUpkg();
+      test.testAccess();
     }
 }

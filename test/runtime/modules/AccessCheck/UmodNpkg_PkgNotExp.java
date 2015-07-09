@@ -26,7 +26,7 @@
 /*
  * @test
  * @summary Test if package p2 in module m2 is not exported, then class p1.c1
- *          in the unnamed module can not access p2.c2 in module m2.
+ *          in an unnamed module can not access p2.c2 in module m2.
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
@@ -50,7 +50,7 @@ import java.util.Map;
 // m1 can read m2
 // package p2 in m2 is not exported
 //
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
+// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
 // Access denied since p2 is not exported.
 //
 public class UmodNpkg_PkgNotExp {

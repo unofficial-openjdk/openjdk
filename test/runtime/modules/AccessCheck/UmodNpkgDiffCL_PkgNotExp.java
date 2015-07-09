@@ -107,11 +107,11 @@ public class UmodNpkgDiffCL_PkgNotExp {
 
         // now use the same loader to load class p1.c1
         // NOTE: module m1 does not define a package named p1.
-        //       p1 will be loaded in the unnamed module.
+        //       p1 will be loaded in an unnamed module.
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported to the unnamed module)");
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported to an unnamed module)");
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
           if (!e.getMessage().contains("not exported")) {
