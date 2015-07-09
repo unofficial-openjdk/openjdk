@@ -105,7 +105,7 @@ public class HashCollisionTest {
         ClassSymbol ce = createClass(entry, cc);
 
         // 4. Create a package containing a nested class using the name from 2
-        PackageSymbol p = new PackageSymbol(names.fromString("p"), symtab.rootPackage);
+        PackageSymbol p = new PackageSymbol(names.fromString("p"), symtab.getRootPackage(symtab.unnamedModule));
         p.members_field = WriteableScope.create(p);
         ClassSymbol inner = createClass(innerName, p);
         // we'll need this later when we "rename" cn
@@ -114,7 +114,7 @@ public class HashCollisionTest {
         // 5. Create a star-import scope
         log ("createStarImportScope");
 
-        PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.rootPackage);
+        PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.getRootPackage(symtab.unnamedModule));
         StarImportScope starImportScope = new StarImportScope(pkg);
 
         dump("initial", starImportScope);

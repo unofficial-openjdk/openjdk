@@ -352,7 +352,7 @@ public class TypeEnter implements Completer {
             // toplevel package
             if (checkClash && tree.pid != null) {
                 Symbol p = env.toplevel.packge;
-                while (p.owner != syms.rootPackage) {
+                while (p.owner != syms.getRootPackage(env.toplevel.packge.modle)) {
                     p.owner.complete(); // enter all class members of p
                     if (syms.getClass(env.toplevel.modle, p.getQualifiedName()) != null) {
                         log.error(tree.pos,

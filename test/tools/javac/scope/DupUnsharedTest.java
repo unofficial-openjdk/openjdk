@@ -73,7 +73,7 @@ public class DupUnsharedTest {
     void runScopeContentTest() throws Exception {
         Set<Symbol> expected = Collections.newSetFromMap(new IdentityHashMap<>() {});
         Set<Symbol> notExpected = Collections.newSetFromMap(new IdentityHashMap<>());
-        WriteableScope s1 = WriteableScope.create(symtab.rootPackage);
+        WriteableScope s1 = WriteableScope.create(symtab.getRootPackage(symtab.unnamedModule));
         ClassSymbol acceptSym = symtab.arrayClass;
         s1.enter(acceptSym);
         expected.add(acceptSym);

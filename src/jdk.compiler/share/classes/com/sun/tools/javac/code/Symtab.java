@@ -119,7 +119,7 @@ public class Symtab {
 
     /** A symbol for the root package.
      */
-    public final PackageSymbol rootPackage;
+    private final PackageSymbol rootPackage;
 
     /** A symbol for the unnamed package.
      */
@@ -673,6 +673,11 @@ public class Symtab {
     public PackageSymbol getPackage(ModuleSymbol module, Name fullname) {
         // for now, ignore the module
         return packages.get(fullname);
+    }
+
+    public PackageSymbol getRootPackage(ModuleSymbol module) {
+        // for now, ignore the module
+        return rootPackage;
     }
 
     public PackageSymbol getUnnamedPackage(ModuleSymbol module) {
