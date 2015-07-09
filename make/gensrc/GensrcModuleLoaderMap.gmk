@@ -112,4 +112,13 @@ $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.java: 
 	$(TOOL_GENCLASSLOADERMAP) -boot $(BOOT_MODULES_LIST) -ext $(EXT_MODULES_LIST) -o $@.tmp $(filter %.java, $^)
 	$(MV) $@.tmp $@
 
+$(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.dat: $(BUILD_TOOLS_JDK) \
+    $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.dat
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	$(TOOL_GENCLASSLOADERMAP) -boot $(BOOT_MODULES_LIST) -ext $(EXT_MODULES_LIST) -o $@.tmp $(filter %.dat, $^)
+	$(MV) $@.tmp $@
+
 GENSRC_JAVA_BASE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.java
+
+GENSRC_JAVA_BASE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.dat
