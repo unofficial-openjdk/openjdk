@@ -113,7 +113,8 @@ public class NmodNpkgDiffCL_UmodUpkg {
      // Attempt access
      try {
          p3_c3_class.newInstance();
-         throw new RuntimeException("Test Failed, strict module m1 should not be able to access public type c4 defined in unnamed module");
+         throw new RuntimeException("Test Failed, strict module m1 should not be able to access " +
+                                    "public type c4 defined in unnamed module");
      } catch (IllegalAccessError e) {
      }
 }
@@ -172,7 +173,8 @@ public class NmodNpkgDiffCL_UmodUpkg {
      try {
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, module m1 has established readability to c4 loader's unnamed module, access should be allowed: " + e.getMessage());
+         throw new RuntimeException("Test Failed, module m1 has established readability to " +
+                                    "c4 loader's unnamed module, access should be allowed: " + e.getMessage());
      }
  }
 
@@ -226,7 +228,8 @@ public class NmodNpkgDiffCL_UmodUpkg {
      try {
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, loose module m1 should be able to access public type c4 defined in unnamed module: " + e.getMessage());
+         throw new RuntimeException("Test Failed, loose module m1 should be able to access " +
+                                    "public type c4 defined in unnamed module: " + e.getMessage());
      }
  }
 

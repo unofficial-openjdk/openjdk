@@ -43,7 +43,8 @@ public class UmodNpkg_UmodUpkg {
             p3_c3_class.newInstance();
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
-              throw new RuntimeException("Test Failed, public type c3 defined in an unnamed module should be able to access public type c4 defined in an unnamed module");
+              throw new RuntimeException("Test Failed, public type c3 defined in an unnamed module should be able " +
+                                         "to access public type c4 defined in an unnamed module");
         }
     }
 

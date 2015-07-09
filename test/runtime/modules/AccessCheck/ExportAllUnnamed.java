@@ -117,7 +117,8 @@ public class ExportAllUnnamed {
         try {
             p1_c1_class.newInstance();
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, unnamed module failed to access public type p2.c2 that was exported to all unnamed");
+            throw new RuntimeException("Test Failed, unnamed module failed to access public type p2.c2 " +
+                                       "that was exported to all unnamed");
         }
     }
 

@@ -110,7 +110,8 @@ public class UmodNpkg_PkgExpUnqual {
         try {
             p1_c1_class.newInstance();
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, an unnamed module can access public type p2.c2 since it is exported unqualifiedly");
+            throw new RuntimeException("Test Failed, an unnamed module can access public type " +
+                                       "p2.c2 since it is exported unqualifiedly");
         }
     }
 

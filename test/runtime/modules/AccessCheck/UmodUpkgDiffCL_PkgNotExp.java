@@ -111,7 +111,8 @@ public class UmodUpkgDiffCL_PkgNotExp {
         Class c5_class = MyDiffClassLoader.loader1.loadClass("c5");
         try {
             c5_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p6 in m2 is not exported to an unnamed module that c5 is defined within)");
+            throw new RuntimeException("Failed to get IAE (p6 in m2 is not exported to " +
+                                       "an unnamed module that c5 is defined within)");
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
           if (!e.getMessage().contains("not exported")) {

@@ -33,7 +33,8 @@ public class MyDiffClassLoader
     public static MyDiffClassLoader loader2 = new MyDiffClassLoader();
 
     public Class loadClass(String name) throws ClassNotFoundException {
-        if (!name.equals("p1.c1") && !name.equals("p2.c2") && !name.equals("p3.c3") && !name.equals("c4") && !name.equals("c5") && !name.equals("p6.c6")) {
+        if (!name.equals("p1.c1") && !name.equals("p2.c2") && !name.equals("p3.c3")
+                && !name.equals("c4") && !name.equals("c5") && !name.equals("p6.c6")) {
             return super.loadClass(name);
         }
         if ((name.equals("p2.c2") || name.equals("c4") || name.equals("p6.c6")) && this == MyDiffClassLoader.loader1) {
