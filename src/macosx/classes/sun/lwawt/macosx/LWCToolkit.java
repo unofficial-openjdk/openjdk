@@ -145,11 +145,16 @@ public final class LWCToolkit extends LWToolkit {
 
     // This is only called from native code.
     static void systemColorsChanged() {
-        EventQueue.invokeLater(() -> {
-            AccessController.doPrivileged ((PrivilegedAction<Object>) () -> {
-                AWTAccessor.getSystemColorAccessor().updateSystemColors();
-                return null;
-            });
+        // This is only called from native code.
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                AccessController.doPrivileged (new PrivilegedAction<Object>() {
+                    public Object run() {
+                        AWTAccessor.getSystemColorAccessor().updateSystemColors();
+                        return null;
+                    }
+                });
+            }
         });
     }
 
