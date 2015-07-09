@@ -320,7 +320,7 @@ public class ClassFinder {
             for (Name name : Convert.enclosingCandidates(Convert.shortName(c.name))) {
                 Symbol encl = owner.members().findFirst(name);
                 if (encl == null)
-                    encl = syms.getClass(TypeSymbol.formFlatName(name, owner));
+                    encl = syms.getClass(c.packge().modle, TypeSymbol.formFlatName(name, owner));
                 if (encl != null)
                     encl.complete();
             }
@@ -400,13 +400,14 @@ public class ClassFinder {
      *  The class is entered into `classes' only if load was successful.
      */
     public ClassSymbol loadClass(Name flatname) throws CompletionFailure {
-        boolean absent = syms.getClass(flatname) == null;
+        ModuleSymbol msym = null; // XXX temporary
+        boolean absent = syms.getClass(msym, flatname) == null;
         ClassSymbol c = syms.enterClass(flatname);
         if (c.members_field == null) {
             try {
                 c.complete();
             } catch (CompletionFailure ex) {
-                if (absent) syms.removeClass(flatname);
+                if (absent) syms.removeClass(msym, flatname);
                 throw ex;
             }
         }

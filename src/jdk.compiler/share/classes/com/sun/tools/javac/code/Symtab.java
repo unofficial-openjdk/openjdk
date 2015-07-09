@@ -590,25 +590,11 @@ public class Symtab {
         return c;
     }
 
-    /**
-     * Creates a new toplevel class symbol with given flat name and
-     * given class (or source) file.
-     *
-     * @param flatName a fully qualified binary class name
-     * @param classFile the class file or compilation unit defining
-     * the class (may be {@code null})
-     * @return a newly created class symbol
-     * @throws AssertionError if the class symbol already exists
-     */
-//    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
-//        return enterClass(null, flatName, classFile);
-//    }
-
-    public ClassSymbol getClass(Name flatName) {
+    public ClassSymbol getClass(ModuleSymbol msym, Name flatName) {
         return classes.get(flatName);
     }
 
-    public void removeClass(Name flatName) {
+    public void removeClass(ModuleSymbol msym, Name flatName) {
         classes.remove(flatName);
     }
 

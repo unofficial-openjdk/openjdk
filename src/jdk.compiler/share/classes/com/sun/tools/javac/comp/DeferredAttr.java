@@ -408,17 +408,21 @@ public class DeferredAttr extends JCTree.Visitor {
         Log.DeferredDiagnosticHandler deferredDiagnosticHandler = diagHandlerCreator.apply(newTree);
         try {
             attr.attribTree(newTree, speculativeEnv, resultInfo);
-            unenterScanner.scan(newTree);
             return newTree;
         } finally {
-            unenterScanner.scan(newTree);
+            new UnenterScanner(env.toplevel.modle).scan(newTree);
             log.popDiagnosticHandler(deferredDiagnosticHandler);
         }
     }
     //where
-        protected UnenterScanner unenterScanner = new UnenterScanner();
 
         class UnenterScanner extends TreeScanner {
+            private final ModuleSymbol msym;
+
+            public UnenterScanner(ModuleSymbol msym) {
+                this.msym = msym;
+            }
+
             @Override
             public void visitClassDef(JCClassDecl tree) {
                 ClassSymbol csym = tree.sym;
@@ -428,7 +432,7 @@ public class DeferredAttr extends JCTree.Visitor {
                 if (csym == null) return;
                 typeEnvs.remove(csym);
                 chk.compiled.remove(csym.flatname);
-                syms.removeClass(csym.flatname);
+                syms.removeClass(msym, csym.flatname);
                 super.visitClassDef(tree);
             }
         }
@@ -780,7 +784,7 @@ public class DeferredAttr extends JCTree.Visitor {
                     return newTree.canCompleteNormally;
                 } finally {
                     JCBlock body = (JCBlock)newTree.body;
-                    unenterScanner.scan(body.stats);
+                    new UnenterScanner(env.toplevel.modle).scan(body.stats);
                     localEnv.info.scope.leave();
                 }
             }

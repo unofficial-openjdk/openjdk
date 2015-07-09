@@ -120,7 +120,7 @@ public class JavacElements implements Elements {
         Name name = names.fromString(nameStr);
         // First check cache.
         Symbol sym = (clazz == ClassSymbol.class)
-                    ? syms.getClass(name)
+                    ? syms.getClass(null, name)
                     : syms.getPackage(null, name);
 
         try {
