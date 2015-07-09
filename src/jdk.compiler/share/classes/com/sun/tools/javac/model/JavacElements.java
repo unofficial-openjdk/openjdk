@@ -98,7 +98,7 @@ public class JavacElements implements Elements {
     public PackageSymbol getPackageElement(CharSequence name) {
         String strName = name.toString();
         if (strName.equals(""))
-            return syms.unnamedPackage;
+            return syms.getUnnamedPackage(syms.unnamedModule);
         return SourceVersion.isName(strName)
             ? nameToSymbol(strName, PackageSymbol.class)
             : null;

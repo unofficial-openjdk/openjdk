@@ -322,7 +322,7 @@ public class Enter extends JCTree.Visitor {
                     }
                 }
             } else {
-                tree.packge = syms.unnamedPackage;
+                tree.packge = syms.getUnnamedPackage(tree.modle);
             }
 
             // TODO: when javac supports multiple private packages in different

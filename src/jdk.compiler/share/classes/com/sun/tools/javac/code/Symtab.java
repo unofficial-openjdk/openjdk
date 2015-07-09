@@ -123,7 +123,7 @@ public class Symtab {
 
     /** A symbol for the unnamed package.
      */
-    public final PackageSymbol unnamedPackage;
+    private final PackageSymbol unnamedPackage;
 
     /** A symbol that stands for a missing symbol.
      */
@@ -673,6 +673,11 @@ public class Symtab {
     public PackageSymbol getPackage(ModuleSymbol module, Name fullname) {
         // for now, ignore the module
         return packages.get(fullname);
+    }
+
+    public PackageSymbol getUnnamedPackage(ModuleSymbol module) {
+        // for now, ignore the module
+        return unnamedPackage;
     }
 
     public ModuleSymbol enterModule(Name name) {

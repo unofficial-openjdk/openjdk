@@ -514,7 +514,7 @@ public class TypeEnter implements Completer {
             return result;
         }
 
-        protected Type modelMissingTypes(Type t, final JCExpression tree, final boolean interfaceExpected) {
+        protected Type modelMissingTypes(Env<AttrContext> env, Type t, final JCExpression tree, final boolean interfaceExpected) {
             if (!t.hasTag(ERROR))
                 return t;
 
@@ -524,19 +524,21 @@ public class TypeEnter implements Completer {
                 @Override
                 public Type getModelType() {
                     if (modelType == null)
-                        modelType = new Synthesizer(getOriginalType(), interfaceExpected).visit(tree);
+                        modelType = new Synthesizer(env.toplevel.modle, getOriginalType(), interfaceExpected).visit(tree);
                     return modelType;
                 }
             };
         }
             // where:
             private class Synthesizer extends JCTree.Visitor {
+                ModuleSymbol msym;
                 Type originalType;
                 boolean interfaceExpected;
                 List<ClassSymbol> synthesizedSymbols = List.nil();
                 Type result;
 
-                Synthesizer(Type originalType, boolean interfaceExpected) {
+                Synthesizer(ModuleSymbol msym, Type originalType, boolean interfaceExpected) {
+                    this.msym = msym;
                     this.originalType = originalType;
                     this.interfaceExpected = interfaceExpected;
                 }
@@ -563,7 +565,7 @@ public class TypeEnter implements Completer {
                     if (!tree.type.hasTag(ERROR)) {
                         result = tree.type;
                     } else {
-                        result = synthesizeClass(tree.name, syms.unnamedPackage).type;
+                        result = synthesizeClass(tree.name, syms.getUnnamedPackage(msym)).type;
                     }
                 }
 
@@ -659,7 +661,7 @@ public class TypeEnter implements Completer {
                 ? Type.noType
                 : syms.objectType;
             }
-            ct.supertype_field = modelMissingTypes(supertype, extending, false);
+            ct.supertype_field = modelMissingTypes(baseEnv, supertype, extending, false);
 
             // Determine interfaces.
             ListBuffer<Type> interfaces = new ListBuffer<>();
@@ -676,7 +678,7 @@ public class TypeEnter implements Completer {
                     } else {
                         if (all_interfaces == null)
                             all_interfaces = new ListBuffer<Type>().appendList(interfaces);
-                        all_interfaces.append(modelMissingTypes(it, iface, true));
+                        all_interfaces.append(modelMissingTypes(baseEnv, it, iface, true));
 
                     }
                 } finally {
@@ -804,7 +806,7 @@ public class TypeEnter implements Completer {
             // but admit classes in the unnamed package which have the same
             // name as a top-level package.
             if (checkClash &&
-                sym.owner.kind == PCK && sym.owner != syms.unnamedPackage &&
+                sym.owner.kind == PCK && sym.owner != syms.getUnnamedPackage(env.toplevel.modle) &&
                 syms.packageExists(env.toplevel.modle, sym.fullname)) {
                 log.error(tree.pos, "clash.with.pkg.of.same.name", Kinds.kindName(sym), sym);
             }

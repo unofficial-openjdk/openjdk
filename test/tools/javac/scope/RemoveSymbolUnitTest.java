@@ -56,7 +56,7 @@ public class RemoveSymbolUnitTest {
         ClassSymbol clazz = new ClassSymbol(0,
                                             names.fromString("X"),
                                             Type.noType,
-                                            symtab.unnamedPackage);
+                                            symtab.getUnnamedPackage(symtab.unnamedModule));
 
         VarSymbol v = new VarSymbol(0, hasNext, Type.noType, clazz);
         MethodSymbol m = new MethodSymbol(0, hasNext, Type.noType, clazz);
