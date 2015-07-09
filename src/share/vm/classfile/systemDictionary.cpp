@@ -1180,7 +1180,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(
   instanceKlassHandle ik (THREAD, find_shared_class(class_name));
   // Make sure we only return the boot class for the NULL classloader.
   if (ik.not_null() &&
-      SharedClassUtil::is_shared_boot_class(ik()) && class_loader.is_null()) {
+      ik->is_shared_boot_class() && class_loader.is_null()) {
     Handle protection_domain;
     return load_shared_class(ik, class_loader, protection_domain, THREAD);
   }

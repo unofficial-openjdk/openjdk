@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_OOPS_INSTANCEKLASS_HPP
 #define SHARE_VM_OOPS_INSTANCEKLASS_HPP
 
+#include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.hpp"
 #include "classfile/packageEntry.hpp"
 #include "gc/shared/specialized_oop_closures.hpp"
@@ -212,8 +213,14 @@ class InstanceKlass: public Klass {
     _misc_has_default_methods      = 1 << 5, // class/superclass/implemented interfaces has default methods
     _misc_declares_default_methods = 1 << 6, // directly declares default methods (any access)
     _misc_has_been_redefined       = 1 << 7, // class has been redefined
-    _misc_is_scratch_class         = 1 << 8  // class is the redefined scratch class
+    _misc_is_scratch_class         = 1 << 8, // class is the redefined scratch class
+    _misc_is_shared_boot_class     = 1 << 9, // defining class loader is boot class loader
+    _misc_is_shared_ext_class      = 1 << 10,// defining class loader is ext class loader
+    _misc_is_shared_app_class      = 1 << 11 // defining class loader is app class loader
   };
+  u2 loader_type_bits() {
+    return _misc_is_shared_boot_class|_misc_is_shared_ext_class|_misc_is_shared_app_class;
+  }
   u2              _misc_flags;
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
@@ -297,6 +304,39 @@ class InstanceKlass: public Klass {
   friend class SystemDictionary;
 
  public:
+  u2 loader_type() {
+    return _misc_flags & loader_type_bits();
+  }
+
+  bool is_shared_boot_class() const {
+    return (_misc_flags & _misc_is_shared_boot_class) != 0;
+  }
+  bool is_shared_ext_class() const {
+    return (_misc_flags & _misc_is_shared_ext_class) != 0;
+  }
+  bool is_shared_app_class() const {
+    return (_misc_flags & _misc_is_shared_app_class) != 0;
+  }
+
+  void set_class_loader_type(jshort loader_type) {
+    assert(( _misc_flags & loader_type_bits()) == 0,
+           "Should only be called once for each class.");
+    switch (loader_type) {
+    case ClassLoader::BOOT:
+      _misc_flags |= _misc_is_shared_boot_class;
+       break;
+    case ClassLoader::EXT:
+      _misc_flags |= _misc_is_shared_ext_class;
+      break;
+    case ClassLoader::APP:
+      _misc_flags |= _misc_is_shared_app_class;
+      break;
+    default:
+      ShouldNotReachHere();
+      break;
+    }
+  }
+
   bool has_nonstatic_fields() const        {
     return (_misc_flags & _misc_has_nonstatic_fields) != 0;
   }

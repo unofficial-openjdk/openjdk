@@ -35,6 +35,13 @@
 // Name of boot module image
 #define  BOOT_IMAGE_NAME "bootmodules.jimage"
 
+// Name of the resource containing mapping from module names to defining class loader type
+#define MODULE_LOADER_MAP "/java.base/jdk/internal/module/ModuleLoaderMap.dat"
+
+// Initial sizes of the following arrays are based on the generated ModuleLoaderMap.dat
+#define INITIAL_BOOT_MODULES_ARRAY_SIZE 30
+#define INITIAL_EXT_MODULES_ARRAY_SIZE  15
+
 // Class path entry (directory or zip file)
 
 class ImageFileReader;
@@ -166,6 +173,11 @@ class ClassLoader: AllStatic {
   enum SomeConstants {
     package_hash_table_size = 31  // Number of buckets
   };
+  enum ClassLoaderType {
+    BOOT = 1,
+    EXT  = 2,
+    APP  = 3
+  };
  protected:
   friend class LazyClassPathEntry;
 
@@ -227,6 +239,12 @@ class ClassLoader: AllStatic {
 
   // True if the boot path has a bootmodules.jimage
   static bool _has_bootmodules_jimage;
+
+  // Array of module names associated with the boot class loader
+  static GrowableArray<char*>* _boot_modules_array;
+
+  // Array of module names associated with the ext class loader
+  static GrowableArray<char*>* _ext_modules_array;
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
@@ -412,6 +430,11 @@ class ClassLoader: AllStatic {
   // prepend a path to class path list
   static void prepend_to_list(const char* apath);
 
+  static bool string_ends_with(const char* str, const char* str_to_find);
+
+  static void initialize_module_loader_map(ImageFileReader* image_reader);
+
+  static jshort module_to_classloader(const char* module_name);
   // Debugging
   static void verify()              PRODUCT_RETURN;
 

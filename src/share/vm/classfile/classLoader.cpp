@@ -132,6 +132,8 @@ int             ClassLoader::_num_entries = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 bool            ClassLoader::_has_bootmodules_jimage = false;
+GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
+GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
 
 #if INCLUDE_CDS
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
@@ -146,7 +148,7 @@ bool string_starts_with(const char* str, const char* str_to_find) {
   return (strncmp(str, str_to_find, str_to_find_len) == 0);
 }
 
-bool string_ends_with(const char* str, const char* str_to_find) {
+bool ClassLoader::string_ends_with(const char* str, const char* str_to_find) {
   size_t str_len = strlen(str);
   size_t str_to_find_len = strlen(str_to_find);
   if (str_to_find_len > str_len) {
@@ -154,7 +156,6 @@ bool string_ends_with(const char* str, const char* str_to_find) {
   }
   return (strncmp(str + (str_len - str_to_find_len), str_to_find, str_to_find_len) == 0);
 }
-
 
 ClassPathEntry::ClassPathEntry() {
   set_next(NULL);
@@ -410,7 +411,7 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
 
         } else if (!dir_already_listed &&
                    ((stat_buf.st_mode & S_IFMT) == S_IFREG) &&
-                   string_ends_with(dir_entry->d_name, ".class")) {
+                   ClassLoader::string_ends_with(dir_entry->d_name, ".class")) {
           // This directory entry is a file ending in '.class'.  Construct a
           // package name from its dir by chopping off the original prefix and
           // starting '/'.
@@ -540,6 +541,9 @@ static void process_javabase(ClassPathImageEntry *entry) {
       tty->print_cr("  %s", package_name);
     }
   }
+
+  ClassLoader::initialize_module_loader_map(image);
+
 }
 
 ClassPathImageEntry::ClassPathImageEntry(ImageFileReader* image) :
@@ -684,7 +688,7 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 }
 
 bool ClassPathImageEntry::is_jrt() {
-  return string_ends_with(name(), BOOT_IMAGE_NAME);
+  return ClassLoader::string_ends_with(name(), BOOT_IMAGE_NAME);
 }
 #endif
 
@@ -818,7 +822,7 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
 }
 
 static bool is_override_dir(const char *path) {
-  assert(string_ends_with(path, "java.base"), "must end in java.base");
+  assert(ClassLoader::string_ends_with(path, "java.base"), "must end in java.base");
   if (Arguments::override_dir() != NULL) {
     size_t path_len = strlen(path);
     const char *override_path = Arguments::override_dir();
@@ -1088,6 +1092,77 @@ jboolean ClassLoader::decompress(void *in, u8 inSize, void *out, u8 outSize, cha
 int ClassLoader::crc32(int crc, const char* buf, int len) {
   assert(Crc32 != NULL, "ZIP_CRC32 is not found");
   return (*Crc32)(crc, (const jbyte*)buf, len);
+}
+
+void ClassLoader::initialize_module_loader_map(ImageFileReader* image_reader) {
+  ImageLocation location;
+  bool found = image_reader->find_location(MODULE_LOADER_MAP, location);
+  if (!found) {
+    vm_exit_during_initialization(
+      "Cannot find ModuleLoaderMap location from bootmodules.jimage.", NULL);
+  }
+  u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+  u1* buffer = NEW_RESOURCE_ARRAY(u1, size);
+  image_reader->get_resource(location, buffer);
+  if (buffer == NULL) {
+    vm_exit_during_initialization(
+      "Cannot find ModuleLoaderMap resource from bootmodules.jimage.", NULL);
+  }
+  char* char_buf = (char*)buffer;
+  int buflen = (int)strlen(char_buf);
+  char* begin_ptr = char_buf;
+  char* end_ptr = strchr(begin_ptr, '\n');
+  bool process_boot_modules = false;
+  _boot_modules_array = new (ResourceObj::C_HEAP, mtInternal)
+    GrowableArray<char*>(INITIAL_BOOT_MODULES_ARRAY_SIZE, true);
+  _ext_modules_array = new (ResourceObj::C_HEAP, mtInternal)
+    GrowableArray<char*>(INITIAL_EXT_MODULES_ARRAY_SIZE, true);
+  while (end_ptr != NULL && (end_ptr - char_buf) < buflen) {
+    // Allocate a buffer from the C heap to be appended to the _boot_modules_array
+    // or the _ext_modules_array.
+    char* temp_name = NEW_C_HEAP_ARRAY(char, (size_t)(end_ptr - begin_ptr + 1), mtInternal);
+    strncpy(temp_name, begin_ptr, end_ptr - begin_ptr);
+    temp_name[end_ptr - begin_ptr] = '\0';
+    if (strncmp(temp_name, "BOOT", 4) == 0) {
+      process_boot_modules = true;
+      FREE_C_HEAP_ARRAY(char, temp_name);
+    } else if (strncmp(temp_name, "EXT", 3) == 0) {
+      process_boot_modules = false;
+      FREE_C_HEAP_ARRAY(char, temp_name);
+    } else {
+      // module name
+      if (process_boot_modules) {
+        _boot_modules_array->append(temp_name);
+      } else {
+        _ext_modules_array->append(temp_name);
+      }
+    }
+    begin_ptr = ++end_ptr;
+    end_ptr = strchr(begin_ptr, '\n');
+  }
+  FREE_RESOURCE_ARRAY(u1, buffer, size);
+}
+
+jshort ClassLoader::module_to_classloader(const char* module_name) {
+
+  assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
+  assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
+
+  int array_size = _boot_modules_array->length();
+  for (int i = 0; i < array_size; i++) {
+    if (strcmp(module_name, _boot_modules_array->at(i)) == 0) {
+      return BOOT;
+    }
+  }
+
+  array_size = _ext_modules_array->length();
+  for (int i = 0; i < array_size; i++) {
+    if (strcmp(module_name, _ext_modules_array->at(i)) == 0) {
+      return EXT;
+    }
+  }
+
+  return APP;
 }
 
 // PackageInfo data exists in order to support the java.lang.Package
@@ -1430,7 +1505,31 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
       }
       return h;
     }
-    h = context.record_result(classpath_index, e, result, THREAD);
+    jshort classloader_type = ClassLoader::APP;
+    int length;
+    const jbyte* pkg_string = InstanceKlass::package_from_name(h_name, length);
+    TempNewSymbol pkg_name = NULL;
+    if (pkg_string != NULL) {
+      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_NULL);
+      const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
+      ClassPathEntry *cpe = ClassLoader::classpath_entry(0);
+      while (cpe != NULL) {
+        ClassPathImageEntry* cpie = (ClassPathImageEntry*)cpe;
+        const char *name = cpie->name();
+        char* module_name;
+        if (ClassLoader::string_ends_with(name, BOOT_IMAGE_NAME)) {
+          ImageModuleData* imd = cpie->module_data();
+          if (imd != NULL) {
+            module_name = (char*)imd->package_to_module(pkg_name_C_string);
+            if (module_name != NULL) {
+              classloader_type = ClassLoader::module_to_classloader(module_name);
+            }
+          }
+        }
+        cpe = cpe->next();
+      }
+    }
+    h = context.record_result(classpath_index, classloader_type, e, result, THREAD);
   } else {
     if (DumpSharedSpaces) {
       tty->print_cr("Preload Warning: Cannot find %s", class_name);
