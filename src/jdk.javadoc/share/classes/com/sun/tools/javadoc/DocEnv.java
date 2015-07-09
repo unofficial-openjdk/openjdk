@@ -219,7 +219,7 @@ public class DocEnv {
             char[] nameChars = name.toCharArray();
             int idx = name.length();
             for (;;) {
-                ClassSymbol s = syms.classes.get(names.fromChars(nameChars, 0, nameLen));
+                ClassSymbol s = syms.getClass(names.fromChars(nameChars, 0, nameLen));
                 if (s != null)
                     return s; // found it!
                 idx = name.substring(0, idx).lastIndexOf('.');

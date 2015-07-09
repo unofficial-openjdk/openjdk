@@ -234,7 +234,7 @@ public class Symtab {
      *  It should be updated from the outside to reflect classes defined
      *  by compiled source files.
      */
-    public final Map<Name, ClassSymbol> classes = new HashMap<>();
+    private final Map<Name, ClassSymbol> classes = new HashMap<>();
 
     /** A hashtable containing the encountered packages.
      *  the table should be updated from outside to reflect packages defined
@@ -603,6 +603,18 @@ public class Symtab {
 //    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
 //        return enterClass(null, flatName, classFile);
 //    }
+
+    public ClassSymbol getClass(Name flatName) {
+        return classes.get(flatName);
+    }
+
+    public void removeClass(Name flatName) {
+        classes.remove(flatName);
+    }
+
+    public Iterable<ClassSymbol> getAllClasses() {
+        return classes.values();
+    }
 
     private ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
         ClassSymbol cs = classes.get(flatName);

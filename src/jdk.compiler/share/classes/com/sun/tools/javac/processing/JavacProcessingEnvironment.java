@@ -1136,7 +1136,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
             boolean foundError = false;
 
-            for (ClassSymbol cs : symtab.classes.values()) {
+            for (ClassSymbol cs : symtab.getAllClasses()) {
                 if (cs.kind == ERR) {
                     foundError = true;
                     break;
@@ -1144,7 +1144,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             }
 
             if (foundError) {
-                for (ClassSymbol cs : symtab.classes.values()) {
+                for (ClassSymbol cs : symtab.getAllClasses()) {
                     if (cs.classfile != null || cs.kind == ERR) {
                         cs.reset();
                         cs.type = new ClassType(cs.type.getEnclosingType(), null, cs);
