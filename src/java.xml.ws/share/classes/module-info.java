@@ -34,6 +34,8 @@ module java.xml.ws {
     requires java.rmi;
     requires jdk.httpserver;
 
+    uses javax.xml.ws.spi.Provider;
+
     exports javax.jws;
     exports javax.jws.soap;
     exports javax.xml.soap;
@@ -45,6 +47,7 @@ module java.xml.ws {
     exports javax.xml.ws.spi;
     exports javax.xml.ws.spi.http;
     exports javax.xml.ws.wsaddressing;
+
     exports com.oracle.webservices.internal.api.databinding to
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.addressing to
@@ -95,6 +98,7 @@ module java.xml.ws {
     // JAF data handlers
     exports com.sun.xml.internal.messaging.saaj.soap to
         java.activation;
-    uses javax.xml.ws.spi.Provider;
+    exports com.sun.xml.internal.ws.encoding to
+        java.activation;
 }
 
