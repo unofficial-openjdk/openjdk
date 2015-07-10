@@ -117,8 +117,10 @@ RMIC = $(RMIC_VM) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
 $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
 	$(prep-target)
 	if [ -x $(PAX_COMMAND) ] ; then \
-	  if [ -w $(RMIC_VM) ] ; then \
-	    $(PAX_COMMAND) $(PAX_COMMAND_ARGS) $(RMIC_VM) ; \
+	  if $(GREP) '^PaX' /proc/self/status > /dev/null ; then \
+	    if [ -w $(RMIC_VM) ] ; then \
+	      $(PAX_COMMAND) $(PAX_COMMAND_ARGS) $(RMIC_VM) ; \
+	    fi ; \
 	  fi ; \
 	fi
 	$(RMIC) -classpath "$(CLASSDESTDIR)"    \
