@@ -41,6 +41,7 @@
 #include "oops/method.hpp"
 #include "oops/symbol.hpp"
 #include "oops/typeArrayOop.hpp"
+#include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -463,12 +464,11 @@ bool java_lang_String::equals(oop str1, oop str2) {
   return true;
 }
 
-void java_lang_String::print(Handle java_string, outputStream* st) {
-  oop          obj    = java_string();
-  assert(obj->klass() == SystemDictionary::String_klass(), "must be java_string");
-  typeArrayOop value  = java_lang_String::value(obj);
-  int          offset = java_lang_String::offset(obj);
-  int          length = java_lang_String::length(obj);
+void java_lang_String::print(oop java_string, outputStream* st) {
+  assert(java_string->klass() == SystemDictionary::String_klass(), "must be java_string");
+  typeArrayOop value  = java_lang_String::value(java_string);
+  int          offset = java_lang_String::offset(java_string);
+  int          length = java_lang_String::length(java_string);
 
   int end = MIN2(length, 100);
   if (value == NULL) {
@@ -549,7 +549,7 @@ void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
       }
     }
   }
-  create_mirror(k, Handle(NULL), CHECK);
+  create_mirror(k, Handle(NULL), Handle(NULL), CHECK);
 }
 
 void java_lang_Class::initialize_mirror_fields(KlassHandle k,
@@ -569,7 +569,8 @@ void java_lang_Class::initialize_mirror_fields(KlassHandle k,
   InstanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, mirror, CHECK);
 }
 
-void java_lang_Class::create_mirror(KlassHandle k, Handle protection_domain, TRAPS) {
+void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
+                                    Handle protection_domain, TRAPS) {
   assert(k->java_mirror() == NULL, "should only assign mirror once");
   // Use this moment of initialization to cache modifier_flags also,
   // to support Class.getModifiers().  Instance classes recalculate
@@ -623,6 +624,10 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle protection_domain, TRA
         return;
       }
     }
+
+    // set the classLoader field in the java_lang_Class instance
+    assert(class_loader() == k->class_loader(), "should be same");
+    set_class_loader(mirror(), class_loader());
 
     // Setup indirection from klass->mirror last
     // after any exceptions can happen during allocations.
@@ -684,6 +689,18 @@ void java_lang_Class::set_signers(oop java_class, objArrayOop signers) {
   java_class->obj_field_put(_signers_offset, (oop)signers);
 }
 
+
+void java_lang_Class::set_class_loader(oop java_class, oop loader) {
+  // jdk7 runs Queens in bootstrapping and jdk8-9 has no coordinated pushes yet.
+  if (_class_loader_offset != 0) {
+    java_class->obj_field_put(_class_loader_offset, loader);
+  }
+}
+
+oop java_lang_Class::class_loader(oop java_class) {
+  assert(_class_loader_offset != 0, "must be set");
+  return java_class->obj_field(_class_loader_offset);
+}
 
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
   // This should be improved by adding a field at the Java level or by
@@ -843,6 +860,12 @@ void java_lang_Class::compute_offsets() {
   // so don't go fatal.
   compute_optional_offset(classRedefinedCount_offset,
                           klass_oop, vmSymbols::classRedefinedCount_name(), vmSymbols::int_signature());
+
+  // Needs to be optional because the old build runs Queens during bootstrapping
+  // and jdk8-9 doesn't have coordinated pushes yet.
+  compute_optional_offset(_class_loader_offset,
+                 klass_oop, vmSymbols::classLoader_name(),
+                 vmSymbols::classloader_signature());
 
   CLASS_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
 }
@@ -2753,12 +2776,35 @@ Metadata* java_lang_invoke_MemberName::vmtarget(oop mname) {
   return (Metadata*)mname->address_field(_vmtarget_offset);
 }
 
+bool java_lang_invoke_MemberName::is_method(oop mname) {
+  assert(is_instance(mname), "must be MemberName");
+  return (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0;
+}
+
 #if INCLUDE_JVMTI
 // Can be executed on VM thread only
-void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, Metadata* ref) {
-  assert((is_instance(mname) && (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0), "wrong type");
+void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, Method* old_method,
+                                                  Method* new_method, bool* trace_name_printed) {
+  assert(is_method(mname), "wrong type");
   assert(Thread::current()->is_VM_thread(), "not VM thread");
-  mname->address_field_put(_vmtarget_offset, (address)ref);
+
+  Method* target = (Method*)mname->address_field(_vmtarget_offset);
+  if (target == old_method) {
+    mname->address_field_put(_vmtarget_offset, (address)new_method);
+
+    if (RC_TRACE_IN_RANGE(0x00100000, 0x00400000)) {
+      if (!(*trace_name_printed)) {
+        // RC_TRACE_MESG macro has an embedded ResourceMark
+        RC_TRACE_MESG(("adjust: name=%s",
+                       old_method->method_holder()->external_name()));
+        *trace_name_printed = true;
+      }
+      // RC_TRACE macro has an embedded ResourceMark
+      RC_TRACE(0x00400000, ("MemberName method update: %s(%s)",
+                            new_method->name()->as_C_string(),
+                            new_method->signature()->as_C_string()));
+    }
+  }
 }
 #endif // INCLUDE_JVMTI
 
@@ -3083,6 +3129,7 @@ int java_lang_Class::_klass_offset;
 int java_lang_Class::_array_klass_offset;
 int java_lang_Class::_oop_size_offset;
 int java_lang_Class::_static_oop_field_count_offset;
+int java_lang_Class::_class_loader_offset;
 int java_lang_Class::_protection_domain_offset;
 int java_lang_Class::_init_lock_offset;
 int java_lang_Class::_signers_offset;

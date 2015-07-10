@@ -68,7 +68,10 @@
 // ciMethod::ciMethod
 //
 // Loaded method.
-ciMethod::ciMethod(methodHandle h_m) : ciMetadata(h_m()) {
+ciMethod::ciMethod(methodHandle h_m, ciInstanceKlass* holder) :
+  ciMetadata(h_m()),
+  _holder(holder)
+{
   assert(h_m() != NULL, "no null method");
 
   // These fields are always filled in in loaded methods.
@@ -124,7 +127,6 @@ ciMethod::ciMethod(methodHandle h_m) : ciMetadata(h_m()) {
   // generating _signature may allow GC and therefore move m.
   // These fields are always filled in.
   _name = env->get_symbol(h_m()->name());
-  _holder = env->get_instance_klass(h_m()->method_holder());
   ciSymbol* sig_symbol = env->get_symbol(h_m()->signature());
   constantPoolHandle cpool = h_m()->constants();
   _signature = new (env->arena()) ciSignature(_holder, cpool, sig_symbol);
@@ -1104,6 +1106,22 @@ bool ciMethod::has_option(const char* option) {
   methodHandle mh(THREAD, get_Method());
   return CompilerOracle::has_option_string(mh, option);
 }
+
+// ------------------------------------------------------------------
+// ciMethod::has_option_value
+//
+template<typename T>
+bool ciMethod::has_option_value(const char* option, T& value) {
+  check_is_loaded();
+  VM_ENTRY_MARK;
+  methodHandle mh(THREAD, get_Method());
+  return CompilerOracle::has_option_value(mh, option, value);
+}
+// Explicit instantiation for all OptionTypes supported.
+template bool ciMethod::has_option_value<intx>(const char* option, intx& value);
+template bool ciMethod::has_option_value<uintx>(const char* option, uintx& value);
+template bool ciMethod::has_option_value<bool>(const char* option, bool& value);
+template bool ciMethod::has_option_value<ccstr>(const char* option, ccstr& value);
 
 // ------------------------------------------------------------------
 // ciMethod::can_be_compiled

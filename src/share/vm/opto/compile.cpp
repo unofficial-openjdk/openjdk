@@ -391,6 +391,11 @@ void Compile::remove_useless_nodes(Unique_Node_List &useful) {
   uint next = 0;
   while (next < useful.size()) {
     Node *n = useful.at(next++);
+    if (n->is_SafePoint()) {
+      // We're done with a parsing phase. Replaced nodes are not valid
+      // beyond that point.
+      n->as_SafePoint()->delete_replaced_nodes();
+    }
     // Use raw traversal of out edges since this code removes out edges
     int max = n->outcnt();
     for (int j = 0; j < max; ++j) {
@@ -660,6 +665,10 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _printer(IdealGraphPrinter::printer()),
 #endif
                   _congraph(NULL),
+                  _comp_arena(mtCompiler),
+                  _node_arena(mtCompiler),
+                  _old_arena(mtCompiler),
+                  _Compile_types(mtCompiler),
                   _replay_inline_data(NULL),
                   _late_inlines(comp_arena(), 2, 0, NULL),
                   _string_late_inlines(comp_arena(), 2, 0, NULL),
@@ -670,8 +679,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _inlining_incrementally(false),
                   _print_inlining_list(NULL),
                   _print_inlining_idx(0),
-                  _preserve_jvm_state(0),
-                  _interpreter_frame_size(0) {
+                  _interpreter_frame_size(0),
+                  _max_node_limit(MaxNodeLimit) {
   C = this;
 
   CompileWrapper cw(this);
@@ -782,7 +791,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       return;
     }
     JVMState* jvms = build_start_state(start(), tf());
-    if ((jvms = cg->generate(jvms, NULL)) == NULL) {
+    if ((jvms = cg->generate(jvms)) == NULL) {
       record_method_not_compilable("method parse failed");
       return;
     }
@@ -968,6 +977,10 @@ Compile::Compile( ciEnv* ci_env,
     _in_dump_cnt(0),
     _printer(NULL),
 #endif
+    _comp_arena(mtCompiler),
+    _node_arena(mtCompiler),
+    _old_arena(mtCompiler),
+    _Compile_types(mtCompiler),
     _dead_node_list(comp_arena()),
     _dead_node_count(0),
     _congraph(NULL),
@@ -977,9 +990,9 @@ Compile::Compile( ciEnv* ci_env,
     _inlining_incrementally(false),
     _print_inlining_list(NULL),
     _print_inlining_idx(0),
-    _preserve_jvm_state(0),
     _allowed_reasons(0),
-    _interpreter_frame_size(0) {
+    _interpreter_frame_size(0),
+    _max_node_limit(MaxNodeLimit) {
   C = this;
 
 #ifndef PRODUCT
@@ -1089,6 +1102,7 @@ void Compile::Init(int aliaslevel) {
   set_do_count_invocations(false);
   set_do_method_data_update(false);
   set_rtm_state(NoRTM); // No RTM lock eliding by default
+  method_has_option_value("MaxNodeLimit", _max_node_limit);
 #if INCLUDE_RTM_OPT
   if (UseRTMLocking && has_method() && (method()->method_data_or_null() != NULL)) {
     int rtm_state = method()->method_data()->rtm_state();
@@ -1910,6 +1924,8 @@ void Compile::inline_boxing_calls(PhaseIterGVN& igvn) {
     for_igvn()->clear();
     gvn->replace_with(&igvn);
 
+    _late_inlines_pos = _late_inlines.length();
+
     while (_boxing_late_inlines.length() > 0) {
       CallGenerator* cg = _boxing_late_inlines.pop();
       cg->do_late_inline();
@@ -1973,8 +1989,8 @@ void Compile::inline_incrementally(PhaseIterGVN& igvn) {
     if (live_nodes() > (uint)LiveNodeCountInliningCutoff) {
       if (low_live_nodes < (uint)LiveNodeCountInliningCutoff * 8 / 10) {
         // PhaseIdealLoop is expensive so we only try it once we are
-        // out of loop and we only try it again if the previous helped
-        // got the number of nodes down significantly
+        // out of live nodes and we only try it again if the previous
+        // helped got the number of nodes down significantly
         PhaseIdealLoop ideal_loop( igvn, false, true );
         if (failing())  return;
         low_live_nodes = live_nodes();
@@ -2065,6 +2081,10 @@ void Compile::Optimize() {
     NOT_PRODUCT( TracePhase t2("incrementalInline", &_t_incrInline, TimeCompiler); )
     // Inline valueOf() methods now.
     inline_boxing_calls(igvn);
+
+    if (AlwaysIncrementalInline) {
+      inline_incrementally(igvn);
+    }
 
     print_method(PHASE_INCREMENTAL_BOXING_INLINE, 2);
 

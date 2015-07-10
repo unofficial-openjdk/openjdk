@@ -30,6 +30,19 @@
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 
+#define LargeSharedArchiveSize    (300*M)
+#define HugeSharedArchiveSize     (800*M)
+#define ReadOnlyRegionPercentage  0.39
+#define ReadWriteRegionPercentage 0.50
+#define MiscDataRegionPercentage  0.09
+#define MiscCodeRegionPercentage  0.02
+#define LargeThresholdClassCount  5000
+#define HugeThresholdClassCount   40000
+
+#define SET_ESTIMATED_SIZE(type, region)                              \
+  Shared ##region## Size  = FLAG_IS_DEFAULT(Shared ##region## Size) ? \
+    (uintx)(type ## SharedArchiveSize *  region ## RegionPercentage) : Shared ## region ## Size
+
 class FileMapInfo;
 
 // Class Data Sharing Support
@@ -38,14 +51,22 @@ class MetaspaceShared : AllStatic {
   // CDS support
   static ReservedSpace* _shared_rs;
   static int _max_alignment;
-
+  static bool _link_classes_made_progress;
+  static bool _check_classes_made_progress;
+  static bool _has_error_classes;
+  static bool _archive_loading_failed;
  public:
   enum {
-    vtbl_list_size = 17, // number of entries in the shared space vtable list.
-    num_virtuals = 200   // maximum number of virtual functions
-                         // If virtual functions are added to Metadata,
-                         // this number needs to be increased.  Also,
-                         // SharedMiscCodeSize will need to be increased.
+    vtbl_list_size         = 17,   // number of entries in the shared space vtable list.
+    num_virtuals           = 200,  // maximum number of virtual functions
+                                   // If virtual functions are added to Metadata,
+                                   // this number needs to be increased.  Also,
+                                   // SharedMiscCodeSize will need to be increased.
+                                   // The following 2 sizes were based on
+                                   // MetaspaceShared::generate_vtable_methods()
+    vtbl_method_size       = 16,   // conservative size of the mov1 and jmp instructions
+                                   // for the x64 platform
+    vtbl_common_code_size  = (1*K) // conservative size of the "common_code" for the x64 platform
   };
 
   enum {
@@ -67,7 +88,11 @@ class MetaspaceShared : AllStatic {
     NOT_CDS(return 0);
   }
 
+  static void prepare_for_dumping() NOT_CDS_RETURN;
   static void preload_and_dump(TRAPS) NOT_CDS_RETURN;
+  static int preload_and_dump(const char * class_list_path,
+                              GrowableArray<Klass*>* class_promote_order,
+                              TRAPS) NOT_CDS_RETURN;
 
   static ReservedSpace* shared_rs() {
     CDS_ONLY(return _shared_rs);
@@ -78,6 +103,9 @@ class MetaspaceShared : AllStatic {
     CDS_ONLY(_shared_rs = rs;)
   }
 
+  static void set_archive_loading_failed() {
+    _archive_loading_failed = true;
+  }
   static bool map_shared_spaces(FileMapInfo* mapinfo) NOT_CDS_RETURN_(false);
   static void initialize_shared_spaces() NOT_CDS_RETURN;
 
@@ -97,5 +125,13 @@ class MetaspaceShared : AllStatic {
   static bool remap_shared_readonly_as_readwrite() NOT_CDS_RETURN_(true);
 
   static void print_shared_spaces();
+
+  static bool try_link_class(InstanceKlass* ik, TRAPS);
+  static void link_one_shared_class(Klass* obj, TRAPS);
+  static void check_one_shared_class(Klass* obj);
+  static void link_and_cleanup_shared_classes(TRAPS);
+
+  static int count_class(const char* classlist_file);
+  static void estimate_regions_size() NOT_CDS_RETURN;
 };
 #endif // SHARE_VM_MEMORY_METASPACE_SHARED_HPP

@@ -78,9 +78,8 @@ public:
   unsigned int _full_collections_completed;
 
   // Data structure for claiming the (potentially) parallel tasks in
-  // (gen-specific) strong roots processing.
-  SubTasksDone* _gen_process_strong_tasks;
-  SubTasksDone* gen_process_strong_tasks() { return _gen_process_strong_tasks; }
+  // (gen-specific) roots processing.
+  SubTasksDone* _process_strong_tasks;
 
   // In block contents verification, the number of header words to skip
   NOT_PRODUCT(static size_t _skip_header_HeapWords;)
@@ -166,14 +165,6 @@ public:
   HeapWord** top_addr() const;
   HeapWord** end_addr() const;
 
-  // Return an estimate of the maximum allocation that could be performed
-  // without triggering any collection activity.  In a generational
-  // collector, for example, this is probably the largest allocation that
-  // could be supported in the youngest generation.  It is "unsafe" because
-  // no locks are taken; the result should be treated as an approximation,
-  // not a guarantee.
-  size_t unsafe_max_alloc();
-
   // Does this heap support heap inspection? (+PrintClassHistogram)
   virtual bool supports_heap_inspection() const { return true; }
 
@@ -220,7 +211,6 @@ public:
 
   // Iteration functions.
   void oop_iterate(ExtendedOopClosure* cl);
-  void oop_iterate(MemRegion mr, ExtendedOopClosure* cl);
   void object_iterate(ObjectClosure* cl);
   void safe_object_iterate(ObjectClosure* cl);
   Space* space_containing(const void* addr) const;
@@ -399,6 +389,7 @@ public:
   static GenCollectedHeap* heap();
 
   void set_par_threads(uint t);
+  void set_n_termination(uint t);
 
   // Invoke the "do_oop" method of one of the closures "not_older_gens"
   // or "older_gens" on root locations for the generation at
@@ -412,26 +403,49 @@ public:
   // The "so" argument determines which of the roots
   // the closure is applied to:
   // "SO_None" does none;
-  // "SO_AllClasses" applies the closure to all entries in the SystemDictionary;
-  // "SO_SystemClasses" to all the "system" classes and loaders;
-  // "SO_Strings" applies the closure to all entries in the StringTable.
-  void gen_process_strong_roots(int level,
-                                bool younger_gens_as_roots,
-                                // The remaining arguments are in an order
-                                // consistent with SharedHeap::process_strong_roots:
-                                bool activate_scope,
-                                bool is_scavenging,
-                                SharedHeap::ScanningOption so,
-                                OopsInGenClosure* not_older_gens,
-                                bool do_code_roots,
-                                OopsInGenClosure* older_gens,
-                                KlassClosure* klass_closure);
+  enum ScanningOption {
+    SO_None                =  0x0,
+    SO_AllCodeCache        =  0x8,
+    SO_ScavengeCodeCache   = 0x10
+  };
 
-  // Apply "blk" to all the weak roots of the system.  These include
-  // JNI weak roots, the code cache, system dictionary, symbol table,
-  // string table, and referents of reachable weak refs.
-  void gen_process_weak_roots(OopClosure* root_closure,
-                              CodeBlobClosure* code_roots);
+ private:
+  void process_roots(bool activate_scope,
+                     ScanningOption so,
+                     OopClosure* strong_roots,
+                     OopClosure* weak_roots,
+                     CLDClosure* strong_cld_closure,
+                     CLDClosure* weak_cld_closure,
+                     CodeBlobClosure* code_roots);
+
+  void gen_process_roots(int level,
+                         bool younger_gens_as_roots,
+                         bool activate_scope,
+                         ScanningOption so,
+                         OopsInGenClosure* not_older_gens,
+                         OopsInGenClosure* weak_roots,
+                         OopsInGenClosure* older_gens,
+                         CLDClosure* cld_closure,
+                         CLDClosure* weak_cld_closure,
+                         CodeBlobClosure* code_closure);
+
+ public:
+  static const bool StrongAndWeakRoots = false;
+  static const bool StrongRootsOnly    = true;
+
+  void gen_process_roots(int level,
+                         bool younger_gens_as_roots,
+                         bool activate_scope,
+                         ScanningOption so,
+                         bool only_strong_roots,
+                         OopsInGenClosure* not_older_gens,
+                         OopsInGenClosure* older_gens,
+                         CLDClosure* cld_closure);
+
+  // Apply "root_closure" to all the weak roots of the system.
+  // These include JNI weak roots, string table,
+  // and referents of reachable weak refs.
+  void gen_process_weak_roots(OopClosure* root_closure);
 
   // Set the saved marks of generations, if that makes sense.
   // In particular, if any generation might iterate over the oops

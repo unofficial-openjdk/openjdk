@@ -157,6 +157,7 @@ class Universe: AllStatic {
   static oop          _out_of_memory_error_class_metaspace;
   static oop          _out_of_memory_error_array_size;
   static oop          _out_of_memory_error_gc_overhead_limit;
+  static oop          _out_of_memory_error_realloc_objects;
 
   static Array<int>*       _the_empty_int_array;    // Canonicalized int array
   static Array<u2>*        _the_empty_short_array;  // Canonicalized short array
@@ -177,6 +178,8 @@ class Universe: AllStatic {
   // The object used as an exception dummy when exceptions are thrown for
   // the vm thread.
   static oop          _vm_exception;
+
+  static oop          _allocation_context_notification_obj;
 
   // The particular choice of collected heap.
   static CollectedHeap* _collectedHeap;
@@ -307,6 +310,10 @@ class Universe: AllStatic {
   static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
   static oop          virtual_machine_error_instance() { return _virtual_machine_error_instance; }
   static oop          vm_exception()                  { return _vm_exception; }
+
+  static inline oop   allocation_context_notification_obj();
+  static inline void  set_allocation_context_notification_obj(oop obj);
+
   static Method*      throw_illegal_access_error()    { return _throw_illegal_access_error; }
 
   static Array<int>*       the_empty_int_array()    { return _the_empty_int_array; }
@@ -322,6 +329,7 @@ class Universe: AllStatic {
   static oop out_of_memory_error_class_metaspace()    { return gen_out_of_memory_error(_out_of_memory_error_class_metaspace);   }
   static oop out_of_memory_error_array_size()         { return gen_out_of_memory_error(_out_of_memory_error_array_size); }
   static oop out_of_memory_error_gc_overhead_limit()  { return gen_out_of_memory_error(_out_of_memory_error_gc_overhead_limit);  }
+  static oop out_of_memory_error_realloc_objects()    { return gen_out_of_memory_error(_out_of_memory_error_realloc_objects);  }
 
   // Accessors needed for fast allocation
   static Klass** boolArrayKlassObj_addr()           { return &_boolArrayKlassObj;   }

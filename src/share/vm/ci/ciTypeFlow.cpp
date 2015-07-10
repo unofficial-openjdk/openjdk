@@ -35,6 +35,7 @@
 #include "interpreter/bytecode.hpp"
 #include "interpreter/bytecodes.hpp"
 #include "memory/allocation.inline.hpp"
+#include "opto/compile.hpp"
 #include "runtime/deoptimization.hpp"
 #include "utilities/growableArray.hpp"
 
@@ -730,7 +731,7 @@ void ciTypeFlow::StateVector::do_ldc(ciBytecodeStream* str) {
     if (obj->is_null_object()) {
       push_null();
     } else {
-      assert(obj->is_instance(), "must be java_mirror of klass");
+      assert(obj->is_instance() || obj->is_array(), "must be java_mirror of klass");
       push_object(obj->klass());
     }
   } else {
@@ -2646,7 +2647,7 @@ void ciTypeFlow::df_flow_types(Block* start,
       assert (!blk->has_pre_order(), "");
       blk->set_next_pre_order();
 
-      if (_next_pre_order >= MaxNodeLimit / 2) {
+      if (_next_pre_order >= (int)Compile::current()->max_node_limit() / 2) {
         // Too many basic blocks.  Bail out.
         // This can happen when try/finally constructs are nested to depth N,
         // and there is O(2**N) cloning of jsr bodies.  See bug 4697245!

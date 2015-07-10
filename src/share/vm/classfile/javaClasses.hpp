@@ -208,7 +208,7 @@ class java_lang_String : AllStatic {
   }
 
   // Debugging
-  static void print(Handle java_string, outputStream* st);
+  static void print(oop java_string, outputStream* st);
   friend class JavaClasses;
 };
 
@@ -239,19 +239,23 @@ class java_lang_Class : AllStatic {
   static int _protection_domain_offset;
   static int _init_lock_offset;
   static int _signers_offset;
+  static int _class_loader_offset;
 
   static bool offsets_computed;
   static int classRedefinedCount_offset;
+
   static GrowableArray<Klass*>* _fixup_mirror_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
+  static void set_class_loader(oop java_class, oop class_loader);
   static void initialize_mirror_fields(KlassHandle k, Handle mirror, Handle protection_domain, TRAPS);
  public:
   static void compute_offsets();
 
   // Instance creation
-  static void create_mirror(KlassHandle k, Handle protection_domain, TRAPS);
+  static void create_mirror(KlassHandle k, Handle class_loader,
+                            Handle protection_domain, TRAPS);
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
   // Conversion
@@ -288,6 +292,8 @@ class java_lang_Class : AllStatic {
   static oop  init_lock(oop java_class);
   static objArrayOop  signers(oop java_class);
   static void set_signers(oop java_class, objArrayOop signers);
+
+  static oop class_loader(oop java_class);
 
   static int oop_size(oop java_class);
   static void set_oop_size(oop java_class, int size);
@@ -1090,7 +1096,8 @@ class java_lang_invoke_MemberName: AllStatic {
   static Metadata*      vmtarget(oop mname);
   static void       set_vmtarget(oop mname, Metadata* target);
 #if INCLUDE_JVMTI
-  static void       adjust_vmtarget(oop mname, Metadata* target);
+  static void       adjust_vmtarget(oop mname, Method* old_method, Method* new_method,
+                                    bool* trace_name_printed);
 #endif // INCLUDE_JVMTI
 
   static intptr_t       vmindex(oop mname);
@@ -1103,6 +1110,8 @@ class java_lang_invoke_MemberName: AllStatic {
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
   }
+
+  static bool is_method(oop obj);
 
   // Relevant integer codes (keep these in synch. with MethodHandleNatives.Constants):
   enum {

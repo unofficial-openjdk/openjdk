@@ -23,7 +23,6 @@
  */
 
 #include "precompiled.hpp"
-#include "gc_implementation/g1/bufferingOopClosure.hpp"
 #include "gc_implementation/g1/concurrentG1Refine.hpp"
 #include "gc_implementation/g1/concurrentG1RefineThread.hpp"
 #include "gc_implementation/g1/g1BlockOffsetTable.inline.hpp"
@@ -33,7 +32,7 @@
 #include "gc_implementation/g1/g1GCPhaseTimes.hpp"
 #include "gc_implementation/g1/g1OopClosures.inline.hpp"
 #include "gc_implementation/g1/g1RemSet.inline.hpp"
-#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "gc_implementation/g1/heapRegionManager.inline.hpp"
 #include "gc_implementation/g1/heapRegionRemSet.hpp"
 #include "memory/iterator.hpp"
 #include "oops/oop.inline.hpp"
@@ -79,9 +78,8 @@ G1RemSet::G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
     _cards_scanned(NULL), _total_cards_scanned(0),
     _prev_period_summary()
 {
-  _seq_task = new SubTasksDone(NumSeqTasks);
   guarantee(n_workers() > 0, "There should be some workers");
-  _cset_rs_update_cl = NEW_C_HEAP_ARRAY(OopsInHeapRegionClosure*, n_workers(), mtGC);
+  _cset_rs_update_cl = NEW_C_HEAP_ARRAY(G1ParPushHeapRSClosure*, n_workers(), mtGC);
   for (uint i = 0; i < n_workers(); i++) {
     _cset_rs_update_cl[i] = NULL;
   }
@@ -91,11 +89,10 @@ G1RemSet::G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
 }
 
 G1RemSet::~G1RemSet() {
-  delete _seq_task;
   for (uint i = 0; i < n_workers(); i++) {
     assert(_cset_rs_update_cl[i] == NULL, "it should be");
   }
-  FREE_C_HEAP_ARRAY(OopsInHeapRegionClosure*, _cset_rs_update_cl, mtGC);
+  FREE_C_HEAP_ARRAY(G1ParPushHeapRSClosure*, _cset_rs_update_cl, mtGC);
 }
 
 void CountNonCleanMemRegionClosure::do_MemRegion(MemRegion mr) {
@@ -109,8 +106,8 @@ class ScanRSClosure : public HeapRegionClosure {
   size_t _cards_done, _cards;
   G1CollectedHeap* _g1h;
 
-  OopsInHeapRegionClosure* _oc;
-  CodeBlobToOopClosure* _code_root_cl;
+  G1ParPushHeapRSClosure* _oc;
+  CodeBlobClosure* _code_root_cl;
 
   G1BlockOffsetSharedArray* _bot_shared;
   G1SATBCardTableModRefBS *_ct_bs;
@@ -121,8 +118,8 @@ class ScanRSClosure : public HeapRegionClosure {
   bool   _try_claimed;
 
 public:
-  ScanRSClosure(OopsInHeapRegionClosure* oc,
-                CodeBlobToOopClosure* code_root_cl,
+  ScanRSClosure(G1ParPushHeapRSClosure* oc,
+                CodeBlobClosure* code_root_cl,
                 uint worker_i) :
     _oc(oc),
     _code_root_cl(code_root_cl),
@@ -143,8 +140,7 @@ public:
   void scanCard(size_t index, HeapRegion *r) {
     // Stack allocate the DirtyCardToOopClosure instance
     HeapRegionDCTOC cl(_g1h, r, _oc,
-                       CardTableModRefBS::Precise,
-                       HeapRegionDCTOC::IntoCSFilterKind);
+                       CardTableModRefBS::Precise);
 
     // Set the "from" region in the closure.
     _oc->set_region(r);
@@ -212,7 +208,6 @@ public:
 #endif
 
       HeapRegion* card_region = _g1h->heap_region_containing(card_start);
-      assert(card_region != NULL, "Yielding cards not in the heap?");
       _cards++;
 
       if (!card_region->is_on_dirty_cards_region_list()) {
@@ -242,8 +237,8 @@ public:
   size_t cards_looked_up() { return _cards;}
 };
 
-void G1RemSet::scanRS(OopsInHeapRegionClosure* oc,
-                      CodeBlobToOopClosure* code_root_cl,
+void G1RemSet::scanRS(G1ParPushHeapRSClosure* oc,
+                      CodeBlobClosure* code_root_cl,
                       uint worker_i) {
   double rs_time_start = os::elapsedTime();
   HeapRegion *startRegion = _g1->start_cset_region_for_worker(worker_i);
@@ -260,9 +255,8 @@ void G1RemSet::scanRS(OopsInHeapRegionClosure* oc,
   assert(_cards_scanned != NULL, "invariant");
   _cards_scanned[worker_i] = scanRScl.cards_done();
 
-  _g1p->phase_times()->record_scan_rs_time(worker_i, scan_rs_time_sec * 1000.0);
-  _g1p->phase_times()->record_strong_code_root_scan_time(worker_i,
-                                                         scanRScl.strong_code_root_scan_time_sec() * 1000.0);
+  _g1p->phase_times()->record_time_secs(G1GCPhaseTimes::ScanRS, worker_i, scan_rs_time_sec);
+  _g1p->phase_times()->record_time_secs(G1GCPhaseTimes::CodeRoots, worker_i, scanRScl.strong_code_root_scan_time_sec());
 }
 
 // Closure used for updating RSets and recording references that
@@ -299,30 +293,19 @@ public:
 };
 
 void G1RemSet::updateRS(DirtyCardQueue* into_cset_dcq, uint worker_i) {
-  double start = os::elapsedTime();
+  G1GCParPhaseTimesTracker x(_g1p->phase_times(), G1GCPhaseTimes::UpdateRS, worker_i);
   // Apply the given closure to all remaining log entries.
   RefineRecordRefsIntoCSCardTableEntryClosure into_cset_update_rs_cl(_g1, into_cset_dcq);
 
   _g1->iterate_dirty_card_closure(&into_cset_update_rs_cl, into_cset_dcq, false, worker_i);
-
-  // Now there should be no dirty cards.
-  if (G1RSLogCheckCardTable) {
-    CountNonCleanMemRegionClosure cl(_g1);
-    _ct_bs->mod_card_iterate(&cl);
-    // XXX This isn't true any more: keeping cards of young regions
-    // marked dirty broke it.  Need some reasonable fix.
-    guarantee(cl.n() == 0, "Card table should be clean.");
-  }
-
-  _g1p->phase_times()->record_update_rs_time(worker_i, (os::elapsedTime() - start) * 1000.0);
 }
 
 void G1RemSet::cleanupHRRS() {
   HeapRegionRemSet::cleanup();
 }
 
-void G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
-                                           CodeBlobToOopClosure* code_root_cl,
+void G1RemSet::oops_into_collection_set_do(G1ParPushHeapRSClosure* oc,
+                                           CodeBlobClosure* code_root_cl,
                                            uint worker_i) {
 #if CARD_REPEAT_HISTO
   ct_freq_update_histo_and_reset();
@@ -340,33 +323,14 @@ void G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
   // are just discarded (there's no need to update the RSets of regions
   // that were in the collection set - after the pause these regions
   // are wholly 'free' of live objects. In the event of an evacuation
-  // failure the cards/buffers in this queue set are:
-  // * passed to the DirtyCardQueueSet that is used to manage deferred
-  //   RSet updates, or
-  // * scanned for references that point into the collection set
-  //   and the RSet of the corresponding region in the collection set
-  //   is updated immediately.
+  // failure the cards/buffers in this queue set are passed to the
+  // DirtyCardQueueSet that is used to manage RSet updates
   DirtyCardQueue into_cset_dcq(&_g1->into_cset_dirty_card_queue_set());
 
   assert((ParallelGCThreads > 0) || worker_i == 0, "invariant");
 
-  // The two flags below were introduced temporarily to serialize
-  // the updating and scanning of remembered sets. There are some
-  // race conditions when these two operations are done in parallel
-  // and they are causing failures. When we resolve said race
-  // conditions, we'll revert back to parallel remembered set
-  // updating and scanning. See CRs 6677707 and 6677708.
-  if (G1UseParallelRSetUpdating || (worker_i == 0)) {
-    updateRS(&into_cset_dcq, worker_i);
-  } else {
-    _g1p->phase_times()->record_update_rs_processed_buffers(worker_i, 0);
-    _g1p->phase_times()->record_update_rs_time(worker_i, 0.0);
-  }
-  if (G1UseParallelRSetScanning || (worker_i == 0)) {
-    scanRS(oc, code_root_cl, worker_i);
-  } else {
-    _g1p->phase_times()->record_scan_rs_time(worker_i, 0.0);
-  }
+  updateRS(&into_cset_dcq, worker_i);
+  scanRS(oc, code_root_cl, worker_i);
 
   // We now clear the cached values of _cset_rs_update_cl for this worker
   _cset_rs_update_cl[worker_i] = NULL;
@@ -374,7 +338,6 @@ void G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
 
 void G1RemSet::prepare_for_oops_into_collection_set_do() {
   cleanupHRRS();
-  ConcurrentG1Refine* cg1r = _g1->concurrent_g1_refine();
   _g1->set_refine_cte_cl_concurrency(false);
   DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   dcqs.concatenate_logs();
@@ -386,67 +349,6 @@ void G1RemSet::prepare_for_oops_into_collection_set_do() {
   }
   _total_cards_scanned = 0;
 }
-
-
-// This closure, applied to a DirtyCardQueueSet, is used to immediately
-// update the RSets for the regions in the CSet. For each card it iterates
-// through the oops which coincide with that card. It scans the reference
-// fields in each oop; when it finds an oop that points into the collection
-// set, the RSet for the region containing the referenced object is updated.
-class UpdateRSetCardTableEntryIntoCSetClosure: public CardTableEntryClosure {
-  G1CollectedHeap* _g1;
-  CardTableModRefBS* _ct_bs;
-public:
-  UpdateRSetCardTableEntryIntoCSetClosure(G1CollectedHeap* g1,
-                                          CardTableModRefBS* bs):
-    _g1(g1), _ct_bs(bs)
-  { }
-
-  bool do_card_ptr(jbyte* card_ptr, uint worker_i) {
-    // Construct the region representing the card.
-    HeapWord* start = _ct_bs->addr_for(card_ptr);
-    // And find the region containing it.
-    HeapRegion* r = _g1->heap_region_containing(start);
-    assert(r != NULL, "unexpected null");
-
-    // Scan oops in the card looking for references into the collection set
-    // Don't use addr_for(card_ptr + 1) which can ask for
-    // a card beyond the heap.  This is not safe without a perm
-    // gen.
-    HeapWord* end   = start + CardTableModRefBS::card_size_in_words;
-    MemRegion scanRegion(start, end);
-
-    UpdateRSetImmediate update_rs_cl(_g1->g1_rem_set());
-    FilterIntoCSClosure update_rs_cset_oop_cl(NULL, _g1, &update_rs_cl);
-    FilterOutOfRegionClosure filter_then_update_rs_cset_oop_cl(r, &update_rs_cset_oop_cl);
-
-    // We can pass false as the "filter_young" parameter here as:
-    // * we should be in a STW pause,
-    // * the DCQS to which this closure is applied is used to hold
-    //   references that point into the collection set from the prior
-    //   RSet updating,
-    // * the post-write barrier shouldn't be logging updates to young
-    //   regions (but there is a situation where this can happen - see
-    //   the comment in G1RemSet::refine_card() below -
-    //   that should not be applicable here), and
-    // * during actual RSet updating, the filtering of cards in young
-    //   regions in HeapRegion::oops_on_card_seq_iterate_careful is
-    //   employed.
-    // As a result, when this closure is applied to "refs into cset"
-    // DCQS, we shouldn't see any cards in young regions.
-    update_rs_cl.set_region(r);
-    HeapWord* stop_point =
-      r->oops_on_card_seq_iterate_careful(scanRegion,
-                                          &filter_then_update_rs_cset_oop_cl,
-                                          false /* filter_young */,
-                                          NULL  /* card_ptr */);
-
-    // Since this is performed in the event of an evacuation failure, we
-    // we shouldn't see a non-null stop point
-    assert(stop_point == NULL, "saw an unallocated region");
-    return true;
-  }
-};
 
 void G1RemSet::cleanup_after_oops_into_collection_set_do() {
   guarantee( _cards_scanned != NULL, "invariant" );
@@ -468,25 +370,10 @@ void G1RemSet::cleanup_after_oops_into_collection_set_do() {
     double restore_remembered_set_start = os::elapsedTime();
 
     // Restore remembered sets for the regions pointing into the collection set.
-    if (G1DeferredRSUpdate) {
-      // If deferred RS updates are enabled then we just need to transfer
-      // the completed buffers from (a) the DirtyCardQueueSet used to hold
-      // cards that contain references that point into the collection set
-      // to (b) the DCQS used to hold the deferred RS updates
-      _g1->dirty_card_queue_set().merge_bufferlists(&into_cset_dcqs);
-    } else {
-
-      CardTableModRefBS* bs = (CardTableModRefBS*)_g1->barrier_set();
-      UpdateRSetCardTableEntryIntoCSetClosure update_rs_cset_immediate(_g1, bs);
-
-      int n_completed_buffers = 0;
-      while (into_cset_dcqs.apply_closure_to_completed_buffer(&update_rs_cset_immediate,
-                                                    0, 0, true)) {
-        n_completed_buffers++;
-      }
-      assert(n_completed_buffers == into_cset_n_buffers, "missed some buffers");
-    }
-
+    // We just need to transfer the completed buffers from the DirtyCardQueueSet
+    // used to hold cards that contain references that point into the collection set
+    // to the DCQS used to hold the deferred RS updates.
+    _g1->dirty_card_queue_set().merge_bufferlists(&into_cset_dcqs);
     _g1->g1_policy()->phase_times()->record_evac_fail_restore_remsets((os::elapsedTime() - restore_remembered_set_start) * 1000.0);
   }
 
@@ -544,7 +431,7 @@ G1Mux2Closure::G1Mux2Closure(OopClosure *c1, OopClosure *c2) :
 G1UpdateRSOrPushRefOopClosure::
 G1UpdateRSOrPushRefOopClosure(G1CollectedHeap* g1h,
                               G1RemSet* rs,
-                              OopsInHeapRegionClosure* push_ref_cl,
+                              G1ParPushHeapRSClosure* push_ref_cl,
                               bool record_refs_into_cset,
                               uint worker_i) :
   _g1(g1h), _g1_rem_set(rs), _from(NULL),
@@ -557,6 +444,12 @@ G1UpdateRSOrPushRefOopClosure(G1CollectedHeap* g1h,
 
 bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
                            bool check_for_refs_into_cset) {
+  assert(_g1->is_in_exact(_ct_bs->addr_for(card_ptr)),
+         err_msg("Card at "PTR_FORMAT" index "SIZE_FORMAT" representing heap at "PTR_FORMAT" (%u) must be in committed heap",
+                 p2i(card_ptr),
+                 _ct_bs->index_for(_ct_bs->addr_for(card_ptr)),
+                 _ct_bs->addr_for(card_ptr),
+                 _g1->addr_to_region(_ct_bs->addr_for(card_ptr))));
 
   // If the card is no longer dirty, nothing to do.
   if (*card_ptr != CardTableModRefBS::dirty_card_val()) {
@@ -569,11 +462,6 @@ bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
   HeapWord* start = _ct_bs->addr_for(card_ptr);
   // And find the region containing it.
   HeapRegion* r = _g1->heap_region_containing(start);
-  if (r == NULL) {
-    // Again no need to return that this card contains refs that
-    // point into the collection set.
-    return false;  // Not in the G1 heap (might be in perm, for example.)
-  }
 
   // Why do we have to check here whether a card is on a young region,
   // given that we dirty young regions and, as a result, the
@@ -626,10 +514,6 @@ bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
 
     start = _ct_bs->addr_for(card_ptr);
     r = _g1->heap_region_containing(start);
-    if (r == NULL) {
-      // Not in the G1 heap
-      return false;
-    }
 
     // Checking whether the region we got back from the cache
     // is young here is inappropriate. The region could have been
@@ -648,7 +532,7 @@ bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
   ct_freq_note_card(_ct_bs->index_for(start));
 #endif
 
-  OopsInHeapRegionClosure* oops_in_heap_closure = NULL;
+  G1ParPushHeapRSClosure* oops_in_heap_closure = NULL;
   if (check_for_refs_into_cset) {
     // ConcurrentG1RefineThreads have worker numbers larger than what
     // _cset_rs_update_cl[] is set up to handle. But those threads should
