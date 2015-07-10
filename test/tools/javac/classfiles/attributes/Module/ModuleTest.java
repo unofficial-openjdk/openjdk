@@ -25,12 +25,10 @@
  * @test
  * @summary Module attribute tests
  * @bug 8080878
- *
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.compiler/com.sun.tools.javac.util
  *          jdk.jdeps/com.sun.tools.classfile
- *
  * @library /tools/lib ../lib /tools/javac/lib
  * @build ToolBox TestBase TestResult ModuleTestBase
  * @run main ModuleTest
