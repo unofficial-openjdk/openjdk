@@ -26,6 +26,10 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -94,8 +100,10 @@ final class AsmPoolImpl implements AsmModulePool {
             if (className.endsWith("module-info")) {
                 // remove the module name contained in the class name
                 className = className.substring(className.indexOf("/") + 1);
+                path = "/" + moduleName + "/" + className;
+            } else {
+                path = toClassNamePath(className);
             }
-            path = toClassNamePath(className);
 
             byte[] content = writer.toByteArray();
             Resource res = new Resource(path, ByteBuffer.wrap(content));
@@ -266,19 +274,30 @@ final class AsmPoolImpl implements AsmModulePool {
 
     private final String moduleName;
 
+    private final ModuleDescriptor descriptor;
+    private final AsmPools pools;
+
     /**
      * A new Asm pool.
      *
      * @param inputResources The raw resources to build the pool from.
      * @param moduleName The name of a module.
+     * @param pools The resource pools.
+     * @param descriptor The module descriptor.
      * @throws IOException
      */
-    public AsmPoolImpl(ResourcePool inputResources, String moduleName)
+    AsmPoolImpl(ResourcePool inputResources, String moduleName,
+            AsmPools pools,
+            ModuleDescriptor descriptor)
             throws IOException {
         Objects.requireNonNull(inputResources);
         Objects.requireNonNull(moduleName);
+        Objects.requireNonNull(pools);
+        Objects.requireNonNull(descriptor);
         this.jimageResources = inputResources;
         this.moduleName = moduleName;
+        this.pools = pools;
+        this.descriptor = descriptor;
         List<Resource> readers = new ArrayList<>();
         List<Resource> resList = new ArrayList<>();
         Map<String, Resource> classes = new LinkedHashMap<>();
@@ -420,6 +439,85 @@ final class AsmPoolImpl implements AsmModulePool {
     }
 
     /**
+     * Lookup the class in this pool and the required pools. NB: static module
+     * readability can be different at execution time.
+     *
+     * @param binaryName The class to lookup.
+     * @return The reader or null if not found
+     * @throws java.io.IOException
+     */
+    @Override
+    public ClassReader getClassReaderInDependencies(String binaryName) throws IOException {
+        Objects.requireNonNull(binaryName);
+        ClassReader reader = getClassReader(binaryName);
+        if (reader == null) {
+            for (Requires requires : descriptor.requires()) {
+                AsmModulePool pool = pools.getModulePool(requires.name());
+                reader = pool.getExportedClassReader(moduleName, binaryName);
+                if (reader != null) {
+                    break;
+                }
+            }
+        }
+        return reader;
+    }
+
+    /**
+     * Lookup the class in the exported packages of this module. "public
+     * requires" modules are looked up. NB: static module readability can be
+     * different at execution time.
+     *
+     * @param callerModule Name of calling module.
+     * @param binaryName The class to lookup.
+     * @return The reader or null if not found
+     * @throws java.io.IOException
+     */
+    @Override
+    public ClassReader getExportedClassReader(String callerModule,
+            String binaryName) throws IOException {
+        Objects.requireNonNull(callerModule);
+        Objects.requireNonNull(binaryName);
+        boolean exported = false;
+        ClassReader clazz = null;
+        for (Exports exports : descriptor.exports()) {
+            String pkg = exports.source();
+            Optional<Set<String>> targets = exports.targets();
+            System.out.println("PKG " + pkg);
+            if (!targets.isPresent() || targets.get().contains(callerModule)) {
+                if (binaryName.startsWith(pkg)) {
+                    String className = binaryName.substring(pkg.length());
+                    System.out.println("CLASS " + className);
+                    exported = !className.contains(".");
+                }
+                if (exported) {
+                    break;
+                }
+            }
+        }
+        // public requires (re-export)
+        if (!exported) {
+            for (Requires requires : descriptor.requires()) {
+                if (requires.modifiers().contains(Modifier.PUBLIC)) {
+                    AsmModulePool pool = pools.getModulePool(requires.name());
+                    clazz = pool.getExportedClassReader(moduleName, binaryName);
+                    if (clazz != null) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            clazz = getClassReader(binaryName);
+        }
+        return clazz;
+
+    }
+
+    @Override
+    public ModuleDescriptor getDescriptor() {
+        return descriptor;
+    }
+
+    /**
      * To visit the set of ClassReaders.
      *
      * @param visitor The visitor.
@@ -492,6 +590,15 @@ final class AsmPoolImpl implements AsmModulePool {
         }
         // Then new resources
         for (Map.Entry<String, Resource> entry : transformedResources.entrySet()) {
+            Resource resource = entry.getValue();
+            if (!forgetResources.contains(resource.getPath())) {
+                if (!added.contains(resource.getPath())) {
+                    output.addResource(resource);
+                }
+            }
+        }
+        // And new classes
+        for (Map.Entry<String, Resource> entry : transformedClasses.entrySet()) {
             Resource resource = entry.getValue();
             if (!forgetResources.contains(resource.getPath())) {
                 if (!added.contains(resource.getPath())) {

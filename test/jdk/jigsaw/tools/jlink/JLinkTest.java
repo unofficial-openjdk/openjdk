@@ -70,7 +70,7 @@ public class JLinkTest {
         jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
 
         // License files
-        String copied = "LICENSE,THIRDPARTYLICENSEREADME.txt";
+        String copied = "LICENSE";
         String[] arr = copied.split(",");
         String[] copyFiles = new String[2];
         copyFiles[0] = "--copy-files";

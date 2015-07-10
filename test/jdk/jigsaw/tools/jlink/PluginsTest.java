@@ -444,16 +444,19 @@ public class PluginsTest {
         JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
         String[] classes = {"toto.Main", "toto.com.foo.bar.X"};
         File moduleFile = helper.generateModuleCompiledClasses("composite2", classes);
+        File moduleinfo = new File(moduleFile, "module-info.class");
 
         // Strip debug
         // Classes have been compiled in debug.
         List<Path> covered2 = new ArrayList<>();
+        byte[] infoContent = readAllBytes(Files.newInputStream(moduleinfo.toPath()));
         try (java.util.stream.Stream<Path> stream = Files.walk(moduleFile.toPath())) {
             stream.forEach((p) -> {
                 if (Files.isRegularFile(p) && p.toString().endsWith(".class")) {
                     try {
                         byte[] content = readAllBytes(Files.newInputStream(p));
                         String path = "/leaf1/";
+                        String moduleInfoPath = path + "module-info.class";
                         if (p.endsWith("toto/Main.class")) {
                             path += "toto/Main.class";
                         } else {
@@ -465,7 +468,7 @@ public class PluginsTest {
                                 }
                             }
                         }
-                        check(path, content);
+                        check(path, content, moduleInfoPath, infoContent);
                         covered2.add(p);
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
@@ -1296,7 +1299,8 @@ public class PluginsTest {
         }
     }
 
-    private static void check(String path, byte[] content) throws Exception {
+    private static void check(String path, byte[] content, String infoPath,
+            byte[] moduleinfo) throws Exception {
         StripDebugProvider prov = new StripDebugProvider();
         Properties options = new Properties();
         options.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
@@ -1305,6 +1309,10 @@ public class PluginsTest {
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         Resource res = new Resource(path, ByteBuffer.wrap(content));
         resources.addResource(res);
+        if (!path.endsWith("module-info.class")) {
+            Resource res2 = new Resource(infoPath, ByteBuffer.wrap(moduleinfo));
+            resources.addResource(res2);
+        }
         ResourcePool results = new ResourcePoolImpl(resources.getByteOrder());
         debug.visit(resources, results, new StringTable() {
 
@@ -1328,6 +1336,10 @@ public class PluginsTest {
         byte[] strip = result.getByteArray();
         ResourcePool resources2 = new ResourcePoolImpl(ByteOrder.nativeOrder());
         resources2.addResource(result);
+        if (!path.endsWith("module-info.class")) {
+            Resource res2 = new Resource(infoPath, ByteBuffer.wrap(moduleinfo));
+            resources2.addResource(res2);
+        }
         ResourcePool results2 = new ResourcePoolImpl(resources.getByteOrder());
         debug.visit(resources2, results2, new StringTable() {
 

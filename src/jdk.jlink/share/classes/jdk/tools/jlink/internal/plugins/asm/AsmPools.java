@@ -25,8 +25,11 @@
 package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -278,11 +281,18 @@ public final class AsmPools {
     public AsmPools(ResourcePool inputResources) throws Exception {
         Objects.requireNonNull(inputResources);
         Map<String, ResourcePool> resPools = new LinkedHashMap<>();
+        Map<String, ModuleDescriptor> descriptors = new HashMap<>();
         for (Resource res : inputResources.getResources()) {
             ResourcePool p = resPools.get(res.getModule());
             if (p == null) {
                 p = new ResourcePoolImpl(inputResources.getByteOrder());
                 resPools.put(res.getModule(), p);
+            }
+            if (res.getPath().endsWith("module-info.class")) {
+                ByteBuffer bb = res.getContent();
+                bb.rewind();
+                ModuleDescriptor descriptor = ModuleDescriptor.read(bb);
+                descriptors.put(res.getModule(), descriptor);
             }
             p.addResource(res);
         }
@@ -290,7 +300,9 @@ public final class AsmPools {
         int i = 0;
 
         for (Entry<String, ResourcePool> entry : resPools.entrySet()) {
-            AsmModulePool p = new AsmPoolImpl(entry.getValue(), entry.getKey());
+            ModuleDescriptor descriptor = descriptors.get(entry.getKey());
+            AsmModulePool p = new AsmPoolImpl(entry.getValue(),
+                    entry.getKey(), this, descriptor);
             pools.put(entry.getKey(), p);
             poolsArray[i] = p;
             i += 1;

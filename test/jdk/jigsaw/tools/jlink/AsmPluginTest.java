@@ -119,10 +119,14 @@ public class AsmPluginTest {
                     List<String> remain = new ArrayList<>();
                     remain.addAll(expected);
                     for (Resource res : pools.getGlobalPool().getClasses()) {
+                        // Wrong naming of module-info.class in ASM
+                        if (res.getPath().endsWith("module-info.class")) {
+                            continue;
+                        }
                         ClassReader reader = pools.getGlobalPool().getClassReader(res);
                         if (!expected.contains(reader.getClassName())) {
-                            throw new IOException("Class is not expected " +
-                                    reader.getClassName() + " expected " + expected);
+                            throw new IOException("Class is not expected "
+                                    + reader.getClassName());
                         }
                         if (pools.getGlobalPool().getClassReader(reader.getClassName()) == null) {
                             throw new IOException("Class " +
@@ -150,6 +154,10 @@ public class AsmPluginTest {
                 {
                     List<String> seen = new ArrayList<>();
                     pools.getGlobalPool().visitClassReaders((ClassReader reader) -> {
+                        // Wrong naming of module-info.class in ASM
+                        if (reader.getClassName().endsWith("module-info")) {
+                            return null;
+                        }
                         if (!expected.contains(reader.getClassName())) {
                             throw new RuntimeException("Class is not expected " +
                                     reader.getClassName());
@@ -202,6 +210,9 @@ public class AsmPluginTest {
             this.pools = pools;
 
             for (Resource res : pools.getGlobalPool().getClasses()) {
+                if (res.getPath().endsWith("module-info.class")) {
+                    continue;
+                }
                 ClassReader reader = pools.getGlobalPool().getClassReader(res);
                 ClassWriter writer = new ClassWriter(reader,
                         ClassWriter.COMPUTE_FRAMES);
@@ -245,6 +256,9 @@ public class AsmPluginTest {
             this.pools = pools;
 
             for (Resource res : pools.getGlobalPool().getClasses()) {
+                if (res.getPath().endsWith("module-info.class")) {
+                    continue;
+                }
                 ClassReader reader = pools.getGlobalPool().getClassReader(res);
                 ClassWriter writer = new ClassWriter(reader,
                         ClassWriter.COMPUTE_FRAMES);
@@ -330,6 +344,7 @@ public class AsmPluginTest {
         List<String> expected = new ArrayList<>();
         List<String> allResources = new ArrayList<>();
         ResourcePool pool = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        List<byte[]> moduleInfos = new ArrayList<>();
         try (java.util.stream.Stream<Path> stream = Files.walk(root)) {
             stream.forEach((p) -> {
                 if (Files.isRegularFile(p)) {
@@ -338,16 +353,16 @@ public class AsmPluginTest {
                     if (MODULES.keySet().contains(module)) {
                         try {
                             boolean isModuleInfo = p.endsWith("module-info.class");
-                            // Module info is not properly handled by Asm,
-                            // java.base/module-info ==> java/lang/module-info
                             if (isModuleInfo) {
-                                return;
+                                moduleInfos.add(readAllBytes(Files.newInputStream(p)));
                             }
                             byte[] content = readAllBytes(Files.newInputStream(p));
                             if (p.toString().endsWith(".class") && !isModuleInfo) {
                                 expected.add(toClassName(p));
                             } else {
-                                MODULES.get(module).add(toResourceFile(p));
+                                if (!isModuleInfo) {
+                                    MODULES.get(module).add(toResourceFile(p));
+                                }
                             }
                             allResources.add(toPath(p.toString()));
                             Resource res = new Resource(toPath(p.toString()),
@@ -371,6 +386,9 @@ public class AsmPluginTest {
         Resource resFile = new Resource("/" + TEST_MODULE + "/" +
                 path, ByteBuffer.wrap(content.getBytes()));
         pool.addResource(resFile);
+        Resource fakeInfoFile = new Resource("/" + TEST_MODULE
+                + "/module-info.class", ByteBuffer.wrap(moduleInfos.get(0)));
+        pool.addResource(fakeInfoFile);
         MODULES.get(TEST_MODULE).add(path);
         for(Entry<String, List<String>> entry : MODULES.entrySet()) {
             if(entry.getValue().isEmpty()) {

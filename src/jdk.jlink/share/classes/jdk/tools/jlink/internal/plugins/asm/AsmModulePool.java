@@ -25,6 +25,8 @@
 package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
+import jdk.internal.org.objectweb.asm.ClassReader;
 
 /**
  * A pool for a given module
@@ -47,4 +49,34 @@ public interface AsmModulePool extends AsmPool {
      * @return The module name;
      */
     public String getModuleName();
+
+    /**
+     * Lookup the class in this pool and the required pools. NB: static module
+     * readability can be different at execution time.
+     *
+     * @param binaryName The class to lookup.
+     * @return The reader or null if not found
+     * @throws java.io.IOException
+     */
+    public ClassReader getClassReaderInDependencies(String binaryName) throws IOException;
+
+    /**
+     * Lookup the class in the exported packages of this module. "public
+     * requires" modules are looked up. NB: static module readability can be
+     * different at execution time.
+     *
+     * @param callerModule Name of calling module.
+     * @param binaryName The class to lookup.
+     * @return The reader or null if not found
+     * @throws java.io.IOException
+     */
+    public ClassReader getExportedClassReader(String callerModule,
+            String binaryName) throws IOException;
+
+    /**
+     * The module descriptor.
+     *
+     * @return The module descriptor;
+     */
+    public ModuleDescriptor getDescriptor();
 }
