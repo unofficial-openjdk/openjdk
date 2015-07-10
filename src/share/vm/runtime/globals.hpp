@@ -1096,6 +1096,9 @@ public:
   product(bool, AlwaysRestoreFPU, false,                                    \
           "Restore the FPU control word after every JNI call (expensive)")  \
                                                                             \
+  product(bool, MemoryMapImage, false,                                       \
+          "Memory map entire runtime image")                                \
+                                                                            \
   diagnostic(bool, PrintCompilation2, false,                                \
           "Print additional statistics per compilation")                    \
                                                                             \
@@ -1516,6 +1519,9 @@ public:
                                                                             \
   product(bool, TraceMonitorInflation, false,                               \
           "Trace monitor inflation in JVM")                                 \
+                                                                            \
+  product(bool, TraceAccessControlErrors, false,                            \
+          "Trace access control errors")                                    \
                                                                             \
   /* gc */                                                                  \
                                                                             \
@@ -2484,6 +2490,12 @@ public:
                                                                             \
   develop(bool, TraceClassLoaderData, false,                                \
           "Trace class loader loader_data lifetime")                        \
+                                                                            \
+  develop(bool, TraceModules, false,                                        \
+          "Trace module creation and lifetime")                             \
+                                                                            \
+  develop(bool, TracePackages, false,                                       \
+          "Trace package creation and lifetime")                            \
                                                                             \
   product(size_t, InitialBootClassLoaderMetaspaceSize,                      \
           NOT_LP64(2200*K) LP64_ONLY(4*M),                                  \
