@@ -74,7 +74,7 @@ import sun.security.action.GetBooleanAction;
  * (and hence to the bottom of the stacking order).
  * <p>
  * <b>Note</b>: For details on the focus subsystem, see
- * <a href="http://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html">
+ * <a href="https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html">
  * How to Use the Focus Subsystem</a>,
  * a section in <em>The Java Tutorial</em>, and the
  * <a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
@@ -3687,7 +3687,7 @@ public class Container extends Component {
     private void writeObject(ObjectOutputStream s) throws IOException {
         ObjectOutputStream.PutField f = s.putFields();
         f.put("ncomponents", component.size());
-        f.put("component", getComponentsSync());
+        f.put("component", component.toArray(EMPTY_ARRAY));
         f.put("layoutMgr", layoutMgr);
         f.put("dispatcher", dispatcher);
         f.put("maxSize", maxSize);

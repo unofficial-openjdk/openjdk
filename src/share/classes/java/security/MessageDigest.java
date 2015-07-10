@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,8 @@ import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 
 import java.nio.ByteBuffer;
+
+import sun.security.util.Debug;
 
 /**
  * This MessageDigest class provides applications the functionality of a
@@ -103,6 +105,11 @@ import java.nio.ByteBuffer;
 
 public abstract class MessageDigest extends MessageDigestSpi {
 
+    private static final Debug pdebug =
+                        Debug.getInstance("provider", "Provider");
+    private static final boolean skipDebug =
+        Debug.isOn("engine=") && !Debug.isOn("messagedigest");
+
     private String algorithm;
 
     // The state of this digest
@@ -156,18 +163,23 @@ public abstract class MessageDigest extends MessageDigestSpi {
     public static MessageDigest getInstance(String algorithm)
     throws NoSuchAlgorithmException {
         try {
+            MessageDigest md;
             Object[] objs = Security.getImpl(algorithm, "MessageDigest",
                                              (String)null);
             if (objs[0] instanceof MessageDigest) {
-                MessageDigest md = (MessageDigest)objs[0];
-                md.provider = (Provider)objs[1];
-                return md;
+                md = (MessageDigest)objs[0];
             } else {
-                MessageDigest delegate =
-                    new Delegate((MessageDigestSpi)objs[0], algorithm);
-                delegate.provider = (Provider)objs[1];
-                return delegate;
+                md = new Delegate((MessageDigestSpi)objs[0], algorithm);
             }
+            md.provider = (Provider)objs[1];
+
+            if (!skipDebug && pdebug != null) {
+                pdebug.println("MessageDigest." + algorithm +
+                    " algorithm from: " + md.provider.getName());
+            }
+
+            return md;
+
         } catch(NoSuchProviderException e) {
             throw new NoSuchAlgorithmException(algorithm + " not found");
         }
@@ -428,6 +440,10 @@ public abstract class MessageDigest extends MessageDigestSpi {
      * @return true if the digests are equal, false otherwise.
      */
     public static boolean isEqual(byte[] digesta, byte[] digestb) {
+        if (digesta == digestb) return true;
+        if (digesta == null || digestb == null) {
+            return false;
+        }
         if (digesta.length != digestb.length) {
             return false;
         }

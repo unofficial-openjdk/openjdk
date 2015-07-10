@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,13 +78,13 @@ SUNWprivate_1.1 {
 		Java_java_io_FileInputStream_available;
 		Java_java_io_FileInputStream_close0;
 		Java_java_io_FileInputStream_initIDs;
-		Java_java_io_FileInputStream_open;
+		Java_java_io_FileInputStream_open0;
 		Java_java_io_FileInputStream_read0;
 		Java_java_io_FileInputStream_readBytes;
 		Java_java_io_FileInputStream_skip;
 		Java_java_io_FileOutputStream_close0;
 		Java_java_io_FileOutputStream_initIDs;
-		Java_java_io_FileOutputStream_open;
+		Java_java_io_FileOutputStream_open0;
 		Java_java_io_FileOutputStream_write;
 		Java_java_io_FileOutputStream_writeBytes;
 		Java_java_io_ObjectInputStream_bytesToDoubles;
@@ -97,7 +97,7 @@ SUNWprivate_1.1 {
 		Java_java_io_RandomAccessFile_getFilePointer;
 		Java_java_io_RandomAccessFile_initIDs;
 		Java_java_io_RandomAccessFile_length;
-		Java_java_io_RandomAccessFile_open;
+		Java_java_io_RandomAccessFile_open0;
 		Java_java_io_RandomAccessFile_read0;
 		Java_java_io_RandomAccessFile_readBytes;
 		Java_java_io_RandomAccessFile_seek0;
@@ -269,6 +269,9 @@ SUNWprivate_1.1 {
 		Java_sun_reflect_Reflection_getCallerClass__;
 		Java_sun_reflect_Reflection_getCallerClass__I;
 		Java_sun_reflect_Reflection_getClassAccessFlags;
+		Java_sun_misc_URLClassPath_knownToNotExist0;
+                Java_sun_misc_URLClassPath_getLookupCacheURLs;
+                Java_sun_misc_URLClassPath_getLookupCacheForClassLoader;
                 Java_sun_misc_Version_getJdkVersionInfo;
                 Java_sun_misc_Version_getJdkSpecialVersion;
                 Java_sun_misc_Version_getJvmVersionInfo;
@@ -286,8 +289,6 @@ SUNWprivate_1.1 {
 #		Java_sun_misc_VM_threadsSuspended;		threads.c
 #		Java_sun_misc_VM_unsuspendSomeThreads;		threads.c
 #		Java_sun_misc_VM_unsuspendThreads;		threads.c
-
-		Java_sun_util_locale_provider_HostLocaleProviderAdapterImpl_getPattern;
 
 	# Outcalls from libjvm done using dlsym().
 

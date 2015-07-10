@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  * Use is subject to license terms.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
  *   Netscape Communications Corporation
  *   Douglas Stebila <douglas@stebila.ca> of Sun Laboratories.
  *
+ * Last Modified Date from the Original Code: June 2014
  *********************************************************************** */
 
 /*  Arbitrary precision integer arithmetic library */
@@ -3376,7 +3377,7 @@ mp_err   s_mp_div_d(mp_int *mp, mp_digit d, mp_digit *r)
 #if !defined(MP_NO_MP_WORD) && !defined(MP_NO_DIV_WORD)
   mp_word   w = 0, q;
 #else
-  mp_digit  w, q;
+  mp_digit  w = 0, q;
 #endif
   int       ix;
   mp_err    res;

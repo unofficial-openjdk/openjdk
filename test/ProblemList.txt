@@ -199,6 +199,9 @@ java/nio/file/WatchService/LotsOfEvents.java			solaris-all
 
 # jdk_rmi
 
+# 7140992
+java/rmi/server/Unreferenced/finiteGCLatency/FiniteGCLatency.java  generic-all
+
 # 7146541
 java/rmi/transport/rapidExportUnexport/RapidExportUnexport.java	linux-all
 
@@ -250,9 +253,6 @@ sun/security/tools/keytool/standard.sh                          solaris-all
 ############################################################################
 
 # jdk_tools
-
-# 8028474
-sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.sh      generic-all
 
 # Tests take too long, on sparcs see 7143279
 tools/pack200/CommandLineTests.java                             solaris-all, macosx-all

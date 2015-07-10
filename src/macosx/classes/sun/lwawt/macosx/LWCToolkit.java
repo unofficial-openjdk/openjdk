@@ -538,9 +538,9 @@ public final class LWCToolkit extends LWToolkit {
             return super.getImage(filename);
         }
 
-        String fileneame2x = getScaledImageName(filename);
-        return (imageExists(fileneame2x))
-                ? getImageWithResolutionVariant(filename, fileneame2x)
+        String filename2x = getScaledImageName(filename);
+        return (imageExists(filename2x))
+                ? getImageWithResolutionVariant(filename, filename2x)
                 : super.getImage(filename);
     }
 
@@ -686,6 +686,11 @@ public final class LWCToolkit extends LWToolkit {
     @Override
     public DragSourceContextPeer createDragSourceContextPeer(
             DragGestureEvent dge) throws InvalidDnDOperationException {
+        final LightweightFrame f = SunToolkit.getLightweightFrame(dge.getComponent());
+        if (f != null) {
+            return f.createDragSourceContextPeer(dge);
+        }
+
         return CDragSourceContextPeer.createDragSourceContextPeer(dge);
     }
 
@@ -693,6 +698,11 @@ public final class LWCToolkit extends LWToolkit {
     public <T extends DragGestureRecognizer> T createDragGestureRecognizer(
             Class<T> abstractRecognizerClass, DragSource ds, Component c,
             int srcActions, DragGestureListener dgl) {
+        final LightweightFrame f = SunToolkit.getLightweightFrame(c);
+        if (f != null) {
+            return f.createDragGestureRecognizer(abstractRecognizerClass, ds, c, srcActions, dgl);
+        }
+
         DragGestureRecognizer dgr = null;
 
         // Create a new mouse drag gesture recognizer if we have a class match:
@@ -784,6 +794,18 @@ public final class LWCToolkit extends LWToolkit {
      */
     native boolean isApplicationActive();
 
+    /**
+     * Returns true if AWT toolkit is embedded, false otherwise.
+     *
+     * @return true if AWT toolkit is embedded, false otherwise
+     */
+    public static native boolean isEmbedded();
+
+    /*
+     * Activates application ignoring other apps.
+     */
+    public native void activateApplicationIgnoringOtherApps();
+
     /************************
      * Native methods section
      ************************/
@@ -811,7 +833,7 @@ public final class LWCToolkit extends LWToolkit {
     /**
      * Just spin a single empty block synchronously.
      */
-    private static native void flushNativeSelectors();
+    static native void flushNativeSelectors();
 
     @Override
     public Clipboard createPlatformClipboard() {
@@ -891,6 +913,9 @@ public final class LWCToolkit extends LWToolkit {
     }
 
     private static boolean isValidPath(String path) {
-        return !path.isEmpty() && !path.endsWith("/") && !path.endsWith(".");
+        return path != null &&
+                !path.isEmpty() &&
+                !path.endsWith("/") &&
+                !path.endsWith(".");
     }
 }

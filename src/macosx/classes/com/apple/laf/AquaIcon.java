@@ -62,7 +62,7 @@ public class AquaIcon {
         if (w <= 0 || h <= 0) return null;
 
         // This could be any kind of icon, so we need to make a buffer for it, draw it and then pass the new image off to appkit.
-        final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB_PRE);
         final Graphics g = image.getGraphics();
         i.paintIcon(null, g, 0, 0);
         g.dispose();
@@ -195,7 +195,7 @@ public class AquaIcon {
                     AquaPainter.create(JRSUIState.getInstance());
             initIconPainter(painter);
 
-            g.setClip(new Rectangle(x, y, width, height));
+            g.clipRect(x, y, width, height);
             painter.paint(g, c, x, y, width, height);
             g.dispose();
         }

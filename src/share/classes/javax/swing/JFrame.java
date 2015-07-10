@@ -24,14 +24,22 @@
  */
 package javax.swing;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeListener;
-import java.util.Locale;
-import java.util.Vector;
-import java.io.Serializable;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.LayoutManager;
+import java.awt.event.WindowEvent;
 
-import javax.accessibility.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 
 
 /**
@@ -40,7 +48,7 @@ import javax.accessibility.*;
  * You can find task-oriented documentation about using <code>JFrame</code>
  * in <em>The Java Tutorial</em>, in the section
  * <a
- href="http://docs.oracle.com/javase/tutorial/uiswing/components/frame.html">How to Make Frames</a>.
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/frame.html">How to Make Frames</a>.
  *
  * <p>
  * The <code>JFrame</code> class is slightly incompatible with <code>Frame</code>.
@@ -78,7 +86,7 @@ import javax.accessibility.*;
  * For more information on content panes
  * and other features that root panes provide,
  * see <a
- href="http://docs.oracle.com/javase/tutorial/uiswing/components/toplevel.html">Using Top-Level Containers</a> in <em>The Java Tutorial</em>.
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/toplevel.html">Using Top-Level Containers</a> in <em>The Java Tutorial</em>.
  * <p>
  * In a multi-screen environment, you can create a <code>JFrame</code>
  * on a different screen device.  See {@link java.awt.Frame} for more
@@ -293,32 +301,27 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see    #setDefaultCloseOperation
      * @see    java.awt.Window#processWindowEvent
      */
-    protected void processWindowEvent(WindowEvent e) {
+    protected void processWindowEvent(final WindowEvent e) {
         super.processWindowEvent(e);
 
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            switch(defaultCloseOperation) {
-              case HIDE_ON_CLOSE:
-                 setVisible(false);
-                 break;
-              case DISPOSE_ON_CLOSE:
-                 dispose();
-                 break;
-              case DO_NOTHING_ON_CLOSE:
-                 default:
-                 break;
-              case EXIT_ON_CLOSE:
-                  // This needs to match the checkExit call in
-                  // setDefaultCloseOperation
-                System.exit(0);
-                break;
+            switch (defaultCloseOperation) {
+                case HIDE_ON_CLOSE:
+                    setVisible(false);
+                    break;
+                case DISPOSE_ON_CLOSE:
+                    dispose();
+                    break;
+                case EXIT_ON_CLOSE:
+                    // This needs to match the checkExit call in
+                    // setDefaultCloseOperation
+                    System.exit(0);
+                    break;
+                case DO_NOTHING_ON_CLOSE:
+                default:
             }
         }
     }
-
-//    public void setMenuBar(MenuBar menu) {
-//        throw new IllegalComponentStateException("Please use setJMenuBar() with JFrame.");
-//    }
 
     /**
      * Sets the operation that will happen by default when
@@ -431,7 +434,7 @@ public class JFrame  extends Frame implements WindowConstants,
      * are currently typed to {@code JComponent}.
      * <p>
      * Please see
-     * <a href="http://docs.oracle.com/javase/tutorial/uiswing/dnd/index.html">
+     * <a href="https://docs.oracle.com/javase/tutorial/uiswing/dnd/index.html">
      * How to Use Drag and Drop and Data Transfer</a>, a section in
      * <em>The Java Tutorial</em>, for more information.
      *

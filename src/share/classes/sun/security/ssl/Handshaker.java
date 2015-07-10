@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ abstract class Handshaker {
     String identificationProtocol;
 
     // The cryptographic algorithm constraints
-    private AlgorithmConstraints algorithmConstraints = null;
+    AlgorithmConstraints algorithmConstraints = null;
 
     // Local supported signature and algorithms
     Collection<SignatureAndHashAlgorithm> localSupportedSignAlgs;
@@ -678,8 +678,25 @@ abstract class Handshaker {
      */
     ProtocolList getActiveProtocols() {
         if (activeProtocols == null) {
+            boolean enabledSSL20Hello = false;
             ArrayList<ProtocolVersion> protocols = new ArrayList<>(4);
             for (ProtocolVersion protocol : enabledProtocols.collection()) {
+                if (!algorithmConstraints.permits(
+                        EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
+                        protocol.name, null)) {
+                    if (debug != null && Debug.isOn("verbose")) {
+                        System.out.println(
+                            "Ignoring disabled protocol: " + protocol);
+                    }
+
+                    continue;
+                }
+                // Need not to check the SSL20Hello protocol.
+                if (protocol.v == ProtocolVersion.SSL20Hello.v) {
+                    enabledSSL20Hello = true;
+                    continue;
+                }
+
                 if (!algorithmConstraints.permits(
                         EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
                         protocol.name, null)) {
@@ -716,6 +733,11 @@ abstract class Handshaker {
                         "No available cipher suite for " + protocol);
                 }
             }
+
+            if (!protocols.isEmpty() && enabledSSL20Hello) {
+                protocols.add(ProtocolVersion.SSL20Hello);
+            }
+
             activeProtocols = new ProtocolList(protocols);
         }
 

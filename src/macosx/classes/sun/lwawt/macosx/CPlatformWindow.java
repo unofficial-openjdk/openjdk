@@ -488,6 +488,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         } else {
             deliverZoom(true);
 
+            // We need an up to date size of the peer, so we flush the native events
+            // to be sure that there are no setBounds requests in the queue.
+            LWCToolkit.flushNativeSelectors();
             this.normalBounds = peer.getBounds();
 
             GraphicsConfiguration config = getPeer().getGraphicsConfiguration();
@@ -568,7 +571,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
                     CWrapper.NSWindow.makeKeyWindow(nsWindowPtr);
                 }
             } else {
+                // immediately hide the window
                 CWrapper.NSWindow.orderOut(nsWindowPtr);
+                // process the close
+                CWrapper.NSWindow.close(nsWindowPtr);
             }
         } else {
             // otherwise, put it in a proper z-order
@@ -674,6 +680,13 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override  // PlatformWindow
     public void toFront() {
         final long nsWindowPtr = getNSWindowPtr();
+        LWCToolkit lwcToolkit = (LWCToolkit) Toolkit.getDefaultToolkit();
+        Window w = DefaultKeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+        if( w != null && w.getPeer() != null
+                && ((LWWindowPeer)w.getPeer()).getPeerType() == LWWindowPeer.PeerType.EMBEDDED_FRAME
+                && !lwcToolkit.isApplicationActive()) {
+            lwcToolkit.activateApplicationIgnoringOtherApps();
+        }
         updateFocusabilityForAutoRequestFocus(false);
         nativePushNSWindowToFront(nsWindowPtr);
         updateFocusabilityForAutoRequestFocus(true);
