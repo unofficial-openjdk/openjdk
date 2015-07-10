@@ -104,6 +104,7 @@ ifneq ($(MOD_FILES), )
 
   # Filter the contents for modules that are actually being built
   MODULES_FILTER := $(addprefix %/, $(addsuffix ;, $(ALL_MODULES)))
+  MODULES_FILTER += provides%
   MODIFICATIONS := $(filter $(MODULES_FILTER), $(MOD_FILE_CONTENTS))
 
   # Convert the modification lines into arguments for the modification tool.
