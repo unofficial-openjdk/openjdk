@@ -2619,7 +2619,7 @@ public class Check {
     }
 
     private boolean isEffectivelyNonPublic(Symbol sym) {
-        if (sym.packge() == syms.getRootPackage(sym.packge().modle)) {
+        if (sym.packge() == sym.packge().modle.rootPackage) {
             return false;
         }
 

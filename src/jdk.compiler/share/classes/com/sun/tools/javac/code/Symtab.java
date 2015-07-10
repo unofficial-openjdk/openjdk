@@ -359,15 +359,6 @@ public class Symtab {
 
         final JavacMessages messages = JavacMessages.instance(context);
 
-        // create the basic builtin symbols
-        unnamedModule = new ModuleSymbol(names.empty, null) {
-                @Override
-                public String toString() {
-                    return messages.getLocalizedString("compiler.misc.unnamed.module");
-                }
-            };
-        errModule = new ModuleSymbol(names.empty, null) { };
-        noModule = new ModuleSymbol(names.empty, null) { };
         rootPackage = new PackageSymbol(names.empty, null);
         packages.put(names.empty, rootPackage);
         unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
@@ -376,6 +367,25 @@ public class Symtab {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
                 }
             };
+
+        // create the basic builtin symbols
+        unnamedModule = new ModuleSymbol(names.empty, null) {
+                @Override
+                public String toString() {
+                    return messages.getLocalizedString("compiler.misc.unnamed.module");
+                }
+            };
+        unnamedModule.rootPackage = rootPackage; // XXX shared, for now
+        unnamedModule.unnamedPackage = unnamedPackage; // XXX shared, for now
+
+        errModule = new ModuleSymbol(names.empty, null) { };
+        errModule.rootPackage = rootPackage; // XXX shared, for now
+        errModule.unnamedPackage = unnamedPackage; // XXX shared, for now
+
+        noModule = new ModuleSymbol(names.empty, null) { };
+        noModule.rootPackage = rootPackage; // XXX shared, for now
+        noModule.unnamedPackage = unnamedPackage; // XXX shared, for now
+
         noSymbol = new TypeSymbol(NIL, 0, names.empty, Type.noType, rootPackage) {
             @Override @DefinedBy(Api.LANGUAGE_MODEL)
             public <R, P> R accept(ElementVisitor<R, P> v, P p) {
@@ -675,20 +685,12 @@ public class Symtab {
         return packages.get(fullname);
     }
 
-    public PackageSymbol getRootPackage(ModuleSymbol module) {
-        // for now, ignore the module
-        return rootPackage;
-    }
-
-    public PackageSymbol getUnnamedPackage(ModuleSymbol module) {
-        // for now, ignore the module
-        return unnamedPackage;
-    }
-
     public ModuleSymbol enterModule(Name name) {
         ModuleSymbol msym = modules.get(name);
         if (msym == null) {
             msym = ModuleSymbol.create(name, names.module_info);
+            msym.rootPackage = rootPackage; // XXX shared, for now
+            msym.unnamedPackage = unnamedPackage; // XXX shared, for now
             msym.completer = moduleCompleter;
             modules.put(name, msym);
         }
@@ -699,6 +701,8 @@ public class Symtab {
         Assert.checkNull(modules.get(name));
         Assert.checkNull(msym.name);
         msym.name = name;
+        msym.rootPackage = rootPackage; // XXX shared, for now
+        msym.unnamedPackage = unnamedPackage; // XXX shared, for now
         ClassSymbol info = msym.module_info;
         info.fullname = msym.name.append('.', names.module_info);
         info.flatname = info.fullname;

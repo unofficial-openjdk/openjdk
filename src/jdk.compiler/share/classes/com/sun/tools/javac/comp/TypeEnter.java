@@ -352,7 +352,7 @@ public class TypeEnter implements Completer {
             // toplevel package
             if (checkClash && tree.pid != null) {
                 Symbol p = env.toplevel.packge;
-                while (p.owner != syms.getRootPackage(env.toplevel.packge.modle)) {
+                while (p.owner != env.toplevel.packge.modle.rootPackage) {
                     p.owner.complete(); // enter all class members of p
                     if (syms.getClass(env.toplevel.modle, p.getQualifiedName()) != null) {
                         log.error(tree.pos,
@@ -565,7 +565,7 @@ public class TypeEnter implements Completer {
                     if (!tree.type.hasTag(ERROR)) {
                         result = tree.type;
                     } else {
-                        result = synthesizeClass(tree.name, syms.getUnnamedPackage(msym)).type;
+                        result = synthesizeClass(tree.name, msym.unnamedPackage).type;
                     }
                 }
 
@@ -806,7 +806,7 @@ public class TypeEnter implements Completer {
             // but admit classes in the unnamed package which have the same
             // name as a top-level package.
             if (checkClash &&
-                sym.owner.kind == PCK && sym.owner != syms.getUnnamedPackage(env.toplevel.modle) &&
+                sym.owner.kind == PCK && sym.owner != env.toplevel.modle.unnamedPackage &&
                 syms.packageExists(env.toplevel.modle, sym.fullname)) {
                 log.error(tree.pos, "clash.with.pkg.of.same.name", Kinds.kindName(sym), sym);
             }

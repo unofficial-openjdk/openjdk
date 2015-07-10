@@ -98,7 +98,7 @@ public class JavacElements implements Elements {
     public PackageSymbol getPackageElement(CharSequence name) {
         String strName = name.toString();
         if (strName.equals(""))
-            return syms.getUnnamedPackage(syms.unnamedModule);
+            return syms.unnamedModule.unnamedPackage;
         return SourceVersion.isName(strName)
             ? nameToSymbol(strName, PackageSymbol.class)
             : null;
@@ -113,7 +113,7 @@ public class JavacElements implements Elements {
     }
 
     /**
-     * Returns a symbol given the type's or packages's canonical name,
+     * Returns a symbol given the type's or package's canonical name,
      * or null if the name isn't found.
      */
     private <S extends Symbol> S nameToSymbol(String nameStr, Class<S> clazz) {

@@ -675,7 +675,7 @@ public class JavaCompiler {
             JCCompilationUnit toplevel =
                 make.TopLevel(List.<JCTree>nil());
             toplevel.modle = syms.unnamedModule;
-            toplevel.packge = syms.getUnnamedPackage(syms.unnamedModule);
+            toplevel.packge = syms.unnamedModule.unnamedPackage;
             return attr.attribIdent(tree, toplevel);
         } finally {
             log.useSource(prev);
