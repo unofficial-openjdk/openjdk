@@ -34,8 +34,8 @@ import java.util.Set;
 
 
 /**
- * A helper class to allow JDK classes (and internal tests) to easily create
- * modules, update modules, and update the readability graph.
+ * A helper class to allow JDK classes, the VM, and internal tests to easily
+ * create modules, update modules, and update the readability graph.
  *
  * The parameters that are package names in this API are the fully-qualified
  * names of the packages as defined in section 6.5.3 of <cite>The Java&trade;
@@ -102,4 +102,15 @@ public class Modules {
     public static void addPackage(Module m, String pn) {
         SharedSecrets.getJavaLangReflectAccess().addPackage(m, pn);
     }
+
+    /**
+     * Called by the VM when code in the given Module has been transformed by
+     * an agent and so may have been instrumented to call into supporting
+     * classes on the boot class path or application class path.
+     */
+    public static void transformedByAgent(Module m) {
+        addReads(m, BootLoader.getUnnamedModule());
+        addReads(m, ClassLoaders.appClassLoader().getUnnamedModule());
+    }
+
 }
