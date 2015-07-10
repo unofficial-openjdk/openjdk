@@ -53,6 +53,8 @@ import java.io.InputStreamReader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import com.sun.xml.internal.Modules;
+
 /**
  * A factory that enables applications to obtain instances of
  * <code>DOMImplementation</code>.
@@ -183,6 +185,7 @@ public final class DOMImplementationRegistry {
                 } else {
                     sourceClass = Class.forName(sourceName);
                 }
+                Modules.ensureReadable(sourceClass.getModule());
                 DOMImplementationSource source =
                     (DOMImplementationSource) sourceClass.newInstance();
                 sources.addElement(source);
@@ -361,11 +364,11 @@ public final class DOMImplementationRegistry {
      */
     private static String getSystemProperty(final String name) {
         return AccessController.doPrivileged(new PrivilegedAction<>() {
-                    @Override
-                    public String run() {
-                        return System.getProperty(name);
-                    }
-                });
+                @Override
+                public String run() {
+                    return System.getProperty(name);
+                }
+            });
     }
 
     /**
