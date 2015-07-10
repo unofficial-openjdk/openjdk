@@ -767,7 +767,13 @@ public class UIDefaults extends Hashtable<Object,Object>
                     m = uiClass.getMethod("createUI", new Class<?>[]{JComponent.class});
                     put(uiClass, m);
                 }
-                uiObject = MethodUtil.invoke(m, null, new Object[]{target});
+
+                if (uiClass.getModule() == ComponentUI.class.getModule()) {
+                    // uiClass is a system LAF if it's in java.desktop module
+                    uiObject = m.invoke(null, new Object[]{target});
+                } else {
+                    uiObject = MethodUtil.invoke(m, null, new Object[]{target});
+                }
             }
             catch (NoSuchMethodException e) {
                 getUIError("static createUI() method not found in " + uiClass);

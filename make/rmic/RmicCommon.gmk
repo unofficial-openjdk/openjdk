@@ -31,9 +31,15 @@ include RMICompilation.gmk
 
 ##########################################################################################
 
-BTRMIC_CP := $(INTERIM_CORBA_JAR)$(PATH_SEP)$(BUILDTOOLS_OUTPUTDIR)/interim_rmic_classes$(PATH_SEP)$(INTERIM_LANGTOOLS_JAR)
-BTRMIC_ARGS := "-Xbootclasspath/p:$(BTRMIC_CP)" -cp "$(BTRMIC_CP)"
-RMIC := $(JAVA) $(BTRMIC_ARGS) sun.rmi.rmic.Main
+ifeq ($(BOOT_JDK_MODULAR), true)
+  BTRMIC_ARGS := $(INTERIM_OVERRIDE_MODULES_ARGS)
+else
+  BTRMIC_CP := $(call CreatePath, \
+      $(wildcard $(BUILDTOOLS_OUTPUTDIR)/override_modules/*))
+  BTRMIC_ARGS := $(INTERIM_OVERRIDE_MODULES_ARGS) -cp "$(BTRMIC_CP)"
+endif
+
+RMIC := $(JAVA) $(INTERIM_OVERRIDE_MODULES_ARGS) sun.rmi.rmic.Main
 
 CLASSES_DIR := $(JDK_OUTPUTDIR)/modules
 # NOTE: If the smart javac dependency management is reintroduced, these classes risk

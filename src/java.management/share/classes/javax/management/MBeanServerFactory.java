@@ -26,6 +26,7 @@
 package javax.management;
 
 import com.sun.jmx.defaults.JmxProperties;
+import com.sun.jmx.util.Modules;
 import static com.sun.jmx.defaults.JmxProperties.JMX_INITIAL_BUILDER;
 import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
 import com.sun.jmx.mbeanserver.GetPropertyAction;
@@ -457,6 +458,7 @@ public class MBeanServerFactory {
      * a JMRuntimeException.
      **/
     private static MBeanServerBuilder newBuilder(Class<?> builderClass) {
+        Modules.ensureReadable(builderClass.getModule());
         try {
             final Object abuilder = builderClass.newInstance();
             return (MBeanServerBuilder)abuilder;

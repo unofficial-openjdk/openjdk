@@ -40,6 +40,7 @@
 
 package sun.util.resources;
 
+import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -49,6 +50,8 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
+import sun.text.resources.JavaTimeSupplementaryProvider;
+import sun.util.locale.provider.AbstractResourceBundleProvider;
 import sun.util.locale.provider.JRELocaleProviderAdapter;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
@@ -184,6 +187,89 @@ public class LocaleData {
                return rb;
            }
         });
+    }
+
+    private static abstract class LocaleDataResourceBundleProvider extends AbstractResourceBundleProvider {
+        protected static ResourceBundle.Control control
+                = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_CLASS);
+        protected static final String DOTCLDR      = ".cldr";
+
+        abstract protected boolean isSupportedInModule(String baseName, Locale locale);
+
+        /**
+         * Changes baseName to its per-language/country package name and
+         * calls the super class implementation. For example,
+         * if the baseName is "sun.text.resources.FormatData" and locale is ja_JP,
+         * the baseName is changed to "sun.text.resources.ja.JP.FormatData". If
+         * baseName contains "cldr", such as "sun.text.resources.cldr.FormatData",
+         * the name is changed to "sun.text.resources.cldr.ja.JP.FormatData".
+         */
+        @Override
+        protected String toBundleName(String baseName, Locale locale) {
+            String newBaseName = baseName;
+            String lang = locale.getLanguage();
+            String ctry = locale.getCountry();
+            if (lang.length() > 0) {
+                if (baseName.startsWith(JRE.getUtilResourcesPackage())
+                        || baseName.startsWith(JRE.getTextResourcesPackage())) {
+                    // Assume the lengths are the same.
+                    assert JRE.getUtilResourcesPackage().length()
+                        == JRE.getTextResourcesPackage().length();
+                    int index = JRE.getUtilResourcesPackage().length();
+                    if (baseName.indexOf(DOTCLDR, index) > 0) {
+                        index += DOTCLDR.length();
+                    }
+                    ctry = (ctry.length() == 2) ? ("." + ctry) : "";
+                    newBaseName = baseName.substring(0, index + 1) + lang + ctry
+                                      + baseName.substring(index);
+                }
+            }
+            return control.toBundleName(newBaseName, locale);
+        }
+
+        @Override
+        public ResourceBundle getBundle(String baseName, Locale locale) {
+            if (isSupportedInModule(baseName, locale)) {
+                Module module = LocaleData.class.getModule();
+                String bundleName = toBundleName(baseName, locale);
+                return loadResourceBundle(module, bundleName);
+            }
+            return null;
+        }
+    }
+
+    public static class BaseResourceBundleProvider extends LocaleDataResourceBundleProvider
+                                                   implements sun.text.resources.BreakIteratorInfoProvider,
+                                                              sun.text.resources.BreakIteratorRulesProvider,
+                                                              sun.text.resources.FormatDataProvider,
+                                                              sun.text.resources.CollationDataProvider,
+                                                              sun.text.resources.cldr.FormatDataProvider,
+                                                              sun.util.resources.LocaleNamesProvider,
+                                                              sun.util.resources.TimeZoneNamesProvider,
+                                                              sun.util.resources.CalendarDataProvider,
+                                                              sun.util.resources.CurrencyNamesProvider,
+                                                              sun.util.resources.cldr.LocaleNamesProvider,
+                                                              sun.util.resources.cldr.TimeZoneNamesProvider,
+                                                              sun.util.resources.cldr.CalendarDataProvider,
+                                                              sun.util.resources.cldr.CurrencyNamesProvider {
+        @Override
+        protected boolean isSupportedInModule(String baseName, Locale locale) {
+            // TODO: avoid hard-coded Locales
+            return locale.equals(Locale.ROOT) ||
+                (locale.getLanguage() == "en" &&
+                    (locale.getCountry() == "" ||
+                     locale.getCountry() == "US" ||
+                     locale.getCountry().length() == 3)); // UN.M49
+        }
+    }
+
+    public static class SupplementaryResourceBundleProvider extends LocaleDataResourceBundleProvider
+                                                            implements JavaTimeSupplementaryProvider {
+        @Override
+        protected boolean isSupportedInModule(String baseName, Locale locale) {
+            // TODO: avoid hard-coded Locales
+            return locale.equals(Locale.ROOT) || locale.getLanguage() == "en";
+        }
     }
 
     private static class LocaleDataResourceBundleControl extends ResourceBundle.Control {

@@ -32,6 +32,9 @@ import java.io.*;
 import sun.reflect.misc.ReflectUtil;
 
 import com.sun.rowset.*;
+import java.lang.reflect.Module;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.text.MessageFormat;
 import javax.sql.rowset.*;
 import javax.sql.rowset.serial.SQLInputImpl;
@@ -573,7 +576,9 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                         // create new instance of the class
                         SQLData obj = null;
                         try {
-                            obj = (SQLData)ReflectUtil.newInstance(c);
+                            ReflectUtil.checkPackageAccess(c);
+                            ensureReadable(c.getModule());
+                            obj = (SQLData)c.newInstance();
                         } catch (Exception ex) {
                             throw new SQLException("Unable to Instantiate: ", ex);
                         }
@@ -1467,4 +1472,14 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
         return isValid;
     }
+
+    private static void ensureReadable(Module targetModule) {
+        Module thisModule = CachedRowSetImpl.class.getModule();
+        if (thisModule.canRead(targetModule))
+            return;
+        PrivilegedAction<Void> pa =
+            () -> { thisModule.addReads(targetModule); return null; };
+        AccessController.doPrivileged(pa);
+    }
+
 }

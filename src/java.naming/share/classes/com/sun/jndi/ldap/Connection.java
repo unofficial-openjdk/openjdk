@@ -34,6 +34,8 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import javax.net.ssl.SSLSocket;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
@@ -43,6 +45,7 @@ import javax.naming.InterruptedNamingException;
 import javax.naming.ldap.Control;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import sun.misc.IOUtils;
@@ -262,6 +265,15 @@ public final class Connection implements Runnable {
                 (Class<? extends SocketFactory>)Obj.helper.loadClass(socketFactory);
             Method getDefault =
                 socketFactoryClass.getMethod("getDefault", new Class<?>[]{});
+
+            Module thisModule = Connection.class.getModule();
+            Module targetModule = socketFactoryClass.getModule();
+            if (!thisModule.canRead(targetModule)) {
+                PrivilegedAction<Void> pa
+                    = () -> { thisModule.addReads(targetModule); return null; };
+                AccessController.doPrivileged(pa);
+            }
+
             SocketFactory factory = (SocketFactory) getDefault.invoke(null, new Object[]{});
 
             // create the socket
