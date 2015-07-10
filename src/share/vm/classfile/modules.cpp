@@ -457,6 +457,16 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
   }
 }
 
+
+void Modules::add_module_exports_qualified(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
+  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+  if (to_module == NULL) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
+              "to_module is null");
+  }
+  add_module_exports(env, from_module, package, to_module);
+}
+
 void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_module) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 

@@ -1000,10 +1000,7 @@ JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
-  if (to_module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Invalid null to_module");
-  }
-  Modules::add_module_exports(env, from_module, package, to_module);
+  Modules::add_module_exports_qualified(env, from_module, package, to_module);
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))

@@ -30,14 +30,14 @@ import static jdk.test.lib.Asserts.*;
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @modules java.base/sun.misc
- * @build AccessCheckUnqualified
+ * @build JVMAddModuleExportsToAll
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckUnqualified
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckUnqualified
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModuleExportsToAll
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModuleExportsToAll
  */
 
-public class AccessCheckUnqualified {
+public class JVMAddModuleExportsToAll {
 
     // Test a series of error conditions for API JVM_AddModuleExportsToAll()
     // and then test that a class in the unnamed module can access a package in
@@ -50,9 +50,9 @@ public class AccessCheckUnqualified {
         Object jlObject_jlrM = jlObject.getModule();
         assertNotNull(jlObject_jlrM, "jlrModule object of java.lang.Object should not be null");
 
-        // Get the class loader for AccessCheckWorks and assume it's also used to
+        // Get the class loader for JVMAddModuleExportsToAll and assume it's also used to
         // load class p2.c2.
-        ClassLoader this_cldr = AccessCheckUnqualified.class.getClassLoader();
+        ClassLoader this_cldr = JVMAddModuleExportsToAll.class.getClassLoader();
 
         // Define a module for p3.
         m1 = ModuleHelper.ModuleObject("module1", this_cldr, new String[] { "p3" });

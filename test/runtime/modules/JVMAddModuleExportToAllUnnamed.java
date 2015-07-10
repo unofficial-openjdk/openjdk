@@ -27,17 +27,17 @@
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @modules java.base/sun.misc
- * @build AccessCheckToUnnamed
+ * @build JVMAddModuleExportToAllUnnamed
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckToUnnamed
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckToUnnamed
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModuleExportToAllUnnamed
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModuleExportToAllUnnamed
  */
 
 import java.lang.reflect.Module;
 import static jdk.test.lib.Asserts.*;
 
-public class AccessCheckToUnnamed {
+public class JVMAddModuleExportToAllUnnamed {
 
     // Check that a class in a package in module1 cannot access a class
     // that is in the unnamed module if the accessing package is strict.
@@ -49,9 +49,9 @@ public class AccessCheckToUnnamed {
         Object jlObject_jlrM = jlObject.getModule();
         assertNotNull(jlObject_jlrM, "jlrModule object of java.lang.Object should not be null");
 
-        // Get the class loader for AccessCheckToUnnamed and assume it's also used to
+        // Get the class loader for JVMAddModuleExportToAllUnnamed and assume it's also used to
         // load class p1.c1.
-        ClassLoader this_cldr = AccessCheckToUnnamed.class.getClassLoader();
+        ClassLoader this_cldr = JVMAddModuleExportToAllUnnamed.class.getClassLoader();
 
         // Define a module for p1.
         m1 = ModuleHelper.ModuleObject("module1", this_cldr, new String[] { "p1" });

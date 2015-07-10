@@ -66,6 +66,17 @@ public:
   // * Package is not in module from_module.
   static void add_module_exports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
+  // This does a qualified export of package in module from_module to module
+  // to_module.  The format for the package name must use "/' not ".".
+  //
+  // Error conditions causing IlegalArgumentException to be throw :
+  // * Module from_module does not exist
+  // * Module to_module does not exist
+  // * Package is not syntactically correct
+  // * Package is not defined for from_module's class loader
+  // * Package is not in module from_module.
+  static void add_module_exports_qualified(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+
   // add_reads_module adds module to_module to the list of modules that from_module
   // can read.  If from_module is the same as to_module then this is a no-op.
   // If to_module is null then from_module is marked as a loose module (meaning that

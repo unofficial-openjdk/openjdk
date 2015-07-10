@@ -36,7 +36,6 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
-#include "prims/jvm.h"
 #include "prims/wbtestmethods/parserTests.hpp"
 #include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
@@ -1107,9 +1106,7 @@ WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring v
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JVM_ API
-  JVM_AddModuleExports(env, from_module, package, to_module);
-  ThreadInVMfromNative ttvfn(thread); // back to VM
+  Modules::add_module_exports_qualified(env, from_module, package, to_module);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
