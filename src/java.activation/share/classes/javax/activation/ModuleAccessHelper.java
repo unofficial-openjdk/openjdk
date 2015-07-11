@@ -25,8 +25,6 @@
 
 package javax.activation;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,10 +49,7 @@ class ModuleAccessHelper {
         if (!sourceModule.canRead(targetModule)) {
             logger.log(Level.FINE, "Adding module [{0}] to module [{1}]'s reads",
                        new Object[]{targetModule.getName(), sourceModule.getName()});
-            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                sourceModule.addReads(targetModule);
-                return null;
-            });
+            sourceModule.addReads(targetModule);
         }
     }
 
