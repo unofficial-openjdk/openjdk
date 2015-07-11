@@ -24,8 +24,6 @@
  */
 package com.sun.xml.internal;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.lang.reflect.Module;
 
 public final class Modules {
@@ -38,8 +36,6 @@ public final class Modules {
         Module module = javax.xml.XMLConstants.class.getModule();
         if (module.canRead(targetModule))
             return;
-        PrivilegedAction<Void> pa =
-            () -> { module.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
+        module.addReads(targetModule);
     }
 }
