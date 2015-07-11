@@ -711,16 +711,15 @@ public final class OCSPResponse {
                 }
                 DEBUG.println("OCSP response validity interval is from " +
                               thisUpdate + until);
+                DEBUG.println("Checking validity of OCSP response on: " +
+                    new Date(now));
             }
-            // Check that the test date is within the validity interval
-            if ((thisUpdate != null && nowPlusSkew.before(thisUpdate)) ||
-                (nextUpdate != null && nowMinusSkew.after(nextUpdate))) {
             // Check that the test date is within the validity interval:
             //   [ thisUpdate - MAX_CLOCK_SKEW,
             //     MAX(thisUpdate, nextUpdate) + MAX_CLOCK_SKEW ]
             if (nowPlusSkew.before(thisUpdate) ||
                 nowMinusSkew.after(
-                    nextUpdate != null ? nextUpdate : thisUpdate))
+                    nextUpdate != null ? nextUpdate : thisUpdate)) {
 
                 if (DEBUG != null) {
                     DEBUG.println("Response is unreliable: its validity " +
