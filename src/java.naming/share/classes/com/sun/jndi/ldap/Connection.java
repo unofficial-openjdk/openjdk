@@ -34,8 +34,6 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import javax.net.ssl.SSLSocket;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
@@ -268,11 +266,7 @@ public final class Connection implements Runnable {
 
             Module thisModule = Connection.class.getModule();
             Module targetModule = socketFactoryClass.getModule();
-            if (!thisModule.canRead(targetModule)) {
-                PrivilegedAction<Void> pa
-                    = () -> { thisModule.addReads(targetModule); return null; };
-                AccessController.doPrivileged(pa);
-            }
+            thisModule.addReads(targetModule);
 
             SocketFactory factory = (SocketFactory) getDefault.invoke(null, new Object[]{});
 

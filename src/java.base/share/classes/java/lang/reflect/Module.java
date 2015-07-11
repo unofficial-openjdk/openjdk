@@ -54,6 +54,8 @@ import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 
 /**
@@ -242,10 +244,11 @@ public final class Module {
      * reads all unnamed modules (both present and future) in the Java
      * virtual machine. </p>
      *
-     * <p> If there is a security manager then its {@code checkPermission}
+     * <p> If there is a security manager, and the caller of this method is not
+     * in this module, then the security manager's {@code checkPermission}
      * method is called with a {@code ReflectPermission("addReadsModule")}
-     * permission to check that the caller is allowed to change the
-     * readability graph. </p>
+     * permission to check that the caller is allowed to change the readability
+     * graph. </p>
      *
      * @return this module
      *
@@ -254,13 +257,19 @@ public final class Module {
      *
      * @see #canRead
      */
+    @CallerSensitive
     public Module addReads(Module target) {
         if (target != this && this.isNamed()) {
+
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                ReflectPermission perm = new ReflectPermission("addReadsModule");
-                sm.checkPermission(perm);
+                Module caller = Reflection.getCallerClass().getModule();
+                if (caller != this) {
+                    ReflectPermission perm = new ReflectPermission("addReadsModule");
+                    sm.checkPermission(perm);
+                }
             }
+
             implAddReads(target, true);
         }
         return this;

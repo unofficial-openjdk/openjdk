@@ -39,7 +39,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
-import java.lang.reflect.Module;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -466,7 +465,7 @@ public abstract class Toolkit {
     private static void fallbackToLoadClassForAT(String atName) {
         try {
             Class<?> c = Class.forName(atName, false, ClassLoader.getSystemClassLoader());
-            ensureReadable(c.getModule());
+            Toolkit.class.getModule().addReads(c.getModule());
             c.newInstance();
         } catch (ClassNotFoundException e) {
             newAWTError(e, "Assistive Technology not found: " + atName);
@@ -477,13 +476,6 @@ public abstract class Toolkit {
         } catch (Exception e) {
             newAWTError(e, "Error trying to install Assistive Technology: " + atName);
         }
-    }
-
-    private static void ensureReadable(Module targetModule) {
-        Module thisModule = Toolkit.class.getModule();
-        PrivilegedAction<Void> pa =
-                () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
     }
 
     /**

@@ -25,8 +25,6 @@
 package com.sun.beans.util;
 
 import java.beans.Beans;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.lang.reflect.Module;
 
 public final class Modules {
@@ -36,12 +34,7 @@ public final class Modules {
      * Ensures that the java.desktop module reads the targert module.
      */
     public static void ensureReadable(Module targetModule) {
-        Module beansModule = Beans.class.getModule();
-        if (beansModule.canRead(targetModule))
-            return;
-        PrivilegedAction<Void> pa =
-            () -> { beansModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
+        Beans.class.getModule().addReads(targetModule);
     }
 
     /**

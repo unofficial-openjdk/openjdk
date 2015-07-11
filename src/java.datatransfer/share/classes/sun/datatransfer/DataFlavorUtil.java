@@ -40,8 +40,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -846,9 +844,7 @@ public class DataFlavorUtil {
 
         private static void ensureReadable(Module targetModule) {
             Module thisModule = DataFlavor.class.getModule();
-            PrivilegedAction<Void> pa =
-                    () -> { thisModule.addReads(targetModule); return null; };
-            AccessController.doPrivileged(pa);
+            thisModule.addReads(targetModule);
         }
     }
 }

@@ -55,8 +55,6 @@ import javax.management.RuntimeOperationsException;
 import sun.reflect.misc.ConstructorUtil;
 import sun.reflect.misc.ReflectUtil;
 
-import com.sun.jmx.util.Modules;
-
 /**
  * Implements the MBeanInstantiator interface. Provides methods for
  * instantiating objects, finding the class given its name and using
@@ -761,13 +759,13 @@ public class MBeanInstantiator {
     }
 
     private static void ensureClassAccess(Class<?> clazz)
-            throws IllegalAccessException
+        throws IllegalAccessException
     {
         int mod = clazz.getModifiers();
         if (!Modifier.isPublic(mod)) {
             throw new IllegalAccessException("Class is not public and can't be instantiated");
         }
-        Modules.ensureReadable(clazz.getModule());
+        MBeanInstantiator.class.getModule().addReads(clazz.getModule());
     }
 
     private ClassLoader getClassLoader(final ObjectName name) {

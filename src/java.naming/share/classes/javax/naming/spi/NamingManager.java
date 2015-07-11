@@ -25,8 +25,6 @@
 
 package javax.naming.spi;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -918,8 +916,6 @@ public class NamingManager {
 
     private static void ensureReadable(Module targetModule) {
         Module thisModule = NamingManager.class.getModule();
-        PrivilegedAction<Void> pa =
-             () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
+        thisModule.addReads(targetModule);
     }
 }

@@ -59,7 +59,6 @@ import sun.awt.OSInfo;
 import sun.security.action.GetPropertyAction;
 import sun.swing.SwingUtilities2;
 import java.lang.reflect.Method;
-import java.lang.reflect.Module;
 import java.util.HashMap;
 import sun.awt.AppContext;
 import sun.awt.AWTAccessor;
@@ -584,7 +583,7 @@ public class UIManager implements Serializable
         }
         else {
             Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
-            ensureReadable(lnfClass.getModule());
+            UIManager.class.getModule().addReads(lnfClass.getModule());
             setLookAndFeel((LookAndFeel)(lnfClass.newInstance()));
         }
     }
@@ -1053,7 +1052,7 @@ public class UIManager implements Serializable
             String className = getLAFState().swingProps.getProperty(multiplexingLAFKey, defaultName);
             try {
                 Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
-                ensureReadable(lnfClass.getModule());
+                UIManager.class.getModule().addReads(lnfClass.getModule());
                 multiLookAndFeel = (LookAndFeel)lnfClass.newInstance();
             } catch (Exception exc) {
                 System.err.println("UIManager: failed loading " + className);
@@ -1499,16 +1498,5 @@ public class UIManager implements Serializable
                 });
         AWTAccessor.getComponentAccessor().
             setRequestFocusController(JComponent.focusController);
-    }
-
-    /**
-     * The java.desktop module needs to read the module with the LnF
-     * class.
-     */
-    private static void ensureReadable(Module targetModule) {
-        Module thisModule = UIManager.class.getModule();
-        PrivilegedAction<Void> pa =
-            () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
     }
 }

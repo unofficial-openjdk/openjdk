@@ -1927,12 +1927,7 @@ public class LogManager {
     }
 
     static void ensureReadable(Module targetModule) {
-        Module thisModule = LogManager.class.getModule();
-        if (thisModule.canRead(targetModule))
-            return;
-        PrivilegedAction<Void> pa =
-            () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
+        LogManager.class.getModule().addReads(targetModule);
     }
 
 }

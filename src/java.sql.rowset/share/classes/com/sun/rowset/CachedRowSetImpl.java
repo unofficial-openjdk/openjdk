@@ -26,8 +26,6 @@
 package com.sun.rowset;
 
 import java.lang.reflect.Module;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.sql.*;
 import javax.sql.*;
 import java.io.*;
@@ -2983,12 +2981,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     }
 
     private static void ensureReadable(Module targetModule) {
-        Module thisModule = CachedRowSetImpl.class.getModule();
-        if (thisModule.canRead(targetModule))
-            return;
-        PrivilegedAction<Void> pa =
-            () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
+        CachedRowSetImpl.class.getModule().addReads(targetModule);
     }
 
     /**

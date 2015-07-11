@@ -25,7 +25,6 @@
 
 package javax.sql.rowset;
 
-import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.sql.SQLException;
@@ -275,17 +274,8 @@ public class RowSetProvider {
         }
 
         ReflectUtil.checkPackageAccess(factoryClass);
-        ensureReadable(factoryClass.getModule());
+        RowSetProvider.class.getModule().addReads(factoryClass.getModule());
         return factoryClass;
-    }
-
-    private static void ensureReadable(Module targetModule) {
-        Module thisModule = RowSetProvider.class.getModule();
-        if (thisModule.canRead(targetModule))
-            return;
-        PrivilegedAction<Void> pa =
-            () -> { thisModule.addReads(targetModule); return null; };
-        AccessController.doPrivileged(pa);
     }
 
     /**
