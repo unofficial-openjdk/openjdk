@@ -1956,14 +1956,13 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   oop methodname = StringTable::intern(sym, CHECK_0);
   java_lang_StackTraceElement::set_methodName(element(), methodname);
 
-  // Fill in module name
+  // Fill in module name and version
   ModuleEntry* module = holder->module();
   if (module->is_named()) {
-    int len = module->name()->utf8_length() + module->version()->utf8_length() + 1 + 1;
-    char* buf = NEW_RESOURCE_ARRAY(char, len);
-    jio_snprintf(buf, len, "%s@%s", module->name()->as_utf8(), module->version()->as_utf8());
-    oop module_id = StringTable::intern(buf, CHECK_0);
-    java_lang_StackTraceElement::set_moduleId(element(), module_id);
+    oop module_name = StringTable::intern(module->name()->as_utf8(), CHECK_0);
+    java_lang_StackTraceElement::set_moduleName(element(), module_name);
+    oop module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+    java_lang_StackTraceElement::set_moduleVersion(element(), module_version);
   }
 
   if (!version_matches(method, version)) {
@@ -3388,7 +3387,8 @@ int java_lang_StackTraceElement::declaringClass_offset;
 int java_lang_StackTraceElement::methodName_offset;
 int java_lang_StackTraceElement::fileName_offset;
 int java_lang_StackTraceElement::lineNumber_offset;
-int java_lang_StackTraceElement::moduleId_offset;
+int java_lang_StackTraceElement::moduleName_offset;
+int java_lang_StackTraceElement::moduleVersion_offset;
 int java_lang_AssertionStatusDirectives::classes_offset;
 int java_lang_AssertionStatusDirectives::classEnabled_offset;
 int java_lang_AssertionStatusDirectives::packages_offset;
@@ -3418,8 +3418,12 @@ void java_lang_StackTraceElement::set_lineNumber(oop element, int value) {
   element->int_field_put(lineNumber_offset, value);
 }
 
-void java_lang_StackTraceElement::set_moduleId(oop element, oop value) {
-  element->obj_field_put(moduleId_offset, value);
+void java_lang_StackTraceElement::set_moduleName(oop element, oop value) {
+  element->obj_field_put(moduleName_offset, value);
+}
+
+void java_lang_StackTraceElement::set_moduleVersion(oop element, oop value) {
+  element->obj_field_put(moduleVersion_offset, value);
 }
 
 
@@ -3516,7 +3520,8 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_System::static_security_offset = java_lang_System::hc_static_security_offset * x;
 
   // java_lang_StackTraceElement
-  java_lang_StackTraceElement::moduleId_offset = java_lang_StackTraceElement::hc_moduleId_offset * x + header;
+  java_lang_StackTraceElement::moduleName_offset = java_lang_StackTraceElement::hc_moduleName_offset * x + header;
+  java_lang_StackTraceElement::moduleVersion_offset = java_lang_StackTraceElement::hc_moduleVersion_offset * x + header;
   java_lang_StackTraceElement::declaringClass_offset = java_lang_StackTraceElement::hc_declaringClass_offset  * x + header;
   java_lang_StackTraceElement::methodName_offset = java_lang_StackTraceElement::hc_methodName_offset * x + header;
   java_lang_StackTraceElement::fileName_offset   = java_lang_StackTraceElement::hc_fileName_offset   * x + header;
