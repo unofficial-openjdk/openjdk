@@ -36,7 +36,6 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import javax.swing.plaf.ComponentUI;
 import javax.swing.border.Border;

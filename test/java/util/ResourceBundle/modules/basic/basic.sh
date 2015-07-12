@@ -82,11 +82,9 @@ $JAR -cf extra.jar -C classes jdk/test/resources/eu \
 $JAR -tvf extra.jar
 
 $JAVA ${EXTRA_JAVA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
-
-# properties files on the class path should be picked up.
-$JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
-
-# classes on the class path shouldn't.
-! $JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
+    # properties files on the class path should be picked up.
+    $JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
+    # classes on the class path shouldn't.
+    ! $JAVA ${EXTRA_JAVA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
 
 exit $?

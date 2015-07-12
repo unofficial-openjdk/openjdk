@@ -919,14 +919,8 @@ public class PolicyFile extends java.security.Policy {
             throw new ClassCastException(type + " is not a Permission");
         }
 
-        // Allow the base module to read the permission's module
-        Module pm = pc.getModule();
-        Module base = Object.class.getModule();
-        PrivilegedAction<Void> pa = () -> {
-            base.addReads(pm);
-            return null;
-        };
-        AccessController.doPrivileged(pa);
+        // base module needs to read the permission's module
+        PolicyFile.class.getModule().addReads(pc.getModule());
 
         if (name == null && actions == null) {
             try {
@@ -1335,14 +1329,8 @@ public class PolicyFile extends java.security.Policy {
                                                      " is not a Principal");
                     }
 
-                    // Allow the base module to read the principal's module
-                    Module pm = pClass.getModule();
-                    Module base = Object.class.getModule();
-                    PrivilegedAction<Void> pa = () -> {
-                        base.addReads(pm);
-                        return null;
-                    };
-                    AccessController.doPrivileged(pa);
+                    // base module needs to read the principal's module
+                    PolicyFile.class.getModule().addReads(pClass.getModule());
 
                     Constructor<?> c = pClass.getConstructor(PARAMS1);
                     p = (Principal)c.newInstance(new Object[] {

@@ -30,6 +30,9 @@ sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
 
+# 8130665
+java/lang/SecurityManager/CheckSecurityProvider.java		macosx-all
+
 ############################################################################
 
 # i18n/ResourceBundle/CLDR breakage
