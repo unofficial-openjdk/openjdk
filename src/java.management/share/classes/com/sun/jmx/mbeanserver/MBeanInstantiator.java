@@ -64,7 +64,6 @@ import sun.reflect.misc.ReflectUtil;
  * @since 1.5
  */
 public class MBeanInstantiator {
-
     private final ModifiableClassLoaderRepository clr;
     //    private MetaData meta = null;
 
