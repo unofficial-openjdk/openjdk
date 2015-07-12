@@ -62,20 +62,6 @@ GENSRC_JDK_JDI += $(GENSRC_JDWP)
 
 ################################################################################
 
-define process-provider
-	$(MKDIR) -p $(@D)
-	$(CAT) $^ | $(SED) -e "s/^#\[$(OPENJDK_TARGET_OS)\]//" > $@
-endef
-
-# Filter com.sun.jdi.connect.Connector
-$(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector: \
-    $(JDK_TOPDIR)/src/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector
-	$(process-provider)
-
-GENSRC_JDK_JDI += $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector
-
-################################################################################
-
 include GensrcProperties.gmk
 
 $(eval $(call SetupCompileProperties,COMPILE_PROPERTIES, \
