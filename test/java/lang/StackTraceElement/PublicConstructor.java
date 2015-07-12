@@ -41,10 +41,16 @@ public class PublicConstructor {
             throw new RuntimeException("1");
         if (ste.isNativeMethod())
             throw new RuntimeException("2");
-        StackTraceElement ste2 = new StackTraceElement("jdk.module@9.0",
-                "com.acme.Widget", "frobnicate", "Widget.java", 42);
+        StackTraceElement ste2
+            = new StackTraceElement("jdk.module",
+                                    "9.0",
+                                    "com.acme.Widget",
+                                    "frobnicate",
+                                    "Widget.java",
+                                    42);
         if (!(ste2.getClassName().equals("com.acme.Widget")  &&
-                ste2.getModuleId().equals("jdk.module@9.0") &&
+                ste2.getModuleName().equals("jdk.module") &&
+                ste2.getModuleVersion().equals("9.0") &&
                 ste2.getFileName().equals("Widget.java") &&
                 ste2.getMethodName().equals("frobnicate") &&
                 ste2.getLineNumber() == 42))
