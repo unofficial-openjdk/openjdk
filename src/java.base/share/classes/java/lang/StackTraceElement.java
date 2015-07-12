@@ -260,8 +260,9 @@ public final class StackTraceElement implements java.io.Serializable {
      * <pre>{@code
      *     equals(a.getFileName(), b.getFileName()) &&
      *     a.getLineNumber() == b.getLineNumber()) &&
+     *     equals(a.getModuleName(), b.getModuleName()) &&
+     *     equals(a.getModuleVersion(), b.getModuleVersion()) &&
      *     equals(a.getClassName(), b.getClassName()) &&
-     *     equals(a.getModuleId(), b.getModuleId()) &&
      *     equals(a.getMethodName(), b.getMethodName())
      * }</pre>
      * where {@code equals} has the semantics of {@link
