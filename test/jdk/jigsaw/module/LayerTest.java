@@ -48,18 +48,6 @@ import static org.testng.Assert.*;
 public class LayerTest {
 
     /**
-     * No-op modular-capable ClassLoader
-     */
-    static class TestClassLoader
-        extends ClassLoader implements ModuleCapableLoader
-    {
-        TestClassLoader() { }
-
-        @Override
-        public void register(ModuleReference mref) { }
-    }
-
-    /**
      * Exercise Layer.bootLayer
      */
     public void testBootLayer() {
@@ -132,9 +120,9 @@ public class LayerTest {
                                                  "m1");
 
         // map each module to its own class loader for this test
-        ClassLoader loader1 = new TestClassLoader();
-        ClassLoader loader2 = new TestClassLoader();
-        ClassLoader loader3 = new TestClassLoader();
+        ClassLoader loader1 = new ModuleClassLoader();
+        ClassLoader loader2 = new ModuleClassLoader();
+        ClassLoader loader3 = new ModuleClassLoader();
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", loader1);
         map.put("m2", loader2);
@@ -189,7 +177,7 @@ public class LayerTest {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        ClassLoader loader = new TestClassLoader();
+        ClassLoader loader = new ModuleClassLoader();
 
         Layer layer = Layer.create(cf, m -> loader);
 
@@ -234,11 +222,11 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 2);
 
         // one loader per module, should be okay
-        Layer.create(cf, m -> new TestClassLoader());
+        Layer.create(cf, m -> new ModuleClassLoader());
 
         // same class loader
         try {
-            ClassLoader loader = new TestClassLoader();
+            ClassLoader loader = new ModuleClassLoader();
             Layer.create(cf, m -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
@@ -268,13 +256,13 @@ public class LayerTest {
 
         // one loader per module
         try {
-            Layer.create(cf, m -> new TestClassLoader());
+            Layer.create(cf, m -> new ModuleClassLoader());
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
 
         // same class loader
         try {
-            ClassLoader loader = new TestClassLoader();
+            ClassLoader loader = new ModuleClassLoader();
             Layer.create(cf, m -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
@@ -313,13 +301,13 @@ public class LayerTest {
 
         // one loader per module
         try {
-            Layer.create(cf, m -> new TestClassLoader());
+            Layer.create(cf, m -> new ModuleClassLoader());
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
 
         // same class loader
         try {
-            ClassLoader loader = new TestClassLoader();
+            ClassLoader loader = new ModuleClassLoader();
             Layer.create(cf, m -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
@@ -360,11 +348,11 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 4);
 
         // one loader per module
-        Layer.create(cf, m -> new TestClassLoader());
+        Layer.create(cf, m -> new ModuleClassLoader());
 
         // m1 & m2 in one loader, m3 & m4 in another loader
-        ClassLoader loader1 = new TestClassLoader();
-        ClassLoader loader2 = new TestClassLoader();
+        ClassLoader loader1 = new ModuleClassLoader();
+        ClassLoader loader2 = new ModuleClassLoader();
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", loader1);
         map.put("m2", loader1);
@@ -374,7 +362,7 @@ public class LayerTest {
 
         // same loader
         try {
-            ClassLoader loader = new TestClassLoader();
+            ClassLoader loader = new ModuleClassLoader();
             Layer.create(cf, m -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
@@ -398,7 +386,7 @@ public class LayerTest {
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
         assertTrue(cf.descriptors().size() == 1);
 
-        Layer.create(cf, m -> new TestClassLoader());
+        Layer.create(cf, m -> new ModuleClassLoader());
     }
 
     /**
@@ -419,7 +407,7 @@ public class LayerTest {
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
         assertTrue(cf.descriptors().size() == 1);
 
-        Layer.create(cf, m -> new TestClassLoader());
+        Layer.create(cf, m -> new ModuleClassLoader());
     }
 
     /**
@@ -449,7 +437,7 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 3);
 
         // each module gets its own loader
-        Layer.create(cf, m -> new TestClassLoader());
+        Layer.create(cf, m -> new ModuleClassLoader());
     }
 
     /**
