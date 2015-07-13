@@ -21,149 +21,289 @@
  * questions.
  */
 
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
+
+import jdk.internal.module.ModuleInfoWriter;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 /**
- * Basic tests for ModuleFinder
+ * Basic tests for java.lang.module.ModuleFinder
  */
+
 @Test
 public class ModuleFinderTest {
-    /*
-     * Verifies number and names of the module references available in a finder.
-     */
-    private static void assertModules(ModuleFinder finder, String... modules) {
-        assertEquals(finder.findAll().size(), modules.length);
-        for (String m : modules) {
-            assertTrue(finder.find(m) != null);
-        }
-    }
 
-    /*
-     * Create a descriptor for testing with a given name.
+    /**
+     * Test ModuleFinder.ofInstalled
      */
-    private static ModuleDescriptor build(String name) {
-        return new ModuleDescriptor.Builder(name).build();
+    public void testOfInstalled() {
+
+        ModuleFinder finder = ModuleFinder.ofInstalled();
+
+        assertTrue(finder.find("java.se").isPresent());
+        assertTrue(finder.find("java.base").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        Set<String> names = finder.findAll().stream()
+            .map(ModuleReference::descriptor)
+            .map(ModuleDescriptor::name)
+            .collect(Collectors.toSet());
+        assertTrue(names.contains("java.se"));
+        assertTrue(names.contains("java.base"));
+        assertFalse(names.contains("java.rhubarb"));
     }
 
     /**
-     * One finder used as left and also as right for a concatenation.
+     * Test ModuleFinder.of with zero directories
      */
-    public void testDuplicateSame() {
-        ModuleFinder finder = ModuleLibrary.of(build("m1"));
-        ModuleFinder concat = ModuleFinder.concat(finder, finder);
-        assertModules(concat, "m1");
+    public void testZeroDirectories() {
+
+        ModuleFinder finder = ModuleFinder.of();
+        assertTrue(finder.findAll().isEmpty());
+        assertFalse(finder.find("java.rhubarb").isPresent());
     }
 
     /**
-     * Module references with the same name are available from both left and right
-     * inner finders.
+     * Test ModuleFinder.of with one directory
      */
-    public void testDuplicateDifferent() {
-        ModuleDescriptor descriptor1 = build("m1");
-        ModuleFinder finder1 = ModuleLibrary.of(descriptor1);
-        ModuleFinder finder2 = ModuleLibrary.of(build("m1"));
-        ModuleFinder concat = ModuleFinder.concat(finder1, finder2);
-        assertModules(concat, "m1");
-        assertSame(concat.find("m1").get().descriptor(), descriptor1);
+    public void testOneDirectory() throws Exception {
+
+        Path dir = Files.createTempDirectory("mods");
+        createExplodedModule(dir.resolve("m1"), "m1");
+        createExplodedModule(dir.resolve("m2"), "m2");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        assertTrue(finder.findAll().size() == 2);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
     }
 
     /**
-     * Concatenates two reasonably big finders with uniquely named descriptors.
+     * Test ModuleFinder.of with two directories
      */
-    public void testReasonablyBig() {
-        final int BIG_NUMBER_OF_MODULES = 0x400;
-        List<ModuleDescriptor> leftFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
-        List<ModuleDescriptor> rightFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
-        for (int i = 0; i < BIG_NUMBER_OF_MODULES; i++) {
-            leftFinders.add(build("m" + i*2));
-            rightFinders.add(build("m" + (i*2 + 1)));
-        }
-        ModuleLibrary left = ModuleLibrary.of(
-            leftFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
-        ModuleLibrary right = ModuleLibrary.of(
-            rightFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
-        ModuleFinder concat = ModuleFinder.concat(left, right);
-        assertEquals(concat.findAll().size(), BIG_NUMBER_OF_MODULES*2);
-        for (int i = 0; i < BIG_NUMBER_OF_MODULES*2; i++) {
-            assertNotNull(concat.find("m" + i), String.format("%x'th module", i));
-        }
+    public void testTwoDirectories() throws Exception {
+
+        Path dir1 = Files.createTempDirectory("mods1");
+        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+
+        Path dir2 = Files.createTempDirectory("mods2");
+        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        createExplodedModule(dir2.resolve("m3"), "m3");
+        createExplodedModule(dir2.resolve("m4"), "m4");
+
+        ModuleFinder finder = ModuleFinder.of(dir1, dir2);
+        assertTrue(finder.findAll().size() == 4);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.find("m3").isPresent());
+        assertTrue(finder.find("m4").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        // check that m1@1.0 (and not m1@2.0) is found
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+        assertEquals(m1.version().get().toString(), "1.0");
+
+        // check that m2@1.0 (and not m2@2.0) is found
+        ModuleDescriptor m2 = finder.find("m2").get().descriptor();
+        assertEquals(m2.version().get().toString(), "1.0");
     }
 
     /**
-     * Makes an inner finder to throw an exception, verifies an exception is thrown
-     * from the concatenation.
+     * Test ModuleFinder.of with a directory that contains two
+     * versions of the same module
      */
-    public void testException() {
-        final String ALL_MODULES_MSG = "from findAll";
-        final String FIND_MSG = "from find";
-        class BrokenFinder implements ModuleFinder {
-            @Override
-            public Set<ModuleReference> findAll() {
-                throw new RuntimeException(ALL_MODULES_MSG);
-            }
-            @Override
-            public Optional<ModuleReference> find(String name) {
-                throw new RuntimeException(FIND_MSG);
-            }
-        }
-        ModuleFinder concat =
-            ModuleFinder.concat(ModuleFinder.empty(),
-                                        new BrokenFinder());
+    public void testDuplicateModules() throws Exception {
+
+        Path dir = Files.createTempDirectory("mods");
+        createModularJar(dir.resolve("m1@1.0.jar"), "m1");
+        createModularJar(dir.resolve("m1@2.0.jar"), "m1");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
         try {
-            concat.findAll();
-            fail("No exception from findAll()");
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(ALL_MODULES_MSG));
+            finder.find("m1");
+            assertTrue(false);
+        } catch (RuntimeException expected) {
+            // expected exception is TBD
         }
+
+        finder = ModuleFinder.of(dir);
         try {
-            concat.find("non-existent module");
-            fail("No exception from find(String)");
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(FIND_MSG));
+            finder.findAll();
+            assertTrue(false);
+        } catch (RuntimeException expected) {
+            // expected exception is TBD
         }
     }
 
     /**
-     * Concatenates two empty finders, checks that both are used properly.
+     * Test ModuleFinder.of with a bad (does not exist) directory
+     */
+    public void testBadDirectory() throws Exception {
+        Path dir = Files.createTempDirectory("mods");
+        Files.delete(dir);
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        try {
+            finder.find("java.rhubarb");
+            assertTrue(false);
+        } catch (UncheckedIOException expected) { }
+
+        finder = ModuleFinder.of(dir);
+        try {
+            finder.findAll();
+            assertTrue(false);
+        } catch (UncheckedIOException expected) { }
+
+    }
+
+    /**
+     * Test ModuleFinder.concat
+     */
+    public void testConcat() throws Exception {
+
+        Path dir1 = Files.createTempDirectory("mods1");
+        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+
+        Path dir2 = Files.createTempDirectory("mods2");
+        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        createExplodedModule(dir2.resolve("m3"), "m3");
+        createExplodedModule(dir2.resolve("m4"), "m4");
+
+        ModuleFinder finder1 = ModuleFinder.of(dir1);
+        ModuleFinder finder2 = ModuleFinder.of(dir2);
+
+        ModuleFinder finder = ModuleFinder.concat(finder1, finder2);
+        assertTrue(finder.findAll().size() == 4);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.find("m3").isPresent());
+        assertTrue(finder.find("m4").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        // check that m1@1.0 (and not m1@2.0) is found
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+        assertEquals(m1.version().get().toString(), "1.0");
+
+        // check that m2@1.0 (and not m2@2.0) is found
+        ModuleDescriptor m2 = finder.find("m2").get().descriptor();
+        assertEquals(m2.version().get().toString(), "1.0");
+    }
+
+    /**
+     * Test ModuleFinder.empty
      */
     public void testEmpty() {
-        class CountingFinder implements ModuleFinder {
-            final AtomicInteger findAllCallCount = new AtomicInteger(0);
-            final Vector findCalls = new Vector();
-            final ModuleFinder inner;
-            CountingFinder(ModuleFinder inner) {
-                this.inner = inner;
-            }
-            @Override
-            public Set<ModuleReference> findAll() {
-                findAllCallCount.incrementAndGet();
-                return inner.findAll();
-            }
-            @Override
-            public Optional<ModuleReference> find(String name) {
-                findCalls.add(name);
-                return inner.find(name);
+        ModuleFinder finder = ModuleFinder.empty();
+        assertTrue(finder.findAll().isEmpty());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+    }
+
+    /**
+     * Test null handling
+     */
+    public void testNulls() {
+
+        try {
+            ModuleFinder.ofInstalled().find(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+        try {
+            ModuleFinder.of().find(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+        try {
+            ModuleFinder.empty().find(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+        try {
+            ModuleFinder.of(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+        // concat
+        ModuleFinder finder = ModuleFinder.of();
+        try {
+            ModuleFinder.concat(finder, null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+        try {
+            ModuleFinder.concat(null, finder);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+    }
+
+
+
+    /**
+     * Creates an exploded module in the given directory and containing a
+     * module descriptor with the given module name.
+     */
+    void createExplodedModule(Path dir, String mid) throws Exception {
+        ModuleDescriptor descriptor = newModuleDescriptor(mid);
+        Files.createDirectories(dir);
+        Path mi = dir.resolve("module-info.class");
+        try (OutputStream out = Files.newOutputStream(mi)) {
+            ModuleInfoWriter.write(descriptor, out);
+        }
+    }
+
+    /**
+     * Creates a JAR file with the given file path and containing a module
+     * descriptor with the given module name.
+     */
+    void createModularJar(Path jf, String mid) throws Exception {
+        ModuleDescriptor descriptor = newModuleDescriptor(mid);
+        try (OutputStream out = Files.newOutputStream(jf)) {
+            try (JarOutputStream jos = new JarOutputStream(out)) {
+                JarEntry je = new JarEntry("module-info.class");
+                jos.putNextEntry(je);
+                ModuleInfoWriter.write(descriptor, jos);
+                jos.closeEntry();
             }
         }
-        CountingFinder empty1 = new CountingFinder(ModuleFinder.empty());
-        CountingFinder empty2 = new CountingFinder(ModuleFinder.empty());
-        ModuleFinder concat = ModuleFinder.concat(empty1, empty2);
-        assertModules(concat);
-        assertEquals(empty1.findAllCallCount.get(), 1);
-        assertEquals(empty2.findAllCallCount.get(), 1);
-        assertEquals(empty1.findCalls.size(), 0);
-        assertEquals(empty2.findCalls.size(), 0);
+
+    }
+
+    /**
+     * Returns a module descriptor with a module name
+     */
+    ModuleDescriptor newModuleDescriptor(String mid) {
+        String mn;
+        String vs;
+        int i = mid.indexOf("@");
+        if (i == -1) {
+            mn = mid;
+            vs = null;
+        } else {
+            mn = mid.substring(0, i);
+            vs = mid.substring(i+1);
+        }
+        ModuleDescriptor.Builder builder
+            = new ModuleDescriptor.Builder(mn).requires("java.base");
+        if (vs != null)
+            builder.version(vs);
+        return builder.build();
     }
 }
 

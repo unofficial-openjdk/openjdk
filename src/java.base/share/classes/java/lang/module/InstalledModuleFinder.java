@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -118,6 +119,7 @@ class InstalledModuleFinder implements ModuleFinder {
 
     @Override
     public Optional<ModuleReference> find(String name) {
+        Objects.requireNonNull(name);
         return Optional.ofNullable(nameToModule.get(name));
     }
 

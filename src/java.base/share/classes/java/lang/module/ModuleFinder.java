@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,9 +56,24 @@ import java.util.stream.Stream;
  *
  * }</pre>
  *
- * @apiNote The eventual API will need to define how errors are handled, say
- * for example find lazily searching the module path and finding two modules of
- * the same name in the same directory.
+ * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
+ *
+ * @apiNote Exceptions aren't specified yet. For now the exceptions thrown are:
+ * <ul>
+ *     <li> UncheckedIOException if there is an I/O error scanning the module
+ *     path or accessing a packaged module. </li>
+ *     <li> SecurityException if the security manager denies something when
+ *     scanning the module path. </li>
+ *     <li> ClassFormatError if a module-info.class cannot be parsed. </li>
+ *     <li> IllegalArgumentException if a module descriptor cannot be
+ *     reconstituted, say for example the module name in the module-info.class
+ *     contains non-Java identifiers. </li>
+ *     <li> RuntimeException if two or more modules with the same name are
+ *     found in the same module path element. </li>
+ * </ul>
+ * The eventual spec also needs to set expectations as to what happens if
+ * a finder is used after an error occurs. Finally, null handling is not
+ * specified yet.
  *
  * @since 1.9
  */
@@ -122,14 +138,10 @@ public interface ModuleFinder {
 
     /**
      * Creates a finder that locates modules on the file system by searching a
-     * sequence of directories for module references. This method will locate
-     * modules that are packaged as modular JAR files or modules that are
-     * exploded on the file system. It may also locate modules that are
-     * packaged in other implementation specific formats.
-     *
-     * @apiNote This method needs to define how the returned finder handles
-     * I/O and other errors (a ClassFormatError when parsing a module-info.class
-     * for example).
+     * sequence of zero or more directories for module references. This method
+     * will locate modules that are packaged as modular JAR files or modules
+     * that are exploded on the file system. It may also locate modules that
+     * are packaged in other implementation specific formats.
      */
     public static ModuleFinder of(Path... dirs) {
         return new ModulePath(dirs);
@@ -144,6 +156,9 @@ public interface ModuleFinder {
     public static ModuleFinder concat(ModuleFinder first,
                                       ModuleFinder second)
     {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+
         return new ModuleFinder() {
             Set<ModuleReference> allModules;
 
@@ -179,6 +194,7 @@ public interface ModuleFinder {
     public static ModuleFinder empty() {
         return new ModuleFinder() {
             @Override public Optional<ModuleReference> find(String name) {
+                Objects.requireNonNull(name);
                 return Optional.empty();
             }
             @Override public Set<ModuleReference> findAll() {

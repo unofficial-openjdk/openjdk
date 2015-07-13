@@ -40,6 +40,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -61,8 +62,6 @@ import sun.misc.PerfCounter;
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
  * a sequence of directories for jmod, modular JAR or exploded modules.
- *
- * @apiNote This class is currently not safe for use by multiple threads.
  */
 
 class ModulePath implements ModuleFinder {
@@ -77,10 +76,15 @@ class ModulePath implements ModuleFinder {
 
     ModulePath(Path... dirs) {
         this.dirs = dirs.clone();
+        for (Path dir : this.dirs) {
+            Objects.requireNonNull(dir);
+        }
     }
 
     @Override
     public Optional<ModuleReference> find(String name) {
+        Objects.requireNonNull(name);
+
         // try cached modules
         ModuleReference m = cachedModules.get(name);
         if (m != null)
@@ -118,25 +122,31 @@ class ModulePath implements ModuleFinder {
      */
     private void scanNextDirectory() {
         if (hasNextDirectory()) {
-            Path dir = dirs[next++];
-            scan(dir);
+            Path dir = dirs[next];
+            Map<String, ModuleReference> modules = scan(dir);
+            // update cache, ignoring duplicates
+            for (Map.Entry<String, ModuleReference> e : modules.entrySet()) {
+                cachedModules.putIfAbsent(e.getKey(), e.getValue());
+            }
+            next++;
         }
     }
 
     /**
-     * Scans the given directory for jmod or exploded modules. For each module
-     * found then it enumerates its contents and creates a {@code Module} and
-     * adds it (and its URL) to the cache.
+     * Scans the given directory for modular JAR, JMOD or exploded modules.
+     *
+     * @return a map of module name to ModuleReference for the modules found
+     * in the directory
      *
      * @throws UncheckedIOException if an I/O error occurs
      * @throws RuntimeException if directory contains more than one version of
      * a module (need to decide on a better exception for this case).
      */
-    private void scan(Path dir) {
+    private Map<String, ModuleReference> scan(Path dir) {
         long t0 = System.nanoTime();
 
-        // the set of module names found in this directory
-        Set<String> namesInThisDirectory = new HashSet<>();
+        // The map of name -> mref of modules found in this directory.
+        Map<String, ModuleReference> nameToReference = new HashMap<>();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry: stream) {
@@ -163,22 +173,12 @@ class ModulePath implements ModuleFinder {
                 if (mref != null) {
                     moduleCount.increment();
 
-                    // check that there is only one version of the module
-                    // in this directory
+                    // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
-                    if (namesInThisDirectory.contains(name)) {
+                    if (nameToReference.put(name, mref) != null) {
                         throw new RuntimeException(dir +
                             " contains more than one version of " + name);
                     }
-                    namesInThisDirectory.add(name);
-
-                    // a module of this name found in a previous location
-                    // on the module path so ignore it
-                    if (cachedModules.containsKey(name))
-                        continue;
-
-                    // add the module to the cache
-                    cachedModules.put(name, mref);
                 }
             }
         } catch (IOException ioe) {
@@ -186,6 +186,9 @@ class ModulePath implements ModuleFinder {
         }
 
         scanTime.addElapsedTimeFrom(t0);
+
+        // return the map of modules found
+        return nameToReference;
     }
 
 
