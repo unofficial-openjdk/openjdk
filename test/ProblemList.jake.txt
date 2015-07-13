@@ -80,12 +80,6 @@ tools/pack200/Pack200Test.java					generic-all
 
 # svc_tools
 
-# 8129594
-sun/tools/jstatd/TestJstatdDefaults.java			generic-all
-sun/tools/jstatd/TestJstatdPort.java				generic-all
-sun/tools/jstatd/TestJstatdPortAndServer.java			generic-all
-sun/tools/jstatd/TestJstatdServer.java				generic-all
-
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
 
