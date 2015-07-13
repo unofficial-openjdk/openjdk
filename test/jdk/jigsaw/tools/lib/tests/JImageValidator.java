@@ -24,17 +24,21 @@ package tests;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import jdk.internal.jimage.BasicImageReader;
-import jdk.internal.jimage.ImageLocation;
-import com.sun.tools.classfile.ClassFile;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import com.sun.tools.classfile.ClassFile;
+import com.sun.tools.classfile.ConstantPoolException;
+import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.BasicImageWriter;
+import jdk.internal.jimage.ImageLocation;
+
 /**
  *
  * JDK Modular image validator
@@ -69,9 +73,9 @@ public class JImageValidator {
             File rootDir,
             List<String> unexpectedPaths,
             List<String> unexpectedFiles,
-            String[] expectedFiles) throws Exception {
+            String[] expectedFiles) throws IOException {
         if (!rootDir.exists()) {
-            throw new Exception("Image root dir not found " +
+            throw new IOException("Image root dir not found " +
                     rootDir.getAbsolutePath());
         }
         this.expectedLocations = expectedLocations;
@@ -82,32 +86,32 @@ public class JImageValidator {
         this.expectedFiles = expectedFiles == null ? new String[0] : expectedFiles;
     }
 
-    public void validate() throws Exception {
+    public void validate() throws IOException {
         for (String d : dirs) {
             File dir = new File(rootDir, d);
             if (!dir.isDirectory()) {
-                throw new Exception("Invalid directory " + d);
+                throw new IOException("Invalid directory " + d);
             }
         }
 
         //check all jimages
         File modules = new File(rootDir, "lib" + File.separator + "modules");
         if (modules.list() == null || modules.list().length == 0) {
-            throw new Exception("No jimage files generated");
+            throw new IOException("No jimage files generated");
         }
         List<String> seenImages = new ArrayList<>();
         seenImages.addAll(EXPECTED_JIMAGES);
         for (File f : modules.listFiles()) {
             if (f.getName().endsWith(".jimage")) {
                 if (!EXPECTED_JIMAGES.contains(f.getName())) {
-                    throw new Exception("Unexpected image " + f.getName());
+                    throw new IOException("Unexpected image " + f.getName());
                 }
                 seenImages.remove(f.getName());
                 validate(f, expectedLocations, unexpectedPaths);
             }
         }
         if (!seenImages.isEmpty()) {
-            throw new Exception("Some images not seen " + seenImages);
+            throw new IOException("Some images not seen " + seenImages);
         }
         // Check binary file
         File launcher = new File(rootDir, "bin" + File.separator + module);
@@ -115,18 +119,17 @@ public class JImageValidator {
             ProcessBuilder builder = new ProcessBuilder("sh", launcher.getAbsolutePath());
             long t = System.currentTimeMillis();
             Process process = builder.inheritIO().start();
-            int ret = process.waitFor();
+            int ret = waitFor(process);
             moduleExecutionTime += System.currentTimeMillis() - t;
             if (ret != 0) {
-                throw new Exception("Image " + module +
-                        " execution failed, check logs.");
+                throw new IOException("Image " + module + " execution failed, check logs.");
             }
         }
 
         for (String f : expectedFiles) {
             File dd = new File(rootDir, f);
             if (!dd.exists()) {
-                throw new Exception("Expected File " + f + " not found");
+                throw new IOException("Expected File " + f + " not found");
             }
         }
 
@@ -134,47 +137,55 @@ public class JImageValidator {
         try (java.util.stream.Stream<Path> stream = Files.walk(rootDir.toPath())) {
             stream.forEach((p) -> {
                 for (String u : unexpectedFiles) {
-                    if (p.toString().contains(u)) {
+                    if (p.toString().equals(u)) {
                         throw new RuntimeException("Seen unexpected path " + p);
                     }
                 }
             });
         }
 
-        File javalauncher = new File(rootDir, "bin" + File.separator +
+        File javaLauncher = new File(rootDir, "bin" + File.separator +
                 (isWindows() ? "java.exe" : "java"));
-        if (javalauncher.exists()) {
-            ProcessBuilder builder = new ProcessBuilder(javalauncher.getAbsolutePath(),
+        if (javaLauncher.exists()) {
+            ProcessBuilder builder = new ProcessBuilder(javaLauncher.getAbsolutePath(),
                     "-version");
             long t = System.currentTimeMillis();
             Process process = builder.start();
-            int ret = process.waitFor();
+            int ret = waitFor(process);
             javaExecutionTime += System.currentTimeMillis() - t;
             if (ret != 0) {
-                throw new Exception("java launcher execution failed, check logs.");
+                throw new RuntimeException("java launcher execution failed, check logs.");
             }
         } else {
-            throw new Exception("java launcher not found.");
+            throw new IOException("java launcher not found.");
         }
 
-        //Check release file
+        // Check release file
         File release = new File(rootDir, "release");
         if (!release.exists()) {
-            throw new Exception("Release file not generated");
+            throw new IOException("Release file not generated");
         } else {
             Properties props = new Properties();
             try (FileInputStream fs = new FileInputStream(release)) {
                 props.load(fs);
                 String s = props.getProperty("MODULES");
                 if (s == null) {
-                    throw new Exception("No MODULES property in release");
+                    throw new IOException("No MODULES property in release");
                 }
                 if (!s.contains(module)) {
-                    throw new Exception("Module not found in release file " + s);
+                    throw new IOException("Module not found in release file " + s);
                 }
             }
         }
 
+    }
+
+    private int waitFor(Process process) {
+        try {
+            return process.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static boolean isWindows() {
@@ -182,14 +193,14 @@ public class JImageValidator {
     }
 
     public static void validate(File jimage, List<String> expectedLocations,
-            List<String> unexpectedPaths) throws Exception {
+            List<String> unexpectedPaths) throws IOException {
         BasicImageReader reader = BasicImageReader.open(jimage.getAbsolutePath());
         // Validate expected locations
         List<String> seenLocations = new ArrayList<>();
         for (String loc : expectedLocations) {
             ImageLocation il = reader.findLocation(loc);
             if (il == null) {
-                throw new Exception("Location " + loc + " not present in " + jimage);
+                throw new IOException("Location " + loc + " not present in " + jimage);
             }
         }
         seenLocations.addAll(expectedLocations);
@@ -203,10 +214,10 @@ public class JImageValidator {
                         System.out.println("IL, compressed " +
                                 il.getCompressedSize() + " uncompressed " +
                                 il.getUncompressedSize());
-                        throw new Exception("NULL RESOURCE " + s);
+                        throw new IOException("NULL RESOURCE " + s);
                     }
                     readClass(r);
-                } catch (Exception ex) {
+                } catch (IOException ex) {
                     System.err.println(s + " ERROR " + ex);
                     throw ex;
                 }
@@ -215,13 +226,13 @@ public class JImageValidator {
                 seenLocations.remove(s);
             }
             for(String p : unexpectedPaths) {
-                if(s.contains(p)) {
-                    throw new Exception("Seen unexpected path " + s);
+                if (s.equals(p)) {
+                    throw new IOException("Seen unexpected path " + s);
                 }
             }
         }
         if (!seenLocations.isEmpty()) {
-            throw new Exception("ImageReader did not return " + seenLocations);
+            throw new IOException("ImageReader did not return " + seenLocations);
         }
     }
 
@@ -233,9 +244,11 @@ public class JImageValidator {
         return moduleExecutionTime;
     }
 
-    public static void readClass(byte[] clazz) throws Exception {
-        try (InputStream stream = new ByteArrayInputStream(clazz);) {
+    public static void readClass(byte[] clazz) throws IOException {
+        try (InputStream stream = new ByteArrayInputStream(clazz)) {
             ClassFile.read(stream);
+        } catch (ConstantPoolException e) {
+            throw new IOException(e);
         }
     }
 }

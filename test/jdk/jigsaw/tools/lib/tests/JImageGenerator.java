@@ -22,17 +22,23 @@
  */
 package tests;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,9 +46,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
 
 /**
  *
@@ -199,7 +207,7 @@ public class JImageGenerator {
     }
 
     public File generateJModule(String moduleName, String[] classNames,
-            String... dependencies) throws Exception {
+            String... dependencies) throws IOException {
         String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
                 jars.getAbsolutePath();
         File compiled = generateModule(jmodsclasses, jmodssrc, moduleName,
@@ -216,6 +224,33 @@ public class JImageGenerator {
         return buildJModule(moduleName, mainClass, compiled);
     }
 
+    public File addFiles(File module, InMemoryFile... resources) throws IOException {
+        Path tempFile = Files.createTempFile("jlink-test", "");
+        try (JarInputStream in = new JarInputStream(new FileInputStream(module));
+             JarOutputStream out = new JarOutputStream(new FileOutputStream(tempFile.toFile()))) {
+            ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                String name = entry.getName();
+                out.putNextEntry(new ZipEntry(name));
+                copy(in, out);
+                out.closeEntry();
+            }
+            for (InMemoryFile r : resources) {
+                addFile(r, out);
+            }
+        }
+        Files.move(tempFile, module.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return module;
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        int len;
+        byte[] buf = new byte[4096];
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+    }
+
     public File generateJarModule(String moduleName, String[] classNames,
             String... dependencies) throws Exception {
         String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
@@ -225,17 +260,34 @@ public class JImageGenerator {
         return buildJarModule(moduleName, compiled);
     }
 
-    public File generateImage(String[] options, String module) throws Exception {
+    public JLinkResult generateImage(String module) throws IOException {
+        return generateImage(createNewFile(images, module, ".image"), new String[0], module);
+    }
+
+    public JLinkResult generateImage(String[] options, String module) throws IOException {
+        return generateImage(createNewFile(images, module, ".image"), options, module);
+    }
+
+    public JLinkResult generateImage(File outDir, String[] options, String module) throws IOException {
         if (!getStandardJModule(module).exists() && !localModuleExists(module)) {
-            throw new Exception("No module for " + module);
+            throw new IOException("No module for " + module);
         }
-        File outDir = createNewFile(images, module, ".image");
-        jdk.tools.jlink.Main.run(optionsJLink(outDir, options, module),
-                new PrintWriter(System.out));
+        // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
+        String modulePath = stdjmods.getAbsolutePath() + File.pathSeparator +
+                jmods.getAbsolutePath() + File.pathSeparator + jars.getAbsolutePath();
+        return generateImage(outDir, modulePath, options, module);
+    }
+
+    public JLinkResult generateImage(File outDir, String modulePath, String[] options, String module) throws IOException {
+        String[] args = optionsJLink(outDir, modulePath, options, module);
+        System.out.println("jlink options: " + Arrays.toString(args));
+        StringWriter writer = new StringWriter();
+        int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
+        System.err.println(writer.toString());
         if (!outDir.exists() || outDir.list() == null || outDir.list().length == 0) {
-            throw new Exception("Error generating jimage, check log file");
+            throw new IOException("Error generating jimage, check log file");
         }
-        return outDir;
+        return new JLinkResult(exitCode, writer.toString(), outDir);
     }
 
     public File extractImageFile(File root, String imgName) throws Exception {
@@ -275,7 +327,7 @@ public class JImageGenerator {
         return outFile;
     }
 
-    private String[] optionsJLink(File output, String[] userOptions, String module) {
+    private String[] optionsJLink(File output, String modulePath, String[] userOptions, String module) {
         List<String> opt = new ArrayList<>();
 
         if (userOptions != null) {
@@ -289,12 +341,8 @@ public class JImageGenerator {
         opt.add(LIMIT_MODS_OPTION);
         opt.add(module);
         opt.add(MODULE_PATH_OPTION);
-        // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
-        opt.add(stdjmods.getAbsolutePath() + File.pathSeparator +
-                jmods.getAbsolutePath()
-                + File.pathSeparator + jars.getAbsolutePath());
+        opt.add(modulePath);
         String[] options = new String[opt.size()];
-        //System.out.println("jimage options " + opt);
         return opt.toArray(options);
     }
 
@@ -326,7 +374,7 @@ public class JImageGenerator {
 
     private static File generateModule(File classes, File src, String name,
             String[] classNames, String modulePath, String... dependencies)
-            throws Exception {
+            throws IOException {
         if (classNames == null || classNames.length == 0) {
             classNames = new String[1];
             classNames[0] = name + ".Main";
@@ -363,8 +411,7 @@ public class JImageGenerator {
         moduleMetaBuilder.append("}");
         writeFile(moduleInfo, moduleMetaBuilder.toString());
 
-        File compiled = compileModule(classes, moduleDirectory, modulePath);
-        return compiled;
+        return compileModule(classes, moduleDirectory, modulePath);
     }
 
     private static String readFromTemplate(String template, String pkgName,
@@ -384,7 +431,7 @@ public class JImageGenerator {
     }
 
     private static File compileModule(File classes, File moduleDirectory,
-            String modulePath) throws Exception {
+            String modulePath) throws IOException {
         File outDir = new File(classes, moduleDirectory.getName());
         outDir.mkdirs();
         SourceFilesVisitor visitor = new SourceFilesVisitor();
@@ -411,16 +458,15 @@ public class JImageGenerator {
         }
         if (rc != 0) {
             System.err.println(sw.toString());
-            throw new Exception("unexpected exit from javac: " + rc);
+            throw new IOException("unexpected exit from javac: " + rc);
         }
         return outDir;
     }
 
     private File buildJModule(String name, String main, File moduleDirectory) {
         File outFile = new File(jmods, name + ".jmod");
-        jdk.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main,
-                name, outFile),
-                                       new PrintWriter(System.out));
+        jdk.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main, name, outFile),
+                new PrintWriter(System.out));
         return outFile;
     }
 
@@ -489,7 +535,30 @@ public class JImageGenerator {
         }
     }
 
-    private static File createNewFile(File root, String module, String extension) {
+    private static void addFile(InMemoryFile resource, JarOutputStream target) throws IOException {
+        String fileName = resource.getPath();
+        fileName = fileName.replace("\\", "/");
+        String[] ss = fileName.split("/");
+        Path p = Paths.get("");
+        for (int i = 0; i < ss.length; ++i) {
+            if (i < ss.length - 1) {
+                if (!ss[i].isEmpty()) {
+                    p = p.resolve(ss[i]);
+                    JarEntry entry = new JarEntry(p.toString() + "/");
+                    target.putNextEntry(entry);
+                    target.closeEntry();
+                }
+            } else {
+                p = p.resolve(ss[i]);
+                JarEntry entry = new JarEntry(p.toString());
+                target.putNextEntry(entry);
+                copy(resource.getBytes(), target);
+                target.closeEntry();
+            }
+        }
+    }
+
+    public static File createNewFile(File root, String module, String extension) {
         File outDir = new File(root, module + extension);
         int i = 1;
         while (outDir.exists()) {
@@ -513,5 +582,64 @@ public class JImageGenerator {
 
     private boolean localModuleExists(String name) {
         return getJModule(name).exists() || getJarModule(name).exists();
+    }
+
+    public static class JLinkResult {
+        private final int exitCode;
+        private final String message;
+        private final File imageFile;
+
+        public JLinkResult(int exitCode, String message, File imageFile) {
+            this.exitCode = exitCode;
+            this.message = message;
+            this.imageFile = imageFile;
+        }
+
+        public int getExitCode() {
+            return exitCode;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public File getImageFile() {
+            return imageFile;
+        }
+    }
+
+    public static class InMemoryFile {
+        private final String path;
+        private final byte[] bytes;
+
+        public String getPath() {
+            return path;
+        }
+
+        public InputStream getBytes() {
+            return new ByteArrayInputStream(bytes);
+        }
+
+        public InMemoryFile(String path, byte[] bytes) {
+            this.path = path;
+            this.bytes = bytes;
+        }
+
+        public InMemoryFile(String path, InputStream is) throws IOException {
+            this(path, readAllBytes(is));
+        }
+    }
+
+    public static byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        while (true) {
+            int n = is.read(buf);
+            if (n < 0) {
+                break;
+            }
+            baos.write(buf, 0, n);
+        }
+        return baos.toByteArray();
     }
 }

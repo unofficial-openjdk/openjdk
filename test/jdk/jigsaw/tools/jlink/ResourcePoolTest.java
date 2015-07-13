@@ -20,19 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.CompressedResource;
-import jdk.tools.jlink.plugins.StringTable;
+
 /*
- * ResourcePool class unit testing.
  * @test
  * @summary Test ResourcePool class
  * @author Jean-Francois Denise
@@ -41,14 +30,26 @@ import jdk.tools.jlink.plugins.StringTable;
  * @run main ResourcePoolTest
  */
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.CompressedResource;
+import jdk.tools.jlink.plugins.StringTable;
+
 public class ResourcePoolTest {
 
-    interface ResourceAdder {
-
-        void add(ResourcePool resources, String path);
+    public static void main(String[] args) throws Exception {
+        new ResourcePoolTest().test();
     }
 
-    public static void main(String[] args) throws Exception {
+    public void test() throws Exception {
         List<String> samples = new ArrayList<>();
         samples.add("java.base");
         samples.add("java/lang/Object");
@@ -58,15 +59,14 @@ public class ResourcePoolTest {
         samples.add("javax/management/ObjectName");
         test(samples, (resources, path) -> {
             try {
-                resources.addResource(new ResourcePool.Resource(path,
-                        ByteBuffer.allocate(0)));
+                resources.addResource(new Resource(path, ByteBuffer.allocate(0)));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         });
         test(samples, (resources, path) -> {
             try {
-                resources.addTransformedResource(new ResourcePool.Resource(path,
+                resources.addTransformedResource(new Resource(path,
                         ByteBuffer.allocate(0)), ByteBuffer.allocate(56));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -75,29 +75,28 @@ public class ResourcePoolTest {
         test(samples, (resources, path) -> {
             try {
                 resources.addResource(CompressedResource.
-                        newCompressedResource(new ResourcePool.Resource(path, ByteBuffer.allocate(0)),
-                        ByteBuffer.allocate(99), "bitcruncher", null, new StringTable() {
+                        newCompressedResource(new Resource(path, ByteBuffer.allocate(0)),
+                                ByteBuffer.allocate(99), "bitcruncher", null, new StringTable() {
+                                    @Override
+                                    public int addString(String str) {
+                                        return -1;
+                                    }
 
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-        }, ByteOrder.nativeOrder()));
+                                    @Override
+                                    public String getString(int id) {
+                                        throw new UnsupportedOperationException("Not supported yet.");
+                                    }
+                                }, ByteOrder.nativeOrder()));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         });
+        checkResourcesAfterCompression();
     }
 
-    private static void test(List<String> samples, ResourceAdder adder)
-            throws Exception {
+    private void test(List<String> samples, ResourceAdder adder) {
         if (samples.isEmpty()) {
-            throw new Exception("No sample to test");
+            throw new AssertionError("No sample to test");
         }
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         for (int i = 0; i < samples.size(); i++) {
@@ -114,16 +113,84 @@ public class ResourcePoolTest {
             String path = "/" + module + "/" + clazz + ".class";
             Resource res = resources.getResource(path);
             if (res == null) {
-                throw new Exception("Resource not found " + res);
+                throw new AssertionError("Resource not found " + path);
             }
             Resource res2 = resources.getResource(clazz);
             if (res2 != null) {
-                throw new Exception("Resource found " + res2);
+                throw new AssertionError("Resource found " + clazz);
             }
         }
         if (resources.getResources().size() != samples.size() / 2) {
-            throw new Exception("Invalid number of resources");
+            throw new AssertionError("Invalid number of resources");
         }
     }
 
+    private void checkResourcesAfterCompression() throws Exception {
+        ResourcePool resources1 = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        ResourcePool.Resource res1 = new ResourcePool.Resource("/module1/toto1", ByteBuffer.allocate(0));
+        ResourcePool.Resource res2 = new ResourcePool.Resource("/module2/toto1", ByteBuffer.allocate(0));
+        resources1.addResource(res1);
+        resources1.addResource(res2);
+
+        checkResources(resources1, res1, res2);
+        ResourcePool resources2 = new ResourcePoolImpl(resources1.getByteOrder());
+        resources2.addTransformedResource(res2, ByteBuffer.allocate(7));
+        resources2.addResource(ResourcePool.CompressedResource.newCompressedResource(res1,
+                ByteBuffer.allocate(7), "zip", null, new StringTable() {
+                    @Override
+                    public int addString(String str) {
+                        return -1;
+                    }
+
+                    @Override
+                    public String getString(int id) {
+                        throw new UnsupportedOperationException("Not supported yet.");
+                    }
+                }, ByteOrder.nativeOrder()));
+        checkResources(resources2, res1, res2);
+    }
+
+    private void checkResources(ResourcePool resources, ResourcePool.Resource... expected) {
+        Map<String, Set<String>> modules = resources.getModulePackages();
+        for (ResourcePool.Resource res : expected) {
+            if (!resources.contains(res)) {
+                throw new AssertionError("Resource not found: " + res);
+            }
+
+            if (resources.getResource(res.getPath()) == null) {
+                throw new AssertionError("Resource not found: " + res);
+            }
+
+            if (!modules.containsKey(res.getModule())) {
+                throw new AssertionError("Module not found: " + res.getModule());
+            }
+
+            if (!resources.getResources().contains(res)) {
+                throw new AssertionError("Resources not found: " + res);
+            }
+
+            try {
+                resources.addResource(res);
+                throw new AssertionError(res + " already present, but an exception is not thrown");
+            } catch (Exception ex) {
+                // Expected
+            }
+        }
+
+        if (resources.isReadOnly()) {
+            throw new AssertionError("ReadOnly resources");
+        }
+
+        ((ResourcePoolImpl) resources).setReadOnly();
+        try {
+            resources.addResource(new ResourcePool.Resource("module2/toto1", ByteBuffer.allocate(0)));
+            throw new AssertionError("Pool is read-only, but an exception is not thrown");
+        } catch (Exception ex) {
+            // Expected
+        }
+    }
+
+    interface ResourceAdder {
+        void add(ResourcePool resources, String path);
+    }
 }

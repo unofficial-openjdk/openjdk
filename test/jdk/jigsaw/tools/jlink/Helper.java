@@ -20,10 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import tests.JImageGenerator;
+import tests.JImageGenerator.JLinkResult;
 import tests.JImageValidator;
 
 /**
@@ -53,6 +53,7 @@ public class Helper {
     private final List<String> bootClasses = new ArrayList<>();
 
     private final JImageGenerator generator;
+    private final File jmodsDir;
     private static FileSystem fs;
 
     public static Helper newHelper() throws Exception {
@@ -73,6 +74,7 @@ public class Helper {
     }
 
     private Helper(FileSystem fs, File jdkHome) throws Exception {
+        this.jmodsDir = JImageGenerator.getJModsDir(jdkHome);
         Consumer<Path> c = (p) -> {
             // take only the .class resources.
             if (Files.isRegularFile(p) && p.toString().endsWith(".class")
@@ -105,19 +107,51 @@ public class Helper {
                 "java.management");
     }
 
-    public final void generateJModule(String module,
+
+    public File getJModsDir() {
+        return jmodsDir;
+    }
+
+    public final File generateJModule(String module,
             String... dependencies)
-            throws Exception {
+            throws IOException {
         List<String> deps = new ArrayList<>();
         for (String d : dependencies) {
             deps.add(d);
         }
         moduleDependencies.put(module, deps);
-        generator.generateJModule(module, getClasses(module), dependencies);
+        return generator.generateJModule(module, getClasses(module), dependencies);
     }
 
-    public File generateImage(String[] options, String module) throws Exception {
+    public JLinkResult assertFailure(String modulePath, String output, String imageName, String regexp, String... options) throws IOException {
+        JLinkResult result = generateImage(output, modulePath, options, imageName);
+        if (result.getExitCode() == 0) {
+            throw new AssertionError("jlink not failed: exit code = " + result.getExitCode());
+        }
+        if (result.getExitCode() != 2) {
+            throw new AssertionError("internal error occurred: exit code = " + result.getExitCode());
+        }
+        if (!result.getMessage().matches(regexp)) {
+            System.err.println(result.getMessage());
+            throw new AssertionError("Output does not fit regexp: " + regexp);
+        }
+        return result;
+    }
+
+    public JLinkResult generateImage(String module) throws IOException {
+        return generator.generateImage(module);
+    }
+
+    public JLinkResult generateImage(String[] options, String module) throws IOException {
         return generator.generateImage(options, module);
+    }
+
+    public JLinkResult generateImage(String outDir, String[] options, String module) throws IOException {
+        return generator.generateImage(new File(outDir), options, module);
+    }
+
+    public JLinkResult generateImage(String outDir, String modulePath, String[] options, String module) throws IOException {
+        return generator.generateImage(new File(outDir), modulePath, options, module);
     }
 
     public final void generateJarModule(String module,
@@ -162,7 +196,7 @@ public class Helper {
     public File checkImage(String module,
             String[] userOptions, String[] paths,
             String[] files)
-            throws Exception {
+            throws IOException {
         return checkImage(module, userOptions, paths, files, null);
     }
 
@@ -170,7 +204,7 @@ public class Helper {
             String[] userOptions, String[] paths,
             String[] files,
             String[] expectedFiles)
-            throws Exception {
+            throws IOException {
         List<String> unexpectedPaths = new ArrayList<>();
         if (paths != null) {
             for (String un : paths) {
@@ -183,7 +217,11 @@ public class Helper {
                 unexpectedFiles.add(un);
             }
         }
-        File image = generator.generateImage(userOptions, module);
+        JLinkResult jLinkResult = generator.generateImage(userOptions, module);
+        if (jLinkResult.getExitCode() != 0) {
+            throw new RuntimeException("jlink failed: " + jLinkResult.getExitCode());
+        }
+        File image = jLinkResult.getImageFile();
         List<String> expectedLocations = new ArrayList<>();
         expectedLocations.addAll(bootClasses);
 
@@ -234,18 +272,5 @@ public class Helper {
             System.out.println("WARNING no debug extension for OS, update test");
             return ".unknown";
         }
-    }
-
-    public static byte[] readAllBytes(InputStream is) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buf = new byte[1024];
-        while (true) {
-            int n = is.read(buf);
-            if (n < 0) {
-                break;
-            }
-            baos.write(buf, 0, n);
-        }
-        return baos.toByteArray();
     }
 }

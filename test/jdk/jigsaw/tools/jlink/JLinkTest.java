@@ -20,11 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+
 import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
@@ -53,29 +58,48 @@ public class JLinkTest {
             return;
         }
 
-        int num = 0;
-        for (PluginProvider pf : ImagePluginProviderRepository.getPluginProviders(null)) {
-            num += 1;
+        {
+            // number of built-in plugins
+            List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(null);
+            if (builtInPluginsProviders.size() != 8) {
+                throw new AssertionError("Plugins not found: " + builtInPluginsProviders.size());
+            }
         }
-        if (num != 8) {
-            throw new Exception("Plugins not found. " + num);
+
+        {
+            // Help
+            StringWriter writer = new StringWriter();
+            jdk.tools.jlink.Main.run(new String[]{"--help"}, new PrintWriter(writer));
+            String output = writer.toString();
+            if (output.split("\n").length < 30) {
+                System.err.println(output);
+                throw new AssertionError("Help");
+            }
         }
 
-        // Help
-        String[] opts2 = {"--help"};
-        jdk.tools.jlink.Main.run(opts2, new PrintWriter(System.out));
+        {
+            // License files
+            String copied = "LICENSE";
+            String[] arr = copied.split(",");
+            String[] copyFiles = new String[2];
+            copyFiles[0] = "--copy-files";
+            copyFiles[1] = copied;
+            helper.checkImage("composite2", copyFiles, null, null, arr);
+        }
 
-        // List plugins
-        String[] opts = {"--list-plugins"};
-        jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
-
-        // License files
-        String copied = "LICENSE";
-        String[] arr = copied.split(",");
-        String[] copyFiles = new String[2];
-        copyFiles[0] = "--copy-files";
-        copyFiles[1] = copied;
-        helper.checkImage("composite2", copyFiles, null, null, arr);
+        {
+            // List plugins
+            StringWriter writer = new StringWriter();
+            jdk.tools.jlink.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
+            String output = writer.toString();
+            long number = Stream.of(output.split("\n"))
+                    .filter((s) -> s.matches("Plugin Name:.*"))
+                    .count();
+            if (number != 8) {
+                System.err.println(output);
+                throw new AssertionError("Plugins not found: " + number);
+            }
+        }
 
         // filter out files and resources + Skip debug + compress
         {
@@ -132,38 +156,25 @@ public class JLinkTest {
 
         // configuration
         {
-            File f = new File("embedded.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = "jdk.jlink.defaults=--strip-java-debug on --addmods toto.unknown "
-                        + "--compress-resources UNKNOWN\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--configuration", f.getAbsolutePath(),
+            Path path = Paths.get("embedded.properties");
+            Files.write(path, Collections.singletonList("jdk.jlink.defaults=--strip-java-debug on --addmods " +
+                    "toto.unknown --compress-resources UNKNOWN\n"));
+            String[] userOptions = {"--configuration", path.toAbsolutePath().toString(),
                     "--compress-resources", "off"};
-                helper.generateJModule("configembeddednocompresscomposite2", "composite2");
-                helper.checkImage("configembeddednocompresscomposite2",
-                        userOptions, null, null);
-            }
+            helper.generateJModule("configembeddednocompresscomposite2", "composite2");
+            helper.checkImage("configembeddednocompresscomposite2",
+                    userOptions, null, null);
         }
 
-        // Defaults configuration unit parsing
-        List<String> lst = new ArrayList<>();
-        lst.add("--aaaa");
-        lst.add("a,b,c,d");
-        lst.add("--koko");
-        lst.add("--bbbbb");
-        lst.add("x,y,z");
-        lst.add("--xxx");
-        lst.add("-x");
-        lst.add("--ddd");
-        lst.add("ddd");
-        lst.add("--compress");
-        lst.add("--doit");
-        String sample = "  --aaaa a, b, c, d --koko --bbbbb    x,y,z   --xxx -x  --ddd ddd --compress --doit";
-        String sample2 = sample + " ";
+        {
+            // Defaults configuration unit parsing
+            List<String> lst = Arrays.asList("--aaaa", "a,b,c,d", "--koko", "--bbbbb",
+                    "x,y,z", "--xxx", "-x", "--ddd", "ddd", "--compress", "--doit");
+            String sample = "  --aaaa a, b, c, d --koko --bbbbb    x,y,z   --xxx -x  --ddd ddd --compress --doit";
 
-        checkDefaults(sample, lst);
-        checkDefaults(sample2, lst);
+            checkDefaults(sample, lst);
+            checkDefaults(sample + " ", lst);
+        }
 
     }
 

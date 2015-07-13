@@ -102,7 +102,7 @@ public class JImageTest {
         List<String> unexpectedPaths = new ArrayList<>();
         unexpectedPaths.add(".jcov");
         unexpectedPaths.add("/META-INF/");
-        File image = helper.generateImage(null, module);
+        File image = helper.generateImage(module).getImageFile();
         File extractedDir = helper.extractImageFile(image, "bootmodules.jimage");
         File recreatedImage = helper.recreateImageFile(extractedDir);
         JImageValidator.validate(recreatedImage, bootClasses, Collections.emptyList());

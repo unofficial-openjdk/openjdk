@@ -20,8 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.File;
-import java.io.FileOutputStream;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 
@@ -41,96 +46,74 @@ import jdk.tools.jlink.plugins.PluginProvider;
  */
 public class JLinkPluginsTest {
 
+    private static String createProperties(String fileName, String content) throws IOException {
+        Path p = Paths.get(fileName);
+        Files.write(p, Collections.singletonList(content));
+        return p.toAbsolutePath().toString();
+    }
+
     public static void main(String[] args) throws Exception {
         Helper helper = Helper.newHelper();
         if (helper == null) {
             System.err.println("Test not run");
             return;
         }
-
         {
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n"
-                        + "zip." + PluginProvider.TOOL_ARGUMENT_PROPERTY
-                        + "=*Error.class,*Exception.class, ^/java.base/java/lang/*\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("zipfiltercomposite", "composite2");
-                helper.checkImage("zipfiltercomposite", userOptions, null, null);
-            }
+            String properties = createProperties("plugins,properties",
+                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n"
+                    + "zip." + PluginProvider.TOOL_ARGUMENT_PROPERTY
+                    + "=*Error.class,*Exception.class, ^/java.base/java/lang/*\n");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("zipfiltercomposite", "composite2");
+            helper.checkImage("zipfiltercomposite", userOptions, null, null);
         }
-
         {
             // Skip debug
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                        + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
-                        + "on";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("skipdebugcomposite", "composite2");
-                helper.checkImage("skipdebugcomposite", userOptions, null, null);
-            }
+            String properties = createProperties("plugins.properties",
+                    ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
+                    + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
+                    + "on");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("skipdebugcomposite", "composite2");
+            helper.checkImage("skipdebugcomposite", userOptions, null, null);
         }
         {
             // Skip debug + zip
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                        + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
-                        + "on\n"
-                        + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("zipskipdebugcomposite", "composite2");
-                helper.checkImage("zipskipdebugcomposite", userOptions, null, null);
-            }
+            String properties = createProperties("plugin.properties",
+                    ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
+                    + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
+                    + "on\n"
+                    + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("zipskipdebugcomposite", "composite2");
+            helper.checkImage("zipskipdebugcomposite", userOptions, null, null);
         }
         {
             // Filter out files
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY + "=exclude-resources\n"
-                        + "exclude-resources." + PluginProvider.TOOL_ARGUMENT_PROPERTY
-                        + "=*.jcov, */META-INF/*\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("excludecomposite", "composite2");
-                String[] res = {".jcov", "/META-INF/"};
-                helper.checkImage("excludecomposite", userOptions, res, null);
-            }
-        }
-        // Shared UTF_8 Constant Pool entries
-        {
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY
-                        + "=compact-cp\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("cpccomposite", "composite2");
-                helper.checkImage("cpccomposite", userOptions, null, null);
-            }
+            String properties = createProperties("plguins.properties",
+                    ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY + "=exclude-resources\n"
+                    + "exclude-resources." + PluginProvider.TOOL_ARGUMENT_PROPERTY
+                    + "=*.jcov, */META-INF/*\n");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("excludecomposite", "composite2");
+            String[] res = {".jcov", "/META-INF/"};
+            helper.checkImage("excludecomposite", userOptions, res, null);
         }
         {
-            File f = new File("plugins.properties");
-            f.createNewFile();
-            try (FileOutputStream stream = new FileOutputStream(f);) {
-                String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY
-                        + ".0=compact-cp\n"
-                        + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + ".1=zip\n";
-                stream.write(content.getBytes());
-                String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-                helper.generateJModule("zipcpccomposite", "composite2");
-                helper.checkImage("zipcpccomposite", userOptions, null, null);
-            }
+            // Shared UTF_8 Constant Pool entries
+            String properties = createProperties("plugins.properties",
+                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=compact-cp\n");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("cpccomposite", "composite2");
+            helper.checkImage("cpccomposite", userOptions, null, null);
+        }
+        {
+            String properties = createProperties("plugins.properties",
+                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + ".0=compact-cp\n"
+                    + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + ".1=zip\n");
+            String[] userOptions = {"--plugins-configuration", properties};
+            helper.generateJModule("zipcpccomposite", "composite2");
+            helper.checkImage("zipcpccomposite", userOptions, null, null);
         }
     }
 }
