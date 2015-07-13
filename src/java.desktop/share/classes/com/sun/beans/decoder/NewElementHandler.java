@@ -25,7 +25,6 @@
 package com.sun.beans.decoder;
 
 import com.sun.beans.finder.ConstructorFinder;
-import com.sun.beans.util.Modules;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -154,7 +153,7 @@ class NewElementHandler extends ElementHandler {
         if (constructor.isVarArgs()) {
             args = getArguments(args, constructor.getParameterTypes());
         }
-        Modules.ensureReadable(constructor.getDeclaringClass().getModule());
+        this.getClass().getModule().addReads(constructor.getDeclaringClass().getModule());
         return ValueObjectImpl.create(constructor.newInstance(args));
     }
 

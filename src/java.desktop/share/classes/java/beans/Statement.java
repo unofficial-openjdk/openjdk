@@ -37,7 +37,6 @@ import java.security.PrivilegedExceptionAction;
 import com.sun.beans.finder.ClassFinder;
 import com.sun.beans.finder.ConstructorFinder;
 import com.sun.beans.finder.MethodFinder;
-import com.sun.beans.util.Modules;
 import sun.reflect.misc.MethodUtil;
 
 /**
@@ -264,7 +263,7 @@ public class Statement {
             if (m == null) {
                 m = getMethod(Class.class, methodName, argClasses);
             }
-            Modules.ensureReadable(((Class<?>)target).getModule());
+            this.getClass().getModule().addReads(((Class<?>)target).getModule());
         }
         else {
             /*
@@ -287,7 +286,7 @@ public class Statement {
                 }
             }
             m = getMethod(target.getClass(), methodName, argClasses);
-            Modules.ensureReadable(target.getClass().getModule());
+            this.getClass().getModule().addReads(target.getClass().getModule());
         }
         if (m != null) {
             try {

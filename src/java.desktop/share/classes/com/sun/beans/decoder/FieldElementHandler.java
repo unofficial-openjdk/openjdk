@@ -25,9 +25,9 @@
 package com.sun.beans.decoder;
 
 import com.sun.beans.finder.FieldFinder;
-import com.sun.beans.util.Modules;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Module;
 
 /**
  * This class is intended to handle &lt;field&gt; element.
@@ -183,11 +183,12 @@ final class FieldElementHandler extends AccessorElementHandler {
      * @throws NoSuchFieldException if the field is not found
      */
     private static Field findField(Object bean, String name) throws NoSuchFieldException {
+        Module m = FieldFinder.class.getModule();
         if (bean instanceof Class<?>) {
-            Modules.ensureReadable(((Class<?>)bean).getModule());
+            m.addReads(((Class<?>)bean).getModule());
             return FieldFinder.findStaticField((Class<?>) bean, name);
         } else {
-            Modules.ensureReadable(bean.getClass().getModule());
+            m.addReads(bean.getClass().getModule());
             return FieldFinder.findField(bean.getClass(), name);
         }
     }

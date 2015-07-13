@@ -25,7 +25,6 @@
 package com.sun.beans.finder;
 
 import com.sun.beans.util.Cache;
-import com.sun.beans.util.Modules;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -73,7 +72,7 @@ public final class ConstructorFinder extends AbstractFinder<Constructor<?>> {
         if (type.isInterface()) {
             throw new NoSuchMethodException("Interface does not contain constructors");
         }
-        if (!Modules.isExported(type)) {
+        if (!FinderUtils.isExported(type)) {
             throw new NoSuchMethodException("Class is not accessible");
         }
         if (Modifier.isAbstract(type.getModifiers())) {

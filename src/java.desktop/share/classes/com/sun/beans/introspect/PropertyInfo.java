@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.sun.beans.util.Modules;
 import static com.sun.beans.finder.ClassFinder.findClass;
 
 public final class PropertyInfo {
@@ -146,7 +145,7 @@ public final class PropertyInfo {
                             }
                             Field field = type.getField(name);
                             if (Modifier.isStatic(field.getModifiers()) && info.type.isAssignableFrom(field.getType())) {
-                                Modules.ensureReadable(type.getModule());
+                                this.getClass().getModule().addReads(type.getModule());
                                 array[index++] = name;
                                 array[index++] = field.get(null);
                                 array[index++] = value;

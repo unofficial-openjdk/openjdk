@@ -22,20 +22,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.beans.util;
+package com.sun.beans.finder;
 
-import java.beans.Beans;
-import java.lang.reflect.Module;
+/**
+ * Defines utility methods for use by finders.
+ */
 
-public final class Modules {
-    private Modules() { }
-
-    /**
-     * Ensures that the java.desktop module reads the targert module.
-     */
-    public static void ensureReadable(Module targetModule) {
-        Beans.class.getModule().addReads(targetModule);
-    }
+final class FinderUtils {
+    private FinderUtils() { }
 
     /**
      * Returns true if the given class is an exported package.

@@ -25,7 +25,6 @@
 package java.beans;
 
 import com.sun.beans.finder.PrimitiveWrapperMap;
-import com.sun.beans.util.Modules;
 
 import java.awt.AWTKeyStroke;
 import java.awt.BorderLayout;
@@ -299,7 +298,7 @@ static final class java_sql_Timestamp_PersistenceDelegate extends java_util_Date
     private static Method getNanosMethod() {
         try {
             Class<?> c = Class.forName("java.sql.Timestamp", true, null);
-            Modules.ensureReadable(c.getModule());
+            MetaData.class.getModule().addReads(c.getModule());
             return c.getMethod("getNanos");
         } catch (ClassNotFoundException e) {
             return null;

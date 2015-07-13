@@ -26,7 +26,6 @@
 package java.beans;
 
 import com.sun.beans.finder.ClassFinder;
-import com.sun.beans.util.Modules;
 
 import java.applet.Applet;
 import java.applet.AppletContext;
@@ -229,7 +228,7 @@ public class Beans {
             /*
              * Try to instantiate the class.
              */
-            Modules.ensureReadable(cl.getModule());
+            Beans.class.getModule().addReads(cl.getModule());
             try {
                 result = cl.newInstance();
             } catch (Exception ex) {
