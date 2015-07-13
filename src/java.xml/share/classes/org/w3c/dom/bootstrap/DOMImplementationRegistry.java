@@ -53,8 +53,6 @@ import java.io.InputStreamReader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import com.sun.xml.internal.Modules;
-
 /**
  * A factory that enables applications to obtain instances of
  * <code>DOMImplementation</code>.
@@ -185,7 +183,7 @@ public final class DOMImplementationRegistry {
                 } else {
                     sourceClass = Class.forName(sourceName);
                 }
-                Modules.ensureReadable(sourceClass.getModule());
+                DOMImplementationRegistry.class.getModule().addReads(sourceClass.getModule());
                 DOMImplementationSource source =
                     (DOMImplementationSource) sourceClass.newInstance();
                 sources.addElement(source);

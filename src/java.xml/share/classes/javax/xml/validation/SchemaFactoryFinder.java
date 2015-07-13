@@ -35,8 +35,6 @@ import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
-import com.sun.xml.internal.Modules;
-
 /**
  * Implementation of {@link SchemaFactory#newInstance(String)}.
  *
@@ -302,7 +300,7 @@ class SchemaFactoryFinder  {
                     schemaFactory = newInstanceNoServiceLoader(clazz);
                 }
                 if (schemaFactory == null) {
-                    Modules.ensureReadable(clazz.getModule());
+                    this.getClass().getModule().addReads(clazz.getModule());
                     schemaFactory = (SchemaFactory) clazz.newInstance();
                 }
         } catch (ClassCastException classCastException) {

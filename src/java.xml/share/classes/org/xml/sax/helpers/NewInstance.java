@@ -35,8 +35,6 @@ package org.xml.sax.helpers;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
-import com.sun.xml.internal.Modules;
-
 /**
  * Create a new instance of a class by name.
  *
@@ -83,7 +81,7 @@ class NewInstance {
         } else {
             driverClass = classLoader.loadClass(className);
         }
-        Modules.ensureReadable(driverClass.getModule());
+        NewInstance.class.getModule().addReads(driverClass.getModule());
         return driverClass.newInstance();
     }
 

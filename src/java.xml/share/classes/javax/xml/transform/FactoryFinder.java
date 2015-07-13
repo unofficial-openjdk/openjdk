@@ -35,8 +35,6 @@ import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
-import com.sun.xml.internal.Modules;
-
 /**
  * <p>Implements pluggable Datatypes.</p>
  *
@@ -177,7 +175,7 @@ class FactoryFinder {
                 instance = newInstanceNoServiceLoader(type, providerClass);
             }
             if (instance == null) {
-                Modules.ensureReadable(providerClass.getModule());
+                FactoryFinder.class.getModule().addReads(providerClass.getModule());
                 instance = providerClass.newInstance();
             }
             if (debug) {    // Extra check to avoid computing cl strings

@@ -35,8 +35,6 @@ import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
-import com.sun.xml.internal.Modules;
-
 /**
  * Implementation of {@link XPathFactory#newInstance(String)}.
  *
@@ -298,7 +296,7 @@ class XPathFactoryFinder  {
                 xPathFactory = newInstanceNoServiceLoader(clazz);
             }
             if (xPathFactory == null) {
-                Modules.ensureReadable(clazz.getModule());
+                XPathFactoryFinder.class.getModule().addReads(clazz.getModule());
                 xPathFactory = (XPathFactory) clazz.newInstance();
             }
         } catch (ClassCastException classCastException) {

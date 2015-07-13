@@ -57,7 +57,6 @@ import com.sun.org.apache.xerces.internal.xs.AttributePSVI;
 import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
 import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
 import com.sun.org.apache.xerces.internal.utils.ObjectFactory;
-import com.sun.xml.internal.Modules;
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Comment;
@@ -789,8 +788,8 @@ public class AbstractDOMParser extends AbstractXMLDocumentParser {
             else {
                 // use specified document class
                 try {
-                    Class documentClass = ObjectFactory.findProviderClass (fDocumentClassName, true);
-                    Modules.ensureReadable(documentClass.getModule());
+                    Class<?> documentClass = ObjectFactory.findProviderClass (fDocumentClassName, true);
+                    this.getClass().getModule().addReads(documentClass.getModule());
                     fDocument = (Document)documentClass.newInstance ();
 
                     // if subclass of our own class that's cool too

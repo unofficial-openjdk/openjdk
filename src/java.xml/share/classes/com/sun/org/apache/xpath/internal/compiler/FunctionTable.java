@@ -25,7 +25,6 @@
 package com.sun.org.apache.xpath.internal.compiler;
 
 import com.sun.org.apache.xpath.internal.functions.Function;
-import com.sun.xml.internal.Modules;
 import java.util.HashMap;
 import javax.xml.transform.TransformerException;
 
@@ -345,7 +344,7 @@ public class FunctionTable
                   return (Function) m_functions[which].newInstance();
               } else {
                   Class<?> c =  m_functions_customer[which-NUM_BUILT_IN_FUNCS];
-                  Modules.ensureReadable(c.getModule());
+                  this.getClass().getModule().addReads(c.getModule());
                   return (Function) c.newInstance();
               }
           }catch (IllegalAccessException ex){
