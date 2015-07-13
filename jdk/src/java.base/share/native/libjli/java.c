@@ -144,7 +144,7 @@ static struct vmdesc *knownVMs = NULL;
 static int knownVMsCount = 0;
 static int knownVMsLimit = 0;
 
-static void GrowKnownVMs();
+static void GrowKnownVMs(int minimum);
 static int  KnownVMIndex(const char* name);
 static void FreeKnownVMs();
 static jboolean IsWildCardEnabled();
