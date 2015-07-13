@@ -872,24 +872,6 @@ final class CipherSuite implements Comparable {
                               0x0016, --p, K_DHE_RSA,    B_3DES,    T);
         add("SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA",
                               0x0013, --p, K_DHE_DSS,    B_3DES,    N);
-        add("SSL_RSA_WITH_DES_CBC_SHA",
-                              0x0009, --p, K_RSA,        B_DES,     N);
-        add("SSL_DHE_RSA_WITH_DES_CBC_SHA",
-                              0x0015, --p, K_DHE_RSA,    B_DES,     N);
-        add("SSL_DHE_DSS_WITH_DES_CBC_SHA",
-                              0x0012, --p, K_DHE_DSS,    B_DES,     N);
-        add("SSL_RSA_EXPORT_WITH_RC4_40_MD5",
-                              0x0003, --p, K_RSA_EXPORT, B_RC4_40,  N,
-                              ProtocolVersion.TLS11.v);
-        add("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                              0x0008, --p, K_RSA_EXPORT, B_DES_40,  N,
-                              ProtocolVersion.TLS11.v);
-        add("SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                              0x0014, --p, K_DHE_RSA,    B_DES_40,  N,
-                              ProtocolVersion.TLS11.v);
-        add("SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
-                              0x0011, --p, K_DHE_DSS,    B_DES_40,  N,
-                              ProtocolVersion.TLS11.v);
 
         // Renegotiation protection request Signalling Cipher Suite Value (SCSV)
         add("TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
@@ -899,6 +881,14 @@ final class CipherSuite implements Comparable {
         // by default.
         // They are listed in preference order, preferred first.
         p = DEFAULT_SUITES_PRIORITY;
+
+        // weak single-DES cipher suites
+        add("SSL_RSA_WITH_DES_CBC_SHA",
+                              0x0009, --p, K_RSA,        B_DES,     N);
+        add("SSL_DHE_RSA_WITH_DES_CBC_SHA",
+                              0x0015, --p, K_DHE_RSA,    B_DES,     N);
+        add("SSL_DHE_DSS_WITH_DES_CBC_SHA",
+                              0x0012, --p, K_DHE_DSS,    B_DES,     N);
 
         // Anonymous key exchange and the NULL ciphers
         add("SSL_RSA_WITH_NULL_MD5",
@@ -943,6 +933,19 @@ final class CipherSuite implements Comparable {
 
         add("TLS_ECDH_anon_WITH_NULL_SHA",
                               0xC015, --p, K_ECDH_ANON,  B_NULL,    N);
+
+        add("SSL_RSA_EXPORT_WITH_RC4_40_MD5",
+                              0x0003, --p, K_RSA_EXPORT, B_RC4_40,  N,
+                              ProtocolVersion.TLS11.v);
+        add("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+                              0x0008, --p, K_RSA_EXPORT, B_DES_40,  N,
+                              ProtocolVersion.TLS11.v);
+        add("SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+                              0x0014, --p, K_DHE_RSA,    B_DES_40,  N,
+                              ProtocolVersion.TLS11.v);
+        add("SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+                              0x0011, --p, K_DHE_DSS,    B_DES_40,  N,
+                              ProtocolVersion.TLS11.v);
 
         // Supported Kerberos ciphersuites from RFC2712
         add("TLS_KRB5_WITH_RC4_128_SHA",
