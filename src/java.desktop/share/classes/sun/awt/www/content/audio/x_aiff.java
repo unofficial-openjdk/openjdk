@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,21 @@
  * questions.
  */
 
+/**
+ * Basic .aiff audio handler.
+ * @author  Jeff Nisewanger
+ */
+package sun.awt.www.content.audio;
 
-import java.awt.Font;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
+import java.net.*;
+import java.io.IOException;
+import sun.applet.AppletAudioClip;
 
-public class JHello extends JFrame {
-
-    public static void main(String[] args) {
-        System.out.println("Hello");
-
-        new JHello().show();
-        if (args.length == 1 && args[0].equals("quit")) {
-            try {
-                Thread.currentThread().sleep(1000);
-            } catch (InterruptedException e) {
-            }
-            System.exit(0);
-        }
-    }
-
-
-    JHello() {
-        JLabel jlabel = new JLabel("Hello");
-        jlabel.setFont(new Font("Monospaced", Font.PLAIN, 144));
-        getContentPane().add(jlabel);
-        pack();
+/**
+ * Returns an AppletAudioClip object.
+ */
+public class x_aiff extends ContentHandler {
+    public Object getContent(URLConnection uc) throws IOException {
+        return new AppletAudioClip(uc);
     }
 }
