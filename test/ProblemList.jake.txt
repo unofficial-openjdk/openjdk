@@ -44,11 +44,10 @@ java/util/PluggableLocale/DateFormatProviderTest.sh			generic-all
 java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh		generic-all
 java/util/PluggableLocale/LocaleNameProviderTest.sh			generic-all
 java/util/PluggableLocale/TimeZoneNameProviderTest.sh			generic-all
-
-java/util/ResourceBundle/Bug6299235Test.sh				generic-all
-java/util/ResourceBundle/Control/Bug6530694.java			generic-all
-
 sun/text/resources/LocaleDataTest.java                                  generic-all
+
+# 8131141
+java/util/ResourceBundle/Bug6299235Test.sh                              generic-all
 
 ############################################################################
 
