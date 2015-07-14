@@ -21,7 +21,6 @@
  * questions.
  */
 
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -29,11 +28,7 @@ import java.lang.module.ModuleDescriptor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
-
-import jdk.internal.module.ModuleInfoWriter;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -81,8 +76,8 @@ public class ModuleFinderTest {
     public void testOneDirectory() throws Exception {
 
         Path dir = Files.createTempDirectory("mods");
-        createExplodedModule(dir.resolve("m1"), "m1");
-        createExplodedModule(dir.resolve("m2"), "m2");
+        ModuleUtils.createExplodedModule(dir.resolve("m1"), "m1");
+        ModuleUtils.createExplodedModule(dir.resolve("m2"), "m2");
 
         ModuleFinder finder = ModuleFinder.of(dir);
         assertTrue(finder.findAll().size() == 2);
@@ -97,14 +92,14 @@ public class ModuleFinderTest {
     public void testTwoDirectories() throws Exception {
 
         Path dir1 = Files.createTempDirectory("mods1");
-        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
-        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+        ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
         Path dir2 = Files.createTempDirectory("mods2");
-        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
-        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
-        createExplodedModule(dir2.resolve("m3"), "m3");
-        createExplodedModule(dir2.resolve("m4"), "m4");
+        ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");
+        ModuleUtils.createExplodedModule(dir2.resolve("m4"), "m4");
 
         ModuleFinder finder = ModuleFinder.of(dir1, dir2);
         assertTrue(finder.findAll().size() == 4);
@@ -130,8 +125,8 @@ public class ModuleFinderTest {
     public void testDuplicateModules() throws Exception {
 
         Path dir = Files.createTempDirectory("mods");
-        createModularJar(dir.resolve("m1@1.0.jar"), "m1");
-        createModularJar(dir.resolve("m1@2.0.jar"), "m1");
+        ModuleUtils.createModularJar(dir.resolve("m1@1.0.jar"), "m1");
+        ModuleUtils.createModularJar(dir.resolve("m1@2.0.jar"), "m1");
 
         ModuleFinder finder = ModuleFinder.of(dir);
         try {
@@ -177,14 +172,14 @@ public class ModuleFinderTest {
     public void testConcat() throws Exception {
 
         Path dir1 = Files.createTempDirectory("mods1");
-        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
-        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+        ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
         Path dir2 = Files.createTempDirectory("mods2");
-        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
-        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
-        createExplodedModule(dir2.resolve("m3"), "m3");
-        createExplodedModule(dir2.resolve("m4"), "m4");
+        ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");
+        ModuleUtils.createExplodedModule(dir2.resolve("m4"), "m4");
 
         ModuleFinder finder1 = ModuleFinder.of(dir1);
         ModuleFinder finder2 = ModuleFinder.of(dir2);
@@ -236,7 +231,12 @@ public class ModuleFinderTest {
         } catch (NullPointerException expected) { }
 
         try {
-            ModuleFinder.of(null);
+            ModuleFinder.of((Path[])null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+        try {
+            ModuleFinder.of((Path)null);
             assertTrue(false);
         } catch (NullPointerException expected) { }
 
@@ -253,57 +253,5 @@ public class ModuleFinderTest {
 
     }
 
-
-
-    /**
-     * Creates an exploded module in the given directory and containing a
-     * module descriptor with the given module name.
-     */
-    void createExplodedModule(Path dir, String mid) throws Exception {
-        ModuleDescriptor descriptor = newModuleDescriptor(mid);
-        Files.createDirectories(dir);
-        Path mi = dir.resolve("module-info.class");
-        try (OutputStream out = Files.newOutputStream(mi)) {
-            ModuleInfoWriter.write(descriptor, out);
-        }
-    }
-
-    /**
-     * Creates a JAR file with the given file path and containing a module
-     * descriptor with the given module name.
-     */
-    void createModularJar(Path jf, String mid) throws Exception {
-        ModuleDescriptor descriptor = newModuleDescriptor(mid);
-        try (OutputStream out = Files.newOutputStream(jf)) {
-            try (JarOutputStream jos = new JarOutputStream(out)) {
-                JarEntry je = new JarEntry("module-info.class");
-                jos.putNextEntry(je);
-                ModuleInfoWriter.write(descriptor, jos);
-                jos.closeEntry();
-            }
-        }
-
-    }
-
-    /**
-     * Returns a module descriptor with a module name
-     */
-    ModuleDescriptor newModuleDescriptor(String mid) {
-        String mn;
-        String vs;
-        int i = mid.indexOf("@");
-        if (i == -1) {
-            mn = mid;
-            vs = null;
-        } else {
-            mn = mid.substring(0, i);
-            vs = mid.substring(i+1);
-        }
-        ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn).requires("java.base");
-        if (vs != null)
-            builder.version(vs);
-        return builder.build();
-    }
 }
 

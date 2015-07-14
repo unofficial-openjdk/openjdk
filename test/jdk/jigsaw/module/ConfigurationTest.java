@@ -22,7 +22,6 @@
  */
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
@@ -34,15 +33,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import static java.lang.module.Layer.*;
-import static java.lang.module.ModuleFinder.*;
 import static java.lang.module.ModuleFinder.empty;
-import static java.util.jar.JarFile.MANIFEST_NAME;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -59,22 +54,22 @@ public class ConfigurationTest {
      * Basic test of resolver
      */
     public void testBasic() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1")
-                        .requires("m2")
-                        .build();
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                    .requires("m2")
+                    .build();
 
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2")
-                        .requires("m3")
-                        .build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m3")
+                .build();
 
-        ModuleDescriptor descriptor3 =
-                new ModuleDescriptor.Builder("m3")
-                        .build();
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .build();
 
-        ModuleFinder finder =
-                ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder, boot(), empty(), "m1");
 
@@ -112,20 +107,20 @@ public class ConfigurationTest {
         // m1 requires m2, m2 requires public m3
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
-                    .requires("m2")
-                    .build();
+                .requires("m2")
+                .build();
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                    .requires(Modifier.PUBLIC, "m3")
-                    .build();
+                .requires(Modifier.PUBLIC, "m3")
+                .build();
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                    .build();
+                .build();
 
         ModuleFinder finder
-            = ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration cf
             = Configuration.resolve(finder, boot(), empty(), "m1");
@@ -175,7 +170,10 @@ public class ConfigurationTest {
             = new ModuleDescriptor.Builder("m4").build();
 
         ModuleFinder finder
-            = ModuleLibrary.of(descriptor1, descriptor2, descriptor3, descriptor4);
+            = ModuleUtils.finderOf(descriptor1,
+                                   descriptor2,
+                                   descriptor3,
+                                   descriptor4);
 
         Configuration cf
             = Configuration.resolve(finder, boot(), empty(), "m1");
@@ -230,12 +228,13 @@ public class ConfigurationTest {
 
         // m2 and m3 are simple JAR files
         Path dir = Files.createTempDirectory("configtest");
-        createDummyJarFile(dir.resolve("m2.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m3.jar"), "q/T.class");
+        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T.class");
+        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "q/T.class");
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(ModuleLibrary.of(m1), ModuleFinder.of(dir));
+            = ModuleFinder.concat(ModuleUtils.finderOf(m1),
+                                  ModuleFinder.of(dir));
 
         Configuration cf
             = Configuration.resolve(finder, boot(), empty(), "m1");
@@ -290,7 +289,7 @@ public class ConfigurationTest {
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
         Path dir = Files.createTempDirectory("configtest");
-        createDummyJarFile(dir.resolve("m1.jar"), man, "p/Main.class");
+        ModuleUtils.createJarFile(dir.resolve("m1.jar"), man, "p/Main.class");
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
@@ -316,9 +315,9 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testDirectDependencyNotFound() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1").requires("m2").build();
-        ModuleFinder finder = ModuleLibrary.of(descriptor1);
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
@@ -328,11 +327,11 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testTransitiveDependencyNotFound() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1").requires("m2").build();
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2").requires("m3").build();
-        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2").requires("m3").build();
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
@@ -344,13 +343,14 @@ public class ConfigurationTest {
     public void testServiceProviderDependencyNotFound() {
 
         // service provider dependency (on m3) not found
-        ModuleDescriptor descriptor1  = new ModuleDescriptor.Builder("m1").build();
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2")
-                    .requires("m3")
-                    .provides("java.security.Provider", "p.CryptoProvder")
-                    .build();
-        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1").build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m3")
+                .provides("java.security.Provider", "p.CryptoProvder")
+                .build();
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration cf;
         try {
@@ -370,14 +370,14 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testSimpleCycle() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1").requires("m2").build();
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2").requires("m3").build();
-        ModuleDescriptor descriptor3 =
-                new ModuleDescriptor.Builder("m3").requires("m1").build();
-        ModuleFinder finder =
-                ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2").requires("m3").build();
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3").requires("m1").build();
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
@@ -387,16 +387,21 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testCycleInProvider() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1").uses("p.Service").build();
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2")
-                        .requires("m3")
-                        .provides("p.Service", "q.ServiceImpl").build();
-        ModuleDescriptor descriptor3 =
-                new ModuleDescriptor.Builder("m3").requires("m2").build();
-        ModuleFinder finder =
-                ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .uses("p.Service")
+                .build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m3")
+                .provides("p.Service", "q.ServiceImpl").build();
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires("m2")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration cf;
         try {
@@ -409,36 +414,6 @@ public class ConfigurationTest {
 
         // should throw ResolutionException because of the m2 <--> m3 cycle
         cf.bind();
-    }
-
-    /**
-     * Creates a JAR file, optionally with a manifest, and with the given
-     * entries. The entries will be empty in the resulting JAR file.
-     */
-    private static void createDummyJarFile(Path file, Manifest man, String... entries)
-        throws IOException
-    {
-        try (OutputStream out = Files.newOutputStream(file)) {
-            try (JarOutputStream jos = new JarOutputStream(out)) {
-                if (man != null) {
-                    JarEntry je = new JarEntry(MANIFEST_NAME);
-                    jos.putNextEntry(je);
-                    man.write(jos);
-                    jos.closeEntry();
-                }
-                for (String entry : entries) {
-                    JarEntry je = new JarEntry(entry);
-                    jos.putNextEntry(je);
-                    jos.closeEntry();
-                }
-            }
-        }
-    }
-
-    private static void createDummyJarFile(Path file, String... entries)
-        throws IOException
-    {
-        createDummyJarFile(file, null, entries);
     }
 
 }

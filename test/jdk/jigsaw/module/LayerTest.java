@@ -22,20 +22,16 @@
  */
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.LayerInstantiationException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.lang.reflect.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -96,23 +92,23 @@ public class LayerTest {
      * Exercise Layer.create, created on an empty layer
      */
     public void testLayerOnEmpty() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1")
-                        .requires("m2")
-                        .exports("p1")
-                        .build();
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports("p1")
+                .build();
 
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2")
-                        .requires("m3")
-                        .build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m3")
+                .build();
 
-        ModuleDescriptor descriptor3 =
-                new ModuleDescriptor.Builder("m3")
-                        .build();
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .build();
 
-        ModuleFinder finder =
-                ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.empty(),
@@ -157,20 +153,20 @@ public class LayerTest {
      * Exercise Layer.create, created over the boot layer
      */
     public void testLayerOnBoot() {
-        ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1")
-                        .requires("m2")
-                        .requires("java.base")
-                        .exports("p1")
-                        .build();
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("java.base")
+                .exports("p1")
+                .build();
 
-        ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2")
-                        .requires("java.base")
-                        .build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("java.base")
+                .build();
 
-        ModuleFinder finder =
-                ModuleLibrary.of(descriptor1, descriptor2);
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.boot(),
@@ -215,7 +211,8 @@ public class LayerTest {
                 .conceals("p")
                 .build();
 
-        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -248,7 +245,8 @@ public class LayerTest {
                 .exports("p")
                 .build();
 
-        ModuleFinder finder = ModuleLibrary.of(descriptor1, descriptor2);
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -293,7 +291,7 @@ public class LayerTest {
                 .build();
 
         ModuleFinder finder
-            = ModuleLibrary.of(descriptor1, descriptor2, descriptor3);
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
@@ -340,7 +338,10 @@ public class LayerTest {
                 .build();
 
         ModuleFinder finder
-            =  ModuleLibrary.of(descriptor1, descriptor2, descriptor3, descriptor4);
+            = ModuleUtils.finderOf(descriptor1,
+                                   descriptor2,
+                                   descriptor3,
+                                   descriptor4);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(),
@@ -380,7 +381,7 @@ public class LayerTest {
                 .exports("java.lang")
                 .build();
 
-        ModuleFinder finder = ModuleLibrary.of(descriptor);
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
@@ -401,7 +402,7 @@ public class LayerTest {
                 .conceals("sun.misc")
                 .build();
 
-        ModuleFinder finder = ModuleLibrary.of(descriptor);
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 
         Configuration cf
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
@@ -424,12 +425,12 @@ public class LayerTest {
 
         // m2 and m3 are simple JAR files
         Path dir = Files.createTempDirectory("layertest");
-        createDummyJarFile(dir.resolve("m2.jar"), "p/T1.class");
-        createDummyJarFile(dir.resolve("m3.jar"), "p/T2.class");
+        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T1.class");
+        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "p/T2.class");
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(ModuleLibrary.of(descriptor),
+            = ModuleFinder.concat(ModuleUtils.finderOf(descriptor),
                                   ModuleFinder.of(dir));
 
         Configuration cf
@@ -440,20 +441,4 @@ public class LayerTest {
         Layer.create(cf, m -> new ModuleClassLoader());
     }
 
-    /**
-     * Creates a JAR file containing the give entries. The entries will be
-     * empty in the resulting JAR file.
-     */
-    private static void createDummyJarFile(Path file, String... entries)
-        throws IOException
-    {
-        try (OutputStream out = Files.newOutputStream(file)) {
-            try (JarOutputStream jos = new JarOutputStream(out)) {
-                for (String entry : entries) {
-                    JarEntry je = new JarEntry(entry);
-                    jos.putNextEntry(je);
-                }
-            }
-        }
-    }
 }
