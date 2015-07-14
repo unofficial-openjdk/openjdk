@@ -34,18 +34,20 @@ import java.util.List;
  *
  * @see <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version">Debian
  * Policy Manual, Chapter 5: Control files and their fields<a>
+ *
+ * @since 1.9
  */
 
 public final class Version
     implements Comparable<Version>
 {
 
-    private String version;
+    private final String version;
 
     // If Java had disjunctive types then we'd write List<Integer|String> here
     //
-    private List<Object> sequence = new ArrayList<Object>(4);
-    private List<Object> branch = new ArrayList<Object>(2);
+    private final List<Object> sequence;
+    private final List<Object> branch;
 
     // Take a numeric token starting at position i
     // Append it to the given list
@@ -75,10 +77,9 @@ public final class Version
     //
     private static int takeString(String s, int i, List<Object> acc) {
         int b = i;
-        char c = s.charAt(i);
         int n = s.length();
         while (++i < n) {
-            c = s.charAt(i);
+            char c = s.charAt(i);
             if (c != '.' && c != '-' && !(c >= '0' && c <= '9'))
                 continue;
             break;
@@ -109,6 +110,10 @@ public final class Version
                 IllegalArgumentException(v
                                          + ": Version does not start"
                                          + " with a number");
+
+        List<Object> sequence = new ArrayList<>(4);
+        List<Object> branch = new ArrayList<>(2);
+
         i = takeNumber(v, i, sequence);
 
         while (i < n) {
@@ -145,18 +150,25 @@ public final class Version
             }
         }
 
-        version = v;
+        this.version = v;
+        this.sequence = sequence;
+        this.branch = branch;
     }
 
+    /**
+     * Parses the given string as a version string.
+     *
+     * @throws IllegalArgumentException
+     *         If {@code v} is {@code null}, an empty string, or cannot be
+     *         parsed as a version string
+     */
     public static Version parse(String v) {
-        if (v == null)
-            return null;
         return new Version(v);
     }
 
     @SuppressWarnings("unchecked")
     private int cmp(Object o1, Object o2) {
-        return ((Comparable)o1).compareTo((Comparable)o2);
+        return ((Comparable)o1).compareTo(o2);
     }
 
     private int compareTokens(List<Object> ts1, List<Object> ts2) {
@@ -196,7 +208,8 @@ public final class Version
         return compareTokens(this.branch, that.branch);
     }
 
-    public String toDebugString() {
+    // needed?
+    String toDebugString() {
         return "v" + sequence + "-" + branch;
     }
 
