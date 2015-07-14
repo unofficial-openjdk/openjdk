@@ -26,7 +26,7 @@
  * @summary Test order of plugins
  * @author Jean-Francois Denise
  * @modules jdk.jlink/jdk.tools.jlink.internal
- * @run main PluginOrderTest
+ * @run main/othervm PluginOrderTest
  */
 
 import java.io.IOException;

@@ -26,7 +26,7 @@
  * @summary Test previsitor
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
- * @run main PrevisitorTest
+ * @run main/othervm PrevisitorTest
  */
 
 import java.io.IOException;

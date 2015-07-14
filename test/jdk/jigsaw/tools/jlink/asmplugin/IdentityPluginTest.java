@@ -46,6 +46,10 @@ import jdk.tools.jlink.plugins.ResourcePool;
 public class IdentityPluginTest extends AsmPluginTestBase {
 
     public static void main(String[] args) throws Exception {
+        if (!isImageBuild()) {
+            System.err.println("Test not run. Not image build.");
+            return;
+        }
         new IdentityPluginTest().test();
     }
 

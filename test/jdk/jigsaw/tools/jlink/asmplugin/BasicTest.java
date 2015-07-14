@@ -49,6 +49,10 @@ import jdk.tools.jlink.plugins.ResourcePool.Resource;
 public class BasicTest extends AsmPluginTestBase {
 
     public static void main(String[] args) throws Exception {
+        if (!isImageBuild()) {
+            System.err.println("Test not run. Not image build.");
+            return;
+        }
         new BasicTest().test();
     }
 

@@ -26,7 +26,7 @@
  * @summary Test last sorter property
  * @author Jean-Francois Denise
  * @modules jdk.jlink/jdk.tools.jlink.internal
- * @run main LastSorterTest
+ * @run main/othervm LastSorterTest
  */
 
 import java.io.IOException;

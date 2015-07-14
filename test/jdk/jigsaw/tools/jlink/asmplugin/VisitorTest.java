@@ -52,6 +52,10 @@ import jdk.tools.jlink.plugins.ResourcePool.Resource;
 public class VisitorTest extends AsmPluginTestBase {
 
     public static void main(String[] args) throws Exception {
+        if (!isImageBuild()) {
+            System.err.println("Test not run. Not image build.");
+            return;
+        }
         new VisitorTest().test();
     }
 

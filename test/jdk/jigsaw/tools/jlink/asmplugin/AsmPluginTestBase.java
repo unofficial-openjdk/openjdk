@@ -6,6 +6,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,12 @@ public abstract class AsmPluginTestBase {
         map.put("java.base", new ArrayList<>());
         map.put(TEST_MODULE, new ArrayList<>());
         MODULES = Collections.unmodifiableMap(map);
+    }
+
+    public static boolean isImageBuild() {
+        Path javaHome = Paths.get(System.getProperty("test.jdk"));
+        Path jmods = javaHome.resolve("..").resolve("jmods");
+        return Files.exists(jmods);
     }
 
     public AsmPluginTestBase() {

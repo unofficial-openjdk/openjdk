@@ -98,6 +98,9 @@ public class VerifyJimage {
         for (String f : failed) {
             System.err.println(f);
         }
+        if (!failed.isEmpty()) {
+            throw new AssertionError("Test failed");
+        }
     }
 
     private final AtomicInteger count = new AtomicInteger(0);
@@ -188,7 +191,7 @@ public class VerifyJimage {
             Arrays.stream(reader.getEntryNames())
                     .filter(n -> n.endsWith(".class") && !n.endsWith(MODULE_INFO))
                     .forEach(n -> {
-                        String cn = n.substring(0, n.length()-6).replace('/', '.');
+                        String cn = removeModule(n).replaceAll("\\.class$", "").replace('/', '.');
                         count.incrementAndGet();
                         try {
                             Class.forName(cn, false, loader);
@@ -199,8 +202,12 @@ public class VerifyJimage {
         }
     }
 
+    private String removeModule(String path) {
+        int index = path.indexOf('/', 1);
+        return path.substring(index + 1, path.length());
+    }
 
-   private static List<JImageReader> newJImageReaders() throws IOException {
+    private static List<JImageReader> newJImageReaders() throws IOException {
         String home = System.getProperty("java.home");
         Path mlib = Paths.get(home, "lib", "modules");
         try (Stream<Path> paths = Files.list(mlib)) {

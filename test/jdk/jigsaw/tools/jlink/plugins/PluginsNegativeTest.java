@@ -26,7 +26,7 @@
  * @summary Negative test for ImagePluginStack.
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
- * @run main PluginsNegativeTest
+ * @run main/othervm PluginsNegativeTest
  */
 
 import java.io.IOException;
@@ -62,6 +62,9 @@ public class PluginsNegativeTest {
     private void testDuplicateBuiltInProviders() {
         ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
         List<PluginProvider> javaPlugins = ImagePluginProviderRepository.getPluginProviders(systemClassLoader);
+        for (PluginProvider javaPlugin : javaPlugins) {
+            System.out.println("Registered plugin: " + javaPlugin.getName());
+        }
         for (PluginProvider javaPlugin : javaPlugins) {
             String pluginName = javaPlugin.getName();
             try {
