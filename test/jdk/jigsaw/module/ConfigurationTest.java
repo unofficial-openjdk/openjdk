@@ -21,6 +21,14 @@
  * questions.
  */
 
+/**
+ * @test
+ * @library ../lib
+ * @build ConfigurationTest ModuleUtils
+ * @run testng ConfigurationTest
+ * @summary Basic tests for java.lang.module.Configuration
+ */
+
 import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
@@ -41,11 +49,6 @@ import static java.lang.module.ModuleFinder.empty;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
-
-
-/**
- * Basic tests for java.lang.module.Configuration
- */
 
 @Test
 public class ConfigurationTest {

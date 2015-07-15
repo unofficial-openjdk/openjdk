@@ -21,6 +21,14 @@
  * questions.
  */
 
+/**
+ * @test
+ * @library ../lib
+ * @build ModuleFinderTest ModuleUtils
+ * @run testng ModuleFinderTest
+ * @summary Basic tests for java.lang.module.ModuleFinder
+ */
+
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -32,10 +40,6 @@ import java.util.stream.Collectors;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
-
-/**
- * Basic tests for java.lang.module.ModuleFinder
- */
 
 @Test
 public class ModuleFinderTest {

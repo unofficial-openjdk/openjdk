@@ -48,7 +48,7 @@ import jdk.internal.module.ModuleInfoWriter;
  * for creating tests for modules.
  */
 
-final class ModuleUtils {
+public final class ModuleUtils {
     private ModuleUtils() { }
 
     /**

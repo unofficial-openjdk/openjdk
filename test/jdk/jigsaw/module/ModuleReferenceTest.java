@@ -21,25 +21,20 @@
  * questions.
  */
 
+/**
+ * @test
+ * @run testng ModuleReferenceTest
+ * @summary Basic tests for java.lang.module.ModuleReference
+ */
+
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import java.lang.module.ModuleReference;
+import java.net.URI;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
-
-/**
- * Basic tests for java.lang.module.ModuleReference
- */
 
 @Test
 public class ModuleReferenceTest {

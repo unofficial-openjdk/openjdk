@@ -21,6 +21,14 @@
  * questions.
  */
 
+/**
+ * @test
+ * @library ../lib
+ * @build LayerTest ModuleUtils
+ * @run testng LayerTest
+ * @summary Basic tests for java.lang.module.Layer
+ */
+
 import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
@@ -35,10 +43,6 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
-
-/**
- * Basic tests for java.lang.module.Layer
- */
 
 @Test
 public class LayerTest {

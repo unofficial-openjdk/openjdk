@@ -21,16 +21,18 @@
  * questions.
  */
 
+/**
+ * @test
+ * @run testng VersionTest
+ * @summary Basic tests for java.lang.module.Version. The tests will be
+ *   extended once Version is specifed.
+ */
+
 import java.lang.module.Version;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
-
-/**
- * Basic tests for java.lang.module.Version. These will be extended once
- * Version is specified.
- */
 
 @Test
 public class VersionTest {
