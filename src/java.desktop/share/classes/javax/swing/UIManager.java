@@ -1386,6 +1386,7 @@ public class UIManager implements Serializable
             String className = p.nextToken();
             try {
                 Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
+                UIManager.class.getModule().addReads(lnfClass.getModule());
                 LookAndFeel newLAF = (LookAndFeel)lnfClass.newInstance();
                 newLAF.initialize();
                 auxLookAndFeels.addElement(newLAF);
