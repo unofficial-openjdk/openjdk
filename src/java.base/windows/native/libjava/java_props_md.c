@@ -388,8 +388,8 @@ GetJavaProperties(JNIEnv* env)
         DWORD platformId;
         {
             OSVERSIONINFOEX ver;
-        ver.dwOSVersionInfoSize = sizeof(ver);
-        GetVersionEx((OSVERSIONINFO *) &ver);
+            ver.dwOSVersionInfoSize = sizeof(ver);
+            GetVersionEx((OSVERSIONINFO *) &ver);
             majorVersion = ver.dwMajorVersion;
             minorVersion = ver.dwMinorVersion;
             is_workstation = (ver.wProductType == VER_NT_WORKSTATION);
@@ -399,7 +399,7 @@ GetJavaProperties(JNIEnv* env)
 
         {
             SYSTEM_INFO si;
-        ZeroMemory(&si, sizeof(SYSTEM_INFO));
+            ZeroMemory(&si, sizeof(SYSTEM_INFO));
             GetNativeSystemInfo(&si);
 
             is_64bit = (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
