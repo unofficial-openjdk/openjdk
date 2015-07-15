@@ -636,6 +636,7 @@ abstract public class ORB {
 
             // OK, the method exists, so invoke it and be happy.
             java.lang.Object[] argx = { oper };
+            Modules.ensureReadable(meth.getDeclaringClass());
             return (org.omg.CORBA.NVList)meth.invoke(this, argx);
         }
         catch( java.lang.reflect.InvocationTargetException exs ) {
