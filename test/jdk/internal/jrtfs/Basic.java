@@ -30,6 +30,7 @@
 import java.io.InputStream;
 import java.io.DataInputStream;
 import java.nio.file.DirectoryStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -565,5 +566,17 @@ public class Basic {
         }
         assertTrue(javaSeen);
         assertTrue(javaxSeen);
+    }
+
+    @Test
+    public void invalidPathTest() {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        InvalidPathException ipe = null;
+        try {
+            Files.exists(fs.getPath("/packages/\ud834\udd7b"));
+        } catch (InvalidPathException e) {
+            ipe = e;
+        }
+        assertTrue(ipe != null);
     }
 }

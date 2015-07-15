@@ -39,6 +39,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -280,8 +281,12 @@ class JrtFileSystem extends FileSystem {
 
     private NodeAndImage lookup(byte[] path) {
         ImageReader image = bootImage;
-        Node node = bootImage.findNode(path);
-
+        Node node;
+        try {
+            node = bootImage.findNode(path);
+        } catch (RuntimeException re) {
+            throw new InvalidPathException(getString(path), re.toString());
+        }
         return node != null? new NodeAndImage(node, image) : null;
     }
 
