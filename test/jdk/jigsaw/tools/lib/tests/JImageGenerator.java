@@ -430,6 +430,14 @@ public class JImageGenerator {
         }
     }
 
+    public File buildModule(String moduleName, File src) throws IOException {
+        File compiledDir = compileModule(jmodsclasses, src, "");
+        File outFile = new File(jmods, moduleName + ".jmod");
+        jdk.tools.jmod.Main.run(jmodCreateOptions(compiledDir, null, moduleName, outFile),
+                new PrintWriter(System.out));
+        return outFile;
+    }
+
     private static File compileModule(File classes, File moduleDirectory,
             String modulePath) throws IOException {
         File outDir = new File(classes, moduleDirectory.getName());

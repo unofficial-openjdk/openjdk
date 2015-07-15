@@ -284,7 +284,7 @@ class JlinkTask {
         Map<String, Path> mods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
-        imageHelper.createModularImage(output, mods);
+        imageHelper.createModularImage(output, mods, optionsHelper.getPluginsLayer());
     }
 
     /**
@@ -363,13 +363,14 @@ class JlinkTask {
             this.modsPaths = modsPaths;
         }
 
-        void createModularImage(Path output, Map<String, Path> mods) throws IOException {
+        void createModularImage(Path output, Map<String, Path> mods, Layer pluginsLayer) throws IOException {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             ImagePluginStack pc = ImagePluginConfiguration.
                     parseConfiguration(output, mods,
-                            taskHelper.getPluginsProperties(), genBOMContent());
+                            taskHelper.getPluginsProperties(), pluginsLayer,
+                            genBOMContent());
             ImageFileCreator.create(archives, pc);
         }
 

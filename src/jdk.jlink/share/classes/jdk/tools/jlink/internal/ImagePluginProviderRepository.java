@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
+import java.lang.module.Layer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,14 +58,15 @@ public final class ImagePluginProviderRepository {
      * Retrieve the provider to build a plugin for the passed name.
      * @param properties Optional properties.
      * @param name Non null name.
-     * @param loader A classloader or null for default loader.
+     * @param pluginsLayer
      * @return An array of plugins.
      * @throws IOException
      */
     public static Plugin[] newPlugins(Properties properties, String name,
-            ClassLoader loader) throws IOException {
+            Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(name);
-        PluginProvider fact = getPluginProvider(name, loader);
+        Objects.requireNonNull(pluginsLayer);
+        PluginProvider fact = getPluginProvider(name, pluginsLayer);
         return fact.newPlugins(properties);
     }
 
@@ -73,14 +75,16 @@ public final class ImagePluginProviderRepository {
      * exist for the same name,
      * then an exception is thrown.
      * @param name The plugin provider name.
+     * @param pluginsLayer
      * @return A provider.
      * @throws IOException
      */
     public static PluginProvider getPluginProvider(String name,
-            ClassLoader loader) throws IOException {
+            Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(name);
+        Objects.requireNonNull(pluginsLayer);
         PluginProvider provider = registeredProviders.get(name);
-        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(loader);
+        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
         while (javaProviders.hasNext()) {
             PluginProvider factory = javaProviders.next();
             if (factory.getName().equals(name)) {
@@ -99,11 +103,13 @@ public final class ImagePluginProviderRepository {
 
     /**
      * The list of all the providers accessible in the current context.
+     * @param pluginsLayer
      * @return A list of all the providers.
      */
-    public static List<PluginProvider> getPluginProviders(ClassLoader loader) {
+    public static List<PluginProvider> getPluginProviders(Layer pluginsLayer) {
+        Objects.requireNonNull(pluginsLayer);
         List<PluginProvider> factories = new ArrayList<>();
-        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(loader);
+        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
         while (javaProviders.hasNext()) {
             PluginProvider fact = javaProviders.next();
             factories.add(fact);
@@ -136,9 +142,13 @@ public final class ImagePluginProviderRepository {
     }
 
     public static ImageBuilder newImageBuilder(Properties properties, Path outputDir,
-            String name, ClassLoader loader) throws IOException {
-        Iterator<ImageBuilderProvider> providers =
-                ServiceLoader.load(ImageBuilderProvider.class, loader).iterator();
+            String name, Layer pluginsLayer) throws IOException {
+        Objects.requireNonNull(properties);
+        Objects.requireNonNull(outputDir);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(pluginsLayer);
+        Iterator<ImageBuilderProvider> providers
+                = ServiceLoader.load(pluginsLayer, ImageBuilderProvider.class).iterator();
         ImageBuilder builder = null;
         while (providers.hasNext()) {
             ImageBuilderProvider fact = providers.next();
@@ -156,20 +166,22 @@ public final class ImagePluginProviderRepository {
     /**
      * The image builder providers accessible in the current context.
      *
-     * @param loader A classloader or null for default loader.
+     * @param pluginsLayer
      * @return The image builder provider or null if no provider.
      */
-    public static List<ImageBuilderProvider> getImageBuilderProviders(ClassLoader loader) {
+    public static List<ImageBuilderProvider> getImageBuilderProviders(Layer pluginsLayer) {
+        Objects.requireNonNull(pluginsLayer);
         List<ImageBuilderProvider> factories = new ArrayList<>();
-        Iterator<ImageBuilderProvider> providers =
-                ServiceLoader.load(ImageBuilderProvider.class, loader).iterator();
+        Iterator<ImageBuilderProvider> providers
+                = ServiceLoader.load(pluginsLayer, ImageBuilderProvider.class).iterator();
         while (providers.hasNext()) {
             factories.add(providers.next());
         }
         return factories;
     }
 
-    private static Iterator<PluginProvider> getJavaPluginProviders(ClassLoader loader) {
-        return ServiceLoader.load(PluginProvider.class, loader).iterator();
+    private static Iterator<PluginProvider> getJavaPluginProviders(Layer pluginsLayer) {
+        Objects.requireNonNull(pluginsLayer);
+        return ServiceLoader.load(pluginsLayer, PluginProvider.class).iterator();
     }
 }

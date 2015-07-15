@@ -28,6 +28,7 @@ import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.File;
 import java.io.IOException;
+import java.lang.module.Layer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -101,8 +102,6 @@ public final class ImagePluginConfiguration {
             TRANSFORMER;
     public static final String RESOURCES_FILTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
             FILTER;
-    public static final String PATH_PROPERTY = "jdk.jlink.classpath";
-
     public static final String RESOURCES_LAST_SORTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
             "resources.last-sorter";
 
@@ -147,7 +146,7 @@ public final class ImagePluginConfiguration {
      */
     public static ImagePluginStack parseConfiguration(Properties p)
             throws IOException {
-        return parseConfiguration(null, null, p, null);
+        return parseConfiguration(null, null, p, Layer.boot(), null);
     }
 
     /**
@@ -156,6 +155,7 @@ public final class ImagePluginConfiguration {
      * Used to build an ImageBuilder.
      * @param mods
      * @param p Properties file.
+     * @param pluginsLayer Layer to retrieve plugins
      * @param bom The tooling config data
      * @return A stack of plugins.
      * @throws IOException
@@ -163,24 +163,23 @@ public final class ImagePluginConfiguration {
     public static ImagePluginStack parseConfiguration(Path outDir,
             Map<String, Path> mods,
             Properties p,
+            Layer pluginsLayer,
             String bom)
             throws IOException {
         if (p == null) {
             return new ImagePluginStack(bom);
         }
-        String path = (String) p.remove(PATH_PROPERTY);
         String lastSorterName = (String) p.remove(RESOURCES_LAST_SORTER_PROPERTY);
-        ClassLoader loader = path == null ? null : newClassLoader(path);
         List<OrderedPlugin> resourcePlugins = new ArrayList<>();
         List<OrderedPlugin> filePlugins = new ArrayList<>();
         for (String prop : p.stringPropertyNames()) {
             if (prop.startsWith(RESOURCES_RADICAL_PROPERTY)) {
                 int index = getIndex(prop, RESOURCES_RADICAL_PROPERTY,
                         RESOURCES_RANGES);
-                resourcePlugins.addAll(createOrderedPlugins(index, p, prop, loader));
+                resourcePlugins.addAll(createOrderedPlugins(index, p, prop, pluginsLayer));
             } else if (prop.startsWith(FILES_RADICAL_PROPERTY)) {
                 int index = getIndex(prop, FILES_RADICAL_PROPERTY, FILES_RANGES);
-                filePlugins.addAll(createOrderedPlugins(index, p, prop, loader));
+                filePlugins.addAll(createOrderedPlugins(index, p, prop, pluginsLayer));
             }
         }
         List<ResourcePlugin> resourcePluginsList = toPluginsList(resourcePlugins);
@@ -218,7 +217,7 @@ public final class ImagePluginConfiguration {
                     DefaultImageBuilderProvider.NAME : builderName);
             if (builderName != null) {
                 builder = ImagePluginProviderRepository.newImageBuilder(filtered, outDir,
-                        builderName, loader);
+                        builderName, pluginsLayer);
             } else {
                 builder = new DefaultImageBuilder(filtered, outDir, mods);
             }
@@ -385,11 +384,11 @@ public final class ImagePluginConfiguration {
     }
 
     private static List<OrderedPlugin> createOrderedPlugins(int index, Properties p,
-            String prop, ClassLoader loader) throws IOException {
+            String prop, Layer pluginsLayer) throws IOException {
         String name = p.getProperty(prop);
         Properties filtered = filter(p, name);
         Plugin[] plugins = ImagePluginProviderRepository.newPlugins(filtered,
-                name, loader);
+                name, pluginsLayer);
         List<OrderedPlugin> ordered = new ArrayList<>();
         for (Plugin plugin : plugins) {
             ordered.add(new OrderedPlugin(index, plugin));

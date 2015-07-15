@@ -24,15 +24,22 @@
  */
 package jdk.tools.jlink;
 
+import java.io.File;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleFinder;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -136,15 +143,38 @@ public final class TaskHelper {
 
     private class PluginsOptions {
 
+        private static final String PLUGINS_PATH = "--plugins-modulepath";
+
+        private Layer pluginsLayer = Layer.boot();
         private String pluginsProperties;
         private boolean listPlugins;
         private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
         private final Map<String, String> defaultBuilder = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
-        private PluginsOptions() throws BadArgs {
+        private PluginsOptions(String pp) throws BadArgs {
+
+            if (pp != null) {
+                String[] dirs = pp.split(File.pathSeparator);
+                Path[] paths = new Path[dirs.length];
+                int i = 0;
+                for (String dir : dirs) {
+                    paths[i++] = Paths.get(dir);
+                }
+
+                ModuleFinder finder = ModuleFinder.of(paths);
+
+                Configuration cf
+                        = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+
+                cf = cf.bind();
+
+                ClassLoader cl = new ModuleClassLoader();
+                pluginsLayer = Layer.create(cf, l -> cl);
+            }
+
             Map<String, List<String>> seen = new HashMap<>();
-            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(null)) {
+            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(pluginsLayer)) {
                 if (provider.getToolOption() != null) {
                     for (Entry<String, List<String>> entry : seen.entrySet()) {
                         if (entry.getKey().equals(provider.getToolOption())
@@ -397,11 +427,34 @@ public final class TaskHelper {
             } catch (IOException ex) {
                 throw new BadArgs("err.file.error", ex.getMessage());
             }
-            // Unit tests can call Task multiple time in same JVM.
-            pluginOptions = new PluginsOptions();
             command = args;
             // Handle defaults.
             args = handleDefaults(args);
+
+            // First extract plugins path if any
+            String pp = null;
+            List<String> filteredArgs = new ArrayList<>();
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals(PluginsOptions.PLUGINS_PATH)) {
+                    if (i == args.length - 1) {
+                        throw new BadArgs("err.no.plugins.path").showUsage(true);
+                    } else {
+                        i += 1;
+                        String arg = args[i];
+                        if (arg.charAt(0) == '-') {
+                            throw new BadArgs("err.no.plugins.path").showUsage(true);
+                        }
+                        pp = args[i];
+                    }
+                } else {
+                    filteredArgs.add(args[i]);
+                }
+            }
+            String[] arr = new String[filteredArgs.size()];
+            args = filteredArgs.toArray(arr);
+
+            // Unit tests can call Task multiple time in same JVM.
+            pluginOptions = new PluginsOptions(pp);
 
             List<String> rest = new ArrayList<>();
             // process options
@@ -470,10 +523,12 @@ public final class TaskHelper {
                 }
                 log.println(bundleHelper.getMessage("main.opt." + name));
             }
+            log.println(bundleHelper.getMessage("main.plugins-modulepath"));
             log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
-            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(null)) {
+            for (PluginProvider provider : ImagePluginProviderRepository.
+                    getPluginProviders(pluginOptions.pluginsLayer)) {
                 if (provider.getToolOption() != null) {
                     StringBuilder line = new StringBuilder();
                     line.append(" --").append(provider.getToolOption());
@@ -499,7 +554,7 @@ public final class TaskHelper {
         }
 
         public void showPlugins(PrintWriter log, boolean showsImageBuilder) {
-            for (PluginProvider fact : ImagePluginProviderRepository.getPluginProviders(null)) {
+            for (PluginProvider fact : ImagePluginProviderRepository.getPluginProviders(getPluginsLayer())) {
                 log.println("\n" + bundleHelper.getMessage("main.plugin.name")
                         + ": " + fact.getName());
                 Integer[] range = ImagePluginConfiguration.getRange(fact);
@@ -592,6 +647,10 @@ public final class TaskHelper {
                 ret = sb.toString();
             }
             return ret;
+        }
+
+        Layer getPluginsLayer() {
+            return pluginOptions.pluginsLayer;
         }
     }
 

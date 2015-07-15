@@ -22,6 +22,7 @@
  */
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.module.Layer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,7 +61,7 @@ public class JLinkTest {
 
         {
             // number of built-in plugins
-            List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(null);
+            List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
             if (builtInPluginsProviders.size() != 8) {
                 throw new AssertionError("Plugins not found: " + builtInPluginsProviders.size());
             }

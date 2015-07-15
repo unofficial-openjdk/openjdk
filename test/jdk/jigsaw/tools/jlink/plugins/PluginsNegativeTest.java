@@ -30,6 +30,7 @@
  */
 
 import java.io.IOException;
+import java.lang.module.Layer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
@@ -60,8 +61,7 @@ public class PluginsNegativeTest {
     }
 
     private void testDuplicateBuiltInProviders() {
-        ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-        List<PluginProvider> javaPlugins = ImagePluginProviderRepository.getPluginProviders(systemClassLoader);
+        List<PluginProvider> javaPlugins = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
         for (PluginProvider javaPlugin : javaPlugins) {
             System.out.println("Registered plugin: " + javaPlugin.getName());
         }
@@ -70,7 +70,7 @@ public class PluginsNegativeTest {
             try {
                 ImagePluginProviderRepository.registerPluginProvider(new CustomProvider(pluginName));
                 try {
-                    ImagePluginProviderRepository.getPluginProvider(pluginName, systemClassLoader);
+                    ImagePluginProviderRepository.getPluginProvider(pluginName, Layer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
                 } catch (IOException ignored) {
                 }
@@ -82,7 +82,7 @@ public class PluginsNegativeTest {
 
     private void testUnknownProvider() {
         try {
-            ImagePluginProviderRepository.getPluginProvider("unknown", ClassLoader.getSystemClassLoader());
+            ImagePluginProviderRepository.getPluginProvider("unknown", Layer.boot());
             throw new AssertionError("Exception expected for unknown plugin name");
         } catch (IOException ignored) {
         }
