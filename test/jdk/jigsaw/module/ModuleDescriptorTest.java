@@ -34,6 +34,7 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.Version;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -181,6 +182,21 @@ public class ModuleDescriptorTest {
         new Builder("foo").exports("p").exports("p");
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testExportsWithConcealedPackage() {
+        new Builder("foo").conceals("p").exports("p");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testExportsToTargetWithConcealedPackage() {
+        new Builder("foo").conceals("p").exports("p", "bar");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testExportsWithEmptySet() {
+        new Builder("foo").exports("p", Collections.emptySet());
+    }
+
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithBadName(String pn, String ignore) {
@@ -245,6 +261,10 @@ public class ModuleDescriptorTest {
         assertTrue(p.providers().contains("q.P2"));
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testProvidesWithEmptySet() {
+        new Builder("foo").provides("p.Service", Collections.emptySet());
+    }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
@@ -272,6 +292,22 @@ public class ModuleDescriptorTest {
         assertTrue(conceals.size() == 2);
         assertTrue(conceals.contains("p"));
         assertTrue(conceals.contains("q"));
+    }
+
+    public void testConcealsWithEmptySet() {
+        Set<String> conceals
+            = new Builder("foo").conceals(Collections.emptySet()).build().conceals();
+        assertTrue(conceals.size() == 0);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testConcealsWithDuplicate() {
+        new Builder("foo").conceals("p").conceals("p");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testConcealsWithExportedPackage() {
+        new Builder("foo").exports("p").conceals("p");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",

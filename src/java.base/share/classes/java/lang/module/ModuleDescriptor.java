@@ -173,6 +173,8 @@ public class ModuleDescriptor
 
     /**
      * <p> A module export, may be qualified or unqualified. </p>
+     *
+     * @since 1.9
      */
 
     public final static class Exports {
@@ -181,12 +183,12 @@ public class ModuleDescriptor
         private final Optional<Set<String>> targets;
 
         private Exports(String source, Set<String> targets) {
-            this.source = requireNonNull(source);
-            requireNonNull(targets);
+            this.source = requirePackageName(source);
+            targets = Collections.unmodifiableSet(new HashSet<>(targets));
             if (targets.isEmpty())
                 throw new IllegalArgumentException("Empty target set");
-            this.targets
-                = Optional.of(Collections.unmodifiableSet(new HashSet<>(targets)));
+            targets.stream().forEach(Checks::requireModuleName);
+            this.targets = Optional.of(targets);
         }
 
         /**
@@ -194,7 +196,7 @@ public class ModuleDescriptor
          * {@code source}.
          */
         private Exports(String source) {
-            this.source = requireNonNull(source);
+            this.source = requirePackageName(source);
             this.targets = Optional.empty();
         }
 
@@ -237,6 +239,8 @@ public class ModuleDescriptor
 
     /**
      * Service providers
+     *
+     * @since 1.9
      */
 
     public final static class Provides {
@@ -246,8 +250,11 @@ public class ModuleDescriptor
 
         private Provides(String service, Set<String> providers) {
             this.service = requireServiceTypeName(service);
+            providers = Collections.unmodifiableSet(new HashSet<>(providers));
+            if (providers.isEmpty())
+                throw new IllegalArgumentException("Empty providers set");
             providers.forEach(Checks::requireServiceProviderName);
-            this.providers = Collections.unmodifiableSet(new HashSet<>(providers));
+            this.providers = providers;
         }
 
         public String service() { return service; }
@@ -425,9 +432,13 @@ public class ModuleDescriptor
     /**
      * A builder used for building {@link ModuleDescriptor} objects.
      *
-     * @apiNote Should Builder be final?
+     * @apiNote IllegalArgumentException is currently thrown for the case that
+     * something is already declared, should this be IllegalStateException
+     * instead?
+     *
+     * @since 1.9
      */
-    public static class Builder {
+    public static final class Builder {
 
         final String name;
         final boolean automatic;
@@ -441,7 +452,10 @@ public class ModuleDescriptor
         DependencyHashes hashes;
 
         /**
-         * Initializes a new builder.
+         * Initializes a new builder with the given module name.
+         *
+         * @throws IllegalArgumentException if the module name is {@code null}
+         *         or is not a legal Java identifier.
          */
         public Builder(String name) {
             this(name, false);
@@ -453,26 +467,49 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module dependence.
+         * Adds a module dependence with the given (and possibly empty) set
+         * of modifiers.
+         *
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or a dependency on the
+         *         module has already been added.
          */
         public Builder requires(Set<Requires.Modifier> mods, String mn) {
-            if (requires.get(requireModuleName(mn)) != null)
+            if (requires.get(mn) != null)
                 throw new IllegalArgumentException("Dependence upon " + mn
                                                    + " already declared");
-            requires.put(mn, new Requires(mods, mn));
+            requires.put(mn, new Requires(mods, mn)); // checks mn
             return this;
         }
 
+        /**
+         * Adds a module dependence with an empty set of modifiers.
+         *
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or a dependency on the
+         *         module has already been added.
+         */
         public Builder requires(String mn) {
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
         }
 
+        /**
+         * Adds a module dependence with the given modifier.
+         *
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or a dependency on the
+         *         module has already been added.
+         */
         public Builder requires(Requires.Modifier mod, String mn) {
             return requires(EnumSet.of(mod), mn);
         }
 
         /**
          * Adds a service dependence.
+         *
+         * @throws IllegalArgumentException if the service type is {@code null},
+         *         is not a legal Java identifier, or a dependency on the
+         *         service type has already been added.
          */
         public Builder uses(String st) {
             if (uses.contains(requireServiceTypeName(st)))
@@ -483,29 +520,51 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module export.
+         * Adds an export to a set of target modules.
+         *
+         * @throws IllegalArgumentException if the package name or any of the
+         *         target modules are {@code null} or not legal Java identifiers,
+         *         the set of targets is empty, or the package is already exported
+         *         or concealed
          */
         public Builder exports(String pn, Set<String> targets) {
-            if (exports.get(requirePackageName(pn)) != null)
+            if (exports.get(pn) != null)
                 throw new IllegalArgumentException("Export of package "
                                                    + pn + " already declared");
-            targets.stream().forEach(Checks::requireModuleName);
-            exports.put(pn, new Exports(pn, targets));
+            if (conceals.contains(pn))
+                throw new IllegalArgumentException("Concealed package "
+                                                   + pn + " already declared");
+            exports.put(pn, new Exports(pn, targets)); // checks pn and targets
             return this;
         }
 
         /**
-         * Exports the given package to the given named module.
+         * Adds an export to a target module.
+         *
+         * @throws IllegalArgumentException if the package name is {@code null},
+         *         the package name or the target module are not legal
+         *         Java identifiers, or the package is already exported or
+         *         concealed
          */
         public Builder exports(String pn, String target) {
             return exports(pn, Collections.singleton(target));
         }
 
+        /**
+         * Adds an export.
+         *
+         * @throws IllegalArgumentException if the package name is {@code null},
+         *         ir not a legal Java identifier, or the package is already
+         *         exported or concealed
+         */
         public Builder exports(String pn) {
-            if (exports.get(requirePackageName(pn)) != null)
+            if (exports.get(pn) != null)
                 throw new IllegalArgumentException("Export of package "
                                                    + pn + " already declared");
-            exports.put(pn, new Exports(pn));
+            if (conceals.contains(pn))
+                throw new IllegalArgumentException("Concealed package "
+                                                   + pn + " already declared");
+            exports.put(pn, new Exports(pn)); // checks pn
             return this;
         }
 
@@ -516,44 +575,91 @@ public class ModuleDescriptor
 
         /**
          * Provides service {@code st} with implementations {@code pcs}.
+         *
+         * @throws IllegalArgumentException if the service type or any of the
+         *         provider class names are {@code null} or not legal Java
+         *         identifiers, the set of provider class names is empty, or
+         *         the providers for the service type have already been declared
          */
         public Builder provides(String st, Set<String> pcs) {
-            if (provides.get(requireServiceTypeName(st)) != null)
+            if (provides.get(st) != null)
                 throw new IllegalArgumentException("Providers of service "
                                                    + st + " already declared");
-            pcs.stream().forEach(Checks::requireServiceProviderName);
-            provides.put(st, new Provides(st, pcs));
+            provides.put(st, new Provides(st, pcs)); // checks st and pcs
             return this;
         }
 
+        /**
+         * Provides service {@code st} with implementation {@code pc}.
+         *
+         * @throws IllegalArgumentException if the service type or the
+         *         provider class name are {@code null} or not legal Java
+         *         identifiers, or the providers for the service type have
+         *         already been declared
+         */
         public Builder provides(String st, String pc) {
             return provides(st, Collections.singleton(pc));
         }
 
+        /**
+         * Sets the module version.
+         *
+         * @apiNote Should this throw IllegalStateException if already set?
+         *
+         * @throws IllegalArgumentException if {@code v} is null or cannot be
+         *         parsed as a version string
+         *
+         * @see Version#parse(String)
+         */
         public Builder version(String v) {
             version = Version.parse(v);
             return this;
         }
 
+        /**
+         * Sets the module main class.
+         *
+         * @apiNote Should this throw IllegalStateException if already set?
+         *
+         * @throws IllegalArgumentException if {@code mainClass} is null or
+         *         is not a legal Java identifier
+         */
         public Builder mainClass(String mainClass) {
             this.mainClass
                 = requireJavaIdentifier("main class name", mainClass);
             return this;
         }
 
+        /**
+         * Adds a set of (possible empty) concealed packages.
+         *
+         * @throws IllegalArgumentException if any of the package names are
+         *         {@code null} or not a legal Java identifier, or any of
+         *         packages are already concealed or exported
+         */
         public Builder conceals(Set<String> packages) {
-            packages.forEach(Checks::requirePackageName);
-            if (this.conceals.isEmpty())
-                this.conceals = new HashSet<>();
-            this.conceals.addAll(packages);
+            packages.forEach(this::conceals);
             return this;
         }
 
-        public Builder conceals(String pkg) {
-            Checks.requirePackageName(pkg);
-            if (this.conceals.isEmpty())
-                this.conceals = new HashSet<>();
-            this.conceals.add(pkg);
+        /**
+         * Adds a concealed package.
+         *
+         * @throws IllegalArgumentException if the package name is {@code null},
+         *         or not a legal Java identifier, or the package is already
+         *         concealed or exported
+         */
+        public Builder conceals(String pn) {
+            Checks.requirePackageName(pn);
+            if (conceals.contains(pn))
+                throw new IllegalArgumentException("Concealed package "
+                                                   + pn + " already declared");
+            if (exports.containsKey(pn))
+                throw new IllegalArgumentException("Exported package "
+                                                   + pn + " already declared");
+            if (conceals.isEmpty())
+                conceals = new HashSet<>();
+            conceals.add(pn);
             return this;
         }
 
