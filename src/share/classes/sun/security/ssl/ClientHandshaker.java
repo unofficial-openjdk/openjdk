@@ -55,6 +55,8 @@ import sun.security.ssl.HandshakeMessage.*;
 import sun.security.ssl.CipherSuite.*;
 import static sun.security.ssl.CipherSuite.KeyExchange.*;
 
+import sun.security.util.CryptoPrimitive;
+
 /**
  * ClientHandshaker does the protocol handshaking from the point
  * of view of a client.  It is driven asychronously by handshake messages
@@ -586,6 +588,14 @@ final class ClientHandshaker extends Handshaker {
             // NOTREACHED
         }
         ephemeralServerKey = mesg.getPublicKey();
+
+        // check constraints of RSA PublicKey
+        if (!algorithmConstraints.permits(
+            EnumSet.of(CryptoPrimitive.KEY_AGREEMENT), ephemeralServerKey)) {
+
+            throw new SSLHandshakeException("RSA ServerKeyExchange " +
+                    "does not comply to algorithm constraints");
+        }
     }
 
 
@@ -602,6 +612,9 @@ final class ClientHandshaker extends Handshaker {
         }
         dh = new DHCrypt(mesg.getModulus(), mesg.getBase(), sslContext.getSecureRandom());
         serverDH = mesg.getServerPublicKey();
+
+        // check algorithm constraints
+        dh.checkConstraints(algorithmConstraints, serverDH);
     }
 
     private void serverKeyExchange(ECDH_ServerKeyExchange mesg) throws IOException {
@@ -611,6 +624,14 @@ final class ClientHandshaker extends Handshaker {
         ECPublicKey key = mesg.getPublicKey();
         ecdh = new ECDHCrypt(key.getParams(), sslContext.getSecureRandom());
         ephemeralServerKey = key;
+
+        // check constraints of EC PublicKey
+        if (!algorithmConstraints.permits(
+            EnumSet.of(CryptoPrimitive.KEY_AGREEMENT), ephemeralServerKey)) {
+
+            throw new SSLHandshakeException("ECDH ServerKeyExchange " +
+                    "does not comply to algorithm constraints");
+        }
     }
 
     /*
