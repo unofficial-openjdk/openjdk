@@ -431,7 +431,7 @@ public class DeferredAttr extends JCTree.Visitor {
                 //are left unchecked - in such cases there's nothing to clean up.
                 if (csym == null) return;
                 typeEnvs.remove(csym);
-                chk.compiled.remove(csym.flatname);
+                chk.removeCompiled(csym);
                 syms.removeClass(msym, csym.flatname);
                 super.visitClassDef(tree);
             }

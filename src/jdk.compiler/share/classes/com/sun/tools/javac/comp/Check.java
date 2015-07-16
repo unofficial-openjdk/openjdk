@@ -191,10 +191,10 @@ public class Check {
      */
     char syntheticNameChar;
 
-    /** A table mapping flat names of all compiled classes in this run to their
-     *  symbols; maintained from outside.
+    /** A table mapping flat names of all compiled classes for each module in this run
+     *  to their symbols; maintained from outside.
      */
-    public Map<Name,ClassSymbol> compiled = new HashMap<>();
+    private Map<Pair<ModuleSymbol, Name>,ClassSymbol> compiled = new HashMap<>();
 
     /** A handler for messages about deprecated usage.
      */
@@ -427,12 +427,28 @@ public class Check {
                 fromString("" + c.owner.enclClass().flatname +
                            syntheticNameChar + i +
                            c.name);
-            if (compiled.get(flatname) == null) return flatname;
+            if (getCompiled(c.packge().modle, flatname) == null) return flatname;
         }
     }
 
     public void newRound() {
         compiled.clear();
+    }
+
+    public void putCompiled(ClassSymbol csym) {
+        compiled.put(Pair.of(csym.packge().modle, csym.flatname), csym);
+    }
+
+    public ClassSymbol getCompiled(ClassSymbol csym) {
+        return compiled.get(Pair.of(csym.packge().modle, csym.flatname));
+    }
+
+    public ClassSymbol getCompiled(ModuleSymbol msym, Name flatname) {
+        return compiled.get(Pair.of(msym, flatname));
+    }
+
+    public void removeCompiled(ClassSymbol csym) {
+        compiled.remove(Pair.of(csym.packge().modle, csym.flatname));
     }
 
 /* *************************************************************************

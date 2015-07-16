@@ -412,13 +412,13 @@ public class Enter extends JCTree.Visitor {
         tree.sym = c;
 
         // Enter class into `compiled' table and enclosing scope.
-        if (chk.compiled.get(c.flatname) != null) {
+        if (chk.getCompiled(c) != null) {
             duplicateClass(tree.pos(), c);
             result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
             tree.sym = (ClassSymbol)result.tsym;
             return;
         }
-        chk.compiled.put(c.flatname, c);
+        chk.putCompiled(c);
         enclScope.enter(c);
 
         // Set up an environment for class block and store in `typeEnvs'

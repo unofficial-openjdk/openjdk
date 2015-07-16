@@ -652,7 +652,7 @@ public class Lower extends TreeTranslator {
 
         // Enter class symbol in owner scope and compiled table.
         enterSynthetic(odef.pos(), c, owner.members());
-        chk.compiled.put(c.flatname, c);
+        chk.putCompiled(c);
 
         // Create class definition tree.
         JCClassDecl cdef = make.ClassDef(
@@ -1286,10 +1286,11 @@ public class Lower extends TreeTranslator {
      */
     ClassSymbol accessConstructorTag() {
         ClassSymbol topClass = currentClass.outermostClass();
+        ModuleSymbol topModle = topClass.packge().modle;
         Name flatname = names.fromString("" + topClass.getQualifiedName() +
                                          target.syntheticNameChar() +
                                          "1");
-        ClassSymbol ctag = chk.compiled.get(flatname);
+        ClassSymbol ctag = chk.getCompiled(topModle, flatname);
         if (ctag == null)
             ctag = makeEmptyClass(STATIC | SYNTHETIC, topClass).sym;
         // keep a record of all tags, to verify that all are generated as required
