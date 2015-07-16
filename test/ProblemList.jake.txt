@@ -36,14 +36,6 @@ java/lang/SecurityManager/CheckSecurityProvider.java		macosx-all
 ############################################################################
 
 # i18n/ResourceBundle/CLDR breakage
-
-java/util/PluggableLocale/BreakIteratorProviderTest.sh			generic-all
-java/util/PluggableLocale/CollatorProviderTest.sh			generic-all
-java/util/PluggableLocale/CurrencyNameProviderTest.sh			generic-all
-java/util/PluggableLocale/DateFormatProviderTest.sh			generic-all
-java/util/PluggableLocale/DateFormatSymbolsProviderTest.sh		generic-all
-java/util/PluggableLocale/LocaleNameProviderTest.sh			generic-all
-java/util/PluggableLocale/TimeZoneNameProviderTest.sh			generic-all
 sun/text/resources/LocaleDataTest.java                                  generic-all
 
 # 8131141
