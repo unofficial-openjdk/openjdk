@@ -587,6 +587,12 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   if (!found) {
     const char *pslash = strrchr(name, '/');
     int len = pslash - name;
+
+#if INCLUDE_CDS
+    if (len <= 0 && DumpSharedSpaces) {
+      return NULL;
+    }
+#endif
     assert(len > 0, "Bad length for package name");
 
     // NOTE: IMAGE_MAX_PATH is used here since this path is internal to the jimage
