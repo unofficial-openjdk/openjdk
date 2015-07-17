@@ -243,7 +243,14 @@ public abstract class OverlappingTestBase {
                 long frameWindow = 0;
                 String getWindowMethodName = "getHWnd";
                 if (Toolkit.getDefaultToolkit().getClass().getName().contains("XToolkit")) {
+                    Class x_ef_class = Class.forName("sun.awt.X11.XEmbeddedFrame");
+                    x_ef_class.getModule().
+                         addExports("sun.awt.X11", OverlappingTestBase.class.getModule());
                     getWindowMethodName = "getWindow";
+                }else if (Toolkit.getDefaultToolkit().getClass().getName().contains(".WToolkit")) {
+                    Class w_ef_class = Class.forName("sun.awt.windows.WEmbeddedFrame");
+                    w_ef_class.getModule().
+                         addExports("sun.awt.windows", OverlappingTestBase.class.getModule());
                 }
                 ComponentPeer peer = AWTAccessor.getComponentAccessor()
                                                 .getPeer(embedder);
@@ -255,6 +262,7 @@ public abstract class OverlappingTestBase {
                 String eframeClassName = "sun.awt.windows.WEmbeddedFrame";
                 if (Toolkit.getDefaultToolkit().getClass().getName().contains("XToolkit")) {
                     eframeClassName = "sun.awt.X11.XEmbeddedFrame";
+
                 }
                 Class eframeClass = Class.forName(eframeClassName);
                 Constructor eframeCtor = eframeClass.getConstructor(long.class);

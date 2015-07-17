@@ -33,8 +33,6 @@
 # They are used at JDK build phase in order to create $(BIFILES) which
 # are used on runtime instead.
 #
-TEXT_SRCDIR := $(JDK_TOPDIR)/src/java.base/share/classes \
-    $(JDK_TOPDIR)/src/jdk.localedata/share/classes
 TEXT_PKG := sun/text/resources
 TEXT_SOURCES := $(TEXT_PKG)/BreakIteratorRules.java \
     $(TEXT_PKG)/BreakIteratorInfo.java \
@@ -45,12 +43,36 @@ TEXT_SOURCES := $(TEXT_PKG)/BreakIteratorRules.java \
 BREAK_ITERATOR_CLASSES := $(BUILDTOOLS_OUTPUTDIR)/break_iterator_classes
 
 # These two files should be moved out to a build tool!
-$(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR, \
+$(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(TEXT_SRCDIR), \
+    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
     INCLUDES := $(TEXT_PKG), \
-    INCLUDE_FILES := $(TEXT_SOURCES), \
-    BIN := $(BREAK_ITERATOR_CLASSES)))
+    INCLUDE_FILES := \
+        $(TEXT_PKG)/BreakIteratorRules.java \
+        $(TEXT_PKG)/BreakIteratorInfo.java, \
+    BIN := $(BREAK_ITERATOR_CLASSES)/java.base))
+
+$(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
+    SETUP := GENERATE_OLDBYTECODE, \
+    SRC := $(JDK_TOPDIR)/src/jdk.localedata/share/classes, \
+    INCLUDES := $(TEXT_PKG), \
+    INCLUDE_FILES := \
+        $(TEXT_PKG)/th/BreakIteratorRules_th.java \
+        $(TEXT_PKG)/th/BreakIteratorInfo_th.java, \
+    BIN := $(BREAK_ITERATOR_CLASSES)/jdk.localedata))
+
+ifeq ($(BOOT_JDK_MODULAR), true)
+  BREAK_ITERATOR_BOOTCLASSPATH := -Xoverride:$(BREAK_ITERATOR_CLASSES) \
+      -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
+          java.base/sun.text \
+          java.base/sun.text.resources \
+          jdk.localedata/sun.text.resources.th \
+      ))
+else
+  BREAK_ITERATOR_BOOTCLASSPATH := -Xbootclasspath/p:$(call CreatePath, \
+      $(BREAK_ITERATOR_CLASSES)/java.base \
+      $(BREAK_ITERATOR_CLASSES)/jdk.localedata)
+endif
 
 # Generate data resource files.
 # input
@@ -58,17 +80,18 @@ UNICODEDATA := $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt
 
 # output
 BASE_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/java.base/sun/text/resources
-SL_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/jdk.localedata/sun/text/resources
+LD_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/jdk.localedata/sun/text/resources
 BIFILES := $(BASE_DATA_PKG_DIR)/CharacterBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/WordBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/LineBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/SentenceBreakIteratorData
-BIFILES_TH := $(SA_DATA_PKG_DIR)/th/WordBreakIteratorData_th \
-    $(SA_DATA_PKG_DIR)/th/LineBreakIteratorData_th
+BIFILES_TH := $(LD_DATA_PKG_DIR)/th/WordBreakIteratorData_th \
+    $(LD_DATA_PKG_DIR)/th/LineBreakIteratorData_th
 
 $(BIFILES): $(BASE_DATA_PKG_DIR)/_the.bifiles
-$(BASE_DATA_PKG_DIR)/_the.bifiles: JAVA_FLAGS += -Xbootclasspath/p:$(BREAK_ITERATOR_CLASSES)
-$(BASE_DATA_PKG_DIR)/_the.bifiles: $(BUILD_TOOLS) $(UNICODEDATA) $(BUILD_BREAKITERATOR)
+$(BASE_DATA_PKG_DIR)/_the.bifiles: JAVA_FLAGS += $(BREAK_ITERATOR_BOOTCLASSPATH)
+$(BASE_DATA_PKG_DIR)/_the.bifiles: $(BUILD_TOOLS) $(UNICODEDATA) \
+    $(BUILD_BREAKITERATOR_BASE) $(BUILD_BREAKITERATOR_LD)
 	$(ECHO) $(LOG_INFO) "Generating BreakIteratorData"
 	$(MKDIR) -p $(@D)
 	$(RM) $(BIFILES)
@@ -77,9 +100,10 @@ $(BASE_DATA_PKG_DIR)/_the.bifiles: $(BUILD_TOOLS) $(UNICODEDATA) $(BUILD_BREAKIT
 	    -spec $(UNICODEDATA)
 	$(TOUCH) $@
 
-$(BIFILES_TH): $(SL_DATA_PKG_DIR)/_the.bifiles_th
-$(SL_DATA_PKG_DIR)/_the.bifiles_th: JAVA_FLAGS += -Xbootclasspath/p:$(BREAK_ITERATOR_CLASSES)
-$(SL_DATA_PKG_DIR)/_the.bifiles_th: $(BUILD_TOOLS) $(UNICODEDATA) $(BUILD_BREAKITERATOR)
+$(BIFILES_TH): $(LD_DATA_PKG_DIR)/_the.bifiles_th
+$(LD_DATA_PKG_DIR)/_the.bifiles_th: JAVA_FLAGS += $(BREAK_ITERATOR_BOOTCLASSPATH)
+$(LD_DATA_PKG_DIR)/_the.bifiles_th: $(BUILD_TOOLS) $(UNICODEDATA) \
+    $(BUILD_BREAKITERATOR_BASE) $(BUILD_BREAKITERATOR_LD)
 	$(ECHO) $(LOG_INFO) "Generating BreakIteratorData_th"
 	$(MKDIR) -p $(@D)/th
 	$(RM) $(BIFILES_TH)

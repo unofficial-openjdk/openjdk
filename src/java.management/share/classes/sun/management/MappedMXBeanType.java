@@ -702,6 +702,8 @@ public abstract class MappedMXBeanType {
                         nameArray, // field descriptions
                         types.toArray(new OpenType<?>[0]));
             }
+
+            MappedMXBeanType.class.getModule().addReads(c.getModule());
         }
 
         Type getJavaType() {

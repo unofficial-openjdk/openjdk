@@ -42,7 +42,7 @@ import sun.awt.AppContext;
 import sun.lwawt.macosx.CImage;
 import sun.lwawt.macosx.CImage.Creator;
 import sun.lwawt.macosx.CPlatformWindow;
-import sun.misc.Launcher;
+import sun.misc.ClassLoaders;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.action.GetPropertyAction;
 import sun.swing.SwingUtilities2;
@@ -364,7 +364,8 @@ final class AquaUtils {
     // special casing naughty applications, like InstallAnywhere
     // <rdar://problem/4851533> REGR: JButton: Myst IV: the buttons of 1.0.3 updater have redraw issue
     static boolean shouldUseOpaqueButtons() {
-        final ClassLoader launcherClassLoader = Launcher.getLauncher().getClassLoader();
+        // can we use ClassLoader.getSystemClassLoader here?
+        final ClassLoader launcherClassLoader = ClassLoaders.appClassLoader();
         if (classExists(launcherClassLoader, "com.installshield.wizard.platform.macosx.MacOSXUtils")) return true;
         return false;
     }

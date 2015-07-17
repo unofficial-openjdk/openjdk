@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,10 @@
 
 package javax.naming.spi;
 
-import java.util.*;
+import java.lang.reflect.Module;
 import java.net.MalformedURLException;
+import java.util.*;
+
 
 import javax.naming.*;
 import com.sun.naming.internal.VersionHelper;
@@ -158,7 +160,12 @@ public class NamingManager {
             }
         }
 
-        return (clas != null) ? (ObjectFactory) clas.newInstance() : null;
+        if (clas != null) {
+            ensureReadable(clas.getModule());
+            return (ObjectFactory) clas.newInstance();
+        } else {
+            return null;
+        }
     }
 
 
@@ -700,8 +707,9 @@ public class NamingManager {
 
             if (factory == null) {
                 try {
-                    factory = (InitialContextFactory)
-                            helper.loadClass(className).newInstance();
+                    Class<?> clazz = helper.loadClass(className);
+                    ensureReadable(clazz.getModule());
+                    factory = (InitialContextFactory) clazz.newInstance();
                 } catch (Exception e) {
                     NoInitialContextException ne =
                             new NoInitialContextException(
@@ -904,5 +912,10 @@ public class NamingManager {
         }
 
         return (answer != null) ? answer : obj;
+    }
+
+    private static void ensureReadable(Module targetModule) {
+        Module thisModule = NamingManager.class.getModule();
+        thisModule.addReads(targetModule);
     }
 }
