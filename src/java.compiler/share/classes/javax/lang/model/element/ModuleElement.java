@@ -166,5 +166,5 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * Returns the list of services used by this module.
      * @return the list of services used by this module
      */
-    List<? extends UsesDirective> getUses();
+    List<? extends UsesDirective> getUsesDirectives();
 }
