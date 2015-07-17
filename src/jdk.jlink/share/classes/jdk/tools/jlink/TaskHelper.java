@@ -690,6 +690,10 @@ public final class TaskHelper {
                 bundleHelper.getMessage(key, args));
     }
 
+    public void reportUnknownError(String message) {
+        log.println(bundleHelper.getMessage("error.prefix") + " " + message);
+    }
+
     public void warning(String key, Object... args) {
         log.println(bundleHelper.getMessage("warn.prefix") + " " +
                 bundleHelper.getMessage(key, args));

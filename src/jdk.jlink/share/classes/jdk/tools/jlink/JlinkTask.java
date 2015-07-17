@@ -216,7 +216,8 @@ class JlinkTask {
             }
             return EXIT_CMDERR;
         } catch (Exception x) {
-            x.printStackTrace();
+            taskHelper.reportUnknownError(x.getMessage());
+            log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             return EXIT_ABNORMAL;
         } finally {
             log.flush();
