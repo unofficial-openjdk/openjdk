@@ -208,8 +208,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns the name of the module that the package is exported to,
-         * or {@code null} if this is an unqualified export.
+         * For a qualified export, returns the non-empty and immutable set
+         * of the module names to which the package is exported. For an
+         * unqualified export, returns an empty {@code Optional}.
          */
         public Optional<Set<String>> targets() {
             return targets;
