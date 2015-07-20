@@ -2329,7 +2329,7 @@ public class XSLTErrorResources_sv extends ListResourceBundle
 
   {
     WG_NO_LOCALE_IN_FORMATNUMBER,
-      "Xalan hanterar \u00e4nnu inte locale-namnet i funktionen format-number."},
+      "Xalan hanterar \u00E4nnu inte spr\u00E5kkonventionen i funktionen format-number."},
 
 
   /** WG_LOCALE_NOT_FOUND          */
@@ -2338,7 +2338,7 @@ public class XSLTErrorResources_sv extends ListResourceBundle
 
   {
     WG_LOCALE_NOT_FOUND,
-      "Varning: Hittade inte locale f\u00f6r xml:lang{0}"},
+      "Varning: Hittade inte spr\u00E5kkonvention f\u00F6r xml:lang={0}"},
 
 
   /** WG_CANNOT_MAKE_URL_FROM          */
@@ -2583,8 +2583,8 @@ public class XSLTErrorResources_sv extends ListResourceBundle
     { "version", ">>>>>>> Xalan Version"},
     { "version2", "<<<<<<<"},
     { "yes", "ja"},
-    { "line",  "Rad #"},
-    { "column", "Kolumn #"},
+    { "line", "Rad nr"},
+    { "column","Kolumn nr"},
     { "xsldone", "XSLProcessor: f\u00e4rdig"},
     { "xslProc_option", "Xalan-J kommando linje Process klass alternativ:"},
     { "optionIN", "    -IN inputXMLURL"},

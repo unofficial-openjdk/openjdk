@@ -432,7 +432,7 @@ public static final int MAX_CODE = 108;  // this is needed to keep track of the 
 
 
   {
-    ER_ERROR_OCCURED, "Fel intr\u00e4ffade!"},
+    ER_ERROR_OCCURED, "Ett fel har intr\u00E4ffat!"},
 
 
   /** Field ER_ILLEGAL_VARIABLE_REFERENCE          */
@@ -1088,7 +1088,7 @@ public static final int MAX_CODE = 108;  // this is needed to keep track of the 
 
   {
     WG_LOCALE_NAME_NOT_HANDLED,
-      "locale-namnet i format-number-funktionen \u00e4nnu inte hanterat!"},
+      "spr\u00E5kkonventionsnamnet i funktionen format-number har \u00E4nnu inte hanterats!"},
 
 
   /** Field WG_PROPERTY_NOT_SUPPORTED          */
@@ -1201,8 +1201,8 @@ public static final int MAX_CODE = 108;  // this is needed to keep track of the 
     { "version", ">>>>>>> Xalan Version"},
     { "version2", "<<<<<<<"},
     { "yes",  "ja"},
-    { "line",  "Rad //"},
-    { "column", "Kolumn //"},
+    { "line", "Rad nr"},
+    { "column", "Kolumn nr"},
     { "xsldone", "XSLProcessor f\u00e4rdig"},
     { "xpath_option", "xpath-alternativ"},
     { "optionIN", "    [-in inputXMLURL]"},

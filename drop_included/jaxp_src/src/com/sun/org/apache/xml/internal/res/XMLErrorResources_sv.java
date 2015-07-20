@@ -619,8 +619,8 @@ public class XMLErrorResources_sv extends XMLErrorResources
       "Parameter till createMessage ligger utanf\u00f6r till\u00e5tet intervall"},
   { "FORMAT_FAILED",
       "Undantag utl\u00f6st vid messageFormat-anrop"},
-  { "line",  "Rad #"},
-  { "column", "Kolumn #"}
+  { "line", "Rad nr"},
+  { "column","Kolumn nr"},
 
   };
   }
