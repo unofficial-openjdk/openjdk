@@ -49,7 +49,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.URIResolver;
 
-import sun.misc.Modules;
+import jdk.internal.misc.Modules;
 
 /**
  * @author Morten Jorgensen
