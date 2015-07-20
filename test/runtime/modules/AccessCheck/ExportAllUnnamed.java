@@ -30,8 +30,8 @@
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @compile -XaddExports:java.base/sun.misc ExportAllUnnamed.java
- * @run main/othervm -XaddExports:java.base/sun.misc=ALL-UNNAMED -Xbootclasspath/a:. ExportAllUnnamed
+ * @compile -XaddExports:java.base/jdk.internal.misc ExportAllUnnamed.java
+ * @run main/othervm -XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED -Xbootclasspath/a:. ExportAllUnnamed
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -110,7 +110,7 @@ public class ExportAllUnnamed {
         Module m2 = p2_c2_class.getModule();
 
         // Export m2/p2 to all unnamed modules.
-        sun.misc.Modules.addExportsToAllUnnamed(m2, "p2");
+        jdk.internal.misc.Modules.addExportsToAllUnnamed(m2, "p2");
 
         // now use the same loader to load class p1.c1
         Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");

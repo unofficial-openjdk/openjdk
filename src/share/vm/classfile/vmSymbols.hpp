@@ -115,12 +115,13 @@
   template(java_util_Hashtable,                       "java/util/Hashtable")                      \
   template(java_lang_Compiler,                        "java/lang/Compiler")                       \
   template(sun_misc_Signal,                           "sun/misc/Signal")                          \
-  template(sun_misc_ClassLoaders_AppClassLoader,      "sun/misc/ClassLoaders$AppClassLoader")     \
   template(java_lang_AssertionStatusDirectives,       "java/lang/AssertionStatusDirectives")      \
   template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
   template(sun_misc_PostVMInitHook,                   "sun/misc/PostVMInitHook")                  \
-  template(sun_misc_ClassLoaders_ExtClassLoader,      "sun/misc/ClassLoaders$ExtClassLoader")     \
   template(sun_net_www_ParseUtil,                     "sun/net/www/ParseUtil")                    \
+                                                                                                  \
+  template(jdk_internal_misc_ClassLoaders_AppClassLoader,      "jdk/internal/misc/ClassLoaders$AppClassLoader")     \
+  template(jdk_internal_misc_ClassLoaders_ExtClassLoader,      "jdk/internal/misc/ClassLoaders$ExtClassLoader")     \
                                                                                                   \
   /* Java runtime version access */                                                               \
   template(sun_misc_Version,                          "sun/misc/Version")                         \
