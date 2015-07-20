@@ -47,6 +47,8 @@ import static java.lang.module.Checks.*;
 
 /**
  * A module descriptor.
+ *
+ * @since 1.9
  */
 
 public class ModuleDescriptor
@@ -56,6 +58,7 @@ public class ModuleDescriptor
     /**
      * <p> A dependence upon a module </p>
      *
+     * @see ModuleDescriptor#requires()
      * @since 1.9
      */
 
@@ -104,7 +107,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns the possibly empty set of modifiers. The set is immutable.
+         * Returns the set of modifiers.
+         *
+         * @return A possibly-empty unmodifiable set of modifiers
          */
         public Set<Modifier> modifiers() {
             return mods;
@@ -174,6 +179,7 @@ public class ModuleDescriptor
     /**
      * <p> A module export, may be qualified or unqualified. </p>
      *
+     * @see ModuleDescriptor#exports()
      * @since 1.9
      */
 
@@ -239,8 +245,9 @@ public class ModuleDescriptor
 
 
     /**
-     * Service providers
+     * <p> A service that a module provides one or more implementations of. </p>
      *
+     * @see ModuleDescriptor#provides()
      * @since 1.9
      */
 
@@ -258,7 +265,16 @@ public class ModuleDescriptor
             this.providers = providers;
         }
 
+        /**
+         * Returns the service type.
+         */
         public String service() { return service; }
+
+        /**
+         * Returns the set of provider names.
+         *
+         * @return A non-empty and unmodifiable set of provider names
+         */
         public Set<String> providers() { return providers; }
 
         public int hashCode() {
@@ -371,6 +387,9 @@ public class ModuleDescriptor
 
     /**
      * <p> The services that this module provides </p>
+     *
+     * @return The possibly-empty unmodifiable map of the services that this
+     *         module provides. The map key is the service type.
      */
     public Map<String, Provides> provides() {
         return provides;
@@ -410,6 +429,8 @@ public class ModuleDescriptor
     /**
      * Returns the names of the packages defined in, but not exported by, this
      * module.
+     *
+     * @return A possibly-empty unmodifiable set of the concealed packages
      */
     public Set<String> conceals() {
         return conceals;
@@ -418,6 +439,8 @@ public class ModuleDescriptor
     /**
      * Returns the names of all the packages defined in this module, whether
      * exported or concealed.
+     *
+     * @return A possibly-empty unmodifiable set of the all packages
      */
     public Set<String> packages() {
         return packages;
@@ -688,6 +711,18 @@ public class ModuleDescriptor
 
     }
 
+
+    /**
+     * Compares this module descriptor to another.
+     *
+     * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
+     * module name lexicographically.  Where the module names are equal then
+     * the versions, if present, are compared.
+     *
+     * @return A negative integer, zero, or a positive integer if this module
+     *         descriptor is less than, equal to, or greater than the given
+     *         module descriptor
+     */
     @Override
     public int compareTo(ModuleDescriptor that) {
         int c = this.name().compareTo(that.name());
