@@ -2358,6 +2358,24 @@ char* SystemDictionary::check_signature_loaders(Symbol* signature,
   return NULL;
 }
 
+// Decide if we can globally cache a lookup of this class, to be returned to any client that asks.
+// We must ensure that all class loaders everywhere will reach this class, for any client.
+// This is a safe bet for public classes in java.lang, such as Object and String.
+// We also include public classes in java.lang.invoke, because they appear frequently in system-level method types.
+// Out of an abundance of caution, we do not include any other classes, not even for packages like java.util.
+static bool is_always_visible_class(oop mirror) {
+  klassOop klass = java_lang_Class::as_klassOop(mirror);
+  if (Klass::cast(klass)->oop_is_objArray()) {
+    klass = objArrayKlass::cast(klass)->bottom_klass(); // check element type
+  }
+  if (Klass::cast(klass)->oop_is_typeArray()) {
+    return true; // primitive array
+  }
+  assert(Klass::cast(klass)->oop_is_instance(), Klass::cast(klass)->external_name());
+  return Klass::cast(klass)->is_public() &&
+         (instanceKlass::cast(klass)->is_same_class_package(SystemDictionary::Object_klass()) ||       // java.lang
+          instanceKlass::cast(klass)->is_same_class_package(SystemDictionary::MethodHandle_klass()));  // java.lang.invoke
+}
 
 methodOop SystemDictionary::find_method_handle_invoke(Symbol* name,
                                                       Symbol* signature,
@@ -2423,32 +2441,34 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
                                                  bool& return_bcp_flag,
                                                  TRAPS) {
   Handle class_loader, protection_domain;
-  bool is_on_bcp = true;  // keep this true as long as we can materialize from the boot classloader
+  if (accessing_klass.not_null()) {
+    class_loader      = Handle(THREAD, instanceKlass::cast(accessing_klass())->class_loader());
+    protection_domain = Handle(THREAD, instanceKlass::cast(accessing_klass())->protection_domain());
+  }
+  bool can_be_cached = true;
   Handle empty;
   int npts = ArgumentCount(signature).size();
   objArrayHandle pts = oopFactory::new_objArray(SystemDictionary::Class_klass(), npts, CHECK_(empty));
   int arg = 0;
-  Handle rt;                            // the return type from the signature
+  Handle rt; // the return type from the signature
   ResourceMark rm(THREAD);
   for (SignatureStream ss(signature); !ss.is_done(); ss.next()) {
     oop mirror = NULL;
-    if (is_on_bcp) {
-      mirror = ss.as_java_mirror(class_loader, protection_domain,
+    if (can_be_cached) {
+      // Use neutral class loader to lookup candidate classes to be placed in the cache.
+      mirror = ss.as_java_mirror(Handle(), Handle(),
                                  SignatureStream::ReturnNull, CHECK_(empty));
-      if (mirror == NULL) {
-        // fall back from BCP to accessing_klass
-        if (accessing_klass.not_null()) {
-          class_loader      = Handle(THREAD, instanceKlass::cast(accessing_klass())->class_loader());
-          protection_domain = Handle(THREAD, instanceKlass::cast(accessing_klass())->protection_domain());
-        }
-        is_on_bcp = false;
+      if (mirror == NULL || (ss.is_object() && !is_always_visible_class(mirror))) {
+        // Fall back to accessing_klass context.
+        can_be_cached = false;
       }
     }
-    if (!is_on_bcp) {
+    if (!can_be_cached) {
       // Resolve, throwing a real error if it doesn't work.
       mirror = ss.as_java_mirror(class_loader, protection_domain,
                                  SignatureStream::NCDFError, CHECK_(empty));
     }
+    assert(!oopDesc::is_null(mirror), ss.as_symbol(THREAD)->as_C_string());
     if (ss.at_return_type())
       rt = Handle(THREAD, mirror);
     else
@@ -2494,7 +2514,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
   }
 
   // report back to the caller with the MethodType and the "on_bcp" flag
-  return_bcp_flag = is_on_bcp;
+  return_bcp_flag = can_be_cached;
   return method_type;
 }
 
