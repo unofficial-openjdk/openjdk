@@ -25,7 +25,6 @@
 
 module customplugin {
     requires jdk.jlink;
-    uses jdk.tools.jlink.plugins.PluginProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with plugin.HelloProvider;
 }
 

@@ -149,7 +149,7 @@ public final class TaskHelper {
         private String pluginsProperties;
         private boolean listPlugins;
         private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
-        private final Map<String, String> defaultBuilder = new HashMap<>();
+        private final Map<ImageBuilderProvider, Map<String, String>> builders = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
         private PluginsOptions(String pp) throws BadArgs {
@@ -226,16 +226,25 @@ public final class TaskHelper {
                     },
                     "--list-plugins"));
 
-            Map<String, String> options = DefaultImageBuilderProvider.getOptions();
-            if (options != null && !options.isEmpty()) {
-                for (Entry<String, String> o : options.entrySet()) {
-                    PluginOption option
-                            = new PluginOption(DefaultImageBuilderProvider.hasArgument(o.getKey()),
-                                    (task, opt, arg) -> {
-                                        defaultBuilder.put(o.getKey(), arg);
-                                    },
-                                    "--" + o.getKey());
-                    pluginsOptions.add(option);
+            //Image Builder options
+            for (ImageBuilderProvider provider
+                    : ImagePluginProviderRepository.getImageBuilderProviders(pluginsLayer)) {
+                Map<String, String> options = provider.getOptions();
+                if (options != null && !options.isEmpty()) {
+                    for (Entry<String, String> o : options.entrySet()) {
+                        PluginOption option
+                                = new PluginOption(provider.hasArgument(o.getKey()),
+                                        (task, opt, arg) -> {
+                                            Map<String, String> m = builders.get(provider);
+                                            if (m == null) {
+                                                m = new HashMap<>();
+                                                builders.put(provider, m);
+                                            }
+                                            m.put(o.getKey(), arg);
+                                        },
+                                        "--" + o.getKey());
+                        pluginsOptions.add(option);
+                    }
                 }
             }
         }
@@ -273,10 +282,13 @@ public final class TaskHelper {
                     }
                 }
             }
-            for (Entry<String, String> entry : defaultBuilder.entrySet()) {
-                props.setProperty(DefaultImageBuilderProvider.NAME + "."
-                        + entry.getKey(), entry.getValue() == null ? ""
-                                : entry.getValue());
+            for (Entry<ImageBuilderProvider, Map<String, String>> provs : builders.entrySet()) {
+                ImageBuilderProvider provider = provs.getKey();
+                for (Entry<String, String> entry : provs.getValue().entrySet()) {
+                    props.setProperty(provider.getName() + "."
+                            + entry.getKey(), entry.getValue() == null ? ""
+                                    : entry.getValue());
+                }
             }
             return props;
         }
@@ -549,7 +561,13 @@ public final class TaskHelper {
                 }
             }
             if (showsImageBuilder) {
-                logBuilderOptions(DefaultImageBuilderProvider.getOptions());
+                log.println(bundleHelper.getMessage("main.image.builders"));
+                for (ImageBuilderProvider prov
+                        : ImagePluginProviderRepository.getImageBuilderProviders(getPluginsLayer())) {
+                    log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
+                            + ": " + prov.getName());
+                    logBuilderOptions(prov.getOptions());
+                }
             }
         }
 
@@ -575,7 +593,7 @@ public final class TaskHelper {
                 if(fact.getAdditionalOptions() != null) {
                     StringBuilder builder = new StringBuilder();
                     for(Entry<String, String> entry : fact.getAdditionalOptions().entrySet()) {
-                        builder.append(entry.getKey()).append(" ").
+                        builder.append("--" + entry.getKey()).append(" ").
                                 append(entry.getValue());
                     }
                     additionalOptions = builder.toString();
@@ -589,15 +607,12 @@ public final class TaskHelper {
                 }
             }
             if (showsImageBuilder) {
-                Map<String, String> defOptions = DefaultImageBuilderProvider.getOptions();
-                if (defOptions != null && !defOptions.isEmpty()) {
-                    log.println("\n" + bundleHelper.getMessage("main.default.image.builder.name"));
-                    logBuilderOptions(defOptions);
-                }
                 for (ImageBuilderProvider prov
-                        : ImagePluginProviderRepository.getImageBuilderProviders(null)) {
+                        : ImagePluginProviderRepository.getImageBuilderProviders(getPluginsLayer())) {
                     log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
                             + ": " + prov.getName());
+                    log.println(bundleHelper.getMessage("main.image.builder.description")
+                            + ": " + prov.getDescription());
                     logBuilderOptions(prov.getOptions());
                 }
             }

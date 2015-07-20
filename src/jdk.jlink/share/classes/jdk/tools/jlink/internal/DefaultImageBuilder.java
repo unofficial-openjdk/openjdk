@@ -38,15 +38,9 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import java.nio.file.Path;
-import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Map;
@@ -60,83 +54,27 @@ import jdk.internal.jimage.BasicImageWriter;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
 /**
  *
  * @author jdenise
  */
 public class DefaultImageBuilder implements ImageBuilder {
 
-    private static class DirectoryCopy implements FileVisitor<Path> {
-
-        private final Path source;
-        private final Path destination;
-
-        DirectoryCopy(Path source, Path destination) {
-            this.source = source;
-            this.destination = destination;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            Path newdir = destination.resolve(source.relativize(dir));
-            copy(dir, newdir);
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            copy(file, destination.resolve(source.relativize(file)));
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-            if (exc != null) {
-                throw exc;
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-            throw exc;
-        }
-    }
-
-    static void copy(Path source, Path destination) throws IOException {
-        CopyOption[] options = {COPY_ATTRIBUTES, NOFOLLOW_LINKS};
-        Files.copy(source, destination, options);
-    }
-
     private final Path root;
     private final Path mdir;
-    private final Map<String, Path> mods;
     private final String jimage;
-    private final String[] filesToCopy;
     private final boolean genBom;
 
-    public DefaultImageBuilder(Properties properties, Path root,
-            Map<String, Path> mods) throws IOException {
+    public DefaultImageBuilder(Properties properties, Path root) throws IOException {
         Objects.requireNonNull(root);
-        Objects.requireNonNull(mods);
         String img = properties.getProperty(DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY);
         jimage = img == null ? BasicImageWriter.BOOT_IMAGE_NAME : img;
-
-        String lst = properties.getProperty(DefaultImageBuilderProvider.COPY_FILES);
-        String[] files = new String[0];
-        if (lst != null) {
-            files = lst.split(",");
-            for (int i = 0; i < files.length; i++) {
-                files[i] = files[i].trim();
-            }
-        }
-        filesToCopy = files;
 
         genBom = properties.getProperty(DefaultImageBuilderProvider.GEN_BOM) != null;
 
         this.root = root;
         this.mdir = root.resolve(root.getFileSystem().getPath("lib", "modules"));
-        this.mods = mods;
         Files.createDirectories(mdir);
     }
 
@@ -163,20 +101,6 @@ public class DefaultImageBuilder implements ImageBuilder {
                 release.store(fo, null);
             }
         }
-        for (String file : filesToCopy) {
-            File p = new File(path, file);
-            File dest = new File(root.toFile(), p.getName());
-            if (p.exists()) {
-                if (p.isFile()) {
-                    copy(p.toPath(), dest.toPath());
-                } else {
-                    if (p.isDirectory()) {
-                        Files.walkFileTree(p.toPath(),
-                                new DirectoryCopy(p.toPath(), dest.toPath()));
-                    }
-                }
-            }
-        }
         // Generate bom
         if (genBom) {
             File bomFile = new File(root.toFile(), "bom");
@@ -200,7 +124,8 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(ImageFilePool files, Set<String> modules, String bom) throws IOException {
+    public void storeFiles(ImageFilePool files, Set<String> modules, String bom,
+            Map<String, Path> mods) throws IOException {
         for (ImageFile f : files.getFiles()) {
             accept(f);
         }
@@ -305,6 +230,21 @@ public class DefaultImageBuilder implements ImageBuilder {
                 case CONFIG:
                     writeEntry(in, destFile("conf", filename));
                     break;
+                case OTHER:
+                    int i = name.indexOf('/');
+                    String dir = i < 0 ? "" : name.substring(0, i);
+                    if (file instanceof SymImageFile) {
+                        SymImageFile sym = (SymImageFile) file;
+                        Path target = root.resolve(sym.getTargetPath());
+                        if (!Files.exists(target)) {
+                            throw new IOException("Sym link target " + target
+                                    + " doesn't exist");
+                        }
+                        writeSymEntry(destFile(dir, filename), target);
+                    } else {
+                        writeEntry(in, destFile(dir, filename));
+                    }
+                    break;
                 default:
                     //throw new InternalError("unexpected entry: " + name + " " + zipfile.toString()); //TODO
                     throw new InternalError("unexpected entry: " + name + " " + name);
@@ -319,6 +259,11 @@ public class DefaultImageBuilder implements ImageBuilder {
     private void writeEntry(InputStream in, Path dstFile) throws IOException {
         Files.createDirectories(dstFile.getParent());
         Files.copy(in, dstFile);
+    }
+
+    private void writeSymEntry(Path dstFile, Path target) throws IOException {
+        Files.createDirectories(dstFile.getParent());
+        Files.createLink(dstFile, target);
     }
 
     private static String nativeDir(String filename) {

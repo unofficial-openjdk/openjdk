@@ -24,6 +24,7 @@
  */
 package jdk.tools.jlink.plugins;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
@@ -40,12 +41,21 @@ public interface ImageBuilderProvider {
     public String getName();
 
     /**
+     * The builder description.
+     *
+     * @return The description.
+     */
+    public String getDescription();
+
+    /**
      * Create the builder that will build the image.
      * @param properties Configuration properties
      * @param imageOutDir The directory where to store the image.
      * @return The builder.
+     * @throws java.io.IOException
      */
-    public ImageBuilder newBuilder(Properties properties, Path imageOutDir);
+    public ImageBuilder newBuilder(Properties properties, Path imageOutDir)
+            throws IOException;
 
     /**
      * Options to configure the image builder.
@@ -53,4 +63,12 @@ public interface ImageBuilderProvider {
      * @return The option name / description mapping
      */
     public abstract Map<String, String> getOptions();
+
+    /**
+     * Check if an option expects an argument.
+     *
+     * @param option
+     * @return true if an argument is expected. False otherwise.
+     */
+    public abstract boolean hasArgument(String option);
 }

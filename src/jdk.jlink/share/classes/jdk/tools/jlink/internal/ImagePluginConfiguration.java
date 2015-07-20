@@ -146,7 +146,7 @@ public final class ImagePluginConfiguration {
      */
     public static ImagePluginStack parseConfiguration(Properties p)
             throws IOException {
-        return parseConfiguration(null, null, p, Layer.boot(), null);
+        return parseConfiguration(null, Collections.emptyMap(), p, Layer.boot(), null);
     }
 
     /**
@@ -201,7 +201,7 @@ public final class ImagePluginConfiguration {
 
                 @Override
                 public void storeFiles(ImageFilePool files, Set<String> modules,
-                        String bom)
+                        String bom, Map<String, Path> mods)
                         throws IOException {
                     throw new IOException("No directory setup to store files");
                 }
@@ -219,11 +219,11 @@ public final class ImagePluginConfiguration {
                 builder = ImagePluginProviderRepository.newImageBuilder(filtered, outDir,
                         builderName, pluginsLayer);
             } else {
-                builder = new DefaultImageBuilder(filtered, outDir, mods);
+                builder = new DefaultImageBuilder(filtered, outDir);
             }
         }
         return new ImagePluginStack(builder, resourcePluginsList,
-                lastSorter, filePluginsList, bom);
+                lastSorter, filePluginsList, bom, mods);
     }
 
     private static Properties filter(Properties p, String name) {

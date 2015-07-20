@@ -31,35 +31,46 @@ import java.util.Map;
 import java.util.Properties;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.plugins.ImageBuilder;
+import jdk.tools.jlink.plugins.ImageBuilderProvider;
 
 /**
  *
  */
-public class DefaultImageBuilderProvider {
+public class DefaultImageBuilderProvider implements ImageBuilderProvider {
 
-    public static final String COPY_FILES = "copy-files";
     public static final String GEN_BOM = "genbom";
     public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
-    public static final String NAME = "jlink-default-image-builder";
+    public static final String NAME = "default-image-builder";
 
     private static final Map<String, String> OPTIONS = new HashMap<>();
 
     static {
-        OPTIONS.put(COPY_FILES, PluginsResourceBundle.getOption(NAME, COPY_FILES));
         OPTIONS.put(GEN_BOM, PluginsResourceBundle.getOption(NAME, GEN_BOM));
     }
-    public ImageBuilder newBuilder(Properties properties,
-            Path imageOutDir,
-            Map<String, Path> mods) throws IOException {
-        return new DefaultImageBuilder(properties, imageOutDir, mods);
-    }
 
-    public static Map<String, String> getOptions() {
+    @Override
+    public Map<String, String> getOptions() {
         return OPTIONS;
     }
 
-    public static boolean hasArgument(String option) {
-        return option.equals(COPY_FILES);
+    @Override
+    public boolean hasArgument(String option) {
+        return false;
     }
 
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public ImageBuilder newBuilder(Properties properties, Path imageOutDir)
+            throws IOException {
+        return new DefaultImageBuilder(properties, imageOutDir);
+    }
 }

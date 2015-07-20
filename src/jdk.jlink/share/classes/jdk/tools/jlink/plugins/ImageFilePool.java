@@ -56,10 +56,10 @@ public interface ImageFilePool {
     public abstract class ImageFile {
 
         public static enum ImageFileType {
-
-            NATIVE_LIB,
+            CONFIG,
             NATIVE_CMD,
-            CONFIG;
+            NATIVE_LIB,
+            OTHER;
         }
 
         private final ImageFileType type;
@@ -67,7 +67,8 @@ public interface ImageFilePool {
         private final String path;
         private final String module;
 
-        public ImageFile(String module, String path, String name, ImageFileType type) {
+        public ImageFile(String module, String path, String name,
+                ImageFileType type) {
             Objects.requireNonNull(module);
             Objects.requireNonNull(path);
             Objects.requireNonNull(name);
@@ -118,6 +119,24 @@ public interface ImageFilePool {
         public abstract long size();
 
         public abstract InputStream stream() throws IOException;
+    }
+
+    /**
+     * Symbolic link to another path.
+     */
+    public abstract class SymImageFile extends ImageFile {
+
+        private final String targetPath;
+
+        public SymImageFile(String targetPath, String module, String path,
+                String name, ImageFileType type) {
+            super(module, path, name, type);
+            this.targetPath = targetPath;
+        }
+
+        public String getTargetPath() {
+            return targetPath;
+        }
     }
 
     /**

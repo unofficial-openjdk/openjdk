@@ -28,6 +28,7 @@ import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -157,18 +158,21 @@ public final class ImagePluginStack {
     private final ImageBuilder imageBuilder;
 
     private final String bom;
+    private final Map<String, Path> mods;
 
     public ImagePluginStack(String bom) {
-        this(null, Collections.emptyList(), null, Collections.emptyList(), null);
+        this(null, Collections.emptyList(), null, Collections.emptyList(), null,
+                Collections.emptyMap());
     }
 
     ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
             List<ImageFilePlugin> filePlugins,
-            String bom) {
+            String bom, Map<String, Path> mods) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
+        Objects.requireNonNull(mods);
         this.lastSorter = lastSorter;
         for (ResourcePlugin p : resourcePlugins) {
             Objects.requireNonNull(p);
@@ -183,6 +187,7 @@ public final class ImagePluginStack {
         }
         this.imageBuilder = imageBuilder;
         this.bom = bom;
+        this.mods = mods;
     }
 
     public DataOutputStream getJImageFileOutputStream() throws IOException {
@@ -271,6 +276,6 @@ public final class ImagePluginStack {
             }
             current = output;
         }
-        imageBuilder.storeFiles(current, modules, bom);
+        imageBuilder.storeFiles(current, modules, bom, mods);
     }
 }
