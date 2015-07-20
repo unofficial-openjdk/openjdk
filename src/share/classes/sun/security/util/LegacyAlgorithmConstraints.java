@@ -52,18 +52,15 @@ public class LegacyAlgorithmConstraints extends AbstractAlgorithmConstraints {
         legacyAlgorithms = getAlgorithms(legacyAlgorithmsMap, propertyName);
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives,
             String algorithm, AlgorithmParameters parameters) {
         return checkAlgorithm(legacyAlgorithms, algorithm, decomposer);
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives, Key key) {
         return true;
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives,
             String algorithm, Key key, AlgorithmParameters parameters) {
         return checkAlgorithm(legacyAlgorithms, algorithm, decomposer);
