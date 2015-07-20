@@ -594,9 +594,6 @@ public class ErrorMessages_it extends ListResourceBundle {
         {ErrorMsg.JAXP_INVALID_ATTR_ERR,
         "TransformerFactory non riconosce l''attributo ''{0}''."},
 
-        {ErrorMsg.JAXP_INVALID_ATTR_VALUE_ERR,
-        "Valore errato specificato per l''attributo ''{0}''."},
-
         /*
          * Note to translators:  "setResult()" and "startDocument()" are Java
          * method names that should not be translated.

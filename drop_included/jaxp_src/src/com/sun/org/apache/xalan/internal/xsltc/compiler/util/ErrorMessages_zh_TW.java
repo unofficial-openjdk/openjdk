@@ -594,9 +594,6 @@ public class ErrorMessages_zh_TW extends ListResourceBundle {
         {ErrorMsg.JAXP_INVALID_ATTR_ERR,
         "TransformerFactory \u7121\u6cd5\u8fa8\u8b58\u5c6c\u6027 ''{0}''\u3002"},
 
-        {ErrorMsg.JAXP_INVALID_ATTR_VALUE_ERR,
-        "\u70BA ''{0}'' \u5C6C\u6027\u6307\u5B9A\u7684\u503C\u4E0D\u6B63\u78BA\u3002"},
-
         /*
          * Note to translators:  "setResult()" and "startDocument()" are Java
          * method names that should not be translated.
