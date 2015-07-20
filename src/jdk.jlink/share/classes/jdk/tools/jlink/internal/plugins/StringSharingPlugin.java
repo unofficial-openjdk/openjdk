@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import jdk.internal.jimage.decompressor.CompressIndexes;
 import jdk.internal.jimage.decompressor.SignatureParser;
@@ -329,10 +330,14 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
         }
     }
 
-    private final ResourceFilter filter;
+    private final Predicate<String> predicate;
 
-    public StringSharingPlugin(String[] patterns) {
-        this.filter = new ResourceFilter(patterns);
+    public StringSharingPlugin(String[] patterns) throws IOException {
+        this(new ResourceFilter(patterns));
+    }
+
+    public StringSharingPlugin(Predicate<String> predicate) {
+        this.predicate = predicate;
     }
 
     @Override
@@ -341,7 +346,7 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
         CompactCPHelper visit = new CompactCPHelper(false);
         resources.visit((resource, order, str) -> {
             Resource res = resource;
-            if (filter.accept(resource.getPath()) && resource.getPath().endsWith(".class")) {
+            if (predicate.test(resource.getPath()) && resource.getPath().endsWith(".class")) {
                 byte[] compressed = visit.transform(resource, result, strings);
                 res = ResourcePool.CompressedResource.newCompressedResource(resource,
                         ByteBuffer.wrap(compressed), getName(), null, str, order);
@@ -360,7 +365,7 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
             throws Exception {
         CompactCPHelper preVisit = new CompactCPHelper(true);
         for (Resource resource : resources.getResources()) {
-            if (resource.getPath().endsWith(".class") && filter.accept(resource.getPath())) {
+            if (resource.getPath().endsWith(".class") && predicate.test(resource.getPath())) {
                 preVisit.transform(resource, null, strings);
             }
         }

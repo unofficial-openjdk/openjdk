@@ -116,7 +116,7 @@ public class CompressorPluginTest {
                 }, Collections.singletonList(".*Exception.class"),
                 Collections.singletonList(".*IOException.class"));
 
-        // compress level 1 == ZIP + String sharing
+        // compress level 1 == ZIP
         Properties options1 = new Properties();
         options1.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
@@ -124,15 +124,36 @@ public class CompressorPluginTest {
         checkCompress(classes, new DefaultCompressProvider(),
                 options1,
                 new ResourceDecompressorFactory[]{
-                        new ZipDecompressorFactory(),
-                        new StringSharingDecompressorFactory()
+                    new ZipDecompressorFactory()
                 });
 
-        // compress level 1 == ZIP + String sharing + filter
+        // compress level 1 == ZIP
         options1.setProperty(DefaultCompressProvider.FILTER_OPTION,
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressProvider(),
                 options1,
+                new ResourceDecompressorFactory[]{
+                    new ZipDecompressorFactory()
+                }, Collections.singletonList(".*Exception.class"),
+                Collections.singletonList(".*IOException.class"));
+
+        // compress level 2 == ZIP + String sharing
+        Properties options2 = new Properties();
+        options2.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+                ImagePluginConfiguration.ON_ARGUMENT);
+        options2.setProperty(DefaultCompressProvider.LEVEL_OPTION, "2");
+        checkCompress(classes, new DefaultCompressProvider(),
+                options2,
+                new ResourceDecompressorFactory[]{
+                        new ZipDecompressorFactory(),
+                        new StringSharingDecompressorFactory()
+                });
+
+        // compress level 2 == ZIP + String sharing + filter
+        options2.setProperty(DefaultCompressProvider.FILTER_OPTION,
+                "*Exception.class,^*IOException.class");
+        checkCompress(classes, new DefaultCompressProvider(),
+                options2,
                 new ResourceDecompressorFactory[]{
                         new ZipDecompressorFactory(),
                         new StringSharingDecompressorFactory()

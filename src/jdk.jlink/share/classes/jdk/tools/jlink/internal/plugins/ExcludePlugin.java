@@ -24,6 +24,8 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.IOException;
+import java.util.function.Predicate;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
@@ -34,10 +36,14 @@ import jdk.tools.jlink.plugins.StringTable;
  */
 final class ExcludePlugin implements ResourcePlugin {
 
-    private final ResourceFilter filter;
+    private final Predicate<String> predicate;
 
-    ExcludePlugin(String[] patterns) {
-        this.filter = new ResourceFilter(patterns, true);
+    ExcludePlugin(String[] patterns) throws IOException {
+        this(new ResourceFilter(patterns, true));
+    }
+
+    ExcludePlugin(Predicate<String> predicate) {
+        this.predicate = predicate;
     }
 
     @Override
@@ -50,7 +56,7 @@ final class ExcludePlugin implements ResourcePlugin {
             StringTable strings)
             throws Exception {
         inResources.visit((resource, order,  str) -> {
-            return filter.accept(resource.getPath()) ? resource : null;
+            return predicate.test(resource.getPath()) ? resource : null;
         }, outResources, strings);
     }
 }

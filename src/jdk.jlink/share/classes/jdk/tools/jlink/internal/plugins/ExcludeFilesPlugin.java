@@ -24,6 +24,8 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.IOException;
+import java.util.function.Predicate;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool;
 
@@ -33,10 +35,14 @@ import jdk.tools.jlink.plugins.ImageFilePool;
  */
 final class ExcludeFilesPlugin implements ImageFilePlugin {
 
-    private final ResourceFilter filter;
+    private final Predicate<String> predicate;
 
-    ExcludeFilesPlugin(String[] patterns) {
-        this.filter = new ResourceFilter(patterns, true);
+    ExcludeFilesPlugin(String[] patterns) throws IOException {
+        this(new ResourceFilter(patterns, true));
+    }
+
+    ExcludeFilesPlugin(Predicate<String> predicate) {
+        this.predicate = predicate;
     }
 
     @Override
@@ -48,7 +54,7 @@ final class ExcludeFilesPlugin implements ImageFilePlugin {
     public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
             throws Exception {
         inFiles.visit((file) -> {
-            return filter.accept("/" + file.getModule() + "/" + file.getPath()) ? file : null;
+            return predicate.test("/" + file.getModule() + "/" + file.getPath()) ? file : null;
         }, outFiles);
     }
 }

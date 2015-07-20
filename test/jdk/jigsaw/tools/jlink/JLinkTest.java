@@ -155,6 +155,14 @@ public class JLinkTest {
             helper.checkImage("compress1filtercmdcomposite2", userOptions, null, null);
         }
 
+        // compress 2
+        {
+            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "2",
+                "--compress-resources-filter", "^/java.base/java/lang/*"};
+            helper.generateJModule("compress2filtercmdcomposite2", "composite2");
+            helper.checkImage("compress2filtercmdcomposite2", userOptions, null, null);
+        }
+
         // configuration
         {
             Path path = Paths.get("embedded.properties");

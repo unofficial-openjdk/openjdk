@@ -30,8 +30,10 @@
  * @run main ExcludePluginTest
  */
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.Properties;
 
 import jdk.tools.jlink.internal.ResourcePoolImpl;
@@ -63,6 +65,12 @@ public class ExcludePluginTest {
         check("/java.base/*/Toto$Titi.class", "/java.base/tutu/Toto$Titi.class", true);
         check("/*$*.class", "/java.base/tutu/Toto$Titi.class", true);
         check("*$*.class", "/java.base/tutu/Toto$Titi.class", true);
+
+        // Excluded resource list in a file
+        File order = new File("resources.exc");
+        order.createNewFile();
+        Files.write(order.toPath(), "*.jcov".getBytes());
+        check(order.getAbsolutePath(), "/num/toto.jcov", true);
     }
 
     public void check(String s, String sample, boolean exclude) throws Exception {

@@ -24,10 +24,16 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -40,15 +46,34 @@ import jdk.tools.jlink.plugins.StringTable;
 final class SortResourcesPlugin implements ResourcePlugin {
 
     private final List<Pattern> filters = new ArrayList<>();
-
-    SortResourcesPlugin(String[] patterns) {
+    private final List<String> orderedPaths;
+    private final boolean isFile;
+    SortResourcesPlugin(String[] patterns) throws IOException {
+        boolean isf = false;
+        List<String> paths = null;
         if (patterns != null) {
-            for (String p : patterns) {
-                p = p.replaceAll(" ", "");
-                Pattern pattern = Pattern.compile(ResourceFilter.escape(p));
-                filters.add(pattern);
+            if (patterns.length == 1) {
+                String filePath = patterns[0];
+                File f = new File(filePath);
+                if (f.exists()) {
+                    isf = true;
+                    try (FileInputStream fis = new FileInputStream(f)) {
+                        BufferedReader reader
+                                = new BufferedReader(new InputStreamReader(fis));
+                        paths = reader.lines().collect(Collectors.toList());
+                    }
+                }
+            }
+            if (!isf) {
+                for (String p : patterns) {
+                    p = p.replaceAll(" ", "");
+                    Pattern pattern = Pattern.compile(ResourceFilter.escape(p));
+                    filters.add(pattern);
+                }
             }
         }
+        orderedPaths = paths;
+        isFile = isf;
     }
 
     @Override
@@ -78,7 +103,7 @@ final class SortResourcesPlugin implements ResourcePlugin {
         }
     }
 
-    private int getOrdinal(String path) {
+    private int getPatternOrdinal(String path) {
         int ordinal = -1;
         for (int i = 0; i < filters.size(); i++) {
             Matcher m = filters.get(i).matcher(path);
@@ -90,31 +115,38 @@ final class SortResourcesPlugin implements ResourcePlugin {
         return ordinal;
     }
 
+    private int getFileOrdinal(String path) {
+        return orderedPaths.indexOf(path);
+    }
+
     @Override
     public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
+
         inResources.getResources().stream()
-                                  .map((r)-> new SortWrapper(r, getOrdinal(r.getPath())))
-                                  .sorted((sw1, sw2) -> {
-            int ordinal1 = sw1.getOrdinal();
-            int ordinal2 = sw2.getOrdinal();
+                .map((r) -> new SortWrapper(r, isFile
+                                        ? getFileOrdinal(r.getPath())
+                                        : getPatternOrdinal(r.getPath())))
+                .sorted((sw1, sw2) -> {
+                    int ordinal1 = sw1.getOrdinal();
+                    int ordinal2 = sw2.getOrdinal();
 
-            if (ordinal1 >= 0) {
-                if (ordinal2 >= 0) {
-                    return ordinal1 - ordinal2;
-                } else {
-                    return -1;
-                }
-            } else if (ordinal2 >= 0) {
-                return 1;
-            }
+                    if (ordinal1 >= 0) {
+                        if (ordinal2 >= 0) {
+                            return ordinal1 - ordinal2;
+                        } else {
+                            return -1;
+                        }
+                    } else if (ordinal2 >= 0) {
+                        return 1;
+                    }
 
-            return sw1.getPath().compareTo(sw2.getPath());
-        }).forEach((sw) -> {
-            try {
-                outResources.addResource(sw.getResource());
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+                    return sw1.getPath().compareTo(sw2.getPath());
+                }).forEach((sw) -> {
+                    try {
+                        outResources.addResource(sw.getResource());
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
     }
 }

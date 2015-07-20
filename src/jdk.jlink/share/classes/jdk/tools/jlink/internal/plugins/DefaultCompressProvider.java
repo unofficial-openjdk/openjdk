@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.plugins.OnOffProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.Plugin;
@@ -45,6 +44,7 @@ public class DefaultCompressProvider extends OnOffProvider {
     public static final String FILTER_OPTION = "compress-resources-filter";
     public static final String LEVEL_0 = "0";
     public static final String LEVEL_1 = "1";
+    public static final String LEVEL_2 = "2";
 
     public DefaultCompressProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
@@ -57,10 +57,12 @@ public class DefaultCompressProvider extends OnOffProvider {
         String[] patterns = filter == null ? null : filter.split(",");
         String level = otherOptions.get(LEVEL_OPTION);
         List<Plugin> plugins = new ArrayList<>();
-        if(level != null) {
+        if (level != null) {
             if (LEVEL_0.equals(level)) {
                 plugins.add(new StringSharingPlugin(patterns));
             } else if (LEVEL_1.equals(level)) {
+                plugins.add(new ZipPlugin(patterns));
+            } else if (LEVEL_2.equals(level)) {
                 plugins.add(new StringSharingPlugin(patterns));
                 plugins.add(new ZipPlugin(patterns));
             } else {

@@ -30,8 +30,10 @@
  * @run main ExcludeFilesPluginTest
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
@@ -57,6 +59,12 @@ public class ExcludeFilesPluginTest {
 
         checkFiles("/*$*.properties", "/tutu/Toto$Titi.properties", "java.base", true);
         checkFiles("*$*.properties", "/tutu/Toto$Titi.properties", "java.base", true);
+
+        // Excluded files list in a file
+        File order = new File("files.exc");
+        order.createNewFile();
+        Files.write(order.toPath(), "*.jcov".getBytes());
+        checkFiles(order.getAbsolutePath(), "/num/toto.jcov", "", true);
     }
 
     public void checkFiles(String s, String sample, String module, boolean exclude) throws Exception {

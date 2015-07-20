@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal.plugins;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.Predicate;
 import java.util.zip.Deflater;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -39,10 +40,14 @@ import jdk.tools.jlink.plugins.StringTable;
  */
 final class ZipPlugin implements ResourcePlugin {
 
-    private final ResourceFilter filter;
+    private final Predicate<String> predicate;
 
-    ZipPlugin(String[] patterns) {
-         this.filter = new ResourceFilter(patterns);
+    ZipPlugin(String[] patterns) throws IOException {
+        this(new ResourceFilter(patterns));
+    }
+
+    ZipPlugin(Predicate<String> predicate) {
+        this.predicate = predicate;
     }
 
     @Override
@@ -79,7 +84,7 @@ final class ZipPlugin implements ResourcePlugin {
             throws Exception {
         resources.visit((resource, order, str) -> {
             Resource res = resource;
-            if (filter.accept(resource.getPath())) {
+            if (predicate.test(resource.getPath())) {
                 byte[] compressed = compress(resource.getByteArray());
                 res = ResourcePool.CompressedResource.newCompressedResource(resource,
                         ByteBuffer.wrap(compressed), getName(), null, str, order);
