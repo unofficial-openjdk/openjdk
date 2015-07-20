@@ -42,7 +42,7 @@ import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptObject;
-import sun.misc.Modules;
+import jdk.internal.misc.Modules;
 
 /**
  * This class encapsulates the bytecode of the adapter class and can be used to load it into the JVM as an actual Class.

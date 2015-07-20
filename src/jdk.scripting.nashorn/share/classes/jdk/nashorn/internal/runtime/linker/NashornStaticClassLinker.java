@@ -27,7 +27,7 @@ package jdk.nashorn.internal.runtime.linker;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
-import sun.misc.Modules;
+import jdk.internal.misc.Modules;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.beans.BeansLinker;
 import jdk.internal.dynalink.beans.StaticClass;

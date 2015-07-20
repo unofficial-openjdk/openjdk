@@ -39,7 +39,7 @@ import java.security.SecureClassLoader;
 import java.util.HashSet;
 import java.util.Set;
 import jdk.nashorn.tools.Shell;
-import sun.misc.Modules;
+import jdk.internal.misc.Modules;
 
 /**
  * Superclass for Nashorn class loader classes.
