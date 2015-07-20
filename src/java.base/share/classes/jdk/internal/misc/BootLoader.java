@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.misc;
+package jdk.internal.misc;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +34,8 @@ import java.util.Enumeration;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
+import sun.misc.VM;
+import sun.misc.SharedSecrets;
 
 /**
  * Find resources and packages in modules defined to the boot class loader or

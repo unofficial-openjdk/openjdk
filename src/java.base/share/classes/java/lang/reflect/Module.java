@@ -50,7 +50,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
-import sun.misc.BootLoader;
+import jdk.internal.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;

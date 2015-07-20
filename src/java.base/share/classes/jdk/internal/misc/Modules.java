@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.internal.misc;
 
 import java.io.IOException;
 import java.lang.module.ModuleReference;
@@ -31,6 +31,8 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.util.Set;
+
+import sun.misc.SharedSecrets;
 
 
 /**

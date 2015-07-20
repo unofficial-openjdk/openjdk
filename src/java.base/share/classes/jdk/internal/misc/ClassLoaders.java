@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.internal.misc;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +34,10 @@ import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.util.jar.Manifest;
+
+import sun.misc.URLClassPath;
+import sun.misc.SharedSecrets;
+import sun.misc.JavaLangAccess;
 
 
 /**
@@ -84,9 +88,9 @@ public class ClassLoaders {
      * Returns the class loader that is used to find resources in modules
      * defined to the boot class loader.
      *
-     * @apiNote This method is not public, it should instead be used
-     * via sun.misc.BootLoader that provides a restricted API to this
-     * class loader.
+     * @apiNote This method is not public, it should instead be used via
+     * the BootLoader class that provides a restricted API to this class
+     * loader.
      */
     static BuiltinClassLoader bootLoader() {
         return BOOT_LOADER;

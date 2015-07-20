@@ -51,8 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
-import sun.misc.BootLoader;
-import sun.misc.ClassLoaders;
+import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;

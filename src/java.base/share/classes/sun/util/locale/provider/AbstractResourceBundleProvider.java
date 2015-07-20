@@ -25,9 +25,6 @@
 
 package sun.util.locale.provider;
 
-import sun.misc.BootLoader;
-import sun.misc.Unsafe;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -41,6 +38,10 @@ import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.spi.ResourceBundleProvider;
+
+import jdk.internal.misc.BootLoader;
+import sun.misc.Unsafe;
+
 
 /**
  * Support class for ResourceBundleProvider implementation

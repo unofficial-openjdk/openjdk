@@ -44,8 +44,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import sun.misc.BootLoader;
-import sun.misc.Modules;
+import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.Modules;
 import sun.misc.ProxyGenerator;
 import sun.misc.Unsafe;
 import sun.misc.VM;

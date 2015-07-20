@@ -298,8 +298,8 @@ SUNWprivate_1.1 {
                 Java_sun_reflect_Reflection_canReadModule0;
                 Java_sun_reflect_Reflection_isExportedToModule0;
 
-		Java_sun_misc_BootLoader_getSystemPackageLocation;
-		Java_sun_misc_BootLoader_getSystemPackageNames;
+		Java_jdk_internal_misc_BootLoader_getSystemPackageLocation;
+		Java_jdk_internal_misc_BootLoader_getSystemPackageNames;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

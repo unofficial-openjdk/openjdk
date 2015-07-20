@@ -41,8 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import sun.misc.BootLoader;
-import sun.misc.Modules;
+import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.Modules;
 import sun.misc.PerfCounter;
 import sun.misc.SharedSecrets;
 

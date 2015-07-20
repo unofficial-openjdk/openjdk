@@ -31,7 +31,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import sun.misc.BootLoader;
+import jdk.internal.misc.BootLoader;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
@@ -264,7 +264,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
         if (l != null) {
             return l.findPackageFromAncestors(name);
         } else {
-            return sun.misc.BootLoader.getPackage(name);
+            return BootLoader.getPackage(name);
         }
     }
 
@@ -283,7 +283,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     public static Package[] getPackages() {
         ClassLoader cl = ClassLoader.getClassLoader(Reflection.getCallerClass());
         Stream<Package> pkgs = cl != null ? cl.packagesFromAncestors()
-                                          : sun.misc.BootLoader.packages();
+                                          : BootLoader.packages();
         return pkgs.toArray(Package[]::new);
     }
 

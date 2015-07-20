@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import sun.misc.ClassLoaders;
+import jdk.internal.misc.ClassLoaders;
 
 
 /**

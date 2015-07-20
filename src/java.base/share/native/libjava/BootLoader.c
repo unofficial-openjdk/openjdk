@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,16 @@
 #include <stdlib.h>
 #include "jvm.h"
 #include "jni_util.h"
-#include "sun_misc_BootLoader.h"
+#include "jdk_internal_misc_BootLoader.h"
 
 JNIEXPORT jstring JNICALL
-Java_sun_misc_BootLoader_getSystemPackageLocation(JNIEnv *env, jclass cls, jstring str)
+Java_jdk_internal_misc_BootLoader_getSystemPackageLocation(JNIEnv *env, jclass cls, jstring str)
 {
     return JVM_GetSystemPackage(env, str);
 }
 
 JNIEXPORT jobject JNICALL
-Java_sun_misc_BootLoader_getSystemPackageNames(JNIEnv *env, jclass cls)
+Java_jdk_internal_misc_BootLoader_getSystemPackageNames(JNIEnv *env, jclass cls)
 {
     return JVM_GetSystemPackages(env);
 }

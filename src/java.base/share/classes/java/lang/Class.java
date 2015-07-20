@@ -59,7 +59,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-import sun.misc.BootLoader;
+import jdk.internal.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
@@ -927,7 +927,7 @@ public final class Class<T> implements java.io.Serializable,
             return cl.ensureDefinePackage(pn);
         } else {
             // BootLoader.getPackage defines the system package, if exists
-            return sun.misc.BootLoader.getPackage(pn);
+            return BootLoader.getPackage(pn);
         }
     }
 

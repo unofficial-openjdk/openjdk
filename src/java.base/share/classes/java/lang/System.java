@@ -1235,7 +1235,7 @@ public final class System {
         Module base = Object.class.getModule();
         if (base == null)
             throw new InternalError();
-        sun.misc.Modules.addReads(base, null);
+        jdk.internal.misc.Modules.addReads(base, null);
 
         // module system initialized
         sun.misc.VM.initLevel(2);

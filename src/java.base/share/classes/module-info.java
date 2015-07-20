@@ -77,8 +77,10 @@ module java.base {
     exports javax.security.cert;
     exports jdk;
     exports jdk.net;
+
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
+
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
@@ -99,6 +101,12 @@ module java.base {
     exports jdk.internal.module to
         jdk.jartool,
         jdk.jlink;
+
+    exports jdk.internal.misc to
+        java.management,
+        java.xml,
+        jdk.scripting.nashorn;
+
     exports sun.misc to
         java.corba,
         java.desktop,

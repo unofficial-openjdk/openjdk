@@ -37,12 +37,13 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 
+import jdk.internal.misc.ClassLoaders;
+
 import sun.awt.AppContext;
 
 import sun.lwawt.macosx.CImage;
 import sun.lwawt.macosx.CImage.Creator;
 import sun.lwawt.macosx.CPlatformWindow;
-import sun.misc.ClassLoaders;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.action.GetPropertyAction;
 import sun.swing.SwingUtilities2;

@@ -25,8 +25,6 @@
 
 package java.lang;
 
-import sun.misc.BootLoader;
-
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
@@ -41,6 +39,8 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import jdk.internal.misc.BootLoader;
 
 
 /**

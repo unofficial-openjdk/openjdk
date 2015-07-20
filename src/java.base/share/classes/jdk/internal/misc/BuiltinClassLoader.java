@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.internal.misc;
 
 import java.io.File;
 import java.io.FilePermission;
@@ -54,6 +54,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+
+import sun.misc.URLClassPath;
+import sun.misc.Resource;
+import sun.misc.VM;
 
 
 /**

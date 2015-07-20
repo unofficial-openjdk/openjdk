@@ -44,7 +44,8 @@ import java.security.PrivilegedAction;
 
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.ServicesCatalog.ServiceProvider;
-import sun.misc.BootLoader;
+import jdk.internal.misc.BootLoader;
+
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
