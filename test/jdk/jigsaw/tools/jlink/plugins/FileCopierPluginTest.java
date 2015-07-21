@@ -71,8 +71,17 @@ public class FileCopierPluginTest {
 
         String target = "target" + File.separator + name;
         Files.write(txt.toPath(), content.getBytes());
-        String[] args = {"LICENSE", txt.getAbsolutePath(), txt.getAbsolutePath()
-            + "=" + target, src.getAbsolutePath() + "=src2"};
+        File lic = new File(System.getProperty("java.home"), "LICENSE");
+        String[] args = new String[lic.exists() ? 4 : 3];
+        int i = 0;
+        if (lic.exists()) {
+            args[i] = "LICENSE";
+            i += 1;
+        }
+        args[i++] = txt.getAbsolutePath();
+        args[i++] = txt.getAbsolutePath() + "=" + target;
+        args[i++] = src.getAbsolutePath() + "=src2";
+
         ImageFilePlugin plug = prov.newPlugins(args, null)[0];
         ImageFilePool pool = new ImageFilePoolImpl();
         plug.visit(new ImageFilePoolImpl(), pool);
@@ -94,11 +103,14 @@ public class FileCopierPluginTest {
                 root);
         builder.storeFiles(pool, Collections.EMPTY_SET, "", Collections.EMPTY_MAP);
 
-        File license = new File(root.toFile(), "LICENSE");
-        if (!license.exists() || license.length() == 0) {
-            throw new AssertionError("Invalide license file "
-                    + license.getAbsoluteFile());
+        if (lic.exists()) {
+            File license = new File(root.toFile(), "LICENSE");
+            if (!license.exists() || license.length() == 0) {
+                throw new AssertionError("Invalide license file "
+                        + license.getAbsoluteFile());
+            }
         }
+
         File sample1 = new File(root.toFile(), txt.getName());
         if (!sample1.exists() || sample1.length() == 0) {
             throw new AssertionError("Invalide sample1 file "
