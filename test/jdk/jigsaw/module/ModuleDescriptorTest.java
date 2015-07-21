@@ -177,17 +177,17 @@ public class ModuleDescriptorTest {
     }
 
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithDuplicate() {
         new Builder("foo").exports("p").exports("p");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithConcealedPackage() {
         new Builder("foo").conceals("p").exports("p");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsToTargetWithConcealedPackage() {
         new Builder("foo").conceals("p").exports("p", "bar");
     }
@@ -228,7 +228,7 @@ public class ModuleDescriptorTest {
         assertTrue(uses.contains("q.S"));
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testUsesWithDuplicate() {
         new Builder("foo").uses("p.S").uses("p.S");
     }
@@ -300,12 +300,12 @@ public class ModuleDescriptorTest {
         assertTrue(conceals.size() == 0);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testConcealsWithDuplicate() {
         new Builder("foo").conceals("p").conceals("p");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class )
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testConcealsWithExportedPackage() {
         new Builder("foo").exports("p").conceals("p");
     }
@@ -354,6 +354,16 @@ public class ModuleDescriptorTest {
         new Builder("foo").version(null);
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testEmptyVersion() {
+        new Builder("foo").version("");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateVersion() {
+        new Builder("foo").version("1.0").version("2.0");
+    }
+
 
     // toNameAndVersion
 
@@ -379,6 +389,11 @@ public class ModuleDescriptorTest {
     public void testMainClassWithBadName(String mainClass, String ignore) {
         Builder builder = new Builder("foo");
         builder.mainClass(mainClass);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateMainClass() {
+        new Builder("foo").mainClass("p.Main").mainClass("p.Main");
     }
 
 
