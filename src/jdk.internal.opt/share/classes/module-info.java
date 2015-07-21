@@ -24,6 +24,5 @@
  */
 
 module jdk.internal.opt {
-    exports jdk.joptsimple to jdk.jlink;
+    exports jdk.internal.joptsimple to jdk.jlink;
 }
-
