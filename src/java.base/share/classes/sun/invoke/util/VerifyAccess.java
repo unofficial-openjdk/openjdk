@@ -188,7 +188,16 @@ public class VerifyAccess {
                 return false;
 
             // check the package is exported to everyone
-            return refModule.isExported(getPackageName(refc));
+            if (refModule.isExported(getPackageName(refc)))
+                return true;
+
+            // not exported but allow access during VM initialization
+            // because java.base does not have its exports setup
+            if (sun.misc.VM.isModuleSystemInited()) {
+                return false;
+            } else {
+                return true;
+            }
         }
         if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
             isSamePackage(lookupClass, refc))
