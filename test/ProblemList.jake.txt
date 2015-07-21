@@ -43,13 +43,6 @@ java/util/ResourceBundle/Bug6299235Test.sh                              generic-
 
 ############################################################################
 
-# jdk_instrument
-
-# 8129832
-java/lang/instrument/NativeMethodPrefixAgent.java		generic-all
-
-############################################################################
-
 # jdk_jdi
 
 # 8130683
