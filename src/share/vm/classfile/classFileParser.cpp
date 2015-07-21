@@ -3739,6 +3739,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   // Timing
   assert(THREAD->is_Java_thread(), "must be a JavaThread");
   JavaThread* jt = (JavaThread*) THREAD;
+  bool cf_changed_in_CFLH = false;
 
   PerfClassTraceTime ctimer(ClassLoader::perf_class_parse_time(),
                             ClassLoader::perf_class_parse_selftime(),
@@ -3778,6 +3779,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       // class file data.
       cfs = new ClassFileStream(ptr, end_ptr - ptr, cfs->source());
       set_stream(cfs);
+      cf_changed_in_CFLH = true;
     }
   }
 
@@ -4219,6 +4221,11 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     if (has_default_methods ) {
       DefaultMethods::generate_default_methods(
           this_klass(), &all_mirandas, CHECK_(nullHandle));
+    }
+
+    // Add read edges to the unnamed modules of the bootstrap and app class loaders.
+    if (cf_changed_in_CFLH && !class_module.is_null() && module_entry->is_named()) {
+      JvmtiExport::add_default_read_edges(class_module, THREAD);
     }
 
     // Update the loader_data graph.

@@ -3470,13 +3470,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     ShouldNotReachHere();
   }
 
-  // Always call even when there are not JVMTI environments yet, since environments
-  // may be attached late and JVMTI must track phases of VM execution
-  JvmtiExport::enter_start_phase();
-
-  // Notify JVMTI agents that VM has started (JNI is up) - nop if no agents.
-  JvmtiExport::post_vm_start();
-
   initialize_java_lang_classes(main_thread, CHECK_JNI_ERR);
 
   // Create and patch the java.lang.reflect.Module entry for module java.base
@@ -3591,6 +3584,13 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   //     other modules or the application's classpath.
 
   call_initPhase2(CHECK_JNI_ERR);
+
+  // Always call even when there are not JVMTI environments yet, since environments
+  // may be attached late and JVMTI must track phases of VM execution
+  JvmtiExport::enter_start_phase();
+
+  // Notify JVMTI agents that VM has started (JNI is up) - nop if no agents.
+  JvmtiExport::post_vm_start();
 
   // Final system initialization including security manager and system class loader.
   call_initPhase3(CHECK_JNI_ERR);

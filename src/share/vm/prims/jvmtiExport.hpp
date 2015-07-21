@@ -213,6 +213,8 @@ class JvmtiExport : public AllStatic {
     _all_dependencies_are_recorded = (on != 0);
   }
 
+  // Add read edges to the unnamed modules of the bootstrap and app class loaders
+  static void add_default_read_edges(Handle h_module, TRAPS);
 
   // let JVMTI know that the JVM_OnLoad code is running
   static void enter_onload_phase() NOT_JVMTI_RETURN;
