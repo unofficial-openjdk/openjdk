@@ -37,18 +37,23 @@
  */
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import tests.JImageGenerator;
+import tests.JImageGenerator.InMemoryFile;
 import tests.JImageValidator;
 
 public class JLink2Test {
@@ -65,6 +70,36 @@ public class JLink2Test {
         testCustomization(helper);
         testBomFile(helper);
         testFileReplacement(helper);
+        //testModulePath(helper);
+    }
+
+    private static void testModulePath(Helper helper) throws IOException {
+        File unknownDir = createNewImageDir("jar");
+        Path jar = Paths.get("jars").resolve("bad.jar");
+        Helper.assertFailure("--plugins-modulepath", unknownDir.toString(), "--help");
+        Files.createFile(jar);
+        Helper.assertFailure("--plugins-modulepath", jar.toString(), "--help");
+        Helper.assertFailure("--plugins-modulepath", jar.getParent().toString(), "--help");
+        try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
+            JarEntry entry = new JarEntry("class");
+            out.putNextEntry(entry);
+            out.write("AAAA".getBytes());
+            out.closeEntry();
+        }
+        Helper.assertFailure("--plugins-modulepath", jar.getParent().toString(), "--output", createNewImageDir("crash").toString(),
+                        "--modulepath", jar.getParent().toString() + File.pathSeparator + helper.getJModsDir(), "--addmods", "bad");
+        try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
+            JarEntry entry = new JarEntry("classes");
+            out.putNextEntry(entry);
+            out.closeEntry();
+
+            entry = new JarEntry("classes/class");
+            out.putNextEntry(entry);
+            out.write("AAAA".getBytes());
+            out.closeEntry();
+        }
+        Helper.assertFailure("--plugins-modulepath", jar.getParent().toString(), "--output", createNewImageDir("crash").toString(),
+                "--modulepath", jar.getParent().toString() + File.pathSeparator + helper.getJModsDir(), "--addmods", "bad");
     }
 
     private static void testSameNames(Helper helper) throws Exception {
@@ -196,25 +231,25 @@ public class JLink2Test {
         {
             helper.generateJModule("failure3", "composite2");
             File image = helper.generateImage("failure3").getImageFile();
-            helper.assertFailure("jmods", image.getAbsolutePath(), "failure3", "Error: not empty: .*images/failure3.image\n");
+            helper.assertFailure("jmods", image, "failure3", "Error: not empty: .*images/failure3.image\n");
         }
         {
             // output == file
-            Path image = createNewImageDir("failure4").toPath();
+            /*Path image = createNewImageDir("failure4").toPath();
             Files.createFile(image);
-            //helper.assertFailure("jmods", image.toAbsolutePath().toString(), "failure4", "Error: not empty: .*images/failure4.image\n");
+            helper.assertFailure("jmods", image.toFile(), "failure4", "Error: not empty: .*images/failure4.image\n");*/
         }
         {
             // limit module is not found
             /*File imageFile = createNewImageDir("test");
-            assertFailure("--output", imageFile.getAbsolutePath(), "--addmods", "leaf1",
+            helper.assertFailure("--output", imageFile, "--addmods", "leaf1",
                     "--limitmods", "leaf1,failure5,java.base",
                     "--modulepath", "jmods" + File.pathSeparator + helper.getJModsDir());*/
         }
         {
             // added module is filtered out
             /*File imageFile = createNewImageDir("test");
-            assertFailure("--output", imageFile.getAbsolutePath(),"--addmods", "leaf1",
+            helper.assertFailure("--output", imageFile, "--addmods", "leaf1",
                     "--limitmods", "leaf2", "--modulepath",
                     "jmods" + File.pathSeparator + helper.getJModsDir());*/
         }
@@ -229,7 +264,7 @@ public class JLink2Test {
             Files.createDirectory(dirJmod);
             Path dirJar = JImageGenerator.createNewFile(new File("jmods"), "dir", ".jar").toPath();
             Files.createDirectory(dirJar);
-            assertFailure("--output", imageFile.getAbsolutePath(),
+            helper.assertFailure("--output", imageFile,
                     "--addmods", "leaf1", "--limit-mods", "leaf2", "--modulepath",
                     "jmods" + File.pathSeparator + helper.getJModsDir());*/
         }
@@ -256,14 +291,6 @@ public class JLink2Test {
 
     private static File createNewImageDir(String imageName) {
         return JImageGenerator.createNewFile(new File("images"), imageName, ".image");
-    }
-
-    private static void assertFailure(String...options) {
-        System.out.println("jlink options: " + Arrays.toString(options));
-        int exitCode = jdk.tools.jlink.Main.run(options, new PrintWriter(System.out));
-        if (exitCode != 2) {
-            throw new AssertionError("jlink crashed");
-        }
     }
 
     private static void checkFile(String header, File file) throws IOException {

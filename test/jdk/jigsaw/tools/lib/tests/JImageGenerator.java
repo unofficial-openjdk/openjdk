@@ -42,6 +42,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -157,13 +159,13 @@ public class JImageGenerator {
     private final File extracted;
     private final File recreated;
 
-    public JImageGenerator(File output, File jdkHome) throws Exception {
+    public JImageGenerator(File output, File jdkHome) throws IOException {
         stdjmods = getJModsDir(jdkHome);
         if (stdjmods == null) {
-            throw new Exception("No standard jmods ");
+            throw new IOException("No standard jmods ");
         }
         if (!output.exists()) {
-            throw new Exception("Output directory doesn't exist " + output);
+            throw new IOException("Output directory doesn't exist " + output);
         }
 
         this.jmods = new File(output, "jmods");
@@ -252,7 +254,7 @@ public class JImageGenerator {
     }
 
     public File generateJarModule(String moduleName, String[] classNames,
-            String... dependencies) throws Exception {
+            String... dependencies) throws IOException {
         String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
                 jars.getAbsolutePath();
         File compiled = generateModule(jarsclasses, jarssrc, moduleName,
@@ -372,7 +374,7 @@ public class JImageGenerator {
         return f;
     }
 
-    private static File generateModule(File classes, File src, String name,
+    private File generateModule(File classes, File src, String name,
             String[] classNames, String modulePath, String... dependencies)
             throws IOException {
         if (classNames == null || classNames.length == 0) {
@@ -438,31 +440,32 @@ public class JImageGenerator {
         return outFile;
     }
 
-    private static File compileModule(File classes, File moduleDirectory,
-            String modulePath) throws IOException {
+    public File compileModule(File moduleDirectory, String modulePath, String... options) throws IOException {
+        return compileModule(jmodsclasses, moduleDirectory, modulePath, options);
+    }
+
+    public File compileModule(File classes, File moduleDirectory, String modulePath, String... options) throws IOException {
         File outDir = new File(classes, moduleDirectory.getName());
         outDir.mkdirs();
         SourceFilesVisitor visitor = new SourceFilesVisitor();
         Files.walkFileTree(moduleDirectory.toPath(), visitor);
-        List<Path> files = visitor.files;
-
-        String[] args = new String[files.size() + 7];
-        args[0] = COMPILER_SRC_PATH_OPTION;
-        args[1] = moduleDirectory.getAbsolutePath();
-        args[2] = COMPILER_DIRECTORY_OPTION;
-        args[3] = outDir.getPath();
-        args[4] = COMPILER_MODULE_PATH_OPTION;
-        args[5] = modulePath;
-        args[6] = COMPILER_DEBUG_OPTION;
-        int i = 7;
-        for (Path f : visitor.files) {
-            args[i++] = f.toString();
+        List<String> args = new ArrayList<>();
+        args.add(COMPILER_SRC_PATH_OPTION);
+        args.add(moduleDirectory.getAbsolutePath());
+        args.add(COMPILER_DIRECTORY_OPTION);
+        args.add(outDir.getPath());
+        if (modulePath != null) {
+            args.add(COMPILER_MODULE_PATH_OPTION);
+            args.add(modulePath);
         }
-        System.out.println("compile: " + Arrays.asList(args));
+        args.add(COMPILER_DEBUG_OPTION);
+        Collections.addAll(args, options);
+        visitor.files.forEach(f -> args.add(f.toString()));
+        System.out.println("compile: " + args);
         StringWriter sw = new StringWriter();
         int rc;
         try (PrintWriter pw = new PrintWriter(sw)) {
-            rc = com.sun.tools.javac.Main.compile(args, pw);
+            rc = com.sun.tools.javac.Main.compile(args.toArray(new String[args.size()]), pw);
         }
         if (rc != 0) {
             System.err.println(sw.toString());
@@ -471,7 +474,7 @@ public class JImageGenerator {
         return outDir;
     }
 
-    private File buildJModule(String name, String main, File moduleDirectory) {
+    public File buildJModule(String name, String main, File moduleDirectory) {
         File outFile = new File(jmods, name + ".jmod");
         jdk.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main, name, outFile),
                 new PrintWriter(System.out));

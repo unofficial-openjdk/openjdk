@@ -41,6 +41,7 @@ import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.CompressedResource;
+import jdk.tools.jlink.plugins.ResourcePool.Visitor;
 import jdk.tools.jlink.plugins.StringTable;
 
 public class ResourcePoolTest {
@@ -50,6 +51,81 @@ public class ResourcePoolTest {
     }
 
     public void test() throws Exception {
+        checkResourceAdding();
+        checkResourceVisitor();
+        checkResourcesAfterCompression();
+    }
+
+    private static final String SUFFIX = "END";
+
+    private void checkResourceVisitor() throws Exception {
+        ResourcePool input = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        for (int i = 0; i < 1000; ++i) {
+            String resourceName = "/module" + (i / 10) + "/java/package" + i;
+            input.addResource(new Resource(resourceName, ByteBuffer.wrap(resourceName.getBytes())));
+        }
+        ResourcePool output = new ResourcePoolImpl(input.getByteOrder());
+        ResourceVisitor visitor = new ResourceVisitor();
+        input.visit(visitor, output, new StringTable() {
+            @Override
+            public int addString(String str) {
+                return 0;
+            }
+
+            @Override
+            public String getString(int id) {
+                return null;
+            }
+        });
+        if (visitor.getAmountBefore() == 0) {
+            throw new AssertionError("Resources not found");
+        }
+        if (visitor.getAmountBefore() != input.getResources().size()) {
+            throw new AssertionError("Number of visited resources. Expected: " +
+                    visitor.getAmountBefore() + ", got: " + input.getResources().size());
+        }
+        if (visitor.getAmountAfter() != output.getResources().size()) {
+            throw new AssertionError("Number of added resources. Expected: " +
+                    visitor.getAmountAfter() + ", got: " + output.getResources().size());
+        }
+        for (Resource outResource : output.getResources()) {
+            String path = outResource.getPath().replaceAll(SUFFIX + "$", "");
+            Resource inResource = input.getResource(path);
+            if (inResource == null) {
+                throw new AssertionError("Unknown resource: " + path);
+            }
+        }
+    }
+
+    private static class ResourceVisitor implements Visitor {
+
+        private int amountBefore;
+        private int amountAfter;
+
+        @Override
+        public Resource visit(Resource resource, ByteOrder order, StringTable strings) throws Exception {
+            int index = ++amountBefore % 3;
+            switch (index) {
+                case 0:
+                    ++amountAfter;
+                    return new Resource(resource.getPath() + SUFFIX, resource.getContent());
+                case 1:
+                    ++amountAfter;
+                    return new Resource(resource.getPath(), resource.getContent());
+            }
+            return null;
+        }
+
+        public int getAmountAfter() {
+            return amountAfter;
+        }
+
+        public int getAmountBefore() {
+            return amountBefore;
+        }
+    }
+
+    private void checkResourceAdding() {
         List<String> samples = new ArrayList<>();
         samples.add("java.base");
         samples.add("java/lang/Object");
@@ -91,7 +167,6 @@ public class ResourcePoolTest {
                 throw new RuntimeException(ex);
             }
         });
-        checkResourcesAfterCompression();
     }
 
     private void test(List<String> samples, ResourceAdder adder) {

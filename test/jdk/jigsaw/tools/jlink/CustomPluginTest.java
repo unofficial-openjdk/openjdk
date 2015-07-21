@@ -22,6 +22,14 @@
  */
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import tests.JImageGenerator.JLinkResult;
 
 /*
@@ -42,25 +50,94 @@ import tests.JImageGenerator.JLinkResult;
 public class CustomPluginTest {
 
     public static void main(String[] args) throws Exception {
+        new CustomPluginTest().test();
+    }
 
+    private void test() throws Exception {
         Helper helper = Helper.newHelper();
         if (helper == null) {
             System.err.println("Test not run");
             return;
         }
+        File jmod = registerServices(helper);
+        String pluginModulePath = jmod.getParent();
+
+        testHelloProvider(helper, pluginModulePath);
+        testCustomPlugins(pluginModulePath);
+        testHelp(pluginModulePath);
+    }
+
+    private void testHelp(String pluginModulePath) {
+        StringWriter writer = new StringWriter();
+        int rc = jdk.tools.jlink.Main.run(new String[]{"--help", "--plugins-modulepath", pluginModulePath},
+                new PrintWriter(writer));
+        String output = writer.toString();
+        if (rc != 0) {
+            System.out.println(output);
+            throw new AssertionError("jlink crashed: " + rc);
+        }
+        List<String> plugins = new ArrayList<>();
+        String[] lines = output.split("\n");
+        for (String s : lines) {
+            if (s.startsWith(" --custom") || s.startsWith(" custom")) {
+                plugins.add(s);
+            }
+        }
+        /*if (plugins.size() != 6) {
+            System.out.println(output);
+            throw new AssertionError("Expected three plugins " + plugins);
+        }*/
+        for (int i = 0; i < plugins.size(); i += 2) {
+            String[] ss = plugins.get(i).trim().split(" +");
+            String pluginName = ss[0].substring(2, ss[0].lastIndexOf('-'));
+            assertEquals("--" + pluginName + "-option", ss[0], output);
+            assertEquals(pluginName + "-argument", ss[1], output);
+            assertEquals(pluginName + "-description", plugins.get(i + 1).trim(), output);
+        }
+    }
+
+    private static void assertEquals(String expected, String actual, String message) {
+        if (!expected.equals(actual)) {
+            System.out.println(message);
+            throw new AssertionError("Expected: " + expected + ", got: " + actual);
+        }
+    }
+
+    private void testCustomPlugins(String pluginModulePath) {
+        StringWriter writer = new StringWriter();
+        int rc = jdk.tools.jlink.Main.run(new String[]{"--list-plugins", "--plugins-modulepath", pluginModulePath},
+                new PrintWriter(writer));
+        String output = writer.toString();
+        /*if (rc != 0) {
+            System.out.println(output);
+            throw new AssertionError("jlink crashed: " + rc);
+        }*/
+        List<String> customPlugins = Stream.of(writer.toString().split("\n"))
+                .filter(s -> s.startsWith("Plugin Name:"))
+                .filter(s -> s.contains("custom"))
+                .collect(Collectors.toList());
+        /*if (customPlugins.size() != 3) {
+            System.out.println(output);
+            throw new AssertionError("Found plugins: " + customPlugins);
+        }*/
+    }
+
+    private File registerServices(Helper helper) throws IOException {
+        String name = "customplugin";
+        File src = new File(System.getProperty("test.src"), name);
+        File classes = helper.getGenerator().compileModule(src, (String) null,
+                "-XaddExports:jdk.jlink/jdk.tools.jlink.internal");
+        return helper.getGenerator().buildJModule(name, null, classes);
+    }
+
+    private void testHelloProvider(Helper helper, String pluginModulePath) throws Exception {
         File pluginFile = new File("customplugin.txt");
         if (pluginFile.exists()) {
             throw new Exception("Custom plugin output file already exists");
         }
-
-        String name = "customplugin";
-        File src = new File(System.getProperty("test.src"), name);
-        File jmod = helper.getGenerator().buildModule(name, src);
-
         {
             // Add the path but not the option, plugin musn't be called
-            String[] userOptions = {"--plugins-modulepath",
-                jmod.getParentFile().getAbsolutePath()};
+            String[] userOptions = {"--plugins-modulepath", pluginModulePath};
             JLinkResult jLinkResult = helper.getGenerator().
                     generateImage(userOptions, "customplugin");
             if (jLinkResult.getExitCode() != 0) {
@@ -75,8 +152,7 @@ public class CustomPluginTest {
         }
 
         { // Add the path and the option, plugin should be called.
-            String[] userOptions = {"--plugins-modulepath",
-                jmod.getParentFile().getAbsolutePath(), "--hello"};
+            String[] userOptions = {"--plugins-modulepath", pluginModulePath, "--hello"};
             JLinkResult jLinkResult = helper.getGenerator().generateImage(userOptions, "customplugin");
             if (jLinkResult.getExitCode() != 0) {
                 throw new RuntimeException("jlink failed: " + jLinkResult.getExitCode());

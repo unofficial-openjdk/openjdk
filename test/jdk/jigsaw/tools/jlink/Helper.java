@@ -23,6 +23,8 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -31,6 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +60,7 @@ public class Helper {
     private final File jmodsDir;
     private static FileSystem fs;
 
-    public static Helper newHelper() throws Exception {
+    public static Helper newHelper() throws IOException {
         try {
             fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
@@ -73,7 +77,7 @@ public class Helper {
         return new Helper(fs, jdkHome);
     }
 
-    private Helper(FileSystem fs, File jdkHome) throws Exception {
+    private Helper(FileSystem fs, File jdkHome) throws IOException {
         this.jmodsDir = JImageGenerator.getJModsDir(jdkHome);
         Consumer<Path> c = (p) -> {
             // take only the .class resources.
@@ -115,16 +119,12 @@ public class Helper {
     public final File generateJModule(String module,
             String... dependencies)
             throws IOException {
-        List<String> deps = new ArrayList<>();
-        for (String d : dependencies) {
-            deps.add(d);
-        }
-        moduleDependencies.put(module, deps);
+        moduleDependencies.put(module, Arrays.asList(dependencies));
         return generator.generateJModule(module, getClasses(module), dependencies);
     }
 
-    public JLinkResult assertFailure(String modulePath, String output, String imageName, String regexp, String... options) throws IOException {
-        JLinkResult result = generateImage(output, modulePath, options, imageName);
+    public JLinkResult assertFailure(String modulePath, File output, String imageName, String regexp, String... options) throws IOException {
+        JLinkResult result = generateImage(output.getAbsolutePath(), modulePath, options, imageName);
         if (result.getExitCode() == 0) {
             throw new AssertionError("jlink not failed: exit code = " + result.getExitCode());
         }
@@ -154,14 +154,31 @@ public class Helper {
         return generator.generateImage(new File(outDir), modulePath, options, module);
     }
 
-    public final void generateJarModule(String module,
-            String... dependencies)
-            throws Exception {
-        List<String> deps = new ArrayList<>();
-        for (String d : dependencies) {
-            deps.add(d);
+    public static void assertFailure(String...options) {
+        System.out.println("jlink options: " + Arrays.toString(options));
+        int exitCode = jdk.tools.jlink.Main.run(options, new PrintWriter(System.out));
+        if (exitCode != 2) {
+            throw new AssertionError("jlink crashed");
         }
-        moduleDependencies.put(module, deps);
+    }
+
+    public static JLinkResult runJLink(File output, String modulePath, String... options) {
+        List<String> args = new ArrayList<>();
+        args.add("--output");
+        args.add(output.toString());
+        args.add("--module-path");
+        args.add(modulePath);
+        Collections.addAll(args, options);
+
+        System.out.println("jlink options: " + args);
+        StringWriter writer = new StringWriter();
+        int exitCode = jdk.tools.jlink.Main.run(args.toArray(new String[args.size()]), new PrintWriter(writer));
+        System.err.println(writer.toString());
+        return new JLinkResult(exitCode, writer.toString(), output);
+    }
+
+    public final void generateJarModule(String module, String... dependencies) throws IOException {
+        moduleDependencies.put(module, Arrays.asList(dependencies));
         generator.generateJarModule(module, getClasses(module), dependencies);
     }
 
