@@ -1,0 +1,105 @@
+#
+# Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+################################################################
+# MOTIF TARGETS
+################################################################
+
+motif-sanity:
+
+motif-freshen:
+	@$(call Freshen,$(MOTIF_MASTER),$(MOTIF_TOPDIR),$(MOTIF_SOURCE))
+
+ifeq ($(PLATFORM), linux)
+# LINUX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv LINUX
+
+ifeq ($(BUILD_MOTIF), true)
+  dummy := $(shell $(MKDIR) -p $(MOTIF_DIR))
+  ABS_MOTIF_DIR :=$(call FullPath,$(MOTIF_DIR))
+endif
+
+MOTIF = $(MOTIF_LIB)/libXm.a 
+
+MOTIF_BUILD_ARGUMENTS = \
+  PLATFORM=$(PLATFORM) \
+  ARCH_DATA_MODEL=$(ARCH_DATA_MODEL) \
+  ARCH=$(ARCH) \
+  ARCH_FAMILY=$(ARCH_FAMILY)
+
+motif: motif-build motif-install
+
+$(MOTIF): motif-build motif-install
+
+motif-build:
+	( $(CD) $(MOTIF_TOPDIR)/lib/Xm && \
+	  $(MAKE) $(MOTIF_BUILD_ARGUMENTS) all )
+	( $(CD) $(MOTIF_TOPDIR)/lib/Xm && \
+	  $(MAKE) $(MOTIF_BUILD_ARGUMENTS) includes )
+
+motif-install: motif-install-lib motif-install-include
+
+motif-install-lib: $(MOTIF_LIB) 
+	$(RM) $(MOTIF_LIB)/libXm.a
+	( $(CD) $(MOTIF_LIB) && \
+	  $(LN) -s $(ABS_MOTIF_TOPDIR)/lib/libXm.a . )
+
+motif-install-include: $(MOTIF_DIR)/include 
+	$(RM) $(MOTIF_DIR)/include/Xm
+	( $(CD) $(MOTIF_DIR)/include && \
+	  $(LN) -s $(ABS_MOTIF_TOPDIR)/lib/Xm/exports/include/Xm . )
+
+#
+# clobber the build, but note that the motif code misses some
+# clobber files in $(MOTIF_TOPDIR), so clean them up too. 
+# Also, remove the staging area - $(MOTIF_DIR)
+#
+motif-clobber:
+	( $(CD) $(MOTIF_TOPDIR)/lib/Xm && \
+	  $(MAKE) $(MOTIF_BUILD_ARGUMENTS) clean )
+	$(RM) $(MOTIF_TOPDIR)/lib/libXm.a
+	$(RM) $(MOTIF_TOPDIR)/lib/Xm/Xm.msg 
+	$(RM) -r $(MOTIF_TOPDIR)/lib/Xm/exports
+	$(RM) -r $(MOTIF_LIB)
+	$(RM) -r $(MOTIF_DIR)/include
+	$(RM) -r $(MOTIF_DIR)
+	$(RM) $(MOTIF_TOPDIR)/include 
+
+$(MOTIF_DIR) $(MOTIF_LIB) $(MOTIF_DIR)/include:
+	$(MKDIR) -p $@
+
+# LINUX ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ LINUX
+else
+# NON-LINUX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv NON-LINUX
+
+motif:
+
+motif-clobber:
+
+.PHONY: motif motif-build motif-install motif-install-lib \
+	motif-sanity motif-freshen motif-install-include motif-clobber 
+
+
+# NON-LINUX ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ NON-LINUX
+endif
