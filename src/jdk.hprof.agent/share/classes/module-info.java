@@ -24,5 +24,6 @@
  */
 
 module jdk.hprof.agent {
+    exports com.sun.demo.jvmti.hprof;
 }
 
