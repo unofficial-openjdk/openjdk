@@ -419,17 +419,16 @@ public class ModuleDescriptorTest {
         }
     };
 
-    @Test(enabled=false)
     public void testRead() throws Exception {
         Module base = Object.class.getModule();
 
-        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+        try (InputStream in = base.getResourceAsStream("module-info.class")) {
             ModuleDescriptor descriptor = ModuleDescriptor.read(in);
             assertTrue(in.read() == -1); // all bytes read
             assertEquals(descriptor.name(), "java.base");
         }
 
-        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+        try (InputStream in = base.getResourceAsStream("module-info.class")) {
             ByteBuffer bb = ByteBuffer.wrap(in.readAllBytes());
             ModuleDescriptor descriptor = ModuleDescriptor.read(bb);
             assertFalse(bb.hasRemaining()); // no more remaining bytes
@@ -458,7 +457,6 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.read(bb);
     }
 
-    @Test(enabled=false)
     public void testReadWithNull() throws Exception {
         Module base = Object.class.getModule();
 
@@ -468,7 +466,7 @@ public class ModuleDescriptorTest {
         } catch (NullPointerException expected) { }
 
 
-        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+        try (InputStream in = base.getResourceAsStream("module-info.class")) {
             try {
                 ModuleDescriptor.read(in, null);
                 assertTrue(false);
@@ -481,7 +479,7 @@ public class ModuleDescriptorTest {
         } catch (NullPointerException expected) { }
 
 
-        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+        try (InputStream in = base.getResourceAsStream("module-info.class")) {
             ByteBuffer bb = ByteBuffer.wrap(in.readAllBytes());
             try {
                 ModuleDescriptor.read(bb, null);
