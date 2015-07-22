@@ -1,0 +1,7 @@
+MissingTag.java:15: error: unexpected end tag: </p>
+ * </p>
+   ^
+MissingTag.java:16: error: end tag missing: </b>
+ * <h1> <b> text </h1>
+        ^
+2 errors

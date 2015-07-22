@@ -1,0 +1,3 @@
+SingleCommaAnnotationValueFail.java:34:12: compiler.err.expected: '}'
+SingleCommaAnnotationValueFail.java:34:14: compiler.err.expected3: class, interface, enum
+2 errors
