@@ -1,0 +1,89 @@
+#
+# Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# This file is contains targets utilities needed by JPRT.
+
+          ifdef ALT_BSDIFF_DIR
+	    @$(ECHO) " --with-bsdiff-dir=$(call UnixPath,$(ALT_BSDIFF_DIR)) " >> $@.tmp
+          endif
+ifndef JPRT_ARCHIVE_BUNDLE
+  JPRT_ARCHIVE_BUNDLE=/tmp/jprt_bundles/j2sdk-image.zip
+endif
+ifndef JPRT_ARCHIVE_INSTALL_BUNDLE
+  JPRT_ARCHIVE_INSTALL_BUNDLE=/tmp/jprt_bundles/product-install.zip
+endif
+
+ifeq ($(SKIP_BOOT_CYCLE), false)
+  jprt_bundle: bootcycle-images
+endif
+
+# This target must be called in the context of a SPEC file
+jprt_bundle: $(JPRT_ARCHIVE_BUNDLE)
+	@$(call CheckIfMakeAtEnd)
+
+# This target must be called in the context of a SPEC file
+$(JPRT_ARCHIVE_BUNDLE): bundles
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(CP) $(BUILD_OUTPUT)/bundles/$(JDK_IMAGE_SUBDIR).zip $@
+
+SRC_JDK_IMAGE_DIR := $(JDK_IMAGE_DIR)
+SRC_JRE_IMAGE_DIR := $(JRE_IMAGE_DIR)
+SRC_JDK_BUNDLE_DIR := $(JDK_BUNDLE_DIR)
+SRC_JRE_BUNDLE_DIR := $(JRE_BUNDLE_DIR)
+
+# Bundle up the images
+bundles: all bundles-only
+bundles-only: start-make
+	@$(call TargetEnter)
+	$(MKDIR) -p $(BUILD_OUTPUT)/bundles
+	$(CD) $(SRC_JDK_IMAGE_DIR) && $(ZIP) -y -q -r $(BUILD_OUTPUT)/bundles/$(JDK_IMAGE_SUBDIR).zip .
+	$(CD) $(SRC_JRE_IMAGE_DIR) && $(ZIP) -y -q -r $(BUILD_OUTPUT)/bundles/$(JRE_IMAGE_SUBDIR).zip .
+	if [ -d $(BUILD_OUTPUT)/install/bundles ] ; then \
+	  $(CD) $(BUILD_OUTPUT)/install/bundles && $(ZIP) -y -q -r $(JPRT_ARCHIVE_INSTALL_BUNDLE) . ; \
+	fi
+	@$(call TargetExit)
+
+# Copy images to one unified location regardless of platform etc.
+final-images: all final-images-only
+final-images-only: start-make
+	@$(call TargetEnter)
+	$(RM) -r $(BUILD_OUTPUT)/final-images
+	$(MKDIR) -p $(BUILD_OUTPUT)/final-images/$(JDK_IMAGE_SUBDIR)
+	$(MKDIR) -p $(BUILD_OUTPUT)/final-images/$(JRE_IMAGE_SUBDIR)
+	$(CP) -R -P $(SRC_JDK_IMAGE_DIR)/* $(BUILD_OUTPUT)/final-images/$(JDK_IMAGE_SUBDIR)/
+	$(CP) -R -P $(SRC_JRE_IMAGE_DIR)/* $(BUILD_OUTPUT)/final-images/$(JRE_IMAGE_SUBDIR)/
+        ifeq ($(OPENJDK_TARGET_OS),macosx)
+	  $(MKDIR) -p $(BUILD_OUTPUT)/final-images/$(JDK_BUNDLE_SUBDIR)
+	  $(MKDIR) -p $(BUILD_OUTPUT)/final-images/$(JRE_BUNDLE_SUBDIR)
+	  $(CP) -R -P $(SRC_JDK_BUNDLE_DIR)/* $(BUILD_OUTPUT)/final-images/$(JDK_BUNDLE_SUBDIR)/
+	  $(CP) -R -P $(SRC_JRE_BUNDLE_DIR)/* $(BUILD_OUTPUT)/final-images/$(JRE_BUNDLE_SUBDIR)/
+        endif
+	@$(call TargetExit)
+
+
+###########################################################################
+# Phony targets
+.PHONY: jprt_bundle bundles bundles-only final-images final-images-only
