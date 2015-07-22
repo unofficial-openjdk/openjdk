@@ -1,0 +1,290 @@
+#
+# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+#
+
+#
+# Makefile to run various jdk tests
+#
+
+GETMIXEDPATH=echo
+
+# Get OS/ARCH specifics
+OSNAME = $(shell uname -s)
+ifeq ($(OSNAME), SunOS)
+  PLATFORM = solaris
+  SLASH_JAVA = /java
+  ARCH = $(shell uname -p)
+  ifeq ($(ARCH), i386)
+    ARCH=i586
+  endif
+endif
+ifeq ($(OSNAME), Linux)
+  PLATFORM = linux
+  SLASH_JAVA = /java
+  ARCH = $(shell uname -m)
+  ifeq ($(ARCH), i386)
+    ARCH = i586
+  endif
+endif
+ifeq ($(OSNAME), Darwin)
+  PLATFORM = bsd
+  SLASH_JAVA = /java
+  ARCH = $(shell uname -m)
+  ifeq ($(ARCH), i386)
+    ARCH = i586
+  endif
+endif
+ifeq ($(findstring BSD,$(OSNAME)), BSD)
+  PLATFORM = bsd
+  SLASH_JAVA = /java
+  ARCH = $(shell uname -m)
+  ifeq ($(ARCH), i386)
+    ARCH = i586
+  endif
+endif
+ifeq ($(PLATFORM),)
+  # detect wether we're running in MKS or cygwin
+  ifeq ($(OSNAME), Windows_NT) # MKS
+    GETMIXEDPATH=dosname -s
+  endif
+  ifeq ($(findstring CYGWIN,$(OSNAME)), CYGWIN)
+    GETMIXEDPATH=cygpath -m -s
+  endif
+  PLATFORM = windows
+  SLASH_JAVA = J:
+  ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)),ia64)
+    ARCH = ia64
+  else
+    ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)),AMD64)
+      ARCH = x64
+    else
+      ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)),EM64T)
+        ARCH = x64
+      else
+        ARCH = i586
+      endif
+    endif
+  endif
+  EXESUFFIX = .exe
+endif
+
+ifdef ALT_SLASH_JAVA
+  SLASH_JAVA = $(ALT_SLASH_JAVA)
+endif
+
+# Utilities used
+CD    = cd
+CP    = cp
+ECHO  = echo
+MKDIR = mkdir
+ZIP   = zip
+
+# Root of this test area (important to use full paths in some places)
+TEST_ROOT := $(shell pwd)
+
+# Root of all test results
+ifdef ALT_OUTPUTDIR
+  ABS_BUILD_ROOT = $(ALT_OUTPUTDIR)/$(PLATFORM)-$(ARCH)
+else
+  ABS_BUILD_ROOT = $(TEST_ROOT)/../build/$(PLATFORM)-$(ARCH)
+endif
+ABS_TEST_OUTPUT_DIR = $(ABS_BUILD_ROOT)/testoutput
+
+# Expect JPRT to set PRODUCT_HOME (the product or jdk in this case to test)
+ifndef PRODUCT_HOME
+  # Try to use j2sdk-image if it exists
+  ABS_JDK_IMAGE = $(ABS_BUILD_ROOT)/j2sdk-image
+  PRODUCT_HOME :=                       \
+    $(shell                             \
+      if [ -d $(ABS_JDK_IMAGE) ] ; then \
+         $(ECHO) "$(ABS_JDK_IMAGE)";    \
+       else                             \
+         $(ECHO) "$(ABS_BUILD_ROOT)" ;  \
+       fi)
+endif
+
+# Expect JPRT to set JAVA_ARGS (e.g. -server etc.)
+JAVA_OPTIONS = 
+ifdef JAVA_ARGS
+  JAVA_OPTIONS = $(JAVA_ARGS)
+endif
+
+# Expect JPRT to set JPRT_ARCHIVE_BUNDLE (path to zip bundle for results)
+ARCHIVE_BUNDLE = $(ABS_TEST_OUTPUT_DIR)/ARCHIVE_BUNDLE.zip
+ifdef JPRT_ARCHIVE_BUNDLE
+  ARCHIVE_BUNDLE = $(JPRT_ARCHIVE_BUNDLE)
+endif
+
+# How to create the test bundle (pass or fail, we want to create this)
+BUNDLE_UP = ( $(MKDIR) -p `dirname $(ARCHIVE_BUNDLE)`     \
+	      && $(CD) $(ABS_TEST_OUTPUT_DIR)             \
+	      && $(ZIP) -q -r $(ARCHIVE_BUNDLE) . )
+BUNDLE_UP_FAILED = ( exitCode=$$? && $(BUNDLE_UP) && exit $${exitCode} )
+
+################################################################
+
+# Default make rule (runs jtreg_tests)
+all: jtreg_tests
+	@$(ECHO) "Testing completed successfully"
+
+# Prep for output
+prep: clean
+	@$(MKDIR) -p $(ABS_TEST_OUTPUT_DIR)
+	@$(MKDIR) -p `dirname $(ARCHIVE_BUNDLE)`
+
+# Cleanup
+clean:
+	$(RM) -r $(ABS_TEST_OUTPUT_DIR)
+	$(RM) $(ARCHIVE_BUNDLE)
+
+################################################################
+
+# jtreg tests
+
+# Expect JT_HOME to be set for jtreg tests. (home for jtreg)
+JT_HOME = $(SLASH_JAVA)/re/jtreg/4.0/promoted/latest/binaries/jtreg
+ifdef JPRT_JTREG_HOME
+  JT_HOME = $(JPRT_JTREG_HOME)
+endif
+
+# Expect JPRT to set TESTDIRS to the jtreg test dirs
+JTREG_TESTDIRS = demo/jvmti/gctest demo/jvmti/hprof
+ifdef TESTDIRS
+  JTREG_TESTDIRS = $(TESTDIRS)
+endif
+
+# Default JTREG to run
+JTREG = $(JT_HOME)/bin/jtreg
+
+# Option to tell jtreg to not run tests marked with "ignore"
+ifeq ($(PLATFORM), windows)
+  JTREG_KEY_OPTION = -k:!ignore
+else
+  JTREG_KEY_OPTION = -k:\!ignore
+endif
+
+#EXTRA_JTREG_OPTIONS =
+
+jtreg_tests: prep $(JT_HOME) $(PRODUCT_HOME) $(JTREG)
+	$(JTREG) -a -v:fail,error               \
+          $(JTREG_KEY_OPTION)                   \
+          $(EXTRA_JTREG_OPTIONS)                \
+          -r:$(ABS_TEST_OUTPUT_DIR)/JTreport    \
+          -w:$(ABS_TEST_OUTPUT_DIR)/JTwork      \
+          -jdk:$(PRODUCT_HOME)                  \
+          $(JAVA_OPTIONS:%=-vmoption:%)         \
+          $(JTREG_TESTDIRS)                     \
+	  || $(BUNDLE_UP_FAILED)
+	$(BUNDLE_UP)
+
+PHONY_LIST += jtreg_tests
+
+################################################################
+
+# clienttest (make sure various basic java client options work)
+
+clienttest: prep $(PRODUCT_HOME)
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -version
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -help
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -X
+	$(RM) $(PRODUCT_HOME)/jre/lib/*/client/classes.jsa
+	$(RM) $(PRODUCT_HOME)/jre/lib/*/client/classes_g.jsa
+	$(RM) $(PRODUCT_HOME)/jre/bin/client/classes.jsa
+	$(RM) $(PRODUCT_HOME)/jre/bin/client/classes_g.jsa
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -Xshare:dump
+
+PHONY_LIST += clienttest
+
+################################################################
+
+# servertest (make sure various basic java server options work)
+
+servertest: prep $(PRODUCT_HOME)
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -version
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -help
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -X
+
+PHONY_LIST += servertest
+
+################################################################
+
+# internalvmtests (run internal unit tests inside the VM)
+
+internalvmtests: prep $(PRODUCT_HOME)
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -XX:+ExecuteInternalVMTests -version
+
+PHONY_LIST += internalvmtests
+
+################################################################
+
+# wbapitest (make sure the whitebox testing api classes work
+
+wbapitest: prep $(JT_HOME) $(PRODUCT_HOME) $(JTREG)
+	$(JTREG) -a -v:fail,error               \
+          $(JTREG_KEY_OPTION)                   \
+          $(EXTRA_JTREG_OPTIONS)                \
+          -r:$(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/JTreport    \
+          -w:$(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/JTwork      \
+          -jdk:$(shell $(GETMIXEDPATH) "$(PRODUCT_HOME)")                  \
+          $(JAVA_OPTIONS:%=-vmoption:%)         \
+          $(shell $(GETMIXEDPATH) "$(TEST_ROOT)")/sanity                   \
+	  || $(BUNDLE_UP_FAILED)
+	$(BUNDLE_UP)
+
+PHONY_LIST += wbapitest
+
+################################################################
+
+# packtest
+
+# Expect JPRT to set JPRT_PACKTEST_HOME.
+PACKTEST_HOME = /net/jprt-web.sfbay.sun.com/jprt/allproducts/packtest
+ifdef JPRT_PACKTEST_HOME
+  PACKTEST_HOME = $(JPRT_PACKTEST_HOME)
+endif
+
+#EXTRA_PACKTEST_OPTIONS =
+
+packtest: prep $(PACKTEST_HOME)/ptest $(PRODUCT_HOME)
+	( $(CD) $(PACKTEST_HOME) &&            \
+	    $(PACKTEST_HOME)/ptest             \
+		 -t "$(PRODUCT_HOME)"          \
+	         $(PACKTEST_STRESS_OPTION)     \
+		 $(EXTRA_PACKTEST_OPTIONS)     \
+		 -W $(ABS_TEST_OUTPUT_DIR)     \
+                 $(JAVA_OPTIONS:%=-J %)        \
+	 ) || $(BUNDLE_UP_FAILED)
+	$(BUNDLE_UP)
+
+packtest_stress: PACKTEST_STRESS_OPTION=-s
+packtest_stress: packtest
+
+PHONY_LIST += packtest packtest_stress
+
+################################################################
+
+# Phony targets (e.g. these are not filenames)
+.PHONY: all clean prep $(PHONY_LIST)
+
+################################################################
+
