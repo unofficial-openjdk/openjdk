@@ -1,0 +1,344 @@
+'\" t
+.\" Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+.\" Title: javap
+.\" Language: English
+.\" Date: 2013年11月21日
+.\" SectDesc: 基本ツール
+.\" Software: JDK 8
+.\" Arch: 汎用
+.\"
+.\" DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+.\"
+.\" This code is free software; you can redistribute it and/or modify it
+.\" under the terms of the GNU General Public License version 2 only, as
+.\" published by the Free Software Foundation.
+.\"
+.\" This code is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+.\" version 2 for more details (a copy is included in the LICENSE file that
+.\" accompanied this code).
+.\"
+.\" You should have received a copy of the GNU General Public License version
+.\" 2 along with this work; if not, write to the Free Software Foundation,
+.\" Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+.\"
+.\" Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+.\" or visit www.oracle.com if you need additional information or have any
+.\" questions.
+.\"
+.pl 99999
+.TH "javap" "1" "2013年11月21日" "JDK 8" "基本ツール"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+javap \- 1つ以上のクラス・ファイルを逆アセンブルします。
+.SH "概要"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIjavap\fR [\fIoptions\fR] \fIclassfile\fR\&.\&.\&.
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIoptions\fR
+.RS 4
+コマンドライン・オプション。オプションを参照してください。
+.RE
+.PP
+\fIclassfile\fR
+.RS 4
+注釈の処理対象となる、空白で区切った1つ以上のクラス(DocFooter\&.classなど)。クラス・パスで検出できるクラスを、ファイル名またはURL(\fIfile:///home/user/myproject/src/DocFooter\&.class\fRなど)で指定できます。
+.RE
+.SH "説明"
+.PP
+\fIjavap\fRコマンドは、1つまたは複数のクラス・ファイルを逆アセンブルします。その出力は指定するオプションにより異なります。オプションを指定しない場合、\fIjavap\fRコマンドは、そのパッケージ、渡されたクラスのprotectedおよびpublicのフィールドとメソッドを出力します。\fIjavap\fRコマンドはその出力を\fI標準出力\fRに表示します。
+.SH "オプション"
+.PP
+\-help, \-\-help, \-?
+.RS 4
+\fIjavap\fRコマンドについてのヘルプ・メッセージを出力します。
+.RE
+.PP
+\-version
+.RS 4
+リリース情報を出力します。
+.RE
+.PP
+\-l
+.RS 4
+行番号とローカル変数表を出力します。
+.RE
+.PP
+\-public
+.RS 4
+publicクラスおよびメンバーのみ表示します。
+.RE
+.PP
+\-protected
+.RS 4
+protectedおよびpublicのクラスとメンバーのみを表示します。
+.RE
+.PP
+\-private, \-p
+.RS 4
+すべてのクラスとメンバーを表示します。
+.RE
+.PP
+\-J\fIoption\fR
+.RS 4
+指定されたオプションをJVMに渡します。次に例を示します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+javap \-J\-version
+javap \-J\-Djava\&.security\&.manager \-J\-Djava\&.security\&.policy=MyPolicy MyClassName
+.fi
+.if n \{\
+.RE
+.\}
+JVMオプションの詳細は、コマンドのマニュアルを参照してください。
+.RE
+.PP
+\-s
+.RS 4
+内部の型シグニチャを出力します。
+.RE
+.PP
+\-sysinfo
+.RS 4
+処理中のクラスのシステム情報(パス、サイズ、日付、MD5ハッシュ)を表示します。
+.RE
+.PP
+\-constants
+.RS 4
+\fIstatic final\fR定数を表示します。
+.RE
+.PP
+\-c
+.RS 4
+クラスの各メソッドのために逆アセンブルされるコード、すなわちJavaバイトコードからなる命令を表示します。
+.RE
+.PP
+\-verbose
+.RS 4
+メソッドのスタック・サイズ、localsとargumentsの数を出力します。
+.RE
+.PP
+\-classpath \fIpath\fR
+.RS 4
+クラスを探すために\fIjavap\fRコマンドが使用するパスを指定します。デフォルトまたは\fICLASSPATH\fR環境変数の設定をオーバーライドします。
+.RE
+.PP
+\-bootclasspath \fIpath\fR
+.RS 4
+ブートストラップ・クラスをロードするパスを指定します。ブートストラップ・クラスは、デフォルトでは\fIjre/lib/rt\&.jar\fRおよび他のいくつかのJARファイルにある、コアJavaプラットフォームを実装するクラスです。
+.RE
+.PP
+\-extdir \fIdirs\fR
+.RS 4
+インストールされた拡張機能を検索する場所をオーバーライドします。拡張機能のデフォルト位置は\fIjava\&.ext\&.dirs\fRです。
+.RE
+.SH "例"
+.PP
+次の\fIDocFooter\fRクラスをコンパイルします。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+import java\&.awt\&.*;
+import java\&.applet\&.*;
+ 
+public class DocFooter extends Applet {
+        String date;
+        String email;
+ 
+        public void init() {
+                resize(500,100);
+                date = getParameter("LAST_UPDATED");
+                email = getParameter("EMAIL");
+        }
+ 
+        public void paint(Graphics g) {
+                g\&.drawString(date + " by ",100, 15);
+                g\&.drawString(email,290,15);
+        }
+}
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIjavap DocFooter\&.class\fRコマンドからの出力は次を生成します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Compiled from "DocFooter\&.java"
+public class DocFooter extends java\&.applet\&.Applet {
+  java\&.lang\&.String date;
+  java\&.lang\&.String email;
+  public DocFooter();
+  public void init();
+  public void paint(java\&.awt\&.Graphics);
+}
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIjavap \-c DocFooter\&.class\fRコマンドからの出力は次を生成します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Compiled from "DocFooter\&.java"
+public class DocFooter extends java\&.applet\&.Applet {
+  java\&.lang\&.String date;
+  java\&.lang\&.String email;
+
+  public DocFooter();
+    Code:
+       0: aload_0       
+       1: invokespecial #1                  // Method
+java/applet/Applet\&."<init>":()V
+       4: return        
+
+  public void init();
+    Code:
+       0: aload_0       
+       1: sipush        500
+       4: bipush        100
+       6: invokevirtual #2                  // Method resize:(II)V
+       9: aload_0       
+      10: aload_0       
+      11: ldc           #3                  // String LAST_UPDATED
+      13: invokevirtual #4                  // Method
+ getParameter:(Ljava/lang/String;)Ljava/lang/String;
+      16: putfield      #5                  // Field date:Ljava/lang/String;
+      19: aload_0       
+      20: aload_0       
+      21: ldc           #6                  // String EMAIL
+      23: invokevirtual #4                  // Method
+ getParameter:(Ljava/lang/String;)Ljava/lang/String;
+      26: putfield      #7                  // Field email:Ljava/lang/String;
+      29: return        
+
+  public void paint(java\&.awt\&.Graphics);
+    Code:
+       0: aload_1       
+       1: new           #8                  // class java/lang/StringBuilder
+       4: dup           
+       5: invokespecial #9                  // Method
+ java/lang/StringBuilder\&."<init>":()V
+       8: aload_0       
+       9: getfield      #5                  // Field date:Ljava/lang/String;
+      12: invokevirtual #10                 // Method
+ java/lang/StringBuilder\&.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      15: ldc           #11                 // String  by 
+      17: invokevirtual #10                 // Method
+ java/lang/StringBuilder\&.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      20: invokevirtual #12                 // Method
+ java/lang/StringBuilder\&.toString:()Ljava/lang/String;
+      23: bipush        100
+      25: bipush        15
+      27: invokevirtual #13                 // Method
+ java/awt/Graphics\&.drawString:(Ljava/lang/String;II)V
+      30: aload_1       
+      31: aload_0       
+      32: getfield      #7                  // Field email:Ljava/lang/String;
+      35: sipush        290
+      38: bipush        15
+      40: invokevirtual #13                 // Method
+java/awt/Graphics\&.drawString:(Ljava/lang/String;II)V
+      43: return        
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "関連項目"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+javac(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+java(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jdb(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+javah(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+javadoc(1)
+.RE
+.br
+'pl 8.5i
+'bp
