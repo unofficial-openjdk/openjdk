@@ -818,8 +818,21 @@ public class ModuleDescriptor
      * module descriptors from legacy module-artifact formats that do not
      * record the set of concealed packages in the descriptor itself.
      *
+     * <p> If there are bytes following the module descriptor then it is
+     * implementation specific as to whether those bytes are read, ignored,
+     * or reported as a {@code ClassFormatException}. If this method fails with
+     * a {@code ClassFormatException} or {@code IOException} then it may do so
+     * after some, but not all, bytes have been read from the input stream.
+     * It is strongly recommended that the stream be promptly closed and
+     * discarded if an exception occurs.
+     *
      * @param  packageFinder  A supplier that can produce a set of package
      *         names
+     *
+     * @throws ClassFormatException If an invalid module descriptor is detected
+     *
+     * @throws IOException If an I/O error occurs reading from the input stream
+     *         or {@code UncheckedIOException} is thrown by the package finder
      */
     public static ModuleDescriptor read(InputStream in,
                                         Supplier<Set<String>> packageFinder)
@@ -830,10 +843,12 @@ public class ModuleDescriptor
 
     /**
      * Reads a module descriptor from an input stream.
+     *
+     * @throws ClassFormatException If an invalid module descriptor is detected
+     *
+     * @throws IOException If an I/O error occurs reading from the input stream
      */
-    public static ModuleDescriptor read(InputStream in)
-        throws IOException
-    {
+    public static ModuleDescriptor read(InputStream in) throws IOException {
         return ModuleInfo.read(in, null);
     }
 
@@ -845,9 +860,23 @@ public class ModuleDescriptor
      * invoked.  The packages it returns, except for those indicated as
      * exported in the encoded descriptor, will be considered to be concealed.
      *
+     * <p> The module descriptor is read from the buffer stating at index
+     * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
+     * position} when this method is invoked. Upon return the buffer's position
+     * will be equal to {@code p + n} where {@code n} is the number of bytes
+     * read from the buffer.
+     *
      * @apiNote The {@code packageFinder} parameter is for use when reading
      * module descriptors from legacy module-artifact formats that do not
      * record the set of concealed packages in the descriptor itself.
+     *
+     * <p> If there are bytes following the module descriptor then it is
+     * implementation specific as to whether those bytes are read, ignored,
+     * or reported as a {@code ClassFormatException}. If this method fails with
+     * a {@code ClassFormatException} then it may do so after some, but not all,
+     * bytes have been read.
+     *
+     * @throws ClassFormatException If an invalid module descriptor is detected
      */
     public static ModuleDescriptor read(ByteBuffer bb,
                                         Supplier<Set<String>> packageFinder)
@@ -857,6 +886,8 @@ public class ModuleDescriptor
 
     /**
      * Reads a module descriptor from a byte buffer.
+     *
+     * @throws ClassFormatException If an invalid module descriptor is detected
      */
     public static ModuleDescriptor read(ByteBuffer bb) {
         return ModuleInfo.read(bb, null);

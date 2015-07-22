@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,41 +26,41 @@
 package java.lang.module;
 
 /**
- * Thrown when resolving a set of modules or binding fails.
+ * Thrown by module finders when finding a module fails.
  *
- * @see Configuration#resolve
- * @see Configuration#bind
- *
+ * @see ModuleFinder
  * @since 1.9
  */
-public class ResolutionException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+
+public class FindException extends RuntimeException {
+    private static final long serialVersionUID = 1L; // TBD
 
     /**
-     * Constructs a {@code ResolutionException} with no detail message.
+     * Constructs a {@code FindException} with no detail message.
      */
-    public ResolutionException() { }
+    public FindException() {
+    }
 
     /**
-     * Constructs an instance of this exception with the given cause.
+     * Constructs a {@code FindException} with the given detail
+     * message.
      */
-    public ResolutionException(Throwable cause) {
+    public FindException(String msg) {
+        super(msg);
+    }
+
+    /**
+     * Constructs a {@code FindException} with the given cause.
+     */
+    public FindException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * Constructs a {@code ResolutionException} with the given detail message
+     * Constructs a {@code FindException} with the given detail message
      * and cause.
      */
-    public ResolutionException(String msg, Throwable cause) {
+    public FindException(String msg, Throwable cause) {
         super(msg, cause);
     }
-
-    /**
-     * Constructs an instance of this exception.
-     */
-    public ResolutionException(String fmt, Object... args) {
-        super(String.format(fmt, args));
-    }
-
 }

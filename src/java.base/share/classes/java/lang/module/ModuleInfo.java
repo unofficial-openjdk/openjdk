@@ -50,7 +50,7 @@ import static jdk.internal.module.ClassFileConstants.*;
  * Read module information from a {@code module-info} class file.
  *
  * @implNote The rationale for the hand-coded reader is performance and fine
- * control over the throwing of ClassFormatError.
+ * control over the throwing of ClassFormatException.
  */
 
 final class ModuleInfo {
@@ -72,30 +72,41 @@ final class ModuleInfo {
     /**
      * Reads a {@code module-info.class} from the given input stream.
      *
-     * @throws ClassFormatError if the class file is malformed
-     * @throws IOException if an I/O error occurs
+     * @throws ClassFormatException
+     * @throws IOException
      */
     public static ModuleDescriptor read(InputStream in,
                                         Supplier<Set<String>> pf)
         throws IOException
     {
-        return new ModuleInfo(pf).doRead(new DataInputStream(in));
+        try {
+            return new ModuleInfo(pf).doRead(new DataInputStream(in));
+        } catch (IllegalArgumentException iae) {
+            // IllegalArgumentException means a malformed class
+            throw cfe(iae.getMessage());
+        } catch (EOFException x) {
+            throw cfeTruncated();
+        }
     }
 
     /**
      * Reads a {@code module-info.class} from the given byte buffer.
      *
-     * @throws ClassFormatError if the class file is malformed
+     * @throws ClassFormatException
+     * @throws UncheckedIOException
      */
     public static ModuleDescriptor read(ByteBuffer bb,
                                         Supplier<Set<String>> pf)
     {
         try {
             return new ModuleInfo(pf).doRead(new DataInputWrapper(bb));
+        } catch (IllegalArgumentException iae) {
+            // IllegalArgumentException means a malformed class
+            throw cfe(iae.getMessage());
         } catch (EOFException x) {
-            throw new ClassFormatError("Incomplete class file");
-        } catch (IOException x) {
-            throw new InternalError(x);
+            throw cfeTruncated();
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 
@@ -103,18 +114,31 @@ final class ModuleInfo {
      * Reads a {@code module-info.class} from the given byte buffer
      * but ignore the {@code Hashes} attribute.
      *
-     * @throws ClassFormatError if the class file is malformed
-     * @throws IOException if an I/O errors occurs
+     * @throws ClassFormatException
+     * @throws UncheckedIOException
      */
     static ModuleDescriptor readIgnoringHashes(ByteBuffer bb,
                                                Supplier<Set<String>> pf)
-        throws IOException
     {
-        return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
+        try {
+            return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
+        } catch (IllegalArgumentException e) {
+            throw cfe(e.getMessage());
+        } catch (EOFException x) {
+            throw cfeTruncated();
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
     /**
      * Reads the input as a module-info class file.
+     *
+     * @throws IOException
+     * @throws ClassFormatException
+     * @throws IllegalArgumentException if thrown by the ModuleDescriptor.Builder
+     *         because an identifier is not a legal Java identifier, duplicate
+     *         exports, and many other reasons
      */
     @SuppressWarnings("fallthrough")
     private ModuleDescriptor doRead(DataInput in)
@@ -122,43 +146,43 @@ final class ModuleInfo {
     {
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
-            classFormatError("Bad magic number");
+            throw cfe("Bad magic number");
 
         int minor_version = in.readUnsignedShort();
         int major_version = in.readUnsignedShort();
         if (major_version < 53) {
-            // classFormatError("Must be >= 53.0");
+            // throw cfe("Must be >= 53.0");
         }
 
         ConstantPool cpool = new ConstantPool(in);
 
         int access_flags = in.readUnsignedShort();
         if (access_flags != ACC_MODULE)
-            classFormatError("access_flags should be ACC_MODULE");
+            throw cfe("access_flags should be ACC_MODULE");
 
         int this_class = in.readUnsignedShort();
         String mn = cpool.getClassName(this_class);
         int suffix = mn.indexOf("/module-info");
         if (suffix < 1)
-            classFormatError("this_class not of form name/module-info");
+            throw cfe("this_class not of form name/module-info");
         name = mn.substring(0, suffix).replace('/', '.');
         builder = new ModuleDescriptor.Builder(name);
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
-            classFormatError("bad #super_class");
+            throw cfe("bad #super_class");
 
         int interfaces_count = in.readUnsignedShort();
         if (interfaces_count > 0)
-            classFormatError("Bad #interfaces");
+            throw cfe("Bad #interfaces");
 
         int fields_count = in.readUnsignedShort();
         if (fields_count > 0)
-            classFormatError("Bad #fields");
+            throw cfe("Bad #fields");
 
         int methods_count = in.readUnsignedShort();
         if (methods_count > 0)
-            classFormatError("Bad #fields");
+            throw cfe("Bad #fields");
 
         int attributes_count = in.readUnsignedShort();
 
@@ -173,7 +197,7 @@ final class ModuleInfo {
 
             boolean added = namesFound.add(name);
             if (!added) {
-                classFormatError("More than one " + name + " attribute");
+                throw cfe("More than one "  + name + " attribute");
             }
 
             switch (name) {
@@ -196,15 +220,15 @@ final class ModuleInfo {
                     }
                     // fallthrough
                 default:
-                    // Should check that it's one of: Synthetic, SourceFile,
-                    // SourceDebugExtension, Deprecated.
+                    // Should check that it's one of Synthetic, SourceFile,
+                    // SourceDebugExtension, Deprecated?
                     in.skipBytes(length);
             }
         }
 
         // the Module attribute is required
         if (!namesFound.contains(MODULE)) {
-            classFormatError(MODULE + " attribute not found");
+            throw cfe(MODULE + " attribute not found");
         }
 
         // If the ConcealedPackages attribute is not present then the
@@ -230,8 +254,9 @@ final class ModuleInfo {
         throws IOException
     {
         int requires_count = in.readUnsignedShort();
-        if (requires_count == 0 && !name.equals("java.base"))
-            classFormatError("The requires table must have at least one entry");
+        if (requires_count == 0 && !name.equals("java.base")) {
+            throw cfe("The requires table must have at least one entry");
+        }
         for (int i=0; i<requires_count; i++) {
             int index = in.readUnsignedShort();
             int flags = in.readUnsignedShort();
@@ -319,8 +344,6 @@ final class ModuleInfo {
 
     /**
      * Reads the Version attribute
-     *
-     * @throws IllegalAccessException if the version attribute cannot be parsed
      */
     private void readVersionAttribute(DataInput in, ConstantPool cpool)
         throws IOException
@@ -363,13 +386,6 @@ final class ModuleInfo {
         }
 
         builder.hashes(new DependencyHashes(algorithm, map));
-    }
-
-    /**
-     * Throws {@code ClassFormatError} with the given message.
-     */
-    private static void classFormatError(String msg) {
-        throw new ClassFormatError(msg);
     }
 
     /**
@@ -488,7 +504,7 @@ final class ModuleInfo {
                         break;
 
                     default:
-                        classFormatError("Bad constant pool entry" + i);
+                        throw cfe("Bad constant pool entry" + i);
                 }
             }
         }
@@ -509,7 +525,7 @@ final class ModuleInfo {
 
         void checkIndex(int index) {
             if (index >= pool.length)
-                classFormatError("Index into constant pool out of range");
+                throw cfe("Index into constant pool out of range");
         }
     }
 
@@ -646,6 +662,21 @@ final class ModuleInfo {
             // the UTF-8 decoder instead.
             return DataInputStream.readUTF(this);
         }
+    }
+
+    /**
+     * Returns a ClassFormatException with the given detail message
+     */
+    private static ClassFormatException cfe(String msg) {
+        return new ClassFormatException(msg);
+    }
+
+    /**
+     * Returns a ClassFormatException with a detail message to indicate that
+     * the class file is truncated.
+     */
+    private static ClassFormatException cfeTruncated() {
+        return cfe("Truncated module-info.class");
     }
 
 }

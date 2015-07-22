@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,44 +23,29 @@
  * questions.
  */
 
-package java.lang.module;
+package java.lang;
 
 /**
- * Thrown when resolving a set of modules or binding fails.
+ * Thrown when reading a class file and the class file is found to be
+ * malformed or otherwise cannot be interpreted as a class file.
  *
- * @see Configuration#resolve
- * @see Configuration#bind
- *
+ * @see java.lang.module.ModuleDescriptor#read
  * @since 1.9
  */
-public class ResolutionException extends RuntimeException {
+public class ClassFormatException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs a {@code ResolutionException} with no detail message.
+     * Constructs a {@code ClassFormatException} with no detail message.
      */
-    public ResolutionException() { }
-
-    /**
-     * Constructs an instance of this exception with the given cause.
-     */
-    public ResolutionException(Throwable cause) {
-        super(cause);
+    public ClassFormatException() {
     }
 
     /**
-     * Constructs a {@code ResolutionException} with the given detail message
-     * and cause.
+     * Constructs a {@code ClassFormatException} with the specified
+     * detail message.
      */
-    public ResolutionException(String msg, Throwable cause) {
-        super(msg, cause);
+    public ClassFormatException(String msg) {
+        super(msg);
     }
-
-    /**
-     * Constructs an instance of this exception.
-     */
-    public ResolutionException(String fmt, Object... args) {
-        super(String.format(fmt, args));
-    }
-
 }

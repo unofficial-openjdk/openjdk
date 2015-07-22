@@ -27,6 +27,8 @@
  * @summary Basic test for java.lang.module.ModuleDescriptor and its builder
  */
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -34,11 +36,14 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.Version;
+import java.lang.reflect.Module;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
 import org.testng.annotations.DataProvider;
@@ -394,6 +399,95 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testDuplicateMainClass() {
         new Builder("foo").mainClass("p.Main").mainClass("p.Main");
+    }
+
+
+
+    // reads
+
+    private static InputStream EMPTY_INPUT_STREAM = new InputStream() {
+        @Override
+        public int read() {
+            return -1;
+        }
+    };
+
+    private static InputStream FAILING_INPUT_STREAM = new InputStream() {
+        @Override
+        public int read() throws IOException {
+            throw new IOException();
+        }
+    };
+
+    @Test(enabled=false)
+    public void testRead() throws Exception {
+        Module base = Object.class.getModule();
+
+        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+            ModuleDescriptor descriptor = ModuleDescriptor.read(in);
+            assertTrue(in.read() == -1); // all bytes read
+            assertEquals(descriptor.name(), "java.base");
+        }
+
+        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+            ByteBuffer bb = ByteBuffer.wrap(in.readAllBytes());
+            ModuleDescriptor descriptor = ModuleDescriptor.read(bb);
+            assertFalse(bb.hasRemaining()); // no more remaining bytes
+            assertEquals(descriptor.name(), "java.base");
+        }
+    }
+
+    public void testReadsWithPackageFinder() {
+        // TBD: Need way to write a module-info.class without a
+        // ConcealedPackages attribute
+    }
+
+    @Test(expectedExceptions = ClassFormatException.class)
+    public void testReadFromEmptyInputStream() throws Exception {
+        ModuleDescriptor.read(EMPTY_INPUT_STREAM);
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testReadFromFailingInputStream() throws Exception {
+        ModuleDescriptor.read(FAILING_INPUT_STREAM);
+    }
+
+    @Test(expectedExceptions = ClassFormatException.class)
+    public void testReadFromEmptyBuffer() {
+        ByteBuffer bb = ByteBuffer.allocate(0);
+        ModuleDescriptor.read(bb);
+    }
+
+    @Test(enabled=false)
+    public void testReadWithNull() throws Exception {
+        Module base = Object.class.getModule();
+
+        try {
+            ModuleDescriptor.read((InputStream)null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+
+        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+            try {
+                ModuleDescriptor.read(in, null);
+                assertTrue(false);
+            } catch (NullPointerException expected) { }
+        }
+
+        try {
+            ModuleDescriptor.read((ByteBuffer)null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+
+
+        try (InputStream in = base.getResourceAsStream("/module-info.class")) {
+            ByteBuffer bb = ByteBuffer.wrap(in.readAllBytes());
+            try {
+                ModuleDescriptor.read(bb, null);
+                assertTrue(false);
+            } catch (NullPointerException expected) { }
+        }
     }
 
 

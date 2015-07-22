@@ -25,7 +25,6 @@
 
 package java.lang.module;
 
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.util.ArrayDeque;
@@ -706,10 +705,9 @@ final class Resolver {
     private static ModuleReference find(ModuleFinder finder, String mn) {
         try {
             return finder.find(mn).orElse(null);
-        } catch (UncheckedIOException e) {
-            throw new ResolutionException(e.getCause());
-        } catch (RuntimeException | Error e) {
-            throw new ResolutionException(e);
+        } catch (FindException e) {
+            // unwrap
+            throw new ResolutionException(e.getMessage(), e.getCause());
         }
     }
 
@@ -734,10 +732,9 @@ final class Resolver {
                 = postModules.stream().filter(m -> !inParentLayer(m));
             return Stream.concat(s1, s2).collect(Collectors.toSet());
 
-        } catch (UncheckedIOException e) {
-            throw new ResolutionException(e.getCause());
-        } catch (RuntimeException | Error e) {
-            throw new ResolutionException(e);
+        } catch (FindException e) {
+            // unwrap
+            throw new ResolutionException(e.getMessage(), e.getCause());
         }
     }
 

@@ -35,6 +35,7 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ import sun.misc.PerfCounter;
 
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
- * a sequence of directories for jmod, modular JAR or exploded modules.
+ * a sequence of directories for JMOD, modular JAR or exploded modules.
  */
 
 class ModulePath implements ModuleFinder {
@@ -136,11 +137,9 @@ class ModulePath implements ModuleFinder {
      * Scans the given directory for modular JAR, JMOD or exploded modules.
      *
      * @return a map of module name to ModuleReference for the modules found
-     * in the directory
+     *         in the directory
      *
-     * @throws UncheckedIOException if an I/O error occurs
-     * @throws RuntimeException if directory contains more than one version of
-     * a module (need to decide on a better exception for this case).
+     * @throws FindException
      */
     private Map<String, ModuleReference> scan(Path dir) {
         long t0 = System.nanoTime();
@@ -149,24 +148,31 @@ class ModulePath implements ModuleFinder {
         Map<String, ModuleReference> nameToReference = new HashMap<>();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            for (Path entry: stream) {
+            for (Path entry : stream) {
                 ModuleReference mref = null;
 
                 BasicFileAttributes attrs;
                 try {
                     attrs = Files.readAttributes(entry, BasicFileAttributes.class);
-                } catch (IOException ioe) {
-                    // ignore for now
+                } catch (NoSuchFileException ignore) {
+                    // file has been removed or moved, ignore for now
                     continue;
                 }
-                if (attrs.isRegularFile()) {
-                    if (entry.toString().endsWith(".jmod")) {
-                        mref = readJMod(entry);
-                    } else if (entry.toString().endsWith(".jar")) {
-                        mref = readJar(entry);
+
+                try {
+
+                    if (attrs.isRegularFile()) {
+                        if (entry.toString().endsWith(".jmod")) {
+                            mref = readJMod(entry);
+                        } else if (entry.toString().endsWith(".jar")) {
+                            mref = readJar(entry);
+                        }
+                    } else if (attrs.isDirectory()) {
+                        mref = readExploded(entry);
                     }
-                } else if (attrs.isDirectory()) {
-                    mref = readExploded(entry);
+
+                } catch (ClassFormatException e) {
+                    throw new FindException("Error reading module: " + entry, e);
                 }
 
                 // module found
@@ -176,13 +182,13 @@ class ModulePath implements ModuleFinder {
                     // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
                     if (nameToReference.put(name, mref) != null) {
-                        throw new RuntimeException(dir +
-                            " contains more than one version of " + name);
+                        throw new FindException("Two versions of module "
+                                                + name + " found in " + dir);
                     }
                 }
             }
         } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
+            throw new FindException(ioe);
         }
 
         scanTime.addElapsedTimeFrom(t0);
@@ -399,8 +405,16 @@ class ModulePath implements ModuleFinder {
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
+
                 // no module-info.class so treat it as automatic module
-                md = deriveModuleDescriptor(jf);
+                try {
+                    md = deriveModuleDescriptor(jf);
+                } catch (IllegalArgumentException iae) {
+                    throw new FindException(
+                        "Unable to derive module descriptor for: "
+                        + jf.getName(), iae);
+                }
+
             } else {
                 md = ModuleDescriptor.read(jf.getInputStream(entry),
                                            () -> jarPackages(jf));

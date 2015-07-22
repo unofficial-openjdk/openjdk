@@ -25,8 +25,6 @@
 
 package java.lang.module;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -81,34 +79,30 @@ class InstalledModuleFinder implements ModuleFinder {
         Set<ModuleReference> modules = new HashSet<>(n);
         Map<String, ModuleReference> nameToModule = new HashMap<>(n);
 
-        try {
-            for (String mn : moduleNames) {
-                ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
-                ByteBuffer bb = imageReader.getResourceBuffer(loc);
-                try {
+        for (String mn : moduleNames) {
+            ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
+            ByteBuffer bb = imageReader.getResourceBuffer(loc);
+            try {
 
-                    // parse the module-info.class file and create the
-                    // module reference.
-                    ModuleDescriptor descriptor
-                        = ModuleInfo.readIgnoringHashes(bb, null);
-                    URI uri = URI.create("jrt:/" + mn);
-                    ModuleReference mref
-                        = ModuleReferences.newModuleReference(descriptor,
-                                                              uri,
-                                                              null);
-                    modules.add(mref);
-                    nameToModule.put(mn, mref);
+                // parse the module-info.class file and create the
+                // module reference.
+                ModuleDescriptor descriptor
+                    = ModuleInfo.readIgnoringHashes(bb, null);
+                URI uri = URI.create("jrt:/" + mn);
+                ModuleReference mref
+                    = ModuleReferences.newModuleReference(descriptor,
+                                                          uri,
+                                                          null);
+                modules.add(mref);
+                nameToModule.put(mn, mref);
 
-                    // counters
-                    packageCount.add(descriptor.packages().size());
-                    exportsCount.add(descriptor.exports().size());
+                // counters
+                packageCount.add(descriptor.packages().size());
+                exportsCount.add(descriptor.exports().size());
 
-                } finally {
-                    ImageReader.releaseByteBuffer(bb);
-                }
+            } finally {
+                ImageReader.releaseByteBuffer(bb);
             }
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
         }
 
         this.modules = Collections.unmodifiableSet(modules);

@@ -29,7 +29,8 @@
  * @summary Basic tests for java.lang.module.ModuleFinder
  */
 
-import java.io.UncheckedIOException;
+import java.io.IOException;
+import java.lang.module.FindException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
@@ -136,23 +137,19 @@ public class ModuleFinderTest {
         try {
             finder.find("m1");
             assertTrue(false);
-        } catch (RuntimeException expected) {
-            // expected exception is TBD
-        }
+        } catch (FindException expected) { }
 
         finder = ModuleFinder.of(dir);
         try {
             finder.findAll();
             assertTrue(false);
-        } catch (RuntimeException expected) {
-            // expected exception is TBD
-        }
+        } catch (FindException expected) { }
     }
 
     /**
      * Test ModuleFinder.of with a bad (does not exist) directory
      */
-    public void testBadDirectory() throws Exception {
+    public void testWithBadDirectory() throws Exception {
         Path dir = Files.createTempDirectory("mods");
         Files.delete(dir);
 
@@ -160,14 +157,45 @@ public class ModuleFinderTest {
         try {
             finder.find("java.rhubarb");
             assertTrue(false);
-        } catch (UncheckedIOException expected) { }
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof IOException);
+        }
 
         finder = ModuleFinder.of(dir);
         try {
             finder.findAll();
             assertTrue(false);
-        } catch (UncheckedIOException expected) { }
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof IOException);
+        }
 
+    }
+
+    /**
+     * Test ModuleFinder.of with a truncated module-info.class
+     */
+    public void testWithTruncateModuleInfo() throws Exception {
+        Path dir = Files.createTempDirectory("mods");
+
+        // create an empty <dir>/rhubarb/module-info.class
+        Path subdir = Files.createDirectory(dir.resolve("rhubarb"));
+        Files.createFile(subdir.resolve("module-info.class"));
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        try {
+            finder.find("rhubarb");
+            assertTrue(false);
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof ClassFormatException);
+        }
+
+        finder = ModuleFinder.of(dir);
+        try {
+            finder.findAll();
+            assertTrue(false);
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof ClassFormatException);
+        }
     }
 
     /**

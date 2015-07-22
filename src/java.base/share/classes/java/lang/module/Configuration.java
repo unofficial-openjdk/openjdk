@@ -80,9 +80,8 @@ public final class Configuration {
      *
      *     <li> Some other error occurs when attempting to find a module.
      *          Possible errors include I/O errors, errors detected parsing a
-     *          module descriptor ({@code module-info.class}), or an exception
-     *          where access to some resource is denied by the security manager.
-     *          </li>
+     *          module descriptor ({@code module-info.class}) or two versions
+     *          of the same module found in the same directory. </li>
      *
      *     <li> A cycle is detected, say where module {@code m1} requires module
      *          {@code m2} and {@code m2} requires {@code m1}. </li>

@@ -56,24 +56,18 @@ import java.util.stream.Stream;
  *
  * }</pre>
  *
- * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
+ * <p> The {@link #find(String) find} and {@link #findAll() findAll} methods
+ * defined here can fail for several reasons. These include include I/O errors,
+ * errors detected parsing a module descriptor ({@code module-info.class}), or
+ * in the case of {@code ModuleFinder} based on a sequence of directories,
+ * that two or more versions of the module are found in the same directory.
+ * When an error is detected then these methods throw {@link FindException
+ * FindException} with a {@link Throwable#getCause cause} where appropriate.
+ * The behavior of a {@code ModuleFinder} after a {@code FindException} is
+ * thrown is undefined. It is recommended that the {@code ModuleFinder} be
+ * discarded after an exception is thrown. </p>
  *
- * @apiNote Exceptions aren't specified yet. For now the exceptions thrown are:
- * <ul>
- *     <li> UncheckedIOException if there is an I/O error scanning the module
- *     path or accessing a packaged module. </li>
- *     <li> SecurityException if the security manager denies something when
- *     scanning the module path. </li>
- *     <li> ClassFormatError if a module-info.class cannot be parsed. </li>
- *     <li> IllegalArgumentException if a module descriptor cannot be
- *     reconstituted, say for example the module name in the module-info.class
- *     contains non-Java identifiers. </li>
- *     <li> RuntimeException if two or more modules with the same name are
- *     found in the same module path element. </li>
- * </ul>
- * The eventual spec also needs to set expectations as to what happens if
- * a finder is used after an error occurs. Finally, null handling is not
- * specified yet.
+ * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
  * @since 1.9
  */
@@ -89,6 +83,13 @@ public interface ModuleFinder {
      * each time. If a module is located then it is guaranteed to be a member
      * of the set of modules returned by the {@link #findAll() findAll}
      * method.
+     *
+     * @return a reference to a module with the given name or an empty
+     *         {@code Optional} if not found
+     *
+     * @throws FindException If an error occurs finding the module
+     *
+     * @throws SecurityException If denied by the security manager
      */
     public Optional<ModuleReference> find(String name);
 
@@ -105,6 +106,10 @@ public interface ModuleFinder {
      * @apiNote This is important to have for methods such as {@link
      * Configuration#bind} that need to scan the module path to find
      * modules that provide a specific service.
+     *
+     * @throws FindException If an error occurs finding all modules
+     *
+     * @throws SecurityException If denied by the security manager
      */
     public Set<ModuleReference> findAll();
 
@@ -142,6 +147,12 @@ public interface ModuleFinder {
      * will locate modules that are packaged as modular JAR files or modules
      * that are exploded on the file system. It may also locate modules that
      * are packaged in other implementation specific formats.
+     *
+     * <p> Finders created by this method are lazy and do not eagerly check
+     * that the given file paths are directories. A call to the {@code find}
+     * or {@code findAll} methods may fail as a result. </p>
+     *
+     * @param dirs  The possibly-empty array of directories
      */
     public static ModuleFinder of(Path... dirs) {
         return new ModulePath(dirs);
@@ -192,6 +203,7 @@ public interface ModuleFinder {
      * Configuration#resolve resolve} where two finders are specified.
      */
     public static ModuleFinder empty() {
+        // an alternative implementation of ModuleFinder.of()
         return new ModuleFinder() {
             @Override public Optional<ModuleReference> find(String name) {
                 Objects.requireNonNull(name);
