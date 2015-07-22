@@ -1090,7 +1090,7 @@ public class Locations {
                 String name = location.getName() + "[" + k + "]";
                 ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false, false);
                 moduleLocations.put(k, h);
-                v.forEach(p -> pathLocations.put(p, h));
+                v.forEach(p -> pathLocations.put(p.toAbsolutePath().normalize(), h));
             });
         }
 
@@ -1420,6 +1420,14 @@ public class Locations {
         String n = StringUtils.toLowerCase(file.getFileName().toString());
         return fsInfo.isFile(file)
                 && (n.endsWith(".jar") || n.endsWith(".zip"));
+    }
+
+    static Path normalize(Path p) {
+        try {
+            return p.toRealPath();
+        } catch (IOException e) {
+            return p.toAbsolutePath().normalize();
+        }
     }
 
 }

@@ -948,7 +948,6 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         nullCheck(location);
         if (!(fo instanceof RegularFileObject))
             throw new IllegalArgumentException(fo.getName());
-        Path f = ((RegularFileObject) fo).file;
         int depth = 1; // allow 1 for filename
         if (pkgName != null && !pkgName.isEmpty()) {
             depth += 1;
@@ -959,11 +958,12 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                 }
             }
         }
-        if (depth < f.getNameCount()) {
+        Path f = Locations.normalize(((RegularFileObject) fo).file);
+        int fc = f.getNameCount();
+        if (depth < fc) {
             Path root = f.getRoot();
-            Path subpath = f.subpath(0, f.getNameCount() - depth);
+            Path subpath = f.subpath(0, fc - depth);
             Path dir = (root == null) ? subpath : root.resolve(subpath);
-
             // need to find dir in location
             return locations.getModuleLocation(location, dir);
         } else {
