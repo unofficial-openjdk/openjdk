@@ -1,0 +1,3 @@
+project=jdk6
+whitespace=lax
+bugids=ignore
