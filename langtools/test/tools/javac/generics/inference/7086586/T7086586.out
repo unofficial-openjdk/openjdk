@@ -1,0 +1,5 @@
+T7086586.java:14:21: compiler.err.invalid.inferred.types: T, (compiler.misc.no.conforming.assignment.exists: java.util.List<compiler.misc.type.captureof: 1, ?>, java.util.List<? super java.lang.Object>)
+T7086586.java:15:21: compiler.err.invalid.inferred.types: T, (compiler.misc.no.conforming.assignment.exists: java.util.List<compiler.misc.type.captureof: 1, ?>, java.util.List<? super java.lang.Object>)
+T7086586.java:16:24: compiler.err.invalid.inferred.types: T, (compiler.misc.no.conforming.assignment.exists: java.util.List<compiler.misc.type.captureof: 1, ?>, java.util.List<? super java.lang.Object>)
+T7086586.java:17:10: compiler.err.invalid.inferred.types: T, (compiler.misc.no.conforming.assignment.exists: java.util.List<compiler.misc.type.captureof: 1, ?>, java.util.List<? super java.lang.Object>)
+4 errors

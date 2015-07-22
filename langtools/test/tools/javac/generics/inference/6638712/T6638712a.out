@@ -1,0 +1,2 @@
+T6638712a.java:16:41: compiler.err.invalid.inferred.types: T, (compiler.misc.no.conforming.assignment.exists: java.util.List<java.util.Comparator<?>>, java.lang.Iterable<? extends java.util.Comparator<? super java.lang.String>>)
+1 error
