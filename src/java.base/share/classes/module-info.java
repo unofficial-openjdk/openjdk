@@ -75,7 +75,11 @@ module java.base {
     exports javax.security.auth.spi;
     exports javax.security.auth.x500;
     exports javax.security.cert;
+
+    // JDK-8049422
     exports jdk;
+
+    // JDK-8044773
     exports jdk.net;
 
     // additional qualified exports may be inserted at build time
