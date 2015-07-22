@@ -1,0 +1,283 @@
+#
+# Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+#
+# Generic makefile for building executables.
+#
+
+# WARNING: This file is shared with other workspaces.
+#          So when it includes other files, it must use JDK_TOPDIR.
+#
+
+#
+# If building programs, use a normal compile approach
+#
+ifeq ($(COMPILE_APPROACH),batch)
+  override COMPILE_APPROACH = normal
+endif
+
+ifndef LAUNCHER_PLATFORM_SRC
+LAUNCHER_PLATFORM_SRC = $(PLATFORM_SRC)
+endif
+
+ifndef LAUNCHER_SHARE_SRC
+LAUNCHER_SHARE_SRC = $(SHARE_SRC)
+endif
+
+ACTUAL_PROGRAM_NAME = $(PROGRAM)$(EXE_SUFFIX)
+ACTUAL_PROGRAM_DIR  = $(BINDIR)
+ACTUAL_PROGRAM      = $(ACTUAL_PROGRAM_DIR)/$(ACTUAL_PROGRAM_NAME)
+
+JVMCFG = $(LIBDIR)/$(LIBARCH)/jvm.cfg
+
+# Make sure the default rule is all
+program_default_rule: all
+
+program: $(ACTUAL_PROGRAM)
+
+include $(JDK_TOPDIR)/make/common/Rules.gmk
+
+ifdef NEVER_ACT_AS_SERVER_CLASS_MACHINE
+SERVERCLASS=-DNEVER_ACT_AS_SERVER_CLASS_MACHINE
+endif
+
+#
+# Create a dependency on libjli (Java Launcher Infrastructure)
+#
+# On UNIX, this is a relative dependency using $ORIGIN. Unfortunately, to
+# do this reliably on Linux takes a different syntax than Solaris.
+#
+# On Windows, this is done by using the same directory as the executable
+# itself, as with all the Windows libraries.
+#
+ifneq (,$(findstring $(PLATFORM), linux solaris))	# UNIX systems
+    LDFLAGS += -L $(LIBDIR)/$(LIBARCH)/jli
+    OTHER_LDLIBS += -ljli
+    ifeq ($(PLATFORM), solaris)
+	ifeq ($(ARCH_DATA_MODEL), 32)
+		LDFLAGS += -R \$$ORIGIN/../lib/$(LIBARCH)/jli
+	else
+		LDFLAGS += -R \$$ORIGIN/../../lib/$(LIBARCH)/jli
+	endif
+    endif
+    ifeq ($(PLATFORM), linux)
+	LDFLAGS += -Wl,-z -Wl,origin
+	LDFLAGS += -Wl,--allow-shlib-undefined
+	LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../lib/$(LIBARCH)/jli
+    endif
+endif
+ifeq ($(PLATFORM), windows)
+	ifdef STATIC_JLI
+	    LDFLAGS += -libpath:$(OUTPUTDIR)/tmp/java/jli/$(OBJDIRNAME)/static
+	else
+	    LDFLAGS += -libpath:$(OUTPUTDIR)/tmp/java/jli/$(OBJDIRNAME)
+	endif
+	OTHER_LDLIBS += jli.lib
+endif
+
+#
+# Launcher specific files.
+#
+FILES_o = \
+	$(OBJDIR)/$(PROGRAM).$(OBJECT_SUFFIX) \
+	$(OBJDIR)/$(PROGRAM)_md.$(OBJECT_SUFFIX) \
+	$(OBJDIR)/splashscreen_stubs.$(OBJECT_SUFFIX)
+
+$(ACTUAL_PROGRAM):: classes $(JVMCFG) $(INIT)
+
+#
+# Windows only
+#
+ifeq ($(PLATFORM), windows)
+
+# J2SE name required here
+RC_FLAGS += /D "J2SE_FNAME=$(PROGRAM)$(EXE_SUFFIX)" \
+	    /D "J2SE_INTERNAL_NAME=$(PROGRAM)" \
+	    /D "J2SE_FTYPE=0x1L"
+
+$(OBJDIR)/$(PROGRAM).res: $(VERSIONINFO_RESOURCE)
+	@$(prep-target)
+ifndef LOCAL_RESOURCE_FILE
+	$(RC) $(RC_FLAGS) $(CC_OBJECT_OUTPUT_FLAG)$(@) $(VERSIONINFO_RESOURCE)
+endif
+
+$(OBJDIR)/$(PROGRAM).lcf: $(OBJDIR)/$(PROGRAM).res $(FILES_o)
+	@$(prep-target)
+	@$(ECHO) $(FILES_o) > $@ 
+  ifndef LOCAL_RESOURCE_FILE
+	@$(ECHO) $(OBJDIR)/$(PROGRAM).res >> $@
+  endif
+	@$(ECHO) setargv.obj >> $@
+	@$(ECHO) Created $@ 
+
+$(ACTUAL_PROGRAM):: $(OBJDIR)/$(PROGRAM)$(EXE_SUFFIX)
+	@$(install-file)
+
+ifeq ($(ARCH_DATA_MODEL), 32)
+  STACK_SIZE=327680
+else
+# We need more Stack for Windows 64bit
+  STACK_SIZE=1048576
+endif
+
+$(OBJDIR)/$(PROGRAM)$(EXE_SUFFIX):: $(OBJDIR)/$(PROGRAM).lcf $(FILES_o)
+	@$(prep-target)
+	@set -- $?; \
+	    $(ECHO) Rebuilding $@ because of $$1 $$2 $$3 $$4 $$5 $$6 $${7:+...};
+	$(LINK) -out:$@ /STACK:$(STACK_SIZE) \
+	    -map:$(OBJDIR)/$(PROGRAM).map $(LFLAGS) $(LDFLAGS) \
+	    @$(OBJDIR)/$(PROGRAM).lcf $(LDLIBS)
+
+else # PLATFORM
+
+#
+# Note that we have to link -lthread even when USE_PTHREADS is true.
+# This is becuase checkForCorrectLibthread() croaks otherwise.
+#
+LIBTHREAD = -lthread
+ifeq ($(USE_PTHREADS),true)
+  THREADLIBS = -lpthread $(LIBTHREAD)
+else # USE_PTHREADS
+  THREADLIBS = $(LIBTHREAD)
+endif # USE_PTHREADS
+
+#
+# This rule only applies on unix.  It supports quantify and its ilk.
+#
+$(ACTUAL_PROGRAM):: $(FILES_o)
+	@$(prep-target)
+	@set -- $?; \
+	    $(ECHO) Rebuilding $@ because of $$1 $$2 $$3 $$4 $$5 $$6 $${7:+...};
+	@$(MKDIR) -p $(TEMPDIR)
+	$(LINK_PRE_CMD) $(CC) $(SERVERCLASS) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LDFLAGS) \
+	    $(FILES_o) $(THREADLIBS) $(LDLIBS)
+
+endif # PLATFORM
+
+clean:: 
+ifeq ($(PLATFORM), windows)
+	$(RM) $(OBJDIR)/$(PROGRAM).rc
+	$(RM) $(OBJDIR)/$(PROGRAM).ico
+	$(RM) $(OBJDIR)/$(PROGRAM).lcf
+	$(RM) $(OBJDIR)/$(PROGRAM).map
+	$(RM) $(OBJDIR)/$(PROGRAM).exp
+	$(RM) $(OBJDIR)/$(PROGRAM).lib
+	$(RM) $(OBJDIR)/$(PROGRAM)$(EXE_SUFFIX)
+	$(RM) $(OBJDIR)/$(PROGRAM).ilk
+	$(RM) *.pdb
+endif
+
+
+clobber:: 
+	$(RM) $(ACTUAL_PROGRAM)
+
+#
+# Now include make dependencies (created during compilation, see Rules.gmk)
+#
+ifeq ($(INCREMENTAL_BUILD),true)
+# Workaround: gnumake sometimes says files is empty when it shouldn't
+#    was:  files := $(foreach file, $(wildcard */$(ARCH)/*.$(DEPEND_SUFFIX)), $(file))
+files := $(shell $(LS) $(OBJDIR)/*.$(DEPEND_SUFFIX) 2>/dev/null)
+ifneq ($(strip $(files)),)
+include $(files)
+endif # files
+endif # INCREMENTAL_BUILD
+
+ifdef JAVA_ARGS
+OTHER_CPPFLAGS += -DJAVA_ARGS='$(JAVA_ARGS)'
+OTHER_CPPFLAGS += -DLAUNCHER_NAME='"$(LAUNCHER_NAME)"'
+endif
+
+ifeq ($(PLATFORM), windows)
+ifdef RELEASE
+OTHER_CPPFLAGS += -DVERSION='"$(RELEASE)"'
+endif
+endif
+
+
+ifneq ($(PLATFORM), windows)
+HAVE_GETHRTIME=true
+endif
+
+ifeq ($(HAVE_GETHRTIME),true)
+OTHER_CPPFLAGS += -DHAVE_GETHRTIME
+endif
+
+OTHER_INCLUDES += -I$(LAUNCHER_SHARE_SRC)/bin -I$(LAUNCHER_PLATFORM_SRC)/bin
+OTHER_INCLUDES += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+
+OTHER_CPPFLAGS += -DPROGNAME='"$(PROGRAM)"'
+VERSION_DEFINES += -DFULL_VERSION='"$(FULL_VERSION)"'
+
+VERSION_DEFINES += -DJDK_MAJOR_VERSION='"$(JDK_MAJOR_VERSION)"' \
+		   -DJDK_MINOR_VERSION='"$(JDK_MINOR_VERSION)"'
+
+# Names of arch directories
+LIBARCH_DEFINES = -DLIBARCHNAME='"$(LIBARCH)"'
+ifeq ($(PLATFORM), solaris)
+  LIBARCH_DEFINES += -DLIBARCH32NAME='"$(LIBARCH32)"'
+  LIBARCH_DEFINES += -DLIBARCH64NAME='"$(LIBARCH64)"'
+endif
+
+$(OBJDIR)/$(PROGRAM).$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/java.c
+	@$(prep-target)
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(VERSION_DEFINES) $<
+
+$(OBJDIR)/$(PROGRAM)_md.$(OBJECT_SUFFIX): $(LAUNCHER_PLATFORM_SRC)/bin/java_md.c
+	@$(prep-target)
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LIBARCH_DEFINES) \
+		     $(VERSION_DEFINES) $(SERVERCLASS) $<
+
+$(OBJDIR)/%.$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/%.c
+	@$(prep-target)
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(VERSION_DEFINES) $<
+
+#
+# How to install jvm.cfg. 
+#
+ifeq ($(ZERO_BUILD), true)
+JVMCFG_ARCH = zero
+else
+JVMCFG_ARCH = $(ARCH)
+endif
+
+$(JVMCFG): $(LAUNCHER_PLATFORM_SRC)/bin/$(JVMCFG_ARCH)/jvm.cfg 
+	$(install-file)
+
+#
+# Default dependencies
+#
+
+all: build
+
+build: program
+
+debug:
+	$(MAKE) VARIANT=DBG build
+
+fastdebug:
+	$(MAKE) VARIANT=DBG FASTDEBUG=true build
+
+.PHONY: all build program clean clobber debug fastdebug
