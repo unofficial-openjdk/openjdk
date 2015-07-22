@@ -1,0 +1,656 @@
+." Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH wsgen 1 "05 Jul 2012"
+.SH "名前"
+wsgen \- XML Web Services(JAX\-WS)2.0のためのJava(tm)API
+.LP
+\f3仕様バージョン:\fP 2.1
+.br
+\f3実装バージョン:\fP 2.1.1
+.LP
+\f2wsgen\fPツールは、JAX\-WS Webサービスで使用されるJAX\-WSポータブル・アーティファクトを生成します。このツールは、Webサービスのエンドポイント実装クラス(SEI)を読取り、Webサービスのデプロイメントと呼出しに必要なすべてのアーティファクトを生成します。
+.SH "概要"
+.LP
+\f2wsgen\fPツールは、JAX\-WS Webサービスで使用されるJAX\-WSポータブル・アーティファクトを生成します。このツールは、Webサービスのエンドポイント・クラスを読取り、Webサービスのデプロイメントと呼出しに必要なすべてのアーティファクトを生成します。JAXWS 2.1.1 RIにはwsgen Antタスクも用意されています。詳細は、
+.na
+\f2Wsgen Antタスク\fP @
+.fi
+https://jax\-ws.dev.java.net/nonav/2.1.1/docs/wsgenant.htmlを参照してください。
+.LP
+.SH "wsgenの起動"
+.RS 3
+.TP 2
+o
+\f3Solaris/Linux\fP 
+.RS 3
+.TP 2
+*
+\f2export JAXWS_HOME=/pathto/jaxws\-ri\fP 
+.TP 2
+*
+\f2$JAXWS_HOME/bin/wsgen.sh \-help\fP 
+.RE
+.TP 2
+o
+\f3Windows\fP 
+.RS 3
+.TP 2
+*
+\f2set JAXWS_HOME=c:\\pathto\\jaxws\-ri\fP 
+.TP 2
+*
+\f2%JAXWS_HOME%\\bin\\wsgen.bat \-help\fP 
+.RE
+.RE
+
+.LP
+.SH "構文"
+.nf
+\f3
+.fl
+wsgen [options] <SEI>\fP
+.br
+\f3
+.fl
+\fP
+.fi
+.LP
+次の表に、\f2wsgen\fPのオプションを示します。
+.br
+.LP
+.TS
+.if \n+(b.=1 .nr d. \n(.c-\n(c.-1
+.de 35
+.ps \n(.s
+.vs \n(.vu
+.in \n(.iu
+.if \n(.u .fi
+.if \n(.j .ad
+.if \n(.j=0 .na
+..
+.nf
+.nr #~ 0
+.if n .nr #~ 0.6n
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.fc
+.nr 33 \n(.s
+.rm 80 81
+.nr 34 \n(.lu
+.eo
+.am 81
+.br
+.di a+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+入力クラス・ファイルの検索場所を指定します
+.br
+.di
+.nr a| \n(dn
+.nr a- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di b+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+\f2\-classpath<path>\fPと同じです
+.br
+.di
+.nr b| \n(dn
+.nr b- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di c+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+生成される出力ファイルを格納する場所を指定します
+.br
+.di
+.nr c| \n(dn
+.nr c- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di d+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+ベンダー拡張(仕様で規定されていない機能)を許可します。拡張を使用すると、アプリケーションの移植性が失われたり、他の実装との相互運用が行えなくなる可能性があります
+.br
+.di
+.nr d| \n(dn
+.nr d- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di e+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+ヘルプを表示します
+.br
+.di
+.nr e| \n(dn
+.nr e- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di f+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+生成されたファイルを保持します
+.br
+.di
+.nr f| \n(dn
+.nr f- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di g+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+常に \-wsdlオプションと組み合わて使用します。WSDLなどの生成されたリソース・ファイルの格納場所を指定します
+.br
+.di
+.nr g| \n(dn
+.nr g- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di h+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+生成されるソース・ファイルを格納する場所を指定します
+.br
+.di
+.nr h| \n(dn
+.nr h- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di i+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+コンパイラが実行している処理に関するメッセージを出力します
+.br
+.di
+.nr i| \n(dn
+.nr i- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di j+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+バージョン情報を出力します。このオプションを使用すると、バージョン情報のみが出力されます。通常の処理は実行されません。
+.br
+.di
+.nr j| \n(dn
+.nr j- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di k+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+デフォルトでは\f2wsgen\fPはWSDLファイルを生成しません。このフラグは省略可能ですが、指定した場合は\f2wsgen\fPがWSDLファイルを生成するようになります。このフラグは通常、エンドポイントのデプロイ前に開発者がWSDLを参照できるようにするためにのみ使用します。\f2protocol\fPは省略可能であり、\f2wsdl:binding\fPで使用するプロトコルを指定するために使用されます。有効なプロトコルは\f2soap1.1\fPおよび\f2Xsoap1.2\fPなどです。デフォルトは\f2soap1.1\fPです。\f2Xsoap1.2\fPは標準ではないため、\f2\-extension\fPオプションと組み合せないと使用できません。
+.br
+.di
+.nr k| \n(dn
+.nr k- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di l+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+常に\f2\-wsdl\fPオプションと組み合せて使用します。WSDL内で生成される\f2wsdl:service\fPの名前を指定するために使用します。例: \f2\-servicename "{http://mynamespace/}MyService"\fP
+.br
+.di
+.nr l| \n(dn
+.nr l- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di m+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+常に\f2\-wsdl\fPオプションと組み合せて使用します。WSDL内で生成される\f2wsdl:port\fPの名前を指定するために使用します。例: \f2\-portname "{http://mynamespace/}MyPort"\fP
+.br
+.br
+.di
+.nr m| \n(dn
+.nr m- \n(dl
+..
+.ec \
+.35
+.nf
+.ll \n(34u
+.nr 80 0
+.nr 38 \w\f3オプション\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-classpath <path>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-cp <path>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-d <directory>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-extension\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-help\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-keep\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-r <directory>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-s <directory>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-verbose\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-version\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-wsdl[:protocol]\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-servicename <name>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f4\-portname <name>\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.80
+.rm 80
+.nr 81 0
+.nr 38 \w\f3説明\fP
+.if \n(81<\n(38 .nr 81 \n(38
+.81
+.rm 81
+.nr 38 \n(a-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(b-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(c-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(d-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(e-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(f-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(g-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(h-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(i-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(j-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(k-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(l-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(m-
+.if \n(81<\n(38 .nr 81 \n(38
+.35
+.nf
+.ll \n(34u
+.nr 38 1n
+.nr 79 0
+.nr 40 \n(79+(0*\n(38)
+.nr 80 +\n(40
+.nr 41 \n(80+(3*\n(38)
+.nr 81 +\n(41
+.nr TW \n(81
+.if t .if \n(TW>\n(.li .tm Table at line 137 file Input is too wide - \n(TW units
+.fc  
+.nr #T 0-1
+.nr #a 0-1
+.eo
+.de T#
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.mk ##
+.nr ## -1v
+.ls 1
+.ls
+..
+.ec
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f3オプション\fP\h'|\n(41u'\f3説明\fP
+.ne \n(a|u+\n(.Vu
+.if (\n(a|+\n(#^-1v)>\n(#- .nr #- +(\n(a|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-classpath <path>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.a+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(b|u+\n(.Vu
+.if (\n(b|+\n(#^-1v)>\n(#- .nr #- +(\n(b|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-cp <path>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.b+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(c|u+\n(.Vu
+.if (\n(c|+\n(#^-1v)>\n(#- .nr #- +(\n(c|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-d <directory>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.c+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(d|u+\n(.Vu
+.if (\n(d|+\n(#^-1v)>\n(#- .nr #- +(\n(d|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-extension\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.d+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(e|u+\n(.Vu
+.if (\n(e|+\n(#^-1v)>\n(#- .nr #- +(\n(e|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-help\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.e+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(f|u+\n(.Vu
+.if (\n(f|+\n(#^-1v)>\n(#- .nr #- +(\n(f|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-keep\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.f+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(g|u+\n(.Vu
+.if (\n(g|+\n(#^-1v)>\n(#- .nr #- +(\n(g|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-r <directory>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.g+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(h|u+\n(.Vu
+.if (\n(h|+\n(#^-1v)>\n(#- .nr #- +(\n(h|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-s <directory>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.h+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(i|u+\n(.Vu
+.if (\n(i|+\n(#^-1v)>\n(#- .nr #- +(\n(i|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-verbose\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.i+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(j|u+\n(.Vu
+.if (\n(j|+\n(#^-1v)>\n(#- .nr #- +(\n(j|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-version\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.j+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(k|u+\n(.Vu
+.if (\n(k|+\n(#^-1v)>\n(#- .nr #- +(\n(k|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-wsdl[:protocol]\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.k+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(l|u+\n(.Vu
+.if (\n(l|+\n(#^-1v)>\n(#- .nr #- +(\n(l|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-servicename <name>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.l+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(m|u+\n(.Vu
+.if (\n(m|+\n(#^-1v)>\n(#- .nr #- +(\n(m|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f4\-portname <name>\fP\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.m+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.fc
+.nr T. 1
+.T# 1
+.35
+.rm a+
+.rm b+
+.rm c+
+.rm d+
+.rm e+
+.rm f+
+.rm g+
+.rm h+
+.rm i+
+.rm j+
+.rm k+
+.rm l+
+.rm m+
+.TE
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-57
+
+.LP
+.SH "例"
+.nf
+\f3
+.fl
+\fP\f3wsgen \-d stock \-cp myclasspath stock.StockService\fP 
+.fl
+.fi
+.LP
+\f3stock\fPディレクトリ内に@WebService注釈が付けられた、StockServiceに必要なラッパー・クラスが生成されます。
+.nf
+\f3
+.fl
+\fP\f3wsgen \-wsdl \-d stock \-cp myclasspath stock.StockService\fP 
+.fl
+.fi
+.LP
+SOAP 1.1 WSDLと、@WebService注釈が付けられたJavaクラスstock.StockServiceのスキーマが生成されます。
+.nf
+\f3
+.fl
+\fP\f3wsgen \-wsdl:Xsoap1.2 \-d stock \-cp myclasspath stock.StockService\fP 
+.fl
+.fi
+.LP
+SOAP 1.2 WSDLが生成されます。
+.LP
+サービスをデプロイするときにJAXWSランタイムによって自動的にWSDLが生成されるため、開発時にWSDLを生成する必要はありません。 

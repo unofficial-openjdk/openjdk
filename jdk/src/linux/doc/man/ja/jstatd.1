@@ -1,0 +1,285 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jstatd 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jstatd \- 仮想マシンjstatデーモン
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+セキュリティ 
+.TP 2
+o
+リモート・インタフェース 
+.TP 2
+o
+例 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+jstatd [ \fP\f4options\fP\f3 ]\fP
+.br
+\f3
+.fl
+\fP
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+options 
+コマンドライン・オプション。オプションは任意の順序で指定できます。重複または矛盾するオプションがある場合、最後に指定したオプションが優先されます。 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jstatd\fPツールは、計測されたHotSpot Java仮想マシン(JVM)の作成と終了を監視し、ローカル・システム上で実行されているJava仮想マシンに、リモート監視ツールが接続できるようにするためのインタフェースを提供するRMIサーバー・アプリケーションです。
+.LP
+.LP
+\f3jstatd\fPサーバーでは、ローカル・ホストにRMIレジストリが存在することが必要になります。\f3jstatd\fPサーバーは、デフォルト・ポートまたは\f2\-p port\fPオプションで指定されたポート上のRMIレジストリに接続しようとします。RMIレジストリが見つからない場合、\f2\-p port\fPオプションで指定されたポート、または\f2\-p port\fPが省略されている場合は、デフォルトRMIレジストリにバインドされた\f3jstatd\fPアプリケーション内に、1つのRMIレジストリが作成されます。内部RMIレジストリの作成は、\f2\-nr\fPオプションを指定することによって禁止することができます。
+.LP
+.LP
+\f3注意:\fPこのユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。現在、Windows 98およびWindows MEプラットフォームでは使用できません。
+.LP
+.SH "オプション"
+.LP
+.LP
+\f3jstatd\fPコマンドは次のオプションをサポートしています。
+.LP
+.RS 3
+.TP 3
+\-nr 
+既存のRMIレジストリが見つからない場合、\f2jstatd\fPプロセス内に内部RMIレジストリを作成しないようにします。 
+.TP 3
+\-p\  port 
+RMIレジストリがあると予想されるポート番号です。見つからない場合は、\f2\-nr\fPが指定されていなければ作成されます。 
+.TP 3
+\-n\  rminame 
+RMIレジストリにおいて、リモートRMIオブジェクトがバインドされる名前です。デフォルト名は\f2JStatRemoteHost\fPです。複数の\f3jstatd\fPサーバーが同じホスト上で起動している場合、各サーバーのエクスポートしたRMIオブジェクトの名前は、このオプションを指定することによって、一意の名前にすることができます。ただし、このオプションを使用する場合、監視クライアントの\f2hostid\fPおよび\f2vmid\fP文字列に、その一意のサーバー名を含める必要があります。 
+.TP 3
+\-Joption 
+\f3javac\fPが呼び出す\f3java\fP起動ツールに、\f2option\fPを渡します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。\f3\-J\fPを使用して、Javaで記述されたアプリケーションを実行する背後のVMにオプションを渡すことは、よく行われています。 
+.RE
+
+.LP
+.SH "セキュリティ"
+.LP
+.LP
+\f3jstatd\fPサーバーは、適切なネイティブ・アクセス権を持つJVMのみを監視できます。したがって、\f3jstatd\fPプロセスは、ターゲットJVMと同じユーザー資格で実行されている必要があります。UNIX(tm)ベースのシステムにおける\f2root\fPユーザーなどの一部のユーザー資格は、システム上の任意のJVMによってエクスポートされたインストゥルメンテーションへのアクセス権を持っています。このような資格で実行されている\f3jstatd\fPプロセスは、システム上のすべてのJVMを監視できますが、セキュリティ上の別の問題が起こります。
+.LP
+.LP
+\f3jstatd\fPサーバーには、リモート・クライアントの認証機能がありません。そのため、\f3jstatd\fPサーバー・プロセスを実行すると、\f3jstatd\fPプロセスがアクセス権を持つすべてのJVMによるインストゥルメンテーションのエクスポートを、ネットワーク上のすべてのユーザーに公開することになります。この無防備な状態は、環境によっては望ましくない場合があるので、特に実稼働環境または安全でないネットワークでは、\f3jstatd\fPプロセスを起動する前に、ローカル・セキュリティ・ポリシーを検討する必要があります。
+.LP
+.LP
+\f3jstatd\fPサーバーは、他のセキュリティ・マネージャがインストールされていない場合には、RMISecurityPolicyのインスタンスをインストールします。そのため、セキュリティ・ポリシー・ファイルを指定する必要があります。ポリシー・ファイルは、デフォルト・ポリシー実装の
+.na
+\f2ポリシー・ファイルの構文\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyFiles.htmlに準拠する必要があります。
+.LP
+.LP
+次のポリシー・ファイルでは、セキュリティ例外を発生せずに\f3jstatd\fPサーバーを実行できます。このポリシーは、すべてのコードベースへのあらゆるアクセス権を認めるポリシーよりも自由度が低いですが、\f3jstatd\fPサーバーを実行するために最低限必要なアクセス権のみを認めるポリシーよりも自由度が高くなっています。
+.LP
+.nf
+\f3
+.fl
+grant codebase "file:${java.home}/../lib/tools.jar" {\fP
+.br
+\f3
+.fl
+   permission java.security.AllPermission;\fP
+.br
+\f3
+.fl
+};\fP
+.br
+\f3
+.fl
+\fP
+.fi
+
+.LP
+.LP
+このポリシーを使用するには、このテキストを\f2jstatd.all.policy\fPというファイルにコピーし、次のように\f3jstatd\fPサーバーを実行します。
+.LP
+.nf
+\f3
+.fl
+jstatd \-J\-Djava.security.policy=jstatd.all.policy\fP
+.br
+\f3
+.fl
+\fP
+.fi
+
+.LP
+.LP
+より厳しいセキュリティを実施するサイトの場合、カスタム・ポリシー・ファイルを使用して、特定の信頼できるホストまたはネットワークにアクセスを制限することができます。ただし、このような方法は、IPアドレスの盗聴攻撃を受けやすくなります。セキュリティの問題について、カスタマイズしたポリシー・ファイルでも対処できない場合は、\f3jstatd\fPサーバーを実行せずに、\f3jstat\fPと\f3jps\fPツールをローカルで使用することが最も安全な方法になります。
+.LP
+.SH "リモート・インタフェース"
+.LP
+.LP
+\f3jstatd\fPプロセスがエクスポートするインタフェースは、独自に開発したものであり変更される予定です。ユーザーおよび開発者は、このインタフェースへの書込みを行わないでください。
+.LP
+.SH "例"
+.LP
+.LP
+次に\f3jstatd\fPを起動する例を紹介します。\f3jstatd\fPスクリプトによって、サーバーはバックグラウンドで自動的に起動します。
+.LP
+.SS 
+内部RMIレジストリの使用
+.LP
+.LP
+この例は、内部RMIレジストリを使用した\f3jstatd\fPの起動を表しています。この例では、デフォルトのRMIレジストリ・ポート(ポート1099)には、他のサーバーはバインドされていないと想定しています。
+.LP
+.nf
+\f3
+.fl
+jstatd \-J\-Djava.security.policy=all.policy
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+外部RMIレジストリの使用
+.LP
+.LP
+この例は、外部RMIレジストリを使用した\f3jstatd\fPの起動を表しています。
+.LP
+.nf
+\f3
+.fl
+rmiregistry&
+.fl
+jstatd \-J\-Djava.security.policy=all.policy
+.fl
+\fP
+.fi
+
+.LP
+.LP
+この例は、ポート2020の外部RMIレジストリを使用した\f3jstatd\fPの起動を表しています。
+.LP
+.nf
+\f3
+.fl
+rmiregistry 2020&
+.fl
+jstatd \-J\-Djava.security.policy=all.policy \-p 2020
+.fl
+\fP
+.fi
+
+.LP
+.LP
+この例は、AlternateJstatdServerNameの名前にバインドされた、ポート2020の外部RMIレジストリを使用した\f3jstatd\fPの起動を表しています。
+.LP
+.nf
+\f3
+.fl
+rmiregistry 2020&
+.fl
+jstatd \-J\-Djava.security.policy=all.policy \-p 2020 \-n AlternateJstatdServerName
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+インプロセスRMIレジストリの作成の禁止
+.LP
+.LP
+この例は、RMIレジストリが見つからない場合にRMIレジストリを作成しない\f3jstatd\fPの起動を表しています。この例では、RMIレジストリがすでに実行されていると想定しています。実行されていない場合は、適切なエラー・メッセージが表示されます。
+.LP
+.nf
+\f3
+.fl
+jstatd \-J\-Djava.security.policy=all.policy \-nr
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+RMIログ機能の有効化
+.LP
+.LP
+この例は、RMIログ機能を有効にした\f3jstatd\fPの起動を表しています。この方法は、トラブルシューティングまたはサーバー活動の監視に役立ちます。
+.LP
+.nf
+\f3
+.fl
+jstatd \-J\-Djava.security.policy=all.policy \-J\-Djava.rmi.server.logCalls=true
+.fl
+\fP
+.fi
+
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+java(1) \- Javaアプリケーション起動ツール 
+.TP 2
+o
+jps(1) \- Java仮想マシン・プロセス・ステータス・ツール 
+.TP 2
+o
+jstat(1) \- Java仮想マシン統計データ監視ツール 
+.TP 2
+o
+.na
+\f2rmiregistry\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#rmi \- Javaリモート・オブジェクト・レジストリ 
+.RE
+
+.LP
+ 

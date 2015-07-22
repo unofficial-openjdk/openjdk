@@ -1,0 +1,212 @@
+." Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jrunscript 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jrunscript \- コマンドライン・スクリプト・シェル
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+引数 
+.TP 2
+o
+例 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jrunscript\fP [ \f2options\fP ] [ arguments... ]
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+options 
+オプションを使用する場合、コマンド名の直後に記述してください。 
+.TP 3
+arguments 
+引数を使用する場合、オプションまたはコマンド名の直後に記述してください。 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jrunscript\fPはコマンドライン・スクリプト・シェルです。jrunscriptは、対話型(読取り\-評価\-出力)モードとバッチ(\-fオプション)モードの両方のスクリプト実行をサポートします。これはスクリプト言語に依存しないシェルです。デフォルトの使用言語はJavaScriptですが、\-lオプションを使用すれば他の言語も指定できます。jrunscriptは、Javaとスクリプト言語との通信によって「探求的なプログラミング」スタイルをサポートします。
+.LP
+.LP
+\f3注意:\fP このツールは\f3試験的なもの\fPであり、将来のJDKのバージョンでは利用\f3できなくなる\fP可能性があります。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-classpath path 
+スクリプトからのアクセス対象となるユーザーの .classファイルの検索場所を指定します。 
+.TP 3
+\-cp path 
+\-classpath\f2path\fPと同義です。 
+.TP 3
+\-Dname=value 
+Javaのシステム・プロパティを設定します。 
+.TP 3
+\-J<flag> 
+jrunscriptが実行されているJava仮想マシンに<flag>を直接渡します。 
+.TP 3
+\-l language 
+指定されたスクリプト言語を使用します。デフォルトではJavaScriptが使用されます。他のスクリプト言語を使用するには、\-cpまたは\-classpathオプションを使用して、対応するスクリプト・エンジンのJARファイルも指定する必要があります。 
+.TP 3
+\-e script 
+指定されたスクリプトを評価します。このオプションを使用すれば、コマンドラインにすべてが指定された「1行」スクリプトを実行できます。 
+.TP 3
+\-encoding encoding 
+スクリプト・ファイルの読取り時に使用する文字エンコーディングを指定します。 
+.TP 3
+\-f script\-file 
+指定されたスクリプト・ファイルを評価します(バッチ・モード)。 
+.TP 3
+\-f \- 
+標準入力からスクリプトを読取り、それを評価します(対話型モード)。 
+.TP 3
+\-help\  
+ヘルプ・メッセージを出力して終了します。 
+.TP 3
+\-?\  
+ヘルプ・メッセージを出力して終了します。 
+.TP 3
+\-q\  
+利用可能なすべてのスクリプト・エンジンを一覧表示したあと、終了します。 
+.RE
+
+.LP
+.SH "引数"
+.LP
+.LP
+[arguments...]が存在していて、かつ\f3\-e\fP、\f3\-f\fPのいずれのオプションも使用されなかった場合、最初の引数がスクリプト・ファイルとなり、他の引数が存在する場合はスクリプト引数として渡されます。[arguments..]と、\f3\-e\fPまたは\f3\-f\fPが使用されている場合、すべての[arguments..]がスクリプト引数として渡されます。[arguments..]、\f3\-e\fP、\f3\-f\fPがどれも存在しなかった場合は、対話型モードが使用されます。スクリプトからスクリプト引数を使用するには、「arguments」という名前のString配列型のエンジン変数を使用します。
+.LP
+.SH "例"
+.LP
+.SS 
+インライン・スクリプトの実行
+.LP
+.nf
+\f3
+.fl
+jrunscript \-e "print('hello world')"
+.fl
+jrunscript \-e "cat('http://www.example.com')"
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+指定された言語の使用および指定されたスクリプト・ファイルの評価
+.LP
+.nf
+\f3
+.fl
+jrunscript \-l js \-f test.js
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+対話型モード
+.LP
+.nf
+\f3
+.fl
+jrunscript
+.fl
+js> print('Hello World\\n');
+.fl
+Hello World
+.fl
+js> 34 + 55
+.fl
+89.0
+.fl
+js> t = new java.lang.Thread(function() { print('Hello World\\n'); })
+.fl
+Thread[Thread\-0,5,main]
+.fl
+js> t.start()
+.fl
+js> Hello World
+.fl
+
+.fl
+js>
+.fl
+\fP
+.fi
+
+.LP
+.SS 
+スクリプト引数を指定したスクリプト・ファイルの実行
+.LP
+.nf
+\f3
+.fl
+jrunscript test.js arg1 arg2 arg3
+.fl
+\fP
+.fi
+
+.LP
+test.jsが実行対象となるスクリプト・ファイルであり、arg1、arg2およびarg3はスクリプト引数としてスクリプトに渡されます。スクリプトは「arguments」配列を使用してこれらにアクセスできます。 
+.SH "関連項目"
+.LP
+.LP
+JavaScriptが使用される場合、jrunscriptは、最初のユーザー定義スクリプトを評価する前に、いくつかの組込み関数や組込みオブジェクトを初期化します。これらのJavaScript組込み機能については、
+.na
+\f2jsdocs\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/share/jsdocs/allclasses\-noframe.htmlを参照してください。
+.LP
+ 

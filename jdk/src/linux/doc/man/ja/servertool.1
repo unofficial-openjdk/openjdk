@@ -1,0 +1,113 @@
+." Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH servertool 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+servertool \- Java(tm)IDLサーバー・ツール
+.LP
+\f3servertool\fPはアプリケーション・プログラマが、永続サーバーの登録、登録解除、起動および停止を行うためのコマンドライン・インタフェースを提供します。 
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+servertool \-ORBInitialPort \fP\f4nameserverport\fP\f3 \fP\f3options\fP\f3 [ \fP\f3commands\fP\f3 ]
+.fl
+\fP
+.fi
+
+.LP
+.LP
+コマンドを入力しないで\f2servertool\fPを起動すると、コマンドライン・ツールとして\f2servertool >\fPプロンプトが表示されます。\f2servertool >\fPプロンプトにコマンドを入力します。
+.LP
+.LP
+コマンドを入力して\f2servertool\fPを起動すると、Java IDLサーバー・ツールが起動し、コマンドを実行して終了します。
+.LP
+.LP
+\f2\-ORBInitialPort\fP \f2nameserverport\fPオプションは\f3必須\fPです。\f2nameserverport\fPの値には、\f2orbd\fPが実行され、着信リクエストを待機しているポートを指定する必要があります。Solarisソフトウェアを使用する場合、1024より小さいポート上でプロセスを開始するには、rootユーザーになる必要があります。このため、\f2nameserverport\fPとして1024以上のポート番号を使用することをお薦めします。
+.LP
+.SH "説明"
+.LP
+.LP
+\f2servertool\fPはアプリケーション・プログラマが、永続サーバーの登録、登録解除、起動および停止を行うためのコマンドライン・インタフェースを提供します。その他に、サーバーに関する様々な統計情報を取得するためのコマンドも提供します。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-ORBInitialHost nameserverhost 
+ネーム・サーバーが、実行され、着信リクエストを待機しているホスト・マシンを指定します。このオプションを指定しない場合、\f2nameserverhost\fPはデフォルトで\f2localhost\fPに設定されます。\f2orbd\fPと\f2servertool\fPが異なるマシン上で実行されている場合は、\f2orbd\fPが実行されているホストの名前とIPアドレスを指定する必要があります。 
+.TP 3
+\-Joption 
+Java仮想マシンに\f2option\fPを渡します。\f2option\fPには、java(1)のリファレンス・ページに記載されているオプションを1つ指定します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。\f3\-J\fPを使用して背後の仮想マシンにオプションを渡すことはよく行われています。 
+.RE
+
+.LP
+.SH "コマンド"
+.LP
+.RS 3
+.TP 3
+register \-server\ <server\ class\ name> \ \-classpath\ <classpath\ to\ server> [\ \-applicationName\ <application\ name> \-args\ <args\ to\ server> \-vmargs\ <flags\ to\ be\ passed\ to\ Java\ VM> \ ] 
+Object Request Broker Daemon(ORBD)に新規永続サーバーを登録します。サーバーが未登録の場合、登録してアクティブ化します。このコマンドによって、\f2\-server\fPオプションで識別されるサーバーのメイン・クラス内でインストール・メソッドが呼び出されます。このインストール・メソッドは、\f2public static void install(org.omg.CORBA.ORB)\fPになっている必要があります。インストール・メソッドは、オプションであり、データベース・スキーマの作成などの独自のサーバー・インストール動作を開発者が指定できます。 
+.TP 3
+unregister \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> 
+サーバーIDまたはアプリケーション名を使用して、ORBDのサーバーの登録を解除します。このコマンドによって、\f2\-server\fPオプションで識別されるサーバーのメイン・クラス内でアンインストール・メソッドが呼び出されます。このアンインストール・メソッドは、\f2public static void uninstall(org.omg.CORBA.ORB)\fPになっている必要があります。アンインストール・メソッドは、オプションであり、インストール・メソッドの動作の取り消しなどの独自のサーバー・アンインストール動作を開発者が指定できます。 
+.TP 3
+getserverid \-applicationName\ <application\ name> 
+アプリケーションに関連付けられているサーバーIDを返します。 
+.TP 3
+list 
+ORBDに登録されているすべての永続サーバーに関する情報を一覧表示します。 
+.TP 3
+listappnames 
+現在ORBDに登録されているすべてのサーバーのアプリケーション名を一覧表示します。 
+.TP 3
+listactive 
+ORBDによって起動され、現在実行されているすべての永続サーバーに関する情報を一覧表示します。 
+.TP 3
+locate \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> [\-endpointType\ <endpointType>\ ] 
+登録されたサーバーで作成したすべてのORBの特定のタイプについてエンドポイント(ポート)を検出します。サーバーが実行されていない場合、アクティブ化されます。エンドポイント・タイプが指定されていない場合、サーバーのORBごとに関連付けられているplainタイプまたはnon\-protectedタイプのエンドポイントが返されます。 
+.TP 3
+locateperorb \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> [\-orbid\ <ORB\ name>\ ] 
+登録されたサーバーの特定のORBで登録されたエンドポイント(ポート)を検出します。サーバーが実行されていない場合、アクティブ化されます。\f2orbid\fPが指定されていない場合は、デフォルト値の「""」が\f2orbid\fPに割り当てられます。ORBが空文字列の\f2orbid\fPで作成されている場合、登録したポートがすべて返されます。 
+.TP 3
+orblist \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> 
+サーバー上に定義されたORBのORBIdを一覧表示します。ORBIdはサーバーで作成されたORBの文字列名です。サーバーが実行されていない場合、アクティブ化されます。 
+.TP 3
+shutdown \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> 
+ORBDに登録されたアクティブなサーバーを停止します。このコマンドの実行中に、\f2\-serverid\fPパラメータまたは\f2\-applicationName\fPパラメータで指定されたクラス内に定義された\f2shutdown()\fPメソッドも呼び出されてサーバー・プロセスを正しく停止します。 
+.TP 3
+startup \-serverid\ <server\ id\ >\ | \-applicationName\ <application\ name> 
+ORBDに登録されたサーバーを起動します。サーバーが実行されていない場合は、このコマンドでサーバーを起動します。サーバーがすでに実行されている場合は、ユーザーにエラー・メッセージが返されます。 
+.TP 3
+help 
+サーバーがサーバー・ツールで使用できるすべてのコマンドを表示します。 
+.TP 3
+quit 
+サーバー・ツールを終了します。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+orbd(1)  

@@ -1,0 +1,1403 @@
+'\" t
+.\" Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+.\" Title: jarsigner
+.\" Language: English
+.\" Date: 2013年8月6日
+.\" SectDesc: セキュリティ・ツール
+.\" Software: JDK 7
+.\" Arch: 汎用
+.\"
+.\" DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+.\"
+.\" This code is free software; you can redistribute it and/or modify it
+.\" under the terms of the GNU General Public License version 2 only, as
+.\" published by the Free Software Foundation.
+.\"
+.\" This code is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+.\" version 2 for more details (a copy is included in the LICENSE file that
+.\" accompanied this code).
+.\"
+.\" You should have received a copy of the GNU General Public License version
+.\" 2 along with this work; if not, write to the Free Software Foundation,
+.\" Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+.\"
+.\" Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+.\" or visit www.oracle.com if you need additional information or have any
+.\" questions.
+.\"
+.pl 99999
+.TH "jarsigner" "1" "2013年8月6日" "JDK 7" "セキュリティ・ツール"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+jarsigner \- Javaアーカイブ(JAR)ファイルに対して署名および検証を行います。
+.SH "形式"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIjarsigner\fR [ \fIoptions\fR ] \fIjar\-file\fR \fIalias\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIjarsigner\fR \fI\-verify\fR [ \fIoptions\fR ] \fIjar\-file\fR [\fIalias \&.\&.\&.\fR]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIoptions\fR
+.RS 4
+コマンドライン・オプション。オプションを参照してください。
+.RE
+.PP
+\-verify
+.RS 4
+\fI\-verify\fRオプションでは、JARファイル名の後に0個以上のキーストア別名を指定できます。\fI\-verify\fRオプションが指定された場合、\fIjarsigner\fRコマンドでは、JARファイル内の各署名付きエンティティの検証に使用される証明書が、いずれかのキーストア別名に一致することをチェックします。別名は、\fI\-keystore\fRで指定されたキーストア内またはデフォルトのキーストア内に定義されます。
+.sp
+\fI\-strict\fRオプションも指定した場合、\fIjarsigner\fRコマンドにより重大な警告が検出されると、メッセージ「jarが検証されました。署名者エラー」が表示されます。
+.RE
+.PP
+\fIjar\-file\fR
+.RS 4
+署名されるJARファイル。
+.RE
+.PP
+\fIalias\fR
+.RS 4
+別名は、\fI\-keystore\fRで指定されたキーストア内またはデフォルトのキーストア内に定義されます。
+.RE
+.SH "説明"
+.PP
+\fIjarsigner\fRツールには、次の2つの目的があります。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Javaアーカイブ(JAR)ファイルに署名する目的。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+署名付きJARファイルの署名と整合性を検証する目的。
+.RE
+.PP
+JAR機能を使用すると、クラス・ファイル、イメージ、サウンドおよびその他のデジタル・データを単一のファイルにパッケージ化できるので、ファイルを迅速かつ容易に配布できます。\fIjar\fRという名前のツールを使用して、開発者はJARファイルを作成できます。(技術的な観点から言えば、すべてのZIPファイルもJARファイルとみなすことができます。ただし、jarによって作成されたJARファイル、または\fIjarsigner\fRによって処理されたJARファイルには、\fIMETA\-INF/MANIFEST\&.MF\fRファイルが含まれています。)
+.PP
+デジタル署名は、なんらかのデータ(署名の対象となるデータ)、およびエンティティ(人、会社など)の秘密鍵から計算されるビットの文字列です。手書きの署名同様、デジタル署名には多くの利点があります。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+署名の生成に使用された秘密鍵に対応する公開鍵を使用する計算によって、それが本物であることを検証できます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+秘密鍵が他人に知られない限り、デジタル署名の偽造は不可能です。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+これは、署名が付いたデータの機能であり、他のデータの署名となるように要求できません。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+署名付きデータは変更できません。データが変更された場合、署名によって本物であると検証できません。
+.RE
+.PP
+ファイルに対してエンティティの署名を生成するには、まず、エンティティは、そのエンティティに関連する公開鍵/秘密鍵のペアと、公開鍵を認証する1つ以上の証明書を持つ必要があります。証明書とは、あるエンティティからのデジタル署名付きの文書で、別のエンティティの公開鍵が特定の値を持つことを示しています。
+.PP
+\fIjarsigner\fRコマンドは、キーストアからの鍵と証明書情報を使用して、JARファイルのデジタル署名を生成します。キーストアは、秘密鍵、および対応する公開鍵を認証する、秘密鍵に関連したX\&.509証明書チェーンのデータベースです。\fIkeytool\fRコマンドを使用して、キーストアを作成および管理します。
+.PP
+\fIjarsigner\fRコマンドでは、エンティティの秘密鍵を使用して署名を生成します。署名付きJARファイルには、特に、ファイルへの署名に使用する秘密鍵に対応する公開鍵のキーストアからの証明書のコピーが含まれます。\fIjarsigner\fRコマンドでは、内部(署名ブロック・ファイル内)の証明書を使用して、署名付きJARファイルのデジタル署名を検証できます。
+.PP
+\fIjarsigner\fRコマンドでは、署名証明書の有効期間中にJARファイルが署名されたされたかどうかをシステムやデプロイヤ(Java Plug\-inを含む)がチェックできる、タイムスタンプを含む署名を生成できます。さらに、APIを使用すると、アプリケーションでタイムスタンプ情報を取得できます。
+.PP
+現時点では、\fIjarsigner\fRコマンドでは、\fIjar\fRコマンドまたはZIPファイルによって作成されたJARファイルのみに署名できます。JARファイルはZIPファイルと同じですが、JARファイルには\fIMETA\-INF/MANIFEST\&.MF\fRファイルも含まれている点が異なります。\fIMETA\-INF/MANIFEST\&.MF\fRファイルは、\fIjarsigner\fRコマンドによってZIPファイルに署名する際に作成されます。
+.PP
+デフォルトの\fIjarsigner\fRコマンドの動作では、JARまたはZIPファイルに署名します。\fI\-verify\fRオプションを使用して、署名付きJARファイルを検証します。
+.PP
+\fIjarsigner\fRコマンドは、署名または検証の後に署名者の証明書の検証も試行します。検証エラーまたはその他の問題が発生すると、コマンドにより警告メッセージが生成されます。\fI\-strict\fRオプションを指定した場合、コマンドにより重大な警告がエラーとして処理されます。エラーと警告を参照してください。
+.SS "キーストアの別名"
+.PP
+キーストアのすべてのエンティティは、一意の別名を使用してアクセスされます。
+.PP
+\fIjarsigner\fRコマンドを使用してJARファイルに署名するときは、署名の生成に必要な秘密鍵を含むキーストア・エントリの別名を指定する必要があります。たとえば、次のコマンドでは、\fIworking\fRディレクトリの\fImystore\fRという名前のキーストアに含まれる別名\fIduke\fRに関連付けられた秘密鍵を使用して、\fIMyJARFile\&.jar\fRという名前のJARファイルに署名します。出力ファイルは指定されていないため、\fIMyJARFile\&.jar\fRは署名付きのJARファイルによって上書きされます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore /working/mystore \-storepass <keystore password>
+      \-keypass <private key password> MyJARFile\&.jar duke
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+キーストアはパスワードで保護されているので、ストアのパスワードを指定する必要があります。コマンドラインで指定しないと、入力を求められます。同様に、秘密鍵もキーストア内でパスワードによって保護されているため、秘密鍵のパスワードを指定する必要があります。コマンドラインでパスワードを指定していない場合、または指定したパスワートが保存されているパスワードと同じではない場合は、パスワードの入力を求められます。
+.SS "キーストアの場所"
+.PP
+\fIjarsigner\fRコマンドには、使用するキーストアのURLを指定する\fI\-keystore\fRオプションがあります。キーストアはデフォルトで、\fIuser\&.home\fRシステム・プロパティで決まるユーザーのホーム・ディレクトリの\fI\&.keystore\fRという名前のファイル内に格納されます。Oracle Solarisシステムの場合、\fIuser\&.home\fRは、ユーザーのホーム・ディレクトリにデフォルト設定されます。
+.PP
+\fI\-keystore\fRオプションからの入力ストリームは、\fIKeyStore\&.load\fRメソッドに渡されます。URLとして\fINONE\fRが指定されている場合は、nullのストリームが\fIKeyStore\&.load\fRメソッドに渡されます。\fINONE\fRは、\fIKeyStore\fRクラスがファイルベースではない場合、たとえば、ハードウェア・トークン・デバイスに置かれている場合に指定します。
+.SS "キーストアの実装"
+.PP
+\fIjava\&.security package\fRで提供されている\fIKeyStore\fRクラスは、キーストア内の情報へのアクセスおよび情報の変更を行うための、明確に定義された多くのインタフェースを提供します。複数の異なる固定実装を指定することができ、各実装は特定のタイプのキーストアを対象とします。
+.PP
+現在、キーストアの実装を使用する2つのコマンドライン・ツール(\fIkeytool\fRと\fIjarsigner\fR)、およびポリシー・ツールという名前の1つのGUIベースのツールがあります。\fIKeyStore\fRクラスは公開されているため、JDKユーザーは、それを使用する他のセキュリティ・アプリケーションを書き込むことができます。
+.PP
+Oracleが提供する組込みのデフォルトの実装があります。これは、KSという名前の独自のキーストア・タイプ(形式)を使用するもので、キーストアをファイルとして実装しています。組込みの実装では、各秘密鍵は個別のパスワードによって保護され、キーストア全体の整合性は(秘密鍵とは別の)パスワードによって保護されます。
+.PP
+キーストアの実装はプロバイダベースで、つまり、\fIKeyStore\fRクラスにより提供されるアプリケーション・インタフェースは、サービス・プロバイダ・インタフェース(SPI)に関して実装されます。対応する\fIKeystoreSpi\fR抽象クラスがあり、これも\fIjava\&.security package\fRに含まれています。このクラスが、プロバイダが実装する必要のあるサービス・プロバイダ・インタフェースのメソッドを定義しています。ここで、プロバイダとは、Java Security APIによってアクセス可能なサービスのサブセットに対し、その固定実装を提供するパッケージまたはパッケージの集合のことです。キーストアの実装を提供するには、http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/security/crypto/HowToImplAProvider\&.htmlにある
+Java暗号化アーキテクチャのプロバイダの実装方法で説明しているように、クライアントはプロバイダを実装し、\fIKeystoreSpi\fRサブクラスの実装を提供する必要があります。
+.PP
+アプリケーションでは、\fIKeyStore\fRクラスの\fIgetInstance\fRファクトリ・メソッドを使用して、様々なプロバイダから異なるタイプのキーストアの実装を選択できます。キーストアのタイプは、キーストア情報の格納形式とデータ形式を定義するとともに、キーストア内の秘密鍵とキーストア自体の整合性を保護するために使用されるアルゴリズムを定義します。異なるタイプのキーストアの実装には、互換性はありません。
+.PP
+\fIkeytool\fRコマンドは、任意のファイルベースのキーストア実装で動作します。これは、コマンドラインで渡されたキーストアの場所をファイル名として扱い、これを\fIFileInputStream\fRに変換して、そこからキーストアの情報をロードします。\fIjarsigner\fRツールおよび\fIpolicytool\fRツールは、URLを使用して指定可能な任意の場所からキーストアを読み取ることができます。
+.PP
+\fIjarsigner\fRコマンドおよび\fIkeytool\fRコマンドの場合、\fI\-storetype\fRオプションを使用して、コマンドラインでキーストアのタイプを指定できます。ポリシー・ツールの場合、「編集」メニューのChange Keystoreコマンドを使用して、キーストアのタイプを指定できます。
+.PP
+ユーザーがキーストアのタイプを明示的に指定しなかった場合、セキュリティ・プロパティ・ファイルで指定された\fIkeystore\&.type\fRプロパティの値に基づいて、ツールによってキーストアの実装が選択されます。このセキュリティ・プロパティ・ファイルは\fIjava\&.security\fRと呼ばれ、JDKセキュリティ・プロパティ・ディレクトリ\fIjava\&.home/lib/security\fR内に存在しています。ここで、java\&.homeは実行時環境のディレクトリです。\fIjre\fRディレクトリは、JDKまたはJava Runtime Environment (JRE)の最上位のディレクトリにあります。
+.PP
+各ツールは、\fIkeystore\&.type\fRの値を取得し、そのタイプのキーストアを実装しているプロバイダが見つかるまで、インストールされているすべてのプロバイダを調べます。目的のプロバイダが見つかると、そのプロバイダからのキーストアの実装を使用します。
+.PP
+\fIKeyStore\fRクラスでは、\fIgetDefaultType\fRという名前のstaticメソッドを定義し、これを使用すると、アプリケーションおよびアプレットから\fIkeystore\&.type property\fRの値を取得できます。次のコードの行では、\fIkeystore\&.type property\fRで指定された、デフォルトのキーストア・タイプのインスタンスを作成します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+KeyStore keyStore = KeyStore\&.getInstance(KeyStore\&.getDefaultType());
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+デフォルトのキーストア・タイプは、\fIjks\fR
+(Oracleが提供する独自のタイプのキーストアの実装)です。これは、セキュリティ・プロパティ・ファイル内の次の行によって指定されています。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+keystore\&.type=jks
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+キーストアのタイプの指定では、大文字と小文字は区別されません。たとえば、\fIJKS\fRは\fIjks\fRと同じになります。
+.PP
+ツールでデフォルト以外のキーストアの実装を使用するには、その行を変更して別のキーストアのタイプを指定します。たとえば、\fIpkcs12\fRと呼ばれるキーストアのタイプのキーストアの実装を提供するプロバイダ・パッケージがある場合、行を次のように変更します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+keystore\&.type=pkcs12
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fB注意: \fRPKCS 11プロバイダ・パッケージを使用する場合、http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/security/p11guide\&.htmlにある
+Java PKCS #11リファレンス・ガイドの「KeyTool」および「JarSigner」を参照してください。
+.SS "サポートされるアルゴリズム"
+.PP
+デフォルトで、\fIjarsigner\fRコマンドでは次のいずれかのアルゴリズムを使用してJARファイルに署名します。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+SHA1ダイジェスト・アルゴリズムを使用したデジタル署名アルゴリズム(DSA)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+SHA256ダイジェスト・アルゴリズムを使用したRSAアルゴリズム。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+SHA256と楕円曲線デジタル署名アルゴリズム(ECDSA)を使用した楕円曲線(EC)暗号方式アルゴリズム
+.RE
+.PP
+署名者の公開鍵と秘密鍵がDSA鍵である場合、\fIjarsigner\fRはSHAとDSAアルゴリズムを使用してJARファイルに署名します。署名者の鍵がRSA鍵である場合、\fIjarsigner\fRはSHA256とRSAアルゴリズムを使用してJARファイルに署名しようとします。署名者の鍵がEC鍵である場合、\fIjarsigner\fRはSHA256とECDSAアルゴリズムを使用してJARファイルに署名します。
+.PP
+これらのデフォルトの署名アルゴリズムは、\fI\-sigalg\fRオプションを使用してオーバーライドできます。
+.SS "署名付きJARファイル"
+.PP
+\fIjarsigner\fRコマンドを使用してJARファイルに署名する場合、出力される署名付きJARファイルは入力JARファイルと同じですが、次の2つの追加ファイルがMETA\-INFディレクトリに置かれる点が異なります。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI\&.SF\fR拡張子の付いた署名ファイル
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI\&.DSA\fR、\fI\&.RSA\fRまたは\fI\&.EC\fR拡張子の付いた署名ブロック・ファイル
+.RE
+.PP
+これら2つのファイルのベース・ファイル名は、\fI\-sigFile\fRオプションの値から作成されます。たとえば、オプションが\fI\-sigFile MKSIGN\fRの場合、ファイルは\fIMKSIGN\&.SF\fRおよび\fIMKSIGN\&.DSA\fRという名前になります。
+.PP
+コマンドラインで\fI\-sigfile\fRオプションを指定しなかった場合、\fI\&.SF\fRファイルと\fI\&.DSA\fRファイルのベース・ファイル名は、コマンドラインで指定された別名の先頭の8文字をすべて大文字に変換したものになります。別名が8文字未満の場合は、別名がそのまま使用されます。別名に、署名ファイル名で使用できない文字が含まれている場合、ファイル名の作成時に、該当する文字が下線(_)文字に変換されます。有効な文字は、アルファベット、数字、下線およびハイフンです。
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fB署名ファイル\fR
+.RS 4
+.PP
+署名ファイル(\fI\&.SF\fRファイル)は、\fIjarsigner\fRコマンドを使用してファイルに署名する際にJARファイルに常に含まれるマニフェスト・ファイルと似ています。JARファイルに含まれているソース・ファイルごとに、\fI\&.SF\fRファイルには、マニフェスト・ファイルにあるような、次に示す3つの行があります。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ファイル名
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ダイジェスト・アルゴリズム(SHA)の名前
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+SHAダイジェストの値
+.RE
+.PP
+マニフェスト・ファイルでは、各ソース・ファイルのSHAダイジェストの値は、ソース・ファイルのバイナリ・データのダイジェスト(ハッシュ)になります。\fI\&.SF\fRファイルでは、指定されたソース・ファイルのダイジェストの値は、ソース・ファイルのマニフェスト・ファイル内のその3行のハッシュになります。
+.PP
+署名ファイルには、デフォルトで、マニフェスト・ファイル全体のハッシュが格納されたヘッダーが含まれています。ヘッダーが存在すると、検証の最適化が有効になります。JARファイルの検証を参照してください。
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fB署名ブロック・ファイル\fR
+.RS 4
+.PP
+\fI\&.SF\fRファイルには署名が付けられ、署名は署名ブロック・ファイルに置かれます。このファイルには、署名に使用された秘密鍵に対応する公開鍵を認証するキーストアからの証明書または証明書チェーンも、内部でエンコードされて含まれています。ファイルの拡張子は、使用されるダイジェスト・アルゴリズムに応じて、\fI\&.DSA\fR、\fI\&.RSA\fRまたは\fI\&.EC\fRになります。
+.RE
+.SS "署名タイムスタンプ"
+.PP
+\fIjarsigner\fRコマンドでは、JARファイルの署名時に署名タイムスタンプを生成および保存できます。さらに、\fIjarsigner\fRは代替署名機構をサポートします。この動作は省略可能で、署名時に次の各オプションによって制御されます。オプションを参照してください。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-tsa \fIurl\fR
+\-tsacert \fIalias\fR
+\-altsigner \fIclass\fR
+\-altsignerpath \fIclasspathlist\fR
+\-tsapolicyid \fIpolicyid\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SS "JARファイルの検証"
+.PP
+JARファイルの検証が成功するのは、署名が有効であり、かつ署名の生成以降にJARファイル内のどのファイルも変更されていない場合です。JARファイルの検証は、次の手順で行われます。
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+\fI\&.SF\fRファイルの署名を検証します。
+.sp
+検証では、各署名ブロック(\fI\&.DSA\fR)ファイルに格納された署名が、証明書(または証明書チェーン)も\fI\&.DSA\fRファイルに示される公開鍵に対応する秘密鍵を使用して生成されたことを確認します。また、署名が対応する署名(\fI\&.SF\fR)ファイルの有効な署名であることが確認され、それにより、\fI\&.SF\fRファイルが改ざんされていないことも確認されます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+\fI\&.SF\fRファイル内の各エントリに示されるダイジェストを、マニフェスト内の対応する各セクションと突きあわせて検証します。
+.sp
+\fI\&.SF\fRファイルには、マニフェスト・ファイル全体のハッシュが格納されたヘッダーがデフォルトで含まれています。ヘッダーが存在する場合、検証では、ヘッダー内のハッシュがマニフェスト・ファイルのハッシュと一致するかどうかを確認するためにチェックできます。一致する場合、検証は次の手順に進みます。
+.sp
+一致しない場合、\fI\&.SF\fRファイル内の各ソース・ファイル情報セクションのハッシュが、マニフェスト・ファイル内の対応するセクションのハッシュと一致することを確認するために、あまり最適化されていない検証が必要になります。署名ファイルを参照してください。
+.sp
+\fI\&.SF\fRファイルのヘッダーに格納されたマニフェスト・ファイルのハッシュが、現在のマニフェスト・ファイルのハッシュに一致しない理由の1つは、署名および\fI\&.SF\fRファイルの生成後に、(\fIjar\fRツールを使用して)1つ以上のファイルがJARファイルに追加されたことです。\fIjar\fRツールを使用してファイルを追加した場合、新しいファイル用のセクションが追加されることにより、マニフェスト・ファイルは変更されますが、\fI\&.SF\fRファイルは変更されません。検証がまだ成功しているとみなされるのは、署名の生成以降にJARファイル内のどのファイルも変更されていない場合です。これが発生するのは、\fI\&.SF\fRファイルのヘッダー以外のセクションのハッシュが、マニフェスト・ファイル内の対応するセクションのハッシュと一致する場合です。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+\fI\&.SF\fRファイル内にエントリを持つJARファイル内の各ファイルを読み取ります。読取り中にファイルのダイジェストを計算し、結果をマニフェスト・セクション内のこのファイルのダイジェストと比較します。ダイジェストは同じである必要があり、そうでない場合は検証が失敗します。
+.sp
+検証プロセス中になんらかの重大な検証エラーが発生した場合、そのプロセスは停止され、セキュリティ例外がスローされます。\fIjarsigner\fRコマンドでは、例外を捕捉および表示します。
+.RE
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.TS
+allbox tab(:);
+l.
+T{
+ノート
+.PP
+追加の警告(または、\fI\-strict\fRオプションを指定した場合はエラー)はすべて読む必要があります。同様に、証明が信頼できるかを決定するために、(\fI\-verbose\fRおよび\fI\-certs\fRオプションを指定して)証明書の内容も読む必要があります。
+T}
+.TE
+.sp 1
+.sp .5v
+.RE
+.SS "1つのJARファイルを対象とする複数の署名"
+.PP
+次のように、\fIjarsigner\fRコマンドをファイルで複数回実行し、実行のたびに異なるユーザーの別名を指定することによって、1つのJARファイルに複数のユーザーの署名を付けることができます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner myBundle\&.jar susan
+jarsigner myBundle\&.jar kevin
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+JARファイルが複数回署名されている場合、そのJARファイルには、複数の\fI\&.SF\fRファイルと\fI\&.DSA\fRファイルが含まれており、1回の署名に対して1つのペアとなります。前述の例では、出力JARファイルには、次の名前のファイルが含まれています。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+SUSAN\&.SF
+SUSAN\&.DSA
+KEVIN\&.SF
+KEVIN\&.DSA
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fB注意: \fRJARファイルには、JDK 1\&.1の\fIjavakey\fRコマンドにより生成された署名と、\fIjarsigner\fRにより生成された署名を混在させることもできます。\fIjarsigner\fRコマンドを使用して、\fIjavakey\fRコマンドですでに署名されているJARファイルに署名できます。
+.SH "オプション"
+.PP
+次の各項では、様々な\fIjarsigner\fRオプションについて説明します。次の標準に注意してください。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+どのオプション名にも先頭にマイナス記号(\-)が付きます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+オプションは任意の順序で指定できます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+イタリック体の項目の実際の値(オプションの値)は、指定する必要があります。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI\-keystore\fR、\fI\-storepass\fR、\fI\-keypass\fR、\fI\-sigfile\fR、\fI\-sigalg\fR、\fI\-digestalg\fRおよび\fI\-signedjar\fRオプションを使用できるのは、JARファイルに署名する場合のみです。署名付きJARファイルの検証時には、これらは関係ありません。同様に、別名をコマンドラインで指定するのは、JARファイルへの署名時のみです。
+.RE
+.PP
+\-keystore \fIurl\fR
+.RS 4
+キーストアの場所を示すURLを指定します。これにより、\fIuser\&.home\fRシステム・プロパティで決定されたユーザーのホーム・ディレクトリ内のファイル\fI\&.keystore\fRにデフォルト設定されます。
+.sp
+キーストアは署名時には必要です。デフォルトのキーストアが存在しない場合、またはデフォルト以外のキーストアを使用する場合は、キーストアを明示的に指定する必要があります。
+.sp
+検証するときはキーストアは必要ありません。ただし、キーストアが指定されているか、あるいはデフォルトのキーストアが存在していて、さらに\fI\-verbose\fRオプションも指定されていた場合、JARファイルの検証に使用される証明書がそのキーストアに1つでも含まれているかどうかに関する追加情報が出力されます。
+.sp
+\fI\-keystore\fR引数には、URLではなくファイル名とパスを指定でき、この場合、ファイル: URLと同じように処理されます。たとえば、次にように指定すると同等になります。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-keystore \fIfilePathAndName\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-keystore file:\fIfilePathAndName\fR
+.fi
+.if n \{\
+.RE
+.\}
+(JREの\fI$JAVA_HOME/lib/security directory\fRにある)
+\fIjava\&.security\fRセキュリティ・プロパティ・ファイル内でSun PKCS #11プロバイダが構成された場合、\fIkeytool\fRおよび\fIjarsigner\fRツールはPKCS#11トークンに基づいて動作できます。次のオプションを指定します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-keystore NONE
+\-storetype PKCS11
+.fi
+.if n \{\
+.RE
+.\}
+たとえば、次のコマンドは、構成されたPKCS#11トークンの内容を一覧表示します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore NONE \-storetype PKCS11 \-list
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-storetype \fIstoretype\fR
+.RS 4
+インスタンスを生成するキーストアのタイプを指定します。デフォルトのキーストア・タイプは、セキュリティ・プロパティ・ファイル内の\fIkeystore\&.type\fRプロパティの値で指定されたタイプで、この値は、\fIjava\&.security\&.KeyStore\fRのstatic
+\fIgetDefaultType\fRメソッドによって返されます。
+.sp
+\fI\-storepass\fRオプションを使用して、PCKS #11トークンのPINを指定することもできます。何も指定しない場合、\fIkeytool\fRおよび\fIjarsigner\fRコマンドによって、トークンPINの指定を求められます。トークンに保護された認証パス(専用のPINパッドや生体読取り機など)がある場合、\fI\-protected\fRオプションを指定する必要がありますが、パスワード・オプションは指定できません。
+.RE
+.PP
+\-storepass[:env | :file} \fIargument\fR
+.RS 4
+キーストアにアクセスするのに必要なパスワードを指定します。これが必要なのは、JARファイルに署名を付けるときのみです(検証するときには不要です)。その場合、\fI\-storepass\fRオプションをコマンドラインで指定しないと、パスワードの入力を求められます。
+.sp
+修飾子\fIenv\fRまたは\fIfile\fRが指定されていない場合、パスワードの値は\fIargument\fRになります。それ以外の場合、パスワードは次のようにして取得されます。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIenv\fR:
+\fIargument\fRという名前の環境変数からパスワードを取得します。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIfile\fR:
+\fIargument\fRという名前のファイルからパスワードを取得します。
+.RE
+.sp
+\fB注意:\fRテストを目的とする場合またはセキュリティ保護されたシステムを使用している場合以外は、コマンドラインやスクリプトでパスワードを指定しないでください。
+.RE
+.PP
+\-keypass [:env | :file] \fIargument\fR
+.RS 4
+コマンドラインで指定された別名に対応するキーストア・エントリの秘密鍵を保護するのに使用するパスワードを指定します。\fIjarsigner\fRを使用してJARファイルに署名を付けるときは、パスワードが必要です。コマンドラインでパスワードが指定されておらず、必要なパスワードがストアのパスワードと異なる場合は、パスワードの入力を求められます。
+.sp
+修飾子\fIenv\fRまたは\fIfile\fRが指定されていない場合、パスワードの値は\fIargument\fRになります。それ以外の場合、パスワードは次のようにして取得されます。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIenv\fR:
+\fIargument\fRという名前の環境変数からパスワードを取得します。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIfile\fR:
+\fIargument\fRという名前のファイルからパスワードを取得します。
+.RE
+.sp
+\fB注意: \fRテストを目的とする場合またはセキュリティ保護されたシステムを使用している場合以外は、コマンドラインやスクリプトでパスワードを指定しないでください。
+.RE
+.PP
+\-sigfile \fIfile\fR
+.RS 4
+生成された\fI\&.SF\fRファイルおよび\fI\&.DSA\fRファイルに使用するベース・ファイル名を指定します。たとえば、ファイルが\fIDUKESIGN\fRの場合、生成される\fI\&.SF\fRおよび\fI\&.DSA\fRファイルは、\fIDUKESIGN\&.SF\fRおよび\fIDUKESIGN\&.DSA\fRという名前で、署名付きJARファイルの\fIMETA\-INF\fRディレクトリに格納されます。
+.sp
+ファイル内の文字は、セット\fIa\-zA\-Z0\-9_\-\fRから指定される必要があります。アルファベット、数字、下線およびハイフン文字のみを使用できます。\fI\&.SF\fRおよび\fI\&.DSA\fRのファイル名では、小文字はすべて大文字に変換されます。
+.sp
+コマンドラインで\fI\-sigfile\fRオプションを指定しなかった場合、\fI\&.SF\fRファイルと\fI\&.DSA\fRファイルのベース・ファイル名は、コマンドラインで指定された別名の先頭の8文字をすべて大文字に変換したものになります。別名が8文字未満の場合は、別名がそのまま使用されます。別名に、署名ファイル名で無効な文字が含まれている場合、ファイル名を作成するために、該当する文字が下線(_)文字に変換されます。
+.RE
+.PP
+\-sigalg \fIalgorithm\fR
+.RS 4
+JARファイルの署名に使用する署名アルゴリズムの名前を指定します。
+.sp
+標準的な署名アルゴリズム名のリストは、http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec\&.html#AppAにある
+Java Cryptography Architecture (JCA)リファレンス・ガイドの「付録A: 標準名」を参照してください。
+.sp
+このアルゴリズムには、JARファイルの署名に使用する秘密鍵との互換性が必要です。このオプションを指定しない場合、秘密鍵のタイプに応じて、\fISHA1withDSA\fR、\fISHA256withRSA\fRまたは\fISHA256withECDSA\fRが使用されます。指定されたアルゴリズムの実装を提供するプロバイダが静的にインストールされているか、\fI\-providerClass\fRオプションを使用してそのようなプロバイダをユーザーが指定する必要があります。そうでない場合、コマンドは失敗します。
+.RE
+.PP
+\-digestalg \fIalgorithm\fR
+.RS 4
+JARファイルのエントリをダイジェストする際に使用するメッセージ・ダイジェスト・アルゴリズムの名前を指定します。
+.sp
+標準的なメッセージ・ダイジェスト・アルゴリズム名のリストは、http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec\&.html#AppAにある
+Java Cryptography Architecture (JCA)リファレンス・ガイドの「付録A: 標準名」を参照してください。
+.sp
+このオプションを指定しない場合、\fISHA256\fRが使用されます。指定されたアルゴリズムの実装を提供するプロバイダが静的にインストールされているか、\fI\-providerClass\fRオプションを使用してそのようなプロバイダをユーザーが指定する必要があります。そうでない場合、コマンドは失敗します。
+.RE
+.PP
+\-certs
+.RS 4
+コマンドラインで、\fI\-certs\fRオプションを\fI\-verify\fRおよび\fI\-verbose\fRオプションとともに指定した場合、JARファイルの各署名者の証明書情報が出力に含まれます。この情報には、署名者の公開鍵を証明する証明書(\fI\&.DSA\fRファイルに格納)のタイプの名前が含まれ、証明書がX\&.509証明書(\fIjava\&.security\&.cert\&.X509Certificate\fRのインスタンス)の場合、署名者の識別名が含まれます。
+.sp
+キーストアの確認も行われます。コマンドラインでキーストアの値が指定されていない場合、デフォルトのキーストア・ファイル(ある場合)がチェックされます。署名者の公開鍵の証明書がキーストア内のエントリと一致する場合、その署名者のキーストアのエントリの別名が丸カッコ内に表示されます。キーストアではなくJDK 1\&.1のアイデンティティ・データベースに由来する署名者の場合、別名は丸カッコではなく大カッコ内に表示されます。
+.RE
+.PP
+\-certchain \fIfile\fR
+.RS 4
+コマンドラインで指定した別名によって表されるキーストア・エントリの秘密鍵に関連付けられた証明書チェーンが完全ではない場合に、使用する証明書チェーンを指定します。これは、証明書チェーン全体を保持するのに十分な領域がないハードウェア・トークン上にキーストアが格納されている場合に発生します。このファイルは一連の連結されたX\&.509証明書、PKCS#7形式の単一データ・ブロックのいずれかとなり、そのエンコーディング形式はバイナリ・エンコーディング形式、Internet RFC 1421標準で規定される印刷可能エンコーディング形式(Base64エンコーディングとも呼ばれる)のいずれかになります。インターネットRFC 1421証明書符号化規格を参照してください。
+.RE
+.PP
+\-verbose
+.RS 4
+コマンドラインで\fI\-verbose\fRオプションを指定した場合、冗長モードで動作し、このモードでは、\fIjarsigner\fRは、JARの署名または検証の進行状況に関する追加情報を出力します。
+.RE
+.PP
+\-internalsf
+.RS 4
+以前は、JARファイルの署名時に生成された\fI\&.DSA\fR
+(署名ブロック)ファイルに、生成された\fI\&.SF\fRファイル(署名ファイル)のエンコードされた完全なコピーが含まれていました。 この動作は変更されました。出力JARファイル全体のサイズを小さくするために、デフォルトでは\fI\&.DSA\fRファイルには\fI\&.SF\fRファイルのコピーが含まれないようになっています。コマンドラインで\fI\-internalsf\fRを指定した場合、以前と同じように動作します。このオプションは、テストを行う場合に便利です。実際には、\fI\-internalsf\fRオプションは、オーバーヘッドが大きくなるため、使用しないでください。
+.RE
+.PP
+\-sectionsonly
+.RS 4
+コマンドラインで\fI\-sectionsonly\fRオプションを指定した場合、JARファイルの署名時に生成される\fI\&.SF\fRファイル(署名ファイル)には、マニフェスト・ファイル全体のハッシュを含むヘッダーは含まれません。これに含まれるのは、JARファイル内の各ソース・ファイルに関連する情報およびハッシュのみです。署名ファイルを参照してください。
+.sp
+デフォルトでは、最適化のために、このヘッダーが追加されます。ヘッダーが存在する場合、JARファイルを検証するたびに、検証では、まずヘッダー内のハッシュがマニフェスト・ファイル全体のハッシュと一致するかどうかを確認するためにチェックできます。一致する場合、検証は次の手順に進みます。一致しない場合、\fI\&.SF\fRファイル内の各ソース・ファイル情報セクションのハッシュが、マニフェスト・ファイル内の対応するセクションのハッシュと一致するという、あまり最適化されていない検証を実行する必要があります。JARファイルの検証を参照してください。
+.sp
+\fI\-sectionsonly\fRオプションは、主にテスト用に使用されます。これを使用するとオーバーヘッドが大きくなるため、テスト用以外では使用しないでください。
+.RE
+.PP
+\-protected
+.RS 4
+\fItrue\fRまたは\fIfalse\fRのいずれかの値を指定できます。専用PINリーダーなどの保護された認証パスによってパスワードを指定する必要がある場合、\fItrue\fRを指定します。
+.RE
+.PP
+\-providerClass \fIprovider\-class\-name\fR
+.RS 4
+暗号化サービス・プロバイダが\fIjava\&.security\fRセキュリティ・プロパティ・ファイルに指定されていないときは、そのマスター・クラス・ファイルの名前を指定するときに使用されます。
+.sp
+\fI\-providerArg \fR\fIConfigFilePath\fRオプションとともに使用し、\fIkeytool\fRおよび\fIjarsigner\fRツールは、プロバイダを動的にインストールし、トークン構成ファイルへのパスに\fIConfigFilePath\fRを使用します。次の例は、Oracle PKCS #11プロバイダがセキュリティ・プロパティ・ファイルに構成されていなかった場合に\fIPKCS #11\fRキーストアを一覧表示するコマンドを示しています。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore NONE \-storetype PKCS11 \e
+          \-providerClass sun\&.security\&.pkcs11\&.SunPKCS11 \e
+          \-providerArg /mydir1/mydir2/token\&.config \e
+          \-list
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-providerName \fIproviderName\fR
+.RS 4
+\fIjava\&.security\fRセキュリティ・プロパティ・ファイル内で2つ以上のプロバイダが構成された場合、\fI\-providerName\fRオプションを使用して、特定のプロバイダ・インスタンスを対象にすることができます。このオプションの引数は、プロバイダの名前です。
+.sp
+Oracle PKCS #11プロバイダの場合、\fIproviderName\fRは\fISunPKCS11\-\fR\fITokenName\fRという形式になります。ここで、構成属性の表で詳細に説明されているように、\fITokenName\fRは、プロバイダ・インスタンスが構成された名前の接尾辞です。たとえば、次のコマンドは、名前接尾辞\fISmartCard\fRの\fIPKCS #11\fRキーストア・プロバイダ・インスタンスの内容を一覧表示します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore NONE \-storetype PKCS11 \e
+        \-providerName SunPKCS11\-SmartCard \e
+        \-list
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-J\fIjavaoption\fR
+.RS 4
+指定された\fIjavaoption\fR文字列をJavaインタプリタに直接渡します。\fIjarsigner\fRコマンドは、インタプリタに対するラッパーです。このオプションには、空白を含めることはできません。このオプションは、実行環境またはメモリー使用を調整する場合に便利です。指定できるインタプリタ・オプションを一覧表示するには、コマンドラインで\fIjava \-h\fRまたは\fIjava \-X\fRと入力してください。
+.RE
+.PP
+\-tsa \fIurl\fR
+.RS 4
+\fI\-tsa http://example\&.tsa\&.url\fRがJARファイルの署名時にコマンドラインにある場合、署名のタイムスタンプが生成されます。URL
+\fIhttp://example\&.tsa\&.url\fRは、Time Stamping Authority (TSA)の場所を特定し、\fI\-tsacert\fRオプションを指定して検出されたURLをオーバーライドします。\fI\-tsa\fRオプションでは、TSAの公開鍵証明書をキーストアに配置する必要はありません。
+.sp
+タイムスタンプを生成するために、\fIjarsigner\fRは、RFC 3161で定義されているタイムスタンプ・プロトコル(TSP)を使用してTSAと通信します。成功すると、TSAによって返されたタイムスタンプ・トークンは、署名ブロック・ファイルの署名とともに保存されます。
+.RE
+.PP
+\-tsacert \fIalias\fR
+.RS 4
+\fI\-tsacert\fR
+\fIalias\fRがJARファイルの署名時にコマンドラインにある場合、署名のタイムスタンプが生成されます。別名は、キーストア内の有効なTSAの公開鍵証明書を特定します。エントリの証明書で、TSAの場所を特定するURLを含むSubject Information Access拡張機能が確認されます。
+.sp
+\fI\-tsacert\fRオプションを使用する場合は、TSAの公開鍵証明書がキーストアに配置されている必要があります。
+.RE
+.PP
+\-tsapolicyid \fIpolicyid\fR
+.RS 4
+TSAサーバーに送信するポリシーIDを識別するオブジェクト識別子(OID)を指定します。このオプションを指定しない場合、ポリシーIDは送信されず、TSAサーバーはデフォルトのポリシーIDを選択します。
+.sp
+オブジェクト識別子は、ITU Telecommunication Standardization Sector (ITU\-T)標準であるX\&.696によって定義されます。これらの識別子は、通常、\fI1\&.2\&.3\&.4\fRなどの、負ではない数字のピリオド区切りのセットです。
+.RE
+.PP
+\-altsigner \fIclass\fR
+.RS 4
+このオプションは、代替署名メカニズムを指定します。完全修飾クラス名は、\fIcom\&.sun\&.jarsigner\&.ContentSigner\fR抽象クラスを拡張するクラス・ファイルを識別します。このクラス・ファイルへのパスは、\fI\-altsignerpath\fRオプションによって定義されます。\fI\-altsigner\fRオプションを使用した場合、\fIjarsigner\fRコマンドでは、指定されたクラスによって提供される署名メカニズムを使用します。それ以外の場合、\fIjarsigner\fRコマンドはデフォルトの署名メカニズムを使用します。
+.sp
+たとえば、\fIcom\&.sun\&.sun\&.jarsigner\&.AuthSigner\fRという名前のクラスが提供する署名メカニズムを使用するには、jarsignerのオプション\fI\-altsigner com\&.sun\&.jarsigner\&.AuthSigner\fRを使用します。
+.RE
+.PP
+\-altsignerpath \fIclasspathlist\fR
+.RS 4
+クラス・ファイルおよびそれが依存するJARファイルへのパスを指定します。\fI\-altsigner\fRオプションを使用して、クラス・ファイル名を指定します。クラス・ファイルがJARファイル内にある場合、このオプションでは、そのJARファイルへのパスを指定します。
+.sp
+絶対パスまたは現在のディレクトリへの相対パスを指定できます。\fIclasspathlist\fRに複数のパスやJARファイルが含まれる場合、それらを、Oracle Solarisの場合はコロン(:)で、Windowsの場合はセミコロン(;)で、それぞれ区切ります。目的のクラスがすでに検索パス内にある場合は、このオプションは不要です。
+.sp
+次の例では、クラス・ファイルを含むJARファイルへのパスを指定する方法を示します。JARファイル名を含めます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-altsignerpath /home/user/lib/authsigner\&.jar
+.fi
+.if n \{\
+.RE
+.\}
+次の例では、クラス・ファイルを含むJARファイルへのパスを指定する方法を示します。JARファイル名を省略します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-altsignerpath /home/user/classes/com/sun/tools/jarsigner/
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-strict
+.RS 4
+署名または検証処理中に、コマンドにより警告メッセージが発行される場合があります。このオプションを指定すると、コマンドにより検出された重大な警告メッセージがツールの終了コードに反映されます。エラーと警告を参照してください。
+.RE
+.PP
+\-verbose \fIsuboptions\fR
+.RS 4
+検証処理の場合、\fI\-verbose\fRオプションには、表示する情報の量を決定するサブオプションを指定します。\fI\-certs\fRオプションも指定した場合、デフォルト・モード(またはサブオプション\fIall\fR)では、エントリが処理されるたびに各エントリが表示され、その後にJARファイルの各署名者の証明書情報も表示されます。\fI\-certs\fRおよび\fI\-verbose:grouped\fRサブオプションを指定した場合、同じ署名者情報を持つエントリが、その証明書情報とともに、グループ化されて表示されます。\fI\-certs\fRおよび\fI\-verbose:summary\fRサブオプションを指定した場合、同じ署名者情報を持つエントリが、その証明書情報とともに、グループ化されて表示されます。各エントリの詳細は、\fI1つのエントリ(以上)\fRにまとめられて表示されます。例を参照してください。
+.RE
+.SH "エラーと警告"
+.PP
+署名または検証プロセス中に、\fIjarsigner\fRコマンドで、様々なエラーまたは警告が発行される可能性があります。
+.PP
+障害がある場合、\fIjarsigner\fRコマンドはコード1で終了します。障害はないが、1つ以上の重大な警告がある場合、\fI\-strict\fRオプションが指定されて\fBいない\fR場合は、\fIjarsigner\fRコマンドはコード0で終了し、\fI\-strict\fRが指定されている場合は警告コードのOR値で終了します。情報警告のみがある、または警告がまったくない場合、コマンドは常にコード0で終了します。
+.PP
+たとえば、エントリの署名に使用される証明書が期限切れで、ファイルの署名を許可しないKeyUsage拡張機能を使用している場合、\fI\-strict\fRオプションが指定されていると、\fIjarsigner\fRコマンドはコード12 (=4+8)で終了します。
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.TS
+allbox tab(:);
+l.
+T{
+ノート
+.PP
+Unixベースのオペレーティング・システムでは0から255までの値のみが有効のため、終了コードは再利用されます。
+T}
+.TE
+.sp 1
+.sp .5v
+.RE
+.PP
+次のセクションでは、\fIjarsigner\fRコマンドにより発行できるエラーおよび警告の名前、コード、説明を記述します。
+.SS "障害"
+.PP
+コマンドライン解析エラー、JARファイルに署名する鍵ペアを検索できない、または署名付きJARファイルの検証失敗など(限定されません)、\fIjarsigner\fRコマンドの失敗理由。
+.PP
+failure
+.RS 4
+コード1。署名または検証が失敗します。
+.RE
+.SS "重大な警告"
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.TS
+allbox tab(:);
+l.
+T{
+ノート
+.PP
+\fI\-strict\fRオプションを指定した場合、重大な警告はエラーとして報告されます。
+T}
+.TE
+.sp 1
+.sp .5v
+.RE
+.PP
+JARファイルの署名に使用する証明書にエラーがある、または署名付きJARファイルに他の問題があるなど、\fIjarsigner\fRコマンドが重大な警告を発行する理由。
+.PP
+hasExpiredCert
+.RS 4
+コード4。このjarには、署名者証明書が期限切れのエントリが含まれています。
+.RE
+.PP
+notYetValidCert
+.RS 4
+コード4。このjarには、署名者証明書がまだ有効になっていないエントリが含まれています。
+.RE
+.PP
+chainNotValidated
+.RS 4
+コード4。このjarには、証明書チェーンが正しく検証できないエントリが含まれています。
+.RE
+.PP
+badKeyUsage
+.RS 4
+コード8。このJARには、署名者証明書のKeyUsage拡張機能がコード署名を許可しないエントリが含まれています。
+.RE
+.PP
+badExtendedKeyUsage
+.RS 4
+コード8。このjarには、署名者証明書のExtendedKeyUsage拡張機能がコード署名を許可しないエントリが含まれています。
+.RE
+.PP
+badNetscapeCertType
+.RS 4
+コード8。このjarには、署名者証明書のNetscapeCertType拡張機能がコード署名を許可しないエントリが含まれています。
+.RE
+.PP
+hasUnsignedEntry
+.RS 4
+コード16。このjarには、整合性チェックをしていない未署名のエントリが含まれています。
+.RE
+.PP
+notSignedByAlias
+.RS 4
+コード32。このjarには、指定された別名によって署名されていない署名済エントリが含まれています。
+.RE
+.PP
+aliasNotInStore
+.RS 4
+コード32。このjarには、このキーストア内の別名によって署名されていない署名済エントリが含まれます。
+.RE
+.SS "情報警告"
+.PP
+情報警告には、エラーではないが不適切とみなされるものが含まれます。コードはありません。
+.PP
+hasExpiringCert
+.RS 4
+このjarには、署名者証明書が6か月以内に期限切れとなるエントリが含まれています。
+.RE
+.PP
+noTimestamp
+.RS 4
+このjarには、タイムスタンプを含まない署名が含まれています。タイムスタンプなしでは、署名者証明書の有効期限(形式は\fIYYYY\-MM\-DD\fR)後または将来の取消日後、ユーザーはこのJARファイルを検証できない場合があります。
+.RE
+.SH "例"
+.SS "JARファイルの署名"
+.PP
+次のコマンドを使用して、キーストア別名が\fIworking\fRディレクトリの\fImystore\fRという名前のキーストアにある\fIjane\fRであるユーザーの秘密鍵でbundle\&.jarに署名し、署名付きJARファイルにsbundle\&.jarという名前を付けます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore /working/mystore \-storepass <keystore password>
+      \-keypass <private key password> \-signedjar sbundle\&.jar bundle\&.jar jane
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+前述のコマンドでは\fI\-sigfile\fRが指定されていないため、署名付きJARファイルに格納される生成された\fI\&.SF\fRファイルおよび\fI\&.DSA\fRファイルの名前は、別名に基づいたデフォルトの名前になります。これらは、名前付きの\fIJANE\&.SF\fRおよび\fIJANE\&.DSA\fRです。
+.PP
+ストアのパスワードおよび秘密鍵のパスワードを求められる場合、前述のコマンドを短縮して、次のことを実行できます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore /working/mystore
+      \-signedjar sbundle\&.jar bundle\&.jar jane
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+キーストアがデフォルトのキーストア(ホーム・ディレクトリ内の\&.keystore)である場合、次に示すように、キーストアを指定する必要がありません。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-signedjar sbundle\&.jar bundle\&.jar jane
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+入力JARファイル(bundle\&.jar)を署名付きJARファイルで上書きする場合、次のように\fI\-signedjar\fRオプションを指定する必要はありません。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner bundle\&.jar jane
+.fi
+.if n \{\
+.RE
+.\}
+.SS "署名付きJARファイルの検証"
+.PP
+署名付きJARファイルを検証して、署名が有効でJARファイルが改ざんされなかったことを確認するには、次のようなコマンドを使用します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-verify sbundle\&.jar
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+検証が成功すると、\fIjar verified\fRが表示されます。有効でない場合は、エラー・メッセージが表示されます。\fI\-verbose\fRオプションを使用すると、詳細情報を取得できます。\fIjarsigner\fRを\fI\-verbose\fRオプションとともに使用するサンプルを、次に示します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-verify \-verbose sbundle\&.jar
+ 
+           198 Fri Sep 26 16:14:06 PDT 1997 META\-INF/MANIFEST\&.MF
+           199 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.SF
+          1013 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.DSA
+    smk   2752 Fri Sep 26 16:12:30 PDT 1997 AclEx\&.class
+    smk    849 Fri Sep 26 16:12:46 PDT 1997 test\&.class
+ 
+      s = signature was verified
+      m = entry is listed in manifest
+      k = at least one certificate was found in keystore
+ 
+    jar verified\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SS "証明書情報を使用した検証"
+.PP
+\fI\-certs\fRオプションを\fI\-verify\fRおよび\fI\-verbose\fRオプションとともに指定した場合、JARファイルの各署名者の証明書情報が出力に含まれます。この情報には、証明書タイプ、署名者の識別名情報(X\&.509証明書の場合)が含まれ、丸カッコ内には、JARファイルの公開鍵証明書がキーストア・エントリの公開鍵証明書に一致する場合の署名者のキーストア別名が含まれます。たとえば、次のようになります。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+jarsigner \-keystore /working/mystore \-verify \-verbose \-certs myTest\&.jar
+ 
+           198 Fri Sep 26 16:14:06 PDT 1997 META\-INF/MANIFEST\&.MF
+           199 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.SF
+          1013 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.DSA
+           208 Fri Sep 26 16:23:30 PDT 1997 META\-INF/JAVATEST\&.SF
+          1087 Fri Sep 26 16:23:30 PDT 1997 META\-INF/JAVATEST\&.DSA
+    smk   2752 Fri Sep 26 16:12:30 PDT 1997 Tst\&.class
+ 
+      X\&.509, CN=Test Group, OU=Java Software, O=Oracle, L=CUP, S=CA, C=US (javatest)
+      X\&.509, CN=Jane Smith, OU=Java Software, O=Oracle, L=cup, S=ca, C=us (jane)
+ 
+      s = signature was verified
+      m = entry is listed in manifest
+      k = at least one certificate was found in keystore
+ 
+    jar verified\&.
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+署名者の証明書がX\&.509証明書ではない場合、識別名情報は表示されません。その場合には、証明書のタイプと別名のみが表示されます。たとえば、証明書がPGP証明書で、別名が\fIbob\fRである場合、\fIPGP, (bob)\fRを取得します。
+.SS "アイデンティティ・データベースの署名者を含む検証"
+.PP
+JARファイルがJDK 1\&.1の\fIjavakey\fRツールを使用して署名され、署名者がアイデンティティ・データベース内の別名である場合、検証の出力には\fIi\fRが含まれます。JARファイルがアイデンティティ・データベース内の別名とキーストア内の別名の両方によって署名された場合、\fIk\fRと\fIi\fRの両方が表示されます。
+.PP
+\fI\-certs\fRオプションを使用した場合、アイデンティティ・データベースの別名は、キーストアの別名に使用される丸カッコではなく、大カッコで囲みます。たとえば、次のようになります。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+    jarsigner \-keystore /working/mystore \-verify \-verbose \-certs writeFile\&.jar
+ 
+           198 Fri Sep 26 16:14:06 PDT 1997 META\-INF/MANIFEST\&.MF
+           199 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.SF
+          1013 Fri Sep 26 16:22:10 PDT 1997 META\-INF/JANE\&.DSA
+           199 Fri Sep 27 12:22:30 PDT 1997 META\-INF/DUKE\&.SF
+          1013 Fri Sep 27 12:22:30 PDT 1997 META\-INF/DUKE\&.DSA
+   smki   2752 Fri Sep 26 16:12:30 PDT 1997 writeFile\&.html
+ 
+      X\&.509, CN=Jane Smith, OU=Java Software, O=Oracle, L=cup, S=ca, C=us (jane)
+      X\&.509, CN=Duke, OU=Java Software, O=Oracle, L=cup, S=ca, C=us [duke]
+ 
+      s = signature was verified
+      m = entry is listed in manifest
+      k = at least one certificate was found in keystore
+      i = at least one certificate was found in identity scope
+ 
+    jar verified\&.
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fB注意: \fR別名がキーストアの別名ではなく、アイデンティティ・データベースの別名であることを示すには、別名\fIduke\fRを大カッコで囲みます。
+.SH "JDK 1.1の互換性"
+.PP
+\fIkeytool\fRおよび\fIjarsigner\fRツールは、JDK 1\&.1における\fIjavakey\fRツールを置き換えたものです。これらの新しいツールは、キーストアと秘密鍵をパスワードで保護する機能や、署名の生成に加えて署名を検証する機能など、\fIjavakey\fRより多くのを機能を備えています。
+.PP
+新しいキーストア・アーキテクチャは、\fIjavakey\fRが作成して管理していたアイデンティティ・データベースに代わるものです。キーストア形式と、JDK 1\&.1の\fIjavakey\fRが使用していたデータベース形式との間には、下位互換性はありません。ただし、次の点に注意してください。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIkeytool \-identitydb\fRコマンドを使用して、アイデンティティ・データベースからキーストアに情報をインポートできます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIjarsigner\fRコマンドでは、\fIjavakey\fRコマンドで署名されたJARファイルに署名できます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIjarsigner\fRコマンドでは、\fIjavakey\fRで署名されたJARファイルを検証できます。\fIjarsigner\fRコマンドでは、JDKのキーストアではなくJDK 1\&.1のアイデンティティ・データベースからの署名者別名を認識し、それを対象に処理を行うことができます。
+.RE
+.SS "署名のないJAR"
+.PP
+署名のないJARには、すべてのコードに付与されるデフォルトの権限があります。
+.SS "署名付きJAR"
+.PP
+署名付きJARには、記述どおりのJDK 1\&.1\&.\fIn\fRアイデンティティおよびポリシー・ファイルのステータスに基づいた権限構成があります。JDKキーストアにインポートできるのは、信頼できるアイデンティティのみです。
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBすべてのコードに付与されるデフォルトの権限\fR
+.RS 4
+.RS 4
+1\&.1データベースのアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBいいえ\fR
+.RE
+.PP
+.RS 4
+1\&.1データベースのアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBはい\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBいいえ\fR
+.RE
+.PP
+.RS 4
+1\&.1データベースのアイデンティティ: はい/信頼されない
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBいいえ\fR
+.RE
+.RS 4
+注意の3を参照してください。
+.RE
+.PP
+.RS 4
+1\&.1データベースのアイデンティティ: はい/信頼されない
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBはい\fR
+.RE
+.RS 4
+注意の1および3を参照してください。
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fB付与されるデフォルトの権限およびポリシー・ファイル権限\fR
+.RS 4
+.RS 4
+1\&.1データベースのアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBはい\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBはい\fR
+.RE
+.PP
+.RS 4
+1\&.1データベースのアイデンティティ: \fBはい/信頼される\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBはい\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBはい\fR
+.RE
+.RS 4
+注意の2を参照してください。
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fB付与されるすべての権限\fR
+.RS 4
+.RS 4
+1\&.1データベースのアイデンティティ: \fBはい/信頼される\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBいいえ\fR
+.RE
+.PP
+.RS 4
+1\&.1データベースのアイデンティティ: \fBはい/信頼される\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBはい\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBいいえ\fR
+.RE
+.RS 4
+注意の1を参照してください。
+.RE
+.RS 4
+1\&.1データベースのアイデンティティ: \fBはい/信頼される\fR
+.RE
+.RS 4
+1\&.1\&.データベースからJavaキーストアにインポートされた信頼できるアイデンティティ: \fBいいえ\fR
+.RE
+.RS 4
+ポリシー・ファイルによるアイデンティティ/別名への権限の付与: \fBはい\fR
+.RE
+.RS 4
+注意の1を参照してください。
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fB注意\fR
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+ポリシー・ファイル内にアイデンティティまたは別名についての言及がある場合、それをキーストアにインポートして、付与された権限にポリシー・ファイルの設定が反映されるようにする必要があります。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+ポリシー・ファイル/キーストアの組合せは、アイデンティティ・データベース内の信頼できるアイデンティティよりも優先されます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+Javaプラットフォームでは、信頼できないアイデンティティは無視されます。
+.RE
+.RE
+.SH "参照"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jar(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+keytool(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://docs\&.oracle\&.com/javase/tutorial/security/index\&.htmlにある
+「コース: Java SEのセキュリティ機能」
+.RE
+.br
+'pl 8.5i
+'bp

@@ -1,0 +1,138 @@
+." Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH javah 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+javah \- Cヘッダーとスタブ・ファイル・ジェネレータ
+.LP
+.LP
+\f3javah\fPは、JavaクラスからCヘッダー・ファイルとCソース・ファイルを作成します。これらのファイルは、Javaプログラミング言語で書かれたコードと、Cなどのその他の言語で書かれたコードを接続し、コードが相互に作用するようにします。
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+javah [ \fP\f3options\fP\f3 ] fully\-qualified\-classname. . .
+.fl
+\fP
+.fi
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3javah\fPは、ネイティブ・メソッドを実装するために必要なCヘッダーとソース・ファイルを生成します。作成されたヘッダーとソース・ファイルは、ネイティブ・ソース・コードからオブジェクトのインスタンス変数を参照するためにCプログラムによって使用されます。.hファイルは、対応するクラスと一致する配置を持つ構造体定義を含みます。構造体のフィールドは、クラスのインスタンス変数に対応します。
+.LP
+.LP
+ヘッダー・ファイルとその中で宣言される構造体の名前はクラスの名前から派生します。\f3javah\fPに渡されるクラスがパッケージの中にある場合、パッケージ名はヘッダー・ファイル名と構造体名の両方に付加されます。下線(_)が名前の区切り文字として使用されます。
+.LP
+.LP
+デフォルトでは\f3javah\fPは、コマンドラインにリストされる各クラスのヘッダー・ファイルを作成し、現在のディレクトリにファイルを置きます。ソース・ファイルを作成するには、\f2\-stubs\fPオプションを使用してください。1つのファイルの中に、リストされたすべてのクラスの結果を連結するには、\f2\-o\fPオプションを使用してください。
+.LP
+.LP
+新しいネイティブ・メソッド・インタフェースであるJava Native Interface(JNI)は、ヘッダー情報またはスタブ・ファイルを必要としません。現在では、\f3javah\fPは、JNI形式のネイティブ・メソッドに必要なネイティブ・メソッド機能プロトタイプを生成します。デフォルトでは、\f3javah\fPはJNI形式で出力され、その結果は .hファイルに格納されます。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-o outputfile 
+コマンドラインにリストされたすべてのクラスに対して、結果のヘッダーまたはソース・ファイルを連結して\f2outputfile\fPに格納します。\f3\-o\fPまたは\f3\-d\fPのどちらか一方のみ使用されます。 
+.TP 3
+\-ddirectory 
+\f3javah\fPがヘッダー・ファイルまたはスタブ・ファイルを保存する、ディレクトリを設定します。\f3\-d\fPまたは\f3\-o\fPのどちらか一方のみ使用されます。 
+.TP 3
+\-stubs 
+\f3javah\fPが、Javaオブジェクト・ファイルからC宣言を生成します。 
+.TP 3
+\-verbose 
+詳細出力を指定し、作成ファイルの状態に関するメッセージを、\f3javah\fPが標準出力に出力します。 
+.TP 3
+\-help 
+\f3javah\fPの使用方法についてのヘルプ・メッセージを出力します。 
+.TP 3
+\-version 
+\f3javah\fPのバージョン情報を出力します。 
+.TP 3
+\-jni 
+JNI形式のネイティブ・ファイル機能プロトタイプを含む出力ファイルを、\f3javah\fPが作成します。これは標準出力であるため、\f3\-jni\fPの使用はオプションです。 
+.TP 3
+\-classpath path 
+クラスを探すために\f3javah\fPが使用するパスを指定します。デフォルトまたはCLASSPATH環境変数設定を上書きします。ディレクトリはコロンで分割します。したがって、\f2path\fPの一般形式は次のようになります。 
+.nf
+\f3
+.fl
+   .:<your_path>
+.fl
+\fP
+.fi
+次に例を示します。 
+.nf
+\f3
+.fl
+   .:/home/avh/classes:/usr/local/java/classes
+.fl
+\fP
+.fi
+便宜上、\f2*\fPのベース名を含むクラス・パス要素は、\f2.jar\fPまたは\f2.JAR\fPを拡張子に持つディレクトリ内のすべてのファイルのリストを指定するのと同等とみなされます(javaプログラムはこの2つの呼出しを区別できない)。
+.br
+.br
+たとえば、ディレクトリ\f2foo\fPに\f2a.jar\fPと\f2b.JAR\fPが含まれている場合、クラス・パス要素\f2foo/*\fPは\f2A.jar:b.JAR\fPに展開されます。ただし、JARファイルの順番は未指定となります。このリストには、隠しファイルも含め、指定されたディレクトリ内のすべてのJARファイルが含まれます。\f2*\fPのみからなるクラス・パス・エントリは、現在のディレクトリ内のすべてのJARファイルのリストに展開されます。\f2CLASSPATH\fP環境変数も、定義時には同様に展開されます。クラス・パスのワイルドカード展開は必ず、Java仮想マシンの起動前に実行されます。したがって、環境に問合せを行わない限り、Javaプログラムが展開されていないワイルドカードを認識することはありません。たとえば、\f2System.getenv(\\"CLASSPATH\\")\fP呼出しがその例です。  
+.TP 3
+\-bootclasspath path 
+ブートストラップ・クラスをロードするパスを指定します。ブートストラップ・クラスは、デフォルトでは\f2jre/lib/rt.jar\fPおよび他のいくつかのJARファイルにある、コアJava 2プラットフォームを実装するクラスです。 
+.TP 3
+\-old 
+古いJDK1.0形式のヘッダー・ファイルを生成するように指定します。 
+.TP 3
+\-force 
+出力ファイルが常に書き込まれるように指定します。 
+.TP 3
+\-Joption 
+Java仮想マシンに\f2option\fPを渡します。\f2option\fPには、java(1)のリファレンス・ページに記載されているオプションを1つ指定します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。 
+.RE
+
+.LP
+.SH "環境変数"
+.LP
+.RS 3
+.TP 3
+CLASSPATH 
+ユーザー定義クラスへのパスをシステムに指定します。ディレクトリはコロンで分割されています。 
+.nf
+\f3
+.fl
+.:/home/avh/classes:/usr/local/java/classes
+.fl
+\fP
+.fi
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.LP
+javac(1)、java(1)、jdb(1)、javap(1)、javadoc(1)
+.LP
+ 

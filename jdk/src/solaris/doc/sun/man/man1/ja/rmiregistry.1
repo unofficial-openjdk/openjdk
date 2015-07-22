@@ -1,0 +1,83 @@
+." Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH rmiregistry 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+rmiregistry \- Javaリモート・オブジェクト・レジストリ
+.LP
+.RS 3
+\f3rmiregistry\fPコマンドは、現在のホストの指定したポート上にリモート・オブジェクト・レジストリを開始します。 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+rmiregistry [\fP\f4port\fP\f3]
+.fl
+\fP
+.fi
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3rmiregistry\fPコマンドは、現在のホストの指定\f2port\fP上にリモート・オブジェクト・レジストリを作成し、開始します。\f2port\fPの指定を省略した場合、レジストリはポート1099で開始します。\f3rmiregistry\fPコマンドに、出力機能はありません。通常、これはバックグラウンドで実行されます。次に例を示します。
+.LP
+.LP
+\f2rmiregistry &\fP
+.LP
+.LP
+リモート・オブジェクト・レジストリは、ブートストラップのネーム・サービスです。同一ホストのRMIサーバーが、リモート・オブジェクトを名前にバインドするために使用されます。次に、ローカルおよびリモート・ホストのクライアントはリモート・オブジェクトを検索し、リモート・メソッドの呼出しを行います。
+.LP
+.LP
+レジストリは、一般的に、最初のリモート・オブジェクトの位置を指定します。そこで、アプリケーションはメソッドを呼び出す必要があります。かわって、そのオブジェクトはアプリケーション指定のサポートを提供し、他のオブジェクトを探します。
+.LP
+.LP
+\f2java.rmi.registry.LocateRegistry\fPクラスのメソッドは、ローカル・ホスト、またはローカル・ホストとポートで動作するレジストリを取得するために使用されます。
+.LP
+.LP
+\f2java.rmi.Naming\fPクラスのURLベースのメソッドは、レジストリで動作し、任意のホストおよびローカル・ホスト上のリモート・オブジェクトの検索に使用されます。リモート・オブジェクトに単純な(文字列)名前をバインドしたり、新しい名前をリバインド(古いバインドにオーバーライド)します。またリモート・オブジェクトをアンバインドしたり、レジストリにバインドされたURLを出力します。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-J 
+\f2\-J\fPの後ろに続くオプションを\f2java\fPインタプリタに引き渡します。\f2java\fPオプションと組み合せて使用します(\-Jとjavaオプションの間にスペースは入れない)。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+java(1)、
+.na
+\f2java.rmi.registry.LocateRegistry\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/java/rmi/registry/LocateRegistry.htmlおよび
+.na
+\f2java.rmi.Naming\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/java/rmi/Naming.html  

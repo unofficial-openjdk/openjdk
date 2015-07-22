@@ -1,0 +1,317 @@
+." Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH javap 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+javap \- Javaクラス・ファイル逆アセンブラ
+.LP
+.LP
+クラス・ファイルを逆アセンブルします。
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+javap [ \fP\f3options\fP\f3 ] classes
+.fl
+\fP
+.fi
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3javap\fPコマンドは、1つまたは複数のクラス・ファイルを逆アセンブルします。その出力は指定するオプションにより異なります。オプションを指定しない場合、\f3javap\fPは、そのパッケージ、渡されたクラスのprotectedおよびpublicのフィールドとメソッドを出力します。\f3javap\fPはその出力を標準出力に表示します。
+.LP
+.RS 3
+.TP 3
+options 
+コマンドライン・オプション。 
+.TP 3
+classes 
+注釈の処理対象となる1つ以上のクラス\f2DocFooter.class\fPなどのリスト(空白区切り)。クラス・パスで見つかるクラスは、ファイル名(\f2/home/user/myproject/src/DocFooter.class\fPなど)またはURL(\f2file:///home/user/myproject/src/DocFooter.class\fPなど)で指定できます。 
+.RE
+
+.LP
+.LP
+たとえば、次のクラス宣言をコンパイルするとします。
+.LP
+.nf
+\f3
+.fl
+import java.awt.*;
+.fl
+import java.applet.*;
+.fl
+
+.fl
+public class DocFooter extends Applet {
+.fl
+        String date;
+.fl
+        String email;
+.fl
+
+.fl
+        public void init() {
+.fl
+                resize(500,100);
+.fl
+                date = getParameter("LAST_UPDATED");
+.fl
+                email = getParameter("EMAIL");
+.fl
+        }
+.fl
+
+.fl
+        public void paint(Graphics g) {
+.fl
+                g.drawString(date + " by ",100, 15);
+.fl
+                g.drawString(email,290,15);
+.fl
+        }
+.fl
+}
+.fl
+\fP
+.fi
+
+.LP
+.LP
+\f3javap DocFooter.class\fPがもたらす出力は次のようになります。
+.LP
+.nf
+\f3
+.fl
+Compiled from "DocFooter.java"
+.fl
+public class DocFooter extends java.applet.Applet {
+.fl
+  java.lang.String date;
+.fl
+  java.lang.String email;
+.fl
+  public DocFooter();
+.fl
+  public void init();
+.fl
+  public void paint(java.awt.Graphics);
+.fl
+}
+.fl
+\fP
+.fi
+
+.LP
+.LP
+\f3javap \-c DocFooter.class\fPがもたらす出力は次のようになります。
+.LP
+.nf
+\f3
+.fl
+Compiled from "DocFooter.java"
+.fl
+public class DocFooter extends java.applet.Applet {
+.fl
+  java.lang.String date;
+.fl
+
+.fl
+  java.lang.String email;
+.fl
+
+.fl
+  public DocFooter();
+.fl
+    Code:
+.fl
+       0: aload_0       
+.fl
+       1: invokespecial #1                  // Method java/applet/Applet."<init>":()V
+.fl
+       4: return        
+.fl
+
+.fl
+  public void init();
+.fl
+    Code:
+.fl
+       0: aload_0       
+.fl
+       1: sipush        500
+.fl
+       4: bipush        100
+.fl
+       6: invokevirtual #2                  // Method resize:(II)V
+.fl
+       9: aload_0       
+.fl
+      10: aload_0       
+.fl
+      11: ldc           #3                  // String LAST_UPDATED
+.fl
+      13: invokevirtual #4                  // Method getParameter:(Ljava/lang/String;)Ljava/lang/String;
+.fl
+      16: putfield      #5                  // Field date:Ljava/lang/String;
+.fl
+      19: aload_0       
+.fl
+      20: aload_0       
+.fl
+      21: ldc           #6                  // String EMAIL
+.fl
+      23: invokevirtual #4                  // Method getParameter:(Ljava/lang/String;)Ljava/lang/String;
+.fl
+      26: putfield      #7                  // Field email:Ljava/lang/String;
+.fl
+      29: return        
+.fl
+
+.fl
+  public void paint(java.awt.Graphics);
+.fl
+    Code:
+.fl
+       0: aload_1       
+.fl
+       1: new           #8                  // class java/lang/StringBuilder
+.fl
+       4: dup           
+.fl
+       5: invokespecial #9                  // Method java/lang/StringBuilder."<init>":()V
+.fl
+       8: aload_0       
+.fl
+       9: getfield      #5                  // Field date:Ljava/lang/String;
+.fl
+      12: invokevirtual #10                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+.fl
+      15: ldc           #11                 // String  by 
+.fl
+      17: invokevirtual #10                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+.fl
+      20: invokevirtual #12                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+.fl
+      23: bipush        100
+.fl
+      25: bipush        15
+.fl
+      27: invokevirtual #13                 // Method java/awt/Graphics.drawString:(Ljava/lang/String;II)V
+.fl
+      30: aload_1       
+.fl
+      31: aload_0       
+.fl
+      32: getfield      #7                  // Field email:Ljava/lang/String;
+.fl
+      35: sipush        290
+.fl
+      38: bipush        15
+.fl
+      40: invokevirtual #13                 // Method java/awt/Graphics.drawString:(Ljava/lang/String;II)V
+.fl
+      43: return        
+.fl
+}
+.fl
+\fP
+.fi
+
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-help \-\-help \-? 
+\f3javap\fPのヘルプ・メッセージを出力します。 
+.TP 3
+\-version 
+バージョン情報を出力します。 
+.TP 3
+\-l 
+行番号とローカル変数表を出力します。 
+.TP 3
+\-public 
+publicクラスおよびメンバーのみ表示します。 
+.TP 3
+\-protected 
+protectedおよびpublicのクラスとメンバーのみを表示します。 
+.TP 3
+\-package 
+package、protected、およびpublicのクラスとメンバーのみ表示します。これがデフォルトです。 
+.TP 3
+\-private \-p 
+すべてのクラスとメンバーを表示します。 
+.TP 3
+\-Jflag 
+ランタイム・システムに直接\f2flag\fPを渡します。使用例を次に示します。 
+.nf
+\f3
+.fl
+javap \-J\-version
+.fl
+javap \-J\-Djava.security.manager \-J\-Djava.security.policy=MyPolicy MyClassName
+.fl
+\fP
+.fi
+.TP 3
+\-s 
+内部の型シグニチャを出力します。 
+.TP 3
+\-sysinfo 
+処理中のクラスのシステム情報(パス、サイズ、日付、MD5ハッシュ)を表示します。 
+.TP 3
+\-constants 
+static final定数を表示します。 
+.TP 3
+\-c 
+クラスの各メソッドのために逆アセンブルされるコード、すなわちJavaバイトコードからなる命令を表示します。これらは
+.na
+\f2Java Virtual Machine Specification\fP @
+.fi
+http://docs.oracle.com/javase/specs/にドキュメント化されています。 
+.TP 3
+\-verbose 
+メソッドのスタック・サイズ、および\f2locals\fPと\f2args\fPの数を出力します。 
+.TP 3
+\-classpath path 
+\f3javap\fPがクラスを探すために使用するパスを指定します。デフォルトまたはCLASSPATH環境変数設定を上書きします。 
+.TP 3
+\-bootclasspath path 
+ブートストラップ・クラスをロードするパスを指定します。ブートストラップ・クラスは、デフォルトでは\f2jre/lib/rt.jar\fPおよび他のいくつかのJARファイルにある、コアJavaプラットフォームを実装するクラスです。 
+.TP 3
+\-extdirs dirs 
+インストールされた拡張機能を検索する場所をオーバーライドします。拡張機能のデフォルト位置は\f2java.ext.dirs\fPです。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.LP
+javac(1)、java(1)、jdb(1)、javah(1)、javadoc(1)
+.LP
+ 

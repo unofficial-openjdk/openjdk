@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2012, Oracle and/or its affiliates. All rights reserved.
+
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+This code is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 only, as
+published by the Free Software Foundation.  Oracle designates this
+particular file as subject to the "Classpath" exception as provided
+by Oracle in the LICENSE file that accompanied this code.
+
+This code is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+version 2 for more details (a copy is included in the LICENSE file that
+accompanied this code).
+
+You should have received a copy of the GNU General Public License version
+2 along with this work; if not, write to the Free Software Foundation,
+Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+or visit www.oracle.com if you need additional information or have any
+questions.
+-->
+
+<project name="appbundler" default="package">
+    <property environment="env"/>
+
+    <property file="build.properties"/>
+
+    <property name="folder.src" value="src"/>
+    <property name="folder.test" value="test"/>
+    <property name="folder.native" value="native"/>
+    <property name="folder.bin" value="bin"/>
+    <property name="folder.classes" value="${folder.bin}/classes"/>
+
+    <!-- Compile target -->
+    <target name="compile">
+        <mkdir dir="${ant.project.name}/${folder.classes}"/>
+        <javac destDir="${ant.project.name}/${folder.classes}"
+            includejavaruntime="true"
+            includeantruntime="true"
+            deprecation="true"
+            debug="true"
+            encoding="UTF-8"
+            failonerror="true">
+            <src>
+                <dirset dir="${ant.project.name}">
+                    <include name="${folder.src}"/>
+                    <include name="${folder.test}"/>
+                </dirset>
+            </src>
+            <compilerarg line="-Xlint:all"/>
+            <classpath>
+                <dirset dir="${basedir}" includes="**/${folder.classes}"/>
+                <fileset dir="${ant.project.name}" includes="lib/**/*.jar"/>
+            </classpath>
+        </javac>
+        <copy todir="${ant.project.name}/${folder.classes}" includeEmptyDirs="false">
+            <fileset dir="${ant.project.name}/${folder.src}">
+                <exclude name="**/*.java"/>
+                <exclude name="**/package.html"/>
+            </fileset>
+            <fileset dir="${ant.project.name}/${folder.test}" erroronmissingdir="false">
+                <exclude name="**/*.java"/>
+                <exclude name="**/package.html"/>
+            </fileset>
+        </copy>
+
+        <!-- TODO Move this to a makefile so we can reference the defines required by JLI_Launch() -->
+        <exec executable="gcc">
+            <arg value="-I"/>
+            <arg value="${env.JAVA_HOME}/include"/>
+            <arg value="-I"/>
+            <arg value="${env.JAVA_HOME}/include/darwin"/>
+            <arg value="-o"/>
+            <arg value="${ant.project.name}/${folder.classes}/com/oracle/appbundler/JavaAppLauncher"/>
+            <arg value="-framework"/>
+            <arg value="Cocoa"/>
+            <arg value="-F"/>
+            <arg value="${env.JAVA_HOME}/../.."/>
+            <arg value="-m64"/>
+            <arg value="-std=c99"/>
+            <arg value="appbundler/native/main.m"/>
+        </exec>
+    </target>
+
+    <!-- Clean target -->
+    <target name="clean">
+        <delete dir="${ant.project.name}/${folder.classes}"/>
+        <delete file="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+        <delete dir="HelloWorld.app"/>
+        <delete dir="SwingSet2.app"/>
+    </target>
+
+    <!-- Package target -->
+    <target name="package" depends="compile">
+        <property name="destfile" value="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+
+        <delete file="${destfile}"/>
+        <jar destfile="${destfile}" index="true">
+            <manifest>
+                <attribute name="Implementation-Vendor-Id" value="com.oracle"/>
+                <attribute name="Implementation-Vendor" value="Oracle"/>
+                <attribute name="Implementation-Title" value="App Bundler Ant Task"/>
+                <attribute name="Implementation-Version" value="${version}"/>
+            </manifest>
+            <fileset dir="${ant.project.name}/${folder.classes}">
+                <exclude name="**/${folder.test}/**"/>
+            </fileset>
+            <fileset dir="${ant.project.name}/${folder.bin}">
+                <include name="JavaAppLauncher"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <!-- Test targets -->
+    <target name="test-hello" depends="package">
+        <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask"
+            classpath="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+
+        <bundleapp outputdirectory="."
+            name="HelloWorld"
+            displayname="Hello World Test"
+            identifier="com.oracle.appbundler.Test"
+            shortversion="1.0"
+            runtime="${env.JAVA_HOME}/../.."
+            mainclassname="Test">
+            <classpath dir="${ant.project.name}/${folder.classes}" includes="Test.class"/>
+            <option value="-Xms32M"/>
+            <option value="-Xmx256M"/>
+            <argument value="foo=bar"/>
+        </bundleapp>
+    </target>
+
+    <target name="test-swingset" depends="package">
+        <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask"
+            classpath="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+
+        <bundleapp outputdirectory="."
+            name="SwingSet2"
+            displayname="SwingSet 2"
+            identifier="com.oracle.javax.swing.SwingSet2"
+            shortversion="1.0"
+            runtime="${env.JAVA_HOME}/../.."
+            mainclassname="SwingSet2">
+            <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
+            <option value="-Xms32M"/>
+            <option value="-Xmx256M"/>
+            <option value="-Dapple.laf.useScreenMenuBar=true"/>
+            <argument value="foo=bar"/>
+        </bundleapp>
+    </target>
+
+    <!-- Trim whitespace target -->
+    <target name="trim-whitespace">
+        <fileset id="trimfiles" dir=".">
+            <include name="**/*.h"/>
+            <include name="**/*.html"/>
+            <include name="**/*.java"/>
+            <include name="**/*.m"/>
+            <include name="**/*.properties"/>
+            <include name="**/*.xml"/>
+        </fileset>
+        <replaceregexp match="[\t]" replace="    " flags="gm" byline="true">
+            <fileset refid="trimfiles"/>
+        </replaceregexp>
+        <replaceregexp match="[\t ]+$" replace="" flags="gm" byline="true">
+            <fileset refid="trimfiles"/>
+        </replaceregexp>
+    </target>
+</project>

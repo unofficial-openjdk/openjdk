@@ -1,0 +1,222 @@
+." Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH javaws 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+\f2javaws\fPコマンドライン
+.LP
+.SH "名前"
+.LP
+.LP
+\f2javaws\fP \- Java Web Start起動コマンド
+.LP
+.SH "形式"
+.LP
+.LP
+\f2javaws [run\-options] <jnlp>\fP
+.LP
+.LP
+\f2javaws [control\-options]\fP
+.LP
+.SH "パラメータ"
+.LP
+.LP
+\f2[run\-options]\fP
+.LP
+.LP
+コマンドライン実行オプション。実行オプションは任意の順序で指定できます。各種実行オプションの詳細は、次の実行オプションを参照してください。
+.LP
+.LP
+\f2<jnlp>\fP
+.LP
+.LP
+JNLP(Java Network Launching Protocol)ファイルのパスまたはURL(Uniform Resource Locator)のどちらかを指定できます。
+.LP
+.LP
+\f2[control\-options]\fP
+.LP
+.LP
+コマンドライン制御オプション。制御オプションは任意の順序で指定できます。各種制御オプションの詳細は、次の制御オプションを参照してください。
+.LP
+.SH "説明"
+.LP
+.LP
+\f2javaws\fPコマンドは、JNLP(Java Network Launching Protocol)のリファレンス実装であるJava Web Startを起動します。Java Web Startは、ネットワーク上で動作するJavaアプリケーションまたはアプレットを起動します。
+.LP
+.LP
+JNLPファイルが指定された場合、\f2javaws\fPは、そのJNLPファイルで指定されたJavaアプリケーション/アプレットを起動します。
+.LP
+.LP
+\f2javaws\fP起動ツールには、現在のリリースでサポートされている1組のオプションがあります。ただし、これらのオプションは将来のリリースでは削除される可能性があります。
+.LP
+.SH "実行オプション"
+.LP
+.LP
+\f2\-offline\fP
+.LP
+.LP
+Java Web Startをオフライン・モードで実行します。
+.LP
+.LP
+\f2\-Xnosplash\fP
+.LP
+.LP
+初期スプラッシュ画面を表示しません。
+.LP
+.LP
+\f2\-open <arguments>\fP
+.LP
+.LP
+このオプションを指定すると、JNLPファイル内の引数が\f2\-open<arguments>\fPに置き換わります。
+.LP
+.LP
+\f2\-print <arguments>\fP
+.LP
+.LP
+このオプションを指定すると、JNLPファイル内の引数が\f2\-print<arguments>\fPに置き換わります。
+.LP
+.LP
+\f2\-online\fP
+.LP
+.LP
+オンライン・モードを使用します(デフォルトの動作)。
+.LP
+.LP
+\f2\-wait\fP
+.LP
+.LP
+このオプションを指定した場合、\f2javaws\fPプロセスは、アプリケーションが終了するまで終了しません。Windowsプラットフォーム上では、このオプションは説明したとおりに機能しません。
+.LP
+.LP
+\f2\-verbose\fP
+.LP
+.LP
+追加の出力を表示します。
+.LP
+.LP
+\f2\-J<option>\fP
+.LP
+.LP
+VMに対するオプションを指定します。
+.LP
+.LP
+\f2\-system\fP
+.LP
+.LP
+アプリケーションをシステム・キャッシュのみから実行します。
+.LP
+.SH "制御オプション"
+.LP
+.LP
+\f2\-viewer\fP
+.LP
+.LP
+Javaコントロール・パネルでキャッシュ・ビューアを表示します。
+.LP
+.LP
+\f2\-clearcache\fP
+.LP
+.LP
+インストールされていないすべてのアプリケーションをキャッシュから削除します。
+.LP
+.LP
+\f2\-userConfig <property name>\fP
+.LP
+.LP
+指定されたデプロイメント・プロパティをクリアします。
+.LP
+.LP
+\f2\-userConfig <property name> <property value>\fP
+.LP
+.LP
+指定されたデプロイメント・プロパティを指定された値に設定します。
+.LP
+.LP
+\f2\-uninstall\fP
+.LP
+.LP
+キャッシュからすべてのアプリケーションを削除します。
+.LP
+.LP
+\f2\-uninstall <jnlp>\fP
+.LP
+.LP
+キャッシュからアプリケーションを削除します。
+.LP
+.LP
+\f2\-import [import\-options] <jnlp>\fP
+.LP
+.LP
+キャッシュにアプリケーションをインポートします。
+.LP
+.SH "インポート・オプション"
+.LP
+.LP
+\f2\-silent\fP
+.LP
+.LP
+サイレント・モードでインポートします(ユーザー・インタフェースは表示されません)。
+.LP
+.LP
+\f2\-system\fP
+.LP
+.LP
+システム・キャッシュにアプリケーションをインポートします。
+.LP
+.LP
+\f2\-codebase <url>\fP
+.LP
+.LP
+指定したcodebaseからリソースを取得します。
+.LP
+.LP
+\f2\-shortcut\fP
+.LP
+.LP
+ユーザーがプロンプトで許可した場合のようにショートカットをインストールします。このオプションは、\f2\-silent\fPオプションも使用しないと効果がありません。
+.LP
+.LP
+\f2\-association\fP
+.LP
+.LP
+ユーザーがプロンプトで許可した場合のようにアソシエーションをインストールします。このオプションは、\f2\-silent\fPオプションも使用しないと効果がありません。
+.LP
+.SH "ファイル"
+.LP
+.LP
+ユーザー・キャッシュ、システム・キャッシュおよびdeployment.propertiesファイルについては、
+.na
+\f2システム・レベルおよびユーザー・レベルのプロパティ\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/deployment/deployment\-guide/properties.htmlを参照してください。
+.LP
+.SH "詳細情報"
+.LP
+.LP
+Java Web Startの詳細は、
+.na
+\f2Java Web Start\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javaws/index.htmlを参照してください。
+.LP
+ 

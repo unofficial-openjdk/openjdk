@@ -1,0 +1,750 @@
+." Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH java 1 "11 Jul 2013"
+
+.LP
+.SH "NAME"
+java \- Javaアプリケーションを起動します。
+.SH "形式"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java [ \fIoptions\fR ] class [ \fIargument \&.\&.\&.\fR ]
+java [ \fIoptions\fR ] \-jar file\&.jar [ \fIargument \&.\&.\&.\fR ]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIオプション\fR
+.RS 4
+コマンドライン・オプション。オプションを参照してください。
+.RE
+.PP
+クラス
+.RS 4
+コールするクラスの名前。
+.RE
+.PP
+\fIfile\&.jar\fR
+.RS 4
+コールするJARファイルの名前。\fI\-jar\fRコマンドでのみ使用されます。
+.RE
+.PP
+\fI引数\fR
+.RS 4
+\fImain\fR関数に渡される引数。
+.RE
+.SH "説明"
+.PP
+\fIjava\fRコマンドはJavaアプリケーションを開始します。Java Runtime Environmentを起動した後、指定されたクラスをロードし、そのクラスの\fImain\fRメソッドをコールすることにより、これを行います。
+.PP
+このメソッドは、publicおよびstaticとして宣言する必要があります。また、値は返せません。さらに、String配列をパラメータとして指定できる必要があります。メソッド宣言は次の形式を含みます。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+public static void main(String args[]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+デフォルトでは、オプションのない最初の引数が、コールされるクラスの名前になります。完全修飾クラス名を使用する必要があります。\fI\-jar\fRオプションを指定した場合、コマンドライン・オプション以外の最初の引数が、アプリケーションのクラス・ファイルとリソース・ファイルを含むJARファイルの名前になります。この場合、マニフェストのMain\-Classヘッダーで指定されたクラスが起動クラスになります。
+.PP
+Java Runtimeは、ブートストラップ・クラス・パス、インストール済拡張機能およびユーザー・クラス・パスの3箇所から起動クラスと他の使用されているクラスを検索します。
+.PP
+クラス名またはJARファイル名の後にある、コマンドライン・オプション以外の引数は、\fImain\fR関数に渡されます。
+.SH "オプション"
+.PP
+起動ツールには、現在のランタイム環境でサポートされる標準オプションのセットがあります。
+.PP
+また、仮想マシンの現在の実装では、非標準オプションのセットもサポートされます。これは、将来のリリースで変更される可能性があります。非標準オプションを参照してください。
+.SS "標準オプション"
+.PP
+\-client
+.RS 4
+Java HotSpot VMクライアントを選択します。64ビット対応JDKは現時点では、このオプションを無視し、かわりにJava Hotspot Server VMを使用します。
+.sp
+デフォルトのJava VM選択は、次の\fI「サーバークラス・マシンの検出」\fRページを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/vm/server\-class\&.html
+.RE
+.PP
+\-server
+.RS 4
+Java HotSpot VMサーバーを選択します。64ビット対応JDK上では、サポートされるのはJava Hotspot Server VMのみであるため、\fI\-\fR\fIserver\fRオプションが暗黙的に選択されます。
+.sp
+デフォルトのJava VM選択は、次の「サーバークラス・マシンの検出」ページを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/vm/server\-class\&.html
+.RE
+.PP
+\-agentlib:\fIlibname\fR[\fI=options\fR]
+.RS 4
+次の例のようなネイティブ・エージェント・ライブラリ\fIlibname\fRをロードします。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-agentlib:hprof
+ 
+\-agentlib:jdwp=help
+ 
+\-agentlib:hprof=help
+.fi
+.if n \{\
+.RE
+.\}
+次の\fI「JVMTIエージェント・コマンドライン・オプション」\fRを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/platform/jvmti/jvmti\&.html#starting
+.RE
+.PP
+\-agentpath:\fIpathname\fR[\fI=options\fR]
+.RS 4
+フル\fIパス名\fRを使用して、ネイティブ・エージェント・ライブラリをロードします。次の\fI「JVMTIコマンドライン・オプション」\fRを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/platform/jvmti/jvmti\&.html#starting
+.RE
+.PP
+\-classpath \fIclasspath\fR, \-cp \fIclasspath\fR
+.RS 4
+クラス・ファイルを検索するディレクトリ、JARファイルおよびZIPアーカイブのリストを指定します。
+\fIクラス・パス・エントリはコロン(:)で区切ります。\fR\fI\-classpath\fRまたは\fI\-cp\fRを指定すると、このオプションの値によって\fICLASSPATH\fR環境変数の設定がオーバーライドされます。
+.sp
+\fI\-classpath\fRと\fI\-cp\fRが使用されず、\fICLASSPATH\fRが設定されていない場合、ユーザー・クラス・パスは現在のディレクトリ(\&.)から構成されます。
+.sp
+便宜上、\fI*\fRのベース名を含むクラス・パス要素は、\&.jarまたは\&.JARを拡張子に持つディレクトリ内のすべてのファイルのリストを指定するのと同等とみなされます。Javaプログラムは2つの呼出しの違いを認識できません。
+.sp
+たとえば、ディレクトリmydirにa\&.jarとb\&.JARが含まれている場合、クラス・パス要素\fImydir/*\fRはA\&.jar:b\&.JARに展開されますが、JARファイルの順番は未指定となります。このリストには、隠しファイルも含め、指定されたディレクトリ内のすべてのJARファイルが含まれます。\fI*\fRのみからなるクラス・パス・エントリは、現在のディレクトリ内のすべてのJARファイルのリストに展開されます。\fICLASSPATH\fR環境変数も、定義時には同様に展開されます。クラス・パス・ワイルドカード拡張は、Java VMの開始前に行われます。Javaプログラムは、環境を問い合せる場合を除き、拡張されていないワイルド・カードを参照しません。たとえば、\fISystem\&.getenv("CLASSPATH")\fRをコールして問い合せる場合です。
+.RE
+.PP
+\-D\fIproperty=value\fR
+.RS 4
+システム・プロパティの値を設定します。
+.RE
+.PP
+\-d32
+.RS 4
+アプリケーションを32ビット環境で実行します。32ビット環境がインストールされていないかサポートされていない場合は、エラーが報告されます。デフォルトでは、64ビット専用システムが使用されている場合を除き、アプリケーションは32ビット環境で実行されます。
+.RE
+.PP
+\-d64
+.RS 4
+アプリケーションを64ビット環境で実行します。64ビット環境がインストールされていないかサポートされていない場合は、エラーが報告されます。デフォルトでは、64ビット専用システムが使用されている場合を除き、アプリケーションは32ビット環境で実行されます。
+.sp
+現在のところ、Java HotSpot Server VMのみが64ビットの操作をサポートしているため、\fI\-d64\fR使用時には\fI\-server\fRオプションが暗黙的に使用されます。\fI\-d64\fR使用時には、\fI\-client\fRオプションは無視されます。この仕様は、将来のリリースでは変更になる可能性があります。
+.RE
+.PP
+\-disableassertions[:\fIpackage name\fR"\&.\&.\&." | :\fIclass name\fR ], \-da[:\fIpackage name\fR"\&.\&.\&." | :\fIclass name\fR ]
+.RS 4
+アサーションを無効にします。これがデフォルトです。
+.sp
+引数なしの\fIdisableassertions\fRまたは\fI\-da\fRを指定すると、アサーションが無効になります。「\fI\&.\&.\&.\fR」で終わる引数を1つ指定すると、指定したパッケージとそのサブパッケージ内でアサーションが無効になります。引数として\fI"\&.\&.\&."\fRを指定すると、現在の作業ディレクトリにある名前のないパッケージ内でアサーションが無効になります。「\fI\&.\&.\&.\fR」で終わらない引数を1つ指定すると、指定したクラス内でアサーションが無効になります。
+.sp
+パッケージ\fIcom\&.wombat\&.fruitbat\fR内ではアサーションを有効にし、クラス\fIcom\&.wombat\&.fruitbat\&.Brickbat\fR内ではアサーションを無効にしたうえで、プログラムを実行するには、次のようなコマンドを使用します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java \-ea:com\&.wombat\&.fruitbat\&.\&.\&. \-da:com\&.wombat\&.fruitbat\&.Brickbat <Main Class>
+.fi
+.if n \{\
+.RE
+.\}
+\fI\-disableassertions\fRおよび\fI\-da\fRスイッチは、すべてのクラス・ローダーおよびシステム・クラスに適用されます。システム・クラスにはクラス・ローダーはありません。ただし、このルールには1つ例外があります。それは、引数なしの形式でこのスイッチを指定すると、その指定がシステムに適用されない、ということです。この例外を利用すれば、システム・クラスを除くすべてのクラスでアサーションを簡単に有効にすることができます。\fI\-disablesystemassertions\fRオプションは、すべてのシステム・クラスでアサーションを有効にする別のスイッチを提供します。
+.RE
+.PP
+\-enableassertions[:\fIpackage name\fR"\&.\&.\&." | :\fIclass name\fR ], \-ea[:\fIpackage name\fR"\&.\&.\&." | :\fIclass name\fR ]
+.RS 4
+アサーションを有効にします。アサーションは、デフォルトでは無効になっています。
+.sp
+引数なしの\fIenableassertions\fRまたは\fI\-ea\fRを指定すると、アサーションが有効になります。「\fI\&.\&.\&.\fR」で終わる引数を1つ指定すると、指定したパッケージとそのサブパッケージ内でアサーションが有効になります。引数として\fI"\&.\&.\&."\fRを指定すると、現在の作業ディレクトリにある名前のないパッケージ内でアサーションが有効になります。「\fI\&.\&.\&.\fR」で終わらない引数を1つ指定すると、指定したクラス内でアサーションが有効になります。
+.sp
+単一コマンドにこれらのスイッチのインスタンスを複数指定した場合は、指定したスイッチが順番に処理されてからクラスがロードされます。したがって、たとえば、パッケージcom\&.wombat\&.fruitbat(サブパッケージを含む)内でのみアサーションを有効にしてプログラムを実行するには、次のようなコマンドを使用します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java \-ea:com\&.wombat\&.fruitbat\&.\&.\&. <Main Class>
+.fi
+.if n \{\
+.RE
+.\}
+\fI\-enableassertions\fRおよび\fI\-ea\fRスイッチは、すべてのクラス・ローダーおよびシステム・クラスに適用されます。システム・クラスにはクラス・ローダーはありません。ただし、このルールには1つ例外があります。それは、引数なしの形式でこのスイッチを指定すると、その指定がシステムに適用されない、ということです。この例外を利用すれば、システム・クラスを除くすべてのクラスでアサーションを簡単に有効にすることができます。\fI\-enablesystemassertions\fRオプションは、すべてのシステム・クラスでアサーションを有効にする別のスイッチを提供します。
+.RE
+.PP
+\-enablesystemassertions, \-esa
+.RS 4
+すべてのシステム・クラス内でアサーションを有効にします。つまり、システム・クラスについてアサーションのデフォルト・ステータスをtrueに設定します。
+.RE
+.PP
+\-disablesystemassertions, \-dsa
+.RS 4
+すべてのシステム・クラス内でアサーションを無効にします。
+.RE
+.PP
+\-helpまたは\-?
+.RS 4
+使用方法を表示して終了します。
+.RE
+.PP
+\-jar
+.RS 4
+JARファイルにカプセル化されたプログラムを実行します。最初の引数は、起動クラスの名前ではなく、JARファイルの名前にします。このオプションが機能するには、JARファイルのマニフェストに\fIMain\-Class\fR:
+\fIclassname\fRという形式の行を指定する必要があります。\fIclassname\fRには、アプリケーションの開始位置として機能する\fIpublic static void main(String[] args)\fRメソッドを含むクラスを指定します。
+.sp
+このオプションを使用すると、指定したJARファイルがすべてのユーザー・クラスのソースになり、ユーザー・クラス・パスの他の設定は無視されます。
+.sp
+\fIjava \-jar\fRオプションで実行できるJARファイルは、実行権限のセットを保持しています。このため、\fIjava \-jar\fRを使用しないで実行することも可能です。次の「JARファイルの概要」を参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/technotes/guides/jar/jarGuide\&.html
+.RE
+.PP
+\-javaagent:\fIjarpath\fR[\fI=options\fR]
+.RS 4
+Javaプログラミング言語エージェントをロードします。
+.RE
+.PP
+\-jre\-restrict\-search
+.RS 4
+ユーザー・プライベートなJREをバージョン検索に含めます。
+.RE
+.PP
+\-no\-jre\-restrict\-search
+.RS 4
+ユーザー・プライベートなJREをバージョン検索から除外します。
+.RE
+.PP
+\-showversion
+.RS 4
+バージョン情報を表示して続行します。(も参照してください。)
+.RE
+.PP
+\-splash:\fIimagepath\fR
+.RS 4
+\fIimagepath\fRに指定された画像を含むスプラッシュ画面を表示します。
+.RE
+.PP
+\-verbose, \-verbose:class
+.RS 4
+クラスがロードされるたびにクラスに関する情報を表示します。
+.RE
+.PP
+\-verbose:gc
+.RS 4
+ガベージ・コレクション・イベントが発生するたびに報告します。
+.RE
+.PP
+\-verbose:jni
+.RS 4
+ネイティブ・メソッドの使用およびその他のJava Native Interfaceアクティビティに関する情報を報告します。
+.RE
+.PP
+\-version
+.RS 4
+バージョン情報を表示して終了します。\fI\-showversion\fRオプションも参照してください。
+.RE
+.PP
+\-version:\fIrelease\fR
+.RS 4
+コマンドラインに指定されたクラスまたはJARファイルが、releaseで指定されたバージョンを必要としていることを示します。コールされた\fIjava\fRコマンドのバージョンがこの指定内容を満たさず、かつ適切な実装がシステム上で見つかった場合には、その適切な実装が使用されます。
+.sp
+\fIrelease\fRオプションでは、特定のバージョンと、バージョン文字列と呼ばれるバージョンのリストを指定します。バージョン文字列は、いくつかのバージョン範囲を空白で区切った形式の順序付きリストです。バージョン範囲は、\fIバージョンID\fR、\fIバージョンID\fRとそれに続くアスタリスク(\fI*\fR)、\fIバージョンID\fRとそれに続くプラス記号(\fI+\fR)、またはアンパサンド(\fI&\fR)を使用して結合された2つの\fIバージョンID\fRから構成されるバージョン範囲です。次の例のように、アスタリスクはプレフィックス一致を、プラス記号は指定されたバージョン以上を、アンパサンドは2つのバージョン範囲の論理\fIand\fRをそれぞれ意味します。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-version:"1\&.6\&.0_13 1\&.6* & 1\&.6\&.0_10+"
+.fi
+.if n \{\
+.RE
+.\}
+前の例の意味は、バージョン1\&.6\&.0_13、または1\&.6を\fIバージョンID\fRプレフィックスに持つ1\&.6\&.0_10以上のバージョンをクラスまたはJARファイルが必要としている、ということです。バージョン文字列の厳密な構文や定義については、「Javaネットワーク起動プロトコル & API仕様(JSR\-56)」の「付録A」を参照してください。
+.sp
+JARファイルの場合は、バージョン要件をコマンドラインに指定するよりも、JARファイルのマニフェスト内に指定することが推奨されています。
+.sp
+このオプションの使用に関する重要なポリシー情報は、注意を参照してください。
+.RE
+.SS "非標準オプション"
+.PP
+\-X
+.RS 4
+非標準オプションに関する情報を表示して終了します。
+.RE
+.PP
+\-Xint
+.RS 4
+インタプリタ専用モードで動作します。ネイティブ・コードへのコンパイルは無効になり、すべてのバイトコードがインタプリタによって実行されます。Java HotSpot VMクライアントに対応するコンパイラが提供するパフォーマンス上の利点は、このモードでは実現されません。
+.RE
+.PP
+\-Xbatch
+.RS 4
+バックグラウンド・コンパイルを無効にします。通常、Java VMでは、バックグラウンド・コンパイルが終了するまで、メソッドをバックグラウンド・タスクとしてコンパイルし、インタプリタ・モードでメソッドを実行します。\-Xbatchフラグを指定すると、バックグラウンド・コンパイルが無効になり、すべてのメソッドのコンパイルが完了するまでフォアグラウンド・タスクとして処理されます。
+.RE
+.PP
+\-X\fIbootclasspath\fR:\fIbootclasspath\fR
+.RS 4
+\fIブート・クラス・ファイルを検索するディレクトリ、JARファイルおよびZIPアーカイブのコロンで区切られたリストを指定します。\fR指定したパスに存在するブート・クラス・ファイルが、JavaプラットフォームJDKに含まれるブート・クラス・ファイルのかわりに使用されます。
+.sp
+rt\&.jar内のクラスをオーバーライドする目的でこのオプションを使用するアプリケーションは、システムに配置しないでください。Java Runtime Environmentバイナリ・コード・ライセンス違反になります。
+.RE
+.PP
+\-X\fIbootclasspath\fR/a:\fIpath\fR
+.RS 4
+ディレクトリ、JARファイルおよびZIPアーカイブのパスをコロンで区切って指定します。パスはデフォルトのブートストラップ・クラス・パスの後に追加されます。
+.RE
+.PP
+\-X\fIbootclasspath\fR/p:\fIpath\fR
+.RS 4
+ディレクトリ、JARファイルおよびZIPアーカイブのパスをコロンで区切って指定します。パスはデフォルトのブートストラップ・クラス・パスの前に追加されます。
+.sp
+rt\&.jar内のクラスをオーバーライドする目的で、このオプションを使用するアプリケーションをデプロイしないでください。Java Runtime Environmentバイナリ・コード・ライセンスに違反します。
+.RE
+.PP
+\-Xcheck:jni
+.RS 4
+Java Native Interface (JNI)機能に対して追加チェックを行います。具体的には、Java仮想マシンはJNIリクエストを処理する前に、JNI関数に渡されるパラメータと、実行環境のデータを検証します。無効なデータが見つかった場合は、ネイティブ・コードに問題があることを示しているため、Java仮想マシンは致命的エラーを発生して終了します。このオプションを使用すると、パフォーマンス低下が予想されます。
+.RE
+.PP
+\-Xfuture
+.RS 4
+クラスとファイルの形式を厳密にチェックします。下位互換性を保つため、SDK仮想マシンが実行するデフォルトの形式チェックは、JDKソフトウェアのバージョン1\&.1\&.xが実行するチェックと同程度の厳密さになっています。\fI\-Xfuture\fRオプションを指定すると、クラス・ファイル形式の仕様への準拠を強化するためのより厳密なチェックが有効になります。Javaアプリケーション起動ツールの将来のリリースでは、より厳密なチェックがデフォルトになるため、新しいコードを開発するときにはこのフラグを使用することをお薦めします。
+.RE
+.PP
+\-Xnoclassgc
+.RS 4
+クラスのガベージ・コレクションを無効にします。このオプションを使用すると、ロード済クラスからメモリーが回復されることがなくなるため、全体的なメモリー使用量が増大します。この場合、アプリケーションによっては\fIOutOfMemoryError\fRがスローされる可能性があります。
+.RE
+.PP
+\-Xincgc
+.RS 4
+インクリメンタル・ガベージ・コレクタを有効にします。インクリメンタル・ガベージ・コレクタは、デフォルトでは無効になっています。有効にすると、プログラムの実行中にガベージ・コレクションによる一時停止が発生しなくなります。インクリメンタル・ガベージ・コレクタは、プログラムと同時に実行することがあり、この場合、プログラムの利用できるプロセッサ能力が低下します。
+.RE
+.PP
+\-Xloggc:\fIfile\fR
+.RS 4
+\fI\-verbose:gc\fRと同様にガベージ・コレクション・イベントが発生するたびに報告しますが、そのデータをファイルに記録します。\fI\-verbose:gc\fRを指定したときに報告される情報の他に、報告される各イベントの先頭に、最初のガベージ・コレクション・イベントからの経過時間(秒単位)が付け加えられます。
+.sp
+ネットワークのレスポンス時間によってJava VMの実行速度が低下するのを避けるため、このファイルの格納先は、常にローカル・ファイル・システムにしてください。ファイル・システムが満杯になると、ファイルは切り詰められ、そのファイルにデータが引続き記録されます。このオプションと\fI\-verbose:gc\fRの両方がコマンドラインに指定されている場合は、このオプションが優先されます。
+.RE
+.PP
+\-Xmnsizeまたは\-XX:\fINewSize\fR
+.RS 4
+若い世代(ナーサリ)のサイズを設定します。
+.RE
+.PP
+\-Xms\fIn\fR
+.RS 4
+メモリー割当てプールの初期サイズをバイト数で指定します。指定する値は、1MBより大きい1024の倍数にする必要があります。キロバイトを指定するには、文字\fIk\fRまたは\fIK\fRを付けます。メガバイトを指定するには、文字\fIm\fRまたは\fIM\fRを付けます。デフォルト値は、実行時にシステム構成に基づいて選択されます。次の\fI「ガベージ・コレクタのエルゴノミクス」\fRを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/technotes/guide/vm/gc\-ergonomics\&.html
+.sp
+例:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-Xms6291456
+\-Xms6144k
+\-Xms6m
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-Xmx\fIn\fR
+.RS 4
+メモリー割当てプールの最大サイズをバイト数で指定します。指定する値は、2MBより大きい1024の倍数にする必要があります。キロバイトを指定するには、文字\fIk\fRまたは\fIK\fRを付けます。メガバイトを指定するには、文字\fIm\fRまたは\fIM\fRを付けます。デフォルト値は、実行時にシステム構成に基づいて選択されます。
+.sp
+サーバー・デプロイメントでは、\fI\-Xms\fRおよび\fI\-Xmx\fRは通常同じ値に設定されます。次の\fI「ガベージ・コレクタのエルゴノミクス」\fRを参照してください:
+
+http://docs\&.oracle\&.com/javase/7/docs/technotes/guide/vm/gc\-ergonomics\&.html
+.sp
+例:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-Xmx83886080
+\-Xmx81920k
+\-Xmx80m
+.fi
+.if n \{\
+.RE
+.\}
+Solaris 7およびSolaris 8 SPARCプラットフォームの場合のこの値の上限は、およそ4000mからオーバーヘッドの量を引いたものです。Solaris 2\&.6およびx86プラットフォームの場合の上限は、およそ2000mからオーバーヘッドの量を引いたものです。Linuxプラットフォームの場合の上限は、およそ2000mからオーバーヘッドの量を引いたものです。
+.RE
+.PP
+\-Xprof
+.RS 4
+実行中のプログラムのプロファイルを生成し、プロファイル・データを標準出力に出力します。このオプションは、プログラム開発用のユーティリティとして提供されています。本番稼働システムでの使用を目的としたものではありません。
+.RE
+.PP
+\-Xrs
+.RS 4
+Java VMによるオペレーティング・システム・シグナルの使用を減らします。
+.sp
+以前のリリースでは、Javaアプリケーションを秩序正しくシャットダウンするためのシャットダウン・フック機能が追加されました。この機能により、Java VMが突然終了した場合でも、シャットダウン時にユーザー・クリーン・アップコード(データベース接続のクローズなど)を実行できるようになりました。
+.sp
+Java VMは、予期しないJava VM終了のシャットダウン・フックを実装するためにシグナルをキャッチします。Java VMは、\fISIGHUP\fR、\fISIGINT\fRおよび\fISIGTERM\fRを使用してシャットダウン・フックの実行を開始します。
+.sp
+JVMは、デバッグの目的でスレッド・スタックをダンプするという機能を実現するために、同様のメカニズムを使用します。JVMは、スレッド・ダンプを実行するために\fISIGQUIT\fRを使用します。
+.sp
+Java VMを埋め込んでいるアプリケーションは\fISIGINT\fRや\fISIGTERM\fRなどのシグナルを頻繁にトラップする必要があり、その結果Java VMのシグナル・ハンドラと衝突する可能性があります。\fI\-Xrs\fRコマンドライン・オプションを使用すると、この問題に対処できます。\fI\-Xrs\fRがJava VMで使用されている場合、\fISIGINT\fR、\fISIGTERM\fR、\fISIGHUP\fRおよび\fISIGQUIT\fRのシグナル・マスクはJava VMによって変更されず、これらのシグナルのシグナル・ハンドラはインストールされません。
+.sp
+\fI\-Xrs\fRを指定すると、次の2つの結果が生じます:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fISIGQUIT\fRによるスレッド・ダンプは使用できません。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+シャットダウン・フック処理の実行は、Java VMが終了しようとしている時点で\fISystem\&.exit()\fRを呼び出すなどして、ユーザー・コード側で行う必要があります。
+.RE
+.RE
+.PP
+\-Xss\fIn\fR
+.RS 4
+スレッドのスタック・サイズを設定します。
+.RE
+.PP
+\-XX:AllocationPrefetchStyle=\fIn\fR
+.RS 4
+割当中に使用されるプリフェッチのスタイルを設定します。デフォルトは2です。
+.RE
+.PP
+\-XX:+AggressiveOpts
+.RS 4
+積極的な最適化を有効にします。
+.RE
+.PP
+\-XX:+|\-DisableAttachMechanism
+.RS 4
+コマンド(\fIjmap\fRや\fIjconsole\fRなど)がJava VMに接続できるかどうかを指定します。デフォルトでは、この機能は無効になっています。つまり、次の例のように接続が有効です。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java \-XX:+DisableAttachMechanism
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-XXLargePageSizeInBytes=\fIn\fR
+.RS 4
+ラージ・ページの最大サイズを指定します。
+.RE
+.PP
+\-XX:MaxGCPauseMillis=\fIn\fR
+.RS 4
+最大GC休止時間のターゲットを設定します。
+.sp
+これはソフト・ゴールのため、Java VMは実現のために最善の努力をします。デフォルトで設定されている最大値はありません。
+.RE
+.PP
+\-XX:NewSize
+.RS 4
+若い世代(ナーサリ)のサイズを設定します。\fI\-Xmnsize\fRと同じです。
+.RE
+.PP
+\-XX:ParallelGCThreads=\fIn\fR
+.RS 4
+パラレル・コレクタ内のGCスレッドの数を設定します。
+.RE
+.PP
+\-XX:PredictedClassLoadCount=\fIn\fR
+.RS 4
+このオプションでは、最初に\fIUnlockExperimentalVMOptions\fRフラグを設定する必要があります。アプリケーションが多数のクラスをロードする場合で、特に\fIclass\&.forName()\fRが頻繁に使用される場合は\fIPredictedClassLoadCount\fRフラグを使用します。推奨値は、\fI\-verbose:class\fRからの出力に示されているロード済クラスの数です。
+.sp
+例:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java \-XX:+UnlockExperimentalVMOptions \-XX:PredictedClassLoadCount=60013
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-XX:+PrintCompilation
+.RS 4
+Java HotSpot VMダイナミック・ランタイム・コンパイラからの詳細出力を印刷します。
+.RE
+.PP
+\-XX:+PrintGCDetails \-XX:+PrintGCTimeStamps
+.RS 4
+ガベージ・コレクション出力をタイムスタンプとともに印刷します。
+.RE
+.PP
+\-XX:SoftRefLRUPolicyMSPerMB=0
+.RS 4
+このフラグは、ソフトウェア参照の積極的処理を有効にします。このフラグは、ソフトウェア参照カウントがJava HotSpot VMガベージ・コレクタに影響する場合に使用します。
+.RE
+.PP
+\-XX:TLABSize=\fIn\fR
+.RS 4
+スレッド・ローカル割当てバッファ(TLAB)がJava HotSpot VMでデフォルトで有効になっています。Java HotSpot VMでは、TLABのサイズを割当てパターンに基づいて決定します。\fI\-XX:TLABSize\fRオプションでTLABのサイズを微調整できます。
+.RE
+.PP
+\-XX:+UseAltSigs
+.RS 4
+Java VMではデフォルトで\fISIGUSR1\fRおよび\fISIGUSR2\fRを使用しますが、\fISIGUSR1\fRおよび\fISIGUSR2\fRをシグナル連鎖するアプリケーションと競合する場合があります。\fI\-XX:+UseAltSigs\fRオプションを指定すると、Java VMはデフォルトとして\fISIGUSR1\fRと\fISIGUSR2\fR以外のシグナルを使用します。
+.RE
+.PP
+\-XX:+|\-UseCompressedOops
+.RS 4
+64ビットJava VMで圧縮された参照を有効にします。
+.sp
+このオプションは、デフォルトでtrueになります。
+.RE
+.PP
+\-XX:+UseConcMarkSweepGCまたは\-XX:+UseG1GC
+.RS 4
+Concurrent Mark Sweep (CMS)またはG1ガベージ・コレクションを有効にします。
+.RE
+.PP
+\-XX:+|\-UseLargePages
+.RS 4
+ラージ・ページ・サポートを有効にします。
+.sp
+ラージ・ページは、Solarisではデフォルトで有効になっています。
+.RE
+.PP
+\-XX:+UseParallelOldGC
+.RS 4
+パラレル・ガベージ・コレクタを有効にします。これはスループットおよび平均レスポンス時間に対して最適化されます。
+.RE
+.SH "注意"
+.PP
+\fI\-version:release\fRオプションでは、リリース指定の複雑さに制限はありません。ただし、可能なリリース指定の限られたサブセットのみが適切なサウンド・ポリシーを表現でき、それらのみが完全にサポートされます。それらのポリシーを次に示します。
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+任意のバージョン。これは、このオプションを使用しないことで表現できます。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+次の例のように、ある特定の\fIバージョンID\fR値よりも大きい任意のバージョン。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+"1\&.6\&.0_10+"
+.fi
+.if n \{\
+.RE
+.\}
+この場合、1\&.6\&.0_10よりも大きい任意のバージョンが使用されます。これは、指定されたバージョンで特定のインタフェースが導入された(あるいはそのバグが修正された)場合に便利です。
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+次の例のように、ある特定のバージョンIDよりも大きいバージョンで、そのリリース・ファミリの上限によって制限されるもの。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+"1\&.6\&.0_10+ & 1\&.6*"
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+次の例のように、項目2または3の\fIor\fR式。
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ "1\&.6\&.0_10+ & 1\&.6* 1\&.7+"
+.fi
+.if n \{\
+.RE
+.\}
+項目2と同様です。これは、ある変更が特定のリリース(1\&.7)で導入されたが、その同じ変更が以前のリリースのアップデートでも利用可能になった、という場合に便利です。
+.RE
+.SH "パフォーマンス・チューニングの例"
+.PP
+スループットまたはレスポンス時間の高速化のどちらかを最適化するための、試験的なチューニング・フラグの使用例を次に示します。
+.PP
+\fBExample 1\fR, スループットを向上するためのチューニング
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java \-d64 \-server \-XX:+AggressiveOpts \-XX:+UseLargePages \-Xmn10g  \-Xms26g \-Xmx26g 
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBExample 2\fR, レスポンス時間を速くするためのチューニング
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ java \-d64 \-XX:+UseG1GC \-Xms26g Xmx26g \-XX:MaxGCPauseMillis=500 \-XX:+PrintGCTimeStamps 
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "終了ステータス"
+.PP
+一般に、次の終了値が起動ツールから返されるのは通常、起動元が不正な引数で呼び出されたか、深刻なエラーが発生したか、あるいはJava仮想マシンから例外がスローされた場合です。ただしJavaアプリケーションは、API呼出し\fISystem\&.exit(exitValue)\fRを使用して任意の値を返すことを選択することもできます。
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI0\fR: 正常終了
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI>0\fR: エラー発生
+.RE
+.SH "関連項目"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+javac [SolarisおよびLinux] [Windows]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jdb [SolarisおよびLinux] [Windows]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+javah [SolarisおよびLinux] [Windows]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jar [SolarisおよびLinux] [Windows]
+.RE
+.br
+'pl 8.5i
+'bp

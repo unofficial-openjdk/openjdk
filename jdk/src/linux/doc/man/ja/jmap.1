@@ -1,0 +1,179 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jmap 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jmap \- メモリー・マップ
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jmap\fP [ option ] pid
+.fl
+\f3jmap\fP [ option ] executable core
+.fl
+\f3jmap\fP [ option ] [server\-id@]remote\-hostname\-or\-IP
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+option 
+各オプションは互いに排他的です。オプションを使用する場合、コマンド名の直後に記述します。 
+.TP 3
+pid 
+出力するメモリー・マップのプロセスID。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)を使用します。 
+.br
+.TP 3
+executable 
+コア・ダンプの作成元のJava実行可能ファイル。 
+.br
+.TP 3
+core 
+出力するメモリー・マップのコア・ファイル。 
+.br
+.TP 3
+remote\-hostname\-or\-IP 
+リモート・デバッグ・サーバー(jsadebugd(1)を参照)のホスト名またはIPアドレス。 
+.br
+.TP 3
+server\-id 
+複数のデバッグ・サーバーが同一のリモート・ホストで動作している場合の、オプション固有のIDです。
+.br
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jmap\fPは、指定されたプロセスやコア・ファイルまたはリモート・デバッグ・サーバーの、共用オブジェクト・メモリー・マップまたはヒープ・メモリーの詳細を出力します。指定されたプロセスが64ビットVM上で実行されている場合、\f2\-J\-d64\fPオプションを指定する必要がある場合があります。次に例を示します。
+.LP
+.nf
+\f3
+.fl
+jmap \-J\-d64 \-heap pid
+.fl
+\fP
+.fi
+
+.LP
+.LP
+\f3注意: このユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。dbgeng.dllが存在していないWindowsシステムでは、「Debugging Tools For Windows」をインストールしないとこれらのツールが正常に動作しません。また、\fP\f4PATH\fP\f3環境変数には、ターゲット・プロセスによって使用される\fP\f4jvm.dll\fP\f3の場所、またはクラッシュ・ダンプ・ファイルが生成された場所が含まれるようにしてください。\fP
+.LP
+.LP
+\f3次に例を示します。\fP\f4set PATH=<jdk>\\jre\\bin\\client;%PATH%\fP
+.LP
+.br
+
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+<オプションなし> 
+オプションを使用しない場合、jmapは共用オブジェクト・マッピングを出力します。ターゲットVMにロードされた共用オブジェクトごとに、開始アドレス、マッピングのサイズおよび共用オブジェクト・ファイルのフルパスが出力されます。これは、Solaris \f3pmap\fPユーティリティと類似しています。 
+.br
+.TP 3
+\-dump:[live,]format=b,file=<filename> 
+Javaヒープをhprofバイナリ形式でfilenameにダンプします。\f2live\fPサブオプションは省略可能です。これが指定された場合、ヒープ内で生存中のオブジェクトのみがダンプされます。ヒープ・ダンプを参照するには、生成されたファイルをjhat(1) (Java Heap Analysis Tool)を使用して読み取ります。 
+.br
+.TP 3
+\-finalizerinfo 
+ファイナライズを待っているオブジェクトに関する情報を出力します。 
+.br
+.TP 3
+\-heap 
+ヒープ・サマリーを出力します。使用されるGCアルゴリズム、ヒープ構成および世代ごとのヒープ使用率が出力されます。 
+.br
+.TP 3
+\-histo[:live] 
+ヒープのヒストグラムを出力します。Javaクラスごとに、オブジェクトの数、バイト単位でのメモリー・サイズ、および完全修飾クラス名が出力されます。VM内部クラス名は、「*」の接頭辞を付けて出力されます。\f2live\fPサブオプションが指定された場合、生存中のオブジェクトのみがカウントされます。 
+.br
+.TP 3
+\-permstat 
+Permanent世代のJavaヒープの、クラス・ローダー関連の統計データを出力します。クラス・ローダーごとに、その名前、状態、アドレス、親クラス・ローダー、およびクラス・ローダーがロードしたクラスの数とサイズが出力されます。さらに、internされた文字列の数とサイズも出力されます。 
+.br
+.TP 3
+\-F 
+強制(Force)。pidが応答しない場合に、jmap \-dumpまたはjmap \-histoオプションとともに使用します。このモードでは、\f2live\fPサブオプションはサポートされません。 
+.br
+.TP 3
+\-h 
+ヘルプ・メッセージが出力されます。
+.br
+.br
+.TP 3
+\-help 
+ヘルプ・メッセージが出力されます。
+.br
+.br
+.TP 3
+\-J<flag> 
+jmapが実行されているJava仮想マシンに<flag>を渡します。 
+.br
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+pmap(1) 
+.TP 2
+o
+jhat(1) 
+.TP 2
+o
+jps(1) 
+.TP 2
+o
+jsadebugd(1) 
+.RE
+
+.LP
+ 

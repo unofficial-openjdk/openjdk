@@ -1,0 +1,116 @@
+." Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jcmd 1 "11 Jul 2013"
+
+.LP
+.SH "NAME"
+jcmd \- 実行中のJava仮想マシンに診断コマンド・リクエストを送信します。
+.SH "形式"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+java [ \fIoptions\fR ]
+java [ \fIpid\fR | \fImain\-class\fR ] PerfCounter\&.print
+java [ \fIpid\fR | \fImain\-class\fR ] \fIcommand\fR [\fIarguments\fR]
+java [ \fIpid\fR | \fImain\-class\fR ] \-f \fIfile\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIオプション\fR
+.RS 4
+コマンドライン・\fIオプション\fR。オプションを参照してください。
+.RE
+.PP
+\fIpid\fR
+.RS 4
+診断コマンド・リクエストを受信するプロセスを指定します。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+\fImain class\fR
+.RS 4
+診断コマンド・リクエストを受信するプロセスのメイン・クラスです。プロセスを照合する際には、指定された文字列がメイン・クラス名に部分文字列として含まれているすべてのプロセスが一致したとみなされます。いくつかの実行中のJavaプロセスが同じメイン・クラスを共有している場合は、それらすべてのプロセスに診断コマンド・リクエストが送信されます。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+\fIcommand\fR [arguments]
+.RS 4
+診断コマンド・リクエストを受信するプロセスのメイン・クラスです。プロセスを照合する際には、指定された文字列がメイン・クラス名に部分文字列として含まれているすべてのプロセスが一致したとみなされます。いくつかの実行中のJavaプロセスが同じメイン・クラスを共有している場合は、それらすべてのプロセスに診断コマンド・リクエストが送信されます。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+Perfcounter\&.print
+.RS 4
+ターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。パフォーマンス・カウンタのリストはJavaプロセスによって異なる場合があります。
+.RE
+.PP
+\-f \fIfile\fR
+.RS 4
+\fIfile\fRからコマンドを読み取って、ターゲットのJavaプロセスでコールします。\fIfile\fRでは、各コマンドを1行に記述する必要があります。#で始まる行は無視されます。すべての行がコールされるか、\fIstop\fRキーワードを含む行が読み取られると、\fIfile\fRの処理が終了します。
+.RE
+.SH "説明"
+.PP
+\fIjcmd\fRは、この機能をサポートするJava仮想マシンに診断コマンド・リクエストを送信するユーティリティです。
+.PP
+引数なしまたは\fI\-l\fRオプションを指定して\fIjcmd\fRを使用すると、実行中のJavaプロセスがプロセスID、メイン・クラスおよびコマンドライン引数とともに出力されます。
+.PP
+プロセスIDをコマンドラインに指定すると、\fIjcmd\fRでは、このIDのプロセスに診断コマンド・リクエストが送信されます。
+.PP
+メイン・クラスをコマンドラインに指定すると、\fIjcmd\fRでは、コマンドライン引数がJavaプロセスのメイン・クラスの部分文字列であるすべてのJavaプロセスに診断コマンド・リクエストが送信されます。
+.PP
+\fIPerfCounter\&.print\fR引数を指定すると、\fIjcmd\fRではターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。
+.PP
+\fI\-f\fRオプションを指定すると、\fIjcmd\fRでは、指定された\fIfile\fRに格納されている診断コマンドがターゲットのJavaプロセスに送信されます。
+.SH "オプション"
+.PP
+各オプションは互いに排他的です。オプションを使用する場合は、コマンド名の直後に記述する必要があります。
+.PP
+\-l
+.RS 4
+実行中のJavaプロセスの一覧がプロセスID、メイン・クラスおよびコマンドライン引数とともに出力されます。
+.RE
+.PP
+\-h
+.RS 4
+ヘルプ・メッセージが出力されます。
+.RE
+.PP
+\-help
+.RS 4
+ヘルプ・メッセージが出力されます。
+.RE
+.SH "関連項目"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jps
+.RE
+.br
+'pl 8.5i
+'bp

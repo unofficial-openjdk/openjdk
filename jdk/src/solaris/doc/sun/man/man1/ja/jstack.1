@@ -1,0 +1,172 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jstack 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jstack \- スタック・トレース
+.br
+
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ
+.br
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+関連項目 
+.TP 2
+o
+既知のバグ
+.br
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jstack\fP [ option ] pid
+.fl
+\f3jstack\fP [ option ] executable core
+.fl
+\f3jstack\fP [ option ] [server\-id@]remote\-hostname\-or\-IP
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.LP
+各オプションは互いに排他的です。オプションを使用する場合、コマンド名の直後に記述します。オプションを参照してください。
+.LP
+.RS 3
+.TP 3
+pid 
+出力するスタック・トレースのプロセスIDです。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)を使用します。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+executable 
+コア・ダンプの作成元のJava実行可能ファイル。 
+.br
+.TP 3
+core 
+出力するスタック・トレースのコア・ファイルです。 
+.br
+.TP 3
+remote\-hostname\-or\-IP 
+リモート・デバッグ・サーバー(jsadebugd(1)を参照)のホスト名またはIPアドレス。 
+.br
+.TP 3
+server\-id 
+複数のデバッグ・サーバーが同一のリモート・ホストで実行している場合の、オプション固有のID。 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jstack\fPは、指定されたJavaプロセスやコア・ファイルまたはリモート・デバッグ・サーバーに対するJavaスレッドのJavaスタック・トレースを出力します。Javaフレームごとに、フルクラス名、メソッド名、「bci」(バイトコード・インデックス)、および行番号(利用可能な場合)が出力されます。\-mオプションを使用すると、jstackは、すべてのスレッドのJavaフレームとネイティブ・フレームの両方を、「pc」(プログラム・カウンタ)とともに出力します。ネイティブ・フレームごとに、「pc」に最も近いネイティブ・シンボル(利用可能な場合)が出力されます。C++分解名は分解解除されません。C++名を分解解除するには、このコマンドの出力を\f3c++filt\fPにパイプします。指定されたプロセスが64ビットVM上で実行されている場合、\f2\-J\-d64\fPオプションを指定する必要がある場合があります。次に例を示します。
+.br
+
+.LP
+.nf
+\f3
+.fl
+jstack \-J\-d64 \-m pid
+.fl
+\fP
+.fi
+
+.LP
+.LP
+\f3注意\fP \- このユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。dbgeng.dllが存在していないWindowsシステムでは、「Debugging Tools For Windows」をインストールしないとこれらのツールが正常に動作しません。また、\f2PATH\fP環境変数には、ターゲット・プロセスによって使用される\f2jvm.dll\fPの場所、またはクラッシュ・ダンプ・ファイルが生成された場所が含まれるようにしてください。
+.LP
+.LP
+次に例を示します。\f2set PATH=<jdk>\\jre\\bin\\client;%PATH%\fP
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-F 
+「jstack [\-l] pid」が応答しない場合にスタック・ダンプを強制します。 
+.TP 3
+\-l 
+長形式のリスト。所有java.util.concurrentの
+.na
+\f2所有できるシンクロナイザ\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/locks/AbstractOwnableSynchronizer.htmlの一覧など、ロックについての追加情報を印刷します。 
+.TP 3
+\-m 
+混合モード(JavaおよびネイティブC/C++フレームの両方)のスタック・トレースを出力します。 
+.TP 3
+\-h 
+ヘルプ・メッセージを出力します。
+.br
+.br
+.TP 3
+\-help 
+ヘルプ・メッセージを出力します。
+.br
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+pstack(1) 
+.TP 2
+o
+c++filt(1) 
+.TP 2
+o
+jps(1) 
+.TP 2
+o
+jsadebugd(1) 
+.RE
+
+.LP
+.SH "既知のバグ"
+.LP
+.LP
+混合モードのスタック・トレース(\-mオプション使用)は、リモート・デバッグ・サーバーでは機能しません。
+.LP
+ 

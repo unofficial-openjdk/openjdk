@@ -1,0 +1,156 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jconsole 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jconsole \- Java監視および管理コンソール
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jconsole\fP [ \f2options\fP ] [ connection ... ]
+.fl
+
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+options 
+オプションを使用する場合、コマンド名の直後に記述してください。 
+.TP 3
+connection = pid | host:port | jmxUrl 
+.RS 3
+.TP 2
+o
+\f2pid\fPローカルのJava VMのプロセスID。Java VMは、jconsoleを実行しているユーザーIDと同じユーザーIDを使用して実行する必要があります。詳細は、
+.na
+\f2JMXの監視および管理\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/management/agent.htmlを参照してください。 
+.TP 2
+o
+\f2host\fP:\f2port\fP: Java VMを実行しているホスト・システムの名前と、Java VMを起動したときにシステム・プロパティ\f2com.sun.management.jmxremote.port\fPで指定したポート番号。詳細は、
+.na
+\f2JMXの監視および管理\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/management/agent.htmlを参照してください。 
+.TP 2
+o
+\f2jmxUrl\fP: 
+.na
+\f2JMXServiceURL\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/javax/management/remote/JMXServiceURL.htmlに記述されている接続先のJMXエージェントのアドレス。 
+.RE
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jconsole\fPコマンドは、ローカル・マシンまたはリモート・マシン上のJavaアプリケーションと仮想マシンの監視と管理を行うグラフィカル・コンソール・ツールを起動します。
+.LP
+.LP
+Windows上では、\f3jconsole\fPはコンソール・ウィンドウと関連付けられていません。ただし、なんらかの理由で\f3jconsole\fPコマンドが失敗すると、エラー情報を示すダイアログ・ボックスが表示されます。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-interval=n 
+更新間隔を\f2n\fP秒に設定します(デフォルトは4秒)。 
+.TP 3
+\-notile 
+最初にウィンドウをタイリングしません(複数接続の場合)。 
+.TP 3
+\-pluginpath plugins 
+JConsoleプラグインの検索先となるディレクトリまたはJARファイルのリストを指定します。\f2plugins\fPパスには、次の名前のプロバイダ構成ファイルを含めてください。
+.br
+.nf
+\f3
+.fl
+   META\-INF/services/com.sun.tools.jconsole.JConsolePlugin
+.fl
+\fP
+.fi
+これには、
+.na
+\f2com.sun.tools.jconsole.JConsolePlugin\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/jdk/api/jconsole/spec/com/sun/tools/jconsole/JConsolePlugin.htmlクラスを実装するクラスの完全修飾クラス名を指定する行が、プラグインごとに1行ずつ含まれています。 
+.TP 3
+\-version 
+バージョン情報を出力して終了します。 
+.TP 3
+\-help 
+ヘルプ・メッセージを出力して終了します。 
+.TP 3
+\-J<flag> 
+jconsoleが実行されているJava仮想マシンに<flag>を渡します。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+.na
+\f2JConsoleの使用\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/management/jconsole.html 
+.TP 2
+o
+.na
+\f2Javaプラットフォームの監視および管理\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/management/index.html 
+.RE
+
+.LP
+ 

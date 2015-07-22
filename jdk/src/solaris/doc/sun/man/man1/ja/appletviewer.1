@@ -1,0 +1,69 @@
+." Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH appletviewer 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+appletviewer \- Javaアプレット・ビューア
+.LP
+.LP
+\f3appletviewer\fPコマンドでは、Webブラウザの外でアプレットを実行できます。
+.LP
+.SH "形式"
+.LP
+.LP
+\f4appletviewer\fP \f2[\fP \f2options\fP \f2] \fP\f2urls\fP ...
+.LP
+.SH "説明"
+.LP
+.LP
+\f3appletviewer\fPコマンドは\f2urls\fPに指定されたドキュメントあるいはリソースと接続して、そのドキュメントが参照するそれぞれのアプレットを独自のウィンドウで表示します。注意: \f2urls\fPによって参照されたドキュメントが、\f2OBJECT\fP、\f2EMBED\fP、または\f2APPLET\fPタグでどのアプレットも参照していない場合、\f3appletviewer\fPは何も行いません。\f3appletviewer\fPでサポートされるHTMLタグの詳細は、
+.na
+\f2アプレット・ビューアのタグ\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/appletviewertags.htmlを参照してください。
+.LP
+.LP
+\f3注意:\fP \f3appletviewer\fPは開発専用です。詳細は、サンプル/テスト・アプリケーションのコードについてを参照してください。
+.LP
+.LP
+\f3注意:\fP \f3appletviewer\fPは、RFC2396で定義されたエスケープ・メカニズムに従ってエンコードされたURLを必要とします。サポートされるのは、エンコードされたURLのみです。ただし、ファイル名については、RFC2396の仕様に従ってエンコードを解除しておく必要があります。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-debug 
+Javaデバッガjdb(1)でアプレット・ビューアを開始します。これにより、ドキュメント中のアプレットをデバッグすることができます。 
+.TP 3
+\-encoding \  \ encoding name 
+入力HTMLファイルのエンコーディング名を指定します。 
+.TP 3
+\-Jjavaoption 
+文字列\f2javaoption\fPは、appletviewerを実行するJavaインタプリタに1つの引数として渡されます。引数にスペースを含めないでください。複数の引数は、各引数のすべてを接頭辞\f3\-J\fPで始めることにより区分する必要があります。これは、コンパイラの実行環境またはメモリー使用の調整に有効です。 
+.RE
+
+.LP
+.LP
+
+.LP
+ 

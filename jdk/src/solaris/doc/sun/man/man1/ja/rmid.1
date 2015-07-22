@@ -1,0 +1,328 @@
+." Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH rmid 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+rmid \- Java RMI起動システム・デーモン
+.LP
+.LP
+\f3rmid\fPでアクティブ化するシステム・デーモンを開始すると、オブジェクトを仮想マシン(VM)に登録してアクティブ化できるようになります。
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+rmid [options]
+.fl
+\fP
+.fi
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3rmid\fPツールは、起動システム・デーモンを開始します。アクティブ化システム・デーモンを開始してからでないと、アクティブ化可能オブジェクトをアクティブ化システムに登録したり、VM内でアクティブ化したりすることができません。起動可能なリモート・オブジェクトを使用したプログラムの作成方法の詳細は、
+.na
+\f2Java RMI仕様\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/platform/rmi/spec/rmiTOC.htmlおよび
+.na
+\f2起動のチュートリアル\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/rmi/activation/overview.htmlを参照してください。
+.LP
+.LP
+デーモンを起動するには、次のように、セキュリティ・ポリシー・ファイルを指定して\f2rmid\fPコマンドを実行します。
+.LP
+.nf
+\f3
+.fl
+    rmid \-J\-Djava.security.policy=rmid.policy
+.fl
+\fP
+.fi
+
+.LP
+.LP
+\f3注意:\fP \f2rmid\fPのSunの実装を実行する場合、デフォルトでは、セキュリティ・ポリシー・ファイルを指定する必要があります。それは、\f2rmid\fPが起動グループ用にVMを起動するために各\f2ActivationGroupDesc\fP内の情報を使用できるかどうかを検証できるようにするためです。特に、\f2ActivationGroupDesc\fPのコンストラクタに渡される\f2CommandEnvironment\fPや任意の\f2Properties\fPによって指定されるコマンドおよびオプションは、\f2rmid\fPのセキュリティ・ポリシー・ファイルの中で明示的に許可することが必要になりました。\f2sun.rmi.activation.execPolicy\fPプロパティの値は、起動グループ用にVMを起動するために\f2ActivationGroupDesc\fP内の情報を使用できるかどうかを判断するときに\f2rmid\fPが使用するポリシーを決定します。
+.LP
+.LP
+\f2rmid\fPをデフォルト設定で実行すると、次のような処理が行われます。
+.LP
+.RS 3
+.TP 2
+o
+アクティベータを起動し、デフォルト・ポート1098で内部レジストリを起動する 
+.TP 2
+o
+この内部レジストリの中で、\f2ActivationSystem\fPを\f2java.rmi.activation.ActivationSystemという名前に\fPバインドする 
+.RE
+
+.LP
+.LP
+レジストリに他のポートを指定するには、\f2rmid\fPの起動時に\f2\-port\fPオプションを指定する必要があります。次に示します。
+.LP
+.nf
+\f3
+.fl
+    rmid \-J\-Djava.security.policy=rmid.policy \-port 1099
+.fl
+\fP
+.fi
+
+.LP
+.LP
+このコマンドは、起動システム・デーモンを開始し、レジストリのデフォルト・ポート1099でレジストリを開始します。
+.LP
+.SS 
+rmidをinetd/xinetdから開始する
+.LP
+.LP
+\f2rmid\fPをコマンドラインから開始するには、\f2inetd\fP(Solarisの場合)、または\f2xinetd\fP(Linuxの場合)を構成して\f2rmid\fPを必要に応じて開始する方法もあります。
+.LP
+.LP
+\f2rmid\fPを開始すると、\f2System.inheritedChannel\fPメソッドを呼び出して、継承されたチャンネル(\f2inetd\fP/\f2xinetd\fPから継承)を取得しようとします。継承されたチャンネルが\f2null\fPであるか、\f2java.nio.channels.ServerSocketChannel\fPのインスタンスでなかった場合、\f2rmid\fPはそのチャンネルは\f2inetd\fP/\f2xinetd\fPによって起動されたものではないと判断し、前述のように起動します。
+.LP
+.LP
+継承されたチャンネルが\f2ServerSocketChannel\fPインスタンスである場合は、\f2rmid\fPはエクスポートするリモート・オブジェクト、つまり\f2java.rmi.activation.ActivationSystem\fPがバインドされているレジストリと\f2java.rmi.activation.Activator\fPリモート・オブジェクトに対するリクエストを受信するサーバー・ソケットとして、\f2ServerSocketChannel\fPから取得した\f2java.net.ServerSocket\fPを使用します。このモードでは、\f2rmid\fPの動作は、\f2次のことを除いて\fP、コマンドラインから起動した場合と同じです。
+.LP
+.RS 3
+.TP 2
+o
+\f2System.err\fPに対する出力は、ファイルにリダイレクトされる。このファイルは\f2java.io.tmpdir\fPシステム・プロパティで指定されるディレクトリ(通常は\f2/var/tmp\fPまたは\f2/tmp\fP)にある。ファイル名の接頭辞は\f2"rmid\-err"\fPで、接尾辞は\f2"tmp"\fPである。 
+.TP 2
+o
+\f2\-port\fPオプションは拒否される。このオプションを指定すると、\f2rmid\fPはエラー・メッセージを出して終了する。 
+.TP 2
+o
+\f2\-log\fPオプションは必須。このオプションを指定しないと、\f2rmid\fPはエラー・メッセージを出して終了する。 
+.RE
+
+.LP
+.LP
+必要に応じてサービスを開始するように構成する方法の詳細は、\f2inetd\fP(Solarisの場合)、または\f2xinetd\fP(Linux)のマニュアル・ページを参照してください。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-C<someCommandLineOption> 
+\f2rmid\fPの子プロセス(起動グループ)が作成されたときに、それぞれの子プロセスにコマンドライン引数として渡されるオプションを指定します。たとえば、次のように指定すると、起動システム・デーモンによって生成される各仮想マシンにプロパティを渡すことができます。 
+.nf
+\f3
+.fl
+    rmid \-C\-Dsome.property=value
+.fl
+\fP
+.fi
+コマンドライン引数を子プロセスに渡す機能は、デバッグを行う場合に便利です。たとえば、次のようなコマンドを実行できます。 
+.nf
+\f3
+.fl
+    rmid \-C\-Djava.rmi.server.logCalls=true
+.fl
+\fP
+.fi
+このコマンドにより、すべての子VMでサーバー呼出しのログが作成されるようになります。 
+.LP
+.TP 3
+\-J<someCommandLineOption> 
+\f2rmid\fPを実行している\f2java\fPインタプリタに渡すオプションを指定します。たとえば、\f2rmid\fPが\f2rmid.policy\fPという名前のポリシー・ファイルを使用するように指定するには、\f2rmid\fPのコマンドラインで\f2\-J\fPオプションを使用して、\f2java.security.policy\fPプロパティを定義します。次に例を示します。 
+.nf
+\f3
+.fl
+    rmid \-J\-Djava.security.policy=rmid.policy
+.fl
+\fP
+.fi
+.TP 3
+\-J\-Dsun.rmi.activation.execPolicy=<policy> 
+起動グループが実行されることになるVMの起動に使用するコマンドおよびコマンドライン・オプションをチェックするために、\f2rmid\fPが採用するポリシーを指定します。このオプションは、Java RMI起動デーモンのSunの実装のみに存在することに注意してください。コマンドラインにこのプロパティを指定しない場合、結果は\f2\-J\-Dsun.rmi.activation.execPolicy=default\fPを指定した場合と同じになります。\f2<policy>\fPに指定可能な値は、\f2default\fP、\f2<policyClassName>\fP、または\f2none\fPです。 
+.RS 3
+.TP 2
+o
+\f3default(または、このプロパティが\fP\f4指定されていない\fP\f3場合)\fP 
+.LP
+デフォルトの\f2execPolicy\fPの場合、\f2rmid\fPが実行できるのは、\f2rmid\fPが使用するセキュリティ・ポリシー・ファイルの中で、実行する権限が\f2rmid\fPに与えられているコマンドおよびコマンドライン・オプションのみです。\f2デフォルト\fPの実行ポリシーで使用できるのは、デフォルトの起動グループ実装のみです。 
+.LP
+\f2rmid\fPは、起動グループ用のVMを起動するときに、そのグループについて登録された起動グループ記述子である\f2ActivationGroupDesc\fP内の情報を使用します。グループ記述子は、\f2ActivationGroupDesc.CommandEnvironment\fPを指定します(省略可能)。これには、起動グループを開始する\f2コマンド\fPと、そのコマンドラインに追加できるコマンドライン・\f2オプション\fPが含まれています。デフォルトでは、\f2rmid\fPは\f2java.home\fPにある\f2java\fPコマンドを使用します。グループ記述子には、オプションとしてコマンドラインに追加される\f2プロパティ\fP・オーバーライドも含まれています。このプロパティは、次のように定義します。 
+.nf
+\f3
+.fl
+    \-D\fP\f4<property>\fP\f3=\fP\f4<value>\fP\f3
+.fl
+\fP
+.fi
+.LP
+アクセス権\f2com.sun.rmi.rmid.ExecPermission\fPを使用すると、\f2rmid\fPに対して、グループ記述子の\f2CommandEnvironment\fPで指定されたコマンドを実行して起動グループを開始する権限を許可することができます。アクセス権\f2com.sun.rmi.rmid.ExecOptionPermission\fPを使用すると、グループ記述子でプロパティ・オーバーライドとして指定されたコマンドライン・オプション、または\f2CommandEnvironment\fPでオプションとして指定されたコマンドライン・オプションを、起動グループを開始するときに\f2rmid\fPが使用できるようになります。 
+.LP
+\f2rmidに\fP様々なコマンドおよびオプションを実行する権限を許可する場合は、アクセス権\f2ExecPermission\fPおよび\f2ExecOptionPermission\fPを汎用的に許可する必要があります。つまり、すべてのコード・ソースに対して許可します。 
+.RS 3
+.TP 3
+ExecPermission 
+\f2ExecPermission\fPクラスは、起動グループを開始するために\f2rmidが\fP特定の\f2コマンド\fPを実行する権限を表します。 
+.LP
+\f3構文\fP
+.br
+\f2ExecPermission\fPの\f2名前\fPは、\f2rmid\fPに実行を許可するコマンドのパス名です。「/*」(「/」はファイル区切り文字\f2File.separatorChar\fP)で終わるパス名は、そのディレクトリに含まれるすべてのファイルを示します。「/\-」で終わるパス名は、そのディレクトリに含まれるすべてのファイルとサブディレクトリ(再帰的に)を示します。パス名に特別なトークン「<<ALL FILES>>」を指定した場合は、\f3任意の\fPファイルを示します。 
+.LP
+\f3注意:\fP 「*」を1つのみ指定したパス名は、現在のディレクトリ内のすべてのファイルを表します。また、「\-」を1つのみ指定したパス名は、現在のディレクトリ内のすべてのファイルと、現在のディレクトリに含まれるすべてのファイルとサブディレクトリ(再帰的に)を表します。  
+.TP 3
+ExecOptionPermission 
+\f2ExecOptionPermission\fPクラスは、起動グループを開始するときに\f2rmid\fPで特定のコマンドライン・\f2オプション\fPを使用できる権限を表します。\f2ExecOptionPermission\fPの\f2名前\fPは、コマンドライン・オプションの値です。 
+.LP
+\f3構文\fP
+.br
+オプションでは、ワイルドカードが限定的にサポートされます。アスタリスクは、ワイルドカード・マッチを表します。アスタリスクは、オプション名そのものとして使用できます。つまり、任意のオプションを表すことができます。また、オプション名の末尾に使用することもできます。ただし、「.」か「=」の直後にアスタリスクを指定する必要があります。 
+.LP
+例を示します。「*」、「\-Dfoo.*」、「\-Da.b.c=*」は有効ですが、「*foo」、「\-Da*b」、「ab*」は無効です。  
+.TP 3
+rmidのポリシー・ファイル 
+\f2rmidに\fP様々なコマンドおよびオプションを実行する権限を許可する場合は、アクセス権\f2ExecPermission\fPおよび\f2ExecOptionPermission\fPを汎用的に許可する必要があります。つまり、すべてのコード・ソースに対して許可します。これらのアクセス権をチェックするのは\f2rmid\fPのみなので、これらのアクセス権を汎用的に許可しても安全です。 
+.LP
+\f2rmid\fPに各種の実行権限を許可するポリシー・ファイルの例を、次に示します。 
+.nf
+\f3
+.fl
+grant {
+.fl
+    permission com.sun.rmi.rmid.ExecPermission
+.fl
+        "/files/apps/java/jdk1.7.0/solaris/bin/java";
+.fl
+
+.fl
+    permission com.sun.rmi.rmid.ExecPermission
+.fl
+        "/files/apps/rmidcmds/*";
+.fl
+
+.fl
+    permission com.sun.rmi.rmid.ExecOptionPermission
+.fl
+        "\-Djava.security.policy=/files/policies/group.policy";
+.fl
+
+.fl
+    permission com.sun.rmi.rmid.ExecOptionPermission
+.fl
+        "\-Djava.security.debug=*";
+.fl
+
+.fl
+    permission com.sun.rmi.rmid.ExecOptionPermission
+.fl
+        "\-Dsun.rmi.*";
+.fl
+};
+.fl
+\fP
+.fi
+最初に付与されているアクセス権は、\f2rmid\fPに対し、パス名により明示的に指定される\f2java\fPコマンドの1.7.0バージョンの実行を許可します。デフォルトでは、\f2java.home\fPにあるバージョンの\f2java\fPコマンドを使用します。\f2rmid\fPが使用するのと同じバージョンが使用されるため、そのコマンドは、ポリシー・ファイルで指定する必要はありません。2番目のアクセス権は、\f2rmid\fPに対して、ディレクトリ\f2/files/apps/rmidcmds\fP内の任意のコマンドの実行権限を許可します。 
+.LP
+3番目に付与されているアクセス権\f2ExecOptionPermission\fPは、\f2rmid\fPに対して、セキュリティ・ポリシー・ファイルを\f2/files/policies/group.policy\fPとして定義している起動グループの開始を許可します。次のアクセス権は、起動グループが\f2java.security.debug\fPプロパティを使用することを許可しています。最後のアクセス権は、起動グループが\f2sun.rmi\fPというプロパティ名の階層内の任意のプロパティを使用することを許可しています。 
+.LP
+ポリシー・ファイルを指定して\f2rmid\fPを起動するには、\f2rmid\fPのコマンドラインで\f2java.security.policy\fPプロパティを指定する必要があります。次に例を示します。 
+.LP
+\f2rmid \-J\-Djava.security.policy=rmid.policy\fP  
+.RE
+.TP 2
+o
+\f4<policyClassName>\fP 
+.LP
+デフォルトの動作では十分な柔軟性が得られない場合、管理者は、\f2rmid\fPの起動時に、\f2checkExecCommand\fPメソッドが所属するクラスの名前を指定して、rmidが実行するコマンドをチェックすることができます。 
+.LP
+\f2policyClassName\fPには、引数なしのコンストラクタを持ち、次のような\f2checkExecCommand\fPメソッドを実装しているpublicクラスを指定します。 
+.nf
+\f3
+.fl
+    public void checkExecCommand(ActivationGroupDesc desc,
+.fl
+                                 String[] command)
+.fl
+        throws SecurityException;
+.fl
+\fP
+.fi
+アクティブ化グループを開始する前に、\f2rmid\fPは、ポリシーの\f2checkExecCommand\fPメソッドを呼び出します。このとき、アクティブ化グループの記述子と、アクティブ化グループを開始するための完全なコマンドを含む配列をそのメソッドに渡します。\f2checkExecCommand\fPが\f2SecurityException\fPをスローすると、\f2rmid\fPはそのアクティブ化グループを開始せず、オブジェクトのアクティブ化を試行している呼出し側には\f2ActivationException\fPがスローされます。 
+.TP 2
+o
+\f3none\fP 
+.LP
+\f2sun.rmi.activation.execPolicy\fPプロパティの値が「none」の場合、\f2rmid\fPは、起動グループを開始するコマンドをまったく検証しません。  
+.RE
+.LP
+.TP 3
+\-log dir 
+起動システム・デーモンがデータベースおよび関連情報を書き込むのに使用するディレクトリの名前を指定します。デフォルトでは、\f2rmid\fPコマンドを実行したディレクトリに、\f2log\fPというログ・ディレクトリが作成されます。 
+.LP
+.TP 3
+\-port port 
+\f2rmid\fPのレジストリが使用するポートを指定します。起動システム・デーモンは、このレジストリの中で、\f2java.rmi.activation.ActivationSystem\fPという名前で\f2ActivationSystem\fPをバインドします。したがって、ローカル・マシン上の\f2ActivationSystem\fPは、次のように\f2Naming.lookup\fPメソッドを呼び出すことによって取得できます。 
+.nf
+\f3
+.fl
+    import java.rmi.*; 
+.fl
+    import java.rmi.activation.*;
+.fl
+
+.fl
+    ActivationSystem system; system = (ActivationSystem)
+.fl
+    Naming.lookup("//:\fP\f4port\fP/java.rmi.activation.ActivationSystem");
+.fl
+.fi
+.TP 3
+\-stop 
+\f2\-port\fPオプションによって指定されたポートの、現在の\f2rmid\fP呼出しを停止します。ポートが指定されていない場合は、ポート1098で実行されている\f2rmid\fPを停止します。 
+.RE
+
+.LP
+.SH "環境変数"
+.LP
+.RS 3
+.TP 3
+CLASSPATH 
+ユーザー定義クラスへのパスをシステムに指定します。ディレクトリはコロンで分割します。次に例を示します。 
+.nf
+\f3
+.fl
+    .:/usr/local/java/classes
+.fl
+\fP
+.fi
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.LP
+rmic(1)、
+.na
+\f2CLASSPATH\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#classpath、java(1)
+.LP
+ 

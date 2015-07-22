@@ -1,0 +1,330 @@
+." Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jdb 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jdb \- Javaデバッガ
+.LP
+.LP
+\f3jdb\fPは、Java言語プログラムのバグを見つけて修正するために使用するツールです。
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jdb\fP [ options ] [ class ] [ arguments ] 
+.fl
+.fi
+
+.LP
+.RS 3
+.TP 3
+options 
+次に示すコマンドライン・オプション 
+.TP 3
+class 
+デバッグを開始するクラスの名前 
+.TP 3
+arguments 
+\f2class\fPの\f2main()\fPメソッドに渡す引数 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+Javaデバッガ\f3jdb\fPは、Javaクラス用の簡単なコマンドライン・デバッガです。
+.na
+\f2Java Platform Debugger Architecture\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/jpda/index.htmlを視覚的に実行し、ローカルまたはリモートのJava Virtual Machineの検査とデバッグを行うことができます。
+.LP
+.SS 
+jdbセッションの開始
+.LP
+.LP
+jdbセッションを開始するには様々な方法があります。最も頻繁に使用されるのは、デバッグするアプリケーションのメイン・クラスを使用して、\f3jdb\fPから新しいJava仮想マシン(VM)を起動する方法です。コマンドラインで、\f3java\fPのかわりに\f3jdb\fPコマンドを入力します。たとえば、アプリケーションのメイン・クラスがMyClassの場合は、JDB環境でデバッグするときに次のコマンドを使用します。
+.LP
+.nf
+\f3
+.fl
+ % jdb MyClass 
+.fl
+\fP
+.fi
+
+.LP
+.LP
+この方法で起動すると、\f3jdb\fPは、指定されたパラメータを使用して2つ目のJava VMを呼び出します。次に、指定されたクラスをロードして、クラスの最初の命令を実行する前にVMを停止させます。
+.LP
+.LP
+\f3jdb\fPのもう1つの使用方法は、すでに実行中のJava VMにjdbを接続することです。jdbが接続するVMを、その実行中に起動するための構文を次に示します。これは、インプロセス・デバッグ用ライブラリをロードし、接続の種類を指定します。
+.LP
+.nf
+\f3
+.fl
+\-agentlib:jdwp=transport=dt_socket,server=y,suspend=n
+.fl
+\fP
+.fi
+
+.LP
+.LP
+たとえば、次のコマンドは、MyClassアプリケーションを実行して、\f3jdb\fPがあとでそのアプリケーションに接続できるようにします。
+.LP
+.nf
+\f3
+.fl
+ % java \-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n MyClass
+.fl
+\fP
+.fi
+
+.LP
+.LP
+次のコマンドを使用して、\f3jdb\fPをVMに接続できます。
+.LP
+.nf
+\f3
+.fl
+ % jdb \-attach 8000 
+.fl
+\fP
+.fi
+
+.LP
+.LP
+この場合、\f3jdb\fPは新しいVMを起動するかわりに既存のVMに接続されるため、\f3jdb\fPコマンドラインには「MyClass」は指定しません。
+.LP
+.LP
+デバッガをVMに接続するには他にも様々な方法があり、すべて\f3jdb\fPでサポートされています。接続オプションについては、Java Platform Debugger Architectureの
+.na
+\f2ドキュメント\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/jpda/conninv.htmlを参照してください。\f3jdb\fPで使用するためにJ2SE 1.4.2以前のVMを起動する方法については、
+.na
+\f21.4.2のドキュメント\fP @
+.fi
+http://docs.oracle.com/javase/1.4.2/docs/guide/jpda/conninv.htmlを参照してください。
+.LP
+.SS 
+基本jdbコマンド
+.LP
+.LP
+基本的な\f3jdb\fPコマンドの一覧を示します。Javaデバッガがサポートするコマンドはこれ以外にもあり、それらは\f3jdb\fPの\f2help\fPコマンドを使用して表示できます。
+.LP
+.RS 3
+.TP 3
+helpまたは? 
+最も重要な\f3jdb\fPコマンド\f2help\fPは、認識されたコマンドのリストに簡潔な説明を付けて表示します。 
+.TP 3
+run 
+\f3jdb\fPを起動して必要なブレークポイントを設定したあとに、このコマンドを使用して、デバッグするアプリケーションの実行を開始できます。このコマンドは、既存のVMに接続している場合とは異なり、デバッグするアプリケーションが\f3jdb\fPから起動したときにのみ使用できます。 
+.TP 3
+cont 
+ブレークポイント、例外、またはステップ実行の後で、デバッグするアプリケーションの実行を継続します。 
+.TP 3
+print 
+Javaオブジェクトおよびプリミティブ値を表示します。プリミティブ型の変数またはフィールドの場合には、実際の値が出力されます。オブジェクトの場合には、短い説明が出力されます。オブジェクトについては、以降の\f2dump\fPコマンドの説明を参照してください。
+.br
+.br
+\f2注意: ローカル変数を表示するには、その変数を含むクラスが\fP\f2javac(1)\fP\f2 \fP\f2\-g\fPオプションでコンパイルされている必要があります。
+.br
+.br
+\f2print\fPでは、メソッドの呼出しを含む多数の簡単なJava式がサポートされています。次に例を示します。 
+.RS 3
+.TP 2
+o
+\f2print MyClass.myStaticField\fP 
+.TP 2
+o
+\f2print myObj.myInstanceField\fP 
+.TP 2
+o
+\f2print i+j+k\fP \f2(i、j、およびkはプリミティブであり、フィールドまたはローカル変数のいずれか)\fP 
+.TP 2
+o
+\f2print myObj.myMethod()\fP \f2(myMethodがnull以外を返す場合)\fP 
+.TP 2
+o
+\f2print new java.lang.String("Hello").length()\fP 
+.RE
+.TP 3
+dump 
+プリミティブ値の場合には、このコマンドは\f2print\fPと同じです。オブジェクトの場合には、オブジェクト内に定義されている各フィールドの現在の値が出力されます。staticフィールドとinstanceフィールドが出力されます。
+.br
+.br
+\f2dump\fPコマンドでは、\f2print\fPコマンドと同じ式がサポートされます。 
+.TP 3
+threads 
+現在実行中のスレッドを一覧表示します。スレッドごとに、名前と現在の状態、および他のコマンドに使用できるインデックスが出力されます。次に例を示します。 
+.nf
+\f3
+.fl
+4. (java.lang.Thread)0x1 main      running
+.fl
+\fP
+.fi
+この例では、スレッド・インデックスは4であり、スレッドはjava.lang.Threadのインスタンスです。スレッドの名前は「main」であり、現在実行中です。 
+.TP 3
+thread 
+現在のスレッドにするスレッドを選択します。多くの\f3jdb\fPコマンドは、現在のスレッドの設定に基づいて実行されます。スレッドは、\f2threads\fPコマンドで説明したスレッド・インデックスとともに指定します。 
+.TP 3
+where 
+引数を指定しないで\f2where\fPを実行すると、現在のスレッドのスタックがダンプされます。\f2where all\fPコマンドは、現在のスレッド・グループにあるスレッドのスタックをすべてダンプします。\f2where\fP \f2threadindex\fPは、指定されたスレッドのスタックをダンプします。
+.br
+.br
+現在のスレッドが(ブレークポイントか\f2suspend\fPコマンドによって)中断している場合は、ローカル変数とフィールドは\f2print\fPコマンドと\f2dump\fPコマンドで表示できます。\f2up\fPコマンドと\f2down\fPコマンドで、どのスタック・フレームをカレントにするかを選ぶことができます。 
+.RE
+
+.LP
+.SS 
+ブレークポイント
+.LP
+.LP
+ブレークポイントは、行番号またはメソッドの最初の命令で\f3jdb\fPに設定できます。次に例を示します。
+.LP
+.RS 3
+.TP 2
+o
+\f2stop at MyClass:22\fP \f2(MyClassが含まれるソース・ファイルの22行目の最初の命令にブレークポイントを設定)\fP 
+.TP 2
+o
+\f2stop in java.lang.String.length\fP \f2(\fP\f2java.lang.String.length\fPメソッドの最初にブレークポイントを設定) 
+.TP 2
+o
+\f2stop in MyClass.<init>\fP \f2(<init>はMyClassコンストラクタを識別)\fP 
+.TP 2
+o
+\f2stop in MyClass.<clinit>\fP \f2(<clinit>はMyClassの静的初期化コードを識別)\fP 
+.RE
+
+.LP
+.LP
+メソッドがオーバーロードされている場合には、メソッドの引数の型も指定して、ブレークポイントに対して適切なメソッドが選択されるようにする必要があります。たとえば、「\f2MyClass.myMethod(int,java.lang.String)\fP」または「\f2MyClass.myMethod()\fP」と指定します。
+.LP
+.LP
+\f2clear\fPコマンドは、「\f2clear\ MyClass:45\fP」のような構文を使用してブレークポイントを削除します。\f2clear\fPを使用するか、引数を指定しないでコマンドを使用すると、現在設定されているすべてのブレークポイントが表示されます。\f2cont\fPコマンドは実行を継続します。
+.LP
+.SS 
+ステップ実行
+.LP
+.LP
+\f2step\fPコマンドは、現在のスタック・フレームまたは呼び出されたメソッド内で、次の行を実行します。\f2next\fPコマンドは、現在のスタック・フレームの次の行を実行します。
+.LP
+.SS 
+例外
+.LP
+.LP
+スローしているスレッドの呼出しスタック上のどこにもcatch文がない場合に例外が発生すると、VMは通常、例外トレースを出力して終了します。ただし、\f3jdb\fP環境で実行している場合は、違反のスロー時に\f3jdb\fPに制御が戻ります。次に、\f3jdb\fPを使用して例外の原因を診断します。
+.LP
+.LP
+たとえば、「\f2catch java.io.FileNotFoundException\fP」または「\f2catch mypackage.BigTroubleException\fP」のように\f2catch\fPコマンドを使用すると、デバッグされたアプリケーションは、他の例外がスローされたときに停止します。例外が特定のクラス(またはサブクラス)のインスタンスの場合は、アプリケーションは例外がスローされた場所で停止します。
+.LP
+.LP
+\f2ignore\fPコマンドを使用すると、以前の\f2catch\fPコマンドの効果が無効になります。
+.LP
+.LP
+\f2注意: \fP\f2ignore\fPコマンドでは、デバッグされるVMは例外を無視せず、デバッガのみが例外を無視します。
+.LP
+.SH "コマンドライン・オプション"
+.LP
+.LP
+コマンドラインでJavaアプリケーション起動ツールのかわりに\f3jdb\fPを使用する場合、\f3jdb\fPは、\f2\-D\fP、\f2\-classpath\fP、\f2\-X<option>\fPなど、javaコマンドと同じ数のオプションを受け入れます。
+.LP
+.LP
+\f3jdb\fPは、その他に次のオプションを受け入れます。
+.LP
+.RS 3
+.TP 3
+\-help 
+ヘルプ・メッセージを表示します。 
+.TP 3
+\-sourcepath <dir1:dir2:...> 
+指定されたパスを使用して、ソース・ファイルを検索します。このオプションが指定されていない場合は、デフォルト・パスの「.」が使用されます。 
+.TP 3
+\-attach <address> 
+デフォルトの接続機構を使用して、すでに実行中のVMにデバッガを接続します。 
+.TP 3
+\-listen <address> 
+実行中のVMが標準のコネクタを使用して指定されたアドレスに接続するのを待機します。 
+.TP 3
+\-listenany 
+実行中のVMが標準のコネクタを使用して利用可能な任意のアドレスに接続するのを待機します。 
+.TP 3
+\-launch 
+デバッグするアプリケーションをjdbの起動後ただちに起動します。このオプションによって、\f2run\fPコマンドを使用する必要がなくなります。デバッグするアプリケーションは、起動後、初期アプリケーション・クラスがロードされる直前に停止します。その時点で、必要なブレークポイントを設定し、\f2cont\fPを使用して実行を継続できます。 
+.TP 3
+\-listconnectors 
+このVMで利用できるコネクタを一覧表示します。 
+.TP 3
+\-connect <connector\-name>:<name1>=<value1>,... 
+一覧表示された引数の値と指定のコネクタを使用してターゲットVMに接続します。 
+.TP 3
+\-dbgtrace [flags] 
+jdbのデバッグ情報を出力します。 
+.TP 3
+\-tclient 
+Java HotSpot(tm) VM(クライアント)内でアプリケーションを実行します。 
+.TP 3
+\-tserver 
+Java HotSpot(tm) VM(サーバー)内でアプリケーションを実行します。 
+.TP 3
+\-Joption 
+jdbの実行に使用されるJava仮想マシンに\f2option\fPを渡します。(アプリケーションJava仮想マシンに対するオプションは、\f3run\fPコマンドに渡される)。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。 
+.RE
+
+.LP
+.LP
+デバッガとデバッグを行うVMを接続するための代替機構に対して、その他のオプションがサポートされています。その他の接続オプションについては、Java Platform Debugger Architectureの
+.na
+\f2ドキュメント\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/jpda/conninv.htmlを参照してください。
+.LP
+.SS 
+デバッグ対象のプロセスに転送されるオプション
+.LP
+.RS 3
+.TP 3
+\-v \-verbose[:class|gc|jni] 
+冗長モードにします。 
+.TP 3
+\-D<name>=<value> 
+システム・プロパティを設定します。 
+.TP 3
+\-classpath <directories separated by ":"> 
+クラスを検索するディレクトリを一覧表示します。 
+.TP 3
+\-X<option> 
+非標準ターゲットVMオプションです。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.LP
+javac(1)、java(1)、javah(1)、javap(1)、javadoc(1)
+.LP
+ 

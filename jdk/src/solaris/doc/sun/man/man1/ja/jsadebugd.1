@@ -1,0 +1,125 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jsadebugd 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jsadebugd \- サービスアビリティ・エージェント・デバッグ・デーモン
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jsadebugd\fP pid [ server\-id ]
+.fl
+\f3jsadebugd\fP executable core [ server\-id ]
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+pid 
+デバッグ・サーバーが接続するプロセスのプロセスIDです。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)を使用します。単一のプロセスに接続できるデバッグ・サーバーのインスタンスは、1つに制限されます。 
+.TP 3
+executable 
+コア・ダンプの作成元のJava実行可能ファイル。 
+.TP 3
+core 
+デバッグ・サーバーを接続するコア・ファイルです。 
+.TP 3
+server\-id 
+複数のデバッグ・サーバーが同一のマシン上で実行されている場合に必要になる、オプションの一意のIDです。このIDは、リモート・クライアントが、接続先のデバッグ・サーバーを特定するために使用する必要があります。このIDは、単一のマシン内で一意にする必要があります。 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jsadebugd\fPは、Javaプロセスまたはコア・ファイルに接続し、デバッグ・サーバーとして機能します。jstack(1)、jmap(1)およびjinfo(1)などのリモート・クライアントは、Java Remote Method Invocation(RMI)を使用しているサーバーに接続できます。\f2jsadebugd\fPを起動する前に、次のようにして
+.na
+\f2rmiregistry\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#rmiを起動する必要があります。
+.LP
+.nf
+\f3
+.fl
+\fP\f4rmiregistry \-J\-Xbootclasspath/p:$JAVA_HOME/lib/sajdi.jar\fP\f3
+.fl
+\fP
+.fi
+
+.LP
+.LP
+ここで、\f2$JAVA_HOME\fPはJDKインストール・ディレクトリです。rmiregistryが起動していない場合、jsadebugdは標準(1099)ポートのrmiregistryを内部で起動します。デバッグ・サーバーは、SIGINTを送信する([Ctrl]+[C]を押す)ことにより停止できます。
+.LP
+.LP
+\f3注意\fP \- このユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。dbgeng.dllが存在していないWindowsシステムでは、「Debugging Tools For Windows」をインストールしないとこれらのツールが正常に動作しません。また、\f2PATH\fP環境変数には、ターゲット・プロセスによって使用される\f2jvm.dll\fPの場所、またはクラッシュ・ダンプ・ファイルが生成された場所が含まれるようにしてください。
+.LP
+.LP
+次に例を示します。\f2set PATH=<jdk>\\jre\\bin\\client;%PATH%\fP
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+jinfo(1) 
+.TP 2
+o
+jmap(1) 
+.TP 2
+o
+jps(1) 
+.TP 2
+o
+jstack(1) 
+.TP 2
+o
+.na
+\f2rmiregistry\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#rmi 
+.RE
+
+.LP
+ 

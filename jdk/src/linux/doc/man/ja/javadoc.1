@@ -1,0 +1,4197 @@
+." Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH javadoc 1 "05 Jul 2012"
+.SH "名前"
+javadoc \- Java APIドキュメント・ジェネレータ
+.LP
+Javaソース・ファイルから、APIドキュメントのHTMLページを生成します。このドキュメントで紹介されているJavadocの例は、Solarisを使用した場合のものです。
+.SH "形式"
+.LP
+\f4javadoc\fP\f2\ [\ \fP\f2options\fP\f2\ ]\ [\ packagenames\ ]\ [\ sourcefilenames\ ]\ [\ \-subpackages\fP\ \f2pkg1:pkg2:...\fP\f2\ ]\ [\ \fP\f2@argfiles\fP\f2\ ]\fP
+.LP
+引数を指定する順序は任意です。Javadocツールでの、処理対象の\f2.java\fPファイルを決定する方法の詳細は、ソース・ファイルの処理を参照してください。
+.RS 3
+.TP 3
+options 
+このドキュメントで説明されているコマンドライン・オプションです。Javadocオプションの標準的な使用方法については、使用例を参照してください。 
+.TP 3
+packagenames 
+空白文字で区切られた一連のパッケージ名です。たとえば、\f2java.lang\ java.lang.reflect\ java.awt\fPのように指定します。ドキュメント化するパッケージを個別に指定する必要があります。ワイルドカードは使用不可です。再帰的処理のためには、\-subpackagesを使用します。Javadocツールは、\f2\-sourcepath\fPを使用してこれらのパッケージ名を検索します。例 \- 1つ以上のパッケージのドキュメント化を参照してください。 
+.TP 3
+sourcefilenames 
+空白文字で区切られた一連のソース・ファイル名です。各ファイルは、パスで始まります。アスタリスク(*)などのワイルドカードを含めることができます。Javadocツールが処理するのは、ファイル名が「.java」という拡張子で終わり、その拡張子を除いた名前が実際に有効なクラス名であるすべてのファイルです(Java言語仕様を参照)。したがって、ハイフンを含む名前(\f2X\-Buffer\fPなど)や、その他の無効な文字を含む名前を付けることによって、それらのファイルをドキュメント化の対象から除外できます。これは、テスト・ファイルやテンプレート・ファイルの場合に便利です。ソース・ファイル名の前に指定したパスによって、javadocがそのファイルを検索する場所が決まります。(Javadocツールは、これらのソース・ファイル名を検索するときに\f2\-sourcepath\fPを使用\f2しません\fP。)相対パスは現在のディレクトリを起点とするため、\f2Button.java\fPを渡すことは、\f2./Button.java\fPを渡すことと同じです。ソース・ファイル名をワイルドカードを含むフルパスで指定すると、\f2/home/src/java/awt/Graphics*.java\fPのようになります。例 \- 1つ以上のクラスのドキュメント化を参照してください。また、例 \- パッケージとクラスのドキュメント化のように、パッケージ名とソース・ファイル名を混在させることもできます。 
+.TP 3
+\-subpackages pkg1:pkg2:... 
+ソース・ファイルから指定されたパッケージおよびそのサブパッケージ内に再帰的にドキュメントを生成します。パッケージ名またはソース・ファイル名を指定する必要はありません。 
+.TP 3
+@argfiles 
+Javadocオプション、パッケージ名、およびソース・ファイル名を任意の順序で並べたリストが含まれる1つ以上のファイルです。このファイルの中では、ワイルドカード(*)および\f2\-J\fPオプションは指定できません。  
+.RE
+.SH "説明"
+.LP
+\f3Javadoc\fPツールは、一連のJavaソース・ファイルにある宣言およびドキュメンテーション・コメントを解析し、デフォルトではpublicクラス、protectedクラス、ネストされたクラス(匿名の内部クラスは除く)、インタフェース、コンストラクタ、メソッド、およびフィールドについて記述した一連のHTMLページを生成します。また、API(アプリケーション・プログラミング・インタフェース)ドキュメントの生成や、一連のソース・ファイルの実装ドキュメントの生成に使用できます。
+.LP
+Javadocツールは、パッケージ全体、個々のソース・ファイル、またはその両方に対して実行できます。パッケージ全体のドキュメント化を行うには、\f2\-subpackages\fPを使用して最上位ディレクトリから下方に再帰的にたどるか、パッケージ名の明示的なリストを渡します。個々のソース・ファイルのドキュメント化を行うには、ソース(.\f2.java\fP)ファイル名のリストを渡します。具体的な例は、このドキュメントの最後に紹介します。次に、Javadocによるソース・ファイルの処理について説明します。
+.SS 
+ソース・ファイルの処理
+.LP
+Javadocツールは、末尾が「\f2.java\fP」のファイル以外に、ソース・ファイルで記述されている他のファイルも処理します。個々のソース・ファイル名を明示的に渡してJavadocツールを実行する場合、どの\f2.java\fPファイルを処理するかを正確に指定できます。ただし、多くの開発者はこの方法では作業しません。パッケージ名を渡すほうが簡単だからです。ソース・ファイル名を明示的に指定しなくても、Javadocツールは3つの方法で実行できます。それは、(1)パッケージ名を渡す、(2)\f2\-subpackages\fPを使用する、(3)ソース・ファイル名でワイルドカードを使用する(\f2*.java\fP)、という方法です。これらの場合、Javadocツールが\f2.java\fPファイルの処理を行うのは、そのファイルが次のすべての要件を満たす場合のみです。
+.RS 3
+.TP 2
+o
+接尾辞「\f2.java\fP」を除いた名前が実際に有効なクラス名である場合(有効な文字については、Java言語仕様を参照) 
+.TP 2
+o
+ソース・ツリーのルートから相対的なディレクトリ・パスが、区切り文字をドットに変換すると、実際に有効なパッケージ名である場合 
+.TP 2
+o
+package文に有効なパッケージ名(前箇条書きで指定)が含まれる場合 
+.RE
+.LP
+\f3リンクの処理\fP \- Javadocツールは、処理の実行中に、その実行でドキュメント化されるパッケージ、クラス、およびメンバーの名前に対して、自動的に相互参照リンクを追加します。このようなリンクは、次のような場所に追加されます。
+.RS 3
+.TP 2
+o
+宣言(戻り値の型、引数の型、フィールドの型) 
+.TP 2
+o
+\f2@see\fPタグから生成された「関連項目」セクション 
+.TP 2
+o
+\f2{@link}\fPタグから生成されたインライン・テキスト 
+.TP 2
+o
+\f2@throws\fPタグから生成された例外の名前 
+.TP 2
+o
+インタフェースのメンバーに対する「定義」リンクと、クラスのメンバーに対する「オーバーライド」リンク 
+.TP 2
+o
+パッケージ、クラス、およびメンバーをリストしている概要表 
+.TP 2
+o
+パッケージおよびクラスの継承ツリー 
+.TP 2
+o
+索引 
+.RE
+.LP
+コマンドラインで指定しなかったクラスについての既存のテキスト(別に生成したテキスト)に対してハイパーリンクを追加するには、\f2\-link\fPおよび\f2\-linkoffline\fPオプションを利用できます。
+.LP
+\f3その他の処理についての詳細\fP \- Javadocツールは、実行するたびに1つの完全なドキュメントを作成します。ドキュメントを追加生成することはできません。つまり、Javadocツールの以前の実行結果を修正したり、その内容を\f2直接\fP組み入れたりすることはできません。ただし、前述のように、他の実行結果にリンクすることはできます。
+.LP
+実装上の理由から、Javadocツールは、ジョブを実行するためにjavaコンパイラを必要とし、javaコンパイラに依存しています。Javadocツールは、\f2javac\fPの一部を呼び出して宣言をコンパイルしますが、メンバーの実装は無視します。これは、クラス階層を含むクラスの豊富な内部表現とクラスの「使用」関係を構築し、その情報からHTMLを生成します。さらに、Javadocツールは、ソース・コードのドキュメンテーション・コメントから、ユーザーの提供したドキュメントも取得します。
+.LP
+実際には、Javadocツールは、メソッド本体を持たない純粋なスタブ・ファイルである\f2.java\fPソース・ファイルに対しても実行できます。したがって、APIの作成時には、実装を記述する前の設計の早い段階で、ドキュメンテーション・コメントを記述してjavadocツールを実行できます。
+.LP
+コンパイラに依存することによって、HTML出力は、実際の実装に正確に対応します。実際の実装は、明示的なソース・コードにではなく、暗黙のソース・コードに依存する場合があります。たとえば、Javadocツールは、\f2.class\fPファイルには存在するがソース・コードには存在しないデフォルト・コンストラクタ(Java言語仕様を参照)をドキュメント化します。
+.LP
+通常、Javadocツールでは、ソース・ファイルのコードが不完全またはエラーを含んでいる場合でもドキュメントを生成できます。このため、デバッグやトラブルシューティングを完了する前にドキュメントを生成できます。たとえば、\f2Java言語仕様\fPによると、抽象メソッドを含むクラスは、それ自体を抽象として宣言する必要があります。javacコンパイラはこのエラーを検出すると停止しますが、Javadocツールはこのチェックを行わず、警告を出さずに処理を続行します。Javadocツールはドキュメンテーション・コメントの基本的なチェックを行います。ドキュメンテーション・コメントをより詳しくチェックする必要がある場合は、DocCheckドックレットを使用してください。
+.LP
+Javadocツールは、ドキュメントの内部構造を構築する際、参照クラスをすべてロードします。このため、Javadocツールは、ブートストラップ・クラス、拡張機能、またはユーザー・クラスにかかわらず、すべての参照クラスを検索できる必要があります。詳細は、
+.na
+\f2クラスの検索方法\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.htmlを参照してください。通常、作成するクラスは、拡張機能としてロードするか、Javadocツールのクラス・パス内に置く必要があります。
+.SS 
+Javadocのドックレット
+.LP
+Javadocツールの出力の内容と形式は、ドックレットを使用してカスタマイズできます。Javadocツールには、標準ドックレットと呼ばれるデフォルトの「組込み」ドックレットがあります。標準ドックレットは、HTML形式のAPIドキュメントを生成します。標準ドックレットを修正またはサブクラス化することや、HTML、XML、MIF、RTFなどの好みの出力形式を生成する独自のドックレットを記述することも可能です。ドックレットとその使用方法については、次を参照してください。
+.RS 3
+.TP 2
+o
+.na
+\f2Javadocのドックレット\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html 
+.TP 2
+o
+\f2\-doclet\fPコマンドライン・オプション 
+.RE
+.LP
+\f2\-doclet\fPコマンドライン・オプションでカスタム・ドックレットが指定されていない場合、Javadocツールは、デフォルトの標準ドックレットを使用します。javadocツールには、使用されているドックレットに関係なく使用できるコマンドライン・オプションがあります。標準ドックレットでは、これらの他に、いくつかのコマンドライン・オプションが追加されます。どちらのオプションについても、後述のオプションで説明します。
+.SS 
+関連ドキュメントおよびドックレット
+.RS 3
+.TP 2
+o
+.na
+\f2Javadocに施された拡張機能\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html \- Javadocで追加された改良点の詳細。 
+.TP 2
+o
+.na
+\f2Javadoc FAQ\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137483.html \- 頻繁に寄せられる質問に対する回答、Javadoc関連のツールについての情報、およびバグの回避方法。 
+.TP 2
+o
+.na
+\f2How to Write Doc Comments for Javadoc\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html \- ドキュメンテーション・コメントの記述方法に関するSunの規約。 
+.TP 2
+o
+.na
+\f2API仕様を記述するための要件\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-142372.html \- Java SEプラットフォーム仕様を記述する際に使用された標準要件。この情報は、ソース・ファイルのドキュメンテーション・コメント形式でAPI仕様を記述する場合にも、その他の形式で記述する場合にも役立ちます。検証可能なアサーションを満たすパッケージ、クラス、インタフェース、フィールド、およびメソッドについての要件を定めています。 
+.TP 2
+o
+.na
+\f2ドキュメンテーション・コメントの仕様\fP @
+.fi
+http://docs.oracle.com/javase/specs/ \- ドキュメンテーション・コメントのオリジナル仕様については、\f2Java Language Specification\fP (James Gosling、Bill Joy、Guy Steele共著)の初版の第18章、Documentation Commentsを参照してください。(この章は、第2版では削除されました。) 
+.TP 2
+o
+.na
+\f2DocCheckドックレット\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-141437.html \- ソース・ファイル内のドキュメンテーション・コメントをチェックし、検出されたエラーや不正のレポートを生成します。Doc Checkユーティリティの一部です。 
+.RE
+.SS 
+用語
+.LP
+\f2ドキュメンテーション・コメント\fP、\f2docコメント\fP、\f2主説明\fP、\f2タグ\fP、\f2ブロック・タグ\fP、および\f2インライン・タグ\fPの用語については、ドキュメンテーション・コメントで説明します。次のその他の用語は、Javadocツールのコンテキストで特定の意味を持ちます。
+.RS 3
+.TP 3
+生成ドキュメント(generated document) 
+JavadocツールがJavaソース・コード内のドキュメンテーション・コメントから生成したドキュメントのことです。デフォルトの生成ドキュメントはHTML形式で、標準ドックレットによって作成されます。 
+.LP
+.TP 3
+名前(name) 
+Java言語で書かれたプログラム要素の名前、つまりパッケージ、クラス、インタフェース、フィールド、コンストラクタ、またはメソッドの名前のことです。名前は、\f2java.lang.String.equals(java.lang.Object)\fPのような完全修飾名にすることも、\f2equals(Object)\fPのような部分修飾名にすることもできます。 
+.LP
+.TP 3
+ドキュメント化されるクラス(documented classes) 
+Javadocの実行によって詳細なドキュメントが生成されるクラスおよびインタフェースのことです。ドキュメント化するには、ソース・ファイルが使用可能であり、ソース・ファイル名またはパッケージ名をjavadocコマンドに渡す必要があり、アクセス修飾子(public、protected、package\-privateまたはprivate)によってフィルタ処理されないようにする必要があります。ドキュメント化されるクラスは、javadocツールの出力に組み込まれるクラス、つまり\f2包含クラス\fPとも呼ばれます。 
+.LP
+.TP 3
+包含クラス(included classes) 
+Javadocツールの実行によって詳細なドキュメントが生成されるクラスおよびインタフェースのことです。\f2ドキュメント化されるクラス\fPと同じです。 
+.LP
+.TP 3
+除外クラス(excluded classes) 
+Javadocツールの実行によって詳細なドキュメントが生成\f2されない\fPクラスおよびインタフェースのことです。 
+.LP
+.TP 3
+参照クラス(referenced classes) 
+ドキュメント化されるクラスおよびインタフェースの定義(実装)またはドキュメンテーション・コメントの中で明示的に参照されているクラスおよびインタフェースのことです。参照の例としては、戻り値の型、パラメータの型、キャストの型、拡張されたクラス、実装されたインタフェース、インポートされたクラス、メソッド本体で使用されるクラス、@see、{@link}、{@linkplain}、{@inheritDoc}タグなどがあります。(この定義は
+.na
+\f21.3\fP @
+.fi
+http://docs.oracle.com/javase/1.3/docs/tooldocs/solaris/javadoc.html#referencedclassesから変更されていることに注意してください。)Javadocツールを実行するときは、Javadocのブート・クラスパスおよびクラスパス内にあるすべての参照クラスをメモリーにロードする必要があります。(参照クラスが見つからない場合は、「クラスが見つかりません」という警告が表示されます。)Javadocツールは、クラスの存在とそのメンバーの完全修飾名を判別するのに必要十分な情報を、.classファイルから引き出すことができます。 
+.LP
+.TP 3
+外部参照クラス(external referenced classes) 
+参照クラスのうち、Javadocの実行中にドキュメントが生成されないクラスのことです。つまり、これらのクラスは、コマンドラインでJavadocツールに渡されていません。生成ドキュメント内でこれらのクラスにリンクしている箇所は、\f2外部参照\fPまたは\f2外部リンク\fPと呼ばれます。たとえば、\f2java.awt\fPパッケージに対してのみJavadocツールを実行した場合、\f2Object\fPなどの\f2java.lang\fP内のすべてのクラスが外部参照クラスになります。外部参照クラスにリンクするには、\f2\-link\fPおよび\f2\-linkoffline\fPオプションを使用します。外部参照クラスには、通常そのソース・コメントをJavadocツールの実行で利用できないという重要な特徴があります。この場合、それらのコメントを継承することはできません。 
+.RE
+.SH "ソース・ファイル"
+.LP
+Javadocツールは、4つのタイプの異なる「ソース」ファイルから出力を生成します。そのファイルは、クラスのJava言語ソース・ファイル(\f2.java\fP)、パッケージ・コメント・ファイル、概要コメント・ファイル、およびその他の未処理のファイルです。ここでは、ドキュメント化しないがソース・ツリーに存在する場合があるテスト・ファイルやテンプレート・ファイルについても説明します。
+.SS 
+クラス・ソース・コード・ファイル
+.LP
+それぞれのクラスまたはインタフェース、およびそのメンバーは、独自のドキュメンテーション・コメントを持つことができ、それを\f2.java\fPファイル内に保持します。ドキュメンテーション・コメントの詳細は、ドキュメンテーション・コメントを参照してください。
+.SS 
+パッケージ・コメント・ファイル
+.LP
+それぞれのパッケージは、独自のドキュメンテーション・コメントを持つことができ、それを専用の「ソース」ファイルに保持します。その内容は、Javadocツールによって生成されるパッケージの概要ページに組み込まれます。このコメントには、通常、そのパッケージ全体に当てはまるドキュメントを記述します。
+.LP
+パッケージ・コメント・ファイルを作成する場合、コメントの格納先として、次の2つのファイルのいずれかを選択できます。
+.RS 3
+.TP 2
+o
+\f2package\-info.java\fP \- パッケージ宣言、パッケージ注釈、パッケージ・コメント、およびJavadocタグを格納できます。このファイルは一般に、package.htmlよりも推奨されます。 
+.TP 2
+o
+\f2package.html\fP \- 格納できるのはパッケージ・コメントとJavadocタグのみです。パッケージ注釈は格納できません。 
+.RE
+.LP
+各パッケージは、\f2package.html\fPファイルまたは\f2package\-info.java\fPファイルのいずれかを1つ持つことができますが、その両方を持つことはできません。このどちらかのファイルを\f2.java\fPファイルとともに、ソース・ツリー内のそのパッケージ・ディレクトリ内に配置してください。
+.LP
+\f4package\-info.java\fP \- このファイルには、次の構造のパッケージ・コメントを格納できます。コメントはパッケージ宣言の前に配置します。
+.LP
+ファイル: \f2java/applet/package\-info.java\fP
+.nf
+\f3
+.fl
+/**
+.fl
+ * Provides the classes necessary to create an  
+.fl
+ * applet and the classes an applet uses 
+.fl
+ * to communicate with its applet context.
+.fl
+ * <p>
+.fl
+ * The applet framework involves two entities:
+.fl
+ * the applet and the applet context.
+.fl
+ * An applet is an embeddable window (see the
+.fl
+ * {@link java.awt.Panel} class) with a few extra
+.fl
+ * methods that the applet context can use to 
+.fl
+ * initialize, start, and stop the applet.
+.fl
+ *
+.fl
+ * @since 1.0
+.fl
+ * @see java.awt
+.fl
+ */
+.fl
+package java.lang.applet;
+.fl
+\fP
+.fi
+.LP
+コメント区切り文字の\f2/**\fPと\f2*/\fPは存在している必要がありますが、中間行の行頭のアスタリスクは省略してもかまいません。
+.LP
+\f4package.html\fP \- このファイルには、次の構造のパッケージ・コメントを格納できます。コメントは\f2<body>\fP要素内に配置します。
+.LP
+ファイル: \f2java/applet/package.html\fP
+.nf
+\f3
+.fl
+<HTML>
+.fl
+<BODY>
+.fl
+Provides the classes necessary to create an applet and the 
+.fl
+classes an applet uses to communicate with its applet context.
+.fl
+<p>
+.fl
+The applet framework involves two entities: the applet
+.fl
+and the applet context. An applet is an embeddable
+.fl
+window (see the {@link java.awt.Panel} class) with a
+.fl
+few extra methods that the applet context can use to
+.fl
+initialize, start, and stop the applet. 
+.fl
+
+.fl
+@since 1.0 
+.fl
+@see java.awt
+.fl
+</BODY>
+.fl
+</HTML>
+.fl
+\fP
+.fi
+.LP
+これは単なる通常のHTMLファイルであり、パッケージ宣言を含んでいない点に注意してください。パッケージ・コメント・ファイルの内容は、他のすべてのコメントと同様にHTMLで記述しますが、例外が1つあります。それは、このドキュメンテーション・コメントには、コメント区切り文字である\f2/**\fPと\f2*/\fP、または行頭のアスタリスクを含めない、という点です。コメントを書く場合は、最初の文をパッケージの概要とし、\f2<body>\fPと最初の文の間にタイトルやその他のテキストを含めないようにします。パッケージ・タグを含めることはできますが、他のドキュメンテーション・コメントと同様、すべてのブロック・タグは、主説明の後に配置する必要があります。\f2@see\fPタグをパッケージ・コメント・ファイルに追加する場合には、完全修飾名を使用する必要があります。詳細は、
+.na
+\f2package.html\fPの例 @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#packagecommentsを参照してください。
+.LP
+\f3パッケージ・コメント・ファイルの処理\fP \- Javadocツールは、実行時にパッケージ・コメント・ファイルを自動的に検索し、このファイルを見つけると次の処理を行います。
+.RS 3
+.TP 2
+o
+処理できるようにコメントをコピーします。(\f2package.html\fPの場合であれば、\f2<body>\fPと\f2</body>\fP HTMLタグの間にある内容をすべてコピーします。\f2<head>\fPセクションを含め、そこに\f2<title>\fPやソース・ファイルの著作権記述などの情報を配置することもできますが、生成ドキュメントにはそれらは一切表示されません。) 
+.TP 2
+o
+パッケージ・タグがあれば、すべて処理します。 
+.TP 2
+o
+生成したパッケージの概要ページの最後に、処理したテキストを挿入します(
+.na
+\f2パッケージの概要\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/java/applet/package\-summary.htmlを参照)。 
+.TP 2
+o
+パッケージの概要ページの先頭に、パッケージ・コメントの最初の文をコピーします。さらに、概要ページのパッケージ・リストに、パッケージ名とパッケージ・コメントの最初の文を追加します(
+.na
+\f2概要の要約\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/overview\-summary.htmlを参照)。文の終わりは、クラスやメンバーの主説明の最初の文の終わりと同じルールによって判断されます。 
+.RE
+.SS 
+概要コメント・ファイル
+.LP
+ドキュメント化する各アプリケーションまたはパッケージ・セットは、独自の概要ドキュメンテーション・コメントを持つことができ、それは専用の「ソース」ファイルに保持されます。その内容は、Javadocツールによって生成される概要ページに組み込まれます。このコメントには、通常、アプリケーションまたはパッケージ・セット全体に当てはまるドキュメントを記述します。
+.LP
+概要コメント・ファイルを作成するには、ファイルに任意の名前(通常は\f4overview.html\fP)を付け、任意の場所(通常はソース・ツリーの最上位レベル)に配置できます。たとえば、\f2java.applet\fPパッケージのソース・ファイルが\f2/home/user/src/java/applet\fPディレクトリに格納されている場合、概要コメント・ファイルは\f2/home/user/src/overview.html\fPに作成できます。
+.LP
+異なるパッケージのセットに対してJavadocを複数回実行する場合は、同じ1つのソース・ファイルのセットに対して複数の概要コメント・ファイルを作成できます。たとえば、内部ドキュメント用に\-privateを指定してJavadocを1回実行した後、公開ドキュメント用にそのオプションを指定しないで再度実行することができます。この場合、各概要コメント・ファイルの1文目で、そのドキュメントを公開用または内部用として記述できます。
+.LP
+概要コメント・ファイルの内容は、前述のパッケージ・コメント・ファイルと同様、HTMLで記述された1つの大きなドキュメンテーション・コメントです。詳細は、前述の説明を参照してください。要点を繰り返すと、コメントを書く場合は、最初の文をアプリケーションまたはパッケージ・セットの概要とし、\f2<body>\fPと最初の文の間にタイトルやその他のテキストを含めないようにします。概要タグを含めることができます。他のドキュメンテーション・コメントと同じく、\f2{@link}\fPなどのインライン・タグを除くすべてのタグは、主説明の後に配置する必要があります。\f2@see\fPタグを追加する場合には、完全修飾名を使用する必要があります。
+.LP
+Javadocツールの実行時に、\-overviewオプションを使用して概要コメント・ファイル名を指定します。このファイルは、パッケージ・コメント・ファイルと同じように処理されます。
+.RS 3
+.TP 2
+o
+\f2<body>\fPと\f2</body>\fPタグの間にある内容をすべて処理対象としてコピーします。 
+.TP 2
+o
+概要タグがあれば、すべて処理します。 
+.TP 2
+o
+生成した概要ページの最後に、処理したテキストを挿入します(
+.na
+\f2概要の要約\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/overview\-summary.htmlを参照)。 
+.TP 2
+o
+概要ページの先頭に、概要コメントの最初の文をコピーします。 
+.RE
+.SS 
+その他の未処理のファイル
+.LP
+ソースには、Javadocツールによって宛先ディレクトリにコピーされる、その他の任意のファイルを含めることができます。一般に、このようなファイルには、グラフィック・ファイル、サンプルのJavaソース(.java)およびクラス(.class)ファイル、内容が通常のJavaソース・ファイルのドキュメンテーション・コメントの影響を受けない独立したHTMLファイルなどがあります。
+.LP
+未処理のファイルを含めるには、それらのファイルを\f4doc\-files\fPという名前のディレクトリに置きます。このディレクトリは、ソース・ファイルが格納された任意のパッケージ・ディレクトリのサブディレクトリでもかまいません。このようなサブディレクトリは、パッケージごとに1つ用意できます。イメージ、サンプル・コード、ソース・ファイル、.classファイル、アプレット、およびHTMLファイルをこのディレクトリに格納できます。たとえば、ボタンのイメージ\f2button.gif\fPを\f2java.awt.Button\fPクラスのドキュメントに含める場合には、そのファイルを\f2/home/user/src/java/awt/doc\-files/\fPディレクトリに置きます。なお、\f2doc\-files\fPディレクトリを\f2/home/user/src/java/doc\-files\fPに置くことはできません。これは、\f2java\fPがパッケージではないからです。つまり、javaそのものにソース・ファイルが1つも格納されていないからです。
+.LP
+これらの未処理のファイルへのリンクは、すべてハードコードする必要があります。これは、Javadocツールがそれらのファイルを見ずに、ディレクトリとその内容を宛先にそのままコピーするからです。たとえば、\f2Button.java\fPのドキュメンテーション・コメント内のリンクは、次のようになります。
+.nf
+\f3
+.fl
+    /**
+.fl
+     * This button looks like this: 
+.fl
+     * <img src="doc\-files/Button.gif">
+.fl
+     */
+.fl
+\fP
+.fi
+.SS 
+テスト・ファイルおよびテンプレート・ファイル
+.LP
+一部の開発者から、テスト・ファイルおよびテンプレート・ファイルを対応するソース・ファイルの近くのソース・ツリーに保存したいという要望がありました。つまり、これらのソース・ファイルと同じディレクトリまたはサブディレクトリに保存したいということです。
+.LP
+個々のソース・ファイル名で明示的に渡してJavadocツールを実行する場合、テスト・ファイルおよびテンプレート・ファイルを意図的に除外して、処理されないようにすることができます。ただし、パッケージ名またはワイルドカードで渡す場合は、特定のルールに従って、これらのテスト・ファイルおよびテンプレート・ファイルが処理されないようにする必要があります。
+.LP
+テスト・ファイルとテンプレート・ファイルの違いは、テスト・ファイルは、有効でコンパイル可能なソース・ファイルであるのに対して、テンプレート・ファイルは、そうではないという点です。ただし、テンプレート・ファイルも「.java」で終わることができます。
+.LP
+\f3テスト・ファイル\fP \- 開発者の多くは、あるパッケージのコンパイル可能で実行可能なテスト・ファイルをそのパッケージのソース・ファイルと\f2同じ\fPディレクトリに配置したいと考えています。しかしテスト・ファイルは、名前なしパッケージなど、ソース・ファイル・パッケージとは別のパッケージに属させたいとも考えています(そのため、テスト・ファイルにはpackage文がないか、またはソースとは別のpackage文があります)。このような状況では、コマンドラインで指定されているソースのパッケージ名を指定してそのソースがドキュメント化されているときに、テスト・ファイルは警告またはエラーを引き起こします。そのようなテスト・ファイルはサブディレクトリに配置する必要があります。たとえば、\f2com.package1\fP内のソース・ファイルに対するテスト・ファイルを追加する場合は、次のようにハイフンを含んでいるためにパッケージ名としては無効な名前のサブディレクトリ内に配置します。
+.nf
+\f3
+.fl
+    com/package1/test\-files/
+.fl
+\fP
+.fi
+.LP
+これで、Javadocツールは警告なしでtestディレクトリをスキップします。
+.LP
+テスト・ファイルにドキュメンテーション・コメントが含まれる場合、Javadocツールの個別の実行で、ワイルドカードを含んだテスト・ソース・ファイル名(\f2com/package1/test\-files/*.java\fPなど)で渡してテスト・ファイルのドキュメントを生成するように設定できます。
+.LP
+\f3ソース・ファイルのテンプレート\fP \- テンプレート・ファイルの名前は「.java」で終わることもありますが、テンプレート・ファイルはコンパイルできません。ソース・ディレクトリ内に保持したいソース・ファイルのテンプレートがある場合は、\f2Buffer\-Template.java\fPのようにハイフンやその他の無効なJava文字を名前に含めることで、テンプレートが処理されないようにします。これは、Javadocツールが処理するのは、「.java」接尾辞を除いた名前が有効なクラス名であるソース・ファイルのみであるためです(Java言語仕様の識別子に関する情報を参照)。
+.SH "生成されるファイル"
+.LP
+デフォルトでは、Javadocは、HTML形式のドキュメントを生成する標準ドックレットを使用します。このドックレットは、次のタイプのファイルを生成します。(それぞれのHTMLページは、別個のファイルに相当します。)Javadocが生成するファイルの名前には、クラスやインタフェースの名前にちなんだものと、そうでないもの(\f2package\-summary.htmlなど\fP)の2つのタイプがあります。後者のグループのファイル名には、前者のグループとファイル名が競合しないように、ハイフンが含まれています。
+.LP
+\f3基本内容ページ\fP
+.RS 3
+.TP 2
+o
+ドキュメント化するクラスまたはインタフェースごとに1つの\f3クラス・ページまたはインタフェース・ページ\fP(\f2クラス名\fP\f2.html\fP) 
+.TP 2
+o
+ドキュメント化するパッケージごとに1つの\f3パッケージ・ページ\fP(\f2package\-summary.html\fP)。Javadocツールは、ソース・ツリーのパッケージ・ディレクトリ内にある\f2package.html\fPまたは\f2package\-info.java\fPという名前のファイル内のHTMLテキストをすべて組み入れます。 
+.TP 2
+o
+パッケージのセット全体に対して1つの\f3概要ページ\fP(\f2overview\-summary.html\fP)。これは、生成ドキュメントの先頭ページになります。Javadocツールは、\f2\-overview\fPオプションで指定されたファイル内のHTMLテキストをすべて組み入れます。このファイルは、Javadocに複数のパッケージ名を渡した場合にのみ作成されます。詳細は、HTMLフレームを参照してください。 
+.RE
+.LP
+\f3相互参照ページ\fP
+.RS 3
+.TP 2
+o
+\f3パッケージのセット全体に対して1つのクラス階層ページ\fP(\f2overview\-tree.html\fP)。このページを表示するには、ナビゲーション・バーの「概要」をクリックしてから、「階層ツリー」をクリックします。 
+.TP 2
+o
+\f3パッケージごとに1つのクラス階層ページ\fP(\f2package\-tree.html\fP)。このページを表示するには、特定のパッケージ、クラス、またはインタフェースのページに移動し、「階層ツリー」をクリックしてそのパッケージの階層を表示します。 
+.TP 2
+o
+\f3パッケージごとに1つの「使用」ページ\fP(\f2package\-use.html\fP)と、クラスおよびインタフェースごとに1つずつの「使用」ページ(\f2class\-use/\fP\f2クラス名\fP\f2.html\fP)。このページには、特定のクラス、インタフェース、またはパッケージの一部を使用しているパッケージ、クラス、メソッド、コンストラクタ、およびフィールドについて記述されます。クラスまたはインタフェースAを例にして考えると、その「使用」ページには、Aのサブクラス、Aとして宣言されたフィールド、Aを返すメソッド、A型のパラメータを持つメソッドおよびコンストラクタが組み込まれます。このページを表示するには、まず、パッケージ、クラス、またはインタフェースに移動してから、ナビゲーション・バーの「使用」リンクをクリックします。 
+.TP 2
+o
+\f3非推奨APIページ\fP(\f2deprecated\-list.html\fP)。推奨されない名前がすべてリストされます。(非推奨名は、一般に改良されたために使用が推奨されていないAPIの名前であり、通常、それに置き換わる名前が提示されています。非推奨APIは、将来の実装では削除される可能性があります。) 
+.TP 2
+o
+\f3定数フィールド値ページ\fP(\f2constant\-values.html\fP)。staticフィールドの値用です。 
+.TP 2
+o
+\f3直列化された形式ページ\fP(\f2serialized\-form.html\fP)。直列化可能かつ外部化可能なクラスに関する情報用のページです。これらの各クラスには、直列化フィールドおよびメソッドに関する記述があります。これらの情報は、APIを使用する開発者ではなく、再実装者に必要な情報です。ナビゲーション・バーにこのページへのリンクはありませんが、直列化されたクラスに移動して、そのクラス・コメントにある「関連項目」セクションで「直列化された形式」をクリックすると、この情報を取得できます。標準ドックレットは直列化された形式ページを自動生成します。このページには、Serializableを実装するすべてのクラス(publicまたは非public)が組み込まれる他、\f2readObject\fPメソッドや\f2writeObject\fPメソッド、直列化されたフィールド、および\f2@serial\fP、\f2@serialField\fP、\f2@serialData\fPタグからのドキュメンテーション・コメントも組み込まれます。直列化可能なpublicクラスを除外するには、そのクラス(またはそのクラスが属するパッケージ)を\f2@serial exclude\fPでマークします。直列化可能なpackage\-privateクラスを含めるには、そのクラス(またはそのクラスが属するパッケージ)を\f2@serial include\fPでマークします。バージョン1.4では、\f2\-private\fPオプションの指定\f2なし\fPでJavadocツールを実行することにより、publicクラスおよびprivateクラスの完全に直列化された形式を生成できます。 
+.TP 2
+o
+\f3索引\fP(\f2index\-*.html\fP)。すべてのクラス名、インタフェース名、コンストラクタ名、フィールド名、およびメソッド名がアルファベット順に並んでいます。索引は、Unicodeを扱えるように国際化されています。1つのファイルとして生成することも、先頭文字(英語の場合A\-Z)ごとに別々のファイルとして生成することもできます。 
+.RE
+.LP
+\f3サポート・ファイル\fP
+.RS 3
+.TP 2
+o
+\f3ヘルプ・ページ\fP(\f2help\-doc.html\fP)。ナビゲーション・バーや前述の各ページに関する説明が記載されています。\f2\-helpfile\fPを使用すると、デフォルトのヘルプ・ファイルに代わる独自のカスタム・ヘルプ・ファイルを提供できます。 
+.TP 2
+o
+表示用のHTMLフレームを作成する1つの\f3index.htmlファイル\fP。このファイルは、フレーム付きの先頭ページを表示する場合にロードします。このファイル自体には、テキスト・コンテンツは含まれていません。 
+.TP 2
+o
+複数の\f3フレーム・ファイル\fP(\f2*\-frame.html\fP)。パッケージ、クラス、およびインタフェースのリストが含まれています。HTMLフレームを表示するときに使用されます。 
+.TP 2
+o
+\f3パッケージ・リスト\fPファイル(\f2package\-list\fP)。\f2\-link\fPおよび\f2\-linkoffline\fPオプションで使用されます。これは、HTMLファイルではなくテキスト・ファイルであり、どのリンクからもアクセスできません。 
+.TP 2
+o
+\f3スタイルシート\fP・ファイル(\f2stylesheet.css\fP)。生成されるページの一部の要素について色、フォント・ファミリ、フォント・サイズ、フォント・スタイル、および配置を制御します。 
+.TP 2
+o
+\f3doc\-files\fPディレクトリ。宛先ディレクトリにコピーするイメージ、サンプル・コード、ソース・コードなどのファイルがすべて格納されます。これらのファイルは、いかなる方法でもJavadocツールによって処理されません。つまり、ファイル内にjavadocタグがあっても無視されます。このディレクトリは、ソース・ツリーの中に存在する場合にのみ生成されます。 
+.RE
+.LP
+\f3HTMLフレーム\fP
+.LP
+Javadocツールは、下の図に示すように、2、3個のHTMLフレームを生成します。1つのパッケージしかない場合(またはパッケージがない場合)は、パッケージのリストを省略することによって最低限必要な数のフレームを作成します。つまり、単一のパッケージに属するソース・ファイル(*.java)または単一のパッケージ名を引数としてjavadocコマンドに渡す場合は、左側の列にクラスのリストを表示するフレーム(C)が1つのみ作成されます。Javadocに複数のパッケージ名を渡した場合は、概要ページ(Detail)に加えて、すべてのパッケージをリストする第3のフレーム(P)が作成されます。この概要ページのファイル名は、\f2overview\-summary.html\fPです。したがって、このファイルは、複数のパッケージ名を渡した場合にのみ作成されます。「フレームなし」リンクをクリックするか、overview\-summary.htmlを最初に表示すると、フレームを省略できます。
+.LP
+HTMLフレームに慣れていない場合は、特定のフレームを印刷およびスクロールするには、そのフレームに\f2フォーカス\fPが必要であることに注意してください。フレームにフォーカスを与えるには、そのフレームをクリックします。これで、多くのブラウザでは、矢印キーやページ・キーを使用してそのフレームをスクロールしたり、「印刷」メニュー・コマンドを使用してそのフレームを印刷したりできます。
+.LP
+HTMLフレームが必要かどうかによって、次のいずれかのファイルを開始ページとしてロードします。
+.RS 3
+.TP 2
+o
+\f2index.html\fP(フレームあり) 
+.TP 2
+o
+\f2overview\-summary.html\fP(フレームなし) 
+.RE
+.LP
+\f3生成されるファイルの構造\fP
+.LP
+生成されるクラス・ファイルおよびインタフェース・ファイルは、Javaソース・ファイルおよびクラス・ファイルと同じディレクトリ階層に編成されます。1つのサブパッケージにつき1つのディレクトリ、という構造になります。
+.LP
+たとえば、\f2java.applet.Applet\fPクラス用に生成されるドキュメントは、\f2java/applet/Applet.html\fPに格納されます。生成先ディレクトリの名前が\f2apidocs\fPだとすると、java.appletパッケージのファイルの構造は、次のとおりです。前述のように、「frame」という語を名前に含むファイルは、すべて左上または左下のフレームに表示されます。それ以外のHTMLファイルは、すべて右側のフレームに表示されます。
+.LP
+注意 \- ディレクトリは\f3太字\fPで示しています。アスタリスク(\f2*\fP)は、Javadocへの引数がパッケージ名ではなくソース・ファイル名(*.java)である場合に\f2省略される\fPファイルおよびディレクトリを示しています。また、引数がソース・ファイル名の場合、\f2package\-list\fPは作成されますが、その中身は空です。doc\-filesディレクトリは、ソース・ツリー内に存在する場合にのみ、生成先に作成されます。
+.nf
+\f3
+.fl
+
+.fl
+\fP\f3apidocs\fP                             Top directory
+.fl
+   index.html                       Initial page that sets up HTML frames
+.fl
+ * overview\-summary.html            Lists all packages with first sentence summaries
+.fl
+   overview\-tree.html               Lists class hierarchy for all packages
+.fl
+   deprecated\-list.html             Lists deprecated API for all packages
+.fl
+   constant\-values.html             Lists values of static fields for all packages
+.fl
+   serialized\-form.html             Lists serialized form for all packages
+.fl
+ * overview\-frame.html              Lists all packages, used in upper\-left frame
+.fl
+   allclasses\-frame.html            Lists all classes for all packages, used in lower\-left frame
+.fl
+   help\-doc.html                    Lists user help for how these pages are organized
+.fl
+   index\-all.html                   Default index created without \-splitindex option
+.fl
+   \f3index\-files\fP                      Directory created with \-splitindex option
+.fl
+       index\-<number>.html          Index files created with \-splitindex option
+.fl
+   package\-list                     Lists package names, used only for resolving external refs
+.fl
+   stylesheet.css                   HTML style sheet for defining fonts, colors and positions
+.fl
+   \f3java\fP                             Package directory
+.fl
+       \f3applet\fP                       Subpackage directory
+.fl
+            Applet.html             Page for Applet class
+.fl
+            AppletContext.html      Page for AppletContext interface
+.fl
+            AppletStub.html         Page for AppletStub interface
+.fl
+            AudioClip.html          Page for AudioClip interface
+.fl
+          * package\-summary.html    Lists classes with first sentence summaries for this package
+.fl
+          * package\-frame.html      Lists classes in this package, used in lower left\-hand frame
+.fl
+          * package\-tree.html       Lists class hierarchy for this package
+.fl
+            package\-use             Lists where this package is used
+.fl
+            \f3doc\-files\fP               Directory holding image and example files
+.fl
+            \f3class\-use\fP               Directory holding pages API is used
+.fl
+                Applet.html         Page for uses of Applet class
+.fl
+                AppletContext.html  Page for uses of AppletContext interface
+.fl
+                AppletStub.html     Page for uses of AppletStub interface
+.fl
+                AudioClip.html      Page for uses of AudioClip interface
+.fl
+   \f3src\-html\fP                         Source code directory
+.fl
+       \f3java\fP                         Package directory
+.fl
+           \f3applet\fP                   Subpackage directory
+.fl
+                Applet.html         Page for Applet source code
+.fl
+                AppletContext.html  Page for AppletContext source code
+.fl
+                AppletStub.html     Page for AppletStub source code
+.fl
+                AudioClip.html      Page for AudioClip source code
+.fl
+.fi
+.SS 
+生成されるAPI宣言
+.LP
+Javadocツールは、それぞれのクラス、インタフェース、フィールド、コンストラクタ、およびメソッドの記述の最初に、そのAPI用の宣言を生成します。たとえば、\f2Boolean\fPクラスの宣言は、次のようになります。
+.LP
+\f2public final class Boolean\fP
+.br
+\f2extends Object\fP
+.br
+\f2implements Serializable\fP
+.LP
+また、\f2Boolean.valueOf\fPメソッドの宣言は、次のようになります。
+.LP
+\f2public static Boolean valueOf(String s)\fP
+.LP
+Javadocツールでは、修飾子\f2public\fP、\f2protected\fP、\f2private\fP、\f2abstract\fP、\f2final\fP、\f2static\fP、\f2transient\fP、および\f2volatile\fPを組み込むことはできますが、\f2synchronized\fPと\f2native\fPを組み込むことはできません。これら後者の2つの修飾子は、実装の詳細と見なされているため、API仕様には含まれません。
+.LP
+APIでは、並行性セマンティクスについて、キーワード\f2synchronized\fPに依存するのではなく、コメントの主説明としてドキュメント化する必要があります。たとえば、「1つの\f2Enumeration\fPを複数のスレッドから並行して使用することはできない」のように記述します。ドキュメントには、これらのセマンティクスを実現する方法を記述しないでください。たとえば、\f2Hashtable\fPはスレッドセーフである必要がありますが、「エクスポートされるすべてのメソッドを同期化してそれを実現する」のように指定する根拠はありません。バケット・レベルで内部的に同期化する権限を保有しておく必要があります。そうすれば、より高度な並行性が提供されます。
+.SH "ドキュメンテーション・コメント"
+.LP
+オリジナルの「ドキュメンテーション・コメントの仕様」は、関連項目を参照してください。
+.SS 
+ソース・コードへのコメントの挿入
+.LP
+ソース・コードの任意のクラス、インタフェース、メソッド、コンストラクタ、またはフィールドの宣言の前に、\f2ドキュメンテーション・コメント\fP("doc comments")を記述することができます。各パッケージにもドキュメンテーション・コメントを作成できます。構文は若干異なりますが、概要にもドキュメンテーション・コメントを作成できます。ドキュメンテーション・コメントは、非公式に「Javadocコメント」と呼ばれています(この用語は商標関連の使用方法に違反)。ドキュメンテーション・コメントは、コメントを始まりを示す文字列\f2/**\fPと、コメントを終わりを示す文字列\f2*/\fPの間にある文字から構成されます。行頭のアスタリスクは、各行に記述できます。詳細は、後述します。コメントのテキストは、複数行にわたって記述できます。
+.nf
+\f3
+.fl
+/**
+.fl
+ * This is the typical format of a simple documentation comment
+.fl
+ * that spans two lines.
+.fl
+ */
+.fl
+\fP
+.fi
+.LP
+スペースを節約するには、コメントを1行に入れます。
+.nf
+\f3
+.fl
+/** This comment takes up only one line. */
+.fl
+\fP
+.fi
+.LP
+\f3コメントの配置\fP \- ドキュメンテーション・コメントは、クラス、インタフェース、コンストラクタ、メソッド、またはフィールドの宣言の直前に置かれているときにのみ認識されます。クラスの例、メソッドの例、およびフィールドの例を参照してください。メソッドの本体に置かれているドキュメンテーション・コメントは無視されます。Javadocツールでは、1つの宣言文につき1つのドキュメンテーション・コメントのみが認識されます。
+.LP
+よくある間違いは、クラス・コメントとクラス宣言の間に\f2import\fP文を置いてしまうことです。このような記述はしないでください。このようなクラス・コメントは無視されます。
+.nf
+\f3
+.fl
+   /**
+.fl
+    * This is the class comment for the class Whatever.
+.fl
+    */
+.fl
+
+.fl
+    import com.sun;   // MISTAKE \- Important not to put import statement here
+.fl
+
+.fl
+    public class Whatever {
+.fl
+    }
+.fl
+\fP
+.fi
+.LP
+\f3ドキュメンテーション・コメントは\fP\f4主説明\fP\f3の後に\fP\f4タグ・セクション\fP\f3が続く\fP \- 開始区切り文字である\f2/**\fPの後からタグ・セクションまでが\f2主説明\fPになります。\f2タグ・セクション\fPは、先頭文字が\f2@\fPの行で定義される最初のブロック・タグから始まります(先頭のアスタリスク、空白文字、先頭の区切り文字\f2/**\fPは除く)。主説明を記述せず、タグ・セクションのみのコメントを記述することもできます。主説明は、タグ・セクション以降に続けることはできません。タグの引数は、複数行にわたって記述できます。タグの数に制限はありません。何回も記述できるタグと、1回しか記述できないタグがあります。たとえば、次の\f2@see\fPからタグ・セクションは始まります。
+.nf
+\f3
+.fl
+/**
+.fl
+ * This sentence would hold the main description for this doc comment.
+.fl
+ * @see java.lang.Object
+.fl
+ */
+.fl
+\fP
+.fi
+.LP
+\f3ブロック・タグとインライン・タグ\fP \- \f2タグ\fPは、Javadocツールが処理できる、ドキュメンテーション・コメント内の特別なキーワードです。タグには2つのタイプがあります。1つは\f2@tag\fPのように表記されるブロック・タグ(「スタンドアロン・タグ」とも呼ばれる)、もう1つは\f2{@tag}\fPのように中括弧で囲んで表記されるインライン・タグです。ブロック・タグが解釈されるには、行頭のアスタリスク、空白文字、区切り文字(\f2/**\fP)を除いて、行の先頭に置く必要があります。これは、\f2@\fP文字をテキスト内の別の場所で使用しても、タグの開始として解釈されないことを意味しています。\f2@\fP文字を使用して行を開始しても、それが解釈されないようにするには、HTMLエンティティ\f2&#064;\fPを使用します。それぞれのブロック・タグには、関連付けられたテキストがあります。このテキストは、タグの後から、次のタグの前、またはドキュメンテーション・コメントの最後までの間に記述されたテキストです(タグまたはコメント区切り文字を除く)。この関連テキストは、複数行にわたって記述できます。インライン・タグは、テキストを記述できる場所であればどこにでも置くことができ、解釈されます。次の例にはブロック・タグ\f2@deprecated\fPとインライン・タグ\f2{@link}\fPが含まれています。
+.nf
+\f3
+.fl
+/**
+.fl
+ * @deprecated  As of JDK 1.1, replaced by {@link #setBounds(int,int,int,int)}
+.fl
+ */
+.fl
+\fP
+.fi
+.LP
+\f3コメントはHTMLで記述する\fP \- テキストはHTMLで記述する必要があります。これは、HTMLのエンティティを使用する必要があること、およびHTMLタグを使用できることを意味します。HTMLのバージョンとしては、使用するブラウザがサポートする任意のバージョンを使用できます。標準ドックレットは、カスケーディング・スタイル・シートおよびフレームを含め、ドキュメンテーション・コメント以外の部分でHTML 3.2に準拠したコードを生成するように作成されています。(ただし、フレーム・セット対応のため、生成される各ファイルには「HTML 4.0」と先頭に記述されます。)
+.LP
+たとえば、より小さい(\f2<\fP)記号およびより大きい(\f2>\fP)記号のエンティティは、\f2<\fPおよび\f2>\fPと記述する必要があります。同様に、アンパサンド(\f2&\fP)は\f2&\fPと記述する必要があります。次の例では、太字のHTMLタグ\f2<b>\fPを使用しています。
+.LP
+次に、ドキュメンテーション・コメントを示します。
+.nf
+\f3
+.fl
+/**
+.fl
+ * This is a <b>doc</b> comment.
+.fl
+ * @see java.lang.Object
+.fl
+ */
+.fl
+\fP
+.fi
+.LP
+\f3行頭のアスタリスク\fP \- Javadocによるドキュメンテーション・コメントの解析時に、各行の先頭にあるアスタリスク(\f2*\fP)文字は破棄されます。最初のアスタリスク(\f2*\fP)文字より前にある空白やタブも破棄されます。バージョン1.4からは、行の先頭のアスタリスクを省略しても、先頭の空白文字は削除されなくなりました。このため、コード例を直接ドキュメンテーション・コメントの\f2<PRE>\fPタグ内に張り付けても、インデントが保持されます。通常、ブラウザは、空白文字をタブよりも一律に解釈します。インデントの起点は(区切り文字\f2/**\fPまたは\f2<PRE>\fPタグではなく)左マージンになります。
+.LP
+\f3最初の文\fP \- 各ドキュメンテーション・コメントの最初の文は、宣言されているエンティティに関する簡潔かつ完全な要約文である必要があります。この文は、空白、タブ、または行終了文字が続く最初のピリオド、または最初のブロック・タグがある位置で終わります。最初の文は、JavadocツールによってHTMLページの先頭にあるメンバーの概要の部分にコピーされます。
+.LP
+\f3複数フィールドの宣言\fP \- Javaでは、1つの文で複数のフィールドを宣言できます。ただし、この文には、1つのドキュメンテーション・コメントしか記述できません。そのコメントが、すべてのフィールドに対してコピーされます。したがって、フィールドごとにドキュメンテーション・コメントを記述する必要がある場合は、各フィールドを別々の文で宣言する必要があります。たとえば、次のドキュメンテーション・コメントは、1つの宣言として記述すると不適切です。この場合は、宣言を2つに分けることをお薦めします。
+.nf
+\f3
+.fl
+/** 
+.fl
+ * The horizontal and vertical distances of point (x,y)
+.fl
+ */
+.fl
+public int x, y;      // Avoid this  
+.fl
+\fP
+.fi
+.LP
+上のコードからは、次のようなドキュメントが生成されます。
+.nf
+\f3
+.fl
+public int \fP\f3x\fP
+.fl
+.fi
+.RS 3
+The horizontal and vertical distances of point (x,y) 
+.RE
+.nf
+\f3
+.fl
+public int \fP\f3y\fP
+.fl
+.fi
+.RS 3
+The horizontal and vertical distances of point (x,y) 
+.RE
+.LP
+\f3見出しタグの使用には要注意\fP \- メンバーに対してドキュメンテーション・コメントを記述するときには、<H1>や<H2>などのHTML見出しタグを使用しないことをお薦めします。Javadocツールは、完全な構造化ドキュメントを作成するので、このような構造化タグが使用されていると、生成ドキュメントの形式が悪影響を受けることがあります。ただし、クラスやパッケージのコメントでは、これらの見出しを使用して独自の構造を指定してかまいません。
+.SS 
+メソッド・コメントの自動コピー
+.LP
+Javadocツールには、次の2つの場合に、クラスおよびインタフェースのメソッド・コメントをコピーまたは「継承」する機能があります。コンストラクタ、フィールド、およびネストされたクラスは、ドキュメンテーション・コメントを継承しません。
+.RS 3
+.TP 2
+o
+\f3自動的にコメントを継承して見つからないテキストを埋める\fP \- 主説明、\f2@return\fPタグ、\f2@param\fPタグ、または\f2@throws\fP  タグがメソッド・コメントに見つからない場合、Javadocツールは、メソッドをオーバーライドまたは実装している場合はそのメソッドから、対応する主説明またはタグ・コメントを、次のアルゴリズムに従ってコピーします。 
+.LP
+厳密には、特定のパラメータの\f2@param\fPタグが見つからない場合、そのパラメータのコメントが、上位の継承階層のメソッドからコピーされます。特定の例外の\f2@throws\fPタグが見つからない場合、その例外が宣言されている場合に\f2かぎり\fP、\f2@throws\fPタグがコピーされます。 
+.LP
+この動作はバージョン1.3以前の動作とは対照的です。これまでのバージョンでは、主説明またはタグが存在すれば、コメントは一切継承されませんでした。  
+.TP 2
+o
+\f3{@inheritDoc}タグを含むコメントを明示的に継承する\fP \- インライン・タグ\f2{@inheritDoc}\fPを、メソッドの主説明内または\f2@return\fPタグ、\f2@param\fPタグ、または\f2@throws\fPのいずれかのタグ・コメント内に挿入します。対応する継承された主説明またはタグ・コメントがその位置にコピーされます。 
+.RE
+.LP
+ドキュメンテーション・コメントを実際にコピーに利用するには、継承したメソッドのソース・ファイルが\-sourcepathで指定したパスのみに置かれている必要があります。コマンドラインで、クラスもパッケージも渡す必要はありません。この点は、クラスがドキュメント化されるクラスであることが必要だった1.3.x以前のリリースと異なります。
+.LP
+\f3クラスおよびインタフェースからの継承\fP \- クラスおよびインタフェースから継承する次の3つの場合に、コメントの継承が行われます。
+.RS 3
+.TP 2
+o
+クラスのメソッドがスーパークラスのメソッドをオーバーライドしている場合 
+.TP 2
+o
+インタフェースのメソッドがスーパーインタフェースのメソッドをオーバーライドしている場合 
+.TP 2
+o
+クラスのメソッドがインタフェースのメソッドを実装している場合 
+.RE
+.LP
+最初の2つのケース(メソッドがオーバーライドしている場合)では、Javadocツールは、そのコメントが継承されているかどうかにかかわらず、オーバーライドしているメソッドのドキュメント内に「オーバーライド」という小見出しを生成し、オーバーライドされているメソッドへのリンクを書き込みます。
+.LP
+3つ目のケース(特定のクラスのメソッドがインタフェースのメソッドを実装している場合)では、Javadocツールは、オーバーライドしているメソッドのドキュメント内に「定義」という小見出しを生成し、実装されているメソッドへのリンクを書き込みます。これは、コメントが継承されているかどうかにかかわりません。
+.LP
+\f3メソッド・コメントが継承されるアルゴリズム\fP \- あるメソッドにドキュメンテーション・コメントが記述されていない場合、または{@inheritDoc}タグがある場合、Javadocツールは、次のアルゴリズムを使用して適切なコメントを検索します。このアルゴリズムは、最も厳密に適切なドキュメンテーション・コメントを検索できるように設計されており、スーパークラスよりもインタフェースが優先されるようになっています。
+.RS 3
+.TP 3
+1.
+直接に実装されている(または、拡張されている)インタフェースを、メソッドの宣言で「implements」(または「extends」)という語の後に出現する順序で、1つずつ調べます。このメソッドについて最初に見つかったドキュメンテーション・コメントを採用します。 
+.TP 3
+2.
+手順1でドキュメンテーション・コメントが見つからなかった場合は、直接実装されている(または、拡張されている)インタフェースのそれぞれに対して、このアルゴリズム全体を再帰的に適用します(その際の順序は、手順1でインタフェースを調べたときの順序と同じ)。 
+.TP 3
+3.
+手順2でドキュメンテーション・コメントが見つからなかった場合で、このクラスがObject以外のクラスである(インタフェースではない)場合は、次のように処理します。 
+.RS 3
+.TP 3
+a.
+スーパークラスにこのメソッドについてのドキュメンテーション・コメントが記述されている場合は、そのコメントを採用します。 
+.TP 3
+b.
+手順3aでドキュメンテーション・コメントが見つからなかった場合は、スーパークラスに対して、このアルゴリズム全体を再帰的に適用します。 
+.RE
+.RE
+.SH "javadocタグ"
+.LP
+Javadocツールは、Javaのドキュメンテーション・コメント内に埋め込まれた特別なタグを解析します。これらのドキュメンテーション・タグを使用すると、完全な整形式のAPIをソース・コードから自動的に生成できます。タグは「アットマーク」記号(\f2@\fP)で始まり、大文字と小文字が区別されます。これらのタグは、表示されているとおりに大文字と小文字を使用して入力する必要があります。タグは、行の先頭(先頭の空白文字と省略可能なアスタリスクの後)に置く必要があります。そうしないと、通常のテキストとして扱われます。慣例として、同じ名前のタグは1箇所にまとめます。たとえば、\f2@see\fPタグが複数ある場合は、すべて同じ場所にまとめて配置します。
+.LP
+タグには次の2つのタイプがあります。
+.RS 3
+.TP 2
+o
+\f3ブロック・タグ\fP \- 主説明に続くタグ・セクション内にのみ記述可能。ブロック・タグは、\f2@tag\fPの形式をとります。 
+.TP 2
+o
+\f3インライン・タグ\fP \- 主説明内、またはブロック・タグのコメント内に記述可能。インライン・タグは、\f2{@tag}\fPのように中括弧で囲みます。 
+.RE
+.LP
+現時点で有効なタグは、次のとおりです。
+.LP
+.TS
+.if \n+(b.=1 .nr d. \n(.c-\n(c.-1
+.de 35
+.ps \n(.s
+.vs \n(.vu
+.in \n(.iu
+.if \n(.u .fi
+.if \n(.j .ad
+.if \n(.j=0 .na
+..
+.nf
+.nr #~ 0
+.if n .nr #~ 0.6n
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.fc
+.nr 33 \n(.s
+.rm 80 81
+.nr 80 0
+.nr 38 \w\f3タグ\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@author\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@code}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@docRoot}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@deprecated\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@exception\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@inheritDoc}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@link}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@linkplain}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@literal}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@param\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@return\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@see\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@serial\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@serialData\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@serialField\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@since\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@throws\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2{@value}\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \w\f2@version\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.80
+.rm 80
+.nr 81 0
+.nr 38 \w\f3導入されたJDK/SDK\fP
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.5
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.3
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.4
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.2
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.4
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.5
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.2
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.2
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.2
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.1
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.2
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.4
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \w1.0
+.if \n(81<\n(38 .nr 81 \n(38
+.81
+.rm 81
+.nr 38 1n
+.nr 79 0
+.nr 40 \n(79+(0*\n(38)
+.nr 80 +\n(40
+.nr 41 \n(80+(3*\n(38)
+.nr 81 +\n(41
+.nr TW \n(81
+.if t .if \n(TW>\n(.li .tm Table at line 861 file Input is too wide - \n(TW units
+.fc  
+.nr #T 0-1
+.nr #a 0-1
+.eo
+.de T#
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.mk ##
+.nr ## -1v
+.ls 1
+.ls
+..
+.ec
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f3タグ\fP\h'|\n(41u'\f3導入されたJDK/SDK\fP
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@author\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@code}\fP\h'|\n(41u'1.5
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@docRoot}\fP\h'|\n(41u'1.3
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@deprecated\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@exception\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@inheritDoc}\fP\h'|\n(41u'1.4
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@link}\fP\h'|\n(41u'1.2
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@linkplain}\fP\h'|\n(41u'1.4
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@literal}\fP\h'|\n(41u'1.5
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@param\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@return\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@see\fP\h'|\n(41u'1.0
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@serial\fP\h'|\n(41u'1.2
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@serialData\fP\h'|\n(41u'1.2
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@serialField\fP\h'|\n(41u'1.2
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@since\fP\h'|\n(41u'1.1
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@throws\fP\h'|\n(41u'1.2
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2{@value}\fP\h'|\n(41u'1.4
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f2@version\fP\h'|\n(41u'1.0
+.fc
+.nr T. 1
+.T# 1
+.35
+.TE
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-42
+.LP
+カスタム・タグについては、\-tagオプションを参照してください。
+.RS 3
+.TP 3
+@author\  name\-text 
+\-authorオプションが使用されている場合、生成ドキュメントに「作成者」エントリを追加して、指定された\f2name\-text\fPを書き込みます。1つのドキュメンテーション・コメントに複数の\f2@author\fPタグを含めることができます。1つの\f2@author\fPタグに1つの名前を指定することも、複数の名前を指定することもできます。前者の場合は、Javadocツールによって名前と名前の間にカンマ(\f2,\fP)と空白文字が挿入されます。後者の場合は、テキスト全体が、解析されることなく、生成ドキュメントにそのままコピーされます。したがって、カンマではなく、各言語に対応した名前区切り文字を使用する必要があるときは、1つのタグに複数の名前を指定してください。 
+.RE
+.LP
+詳細は、タグを使用できる場所および
+.na
+\f2@authorタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@authorを参照してください。
+.LP
+.RS 3
+.TP 3
+@deprecated\  deprecated\-text 注意: @Deprecated注釈を使用して、プログラム要素を非推奨にできます。  
+.RE
+.LP
+このAPIは動作し続けますが、このAPIを使用しないことを薦めるコメントを追加します。Javadocツールは、\f2deprecated\-text\fPを主説明の前に移動してイタリックにし、その前に太字の警告「推奨されていません。」を追加します。このタグは、すべてのドキュメンテーション・コメント、つまり概要、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、およびフィールドで有効です。
+.LP
+\f2deprecated\-text\fPの最初の文では、少なくとも、そのAPIが推奨されなくなった時期と、代替として使用するAPIをユーザーに提示する必要があります。Javadocツールは、この最初の文のみを、概要セクションと索引にコピーします。その後の文では、推奨されない理由を説明することもできます。かわりのAPIを指し示す\f2{@link}\fPタグ(Javadoc 1.2以降の場合)を含める必要があります。
+.LP
+詳細は、
+.na
+\f2@deprecatedタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@deprecatedを参照してください。
+.RS 3
+.TP 2
+o
+Javadoc 1.2以降では、\f2{@link}\fPタグを使用します。これにより、必要な場所にインラインでリンクを作成できます。次に例を示します。 
+.nf
+\f3
+.fl
+/**
+.fl
+ * @deprecated  As of JDK 1.1, replaced by {@link #setBounds(int,int,int,int)}
+.fl
+ */
+.fl
+            
+.fl
+\fP
+.fi
+.TP 2
+o
+Javadoc 1.1では、\f2@see\fPタグ(インラインは不可)を\f2@deprecated\fPタグごとに作成するのが標準の形式です。 
+.RE
+.LP
+推奨されないタグの詳細は、
+.na
+\f2@deprecatedタグ\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/deprecation/index.htmlのドキュメントを参照してください。
+.LP
+.RS 3
+.TP 3
+{@code\  text} 
+\f2<code>{@literal}</code>\fPと同等です。 
+.LP
+テキストをHTMLマークアップまたはネストされたjavadocタグとして解釈せずに、\f2text\fPを\f2コード\fP・フォントで表示します。これにより、ドキュメンテーション・コメントでは、パラメータの型(\f2<Object>\fP)、不等号(\f23 < 4\fP)、矢印(\f2<\-\fP)などで、通常の山括弧(\f2<\fPおよび\f2>\fP)をHTMLエンティティ(\f2<\fPおよび\f2>\fP)のかわりに使用できます。たとえば、次のドキュメンテーション・コメント 
+.nf
+\f3
+.fl
+     \fP\f4{@code A<B>C}\fP\f3
+.fl
+          
+.fl
+\fP
+.fi
+.LP
+は、生成されたHTMLページで、次のようにそのまま表示されます。 
+.nf
+\f3
+.fl
+     \fP\f4A<B>C\fP\f3
+.fl
+          
+.fl
+\fP
+.fi
+.LP
+ここで注目に値するのは、\f2<B>\fPが太字として解釈されず、そのフォントはコード・フォントになる、という点です。 
+.LP
+コード・フォントなしで同じ機能を実現するには、\f2{@literal}\fPを使用します。 
+.LP
+.TP 3
+{@docRoot} 
+生成されるページからの、生成ドキュメントの(生成先)ルート・ディレクトリへの相対パスを表します。このタグは、著作権のページや会社のロゴなど、生成されるすべてのページから参照するファイルを組み込むときに便利です。通常は、各ページの最下部から著作権のページにリンクします。 
+.LP
+この\f2{@docRoot}\fPタグは、コマンドラインでもドキュメンテーション・コメント内でも使用できます。このタグは、@return、@param、@deprecatedなどの任意のタグのテキスト部分を含む、すべてのドキュメンテーション・コメント、つまり概要、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、およびフィールドで有効です。 
+.RS 3
+.TP 3
+1.
+コマンドラインでは、ヘッダー、フッター、またはボトムは次のように定義します。 
+.nf
+\f3
+.fl
+   javadoc \-bottom '<a href="{@docRoot}/copyright.html">Copyright</a>'
+.fl
+            
+.fl
+\fP
+.fi
+.LP
+注意 \- \f2{@docRoot}\fPをMakefile内でこのように利用する場合、一部のMakefileプログラムでは、中括弧{ }文字を特別にエスケープする必要があります。たとえば、Inprise MAKEバージョン5.2をWindows上で実行する場合は、\f2{{@docRoot}}\fPのように、中括弧を二重にする必要があります。さらに、\f2\-bottom\fPなどのオプションに対する引数を、一重引用符ではなく二重引用符で囲む必要もあります(\f2href\fP引数を囲む引用符は省略)。  
+.TP 3
+2.
+ドキュメンテーション・コメントの中では、次のように使用します。 
+.nf
+\f3
+.fl
+   /**
+.fl
+    * See the <a href="{@docRoot}/copyright.html">Copyright</a>.
+.fl
+    */
+.fl
+            
+.fl
+\fP
+.fi
+.RE
+.LP
+このタグが必要な理由は、生成ドキュメントが、サブパッケージと同じ深さを持つ階層構造のディレクトリに格納されるからです。式 
+.nf
+\f3
+.fl
+  <a href="{@docRoot}/copyright.html">
+.fl
+          
+.fl
+\fP
+.fi
+.LP
+は、次のように解決されます。 
+.nf
+\f3
+.fl
+  <a href="../../copyright.html">      for java/lang/Object.java
+.fl
+          
+.fl
+\fP
+.fi
+.LP
+および 
+.nf
+\f3
+.fl
+  <a href="../../../copyright.html">   for java/lang/ref/Reference.java
+.fl
+          
+.fl
+\fP
+.fi
+.LP
+.TP 3
+@exception\  class\-name\  description 
+\f2@exception\fPタグは、\f2@throws\fPと同義です。 
+.LP
+.TP 3
+{@inheritDoc}\  
+最も近い継承可能なクラスまたは実装可能なインタフェースから、このタグの位置にある現在のドキュメンテーション・コメントに、ドキュメントを継承(コピー)します。この機能により、より汎用的なコメントを継承ツリーの上位に記述し、コピーしたテキストを使用して記述することができます。 
+.LP
+このタグは、ドキュメンテーション・コメントの次の位置でのみ有効です。 
+.RS 3
+.TP 2
+o
+メソッドの主説明ブロック内。この場合、主説明は、上位階層のクラスまたはインタフェースからコピーされます。 
+.TP 2
+o
+メソッドの@return、@param、@throwsタグのテキスト引数内。この場合、タグ・テキストは、上位階層の対応するタグからコピーされます。 
+.RE
+.LP
+継承階層でコメントを見つける方法に関する正確な説明は、メソッド・コメントの自動コピーを参照してください。このタグが見つからない場合、コメントは、この項で説明するルールに応じて、自動的に継承されるかどうかが決まります。 
+.LP
+.TP 3
+{@link\  package.class#member\  label} 
+表示テキスト\f2label\fPとともにインライン・リンクを挿入します。labelは、参照クラスの指定されたパッケージ、クラス、またはメンバーの名前のドキュメントを指し示します。このタグは、@return、@param、@deprecatedなどの任意のタグのテキスト部分を含む、すべてのドキュメンテーション・コメント、つまり概要、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、およびフィールドで有効です。 
+.LP
+このタグは\f2@see\fPと非常によく似ています。どちらも、\f2package.class\fP\f2#\fP\f2member\fPと\f2label\fPの参照方法が同じで、有効な構文もまったく同じです。主な違いは、\f2{@link}\fPでは、「関連項目」セクションにリンクが配置されるかわりに、インライン・リンクが生成されるという点です。また、インライン・テキストの他の部分と区別するために、\f2{@link}\fPタグの最初と最後に中括弧を記述します。ラベルの中で「}」を使用する必要がある場合は、HTMLエンティティ表記法の「&#125;」を使用します。 
+.LP
+1つ文の中で使用できる\f2{@link}\fPタグの数に制限はありません。このタグは、ドキュメンテーション・コメントの主説明部分、または@deprecated、@return、@paramなどの任意のタグのテキスト部分で使用できます。 
+.LP
+たとえば、次のコメントでは\f2getComponentAt(int,int)\fPメソッドを参照しています。 
+.nf
+\f3
+.fl
+Use the {@link #getComponentAt(int, int) getComponentAt} method.
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+標準ドックレットでは、上のコメントから次のHTMLが生成されます(このコメントが同じパッケージの別のクラスを参照している場合)。 
+.nf
+\f3
+.fl
+Use the <a href="Component.html#getComponentAt(int, int)">getComponentAt</a> method.
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+これは、Webページ上では次のように表示されます。 
+.nf
+\f3
+.fl
+Use the getComponentAt method.
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+\f2{@link}\fPを拡張してドキュメント化されないクラスにリンクするには、\f2\-link\fPオプションを使用します。 
+.LP
+詳細は、
+.na
+\f2{@link}タグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#{@link}を参照してください。 
+.LP
+.TP 3
+{@linkplain\  package.class#member\  label} 
+リンクのラベルがコード・フォントではなくプレーン・テキストで表示される点以外は\f2{@link}\fPと同じです。ラベルがプレーン・テキストで記述されていると便利です。例: 
+.nf
+\f3
+.fl
+     Refer to {@linkplain add() the overridden method}.
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+これは次のように表示されます。 
+.LP
+Refer to the overridden method. 
+.LP
+.TP 3
+{@literal\  text} 
+テキストをHTMLマークアップまたはネストされたjavadocタグとして解釈せずに、\f2text\fPを表示します。これにより、ドキュメンテーション・コメントでは、パラメータの型(\f2<Object>\fP)、不等号(\f23 < 4\fP)、矢印(\f2<\-\fP)などで、通常の山括弧(\f2<\fPおよび\f2>\fP)をHTMLエンティティ(\f2<\fPおよび\f2>\fP)のかわりに使用できます。たとえば、次のドキュメンテーション・コメント 
+.nf
+\f3
+.fl
+     \fP\f4{@literal A<B>C}\fP\f3
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+は、ブラウザで生成されたHTMLページに次のようにそのまま表示されます。 
+.LP
+\f2\ \ \ \ \ \fPA<B>C  
+.LP
+ここで注目に値するのは、\f2<B>\fPが太字として解釈されず、そのフォントはコード・フォントにならない、という点です。 
+.LP
+コード・フォントで同じ機能を実現するには、\f2{@code}\fPを使用します。 
+.LP
+.TP 3
+@param\  parameter\-name description 
+「パラメータ」セクションに、指定された\f2parameter\-name\fPの後に指定された\f2description\fPを続けてパラメータを追加します。ドキュメンテーション・コメントを記述するときには、\f2description\fPを複数行にわたって記述することもできます。このタグは、メソッド、コンストラクタ、またはクラスのドキュメンテーション・コメント内でのみ有効です。 
+.LP
+\f2parameter\-name\fPは、メソッドまたはコンストラクタでのパラメータの名前か、クラス、メソッドまたはコンストラクタの型パラメータの名前になります。山括弧でこのパラメータ名を囲み、型パラメータを使用することを指定します。 
+.LP
+クラスの型パラメータの例: 
+.nf
+\f3
+.fl
+     /**
+.fl
+      * @param <E> Type of element stored in a list
+.fl
+      */
+.fl
+     public interface List<E> extends Collection<E> {
+.fl
+     }
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+メソッドの型パラメータの例: 
+.nf
+\f3
+.fl
+     /**
+.fl
+      * @param string  the string to be converted
+.fl
+      * @param type    the type to convert the string to
+.fl
+      * @param <T>     the type of the element
+.fl
+      * @param <V>     the value of the element
+.fl
+      */
+.fl
+     <T, V extends T> V convert(String string, Class<T> type) {
+.fl
+     }
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+詳細は、
+.na
+\f2@paramタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@paramを参照してください。 
+.LP
+.TP 3
+@return\  description 
+「戻り値」セクションを追加して、\f2description\fPのテキストを書き込みます。このテキストでは、戻り値の型と、取り得る値の範囲について記述する必要があります。このタグは、メソッドのドキュメンテーション・コメントでのみ有効です。 
+.LP
+詳細は、
+.na
+\f2@returnタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@returnを参照してください。 
+.LP
+.TP 3
+@see\  reference 
+「関連項目」見出しを追加して、\f2reference\fPを指すリンク、またはテキスト・エントリを書き込みます。1つのドキュメンテーション・コメントには任意の数の\f2@see\fPタグを含めることができますが、それらはすべて同じ見出しの下にグループ化されます。\f2@see\fPタグには、次の3つのタイプの形式があります。最もよく使用されるのは、3番目の形式です。このタグは、すべてのドキュメンテーション・コメント、つまり概要、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、またはフィールドで有効です。パッケージ、クラス、またはメンバーに対するインライン・リンクを文中に挿入する方法は、\f2{@link}\fPを参照してください。 
+.RS 3
+.TP 3
+@see "string" 
+\f2string\fPのテキスト・エントリを追加します。リンクは生成されません。\f2string\fPは、書籍またはURLではアクセスできない情報の参照先です。Javadocツールは、最初の文字が二重引用符(\f2"\fP)かどうかを調べて、この形式を前述の形式と区別します。次に例を示します。 
+.nf
+\f3
+.fl
+     @see "The Java Programming Language"
+.fl
+            
+.fl
+\fP
+.fi
+.LP
+これは次のようなテキストを生成します。  
+.RE
+.RE
+.RS 3
+.RS 3
+.RS 3
+.RS 3
+.TP 3
+関連項目: 
+"The Java Programming Language" 
+.RE
+.RE
+.TP 3
+@see <a href="URL#value">label</a> 
+\f2URL\fP#\f2value\fPで定義されたとおりにリンクを追加します。\f2URL\fP#\f2value\fPは、相対URLまたは絶対URLです。Javadocツールは、最初の文字が「より小さい」記号(\f2<\fP)かどうかを調べて、この形式を他の形式と区別します。次に例を示します。 
+.nf
+\f3
+.fl
+     @see <a href="spec.html#section">Java Spec</a>
+.fl
+\fP
+.fi
+これは次のようなリンクを生成します。 
+.RS 3
+.TP 3
+関連項目: 
+Java Spec 
+.RE
+.TP 3
+@see\  package.class#member\  label 
+表示テキスト\f2label\fPとともにリンクを追加します。このリンクは、指定された名前を持つ、参照されているJava言語のメンバーのドキュメントを指します。\f2label\fPは省略可能です。labelを省略すると、名前がかわりに表示テキストとして適切に短縮されて表示されます。名前が表示される方法を参照してください。\-noqualifierを使用すると、この表示テキストからパッケージ名が全体的に削除されます。ラベルは、自動生成される表示テキストとは異なる表示テキストにする場合に使用します。 
+.LP
+バージョン1.2のみは、ラベルではなく、名前が<code> HTMLタグ内に自動的に表示されます。1.2.2からは、ラベルを使用するかしないかにかかわらず、<code>は常に表示テキストを囲むかたちで、含まれます。 
+.LP
+.RS 3
+.TP 2
+o
+\f4package.class\fP\f4#\fP\f4member\fPには、参照されている任意の有効なプログラム要素の名前を指定します。つまり、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、またはフィールドの名前です。ただし、メンバー名の前の文字は、シャープ記号(\f2#\fP)にする必要があります。\f2class\fPは、任意のトップレベルまたはネストされたクラスまたはインタフェースを表します。\f2member\fPは、任意のコンストラクタ、メソッドまたはフィールドを表します(ネストされたクラスまたはインタフェースではありません)。この名前が、ドキュメント化されるクラスに含まれている場合、Javadocツールは、その名前へのリンクを自動的に作成します。外部参照クラスへのリンクを作成するには、\f2\-link\fPオプションを使用します。参照クラスに属していない名前のドキュメントを参照するには、他の2つの\f2@see\fP形式のどちらかを使用します。この引数については、後述の名前の指定で詳しく説明します。 
+.TP 2
+o
+\f4label\fPは、省略可能なテキストで、リンクのラベルとして表示されます。\f2label\fPには空白を含めることができます。\f2label\fPを省略すると、\f2package.class.member\fPが、現在のクラスおよびパッケージに応じて適切に短縮されて表示されます。名前が表示される方法を参照してください。 
+.TP 2
+o
+空白文字が、\f2package.class\fP\f2#\fP\f2member\fPと\f2label\fPの間の区切り文字になります。括弧の内側の空白文字はラベルの先頭とは解釈されないため、メソッドのパラメータ間に空白文字を入れてもかまいません。 
+.RE
+.LP
+\f3例\fP \- この例では、\f2@see\fPタグ(\f2Character\fPクラス内)が、\f2String\fPクラスの\f2equals\fPメソッドを参照しています。タグには、名前「\f2String#equals(Object)\fP」とラベル「\f2equals\fP」の両方の引数が含まれています。 
+.nf
+\f3
+.fl
+ /**
+.fl
+  * @see String#equals(Object) equals
+.fl
+  */
+.fl
+\fP
+.fi
+標準ドックレットは、次のようなHTMLを生成します。 
+.nf
+\f3
+.fl
+<dl>
+.fl
+<dt><b>See Also:</b>
+.fl
+<dd><a href="../../java/lang/String#equals(java.lang.Object)"><code>equals<code></a>
+.fl
+</dl>
+.fl
+\fP
+.fi
+これは、ブラウザでは次のように表示され、ラベルが表示リンク・テキストになります。 
+.RS 3
+.TP 3
+関連項目: 
+equals 
+.RE
+.LP
+\f3名前の指定\fP \- この\f2package.class\fP\f2#\fP\f2member\fPという名前は、\f2java.lang.String#toUpperCase()\fPのような完全修飾名にすることも、\f2String#toUpperCase()\fPや\f2#toUpperCase()\fPのような非完全修飾名にすることもできます。名前が完全には修飾されていない場合、Javadocツールは、Javaコンパイラの通常の検索順序でその名前を検索します。詳細は、後述の@seeの検索順序を参照してください。名前には、メソッドの複数の引数の間など、括弧の内側であれば空白を含めることができます。 
+.LP
+「部分的に修飾」した短い名前を指定することの利点は、入力する文字数が減ることや、ソース・コードが読みやすくなることです。次の表に、様々な形式の名前を示します。ここで、\f2Class\fPにはクラスまたはインタフェースを、\f2Type\fPにはクラス、インタフェース、配列、またはプリミティブを、\f2method\fPにはメソッドまたはコンストラクタを、それぞれ指定できます。 
+.LP
+.LP
+.TS
+.if \n+(b.=1 .nr d. \n(.c-\n(c.-1
+.de 35
+.ps \n(.s
+.vs \n(.vu
+.in \n(.iu
+.if \n(.u .fi
+.if \n(.j .ad
+.if \n(.j=0 .na
+..
+.nf
+.nr #~ 0
+.if n .nr #~ 0.6n
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.fc
+.nr 33 \n(.s
+.rm 80
+.nr 34 \n(.lu
+.eo
+.am 80
+.br
+.di a+
+.35
+.ft \n(.f
+.ll \n(34u*1u/2u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f4@see\fP\f3\ \fP\f4package.class#member\fP\f3の一般的な形式\fP
+.br
+.di
+.nr a| \n(dn
+.nr a- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di b+
+.35
+.ft \n(.f
+.ll \n(34u*1u/2u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f3現在のクラスのメンバーを参照する\ \ \ \ \ \ \fP
+.br
+\f2@see\fP\ \f2#\fP\f2field\fP
+.br
+\f2@see\fP\ \f2#\fP\f2method(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2#\fP\f2method(Type\ argname,\ Type\ argname,...)\fP
+.br
+\f2@see\fP\ \f2#\fP\f2constructor(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2#\fP\f2constructor(Type\ argname,\ Type\ argname,...)\fP
+.br
+.di
+.nr b| \n(dn
+.nr b- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di c+
+.35
+.ft \n(.f
+.ll \n(34u*1u/2u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f3現在の、またはインポートされたパッケージの別のクラスを参照する\ \ \ \ \ \ \ \ \fP
+.br
+\f2@see\fP\ \f2Class\fP\f2#\fP\f2field\fP
+.br
+\f2@see\fP\ \f2Class\fP\f2#\fP\f2method(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2Class\fP\f2#\fP\f2method(Type\ argname,\ Type\ argname,...)\fP
+.br
+\f2@see\fP\ \f2Class\fP\f2#\fP\f2constructor(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2Class\fP\f2#\fP\f2constructor(Type\ argname,\ Type\ argname,...)\fP
+.br
+\f2@see\fP\ \f2Class.NestedClass\fP
+.br
+\f2@see\fP\ \f2Class\fP
+.br
+.di
+.nr c| \n(dn
+.nr c- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di d+
+.35
+.ft \n(.f
+.ll \n(34u*1u/2u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f3別のパッケージの要素を参照する\fP\ (完全修飾)\ \ \ \ .br
+\f2@see\fP\ \f2package.Class\fP\f2#\fP\f2field\fP
+.br
+\f2@see\fP\ \f2package.Class\fP\f2#\fP\f2method(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2package.Class\fP\f2#\fP\f2method(Type\ argname,\ Type\ argname,...)\fP
+.br
+\f2@see\fP\ \f2package.Class\fP\f2#\fP\f2constructor(Type,\ Type,...)\fP
+.br
+\f2@see\fP\ \f2package.Class\fP\f2#\fP\f2constructor(Type\ argname,\ Type\ argname,...)\fP
+.br
+\f2@see\fP\ \f2package.Class.NestedClass\fP
+.br
+\f2@see\fP\ \f2package.Class\fP
+.br
+\f2@see\fP\ \f2package\fP
+.br
+.di
+.nr d| \n(dn
+.nr d- \n(dl
+..
+.ec \
+.35
+.nf
+.ll \n(34u
+.nr 80 0
+.80
+.rm 80
+.nr 38 \n(a-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \n(b-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \n(c-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \n(d-
+.if \n(80<\n(38 .nr 80 \n(38
+.35
+.nf
+.ll \n(34u
+.nr 38 1n
+.nr 79 0
+.nr 40 \n(79+(0*\n(38)
+.nr 80 +\n(40
+.nr TW \n(80
+.if t .if \n(TW>\n(.li .tm Table at line 1352 file Input is too wide - \n(TW units
+.fc  
+.nr #T 0-1
+.nr #a 0-1
+.eo
+.de T#
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.mk ##
+.nr ## -1v
+.ls 1
+.ls
+..
+.ec
+.ne \n(a|u+\n(.Vu
+.if (\n(a|+\n(#^-1v)>\n(#- .nr #- +(\n(a|+\n(#^-\n(#--1v)
+.ta \n(80u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.a+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(b|u+\n(.Vu
+.if (\n(b|+\n(#^-1v)>\n(#- .nr #- +(\n(b|+\n(#^-\n(#--1v)
+.ta \n(80u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.b+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(c|u+\n(.Vu
+.if (\n(c|+\n(#^-1v)>\n(#- .nr #- +(\n(c|+\n(#^-\n(#--1v)
+.ta \n(80u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.c+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(d|u+\n(.Vu
+.if (\n(d|+\n(#^-1v)>\n(#- .nr #- +(\n(d|+\n(#^-\n(#--1v)
+.ta \n(80u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.d+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.fc
+.nr T. 1
+.T# 1
+.35
+.rm a+
+.rm b+
+.rm c+
+.rm d+
+.TE
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-58
+.LP
+上の表に対する補足事項を次に示します。 
+.RS 3
+.TP 2
+o
+最初のタイプの形式(パッケージとクラスを省略)の場合、Javadocツールは、現在のクラスの階層のみを検索します。つまり、現在のクラスかインタフェース、そのスーパークラスかスーパーインタフェース、またはその外側を囲んでいるクラスかインタフェースからメンバーを検索します(検索手順1\-3)。現在のパッケージの他の部分や、他のパッケージは検索しません(検索手順4\-5)。 
+.TP 2
+o
+メソッドまたはコンストラクタの入力時に、\f2getValue\fPのように括弧なしの名前を使用した場合、同じ名前のフィールドが存在していなければ、Javadocツールはその名前へのリンクを正しく作成しますが、括弧と引数の追加を促す警告メッセージを出力します。このメソッドがオーバーロードされている場合、Javadocツールは、検索で最初に見つかったメソッドにリンクします。結果は前もって特定できません。 
+.TP 2
+o
+ネストされたクラスは、すべての形式について、\f2outer\fP\f2.\fP\f2inner\fPとして指定する必要があります。単純に\f2inner\fPとはしないでください。 
+.TP 2
+o
+すでに述べたように、クラスとメンバーとの間の区切り文字としては、ドット(\f2.\fP)ではなくシャープ文字(\f2#\fP)を使用します。このように指定すると、Javadocツールは、あいまいさを解決できます。ドットは、クラス、ネストされたクラス、パッケージ、およびサブパッケージを区切るためにも使用されるからです。ただし、Javadocツールでは一般に許容範囲が広く、あいまいさがなければドットは正しく解析されます。その場合でも、警告は表示されます。 
+.RE
+.LP
+\f3@seeの検索順序\fP \- Javadocツールは、ソース・ファイル(.java)、パッケージ・ファイル(package.htmlまたはpackage\-info.java)または概要ファイル(overview.html)に含まれる\f2@see\fPタグを処理します。後者の2つのファイルでは、完全修飾の名前を\f2@see\fPに指定する必要があります。ソース・ファイルでは、完全修飾の名前、または部分修飾の名前を指定できます。 
+.LP
+Javadocツールは、完全修飾\f2でない\fP名前が記述された\f2@see\fPタグを\f2.java\fPファイル内で見つけると、Javaコンパイラと同じ順序で指定された名前を検索します(ただし、Javadocツールは、特定の名前空間のあいまいさを検出しません。これは、ソース・コードにこれらのエラーが存在していないことを前提としているためです)。この検索順序は、\f2Java言語仕様\fPで正式に定義されています。Javadocツールは、関連するクラスとパッケージ、およびインポートされたクラスとパッケージのすべてからその名前を検索します。具体的には、次の順序で検索します。 
+.RS 3
+.TP 3
+1.
+現在のクラスまたはインタフェース 
+.TP 3
+2.
+外側を囲んでいるクラスとインタフェース(最も近いものから検索) 
+.TP 3
+3.
+スーパークラスとスーパーインタフェース(最も近いものから検索) 
+.TP 3
+4.
+現在のパッケージ 
+.TP 3
+5.
+インポートされているパッケージ、クラス、およびインタフェース(import文の順序に従って検索) 
+.RE
+.LP
+Javadocツールは、各クラスについて手順1\-3を再帰的に適用しながら、一致する名前が見つかるまで検索を続けます。つまり、まず現在のクラスを検索し、次にその外側を囲んでいるクラスEを検索した後、Eのスーパークラスを検索してから、Eを囲んでいるクラスを検索します。  手順4と5では、1つのパッケージ内のクラスまたはインタフェースを検索する順序は決まっていません(その順序は、個々のコンパイラによって異なります)。手順5では、Javadocツールは、java.langを検索します。このパッケージは、すべてのプログラムに自動的にインポートされるからです。 
+.LP
+Javadocツールは、必ずしもサブクラスを検索するとは限りません。また、Javadocの実行中に他のパッケージのドキュメントが生成される場合でも、他のパッケージを検索しません。たとえば、\f2@see\fPタグが\f2java.awt.event.KeyEvent\fPクラス内に含まれていて、\f2java.awt\fPパッケージ内のある名前を参照していても、そのクラスがインポートしないかぎりJavadocはそのパッケージを検索しません。 
+.LP
+\f3名前が表示される方法\fP \- \f2label\fPを省略すると、\f2package.class.member\fPが表示されます。一般に、これは現在のクラスおよびパッケージに応じて適切に短縮されます。「短縮される」とは、必要最小限の名前のみが表示されるということです。たとえば、\f2String.toUpperCase()\fPメソッドに、同じクラスのメンバーへの参照と他のクラスのメンバーへの参照が含まれている場合、クラス名が表示されるのは後者のケースのみです(次の表を参照)。 
+.LP
+パッケージ名を全体的に削除するには、\-noqualifierを使用します。
+.br
+.LP
+.TS
+.if \n+(b.=1 .nr d. \n(.c-\n(c.-1
+.de 35
+.ps \n(.s
+.vs \n(.vu
+.in \n(.iu
+.if \n(.u .fi
+.if \n(.j .ad
+.if \n(.j=0 .na
+..
+.nf
+.nr #~ 0
+.if n .nr #~ 0.6n
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.fc
+.nr 33 \n(.s
+.rm 80 81 82
+.nr 34 \n(.lu
+.eo
+.am 81
+.br
+.di a+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+\f4String.toUpperCase()\fP\f3での例\fP
+.br
+.di
+.nr a| \n(dn
+.nr a- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di b+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f2@see\fPタグが同じクラス、同じパッケージのメンバーを参照している
+.br
+.di
+.nr b| \n(dn
+.nr b- \n(dl
+..
+.ec \
+.eo
+.am 82
+.br
+.di c+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(82 .ll \n(82u
+.in 0
+\f2toLowerCase()\fP(パッケージ名とクラス名は省略)
+.br
+.di
+.nr c| \n(dn
+.nr c- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di d+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f2@see\fPタグが異なるクラス、同じパッケージのメンバーを参照している
+.br
+.di
+.nr d| \n(dn
+.nr d- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di e+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+\f2@see Character#toLowerCase(char)\fP
+.br
+.di
+.nr e| \n(dn
+.nr e- \n(dl
+..
+.ec \
+.eo
+.am 82
+.br
+.di f+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(82 .ll \n(82u
+.in 0
+\f2Character.toLowerCase(char)\fP(パッケージ名は省略し、クラス名を含む)
+.br
+.di
+.nr f| \n(dn
+.nr f- \n(dl
+..
+.ec \
+.eo
+.am 80
+.br
+.di g+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\f2@see\fPタグが異なるクラス、異なるパッケージのメンバーを参照している
+.br
+.di
+.nr g| \n(dn
+.nr g- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di h+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+\f2@see java.io.File#exists()\fP
+.br
+.di
+.nr h| \n(dn
+.nr h- \n(dl
+..
+.ec \
+.eo
+.am 82
+.br
+.di i+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(82 .ll \n(82u
+.in 0
+\f2java.io.File.exists()\fP(パッケージ名とクラス名を含む)
+.br
+.di
+.nr i| \n(dn
+.nr i- \n(dl
+..
+.ec \
+.35
+.nf
+.ll \n(34u
+.nr 80 0
+.nr 38 \w\f3参照のタイプ\fP
+.if \n(80<\n(38 .nr 80 \n(38
+.80
+.rm 80
+.nr 38 \n(b-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \n(d-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 38 \n(g-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 81 0
+.nr 38 \w\f2@see String#toLowerCase()\fP
+.if \n(81<\n(38 .nr 81 \n(38
+.81
+.rm 81
+.nr 38 \n(a-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(e-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(h-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 82 0
+.nr 38 \w\f3表示される名前\fP
+.if \n(82<\n(38 .nr 82 \n(38
+.82
+.rm 82
+.nr 38 \n(c-
+.if \n(82<\n(38 .nr 82 \n(38
+.nr 38 \n(f-
+.if \n(82<\n(38 .nr 82 \n(38
+.nr 38 \n(i-
+.if \n(82<\n(38 .nr 82 \n(38
+.35
+.nf
+.ll \n(34u
+.nr 38 1n
+.nr 79 0
+.nr 40 \n(79+(0*\n(38)
+.nr 80 +\n(40
+.nr 41 \n(80+(3*\n(38)
+.nr 81 +\n(41
+.nr 42 \n(81+(3*\n(38)
+.nr 82 +\n(42
+.nr TW \n(82
+.if t .if \n(TW>\n(.li .tm Table at line 1428 file Input is too wide - \n(TW units
+.fc  
+.nr #T 0-1
+.nr #a 0-1
+.eo
+.de T#
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.mk ##
+.nr ## -1v
+.ls 1
+.ls
+..
+.ec
+.ne \n(a|u+\n(.Vu
+.if (\n(a|+\n(#^-1v)>\n(#- .nr #- +(\n(a|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u \n(82u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\f3参照のタイプ\fP\h'|\n(41u'\h'|\n(42u'\f3表示される名前\fP
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.a+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(b|u+\n(.Vu
+.ne \n(c|u+\n(.Vu
+.if (\n(b|+\n(#^-1v)>\n(#- .nr #- +(\n(b|+\n(#^-\n(#--1v)
+.if (\n(c|+\n(#^-1v)>\n(#- .nr #- +(\n(c|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u \n(82u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\h'|\n(41u'\f2@see String#toLowerCase()\fP\h'|\n(42u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.b+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(42u
+.in +\n(37u
+.c+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(d|u+\n(.Vu
+.ne \n(e|u+\n(.Vu
+.ne \n(f|u+\n(.Vu
+.if (\n(d|+\n(#^-1v)>\n(#- .nr #- +(\n(d|+\n(#^-\n(#--1v)
+.if (\n(e|+\n(#^-1v)>\n(#- .nr #- +(\n(e|+\n(#^-\n(#--1v)
+.if (\n(f|+\n(#^-1v)>\n(#- .nr #- +(\n(f|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u \n(82u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\h'|\n(41u'\h'|\n(42u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.d+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.e+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(42u
+.in +\n(37u
+.f+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(g|u+\n(.Vu
+.ne \n(h|u+\n(.Vu
+.ne \n(i|u+\n(.Vu
+.if (\n(g|+\n(#^-1v)>\n(#- .nr #- +(\n(g|+\n(#^-\n(#--1v)
+.if (\n(h|+\n(#^-1v)>\n(#- .nr #- +(\n(h|+\n(#^-\n(#--1v)
+.if (\n(i|+\n(#^-1v)>\n(#- .nr #- +(\n(i|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u \n(82u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\h'|\n(41u'\h'|\n(42u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.g+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.h+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(42u
+.in +\n(37u
+.i+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.fc
+.nr T. 1
+.T# 1
+.35
+.rm a+
+.rm b+
+.rm c+
+.rm d+
+.rm e+
+.rm f+
+.rm g+
+.rm h+
+.rm i+
+.TE
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-28
+.LP
+\f3@seeの例\fP
+.br
+右側のコメントは、\f2@see\fPタグが\f2java.applet.Applet\fPなどの別のパッケージのクラス内にある場合に、名前がどのように表示されるかを示しています。 
+.nf
+\f3
+.fl
+                                           See also: 
+.fl
+@see java.lang.String                   //  String                          \fP\f3 
+.fl
+@see java.lang.String The String class  //  The String class                \fP\f3 
+.fl
+@see String                             //  String                          \fP\f3 
+.fl
+@see String#equals(Object)              //  String.equals(Object)           \fP\f3 
+.fl
+@see String#equals                      //  String.equals(java.lang.Object) \fP\f3  
+.fl
+@see java.lang.Object#wait(long)        //  java.lang.Object.wait(long)     \fP\f3 
+.fl
+@see Character#MAX_RADIX                //  Character.MAX_RADIX             \fP\f3 
+.fl
+@see <a href="spec.html">Java Spec</a>  //  Java Spec           \fP\f3 
+.fl
+@see "The Java Programming Language"    //  "The Java Programming Language"        \fP\f3 
+.fl
+\fP
+.fi
+\f2@see\fPを拡張してドキュメント化されないクラスにリンクするには、\f2\-link\fPオプションを使用します。 
+.LP
+詳細は、
+.na
+\f2@seeタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@seeを参照してください。  
+.RE
+.RE
+.LP
+.RS 3
+.TP 3
+@serial\  field\-description | include | exclude 
+デフォルトの直列化可能フィールドのドキュメンテーション・コメントで使用します。 
+.LP
+\f2field\-description\fP(省略可能)では、フィールドの意味を説明し、取り得る値のリストを示す必要があります。必要に応じて、複数の行に渡って説明を記述できます。標準ドックレットは、この情報を、直列化された形式ページに追加します。 
+.LP
+クラスを直列化した後しばらくしてから直列化可能フィールドをクラスに追加した場合、主説明に、追加したバージョンを識別する文を追加する必要があります。 
+.LP
+\f2include\fPおよび\f2exclude\fP引数は、直列化された形式ページにクラスまたはパッケージを含めるか除外するかを示します。次のように機能します。 
+.RS 3
+.TP 2
+o
+\f2Serializable\fPを実装しているpublicまたはprotectedクラスは、そのクラス(またはそのクラスが属するパッケージ)が\f2@serial exclude\fPとマークされていないかぎり、\f2含められます\fP。 
+.TP 2
+o
+\f2Serializable\fPを実装しているprivateまたはpackage\-privateクラスは、そのクラス(またはそのクラスが属するパッケージ)が\f2@serial include\fPとマークされていないかぎり、\f2除外されます\fP。 
+.RE
+.LP
+例: \f2javax.swing\fPパッケージは(\f2package.html\fPまたは\f2package\-info.java\fP内で)\f2@serial exclude\fPとマークされています。publicクラス\f2java.security.BasicPermission\fPは\f2@serial exclude\fPとマークされています。package\-privateクラス\f2java.util.PropertyPermissionCollection\fPは\f2@serial include\fPとマークされています。 
+.LP
+クラス・レベルで指定された@serialタグは、パッケージ・レベルで指定された@serialタグをオーバーライドします。 
+.LP
+これらのタグの使用方法の詳細と使用例は、\f2Javaオブジェクト直列化仕様\fPの第1.6項
+.na
+\f2クラスの直列化可能なフィールドおよびデータの文書化\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/platform/serialization/spec/serial\-arch.htmlを参照してください。また、
+.na
+\f2直列化のFAQ\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/tech/serializationfaq\-jsp\-136699.html#javadoc_warn_missingも参照してください。このFAQには、「\-privateスイッチを指定しないでjavadocを実行しているのにprivateフィールドの@serialタグが見つからないというjavadocの警告が表示される」などの一般的な質問への回答が記載されています。直列化された形式の仕様にクラスを含める場合には、
+.na
+\f2Oracleの基準\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/serialized\-criteria\-137781.htmlも参照してください。 
+.LP
+.TP 3
+@serialField\  field\-name\  field\-type\  field\-description 
+\f2Serializable\fPクラスの\f2serialPersistentFields\fPメンバーの\f2ObjectStreamField\fPコンポーネントをドキュメント化します。各\f2ObjectStreamField\fPコンポーネントに対して1つの\f2@serialField\fPタグを使用する必要があります。 
+.LP
+.TP 3
+@serialData\  data\-description 
+\f2data\-description\fPは、直列化された形式でのデータの型と順序を説明するテキストです。具体的に言うと、このデータには、\f2writeObject\fPメソッドによって書き込まれる省略可能なデータ、および\f2Externalizable.writeExternal\fPメソッドによって書き込まれるすべてのデータ(ベース・クラスを含む)が含まれます。 
+.LP
+\f2@serialData\fPタグは、\f2writeObject\fP、\f2readObject\fP、\f2writeExternal\fP、\f2readExternal\fP、\f2writeReplace\fP、および\f2readResolve\fPメソッドのドキュメンテーション・コメント内で使用できます。 
+.LP
+.TP 3
+@since\  since\-text 
+生成ドキュメントに「導入されたバージョン」見出しを追加して、指定された\f2since\-text\fPを書き込みます。このテキストには、特別な内部構造はありません。このタグは、すべてのドキュメンテーション・コメント、つまり概要、パッケージ、クラス、インタフェース、コンストラクタ、メソッド、またはフィールドで有効です。このタグは、特定の変更または機能が、\f2since\-text\fPによって指定されたソフトウェア・リリース以降、存在していることを意味します。次に例を示します。 
+.nf
+\f3
+.fl
+    @since 1.5
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+Javaプラットフォームのソース・コードの場合、このタグは、JavaプラットフォームAPI仕様のバージョンを示します(リファレンス実装に追加された時期を示すとは限りません)。複数の@sinceタグを使用でき、複数の@authorタグのように扱われます。プログラム要素が複数のAPIで使用される場合、複数のタグを使用できます。 
+.LP
+.TP 3
+@throws\  class\-name\  description 
+\f2@throws\fPタグと\f2@exception\fPタグは同義です。生成ドキュメントに「スロー」小見出しを追加して、\f2class\-name\fPおよび\f2description\fPのテキストを書き込みます。\f2class\-name\fPは、そのメソッドからスローされる可能性のある例外の名前です。このタグは、メソッド、コンストラクタのドキュメンテーション・コメント内でのみ有効です。このクラスが完全指定の名前で記述されていない場合、Javadocツールは、検索順序に従ってクラスを探します。同じまたは異なる例外の特定のドキュメンテーション・コメントで、複数の\f2@throws\fPタグを使用できます。 
+.LP
+すべてのチェック済み例外がドキュメント化されるようにするために、\f2@throws\fPタグがthrows節内の例外用に存在しない場合は、@throwsタグでドキュメント化されたかのように、Javadocツールによって例外がHTML出力に説明なしで自動的に追加されます。 
+.LP
+オーバーライドされるメソッド内で例外が明示的に宣言されている場合のみ、\f2@throws\fPのドキュメントがそのメソッドからサブクラスにコピーされます。インタフェース・メソッドから実装メソッドにコピーされる場合も同様です。@throwsにドキュメントを継承させるには、{@inheritDoc}を使用できます。 
+.LP
+詳細は、
+.na
+\f2@throwsタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@exceptionを参照してください。 
+.LP
+.TP 3
+{@value\  package.class#field} 
+\f2{@value}\fPが静的フィールドのドキュメンテーション・コメントで引数なしで使用されている場合、その定数の値が表示されます。 
+.nf
+\f3
+.fl
+    /**
+.fl
+     * The value of this constant is {@value}.
+.fl
+     */
+.fl
+    public static final String SCRIPT_START = "<script>"
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+任意のドキュメンテーション・コメント内で引数\f2package.class#field\fPありで使用された場合は、その指定された定数の値が表示されます。 
+.nf
+\f3
+.fl
+    /**
+.fl
+     * Evaluates the script starting with {@value #SCRIPT_START}.
+.fl
+     */
+.fl
+    public String evalScript(String script) {
+.fl
+    }
+.fl
+        
+.fl
+\fP
+.fi
+.LP
+引数\f2package.class#field\fPは、@see引数と同一の形式になります。ただし、メンバーは静的フィールドである必要があります。 
+.LP
+これらの定数での値は、
+.na
+\f2定数フィールド値\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/constant\-values.htmlページにも表示されます。 
+.LP
+.TP 3
+@version\  version\-text 
+\-versionオプションが使用されている場合、生成ドキュメントに「バージョン」小見出しを追加して、指定された\f2version\-text\fPを書き込みます。このタグは、このコードが含まれるソフトウェアの現在のバージョン番号を保持するように意図されています(これに対し、@sinceは、このコードが導入されたバージョン番号を保持します)。\f2version\-text\fPには、特別な内部構造はありません。バージョン・タグを使用できる場所を調べるには、タグを使用できる場所を参照してください。 
+.LP
+1つのドキュメンテーション・コメントに複数の\f2@version\fPタグを含めることができます。必要に応じて、1つの\f2@version\fPタグに1つのバージョン番号を指定することも、複数のバージョン番号を指定することもできます。前者の場合は、Javadocツールによって名前と名前の間にカンマ(\f2,\fP)と空白文字が挿入されます。後者の場合は、テキスト全体が、解析されることなく、生成ドキュメントにそのままコピーされます。したがって、カンマではなく、各言語に対応した名前区切り文字を使用する必要があるときは、1つのタグに複数の名前を指定してください。 
+.LP
+詳細は、
+.na
+\f2@versionタグのドキュメント\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#@versionを参照してください。  
+.RE
+.SS 
+タグを使用できる場所
+.LP
+ここでは、タグを使用できる場所について説明します。\f2@see\fP、\f2@since\fP、\f2@deprecated\fP、\f2{@link}\fP、\f2{@linkplain}\fP、および\f2{@docroot}\fPは、すべてのドキュメンテーション・コメントで使用できます。
+.SS 
+概要のドキュメンテーション・タグ
+.LP
+概要タグは、概要ページのドキュメンテーション・コメントで使用できるタグです(このドキュメンテーション・コメントは、通常\f2overview.html\fPという名前のソース・ファイル内にあります)。他のドキュメンテーション・コメントの場合と同様に、これらのタグは、主説明の後で使用する必要があります。
+.LP
+\f3注意\fP \- バージョン1.2では、概要ドキュメント内の\f2{@link}\fPタグにバグがあります。テキストは正しく表示されますが、リンクが設定されません。現在のところ、\f2{@docRoot}\fPタグは、概要ドキュメント内では機能しません。
+.LP
+\f3概要タグ\fP
+.RS 3
+.TP 2
+o
+\f2@see\fP 
+.TP 2
+o
+\f2@since\fP 
+.TP 2
+o
+\f2@author\fP 
+.TP 2
+o
+\f2@version\fP 
+.TP 2
+o
+\f2{@link}\fP 
+.TP 2
+o
+\f2{@linkplain}\fP 
+.TP 2
+o
+\f2{@docRoot}\fP 
+.RE
+.SS 
+パッケージ・ドキュメンテーション・タグ
+.LP
+パッケージ・タグは、パッケージのドキュメンテーション・コメントで使用できるタグです(このドキュメンテーション・コメントは\f2package.html\fPまたは\f2package\-info.java\fPという名前のソース・ファイル内にあります)。ここで使用できる\f2@serial\fPタグは、\f2include\fPまたは\f2exclude\fP引数を指定したもののみです。
+.LP
+\f3パッケージ・タグ\fP
+.RS 3
+.TP 2
+o
+\f2@see\fP 
+.TP 2
+o
+\f2@since\fP 
+.TP 2
+o
+\f2@serial\fP 
+.TP 2
+o
+\f2@author\fP 
+.TP 2
+o
+\f2@version\fP 
+.TP 2
+o
+\f2{@link}\fP 
+.TP 2
+o
+\f2{@linkplain}\fP 
+.TP 2
+o
+\f2{@docRoot}\fP 
+.RE
+.SS 
+クラスおよびインタフェース・ドキュメンテーション・タグ
+.LP
+次に、クラスまたはインタフェースのドキュメンテーション・コメントで使用できるタグを示します。ここで使用できる\f2@serial\fPタグは、\f2include\fPまたは\f2exclude\fP引数を指定したもののみです。
+.LP
+\f3クラスおよびインタフェース・タグ\fP
+.RS 3
+.TP 2
+o
+\f2@see\fP 
+.TP 2
+o
+\f2@since\fP 
+.TP 2
+o
+\f2@deprecated\fP 
+.TP 2
+o
+\f2@serial\fP 
+.TP 2
+o
+\f2@author\fP 
+.TP 2
+o
+\f2@version\fP 
+.TP 2
+o
+\f2{@link}\fP 
+.TP 2
+o
+\f2{@linkplain}\fP  
+.TP 2
+o
+\f2{@docRoot}\fP 
+.RE
+\f3クラス・コメントの例:\fP
+.nf
+\f3
+.fl
+/**
+.fl
+ * A class representing a window on the screen.
+.fl
+ * For example:
+.fl
+ * <pre>
+.fl
+ *    Window win = new Window(parent);
+.fl
+ *    win.show();
+.fl
+ * </pre>
+.fl
+ *
+.fl
+ * @author  Sami Shaio
+.fl
+ * @version 1.13, 06/08/06
+.fl
+ * @see     java.awt.BaseWindow
+.fl
+ * @see     java.awt.Button
+.fl
+ */
+.fl
+class Window extends BaseWindow {
+.fl
+   ...
+.fl
+}
+.fl
+\fP
+.fi
+.SS 
+フィールド・ドキュメンテーション・タグ
+.LP
+次に、フィールドのドキュメンテーション・コメントで使用できるタグを示します。
+.LP
+\f3フィールド・タグ\fP
+.RS 3
+.TP 2
+o
+\f2@see\fP 
+.TP 2
+o
+\f2@since\fP 
+.TP 2
+o
+\f2@deprecated\fP 
+.TP 2
+o
+\f2@serial\fP 
+.TP 2
+o
+\f2@serialField\fP 
+.TP 2
+o
+\f2{@link}\fP 
+.TP 2
+o
+\f2{@linkplain}\fP 
+.TP 2
+o
+\f2{@docRoot}\fP 
+.TP 2
+o
+\f2{@value}\fP 
+.RE
+\f3フィールド・コメントの例:\fP
+.nf
+\f3
+.fl
+    /**
+.fl
+     * The X\-coordinate of the component.
+.fl
+     *
+.fl
+     * @see #getLocation()
+.fl
+     */
+.fl
+    int x = 1263732;
+.fl
+\fP
+.fi
+.SS 
+コンストラクタおよびメソッド・ドキュメンテーション・タグ
+.LP
+次に、コンストラクタまたはメソッドのドキュメンテーション・コメントで使用できるタグを示します。ただし、\f2@return\fPはコンストラクタでは使用できず、\f2{@inheritDoc}\fPには特定の制限があります。\f2@serialData\fPタグは特定の直列化メソッドのドキュメンテーション・コメントでのみ使用できます。
+.LP
+\f3メソッドおよびコンストラクタ・タグ\fP
+.RS 3
+.TP 2
+o
+\f2@see\fP 
+.TP 2
+o
+\f2@since\fP 
+.TP 2
+o
+\f2@deprecated\fP 
+.TP 2
+o
+\f2@param\fP 
+.TP 2
+o
+\f2@return\fP 
+.TP 2
+o
+\f2@throws\fPと\f2@exception\fP 
+.TP 2
+o
+\f2@serialData\fP 
+.TP 2
+o
+\f2{@link}\fP 
+.TP 2
+o
+\f2{@linkplain}\fP 
+.TP 2
+o
+\f2{@inheritDoc}\fP 
+.TP 2
+o
+\f2{@docRoot}\fP 
+.RE
+\f3メソッドのドキュメンテーション・コメントの例:\fP
+.nf
+\f3
+.fl
+    /**
+.fl
+     * Returns the character at the specified index. An index 
+.fl
+     * ranges from <code>0</code> to <code>length() \- 1</code>.
+.fl
+     *
+.fl
+     * @param     index  the index of the desired character.
+.fl
+     * @return    the desired character.
+.fl
+     * @exception StringIndexOutOfRangeException 
+.fl
+     *              if the index is not in the range <code>0</code> 
+.fl
+     *              to <code>length()\-1</code>.
+.fl
+     * @see       java.lang.Character#charValue()
+.fl
+     */
+.fl
+    public char charAt(int index) {
+.fl
+       ...
+.fl
+    }
+.fl
+\fP
+.fi
+.SH "オプション"
+.LP
+Javadocツールは、ドックレットを使用して出力を決定します。Javadocツールは、\-docletオプションでカスタム・ドックレットが指定されている場合以外は、デフォルトの標準ドックレットを使用します。Javadocツールには、任意のドックレットとともに使用できるコマンドライン・オプションがあります。これらのオプションについては、後述のJavadocオプションで説明します。標準ドックレットでは、この他に、いくつかの追加のコマンドライン・オプションが提供されます。これらのオプションについては、後述の標準ドックレットが提供するオプションで説明します。どのオプション名も、大文字と小文字が区別されません。ただし、オプションの引数では、大文字と小文字が区別されます。
+.LP
+オプションは次のとおりです。
+.LP
+.TS
+.if \n+(b.=1 .nr d. \n(.c-\n(c.-1
+.de 35
+.ps \n(.s
+.vs \n(.vu
+.in \n(.iu
+.if \n(.u .fi
+.if \n(.j .ad
+.if \n(.j=0 .na
+..
+.nf
+.nr #~ 0
+.if n .nr #~ 0.6n
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.fc
+.nr 33 \n(.s
+.rm 80 81 82
+.nr 34 \n(.lu
+.eo
+.am 80
+.br
+.di a+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(80 .ll \n(80u
+.in 0
+\-\f21.1\fP
+.br
+\-author
+.br
+\-\f2bootclasspath\fP
+.br
+\-bottom
+.br
+\-\f2breakiterator\fP
+.br
+\-charset
+.br
+\-\f2classpath\fP
+.br
+\-d
+.br
+\-docencoding
+.br
+\-docfilessubdirs
+.br
+\-\f2doclet\fP
+.br
+\-\f2docletpath\fP
+.br
+\-doctitle
+.br
+\-\f2encoding\fP
+.br
+\-\f2exclude\fP
+.br
+\-excludedocfilessubdir
+.br
+\-\f2extdirs\fP
+.br
+\-footer
+.br
+\-group
+.br
+.br
+.di
+.nr a| \n(dn
+.nr a- \n(dl
+..
+.ec \
+.eo
+.am 81
+.br
+.di b+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+\-header
+.br
+\-\f2help\fP
+.br
+\-helpfile
+.br
+\-\f2J\fP
+.br
+\-keywords
+.br
+\-link
+.br
+\-linkoffline
+.br
+\-linksource
+.br
+\-\f2locale\fP
+.br
+\-nocomment
+.br
+\-nodeprecated
+.br
+\-nodeprecatedlist
+.br
+\-nohelp
+.br
+\-noindex
+.br
+\-nonavbar
+.br
+\-noqualifier
+.br
+\-nosince
+.br
+\-notimestamp
+.br
+\-notree
+.br
+\-\f2overview\fP
+.br
+\-\f2package\fP
+.br
+.br
+.di
+.nr b| \n(dn
+.nr b- \n(dl
+..
+.ec \
+.eo
+.am 82
+.br
+.di c+
+.35
+.ft \n(.f
+.ll \n(34u*1u/4u
+.if \n(.l<\n(82 .ll \n(82u
+.in 0
+\-\f2private\fP
+.br
+\-\f2protected\fP
+.br
+\-\f2public\fP
+.br
+\-\f2quiet\fP
+.br
+\-serialwarn
+.br
+\-\f2source\fP
+.br
+\-\f2sourcepath\fP
+.br
+\-sourcetab
+.br
+\-splitindex
+.br
+\-stylesheetfile
+.br
+\-\f2subpackages\fP
+.br
+\-tag
+.br
+\-taglet
+.br
+\-tagletpath
+.br
+\-top
+.br
+\-title
+.br
+\-use
+.br
+\-\f2verbose\fP
+.br
+\-version
+.br
+\-windowtitle
+.br
+.br
+.di
+.nr c| \n(dn
+.nr c- \n(dl
+..
+.ec \
+.35
+.nf
+.ll \n(34u
+.nr 80 0
+.80
+.rm 80
+.nr 38 \n(a-
+.if \n(80<\n(38 .nr 80 \n(38
+.nr 81 0
+.81
+.rm 81
+.nr 38 \n(b-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 82 0
+.82
+.rm 82
+.nr 38 \n(c-
+.if \n(82<\n(38 .nr 82 \n(38
+.35
+.nf
+.ll \n(34u
+.nr 38 1n
+.nr 79 0
+.nr 40 \n(79+(0*\n(38)
+.nr 80 +\n(40
+.nr 41 \n(80+(3*\n(38)
+.nr 81 +\n(41
+.nr 42 \n(81+(3*\n(38)
+.nr 82 +\n(42
+.nr TW \n(82
+.if t .if \n(TW>\n(.li .tm Table at line 2003 file Input is too wide - \n(TW units
+.fc  
+.nr #T 0-1
+.nr #a 0-1
+.eo
+.de T#
+.ds #d .d
+.if \(ts\n(.z\(ts\(ts .ds #d nl
+.mk ##
+.nr ## -1v
+.ls 1
+.ls
+..
+.ec
+.ne \n(a|u+\n(.Vu
+.ne \n(b|u+\n(.Vu
+.ne \n(c|u+\n(.Vu
+.if (\n(a|+\n(#^-1v)>\n(#- .nr #- +(\n(a|+\n(#^-\n(#--1v)
+.if (\n(b|+\n(#^-1v)>\n(#- .nr #- +(\n(b|+\n(#^-\n(#--1v)
+.if (\n(c|+\n(#^-1v)>\n(#- .nr #- +(\n(c|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u \n(82u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'\h'|\n(41u'\h'|\n(42u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(40u
+.in +\n(37u
+.a+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.b+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(##u-1v
+.nr 37 \n(42u
+.in +\n(37u
+.c+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.fc
+.nr T. 1
+.T# 1
+.35
+.rm a+
+.rm b+
+.rm c+
+.TE
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-127
+.LP
+\f2イタリック\fPで示されたオプションは、Javadocの基本オプションであり、Javadocツールのフロントエンドによって提供され、すべてのドックレットで使用できます。標準ドックレット自体は、イタリックでないオプションを提供します。
+.SS 
+Javadocオプション
+.RS 3
+.TP 3
+\-overview \ path/filename 
+Javadocに対して、\f2path/filename\fPで指定された「ソース」ファイルから概要ドキュメント用のテキストを取得し、そのテキストを概要ページ(\f2overview\-summary.html\fP)に配置するように指定します。\f2path/filename\fPは、現在のディレクトリからの相対パスです。
+.br
+.br
+\f2filename\fPで任意の名前を使用し、\f2path\fPで任意の配置先を指定できますが、通常は\f2overview.html\fPという名前を付け、ソース・ツリー内の最上位パッケージ・ディレクトリを含むディレクトリに配置します。この場所に配置すると、パッケージをドキュメント化するときに\f2path\fPを指定する必要がなくなります。これは、\f2\-sourcepath\fPによってこのファイルが指し示されるからです。たとえば、\f2java.lang\fPパッケージのソース・ツリーが\f2/src/classes/java/lang/\fPの場合、概要ファイルを\f2/src/classes/overview.html\fPに配置できます。使用例を参照してください。
+.br
+.br
+\f2path/filename\fPで指定するファイルについては、概要コメント・ファイルを参照してください。
+.br
+.br
+概要ページが作成されるのは、Javadocに複数のパッケージ名を渡した場合のみです。詳細は、HTMLフレームを参照してください。
+.br
+.br
+概要ページのタイトルは、\f2\-doctitle\fPによって設定されます。 
+.TP 3
+\-public 
+publicクラスおよびメンバーのみを表示します。  
+.TP 3
+\-protected 
+protectedおよびpublicのクラスとメンバーのみを表示します。これがデフォルトです。  
+.TP 3
+\-package 
+package、protected、およびpublicのクラスとメンバーのみを表示します。  
+.TP 3
+\-private 
+すべてのクラスとメンバーを表示します。  
+.TP 3
+\-help 
+オンライン・ヘルプを表示します。Javadocとドックレットのコマンドライン・オプションがリストされます。  
+.TP 3
+\-doclet\  class 
+ドキュメントの生成に使用するドックレットを起動するためのクラス・ファイルを指定します。完全修飾名を指定してください。このドックレットにより、出力の内容と形式が定義されます。\f4\-doclet\fPオプションが使用されていない場合、Javadocは、標準ドックレットを使用してデフォルトのHTML形式を生成します。このクラスには\f2start(Root)\fPメソッドが含まれている必要があります。この起動クラスへのパスは\f2\-docletpath\fPオプションによって定義されます。
+.br
+.br
+詳細は、
+.na
+\f2ドックレットの概要\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/doclet/overview.htmlを参照してください。 
+.TP 3
+\-docletpath\  classpathlist 
+\f2\-doclet\fPオプションで指定されたドックレット開始クラス・ファイル、およびそのクラスが依存するすべてのJARファイルへのパスを指定します。開始クラス・ファイルがjarファイル内にある場合、次の例のようにjarファイルのパスが指定されます。絶対パスまたは現在のディレクトリからの相対パスを指定できます。\f2classpathlist\fPに複数のパスやJARファイルが含まれる場合には、それらをSolarisの場合はコロン(:)で、Windowsの場合はセミコロン(;)でそれぞれ区切ります。目的のドックレット開始クラスがすでに検索パス内にある場合は、このオプションは不要です。
+.br
+.br
+詳細は、
+.na
+\f2ドックレットの概要\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/doclet/overview.htmlを参照してください。 
+.TP 3
+\-1.1 
+\f2この機能はJavadoc 1.4から削除されました。代替機能はありません。このオプションは、Javadoc 1.1によって生成されるのと同じ外見と機能を持つドキュメントを作成するためのものでした(ネストされたクラスはサポートされていません)。このオプションが必要な場合は、Javadoc 1.2または1.3をかわりに使用してください。\fP  
+.TP 3
+\-source release 
+受け付けるソース・コードのバージョンを指定します。\f2release\fPには次の値を指定できます。 
+.RS 3
+.TP 2
+o
+\f31.5\fP \- Javadocは、JDK 1.5で導入された総称および他の言語機能を含むコードを受け付けます。\f3\-source\fPフラグが使用されなかった場合のコンパイラのデフォルト動作は、1.5のものになります。 
+.TP 2
+o
+\f31.4\fP \- Javadocは、JDK 1.4で導入されたアサーションを含むコードを受け付けます。 
+.TP 2
+o
+\f31.3\fP \- Javadocは、JDK 1.3以降に導入されたアサーション、総称、または他の言語機能をサポートしません。 
+.RE
+javacでコードをコンパイルするときに使用した値に対応する\f2release\fPの値を使用します。  
+.TP 3
+\-sourcepath\  sourcepathlist 
+パッケージ名または\f2\-subpackages\fPを\f2javadoc\fPコマンドに渡すときに、ソース・ファイル(.\f2.java\fP)を見つけるための検索パスを指定します。\f2sourcepathlist\fPには、コロン(\f2:\fP)で区切って複数のパスを含めることができます。Javadocツールは、指定されたパス以下のすべてのサブディレクトリを検索します。このオプションを使用して、ドキュメント化されるソース・ファイルの位置のみでなく、それ自体はドキュメント化されないがドキュメント化されるソース・ファイルから継承されたコメントを持つソース・ファイルの位置も確認できます。
+.br
+.br
+\f2\-sourcepath\fPオプションを使用できるのは、javadocコマンドにパッケージ名を渡す場合のみです。このパスからは、\f2javadoc\fPコマンドに渡される\f2.java\fPファイルは検索されません。(\f2.java\fPファイルを検索するには、そのディレクトリにcdによって移動するか、または各ファイルの先頭にパスを含めます(1つ以上のクラスのドキュメント化を参照)。)\f2\-sourcepath\fPが省略された場合、Javadocは、クラス・パスを使用してソース・ファイルを検索します(\-classpathを参照)。したがって、デフォルトの\-sourcepathは、クラス・パスの値です。\-classpathを省略してパッケージ名をJavadocに渡すと、Javadocは現在のディレクトリ(およびそのサブディレクトリ)からソース・ファイルを検索します。
+.br
+.br
+\f2sourcepathlist\fPには、ドキュメント化するパッケージのソース・ツリーのルート・ディレクトリを設定します。たとえば、\f2com.mypackage\fPという名前のパッケージをドキュメント化する場合に、そのソース・ファイルが次の場所にあるとします。 
+.nf
+\f3
+.fl
+  /home/user/src/com/mypackage/*.java
+.fl
+\fP
+.fi
+この場合、次のようにして\f2sourcepath\fPを、\f2com/mypackage\fPを含むディレクトリである\f2/home/user/src\fPに指定してから、パッケージ名\f2com.mypackage\fPを指定します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-sourcepath /home/user/src/ com.mypackage\fP
+.fl
+.fi
+この方法は、ソース・パスの値とパッケージ名を連結して、ドットをスラッシュ「/」に変更すると、パッケージのフルパス\f2/home/user/src/com/mypackage\fPになることに気付くと覚えやすいです。
+.br
+.br
+2つのソース・パスを設定するには、次のようにします。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-sourcepath /home/user1/src:/home/user2/src com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-classpath\  classpathlist 
+Javadocが参照クラス(\f2.class\fPファイル)の検索を行うときに使用するパスを指定します。参照クラスとは、ドキュメント化されるクラスと、それらのクラスによって参照されるすべてのクラスのことです。\f2classpathlist\fPには、コロン(\f2:\fP)で区切って複数のパスを含めることができます。Javadocツールは、指定されたパス以下のすべてのサブディレクトリを検索します。\f2classpathlist\fPを指定するときは、
+.na
+\f2クラス・パス\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#generalのドキュメントにある指示に従ってください。
+.br
+.br
+\f2\-sourcepath\fPが省略された場合、Javadocツールはクラス・ファイルを検索するときのみでなく、ソース・ファイルを検索するときにも\f2\-classpath\fPを使用します(下位互換性のため)。したがって、ソース・ファイルとクラス・ファイルを別々のパスから検索する必要がある場合は、\f2\-sourcepath\fPと\f2\-classpath\fPの両方を使用します。
+.br
+.br
+たとえば、\f2com.mypackage\fPをドキュメント化する場合に、そのソース・ファイルがディレクトリ\f2/home/user/src/com/mypackage\fPにあり、このパッケージが\f2/home/user/lib\fP内のライブラリに依存しているとき、次のように指定します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-classpath /home/user/lib \-sourcepath /home/user/src com.mypackage\fP
+.fl
+.fi
+他のツールと同様に、\f2\-classpath\fPが指定されていない場合、CLASSPATH環境変数が設定されていれば、Javadocツールはその環境変数を使用します。どちらも設定されていない場合、Javadocツールは現在のディレクトリからクラスを検索します。
+.br
+.br
+Javadocツールが\f2\-classpath\fPを使用してユーザー・クラスを検索する方法についての、拡張機能クラスやブートストラップ・クラスに関連した詳細は、
+.na
+\f2クラスの検索方法\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.htmlを参照してください。  
+.br
+.br
+便宜上、\f2*\fPのベース名を含むクラス・パス要素は、\f2.jar\fPまたは\f2.JAR\fPを拡張子に持つディレクトリ内のすべてのファイルのリストを指定するのと同等とみなされます(Javaプログラムはこの2つの呼出しを区別できません)。
+.br
+.br
+たとえば、ディレクトリ\f2foo\fPに\f2a.jar\fPと\f2b.JAR\fPが含まれている場合、クラス・パス要素\f2foo/*\fPは\f2A.jar:b.JAR\fPに展開されます。ただし、JARファイルの順番は未指定となります。このリストには、隠しファイルも含め、指定されたディレクトリ内のすべてのJARファイルが含まれます。\f2*\fPのみからなるクラス・パス・エントリは、現在のディレクトリ内のすべてのJARファイルのリストに展開されます。\f2CLASSPATH\fP環境変数も、定義時には同様に展開されます。クラス・パスのワイルドカード展開は必ず、Java仮想マシンの起動前に実行されます。したがって、環境に問合せを行わない限り、Javaプログラムが展開されていないワイルドカードを認識することはありません。たとえば、\f2System.getenv(\\"CLASSPATH\\")\fP呼出しがその例です。   
+.TP 3
+\-subpackages\ \ package1:package2:... 
+ソース・ファイルから指定されたパッケージおよびそのサブパッケージ内に再帰的にドキュメントを生成します。このオプションは、ソース・コードに新しいサブパッケージを追加する際に便利です。新しいサブパッケージが自動的に組み込まれるからです。各\f2package\fP引数は、任意の最上位サブパッケージ(\f2java\fPなど)または完全修飾パッケージ(\f2javax.swing\fPなど)になります。ソース・ファイルを含める必要はありません。引数は、コロンで区切られます(すべてのオペレーティング・システム)。ワイルドカードは不要(使用不可)です。パッケージの検索場所を指定するには、\f2\-sourcepath\fPを使用します。このオプションは、ソース・ファイルの処理で説明したとおり、ソース・ツリーにあるがパッケージには属していないソース・ファイルを処理しないので役立ちます。
+.br
+.br
+例を示します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d docs \-sourcepath /home/user/src \-subpackages java:javax.swing\fP
+.fl
+.fi
+このコマンドは、「java」および「javax.swing」という名前のパッケージとこれらのサブパッケージ全部のドキュメントを生成します。
+.br
+.br
+\f2\-subpackages\fPを\f2\-exclude\fPと組み合せて使用すると、特定のパッケージを除外できます。  
+.TP 3
+\-exclude\ \ packagename1:packagename2:... 
+指定されたパッケージとそのサブパッケージを\f2\-subpackages\fPによって作成されたリストから無条件に除外します。過去または将来の\f2\-subpackages\fPオプションの指定によって組み込まれるパッケージも除外の対象となります。次に例を示します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-sourcepath /home/user/src \-subpackages java \-exclude java.net:java.lang\fP
+.fl
+.fi
+この場合、\f2java.io\fP、\f2java.util\fP、\f2java.math\fPなどは組み込まれますが、\f2java.net\fPと\f2java.lang\fPをルートに持つパッケージは除外されます。\f2java.lang\fPのサブパッケージである\f2java.lang.ref\fPが除外される点に注意してください。  
+.TP 3
+\-bootclasspath\  classpathlist 
+ブート・クラスが存在するパスを指定します。ブート・クラスとは、通常、Javaプラットフォーム・クラスのことです。ブート・クラスパスは、Javadocツールがソース・ファイルとクラス・ファイルを探すときに使用する検索パスの一部です。詳細は、
+.na
+\f2クラスの検索方法\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfilesを参照してください。\f2classpathlist\fP内の複数のディレクトリは、コロン(:)で区切ります。  
+.TP 3
+\-extdirs\  dirlist 
+拡張機能クラスが存在するディレクトリを指定します。拡張機能クラスとは、Java拡張機能機構を使用するすべてのクラスです。extdirsは、Javadocツールがソース・ファイルとクラス・ファイルを探すときに使用する検索パスの一部です。詳細は、前述の\f2\-classpath\fPを参照してください。\f2dirlist\fP内の複数のディレクトリは、コロン(:)で区切ります。  
+.TP 3
+\-verbose 
+Javadocの実行中に詳細なメッセージを表示します。verboseオプションを指定しないと、ソース・ファイルのロード時、ドキュメントの生成時(ソース・ファイルごとに1つのメッセージ)、およびソート時にメッセージが表示されます。verboseオプションを指定すると、各Javaソース・ファイルの解析に要した時間(ミリ秒単位)を示す追加のメッセージが表示されます。  
+.TP 3
+\-quiet 
+エラー・メッセージまたは警告メッセージ以外のメッセージを抑制し、警告とエラーのみが表示されるようにして、これらを確認しやすくします。バージョン文字列も抑制します。  
+.TP 3
+\-breakiterator\  
+英文の最初の文の終わりを判断する際に、英語言語というロケール固有のアルゴリズムではなく、
+.na
+\f2java.text.BreakIterator\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/java/text/BreakIterator.htmlの国際化された文境界を使用します(他のすべてのロケールはすでに\f2BreakIterator\fPを使用)。\f2最初の文\fPとは、パッケージ、クラス、またはメンバーの主説明での最初の文のことです。この文は、パッケージ、クラス、またはメンバーの要約にコピーされ、アルファベット順の索引にコピーされます。
+.br
+.br
+JDK 1.2以降、BreakIteratorクラスは、英語を除くすべての言語の文の終わりを判断するために、すでに使用されています。したがって、\f2\-breakiterator\fPオプションは、1.2以降では英文以外には効果がありません。英文には、次のような独自のデフォルトのアルゴリズムがあります。 
+.RS 3
+.TP 2
+o
+英文のデフォルトの文区切りアルゴリズム \- 空白文字またはHTMLブロック・タグ(\f2<P>\fPなど)が続くピリオドで停止します。 
+.TP 2
+o
+breakiterator文区切りアルゴリズム \- 一般に、次の語が大文字で始まる場合、空白文字が続くピリオド、疑問符、または感嘆符で停止します。このアルゴリズムでは「The serial no. is valid」など、ほとんどの省略表記が処理されますが、「Mr.Smith」は処理されません。HTMLタグや、数字または記号で始まる文では停止しません。HTMLタグに埋め込まれている場合でも、「../filename」の最後のピリオドで停止します。 
+.RE
+注意: 1.5.0からは、1.4.xに設けられていたbreakiterator警告メッセージを削除し、デフォルトの文区切りアルゴリズムを変更していません。つまり、\-breakiteratorオプションは、1.5.0ではデフォルトではなくなり、またデフォルトにするつもりもありません。これは、「次のメジャー・リリース」(1.5.0)でデフォルトを変更するという、以前の目的とは逆になっています。つまり、ソース・コードを変更せず、1.4.xでのbreakiterator警告を除去していない場合でも、1.5.0からは何もする必要がなく、警告は消滅しています。この逆戻りの理由は、breakiteratorをデフォルトにするメリットよりも、デフォルトにするために必要となる、互換性のないソースの変更の方が負担が大きかったためです。この件で皆様に余分の手間をおかけし、混乱を招いたことをお詫びいたします。  
+.TP 3
+\-locale\  language_country_variant 
+\f3重要\fP \- \f2\-locale\fPオプションは、標準ドックレットが提供するすべてのオプション、またはその他の任意のドックレットが提供するすべてのオプションより\f2前\fP(左側)に指定する必要があります。そうしないと、ナビゲーション・バーが英語で表示されます。このコマンドライン・オプションのみ、指定する順序に依存します。
+.br
+.br
+Javadocがドキュメントを生成するときに使用するロケールを指定します。この引数は、java.util.Localeのドキュメントで説明されているロケールの名前です。たとえば、\f2en_US\fP (英語、米国)または\f2en_US_WIN\fP (Windowsで使用される英語)などです。
+.br
+.br
+ロケールを指定すると、指定したロケールのリソース・ファイルがJavadocによって選択されて、メッセージ(ナビゲーション・バー、リストと表の見出し、ヘルプ・ファイルの目次、stylesheet.cssのコメントなどの文字列)のために使用されます。また、アルファベット順にソートされるリストのソート順、および最初の文の終わりを判断するための文の区切り文字も、指定したロケールによって決まります。ただし、このオプションは、ドキュメント化されるクラスのソース・ファイル内で指定されているドキュメンテーション・コメントのテキストのロケールを決定するものではありません。  
+.TP 3
+\-encoding\  name 
+ソース・ファイルのエンコーディングの名前(\f2EUCJIS/SJIS\fPなど)を指定します。このオプションが指定されていない場合は、プラットフォームのデフォルト・コンバータが使用されます。
+.br
+.br
+\-docencodingおよび\-charsetも参照してください。 
+.TP 3
+\-Jflag 
+Javadocを実行する実行時システムjavaに、\f2flag\fPを直接渡します。\f2J\fPと\f2flag\fPの間に空白文字を入れないように注意してください。たとえば、生成ドキュメントを処理するためにシステムで32MBのメモリーを確保しておく必要がある場合は、Javaの\f2\-Xmx\fPオプションを次のように呼び出します(\f2\-Xms\fPは省略可能です。これは、初期メモリーのサイズを設定するのみのオプションで、必要なメモリーの最小量がわかっている場合に便利です)。 
+.nf
+\f3
+.fl
+   % \fP\f3javadoc \-J\-Xmx32m \-J\-Xms32m\fP \f3com.mypackage\fP
+.fl
+.fi
+使用しているJavadocのバージョンを確認するには、次のようにJavaの「\f2\-version\fP」オプションを呼び出します。 
+.nf
+\f3
+.fl
+   % \fP\f3javadoc \-J\-version\fP
+.fl
+   java version "1.2"
+.fl
+   Classic VM (build JDK\-1.2\-V, green threads, sunwjit)
+.fl
+.fi
+(出力ストリームには標準ドックレットのバージョン番号が含まれます。) 
+.RE
+.SS 
+標準ドックレットが提供するオプション
+.RS 3
+.TP 3
+\-d\  directory 
+生成されたHTMLファイルを保存する生成先ディレクトリを指定します。(「d」は「生成先(destination)」の意味。)このオプションを省略すると、ファイルは現在のディレクトリに保存されます。値\f2directory\fPには、絶対ディレクトリ、または現在の作業ディレクトリからの相対ディレクトリを指定できます。バージョン1.4では、Javadocを実行すると生成先ディレクトリが自動的に作成されます。
+.br
+.br
+たとえば、次の例では、\f2com.mypackage\fPパッケージのドキュメントが生成され、その結果が\f2/home/user/doc/\fPディレクトリに保存されます。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d /home/user/doc com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-use 
+ドキュメント化されるクラスおよびパッケージごとに1つの使用ページを組み込みます。このページには、その特定のクラスまたはパッケージのAPIを使用しているパッケージ、クラス、メソッド、コンストラクタ、およびフィールドが記述されます。たとえば、クラスCを例にとると、クラスCを使用しているものとしては、Cのサブクラス、Cとして宣言されているフィールド、Cを返すメソッド、および型Cのパラメータを持つメソッドとコンストラクタがあります。
+.br
+.br
+たとえば、Stringの使用ページに何が表示されるかを見てみましょう。\f2java.awt.Font\fPクラスの\f2getName()\fPメソッドは、\f2String\fP型の値を返します。したがって、\f2getName()\fPは\f2String\fPを使用しているので、\f2String\fPの使用ページにこのメソッドが表示されます。
+.br
+.br
+ただし、ドキュメント化されるのはAPIの使用のみで、実装はドキュメント化されません。あるメソッドが、その実装の中で\f2String\fPを使用していても、引数として文字列をとったり、文字列を返したりしない場合は、\f2String\fPの「使用」とはみなされません。
+.br
+.br
+生成された使用ページにアクセスするには、まず目的のクラスまたはパッケージに移動し、ナビゲーション・バーの「使用」リンクをクリックします。  
+.TP 3
+\-version 
+生成ドキュメントに、@versionのテキストを組み込みます。このテキストは、デフォルトでは省略されます。使用しているJavadocツールのバージョンを確認するには\f2\-J\-version\fPオプションを使用します。  
+.TP 3
+\-author 
+生成ドキュメントに、@authorのテキストを組み込みます。  
+.TP 3
+\-splitindex 
+索引ファイルをアルファベットごとに複数のファイルに分割し、文字ごとに1つのファイルと、アルファベット以外の文字で始まる索引エントリ用に1つのファイルを作成します。  
+.TP 3
+\-windowtitle\  title 
+HTMLの<title>タグに配置するタイトルを指定します。指定したタイトルは、ウィンドウのタイトルや、このページに対して作成されたブラウザのブックマーク(お気に入り)に表示されます。このタイトルにはHTMLタグを含めないでください。タイトルにHTMLタグが含まれていると、ブラウザがタグを正しく解釈できません。\f2title\fPの中で引用符を使用する場合は、引用符をエスケープする必要があります。\-windowtitleが省略されている場合、Javadocツールは、このオプションのかわりに\-doctitleの値を使用します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-windowtitle "Java SE Platform" com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-doctitle\  title 
+概要ファイルの最上部の近くに配置するタイトルを指定します。タイトルは中央揃えになり、レベル1の見出しとして、上部ナビゲーション・バーのすぐ下に置かれます。\f2title\fPには、HTMLタグと空白を含めることができますが、これらを含める場合は、全体を引用符で囲む必要があります。\f2title\fPの中で引用符を使用する場合は、引用符をエスケープする必要があります。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-doctitle "Java(TM)" com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-title\  title 
+\f3このオプションは、現在は存在していません。\fPJavadoc 1.2のベータ版にしか存在していませんでした。このオプションは、\f2\-doctitle\fPという名前に変更されました。名前を変更した理由は、このオプションが、ウィンドウのタイトルではなくドキュメントのタイトルを定義することを明確にするためです。  
+.TP 3
+\-header\  header 
+各出力ファイルの最上部に配置するヘッダー・テキストを指定します。ヘッダーは、上部ナビゲーション・バーの右側に配置されます。\f2header\fPには、HTMLタグと空白を含めることができますが、これらを含める場合は、全体を引用符で囲む必要があります。\f2header\fPの中で引用符を使用する場合は、引用符をエスケープする必要があります。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-header "<b>Java 2 Platform </b><br>v1.4" com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-footer\  footer 
+各出力ファイルの最下部に配置するフッター・テキストを指定します。フッターは、下部ナビゲーション・バーの右側に配置されます。\f2footer\fPには、HTMLタグと空白を含めることができますが、これらを含める場合は、全体を引用符で囲む必要があります。\f2footer\fPの中で引用符を使用する場合は、引用符をエスケープする必要があります。 
+.TP 3
+\-top 
+各出力ファイルの最上部に配置するテキストを指定します。 
+.TP 3
+\-bottom\  text 
+各出力ファイルの最下部に配置するテキストを指定します。このテキストは、下部ナビゲーション・バーより下の、ページの最下部に配置されます。\f2text\fPには、HTMLタグと空白を含めることができますが、これらを含める場合は、全体を引用符で囲む必要があります。\f2text\fPの中で引用符を使用する場合は、引用符をエスケープする必要があります。  
+.TP 3
+\-link\  extdocURL 
+既存のJavadocにより生成された外部参照クラスのドキュメントへのリンクを作成します。引数を1つとります。  
+.RS 3
+.TP 2
+o
+\f4extdocURL\fPは、リンク先として指定する、Javadocにより生成された外部ドキュメントを含むディレクトリの絶対URLまたは相対URLです。後で例を示します。このディレクトリ内にpackage\-listファイルが存在する必要があります(存在しない場合は、\f2\-linkoffline\fPを使用します)。Javadocツールは、\f2package\-list\fPファイルからパッケージ名を読み取った後、そのURLでこれらのパッケージにリンクします。Javadocツールの実行時に、\f2extdocURL\fPの値がそのまま、作成された\f2<A HREF>\fPリンク内にコピーされます。したがって、\f2extdocURL\fPはファイルへのURLではなく、\f2ディレクトリ\fPへのURLである必要があります。
+.br
+.br
+\f2extdocURL\fPに絶対リンクを使用すると、ユーザーのドキュメントを任意のWebサイト上のドキュメントにリンクできます。相対位置へリンクするのみの場合は相対リンクを使用できます。相対リンクの場合、ユーザーが渡す値は、生成先ディレクトリ(\f2\-d\fPで指定)からリンク先となるパッケージを含むディレクトリへの相対パスにする必要があります。
+.br
+.br
+通常、絶対リンクを指定する場合は、\f2http:\fPリンクを使用します。Webサーバーを持たないファイル・システムにリンクする場合は、\f2file:\fPリンクを使用できます。ただし、この方法は、同じファイル・システムを共有する生成ドキュメントにすべてのユーザーがアクセスする必要がある場合以外は使用しないでください。
+.br
+.br
+すべての場合、すべてのオペレーティング・システムで、絶対URLと相対URL、「http:」ベースと「file:」ベースにかかわらず、スラッシュを区切り文字として使用します(
+.na
+\f2URLのドキュメント\fP @
+.fi
+http://www.ietf.org/rfc/rfc1738.txtで指定)。 
+.RS 3
+.TP 3
+http: ベースの絶対リンク: 
+\f2\-link http://<host>/<directory>/<directory>/.../<name>\fP 
+.TP 3
+file: ベースの絶対リンク: 
+\f2\-link file://<host>/<directory>/<directory>/.../<name>\fP 
+.TP 3
+相対リンク: 
+\f2\-link <directory>/<directory>/.../<name>\fP 
+.RE
+.RE
+1回のJavadocの実行で、複数の\f2\-link\fPオプションを指定して複数のドキュメントへのリンクを作成できます。
+.br
+.br
+\f3\-linkofflineまたは\-linkの選択\fP:
+.br
+.br
+\f2\-link\fPを使用する場合: 
+.RS 3
+.TP 2
+o
+外部APIドキュメントへの相対パスを使用する場合 
+.TP 2
+o
+外部APIドキュメントへの絶対URLを使用する場合(プログラムがそのURLに接続し、読取りを行うことがシェルによって許可されている場合) 
+.RE
+\f2\-linkoffline\fPを使用する場合: 
+.RS 3
+.TP 2
+o
+外部APIドキュメントへの絶対URLを使用する場合(プログラムがそのURLに接続し、読取りを行うことがシェルによって\f2許可されていない\fP場合)このような状況は、ファイアウォールの内側からファイアウォールの外側にあるドキュメントにリンクしようとする場合に発生します。 
+.RE
+.br
+.br
+\f3外部ドキュメントへの絶対リンクの使用例\fP \- 
+.na
+\f2http://docs.oracle.com/javase/7/docs/api/\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/内の\f2java.lang\fP、\f2java.io\fP、その他のJavaプラットフォーム・パッケージにリンクしたいとします。次のコマンドは、Java SEプラットフォーム・パッケージへのリンク持つ\f2com.mypackage\fPパッケージのドキュメントを生成します。生成ドキュメントには、たとえばクラス・ツリー内の\f2Object\fPクラスへのリンクが含まれています。(\f2\-sourcepath\fPや\f2\-d\fPなどの他のオプションは表示されません。) 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-link http://docs.oracle.com/javase/7/docs/api/ com.mypackage\fP
+.fl
+.fi
+\f3外部ドキュメントへの相対リンクの使用例\fP \- 2つのパッケージがあり、そのドキュメントがJavadocツールを複数回実行した結果生成されたものであるとします。さらに、これらのドキュメントが相対パスで分割されているとします。この例の場合、パッケージは、APIである\f2com.apipackage\fPと、SPI(サービス・プロバイダ・インタフェース)である\f2com.spipackage\fPです。ドキュメントの格納先は、\f2docs/api/com/apipackage\fPと\f2docs/spi/com/spipackage\fPです。APIパッケージのドキュメントはすでに生成されていて、\f2docs\fPが現在のディレクトリである場合、APIドキュメントへのリンクを持つSPIパッケージをドキュメント化するには、次のコマンドを実行します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d ./spi \-link ../api com.spipackage\fP
+.fl
+.fi
+\f2\-link\fPの引数は、宛先ディレクトリ(\f2docs/spi\fP)からの相対パスです。
+.br
+.br
+\f3詳細\fP \- \f2\-link\fPオプションを使用すると、コードからは参照されていても、今回のJavadocの実行ではドキュメント化\f2されない\fPというクラスにリンクできるようになります。リンクから有効なページに移動できるようにするには、それらのHTMLページがある場所を調べ、その場所を\f2extdocURL\fPに指定する必要があります。これにより、たとえば、サード・パーティのドキュメントから\f2http://docs.oracle.com\fP上の\f2java.*\fPのドキュメントにリンクすることができます。
+.br
+.br
+今回の実行でJavadocによって生成されるドキュメント内のAPIのみを対象にリンクを作成する場合は、\f2\-link\fPオプションを省略します。(\f2\-link\fPオプションが指定されていないと、Javadocツールは、外部参照のドキュメントへのリンクを作成しません。これは、そのドキュメントが存在するかどうか、および存在する場合はその場所がわからないからです。)
+.br
+.br
+このオプションでは、生成ドキュメント内の複数の場所にリンクを作成できます。
+.br
+.br
+もう1つの用途は、パッケージ・セットの間にクロスリンクを作成することです。一方のパッケージ・セットに対してJavadocを実行した後、他方のパッケージ・セットに対してJavadocを再度実行すると、両セット間に双方向のリンクを作成できます。
+.br
+.br
+\f3クラスの参照方法\fP \- 外部参照クラスへのリンクを、テキスト・ラベルのみではなく実際に表示するには、次の方法でクラスを参照する必要があります。メソッドの本体でクラスを参照するのみでは十分ではありません。\f2import\fP文、宣言のいずれかで参照する必要があります。次に、クラス\f2java.io.File\fPを参照する方法の例を示します。 
+.RS 3
+.TP 2
+o
+すべてのタイプの\f2import\fP文の場合: ワイルドカードによるインポート、名前による明示的なインポート、または\f2java.lang.*\fPに対する自動インポート。たとえば、次のようにすれば十分です。
+.br
+\f2import java.io.*;\fP
+.br
+1.3.xおよび1.2.xでは、名前による明示的なインポートのみ機能します。ワイルドカードによるインポート文も、\f2java.lang.*\fPの自動インポートも機能しません。 
+.TP 2
+o
+宣言の場合:
+.br
+\f2void foo(File f){}\fP
+.br
+この参照を使用し、メソッド、コンストラクタ、フィールド、クラス、またはインタフェースの戻り値の型またはパラメータの型に置くか、\f2implements\fP、\f2extends\fP、または\f2throws\fP文に置きます。 
+.RE
+重要な結果として、\f2\-link\fPオプションを使用しても、この制限のために誤って表示されないリンクが多数発生する可能性があります。(テキストはハイパーテキスト・リンクが付けられずに表示されます。)リンクが表示する警告から、これらのリンクを認識できます。クラスを正しく参照し、それによってリンクを追加するための最も安全な方法は前述したとおり、そのクラスをインポートすることです。  
+.br
+.br
+\f3パッケージ・リスト\fP \- \f2\-link\fPオプションには、Javadocツールによって生成される\f2package\-list\fPという名前のファイルが、\f2\-link\fPに指定したURLに存在していることが必要です。\f2package\-list\fPファイルは、その場所にあるドキュメント化されたパッケージの名前のリストが入った単純なテキスト・ファイルです。前の例では、Javadocツールは、指定されたURLで\f2package\-list\fPという名前のファイルを探し、パッケージ名を読み込んだ後、そのURLにあるそれらのパッケージへのリンクを作成しました。
+.br
+.br
+たとえば、Java SE 6 APIのパッケージ・リストは
+.na
+\f2http://docs.oracle.com/javase/7/docs/api/package\-list\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/package\-listにあり、次のような内容で始まっています。 
+.nf
+\f3
+.fl
+  java.applet  
+.fl
+  java.awt
+.fl
+  java.awt.color
+.fl
+  java.awt.datatransfer
+.fl
+  java.awt.dnd
+.fl
+  java.awt.event
+.fl
+  java.awt.font
+.fl
+  etc.
+.fl
+\fP
+.fi
+\f2\-link\fPオプションを指定せずにJavadocを実行した場合、Javadocは外部参照クラスに属する名前を見つけると、その名前をリンクなしで出力します。一方、\f2\-link\fPオプションを指定した場合、Javadocツールは、指定された\f2extdocURL\fPの場所にある\f2package\-list\fPファイルでそのパッケージ名を検索します。パッケージ名が見つかると、\f2extdocURL\fPが名前の前に付加されます。
+.br
+.br
+すべてのリンクが正しく機能するためには、外部参照のすべてのドキュメントが、指定したURLに存在する必要があります。Javadocツールは、指定されたpackage\-listが存在するかどうかのみをチェックし、これらのページが存在するかどうかはチェックしません。
+.br
+.br
+\f3複数のリンク\fP \- 複数の\f2\-link\fPオプションを指定すると、任意の数の外部生成ドキュメントへのリンクを作成できます。\ Javadoc 1.2には、複数の\f2\-link\fPコマンドを指定できないという既知のバグがあります。これは1.2.2で修正されました。
+.br
+.br
+リンクする外部ドキュメントごとに、次のように別々のリンク・オプションを指定します。
+.br
+.br
+\ \  \f2% \fP\f4javadoc \-link\fP \f2extdocURL1\fP \f4\-link\fP \f2extdocURL2\fP \f2... \fP\f4\-link\fP \f2extdocURLn\fP \f4com.mypackage\fP
+.br
+.br
+\f2extdocURL1\fP、\ \f2extdocURL2\fP、\ ... \f2extdocURLn\fPは、それぞれ外部ドキュメントのルートを指し、各ルートには、\f2package\-list\fPという名前のファイルが入っています。
+.br
+.br
+\f3クロスリンク\fP \- まだ生成されていない2つ以上のドキュメントをクロスリンクする場合は、「ブートストラップ」が必要になります。つまり、どのドキュメントについても\f2package\-list\fPが存在していない場合は、最初のドキュメントに対してJavadocツールを実行する時点で、2番目のドキュメントの\f2package\-list\fPはまだ存在していません。したがって、外部リンクを作成するには、2番目のドキュメントを生成した後で、最初のドキュメントを生成し直す必要があります。
+.br
+.br
+この場合、最初のドキュメント生成の目的は、\f2package\-list\fPを作成することです(パッケージ名を把握している場合は手動で作成してもかまいません)。次に、2番目のドキュメントとその外部リンクを生成します。必要な外部の\f2package\-list\fPファイルが存在しない場合は、Javadocツールから警告が出力されます。  
+.TP 3
+\-linkoffline\  extdocURL\  packagelistLoc 
+このオプションは\f2\-link\fPのバリエーションの1つです。どちらも、Javadocにより生成された外部参照クラスのドキュメントへのリンクを作成します。Javadocツール自体が「オフライン」になっているとき(Web接続を使用してドキュメントにアクセスできないとき)、Web上のドキュメントにリンクするには、\f2\-linkoffline\fPオプションを使用します。
+.br
+.br
+厳密には、外部ドキュメントの\f2package\-list\fPファイルにアクセスできないとき、またはこのファイルが\f2extdocURL\fPで指定された場所には存在せず、\f2packageListLoc\fPで指定できる別の場所(通常ローカル)に存在するとき、\f2\-linkoffline\fPを使用します。したがって、\f2extdocURL\fPにWWW上でしかアクセスできない場合は、\f2\-linkoffline\fPを指定することにより、ドキュメントの生成時にJavadocツールがWebに接続できる必要があるという制約がなくなります。
+.br
+.br
+もう1つの用途は、ドキュメントを更新するための「ハッキング」として使用することです。パッケージのセット全体に対してJavadocを実行した後、変更した一部のパッケージに対してのみJavadocを再度実行して、更新されたファイルを、オリジナルのセットに挿入できるようにします。後で例を示します。
+.br
+.br
+\f2\-linkoffline\fPオプションは引数を2つ取ります。第1引数は\f2<a href>\fPリンクに組み込まれる文字列を指定する引数、第2引数は\f2package\-list\fPの検索場所を指定する引数です。 
+.RS 3
+.TP 2
+o
+\f4extdocURL\fPは、リンク先として指定する、Javadocにより生成された外部ドキュメントを含むディレクトリの絶対URLまたは相対URLです。相対URLの場合、値は、生成先ディレクトリ(\f2\-d\fPで指定)からリンク先となるパッケージのルートへの相対パスにする必要があります。詳細は、\f2\-link\fPオプションの\f2extdocURL\fPを参照してください。 
+.TP 2
+o
+\f4packagelistLoc\fPは、外部ドキュメントの\f2package\-list\fPファイルを含むディレクトリへのパスまたはURLです。これは、URL (http:またはfile:)でもファイル・パスでもかまいません。また、絶対パスと相対パスのどちらでもかまいません。相対パスの場合は、javadocが実行される\f2現在の\fPディレクトリからの相対パスとして指定します。ファイル名の\f2package\-list\fPは含めないでください。 
+.RE
+1回のJavadocの実行で、複数の\f2\-linkoffline\fPオプションを指定できます。(1.2.2より前は、1つのオプションしか指定できませんでした。)
+.br
+.br
+\f3外部ドキュメントへの絶対リンクの使用例\fP \- \f2http://docs.oracle.com/javase/7/docs/api/\fP内の\f2java.lang\fP、\f2java.io\fP、その他のJava SEプラットフォーム・パッケージにリンクしたいが、Webにアクセスできないとします。ブラウザで、
+.na
+\f2http://docs.oracle.com/javase/7/docs/api/package\-list\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/api/package\-listにある\f2package\-list\fPファイルを開き、それをローカル・ディレクトリに保存し、第2引数\f2packagelistLoc\fPでこのローカル・コピーの場所を指定します。この例では、パッケージ・リスト・ファイルはカレント・ディレクトリ「\f2.\fP」に保存されています。次のコマンドは、Java SEプラットフォーム・パッケージへのリンク持つ\f2com.mypackage\fPパッケージのドキュメントを生成します。生成ドキュメントには、たとえばクラス・ツリー内の\f2Object\fPクラスへのリンクが含まれています。(\f2\-sourcepath\fPなど、他の必要なオプションは表示されません。) 
+.nf
+\f3
+.fl
+% \fP\f3javadoc \-linkoffline http://docs.oracle.com/javase/7/docs/api/ . com.mypackage\fP
+.fl
+.fi
+\f3外部ドキュメントへの相対リンクの使用例\fP \- \f2\-linkoffline\fPを相対パスとともに使用することはあまりありません。理由は単純で、通常は\f2\-link\fPで間に合うからです。\f2\-linkoffline\fPを使用する際、\f2package\-list\fPには通常ローカルのファイルを指定します。相対リンクを使用する際も、リンク先のファイルには通常ローカルのファイルを指定します。したがって、\f2\-linkoffline\fPの2つの引数に別々のパスを指定する必要は通常ありません。2つの引数が同一である場合は、\f2\-link\fPを使用できます。\f2\-link\fPの相対リンクの例を参照してください。
+.br
+.br
+\f4package\-list\fP\f3ファイルを手動で作成\fP \- \f2package\-list\fPファイルがまだ存在しなくても、ドキュメントのリンク先のパッケージ名がわかっている場合は、このファイルのコピーを手動で作成し、\f2packagelistLoc\fPでそのパスを指定することができます。\f2com.apipackage\fPが最初に生成された時点で\f2com.spipackage\fPのパッケージ・リストが存在しないという前出のケースが一例として挙げられます。この方法は、パッケージ名はわかっているものの、まだ公開されていない、新しい外部ドキュメントにリンクするドキュメントを生成する必要がある場合に便利です。また、\f2package\-list\fPファイルが生成されないJavadoc 1.0または1.1で生成されたパッケージ用に\f2package\-list\fPファイルを作成する場合にも、この方法が使用できます。同様に、2つの企業が未公開の\f2package\-list\fPファイルを共有できるため、クロスリンクを設定したドキュメントを同時にリリースすることも可能になります。
+.br
+.br
+\f3複数のドキュメントへのリンク\fP \- 参照先となる生成ドキュメントごとに\f2\-linkoffline\fPを1つずつ含めることができます(わかりやすくするために、オプションごとに改行して示しています)。
+.br
+.br
+\f2% \fP\f4javadoc \-linkoffline\fP \f2extdocURL1\fP \f2packagelistLoc1\fP \f2\\\fP
+.br
+\f2\ \ \ \ \ \ \ \ \ \ \fP\f4\-linkoffline\fP \f2extdocURL2\fP \f2packagelistLoc2\fP \f2\\\fP
+.br
+\f2\ \ \ \ \ \ \ \ \ \ ...\fP
+.br
+.br
+\f3ドキュメントの更新\fP \- \f2\-linkoffline\fPオプションのもう1つの用途は、プロジェクトに大量のパッケージが含まれていて、すでにツリー全体に対してJavadocの実行が完了している場合に、次の実行では、少量の変更を手早く加えた後、ソース・ツリーのごく一部に対してのみJavadocを再実行する場合に便利です。これは、ドキュメンテーション・コメントに対してのみ変更を加え、宣言は変更しない場合にのみ正しく処理されるので、ハッキングのようなものです。ソース・コードに対して宣言を追加、削除、または変更した場合は、索引、パッケージ・ツリー、継承されるメンバーのリスト、使用ページなどの場所で、リンクが壊れることがあります。
+.br
+.br
+まず、この新しい小規模な実行で使用する、新しい生成先ディレクトリ(\f2update\fP)を作成します。元の生成先ディレクトリの名前が\f2html\fPだったとします。最も単純な例では、\f2html\fPディレクトリの親にcdによって移動します。\f2\-linkoffline\fPの第1引数にカレント・ディレクトリ「.」を設定し、第2引数に\f2package\-list\fPが検索される\f2html\fPへの相対パスを設定します。更新するパッケージのパッケージ名のみを渡します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d update \-linkoffline . html com.mypackage\fP
+.fl
+.fi
+Javadocツールの終了後、\f2update/com/package\fP内の生成されたクラスのページをコピーし(概要や索引は除く)、\f2html/com/package\fP内の元のファイルに上書きします。  
+.TP 3
+\-linksource\  
+各ソース・ファイル(行番号付き)のHTMLバージョンを作成し、標準HTMLドキュメントからソース・ファイルへのリンクを追加します。リンクは、ソース・ファイル内に宣言されているクラス、インタフェース、コンストラクタ、メソッド、フィールドに対して作成されます。デフォルト・コンストラクタ、生成されたクラスなどに対しては作成されません。
+.br
+.br
+\f3このオプションは、\fP\f4\-public\fP\f3、\fP\f4\-package\fP\f3、\fP\f4\-protected\fP\f3、\fP\f4\-private\fP\f3の各オプションとは関係なく\fP\f3、非公開のクラス、フィールド、非公開のメソッドの本体をはじめとする組み込まれたソース・ファイル内の\fP\f4すべての\fP\f3非公開実装の詳細を公開します。\fP\f2\-private\fPオプションも併せて指定しないかぎり、非公開のクラスやインタフェースの一部には、リンクを介してアクセスできないことがあります。
+.br
+.br
+各リンクは、その宣言内の識別子名の上に作成されます。たとえば、\f2Button\fPクラスのソース・コードへのリンクは、「Button」という語の上に作成されます。 
+.nf
+\f3
+.fl
+    public class Button
+.fl
+    extends Component
+.fl
+    implements Accessible
+.fl
+\fP
+.fi
+また、Buttonクラスの\f2getLabel()\fPメソッドのソース・コードへのリンクは、「getLabel」という語の上に作成されます。 
+.nf
+\f3
+.fl
+    public String getLabel()
+.fl
+\fP
+.fi
+.TP 3
+\-group\  groupheading\  packagepattern:packagepattern:... 
+概要ページの複数のパッケージを、指定したグループに分けて、グループごとに表を作成します。各グループは、それぞれ別の\f2\-group\fPオプションで指定します。これらのグループは、コマンドラインで指定した順序でページに表示されます。各グループ内では、パッケージがアルファベット順に並べられます。1つの\f2\-group\fPオプションでは、\f2packagepattern\fP式のリストに一致するパッケージが、見出しとして\f2groupheading\fPを持つ1つの表に表示されます。 
+.RS 3
+.TP 2
+o
+\f4groupheading\fPには、任意のテキストを指定でき、空白を含めることができます。指定したテキストは、グループの表見出しになります。 
+.TP 2
+o
+\f4packagepattern\fPには、任意のパッケージ名、または任意のパッケージ名の先頭部分とそれに続く1つのアスタリスク(\f2*\fP)を指定できます。アスタリスクは、「任意の文字に一致する」という意味のワイルドカードです。ワイルドカードとして指定できるのは、アスタリスクのみです。1つのグループには、コロン(\f2:\fP)で区切って複数のパターンを含めることができます。 
+.RE
+\f3注意: パターンやパターン・リスト内でアスタリスクを使用する場合は、\fP\f4"java.lang*:java.util"\fP\f3のように、パターン・リストを引用符で囲む必要があります。\fP
+.br
+.br
+\f2\-group\fPオプションが指定されていない場合、すべてのパッケージが、「パッケージ」という見出しの1つのグループに入れられます。ドキュメント化されるパッケージの中に、どのグループにも入らないパッケージがある場合、このようなパッケージは「その他のパッケージ」という見出しを持つ独立したグループに入れられます。
+.br
+.br
+たとえば、次のようにオプションを指定すると、ドキュメント化される5つのパッケージは、コア・パッケージ、拡張機能パッケージ、およびその他のパッケージに分けられます。「java.lang*」では、最後のドットを指定していないことに注目してください。「java.lang.*」のようにドットを入れると、java.langパッケージは除外されることになります。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-group "Core Packages" "java.lang*:java.util"
+.fl
+            \-group "Extension Packages" "javax.*"
+.fl
+            java.lang java.lang.reflect java.util javax.servlet java.new\fP
+.fl
+.fi
+この結果、次のようなグループ化が行われます。 
+.RS 3
+.TP 3
+コア・パッケージ 
+\f2java.lang\fP 
+\f2java.lang.reflect\fP 
+\f2java.util\fP 
+.TP 3
+拡張機能パッケージ 
+\f2javax.servlet\fP 
+.TP 3
+その他のパッケージ 
+\f2java.new\fP 
+.RE
+.TP 3
+\-nodeprecated 
+推奨されないAPIをドキュメントに生成しないようにします。このオプションを指定すると、\-nodeprecatedlistオプションを指定した場合と同じ効果があることに加えて、ドキュメントの他の部分全体でも、推奨されないAPIが生成されません。このオプションは、コードを記述しているとき、推奨されないコードによって気を散らされたくない場合に便利です。  
+.TP 3
+\-nodeprecatedlist 
+推奨されないAPIのリストを含むファイル(deprecated\-list.html)、およびナビゲーション・バーのそのページへのリンクが生成されないようにします。(ただし、ドキュメントの他の部分では、推奨されないAPIが生成されます。)このオプションは、推奨されないAPIがソース・コードに含まれておらず、ナビゲーション・バーをすっきりと見せる場合に便利です。  
+.TP 3
+\-nosince 
+生成ドキュメントから、@sinceタグに関連付けられた「導入されたバージョン」セクションを省略します。  
+.TP 3
+\-notree 
+生成ドキュメントから、クラスおよびインタフェースの階層ページを省略します。これらのページには、ナビゲーション・バーの「階層ツリー」ボタンからアクセスできます。デフォルトでは、階層が生成されます。  
+.TP 3
+\-noindex 
+生成ドキュメントから、索引を省略します。デフォルトでは、索引が生成されます。  
+.TP 3
+\-nohelp 
+出力の各ページの最上部と最下部にあるナビゲーション・バーから「ヘルプ」リンクを省略します。 
+.TP 3
+\-nonavbar 
+生成されるページの最上部と最下部に表示されるナビゲーション・バー、ヘッダー、およびフッターを生成しないようにします。このオプションは、bottomオプションには影響を与えません。\f2\-nonavbar\fPオプションは、印刷するためにのみファイルをPostScriptやPDFに変換する場合など、内容のみが重要で、ナビゲーションの必要がない場合に便利です。  
+.TP 3
+\-helpfile\  path/filename 
+最上部および最下部のナビゲーション・バーの「ヘルプ」リンクのリンク先となる代替ヘルプ・ファイル\f2path/filename\fPのパスを指定します。このオプションが指定されていないと、Javadocツールは、ツール内でハードコードされているヘルプ・ファイル\f2help\-doc.html\fPを自動作成します。このオプションを使用すると、そのデフォルトの動作をオーバーライドできます。\f2filename\fPにはどんなファイル名でも指定でき、\f2help\-doc.html\fPに限定されません。Javadocツールは、ナビゲーション・バー内のリンクを必要に応じて調整します。次に例を示します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-helpfile /home/user/myhelp.html java.awt\fP
+.fl
+.fi
+.TP 3
+\-stylesheetfile\  path/filename 
+代替HTMLスタイルシート・ファイルのパスを指定します。このオプションが指定されていないと、Javadocツールは、ツール内でハードコードされているスタイルシート・ファイル\f2stylesheet.css\fPを自動作成します。このオプションを使用すると、そのデフォルトの動作をオーバーライドできます。\f2filename\fPにはどんなファイル名でも指定でき、\f2stylesheet.css\fPに限定されません。次に例を示します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-stylesheetfile /home/user/mystylesheet.css com.mypackage\fP
+.fl
+.fi
+.TP 3
+\-serialwarn 
+@serialタグがない場合は、コンパイル時に警告を生成します。デフォルトでは、Javadoc 1.2.2 (以降)では、直列化の警告は生成されません。(以前のバージョンとは逆の動作です。)このオプションを使用すると、直列化の警告が表示されるので、デフォルトの直列化可能フィールドと\f2writeExternal\fPメソッドを適切にドキュメント化するのに役立ちます。  
+.TP 3
+\-charset\  name 
+このドキュメント用のHTML文字セットを指定します。この名前は、
+.na
+\f2IANAレジストリ\fP @
+.fi
+http://www.iana.org/assignments/character\-setsで指定された、推奨されるMIME名である必要があります。次に例を示します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-charset "iso\-8859\-1" mypackage\fP
+.fl
+.fi
+生成されるすべてのページの先頭に、次の行が挿入されます。  
+.nf
+\f3
+.fl
+   <META http\-equiv="Content\-Type" content="text/html; charset=ISO\-8859\-1">
+.fl
+\fP
+.fi
+このMETAタグについては、
+.na
+\f2HTML規格\fP @
+.fi
+http://www.w3.org/TR/REC\-html40/charset.html#h\-5.2.2(4197265および4137321)を参照してください。
+.br
+.br
+\-encodingおよび\-docencodingも参照してください。 
+.TP 3
+\-docencoding\  name 
+生成されるHTMLファイルのエンコーディングを指定します。この名前は、
+.na
+\f2IANAレジストリ\fP @
+.fi
+http://www.iana.org/assignments/character\-setsで指定された、推奨されるMIME名である必要があります。このオプションを省略しながら\-encodingを使用した場合、生成されるHTMLファイルのエンコードは、\-encodingによって決められます。例: 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-docencoding "ISO\-8859\-1" mypackage\fP
+.fl
+.fi
+\-encodingおよび\-charsetも参照してください。  
+.TP 3
+\-keywords 
+HTMLメタ・キーワード・タグを、クラスごとに生成されるファイルに追加します。これらのタグは、メタタグを検索するサーチ・エンジンがページを見つける場合に役立ちます。(インターネット全体を検索する多くのサーチ・エンジンは、ページがメタタグを誤用している可能性があるため、メタタグを調べません。一方、検索を自身のWebサイトに限定している企業が提供するサーチ・エンジンは、メタタグを調べることによってメリットを得られます。)
+.br
+.br
+メタタグには、クラスの完全修飾名と、フィールドおよびメソッドの修飾されていない名前が含まれます。コンストラクタは、クラス名と同じであるため含まれません。たとえば、クラスStringは次のキーワードで開始します。 
+.nf
+\f3
+.fl
+     <META NAME="keywords" CONTENT="java.lang.String class">
+.fl
+     <META NAME="keywords" CONTENT="CASE_INSENSITIVE_ORDER">
+.fl
+     <META NAME="keywords" CONTENT="length()">
+.fl
+     <META NAME="keywords" CONTENT="charAt()">
+.fl
+\fP
+.fi
+.TP 3
+\-tag\ \ tagname:Xaoptcmf:"taghead" 
+Javadocツールがドキュメンテーション・コメント内の引数を1つ取る単純なカスタムブロック・タグ\f2@\fP\f2tagname\fPを解釈できるようにします。これにより、Javadocツールはタグ名の「スペルチェック」を行うことができるので、ソース・コード内に存在するすべてのカスタム・タグについて、\f2\-tag\fPオプションを組み込むことが重要です。今回の実行では出力されないタグは、\f2X\fPを付けて無効にします。
+.br
+.br
+コロン(\f4:\fP)が常に区切り文字になります。\f2tagname\fPでコロンを使用する方法については、タグ名でのコロンの使用を参照してください。
+.br
+.br
+\f2\-tag\fPオプションは、タグの見出し\f2taghead\fPを太字で出力します。その次の行には、このオプションの引数で指定したテキストが続きます(下の例を参照)。ブロック・タグと同様、この引数のテキストにはインライン・タグを含めることができます。このインライン・タグも解釈されます。出力は、引数を1つ取る標準のタグ(\f2@return\fPや\f2@author\fPなど)の出力とよく似ています。\f2taghead\fPを省略すると、\f2tagname\fPが見出しとして表示されます。
+.br
+.br
+\f3タグの配置\fP \- 引数の\f4Xaoptcmf\fP部分は、ソース・コード内のタグを配置できる位置と、タグを(\f2X\fPを使用して)無効にできるかどうかを決定します。タグの配置位置を制限しない場合は\f4a\fPを指定します。それ以外の文字の組合せも可能です。
+.br
+.br
+\f4X\fP (タグの無効化)
+.br
+\f4a\fP (すべて)
+.br
+\f4o\fP (概要)
+.br
+\f4p\fP (パッケージ)
+.br
+\f4t\fP (型、つまりクラスとインタフェース)
+.br
+\f4c\fP (コンストラクタ)
+.br
+\f4m\fP (メソッド)
+.br
+\f4f\fP (フィールド) 
+.br
+.br
+\f3シングル・タグの例\fP \- ソース・コード内の任意の位置で使用できるタグのタグ・オプションの例を示します。 
+.nf
+\f3
+.fl
+    \-tag todo:a:"To Do:"
+.fl
+\fP
+.fi
+@todoをコンストラクタ、メソッド、フィールドのみで使用する場合は、次のオプションを使用します。 
+.nf
+\f3
+.fl
+    \-tag todo:cmf:"To Do:"
+.fl
+\fP
+.fi
+上の例の最後のコロン(\f2:\fP)は、パラメータ区切り文字ではなく、見出しテキストの一部になっています(下の例を参照)。次の例のように、\f2@todo\fPタグを含むソース・コードでは、いずれかのタグ・オプションを使用します。 
+.nf
+\f3
+.fl
+     @todo The documentation for this method needs work.
+.fl
+\fP
+.fi
+\f3タグ名でのコロンの使用\fP \- コロン(:)をバックスラッシュでエスケープすると、コロンをタグ名に使用することができます。このドキュメンテーション・コメントの中では、次のように使用します。 
+.nf
+\f3
+.fl
+    /**
+.fl
+     * @ejb:bean
+.fl
+     */
+.fl
+\fP
+.fi
+このタグ・オプションを使用すると、次のようになります。  
+.nf
+\f3
+.fl
+    \-tag ejb\\\\:bean:a:"EJB Bean:"
+.fl
+\fP
+.fi
+\f3タグ名のスペルチェック(タグの無効化)\fP \- 一部の開発者が必ずしも出力しないカスタム・タグをソース・コード内に配置することがあります。この場合、ソース・コード内に存在するすべてのタグをリストし、出力するタグを有効にし、出力しないタグを無効にする必要があります。\f2X\fPを指定するとタグは無効になります。指定しないと、タグは有効になります。これにより、Javadocツールは、検出したタグが入力ミスなどによる不明タグであるかどうかを特定できます。この場合は警告が出力されます。
+.br
+.br
+すでに配置されている値に\f2X\fPを追加できます。こうしておけば、\f2X\fPを削除するのみでタグを有効にすることができます。たとえば、@todoタグの出力を抑制する場合、次のように指定します。 
+.nf
+\f3
+.fl
+    \-tag todo:Xcmf:"To Do:"
+.fl
+\fP
+.fi
+さらに単純な指定方法もあります。 
+.nf
+\f3
+.fl
+    \-tag todo:X
+.fl
+\fP
+.fi
+構文\f2\-tag todo:X\fPは、\f2@todo\fPがタグレットで定義されていても機能します。
+.br
+.br
+\f3タグの順序\fP \- \f2\-tag\fP (および\f2\-taglet\fP)オプションの順序によって、タグの出力順が決まります。カスタム・タグと標準タグを組み合せて使用することもできます。標準タグのタグ・オプションは、順序を決定するためのみのプレースホルダです。これらは標準タグ名のみを使用します。(標準タグの小見出しは変更できません。)これについては、下の例で説明します。
+.br
+.br
+\f2\-tag\fPがない場合は、\f2\-taglet\fPの位置によってその順序が決まります。タグが両方とも存在する場合、コマンドラインの最後にある方がその順序を決定します。これは、タグやタグレットがコマンドラインに指定された順番に処理されるためです。たとえば、\f2\-taglet\fPと\f2\-tag\fPの両方が「todo」という名前を持っている場合、コマンドラインの最後にある方が順序を決定します。
+.br
+.br
+\f3タグの完全セットの例\fP \- この例では、出力の「Parameters」と「Throws」の間に「To Do」を挿入します。「X」を使用して、@exampleが、ソース・コード内の今回の実行では出力されないタグであることを指定します。@argfileを使用する場合は、次のように、引数ファイル内の別々の行にタグを配置できます(行の継続を示す文字は不要)。 
+.nf
+\f3
+.fl
+   \-tag param
+.fl
+   \-tag return
+.fl
+   \-tag todo:a:"To Do:"
+.fl
+   \-tag throws
+.fl
+   \-tag see
+.fl
+   \-tag example:X
+.fl
+\fP
+.fi
+Javadocがドキュメンテーション・コメントを解析する際に検索されたタグのうち、標準タグでも、\f2\-tag\fPや\f2\-taglet\fPで渡されたタグでもないものはすべて不明タグとみなされ、警告がスローされます。
+.br
+.br
+標準タグは、最初、デフォルトの順序でリスト内に内部的に格納されます。\f2\-tag\fPオプションを使用すると、このリストに追加されるタグ、すなわち標準タグがデフォルトの位置から移動します。つまり、標準タグの\f2\-tag\fPオプションを省略すると、これらはデフォルトの位置に配置されたままになります。
+.br
+.br
+\f3競合の回避\fP \- 固有の名前空間を細かく分けるには、パッケージに使用されている\f2com.mycompany.todo\fPという名前のように、ドット(.)で区切られた名前を使用します。Oracleは、今後も名前にドットを含まない標準タグを作成します。ユーザーが作成したタグは、Oracleが定義する同じ名前のタグの動作をオーバーライドします。つまり、\f2@todo\fPという名前のタグまたはタグレットをユーザーが作成した場合、その後にOracleが同じ名前の標準タグを作成しても、そのタグまたはタグレットは常にユーザーが定義したのと同じ動作を保持します。
+.br
+.br
+\f3注釈vs. Javadocタグ\fP \- 一般に、追加する必要のあるマークアップが、ドキュメントに影響を与えたりドキュメントを生成したりするためのものである場合、そのマークアップはJavadocタグにします。それ以外の場合は注釈にします。
+.na
+\f2注釈とJavadocタグの比較\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html#annotationsを参照してください。
+.br
+.br
+\-tagletオプションを使用して、より複雑なブロック・タグやカスタム・インライン・タグを作成することもできます。  
+.TP 3
+\-taglet\ \ class 
+そのタグのドキュメントの生成に使用するドックレットを起動するためのクラス・ファイルを指定します。\f2クラス\fPの完全修飾名を指定してください。このタグレットは、カスタム・タグのテキスト引数の数も定義します。タグレットは、これらの引数を受け付け、処理し、出力を生成します。外部ドキュメントとサンプル・タグレットについては、次を参照してください。 
+.RS 3
+.TP 2
+o
+.na
+\f2タグレットの概要\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/taglet/overview.html 
+.RE
+タグレットは、ブロックタグまたはインライン・タグで便利です。タグレットは任意の数の引数をとることができます。また、テキストを太字にする、箇条書きを作成する、テキストをファイルに書き出す、その他のプロセスを開始するなどのカスタム動作を実装できます。
+.br
+.br
+タグレットで指定できるのは、タグの配置場所と配置形式のみです。その他のすべての決定は、ドックレットによって行われます。したがって、タグレットを使用しても、包含クラスのリストからクラス名を削除するなどの処理は実行できません。ただし、タグのテキストをファイルに出力したり、別のプロセスをトリガーするなどの副作用は得られます。
+.br
+.br
+タグレットへのパスを指定するには、\f2\-tagletpath\fPオプションを使用します。次に、生成されるページの「Parameters」と「Throws」の間に「To Do」タグレットを挿入する例を示します。 
+.nf
+\f3
+.fl
+    \-taglet com.sun.tools.doclets.ToDoTaglet
+.fl
+    \-tagletpath /home/taglets 
+.fl
+    \-tag return
+.fl
+    \-tag param
+.fl
+    \-tag todo
+.fl
+    \-tag throws
+.fl
+    \-tag see
+.fl
+\fP
+.fi
+また、\f2\-taglet\fPオプションを\f2\-tag\fPオプションのかわりに使用することもできますが、読みにくくなる可能性があります。  
+.TP 3
+\-tagletpath\ \ tagletpathlist 
+tagletクラス・ファイル(.class)を検索するための検索パスを指定します。\f2tagletpathlist\fPには、コロン(\f2:\fP)で区切って複数のパスを含めることができます。Javadocツールは、指定されたパス以下のすべてのサブディレクトリを検索します。  
+.TP 3
+\-docfilessubdirs\  
+「\f2doc\-files\fP」ディレクトリのディープ・コピーを有効にします。つまり、宛先には、サブディレクトリとそのすべて内容が再帰的にコピーされます。たとえば、ディレクトリ\f2doc\-files/example/images\fPとその内容がすべてコピーされます。ここでも、サブディレクトリを除外する指定が可能です。  
+.TP 3
+\-excludedocfilessubdir\ \ name1:name2... 
+指定された名前の「\f2doc\-files\fP」サブディレクトリをすべて除外します。これにより、SCCSとその他のソース・コード制御サブディレクトリのコピーを防ぎます。  
+.TP 3
+\-noqualifier\ \ all\  | \ packagename1:packagename2:... 
+出力されるクラス名の先頭からパッケージ名(パッケージ修飾子)を省略します。\f2\-noqualifier\fPの引数は、「\f2all\fP」(すべてのパッケージ修飾子を省略)、修飾子として削除するパッケージのコロン区切りリスト(ワイルドカードも可)、のいずれかとなります。クラスまたはインタフェース名が表示される位置からパッケージ名が削除されます。
+.br
+.br
+次の例では、すべてのパッケージ修飾子を省略します。 
+.nf
+\f3
+.fl
+    \-noqualifier all
+.fl
+\fP
+.fi
+次の例では、パッケージ修飾子「java.lang」および「java.io」を省略します。 
+.nf
+\f3
+.fl
+    \-noqualifier java.lang:java.io
+.fl
+\fP
+.fi
+次の例では、「java」で始まるパッケージ修飾子と「com.sun」というサブパッケージ(「javax」ではない)を省略します。 
+.nf
+\f3
+.fl
+    \-noqualifier java.*:com.sun.*
+.fl
+\fP
+.fi
+パッケージ修飾子が前述の動作に従って表示される場合、名前は適切に短縮されます。詳細は、名前が表示される方法を参照してください。このルールは、\f2\-noqualifier\fPを使用するかどうかにかかわらず有効です。  
+.TP 3
+\-notimestamp\  
+タイムスタンプが抑制されます。各ページの先頭近くにある、生成されたHTML内のHTMLコメントでタイムスタンプが隠されます。Javadocを2つのソース・ベースで実行し、それらに対してdiffを実行するときにこのオプションを使用すると、タイムスタンプによってdiffが発生しなくなるので便利です(このオプションを使用しないと、各ページでdiffになります)。タイムスタンプにはJavadocのバージョン番号が含まれており、次のようになります。 
+.nf
+\f3
+.fl
+     <!\-\- Generated by javadoc (build 1.5.0_01) on Thu Apr 02 14:04:52 IST 2009 \-\->
+.fl
+\fP
+.fi
+.TP 3
+\-nocomment\  
+主説明およびすべてのタグを含むコメント本文全体を抑制し、宣言のみを生成します。このオプションにより、元は異なる目的のためだったソース・ファイルを再利用し、新しいプロジェクトの早い段階でスケルトンHTMLドキュメントを作成できるようになります。 
+.TP 3
+\-sourcetab tabLength 
+ソース内の各タブが取る空白文字の数を指定します。 
+.RE
+.SH "コマンドライン引数ファイル"
+.LP
+Javadocのコマンドラインを短くしたり簡潔にしたりするために、\f2javadoc\fPコマンドに対する引数(\f2\-J\fPオプションを除く)が入った1つ以上のファイルを指定することができます。このことを利用すれば、どのオペレーティング・システム上でも、任意の長さのjavadocコマンドを作成できます。
+.LP
+引数ファイルには、javacのオプションとソース・ファイル名を自由に組み合せて記述できます。ファイル内の各引数は、スペースまたは改行で区切ります。ファイル名に空白が含まれている場合は、そのファイル名全体を二重引用符で囲みます。
+.LP
+引数ファイル内のファイル名は、現在のディレクトリから見た相対パスになります。引数ファイルの位置から見た相対パスではありません。引数ファイル内のファイル名リストでは、ワイルドカード(*)は使用できません。たとえば、\f2*.java\fPとは指定できません。引数ファイル内の引数で\f2@\fP文字を使用して、複数のファイルを再帰的に解釈することはサポートされていません。また、\f2\-J\fPオプションもサポートされていません。このオプションは起動ツールに渡されますが、起動ツールでは引数ファイルをサポートしていないからです。
+.LP
+Javadocを実行するときに、各引数ファイルのパスとファイル名の先頭に\f2@\fP文字を付けて渡します。Javadocは、\f2@\fP文字で始まる引数を見つけると、そのファイルの内容を展開して引数リストに挿入します。
+.SS 
+引数ファイルを1つ指定する例
+.LP
+次のようにして、「\f2argfile\fP」という名前の単一の引数ファイルに、すべてのJavadoc引数を格納できます。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc @argfile\fP
+.fl
+.fi
+.LP
+この引数ファイルには、次の例で示されている2つのファイルの内容を両方とも入れることができます。
+.SS 
+引数ファイルを2つ指定する例
+.LP
+次のようにして、Javadocオプション用に1つ、パッケージ名またはソース・ファイル名用に1つというように、2つの引数ファイルを作成できます(なお、次のリストでは行継続文字を使用していません)。
+.LP
+次の内容を含む、「\f2options\fP」という名前のファイルを作成します。
+.nf
+\f3
+.fl
+     \-d docs\-filelist 
+.fl
+     \-use 
+.fl
+     \-splitindex
+.fl
+     \-windowtitle 'Java SE 7 API Specification'
+.fl
+     \-doctitle 'Java SE 7 API Specification'
+.fl
+     \-header '<b>Java(TM) SE 7</b>'
+.fl
+     \-bottom 'Copyright &copy; 1993\-2011 Oracle and/or its affiliates. All rights reserved.'
+.fl
+     \-group "Core Packages" "java.*"
+.fl
+     \-overview /java/pubs/ws/1.7.0/src/share/classes/overview\-core.html
+.fl
+     \-sourcepath /java/pubs/ws/1.7.0/src/share/classes
+.fl
+\fP
+.fi
+.LP
+次の内容を含む、「\f2packages\fP」という名前のファイルを作成します。
+.nf
+\f3
+.fl
+     com.mypackage1
+.fl
+     com.mypackage2
+.fl
+     com.mypackage3
+.fl
+\fP
+.fi
+.LP
+その後、次のコマンドを使用してJavadocを実行します。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc @options @packages\fP
+.fl
+.fi
+.SS 
+パス付きの引数ファイルの例
+.LP
+引数ファイルには、パスを指定できます。ただし、そのファイル内に指定されたファイル名は、現在の作業ディレクトリから見た相対パスになります。つまり、下の例の場合は、\f2path1\fPや\f2path2\fPから見た相対パスではありません。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc @path1/options @path2/packages\fP
+.fl
+.fi
+.SS 
+オプションの引数の例
+.LP
+次に、Javadocオプションに対する引数のみを引数ファイルに格納する例を示します。ここでは\f2\-bottom\fPオプションを使用します。そのオプションには、長い引数を指定できるからです。次のようなテキスト引数を含む、「\f2bottom\fP」という名前のファイルを作成できます。
+.nf
+\f3
+.fl
+<font size="\-1">
+.fl
+      <a href="http://bugreport.sun.com/bugreport/">Submit a bug or feature</a><br/>
+.fl
+      Copyright &copy; 1993, 2011, Oracle and/or its affiliates. All rights reserved.<br/>
+.fl
+      Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+.fl
+      Other names may be trademarks of their respective owners.</font>
+.fl
+\fP
+.fi
+.LP
+その後、次のようにしてJavadocツールを実行します。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-bottom @bottom @packages\fP
+.fl
+.fi
+.LP
+あるいは、引数ファイルの先頭に\f2\-bottom\fPオプションを組み込んだ後、次のようにして実行します。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc @bottom @packages\fP
+.fl
+.fi
+.SH "名前"
+実行
+.SH "Javadocの実行"
+.LP
+\f3バージョン番号\fP \- Javadocのバージョン番号を判別するには、\f3javadoc \-J\-version\fPを使用します。出力ストリームには標準ドックレットのバージョン番号が含まれます。\f2\-quiet\fPで無効にできます。
+.LP
+\f3公開プログラム・インタフェース\fP \- Java言語で記述されたプログラムからJavadocツールを起動するとき使用します。このインタフェースは\f2com.sun.tools.javadoc.Main\fPにあります(Javadocは再入可能)。詳細は、
+.na
+\f2標準ドックレット\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/standard\-doclet.html#runningprogrammaticallyを参照してください。
+.LP
+\f3ドックレットの実行\fP \- 下の説明は、標準HTMLドックレットを呼び出すためのものです。カスタム・ドックレットを呼び出すには、\-docletおよび\-docletpathオプションを使用します。詳細は、
+.na
+\f2ドックレットの概要\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/doclet/overview.htmlを参照してください。
+.SH "簡単な例"
+.LP
+Javadocは、パッケージ全体に対して実行することも、個々のソース・ファイルに対して実行することもできます。各パッケージ名は、それぞれのパッケージ名に対応するディレクトリ名を持ちます。次の例では、ソース・ファイルは\f2/home/src/java/awt/*.java\fPにあります。生成先ディレクトリは\f2/home/html\fPです。
+.SS 
+1つ以上のパッケージのドキュメント化
+.LP
+パッケージをドキュメント化するには、そのパッケージのソース・ファイル(\f2*.java\fP)を、そのパッケージと同じ名前のディレクトリ内に格納する必要があります。パッケージ名が(\f2java.awt.color\fPのようにドットで区切られた)複数の識別子から構成されている場合、後続の各識別子が下位のサブディレクトリ(\f2java/awt/color\fPなど)に対応している必要があります。1つのパッケージのための複数のソース・ファイルを、異なる場所にあるそのような2つのディレクトリ・ツリーに分けて格納することもできます(\f2src1/java/awt/color\fPや\f2src2/java/awt/color\fPなど)。ただし、その場合は\f2\-sourcepath\fPによってその両方の場所を指定する必要があります。
+.LP
+Javadocを実行するには、\f2cd\fPを使用してディレクトリを変更するか、\f2\-sourcepath\fPオプションを使用します。次の例では、両方の方法について説明します。
+.RS 3
+.TP 2
+o
+\f3ケース1 \- 1つ以上のパッケージからの起動を再帰的に実行\fP \- この例ではJavadocが任意のディレクトリから実行できるように、\-sourcepathを使用し、再帰的処理のために\-subpackages(1.4の新オプション)を使用します。これは、\f2java\fPディレクトリのサブパッケージをたどりますが、\f2java.net\fPと\f2java.lang\fPをルートに持つパッケージは除外されます。\f2java.lang\fPのサブパッケージである\f2java.lang.ref\fPが除外される点に注意してください。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \fP\f3\-d\fP\f3 /home/html \fP\f3\-sourcepath\fP\f3 /home/src \fP\f3\-subpackages\fP\f3 java \fP\f3\-exclude\fP\f3 java.net:java.lang\fP
+.fl
+.fi
+.LP
+また、他のパッケージ・ツリーを下方にたどるには、\f2java:javax:org.xml.sax\fPのように、それらのパッケージの名前を\f2\-subpackages\fPの引数に追加します。  
+.TP 2
+o
+\f3ケース2 \- ルート・ソース・ディレクトリに移ってから明示的なパッケージに対して実行\fP \- 完全修飾のパッケージ名の親ディレクトリに移ります。次に、ドキュメント化する1つ以上のパッケージの名前を指定してJavadocを実行します。 
+.nf
+\f3
+.fl
+  % \fP\f3cd /home/src/\fP
+.fl
+  % \f3javadoc \-d /home/html java.awt java.awt.event\fP
+.fl
+.fi
+.TP 2
+o
+\f3ケース3 \- 1つのディレクトリ・ツリー内にある明示的なパッケージに対して任意のディレクトリから実行\fP \- このケースでは、現在のディレクトリがどこであってもかまいません。最上位パッケージの親ディレクトリを\f2\-sourcepath\fPに指定し、ドキュメント化する1つ以上のパッケージ名を指定してJavadocを実行します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d /home/html \-sourcepath /home/src java.awt java.awt.event\fP
+.fl
+.fi
+.TP 2
+o
+\f3ケース4 \- 複数のディレクトリ・ツリー内にある明示的なパッケージに対して任意のディレクトリから実行\fP \- これはケース3と似ていますが、パッケージが複数のディレクトリ・ツリーに存在します。それぞれのツリーのルートへのパスを\f2\-sourcepath\fPに指定し(コロンで区切る)、ドキュメント化する1つ以上のパッケージ名を指定してJavadocを実行します。1つのパッケージのすべてのソース・ファイルが、1つのルート・ディレクトリの下に存在する必要はありません。ソース・パスとして指定された場所のどこかで見つかれば十分です。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d /home/html \-sourcepath /home/src1:/home/src2 java.awt java.awt.event\fP
+.fl
+.fi
+.RE
+.LP
+結果: すべてのケースで\f2java.awt\fPおよび\f2java.awt.event\fPパッケージ内のpublicおよびprotectedクラスとインタフェースについて、HTML形式のドキュメントが生成され、指定された生成先ディレクトリ(\f2/home/html\fP)にHTMLファイルが保存されます。2つ以上のパッケージが生成されているので、ドキュメントは、パッケージのリスト、クラスのリスト、およびメインのクラス・ページという3つのHTMLフレームを持つことになります。
+.SS 
+1つ以上のクラスのドキュメント化
+.LP
+また、1つ以上のソース・ファイル(\f2.java\fP)を渡して、Javadocツールを実行することもできます。Javadocは、次の2つの方法のいずれかで実行できます。1つは\f2cd\fPを使用してディレクトリを変更する方法、もう1つは\f2.java\fPファイルへのパスを完全に指定する方法です。相対パスは、現在のディレクトリを起点とします。ソース・ファイルを渡すときは、\f2\-sourcepath\fPオプションは無視されます。アスタリスク(*)のようなコマンドライン・ワイルドカードを使用すると、クラスのグループを指定できます。
+.RS 3
+.TP 2
+o
+\f3ケース1 \- ソース・ディレクトリに移る\fP \- \f2.java\fPファイルのあるディレクトリに移ります。次に、ドキュメント化する1つ以上のソース・ファイルの名前を指定してJavadocを実行します。 
+.nf
+\f3
+.fl
+  % \fP\f3cd /home/src/java/awt\fP
+.fl
+  % \f3javadoc \-d /home/html Button.java Canvas.java Graphics*.java\fP
+.fl
+.fi
+この例では、\f2Button\fPクラスと\f2Canvas\fPクラス、および名前が\f2Graphics\fPで始まるクラスについて、HTML形式のドキュメントが生成されます。パッケージ名ではなくソース・ファイルがJavadocに引数として渡されているので、ドキュメントは、クラスのリストとメイン・ページという2つのフレームを持つことになります。 
+.TP 2
+o
+\f3ケース2 \- パッケージのルート・ディレクトリに移る\fP \- これは、同じルート内にある複数のサブパッケージの個々のソース・ファイルをドキュメント化する場合に便利です。パッケージのルート・ディレクトリに移り、各ソース・ファイルを、ルートからのパスとともに指定します。 
+.nf
+\f3
+.fl
+  % \fP\f3cd /home/src/\fP
+.fl
+  % \f3javadoc \-d /home/html java/awt/Button.java java/applet/Applet.java\fP
+.fl
+.fi
+この例では、\f2Button\fPクラスおよび\f2Applet\fPクラスについて、HTML形式のドキュメントが生成されます。 
+.TP 2
+o
+\f3ケース3 \- 任意のディレクトリから\fP \- このケースでは、現在のディレクトリがどこであってもかまいません。ドキュメント化する\f2.java\fPファイルへの絶対パス(または現在のディレクトリからの相対パス)を指定してJavadocを実行します。 
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d /home/html /home/src/java/awt/Button.java /home/src/java/awt/Graphics*.java\fP
+.fl
+.fi
+この例では、\f2Button\fPクラス、および名前が\f2Graphics\fPで始まるクラスについて、HTML形式のドキュメントが生成されます。 
+.RE
+.SS 
+パッケージとクラスのドキュメント化
+.LP
+パッケージ全体と個々のクラスを同時に指定してドキュメント化することもできます。次に、前述の2つの例を組み合せた例を示します。\f2\-sourcepath\fPは、パッケージへのパスに対しては使用できますが、個々のクラスへのパスに対しては使用できません。
+.nf
+\f3
+.fl
+  % \fP\f3javadoc \-d /home/html \-sourcepath /home/src java.awt /home/src/java/applet/Applet.java\fP
+.fl
+.fi
+.LP
+この例では、\f2java.awt\fPパッケージおよび\f2Applet\fPクラスについて、HTML形式のドキュメントが生成されます。(Javadocツールは、\f2Applet.java\fPソース・ファイル内にパッケージ宣言があれば、その宣言に基づいて\f2Applet\fPのパッケージ名を判別します。)
+.SH "使用例"
+.LP
+Javadocツールには多くの便利なオプションがあり、その中には他のオプションよりも頻繁に使用されるものがあります。ここで紹介するのは、JavaプラットフォームAPIに対してJavadocツールを実行するときに使用する実際のコマンドです。Java SE Platform, Standard Edition, v1.2に存在する、約1500個のpublicおよびprotectedクラスのドキュメントを生成するために、180MBのメモリーを使用します。
+.LP
+同じ例を2回掲載します。最初の例はコマンドラインから実行するもので、2番目の例はMakefileから実行するものです。オプションの引数で絶対パスが使用されているため、任意のディレクトリから同じ\f2javadoc\fPコマンドを実行できます。
+.SS 
+コマンドラインの例
+.LP
+次の例は、DOSなどの一部のシェルには長すぎます。この制限を回避するには、コマンドライン引数ファイルを使用します。または、シェル・スクリプトを記述します。
+.nf
+\f3
+.fl
+% javadoc \-sourcepath /java/jdk/src/share/classes \\ 
+.fl
+    \-overview /java/jdk/src/share/classes/overview.html \\ 
+.fl
+    \-d /java/jdk/build/api \\ 
+.fl
+    \-use \\ 
+.fl
+    \-splitIndex \\ 
+.fl
+    \-windowtitle 'Java Platform, Standard Edition 7 API Specification' \\ 
+.fl
+    \-doctitle 'Java Platform, Standard Edition 7 API Specification' \\ 
+.fl
+    \-header '<b>Java(TM) SE 7</b>' \\ 
+.fl
+    \-bottom '<font size="\-1">
+.fl
+      <a href="http://bugreport.sun.com/bugreport/">Submit a bug or feature</a><br/>
+.fl
+      Copyright &copy; 1993, 2011, Oracle and/or its affiliates. All rights reserved.<br/>
+.fl
+      Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+.fl
+      Other names may be trademarks of their respective owners.</font>' \\ 
+.fl
+    \-group "Core Packages" "java.*:com.sun.java.*:org.omg.*" \\ 
+.fl
+    \-group "Extension Packages" "javax.*" \\ 
+.fl
+    \-J\-Xmx180m \\  
+.fl
+    @packages
+.fl
+\fP
+.fi
+.LP
+ここで、\f2packages\fPは、処理対象のパッケージ名(\f2java.applet java.lang\fPなど)が入っているファイルの名前です。各オプションの、一重引用符で囲まれた引数の内側には、改行文字を挿入できません。(たとえば、この例をコピー&ペーストする場合は、\f2\-bottom\fPオプションから改行文字を削除してください。)さらに、下の「注意」も参照してください。
+.SS 
+Makefileの例
+.LP
+ここでは、GNU Makefileの例を示します。WindowsのMakefileの例については、
+.na
+\f2WindowsのMakefileの作成方法\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137483.html#makefilesを参照してください。
+.nf
+\f3
+.fl
+javadoc \-\fP\f3sourcepath\fP\f3 $(SRCDIR)              \\   /* Sets path for source files     */
+.fl
+        \-\fP\f3overview\fP\f3 $(SRCDIR)/overview.html  \\   /* Sets file for overview text    */
+.fl
+        \-\fP\f3d\fP\f3 /java/jdk/build/api             \\   /* Sets destination directory     */
+.fl
+        \-\fP\f3use\fP\f3                               \\   /* Adds "Use" files               */
+.fl
+        \-\fP\f3splitIndex\fP\f3                        \\   /* Splits index A\-Z               */
+.fl
+        \-\fP\f3windowtitle\fP\f3 $(WINDOWTITLE)        \\   /* Adds a window title            */
+.fl
+        \-\fP\f3doctitle\fP\f3 $(DOCTITLE)              \\   /* Adds a doc title               */
+.fl
+        \-\fP\f3header\fP\f3 $(HEADER)                  \\   /* Adds running header text       */
+.fl
+        \-\fP\f3bottom\fP\f3 $(BOTTOM)                  \\   /* Adds text at bottom            */
+.fl
+        \-\fP\f3group\fP\f3 $(GROUPCORE)                \\   /* 1st subhead on overview page   */
+.fl
+        \-\fP\f3group\fP\f3 $(GROUPEXT)                 \\   /* 2nd subhead on overview page   */
+.fl
+        \-\fP\f3J\fP\f3\-Xmx180m                         \\   /* Sets memory to 180MB           */
+.fl
+        java.lang java.lang.reflect        \\   /* Sets packages to document      */
+.fl
+        java.util java.io java.net         \\ 
+.fl
+        java.applet
+.fl
+        
+.fl
+WINDOWTITLE = 'Java(TM) SE 7 API Specification'
+.fl
+DOCTITLE = 'Java(TM) Platform Standard Edition 7 API Specification'
+.fl
+HEADER = '<b>Java(TM) SE 7</font>'
+.fl
+BOTTOM = '<font size="\-1">
+.fl
+      <a href="http://bugreport.sun.com/bugreport/">Submit a bug or feature</a><br/>
+.fl
+      Copyright &copy; 1993, 2011, Oracle and/or its affiliates. All rights reserved.<br/>
+.fl
+      Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+.fl
+      Other names may be trademarks of their respective owners.</font>'
+.fl
+GROUPCORE = '"Core Packages" "java.*:com.sun.java.*:org.omg.*"'
+.fl
+GROUPEXT  = '"Extension Packages" "javax.*"'
+.fl
+SRCDIR = '/java/jdk/1.7.0/src/share/classes'
+.fl
+\fP
+.fi
+.LP
+Makefileの引数は、一重引用符で囲みます。
+.LP
+\f3注意\fP
+.RS 3
+.TP 2
+o
+\f2\-windowtitle\fPオプションを省略すると、Javadocツールによってドキュメント・タイトルがウィンドウ・タイトルにコピーされます。\f2\-windowtitle\fPのテキストは、基本的に\f2\-doctitle\fPと同じです。ただし、HTMLタグは含まれません。これは、HTMLタグが、ウィンドウ・タイトル内にそのままのテキストとして表示されるのを防ぐためです。. 
+.TP 2
+o
+この例のように\f2\-footer\fPオプションを省略すると、Javadocツールによってヘッダー・テキストがフッターにコピーされます。 
+.TP 2
+o
+この例では必要ありませんが、\f2\-classpath\fPと\f2\-link\fPも重要なオプションです。 
+.RE
+.SH "トラブルシューティング"
+.SS 
+一般的なトラブルシューティング
+.RS 3
+.TP 2
+o
+\f3JavadocのFAQ\fP \- 一般的なバグおよびトラブルシューティングのヒントは、
+.na
+\f2JavadocのFAQ\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137483.htmlで参照できます。 
+.TP 2
+o
+\f3バグおよび制限事項\fP \- バグの一部は、バグ修正および変更のインポートでも参照できます。 
+.TP 2
+o
+\f3バージョン番号\fP \- バージョン番号を参照してください。 
+.TP 2
+o
+\f3有効なクラスのみをドキュメント化\fP \- パッケージをドキュメント化するとき、Javadocは、名前が有効なクラス名で構成されているファイルのみを読み込みます。たとえば、ファイル名にハイフン「\-」を含めることで、Javadocによるファイルの解析を防ぐことができます。 
+.RE
+.SS 
+エラーと警告
+.LP
+エラーおよび警告メッセージには、ファイル名と宣言行(ドキュメンテーション・コメント内の特定の行ではない)の行番号が含まれます。
+.RS 3
+.TP 2
+o
+「\f2エラー: Class1.javaを読み込めません\fP」: Javadocツールは現在のディレクトリにClass1.javaクラスをロードしようとしています。絶対パスまたは相対パスとともに表示されるクラス名は、この例の場合\f2./Class1.java\fPと同じです。 
+.RE
+.SH "環境"
+.RS 3
+.TP 3
+CLASSPATH 
+Javadocがユーザー・クラスのファイルを探すときに使用するパスを指定する環境変数です。この環境変数は、\f2\-classpath\fPオプションによってオーバーライドされます。ディレクトリは、次のようにコロンで区切ります。 
+.:/home/classes:/usr/local/java/classes 
+.RE
+.SH "関連項目"
+.RS 3
+.TP 2
+o
+javac(1) 
+.TP 2
+o
+java(1) 
+.TP 2
+o
+jdb(1) 
+.TP 2
+o
+javah(1) 
+.TP 2
+o
+javap(1) 
+.TP 2
+o
+.na
+\f2Javadocのホーム・ページ\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-jsp\-135444.html 
+.TP 2
+o
+.na
+\f2How to Write Doc Comments for Javadoc\fP @
+.fi
+http://www.oracle.com/technetwork/java/javase/documentation/index\-137868.html 
+.TP 2
+o
+.na
+\f2クラス・パスの設定\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#general 
+.TP 2
+o
+.na
+\f2javacとjavadocがクラスを検索する方法\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfiles(tools.jar) 
+.RE
+ 

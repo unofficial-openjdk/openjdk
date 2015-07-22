@@ -1,0 +1,72 @@
+." Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH native2ascii 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+native2ascii \- ネイティブ \- ASCIIコンバータ
+.LP
+.LP
+サポートされる文字エンコーディングの文字のファイルをASCIIまたはUnicodeエスケープあるいはその両方のファイルに変換します。その逆の変換も行います。
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f4native2ascii\fP\f2 [options] [inputfile [outputfile]]\fP
+.fl
+.fi
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f2native2ascii\fP Java実行環境でサポートされる文字エンコーディングにエンコードされたファイルを、ASCIIでエンコードされたファイルに変換します。ASCII文字セットの一部でないすべての文字でUnicodeエスケープ(「\\uxxxx」の表記)を使用します。このプロセスは、ISO\-8859\-1文字セットに含まれない文字が含まれているプロパティ・ファイルで必要です。このツールは、その逆の変換を実行することもできます。
+.LP
+.LP
+\f2outputfile\fPを省略した場合、標準出力に出力されます。さらに、\f2inputfile\fPを省略した場合、標準入力から入力されます。
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+\-reverse 
+逆の処理を行います。つまり、ISO\-8859\-1でUnicodeエスケープを使用してエンコードされたファイルを、Java実行環境でサポートされる文字エンコーディングのファイルに変換します。
+.br
+.br
+.TP 3
+\-encoding encoding_name 
+変換処理で使用する文字エンコーディングの名前を指定します。このオプションが存在しない場合は、デフォルトの文字エンコーディング(\f2java.nio.charset.Charset.defaultCharset\fPメソッドで定義される)が使用されます。\f2encoding_name\fP文字列は、
+.na
+\f4サポートされている文字列エンコーディング\fP @
+.fi
+http://docs.oracle.com/javase/7/docs/technotes/guides/intl/encoding.doc.html・ドキュメントに示されている、Java実行環境でサポートされる文字エンコーディングの名前にする必要があります。
+.br
+.br
+.TP 3
+\-Joption 
+Java仮想マシンに\f2option\fPを渡します。\f2option\fPには、java(1)のリファレンス・ページに記載されているオプションを1つ指定します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。 
+.RE
+
+.LP
+ 

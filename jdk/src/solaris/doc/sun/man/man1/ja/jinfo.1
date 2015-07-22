@@ -1,0 +1,166 @@
+." Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jinfo 1 "05 Jul 2012"
+
+.LP
+.SH "名前"
+jinfo \- 構成情報
+.LP
+.RS 3
+.TP 2
+o
+形式 
+.TP 2
+o
+パラメータ 
+.TP 2
+o
+説明 
+.TP 2
+o
+オプション 
+.TP 2
+o
+関連項目 
+.RE
+
+.LP
+.SH "形式"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jinfo\fP [ option ] pid
+.fl
+\f3jinfo\fP [ option ] executable core
+.fl
+\f3jinfo\fP [ option ] [server\-id@]remote\-hostname\-or\-IP 
+.fl
+.fi
+
+.LP
+.SH "パラメータ"
+.LP
+.RS 3
+.TP 3
+option 
+各オプションは互いに排他的です。オプションを使用する場合、コマンド名の直後に記述します。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+pid 
+出力する構成情報のプロセスID。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)を使用します。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+executable 
+コア・ダンプの作成元のJava実行可能ファイル。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+core 
+出力する構成情報のコア・ファイル。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+remote\-hostname\-or\-IP 
+リモート・デバッグ・サーバー(jsadebugd(1)を参照)のホスト名またはIPアドレス。 
+.RE
+
+.LP
+.RS 3
+.TP 3
+server\-id 
+複数のデバッグ・サーバーが同一のリモート・ホストで実行している場合の、オプション固有のID。 
+.RE
+
+.LP
+.SH "説明"
+.LP
+.LP
+\f3jinfo\fPは、指定されたJavaプロセスやコア・ファイルまたはリモート・デバッグ・サーバーのJava構成情報を出力します。構成情報には、Javaシステム・プロパティとJava仮想マシンのコマンドライン・フラグが含まれています。指定されたプロセスが64ビットVM上で実行されている場合、\f2\-J\-d64\fPオプションを指定する必要がある場合があります。次に例を示します。
+.br
+jinfo \-J\-d64 \-sysprops pid
+.LP
+.LP
+\f3注意 \- このユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。dbgeng.dllが存在していないWindowsシステムでは、「Debugging Tools For Windows」をインストールしないとこれらのツールが正常に動作しません。また、\fP\f4PATH\fP\f3環境変数には、ターゲット・プロセスによって使用される\fP\f4jvm.dll\fP\f3の場所、またはクラッシュ・ダンプ・ファイルが生成された場所が含まれるようにしてください。\fP
+.LP
+.LP
+\f3次に例を示します。\fP\f4set PATH=<jdk>\\jre\\bin\\client;%PATH%\fP
+.LP
+.SH "オプション"
+.LP
+.RS 3
+.TP 3
+<オプションなし> 
+コマンドライン・フラグを、システム・プロパティ名と値のペアとともに出力します。
+.br
+.TP 3
+\-flag name 
+指定されたコマンドライン・フラグの名前と値を出力します。
+.br
+.TP 3
+\-flag [+|\-]name 
+指定されたブール型のコマンドライン・フラグを有効または無効にします。
+.br
+.TP 3
+\-flag name=value 
+指定されたコマンドライン・フラグを指定された値に設定します。
+.br
+.TP 3
+\-flags 
+JVMに渡されるコマンドライン・フラグをペアで出力します。
+.br
+.TP 3
+\-sysprops 
+Javaシステム・プロパティを名前と値のペアとして出力します。
+.br
+.TP 3
+\-h 
+ヘルプ・メッセージが出力されます。 
+.TP 3
+\-help 
+ヘルプ・メッセージが出力されます。 
+.RE
+
+.LP
+.SH "関連項目"
+.LP
+.RS 3
+.TP 2
+o
+jps(1) 
+.TP 2
+o
+jsadebugd(1) 
+.RE
+
+.LP
+ 
