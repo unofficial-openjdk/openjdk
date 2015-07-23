@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
@@ -565,14 +566,49 @@ public class Modules extends JCTree.Visitor {
             if (s.isEmpty())
                 continue;
             int slash = s.indexOf('/');
-            if (slash == -1)
+            if (slash == -1) {
+                // TODO: error: no package name
                 continue;
+            }
             String moduleName = s.substring(0, slash);
+            if (!SourceVersion.isName(moduleName)) {
+                // TODO: error: invalid module name
+                continue;
+            }
             ModuleSymbol msym = syms.enterModule(names.fromString(moduleName));
-            String packageName = s.substring(slash + 1);
-            PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
-            p.modle = msym;
-            ExportsDirective d = new ExportsDirective(p, null);
+            int equals = s.indexOf('=', slash + 1);
+            ExportsDirective d;
+            if (equals == -1) {
+                // TODO: temporarily allow old format
+                String packageName = s.substring(slash + 1);
+                if (!SourceVersion.isName(packageName)) {
+                    // TODO: error: invalid package name
+                    continue;
+                }
+                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+                p.modle = msym;
+                d = new ExportsDirective(p, null);
+            } else {
+                String packageName = s.substring(slash + 1, equals);
+                if (!SourceVersion.isName(packageName)) {
+                    // TODO: error: invalid package name
+                    continue;
+                }
+                String toModule = s.substring(equals + 1);
+                ModuleSymbol m;
+                if (toModule.equals("ALL-UNNAMED")) {
+                    m = syms.unnamedModule;
+                } else {
+                    if (!SourceVersion.isName(toModule)) {
+                        // TODO: error: invalid module name
+                        continue;
+                    }
+                    m = syms.enterModule(names.fromString(toModule));
+                }
+                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+                p.modle = msym;
+                d = new ExportsDirective(p, List.of(m));
+            }
 
             Set<ExportsDirective> extra = addExports.get(msym);
             if (extra == null) {
