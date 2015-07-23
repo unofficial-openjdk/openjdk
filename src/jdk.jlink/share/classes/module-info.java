@@ -26,6 +26,7 @@
 module jdk.jlink {
     exports jdk.tools.jlink.plugins;
     requires jdk.compiler;
+    requires jdk.internal.opt;
     requires jdk.jdeps;
     uses jdk.tools.jlink.plugins.PluginProvider;
     uses jdk.tools.jlink.plugins.ImageBuilderProvider;

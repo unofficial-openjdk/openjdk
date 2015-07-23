@@ -34,7 +34,6 @@ public class Main {
         System.exit(rc);
     }
 
-
     /**
      * Entry point that does <i>not</i> call System.exit.
      *
@@ -42,7 +41,7 @@ public class Main {
      * @param out output stream
      * @return an exit code. 0 means success, non-zero means an error occurred.
      */
-    public static int run(String[] args, PrintWriter out) {
+    public static int run(String[] args, PrintStream out) {
         JmodTask t = new JmodTask();
         t.setLog(out);
         return t.run(args);

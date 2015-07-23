@@ -25,14 +25,13 @@
 
 package jdk.tools.jmod;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -49,7 +48,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,94 +71,41 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import jdk.internal.joptsimple.NonOptionArgumentSpec;
+import jdk.internal.joptsimple.OptionException;
+import jdk.internal.joptsimple.OptionParser;
+import jdk.internal.joptsimple.OptionSet;
+import jdk.internal.joptsimple.OptionSpec;
+import jdk.internal.joptsimple.ValueConverter;
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
 import jdk.internal.module.ModuleInfoExtender;
-
 
 /**
  * Implementation for the jmod tool.
  */
 class JmodTask {
-    static class BadArgs extends Exception {
-        static final long serialVersionUID = 0L;  // ## re-generate
-        BadArgs(String key, Object... args) {
-            super(JmodTask.getMessage(key, args));
-            this.key = key;
-            this.args = args;
+
+    static class CommandException extends RuntimeException {
+        private static final long serialVersionUID = 0L;
+        boolean showUsage;
+
+        CommandException(String key, Object... args) {
+            super(getMessageOrKey(key, args));
         }
 
-        BadArgs showUsage(boolean b) {
+        CommandException showUsage(boolean b) {
             showUsage = b;
             return this;
         }
-        final String key;
-        final Object[] args;
-        boolean showUsage;
-    }
 
-    static abstract class Option {
-        final boolean hasArg;
-        final String[] aliases;
-
-        Option(boolean hasArg, String... aliases) {
-            this.hasArg = hasArg;
-            this.aliases = aliases;
-        }
-
-        boolean isHidden() {
-            return false;
-        }
-
-        boolean matches(String opt) {
-            for (String a : aliases) {
-                if (a.equals(opt)) {
-                    return true;
-                } else if (opt.startsWith("--") && hasArg && opt.startsWith(a + "=")) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        boolean ignoreRest() {
-            return false;
-        }
-
-        abstract void process(JmodTask task, String opt, String arg) throws BadArgs;
-    }
-
-    static abstract class HiddenOption extends Option {
-        HiddenOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
-        }
-
-        @Override
-        boolean isHidden() {
-            return true;
-        }
-    }
-
-    private static Path CWD = Paths.get("");
-
-    private static List<Path> splitPath(String arg, String separator)
-        throws BadArgs
-    {
-        List<Path> paths = new ArrayList<>();
-        for (String p: arg.split(separator)) {
-            if (p.length() > 0) {
-                try {
-                    Path path = CWD.resolve(p);
-                    if (Files.notExists(path)) {
-                        throw new BadArgs("err.path.not.found", path);
-                    }
-                    paths.add(path);
-                } catch (InvalidPathException x) {
-                    throw new BadArgs("err.path.not.valid", p);
-                }
+        private static String getMessageOrKey(String key, Object... args) {
+            try {
+                return MessageFormat.format(ResourceBundleHelper.bundle.getString(key), args);
+            } catch (MissingResourceException e) {
+                return key;
             }
         }
-        return paths;
     }
 
     static <T extends Throwable> void fail(Class<T> type,
@@ -177,100 +123,32 @@ class JmodTask {
         }
     }
 
-    static Option[] recognizedOptions = {
-        new Option(true, "--class-path") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.classpath = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--cmds") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.cmds = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--config") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.configs = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(false, "--help") {
-            void process(JmodTask task, String opt, String arg) {
-                task.options.help = true;
-            }
-        },
-        new Option(true, "--modulepath", "--mp") {
-            void process(JmodTask task, String opt, String arg) {
-                String[] dirs = arg.split(File.pathSeparator);
-                Path[] paths = new Path[dirs.length];
-                int i = 0;
-                for (String dir: dirs) {
-                    paths[i++] = Paths.get(dir);
-                }
-                task.options.moduleFinder = ModuleFinder.of(paths);
-            }
-        },
-        new Option(true, "--libs") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.libs = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--main-class") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.mainClass = arg;
-            }
-        },
-        new Option(true, "--module-version") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.moduleVersion = Version.parse(arg);
-            }
-        },
-        new Option(true, "--hash-dependences") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                try {
-                    task.options.dependencesToHash = Pattern.compile(arg);
-                } catch (PatternSyntaxException e) {
-                    throw new BadArgs("err.badpattern", arg);
-                }
-            }
-        },
-        new Option(false, "--version") {
-            void process(JmodTask task, String opt, String arg) {
-                task.options.version = true;
-            }
-        },
-        new HiddenOption(false, "--fullversion") {
-            void process(JmodTask task, String opt, String arg) {
-                task.options.fullVersion = true;
-            }
-        },
-    };
-
     private static final String PROGNAME = "jmod";
-    private final Options options = new Options();
-
-    private PrintWriter log;
-    void setLog(PrintWriter out) {
-        log = out;
-    }
-
     private static final String MODULE_INFO = "module-info.class";
 
+    private Options options;
+    private PrintStream out;
+    void setLog(PrintStream out) {
+        this.out = out;
+    }
 
-    /**
-     * Result codes.
-     */
+    /* Result codes. */
     static final int EXIT_OK = 0, // Completed with no errors.
                      EXIT_ERROR = 1, // Completed but reported errors.
                      EXIT_CMDERR = 2, // Bad command-line arguments
                      EXIT_SYSERR = 3, // System error or resource exhaustion.
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
+    enum Task {
+        CREATE,
+        LIST
+    };
+
     static class Options {
         Task task;
         Path jmodFile;
         boolean help;
         boolean version;
-        boolean fullVersion;
         List<Path> classpath;
         List<Path> cmds;
         List<Path> configs;
@@ -281,84 +159,57 @@ class JmodTask {
         Pattern dependencesToHash;
     }
 
-    enum Task {
-        CREATE,
-        LIST
-    };
-
     int run(String[] args) {
-        if (log == null) {
-            log = new PrintWriter(System.out);
-        }
+        if (out == null)
+            out = System.out;
+
         try {
             handleOptions(args);
+            if (options == null) {
+                showUsageSummary();
+                return EXIT_CMDERR;
+            }
             if (options.help) {
                 showHelp();
                 return EXIT_OK;
             }
-            if (options.version || options.fullVersion) {
-                showVersion(options.fullVersion);
+            if (options.version) {
+                showVersion();
                 return EXIT_OK;
             }
 
             boolean ok;
             switch (options.task) {
                 case CREATE:
-                    ok = create(options);
+                    ok = create();
                     break;
                 case LIST:
-                    ok = list(options);
+                    ok = list();
                     break;
                 default:
-                    throw new BadArgs("err.invalid.task", options.task.name()).showUsage(true);
+                    throw new CommandException("err.invalid.task", options.task.name()).showUsage(true);
             }
 
             return ok ? EXIT_OK : EXIT_ERROR;
-        } catch (BadArgs e) {
-            reportError(e.key, e.args);
-            if (e.showUsage) {
-                log.println(getMessage("main.usage.summary", PROGNAME));
-            }
+        } catch (CommandException e) {
+            reportError(e.getMessage());
+            if (e.showUsage)
+                showUsageSummary();
             return EXIT_CMDERR;
         } catch (Exception x) {
             x.printStackTrace();
             return EXIT_ABNORMAL;
         } finally {
-            log.flush();
+            out.flush();
         }
     }
 
-    private boolean create(Options options) throws IOException, BadArgs {
-        Path path = options.jmodFile;
-        if (path == null)
-            throw new BadArgs("err.jmod.must.be.specified").showUsage(true);
-        if (Files.exists(path))
-            throw new BadArgs("err.file.already.exists", path);
-
-        // if storing hashes of dependences then the module path is required
-        if (options.dependencesToHash != null && options.moduleFinder == null)
-            throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
-
-        createJmod();
-        return true;
-    }
-
-    private boolean list(Options options) throws IOException, BadArgs {
-        Path path = options.jmodFile;
-        if (path == null)
-            throw new BadArgs("err.output.must.be.specified").showUsage(true);
-        if (Files.notExists(path))
-            throw new BadArgs("err.jmod.not.found", path);
-
-        listJmod(path);
-        return true;
-    }
-
-    private void listJmod(Path path) throws IOException {
-        ZipFile zip = new ZipFile(path.toFile());
+    private boolean list() throws IOException {
+        ZipFile zip = new ZipFile(options.jmodFile.toFile());
 
         // Trivially print the archive entries for now, pending a more complete implementation
-        zip.stream().forEach(e -> log.println(e.getName()));
+        zip.stream().forEach(e -> out.println(e.getName()));
+        return true;
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
@@ -402,7 +253,7 @@ class JmodTask {
         return modPaths;
     }
 
-    private void createJmod() throws IOException {
+    private boolean create() throws IOException {
         JmodFileWriter jmod = new JmodFileWriter();
 
         // create jmod with temporary name to avoid it being examined
@@ -413,6 +264,7 @@ class JmodTask {
             jmod.write(out);
         }
         Files.move(tempTarget, target);
+        return true;
     }
 
     private class JmodFileWriter {
@@ -611,41 +463,39 @@ class JmodTask {
          */
         Set<String> findPackages(JarFile jf) {
             return jf.stream()
-                .filter(e -> e.getName().endsWith(".class"))
-                .map(e -> toPackageName(e))
-                .filter(pkg -> pkg.length() > 0)   // module-info
-                .distinct()
-                .collect(Collectors.toSet());
+                     .filter(e -> e.getName().endsWith(".class"))
+                     .map(e -> toPackageName(e))
+                     .filter(pkg -> pkg.length() > 0)   // module-info
+                     .distinct()
+                     .collect(Collectors.toSet());
         }
 
         String toPackageName(Path path) {
             String name = path.toString();
             assert name.endsWith(".class");
             int index = name.lastIndexOf(File.separatorChar);
-            if (index != -1) {
+            if (index != -1)
                 return name.substring(0, index).replace(File.separatorChar, '.');
-            } else {
+            else
                 return "";
-            }
         }
 
         String toPackageName(ZipEntry entry) {
             String name = entry.getName();
             assert name.endsWith(".class");
             int index = name.lastIndexOf("/");
-            if (index != -1) {
+            if (index != -1)
                 return name.substring(0, index).replace('/', '.');
-            } else {
+            else
                 return "";
-            }
         }
 
         void processClasses(ZipOutputStream zos, List<Path> classpaths)
             throws IOException
         {
-            if (classpaths == null) {
+            if (classpaths == null)
                 return;
-            }
+
             for (Path p : classpaths) {
                 if (Files.isDirectory(p)) {
                     processSection(zos, Section.CLASSES, p);
@@ -661,12 +511,11 @@ class JmodTask {
         void processSection(ZipOutputStream zos, Section section, List<Path> paths)
             throws IOException
         {
-            if (paths == null) {
+            if (paths == null)
                 return;
-            }
-            for (Path p : paths) {
+
+            for (Path p : paths)
                 processSection(zos, section, p);
-            }
         }
 
         void processSection(ZipOutputStream zos, Section section, Path top)
@@ -723,143 +572,223 @@ class JmodTask {
         }
     }
 
-    private static enum Section {
-        NATIVE_LIBS("native", nativeDir()),
-        NATIVE_CMDS("bin", "bin"),
-        CLASSES("classes", "classes"),
-        CONFIG("conf", "conf"),
-        UNKNOWN("unknown", "unknown");
-
-        private static String nativeDir() {
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                return "bin";
-            } else {
-                return "lib";
-            }
-        }
+    enum Section {
+        NATIVE_LIBS("native"),
+        NATIVE_CMDS("bin"),
+        CLASSES("classes"),
+        CONFIG("conf"),
+        UNKNOWN("unknown");
 
         private final String jmodDir;
-        private final String imageDir;
 
-        Section(String jmodDir, String imageDir) {
+        Section(String jmodDir) {
             this.jmodDir = jmodDir;
-            this.imageDir = imageDir;
         }
 
-        String imageDir() { return imageDir; }
         String jmodDir() { return jmodDir; }
-
-        boolean matches(String path) {
-            return path.startsWith(jmodDir);
-        }
-
-        static Section getSectionFromName(String dir) {
-            if (Section.NATIVE_LIBS.matches(dir))
-                return Section.NATIVE_LIBS;
-            else if (Section.NATIVE_CMDS.matches(dir))
-                return Section.NATIVE_CMDS;
-            else if (Section.CLASSES.matches(dir))
-                return Section.CLASSES;
-            else if (Section.CONFIG.matches(dir))
-                return Section.CONFIG;
-            else
-                return Section.UNKNOWN;
-        }
     }
 
-    public void handleOptions(String[] args) throws BadArgs {
-        int count = 0;
-        if (args.length == 0) {
-            options.help = true;
-            return;
+    static class PathConverter implements ValueConverter<Path> {
+        static final ValueConverter<Path> INSTANCE = new PathConverter();
+
+        private static final Path CWD = Paths.get("");
+
+        @Override
+        public Path convert(String value) {
+            try {
+                Path path = CWD.resolve(value);
+                if (Files.notExists(path))
+                    throw new CommandException("err.path.not.found", path);
+                return path;
+            } catch (InvalidPathException x) {
+                throw new CommandException("err.path.not.valid", value);
+            }
         }
 
-        String arg = args[count];
-        if (arg.startsWith("-")) {
-            options.help = true;
-            return;
+        @Override  public Class<Path> valueType() { return Path.class; }
+
+        @Override  public String valuePattern() { return null; }
+    }
+
+    static class ModuleVersionConverter implements ValueConverter<Version> {
+        @Override
+        public Version convert(String value) {
+            try {
+                return Version.parse(value);
+            } catch (IllegalArgumentException x) {
+                throw new CommandException("err.invalid.version", x.getMessage());
+            }
         }
+
+        @Override public Class<Version> valueType() { return Version.class; }
+
+        @Override public String valuePattern() { return null; }
+    }
+
+    static class PatternConverter implements ValueConverter<Pattern> {
+        @Override
+        public Pattern convert(String value) {
+            try {
+                return Pattern.compile(value);
+            } catch (PatternSyntaxException e) {
+                throw new CommandException("err.bad.pattern", value);
+            }
+        }
+
+        @Override public Class<Pattern> valueType() { return Pattern.class; }
+
+        @Override public String valuePattern() { return null; }
+    }
+
+    private final OptionParser parser = new OptionParser();
+
+    private void handleOptions(String[] args) {
+        OptionSpec<Path> classPath
+                = parser.accepts("class-path", getMessage("main.opt.class-path"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(PathConverter.INSTANCE);
+
+        OptionSpec<Path> cmds
+                = parser.accepts("cmds", getMessage("main.opt.cmds"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(PathConverter.INSTANCE);
+
+        OptionSpec<Path> config
+                = parser.accepts("config", getMessage("main.opt.config"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(PathConverter.INSTANCE);
+
+        OptionSpec<Pattern> hashDependences
+                = parser.accepts("hash-dependences", getMessage("main.opt.hash-dependences"))
+                        .withRequiredArg()
+                        .withValuesConvertedBy(new PatternConverter());
+
+        OptionSpec<Void> help
+                = parser.accepts("help", getMessage("main.opt.help"))
+                        .forHelp();
+
+        OptionSpec<Path> libs
+                = parser.accepts("libs", getMessage("main.opt.libs"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(PathConverter.INSTANCE);
+
+        OptionSpec<String> mainClass
+                = parser.accepts("main-class", getMessage("main.opt.main-class"))
+                        .withRequiredArg()
+                        .describedAs(getMessage("main.opt.main-class.arg"));
+
+        OptionSpec<Path> modulePath  // TODO: short version of --mp ??
+                = parser.acceptsAll(Arrays.asList("mp", "modulepath"),
+                                    getMessage("main.opt.config"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(PathConverter.INSTANCE);
+
+        OptionSpec<Version> moduleVersion
+                = parser.accepts("module-version", getMessage("main.opt.module-version"))
+                        .withRequiredArg()
+                        .withValuesConvertedBy(new ModuleVersionConverter());
+
+        OptionSpec<Void> version
+                = parser.accepts("version", getMessage("main.opt.version"));
+
+        NonOptionArgumentSpec<String> nonOptions
+                = parser.nonOptions(getMessage("main.non.opt.args"));
 
         try {
-            options.task = Enum.valueOf(Task.class, arg.toUpperCase());
-            count++;
-        } catch (IllegalArgumentException e) {
-            throw new BadArgs("err.invalid.task", arg).showUsage(true);
-        }
+            OptionSet opts = parser.parse(args);
 
-        // process options
-        for (; count < args.length; count++) {
-            if (args[count].charAt(0) != '-')
-                break;
+            if (opts.specs().isEmpty() && opts.valuesOf(nonOptions).isEmpty())
+                return;  // usage summary will be shown
 
-            String name = args[count];
-            Option option = getOption(name);
-            String param = null;
-            if (option.hasArg) {
-                if (name.startsWith("--") && name.indexOf('=') > 0) {
-                    param = name.substring(name.indexOf('=') + 1, name.length());
-                } else if (count + 1 < args.length) {
-                    param = args[++count];
-                }
-                if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                    throw new BadArgs("err.missing.arg", name).showUsage(true);
-                }
+            options = new Options();
+            options.help = opts.has(help);
+            options.version = opts.has(version);
+            if (opts.has(classPath))
+                options.classpath = opts.valuesOf(classPath);
+            if (opts.has(cmds))
+                options.cmds = opts.valuesOf(cmds);
+            if (opts.has(config))
+                options.configs = opts.valuesOf(config);
+            if (opts.has(libs))
+                options.libs = opts.valuesOf(libs);
+            if (opts.has(modulePath))
+                options.moduleFinder = ModuleFinder.of(opts.valuesOf(modulePath).toArray(new Path[0]));
+            if (opts.has(moduleVersion))
+                options.moduleVersion = opts.valueOf(moduleVersion);
+            if (opts.has(mainClass))
+                options.mainClass = opts.valueOf(mainClass);
+            if (opts.has(hashDependences)) {
+                options.dependencesToHash = opts.valueOf(hashDependences);
+                // if storing hashes of dependences then the module path is required
+                if (options.moduleFinder == null)
+                    throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }
-            option.process(this, name, param);
-            if (option.ignoreRest()) {
-                count = args.length;
+
+            if (options.help)
+                return;  // help message will be shown
+
+            List<String> words = opts.valuesOf(nonOptions);
+            if (words.isEmpty())
+                throw new CommandException("err.missing.task").showUsage(true);
+
+            String verb = words.get(0);
+            try {
+                options.task = Enum.valueOf(Task.class, verb.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new CommandException("err.invalid.task", verb).showUsage(true);
             }
-        }
-        try {
-            options.jmodFile = Paths.get(args[count]);
-            count++;
-        } catch (IndexOutOfBoundsException e) {
-            throw new BadArgs("err.jmod.must.be.specified", arg).showUsage(true);
-        }
-        if (args.length > count) {
-            throw new BadArgs("err.unknown.option", args[count+1]).showUsage(true);
+
+            if (words.size() == 1)
+                throw new CommandException("err.jmod.must.be.specified").showUsage(true);
+            Path path = Paths.get(words.get(1));
+            if (options.task.equals(Task.CREATE) && Files.exists(path))
+                throw new CommandException("err.file.already.exists", path);
+            else if (options.task.equals(Task.LIST) && Files.notExists(path))
+                throw new CommandException("err.jmod.not.found", path);
+            options.jmodFile = path;
+
+            if (words.size() > 2)
+                throw new CommandException("err.unknown.option", words.subList(2, words.size())).showUsage(true);
+        } catch (OptionException e) {
+             throw new CommandException(e.getMessage());
         }
     }
 
-    private Option getOption(String name) throws BadArgs {
-        for (Option o : recognizedOptions) {
-            if (o.matches(name)) {
-                return o;
-            }
-        }
-        throw new BadArgs("err.unknown.option", name).showUsage(true);
-    }
-
-    private void reportError(String key, Object... args) {
-        log.println(getMessage("error.prefix") + " " + getMessage(key, args));
+    private void reportError(String message) {
+        out.println(getMessage("error.prefix") + " " + message);
     }
 
     private void warning(String key, Object... args) {
-        log.println(getMessage("warn.prefix") + " " + getMessage(key, args));
+        out.println(getMessage("warn.prefix") + " " + getMessage(key, args));
+    }
+
+    private void showUsageSummary() {
+        out.println(getMessage("main.usage.summary", PROGNAME));
     }
 
     private void showHelp() {
-        log.println(getMessage("main.usage", PROGNAME));
-        for (Option o : recognizedOptions) {
-            String name = o.aliases[0].substring(1); // there must always be at least one name
-            name = name.charAt(0) == '-' ? name.substring(1) : name;
-            if (o.isHidden() || name.equals("h")) {
-                continue;
-            }
-            log.println(getMessage("main.opt." + name));
+        out.println(getMessage("main.usage", PROGNAME));
+        try {
+            parser.printHelpOn(System.out);
+        } catch (IOException x) {
+            throw new AssertionError(x);
         }
     }
 
-    private void showVersion(boolean full) {
-        log.println(version(full ? "full" : "release"));
+    private void showVersion() {
+        out.println(version());
     }
 
-    private String version(String key) {
-        // ## removed version.properties-template as jmod now moved to jdk repo
+    private String version() {
         return System.getProperty("java.version");
     }
 
-    static String getMessage(String key, Object... args) {
+    private static String getMessage(String key, Object... args) {
         try {
             return MessageFormat.format(ResourceBundleHelper.bundle.getString(key), args);
         } catch (MissingResourceException e) {
