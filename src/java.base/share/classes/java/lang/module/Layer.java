@@ -252,7 +252,7 @@ public final class Layer {
                     String pkg = export.source();
                     ModuleDescriptor other
                         = packageToExporter.put(pkg, descriptor2);
-                    if (other != null) {
+                    if (other != null && other != descriptor2) {
                         throw fail("Modules %s and %s export package %s to module %s",
                                     descriptor2.name(),
                                     other.name(),

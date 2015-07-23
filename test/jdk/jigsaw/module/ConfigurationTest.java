@@ -29,19 +29,12 @@
  * @summary Basic tests for java.lang.module.Configuration
  */
 
-import java.io.IOException;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import static java.lang.module.Layer.*;
@@ -216,93 +209,6 @@ public class ConfigurationTest {
         assertTrue(cf.toString().contains("m1"));
         assertTrue(cf.toString().contains("m2"));
         assertTrue(cf.toString().contains("m3"));
-    }
-
-    /**
-     * Basic test of a configuration created with automatic modules.
-     */
-    public void testAutomaticModules() throws IOException {
-        ModuleDescriptor m1
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .requires("m3")
-                .requires("java.base")
-                .build();
-
-        // m2 and m3 are simple JAR files
-        Path dir = Files.createTempDirectory("configtest");
-        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T.class");
-        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "q/T.class");
-
-        // module finder locates m1 and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(m1),
-                                  ModuleFinder.of(dir));
-
-        Configuration cf
-            = Configuration.resolve(finder, boot(), empty(), "m1");
-
-        assertTrue(cf.descriptors().size() == 3);
-        assertTrue(cf.findDescriptor("m1").isPresent());
-        assertTrue(cf.findDescriptor("m2").isPresent());
-        assertTrue(cf.findDescriptor("m3").isPresent());
-
-        ModuleDescriptor m2 = cf.findDescriptor("m2").get();
-        ModuleDescriptor m3 = cf.findDescriptor("m3").get();
-
-        // m2 && m3 only require java.base
-        assertTrue(m2.requires().size() == 1);
-        assertTrue(m3.requires().size() == 1);
-
-        // the descriptors for the modules in the boot Layer
-        Set<ModuleDescriptor> bootModules
-            = Layer.boot().configuration().get().descriptors();
-
-        // As m2 and m3 are automatic modules then they read all modules
-        // As m1 requires m2 & m3 then it needs to read all modules that
-        // m2 and m3 read.
-
-        //assertFalse(cf.reads(m1).contains(m1));
-        assertTrue(cf.reads(m1).contains(m2));
-        assertTrue(cf.reads(m1).contains(m3));
-        assertTrue(cf.reads(m1).containsAll(bootModules));
-
-        //assertFalse(cf.reads(m2).contains(m2));
-        assertTrue(cf.reads(m2).contains(m1));
-        assertTrue(cf.reads(m2).contains(m3));
-        assertTrue(cf.reads(m2).containsAll(bootModules));
-
-        //assertFalse(cf.reads(m3).contains(m3));
-        assertTrue(cf.reads(m3).contains(m1));
-        assertTrue(cf.reads(m3).contains(m2));
-        assertTrue(cf.reads(m3).containsAll(bootModules));
-    }
-
-    /**
-     * Basic test of an automatic module with a Main-Class attribute
-     * in the JAR manifest.
-     */
-    public void testAutomaticMainModule() throws IOException {
-
-        String mainClass = "p.Main";
-
-        Manifest man = new Manifest();
-        Attributes attrs = man.getMainAttributes();
-        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
-        attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
-
-        Path dir = Files.createTempDirectory("configtest");
-        ModuleUtils.createJarFile(dir.resolve("m1.jar"), man, "p/Main.class");
-
-        ModuleFinder finder = ModuleFinder.of(dir);
-
-        Configuration cf
-            = Configuration.resolve(finder, boot(), empty(), "m1");
-
-        ModuleDescriptor m1 = cf.findDescriptor("m1").get();
-
-        assertTrue(m1.mainClass().isPresent());
-        assertEquals(m1.mainClass().get(), mainClass);
     }
 
     /**

@@ -29,15 +29,12 @@
  * @summary Basic tests for java.lang.module.Layer
  */
 
-import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.LayerInstantiationException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -412,36 +409,6 @@ public class LayerTest {
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
         assertTrue(cf.descriptors().size() == 1);
 
-        Layer.create(cf, m -> new ModuleClassLoader());
-    }
-
-    /**
-     * Layer.create with a configuration that contains two automatic modules
-     * mapped to different class loaders but containing the same package.
-     */
-    @Test(expectedExceptions = { LayerInstantiationException.class })
-    public void testAutomaticModulesWithSamePackage() throws IOException {
-        ModuleDescriptor descriptor
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .requires("m3")
-                .build();
-
-        // m2 and m3 are simple JAR files
-        Path dir = Files.createTempDirectory("layertest");
-        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T1.class");
-        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "p/T2.class");
-
-        // module finder locates m1 and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(descriptor),
-                                  ModuleFinder.of(dir));
-
-        Configuration cf
-            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
-        assertTrue(cf.descriptors().size() == 3);
-
-        // each module gets its own loader
         Layer.create(cf, m -> new ModuleClassLoader());
     }
 
