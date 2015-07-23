@@ -131,10 +131,7 @@ public class Modules extends JCTree.Visitor {
         JNIWriter jniWriter = JNIWriter.instance(context);
         jniWriter.multiModuleMode = multiModuleMode;
 
-        String opt = options.get(Option.XADDEXPORTS);;
-        if (opt == null) // temporary, until old option is phased out
-            opt = options.get(Option.XXADDMODULEEXPORTS);
-        addExportsOpt = opt;
+        addExportsOpt = options.get(Option.XADDEXPORTS);
     }
 
     int depth = -1;
@@ -568,6 +565,8 @@ public class Modules extends JCTree.Visitor {
             if (s.isEmpty())
                 continue;
             int slash = s.indexOf('/');
+            if (slash == -1)
+                continue;
             String moduleName = s.substring(0, slash);
             ModuleSymbol msym = syms.enterModule(names.fromString(moduleName));
             String packageName = s.substring(slash + 1);

@@ -541,16 +541,6 @@ public enum Option {
         }
     },
 
-    XXADDMODULEEXPORTS("-XX:AddModuleExports=", null, HIDDEN, BASIC) {
-        @Override
-        public boolean process(OptionHelper helper, String option) {
-            String p = option.substring(option.indexOf('=') + 1);
-            String prev = helper.get(XXADDMODULEEXPORTS);
-            helper.put(XXADDMODULEEXPORTS.text, (prev == null) ? p : prev + ' ' + p.trim());
-            return false;
-        }
-    },
-
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
     AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true) {
