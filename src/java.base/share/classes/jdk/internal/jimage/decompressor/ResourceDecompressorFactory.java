@@ -29,18 +29,13 @@ import java.util.Properties;
 
 /**
  *
- * JImage Resource Decompressor factory
+ * JLink Resource Decompressor factory
  */
 public abstract class ResourceDecompressorFactory {
     private final String name;
-    private final String description;
-    private final String arguments;
 
-    protected ResourceDecompressorFactory(String name, String description,
-            String arguments) {
+    protected ResourceDecompressorFactory(String name) {
         this.name = name;
-        this.description = description;
-        this.arguments = arguments;
     }
 
     /**
@@ -52,11 +47,16 @@ public abstract class ResourceDecompressorFactory {
     }
 
     /**
-     * The Factory description.
-     * @return The description.
+     * To build a new decompressor.
+     * @param properties Contains configuration.
+     * @return A new decompressor.
+     * @throws IOException
      */
-    public String getDescription() {
-        return description;
+    public abstract ResourceDecompressor newDecompressor(Properties properties)
+            throws IOException;
+
+}
+
     }
 
     /**

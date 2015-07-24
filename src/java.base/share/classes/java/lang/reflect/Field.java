@@ -385,10 +385,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).get(obj);
     }
@@ -420,10 +418,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getBoolean(obj);
     }
@@ -455,10 +451,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getByte(obj);
     }
@@ -492,10 +486,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getChar(obj);
     }
@@ -529,10 +521,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getShort(obj);
     }
@@ -566,10 +556,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getInt(obj);
     }
@@ -603,10 +591,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getLong(obj);
     }
@@ -640,10 +626,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getFloat(obj);
     }
@@ -677,10 +661,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         return getFieldAccessor(obj).getDouble(obj);
     }
@@ -756,10 +738,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).set(obj, value);
     }
@@ -793,10 +773,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setBoolean(obj, z);
     }
@@ -830,10 +808,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setByte(obj, b);
     }
@@ -867,10 +843,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setChar(obj, c);
     }
@@ -904,10 +878,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setShort(obj, s);
     }
@@ -941,10 +913,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setInt(obj, i);
     }
@@ -978,10 +948,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setLong(obj, l);
     }
@@ -1015,10 +983,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setFloat(obj, f);
     }
@@ -1052,10 +1018,8 @@ class Field extends AccessibleObject implements Member {
         throws IllegalArgumentException, IllegalAccessException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         getFieldAccessor(obj).setDouble(obj, d);
     }

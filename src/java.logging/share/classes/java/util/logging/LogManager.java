@@ -31,6 +31,7 @@ import java.util.*;
 import java.security.*;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Module;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
@@ -234,10 +235,12 @@ public class LogManager {
                         try {
                             Class<?> clz = ClassLoader.getSystemClassLoader()
                                     .loadClass(cname);
+                            ensureReadable(clz.getModule());
                             mgr = (LogManager) clz.newInstance();
                         } catch (ClassNotFoundException ex) {
                             Class<?> clz = Thread.currentThread()
                                     .getContextClassLoader().loadClass(cname);
+                            ensureReadable(clz.getModule());
                             mgr = (LogManager) clz.newInstance();
                         }
                     }
@@ -961,6 +964,7 @@ public class LogManager {
                 for (String type : names) {
                     try {
                         Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(type);
+                        ensureReadable(clz.getModule());
                         Handler hdl = (Handler) clz.newInstance();
                         // Check if there is a property defining the
                         // this handler's level.
@@ -1276,15 +1280,15 @@ public class LogManager {
                 // Instantiate the named class.  It is its constructor's
                 // responsibility to initialize the logging configuration, by
                 // calling readConfiguration(InputStream) with a suitable stream.
+                Class<?> clz;
                 try {
-                    Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(cname);
-                    clz.newInstance();
-                    return;
+                    clz = ClassLoader.getSystemClassLoader().loadClass(cname);
                 } catch (ClassNotFoundException ex) {
-                    Class<?> clz = Thread.currentThread().getContextClassLoader().loadClass(cname);
-                    clz.newInstance();
-                    return;
+                    clz = Thread.currentThread().getContextClassLoader().loadClass(cname);
                 }
+                ensureReadable(clz.getModule());
+                clz.newInstance();
+                return;
             } catch (Exception ex) {
                 System.err.println("Logging configuration class \"" + cname + "\" failed");
                 System.err.println("" + ex);
@@ -1483,6 +1487,7 @@ public class LogManager {
                 for (String word : names) {
                     try {
                         Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(word);
+                ensureReadable(clz.getModule());
                         clz.newInstance();
                     } catch (Exception ex) {
                         System.err.println("Can't load config class \"" + word + "\"");
@@ -1603,6 +1608,7 @@ public class LogManager {
         try {
             if (val != null) {
                 Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(val);
+                ensureReadable(clz.getModule());
                 return (Filter) clz.newInstance();
             }
         } catch (Exception ex) {
@@ -1624,6 +1630,7 @@ public class LogManager {
         try {
             if (val != null) {
                 Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(val);
+                ensureReadable(clz.getModule());
                 return (Formatter) clz.newInstance();
             }
         } catch (Exception ex) {
@@ -1917,6 +1924,10 @@ public class LogManager {
         // after all listeners have been invoked.
         if (t instanceof Error) throw (Error)t;
         if (t instanceof RuntimeException) throw (RuntimeException)t;
+    }
+
+    static void ensureReadable(Module targetModule) {
+        LogManager.class.getModule().addReads(targetModule);
     }
 
 }

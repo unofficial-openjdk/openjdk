@@ -39,6 +39,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -51,7 +52,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,8 +76,6 @@ class JrtFileSystem extends FileSystem {
     private final JrtFileSystemProvider provider;
     // System image readers
     private ImageReader bootImage;
-    private ImageReader extImage;
-    private ImageReader appImage;
     // root path
     private final JrtPath rootPath;
     private volatile boolean isOpen;
@@ -100,13 +98,9 @@ class JrtFileSystem extends FileSystem {
             throws IOException {
         this.provider = provider;
         checkExists(SystemImages.bootImagePath);
-        checkExists(SystemImages.extImagePath);
-        checkExists(SystemImages.appImagePath);
 
-        // open image files
+        // open image file
         this.bootImage = openImage(SystemImages.bootImagePath);
-        this.extImage = openImage(SystemImages.extImagePath);
-        this.appImage = openImage(SystemImages.appImagePath);
 
         byte[] root = new byte[] { '/' };
         rootPath = new JrtPath(this, root);
@@ -152,10 +146,6 @@ class JrtFileSystem extends FileSystem {
             // close all image reader and null out
             bootImage.close();
             bootImage = null;
-            extImage.close();
-            extImage = null;
-            appImage.close();
-            appImage = null;
         }
     }
 
@@ -290,15 +280,12 @@ class JrtFileSystem extends FileSystem {
     }
 
     private NodeAndImage lookup(byte[] path) {
-        Node node = bootImage.findNode(path);
         ImageReader image = bootImage;
-        if (node == null) {
-            node = extImage.findNode(path);
-            image = extImage;
-        }
-        if (node == null) {
-            node = appImage.findNode(path);
-            image = appImage;
+        Node node;
+        try {
+            node = bootImage.findNode(path);
+        } catch (RuntimeException re) {
+            throw new InvalidPathException(getString(path), re.toString());
         }
         return node != null? new NodeAndImage(node, image) : null;
     }
@@ -429,8 +416,6 @@ class JrtFileSystem extends FileSystem {
         return jrtPath;
     }
 
-    private Map<UTF8String, List<Node>> packagesTreeChildren = new ConcurrentHashMap<>();
-
     /**
      * returns the list of child paths of the given directory "path"
      *
@@ -454,34 +439,6 @@ class JrtFileSystem extends FileSystem {
             return modulesDirIterator(path, childPrefix);
         } else if (node.isPackagesDir()) {
             return packagesDirIterator(path, childPrefix);
-        } else if (node.getNameString().startsWith("/packages/")) {
-            if (ni.image != appImage) {
-                UTF8String name = node.getName();
-                List<Node> children = packagesTreeChildren.get(name);
-                if (children != null) {
-                    return nodesToIterator(toJrtPath(path), childPrefix, children);
-                }
-
-                children = new ArrayList<>();
-                children.addAll(node.getChildren());
-                Node tmpNode = null;
-                // found in boot
-                if (ni.image == bootImage) {
-                    tmpNode = extImage.findNode(name);
-                    if (tmpNode != null) {
-                        children.addAll(tmpNode.getChildren());
-                    }
-                }
-
-                // found in ext
-                tmpNode = appImage.findNode(name);
-                if (tmpNode != null) {
-                    children.addAll(tmpNode.getChildren());
-                }
-
-                packagesTreeChildren.put(name, children);
-                return nodesToIterator(toJrtPath(path), childPrefix, children);
-            }
         }
 
         return nodesToIterator(toJrtPath(path), childPrefix, node.getChildren());
@@ -507,8 +464,6 @@ class JrtFileSystem extends FileSystem {
         if (rootChildren == null) {
             rootChildren = new ArrayList<>();
             rootChildren.addAll(bootImage.findNode(path).getChildren());
-            addRootDirContent(extImage.findNode(path).getChildren());
-            addRootDirContent(appImage.findNode(path).getChildren());
         }
     }
 
@@ -522,8 +477,6 @@ class JrtFileSystem extends FileSystem {
         if (modulesChildren == null) {
             modulesChildren = new ArrayList<>();
             modulesChildren.addAll(bootImage.findNode(path).getChildren());
-            modulesChildren.addAll(appImage.findNode(path).getChildren());
-            modulesChildren.addAll(extImage.findNode(path).getChildren());
         }
     }
 
@@ -537,8 +490,6 @@ class JrtFileSystem extends FileSystem {
         if (packagesChildren == null) {
             packagesChildren = new ArrayList<>();
             packagesChildren.addAll(bootImage.findNode(path).getChildren());
-            packagesChildren.addAll(extImage.findNode(path).getChildren());
-            packagesChildren.addAll(appImage.findNode(path).getChildren());
         }
     }
     private Iterator<Path> packagesDirIterator(byte[] path, String childPrefix) throws IOException {
