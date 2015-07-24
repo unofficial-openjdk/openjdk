@@ -182,6 +182,8 @@
 #include "runtime/vmStructs_trace.hpp"
 #endif
 
+#include "runtime/vmStructs_ext.hpp"
+
 #ifdef COMPILER2
 #include "opto/addnode.hpp"
 #include "opto/block.hpp"
@@ -2964,6 +2966,9 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
                 GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif
 
+  VM_STRUCTS_EXT(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_STATIC_VM_STRUCT_ENTRY)
+
   VM_STRUCTS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                  GENERATE_STATIC_VM_STRUCT_ENTRY,
                  GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3013,6 +3018,9 @@ VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
   VM_TYPES_TRACE(GENERATE_VM_TYPE_ENTRY,
               GENERATE_TOPLEVEL_VM_TYPE_ENTRY)
 #endif
+
+  VM_TYPES_EXT(GENERATE_VM_TYPE_ENTRY,
+               GENERATE_TOPLEVEL_VM_TYPE_ENTRY)
 
   VM_TYPES_CPU(GENERATE_VM_TYPE_ENTRY,
                GENERATE_TOPLEVEL_VM_TYPE_ENTRY,
@@ -3123,6 +3131,9 @@ VMStructs::init() {
                 CHECK_STATIC_VM_STRUCT_ENTRY);
 #endif
 
+  VM_STRUCTS_EXT(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
+                 CHECK_STATIC_VM_STRUCT_ENTRY);
+
   VM_STRUCTS_CPU(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
                  CHECK_STATIC_VM_STRUCT_ENTRY,
                  CHECK_NO_OP,
@@ -3168,6 +3179,9 @@ VMStructs::init() {
   VM_TYPES_TRACE(CHECK_VM_TYPE_ENTRY,
               CHECK_SINGLE_ARG_VM_TYPE_NO_OP);
 #endif
+
+  VM_TYPES_EXT(CHECK_VM_TYPE_ENTRY,
+               CHECK_SINGLE_ARG_VM_TYPE_NO_OP);
 
   VM_TYPES_CPU(CHECK_VM_TYPE_ENTRY,
                CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
@@ -3236,6 +3250,9 @@ VMStructs::init() {
   debug_only(VM_STRUCTS_TRACE(ENSURE_FIELD_TYPE_PRESENT,
                            ENSURE_FIELD_TYPE_PRESENT));
 #endif
+
+  debug_only(VM_STRUCTS_EXT(ENSURE_FIELD_TYPE_PRESENT,
+                            ENSURE_FIELD_TYPE_PRESENT));
 
   debug_only(VM_STRUCTS_CPU(ENSURE_FIELD_TYPE_PRESENT,
                             ENSURE_FIELD_TYPE_PRESENT,

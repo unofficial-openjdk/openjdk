@@ -728,7 +728,8 @@ public:
           "Control whether AES instructions can be used on x86/x64")        \
                                                                             \
   product(bool, UseSHA, false,                                              \
-          "Control whether SHA instructions can be used on SPARC")          \
+          "Control whether SHA instructions can be used "                   \
+          "on SPARC and on ARM")                                            \
                                                                             \
   product(bool, UseGHASHIntrinsics, false,                                  \
           "Use intrinsics for GHASH versions of crypto")                    \
@@ -837,13 +838,16 @@ public:
           "Use intrinsics for AES versions of crypto")                      \
                                                                             \
   product(bool, UseSHA1Intrinsics, false,                                   \
-          "Use intrinsics for SHA-1 crypto hash function")                  \
+          "Use intrinsics for SHA-1 crypto hash function. "                 \
+          "Requires that UseSHA is enabled.")                                \
                                                                             \
   product(bool, UseSHA256Intrinsics, false,                                 \
-          "Use intrinsics for SHA-224 and SHA-256 crypto hash functions")   \
+          "Use intrinsics for SHA-224 and SHA-256 crypto hash functions. "  \
+          "Requires that UseSHA is enabled.")                               \
                                                                             \
   product(bool, UseSHA512Intrinsics, false,                                 \
-          "Use intrinsics for SHA-384 and SHA-512 crypto hash functions")   \
+          "Use intrinsics for SHA-384 and SHA-512 crypto hash functions. "  \
+          "Requires that UseSHA is enabled.")                               \
                                                                             \
   product(bool, UseCRC32Intrinsics, false,                                  \
           "use intrinsics for java.util.zip.CRC32")                         \
@@ -1031,6 +1035,10 @@ public:
                                                                             \
   product(bool, CreateCoredumpOnCrash, true,                                \
           "Create core/mini dump on VM fatal error")                        \
+                                                                            \
+  product(uintx, ErrorLogTimeout, 2 * 60,                                   \
+          "Timeout, in seconds, to limit the time spent on writing an "     \
+          "error log in case of a crash.")                                  \
                                                                             \
   product_pd(bool, UseOSErrorReporting,                                     \
           "Let VM fatal error propagate to the OS (ie. WER on Windows)")    \
@@ -1363,9 +1371,6 @@ public:
                                                                             \
   develop(uintx, PreallocatedOutOfMemoryErrorCount, 4,                      \
           "Number of OutOfMemoryErrors preallocated with backtrace")        \
-                                                                            \
-  product(bool, LazyBootClassLoader, true,                                  \
-          "Enable/disable lazy opening of boot class path entries")         \
                                                                             \
   product(bool, UseXMMForArrayCopy, false,                                  \
           "Use SSE2 MOVQ instruction for Arraycopy")                        \
@@ -4132,7 +4137,16 @@ public:
                                                                             \
   product_pd(bool, PreserveFramePointer,                                    \
              "Use the FP register for holding the frame pointer "           \
-             "and not as a general purpose register.")
+             "and not as a general purpose register.")                      \
+                                                                            \
+  diagnostic(bool, CheckIntrinsics, trueInDebug,                            \
+             "When a class C is loaded, check that "                        \
+             "(1) all intrinsics defined by the VM for class C are present "\
+             "in the loaded class file and are marked with the "            \
+             "@HotSpotIntrinsicCandidate annotation and also that "         \
+             "(2) there is an intrinsic registered for all loaded methods " \
+             "that are annotated with the @HotSpotIntrinsicCandidate "      \
+             "annotation.")
 
 /*
  *  Macros for factoring of globals
