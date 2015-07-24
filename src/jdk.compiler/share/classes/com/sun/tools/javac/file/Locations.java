@@ -1037,15 +1037,13 @@ public class Locations {
 
     private class ModuleSourcePathLocationHandler extends BasicLocationHandler {
 
-        private final Map<String, Location> moduleLocations;
-        private final Map<Path, Location> pathLocations;
+        private Map<String, Location> moduleLocations;
+        private Map<Path, Location> pathLocations;
 
 
         ModuleSourcePathLocationHandler() {
             super(StandardLocation.MODULE_SOURCE_PATH,
                     Option.MODULESOURCEPATH);
-            moduleLocations = new LinkedHashMap<>();
-            pathLocations = new LinkedHashMap<>();
         }
 
         @Override
@@ -1084,8 +1082,8 @@ public class Locations {
                 }
             }
 
-            moduleLocations.clear();
-            pathLocations.clear();
+            moduleLocations = new LinkedHashMap<>();
+            pathLocations = new LinkedHashMap<>();
             map.forEach((k, v) -> {
                 String name = location.getName() + "[" + k + "]";
                 ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false, false);
@@ -1100,7 +1098,15 @@ public class Locations {
         }
 
         void add(Map<String, Collection<Path>> map, Path prefix, Path suffix) {
-
+            if (!Files.isDirectory(prefix)) {
+                if (warn) {
+                    String key = Files.exists(prefix)
+                            ? "dir.path.element.not.directory"
+                            : "dir.path.element.not.found";
+                    log.warning(Lint.LintCategory.PATH, key, prefix);
+                }
+                return;
+            }
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(prefix, path -> Files.isDirectory(path))) {
                 for (Path entry: stream) {
                     Path path = (suffix == null) ? entry : entry.resolve(suffix);
@@ -1114,6 +1120,7 @@ public class Locations {
                 }
             } catch (IOException e) {
                 // TODO? What to do?
+                System.err.println(e);
             }
         }
 
@@ -1181,7 +1188,7 @@ public class Locations {
 
         @Override
         boolean isSet() {
-            return !moduleLocations.isEmpty();
+            return (moduleLocations != null);
         }
 
         @Override
@@ -1196,16 +1203,18 @@ public class Locations {
 
         @Override
         Location getModuleLocation(String name) {
-            return moduleLocations.get(name);
+            return (moduleLocations == null) ? null : moduleLocations.get(name);
         }
 
         @Override
         Location getModuleLocation(Path dir) {
-            return pathLocations.get(dir);
+            return (pathLocations == null) ? null : pathLocations.get(dir);
         }
 
         @Override
         Iterable<Set<Location>> listModuleLocations() {
+            if (moduleLocations == null)
+                return Collections.emptySet();
             Set<Location> locns = new LinkedHashSet<>();
             moduleLocations.forEach((k, v) -> locns.add(v));
             return Collections.singleton(locns);
