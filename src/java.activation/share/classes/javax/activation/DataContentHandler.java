@@ -41,7 +41,7 @@ import javax.activation.DataSource;
  *
  * <p>An implementation of DataContentHandler should be a public class
  * with a public no-arg constructor. If the implementation class is in
- * a named module then it should be an API package that is exported
+ * a named module then it should be in an API package that is exported
  * to the module {@code java.activation}.</p>
  *
  * <p>Applications don't generally call the methods in DataContentHandlers
