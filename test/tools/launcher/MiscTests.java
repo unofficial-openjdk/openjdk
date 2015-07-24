@@ -39,7 +39,7 @@ public class MiscTests extends TestHelper {
 
     private static final String mainClass = "Foo";
     private static final String exportOpts
-            = "-XaddExports:jdk.crypto.pkcs11/sun.security.pkcs11";
+            = "-XaddExports:jdk.crypto.pkcs11/sun.security.pkcs11=ALL-UNNAMED";
 
     // 6856415: Checks to ensure that proper exceptions are thrown by java
     static void test6856415() throws IOException {

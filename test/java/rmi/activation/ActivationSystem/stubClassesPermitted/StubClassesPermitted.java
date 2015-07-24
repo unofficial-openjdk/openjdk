@@ -120,7 +120,7 @@ public class StubClassesPermitted
             //
             System.err.println("Create activation group, in a new VM");
             CommandEnvironment cmd = new ActivationGroupDesc.CommandEnvironment(null,
-                    new String[] { "-XaddExports:java.base/sun.security.provider,"
+                    new String[] { "-XaddExports:java.base/sun.security.provider=ALL-UNNAMED,"
                             + "java.rmi/sun.rmi.registry,java.rmi/sun.rmi.server,"
                             + "java.rmi/sun.rmi.transport,java.rmi/sun.rmi.transport.tcp" });
 

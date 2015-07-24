@@ -476,7 +476,7 @@ public class Basic {
         commands.add("-d");
         commands.add(dest.toString());
         if (dest.toString().contains("bar"))
-            commands.add("-XaddExports:java.base/jdk.internal.module");
+            commands.add("-XaddExports:java.base/jdk.internal.module=bar");
         if (modulePath != null) {
             commands.add("-mp");
             commands.add(modulePath.toString());
