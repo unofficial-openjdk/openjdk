@@ -1053,7 +1053,6 @@ public class JavaCompiler {
     /**
      * Process any annotations found in the specified compilation units.
      * @param roots a list of compilation units
-     * @return an instance of the compiler in which to complete the compilation
      */
     // Implementation note: when this method is called, log.deferredDiagnostics
     // will have been set true by initProcessAnnotations, meaning that any diagnostics
@@ -1200,7 +1199,7 @@ public class JavaCompiler {
      * Note that attributing classes may cause additional files to be
      * parsed and entered via the SourceCompleter.
      * Attribution of the entries in the list does not stop if any errors occur.
-     * @returns a list of environments for attributd classes.
+     * @return a list of environments for attribute classes.
      */
     public Queue<Env<AttrContext>> attribute(Queue<Env<AttrContext>> envs) {
         ListBuffer<Env<AttrContext>> results = new ListBuffer<>();
@@ -1211,7 +1210,7 @@ public class JavaCompiler {
 
     /**
      * Attribute a parse tree.
-     * @returns the attributed parse tree
+     * @return the attributed parse tree
      */
     public Env<AttrContext> attribute(Env<AttrContext> env) {
         if (compileStates.isDone(env, CompileState.ATTR))
@@ -1251,7 +1250,7 @@ public class JavaCompiler {
      * Perform dataflow checks on attributed parse trees.
      * These include checks for definite assignment and unreachable statements.
      * If any errors occur, an empty list will be returned.
-     * @returns the list of attributed parse trees
+     * @return the list of attributed parse trees
      */
     public Queue<Env<AttrContext>> flow(Queue<Env<AttrContext>> envs) {
         ListBuffer<Env<AttrContext>> results = new ListBuffer<>();
@@ -1321,7 +1320,7 @@ public class JavaCompiler {
      * Prepare attributed parse trees, in conjunction with their attribution contexts,
      * for source or code generation.
      * If any errors occur, an empty list will be returned.
-     * @returns a list containing the classes to be generated
+     * @return a list containing the classes to be generated
      */
     public Queue<Pair<Env<AttrContext>, JCClassDecl>> desugar(Queue<Env<AttrContext>> envs) {
         ListBuffer<Pair<Env<AttrContext>, JCClassDecl>> results = new ListBuffer<>();

@@ -105,10 +105,12 @@ class PlatformClassPath {
                 return false;
             }
         }
+
         static ImageHelper getInstance(Path mpath) throws IOException {
             if (mpath != null) {
                 return new ImageHelper(mpath);
             }
+
             if (isJrtAvailable()) {
                 // jrt file system
                 FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
@@ -118,7 +120,7 @@ class PlatformClassPath {
                 String home = System.getProperty("java.home");
                 Path exploded = Paths.get(home, "modules");
                 if (!Files.isDirectory(exploded)) {
-                    throw new InternalError(home + " not a modular image");
+                     throw new InternalError(home + " not a modular image");
                 }
                 return new ImageHelper(exploded);
             }
