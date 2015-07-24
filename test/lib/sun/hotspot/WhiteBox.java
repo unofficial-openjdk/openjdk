@@ -374,6 +374,23 @@ public class WhiteBox {
                               .orElse(null);
   }
 
+  public native boolean readImageFile(String imagePath);
+  public native long imageOpenImage(String imagePath, boolean bigEndian);
+  public native void imageCloseImage(long id);
+  public native long imageGetIndexAddress(long id);
+  public native long imageGetDataAddress(long id);
+  public native boolean imageReadCompressed(long id, long offset,
+    ByteBuffer compressedBuffer, long compressedSize,
+    ByteBuffer uncompressedBuffer, long uncompressedSize);
+  public native boolean imageRead(long id, long offset,
+    ByteBuffer uncompressedBuffer, long uncompressedSize);
+  public native byte[] imageGetStringBytes(long id, int offset);
+  public native long imageGetStringsSize(long id);
+  public native long[] imageGetAttributes(long id, int offset);
+  public native long[] imageFindAttributes(long id, byte[] path);
+  public native int[] imageAttributeOffsets(long id);
+  public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
+
   // Safepoint Checking
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
