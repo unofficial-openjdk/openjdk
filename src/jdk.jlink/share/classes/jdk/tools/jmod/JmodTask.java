@@ -683,7 +683,7 @@ class JmodTask {
 
         OptionSpec<Path> modulePath  // TODO: short version of --mp ??
                 = parser.acceptsAll(Arrays.asList("mp", "modulepath"),
-                                    getMessage("main.opt.config"))
+                                    getMessage("main.opt.modulepath"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(PathConverter.INSTANCE);
