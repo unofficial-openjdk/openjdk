@@ -1481,11 +1481,10 @@ public abstract class ClassLoader {
      * access to the system class loader.  If not, a
      * <tt>SecurityException</tt> will be thrown.  </p>
      *
-     * @implNote The system property to override the system class loader is
-     * not examined until this method is invoked after the VM is fully
-     * initialized. This means that code that executes this method during
-     * startup should not cache the return value unless sun.misc.VM.isBooted
-     * returns {@code true}.
+     * @implNote The system property to override the system class loader is not
+     * examined until the VM is almost fully initialized. Code that executes
+     * this method during startup should take care not to cache the return
+     * value unless sun.misc.VM.isBooted returns {@code true}.
      *
      * @return  The system <tt>ClassLoader</tt> for delegation, or
      *          <tt>null</tt> if none
