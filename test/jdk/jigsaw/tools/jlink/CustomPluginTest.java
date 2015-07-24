@@ -126,7 +126,7 @@ public class CustomPluginTest {
         String name = "customplugin";
         File src = new File(System.getProperty("test.src"), name);
         File classes = helper.getGenerator().compileModule(src, (String) null,
-                "-XaddExports:jdk.jlink/jdk.tools.jlink.internal");
+                "-XaddExports:jdk.jlink/jdk.tools.jlink.internal=customplugin");
         return helper.getGenerator().buildJModule(name, null, classes);
     }
 

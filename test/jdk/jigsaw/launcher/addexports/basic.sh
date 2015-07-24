@@ -39,7 +39,8 @@ JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 
 rm -rf mods
 mkdir -p mods/test
-$JAVAC -XaddExports:java.base/sun.misc -d mods/test `find $TESTSRC/src/test -name "*.java"`
+$JAVAC -XaddExports:java.base/sun.misc=test -d mods/test \
+    `find $TESTSRC/src/test -name "*.java"`
 
 # unnamed module using sun.misc.Unsafe
 $JAVA -XaddExports:java.base/sun.misc=ALL-UNNAMED -cp mods/test jdk.test.UsesUnsafe
