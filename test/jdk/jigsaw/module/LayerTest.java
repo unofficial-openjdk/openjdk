@@ -37,6 +37,8 @@ import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -45,9 +47,9 @@ import static org.testng.Assert.*;
 public class LayerTest {
 
     /**
-     * Exercise Layer.bootLayer
+     * Exercise Layer.boot()
      */
-    public void testBootLayer() {
+    public void testBoot() {
         Layer bootLayer = Layer.boot();
 
         // configuration
@@ -56,34 +58,43 @@ public class LayerTest {
                    .stream().anyMatch(e -> (e.source().equals("java.lang")
                                             && !e.targets().isPresent())));
 
-        // findLoader
-        assertTrue(bootLayer.findLoader("java.base") == null);
+        // modules
+        Set<Module> modules = bootLayer.modules();
+        assertTrue(modules.contains(Object.class.getModule()));
+        int count = (int) modules.stream().map(Module::getName).count();
+        assertEquals(count, modules.size()); // module names are unique
 
         // findModule
         Module base = Object.class.getModule();
         assertTrue(bootLayer.findModule("java.base").get() == base);
+
+        // findLoader
+        assertTrue(bootLayer.findLoader("java.base") == null);
 
         // parent
         assertTrue(bootLayer.parent().get() == Layer.empty());
     }
 
     /**
-     * Exercise Layer.emptyLayer
+     * Exercise Layer.empty()
      */
-    public void testEmptyLayer() {
+    public void testEmpty() {
         Layer emptyLayer = Layer.empty();
 
         // configuration
-        assertTrue(!emptyLayer.configuration().isPresent());
+        assertFalse(emptyLayer.configuration().isPresent());
+
+        // modules
+        assertTrue(emptyLayer.modules().isEmpty());
+
+        // findModule
+        assertFalse(emptyLayer.findModule("java.base").isPresent());
 
         // findLoader
         try {
             ClassLoader loader = emptyLayer.findLoader("java.base");
             assertTrue(false);
         } catch (IllegalArgumentException ignore) { }
-
-        // findModule
-        assertTrue(!emptyLayer.findModule("java.base").isPresent());
 
         // parent
         assertTrue(!emptyLayer.parent().isPresent());
@@ -131,6 +142,28 @@ public class LayerTest {
         assertTrue(layer.configuration().get() == cf);
         assertTrue(layer.configuration().get().descriptors().size() == 3);
 
+        // modules
+        Set<Module> modules = layer.modules();
+        assertTrue(modules.size() == 3);
+        Set<String> names = modules.stream()
+            .map(Module::getName)
+            .collect(Collectors.toSet());
+        assertTrue(names.contains("m1"));
+        assertTrue(names.contains("m2"));
+        assertTrue(names.contains("m3"));
+
+        // findModule
+        Module m1 = layer.findModule("m1").get();
+        Module m2 = layer.findModule("m2").get();
+        Module m3 = layer.findModule("m3").get();
+        assertEquals(m1.getName(), "m1");
+        assertEquals(m2.getName(), "m2");
+        assertEquals(m3.getName(), "m3");
+        assertTrue(modules.contains(m1));
+        assertTrue(modules.contains(m2));
+        assertTrue(modules.contains(m3));
+        assertFalse(layer.findModule("godot").isPresent());
+
         // findLoader
         assertTrue(layer.findLoader("m1") == loader1);
         assertTrue(layer.findLoader("m2") == loader2);
@@ -139,12 +172,6 @@ public class LayerTest {
             ClassLoader loader = layer.findLoader("godot");
             assertTrue(false);
         } catch (IllegalArgumentException ignore) { }
-
-        // findModule
-        assertTrue(layer.findModule("m1").get().getName().equals("m1"));
-        assertTrue(layer.findModule("m2").get().getName().equals("m2"));
-        assertTrue(layer.findModule("m3").get().getName().equals("m3"));
-        assertTrue(!layer.findModule("godot").isPresent());
 
         // parent
         assertTrue(layer.parent().get() == Layer.empty());
@@ -182,17 +209,31 @@ public class LayerTest {
         assertTrue(layer.configuration().get() == cf);
         assertTrue(layer.configuration().get().descriptors().size() == 2);
 
+        // modules
+        Set<Module> modules = layer.modules();
+        assertTrue(modules.size() == 2);
+        Set<String> names = modules.stream()
+            .map(Module::getName)
+            .collect(Collectors.toSet());
+        assertTrue(names.contains("m1"));
+        assertTrue(names.contains("m2"));
+
+        // findModule
+        Module m1 = layer.findModule("m1").get();
+        Module m2 = layer.findModule("m2").get();
+        assertEquals(m1.getName(), "m1");
+        assertEquals(m2.getName(), "m2");
+        assertTrue(modules.contains(m1));
+        assertTrue(modules.contains(m2));
+        assertTrue(layer.findModule("java.base").get() == Object.class.getModule());
+        assertFalse(layer.findModule("godot").isPresent());
+
         // findLoader
         assertTrue(layer.findLoader("m1") == loader);
         assertTrue(layer.findLoader("m2") == loader);
         assertTrue(layer.findLoader("java.base") == null);
 
-        // findModule
-        assertTrue(layer.findModule("m1").get().getName().equals("m1"));
-        assertTrue(layer.findModule("m2").get().getName().equals("m2"));
-        assertTrue(layer.findModule("java.base").get() == Object.class.getModule());
         // parent
-
         assertTrue(layer.parent().get() == Layer.boot());
     }
 

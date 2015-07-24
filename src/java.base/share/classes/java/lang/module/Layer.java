@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import sun.misc.JavaLangModuleAccess;
 import sun.misc.JavaLangReflectAccess;
@@ -46,16 +47,15 @@ import sun.misc.SharedSecrets;
  * then all modules are associated with the same class loader. </p>
  *
  * <pre>{@code
- *     ModuleFinder finder =
- *         ModuleFinder.of(dir1, dir2, dir3);
+ *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     Configuration cf =
- *         Configuration.resolve(ModuleFinder.empty(),
- *                               Layer.boot(),
- *                               finder,
- *                               "myapp");
+ *     Configuration cf
+ *         = Configuration.resolve(ModuleFinder.empty(),
+ *                                 Layer.boot(),
+ *                                 finder,
+ *                                 "myapp");
  *
- *     ClassLoader loader = ...
+ *     ClassLoader loader = new ModuleClassLoader();
  *
  *     Layer layer = Layer.create(cf, m -> loader);
  *
@@ -291,6 +291,16 @@ public final class Layer {
         } else {
             return Optional.of(cf.layer());
         }
+    }
+
+    /**
+     * Returns a set of the {@code Module}s in this layer.
+     *
+     * @apiNote This method is for discussion purposes. We also need to
+     * consider Module::getLayer.
+     */
+    public Set<Module> modules() {
+        return nameToModule.values().stream().collect(Collectors.toSet());
     }
 
     /**
