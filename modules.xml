@@ -219,14 +219,11 @@
     </export>
     <export>
       <name>jdk.internal.jimage</name>
-      <to>jdk.jlink</to> 
-    </export>
-    <export>
-      <name>jdk.internal.jimage.decompressor</name>
       <to>jdk.jlink</to>
     </export>
     <export>
       <name>jdk.internal.jimage.decompressor</name>
+      <to>jdk.jlink</to>
       <to>jdk.dev</to>
     </export>
     <export>
@@ -262,10 +259,10 @@
       <to>jdk.jlink</to>
       <to>jdk.jartool</to>
     </export>
+    <export>
       <name>jdk.internal</name>
       <to>jdk.jfr</to>
     </export>
-    <export>
     <export>
       <name>sun.misc</name>
       <to>java.corba</to>
