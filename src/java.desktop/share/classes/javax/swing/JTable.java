@@ -6404,12 +6404,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
         };
 
         // start printing on another thread
-        Thread th;
-        if  (System.getSecurityManager() == null) {
-            th = new Thread(runnable);
-        } else {
-            th = new ManagedLocalsThread(runnable);
-        }
+        Thread th = new ManagedLocalsThread(runnable);
         th.start();
 
         printingStatus.showModal(true);

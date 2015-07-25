@@ -40,6 +40,7 @@ final class SystemImages {
 
     static final String RUNTIME_HOME;
     static final Path bootImagePath;
+
     static {
         PrivilegedAction<String> pa = SystemImages::findHome;
         RUNTIME_HOME = AccessController.doPrivileged(pa);
