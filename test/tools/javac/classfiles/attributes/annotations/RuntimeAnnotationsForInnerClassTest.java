@@ -26,6 +26,7 @@
  * @bug 8044411
  * @summary Tests the RuntimeVisibleAnnotations/RuntimeInvisibleAnnotations attribute.
  * @modules jdk.jdeps/com.sun.tools.classfile
+ *          jdk.compiler/com.sun.tools.javac.api
  * @library /tools/lib /tools/javac/lib ../lib
  * @build WorkAnnotations TestBase TestResult InMemoryFileManager ToolBox
  * @build TestCase ClassType TestAnnotationInfo
