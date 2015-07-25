@@ -150,7 +150,7 @@ java/util/stream/test/org/openjdk/tests/java/util/stream/StreamSpliteratorTest.j
 java/util/stream/test/org/openjdk/tests/java/util/stream/TeeOpTest.java		generic-all
 java/util/stream/test/org/openjdk/tests/java/util/stream/ToArrayOpTest.java	generic-all
 java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpStatefulTest.java	generic-all
-java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpTest.jav	generic-alla
+java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpTest.java	generic-all
 
 # these tests use the streams tests
 java/util/regex/PatternStreamTest.java						generic-all
