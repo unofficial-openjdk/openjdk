@@ -57,24 +57,3 @@ public abstract class ResourceDecompressorFactory {
 
 }
 
-    }
-
-    /**
-     * The Factory arguments description.
-     * @return The arguments description.
-     */
-    public String getArgumentsDescription() {
-        return arguments;
-    }
-
-    /**
-     * To build a new decompressor.
-     * @param properties Contains configuration.
-     * @return A new decompressor.
-     * @throws IOException
-     */
-    public abstract ResourceDecompressor newDecompressor(Properties properties)
-            throws IOException;
-
-}
-

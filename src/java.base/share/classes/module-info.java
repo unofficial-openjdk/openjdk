@@ -139,6 +139,7 @@ module java.base {
     exports sun.net.spi.nameservice to
         jdk.naming.dns;
     exports sun.net.util to
+        java.desktop,
         jdk.jconsole,
         jdk.naming.dns;
     exports sun.net.www to

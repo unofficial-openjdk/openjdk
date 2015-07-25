@@ -41,9 +41,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.ImageFileCreator;
+import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageModuleDataWriter;
+import jdk.tools.jlink.internal.ImagePluginStack;
 
 /**
  *
@@ -91,6 +92,8 @@ public final class ExtractedImage {
             }
         }
 
+        private static final String MODULE_INFO = "module-info.class";
+
         private final Path dirPath;
         private final String moduleName;
         private final List<InputStream> open = new ArrayList<>();
@@ -102,7 +105,6 @@ public final class ExtractedImage {
             }
             chop = dirPath.toString().length() + 1;
             this.moduleName = dirPath.getFileName().toString();
-            System.out.println("Module name " + this.moduleName);
             this.dirPath = dirPath;
         }
 
@@ -113,11 +115,13 @@ public final class ExtractedImage {
 
         @Override
         public Stream<Entry> entries() {
+            Stream<Entry> ret = null;
             try {
-                return Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
-            } catch(IOException ex) {
+                ret = Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
+            } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
+            return ret;
         }
 
         private Archive.Entry toEntry(Path p) {
@@ -133,6 +137,9 @@ public final class ExtractedImage {
                 log.println(verboseName);
             }
 
+            if (name.equals(MODULE_INFO)) {
+                name = moduleName + "/" + MODULE_INFO;
+            }
             return new FileEntry(p, name);
         }
 
@@ -164,12 +171,14 @@ public final class ExtractedImage {
     private Set<Archive> archives = new HashSet<>();
     private final PrintWriter log;
     private final boolean verbose;
+    private final ImagePluginStack plugins;
 
-    ExtractedImage(Path dirPath, PrintWriter log,
+    ExtractedImage(Path dirPath, ImagePluginStack plugins, PrintWriter log,
             boolean verbose) throws IOException {
         if (!Files.isDirectory(dirPath)) {
             throw new IOException("Not a directory");
         }
+        this.plugins = plugins;
         Files.walk(dirPath, 1).forEach((p) -> {
             try {
                 if (!dirPath.equals(p)) {
@@ -201,7 +210,7 @@ public final class ExtractedImage {
 
     void recreateJImage(Path path) throws IOException {
 
-        ImageFileCreator.recreateJimage(path, archives, modulePackages);
+        ImageFileCreator.recreateJimage(path, archives, modulePackages, plugins);
     }
 
     private static String getPathName(Path path) {
