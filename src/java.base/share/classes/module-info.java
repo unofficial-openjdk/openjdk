@@ -244,6 +244,7 @@ module java.base {
         jdk.localedata;
     exports sun.util.resources.cldr to
         jdk.localedata;
+    uses java.net.ContentHandlerFactory;
     uses java.net.spi.URLStreamHandlerProvider;
     uses java.nio.channels.spi.AsynchronousChannelProvider;
     uses java.nio.channels.spi.SelectorProvider;
