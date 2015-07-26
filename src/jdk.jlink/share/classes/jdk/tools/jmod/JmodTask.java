@@ -84,7 +84,7 @@ import jdk.internal.module.ModuleInfoExtender;
 /**
  * Implementation for the jmod tool.
  */
-class JmodTask {
+public class JmodTask {
 
     static class CommandException extends RuntimeException {
         private static final long serialVersionUID = 0L;
@@ -127,7 +127,7 @@ class JmodTask {
     private static final String MODULE_INFO = "module-info.class";
 
     private Options options;
-    private PrintStream out;
+    private PrintStream out = System.out;
     void setLog(PrintStream out) {
         this.out = out;
     }
@@ -159,9 +159,7 @@ class JmodTask {
         Pattern dependencesToHash;
     }
 
-    int run(String[] args) {
-        if (out == null)
-            out = System.out;
+    public int run(String[] args) {
 
         try {
             handleOptions(args);

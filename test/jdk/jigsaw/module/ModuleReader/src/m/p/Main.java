@@ -23,5 +23,11 @@
 
 package p;
 
-public class Foo {
+/**
+ * Main class for dummy module.
+ */
+
+public class Main {
+    public static void main(String[] args) {
+    }
 }

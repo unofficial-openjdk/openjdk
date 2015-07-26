@@ -21,8 +21,6 @@
  * questions.
  */
 
-package jdk.testlibrary;
-
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
@@ -37,6 +35,8 @@ import java.util.stream.Collectors;
 /**
  * This class consists exclusively of static utility methods for invoking the
  * java compiler.
+ *
+ * This class will eventually move to jdk.testlibrary.
  */
 
 public final class CompilerUtils {
