@@ -424,14 +424,6 @@ public abstract class IIOMetadata {
         if (!thisModule.canRead(targetModule)) {
             thisModule.addReads(targetModule);
         }
-
-        if (thisModule.isNamed()) {
-            int i = formatClassName.lastIndexOf(".");
-            String pn = i > 0 ? formatClassName.substring(0, i) : "";
-            if (!targetModule.isExported(pn, thisModule)) {
-                targetModule.addExports(pn, thisModule);
-            }
-        }
         return c;
     }
 
