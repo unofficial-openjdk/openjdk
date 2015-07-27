@@ -81,10 +81,10 @@ ifeq ($(BOOT_JDK_MODULAR), true)
       -Xoverride:$(SUPPORT_OUTPUTDIR)/special_classes \
       -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
       -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
-          java.base/jdk.internal.org.objectweb.asm \
-          jdk.scripting.nashorn/jdk.nashorn.internal.objects.annotations \
-          jdk.scripting.nashorn/jdk.nashorn.internal.runtime \
-          jdk.scripting.nashorn/jdk.nashorn.internal.objects \
+          java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
+          jdk.scripting.nashorn/jdk.nashorn.internal.objects.annotations=ALL-UNNAMED \
+          jdk.scripting.nashorn/jdk.nashorn.internal.runtime=ALL-UNNAMED \
+          jdk.scripting.nashorn/jdk.nashorn.internal.objects=ALL-UNNAMED \
       ))
 else
   NASGEN_BOOTCLASSPATH := -Xbootclasspath/p:$(call CreatePath, \
