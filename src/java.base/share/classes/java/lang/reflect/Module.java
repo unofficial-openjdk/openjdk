@@ -520,6 +520,16 @@ public final class Module {
      * Updates the exports so that package {@code pn} is exported to module
      * {@code target}.
      *
+     * This method is for use by whitebox tests only.
+     */
+    void implAddExports(String pn, Module target) {
+        implAddExports(pn, target, true);
+    }
+
+    /**
+     * Updates the exports so that package {@code pn} is exported to module
+     * {@code target}.
+     *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddExports(String pn, Module target, boolean syncVM) {

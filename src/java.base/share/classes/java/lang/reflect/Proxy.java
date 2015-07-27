@@ -1029,8 +1029,7 @@ public class Proxy implements java.io.Serializable {
                         String pn = packageName(e.getKey());
                         Module m = e.getValue();
                         if (!m.isExported(pn, target)) {
-                            PrivilegedAction<Void> pa = () -> { m.addExports(pn, target); return null; };
-                            AccessController.doPrivileged(pa);
+                            jdk.internal.misc.Modules.addExports(m, pn, target);
                         }
                     });
             return target;
@@ -1058,8 +1057,7 @@ public class Proxy implements java.io.Serializable {
                 return;
             }
 
-            PrivilegedAction<Void> pa = () -> { target.addReads(m); return null; };
-            AccessController.doPrivileged(pa);
+            jdk.internal.misc.Modules.addReads(target, m);
         }
 
         static boolean canAccess(Module target, Iterable<Class<?>> types) {
