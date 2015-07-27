@@ -67,6 +67,19 @@ public class AddExportsTest {
         assertTrue(compiled, "test module did not compile");
     }
 
+    /**
+     * Sanity check with -version
+     */
+    public void testSanity() throws Exception {
+
+        int exitValue
+            =  executeTestJava("-XaddExports:java.base/sun.reflect",
+                               "-version")
+                .getExitValue();
+
+        assertTrue(exitValue == 0);
+    }
+
 
     /**
      * Run class path application that uses sun.misc.Unsafe
@@ -105,6 +118,19 @@ public class AddExportsTest {
         assertTrue(exitValue == 0);
     }
 
+    /**
+     * -XaddExports can only be specified once
+     */
+    public void testWithDuplicateOption() throws Exception {
+
+        int exitValue
+            =  executeTestJava("-XaddExports:java.base/sun.reflect",
+                               "-XaddExports:java.base/sun.reflect",
+                               "-version")
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
 
     /**
      * Exercise -XaddExports with bad values
@@ -112,12 +138,10 @@ public class AddExportsTest {
     @Test(dataProvider = "badvalues")
     public void testWithBadValue(String value, String ignore) throws Exception {
 
-        //  -XaddExports:$VALUE -cp mods/test jdk.test.UsesUnsafe
-        String classpath = MODS_DIR.resolve(TEST_MODULE).toString();
+        //  -XaddExports:$VALUE -version
         int exitValue =
             executeTestJava("-XaddExports:" + value,
-                            "-cp", classpath,
-                            MAIN_CLASS)
+                            "-version")
                 .getExitValue();
 
         assertTrue(exitValue != 0);
@@ -127,9 +151,11 @@ public class AddExportsTest {
     public Object[][] badValues() {
         return new Object[][]{
 
-            { "java.base/sun.misc,java.monkey/sun.monkey", null }, // unknown module
-            { "java.base/sun.misc,java.base/sun.monkey",   null }, // unknown package
-            { "java.base/sun.misc,java.base",              null }  // missing package
+            { "java.monkey/sun.monkey",  null }, // unknown module
+            { "java.base/sun.monkey",    null }, // unknown package
+            { "java.monkey/sun.monkey",  null }, // unknown module and package
+            { "java.base",               null }, // missing package
+            { "java.base/",              null }  // missing package
 
         };
     }
