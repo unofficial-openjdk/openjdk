@@ -23,7 +23,7 @@
 
 #
 
-EXTRAOPTS="-XaddExports:java.base/sun.misc"
+EXTRAOPTS="-XaddExports:java.base/sun.misc=ALL-UNNAMED"
 ${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} -cp ${TESTSRC} -d . \
     ${TESTSRC}/Basic.java
 

@@ -39,12 +39,12 @@ fi
 mkdir -p modules/java.naming
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
-        -XaddExports:java.security.jgss/sun.security.krb5 \
+        -XaddExports:java.security.jgss/sun.security.krb5=ALL-UNNAMED \
         ${TESTSRC}/DNS.java || exit 1
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d modules/java.naming \
         ${TESTSRC}/NamingManager.java || exit 2
 
 $TESTJAVA/bin/java ${TESTVMOPTS} \
-        -XaddExports:java.security.jgss/sun.security.krb5 \
+        -XaddExports:java.security.jgss/sun.security.krb5=ALL-UNNAMED \
         -Xoverride:modules DNS

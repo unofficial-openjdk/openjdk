@@ -139,8 +139,8 @@ public class DownloadActivationGroup
             CommandEnvironment cmd = new ActivationGroupDesc.CommandEnvironment(
                     null,
                     new String[] { "-XaddExports:java.rmi/sun.rmi.registry=ALL-UNNAMED,"
-                            + "java.rmi/sun.rmi.server,java.rmi/sun.rmi.transport,"
-                            + "java.rmi/sun.rmi.transport.tcp" });
+                            + "java.rmi/sun.rmi.server=ALL-UNNAMED,java.rmi/sun.rmi.transport=ALL-UNNAMED,"
+                            + "java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED" });
 
             ActivationGroupDesc groupDesc =
                 new ActivationGroupDesc("MyActivationGroupImpl",

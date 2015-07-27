@@ -284,7 +284,7 @@ public final class ModuleBootstrap {
             if (expr.length() > 0) {
 
                 String[] s = expr.split("=");
-                if (s.length < 1 || s.length > 2)
+                if (s.length < 2 || s.length > 2)
                     fail("Unable to parse: " + expr);
 
                 // $MODULE/$PACKAGE
