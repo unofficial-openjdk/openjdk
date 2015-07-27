@@ -354,7 +354,9 @@ public class TypeEnter implements Completer {
                 Symbol p = env.toplevel.packge;
                 while (p.owner != env.toplevel.packge.modle.rootPackage) {
                     p.owner.complete(); // enter all class members of p
-                    if (syms.getClass(env.toplevel.modle, p.getQualifiedName()) != null) {
+                    //need to lookup the owning module/package:
+                    PackageSymbol pack = syms.lookupPackage(env.toplevel.modle, p.owner.getQualifiedName());
+                    if (syms.getClass(pack.modle, p.getQualifiedName()) != null) {
                         log.error(tree.pos,
                                   "pkg.clashes.with.class.of.same.name",
                                   p);

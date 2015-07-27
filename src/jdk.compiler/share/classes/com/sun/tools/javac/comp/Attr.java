@@ -339,7 +339,15 @@ public class Attr extends JCTree.Visitor {
                                            syms.errSymbol.name,
                                            null, null, null, null);
         localEnv.enclClass.sym = syms.errSymbol;
-        return tree.accept(identAttributer, localEnv);
+        return attribIdent(tree, localEnv);
+    }
+
+    /** Attribute a parsed identifier.
+     * @param tree Parsed identifier name
+     * @param env The env to use
+     */
+    public Symbol attribIdent(JCTree tree, Env<AttrContext> env) {
+        return tree.accept(identAttributer, env);
     }
     // where
         private TreeVisitor<Symbol,Env<AttrContext>> identAttributer = new IdentAttributer();

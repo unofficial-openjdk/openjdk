@@ -1031,23 +1031,24 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 if (file.getKind() != JavaFileObject.Kind.CLASS)
                     throw new AssertionError(file);
                 ClassSymbol cs;
+                // TODO: for now, we assume that generated code is in a default module;
+                // in time, we need a way to be able to specify the module for generated code
                 if (isPkgInfo(file, JavaFileObject.Kind.CLASS)) {
                     Name packageName = Convert.packagePart(name);
-                    // TODO: for now, we assume that generated code is in a default module;
-                    // in time, we need a way to be able to specify the module for generated code
                     PackageSymbol p = symtab.enterPackage(defaultModule, packageName);
                     if (p.package_info == null)
-                        p.package_info = symtab.enterClass(Convert.shortName(name), p);
+                        p.package_info = symtab.enterClass(defaultModule, Convert.shortName(name), p);
                     cs = p.package_info;
                     cs.reset();
                     if (cs.classfile == null)
                         cs.classfile = file;
                     cs.completer = initialCompleter;
                 } else {
-                    cs = symtab.enterClass(name);
+                    cs = symtab.enterClass(defaultModule, name);
                     cs.reset();
                     cs.classfile = file;
                     cs.completer = initialCompleter;
+                    cs.owner.members().enter(cs); //XXX - OverwriteBetweenCompilations; syms.getClass is not sufficient anymore
                 }
                 list = list.prepend(cs);
             }

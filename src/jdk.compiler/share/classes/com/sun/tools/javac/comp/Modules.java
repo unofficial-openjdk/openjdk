@@ -271,6 +271,7 @@ public class Modules extends JCTree.Visitor {
                     log.useSource(prev);
                 }
             }
+            syms.unnamedModule.completer = getUnnamedModuleCompleter();
         } else {
             if (defaultModule == null) {
                 switch (rootModules.size()) {

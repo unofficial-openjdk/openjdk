@@ -23,40 +23,49 @@
 
 /**
  * @test
- * @summary test module/package conflicts
+ * @summary Verify that DocLint does not cause unnecessary (and potentially dangerous) implicit compilation
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
  * @build ToolBox ModuleTestBase
- * @run main PackageConflictTest
+ * @run main DoclintOtherModules
  */
 
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class PackageConflictTest extends ModuleTestBase {
+public class DoclintOtherModules extends ModuleTestBase {
+
     public static void main(String... args) throws Exception {
-        PackageConflictTest t = new PackageConflictTest();
+        DoclintOtherModules t = new DoclintOtherModules();
         t.runTests();
     }
 
     @Test
     void testSimple(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src,
-                "package java.util; public class MyList { }");
+        Path m1 = src.resolve("m1");
+        Path m2 = src.resolve("m2");
+        tb.writeJavaFiles(m1,
+                          "module m1 {}",
+                          "package m1; /** @see m2.B */ @Deprecated public class A {}");
+        tb.writeJavaFiles(m2,
+                          "module m2 { requires m1; exports m2; }",
+                          "package m2; public class B extends Foo {} @Deprecated class Foo {}");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
         String log = tb.new JavacTask()
-                .options("-XDrawDiagnostics")
+                .options("-XDrawDiagnostics", "-modulesourcepath", src.toString(), "-Xlint:deprecation", "-Xdoclint:-reference", "-Werror")
                 .outdir(classes)
-                .files(findJavaFiles(src))
+                .files(findJavaFiles(m1))
                 .run(ToolBox.Expect.SUCCESS)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("MyList.java:1:1: compiler.warn.package.in.other.module.1: java.base"))
-            throw new Exception("expected output not found");
+        if (!log.isEmpty())
+            throw new Exception("expected output not found: " + log);
     }
+
 }

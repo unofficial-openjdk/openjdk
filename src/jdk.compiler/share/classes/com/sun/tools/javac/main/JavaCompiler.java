@@ -651,7 +651,7 @@ public class JavaCompiler {
     public Symbol resolveBinaryNameOrIdent(String name) {
         try {
             Name flatname = names.fromString(name.replace("/", "."));
-            return finder.loadClass(flatname);
+            return finder.loadClass(syms.unnamedModule, flatname);
         } catch (CompletionFailure ignore) {
             return resolveIdent(name);
         }

@@ -143,6 +143,9 @@ public class ClassReader {
      */
     protected WriteableScope typevars;
 
+    private List<InterimUsesDirective> interimUses = List.nil();
+    private List<InterimProvidesDirective> interimProvides = List.nil();
+
     /** The path name of the class file currently being read.
      */
     protected JavaFileObject currentClassFile = null;
@@ -510,6 +513,23 @@ public class ClassReader {
                                currentClassFile.toString(),
                                "CONSTANT_Class_info", i);
         return (ClassSymbol)obj;
+    }
+
+    Name readClassName(int i) {
+        int index = poolIdx[i];
+        if (index == 0) return null;
+        byte tag = buf[index];
+        if (tag != CONSTANT_Class) {
+            throw badClassFile("bad.const.pool.entry",
+                               currentClassFile.toString(),
+                               "CONSTANT_Class_info", i);
+        }
+        int nameIndex =  poolIdx[getChar(index + 1)];
+        int len = getChar(nameIndex + 1);
+        int start = nameIndex + 3;
+        if (buf[start] == '[' || buf[start + len - 1] == ';')
+            throw badClassFile("wrong class name"); //TODO: proper diagnostics
+        return names.fromUtf(internalize(buf, start, len));
     }
 
     /** Read name.
@@ -981,7 +1001,12 @@ public class ClassReader {
             new AttributeReader(names.InnerClasses, V45_3, CLASS_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
                     ClassSymbol c = (ClassSymbol) sym;
-                    readInnerClasses(c);
+                    if (currentModule.module_info == c) {
+                        //XXX prevent entering the classes too soon.
+                        skipInnerClasses();
+                    } else {
+                        readInnerClasses(c);
+                    }
                 }
             },
 
@@ -1220,26 +1245,24 @@ public class ClassReader {
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
 
-                        ListBuffer<UsesDirective> uses = new ListBuffer<>();
+                        msym.directives = directives.toList();
+
+                        ListBuffer<InterimUsesDirective> uses = new ListBuffer<>();
                         int nuses = nextChar();
                         for (int i = 0; i < nuses; i++) {
-                            ClassSymbol srvc = readClassSymbol(nextChar());
-                            uses.add(new UsesDirective(srvc));
+                            Name srvc = readClassName(nextChar());
+                            uses.add(new InterimUsesDirective(srvc));
                         }
-                        msym.uses = uses.toList();
-                        directives.addAll(msym.uses);
+                        interimUses = uses.toList();
 
-                        ListBuffer<ProvidesDirective> provides = new ListBuffer<>();
+                        ListBuffer<InterimProvidesDirective> provides = new ListBuffer<>();
                         int nprovides = nextChar();
                         for (int i = 0; i < nprovides; i++) {
-                            ClassSymbol srvc = readClassSymbol(nextChar());
-                            ClassSymbol impl = readClassSymbol(nextChar());
-                            provides.add(new ProvidesDirective(srvc, impl));
+                            Name srvc = readClassName(nextChar());
+                            Name impl = readClassName(nextChar());
+                            provides.add(new InterimProvidesDirective(srvc, impl));
                         }
-                        msym.provides = provides.toList();
-                        directives.addAll(msym.provides);
-
-                        msym.directives = directives.toList();
+                        interimProvides = provides.toList();
                     }
                 }
             },
@@ -2303,6 +2326,16 @@ public class ClassReader {
         }
     }
 
+    void skipInnerClasses() {
+        int n = nextChar();
+        for (int i = 0; i < n; i++) {
+            nextChar();
+            nextChar();
+            nextChar();
+            nextChar();
+        }
+    }
+
     /** Enter type variables of this classtype and all enclosing ones in
      *  `typevars'.
      */
@@ -2349,12 +2382,12 @@ public class ClassReader {
         if ((flags & MODULE) == 0) {
             if (c.owner.kind == PCK) c.flags_field = flags;
             // read own class name and check that it matches
+            currentModule = c.packge().modle;
             ClassSymbol self = readClassSymbol(nextChar());
             if (c != self) {
                 throw badClassFile("class.file.wrong.class",
                                    self.flatname);
             }
-            currentModule = c.packge().modle;
         } else {
             c.flags_field = flags;
             Name modInfoName = readModuleInfoName(nextChar());
@@ -2510,11 +2543,22 @@ public class ClassReader {
             } else {
                 c.setAnnotationTypeMetadata(AnnotationTypeMetadata.notAnAnnotationType());
             }
+
+            if (interimUses.nonEmpty() || interimProvides.nonEmpty()) {
+                Assert.check(currentModule.isCompleted());
+                currentModule.completer =
+                        new UsesProvidesCompleter(currentModule, interimUses, interimProvides);
+            } else {
+                currentModule.uses = List.nil();
+                currentModule.provides = List.nil();
+            }
         } catch (IOException ex) {
             throw badClassFile("unable.to.access.file", ex.getMessage());
         } catch (ArrayIndexOutOfBoundsException ex) {
             throw badClassFile("bad.class.file", c.flatname);
         } finally {
+            interimUses = List.nil();
+            interimProvides = List.nil();
             missingTypeVariables = List.nil();
             foundTypeVariables = List.nil();
             filling = false;
@@ -2747,6 +2791,60 @@ public class ClassReader {
 
             sym.getAnnotationTypeMetadata().setTarget(theTarget);
             sym.getAnnotationTypeMetadata().setRepeatable(theRepeatable);
+        }
+    }
+
+    private static final class InterimUsesDirective {
+        public final Name service;
+
+        public InterimUsesDirective(Name service) {
+            this.service = service;
+        }
+
+    }
+
+    private static final class InterimProvidesDirective {
+        public final Name service;
+        public final Name impl;
+
+        public InterimProvidesDirective(Name service, Name impl) {
+            this.service = service;
+            this.impl = impl;
+        }
+
+    }
+
+    private final class UsesProvidesCompleter implements Completer {
+        private final ModuleSymbol currentModule;
+        private final List<InterimUsesDirective> interimUsesCopy;
+        private final List<InterimProvidesDirective> interimProvidesCopy;
+
+        public UsesProvidesCompleter(ModuleSymbol currentModule, List<InterimUsesDirective> interimUsesCopy, List<InterimProvidesDirective> interimProvidesCopy) {
+            this.currentModule = currentModule;
+            this.interimUsesCopy = interimUsesCopy;
+            this.interimProvidesCopy = interimProvidesCopy;
+        }
+
+        @Override
+        public void complete(Symbol sym) throws CompletionFailure {
+            ListBuffer<Directive> directives = new ListBuffer<>();
+            directives.addAll(currentModule.directives);
+            ListBuffer<UsesDirective> uses = new ListBuffer<>();
+            for (InterimUsesDirective interim : interimUsesCopy) {
+                UsesDirective d = new UsesDirective(syms.enterClass(currentModule, interim.service));
+                uses.add(d);
+                directives.add(d);
+            }
+            currentModule.uses = uses.toList();
+            ListBuffer<ProvidesDirective> provides = new ListBuffer<>();
+            for (InterimProvidesDirective interim : interimProvidesCopy) {
+                ProvidesDirective d = new ProvidesDirective(syms.enterClass(currentModule, interim.service),
+                                                            syms.enterClass(currentModule, interim.impl));
+                provides.add(d);
+                directives.add(d);
+            }
+            currentModule.provides = provides.toList();
+            currentModule.directives = directives.toList();
         }
     }
 }
