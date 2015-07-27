@@ -61,7 +61,7 @@ case "$OS" in
 
         echo
         echo "Running the test..."
-        ${TESTJAVA}/bin/javac -XaddExports:java.base/sun.misc \
+        ${TESTJAVA}/bin/javac -XaddExports:java.base/sun.misc=ALL-UNNAMED \
             ${TESTTOOLVMOPTS} ${TESTJAVACOPTS} -d . ${TESTSRC}\\PublicKeyInterop.java
         ${TESTJAVA}/bin/java -XaddExports:java.base/sun.misc=ALL-UNNAMED \
             ${TESTVMOPTS} PublicKeyInterop

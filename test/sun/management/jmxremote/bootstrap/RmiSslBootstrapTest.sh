@@ -49,7 +49,7 @@ chmod -R 777 ${TESTCLASSES}/ssl
 DEBUGOPTIONS=""
 export DEBUGOPTIONS
 
-EXTRAOPTIONS="-XaddExports:java.management/sun.management,java.management/sun.management.jmxremote"
+EXTRAOPTIONS="-XaddExports:java.management/sun.management=ALL-UNNAMED,java.management/sun.management.jmxremote=ALL-UNNAMED"
 export EXTRAOPTIONS
 
 # Call the common generic test

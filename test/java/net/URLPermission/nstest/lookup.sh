@@ -58,7 +58,7 @@ grant {
 POLICY
 
 ${TESTJAVA}/bin/java ${TESTVMOPTS} \
-    -XaddExports:java.base/sun.net.spi.nameservice \
+    -XaddExports:java.base/sun.net.spi.nameservice=ALL-UNNAMED \
     -Djava.security.policy=file:./policy \
     -Dsun.net.spi.nameservice.provider.1=simple,sun \
     -cp ${TESTCLASSPATH}${PS}${TESTSRC} LookupTest -runtest ${port}
