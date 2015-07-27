@@ -42,6 +42,7 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+import java.util.Collection;
 
 /** This class enters symbols for all encountered definitions into
  *  the symbol table. The pass consists of high-level two phases,
@@ -325,13 +326,16 @@ public class Enter extends JCTree.Visitor {
                 tree.packge = tree.modle.unnamedPackage;
             }
 
-            // TODO: when javac supports multiple private packages in different
-            // modules, this will need to be updated.
-            if (tree.modle != null && tree.modle.name != null) {
-                if (tree.packge.modle == null) {
-                    tree.packge.modle = tree.modle;
-                } else if (tree.packge.modle != tree.modle) {
-                    log.warning(pd, "package.in.other.module", tree.packge.modle);
+            List<ModuleSymbol> modulesWithPackage = syms.listPackageModules(tree.packge.fullname)
+                                                        .stream()
+                                                        .filter(m -> m != tree.modle)
+                                                        .reduce(List.nil(), (l, m) -> l.prepend(m), (l1, l2) -> l1.prependList(l2));
+
+            if (modulesWithPackage.nonEmpty()) {
+                if (modulesWithPackage.size() == 1) {
+                    log.warning(pd, "package.in.other.module.1", modulesWithPackage.head);
+                } else {
+                    log.warning(pd, "package.in.other.module", modulesWithPackage);
                 }
             }
 
@@ -357,7 +361,7 @@ public class Enter extends JCTree.Visitor {
                     q.flags_field |= EXISTS;
 
                 Name name = names.package_info;
-                ClassSymbol c = syms.enterClass(name, tree.packge);
+                ClassSymbol c = syms.enterClass(tree.modle, name, tree.packge);
                 c.flatname = names.fromString(tree.packge + "." + name);
                 c.sourcefile = tree.sourcefile;
             c.completer = Completer.NULL_COMPLETER;
@@ -383,7 +387,7 @@ public class Enter extends JCTree.Visitor {
             PackageSymbol packge = (PackageSymbol)owner;
             for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
-            c = syms.enterClass(tree.name, packge);
+            c = syms.enterClass(env.toplevel.modle, tree.name, packge);
             packge.members().enterIfAbsent(c);
             if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
                 log.error(tree.pos(),
@@ -397,7 +401,7 @@ public class Enter extends JCTree.Visitor {
             }
             if (owner.kind == TYP) {
                 // We are seeing a member class.
-                c = syms.enterClass(tree.name, (TypeSymbol)owner);
+                c = syms.enterClass(env.toplevel.modle, tree.name, (TypeSymbol)owner);
                 if ((owner.flags_field & INTERFACE) != 0) {
                     tree.mods.flags |= PUBLIC | STATIC;
                 }

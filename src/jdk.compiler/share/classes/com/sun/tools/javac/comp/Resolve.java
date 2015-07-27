@@ -320,17 +320,8 @@ public class Resolve {
                     (env.enclMethod.mods.flags & ANONCONSTR) != 0;
                 break;
             default: // error recovery
-                isAccessible = true;
-                break;
             case PUBLIC:
-                if (allowModules && checkModuleAccess) {
-                    ModuleSymbol currModule = env.toplevel.modle;
-                    PackageSymbol p = c.packge();
-                    isAccessible =
-                        (currModule == p.modle) || currModule.visiblePackages.contains(p);
-                } else {
-                    isAccessible = true;
-                }
+                isAccessible = true;
                 break;
             case PROTECTED:
                 isAccessible =
@@ -1897,15 +1888,26 @@ public class Resolve {
      */
     Symbol loadClass(Env<AttrContext> env, Name name) {
         try {
-            ClassSymbol c = finder.loadClass(name);
+            ClassSymbol c = finder.loadClass(env.toplevel.modle, name);
             return isAccessible(env, c) ? c : new AccessError(c);
         } catch (ClassFinder.BadClassFile err) {
             throw err;
         } catch (CompletionFailure ex) {
+            //even if a class cannot be found in the current module and packages in modules it depends on that
+            //are exported for any or this module, the class may exist internally in some of these modules,
+            //or may exist in a module on which this module does not depend. Provide better diagnostic in
+            //such cases by looking for the class in any module:
+            for (ModuleSymbol ms : syms.getAllModules()) {
+                //do not load currently unloaded classes, to avoid too eager completion of random things in other modules:
+                ClassSymbol clazz = syms.getClass(ms, name);
+
+                if (clazz != null) {
+                    return new AccessError(clazz);
+                }
+            }
             return typeNotFound;
         }
     }
-
 
     /**
      * Find a type declared in a scope (not inherited).  Return null
@@ -2107,7 +2109,7 @@ public class Resolve {
         }
 
         if (kind.contains(KindSelector.PCK))
-            return syms.enterPackage(env.toplevel.modle, name);
+            return syms.lookupPackage(env.toplevel.modle, name);
         else return bestSoFar;
     }
 
@@ -2123,7 +2125,7 @@ public class Resolve {
         Symbol bestSoFar = typeNotFound;
         PackageSymbol pack = null;
         if (kind.contains(KindSelector.PCK)) {
-            pack = syms.enterPackage(env.toplevel.modle, fullname);
+            pack = syms.lookupPackage(env.toplevel.modle, fullname);
             if (pack.exists()) return pack;
         }
         if (kind.contains(KindSelector.TYP)) {

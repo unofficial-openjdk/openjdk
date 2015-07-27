@@ -30,11 +30,15 @@ tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determ
 tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
 tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
 tools/javac/warnings/6594914/T6594914b.java     				0 generic-all	uses -Xlint:sunapi; should this go away or be limited to 8?
-tools/javac/modules/DuplicateClassTest.java					0 generic-all   waiting for rest of patch for package problem
 
 
-##### javah ##################################################################
+##### javah ####################################################################
 
 tools/javah/T7185778.java     							0 generic-all	Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
 
+
+##### jdeps ####################################################################
+
+tools/jdeps/Basic.java                                                          0 generic-all   needs -Xmodule to modify contents in existing package
+tools/jdeps/DotFileTest.java                                                    0 generic-all   needs -Xmodule to modify contents in existing package
 

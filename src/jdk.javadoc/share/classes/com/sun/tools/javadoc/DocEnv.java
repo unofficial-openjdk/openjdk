@@ -31,6 +31,7 @@ import java.util.*;
 import javax.tools.JavaFileManager;
 
 import com.sun.javadoc.*;
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePath;
 import com.sun.tools.doclint.DocLint;
@@ -51,6 +52,8 @@ import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCPackageDecl;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.Convert;
+import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 
 /**
@@ -184,7 +187,9 @@ public class DocEnv {
      */
     public ClassDocImpl loadClass(String name) {
         try {
-            ClassSymbol c = finder.loadClass(names.fromString(name));
+            Name nameImpl = names.fromString(name);
+            ModuleSymbol mod = syms.inferModule(Convert.packagePart(nameImpl));
+            ClassSymbol c = finder.loadClass(mod != null ? mod : syms.errModule, nameImpl);
             return getClassDoc(c);
         } catch (CompletionFailure ex) {
             chk.completionError(null, ex);
@@ -200,7 +205,9 @@ public class DocEnv {
         //### to avoid a compiler bug.  Most likely
         //### instead a dummy created for error recovery.
         //### Should investigate this.
-        PackageSymbol p = syms.getPackage(null, names.fromString(name));
+        Name nameImpl = names.fromString(name);
+        ModuleSymbol mod = syms.inferModule(nameImpl);
+        PackageSymbol p = mod != null ? syms.getPackage(mod, nameImpl) : null;
         ClassSymbol c = getClassSymbol(name);
         if (p != null && c == null) {
             return getPackageDoc(p);
@@ -219,7 +226,9 @@ public class DocEnv {
             char[] nameChars = name.toCharArray();
             int idx = name.length();
             for (;;) {
-                ClassSymbol s = syms.getClass(null, names.fromChars(nameChars, 0, nameLen));
+                Name nameImpl = names.fromChars(nameChars, 0, nameLen);
+                ModuleSymbol mod = syms.inferModule(Convert.packagePart(nameImpl));
+                ClassSymbol s = mod != null ? syms.getClass(mod, nameImpl) : null;
                 if (s != null)
                     return s; // found it!
                 idx = name.substring(0, idx).lastIndexOf('.');
@@ -816,16 +825,19 @@ public class DocEnv {
 
     void initDoclint(Collection<String> opts, Collection<String> customTagNames, String htmlVersion) {
         ArrayList<String> doclintOpts = new ArrayList<>();
+        boolean msgOptionSeen = false;
 
-        for (String opt: opts) {
-            doclintOpts.add(opt == null ? DocLint.XMSGS_OPTION : DocLint.XMSGS_CUSTOM_PREFIX + opt);
+        for (String opt : opts) {
+            if (opt.startsWith(DocLint.XMSGS_OPTION)) {
+                if (opt.equals(DocLint.XMSGS_CUSTOM_PREFIX + "none"))
+                    return;
+                msgOptionSeen = true;
+            }
+            doclintOpts.add(opt);
         }
 
-        if (doclintOpts.isEmpty()) {
+        if (!msgOptionSeen) {
             doclintOpts.add(DocLint.XMSGS_OPTION);
-        } else if (doclintOpts.size() == 1
-                && doclintOpts.get(0).equals(DocLint.XMSGS_CUSTOM_PREFIX + "none")) {
-            return;
         }
 
         String sep = "";
@@ -847,5 +859,11 @@ public class DocEnv {
 
     boolean showTagMessages() {
         return (doclint == null);
+    }
+
+    Map<CompilationUnitTree, Boolean> shouldCheck = new HashMap<>();
+
+    boolean shouldCheck(CompilationUnitTree unit) {
+        return shouldCheck.computeIfAbsent(unit, doclint :: shouldCheck);
     }
 }

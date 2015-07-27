@@ -399,15 +399,21 @@ public class ClassFinder {
     /** Load a toplevel class with given fully qualified name
      *  The class is entered into `classes' only if load was successful.
      */
-    public ClassSymbol loadClass(Name flatname) throws CompletionFailure {
-        ModuleSymbol msym = null; // XXX temporary
-        boolean absent = syms.getClass(msym, flatname) == null;
-        ClassSymbol c = syms.enterClass(flatname);
+    public ClassSymbol loadClass(ModuleSymbol msym, Name flatname) throws CompletionFailure {
+        Assert.checkNonNull(msym);
+        Name packageName = Convert.packagePart(flatname);
+        PackageSymbol ps = syms.lookupPackage(msym, packageName);
+
+        Assert.checkNonNull(ps.modle, () -> "msym=" + msym + "; flatName=" + flatname);
+
+        boolean absent = syms.getClass(ps.modle, flatname) == null;
+        ClassSymbol c = syms.enterClass(ps.modle, flatname);
+
         if (c.members_field == null) {
             try {
                 c.complete();
             } catch (CompletionFailure ex) {
-                if (absent) syms.removeClass(msym, flatname);
+                if (absent) syms.removeClass(ps.modle, flatname);
                 throw ex;
             }
         }
@@ -424,9 +430,6 @@ public class ClassFinder {
      *             is older.
      */
     protected void includeClassFile(PackageSymbol p, JavaFileObject file) {
-        if (p.modle == null && p.modleHint != null)
-            p.modle = p.modleHint;
-
         if ((p.flags_field & EXISTS) == 0)
             for (Symbol q = p; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
@@ -509,7 +512,7 @@ public class ClassFinder {
         if (p.members_field == null)
             p.members_field = WriteableScope.create(p);
 
-        ModuleSymbol msym = (p.modle != null) ? p.modle : p.modleHint;
+        ModuleSymbol msym = p.modle;
         if (msym != null) { // TODO: This needs to become an assert
             msym.complete();
             // new code

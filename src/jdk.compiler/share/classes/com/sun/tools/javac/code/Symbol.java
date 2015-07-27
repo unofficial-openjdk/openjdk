@@ -913,11 +913,15 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public java.util.List<ProvidesDirective> getProvidesDirectives() {
+            while (!isCompleted())
+                complete();
             return Collections.unmodifiableList(provides);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public java.util.List<UsesDirective> getUsesDirectives() {
+            while (!isCompleted())
+                complete();
             return Collections.unmodifiableList(uses);
         }
 
@@ -947,7 +951,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public Name fullname;
         public ClassSymbol package_info; // see bug 6443073
         public ModuleSymbol modle;
-        public ModuleSymbol modleHint;
 
         public PackageSymbol(Name name, Type type, Symbol owner) {
             super(PCK, 0, name, type, owner);
