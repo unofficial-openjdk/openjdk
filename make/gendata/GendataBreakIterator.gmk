@@ -64,9 +64,9 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
 ifeq ($(BOOT_JDK_MODULAR), true)
   BREAK_ITERATOR_BOOTCLASSPATH := -Xoverride:$(BREAK_ITERATOR_CLASSES) \
       -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
-          java.base/sun.text \
-          java.base/sun.text.resources \
-          jdk.localedata/sun.text.resources.th \
+          java.base/sun.text=ALL-UNNAMED \
+          java.base/sun.text.resources=ALL-UNNAMED \
+          jdk.localedata/sun.text.resources.th=ALL-UNNAMED \
       ))
 else
   BREAK_ITERATOR_BOOTCLASSPATH := -Xbootclasspath/p:$(call CreatePath, \
