@@ -227,6 +227,8 @@ public abstract class Accessor<BeanT, ValueT> implements Receiver {
             super((Class<ValueT>) f.getType());
             this.f = f;
 
+            ModuleAccessHelper.ensureAccess(Accessor.class, f.getDeclaringClass());
+
             int mod = f.getModifiers();
             if (!Modifier.isPublic(mod) || Modifier.isFinal(mod) || !Modifier.isPublic(f.getDeclaringClass().getModifiers())) {
                 try {
