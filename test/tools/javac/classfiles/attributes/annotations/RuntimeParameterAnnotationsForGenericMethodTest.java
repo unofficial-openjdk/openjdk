@@ -27,6 +27,8 @@
  * @summary Tests the RuntimeParameterVisibleAnnotations/RuntimeParameterInvisibleAnnotations attribute.
  *          Checks that the attribute is generated for bridge method.
  * @modules jdk.jdeps/com.sun.tools.classfile
+ *          jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
  * @library /tools/lib /tools/javac/lib ../lib
  * @build WorkAnnotations TestBase TestResult InMemoryFileManager ToolBox
  * @build TestCase ClassType TestAnnotationInfo
