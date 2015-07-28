@@ -30,7 +30,7 @@
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @compile -XaddExports:java.base/jdk.internal.misc ExportAllUnnamed.java
+ * @compile -XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED ExportAllUnnamed.java
  * @run main/othervm -XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED -Xbootclasspath/a:. ExportAllUnnamed
  */
 
