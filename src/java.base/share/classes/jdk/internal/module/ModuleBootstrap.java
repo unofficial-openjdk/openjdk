@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -284,7 +284,9 @@ public final class ModuleBootstrap {
             if (expr.length() > 0) {
 
                 String[] s = expr.split("=");
-                if (s.length < 1 || s.length > 2)
+                if (s.length == 1)
+                    fail("Missing target module: " + expr);
+                if (s.length != 2)
                     fail("Unable to parse: " + expr);
 
                 // $MODULE/$PACKAGE
@@ -304,11 +306,11 @@ public final class ModuleBootstrap {
 
                 // $TARGET
                 boolean allUnnamed = false;
+                String tn = s[1];
                 Module target = null;
-                if (s.length == 1 || "ALL-UNNAMED".equals(s[1])) {
+                if ("ALL-UNNAMED".equals(tn)) {
                     allUnnamed = true;
                 } else {
-                    String tn = s[1];
                     om = bootLayer.findModule(tn);
                     if (om.isPresent()) {
                         target = om.get();

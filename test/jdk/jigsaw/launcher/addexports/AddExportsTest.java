@@ -73,7 +73,7 @@ public class AddExportsTest {
     public void testSanity() throws Exception {
 
         int exitValue
-            =  executeTestJava("-XaddExports:java.base/sun.reflect",
+            =  executeTestJava("-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
                                "-version")
                 .getExitValue();
 
@@ -124,8 +124,8 @@ public class AddExportsTest {
     public void testWithDuplicateOption() throws Exception {
 
         int exitValue
-            =  executeTestJava("-XaddExports:java.base/sun.reflect",
-                               "-XaddExports:java.base/sun.reflect",
+            =  executeTestJava("-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
+                               "-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
                                "-version")
                 .getExitValue();
 
@@ -151,11 +151,12 @@ public class AddExportsTest {
     public Object[][] badValues() {
         return new Object[][]{
 
-            { "java.monkey/sun.monkey",  null }, // unknown module
-            { "java.base/sun.monkey",    null }, // unknown package
-            { "java.monkey/sun.monkey",  null }, // unknown module and package
-            { "java.base",               null }, // missing package
-            { "java.base/",              null }  // missing package
+            { "java.base/sun.misc",                  null }, // missing target
+            { "java.monkey/sun.monkey=ALL-UNNAMED",  null }, // unknown module
+            { "java.base/sun.monkey=ALL-UNNAMED",    null }, // unknown package
+            { "java.monkey/sun.monkey=ALL-UNNAMED",  null }, // unknown module/package
+            { "java.base=ALL-UNNAMED",               null }, // missing package
+            { "java.base/=ALL-UNNAMED",              null }  // missing package
 
         };
     }
