@@ -1115,7 +1115,7 @@ public class Locations {
                 String name = location.getName() + "[" + k + "]";
                 ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false, false);
                 moduleLocations.put(k, h);
-                v.forEach(p -> pathLocations.put(p.toAbsolutePath().normalize(), h));
+                v.forEach(p -> pathLocations.put(normalize(p), h));
             });
         }
 
