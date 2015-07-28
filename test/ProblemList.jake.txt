@@ -10,6 +10,7 @@ java/lang/invoke/CustomizedLambdaFormTest.java			 generic-all
 java/lang/invoke/ExplicitCastArgumentsTest.java			 generic-all
 java/lang/invoke/VarargsArrayTest.java				 generic-all
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
+java/lang/Package/annotation/PackageInfoTest.java	         generic-all
 
 ############################################################################
 
