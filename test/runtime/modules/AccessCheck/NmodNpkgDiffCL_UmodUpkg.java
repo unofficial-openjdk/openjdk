@@ -25,6 +25,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary class p3.c3 defined in module m1 tries to access c4 defined in an unnamed package
  *          and an unnamed module.
  * @library /testlibrary /../../test/lib

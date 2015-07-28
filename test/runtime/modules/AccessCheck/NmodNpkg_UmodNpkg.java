@@ -25,6 +25,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in unnamed module.
  * @library /testlibrary /../../test/lib
  * @compile p2/c2.java

@@ -45,19 +45,19 @@ public class ModuleHelper {
     public static void AddModuleExports(Object from, String pkg, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExports(from, pkg, to);
-        invoke(findMethod("addExportsNoSync"), from, pkg, to);
+        invoke(findMethod("implAddExportsNoSync"), from, pkg, to);
     }
 
     public static void AddReadsModule(Object from, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddReadsModule(from, to);
-        invoke(findMethod("addReadsNoSync"), from, to);
+        invoke(findMethod("implAddReadsNoSync"), from, to);
     }
 
     public static void AddModulePackage(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModulePackage(m, pkg);
-        invoke(findMethod("addPackageNoSync"), m, pkg);
+        invoke(findMethod("implAddPackageNoSync"), m, pkg);
     }
     public static void AddModuleExportsToAllUnnamed(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
@@ -68,7 +68,7 @@ public class ModuleHelper {
     public static void AddModuleExportsToAll(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExportsToAll(m, pkg);
-        invoke(findMethod("addExportsNoSync"), m, pkg, null);
+        invoke(findMethod("implAddExportsNoSync"), m, pkg, null);
     }
 
     public static boolean CanReadModule(Object from, Object to) throws Throwable {
