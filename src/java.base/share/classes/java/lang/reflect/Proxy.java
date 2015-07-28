@@ -1018,7 +1018,7 @@ public class Proxy implements java.io.Serializable {
             Module target = getDynamicModule(loader);
             requires.stream()
                     .filter(Module::isNamed)
-                    .forEach(target::addReadsAll);
+                    .forEach(target::implAddReadAll);
             requires.stream()
                     .filter(m -> !m.isNamed())
                     .forEach(m -> addReads(target, m));
@@ -1029,7 +1029,7 @@ public class Proxy implements java.io.Serializable {
                         String pn = packageName(e.getKey());
                         Module m = e.getValue();
                         if (!m.isExported(pn, target)) {
-                            jdk.internal.misc.Modules.addExports(m, pn, target);
+                            m.implAddExports(pn, target);
                         }
                     });
             return target;
@@ -1056,8 +1056,7 @@ public class Proxy implements java.io.Serializable {
             if (target.canRead(m)) {
                 return;
             }
-
-            jdk.internal.misc.Modules.addReads(target, m);
+            target.implAddReads(m);
         }
 
         static boolean canAccess(Module target, Iterable<Class<?>> types) {

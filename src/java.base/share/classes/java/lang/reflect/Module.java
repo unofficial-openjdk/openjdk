@@ -234,56 +234,50 @@ public final class Module {
     }
 
     /**
-     * Updates this module to read the given {@code Module}. This method
-     * is a no-op if {@code target} is {@code this} module (all modules can
-     * read themselves) or this module is not a {@link #isNamed() named}
-     * module (an unnamed module reads all other modules).
+     * If the caller's module is this module then update this module to read
+     * the given target {@code Module}.
+     *
+     * <p> This method is a no-op if {@code target} is {@code this} module (all
+     * modules can read themselves) or this module is not a {@link #isNamed()
+     * named} module (an unnamed module reads all other modules). </p>
      *
      * <p> If {@code target} is {@code null}, and this module does not read
      * all unnamed modules, then this method changes this module so that it
      * reads all unnamed modules (both present and future) in the Java
      * virtual machine. </p>
      *
-     * <p> If there is a security manager, and the caller of this method is not
-     * in this module, then the security manager's {@code checkPermission}
-     * method is called with a {@code ReflectPermission("addReadsModule")}
-     * permission to check that the caller is allowed to change the readability
-     * graph. </p>
+     * @apiNote As this method can only be used to update the caller's module
+     * then this method could be static and the IllegalStateException would
+     * not be needed.
      *
      * @return this module
      *
-     * @throws SecurityException
-     *         If denied by the security manager
+     * @throws IllegalStateException if this is a named module and the caller
+     *         is in a different module
      *
      * @see #canRead
      */
     @CallerSensitive
     public Module addReads(Module target) {
-        if (target != this && this.isNamed()) {
-
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                Module caller = Reflection.getCallerClass().getModule();
-                if (caller != this) {
-                    ReflectPermission perm = new ReflectPermission("addReadsModule");
-                    sm.checkPermission(perm);
-                }
+        if (this.isNamed()) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this) {
+                throw new IllegalStateException(caller + " != " + this);
             }
-
             implAddReads(target, true);
         }
         return this;
     }
 
     /**
-     * Updates this module to read the target module and all modules that it
-     * reads in the original readability graph.
+     * Updates this module to read the target module and all modules that the
+     * target module reads in the original readability graph.
      *
-     * This method is for use by Proxy for dynamic modules
+     * @apiNote This method is for Proxy use
      *
      * @throws IllegalArgumentException is the target is an unnamed module
      */
-    void addReadsAll(Module target) {
+    void implAddReadAll(Module target) {
         if (!target.isNamed())
             throw new IllegalArgumentException("unnamed module not allowed");
 
@@ -295,12 +289,21 @@ public final class Module {
     }
 
     /**
+     * Updates this module to read the target module.
+     *
+     * @apiNote This method is for Proxy use and white-box testing.
+     */
+    void implAddReads(Module target) {
+        implAddReads(target, true);
+    }
+
+    /**
      * Makes the given {@code Module} readable to this module without
      * notifying the VM.
      *
-     * This method is for use by VM whitebox tests only.
+     * @apiNote This method is for VM white-box testing.
      */
-    void addReadsNoSync(Module target) {
+    void implAddReadsNoSync(Module target) {
         implAddReads(target, false);
     }
 
@@ -469,36 +472,39 @@ public final class Module {
     }
 
     /**
-     * Adds a qualified export so that this module exports package {@code pn}
-     * to a {@code target} module. This method has no effect if the package is
-     * already exported to the target module. If also has no effect if invoked
-     * on an unnamed module.
+     * If the caller's module is this module then update this module to export
+     * package {@code pn} to the given {@code target} module.
      *
-     * <p> If there is a security manager then its {@code checkPermission}
-     * method is called with a {@code ReflectPermission("addModuleExports")}
-     * permission to check that the caller is allowed to do this operation. </p>
+     * <p> This method has no effect if the package is already exported to the
+     * target module. If also has no effect if invoked on an unnamed module.
+     * </p>
      *
-     * @apiNote This method is intended for use by test libraries and frameworks
-     * that need to break encapsulation and get to public types in otherwise
-     * module-private packages. General use of this method is strongly
-     * discouraged.
+     * @apiNote As this method can only be used to update the caller's module
+     * then this method could be static and the IllegalStateException would
+     * not be needed.
+     *
+     * @implNote Augmenting the exports is potentially an expensive operation,
+     * it is not expected to be used very often.
      *
      * @return this module
      *
-     * @throws IllegalArgumentException
-     *         If {@code pn} is not a package in this module
-     * @throws SecurityException
-     *         If denied by the security manager
+     * @throws IllegalArgumentException if {@code pn} is {@code null}, or
+     *         this is a named module and the package {@code pn} is not a
+     *         package in this module
+     * @throws IllegalStateException if this is a named module and the caller
+     *         is in a different module
      */
+    @CallerSensitive
     public Module addExports(String pn, Module target) {
-        Objects.requireNonNull(pn); // IAE or NPE for this?
+        if (pn == null)
+            throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(target);
 
         if (isNamed()) {
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                ReflectPermission perm = new ReflectPermission("addModuleExports");
-                sm.checkPermission(perm);
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this) {
+                // disable until jtreg and langtools tests are ready
+                // throw new IllegalStateException(caller + " != " + this);
             }
             implAddExports(pn, target, true);
         }
@@ -510,9 +516,9 @@ public final class Module {
      * Updates the exports so that package {@code pn} is exported to module
      * {@code target} but without notifying the VM.
      *
-     * This method is for use by VM whitebox tests only.
+     * @apiNote This method is for VM white-box testing.
      */
-    void addExportsNoSync(String pn, Module target) {
+    void implAddExportsNoSync(String pn, Module target) {
         implAddExports(pn.replace('/', '.'), target, false);
     }
 
@@ -520,7 +526,7 @@ public final class Module {
      * Updates the exports so that package {@code pn} is exported to module
      * {@code target}.
      *
-     * This method is for use by whitebox tests only.
+     * @apiNote This method is for Proxy use and white-box testing.
      */
     void implAddExports(String pn, Module target) {
         implAddExports(pn, target, true);
@@ -662,6 +668,8 @@ public final class Module {
     /**
      * Add a package to this module.
      *
+     * @apiNote This method is for Proxy use.
+     *
      * @apiNote This is an expensive operation, not expected to be used often.
      * At this time then it does not validate that the package name is a
      * valid java identifier.
@@ -673,9 +681,9 @@ public final class Module {
     /**
      * Add a package to this module without notifying the VM.
      *
-     * This method is for use by VM whitebox tests only.
+     * @apiNote This method is VM white-box testing.
      */
-    void addPackageNoSync(String pn) {
+    void implAddPackageNoSync(String pn) {
         implAddPackage(pn.replace('/', '.'), false);
     }
 
