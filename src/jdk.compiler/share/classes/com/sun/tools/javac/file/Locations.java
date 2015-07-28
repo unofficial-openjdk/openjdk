@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -998,6 +999,32 @@ public class Locations {
                     } catch (IOException ignore) {
                     } catch (ModuleNameReader.BadClassFile ignore) {
                     }
+                    //automatic module:
+                    String fn = p.getFileName().toString();
+                    //from ModulePath.deriveModuleDescriptor:
+
+                    // drop .jar
+                    String mn = fn.substring(0, fn.length()-4);
+
+                    // find first occurrence of -${NUMBER}. or -${NUMBER}$
+                    Matcher matcher = Pattern.compile("-(\\d+(\\.|$))").matcher(mn);
+                    if (matcher.find()) {
+                        int start = matcher.start();
+
+                        mn = mn.substring(0, start);
+                    }
+
+                    // finally clean up the module name
+                    mn =  mn.replaceAll("[^A-Za-z0-9]", ".")  // replace non-alphanumeric
+                            .replaceAll("(\\.)(\\1)+", ".")   // collapse repeating dots
+                            .replaceAll("^\\.", "")           // drop leading dots
+                            .replaceAll("\\.$", "");          // drop trailing dots
+
+
+                    if (!mn.isEmpty()) {
+                        return new Pair<>(mn, p);
+                    }
+
                     return null;
                 }
 

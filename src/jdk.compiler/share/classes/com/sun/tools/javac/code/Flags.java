@@ -289,6 +289,12 @@ public class Flags {
     // TODO: do we need this; can we not infer it from the class name?
     public static final long MODULE = 1L<<51;
 
+    /**
+     * Flag to indicate the given ModuleSymbol is an automatic module.
+     */
+    //TODO: can this be 1L << 0 or alike?
+    public static final long AUTOMATIC_MODULE = 1L<<52;
+
     /** Modifier masks.
      */
     public static final int

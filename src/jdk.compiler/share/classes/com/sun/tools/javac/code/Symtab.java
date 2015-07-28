@@ -604,6 +604,16 @@ public class Symtab {
                     return pack;
                 }
             }
+
+            if ((msym.flags() & AUTOMATIC_MODULE) != 0) {
+                //automatic modules depend on the unname module, for which we generally don't know
+                //the list of packages it "exports" ahead of time. So try to lookup the package in the
+                //unnamed module, and use it if it exists:
+                PackageSymbol pack = enterPackage(unnamedModule, flatName);
+                pack.complete();
+                if (pack.exists())
+                    return pack;
+            }
         }
 
         return enterPackage(msym, flatName);

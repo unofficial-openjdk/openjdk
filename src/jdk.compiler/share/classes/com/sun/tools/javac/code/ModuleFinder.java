@@ -26,7 +26,9 @@ package com.sun.tools.javac.code;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -38,6 +40,10 @@ import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardLocation;
 
+import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.RequiresDirective;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
+import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.util.Context;
@@ -288,7 +294,14 @@ public class ModuleFinder {
                     classFinder.preferredFileObject(src_fo, class_fo);
 
             if (fo == null) {
-                msym.kind = ERR;
+                String moduleName = msym.sourceLocation == null && msym.classLocation != null ?
+                    fileManager.inferModuleName(msym.classLocation) : null;
+                if (moduleName != null) {
+                    msym.module_info.classfile = null;
+                    msym.module_info.completer = new AutomaticModuleCompleter(msym);
+                } else {
+                    msym.kind = ERR;
+                }
             } else {
                 msym.module_info.classfile = fo;
                 msym.module_info.completer = new Symbol.Completer() {
@@ -309,5 +322,58 @@ public class ModuleFinder {
 
     JCDiagnostic getDescription(StandardLocation l) {
         return diags.fragment("locn." + StringUtils.toLowerCase(l.getName()));
+    }
+
+    private class AutomaticModuleCompleter implements Completer {
+
+        private final ModuleSymbol msym;
+
+        public AutomaticModuleCompleter(ModuleSymbol msym) {
+            this.msym = msym;
+        }
+
+        @Override
+        public void complete(Symbol sym) throws CompletionFailure {
+            try {
+                ListBuffer<Directive> directives = new ListBuffer<>();
+                ListBuffer<ExportsDirective> exports = new ListBuffer<>();
+                Set<String> seenPackages = new HashSet<>();
+
+                for (JavaFileObject clazz : fileManager.list(msym.classLocation, "", EnumSet.of(Kind.CLASS), true)) {
+                    String binName = fileManager.inferBinaryName(msym.classLocation, clazz);
+                    String pack = binName.lastIndexOf('.') != (-1) ? binName.substring(0, binName.lastIndexOf('.')) : ""; //unnamed package????
+                    if (seenPackages.add(pack)) {
+                        ExportsDirective d = new ExportsDirective(syms.enterPackage(msym, names.fromString(pack)), null);
+                        directives.add(d);
+                        exports.add(d);
+                    }
+                }
+
+                ListBuffer<RequiresDirective> requires = new ListBuffer<>();
+
+                //XXX - findAllModules can only be called once (will return an empty list on subsequent invocations):
+                //workarounding by calling findAllModules to ensure the structures are set-up and the using syms.getAllModules:
+                findAllModules();
+
+                for (ModuleSymbol msym : syms.getAllModules()) {
+                    RequiresDirective d = new RequiresDirective(msym, EnumSet.of(RequiresFlag.PUBLIC));
+                    directives.add(d);
+                    requires.add(d);
+                }
+
+                RequiresDirective requiresUnnamed = new RequiresDirective(syms.unnamedModule);
+                directives.add(requiresUnnamed);
+                requires.add(requiresUnnamed);
+
+                msym.exports = exports.toList();
+                msym.provides = List.nil();
+                msym.requires = requires.toList();
+                msym.uses = List.nil();
+                msym.directives = directives.toList();
+                msym.flags_field |= Flags.AUTOMATIC_MODULE;
+            } catch (IOException ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
     }
 }

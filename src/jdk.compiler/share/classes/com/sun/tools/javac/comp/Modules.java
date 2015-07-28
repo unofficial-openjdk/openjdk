@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
@@ -47,6 +48,7 @@ import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.ModuleFinder;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.Symbol;
@@ -272,6 +274,8 @@ public class Modules extends JCTree.Visitor {
                 }
             }
             syms.unnamedModule.completer = getUnnamedModuleCompleter();
+            syms.unnamedModule.sourceLocation = StandardLocation.SOURCE_PATH;
+            syms.unnamedModule.classLocation = StandardLocation.CLASS_PATH;
         } else {
             if (defaultModule == null) {
                 switch (rootModules.size()) {
@@ -345,7 +349,7 @@ public class Modules extends JCTree.Visitor {
             // But, if module-info comes from a .class file, the underlying
             // call of classFinder.fillIn will just call ClassReader to read
             // the .class file, and so we call completeModule here.
-            if (msym.module_info.classfile.getKind() == Kind.CLASS) {
+            if (msym.module_info.classfile == null || msym.module_info.classfile.getKind() == Kind.CLASS) {
                 completeModule(msym);
             }
         }
@@ -512,18 +516,41 @@ public class Modules extends JCTree.Visitor {
         Assert.checkNonNull(msym.requires);
         Set<ModuleSymbol> readable = new HashSet<>();
         Set<ModuleSymbol> requiresPublic = new HashSet<>();
-        for (RequiresDirective d: msym.requires) {
-            d.module.complete();
-            readable.add(d.module);
-            Set<ModuleSymbol> s = requiresPublicCache.get(d.module);
-            if (s == null) {
-                System.err.println("no entry in cache for " + d.module);
+        if ((msym.flags() & Flags.AUTOMATIC_MODULE) == 0) {
+            for (RequiresDirective d: msym.requires) {
+                d.module.complete();
+                readable.add(d.module);
+                Set<ModuleSymbol> s = requiresPublicCache.get(d.module);
+                Assert.checkNonNull(s, () -> "no entry in cache for " + d.module);
+                readable.addAll(s);
+                if (d.flags.contains(RequiresFlag.PUBLIC)) {
+                    requiresPublic.add(d.module);
+                    requiresPublic.addAll(s);
+                }
             }
-            readable.addAll(s);
-            if (d.flags.contains(RequiresFlag.PUBLIC)) {
-                requiresPublic.add(d.module);
-                requiresPublic.addAll(s);
+        } else {
+            //the module graph may contain cycles involving automatic modules
+            //handle automatic modules separatelly:
+            Set<ModuleSymbol> seen = new HashSet<>();
+            List<ModuleSymbol> todo = List.of(msym);
+            while (todo.nonEmpty()) {
+                ModuleSymbol current = todo.head;
+                todo = todo.tail;
+                if (!seen.add(current))
+                    continue;
+                readable.add(current);
+                requiresPublic.add(current);
+                current.complete();
+                Assert.checkNonNull(current.requires, () -> current + ".requires == null");
+                for (RequiresDirective rd : current.requires) {
+                    if (rd.isPublic())
+                        todo = todo.prepend(rd.module);
+                }
             }
+            //ensure unnamed modules are added (these are not requires public):
+            msym.requires.stream().map(rd -> { rd.module.complete(); return rd.module;}).collect(Collectors.toCollection(() -> readable));
+            readable.remove(msym);
+            requiresPublic.remove(msym);
         }
         requiresPublicCache.put(msym, requiresPublic);
         initVisiblePackages(msym, readable);
@@ -540,6 +567,8 @@ public class Modules extends JCTree.Visitor {
         msym.visiblePackages.add(msym.rootPackage);
 
         for (ModuleSymbol rm : readable) {
+            if (rm == syms.unnamedModule)
+                continue;
             addVisiblePackages(msym, rm.exports);
             Set<ExportsDirective> extra = addExports.get(rm);
             if (extra != null)
