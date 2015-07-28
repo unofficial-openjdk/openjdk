@@ -26,7 +26,6 @@
 module java.desktop {
     requires public java.datatransfer;
     requires public java.xml;
-    requires java.logging;
     requires java.prefs;
 
     exports java.applet;
