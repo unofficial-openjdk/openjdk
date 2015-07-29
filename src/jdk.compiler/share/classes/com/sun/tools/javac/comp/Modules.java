@@ -570,10 +570,10 @@ public class Modules extends JCTree.Visitor {
             if (rm == syms.unnamedModule)
                 continue;
             addVisiblePackages(msym, rm.exports);
-            Set<ExportsDirective> extra = addExports.get(rm);
-            if (extra != null)
-                addVisiblePackages(msym, extra);
         }
+
+        for (Set<ExportsDirective> exports: addExports.values())
+            addVisiblePackages(msym, exports);
     }
 
     private void addVisiblePackages(ModuleSymbol msym, Collection<ExportsDirective> directives) {
