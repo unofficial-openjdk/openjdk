@@ -38,6 +38,13 @@ public class XoverrideCDS {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:.", "-Xshare:dump");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldContain("Cannot use -Xoverride when dumping the shared archive");
+
+        System.out.println("Test that -Xoverride and -Xshare:on are incompatibable");
+        pb = ProcessTools.createJavaProcessBuilder("-Xshare:dump");
+        pb = ProcessTools.createJavaProcessBuilder("-Xoverride:.", "-Xshare:on", "-version");
+        output = new OutputAnalyzer(pb.start());
+        output.shouldContain("The shared archive file cannot be used with -Xoverride");
+
         output.shouldHaveExitValue(1);
     }
 }

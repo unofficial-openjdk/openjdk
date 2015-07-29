@@ -878,6 +878,11 @@ bool FileMapInfo::FileMapHeader::validate() {
     return false;
   }
 
+  if (Arguments::override_dir() != NULL) {
+    FileMapInfo::fail_continue("The shared archive file cannot be used with -Xoverride.");
+    return false;
+  }
+
   if (_version != current_version()) {
     FileMapInfo::fail_continue("The shared archive file is the wrong version.");
     return false;
