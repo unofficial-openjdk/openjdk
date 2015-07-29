@@ -277,6 +277,9 @@ public class CheckResourceKeys {
     }
     // where
     private Set<String> noResourceRequired = new HashSet<String>(Arrays.asList(
+            // module names
+            "jdk.compiler",
+            "jdk.javadoc",
             // system properties
             "application.home", // in Paths.java
             "env.class.path",
