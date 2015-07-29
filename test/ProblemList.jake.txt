@@ -65,6 +65,9 @@ tools/pack200/Pack200Test.java					generic-all
 
 # svc_tools
 
+# 8132452
+sun/tools/jmap/heapconfig/JMapHeapConfigTest.java		generic-all
+
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
 
