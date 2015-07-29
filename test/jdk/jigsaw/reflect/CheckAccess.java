@@ -43,24 +43,24 @@ public class CheckAccess {
 
     @Test
     public void testConstructor() throws Exception {
-        Class<?> c = Class.forName("sun.misc.BASE64Encoder");
+        Class<?> c = Class.forName("sun.security.x509.X500Name");
         assertTrue(Modifier.isPublic(c.getModifiers()));
 
-        Constructor<?> ctor = c.getConstructor();
+        Constructor<?> ctor = c.getConstructor(String.class);
         assertTrue(Modifier.isPublic(ctor.getModifiers()));
 
-        // public class, public constructor, sun.misc not exported
+        // public class, public constructor, sun.security.x509 not exported
         try {
-            ctor.newInstance();
+            ctor.newInstance("cn=duke");
             expectedIllegalAccessException();
         } catch (IllegalAccessException e) { }
 
         // suppress access check
         ctor.setAccessible(true);
-        Object encoder = ctor.newInstance();
+        Object encoder = ctor.newInstance("cn=duke");
     }
 
-    @Test
+    @Test(enabled=false)
     public void testMethodInvoke() throws Exception {
         Class<?> c = Class.forName("sun.misc.VM");
         assertTrue(Modifier.isPublic(c.getModifiers()));
@@ -79,7 +79,7 @@ public class CheckAccess {
         m.invoke(null);
     }
 
-    @Test
+    @Test(enabled=false)
     public void testFieldGet() throws Exception {
         Class<?> c = Class.forName("sun.misc.Unsafe");
         assertTrue(Modifier.isPublic(c.getModifiers()));

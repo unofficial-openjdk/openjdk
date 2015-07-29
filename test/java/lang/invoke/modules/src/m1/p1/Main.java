@@ -53,7 +53,7 @@ public class Main {
     static final Class<?> p2_Type2;        // m1, not exported
     static final Class<?> q1_Type1;        // m2, exported, m1 reads m2
     static final Class<?> q2_Type2;        // m2, not exported, m1 reads m2
-    static final Class<?> uuEncoderClass;  // java.base, not exported
+    static final Class<?> x500NameClass;   // java.base, not exported
 
     static {
         try {
@@ -61,7 +61,7 @@ public class Main {
             p2_Type2 = Class.forName("p2.Type2");
             q1_Type1 = Class.forName("q1.Type1");
             q2_Type2 = Class.forName("q2.Type2");
-            uuEncoderClass = Class.forName("sun.misc.UUEncoder");
+            x500NameClass = Class.forName("sun.security.x509.X500Name");
         } catch (ClassNotFoundException e) {
             throw new AssertionError(e);
         }
@@ -84,7 +84,7 @@ public class Main {
         findConstructor(lookup, q1_Type1, void.class); // [A2]
         findConstructorExpectingIAE(lookup, q2_Type2, void.class); // [A3]
         findConstructor(lookup, Object.class, void.class); // [A2]
-        findConstructorExpectingIAE(lookup, uuEncoderClass, void.class); // [A3]
+        findConstructorExpectingIAE(lookup, x500NameClass, void.class, String.class); // [A3]
 
         /**
          * Teleport from MethodHandles.lookup() to lookup class in the same module
@@ -100,7 +100,7 @@ public class Main {
         findConstructor(lookup2, q1_Type1, void.class); // [A2]
         findConstructorExpectingIAE(lookup2, q2_Type2, void.class); // [A3]
         findConstructor(lookup2, Object.class, void.class); // [A2]
-        findConstructorExpectingIAE(lookup2, uuEncoderClass, void.class); // [A3]
+        findConstructorExpectingIAE(lookup2, x500NameClass, void.class, String.class); // [A3]
 
         /**
          * Teleport from MethodHandles.lookup() to lookup class in another named module
@@ -133,7 +133,7 @@ public class Main {
         findConstructor(lookup, q1_Type1, void.class); // [A1]
         findConstructorExpectingIAE(lookup, q2_Type2, void.class); // [A2]
         findConstructor(lookup, Object.class, void.class); // [A1]
-        findConstructorExpectingIAE(lookup, uuEncoderClass, void.class); // [A2]
+        findConstructorExpectingIAE(lookup, x500NameClass, void.class); // [A2]
 
         /**
          * Teleport from MethodHandles.publicLookup() to lookup class in java.base
@@ -145,7 +145,7 @@ public class Main {
         lookup2 = lookup.in(Object.class);
         assertTrue((lookup2.lookupModes() & MODULE) == 0); // [A0]
         findConstructor(lookup2, String.class, void.class); // [A1]
-        findConstructorExpectingIAE(lookup2, uuEncoderClass, void.class); // [A2]
+        findConstructorExpectingIAE(lookup2, x500NameClass, void.class, String.class); // [A2]
         findConstructorExpectingIAE(lookup2, p1_Type1, void.class); // [A3]
         findConstructorExpectingIAE(lookup2, q1_Type1, void.class); // [A3]
 
@@ -162,7 +162,7 @@ public class Main {
         findConstructor(lookup2, Object.class, void.class);  // [A1]
         findConstructorExpectingIAE(lookup, p2_Type2, void.class); // [A2]
         findConstructorExpectingIAE(lookup, q2_Type2, void.class); // [A2]
-        findConstructorExpectingIAE(lookup2, uuEncoderClass, void.class); // [A2]
+        findConstructorExpectingIAE(lookup2, x500NameClass, void.class, String.class); // [A2]
 
         /**
          * Teleport from MethodHandles.publicLookup() to lookup class in m2
@@ -177,7 +177,7 @@ public class Main {
         findConstructor(lookup2, Object.class, void.class); // [A1]
         findConstructorExpectingIAE(lookup2, p1_Type1, void.class); // [A2]
         findConstructorExpectingIAE(lookup, q2_Type2, void.class); // [A2]
-        findConstructorExpectingIAE(lookup2, uuEncoderClass, void.class);  // [A2]
+        findConstructorExpectingIAE(lookup2, x500NameClass, void.class, String.class);  // [A2]
 
         /**
          * Teleport from MethodHandles.publicLookup() to lookup class that is not

@@ -434,14 +434,14 @@ public class LayerTest {
 
     /**
      * Layer.create with a configuration that contains a module that has a
-     * module-private package that is the same a concealed packaged in
-     * java.base.
+     * concealed package that is the same name as a non-exported package
+     * in java.base.
      */
     public void testConcealSamePackageAsBootLayer() {
         ModuleDescriptor descriptor
             =  new ModuleDescriptor.Builder("m1")
                 .requires("java.base")
-                .conceals("sun.misc")
+                .conceals("sun.launcher")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);

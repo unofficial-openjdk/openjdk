@@ -24,7 +24,6 @@
  */
 
 exports jdk.internal.misc to java.desktop;
-exports sun.misc to jdk.deploy.osx;
 exports sun.security.pkcs to jdk.deploy.osx;
 exports sun.security.util to jdk.deploy.osx;
 exports sun.security.x509 to jdk.deploy.osx;

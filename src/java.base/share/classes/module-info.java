@@ -82,6 +82,10 @@ module java.base {
     // JDK-8044773
     exports jdk.net;
 
+    // These will move to a jdk.internal module via JEP-XXX
+    exports sun.misc;
+    exports sun.reflect;
+
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
 
@@ -105,34 +109,10 @@ module java.base {
     exports jdk.internal.module to
         jdk.jartool,
         jdk.jlink;
-
     exports jdk.internal.misc to
         java.management,
         java.xml,
         jdk.scripting.nashorn;
-
-    exports sun.misc to
-        java.corba,
-        java.desktop,
-        java.logging,
-        java.management,
-        java.naming,
-        java.prefs,
-        java.rmi,
-        java.security.jgss,
-        java.security.sasl,
-        java.sql,
-        java.xml,
-        java.xml.ws,
-        jdk.charsets,
-        jdk.crypto.pkcs11,
-        jdk.httpserver,
-        jdk.jartool,
-        jdk.jconsole,
-        jdk.jvmstat,
-        jdk.scripting.nashorn,
-        jdk.security.auth,
-        jdk.security.jgss;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;
@@ -155,12 +135,6 @@ module java.base {
     exports sun.nio.cs to
         java.desktop,
         jdk.charsets;
-    exports sun.reflect to
-        java.corba,
-        java.logging,
-        java.sql,
-        java.sql.rowset,
-        jdk.scripting.nashorn;
     exports sun.reflect.annotation to
         jdk.compiler;
     exports sun.reflect.generics.reflectiveObjects to

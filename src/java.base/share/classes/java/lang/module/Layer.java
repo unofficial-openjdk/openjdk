@@ -319,7 +319,7 @@ public final class Layer {
      * with the given name.  If a module of the given name is not in this layer
      * then the {@linkplain #parent parent} layer is checked.
      */
-    public Optional<ModuleReference> findReference(String name) {
+    Optional<ModuleReference> findReference(String name) {
         if (cf == null)
             return Optional.empty();
         Optional<ModuleReference> omref = cf.findReference(name);

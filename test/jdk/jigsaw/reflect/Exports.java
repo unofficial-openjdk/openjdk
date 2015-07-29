@@ -54,8 +54,8 @@ public class Exports {
         assertTrue(baseModule.isNamed());
         assertTrue(baseModule.isExported("java.lang"));
         assertTrue(baseModule.isExported("java.lang", thisModule));
-        assertFalse(baseModule.isExported("sun.reflect"));
-        assertFalse(baseModule.isExported("sun.reflect", thisModule));
+        assertFalse(baseModule.isExported("sun.launcher"));
+        assertFalse(baseModule.isExported("sun.launcher", thisModule));
     }
 
     /**
@@ -97,11 +97,6 @@ public class Exports {
             Object name = ctor.newInstance("CN=Duke");
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
-
-        baseModule.addExports("sun.security.x509", thisModule);
-
-        // access should succeed
-        Object name = ctor.newInstance("CN=Duke");
     }
 
 
