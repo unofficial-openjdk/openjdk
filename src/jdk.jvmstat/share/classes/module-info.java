@@ -32,6 +32,10 @@ module jdk.jvmstat {
         jdk.jconsole;
     exports sun.jvmstat.monitor.event to
         jdk.jcmd;
+
+    // RMI needs to serialize types in this package
+    exports sun.jvmstat.monitor.remote to java.rmi;
+
     uses sun.jvmstat.monitor.MonitoredHostService;
     provides sun.jvmstat.monitor.MonitoredHostService with sun.jvmstat.perfdata.monitor.protocol.file.MonitoredHostFileService;
     provides sun.jvmstat.monitor.MonitoredHostService with sun.jvmstat.perfdata.monitor.protocol.local.MonitoredHostLocalService;

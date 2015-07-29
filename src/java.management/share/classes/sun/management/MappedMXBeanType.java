@@ -633,6 +633,7 @@ public abstract class MappedMXBeanType {
                         if (m != null
                                 && CompositeData.class.isAssignableFrom(m.getReturnType())
                                 && Modifier.isStatic(m.getModifiers())) {
+                            this.getClass().getModule().addReads(javaClass.getModule());
                             m.setAccessible(true);
                             return m;
                         } else {
