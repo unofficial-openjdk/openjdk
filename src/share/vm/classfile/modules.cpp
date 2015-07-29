@@ -39,6 +39,7 @@
 #include "oops/objArrayOop.inline.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/javaCalls.hpp"
 #include "runtime/reflection.hpp"
 #include "utilities/utf8.hpp"
 
@@ -632,12 +633,21 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
 
 // This method is called by JFR and JNI.
 jobject Modules::get_module(JNIEnv *env, jclass clazz) {
+  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+  if (clazz == NULL) {
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
+               "class is null", JNI_FALSE);
+  }
   oop mirror = JNIHandles::resolve_non_null(clazz);
   if (mirror == NULL) {
     if (TraceModules) {
       tty->print_cr("[get_module(): returning NULL]");
     }
     return NULL;
+  }
+  if (!java_lang_Class::is_instance(mirror)) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "Invalid class", JNI_FALSE);
   }
 
   Klass* klass = NULL;
@@ -663,6 +673,28 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     }
     if (klass->oop_is_instance()) {
       module = java_lang_Class::module(mirror);
+      if (module == NULL) {
+        // May be an unnamed module whose jlrM has not yet been stored in its
+        // mirror.  Call back to Java to get its java.lang.reflect.Module object.
+        JavaValue result(T_OBJECT);
+        HandleMark hm(THREAD);
+        Handle clazz_handle (THREAD, mirror);
+        JavaCalls::call_virtual(&result, clazz_handle,
+                                KlassHandle(THREAD, SystemDictionary::Class_klass()),
+                                vmSymbols::getModule_name(),
+                                vmSymbols::void_module_signature(),
+                                CHECK_NULL);
+        module = (oop)result.get_jobject();
+        if (module != NULL) {
+          // Make sure module is unnamed
+          if (java_lang_reflect_Module::name(module) != NULL) {
+            THROW_MSG_(vmSymbols::java_lang_InternalError(),
+               "Got an unexpected named module", JNI_FALSE);
+          }
+        } else {
+          return NULL;
+        }
+      }
     } else {
       // Return java.lang.Object's module (java.base)
       Klass* obj_k = SystemDictionary::Object_klass();

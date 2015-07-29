@@ -417,6 +417,7 @@
   template(vmdependencies_name,                       "vmdependencies")                           \
   template(loader_name,                               "loader")                                   \
   template(module_name,                               "module")                                   \
+  template(getModule_name,                            "getModule")                                \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
   template(defineOrCheckPackage_name,                 "defineOrCheckPackage")                     \
   template(defineOrCheckPackage_signature,            "(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)Ljava/lang/Package;") \
@@ -502,6 +503,7 @@
   template(void_class_signature,                      "()Ljava/lang/Class;")                                      \
   template(void_class_array_signature,                "()[Ljava/lang/Class;")                                     \
   template(void_string_signature,                     "()Ljava/lang/String;")                                     \
+  template(void_module_signature,                     "()Ljava/lang/reflect/Module;")                             \
   template(object_array_object_signature,             "([Ljava/lang/Object;)Ljava/lang/Object;")                  \
   template(object_object_array_object_signature,      "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;")\
   template(exception_void_signature,                  "(Ljava/lang/Exception;)V")                                 \
