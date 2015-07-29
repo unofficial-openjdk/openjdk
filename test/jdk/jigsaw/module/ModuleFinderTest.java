@@ -31,9 +31,10 @@
 
 import java.io.IOException;
 import java.lang.module.FindException;
-import java.lang.module.ModuleReference;
-import java.lang.module.ModuleFinder;
+import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -186,7 +187,7 @@ public class ModuleFinderTest {
             finder.find("rhubarb");
             assertTrue(false);
         } catch (FindException e) {
-            assertTrue(e.getCause() instanceof ClassFormatException);
+            assertTrue(e.getCause() instanceof InvalidModuleDescriptorException);
         }
 
         finder = ModuleFinder.of(dir);
@@ -194,7 +195,7 @@ public class ModuleFinderTest {
             finder.findAll();
             assertTrue(false);
         } catch (FindException e) {
-            assertTrue(e.getCause() instanceof ClassFormatException);
+            assertTrue(e.getCause() instanceof InvalidModuleDescriptorException);
         }
     }
 

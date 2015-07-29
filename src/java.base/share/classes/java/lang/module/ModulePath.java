@@ -171,7 +171,7 @@ class ModulePath implements ModuleFinder {
                         mref = readExploded(entry);
                     }
 
-                } catch (ClassFormatException e) {
+                } catch (InvalidModuleDescriptorException e) {
                     throw new FindException("Error reading module: " + entry, e);
                 }
 

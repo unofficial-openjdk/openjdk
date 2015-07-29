@@ -50,7 +50,7 @@ import static jdk.internal.module.ClassFileConstants.*;
  * Read module information from a {@code module-info} class file.
  *
  * @implNote The rationale for the hand-coded reader is performance and fine
- * control over the throwing of ClassFormatException.
+ * control over the throwing of InvalidModuleDescriptorException.
  */
 
 final class ModuleInfo {
@@ -72,7 +72,7 @@ final class ModuleInfo {
     /**
      * Reads a {@code module-info.class} from the given input stream.
      *
-     * @throws ClassFormatException
+     * @throws InvalidModuleDescriptorException
      * @throws IOException
      */
     public static ModuleDescriptor read(InputStream in,
@@ -83,16 +83,16 @@ final class ModuleInfo {
             return new ModuleInfo(pf).doRead(new DataInputStream(in));
         } catch (IllegalArgumentException iae) {
             // IllegalArgumentException means a malformed class
-            throw cfe(iae.getMessage());
+            throw invalidModuleDescriptor(iae.getMessage());
         } catch (EOFException x) {
-            throw cfeTruncated();
+            throw truncatedModuleDescriptor();
         }
     }
 
     /**
      * Reads a {@code module-info.class} from the given byte buffer.
      *
-     * @throws ClassFormatException
+     * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
      */
     public static ModuleDescriptor read(ByteBuffer bb,
@@ -102,9 +102,9 @@ final class ModuleInfo {
             return new ModuleInfo(pf).doRead(new DataInputWrapper(bb));
         } catch (IllegalArgumentException iae) {
             // IllegalArgumentException means a malformed class
-            throw cfe(iae.getMessage());
+            throw invalidModuleDescriptor(iae.getMessage());
         } catch (EOFException x) {
-            throw cfeTruncated();
+            throw truncatedModuleDescriptor();
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
@@ -114,7 +114,7 @@ final class ModuleInfo {
      * Reads a {@code module-info.class} from the given byte buffer
      * but ignore the {@code Hashes} attribute.
      *
-     * @throws ClassFormatException
+     * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
      */
     static ModuleDescriptor readIgnoringHashes(ByteBuffer bb,
@@ -122,10 +122,10 @@ final class ModuleInfo {
     {
         try {
             return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
-        } catch (IllegalArgumentException e) {
-            throw cfe(e.getMessage());
+        } catch (IllegalArgumentException iae) {
+            throw invalidModuleDescriptor(iae.getMessage());
         } catch (EOFException x) {
-            throw cfeTruncated();
+            throw truncatedModuleDescriptor();
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
@@ -135,7 +135,7 @@ final class ModuleInfo {
      * Reads the input as a module-info class file.
      *
      * @throws IOException
-     * @throws ClassFormatException
+     * @throws InvalidModuleDescriptorException
      * @throws IllegalArgumentException if thrown by the ModuleDescriptor.Builder
      *         because an identifier is not a legal Java identifier, duplicate
      *         exports, and many other reasons
@@ -146,43 +146,43 @@ final class ModuleInfo {
     {
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
-            throw cfe("Bad magic number");
+            throw invalidModuleDescriptor("Bad magic number");
 
         int minor_version = in.readUnsignedShort();
         int major_version = in.readUnsignedShort();
         if (major_version < 53) {
-            // throw cfe("Must be >= 53.0");
+            // throw invalidModuleDescriptor"Must be >= 53.0");
         }
 
         ConstantPool cpool = new ConstantPool(in);
 
         int access_flags = in.readUnsignedShort();
         if (access_flags != ACC_MODULE)
-            throw cfe("access_flags should be ACC_MODULE");
+            throw invalidModuleDescriptor("access_flags should be ACC_MODULE");
 
         int this_class = in.readUnsignedShort();
         String mn = cpool.getClassName(this_class);
         int suffix = mn.indexOf("/module-info");
         if (suffix < 1)
-            throw cfe("this_class not of form name/module-info");
+            throw invalidModuleDescriptor("this_class not of form name/module-info");
         name = mn.substring(0, suffix).replace('/', '.');
         builder = new ModuleDescriptor.Builder(name);
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
-            throw cfe("bad #super_class");
+            throw invalidModuleDescriptor("bad #super_class");
 
         int interfaces_count = in.readUnsignedShort();
         if (interfaces_count > 0)
-            throw cfe("Bad #interfaces");
+            throw invalidModuleDescriptor("Bad #interfaces");
 
         int fields_count = in.readUnsignedShort();
         if (fields_count > 0)
-            throw cfe("Bad #fields");
+            throw invalidModuleDescriptor("Bad #fields");
 
         int methods_count = in.readUnsignedShort();
         if (methods_count > 0)
-            throw cfe("Bad #fields");
+            throw invalidModuleDescriptor("Bad #fields");
 
         int attributes_count = in.readUnsignedShort();
 
@@ -197,7 +197,8 @@ final class ModuleInfo {
 
             boolean added = namesFound.add(name);
             if (!added) {
-                throw cfe("More than one "  + name + " attribute");
+                throw invalidModuleDescriptor("More than one "
+                                              + name + " attribute");
             }
 
             switch (name) {
@@ -228,7 +229,7 @@ final class ModuleInfo {
 
         // the Module attribute is required
         if (!namesFound.contains(MODULE)) {
-            throw cfe(MODULE + " attribute not found");
+            throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
         // If the ConcealedPackages attribute is not present then the
@@ -255,7 +256,8 @@ final class ModuleInfo {
     {
         int requires_count = in.readUnsignedShort();
         if (requires_count == 0 && !name.equals("java.base")) {
-            throw cfe("The requires table must have at least one entry");
+            throw invalidModuleDescriptor("The requires table must have"
+                                          + " at least one entry");
         }
         for (int i=0; i<requires_count; i++) {
             int index = in.readUnsignedShort();
@@ -504,7 +506,8 @@ final class ModuleInfo {
                         break;
 
                     default:
-                        throw cfe("Bad constant pool entry" + i);
+                        throw invalidModuleDescriptor("Bad constant pool entry: "
+                                                      + i);
                 }
             }
         }
@@ -525,7 +528,7 @@ final class ModuleInfo {
 
         void checkIndex(int index) {
             if (index >= pool.length)
-                throw cfe("Index into constant pool out of range");
+                throw invalidModuleDescriptor("Index into constant pool out of range");
         }
     }
 
@@ -665,18 +668,20 @@ final class ModuleInfo {
     }
 
     /**
-     * Returns a ClassFormatException with the given detail message
+     * Returns an InvalidModuleDescriptorException with the given detail
+     * message
      */
-    private static ClassFormatException cfe(String msg) {
-        return new ClassFormatException(msg);
+    private static InvalidModuleDescriptorException
+    invalidModuleDescriptor(String msg) {
+        return new InvalidModuleDescriptorException(msg);
     }
 
     /**
-     * Returns a ClassFormatException with a detail message to indicate that
-     * the class file is truncated.
+     * Returns an InvalidModuleDescriptorException with a detail message to
+     * indicate that the class file is truncated.
      */
-    private static ClassFormatException cfeTruncated() {
-        return cfe("Truncated module-info.class");
+    private static InvalidModuleDescriptorException truncatedModuleDescriptor() {
+        return invalidModuleDescriptor("Truncated module-info.class");
     }
 
 }

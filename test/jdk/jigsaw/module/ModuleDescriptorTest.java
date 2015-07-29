@@ -29,6 +29,7 @@
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -441,7 +442,7 @@ public class ModuleDescriptorTest {
         // ConcealedPackages attribute
     }
 
-    @Test(expectedExceptions = ClassFormatException.class)
+    @Test(expectedExceptions = InvalidModuleDescriptorException.class)
     public void testReadFromEmptyInputStream() throws Exception {
         ModuleDescriptor.read(EMPTY_INPUT_STREAM);
     }
@@ -451,7 +452,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.read(FAILING_INPUT_STREAM);
     }
 
-    @Test(expectedExceptions = ClassFormatException.class)
+    @Test(expectedExceptions = InvalidModuleDescriptorException.class)
     public void testReadFromEmptyBuffer() {
         ByteBuffer bb = ByteBuffer.allocate(0);
         ModuleDescriptor.read(bb);
