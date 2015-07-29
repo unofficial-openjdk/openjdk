@@ -1045,6 +1045,8 @@ public class Locations {
                                     fs.close();
                             }
                         }
+                    } catch (UnsupportedOperationException ignore) {
+                        // will be thrown if the file is not a valid zip file
                     } catch (IOException ignore) {
                     } catch (ModuleNameReader.BadClassFile ignore) {
                     }
