@@ -40,8 +40,20 @@ public class XoverrideCDS {
         output.shouldContain("Cannot use -Xoverride when dumping the shared archive");
 
         System.out.println("Test that -Xoverride and -Xshare:on are incompatibable");
-        pb = ProcessTools.createJavaProcessBuilder("-Xshare:dump");
-        pb = ProcessTools.createJavaProcessBuilder("-Xoverride:.", "-Xshare:on", "-version");
+        String filename = "XoverrideCDS.jsa";
+        pb = ProcessTools.createJavaProcessBuilder(
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:SharedArchiveFile=" + filename,
+            "-Xshare:dump");
+        output = new OutputAnalyzer(pb.start());
+        output.shouldContain("ro space:"); // Make sure archive got created.
+
+        pb = ProcessTools.createJavaProcessBuilder(
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:SharedArchiveFile=" + filename,
+            "-Xshare:on",
+            "-Xoverride:.",
+            "-version");
         output = new OutputAnalyzer(pb.start());
         output.shouldContain("The shared archive file cannot be used with -Xoverride");
 
