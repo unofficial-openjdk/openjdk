@@ -24,11 +24,11 @@
 /**
  * @test
  * @run testng VersionTest
- * @summary Basic tests for java.lang.module.Version. The tests will be
- *   extended once Version is specifed.
+ * @summary Basic tests for java.lang.module.ModuleDescriptor.Version.
+ *   The test will be extended once Version is specified.
  */
 
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;

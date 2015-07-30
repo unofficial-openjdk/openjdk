@@ -27,7 +27,7 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 

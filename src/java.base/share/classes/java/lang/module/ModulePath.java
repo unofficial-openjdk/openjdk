@@ -311,7 +311,7 @@ class ModulePath implements ModuleFinder {
             // attempt to parse the tail as a version string
             try {
                 String tail = mn.substring(start+1);
-                Version.parse(tail);
+                ModuleDescriptor.Version.parse(tail);
                 vs = tail;
             } catch (IllegalArgumentException ignore) { }
 

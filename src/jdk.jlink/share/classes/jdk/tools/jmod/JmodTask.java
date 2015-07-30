@@ -37,7 +37,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.file.FileVisitResult;

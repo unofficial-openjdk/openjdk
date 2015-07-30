@@ -28,7 +28,7 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

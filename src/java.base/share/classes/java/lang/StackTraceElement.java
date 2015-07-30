@@ -165,7 +165,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *         point represented by this stack trace element; {@code null}
      *         if the module version is not available.
      * @since 1.9
-     * @see java.lang.module.Version
+     * @see java.lang.module.ModuleDescriptor.Version
      */
     public String getModuleVersion() {
         return moduleVersion;

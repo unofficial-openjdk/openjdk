@@ -34,7 +34,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;

@@ -28,7 +28,7 @@ package sun.tools.jar;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.module.ModuleFinder;
-import java.lang.module.Version;
+import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
