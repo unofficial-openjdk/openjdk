@@ -106,6 +106,8 @@ public class ModuleSetAccessibleTest {
             ctor.setAccessible(true);
             assertTrue(false);
         } catch (SecurityException expected) { }
+
+        ctor.setAccessible(false); // should succeed
     }
 
     /**
@@ -124,6 +126,8 @@ public class ModuleSetAccessibleTest {
             f.setAccessible(true);
             assertTrue(false);
         } catch (SecurityException expected) { }
+
+        f.setAccessible(false); // should succeed
     }
 
 }

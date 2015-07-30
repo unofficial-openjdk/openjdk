@@ -108,7 +108,7 @@ public class AccessibleObject implements AnnotatedElement {
         throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-        if (true) {
+        if (flag) {
             Class<?> caller = Reflection.getCallerClass();
             for (AccessibleObject ao : array) {
                 checkCanSetAccessible(caller, ao);
@@ -148,7 +148,7 @@ public class AccessibleObject implements AnnotatedElement {
     public void setAccessible(boolean flag) throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-        if (true) checkCanSetAccessible(Reflection.getCallerClass(), this);
+        if (flag) checkCanSetAccessible(Reflection.getCallerClass(), this);
         this.override = flag;
     }
 
