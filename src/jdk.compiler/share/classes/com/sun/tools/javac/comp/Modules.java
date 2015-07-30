@@ -609,17 +609,8 @@ public class Modules extends JCTree.Visitor {
             int equals = s.indexOf('=', slash + 1);
             ExportsDirective d;
             if (equals == -1) {
-                // TODO: temporarily allow old format
-                String packageName = s.substring(slash + 1);
-                if (!SourceVersion.isName(packageName)) {
-                    // TODO: error: invalid package name
-                    continue;
-                }
-                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
-                p.modle = msym;
-                d = new ExportsDirective(p, null);
-//                // TODO: error: invalid target
-//                continue;
+                // TODO: error: invalid target
+                continue;
             } else {
                 String packageName = s.substring(slash + 1, equals);
                 if (!SourceVersion.isName(packageName)) {
