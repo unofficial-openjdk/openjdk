@@ -92,9 +92,13 @@ module java.xml.ws {
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.wsdl.writer to
         jdk.xml.ws;
+
     // XML document content needs to be exported
-    exports com.sun.xml.internal.ws.runtime.config to
-        java.xml.bind;
+    exports com.sun.xml.internal.ws.runtime.config to java.xml.bind;
+
+    // com.sun.xml.internal.ws.fault.SOAPFaultBuilder uses JAXBContext.newInstance
+    exports com.sun.xml.internal.ws.fault to java.xml.bind;
+
     // JAF data handlers
     exports com.sun.xml.internal.messaging.saaj.soap to
         java.activation;
