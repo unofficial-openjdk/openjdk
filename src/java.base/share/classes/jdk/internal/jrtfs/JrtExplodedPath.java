@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,25 +25,30 @@
 package jdk.internal.jrtfs;
 
 /**
- * jrt Path implementation for jrt on .jimage files.
+ * Path implementation for jrt file system on JDK exploded modules build.
  */
-final class JrtPath extends AbstractJrtPath {
+final class JrtExplodedPath extends AbstractJrtPath {
 
-    JrtPath(AbstractJrtFileSystem jrtfs, byte[] path) {
-        this(jrtfs, path, false);
+    JrtExplodedPath(AbstractJrtFileSystem jrtfs, byte[] path) {
+        super(jrtfs, path);
     }
 
-    JrtPath(AbstractJrtFileSystem jrtfs, byte[] path, boolean normalized) {
+    JrtExplodedPath(AbstractJrtFileSystem jrtfs, byte[] path, boolean normalized) {
         super(jrtfs, path, normalized);
     }
 
     @Override
-    protected JrtPath newJrtPath(byte[] path) {
-        return new JrtPath(jrtfs, path);
+    protected AbstractJrtPath newJrtPath(byte[] path) {
+        return new JrtExplodedPath(jrtfs, path);
     }
 
     @Override
-    protected JrtPath newJrtPath(byte[] path, boolean normalized) {
-        return new JrtPath(jrtfs, path, normalized);
+    protected AbstractJrtPath newJrtPath(byte[] path, boolean normalized) {
+        return new JrtExplodedPath(jrtfs, path, normalized);
+    }
+
+    @Override
+    public JrtExplodedFileSystem getFileSystem() {
+        return (JrtExplodedFileSystem) jrtfs;
     }
 }

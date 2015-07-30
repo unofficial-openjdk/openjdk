@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,24 +24,28 @@
  */
 package jdk.internal.jrtfs;
 
+import java.io.IOException;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import jdk.internal.jimage.ImageReader.Node;
+import jdk.internal.jrtfs.JrtExplodedFileSystem.Node;
 
 /**
- * File attributes implementation for jrt image file system.
+ * jrt file system attributes implementation on top of 'exploded file system'
+ * Node.
  */
-final class JrtFileAttributes extends AbstractJrtFileAttributes {
+final class JrtExplodedFileAttributes extends AbstractJrtFileAttributes {
 
     private final Node node;
+    private final BasicFileAttributes attrs;
 
-    JrtFileAttributes(Node node) {
+    JrtExplodedFileAttributes(Node node) throws IOException {
         this.node = node;
+        this.attrs = node.getBasicAttrs();
     }
 
-    ///////// basic attributes ///////////
     @Override
     public FileTime creationTime() {
-        return node.creationTime();
+        return attrs.creationTime();
     }
 
     @Override
@@ -56,22 +60,22 @@ final class JrtFileAttributes extends AbstractJrtFileAttributes {
 
     @Override
     public boolean isRegularFile() {
-        return !isDirectory();
+        return node.isFile();
     }
 
     @Override
     public FileTime lastAccessTime() {
-        return node.lastAccessTime();
+        return attrs.lastAccessTime();
     }
 
     @Override
     public FileTime lastModifiedTime() {
-        return node.lastModifiedTime();
+        return attrs.lastModifiedTime();
     }
 
     @Override
     public long size() {
-        return node.size();
+        return isRegularFile() ? attrs.size() : 0L;
     }
 
     @Override
@@ -84,14 +88,13 @@ final class JrtFileAttributes extends AbstractJrtFileAttributes {
         return node.resolveLink(true);
     }
 
-    ///////// jrt entry attributes ///////////
     @Override
     public long compressedSize() {
-        return node.compressedSize();
+        return 0L;
     }
 
     @Override
     public String extension() {
-        return node.extension();
+        return node.getExtension();
     }
 }

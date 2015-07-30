@@ -22,11 +22,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package jdk.internal.jrtfs;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -38,8 +38,14 @@ import java.security.PrivilegedAction;
 final class SystemImages {
     private SystemImages() {}
 
+
     static final String RUNTIME_HOME;
+    // bootmodules.jimage file Path
     static final Path bootImagePath;
+    // <JAVA_HOME>/modules directory Path
+    static final Path modulesDirPath;
+    // bootmodules.jimage exists or not?
+    static final boolean bootImageExists;
 
     static {
         PrivilegedAction<String> pa = SystemImages::findHome;
@@ -47,7 +53,11 @@ final class SystemImages {
 
         FileSystem fs = FileSystems.getDefault();
         bootImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "bootmodules.jimage");
+        modulesDirPath = fs.getPath(RUNTIME_HOME, "modules");
+
+        bootImageExists = AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> Files.exists(bootImagePath));
     }
+
 
     /**
      * Returns the appropriate JDK home for this usage of the FileSystemProvider.

@@ -384,6 +384,8 @@ public class Basic {
             { "/modules/java.base/packages.offsets" },
             { "/modules/java.instrument/packages.offsets" },
             { "/modules/jdk.zipfs/packages.offsets" },
+            { "/modules/java.base/_the.java.base.vardeps" },
+            { "/modules/java.base/_the.java.base_batch" },
             { "/java/lang" },
             { "/java/util" },
         };
@@ -573,7 +575,9 @@ public class Basic {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         InvalidPathException ipe = null;
         try {
-            Files.exists(fs.getPath("/packages/\ud834\udd7b"));
+            boolean res = Files.exists(fs.getPath("/packages/\ud834\udd7b"));
+            assertFalse(res);
+            return;
         } catch (InvalidPathException e) {
             ipe = e;
         }
