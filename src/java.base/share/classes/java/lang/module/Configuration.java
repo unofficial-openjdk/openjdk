@@ -140,7 +140,7 @@ public final class Configuration {
     }
 
     /**
-     * Returns the {@code Layer} used when creating this configuration.
+     * Returns the parent {@code Layer} on which this configuration is based.
      */
     public Layer layer() {
         return parent;
@@ -177,15 +177,8 @@ public final class Configuration {
      * Returns an immutable set of the module references in this
      * configuration.
      */
-    public Set<ModuleReference> references() {
+    public Set<ModuleReference> modules() {
         return resolution.references();
-    }
-
-    /**
-     * Returns the {@code ModuleReference} for the named module.
-     */
-    public Optional<ModuleReference> findReference(String name) {
-        return resolution.findReference(name);
     }
 
     /**
@@ -194,7 +187,14 @@ public final class Configuration {
      * @apiNote It's not clear that this method is useful.
      */
     public Optional<ModuleDescriptor> findDescriptor(String name) {
-        return findReference(name).map(ModuleReference::descriptor);
+        return findModule(name).map(ModuleReference::descriptor);
+    }
+
+    /**
+     * Returns the {@code ModuleReference} for the named module.
+     */
+    public Optional<ModuleReference> findModule(String name) {
+        return resolution.findModule(name);
     }
 
     /**

@@ -75,10 +75,15 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
 
-        assertEquals(cf.references().stream()
-                     .map(ModuleReference::descriptor)
-                     .collect(Collectors.toSet()),
+        assertEquals(cf.modules().stream()
+                        .map(ModuleReference::descriptor)
+                        .collect(Collectors.toSet()),
                      cf.descriptors());
+
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+        assertTrue(cf.findModule("m3").isPresent());
+
 
         // m1 reads m2
         assertTrue(cf.reads(descriptor1).size() == 1);
@@ -127,6 +132,14 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor1));
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
+
+        assertEquals(cf.modules().stream()
+                        .map(ModuleReference::descriptor)
+                        .collect(Collectors.toSet()),
+                cf.descriptors());
+
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
 
         // m1 reads m2 and m3
         assertTrue(cf.reads(descriptor1).size() == 2);
@@ -182,6 +195,14 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor1));
         assertTrue(cf.descriptors().contains(descriptor2));
 
+        assertEquals(cf.modules().stream()
+                        .map(ModuleReference::descriptor)
+                        .collect(Collectors.toSet()),
+                cf.descriptors());
+
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+
         assertTrue(cf.reads(descriptor1).size() == 1);
         assertTrue(cf.reads(descriptor1).contains(descriptor2));
 
@@ -196,6 +217,15 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor1));
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
+
+        assertEquals(cf.modules().stream()
+                        .map(ModuleReference::descriptor)
+                        .collect(Collectors.toSet()),
+                cf.descriptors());
+
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+        assertTrue(cf.findModule("m3").isPresent());
 
         assertTrue(cf.reads(descriptor1).size() == 1);
         assertTrue(cf.reads(descriptor1).contains(descriptor2));

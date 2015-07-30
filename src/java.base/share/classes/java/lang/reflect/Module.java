@@ -782,7 +782,7 @@ public final class Module {
 
         // define each module in the configuration to the VM and register
         // with each class loader.
-        for (ModuleReference mref : cf.references()) {
+        for (ModuleReference mref : cf.modules()) {
             String name = mref.descriptor().name();
             ClassLoader loader = clf.loaderForModule(name);
             Module m = defineModule(loader, mref);

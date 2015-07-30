@@ -268,7 +268,7 @@ public final class Layer {
     Optional<ModuleReference> findReference(String name) {
         if (cf == null)
             return Optional.empty();
-        Optional<ModuleReference> omref = cf.findReference(name);
+        Optional<ModuleReference> omref = cf.findModule(name);
         if (omref.isPresent())
             return omref;
         return parent().flatMap(l -> l.findReference(name));

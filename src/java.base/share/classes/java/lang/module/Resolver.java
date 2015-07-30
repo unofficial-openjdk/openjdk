@@ -98,7 +98,7 @@ final class Resolver {
             return references;
         }
 
-        Optional<ModuleReference> findReference(String name) {
+        Optional<ModuleReference> findModule(String name) {
             return Optional.ofNullable(nameToReference.get(name));
         }
 
@@ -749,7 +749,8 @@ final class Resolver {
 
     /**
      * Checks the readability graph to ensure that no two modules export the
-     * same package to a module.
+     * same package to a module. This includes the case where module M has
+     * a local package P and M reads another module that exports P to M.
      */
     private static void
     checkExportSuppliers(Map<ModuleDescriptor, Set<ModuleDescriptor>> graph) {
