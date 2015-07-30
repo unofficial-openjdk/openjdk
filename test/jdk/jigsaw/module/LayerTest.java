@@ -75,6 +75,7 @@ public class LayerTest {
         assertTrue(bootLayer.parent().get() == Layer.empty());
     }
 
+
     /**
      * Exercise Layer.empty()
      */
@@ -99,6 +100,7 @@ public class LayerTest {
         // parent
         assertTrue(!emptyLayer.parent().isPresent());
     }
+
 
     /**
      * Exercise Layer.create, created on an empty layer
@@ -177,6 +179,7 @@ public class LayerTest {
         assertTrue(layer.parent().get() == Layer.empty());
     }
 
+
     /**
      * Exercise Layer.create, created over the boot layer
      */
@@ -237,6 +240,7 @@ public class LayerTest {
         assertTrue(layer.parent().get() == Layer.boot());
     }
 
+
     /**
      * Layer.create with a configuration of two modules that have the same
      * module-private package.
@@ -271,87 +275,6 @@ public class LayerTest {
         } catch (LayerInstantiationException expected) { }
     }
 
-    /**
-     * Layer.create with a configuration of two modules that export the
-     * same package.
-     */
-    public void testSameExportedPackage() {
-        ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .exports("p")
-                .build();
-
-        ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .exports("p")
-                .build();
-
-        ModuleFinder finder
-            = ModuleUtils.finderOf(descriptor1, descriptor2);
-
-        Configuration cf
-            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
-        assertTrue(cf.descriptors().size() == 2);
-
-        // one loader per module
-        try {
-            Layer.create(cf, m -> new ModuleClassLoader());
-            assertTrue(false);
-        } catch (LayerInstantiationException expected) { }
-
-        // same class loader
-        try {
-            ClassLoader loader = new ModuleClassLoader();
-            Layer.create(cf, m -> loader);
-            assertTrue(false);
-        } catch (LayerInstantiationException expected) { }
-    }
-
-    /**
-     * Layer.create with a configuration of two modules that export the
-     * same package to another module (that reads both).
-     */
-    public void testSameExportToModule() {
-
-        ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .requires("m3")
-                .build();
-
-        // exports p
-        ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .exports("p")
-                .build();
-
-        // exports p to m1
-        ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
-                .exports("p", "m1")
-                .build();
-
-        ModuleFinder finder
-            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
-
-        Configuration cf
-            = Configuration.resolve(finder, Layer.empty(), ModuleFinder.empty(), "m1");
-        assertTrue(cf.descriptors().size() == 3);
-
-        // one loader per module
-        try {
-            Layer.create(cf, m -> new ModuleClassLoader());
-            assertTrue(false);
-        } catch (LayerInstantiationException expected) { }
-
-        // same class loader
-        try {
-            ClassLoader loader = new ModuleClassLoader();
-            Layer.create(cf, m -> loader);
-            assertTrue(false);
-        } catch (LayerInstantiationException expected) { }
-    }
 
     /**
      * Layer.create with a configuration with a partitioned graph. The same
@@ -411,38 +334,18 @@ public class LayerTest {
         } catch (LayerInstantiationException expected) { }
     }
 
-    /**
-     * Layer.create with a configuration that contains a module that exports
-     * the same package as java.base.
-     */
-    @Test(expectedExceptions = { LayerInstantiationException.class })
-    public void testExportSamePackageAsBootLayer() {
-        ModuleDescriptor descriptor
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("java.base")
-                .exports("java.lang")
-                .build();
-
-        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
-
-        Configuration cf
-            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
-        assertTrue(cf.descriptors().size() == 1);
-
-        Layer.create(cf, m -> new ModuleClassLoader());
-    }
 
     /**
      * Layer.create with a configuration that contains a module that has a
      * concealed package that is the same name as a non-exported package
-     * in java.base.
+     * in a parent layer.
      */
     public void testConcealSamePackageAsBootLayer() {
         ModuleDescriptor descriptor
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("java.base")
-                .conceals("sun.launcher")
-                .build();
+            = new ModuleDescriptor.Builder("m1")
+               .requires("java.base")
+               .conceals("sun.launcher")
+               .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 
@@ -450,7 +353,8 @@ public class LayerTest {
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
         assertTrue(cf.descriptors().size() == 1);
 
-        Layer.create(cf, m -> new ModuleClassLoader());
-    }
+        Layer layer = Layer.create(cf, m -> new ModuleClassLoader());
+        assertTrue(layer.modules().size() == 1);
+   }
 
 }

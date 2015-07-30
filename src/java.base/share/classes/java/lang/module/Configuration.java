@@ -41,15 +41,14 @@ import java.util.stream.Collectors;
  *
  * <pre>{@code
  *
- *     ModuleFinder finder =
- *         ModuleFinder.of(dir1, dir2, dir3);
+ *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Configuration cf =
- *         Configuration.resolve(ModuleFinder.empty(),
- *                               Layer.boot(),
- *                               finder,
- *                               "myapp")
- *                      .bind();
+ *         = Configuration.resolve(ModuleFinder.empty(),
+ *                                 Layer.boot(),
+ *                                 finder,
+ *                                 "myapp")
+ *                        .bind();
  *
  * }</pre>
  *
@@ -67,12 +66,23 @@ public final class Configuration {
     }
 
     /**
-     * Resolves the given named modules. The given root modules are located
-     * using {@code beforeFinder} or if not found then using {@code afterFinder}.
-     * Module dependences are resolved by locating them (in order) using the
-     * given {@code beforeFinder}, {@code layer}, and {@code afterFinder}.
+     * Resolves the collection of root modules, specified by module names,
+     * returning the resulting configuration.
      *
-     * <p> Resolution can fail for several reasons including: </p>
+     * <p> The root modules and their transitive dependences are located using
+     * the given {@code beforeFinder}, parent {@code Layer} and {@code
+     * afterFinder}, in this order. Dependences located in the parent {@code
+     * Layer} are resolved no further. </p>
+     *
+     * <p> When all modules have been resolved then the resulting <em>dependency
+     * graph</em> is checked to ensure that it does not contain cycles. A
+     * <em>readability graph</em> is then constructed to take account of
+     * implicitly declared dependences (requires public). The readability
+     * graph and modules exports are checked to ensure that two or more modules
+     * do not export the same package to a module that reads both. </p>
+     *
+     * <p> Resolution and the post-resolution consistency checks may fail for
+     * several reasons: </p>
      *
      * <ul>
      *     <li> A root module, or a direct or transitive dependency, is not
@@ -81,17 +91,23 @@ public final class Configuration {
      *     <li> Some other error occurs when attempting to find a module.
      *          Possible errors include I/O errors, errors detected parsing a
      *          module descriptor ({@code module-info.class}) or two versions
-     *          of the same module found in the same directory. </li>
+     *          of the same module are found in the same directory. </li>
      *
-     *     <li> A cycle is detected, say where module {@code m1} requires module
-     *          {@code m2} and {@code m2} requires {@code m1}. </li>
+     *     <li> A cycle is detected, say where module {@code m1} requires
+     *          module {@code m2} and {@code m2} requires {@code m1}. </li>
      *
-     *     <li> Implementation specific checks, for example referential integrity
-     *          checks that fail where incompatible versions of modules may not
-     *          be combined in the same configuration. </li>
+     *     <li> Two or more modules in the configuration export the same
+     *          package to a module that reads both. This includes the case
+     *          where a module {@code M} containing package {@code P} reads
+     *          another module that exports {@code P} to {@code M}. </li>
+     *
+     *     <li> Other implementation specific checks, for example referential
+     *          integrity checks that fail where incompatible versions of
+     *          modules may not be combined in the same configuration. </li>
      * </ul>
      *
-     * @throws ResolutionException  If resolution fails
+     * @throws ResolutionException If resolution or the post-resolution checks
+     *         fail for any of the reasons listed
      */
     public static Configuration resolve(ModuleFinder beforeFinder,
                                         Layer parent,
@@ -109,11 +125,11 @@ public final class Configuration {
     }
 
     /**
-     * Resolves the given named modules. Module dependences are resolved by
-     * locating them (in order) using the given {@code beforeFinder}, {@code
-     * layer}, and {@code afterFinder}.
+     * Resolves the root modules, specified by module names, returning the
+     * resulting configuration.
      *
-     * @throws ResolutionException   If resolution fails
+     * @throws ResolutionException If resolution or the post-resolution checks
+     *         fail for any of the reasons listed
      */
     public static Configuration resolve(ModuleFinder beforeFinder,
                                         Layer layer,
@@ -139,7 +155,8 @@ public final class Configuration {
      * provider modules. It may therefore fail with {@code ResolutionException}
      * for exactly the same reasons as the {@link #resolve resolve} methods.
      *
-     * @throws ResolutionException  If resolution fails
+     * @throws ResolutionException If resolution or the post-resolution checks
+     *         fail for any of the reasons listed
      *
      * @apiNote This method is not thread safe
      */

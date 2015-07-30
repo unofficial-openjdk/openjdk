@@ -30,6 +30,7 @@
  */
 
 import java.lang.module.Configuration;
+import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
@@ -96,6 +97,7 @@ public class ConfigurationTest {
         assertTrue(cf.toString().contains("m3"));
     }
 
+
     /**
      * Basic test of "requires public"
      */
@@ -138,6 +140,7 @@ public class ConfigurationTest {
         // m3 reads nothing
         assertTrue(cf.reads(descriptor3).size() == 0);
     }
+
 
     /**
      * Basic test of binding services
@@ -219,6 +222,7 @@ public class ConfigurationTest {
         Configuration.resolve(empty(), boot(), empty(), "m1");
     }
 
+
     /**
      * Direct dependency not found
      */
@@ -230,6 +234,7 @@ public class ConfigurationTest {
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
+
 
     /**
      * Transitive dependency not found
@@ -244,6 +249,7 @@ public class ConfigurationTest {
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
+
 
     /**
      * Service provider dependency not found
@@ -274,6 +280,7 @@ public class ConfigurationTest {
         cf.bind();
     }
 
+
     /**
      * Simple cycle.
      */
@@ -290,6 +297,7 @@ public class ConfigurationTest {
 
         Configuration.resolve(finder, boot(), empty(), "m1");
     }
+
 
     /**
      * Basic test for detecting cycles involving a service provider module
@@ -323,6 +331,110 @@ public class ConfigurationTest {
 
         // should throw ResolutionException because of the m2 <--> m3 cycle
         cf.bind();
+    }
+
+
+    /**
+     * Test two modules exporting package p to a module that reads both.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testPackageSuppliedByTwoOthers() {
+
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports("p")
+                .build();
+
+        ModuleDescriptor descriptor3
+            =  new ModuleDescriptor.Builder("m3")
+                .exports("p", "m1")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
+
+        Configuration.resolve(finder, Layer.boot(), empty(), "m1");
+    }
+
+
+    /**
+     * Test the scenario where a module has a concealed package p and reads
+     * a module that exports package p.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testPackageSuppliedBySelfAndOther() {
+
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports("p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration.resolve(finder, Layer.boot(), empty(), "m1");
+    }
+
+
+    /**
+     * Test the scenario where a module has a concealed package p and reads
+     * a module that also has a concealed package p.
+     */
+    public void testPackagePrivateToSelfAndOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .conceals("p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf
+            = Configuration.resolve(finder, Layer.boot(), empty(), "m1");
+
+        assertTrue(cf.descriptors().size() == 2);
+        assertTrue(cf.descriptors().contains(descriptor1));
+        assertTrue(cf.descriptors().contains(descriptor2));
+
+        // m1 reads m2
+        assertTrue(cf.reads(descriptor1).contains(descriptor2));
+
+        // m2 reads nothing
+        assertTrue(cf.reads(descriptor2).isEmpty());
+    }
+
+
+    /**
+     * Test the scenario where a module that exports a package that is also
+     * exported by a module that it reads in a parent layer.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testExportSamePackageAsBootLayer() {
+        ModuleDescriptor descriptor
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("java.base")
+                .exports("java.lang")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
+
+        Configuration.resolve(finder, Layer.boot(), empty(), "m1");
     }
 
 }

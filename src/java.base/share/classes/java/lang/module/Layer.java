@@ -110,21 +110,16 @@ public final class Layer {
      * given {@code Configuration}, to the Java virtual machine.
      *
      * <p> Modules are mapped to module-capable class loaders by means of the
-     * given {@code ClassLoaderFinder}. This method registers modules to their
-     * class loader by invoking the class loader's {@link
-     * ModuleCapableLoader#register register} method. </p>
+     * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
+     * This method also registers modules to their class loader by invoking
+     * the class loader's {@link ModuleCapableLoader#register register} method.
+     * </p>
      *
      * <p> Creating a {@code Layer} may fail for several reasons: </p>
      *
      * <ul>
      *     <li> Two or more modules with the same package (exported or
      *          concealed) are mapped to the same class loader. </li>
-     *
-     *     <li> Two or more modules in the configuration export the same
-     *          package to a module that reads both. </li>
-     *
-     *     <li> A module {@code M} containing package {@code P} reads another
-     *          module that exports {@code P} to {@code M}. </li>
      *
      *     <li> A module is mapped to a class loader that already has a module
      *          of the same name defined to it. </li>
@@ -158,7 +153,6 @@ public final class Layer {
             checkBootModulesForDuplicatePkgs(cf);
         } else {
             checkForDuplicatePkgs(cf, clf);
-            checkExportSuppliers(cf);
         }
 
         Layer layer;
@@ -221,51 +215,6 @@ public final class Layer {
     }
 
     /**
-     * Checks a configuration to ensure that no two modules export the same
-     * package to a module.
-     *
-     * @throws LayerInstantiationException
-     */
-    private static void checkExportSuppliers(Configuration cf) {
-
-        for (ModuleDescriptor descriptor1 : cf.descriptors()) {
-
-            // the map of packages that are local or exported to descriptor1
-            Map<String, ModuleDescriptor> packageToExporter = new HashMap<>();
-
-            // local packages
-            descriptor1.packages()
-                .forEach(p -> packageToExporter.put(p, descriptor1));
-
-            // descriptor1 reads descriptor2
-            for (ModuleDescriptor descriptor2 : cf.reads(descriptor1)) {
-
-                for (ModuleDescriptor.Exports export : descriptor2.exports()) {
-
-                    Optional<Set<String>> otargets = export.targets();
-                    if (otargets.isPresent()) {
-                        if (!otargets.get().contains(descriptor1.name()))
-                            continue;
-                    }
-
-                    // pkg is exported to descriptor2
-                    String pkg = export.source();
-                    ModuleDescriptor other
-                        = packageToExporter.put(pkg, descriptor2);
-                    if (other != null && other != descriptor2) {
-                        throw fail("Modules %s and %s export package %s to module %s",
-                                    descriptor2.name(),
-                                    other.name(),
-                                    pkg,
-                                    descriptor1.name());
-                    }
-                }
-            }
-
-        }
-    }
-
-    /**
      * Creates a LayerInstantiationException with the a message formatted from
      * the given format string and arguments.
      */
@@ -295,9 +244,6 @@ public final class Layer {
 
     /**
      * Returns a set of the {@code Module}s in this layer.
-     *
-     * @apiNote This method is for discussion purposes. We also need to
-     * consider Module::getLayer.
      */
     public Set<Module> modules() {
         return nameToModule.values().stream().collect(Collectors.toSet());

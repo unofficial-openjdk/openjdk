@@ -211,6 +211,12 @@ final class Resolver {
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
         cachedGraph = graph;
 
+        // As Layer.create will ensure that the boot Layer does not contain any
+        // duplicate packages (even concealed) then we can skip this check to
+        // reduce overhead at startup
+        //if (Layer.boot() != null)
+        checkExportSuppliers(graph);
+
         Resolution r = new Resolution(selected,
                                       nameToReference,
                                       graph,
@@ -403,6 +409,8 @@ final class Resolver {
             checkHashes();
 
             graph = makeGraph();
+
+            checkExportSuppliers(graph);
 
         } else {
             graph = cachedGraph;
@@ -736,6 +744,56 @@ final class Resolver {
             // unwrap
             throw new ResolutionException(e.getMessage(), e.getCause());
         }
+    }
+
+
+    /**
+     * Checks the readability graph to ensure that no two modules export the
+     * same package to a module.
+     */
+    private static void
+    checkExportSuppliers(Map<ModuleDescriptor, Set<ModuleDescriptor>> graph) {
+
+        for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> e : graph.entrySet()) {
+            ModuleDescriptor descriptor1 = e.getKey();
+
+            // the map of packages that are local or exported to descriptor1
+            Map<String, ModuleDescriptor> packageToExporter = new HashMap<>();
+
+            // local packages
+            for (String pn : descriptor1.packages()) {
+                packageToExporter.put(pn, descriptor1);
+            }
+
+            // descriptor1 reads descriptor2
+            Set<ModuleDescriptor> reads = e.getValue();
+            for (ModuleDescriptor descriptor2 : reads) {
+
+                for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+
+                    Optional<Set<String>> otargets = export.targets();
+                    if (otargets.isPresent()) {
+                        if (!otargets.get().contains(descriptor1.name()))
+                            continue;
+                    }
+
+                    // source is exported to descriptor2
+                    String source = export.source();
+                    ModuleDescriptor other
+                        = packageToExporter.put(source, descriptor2);
+                    if (other != null && other != descriptor2) {
+                        fail("Modules %s and %s export package %s to module %s",
+                                descriptor2.name(),
+                                other.name(),
+                                source,
+                                descriptor1.name());
+
+                    }
+                }
+            }
+
+        }
+
     }
 
 
