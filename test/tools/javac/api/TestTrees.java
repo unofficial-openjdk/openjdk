@@ -87,8 +87,8 @@ public class TestTrees extends AbstractProcessor {
             };
 
         String addExports = "-XaddExports:"
-            + "jdk.compiler/com.sun.tools.javac.api,"
-            + "jdk.compiler/com.sun.tools.javac.tree";
+            + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+            + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED";
 
         try (StandardJavaFileManager fm = tool.getStandardFileManager(dl, null, null)) {
             Iterable<? extends JavaFileObject> files =

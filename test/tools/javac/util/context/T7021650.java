@@ -95,11 +95,11 @@ public class T7021650 extends JavacTestingAbstractProcessor {
 
         String[] args = {
             "-XaddExports:"
-                + "jdk.compiler/com.sun.tools.javac.comp,"
-                + "jdk.compiler/com.sun.tools.javac.file,"
-                + "jdk.compiler/com.sun.tools.javac.main,"
-                + "jdk.compiler/com.sun.tools.javac.processing,"
-                + "jdk.compiler/com.sun.tools.javac.util",
+                + "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
             "-d", ".",
             "-processor", T7021650.class.getName(),
             "-XprintRounds",

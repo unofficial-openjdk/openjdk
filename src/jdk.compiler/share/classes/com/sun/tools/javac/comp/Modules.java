@@ -618,6 +618,8 @@ public class Modules extends JCTree.Visitor {
                 PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
                 p.modle = msym;
                 d = new ExportsDirective(p, null);
+//                // TODO: error: invalid target
+//                continue;
             } else {
                 String packageName = s.substring(slash + 1, equals);
                 if (!SourceVersion.isName(packageName)) {

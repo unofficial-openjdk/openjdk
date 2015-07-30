@@ -68,9 +68,9 @@ public class T7018098 extends JavacTestingAbstractProcessor {
 
         compile(
             "-XaddExports:"
-                + "jdk.compiler/com.sun.tools.javac.file,"
-                + "jdk.compiler/com.sun.tools.javac.processing,"
-                + "jdk.compiler/com.sun.tools.javac.util",
+                + "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
             "-proc:only",
             "-processor", myName,
             "-Aexpect=false",
@@ -81,9 +81,9 @@ public class T7018098 extends JavacTestingAbstractProcessor {
 
         compile(
             "-XaddExports:"
-                + "jdk.compiler/com.sun.tools.javac.file,"
-                + "jdk.compiler/com.sun.tools.javac.processing,"
-                + "jdk.compiler/com.sun.tools.javac.util",
+                + "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
             "-proc:only",
             "-processor", myName,
             "-Aexpect=true",

@@ -57,7 +57,8 @@ public class T6406771 extends AbstractProcessor {
 
             List<String> opts = Arrays.asList(
                 "-XaddExports:"
-                    + "jdk.compiler/com.sun.tools.javac.api,jdk.compiler/com.sun.tools.javac.tree",
+                    + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
                 "-d", ".",
                 "-processorpath", testClasses,
                 "-processor", self,

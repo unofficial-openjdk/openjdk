@@ -97,11 +97,11 @@ public class RunCodingRules {
             Files.createDirectories(crulesTarget);
             List<String> crulesOptions = Arrays.asList(
                     "-XaddExports:"
-                        + "jdk.compiler/com.sun.tools.javac.api,"
-                        + "jdk.compiler/com.sun.tools.javac.code,"
-                        + "jdk.compiler/com.sun.tools.javac.model,"
-                        + "jdk.compiler/com.sun.tools.javac.tree,"
-                        + "jdk.compiler/com.sun.tools.javac.util",
+                        + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                     "-d", crulesTarget.toString());
             javaCompiler.getTask(null, fm, noErrors, crulesOptions, null,
                     fm.getJavaFileObjectsFromFiles(crulesFiles)).call();

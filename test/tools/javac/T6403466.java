@@ -59,8 +59,8 @@ public class T6403466 extends AbstractProcessor {
 
             Iterable<String> options = Arrays.asList(
                 "-XaddExports:"
-                    + "jdk.compiler/com.sun.tools.javac.api,"
-                    + "jdk.compiler/com.sun.tools.javac.util",
+                    + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                 "-processorpath", testClassDir,
                 "-processor", self,
                 "-s", ".",

@@ -71,10 +71,10 @@ public class TestJavacTaskScanner extends ToolTester {
             fm.getJavaFileObjects(new File[] {file});
         StandardJavaFileManager fm = getLocalFileManager(tool, null, null);
         java.util.List<String> options = Arrays.asList("-XaddExports:"
-                + "jdk.compiler/com.sun.tools.javac.api,"
-                + "jdk.compiler/com.sun.tools.javac.code,"
-                + "jdk.compiler/com.sun.tools.javac.parser,"
-                + "jdk.compiler/com.sun.tools.javac.util");
+                + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
         task = (JavacTaskImpl)tool.getTask(null, fm, null, options, null, compilationUnits);
         task.getContext().put(ScannerFactory.scannerFactoryKey,
                 new MyScanner.Factory(task.getContext(), this));

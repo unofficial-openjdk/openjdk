@@ -136,8 +136,8 @@ public class TestClose implements TaskListener {
                         new MemFile("Callback.java", callback));
                 List<String> options = Arrays.asList(
                     "-XaddExports:"
-                        + "jdk.compiler/com.sun.tools.javac.processing,"
-                        + "jdk.compiler/com.sun.tools.javac.util"
+                        + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
                 );
                 JavacTask task = tool.getTask(null, fm, null, options, null, files);
                 check(task.call());

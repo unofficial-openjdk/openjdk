@@ -49,7 +49,7 @@ public class T6358786 {
             String srcdir = System.getProperty("test.src");
             File file = new File(srcdir, args[0]);
             List<String> options = Arrays.asList(
-                "-XaddExports:jdk.compiler/com.sun.tools.javac.api"
+                "-XaddExports:jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"
             );
             JavacTaskImpl task = (JavacTaskImpl)tool.getTask(null, fm, null, options, null, fm.getJavaFileObjectsFromFiles(Arrays.asList(file)));
             Elements elements = task.getElements();

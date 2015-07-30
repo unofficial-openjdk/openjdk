@@ -65,7 +65,9 @@ public class T6597678 extends JavacTestingAbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
 
         compile(sw, pw,
-            "-XaddExports:jdk.compiler/com.sun.tools.javac.processing,jdk.compiler/com.sun.tools.javac.util",
+            "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
             "-proc:only",
             "-processor", myName,
             "-AWriterString=" + pw.toString(),

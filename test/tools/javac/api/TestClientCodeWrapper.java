@@ -131,7 +131,7 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
 
         List<String> javacOptions = Arrays.asList(
-                "-XaddExports:jdk.compiler/com.sun.tools.javac.api",
+                "-XaddExports:jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
                 "-extdirs", extDirs.getPath(), // for use by filemanager handleOption
                 "-processor", TestClientCodeWrapper.class.getName()
                 );

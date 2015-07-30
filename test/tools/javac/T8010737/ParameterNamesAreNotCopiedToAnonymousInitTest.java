@@ -144,11 +144,11 @@ public class ParameterNamesAreNotCopiedToAnonymousInitTest {
                     this.getClass().getName() + ".java")));
             java.util.List<String> options = Arrays.asList(
                 "-XaddExports:"
-                    + "jdk.jdeps/com.sun.tools.classfile,"
-                    + "jdk.compiler/com.sun.tools.javac.api,"
-                    + "jdk.compiler/com.sun.tools.javac.code,"
-                    + "jdk.compiler/com.sun.tools.javac.tree,"
-                    + "jdk.compiler/com.sun.tools.javac.util",
+                    + "jdk.jdeps/com.sun.tools.classfile=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED,"
+                    + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                 "-d", System.getProperty("user.dir")
             );
             JavacTask task = (JavacTask) c.getTask(null, fm, null, options, null, fos);

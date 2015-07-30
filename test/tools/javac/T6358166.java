@@ -57,10 +57,10 @@ public class T6358166 extends AbstractProcessor {
         JavaFileObject f = fm.getFileForInput(testSrc + File.separatorChar + self + ".java");
 
         String addExports = "-XaddExports:"
-                + "jdk.compiler/com.sun.tools.javac.api,"
-                + "jdk.compiler/com.sun.tools.javac.file,"
-                + "jdk.compiler/com.sun.tools.javac.main,"
-                + "jdk.compiler/com.sun.tools.javac.util";
+                + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED";
 
         test(fm, f, addExports, "-verbose", "-d", ".");
 
