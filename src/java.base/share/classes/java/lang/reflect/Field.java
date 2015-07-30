@@ -160,6 +160,7 @@ class Field extends AccessibleObject implements Member {
      * Returns the {@code Class} object representing the class or interface
      * that declares the field represented by this {@code Field} object.
      */
+    @Override
     public Class<?> getDeclaringClass() {
         return clazz;
     }

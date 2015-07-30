@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
 package java.lang.reflect;
 
 import java.security.AccessController;
+
+import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.ReflectionFactory;
 import java.lang.annotation.Annotation;
@@ -65,6 +67,18 @@ public class AccessibleObject implements AnnotatedElement {
         new ReflectPermission("suppressAccessChecks");
 
     /**
+     * Returns the {@code Class} object representing the class or interface
+     * that declares the executable represented by this object.
+     *
+     * This is overridden by {@code Constructor}, {@code Method} and
+     * {@code Field}.
+     */
+    Class<?> getDeclaringClass() {
+        return null;
+    }
+
+
+    /**
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
      *
@@ -89,12 +103,19 @@ public class AccessibleObject implements AnnotatedElement {
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
+    @CallerSensitive
     public static void setAccessible(AccessibleObject[] array, boolean flag)
         throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        if (true) {
+            Class<?> caller = Reflection.getCallerClass();
+            for (AccessibleObject ao : array) {
+                checkCanSetAccessible(caller, ao);
+            }
+        }
         for (AccessibleObject ao : array) {
-            setAccessible0(ao, flag);
+            ao.override = flag;
         }
     }
 
@@ -123,25 +144,75 @@ public class AccessibleObject implements AnnotatedElement {
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
+    @CallerSensitive
     public void setAccessible(boolean flag) throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-        setAccessible0(this, flag);
+        if (true) checkCanSetAccessible(Reflection.getCallerClass(), this);
+        this.override = flag;
     }
 
-    /* Check that you aren't exposing java.lang.Class.<init> or sensitive
-       fields in java.lang.Class. */
-    private static void setAccessible0(AccessibleObject obj, boolean flag)
-        throws SecurityException
+    /**
+     * If the given AccessibleObject is a {@code Constructor}, {@code Method}
+     * or {@code Field} then checks that its declaring class is in a package
+     * that can be accessed by the given caller of setAccessible.
+     */
+    private static void checkCanSetAccessible(Class<?> caller,
+                                              AccessibleObject ao)
     {
-        if (obj instanceof Constructor && flag == true) {
-            Constructor<?> c = (Constructor<?>)obj;
-            if (c.getDeclaringClass() == Class.class) {
-                throw new SecurityException("Cannot make a java.lang.Class" +
-                                            " constructor accessible");
+        Class<?> declaringClass = ao.getDeclaringClass();
+        if (declaringClass == null)
+            return; // not a Constrictor, Method or Field
+
+        Module callerModule = caller.getModule();
+        Module declaringModule = declaringClass.getModule();
+
+        if (callerModule != declaringModule
+                && callerModule != Object.class.getModule()) {
+
+            // check reads
+            if (!callerModule.canRead(declaringModule)) {
+                String msg = "Unable to make member of "
+                        + declaringClass + " accessible:  "
+                        + callerModule + " does not read " + declaringModule;
+                throw new SecurityException(msg);
             }
+
+            // check exports to target module
+            String pn = packageName(declaringClass);
+            if (!declaringModule.isExported(pn, callerModule)) {
+                String msg = "Unable to make member of "
+                        + declaringClass + " accessible:  "
+                        + declaringModule + " does not export "
+                        + pn + " to " + callerModule;
+                throw new SecurityException(msg);
+            }
+
         }
-        obj.override = flag;
+
+        if (declaringClass == Class.class && ao instanceof Constructor) {
+            throw new SecurityException("Cannot make a java.lang.Class"
+                                        + " constructor accessible");
+        }
+
+        if (declaringClass == Module.class) {
+            // TDB
+        }
+
+    }
+
+    /**
+     * Returns the package name of the give class.
+     */
+    private static String packageName(Class<?> c) {
+        if (c.isArray()) {
+            return packageName(c.getComponentType());
+        } else {
+            String name = c.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) return "";
+            return name.substring(0, dot);
+        }
     }
 
     /**
