@@ -88,8 +88,8 @@ public class Main {
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);
+        Main.class.getModule().addReads(c.getModule());
         Method mainMethod = c.getMethod("main", String[].class);
-        mainMethod.setAccessible(true);
 
         // set TCCL as that is the EE thing to do
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();

@@ -23,4 +23,5 @@
 module app1 {
     requires java.base;
     requires java.xml.ws;
+    exports app1;
 }

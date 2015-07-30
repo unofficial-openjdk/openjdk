@@ -23,4 +23,5 @@
 module app2 {
     requires java.base;
     requires java.ws.rs;
+    exports app2;
 }
