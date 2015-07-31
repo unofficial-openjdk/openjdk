@@ -264,7 +264,7 @@ public class AutomaticModulesTest {
         assertTrue(cf.descriptors().size() == 3);
 
         // each module gets its own loader
-        Layer layer = Layer.create(cf, m -> new ModuleClassLoader());
+        Layer layer = Layer.create(cf, mn -> new ModuleClassLoader(cf, mn));
 
         Module m2 = layer.findModule("m2").get();
         assertTrue(m2.isNamed());

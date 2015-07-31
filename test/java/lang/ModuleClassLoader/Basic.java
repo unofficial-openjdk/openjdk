@@ -30,6 +30,9 @@
  */
 
 import java.io.FilePermission;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleFinder;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.Permission;
@@ -67,8 +70,12 @@ public class Basic {
     }
 
     static void test(ClassLoader parent, boolean succeed) throws ClassNotFoundException {
+
+        Configuration cf = Configuration.resolve(ModuleFinder.empty(),
+                                                 Layer.empty(),
+                                                 ModuleFinder.empty());
         try {
-            ModuleClassLoader loader = new ModuleClassLoader(parent);
+            ModuleClassLoader loader = new ModuleClassLoader(parent, cf);
             if (!succeed) {
                 throw new RuntimeException("Expected SecurityException not thrown");
             }

@@ -165,12 +165,12 @@ public final class TaskHelper {
                 ModuleFinder finder = ModuleFinder.of(paths);
 
                 Configuration cf
-                        = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+                    = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
 
                 cf = cf.bind();
 
-                ClassLoader cl = new ModuleClassLoader();
-                pluginsLayer = Layer.create(cf, l -> cl);
+                ClassLoader cl = new ModuleClassLoader(cf);
+                pluginsLayer = Layer.create(cf, mn -> cl);
             }
 
             Map<String, List<String>> seen = new HashMap<>();

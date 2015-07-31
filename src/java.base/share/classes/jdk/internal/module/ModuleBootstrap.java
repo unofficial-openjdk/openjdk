@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.BuiltinClassLoader;
 import jdk.internal.misc.Modules;
 import sun.misc.PerfCounter;
 import sun.misc.SharedSecrets;
@@ -72,12 +73,21 @@ public final class ModuleBootstrap {
     public static void boot() {
         long t0 = System.nanoTime();
 
-        // -upgrademodulepath option specified to launcher
-        ModuleFinder upgradeModulePath =
-            createModulePathFinder("java.upgrade.module.path");
-
         // system module path, aka the installed modules
         ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
+
+        // Once we have the system module path then we define the base module
+        // to the boot loader. We do this here so that resources in the base
+        // module can be located for error messages that may happen from here
+        // on.
+        Optional<ModuleReference> obase = systemModulePath.find(JAVA_BASE);
+        if (!obase.isPresent())
+            throw new InternalError(JAVA_BASE + " not found");
+        BootLoader.loadModule(obase.get());
+
+        // -upgrademodulepath option specified to launcher
+        ModuleFinder upgradeModulePath
+            = createModulePathFinder("java.upgrade.module.path");
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("java.module.path");
@@ -89,14 +99,6 @@ public final class ModuleBootstrap {
         if (appModulePath != null)
             finder = ModuleFinder.concat(finder, appModulePath);
 
-        // Once the finder is created then we find the base module and define
-        // it to the boot loader. We do this here so that resources in the
-        // base module can be located for error messages that may happen
-        // from here on.
-        Optional<ModuleReference> obase = finder.find(JAVA_BASE);
-        if (!obase.isPresent())
-            throw new InternalError(JAVA_BASE + " not found");
-        BootLoader.register(obase.get());
 
         // launcher -m option to specify the initial module
         String mainModule = null;
@@ -201,6 +203,17 @@ public final class ModuleBootstrap {
 
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, clf);
+
+        // define the module to its class loader, except java.base
+        for (ModuleReference mref : cf.modules()) {
+            String name = mref.descriptor().name();
+            ClassLoader cl = clf.loaderForModule(name);
+            if (cl == null) {
+                if (!name.equals(JAVA_BASE)) BootLoader.loadModule(mref);
+            } else {
+                ((BuiltinClassLoader)cl).loadModule(mref);
+            }
+        }
 
         // if -XaddExports is specified then process the value to export
         // additional API packages

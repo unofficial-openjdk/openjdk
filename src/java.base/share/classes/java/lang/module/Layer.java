@@ -55,9 +55,9 @@ import sun.misc.SharedSecrets;
  *                                 finder,
  *                                 "myapp");
  *
- *     ClassLoader loader = new ModuleClassLoader();
+ *     ClassLoader loader = new ModuleClassLoader(cf);
  *
- *     Layer layer = Layer.create(cf, m -> loader);
+ *     Layer layer = Layer.create(cf, mn -> loader);
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
@@ -111,13 +111,14 @@ public final class Layer {
      *
      * <p> Modules are mapped to module-capable class loaders by means of the
      * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
-     * This method also registers modules to their class loader by invoking
-     * the class loader's {@link ModuleCapableLoader#register register} method.
-     * </p>
+     * The caller of this method must arrange for the class loaders to be
+     * ready to load from these modules before attempting to load classes or
+     * resources. This can be before or after the {@code Layer} is created. </p>
      *
      * <p> Creating a {@code Layer} may fail for several reasons: </p>
      *
      * <ul>
+     *
      *     <li> Two or more modules with the same package (exported or
      *          concealed) are mapped to the same class loader. </li>
      *

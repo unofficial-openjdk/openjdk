@@ -52,10 +52,8 @@ public class CustomLayerTest {
 
         cf = cf.bind();
 
-        // create the Layer with the module loaded by the system class loader
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-        ModuleReference mref = cf.findModule(moduleName).get();
-        Layer layer = Layer.create(cf, k -> scl);
+        ClassLoader loader = new ModuleClassLoader(cf);
+        Layer layer = Layer.create(cf, mn -> loader);
 
         ServiceLoader<ScriptEngineFactory> sl;
         ScriptEngineFactory factory;

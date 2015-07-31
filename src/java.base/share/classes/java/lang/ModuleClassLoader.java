@@ -29,37 +29,42 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.security.*;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Optional;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.security.SecureClassLoader;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jdk.internal.misc.BootLoader;
 
 
 /**
- * This {@code ModuleClassLoader} loads classes and resources from one or more named modules.
+ * A {@code ClassLoader} that loads classes and resources from a set of modules
+ * in a configuration.
  *
- * <p>
- * Modules must be registered to this {@code ModuleClassLoader}  by invoking the
- * {@link ModuleCapableLoader#register(ModuleReference)} method
- * so that its classes and resources become visible via this class loader.</p>
- *
- * <p> The delegation model used by this {@code ModuleClassLoader} differs to the regular
- * delegation model. When requested to load a class then this {@code ModuleClassLoader}
- * first checks the modules defined to this class loader. If not found then it delegates
- * the search to the parent class loader.</p>
+ * <p> The delegation model used by this {@code ModuleClassLoader} differs to
+ * the regular delegation model. When requested to load a class then this
+ * {@code ModuleClassLoader} first checks the modules defined to this class
+ * loader. If not found then it delegates the search to the parent class
+ * loader.</p>
  *
  * @since 1.9
  */
 public final class ModuleClassLoader
-    extends SecureClassLoader implements ModuleCapableLoader {
+    extends SecureClassLoader
+{
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -68,26 +73,120 @@ public final class ModuleClassLoader
     // parent ClassLoader
     private final ClassLoader parent;
 
-    // maps package name to a module loaded by this class loader
-    private final Map<String, ModuleReference> packageToModule;
-
     // maps a module name to a module reference
     private final Map<String, ModuleReference> nameToModule;
 
-    // maps a module reference to a module reader
-    private final Map<ModuleReference, ModuleReader> moduleToReader;
+    // maps package name to a module loaded by this class loader
+    private final Map<String, ModuleReference> packageToModule;
+
+    // maps a module reference to a module reader, populated lazily
+    private final Map<ModuleReference, ModuleReader> moduleToReader
+        = new ConcurrentHashMap<>();
 
     /* The context to be used when loading classes and resources */
     private final AccessControlContext acc;
 
-    private ModuleClassLoader(Void unused, ClassLoader parent) {
+
+
+    private ModuleClassLoader(Void unused,
+                              ClassLoader parent,
+                              Set<ModuleReference> modules)
+    {
         super(parent);
+
+        Map<String, ModuleReference> nameToModule = new HashMap<>();
+        Map<String, ModuleReference> packageToModule = new HashMap<>();
+
+        for (ModuleReference mref : modules) {
+            nameToModule.put(mref.descriptor().name(), mref);
+            mref.descriptor().packages()
+                    .forEach(pn -> packageToModule.put(pn, mref));
+        }
+
         this.parent = parent;
-        this.packageToModule = new ConcurrentHashMap<>();
-        this.nameToModule = new ConcurrentHashMap<>();
-        this.moduleToReader = new ConcurrentHashMap<>();
+        this.packageToModule = packageToModule;
+        this.nameToModule = nameToModule;
         this.acc = AccessController.getContext();
     }
+
+
+    /**
+     * Create a new {@code ModuleClassLoader} that loads classes and resources
+     * from the modules in the given {@code Configuration}. The class loader's
+     * parent is the system class loader.
+     *
+     * <p> If there is a security manager then its {@code checkCreateClassLoader}
+     * is invoked to ensure that creation of a class loader is allowed. </p>
+     *
+     * @throws  SecurityException
+     *          If denied by the security manager
+     */
+    public ModuleClassLoader(Configuration cf) {
+        this(ClassLoader.getSystemClassLoader(), cf);
+    }
+
+    /**
+     * Create a new {@code ModuleClassLoader} that loads classes and resources
+     * from the modules in the given {@code Configuration}. The class loader's
+     * parent is the given class loader.
+     *
+     * <p> If there is a security manager then its {@code checkCreateClassLoader}
+     * is invoked to ensure that creation of a class loader is allowed. </p>
+     *
+     * @throws  SecurityException
+     *          If denied by the security manager
+     */
+    public ModuleClassLoader(ClassLoader parent, Configuration cf) {
+        this(checkCreateClassLoader(), parent, cf.modules());
+    }
+
+    /**
+     * Create a new {@code ModuleClassLoader} that loads classes and resources
+     * from a subset of the modules in the given {@code Configuration}. The
+     * class loader's parent is the system class loader.
+     *
+     * <p> The parameters {@code first} and {@code other} are the names of the
+     * modules in the {@code Configuration} that this class loader should load
+     * from. </p>
+     *
+     * <p> If there is a security manager then its {@code checkCreateClassLoader}
+     * is invoked to ensure that creation of a class loader is allowed. </p>
+     *
+     * @throws  IllegalArgumentException
+     *          If any of the modules are not in the given Configuration
+     * @throws  SecurityException
+     *          If denied by the security manager
+     */
+    public ModuleClassLoader(Configuration cf, String first, String... other) {
+        this(checkCreateClassLoader(),
+             ClassLoader.getSystemClassLoader(),
+             collect(cf, first, other));
+    }
+
+    /**
+     * Create a new {@code ModuleClassLoader} that loads classes and resources
+     * from a subset of the modules in the given {@code Configuration}. The
+     * class loader's parent is the given class loader
+     *
+     * <p> The parameters {@code first} and {@code other} are the names of the
+     * modules in the {@code Configuration} that this class loader should load
+     * from. </p>
+     *
+     * <p> If there is a security manager then its {@code checkCreateClassLoader}
+     * is invoked to ensure that creation of a class loader is allowed. </p>
+     *
+     * @throws  IllegalArgumentException
+     *          If any of the modules are not in the given Configuration
+     * @throws  SecurityException
+     *          If denied by the security manager
+     */
+    public ModuleClassLoader(ClassLoader parent,
+                             Configuration cf,
+                             String first,
+                             String... other) {
+        this(checkCreateClassLoader(), parent, collect(cf, first, other));
+    }
+
 
     private static Void checkCreateClassLoader() {
         SecurityManager security = System.getSecurityManager();
@@ -97,59 +196,27 @@ public final class ModuleClassLoader
         return null;
     }
 
-    /**
-     * Create a new {@code ModuleClassLoader} using
-     * the {@linkplain ClassLoader#getSystemClassLoader() application class loader}
-     * as the parent class loader.
-     *
-     * <p>
-     * If there is a security manager, its {@link SecurityManager#checkCreateClassLoader()
-     * checkCreateClassLoader} method is invoked.
-     *
-     * @throws  SecurityException
-     *          If a security manager exists and its
-     *          {@code checkCreateClassLoader} method doesn't allow creation
-     *          of a new class loader.
-     */
-    public ModuleClassLoader() {
-        this(checkCreateClassLoader(), ClassLoader.getSystemClassLoader());
-    }
+    private static Set<ModuleReference> collect(Configuration cf,
+                                                String first,
+                                                String... other)
+    {
+        Set<ModuleReference> modules = new HashSet<>();
 
-    /**
-     * Create a new {@code ModuleClassLoader} using the specified parent class loader
-     * for delegation.
-     *
-     * <p>
-     * If there is a security manager, its {@link SecurityManager#checkCreateClassLoader()
-     * checkCreateClassLoader} method is invoked.
-     *
-     * @param parent parent class loader
-     *
-     * @throws  SecurityException
-     *          If a security manager exists and its
-     *          {@code checkCreateClassLoader} method doesn't allow creation
-     *          of a new class loader.
-     */
-    public ModuleClassLoader(ClassLoader parent) {
-        this(checkCreateClassLoader(), parent);
-    }
+        Optional<ModuleReference> omref = cf.findModule(first);
+        if (!omref.isPresent())
+            throw new IllegalArgumentException(first + " not in Configuration");
+        modules.add(omref.get());
 
-    @Override
-    public void register(ModuleReference mref) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            RuntimePermission perm = new RuntimePermission("registerSystemModule");
-            sm.checkPermission(perm);
+        for (String mn : other) {
+            omref = cf.findModule(mn);
+            if (!omref.isPresent())
+                throw new IllegalArgumentException(first + " not in Configuration");
+            modules.add(omref.get());
         }
 
-        String mn = mref.descriptor().name();
-        if (nameToModule.containsKey(mn))
-            throw new IllegalStateException("Module " + mn
-                    + " already defined in this class loader");
-        nameToModule.put(mn, mref);
-        mref.descriptor().packages()
-                .forEach(p -> packageToModule.put(p, mref));
+        return modules;
     }
+
 
     // -- finding resources
 
@@ -167,17 +234,18 @@ public final class ModuleClassLoader
      */
     @Override
     public InputStream getResourceAsStream(String moduleName, String name)
-            throws IOException {
+        throws IOException
+    {
         ModuleReference mref = nameToModule.get(moduleName);
         if (mref != null) {
             try {
                 return AccessController.doPrivileged(
-                        new PrivilegedExceptionAction<InputStream>() {
-                            @Override
-                            public InputStream run() throws IOException {
-                                return moduleReaderFor(mref).open(name).orElse(null);
-                            }
-                        }, acc);
+                    new PrivilegedExceptionAction<InputStream>() {
+                        @Override
+                        public InputStream run() throws IOException {
+                            return moduleReaderFor(mref).open(name).orElse(null);
+                        }
+                    }, acc);
             } catch (PrivilegedActionException pae) {
                 throw (IOException) pae.getCause();
             }
@@ -236,19 +304,18 @@ public final class ModuleClassLoader
     }
 
     /**
-     * Loads the class with the specified <a href="ClassLoader.html#name">binary name</a>
-     * from a module defined to this class loader.
+     * Loads the class with the specified <a href="ClassLoader.html#name">binary
+     * name</a> from a module defined to this class loader.
      *
-     * <p>
-     * This {@code ModuleClassLoader} first checks the modules defined to this class loader.
-     * If not found then it delegates the search to the parent class loader.
+     * <p> This {@code ModuleClassLoader} first checks the modules defined to
+     * this class loader. If not found then it delegates the search to the
+     * parent class loader.
      *
      * @inheritDoc
-     *
      */
     @Override
     protected Class<?> loadClass(String name, boolean resolve)
-            throws ClassNotFoundException
+        throws ClassNotFoundException
     {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -267,12 +334,12 @@ public final class ModuleClassLoader
 
 
     /**
-     * Loads the class with the specified <a href="ClassLoader.html#name">binary name</a>
-     * from a module defined to this class loader.
-     * <p>
-     * This {@code ModuleClassLoader} first checks the modules defined to this class loader.
-     * If not found then it delegates the search to the parent class loader.  If not
-     * found, it returns {@code null}.
+     * Loads the class with the specified <a href="ClassLoader.html#name">binary
+     * name</a> from a module defined to this class loader.
+     *
+     * <p> This {@code ModuleClassLoader} first checks the modules defined to
+     * this class loader. If not found then it delegates the search to the
+     * parent class loader.  If not found, it returns {@code null}.
      */
     private Class<?> loadClassOrNull(String name, boolean resolve) {
         synchronized (getClassLoadingLock(name)) {
@@ -383,8 +450,8 @@ public final class ModuleClassLoader
      * @param name  name of the package to be defined.
      * @return {@code Package} object of the given name
      *
-     * @throws IllegalArgumentException if a duplicated {@code Package} of the given name
-     *         is defined in different module by this class loader.
+     * @throws IllegalArgumentException if a duplicated {@code Package} of the
+     *         given name is defined in different module by this class loader.
      */
     @Override
     protected Package definePackage(String name) {

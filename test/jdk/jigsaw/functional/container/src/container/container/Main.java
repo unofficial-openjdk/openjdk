@@ -81,10 +81,10 @@ public class Main {
           .forEach(md -> System.out.format("  %s%n", md.name()));
 
         // choose a class loader
-        ModuleClassLoader loader = new ModuleClassLoader();
+        ModuleClassLoader loader = new ModuleClassLoader(cf);
 
         // reify the configuration as a Layer
-        Layer layer = Layer.create(cf, m -> loader);
+        Layer layer = Layer.create(cf, mn -> loader);
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);

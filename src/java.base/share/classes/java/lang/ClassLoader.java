@@ -711,12 +711,7 @@ public abstract class ClassLoader {
     Package ensureDefinePackage(String pn) {
         Package p = packages.get(pn);
         if (p == null) {
-            if (this instanceof ModuleCapableLoader) {
-                p = definePackage(pn);
-            } else {
-                p = definePackage(pn, null, null, null,
-                                  null, null, null, null);
-            }
+            p = definePackage(pn);
         }
         return p;
     }

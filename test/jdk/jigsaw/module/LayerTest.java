@@ -130,9 +130,9 @@ public class LayerTest {
                                                  "m1");
 
         // map each module to its own class loader for this test
-        ClassLoader loader1 = new ModuleClassLoader();
-        ClassLoader loader2 = new ModuleClassLoader();
-        ClassLoader loader3 = new ModuleClassLoader();
+        ClassLoader loader1 = new ModuleClassLoader(cf, "m1");
+        ClassLoader loader2 = new ModuleClassLoader(cf, "m2");
+        ClassLoader loader3 = new ModuleClassLoader(cf, "m3");
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", loader1);
         map.put("m2", loader2);
@@ -204,9 +204,9 @@ public class LayerTest {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        ClassLoader loader = new ModuleClassLoader();
+        ClassLoader loader = new ModuleClassLoader(cf);
 
-        Layer layer = Layer.create(cf, m -> loader);
+        Layer layer = Layer.create(cf, mn -> loader);
 
         // configuration
         assertTrue(layer.configuration().get() == cf);
@@ -265,12 +265,12 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 2);
 
         // one loader per module, should be okay
-        Layer.create(cf, m -> new ModuleClassLoader());
+        Layer.create(cf, mn -> new ModuleClassLoader(cf, mn));
 
         // same class loader
         try {
-            ClassLoader loader = new ModuleClassLoader();
-            Layer.create(cf, m -> loader);
+            ClassLoader loader = new ModuleClassLoader(cf);
+            Layer.create(cf, mn -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
     }
@@ -314,11 +314,11 @@ public class LayerTest {
         assertTrue(cf.descriptors().size() == 4);
 
         // one loader per module
-        Layer.create(cf, m -> new ModuleClassLoader());
+        Layer.create(cf, mn -> new ModuleClassLoader(cf, mn));
 
         // m1 & m2 in one loader, m3 & m4 in another loader
-        ClassLoader loader1 = new ModuleClassLoader();
-        ClassLoader loader2 = new ModuleClassLoader();
+        ClassLoader loader1 = new ModuleClassLoader(cf, "m1");
+        ClassLoader loader2 = new ModuleClassLoader(cf, "m2");
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", loader1);
         map.put("m2", loader1);
@@ -328,8 +328,8 @@ public class LayerTest {
 
         // same loader
         try {
-            ClassLoader loader = new ModuleClassLoader();
-            Layer.create(cf, m -> loader);
+            ClassLoader loader = new ModuleClassLoader(cf);
+            Layer.create(cf, mn -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
     }
@@ -353,7 +353,8 @@ public class LayerTest {
             = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
         assertTrue(cf.descriptors().size() == 1);
 
-        Layer layer = Layer.create(cf, m -> new ModuleClassLoader());
+        ClassLoader loader = new ModuleClassLoader(cf);
+        Layer layer = Layer.create(cf, mn -> loader);
         assertTrue(layer.modules().size() == 1);
    }
 

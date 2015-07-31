@@ -66,7 +66,7 @@ import sun.misc.VM;
  * ClassLoader type.
  *
  * <p> This ClassLoader supports loading of classes and resources from modules.
- * Modules are defined to the ClassLoader by invoking the {@link #defineModule}
+ * Modules are defined to the ClassLoader by invoking the {@link #loadModule}
  * method. Defining a module to this ClassLoader has the effect of making the
  * types in the module visible. </p>
  *
@@ -84,8 +84,9 @@ import sun.misc.VM;
  * any overlapping packages with modules defined to the parent or the boot class
  * loader. </p>
  */
-class BuiltinClassLoader
-    extends SecureClassLoader implements ModuleCapableLoader
+
+public class BuiltinClassLoader
+    extends SecureClassLoader
 {
 
     static {
@@ -163,25 +164,16 @@ class BuiltinClassLoader
     }
 
     /**
-     * Register a module this this class loader. This has the effect
-     * of making the types in the module visible.
+     * Register a module this this class loader. This has the effect of making
+     * the types in the module visible.
      */
-    @Override
-    public void register(ModuleReference mref) {
-
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            RuntimePermission perm = new RuntimePermission("registerSystemModule");
-            sm.checkPermission(perm);
+    public void loadModule(ModuleReference mref) {
+        String mn = mref.descriptor().name();
+        if (nameToModule.putIfAbsent(mn, mref) != null) {
+            throw new InternalError(mn + " already defined to this loader");
         }
 
-        String mn = mref.descriptor().name();
-        if (nameToModule.containsKey(mn))
-            throw new IllegalStateException("Module " + mn
-                                            + " already defined in this class loader");
-        nameToModule.put(mn, mref);
         LoadedModule loadedModule = new LoadedModule(mref);
-
         for (String pn : mref.descriptor().packages()) {
             packageToModule.put(pn, loadedModule);
         }

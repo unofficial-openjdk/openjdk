@@ -788,14 +788,6 @@ public final class Module {
             Module m = defineModule(loader, mref);
             modules.put(name, m);
             loaders.put(name, loader);
-
-            // register all modules (except java.base) with its class loader
-            if (loader == null) {
-                if (!mref.descriptor().name().equals("java.base"))
-                    BootLoader.register(mref);
-            } else {
-                ((ModuleCapableLoader) loader).register(mref);
-            }
         }
 
         // setup readability and exports
