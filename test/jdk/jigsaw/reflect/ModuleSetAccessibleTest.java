@@ -31,6 +31,7 @@
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -105,7 +106,7 @@ public class ModuleSetAccessibleTest {
         try {
             ctor.setAccessible(true);
             assertTrue(false);
-        } catch (SecurityException expected) { }
+        } catch (InaccessibleObjectException expected) { }
 
         ctor.setAccessible(false); // should succeed
     }
@@ -125,7 +126,7 @@ public class ModuleSetAccessibleTest {
         try {
             f.setAccessible(true);
             assertTrue(false);
-        } catch (SecurityException expected) { }
+        } catch (InaccessibleObjectException expected) { }
 
         f.setAccessible(false); // should succeed
     }

@@ -82,6 +82,11 @@ public class AccessibleObject implements AnnotatedElement {
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
      *
+     * <p>This method may not be used to enable access to an object that is a
+     * member of a declaring class when either the caller's module does not
+     * read the module of the declaring class, or the declaring class is in
+     * a package that is not exported to the caller's module.
+     *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
@@ -99,6 +104,7 @@ public class AccessibleObject implements AnnotatedElement {
      * @param array the array of AccessibleObjects
      * @param flag  the new value for the {@code accessible} flag
      *              in each object
+     * @throws InaccessibleObjectException
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
@@ -110,6 +116,7 @@ public class AccessibleObject implements AnnotatedElement {
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
         if (flag) {
             Class<?> caller = Reflection.getCallerClass();
+            array = array.clone();
             for (AccessibleObject ao : array) {
                 checkCanSetAccessible(caller, ao);
             }
@@ -126,6 +133,11 @@ public class AccessibleObject implements AnnotatedElement {
      * checking when it is used.  A value of {@code false} indicates
      * that the reflected object should enforce Java language access checks.
      *
+     * <p>This method may not be used to enable access to an object that is a
+     * member of a declaring class when either the caller's module does not
+     * read the module of the declaring class, or the declaring class is in
+     * a package that is not exported to the caller's module.
+     *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
@@ -140,6 +152,7 @@ public class AccessibleObject implements AnnotatedElement {
      * {@code java.lang.Class}, and {@code flag} is true.
      *
      * @param flag the new value for the {@code accessible} flag
+     * @throws InaccessibleObjectException
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
@@ -175,7 +188,7 @@ public class AccessibleObject implements AnnotatedElement {
                 String msg = "Unable to make member of "
                         + declaringClass + " accessible:  "
                         + callerModule + " does not read " + declaringModule;
-                throw new SecurityException(msg);
+                throw new InaccessibleObjectException(msg);
             }
 
             // check exports to target module
@@ -185,7 +198,7 @@ public class AccessibleObject implements AnnotatedElement {
                         + declaringClass + " accessible:  "
                         + declaringModule + " does not export "
                         + pn + " to " + callerModule;
-                throw new SecurityException(msg);
+                throw new InaccessibleObjectException(msg);
             }
 
         }
@@ -196,7 +209,7 @@ public class AccessibleObject implements AnnotatedElement {
         }
 
         if (declaringClass == Module.class) {
-            // TDB
+            // TBD
         }
 
     }
