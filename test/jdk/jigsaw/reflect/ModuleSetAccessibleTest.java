@@ -51,6 +51,7 @@ public class ModuleSetAccessibleTest {
 
         try {
             ctor.newInstance();
+            assertTrue(false);
         } catch (IllegalAccessException expected) { }
 
         ctor.setAccessible(true);
@@ -64,6 +65,7 @@ public class ModuleSetAccessibleTest {
         Method m = Unsafe.class.getDeclaredMethod("throwIllegalAccessError");
         try {
             m.invoke(null);
+            assertTrue(false);
         } catch (IllegalAccessException expected) { }
 
         m.setAccessible(true);
@@ -101,6 +103,7 @@ public class ModuleSetAccessibleTest {
 
         try {
             ctor.newInstance("cn=duke");
+            assertTrue(false);
         } catch (IllegalAccessException expected) { }
 
         try {

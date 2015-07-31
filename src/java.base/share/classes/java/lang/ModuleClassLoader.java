@@ -44,7 +44,13 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
-import java.util.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jdk.internal.misc.BootLoader;
@@ -210,7 +216,7 @@ public final class ModuleClassLoader
         for (String mn : other) {
             omref = cf.findModule(mn);
             if (!omref.isPresent())
-                throw new IllegalArgumentException(first + " not in Configuration");
+                throw new IllegalArgumentException(mn + " not in Configuration");
             modules.add(omref.get());
         }
 
