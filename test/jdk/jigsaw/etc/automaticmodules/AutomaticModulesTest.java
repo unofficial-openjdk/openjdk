@@ -23,13 +23,15 @@
 
 /**
  * @test
- * @library ../lib
+ * @library ../../lib
+ * @modules java.base/jdk.internal.module
  * @build AutomaticModulesTest ModuleUtils
  * @run testng AutomaticModulesTest
  * @summary Basic tests for automatic modules
  */
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
@@ -42,6 +44,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
@@ -104,7 +109,7 @@ public class AutomaticModulesTest {
         Path jf = dir.resolve(fn);
 
         // create empty JAR file
-        ModuleUtils.createJarFile(jf);
+        createJarFile(jf);
 
         // create a ModuleFinder to find modules in the directory
         ModuleFinder finder = ModuleFinder.of(dir);
@@ -129,10 +134,8 @@ public class AutomaticModulesTest {
      */
     public void testExports() throws IOException {
         Path dir = Files.createTempDirectory("mods");
-        ModuleUtils.createJarFile(dir.resolve("m1.jar"),
-            "p/C1.class",
-            "p/C2.class",
-            "q/C1.class");
+        createJarFile(dir.resolve("m1.jar"),
+                      "p/C1.class", "p/C2.class", "q/C1.class");
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
@@ -164,7 +167,7 @@ public class AutomaticModulesTest {
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
         Path dir = Files.createTempDirectory("mods");
-        ModuleUtils.createJarFile(dir.resolve("m1.jar"), man);
+        createJarFile(dir.resolve("m1.jar"), man);
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
@@ -191,8 +194,8 @@ public class AutomaticModulesTest {
 
         // m2 and m3 are simple JAR files
         Path dir = Files.createTempDirectory("mods");
-        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T.class");
-        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "q/T.class");
+        createJarFile(dir.resolve("m2.jar"), "p/T.class");
+        createJarFile(dir.resolve("m3.jar"), "q/T.class");
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
@@ -251,8 +254,8 @@ public class AutomaticModulesTest {
 
         // m2 and m3 are simple JAR files
         Path dir = Files.createTempDirectory("mods");
-        ModuleUtils.createJarFile(dir.resolve("m2.jar"), "p/T.class");
-        ModuleUtils.createJarFile(dir.resolve("m3.jar"), "q/T2.class");
+        createJarFile(dir.resolve("m2.jar"), "p/T.class");
+        createJarFile(dir.resolve("m3.jar"), "q/T2.class");
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
@@ -293,6 +296,42 @@ public class AutomaticModulesTest {
 
             layer = layer.parent().get();
         }
+    }
+
+    /**
+     * Creates a JAR file, optionally with a manifest, and with the given
+     * entries. The entries will be empty in the resulting JAR file.
+     */
+    static void createJarFile(Path file, Manifest man, String... entries)
+        throws IOException
+    {
+        try (OutputStream out = Files.newOutputStream(file)) {
+            try (JarOutputStream jos = new JarOutputStream(out)) {
+
+                if (man != null) {
+                    JarEntry je = new JarEntry(JarFile.MANIFEST_NAME);
+                    jos.putNextEntry(je);
+                    man.write(jos);
+                    jos.closeEntry();
+                }
+
+                for (String entry : entries) {
+                    JarEntry je = new JarEntry(entry);
+                    jos.putNextEntry(je);
+                    jos.closeEntry();
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a JAR file and with the given entries. The entries will be empty
+     * in the resulting JAR file.
+     */
+    static void createJarFile(Path file, String... entries)
+        throws IOException
+    {
+        createJarFile(file, null, entries);
     }
 
 }

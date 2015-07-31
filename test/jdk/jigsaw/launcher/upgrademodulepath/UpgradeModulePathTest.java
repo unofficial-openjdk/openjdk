@@ -85,6 +85,8 @@ public class UpgradeModulePathTest {
                 "-upgrademodulepath", UPGRADEDMODS_DIR.toString(),
                 "-mp", MODS_DIR.toString(),
                 "-m", mid)
+            .outputTo(System.out)
+            .errorTo(System.out)
             .getExitValue();
 
         assertTrue(exitValue == 0);

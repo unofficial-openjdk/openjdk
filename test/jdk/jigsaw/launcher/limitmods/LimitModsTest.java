@@ -76,6 +76,8 @@ public class LimitModsTest {
             = executeTestJava("-limitmods", "java.base",
                               "-cp", classpath,
                               MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue1 != 0);
@@ -86,6 +88,8 @@ public class LimitModsTest {
             = executeTestJava("-limitmods", "java.desktop",
                               "-cp", classpath,
                              MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue2 == 0);
@@ -103,6 +107,8 @@ public class LimitModsTest {
             = executeTestJava("-limitmods", "java.base",
                               "-mp", modulepath,
                               "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);

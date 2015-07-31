@@ -92,6 +92,8 @@ public class MixedModeTest {
                               "-addmods", LIB_MODULE,
                               "-cp", CLASSES_DIR.toString(),
                               MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -110,6 +112,8 @@ public class MixedModeTest {
             = executeTestJava("-mp", MODS_DIR.toString(),
                               "-cp", CLASSES_DIR.toString(),
                               MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         // CNFE or other error/exception

@@ -75,6 +75,8 @@ public class AddExportsTest {
         int exitValue
             =  executeTestJava("-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
                                "-version")
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -94,6 +96,8 @@ public class AddExportsTest {
             = executeTestJava("-XaddExports:java.base/sun.misc=ALL-UNNAMED",
                               "-cp", classpath,
                               MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -113,6 +117,8 @@ public class AddExportsTest {
             executeTestJava("-XaddExports:java.base/sun.misc=" + TEST_MODULE,
                             "-mp", MODS_DIR.toString(),
                             "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -127,6 +133,8 @@ public class AddExportsTest {
             =  executeTestJava("-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
                                "-XaddExports:java.base/sun.reflect=ALL-UNNAMED",
                                "-version")
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue != 0);
@@ -142,6 +150,8 @@ public class AddExportsTest {
         int exitValue =
             executeTestJava("-XaddExports:" + value,
                             "-version")
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue != 0);

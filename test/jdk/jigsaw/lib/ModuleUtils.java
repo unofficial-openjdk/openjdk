@@ -37,9 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 import jdk.internal.module.ModuleInfoWriter;
 
@@ -145,42 +143,6 @@ public final class ModuleUtils {
             }
 
         }
-    }
-
-    /**
-     * Creates a JAR file, optionally with a manifest, and with the given
-     * entries. The entries will be empty in the resulting JAR file.
-     */
-    static void createJarFile(Path file, Manifest man, String... entries)
-        throws IOException
-    {
-        try (OutputStream out = Files.newOutputStream(file)) {
-            try (JarOutputStream jos = new JarOutputStream(out)) {
-
-                if (man != null) {
-                    JarEntry je = new JarEntry(JarFile.MANIFEST_NAME);
-                    jos.putNextEntry(je);
-                    man.write(jos);
-                    jos.closeEntry();
-                }
-
-                for (String entry : entries) {
-                    JarEntry je = new JarEntry(entry);
-                    jos.putNextEntry(je);
-                    jos.closeEntry();
-                }
-            }
-        }
-    }
-
-    /**
-     * Creates a JAR file and with the given entries. The entries will be empty
-     * in the resulting JAR file.
-     */
-    static void createJarFile(Path file, String... entries)
-        throws IOException
-    {
-        createJarFile(file, null, entries);
     }
 
 }

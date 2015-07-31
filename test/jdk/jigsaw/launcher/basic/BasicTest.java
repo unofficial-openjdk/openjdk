@@ -81,6 +81,8 @@ public class BasicTest {
         int exitValue
             = executeTestJava("-mp", modulepath,
                               "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -109,6 +111,8 @@ public class BasicTest {
         int exitValue
             = executeTestJava("-mp", dir.toString(),
                               "-m", TEST_MODULE)
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
@@ -125,6 +129,8 @@ public class BasicTest {
         int exitValue
             = executeTestJava("-mp", modulepath,
                               "-m", "rhubarb")
+                .outputTo(System.out)
+                .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue != 0);

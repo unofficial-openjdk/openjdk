@@ -69,6 +69,7 @@ public class Main {
         boolean found = false;
         for (ScriptEngineFactory factory : sl) {
             String name = factory.getEngineName();
+            System.out.println(name);
             if (name.equals("BananaScriptEngine"))
                 found = true;
         }
