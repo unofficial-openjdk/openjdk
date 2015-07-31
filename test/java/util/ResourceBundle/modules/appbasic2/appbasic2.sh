@@ -39,7 +39,7 @@ JAVA="$TESTJAVA/bin/java"
 
 # This test is temporarily converted to use AbstractResourceBundleProvider class
 # to avoid calling Control.newBundle
-EXTRA_JAVAC_OPTS="-XaddExports:java.base/sun.util.locale.provider"
+EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider=test"
 
 for I in eu asia
 do
@@ -47,7 +47,7 @@ do
   mkdir -p mods/$B
   CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
   if [ "x$CLASSES" != x ]; then
-    $JAVAC ${EXTRA_JAVAC_OPTS} -g -d mods -modulesourcepath $TESTSRC/src -cp mods/test $CLASSES
+    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src -cp mods/test $CLASSES
   fi
   PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
   if [ "x$PROPS" != x ]; then
@@ -61,10 +61,8 @@ do
 done
 
 mkdir -p mods/test
-$JAVAC ${EXTRA_JAVAC_OPTS} -g -d mods -modulesourcepath $TESTSRC/src \
-    `find $TESTSRC/src/test -name "*.java"`
+$JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -XaddExports:java.base/sun.util.locale.provider=test \
-    -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?
