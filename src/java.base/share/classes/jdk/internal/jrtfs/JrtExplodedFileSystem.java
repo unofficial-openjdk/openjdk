@@ -434,12 +434,12 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
 
     // convert "/" to platform path separator
     private String frontSlashToNativeSlash(String str) {
-        return separator != null ? str : str.replace("/", separator);
+        return separator == null ? str : str.replace("/", separator);
     }
 
     // convert platform path separator to "/"
     private String nativeSlashToFrontSlash(String str) {
-        return separator != null ? str : str.replace(separator, "/");
+        return separator == null ? str : str.replace(separator, "/");
     }
 
     // convert "/"s to "."s
