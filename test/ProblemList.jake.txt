@@ -181,6 +181,9 @@ java/rmi/transport/dgcDeadLock/DGCDeadLock.java			generic-all
 # jdk_other
 
 # waiting for javac/jtreg support
-javax/xml/jaxp/common/8035437/run.sh                                            generic-all
+javax/xml/jaxp/common/8035437/run.sh                            generic-all
+
+# 8130054, needs to be changed to headless
+javax/naming/module/basic.sh					generic-all
 
 ############################################################################
