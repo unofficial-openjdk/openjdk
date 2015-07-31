@@ -4313,8 +4313,20 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       ResourceMark rm;
       // print in a single call to reduce interleaving of output
       if (cfs->source() != NULL) {
-        tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
-                   cfs->source());
+        static const size_t boot_image_name_len = strlen(BOOT_IMAGE_NAME);
+        size_t cfs_len = strlen(cfs->source());
+        ModuleEntry* module_entry = this_klass->module();
+        assert(module_entry != NULL, "module_entry should always be set");
+        // See if cfs->source() ends in "bootmodules.jimage"
+        if (module_entry->is_named() && boot_image_name_len < cfs_len &&
+          (strncmp(cfs->source() + cfs_len - boot_image_name_len,
+                  BOOT_IMAGE_NAME, boot_image_name_len) == 0)) {
+          tty->print_cr("[Loaded %s from jrt:/%s]", this_klass->external_name(),
+                     module_entry->name()->as_C_string());
+        } else {
+          tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
+                     cfs->source());
+        }
       } else if (class_loader.is_null()) {
         Klass* caller =
             THREAD->is_Java_thread()
