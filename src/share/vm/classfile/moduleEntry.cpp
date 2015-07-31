@@ -111,9 +111,8 @@ ModuleEntryTable::~ModuleEntryTable() {
 
       if (TraceModules) {
         ResourceMark rm;
-        tty->print("[deleting module: %s, ", to_remove->name()->as_C_string());
-        to_remove->loader()->print_value();
-        tty->cr();
+        tty->print_cr("[deleting module: %s]", to_remove->name() != NULL ?
+          to_remove->name()->as_C_string() : UNNAMED_MODULE);
       }
 
       // Clean out the C heap allocated reads list first before freeing the entry
