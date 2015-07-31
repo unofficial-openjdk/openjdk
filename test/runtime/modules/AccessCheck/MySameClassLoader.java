@@ -28,7 +28,7 @@ import java.lang.module.ModuleReference;
 // class loader.  This class loader will also be used to load classes
 // within modules.
 public class MySameClassLoader
-    extends ClassLoader implements ModuleCapableLoader
+    extends ClassLoader
 {
     public static MySameClassLoader loader1 = new MySameClassLoader();
 
@@ -57,6 +57,5 @@ public class MySameClassLoader
         }
     }
 
-    @Override
     public void register(ModuleReference mref) { }
 }
