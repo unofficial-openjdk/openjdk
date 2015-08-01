@@ -37,10 +37,10 @@
 import static jdk.test.lib.Asserts.*;
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
