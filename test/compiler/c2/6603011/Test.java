@@ -25,7 +25,7 @@
  * @test
  * @bug 6603011
  * @summary long/int division by constant
- *
+ * @ignore 8072369
  * @run main/othervm -Xcomp -Xbatch -XX:-Inline Test
  */
 

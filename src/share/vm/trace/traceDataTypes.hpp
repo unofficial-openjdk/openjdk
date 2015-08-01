@@ -58,12 +58,11 @@ enum ReservedEvent {
 
 typedef enum ReservedEvent ReservedEvent;
 
-typedef u8 classid;
-typedef u8 stacktraceid;
-typedef u8 methodid;
-typedef u8 fieldid;
+typedef u8 traceid;
 
+class ModuleEntry;
+class PackageEntry;
 class TraceUnicodeString;
+class Symbol;
 
 #endif // SHARE_VM_TRACE_TRACEDATATYPES_HPP
-

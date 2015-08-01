@@ -28,6 +28,7 @@
 #include "classfile/classLoader.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
+#include "runtime/thread.inline.hpp"
 #include "utilities/endian.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/growableArray.hpp"
