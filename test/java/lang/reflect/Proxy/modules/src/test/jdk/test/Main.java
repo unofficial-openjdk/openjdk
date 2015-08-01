@@ -56,10 +56,11 @@ public class Main {
             ptest.test(d.module, d.loader, d.interfaces);
         }
 
-        for (Data d : proxiesWtihAddExports()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
-        }
+        // Disabled until we see if this test is needed
+        //for (Data d : proxiesWtihAddExports()) {
+        //    System.out.println(d);
+        //    ptest.test(d.module, d.loader, d.interfaces);
+        //}
     }
 
     static class Data {

@@ -503,8 +503,7 @@ public final class Module {
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                // disable until jtreg and langtools tests are ready
-                // throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalStateException(caller + " != " + this);
             }
             implAddExports(pn, target, true);
         }
