@@ -154,8 +154,12 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             for (List<String> it = javaNames; it.nonEmpty(); it = it.tail) {
                 String name = it.head;
                 if (!docClasses && fm != null && name.endsWith(".java") && new File(name).exists()) {
-                    JavaFileObject fo = fm.getJavaFileObjects(name).iterator().next();
-                    parse(fo, classTrees, true);
+                    if (new File(name).getName().equals("module-info.java")) {
+                        docenv.warning(null, "main.file_ignored", name);
+                    } else {
+                        JavaFileObject fo = fm.getJavaFileObjects(name).iterator().next();
+                        parse(fo, classTrees, true);
+                    }
                 } else if (isValidPackageName(name)) {
                     names = names.append(name);
                 } else if (name.endsWith(".java")) {

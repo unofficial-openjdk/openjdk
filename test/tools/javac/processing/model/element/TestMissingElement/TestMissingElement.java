@@ -45,6 +45,12 @@ import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Log;
 
 public class TestMissingElement extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
+
     private PrintWriter out;
 
     @Override

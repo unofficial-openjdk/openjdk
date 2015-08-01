@@ -128,7 +128,6 @@ class PlatformClassPath {
 
         private final FileSystem fs;
         private final Path mpath;
-
         ImageHelper(Path path) throws IOException {
             this(FileSystems.getDefault(), path);
         }

@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -42,6 +43,7 @@ import javax.lang.model.util.*;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
+
 import static javax.tools.StandardLocation.*;
 
 import com.sun.source.util.TaskEvent;
@@ -79,6 +81,7 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.util.ServiceLoader;
+
 import static com.sun.tools.javac.code.Lint.LintCategory.PROCESSING;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.main.Option.*;
@@ -164,6 +167,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final Enter enter;
     private final Completer initialCompleter;
     private final Check chk;
+    private final ModuleSymbol defaultModule;
 
     private final Context context;
 
@@ -212,6 +216,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         initialCompleter = ClassFinder.instance(context).getCompleter();
         chk = Check.instance(context);
         initProcessorClassLoader();
+
+        defaultModule = source.allowModules() && options.isUnset("noModules")
+                ? symtab.unnamedModule : symtab.noModule;
+
     }
 
     public void setProcessors(Iterable<? extends Processor> processors) {
@@ -434,8 +442,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     Processor processor;
                     try {
                         try {
+                            Class<?> processorClass = processorCL.loadClass(processorName);
+                            ensureReadable(processorClass);
                             processor =
-                                (Processor) (processorCL.loadClass(processorName).newInstance());
+                                (Processor) (processorClass.newInstance());
                         } catch (ClassNotFoundException cnfe) {
                             log.error("proc.processor.not.found", processorName);
                             return false;
@@ -469,6 +479,26 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
         public void remove () {
             throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Ensures that the module of the given class is readable to this
+         * module.
+         */
+        private void ensureReadable(Class<?> targetClass) {
+            try {
+                Method getModuleMethod = Class.class.getMethod("getModule");
+                Object thisModule = getModuleMethod.invoke(this.getClass());
+                Object targetModule = getModuleMethod.invoke(targetClass);
+
+                Class<?> moduleClass = getModuleMethod.getReturnType();
+                Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+                addReadsMethod.invoke(thisModule, targetModule);
+            } catch (NoSuchMethodException e) {
+                // ignore
+            } catch (Exception e) {
+                throw new InternalError(e);
+            }
         }
     }
 
@@ -1001,21 +1031,24 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 if (file.getKind() != JavaFileObject.Kind.CLASS)
                     throw new AssertionError(file);
                 ClassSymbol cs;
+                // TODO: for now, we assume that generated code is in a default module;
+                // in time, we need a way to be able to specify the module for generated code
                 if (isPkgInfo(file, JavaFileObject.Kind.CLASS)) {
                     Name packageName = Convert.packagePart(name);
-                    PackageSymbol p = symtab.enterPackage(packageName);
+                    PackageSymbol p = symtab.enterPackage(defaultModule, packageName);
                     if (p.package_info == null)
-                        p.package_info = symtab.enterClass(Convert.shortName(name), p);
+                        p.package_info = symtab.enterClass(defaultModule, Convert.shortName(name), p);
                     cs = p.package_info;
                     cs.reset();
                     if (cs.classfile == null)
                         cs.classfile = file;
                     cs.completer = initialCompleter;
                 } else {
-                    cs = symtab.enterClass(name);
+                    cs = symtab.enterClass(defaultModule, name);
                     cs.reset();
                     cs.classfile = file;
                     cs.completer = initialCompleter;
+                    cs.owner.members().enter(cs); //XXX - OverwriteBetweenCompilations; syms.getClass is not sufficient anymore
                 }
                 list = list.prepend(cs);
             }
@@ -1104,7 +1137,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
             boolean foundError = false;
 
-            for (ClassSymbol cs : symtab.classes.values()) {
+            for (ClassSymbol cs : symtab.getAllClasses()) {
                 if (cs.kind == ERR) {
                     foundError = true;
                     break;
@@ -1112,7 +1145,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             }
 
             if (foundError) {
-                for (ClassSymbol cs : symtab.classes.values()) {
+                for (ClassSymbol cs : symtab.getAllClasses()) {
                     if (cs.classfile != null || cs.kind == ERR) {
                         cs.reset();
                         cs.type = new ClassType(cs.type.getEnclosingType(), null, cs);

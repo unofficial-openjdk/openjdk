@@ -28,6 +28,10 @@
  *          correctly.
  * @library /tools/lib
  * @build ToolBox PlatformProviderTest
+ * @modules jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.compiler/com.sun.tools.javac.platform
+ *          jdk.compiler/com.sun.tools.javac.util
  * @run main/othervm PlatformProviderTest
  */
 
@@ -90,6 +94,8 @@ public class PlatformProviderTest implements PlatformProvider {
                 tb.new JavacTask(ToolBox.Mode.EXEC)
                   .options("-J-classpath",
                            "-J" + System.getProperty("test.classes"),
+                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED," +
+                                           "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                            "-XDrawDiagnostics",
                            "-release",
                            platformSpec,
@@ -123,6 +129,8 @@ public class PlatformProviderTest implements PlatformProvider {
                 tb.new JavacTask(ToolBox.Mode.EXEC)
                   .options("-J-classpath",
                            "-J" + System.getProperty("test.classes"),
+                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED," +
+                                           "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                            "-release",
                            "fail",
                            System.getProperty("test.src") + "/PlatformProviderTestSource.java")
