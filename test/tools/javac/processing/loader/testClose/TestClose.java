@@ -39,7 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Module;
 import java.net.URI;

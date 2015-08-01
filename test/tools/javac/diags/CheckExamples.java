@@ -38,7 +38,7 @@
  */
 
 import java.io.*;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;

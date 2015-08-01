@@ -34,7 +34,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.Optional;
 import java.util.Set;
