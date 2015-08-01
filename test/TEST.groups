@@ -59,6 +59,7 @@ jdk_lang = \
     sun/misc \
     sun/reflect \
     jdk/lambda \
+    jdk/jigsaw \
     vm
 
 # All of the java.util package
@@ -214,7 +215,6 @@ jdk_launcher = \
 #
 core_tools = \
     tools \
-    jdk/internal/jimage \
     jdk/internal/jrtfs \
     sun/tools/java \
     sun/tools/jrunscript

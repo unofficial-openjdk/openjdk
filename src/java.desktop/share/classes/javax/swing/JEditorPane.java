@@ -24,15 +24,11 @@
  */
 package javax.swing;
 
-import sun.swing.SwingUtilities2;
-
 import java.awt.*;
-import java.awt.event.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.io.*;
-import java.util.*;
 
 import javax.swing.plaf.*;
 import javax.swing.text.*;
@@ -1203,6 +1199,7 @@ public class JEditorPane extends JTextComponent {
                     // registerEditorKitForContentType(type, class, null).
                     c = SwingUtilities.loadSystemClass(classname);
                 }
+                JEditorPane.class.getModule().addReads(c.getModule());
                 k = (EditorKit) c.newInstance();
                 kitRegistry.put(type, k);
             } catch (Throwable e) {

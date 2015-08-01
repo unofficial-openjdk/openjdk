@@ -45,9 +45,12 @@ public class SharedSecrets {
     private static final Unsafe unsafe = Unsafe.getUnsafe();
     private static JavaUtilJarAccess javaUtilJarAccess;
     private static JavaLangAccess javaLangAccess;
+    private static JavaLangModuleAccess javaLangModuleAccess;
+    private static JavaLangReflectAccess javaLangReflectAccess;
     private static JavaLangRefAccess javaLangRefAccess;
     private static JavaIOAccess javaIOAccess;
     private static JavaNetAccess javaNetAccess;
+    private static JavaNetInetAddressAccess javaNetInetAddressAccess;
     private static JavaNetHttpCookieAccess javaNetHttpCookieAccess;
     private static JavaNioAccess javaNioAccess;
     private static JavaIOFileDescriptorAccess javaIOFileDescriptorAccess;
@@ -79,6 +82,24 @@ public class SharedSecrets {
         return javaLangAccess;
     }
 
+    public static void setJavaLangModuleAccess(JavaLangModuleAccess jlma) {
+        javaLangModuleAccess = jlma;
+    }
+
+    public static JavaLangModuleAccess getJavaLangModuleAccess() {
+        return javaLangModuleAccess;
+    }
+
+    public static void setJavaLangReflectAccess(JavaLangReflectAccess jlfa) {
+        javaLangReflectAccess = jlfa;
+    }
+
+    public static JavaLangReflectAccess getJavaLangReflectAccess() {
+        if (javaLangReflectAccess == null)
+            unsafe.ensureClassInitialized(java.lang.reflect.Module.class);
+        return javaLangReflectAccess;
+    }
+
     public static void setJavaLangRefAccess(JavaLangRefAccess jlra) {
         javaLangRefAccess = jlra;
     }
@@ -92,7 +113,17 @@ public class SharedSecrets {
     }
 
     public static JavaNetAccess getJavaNetAccess() {
+        if (javaNetAccess == null)
+            unsafe.ensureClassInitialized(java.net.URLClassLoader.class);
         return javaNetAccess;
+    }
+
+    public static void setJavaNetInetAddressAccess(JavaNetInetAddressAccess jna) {
+        javaNetInetAddressAccess = jna;
+    }
+
+    public static JavaNetInetAddressAccess getJavaNetInetAddressAccess() {
+        return javaNetInetAddressAccess;
     }
 
     public static void setJavaNetHttpCookieAccess(JavaNetHttpCookieAccess a) {
