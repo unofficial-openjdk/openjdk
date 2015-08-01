@@ -33,11 +33,11 @@
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +50,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import static java.lang.module.Layer.boot;
+import static java.lang.reflect.Layer.boot;
 import static java.lang.module.ModuleFinder.empty;
 
 import org.testng.annotations.DataProvider;

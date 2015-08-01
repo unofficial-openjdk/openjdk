@@ -1103,4 +1103,20 @@ public class ModuleDescriptor
         return ModuleInfo.read(bb, null);
     }
 
+
+    static {
+        /**
+         * Setup the shared secret to allow code in other packages know if a
+         * module is an automatic module. If isAutomatic becomes part of the
+         * API then this setup can go away.
+         */
+        sun.misc.SharedSecrets
+            .setJavaLangModuleAccess(new sun.misc.JavaLangModuleAccess() {
+                @Override
+                public boolean isAutomatic(ModuleDescriptor descriptor) {
+                    return descriptor.isAutomatic();
+                }
+            });
+    }
+
 }

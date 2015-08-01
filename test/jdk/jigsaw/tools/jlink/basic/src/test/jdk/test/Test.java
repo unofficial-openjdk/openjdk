@@ -24,7 +24,7 @@
 package jdk.test;
 
 import java.lang.reflect.Module;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 
 public class Test {
     public static void main(String[] args) {

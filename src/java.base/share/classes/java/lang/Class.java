@@ -25,7 +25,7 @@
 
 package java.lang;
 
-import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -41,7 +41,9 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Proxy;
 import java.lang.ref.SoftReference;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamField;
 import java.net.URL;
@@ -58,12 +60,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
-
 import jdk.internal.misc.BootLoader;
-import sun.misc.JavaLangReflectAccess;
-import sun.misc.SharedSecrets;
-import sun.misc.Unsafe;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import sun.misc.JavaLangReflectModuleAccess;
+import sun.misc.Unsafe;
+import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -75,8 +76,6 @@ import sun.reflect.generics.repository.MethodRepository;
 import sun.reflect.generics.repository.ConstructorRepository;
 import sun.reflect.generics.scope.ClassScope;
 import sun.security.util.SecurityConstants;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Proxy;
 import sun.reflect.annotation.*;
 import sun.reflect.misc.ReflectUtil;
 

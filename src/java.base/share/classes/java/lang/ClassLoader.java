@@ -2326,8 +2326,8 @@ public abstract class ClassLoader {
     public Module getUnnamedModule() {
         Module module = unnamedModule;
         if (module == null) {
-            module = SharedSecrets.getJavaLangReflectAccess()
-                    .defineUnnamedModule(this);
+            module = SharedSecrets.getJavaLangReflectModuleAccess()
+                                  .defineUnnamedModule(this);
             boolean set = trySetObjectField("unnamedModule", module);
             if (!set) {
                 // beaten by someone else

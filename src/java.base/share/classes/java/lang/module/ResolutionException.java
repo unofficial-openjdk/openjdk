@@ -42,6 +42,14 @@ public class ResolutionException extends RuntimeException {
     public ResolutionException() { }
 
     /**
+     * Constructs a {@code ResolutionException} with the given detail
+     * message.
+     */
+    public ResolutionException(String msg) {
+        super(msg);
+    }
+
+    /**
      * Constructs an instance of this exception with the given cause.
      */
     public ResolutionException(Throwable cause) {
@@ -54,13 +62,6 @@ public class ResolutionException extends RuntimeException {
      */
     public ResolutionException(String msg, Throwable cause) {
         super(msg, cause);
-    }
-
-    /**
-     * Constructs an instance of this exception.
-     */
-    public ResolutionException(String fmt, Object... args) {
-        super(String.format(fmt, args));
     }
 
 }

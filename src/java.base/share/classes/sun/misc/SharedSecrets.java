@@ -46,7 +46,7 @@ public class SharedSecrets {
     private static JavaUtilJarAccess javaUtilJarAccess;
     private static JavaLangAccess javaLangAccess;
     private static JavaLangModuleAccess javaLangModuleAccess;
-    private static JavaLangReflectAccess javaLangReflectAccess;
+    private static JavaLangReflectModuleAccess javaLangReflectModuleAccess;
     private static JavaLangRefAccess javaLangRefAccess;
     private static JavaIOAccess javaIOAccess;
     private static JavaNetAccess javaNetAccess;
@@ -82,22 +82,22 @@ public class SharedSecrets {
         return javaLangAccess;
     }
 
-    public static void setJavaLangModuleAccess(JavaLangModuleAccess jlma) {
-        javaLangModuleAccess = jlma;
+    public static void setJavaLangModuleAccess(JavaLangModuleAccess jlrma) {
+        javaLangModuleAccess = jlrma;
     }
 
     public static JavaLangModuleAccess getJavaLangModuleAccess() {
         return javaLangModuleAccess;
     }
 
-    public static void setJavaLangReflectAccess(JavaLangReflectAccess jlfa) {
-        javaLangReflectAccess = jlfa;
+    public static void setJavaLangReflectModuleAccess(JavaLangReflectModuleAccess jlrma) {
+        javaLangReflectModuleAccess = jlrma;
     }
 
-    public static JavaLangReflectAccess getJavaLangReflectAccess() {
-        if (javaLangReflectAccess == null)
+    public static JavaLangReflectModuleAccess getJavaLangReflectModuleAccess() {
+        if (javaLangReflectModuleAccess == null)
             unsafe.ensureClassInitialized(java.lang.reflect.Module.class);
-        return javaLangReflectAccess;
+        return javaLangReflectModuleAccess;
     }
 
     public static void setJavaLangRefAccess(JavaLangRefAccess jlra) {

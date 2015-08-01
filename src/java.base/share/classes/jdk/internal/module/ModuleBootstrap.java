@@ -27,10 +27,10 @@ package jdk.internal.module;
 
 import java.io.File;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Layer;
+import java.lang.reflect.Layer.ClassLoaderFinder;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +45,6 @@ import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.BuiltinClassLoader;
 import jdk.internal.misc.Modules;
 import sun.misc.PerfCounter;
-import sun.misc.SharedSecrets;
 
 /**
  * Initializes/boots the module system.
@@ -66,11 +65,12 @@ public final class ModuleBootstrap {
     private static final String JAVA_BASE = "java.base";
 
     /**
-     * Initialize the module system.
+     * Initialize the module system, returning the boot Layer.
      *
-     * @see java.lang.System#initPhase2
+     * @see java.lang.System#initPhase2()
      */
-    public static void boot() {
+    public static Layer boot() {
+
         long t0 = System.nanoTime();
 
         // system module path, aka the installed modules
@@ -224,11 +224,10 @@ public final class ModuleBootstrap {
         // time to reify modules
         PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
-        // set the boot Layer
-        SharedSecrets.getJavaLangModuleAccess().setBootLayer(bootLayer);
-
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
+
+        return bootLayer;
     }
 
     /**

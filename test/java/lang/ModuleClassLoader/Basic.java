@@ -30,8 +30,8 @@
  */
 
 import java.io.FilePermission;
+import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleFinder;
 import java.net.URL;
 import java.security.AccessControlException;

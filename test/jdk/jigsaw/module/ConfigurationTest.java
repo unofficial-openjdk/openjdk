@@ -30,16 +30,16 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
+import java.lang.reflect.Layer;
 import java.util.stream.Collectors;
 
-import static java.lang.module.Layer.*;
 import static java.lang.module.ModuleFinder.empty;
+import static java.lang.reflect.Layer.*;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;

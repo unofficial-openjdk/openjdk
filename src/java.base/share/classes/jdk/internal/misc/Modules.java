@@ -25,13 +25,11 @@
 
 package jdk.internal.misc;
 
-import java.io.IOException;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.util.Set;
 
+import sun.misc.JavaLangReflectModuleAccess;
 import sun.misc.SharedSecrets;
 
 
@@ -47,23 +45,21 @@ import sun.misc.SharedSecrets;
 public class Modules {
     private Modules() { }
 
+    private static final JavaLangReflectModuleAccess JLRMA
+        = SharedSecrets.getJavaLangReflectModuleAccess();
+
     /**
-     * Define a new module of the given name to be associated with the
-     * given class loader.
+     * Define a new module to the VM. The module has the given set of
+     * concealed packages and is defined to the given class loader.
      */
-    public static Module defineModule(ClassLoader loader, String name,
+    public static Module defineModule(ClassLoader loader,
+                                      String name,
                                       Set<String> packages)
     {
         ModuleDescriptor descriptor
             = new ModuleDescriptor.Builder(name).conceals(packages).build();
-        ModuleReference mref = new ModuleReference(descriptor, null) {
-            @Override
-            public ModuleReader open() throws IOException {
-                throw new IOException("No reader for module " +
-                                      descriptor().toNameAndVersion());
-            }
-        };
-        return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, mref);
+
+        return JLRMA.defineModule(loader, descriptor, null);
     }
 
     /**
@@ -71,7 +67,7 @@ public class Modules {
      * Same as m1.addReads(m2) but without a permission check.
      */
     public static void addReads(Module m1, Module m2) {
-        SharedSecrets.getJavaLangReflectAccess().addReads(m1, m2);
+        JLRMA.addReads(m1, m2);
     }
 
     /**
@@ -79,21 +75,21 @@ public class Modules {
      * Same as m1.addExports(pkg, m2) but without a permission check.
      */
     public static void addExports(Module m1, String pn, Module m2) {
-        SharedSecrets.getJavaLangReflectAccess().addExports(m1, pn, m2);
+        JLRMA.addExports(m1, pn, m2);
     }
 
     /**
      * Updates a module m to export a package to all modules.
      */
     public static void addExportsToAll(Module m, String pn) {
-        SharedSecrets.getJavaLangReflectAccess().addExportsToAll(m, pn);
+        JLRMA.addExportsToAll(m, pn);
     }
 
     /**
      * Updates module m to export a package to all unnamed modules.
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
-        SharedSecrets.getJavaLangReflectAccess().addExportsToAllUnnamed(m, pn);
+        JLRMA.addExportsToAllUnnamed(m, pn);
     }
 
     /**
@@ -102,7 +98,7 @@ public class Modules {
      * This method is a no-op if the module already contains the package.
      */
     public static void addPackage(Module m, String pn) {
-        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pn);
+        JLRMA.addPackage(m, pn);
     }
 
     /**

@@ -34,9 +34,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
-import java.lang.annotation.Annotation;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.security.AccessControlContext;
@@ -1228,13 +1229,16 @@ public final class System {
         sun.misc.VM.initLevel(1);
     }
 
+    // @see #initPhase2()
+    private static Layer bootLayer;
+
     /*
      * Invoked by VM.  Phase 2 module system initialization.
      * Only classes in java.base can be loaded in this phase.
      */
     private static void initPhase2() {
         // initialize the module system
-        ModuleBootstrap.boot();
+        System.bootLayer = ModuleBootstrap.boot();
 
         // base module needs to be loose
         Module base = Object.class.getModule();
@@ -1345,6 +1349,9 @@ public final class System {
             }
             public void invokeFinalize(Object o) throws Throwable {
                 o.finalize();
+            }
+            public Layer getBootLayer() {
+                return bootLayer;
             }
             public ServicesCatalog getServicesCatalog(ClassLoader cl) {
                 return cl.getServicesCatalog();

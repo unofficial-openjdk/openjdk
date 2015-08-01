@@ -81,7 +81,7 @@ public abstract class ModuleReference {
     /**
      * Returns the module descriptor.
      */
-    public ModuleDescriptor descriptor() {
+    public final ModuleDescriptor descriptor() {
         return descriptor;
     }
 
@@ -94,7 +94,7 @@ public abstract class ModuleReference {
      * granted specific permissions when loaded by a {@link
      * java.security.SecureClassLoader SecureClassLoader}.
      */
-    public Optional<URI> location() {
+    public final Optional<URI> location() {
         return location;
     }
 

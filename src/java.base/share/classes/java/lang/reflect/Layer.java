@@ -23,9 +23,10 @@
  * questions.
  */
 
-package java.lang.module;
+package java.lang.reflect;
 
-import java.lang.reflect.Module;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,9 +36,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import sun.misc.JavaLangModuleAccess;
-import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
+
 
 /**
  * Represents a layer of modules in the Java virtual machine.
@@ -62,27 +62,13 @@ import sun.misc.SharedSecrets;
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
  *
+ * @apiNote As Layer is in java.lang.reflect then its method names may
+ * need to follow the convention in this package.
+ *
  * @since 1.9
  */
 
 public final class Layer {
-
-    private static final JavaLangReflectAccess reflectAccess
-        = SharedSecrets.getJavaLangReflectAccess();
-
-    private static final Layer EMPTY_LAYER
-        = new Layer(null, Collections.emptyMap());
-
-    private final Configuration cf;
-    private final Map<String, Module> nameToModule;
-
-    /**
-     * Creates a new {@code Layer} object.
-     */
-    private Layer(Configuration cf, Map<String, Module> map) {
-        this.cf = cf;
-        this.nameToModule = map; // no need to create defensive copy
-    }
 
 
     /**
@@ -102,6 +88,33 @@ public final class Layer {
          * a Layer. </p>
          */
         ClassLoader loaderForModule(String moduleName);
+    }
+
+
+    // the empty Layer
+    private static final Layer EMPTY_LAYER = new Layer(null, null);
+
+    // the configuration from which this Layer was created
+    private final Configuration cf;
+
+    // maps module name to jlr.Module
+    private final Map<String, Module> nameToModule;
+
+
+    /**
+     * Creates a new Layer from the modules in the given configuration.
+     */
+    private Layer(Configuration cf, ClassLoaderFinder clf) {
+
+        Map<String, Module> map;
+        if (cf == null) {
+            map = Collections.emptyMap();
+        } else {
+            map = Module.defineModules(cf, clf, this);
+        }
+
+        this.cf = cf;
+        this.nameToModule = map; // no need to do defensive copy
     }
 
 
@@ -150,7 +163,7 @@ public final class Layer {
         // For now, no two modules in the boot Layer may contain the same
         // package so we use a simple check for the boot Layer to keep
         // the overhead at startup to a minimum
-        if (bootLayer == null) {
+        if (bootLayer() == null) {
             checkBootModulesForDuplicatePkgs(cf);
         } else {
             checkForDuplicatePkgs(cf, clf);
@@ -158,8 +171,12 @@ public final class Layer {
 
         Layer layer;
         try {
-            layer = new Layer(cf, reflectAccess.defineModules(cf, clf));
+            layer = new Layer(cf, clf);
+        } catch (SecurityException se) {
+            throw se;
         } catch (Exception | Error e) {
+            // FIXME: Need to reduce the range of exceptions that need
+            // to be caught here
             throw new LayerInstantiationException(e);
         }
 
@@ -220,8 +237,10 @@ public final class Layer {
      * the given format string and arguments.
      */
     private static LayerInstantiationException fail(String fmt, Object ... args) {
-        return new LayerInstantiationException(fmt, args);
+        String msg = String.format(fmt, args);
+        return new LayerInstantiationException(msg);
     }
+
 
     /**
      * Returns the {@code Configuration} used to create this layer unless this
@@ -230,6 +249,7 @@ public final class Layer {
     public Optional<Configuration> configuration() {
         return Optional.ofNullable(cf);
     }
+
 
     /**
      * Returns this layer's parent unless this is the {@linkplain #empty empty
@@ -243,12 +263,14 @@ public final class Layer {
         }
     }
 
+
     /**
      * Returns a set of the {@code Module}s in this layer.
      */
     public Set<Module> modules() {
         return nameToModule.values().stream().collect(Collectors.toSet());
     }
+
 
     /**
      * Returns the {@code Module} with the given name in this layer, or if not
@@ -261,19 +283,6 @@ public final class Layer {
         return parent().flatMap(l -> l.findModule(name));
     }
 
-    /**
-     * Returns the {@code ModuleReference} that was used to define the module
-     * with the given name.  If a module of the given name is not in this layer
-     * then the {@linkplain #parent parent} layer is checked.
-     */
-    Optional<ModuleReference> findReference(String name) {
-        if (cf == null)
-            return Optional.empty();
-        Optional<ModuleReference> omref = cf.findModule(name);
-        if (omref.isPresent())
-            return omref;
-        return parent().flatMap(l -> l.findReference(name));
-    }
 
     /**
      * Returns the {@code ClassLoader} for the {@code Module} with the given
@@ -304,19 +313,6 @@ public final class Layer {
                                            + " not known to this layer");
     }
 
-    /**
-     * Returns the set of module descriptors in this layer and all
-     * parent layers.
-     */
-    Set<ModuleDescriptor> allModuleDescriptors() {
-        Set<ModuleDescriptor> result = new HashSet<>();
-        Optional<Layer> ol = parent();
-        if (ol.isPresent())
-            result.addAll(ol.get().allModuleDescriptors());
-        if (cf != null)
-            result.addAll(cf.descriptors());
-        return result;
-    }
 
     /**
      * Returns the <em>empty</em> layer.
@@ -324,6 +320,7 @@ public final class Layer {
     public static Layer empty() {
         return EMPTY_LAYER;
     }
+
 
     /**
      * Returns the boot layer. Returns {@code null} if the boot layer has not
@@ -340,23 +337,15 @@ public final class Layer {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null)
             sm.checkPermission(new RuntimePermission("getBootLayer"));
-        return bootLayer;
+        return bootLayer();
     }
 
-    // the boot Layer
-    private static Layer bootLayer;
-
-    static {
-        SharedSecrets.setJavaLangModuleAccess(new JavaLangModuleAccess() {
-            @Override
-            public void setBootLayer(Layer layer) {
-                bootLayer = layer;
-            }
-            @Override
-            public boolean isAutomatic(ModuleDescriptor descriptor) {
-                return descriptor.isAutomatic();
-            }
-        });
+    /**
+     * Returns the boot layer. Returns {@code null} if the boot layer has not
+     * been set.
+     */
+    private static Layer bootLayer() {
+        return SharedSecrets.getJavaLangAccess().getBootLayer();
     }
 
 }

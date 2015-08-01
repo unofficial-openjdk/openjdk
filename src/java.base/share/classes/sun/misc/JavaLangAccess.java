@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
+import java.lang.reflect.Layer;
 import java.security.AccessControlContext;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -136,6 +137,11 @@ public interface JavaLangAccess {
      * Invokes the finalize method of the given object.
      */
     void invokeFinalize(Object o) throws Throwable;
+
+    /**
+     * Returns the boot Layer
+     */
+    Layer getBootLayer();
 
     /**
      * Returns the ServicesCatalog for the given class loader.
