@@ -2,6 +2,10 @@
 
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java     	0 generic-all	javadoc can't find {@link java.math}
 
+com/sun/javadoc/testCustomTag/TestCustomTag.java				0 generic-all	addExports
+com/sun/javadoc/testTaglets/TestTaglets.java					0 generic-all	addExports
+com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java			0 generic-all	addExports
+
 
 ##### javac ####################################################################
 
@@ -30,6 +34,33 @@ tools/javac/profiles/ProfileOptionTest.java     				0 generic-all	need to determ
 tools/javac/synthesize/Main.java     						0 generic-all	convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
 tools/javac/tree/ScopeTest.java     						0 generic-all	?? need more investigation
 tools/javac/warnings/6594914/T6594914b.java     				0 generic-all	uses -Xlint:sunapi; should this go away or be limited to 8?
+
+tools/javac/api/TestTrees.java							0 generic-all	addExports
+tools/javac/util/context/T7021650.java						0 generic-all	addExports
+tools/javac/file/T7018098.java							0 generic-all	addExports
+tools/javac/util/T6597678.java							0 generic-all	addExports
+tools/javac/annotations/typeAnnotations/TypeProcOnly.java			0 generic-all	addExports
+tools/javac/T6406771.java							0 generic-all	addExports
+tools/javac/processing/loader/testClose/TestClose.java				0 generic-all	addExports
+tools/javac/diags/MessageInfo.java						0 generic-all	addExports
+tools/javac/diags/RunExamples.java						0 generic-all	addExports
+tools/javac/api/taskListeners/CompileEvent.java					0 generic-all	addExports
+tools/javac/annotations/typeAnnotations/packageanno/PackageProcessor.java	0 generic-all	addExports
+tools/javac/cast/intersection/model/Model01.java				0 generic-all	addExports
+tools/javac/processing/environment/ProcessingEnvAnnoDiscovery.java		0 generic-all	addExports
+tools/javac/processing/errors/EnsureAnnotationTypeMismatchException/Source.java 0 generic-all	addExports
+tools/javac/processing/errors/EnsureMirroredTypeException/Source.java		0 generic-all	addExports
+tools/javac/processing/errors/StopOnInapplicableAnnotations/GenerateFunctionalInterface.java	0 generic-all	addExports
+tools/javac/processing/model/element/8009367/TestQualifiedNameUsed.java		0 generic-all	addExports
+tools/javac/processing/model/element/TestEmptyContainer.java			0 generic-all	addExports
+tools/javac/processing/model/element/TestMissingElement/TestMissingElement.java	0 generic-all	addExports
+tools/javac/processing/model/element/TestNonInherited.java			0 generic-all	addExports
+tools/javac/processing/model/inheritedByType/EnsureOrder.java			0 generic-all	addExports
+tools/javac/processing/model/type/BasicAnnoTests.java				0 generic-all	addExports
+tools/javac/processing/rounds/OverwriteBetweenCompilations.java			0 generic-all	addExports
+tools/javac/tree/ArrayTypeToString.java						0 generic-all	addExports
+tools/javac/tree/MakeTypeTest.java						0 generic-all	addExports
+tools/javac/treeannotests/AnnoTreeTests.java					0 generic-all	addExports
 
 
 ##### javah ####################################################################
