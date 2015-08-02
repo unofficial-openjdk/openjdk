@@ -24,7 +24,7 @@
 /*
  * @test
  * @summary Exercise Class#getModule
- * @run testng GetModule
+ * @run testng GetModuleTest
  */
 
 import java.awt.Component;
@@ -35,9 +35,9 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
-public class GetModule {
+public class GetModuleTest {
 
-    private static final Module TEST_MODULE = GetModule.class.getModule();
+    private static final Module TEST_MODULE = GetModuleTest.class.getModule();
 
     @DataProvider(name = "samples")
     public Object[][] sampleData() {
@@ -45,9 +45,9 @@ public class GetModule {
 
             // unnamed module
 
-            { GetModule.class,      null },
-            { GetModule[].class,    null },
-            { GetModule[][].class,  null },
+            { GetModuleTest.class,      null },
+            { GetModuleTest[].class,    null },
+            { GetModuleTest[][].class,  null },
 
             // should return named module
 
