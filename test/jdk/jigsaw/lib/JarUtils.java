@@ -48,8 +48,8 @@ public final class JarUtils {
      *
      * Equivalent to {@code jar cf <jarfile> -C <dir> file...}
      *
-     * The input files are resolve against the given directory. Any input
-     * files that are directories then they are processed recursively.
+     * The input files are resolved against the given directory. Any input
+     * files that are directories are processed recursively.
      */
     public static void createJarFile(Path jarfile, Path dir, Path... file)
         throws IOException
@@ -90,8 +90,8 @@ public final class JarUtils {
      *
      * Equivalent to {@code jar cf <jarfile> -C <dir> file...}
      *
-     * The input files are resolve against the given directory. Any input
-     * files that are directories then they are processed recursively.
+     * The input files are resolved against the given directory. Any input
+     * files that are directories are processed recursively.
      */
     public static void createJarFile(Path jarfile, Path dir, String... input)
         throws IOException
