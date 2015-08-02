@@ -37,7 +37,7 @@ import java.nio.file.Paths;
  * code in named modules.
  */
 
-public class Basic {
+public class Main {
 
     static final String NAME = "myresource";
 
@@ -55,7 +55,7 @@ public class Basic {
         assertTrue(Files.notExists(directoryFor("m3").resolve(NAME)));
 
         // invoke Class getResource from the unnamed module
-        URL url0 = Basic.class.getResource("/" + NAME);
+        URL url0 = Main.class.getResource("/" + NAME);
         assertNull(url0);
 
         // invoke Class getResource from modules m1-m3
@@ -67,16 +67,16 @@ public class Basic {
         assertNull(url3);
 
         // invoke Class getResourceAsStream from the unnamed module
-        InputStream in0 = Basic.class.getResourceAsStream("/" + NAME);
+        InputStream in0 = Main.class.getResourceAsStream("/" + NAME);
         assertNull(in0);
 
         // invoke Class getResourceAsStream from modules m1-m3
         try (InputStream in = p1.Main.getResourceAsStream("/" + NAME)) {
-            String s = new String(readAll(in), "UTF-8");
+            String s = new String(in.readAllBytes(), "UTF-8");
             assertEquals(s, "m1");
         }
         try (InputStream in = p2.Main.getResourceAsStream("/" + NAME)) {
-            String s = new String(readAll(in), "UTF-8");
+            String s = new String(in.readAllBytes(), "UTF-8");
             assertEquals(s, "m2");
         }
         InputStream in3 = p3.Main.getResourceAsStream("/" + NAME);
@@ -91,10 +91,12 @@ public class Basic {
         assertNull(in3);
 
         // check the content of in1 and in2
-        String s1 = new String(readAll(in1), "UTF-8");
-        String s2 = new String(readAll(in2), "UTF-8");
+        String s1 = new String(in1.readAllBytes(), "UTF-8");
+        String s2 = new String(in2.readAllBytes(), "UTF-8");
         assertEquals(s1, "m1");
         assertEquals(s2, "m2");
+
+        System.out.println("Success!");
     }
 
     /**
@@ -112,16 +114,9 @@ public class Basic {
     }
 
     static byte[] readAll(URL url) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (InputStream in = url.openStream()) {
-            return readAll(in);
+            return in.readAllBytes();
         }
-    }
-
-    static byte[] readAll(InputStream in) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        in.transferTo(baos);
-        return baos.toByteArray();
     }
 
     static void assertTrue(boolean condition) {
