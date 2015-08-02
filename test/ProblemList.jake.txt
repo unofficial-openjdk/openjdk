@@ -80,18 +80,6 @@ sun/tools/jstat/jstatTimeStamp1.sh				generic-all
 # 8059035
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 
-# 8072745
-demo/jvmti/heapTracker/HeapTrackerTest.java			generic-all
-demo/jvmti/hprof/HeapAllTest.java				generic-all
-demo/jvmti/hprof/HeapBinaryFormatTest.java			generic-all
-demo/jvmti/hprof/HeapDumpTest.java				generic-all
-demo/jvmti/hprof/HeapSitesTest.java				generic-all
-demo/jvmti/hprof/CpuOldTest.java				generic-all
-demo/jvmti/hprof/CpuTimesDefineClassTest.java			generic-all
-demo/jvmti/hprof/CpuTimesTest.java				generic-all
-demo/jvmti/hprof/OptionsTest.java				generic-all
-demo/jvmti/hprof/StackMapTableTest.java				generic-all
-
 ############################################################################
 
 # Exclude tests depending on package-private API or testlibrary
