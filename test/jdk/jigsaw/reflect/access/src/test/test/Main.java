@@ -46,16 +46,41 @@ public class Main {
         assertTrue(om.isPresent());
 
         Module target = om.get();
+
+        assertTrue(target.isExported("p"));
+        assertTrue(target.isExported("p", thisModule));
+
+        assertFalse(target.isExported("q"));
+        assertFalse(target.isExported("q", thisModule));
+
+
+        // thisModule does not read the target module
+
         assertFalse(thisModule.canRead(target));
 
         tryAccessPublicMembers("p.Exported", false);
         tryAccessPublicMembers("q.Internal", false);
+
+
+
+        // thisModule reads the target module
 
         thisModule.addReads(target);
         assertTrue(thisModule.canRead(target));
 
         tryAccessPublicMembers("p.Exported", true);
         tryAccessPublicMembers("q.Internal", false);
+
+
+
+        // change target module to export its internal package to thisModule
+
+        targetAddExports("q", thisModule);
+        assertFalse(target.isExported("q"));
+        assertTrue(target.isExported("q", thisModule));
+
+        tryAccessPublicMembers("p.Exported", true);
+        tryAccessPublicMembers("q.Internal", true);
     }
 
 
@@ -150,6 +175,15 @@ public class Main {
             assertTrue(shouldFail);
         }
 
+    }
+
+    /**
+     * Update target module to export a package to the given module.
+     */
+    static void targetAddExports(String pn, Module who) throws Exception {
+        Class<?> helper = Class.forName("p.Helper");
+        Method m = helper.getMethod("exportPackage", String.class, Module.class);
+        m.invoke(null, pn, who);
     }
 
 

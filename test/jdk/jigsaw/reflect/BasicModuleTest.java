@@ -34,10 +34,10 @@ import static org.testng.Assert.*;
 /*
  * @test
  * @summary Basic test of java.lang.reflect.Module
- * @run testng ModuleTest
+ * @run testng BasicModuleTest
  */
 
-public class ModuleTest {
+public class BasicModuleTest {
 
     /**
      * Tests that the given module reads all modules in the boot Layer.
@@ -52,26 +52,58 @@ public class ModuleTest {
             .forEach(target -> assertTrue(m.canRead(target.get())));
     }
 
+    /**
+     * Returns {@code true} if the array contains the given object.
+     */
+    private <T> boolean contains(T[] array, T obj) {
+        return Stream.of(array).anyMatch(obj::equals);
+    }
+
+    /**
+     * Returns a {@code Predicate} to test if a package is exported.
+     */
+    private Predicate<Exports> doesExport(String pn) {
+        return e -> (e.source().equals(pn)
+                && !e.targets().isPresent());
+    }
+
+
+
     @Test
     public void testThisModule() {
-        Module thisModule = ModuleTest.class.getModule();
+        Module thisModule = BasicModuleTest.class.getModule();
+        Module baseModule = Object.class.getModule();
 
         assertFalse(thisModule.isNamed());
         assertTrue(thisModule.getName() == null);
         assertTrue(thisModule.getDescriptor() == null);
 
-        ClassLoader thisLoader = ModuleTest.class.getClassLoader();
+        ClassLoader thisLoader = BasicModuleTest.class.getClassLoader();
         assertTrue(thisLoader == thisModule.getClassLoader());
         assertTrue(thisLoader.getUnnamedModule() == thisModule);
 
+        // unnamed modules read all other modules
         assertTrue(thisModule.canRead(null));
         testReadsAllBootModules(thisModule);
 
+        // unnamed modules export all packages
+        assertTrue(thisModule.isExported(""));
+        assertTrue(thisModule.isExported("", thisModule));
+        assertTrue(thisModule.isExported("", baseModule));
+        assertTrue(thisModule.isExported("p"));
+        assertTrue(thisModule.isExported("p", thisModule));
+        assertTrue(thisModule.isExported("p", baseModule));
+
+        // this test is in the unnamed package
         assertTrue(contains(thisModule.getPackages(), ""));
     }
 
+
     @Test
     public void testUnnamedModules() {
+        Module thisModule = BasicModuleTest.class.getModule();
+        Module baseModule = Object.class.getModule();
+
         ClassLoader loader1 = ClassLoader.getSystemClassLoader();
         ClassLoader loader2 = loader1.getParent();
 
@@ -89,16 +121,21 @@ public class ModuleTest {
 
         testReadsAllBootModules(m1);
         testReadsAllBootModules(m2);
+
+        assertTrue(m1.isExported(""));
+        assertTrue(m1.isExported("", thisModule));
+        assertTrue(m1.isExported("", baseModule));
+        assertTrue(m1.isExported("p"));
+        assertTrue(m1.isExported("p", thisModule));
+        assertTrue(m1.isExported("p", baseModule));
     }
 
-    private Predicate<Exports> doesExport(String pn) {
-        return e -> (e.source().equals(pn)
-                     && !e.targets().isPresent());
-    }
+
 
     @Test
     public void testBaseModule() {
         Module base = Object.class.getModule();
+        Module thisModule = BasicModuleTest.class.getModule();
 
         // getClassLoader
         assertTrue(base.getClassLoader() == null);
@@ -113,14 +150,23 @@ public class ModuleTest {
         // packages
         assertTrue(contains(base.getPackages(), "java.lang"));
 
-        // canRead
-        Module me = ModuleTest.class.getModule();
+        // reads
         assertTrue(base.canRead(base));
+
+        // isExported
+        assertTrue(base.isExported("java.lang"));
+        assertTrue(base.isExported("java.lang", thisModule));
+        assertFalse(base.isExported("java.wombat"));
+        assertFalse(base.isExported("java.wombat", thisModule));
     }
+
 
     @Test
     public void testDesktopModule() {
         Module desktop = java.awt.Component.class.getModule();
+        Module base = Object.class.getModule();
+        Module xml = javax.xml.XMLConstants.class.getModule();
+        Module thisModule = BasicModuleTest.class.getModule();
 
         // getClassLoader
         assertTrue(desktop.getClassLoader() == null);
@@ -134,17 +180,32 @@ public class ModuleTest {
 
         // packages
         assertTrue(contains(desktop.getPackages(), "java.awt"));
-        assertTrue(contains(desktop.getPackages(), "javax.swing"));
+        assertTrue(contains(desktop.getPackages(), "sun.awt"));
 
         // reads
-        Module base = Object.class.getModule();
-        Module xml = javax.xml.XMLConstants.class.getModule();
         assertTrue(desktop.canRead(base));
         assertTrue(desktop.canRead(xml));
+
+        // isExported
+        assertTrue(desktop.isExported("java.awt"));
+        assertTrue(desktop.isExported("java.awt", thisModule));
+        assertFalse(desktop.isExported("java.wombat"));
+        assertFalse(desktop.isExported("java.wombat", thisModule));
     }
 
-    private <T> boolean contains(T[] array, T obj) {
-        return Stream.of(array).anyMatch(obj::equals);
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testIsExportedNull() {
+        Module thisModule = this.getClass().getModule();
+        thisModule.isExported(null, thisModule);
     }
+
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testIsExportedToNull() {
+        Module thisModule = this.getClass().getModule();
+        thisModule.isExported("", null);
+    }
+
 
 }

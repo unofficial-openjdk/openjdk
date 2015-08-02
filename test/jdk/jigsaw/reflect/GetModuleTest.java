@@ -33,7 +33,7 @@ import java.lang.reflect.Module;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 public class GetModuleTest {
 
@@ -67,8 +67,9 @@ public class GetModuleTest {
     @Test(dataProvider = "samples")
     public void testGetModule(Class<?> type, String expected) {
         Module m = type.getModule();
+        assertNotNull(m);
         if (expected == null) {
-            assertEquals(m, TEST_MODULE);
+            assertTrue(m == TEST_MODULE);
         } else {
             assertEquals(m.getName(), expected);
         }
