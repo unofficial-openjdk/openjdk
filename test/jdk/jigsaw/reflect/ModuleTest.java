@@ -21,9 +21,9 @@
  * questions.
  */
 
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.function.Predicate;
 import java.util.stream.Stream;

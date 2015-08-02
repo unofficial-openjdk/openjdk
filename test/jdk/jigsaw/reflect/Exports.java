@@ -61,7 +61,7 @@ public class Exports {
     /**
      * Exercise Module#addExports with parameters that make it a no-op.
      */
-    @Test
+    @Test(enabled=false)
     public void testNoopAddExports() {
         Module thisModule = this.getClass().getModule();
         Module baseModule = Object.class.getModule();
@@ -81,7 +81,7 @@ public class Exports {
      * Exercise Module#addExports to export a package from a named module to
      * an unnamed module.
      */
-    @Test
+    @Test(enabled=false)
     public void testAddExportsToUnamed() throws Exception {
         Module thisModule = this.getClass().getModule();
         Module baseModule = Object.class.getModule();
@@ -100,14 +100,14 @@ public class Exports {
     }
 
 
-    @Test(expectedExceptions = { IllegalArgumentException.class })
+    @Test(enabled=false, expectedExceptions = { IllegalArgumentException.class })
     public void testAddExportsWithBadPackage() {
         Module thisModule = this.getClass().getModule();
         Module baseModule = Object.class.getModule();
         baseModule.addExports("jdk.badpackage", thisModule);
     }
 
-    @Test(expectedExceptions = { NullPointerException.class })
+    @Test(enabled=false, expectedExceptions = { NullPointerException.class })
     public void testAddExportsToNull() {
         Module baseModule = Object.class.getModule();
         baseModule.addExports("java.lang", null);

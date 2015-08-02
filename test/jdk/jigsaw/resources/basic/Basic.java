@@ -22,9 +22,8 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleReference;
-
+import java.lang.reflect.Layer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

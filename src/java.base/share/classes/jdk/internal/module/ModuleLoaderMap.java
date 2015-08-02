@@ -25,8 +25,8 @@
 
 package jdk.internal.module;
 
+import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.util.HashMap;
 import java.util.HashSet;

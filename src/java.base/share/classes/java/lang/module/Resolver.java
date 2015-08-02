@@ -27,6 +27,8 @@ package java.lang.module;
 
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.reflect.Layer;
+import java.lang.reflect.Module;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -338,8 +340,7 @@ final class Resolver {
         if (layer == null) {
             candidateConsumers = selected;
         } else {
-            candidateConsumers = new HashSet<>();
-            candidateConsumers.addAll(layer.allModuleDescriptors());
+            candidateConsumers = allModuleDescriptorsInLayer(layer);
             candidateConsumers.addAll(selected);
         }
 
@@ -382,7 +383,7 @@ final class Resolver {
         // For debugging purposes, print out the service consumers in the
         // selected set that use providers in a parent layer
         if (TRACE) {
-            Set<ModuleDescriptor> allModules = layer.allModuleDescriptors();
+            Set<ModuleDescriptor> allModules = allModuleDescriptorsInLayer(layer);
             for (ModuleDescriptor descriptor : selected) {
                 if (!descriptor.uses().isEmpty()) {
                     for (String service : descriptor.uses()) {
@@ -452,6 +453,23 @@ final class Resolver {
         return r;
     }
 
+    /**
+     * Returns the set of module descriptors in this layer and all parent
+     * layers. There may be several modules with the same name in the returned
+     * set.
+     */
+    private static Set<ModuleDescriptor> allModuleDescriptorsInLayer(Layer l) {
+        Set<ModuleDescriptor> result = new HashSet<>();
+        Optional<Layer> ol = l.parent();
+        if (ol.isPresent())
+            result.addAll( allModuleDescriptorsInLayer(ol.get()) );
+        Optional<Configuration> ocf = l.configuration();
+        if (ocf.isPresent())
+            result.addAll(ocf.get().descriptors());
+        return result;
+    }
+
+
 
     /**
      * Computes and sets the readability graph for the modules in the given
@@ -493,9 +511,9 @@ final class Resolver {
                         if (nameToDescriptor.get(dn) == null
                             && d.modifiers().contains(Requires.Modifier.PUBLIC))
                         {
-                            ModuleReference mref = l.findReference(dn).orElse(null);
+                            ModuleReference mref = findInLayer(l, dn);
                             if (mref == null)
-                                throw new InternalError();
+                                throw new InternalError(dn + " not found");
                             requiresPublic.add(mref.descriptor());
                         }
                     }
@@ -516,10 +534,12 @@ final class Resolver {
             for (Requires d: m.requires()) {
                 String dn = d.name();
                 ModuleDescriptor other = nameToDescriptor.get(dn);
-                if (other == null && layer != null)
-                    other = layer.findReference(dn)
-                                 .map(ModuleReference::descriptor)
-                                 .orElse(null);
+                if (other == null && layer != null) {
+                    ModuleReference mref = findInLayer(layer, dn);
+                    if (mref != null)
+                        other = mref.descriptor();
+                }
+
                 if (other == null)
                     throw new InternalError(dn + " not found??");
 
@@ -624,7 +644,8 @@ final class Resolver {
                 if (recordedHash != null) {
                     ModuleReference mref = nameToReference.get(dn);
                     if (mref == null)
-                        mref = layer.findReference(dn).orElse(null);
+                        mref = findInLayer(layer, dn);
+
                     if (mref == null)
                         throw new InternalError(dn + " not found");
 
@@ -700,6 +721,7 @@ final class Resolver {
     }
 
 
+
     /**
      * Returns true if a module of the given module's name is in a parent Layer
      */
@@ -745,6 +767,25 @@ final class Resolver {
             throw new ResolutionException(e.getMessage(), e.getCause());
         }
     }
+
+    /**
+     * Returns the {@code ModuleReference} that was used to define the module
+     * with the given name.  If a module of the given name is not in the layer
+     * then the parent layer is searched.
+     */
+    private static ModuleReference findInLayer(Layer layer, String name) {
+        Optional<Configuration> ocf = layer.configuration();
+        if (!ocf.isPresent())
+            return null;
+
+        Optional<ModuleReference> omref = ocf.get().findModule(name);
+        if (omref.isPresent()) {
+            return omref.get();
+        } else {
+            return findInLayer(layer.parent().get(), name);
+        }
+    }
+
 
 
     /**
@@ -823,7 +864,8 @@ final class Resolver {
 
 
     private static void fail(String fmt, Object ... args) {
-        throw new ResolutionException(fmt, args);
+        String msg = String.format(fmt, args);
+        throw new ResolutionException(msg);
     }
 
 }

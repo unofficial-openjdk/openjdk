@@ -26,14 +26,14 @@
  * @library ../lib
  * @build LayerTest ModuleUtils
  * @run testng LayerTest
- * @summary Basic tests for java.lang.module.Layer
+ * @summary Basic tests for java.lang.reflect.Layer;
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.LayerInstantiationException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Layer;
+import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;

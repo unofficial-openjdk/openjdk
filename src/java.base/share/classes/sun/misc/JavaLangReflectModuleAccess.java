@@ -25,18 +25,15 @@
 
 package sun.misc;
 
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
-import java.util.Map;
-
-import java.lang.module.Configuration;
-import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleReference;
+import java.net.URI;
 
 /**
- * Provides access to package-private methods in java.lang.reflect.
+ * Provides access to non-public methods in java.lang.reflect.Module
  */
 
-public interface JavaLangReflectAccess {
+public interface JavaLangReflectModuleAccess {
 
     /**
      * Defines the unnamed module for the given class loader.
@@ -46,15 +43,10 @@ public interface JavaLangReflectAccess {
     /**
      * Defines a new module to the Java virtual machine. The module
      * is defined to the given class loader.
+     *
+     * The URI is for information purposes only, it can be {@code null}.
      */
-    Module defineModule(ClassLoader loader, ModuleReference mref);
-
-    /**
-     * Defines the modules in the given {@code Configuration} to the Java
-     * virtual machine. The modules are mapped to class loaders using the
-     * given {@code ClassLoaderFinder}.
-     */
-    Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf);
+    Module defineModule(ClassLoader loader, ModuleDescriptor descriptor, URI uri);
 
     /**
      * Updates the readability so that module m1 reads m2. The new read edge

@@ -23,10 +23,10 @@
 
 package test;
 
-import java.lang.module.Layer;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.Map;
 import java.util.Optional;

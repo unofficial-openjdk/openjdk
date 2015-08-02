@@ -28,7 +28,7 @@ import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;

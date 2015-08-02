@@ -27,7 +27,7 @@ package jdk.tools.jlink.internal;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -23,12 +23,11 @@
 
 package jdk.test;
 
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
+import java.lang.module.Configuration;
 import javax.annotation.Resource;
 import javax.annotation.more.BigResource;
-
-import java.lang.module.Configuration;
-import java.lang.module.Layer;
 
 public class Main {
     public static void main(String[] args) {

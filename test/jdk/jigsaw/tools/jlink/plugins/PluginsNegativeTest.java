@@ -30,7 +30,7 @@
  */
 
 import java.io.IOException;
-import java.lang.module.Layer;
+import java.lang.reflect.Layer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;

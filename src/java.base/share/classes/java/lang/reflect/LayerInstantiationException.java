@@ -23,7 +23,7 @@
  * questions.
  */
 
-package java.lang.module;
+package java.lang.reflect;
 
 /**
  * Thrown when creating a Layer fails.
@@ -33,21 +33,35 @@ package java.lang.module;
  * @since 1.9
  */
 public class LayerInstantiationException extends RuntimeException {
-
-    private static final long serialVersionUID = 0L;
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an instance of this exception with the given cause.
+     * Constructs a {@code LayerInstantiationException} with no detail message.
+     */
+    public LayerInstantiationException() {
+    }
+
+    /**
+     * Constructs a {@code LayerInstantiationException} with the given detail
+     * message.
+     */
+    public LayerInstantiationException(String msg) {
+        super(msg);
+    }
+
+    /**
+     * Constructs a {@code LayerInstantiationException} with the given cause.
      */
     public LayerInstantiationException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * Constructs an instance of this exception.
+     * Constructs a {@code FindException} with the given detail message
+     * and cause.
      */
-    public LayerInstantiationException(String fmt, Object... args) {
-        super(String.format(fmt, args));
+    public LayerInstantiationException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 
 }

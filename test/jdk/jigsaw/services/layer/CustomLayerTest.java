@@ -22,9 +22,9 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Layer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ServiceLoader;

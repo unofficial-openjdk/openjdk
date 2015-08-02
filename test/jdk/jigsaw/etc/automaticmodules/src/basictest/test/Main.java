@@ -23,7 +23,8 @@
 
 package test;
 
-import java.lang.module.*;
+import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 
 import http.HttpServer;

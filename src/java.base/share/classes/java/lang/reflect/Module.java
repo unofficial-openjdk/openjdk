@@ -28,8 +28,6 @@ package java.lang.reflect;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -51,7 +49,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
-import sun.misc.JavaLangReflectAccess;
+import sun.misc.JavaLangReflectModuleAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
@@ -63,8 +61,7 @@ import sun.security.util.SecurityConstants;
  *
  * <p> Named modules have a {@link #getName() name} and are constructed by the
  * Java Virtual Machine when a {@link java.lang.module.Configuration
- * Configuration} is reified by creating a module {@link java.lang.module.Layer
- * Layer}. </p>
+ * Configuration} is reified by creating a module {@link Layer Layer}. </p>
  *
  * <p> An unnamed module does not have a name. There is an unnamed module
  * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
@@ -84,6 +81,9 @@ import sun.security.util.SecurityConstants;
 
 public final class Module {
 
+    private static final String JAVA_BASE = "java.base";
+
+
     // module name and loader, these fields are read by VM
     private final String name;
     private final ClassLoader loader;
@@ -91,13 +91,13 @@ public final class Module {
     // the module descriptor
     private final ModuleDescriptor descriptor;
 
+
     /**
      * Invoked by the VM to create java.base early in the startup.
      */
     private Module(ClassLoader loader, String name) {
-        if (name == null)
-            throw new Error();
-
+        if (!name.equals(JAVA_BASE))
+            throw new InternalError();
         this.name = name;
         this.loader = loader;
         this.descriptor = null;
@@ -127,6 +127,7 @@ public final class Module {
         // unnamed modules are loose
         this.loose = true;
     }
+
 
     /**
      * Returns {@code true} if this module is a named module.
@@ -503,8 +504,7 @@ public final class Module {
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                // disable until jtreg and langtools tests are ready
-                // throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalStateException(caller + " != " + this);
             }
             implAddExports(pn, target, true);
         }
@@ -723,15 +723,17 @@ public final class Module {
      * exports. This method does not register the module with its class
      * loader or register the module in the service catalog.
      */
-    static Module defineModule(ClassLoader loader, ModuleReference mref) {
+    static Module defineModule(ClassLoader loader,
+                               ModuleDescriptor descriptor,
+                               URI uri)
+    {
         Module m;
 
-        ModuleDescriptor descriptor = mref.descriptor();
         Set<String> packages = descriptor.packages();
 
         // define module to VM, except java.base as it is defined by VM
         String name = descriptor.name();
-        if (loader == null && name.equals("java.base")) {
+        if (loader == null && name.equals(JAVA_BASE)) {
             m = Object.class.getModule();
 
             // set descriptor and packages fields
@@ -760,7 +762,6 @@ public final class Module {
             Version version = descriptor.version().orElse(null);
             String vs = Objects.toString(version, "");
 
-            URI uri = mref.location().orElse(null);
             String loc = Objects.toString(uri, null);
 
             defineModule0(m, vs, loc, array);
@@ -775,17 +776,20 @@ public final class Module {
      * @return a map of module name to runtime {@code Module}
      */
     static Map<String, Module> defineModules(Configuration cf,
-                                             Layer.ClassLoaderFinder clf)
+                                             Layer.ClassLoaderFinder clf,
+                                             Layer layer)
     {
+
         Map<String, Module> modules = new HashMap<>();
         Map<String, ClassLoader> loaders = new HashMap<>();
 
-        // define each module in the configuration to the VM and register
-        // with each class loader.
+        // define each module in the configuration to the VM
         for (ModuleReference mref : cf.modules()) {
-            String name = mref.descriptor().name();
+            ModuleDescriptor descriptor = mref.descriptor();
+            String name = descriptor.name();
             ClassLoader loader = clf.loaderForModule(name);
-            Module m = defineModule(loader, mref);
+            URI uri = mref.location().orElse(null);
+            Module m = defineModule(loader, descriptor, uri);
             modules.put(name, m);
             loaders.put(name, loader);
         }
@@ -963,19 +967,17 @@ public final class Module {
      * Register shared secret to provide access to package-private methods
      */
     static {
-        SharedSecrets.setJavaLangReflectAccess(
-            new JavaLangReflectAccess() {
+        SharedSecrets.setJavaLangReflectModuleAccess(
+            new JavaLangReflectModuleAccess() {
                 @Override
                 public Module defineUnnamedModule(ClassLoader loader) {
                     return new Module(loader);
                 }
                 @Override
-                public Module defineModule(ClassLoader loader, ModuleReference mref) {
-                   return Module.defineModule(loader, mref);
-                }
-                @Override
-                public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {
-                    return Module.defineModules(cf, clf);
+                public Module defineModule(ClassLoader loader,
+                                           ModuleDescriptor descriptor,
+                                           URI uri) {
+                   return Module.defineModule(loader, descriptor, uri);
                 }
                 @Override
                 public void addReads(Module m1, Module m2) {

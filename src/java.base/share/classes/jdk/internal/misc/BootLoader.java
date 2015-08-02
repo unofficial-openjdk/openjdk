@@ -47,7 +47,7 @@ public class BootLoader {
 
     // The unnamed module for the boot loader
     private static final Module UNNAMED_MODULE
-        = SharedSecrets.getJavaLangReflectAccess().defineUnnamedModule(null);
+        = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
 
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
