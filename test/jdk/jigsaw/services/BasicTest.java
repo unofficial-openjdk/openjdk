@@ -30,10 +30,11 @@ import static org.testng.Assert.*;
 
 /*
  * @test
- * @run testng BasicLayerTest
+ * @run testng BasicTest
+ * @summary Basic test of ServiceLoader with modules
  */
 
-public class BasicLayerTest {
+public class BasicTest {
 
     @Test
     public void testEmptyLayer() {
