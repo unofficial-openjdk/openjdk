@@ -23,7 +23,8 @@
 
 /*
  * @test
- * @modules java.base/sun.misc java.desktop
+ * @modules java.base/jdk.internal.misc
+ *          java.desktop
  * @library /testlibrary
  * @run main/othervm GetSysPkgTest
  */
@@ -33,7 +34,7 @@
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import com.oracle.java.testlibrary.*;
+import jdk.test.lib.*;
 
 // Test that JVM get_system_package() returns the module location for defined packages.
 public class GetSysPkgTest {
@@ -47,7 +48,7 @@ public class GetSysPkgTest {
     }
 
     private static Method findMethod(String name) {
-        for (Method m : sun.misc.BootLoader.class.getDeclaredMethods()) {
+        for (Method m : jdk.internal.misc.BootLoader.class.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
                 m.setAccessible(true);
                 return m;
@@ -98,7 +99,7 @@ public class GetSysPkgTest {
             ClassFileInstaller.writeClassToDisk("GetSysPkg_package/GetSysClass", klassbuf);
 
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xbootclasspath/a:bl_dir",
-                "-XaddExports:java.base/sun.misc=ALL-UNNAMED", "-cp", "." + File.pathSeparator +
+                "-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED", "-cp", "." + File.pathSeparator +
                 System.getProperty("test.classes"), "GetSysPkgTest", "do_tests");
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
             output.shouldHaveExitValue(0);
