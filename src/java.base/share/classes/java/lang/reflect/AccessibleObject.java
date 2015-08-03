@@ -151,6 +151,13 @@ public class AccessibleObject implements AnnotatedElement {
      * java.lang.reflect.Constructor} object for the class
      * {@code java.lang.Class}, and {@code flag} is true.
      *
+     * @apiNote This method is @CS and so should be final. We need to decide
+     * whether to change it to final (compatibility impact should be low)
+     * or alternatively have Constructor, Method and Field override this
+     * method. In addition, this method needs to be updated to disallow
+     * access to java.lang.reflect.Module. We need to create a solution for
+     * VM white-box tests before doing that.
+     *
      * @param flag the new value for the {@code accessible} flag
      * @throws InaccessibleObjectException
      * @throws SecurityException if the request is denied.
