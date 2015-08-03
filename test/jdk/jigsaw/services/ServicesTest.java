@@ -139,7 +139,7 @@ public class ServicesTest {
 
 
     /**
-     * Exercise ServiceLoader.loader(Layer, Class).
+     * Exercise ServiceLoader.load(Layer, Class).
      */
     public void testWithCustomLayer() throws Exception {
 
@@ -160,6 +160,7 @@ public class ServicesTest {
         sl = ServiceLoader.load(layer, ScriptEngineFactory.class);
         ScriptEngineFactory factory = find("BananaScriptEngine", sl);
         assertTrue(factory != null);
+        assertEquals(factory.getClass().getModule().getName(), "bananascript");
         assertTrue(factory.getClass().getClassLoader() == loader);
 
     }
