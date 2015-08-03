@@ -26,6 +26,7 @@
  * @bug 6583051
  * @summary Give error if java.lang.Object has been incompatibly overridden on the bootpath
  * @library /testlibrary
+ * @ignore 8132924
  * @modules java.base/sun.misc
  *          java.management
  * @run main BootstrapRedefine
