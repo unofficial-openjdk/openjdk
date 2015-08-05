@@ -102,6 +102,8 @@ public class Modules extends JCTree.Visitor {
 
     private final boolean noModules;
 
+    private final String moduleOverride;
+
     ModuleSymbol defaultModule;
 
     private final String addExportsOpt;
@@ -123,6 +125,8 @@ public class Modules extends JCTree.Visitor {
         fileManager = context.get(JavaFileManager.class);
         allowModules = Source.instance(context).allowModules();
         Options options = Options.instance(context);
+
+        moduleOverride = options.get(Option.XMODULE);
 
         // The following is required, for now, to support building
         // Swing beaninfo via javadoc.
@@ -282,10 +286,15 @@ public class Modules extends JCTree.Visitor {
                     case 0:
                         defaultModule = moduleFinder.findSingleModule();
                         if (defaultModule == syms.unnamedModule) {
-                            // Question: why not do findAllModules and initVisiblePackages here?
-                            // i.e. body of unnamedModuleCompleter
-                            defaultModule.completer = getUnnamedModuleCompleter();
+                            if (moduleOverride != null) {
+                                defaultModule = moduleFinder.findModule(names.fromString(moduleOverride));
+                            } else {
+                                // Question: why not do findAllModules and initVisiblePackages here?
+                                // i.e. body of unnamedModuleCompleter
+                                defaultModule.completer = getUnnamedModuleCompleter();
+                            }
                         } else {
+                            checkSpecifiedModule(trees, "module-info.with.xmodule.classpath");
                             // Question: why not do completeModule here?
                             defaultModule.completer = new Completer() {
                                 @Override
@@ -297,13 +306,16 @@ public class Modules extends JCTree.Visitor {
                         rootModules.add(defaultModule);
                         break;
                     case 1:
+                        checkSpecifiedModule(trees, "module-info.with.xmodule.sourcepath");
                         defaultModule = rootModules.iterator().next();
                         break;
                     default:
                         Assert.error("too many modules");
                 }
-                defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
-                defaultModule.classLocation = StandardLocation.CLASS_PATH;
+                if (moduleOverride == null) {
+                    defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
+                    defaultModule.classLocation = StandardLocation.CLASS_PATH;
+                }
             } else {
                 Assert.check(rootModules.isEmpty());
             }
@@ -334,6 +346,17 @@ public class Modules extends JCTree.Visitor {
         // We may want to check source path as well.
         return fileManager.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH,
                 fo, (pkgName == null) ? null : pkgName.toString());
+    }
+
+    private void checkSpecifiedModule(List<JCCompilationUnit> trees, String key) {
+        if (moduleOverride != null) {
+            JavaFileObject prev = log.useSource(trees.head.sourcefile);
+            try {
+                log.error(trees.head.pos(), key);
+            } finally {
+                log.useSource(prev);
+            }
+        }
     }
 
     private final Completer mainCompleter = new Completer() {

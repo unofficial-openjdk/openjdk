@@ -511,11 +511,15 @@ public class Arguments {
                 Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
                 Option.SYSTEMMODULEPATH, Option.MODULEPATH);
 
-        if (!options.isSet(Option.PROC, "only")) {
-            JavaFileManager fm = getFileManager();
-            if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)
+        JavaFileManager fm = getFileManager();
+
+        if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
+            if (!options.isSet(Option.PROC, "only")
                     && !fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
                 log.error("no.output.dir");
+            }
+            if (options.isSet(Option.XMODULE)) {
+                log.error("xmodule.no.module.sourcepath");
             }
         }
 

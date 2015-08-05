@@ -541,6 +541,19 @@ public enum Option {
         }
     },
 
+    XMODULE("-Xmodule:", "opt.arg.module", "opt.module", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XMODULE);
+            if (prev != null) {
+                helper.error("err.option.too.many", XMODULE.text);
+            }
+            String p = option.substring(option.indexOf(':') + 1);
+            helper.put(XMODULE.text, p);
+            return false;
+        }
+    },
+
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
     AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true) {
