@@ -43,6 +43,7 @@ import javax.tools.StandardLocation;
 import com.sun.javadoc.*;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.CommandLine;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.platform.PlatformDescription;
 import com.sun.tools.javac.platform.PlatformUtils;
