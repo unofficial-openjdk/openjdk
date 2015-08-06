@@ -492,10 +492,8 @@ public final class Method extends Executable {
            InvocationTargetException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, obj, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {

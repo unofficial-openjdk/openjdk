@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,8 @@ public final class UtilInternal {
         if ("sun.awt.windows.WToolkit".equals(tk.getClass().getName())) {
             Class comp_peer_class =
                 Class.forName("sun.awt.windows.WComponentPeer");
+            comp_peer_class.getModule().
+                         addExports("sun.awt.windows",UtilInternal.class.getModule());
             System.out.println("comp peer class = " + comp_peer_class);
             Field hwnd_field = comp_peer_class.getDeclaredField("hwnd");
             hwnd_field.setAccessible(true);
@@ -64,6 +66,8 @@ public final class UtilInternal {
             return (Frame) constructor.newInstance (new Object[] {hwnd});
         } else if ("sun.awt.X11.XToolkit".equals(tk.getClass().getName())) {
             Class x_base_window_class = Class.forName("sun.awt.X11.XBaseWindow");
+            x_base_window_class.getModule().
+                         addExports("sun.awt.X11",UtilInternal.class.getModule());
             System.out.println("x_base_window_class = " + x_base_window_class);
             Method get_window = x_base_window_class.getMethod("getWindow", new Class[0]);
             System.out.println("get_window = " + get_window);

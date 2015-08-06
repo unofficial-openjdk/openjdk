@@ -76,7 +76,7 @@ public class ThreadSafety {
 
     private Class<?> createNewEmptyGenericSubclassClass() throws Exception {
         String[] cpaths = System.getProperty("test.classes", ".")
-                                .split(File.pathSeparator);
+                                    .split(File.pathSeparator);
         URL[] urls = new URL[cpaths.length];
         for (int i=0; i < cpaths.length; i++) {
             urls[i] = Paths.get(cpaths[i]).toUri().toURL();
