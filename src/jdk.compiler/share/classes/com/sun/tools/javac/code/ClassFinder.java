@@ -120,6 +120,10 @@ public class ClassFinder {
      */
     final Name completionFailureName;
 
+    /** Module specified with -Xmodule:
+     */
+    final Name moduleOverride;
+
     /** Access to files
      */
     private final JavaFileManager fileManager;
@@ -206,6 +210,9 @@ public class ClassFinder {
             options.isSet("failcomplete")
             ? names.fromString(options.get("failcomplete"))
             : null;
+
+        moduleOverride = options.isSet(XMODULE) ? names.fromString(options.get(XMODULE))
+                                                : null;
 
         // Temporary, until more info is available from the module system.
         boolean useCtProps;
@@ -569,10 +576,28 @@ public class ClassFinder {
         sourceKinds.remove(JavaFileObject.Kind.CLASS);
         boolean wantSourceFiles = !sourceKinds.isEmpty();
 
+        String packageName = p.fullname.toString();
+
+        if (msym.name == moduleOverride) {
+            if (wantClassFiles) {
+                fillIn(p, CLASS_PATH,
+                       fileManager.list(CLASS_PATH,
+                                        packageName,
+                                        classKinds,
+                                        false));
+            }
+            if (wantSourceFiles && fileManager.hasLocation(SOURCE_PATH)) {
+                fillIn(p, SOURCE_PATH,
+                        fileManager.list(SOURCE_PATH,
+                                        packageName,
+                                        sourceKinds,
+                                        false));
+            }
+        }
+
         Location classLocn = msym.classLocation;
         Location sourceLocn = msym.sourceLocation;
 
-        String packageName = p.fullname.toString();
         if (wantClassFiles && (classLocn != null)) {
             fillIn(p, classLocn,
                    fileManager.list(classLocn,
