@@ -27,6 +27,7 @@ package sun.tools.jar;
 
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -1615,8 +1616,8 @@ class Main {
         Set<String> missing = md.provides()
                                 .values()
                                 .stream()
-                                .map(p -> p.providers())
-                                .flatMap(p -> p.stream())
+                                .map(Provides::providers)
+                                .flatMap(Set::stream)
                                 .filter(p -> !jarEntries.contains(toBinaryName(p)))
                                 .collect(Collectors.toSet());
         if (missing.size() > 0) {
