@@ -49,6 +49,7 @@ import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.ModuleFinder;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.Symbol;
@@ -362,8 +363,20 @@ public class Modules extends JCTree.Visitor {
     private final Completer mainCompleter = new Completer() {
         @Override
         public void complete(Symbol sym) throws CompletionFailure {
-            ModuleSymbol msym = (ModuleSymbol) sym;
-            moduleFinder.findModule(msym).module_info.complete();
+            ModuleSymbol msym = moduleFinder.findModule((ModuleSymbol) sym);
+
+            if (msym.kind == Kinds.Kind.ERR) {
+                log.error("cant.find.module", msym);
+                //make sure the module is initialized:
+                msym.directives = List.nil();
+                msym.exports = List.nil();
+                msym.provides = List.nil();
+                msym.requires = List.nil();
+                msym.uses = List.nil();
+                return;
+            }
+
+            msym.module_info.complete();
 
             // If module-info comes from a .java file, the underlying
             // call of classFinder.fillIn will have called through the
@@ -571,7 +584,9 @@ public class Modules extends JCTree.Visitor {
                 }
             }
             //ensure unnamed modules are added (these are not requires public):
-            msym.requires.stream().map(rd -> { rd.module.complete(); return rd.module;}).collect(Collectors.toCollection(() -> readable));
+            msym.requires.stream()
+                    .map(rd -> { rd.module.complete(); return rd.module;})
+                    .collect(Collectors.toCollection(() -> readable));
             readable.remove(msym);
             requiresPublic.remove(msym);
         }
