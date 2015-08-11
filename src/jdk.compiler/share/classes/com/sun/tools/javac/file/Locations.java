@@ -1385,12 +1385,11 @@ public class Locations {
         switch (option) {
             case XOVERRIDE:
                 moduleOverrideSearchPath = new SearchPath().addFiles(value);
-                break;
+                return true;
             default:
                 LocationHandler h = handlersForOption.get(option);
                 return (h == null ? false : h.handleOption(option, value));
         }
-        return false;
     }
 
     boolean hasLocation(Location location) {
