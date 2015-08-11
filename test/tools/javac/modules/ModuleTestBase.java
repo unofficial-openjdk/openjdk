@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
@@ -34,6 +35,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -99,5 +103,53 @@ class ModuleTestBase {
     void error(String message) {
         out.println("Error: " + message);
         errors++;
+    }
+
+    public class ModuleBuilder {
+
+        private final String name;
+        private String requires = "";
+        private String exports = "";
+        private String modulePath = "";
+        private List<String> content = new ArrayList<>();
+
+        public ModuleBuilder(String name) {
+            this.name = name;
+        }
+
+        public ModuleBuilder requires(String requires, Path modulePath) {
+            this.requires += "    requires " + requires + ";\n";
+            this.modulePath += File.pathSeparator + modulePath;
+            return this;
+        }
+
+        public ModuleBuilder exports(String exports) {
+            this.exports += "    exports " + exports + ";\n";
+            return this;
+        }
+
+        public ModuleBuilder classes(String... content) {
+            this.content.addAll(Arrays.asList(content));
+            return this;
+        }
+
+        public void build(Path where) throws IOException {
+            Files.createDirectories(where);
+            List<String> sources = new ArrayList<>();
+            sources.add("module " + name + "{"
+                    + requires
+                    + exports
+                    + "}");
+            sources.addAll(content);
+            tb.writeJavaFiles(where.resolve(name), sources.toArray(new String[]{}));
+
+            tb.new JavacTask()
+                    .outdir(where)
+                    .options("-modulesourcepath", where.toString(),
+                            "-mp", modulePath)
+                    .files(findJavaFiles(where))
+                    .run()
+                    .writeAll();
+        }
     }
 }
