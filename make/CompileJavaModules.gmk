@@ -538,7 +538,7 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
         -systemmodulepath none, \
 ))
 
-TARGETS += $($(MODULE)) $(COPY_EXTRA)
+TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
 
 # Declare dependencies between java compilations of different modules.
 # Since the other modules are declared in different invocations of this file,
