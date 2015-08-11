@@ -752,6 +752,9 @@ public class JmodTask {
 
             if (words.size() > 2)
                 throw new CommandException("err.unknown.option", words.subList(2, words.size())).showUsage(true);
+
+            if (options.classpath == null)
+                throw new CommandException("err.classpath.must.be.specified").showUsage(true);
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
         }
