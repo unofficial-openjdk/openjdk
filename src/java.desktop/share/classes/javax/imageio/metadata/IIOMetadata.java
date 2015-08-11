@@ -424,6 +424,14 @@ public abstract class IIOMetadata {
         if (!thisModule.canRead(targetModule)) {
             thisModule.addReads(targetModule);
         }
+        if (thisModule.isNamed()) {
+            int i = formatClassName.lastIndexOf(".");
+            String pn = i > 0 ? formatClassName.substring(0, i) : "";
+            if (!targetModule.isExported(pn, thisModule)) {
+                throw new IllegalStateException("Class " + formatClassName +
+                   " in named module must be exported to java.desktop module.");
+            }
+        }
         return c;
     }
 

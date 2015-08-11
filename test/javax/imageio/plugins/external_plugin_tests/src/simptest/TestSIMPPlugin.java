@@ -31,6 +31,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
@@ -49,6 +50,12 @@ public class TestSIMPPlugin {
         if (simpReader == null) {
             throw new RuntimeException("Reader not found.");
         }
+
+        ImageReaderSpi spi = simpReader.getOriginatingProvider();
+        IIOMetadataFormat spiFmt =
+            spi.getImageMetadataFormat("simp_metadata_1.0");
+        System.out.println("fmt from SPI=" + spiFmt);
+
         ByteArrayInputStream bais = new ByteArrayInputStream(simpData);
         ImageInputStream iis = new MemoryCacheImageInputStream(bais);
         simpReader.setInput(iis);
