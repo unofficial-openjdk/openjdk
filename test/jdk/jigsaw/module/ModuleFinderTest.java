@@ -37,6 +37,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,8 @@ import static org.testng.Assert.*;
 
 @Test
 public class ModuleFinderTest {
+
+    private static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
 
     /**
      * Test ModuleFinder.ofInstalled
@@ -81,7 +84,7 @@ public class ModuleFinderTest {
      */
     public void testOneDirectory() throws Exception {
 
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         ModuleUtils.createExplodedModule(dir.resolve("m1"), "m1");
         ModuleUtils.createExplodedModule(dir.resolve("m2"), "m2");
 
@@ -97,11 +100,11 @@ public class ModuleFinderTest {
      */
     public void testTwoDirectories() throws Exception {
 
-        Path dir1 = Files.createTempDirectory("mods1");
+        Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
         ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
         ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
-        Path dir2 = Files.createTempDirectory("mods2");
+        Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
         ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
         ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
         ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");
@@ -130,7 +133,7 @@ public class ModuleFinderTest {
      */
     public void testDuplicateModules() throws Exception {
 
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         ModuleUtils.createModularJar(dir.resolve("m1@1.0.jar"), "m1");
         ModuleUtils.createModularJar(dir.resolve("m1@2.0.jar"), "m1");
 
@@ -151,7 +154,7 @@ public class ModuleFinderTest {
      * Test ModuleFinder.of with a bad (does not exist) directory
      */
     public void testWithBadDirectory() throws Exception {
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         Files.delete(dir);
 
         ModuleFinder finder = ModuleFinder.of(dir);
@@ -176,7 +179,7 @@ public class ModuleFinderTest {
      * Test ModuleFinder.of with a truncated module-info.class
      */
     public void testWithTruncateModuleInfo() throws Exception {
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
 
         // create an empty <dir>/rhubarb/module-info.class
         Path subdir = Files.createDirectory(dir.resolve("rhubarb"));
@@ -204,11 +207,11 @@ public class ModuleFinderTest {
      */
     public void testConcat() throws Exception {
 
-        Path dir1 = Files.createTempDirectory("mods1");
+        Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
         ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
         ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
-        Path dir2 = Files.createTempDirectory("mods2");
+        Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
         ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
         ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
         ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");

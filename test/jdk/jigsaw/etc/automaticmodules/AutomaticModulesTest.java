@@ -41,6 +41,7 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -59,6 +60,8 @@ import static org.testng.Assert.*;
 
 @Test
 public class AutomaticModulesTest {
+
+    private static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
 
     @DataProvider(name = "names")
     public Object[][] createNames() {
@@ -105,7 +108,7 @@ public class AutomaticModulesTest {
         String mn = s[0];
         String vs = (s.length == 2) ? s[1] : null;
 
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         Path jf = dir.resolve(fn);
 
         // create empty JAR file
@@ -133,7 +136,7 @@ public class AutomaticModulesTest {
      * Test all packages are exported
      */
     public void testExports() throws IOException {
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createJarFile(dir.resolve("m1.jar"),
                       "p/C1.class", "p/C2.class", "q/C1.class");
 
@@ -166,7 +169,7 @@ public class AutomaticModulesTest {
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createJarFile(dir.resolve("m1.jar"), man);
 
         ModuleFinder finder = ModuleFinder.of(dir);
@@ -193,7 +196,7 @@ public class AutomaticModulesTest {
                 .build();
 
         // m2 and m3 are simple JAR files
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createJarFile(dir.resolve("m2.jar"), "p/T.class");
         createJarFile(dir.resolve("m3.jar"), "q/T.class");
 
@@ -253,7 +256,7 @@ public class AutomaticModulesTest {
                 .build();
 
         // m2 and m3 are simple JAR files
-        Path dir = Files.createTempDirectory("mods");
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createJarFile(dir.resolve("m2.jar"), "p/T.class");
         createJarFile(dir.resolve("m3.jar"), "q/T2.class");
 
