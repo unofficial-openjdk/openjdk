@@ -940,6 +940,17 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitUnknown(this, p); // for now
         }
 
+        public void reset() {
+            this.sourceLocation = null;
+            this.classLocation = null;
+            this.directives = null;
+            this.requires = null;
+            this.exports = null;
+            this.provides = null;
+            this.uses = null;
+            this.visiblePackages = null;
+        }
+
     }
 
     /** A class for package symbols

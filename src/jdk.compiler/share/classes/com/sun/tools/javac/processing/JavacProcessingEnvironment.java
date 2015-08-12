@@ -42,6 +42,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.util.*;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
 
 import static javax.tools.StandardLocation.*;
@@ -49,6 +50,7 @@ import static javax.tools.StandardLocation.*;
 import com.sun.source.util.TaskEvent;
 import com.sun.tools.javac.api.MultiTaskListener;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.Types;
@@ -1383,6 +1385,14 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                         node.packge.package_info.reset();
                     }
                     node.packge.reset();
+                }
+                boolean isModuleInfo = node.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
+                if (isModuleInfo) {
+                    node.modle.reset();
+                    node.modle.module_info.reset();
+                    node.modle.module_info.classfile = null;
+                    node.modle.module_info.sourcefile = null;
+                    node.modle.module_info.members_field = WriteableScope.create(node.modle.module_info);
                 }
                 node.packge = null;
                 topLevel = node;
