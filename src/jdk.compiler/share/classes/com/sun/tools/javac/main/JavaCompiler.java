@@ -71,6 +71,7 @@ import com.sun.tools.javac.util.JCDiagnostic.Factory;
 import com.sun.tools.javac.util.Log.WriterKind;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
@@ -661,11 +662,37 @@ public class JavaCompiler {
      * @param name      The name to resolve
      */
     public Symbol resolveBinaryNameOrIdent(String name) {
+        ModuleSymbol msym;
+        String typeName;
+        int sep = name.indexOf('/');
+        if (sep == -1) {
+            msym = modules.getDefaultModule();
+            typeName = name;
+        } else {
+            Name modName = names.fromString(name.substring(0, sep));
+            ModuleFinder mf = ModuleFinder.instance(context); //TODO
+            msym = mf.findModule(modName);
+
+            if (msym == null)
+                return Resolve.instance(context).typeNotFound;
+
+            typeName = name.substring(sep + 1);
+        }
+
+        return resolveBinaryNameOrIdent(msym, typeName);
+    }
+
+    /** Resolve an identifier which may be the binary name of a class or
+     * the Java name of a class or package.
+     * @param msym      The module in which the search should be performed
+     * @param name      The name to resolve
+     */
+    public Symbol resolveBinaryNameOrIdent(ModuleSymbol msym, String name) {
         try {
             Name flatname = names.fromString(name.replace("/", "."));
-            return finder.loadClass(syms.unnamedModule, flatname);
+            return finder.loadClass(msym, flatname);
         } catch (CompletionFailure ignore) {
-            return resolveIdent(name);
+            return resolveIdent(msym, name);
         }
     }
 
@@ -673,6 +700,15 @@ public class JavaCompiler {
      * @param name      The identifier to resolve
      */
     public Symbol resolveIdent(String name) {
+        //TODO:
+        return resolveIdent(syms.unnamedModule, name);
+    }
+
+    /** Resolve an identifier.
+     * @param msym      The module in which the search should be performed
+     * @param name      The identifier to resolve
+     */
+    public Symbol resolveIdent(ModuleSymbol msym, String name) {
         if (name.equals(""))
             return syms.errSymbol;
         JavaFileObject prev = log.useSource(null);
@@ -686,8 +722,8 @@ public class JavaCompiler {
             }
             JCCompilationUnit toplevel =
                 make.TopLevel(List.<JCTree>nil());
-            toplevel.modle = syms.unnamedModule;
-            toplevel.packge = syms.unnamedModule.unnamedPackage;
+            toplevel.modle = msym;
+            toplevel.packge = msym.unnamedPackage;
             return attr.attribIdent(tree, toplevel);
         } finally {
             log.useSource(prev);

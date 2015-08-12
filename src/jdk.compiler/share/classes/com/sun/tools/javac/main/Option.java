@@ -563,19 +563,19 @@ public enum Option {
         }
     },
 
-    /*
-     * TODO: With apt, the matches method accepts anything if
-     * -XclassAsDecls is used; code elsewhere does the lookup to
-     * see if the class name is both legal and found.
-     *
-     * In apt, the process method adds the candidate class file
-     * name to a separate list.
-     */
+    // Standalone positional argument: source file or type name.
     SOURCEFILE("sourcefile", null, HIDDEN, INFO) {
         @Override
         public boolean matches(String s) {
-            return s.endsWith(".java")  // Java source file
-                || SourceVersion.isName(s);   // Legal type name
+            if (s.endsWith(".java"))  // Java source file
+                return true;
+            int sep = s.indexOf('/');
+            if (sep != -1) {
+                return SourceVersion.isName(s.substring(0, sep))
+                        && SourceVersion.isName(s.substring(sep + 1));
+            } else {
+                return SourceVersion.isName(s);   // Legal type name
+            }
         }
         @Override
         public boolean process(OptionHelper helper, String option) {

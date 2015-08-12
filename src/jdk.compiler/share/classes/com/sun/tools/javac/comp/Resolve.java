@@ -147,7 +147,7 @@ public class Resolve {
      */
     private final SymbolNotFoundError varNotFound;
     private final SymbolNotFoundError methodNotFound;
-    private final SymbolNotFoundError typeNotFound;
+    public final SymbolNotFoundError typeNotFound;
 
     /** empty reference lookup result */
     private final ReferenceLookupResult referenceNotFound;

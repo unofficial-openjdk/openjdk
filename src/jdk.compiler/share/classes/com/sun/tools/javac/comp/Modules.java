@@ -154,6 +154,7 @@ public class Modules extends JCTree.Visitor {
             for (JCCompilationUnit tree: trees) {
                 tree.modle = syms.noModule;
             }
+            defaultModule = syms.noModule;
             return true;
         }
 
@@ -180,6 +181,9 @@ public class Modules extends JCTree.Visitor {
         return mainCompleter;
     }
 
+    public ModuleSymbol getDefaultModule() {
+        return defaultModule;
+    }
 
     private Set<ModuleSymbol> enterModules(List<JCCompilationUnit> trees, ClassSymbol c) {
         Set<ModuleSymbol> modules = new LinkedHashSet<>();
@@ -281,6 +285,7 @@ public class Modules extends JCTree.Visitor {
             syms.unnamedModule.completer = getUnnamedModuleCompleter();
             syms.unnamedModule.sourceLocation = StandardLocation.SOURCE_PATH;
             syms.unnamedModule.classLocation = StandardLocation.CLASS_PATH;
+            defaultModule = syms.unnamedModule;
         } else {
             if (defaultModule == null) {
                 switch (rootModules.size()) {
