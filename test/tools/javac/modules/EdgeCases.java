@@ -58,7 +58,8 @@ public class EdgeCases extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList("- compiler.err.cant.find.module: undef",
-                                              "1 error");
+                                              "Test.java:1:27: compiler.err.doesnt.exist: undef",
+                                              "2 errors");
 
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);

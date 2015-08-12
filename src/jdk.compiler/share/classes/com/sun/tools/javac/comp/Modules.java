@@ -378,10 +378,9 @@ public class Modules extends JCTree.Visitor {
                 msym.provides = List.nil();
                 msym.requires = List.nil();
                 msym.uses = List.nil();
-                return;
+            } else {
+                msym.module_info.complete();
             }
-
-            msym.module_info.complete();
 
             // If module-info comes from a .java file, the underlying
             // call of classFinder.fillIn will have called through the
@@ -703,5 +702,11 @@ public class Modules extends JCTree.Visitor {
     // DEBUG
     String toString(JavaFileObject fo) {
         return (fo == null) ? "--" : fo.getName();
+    }
+
+    public void newRound() {
+        //TODO: should always clean the defaultModule:
+        if (defaultModule != syms.unnamedModule)
+            defaultModule = null;
     }
 }

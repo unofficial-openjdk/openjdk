@@ -58,6 +58,7 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.model.JavacElements;
@@ -114,8 +115,9 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final JavacMessager messager;
     private final JavacElements elementUtils;
     private final JavacTypes typeUtils;
-    private final Types types;
     private final JavaCompiler compiler;
+    private final Modules modules;
+    private final Types types;
 
     /**
      * Holds relevant state history of which processors have been
@@ -207,6 +209,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         messager = new JavacMessager(context, this);
         elementUtils = JavacElements.instance(context);
         typeUtils = JavacTypes.instance(context);
+        modules = Modules.instance(context);
         types = Types.instance(context);
         processorOptions = initProcessorOptions();
         unmatchedProcessorOptions = initUnmatchedProcessorOptions();
@@ -1135,6 +1138,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             filer.newRound();
             messager.newRound();
             compiler.newRound();
+            modules.newRound();
             types.newRound();
 
             boolean foundError = false;

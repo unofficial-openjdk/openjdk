@@ -39,6 +39,7 @@ import java.util.Set;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ElementVisitor;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -67,6 +68,7 @@ import com.sun.tools.javac.tree.JCTree.JCMemberReference;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.Factory;
 import com.sun.tools.javac.util.Log.WriterKind;
 
@@ -448,6 +450,18 @@ public class JavaCompiler {
 
         if (platformProvider != null)
             closeables = closeables.prepend(platformProvider);
+
+        silentFail = new Symbol(ABSENT_TYP, 0, names.empty, Type.noType, syms.noModule.rootPackage) {
+            @DefinedBy(Api.LANGUAGE_MODEL)
+            public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+                return v.visitUnknown(this, p);
+            }
+            @Override
+            public boolean exists() {
+                return false;
+            }
+        };
+
     }
 
     /* Switches:
@@ -548,6 +562,11 @@ public class JavaCompiler {
      *  initialized by `compile'.
      */
     protected Set<JavaFileObject> inputFiles = new HashSet<>();
+
+    /** Used by the resolveBinaryNameOrIdent to say that the given type cannot be found, and that
+     *  an error has already been produced about that.
+     */
+    private final Symbol silentFail;
 
     protected boolean shouldStop(CompileState cs) {
         CompileState shouldStopPolicy = (errorCount() > 0 || unrecoverableError())
@@ -668,15 +687,15 @@ public class JavaCompiler {
         if (sep == -1) {
             msym = modules.getDefaultModule();
             typeName = name;
-        } else {
+        } else if (source.allowModules() && !options.isSet("noModules")) {
             Name modName = names.fromString(name.substring(0, sep));
             ModuleFinder mf = ModuleFinder.instance(context); //TODO
+
             msym = mf.findModule(modName);
-
-            if (msym == null)
-                return Resolve.instance(context).typeNotFound;
-
             typeName = name.substring(sep + 1);
+        } else {
+            log.error("invalid.module.specifier", name);
+            return silentFail;
         }
 
         return resolveBinaryNameOrIdent(msym, typeName);
@@ -1188,7 +1207,8 @@ public class JavaCompiler {
                         if (sym == null ||
                             (sym.kind == PCK && !processPcks) ||
                             sym.kind == ABSENT_TYP) {
-                            log.error("proc.cant.find.class", nameStr);
+                            if (sym != silentFail)
+                                log.error("proc.cant.find.class", nameStr);
                             errors = true;
                             continue;
                         }
