@@ -3339,9 +3339,11 @@ void CMSCollector::setup_cms_unloading_and_verification_state() {
   // Not unloading classes this cycle
   assert(!should_unload_classes(), "Inconsitency!");
 
+  // If we are not unloading classes then add SO_AllCodeCache to root
+  // scanning options.
+  add_root_scanning_option(rso);
+
   if ((!verifying() || unloaded_classes_last_cycle()) && should_verify) {
-    // Include symbols, strings and code cache elements to prevent their resurrection.
-    add_root_scanning_option(rso);
     set_verifying(true);
   } else if (verifying() && !should_verify) {
     // We were verifying, but some verification flags got disabled.
@@ -6634,7 +6636,6 @@ void CMSCollector::reset(bool asynch) {
 }
 
 void CMSCollector::do_CMS_operation(CMS_op_type op, GCCause::Cause gc_cause) {
-  gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
   TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
   GCTraceTime t(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, NULL, _gc_tracer_cm->gc_id());
   TraceCollectorStats tcs(counters());

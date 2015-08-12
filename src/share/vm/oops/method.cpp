@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,6 +92,7 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags, int size) {
   set_force_inline(false);
   set_hidden(false);
   set_dont_inline(false);
+  set_has_injected_profile(false);
   set_method_data(NULL);
   clear_method_counters();
   set_vtable_index(Method::garbage_vtable_index);
@@ -1419,6 +1420,7 @@ void Method::sort_methods(Array<Method*>* methods, bool idempotent, bool set_idn
       for (int i = 0; i < length; i++) {
         Method* m = methods->at(i);
         m->set_method_idnum(i);
+        m->set_orig_method_idnum(i);
       }
     }
   }

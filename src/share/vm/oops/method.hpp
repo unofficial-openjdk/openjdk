@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,12 +110,13 @@ class Method : public Metadata {
 #endif
   u2                _method_size;                // size of this object
   u1                _intrinsic_id;               // vmSymbols::intrinsic_id (0 == _none)
-  u1                _jfr_towrite      : 1,       // Flags
-                    _caller_sensitive : 1,
-                    _force_inline     : 1,
-                    _hidden           : 1,
-                    _dont_inline      : 1,
-                                      : 3;
+  u1                _jfr_towrite          : 1,   // Flags
+                    _caller_sensitive     : 1,
+                    _force_inline         : 1,
+                    _hidden               : 1,
+                    _dont_inline          : 1,
+                    _has_injected_profile : 1,
+                                          : 2;
 
 #ifndef PRODUCT
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
@@ -264,6 +265,9 @@ class Method : public Metadata {
   // note: also used by jfr
   u2 method_idnum() const           { return constMethod()->method_idnum(); }
   void set_method_idnum(u2 idnum)   { constMethod()->set_method_idnum(idnum); }
+
+  u2 orig_method_idnum() const           { return constMethod()->orig_method_idnum(); }
+  void set_orig_method_idnum(u2 idnum)   { constMethod()->set_orig_method_idnum(idnum); }
 
   // code size
   int code_size() const                  { return constMethod()->code_size(); }
@@ -714,6 +718,8 @@ class Method : public Metadata {
   void set_is_old()                                 { _access_flags.set_is_old(); }
   bool is_obsolete() const                          { return access_flags().is_obsolete(); }
   void set_is_obsolete()                            { _access_flags.set_is_obsolete(); }
+  bool is_deleted() const                           { return access_flags().is_deleted(); }
+  void set_is_deleted()                             { _access_flags.set_is_deleted(); }
   bool on_stack() const                             { return access_flags().on_stack(); }
   void set_on_stack(const bool value);
 
@@ -776,16 +782,19 @@ class Method : public Metadata {
   void init_intrinsic_id();     // updates from _none if a match
   static vmSymbols::SID klass_id_for_intrinsics(Klass* holder);
 
-  bool     jfr_towrite()            { return _jfr_towrite;          }
-  void set_jfr_towrite(bool x)      {        _jfr_towrite = x;      }
-  bool     caller_sensitive()       { return _caller_sensitive;     }
-  void set_caller_sensitive(bool x) {        _caller_sensitive = x; }
-  bool     force_inline()           { return _force_inline;         }
-  void set_force_inline(bool x)     {        _force_inline = x;     }
-  bool     dont_inline()            { return _dont_inline;          }
-  void set_dont_inline(bool x)      {        _dont_inline = x;      }
-  bool  is_hidden()                 { return _hidden;               }
-  void set_hidden(bool x)           {        _hidden = x;           }
+  bool     jfr_towrite()                { return _jfr_towrite;              }
+  void set_jfr_towrite(bool x)          {        _jfr_towrite = x;          }
+  bool     caller_sensitive()           { return _caller_sensitive;         }
+  void set_caller_sensitive(bool x)     {        _caller_sensitive = x;     }
+  bool     force_inline()               { return _force_inline;             }
+  void set_force_inline(bool x)         {        _force_inline = x;         }
+  bool     dont_inline()                { return _dont_inline;              }
+  void set_dont_inline(bool x)          {        _dont_inline = x;          }
+  bool  is_hidden()                     { return _hidden;                   }
+  void set_hidden(bool x)               {        _hidden = x;               }
+  bool     has_injected_profile()       { return _has_injected_profile;     }
+  void set_has_injected_profile(bool x) {        _has_injected_profile = x; }
+
   ConstMethod::MethodType method_type() const {
       return _constMethod->method_type();
   }
