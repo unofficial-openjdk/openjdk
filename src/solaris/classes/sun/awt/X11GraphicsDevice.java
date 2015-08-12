@@ -286,7 +286,6 @@ public class X11GraphicsDevice
      * Returns true only if:
      *   - the Xrandr extension is present
      *   - the necessary Xrandr functions were loaded successfully
-     *   - XINERAMA is not enabled
      */
     private static synchronized boolean isXrandrExtensionSupported() {
         if (xrandrExtSupported == null) {
@@ -298,11 +297,7 @@ public class X11GraphicsDevice
 
     @Override
     public boolean isFullScreenSupported() {
-        // REMIND: for now we will only allow fullscreen exclusive mode
-        // on the primary screen; we could change this behavior slightly
-        // in the future by allowing only one screen to be in fullscreen
-        // exclusive mode at any given time...
-        boolean fsAvailable = (screen == 0) && isXrandrExtensionSupported();
+        boolean fsAvailable = isXrandrExtensionSupported();
         if (fsAvailable) {
             SecurityManager security = System.getSecurityManager();
             if (security != null) {
@@ -322,13 +317,15 @@ public class X11GraphicsDevice
 
     @Override
     public boolean isDisplayChangeSupported() {
-        return (isFullScreenSupported() && (getFullScreenWindow() != null));
+        return (isFullScreenSupported()
+                && !((X11GraphicsEnvironment) GraphicsEnvironment
+                        .getLocalGraphicsEnvironment()).runningXinerama());
     }
 
     private static void enterFullScreenExclusive(Window w) {
         X11ComponentPeer peer = (X11ComponentPeer)w.getPeer();
         if (peer != null) {
-            enterFullScreenExclusive(peer.getContentWindow());
+            enterFullScreenExclusive(peer.getWindow());
             peer.setFullScreenExclusiveModeState(true);
         }
     }
@@ -337,7 +334,7 @@ public class X11GraphicsDevice
         X11ComponentPeer peer = (X11ComponentPeer)w.getPeer();
         if (peer != null) {
             peer.setFullScreenExclusiveModeState(false);
-            exitFullScreenExclusive(peer.getContentWindow());
+            exitFullScreenExclusive(peer.getWindow());
         }
     }
 
@@ -352,7 +349,9 @@ public class X11GraphicsDevice
         if (fsSupported && old != null) {
             // enter windowed mode (and restore original display mode)
             exitFullScreenExclusive(old);
-            setDisplayMode(origDisplayMode);
+            if (isDisplayChangeSupported()) {
+                setDisplayMode(origDisplayMode);
+            }
         }
 
         super.setFullScreenWindow(w);
@@ -379,7 +378,11 @@ public class X11GraphicsDevice
     @Override
     public synchronized DisplayMode getDisplayMode() {
         if (isFullScreenSupported()) {
-            return getCurrentDisplayMode(screen);
+            DisplayMode mode = getCurrentDisplayMode(screen);
+            if (mode == null) {
+                mode = getDefaultDisplayMode();
+            }
+            return mode;
         } else {
             if (origDisplayMode == null) {
                 origDisplayMode = getDefaultDisplayMode();
@@ -431,7 +434,9 @@ public class X11GraphicsDevice
                     Window old = getFullScreenWindow();
                     if (old != null) {
                         exitFullScreenExclusive(old);
-                        setDisplayMode(origDisplayMode);
+                        if (isDisplayChangeSupported()) {
+                            setDisplayMode(origDisplayMode);
+                        }
                     }
                 };
                 Thread t = new Thread(rootTG, r,"Display-Change-Shutdown-Thread-"+screen);

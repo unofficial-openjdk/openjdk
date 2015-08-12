@@ -213,16 +213,16 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
             byte_t *pSrc = image->RasterBits;
             ImageFormat srcFormat;
             ImageRect srcRect, dstRect;
-            int pass, npass;
+            int pass = 4, npass = 5;
 
+#if GIFLIB_MAJOR < 5
+            /* Interlaced gif support is broken in giflib < 5
+               so we need to work around this */
             if (desc->Interlace) {
                 pass = 0;
                 npass = 4;
             }
-            else {
-                pass = 4;
-                npass = 5;
-            }
+#endif
 
             srcFormat.colorMap = colorMapBuf;
             srcFormat.depthBytes = 1;
@@ -310,7 +310,13 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
     free(pBitmapBits);
     free(pOldBitmapBits);
 
+#if GIFLIB_MAJOR > 5 || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1)
+    if (DGifCloseFile(gif, NULL) == GIF_ERROR) {
+        return 0;
+    }
+#else
     DGifCloseFile(gif);
+#endif
 
     return 1;
 }
@@ -318,7 +324,11 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
 int
 SplashDecodeGifStream(Splash * splash, SplashStream * stream)
 {
+#if GIFLIB_MAJOR >= 5
+    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc, NULL);
+#else
     GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc);
+#endif
 
     if (!gif)
         return 0;

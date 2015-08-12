@@ -111,7 +111,6 @@ jdk_time = \
 
 jdk_rmi = \
     java/rmi \
-    javax/rmi/ssl \
     sun/rmi
 
 jdk_security1 = \
@@ -195,6 +194,7 @@ jdk_tools = \
 jdk_other = \
     java/sql \
     javax/sql \
+    javax/rmi \
     javax/naming \
     javax/script \
     javax/smartcardio \
@@ -484,7 +484,12 @@ needs_compact3 = \
   sun/security/jgss \
   sun/security/krb5 \
   java/lang/annotation/AnnotationType/AnnotationTypeDeadlockTest.java \
+  java/lang/invoke/lambda/LambdaStackTrace.java \
+  java/lang/invoke/LFCaching/LFGarbageCollectedTest.java \
+  java/lang/invoke/LFCaching/LFMultiThreadCachingTest.java \
+  java/lang/invoke/LFCaching/LFSingleThreadCachingTest.java \
   java/lang/System/MacEncoding/TestFileEncoding.java \
+  java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java \
   java/nio/channels/AsynchronousSocketChannel/Leaky.java \
   java/security/PermissionCollection/Concurrent.java \
   java/security/Principal/Implies.java \

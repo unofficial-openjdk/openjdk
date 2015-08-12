@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1302,6 +1302,25 @@ public abstract class Component implements ImageObserver, MenuContainer,
     }
 
     /**
+     * Determines the bounds of a visible part of the component relative to its
+     * parent.
+     *
+     * @return the visible part of bounds
+     */
+    private Rectangle getRecursivelyVisibleBounds() {
+        final Component container = getContainer();
+        final Rectangle bounds = getBounds();
+        if (container == null) {
+            // we are top level window or haven't a container, return our bounds
+            return bounds;
+        }
+        // translate the container's bounds to our coordinate space
+        final Rectangle parentsBounds = container.getRecursivelyVisibleBounds();
+        parentsBounds.setLocation(0, 0);
+        return parentsBounds.intersection(bounds);
+    }
+
+    /**
      * Translates absolute coordinates into coordinates in the coordinate
      * space of this component.
      */
@@ -1473,7 +1492,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
                     peer.setEnabled(true);
-                    if (visible) {
+                    if (visible && !getRecursivelyVisibleBounds().isEmpty()) {
                         updateCursorImmediately();
                     }
                 }
@@ -1522,7 +1541,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
                     peer.setEnabled(false);
-                    if (visible) {
+                    if (visible && !getRecursivelyVisibleBounds().isEmpty()) {
                         updateCursorImmediately();
                     }
                 }
@@ -1667,15 +1686,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     void clearCurrentFocusCycleRootOnHide() {
         /* do nothing */
-    }
-
-    /*
-     * Delete references from LightweithDispatcher of a heavyweight parent
-     */
-    void clearLightweightDispatcherOnRemove(Component removedComponent) {
-        if (parent != null) {
-            parent.clearLightweightDispatcherOnRemove(removedComponent);
-        }
     }
 
     /**
@@ -6180,7 +6190,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
     /**
      * Indicates whether a class or its superclasses override coalesceEvents.
      * Must be called with lock on coalesceMap and privileged.
-     * @see checkCoalsecing
+     * @see checkCoalescing
      */
     private static boolean isCoalesceEventsOverriden(Class<?> clazz) {
         assert Thread.holdsLock(coalesceMap);
@@ -6986,8 +6996,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
 
         synchronized (getTreeLock()) {
-            clearLightweightDispatcherOnRemove(this);
-
             if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabledFor(this)) {
                 transferFocus(true);
             }
