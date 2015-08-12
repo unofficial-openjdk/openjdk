@@ -43,6 +43,7 @@ import com.sun.tools.javac.code.ClassFinder;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.comp.Enter;
+import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
@@ -73,6 +74,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     final ClassFinder javadocFinder;
     final Enter javadocEnter;
     final Set<JavaFileObject> uniquefiles;
+    final Modules modules;
 
     /**
      * Construct a new JavaCompiler processor, using appropriately
@@ -84,6 +86,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         javadocFinder = JavadocClassFinder.instance(context);
         javadocEnter = JavadocEnter.instance(context);
         uniquefiles = new HashSet<>();
+        modules = Modules.instance(context);
     }
 
     /**
@@ -191,8 +194,13 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
                 if (messager.nerrors() != 0) return null;
 
                 // Enter symbols for all files
+                List<JCCompilationUnit> roots = classTrees.toList().appendList(packTrees.toList());
+
                 docenv.notice("main.Building_tree");
-                javadocEnter.main(classTrees.toList().appendList(packTrees.toList()));
+                modules.enter(roots, null);
+                javadocEnter.main(roots);
+            } else {
+                modules.enter(classTrees.toList().appendList(packTrees.toList()), null);
             }
         } catch (Abort ex) {}
 

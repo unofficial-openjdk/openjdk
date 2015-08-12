@@ -42,7 +42,6 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
-import java.util.Collection;
 
 /** This class enters symbols for all encountered definitions into
  *  the symbol table. The pass consists of high-level two phases,
@@ -529,18 +528,6 @@ public class Enter extends JCTree.Visitor {
      *  @param c          The class symbol to be processed or null to process all.
      */
     public void complete(List<JCCompilationUnit> trees, ClassSymbol c) {
-        // Process module declarations.
-        // If module resolution fails, ignore trees, and if trying to
-        // complete a specific symbol, throw CompletionFailure.
-        // Note that if module resolution failed, we may not even
-        // have enough modules available to access java.lang, and
-        // so risk getting FatalError("no.java.lang") from MemberEnter.
-        if (!modules.enter(trees, c)) {
-            if (c != null)
-                throw new CompletionFailure(c, diags.fragment("cant.resolve.modules"));
-            return;
-        }
-
         annotate.blockAnnotations();
         ListBuffer<ClassSymbol> prevUncompleted = uncompleted;
         if (typeEnter.completionEnabled) uncompleted = new ListBuffer<>();

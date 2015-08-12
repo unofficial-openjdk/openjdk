@@ -67,12 +67,14 @@ import com.sun.tools.javac.tree.JCTree.JCMemberReference;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.JCDiagnostic.Factory;
 import com.sun.tools.javac.util.Log.WriterKind;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
+
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 /** This class could be the main entry point for GJC when GJC is used as a
@@ -276,6 +278,14 @@ public class JavaCompiler {
      */
     protected Flow flow;
 
+    /** The modules visitor
+     */
+    protected Modules modules;
+
+    /** The diagnostics factory
+     */
+    protected JCDiagnostic.Factory diags;
+
     /** The type eraser.
      */
     protected TransTypes transTypes;
@@ -383,6 +393,8 @@ public class JavaCompiler {
         annotate = Annotate.instance(context);
         types = Types.instance(context);
         taskListener = MultiTaskListener.instance(context);
+        modules = Modules.instance(context);
+        diags = Factory.instance(context);
 
         finder.sourceCompleter = sourceCompleter;
 
@@ -762,6 +774,16 @@ public class JavaCompiler {
             taskListener.started(e);
         }
 
+        // Process module declarations.
+        // If module resolution fails, ignore trees, and if trying to
+        // complete a specific symbol, throw CompletionFailure.
+        // Note that if module resolution failed, we may not even
+        // have enough modules available to access java.lang, and
+        // so risk getting FatalError("no.java.lang") from MemberEnter.
+        if (!modules.enter(List.of(tree), c)) {
+            throw new CompletionFailure(c, diags.fragment("cant.resolve.modules"));
+        }
+
         enter.complete(List.of(tree), c);
 
         if (!taskListener.isEmpty()) {
@@ -842,8 +864,12 @@ public class JavaCompiler {
 
             // These method calls must be chained to avoid memory leaks
             processAnnotations(
-                enterTrees(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))),
-                classnames);
+                enterTrees(
+                        stopIfError(CompileState.PARSE,
+                                initModules(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))))
+                ),
+                classnames
+            );
 
             // If it's safe to do so, skip attr / flow / gen for implicit classes
             if (taskListener.isEmpty() &&
@@ -944,7 +970,16 @@ public class JavaCompiler {
     public List<JCCompilationUnit> enterTreesIfNeeded(List<JCCompilationUnit> roots) {
        if (shouldStop(CompileState.ATTR))
            return List.nil();
-        return enterTrees(roots);
+        return enterTrees(initModules(roots));
+    }
+
+    public List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots) {
+        return initModules(roots, null);
+    }
+
+    List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots, ClassSymbol c) {
+        modules.enter(roots, c);
+        return roots;
     }
 
     /**

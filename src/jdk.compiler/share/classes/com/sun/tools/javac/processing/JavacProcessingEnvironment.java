@@ -1057,7 +1057,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
         /** Enter a set of syntax trees. */
         private void enterTrees(List<JCCompilationUnit> roots) {
-            compiler.enterTrees(roots);
+            compiler.enterTrees(compiler.initModules(roots));
         }
 
         /** Run a processing round. */
