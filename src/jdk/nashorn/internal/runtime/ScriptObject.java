@@ -28,7 +28,6 @@ package jdk.nashorn.internal.runtime;
 import static jdk.nashorn.internal.codegen.CompilerConstants.staticCallNoLookup;
 import static jdk.nashorn.internal.codegen.CompilerConstants.virtualCall;
 import static jdk.nashorn.internal.codegen.CompilerConstants.virtualCallNoLookup;
-import static jdk.nashorn.internal.codegen.ObjectClassGenerator.OBJECT_FIELDS_ONLY;
 import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.ECMAErrors.referenceError;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
@@ -110,20 +109,17 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     /** Search fall back routine name for "no such property" */
     public static final String NO_SUCH_PROPERTY_NAME = "__noSuchProperty__";
 
-    /** Per ScriptObject flag - is this a scope object? */
-    public static final int IS_SCOPE       = 1 << 0;
-
     /** Per ScriptObject flag - is this an array object? */
-    public static final int IS_ARRAY       = 1 << 1;
+    public static final int IS_ARRAY               = 1 << 0;
 
     /** Per ScriptObject flag - is this an arguments object? */
-    public static final int IS_ARGUMENTS   = 1 << 2;
+    public static final int IS_ARGUMENTS           = 1 << 1;
 
     /** Is length property not-writable? */
-    public static final int IS_LENGTH_NOT_WRITABLE = 1 << 3;
+    public static final int IS_LENGTH_NOT_WRITABLE = 1 << 2;
 
     /** Is this a builtin object? */
-    public static final int IS_BUILTIN = 1 << 4;
+    public static final int IS_BUILTIN             = 1 << 3;
 
     /**
      * Spill growth rate - by how many elements does {@link ScriptObject#primitiveSpill} and
@@ -146,12 +142,6 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     /** Area for reference properties added to object after instantiation, see {@link AccessorProperty} */
     protected Object[] objectSpill;
 
-    /**
-     * Number of elements in the spill. This may be less than the spill array lengths, if not all of
-     * the allocated memory is in use
-     */
-    private int spillLength;
-
     /** Indexed array data. */
     private ArrayData arrayData;
 
@@ -170,12 +160,6 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
     /** Method handle for getting the array data */
     public static final Call GET_ARRAY          = virtualCall(MethodHandles.lookup(), ScriptObject.class, "getArray", ArrayData.class);
-
-    /** Method handle for getting the property map - debugging purposes */
-    public static final Call GET_MAP            = virtualCall(MethodHandles.lookup(), ScriptObject.class, "getMap", PropertyMap.class);
-
-    /** Method handle for setting the array data */
-    public static final Call SET_ARRAY          = virtualCall(MethodHandles.lookup(), ScriptObject.class, "setArray", void.class, ArrayData.class);
 
     /** Method handle for getting a function argument at a given index. Used from MapCreator */
     public static final Call GET_ARGUMENT       = virtualCall(MethodHandles.lookup(), ScriptObject.class, "getArgument", Object.class, int.class);
@@ -259,8 +243,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         this(map);
         this.primitiveSpill = primitiveSpill;
         this.objectSpill    = objectSpill;
-        assert primitiveSpill.length == objectSpill.length : " primitive spill pool size is not the same length as object spill pool size";
-        this.spillLength = spillAllocationLength(primitiveSpill.length);
+        assert primitiveSpill == null || primitiveSpill.length == objectSpill.length : " primitive spill pool size is not the same length as object spill pool size";
     }
 
     /**
@@ -407,14 +390,6 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      */
     public final boolean isDataDescriptor() {
         return has(VALUE) || has(WRITABLE);
-    }
-
-    /**
-     * ECMA 8.10.3 IsGenericDescriptor ( Desc )
-     * @return true if this has a descriptor describing an {@link AccessorPropertyDescriptor} or {@link DataPropertyDescriptor}
-     */
-    public final boolean isGenericDescriptor() {
-        return isAccessorDescriptor() || isDataDescriptor();
     }
 
     /**
@@ -722,8 +697,12 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     public void defineOwnProperty(final int index, final Object value) {
         assert isValidArrayIndex(index) : "invalid array index";
         final long longIndex = ArrayIndex.toLongIndex(index);
-        doesNotHaveEnsureDelete(longIndex, getArray().length(), false);
-        setArray(getArray().ensure(longIndex).set(index,value, false));
+        final long oldLength = getArray().length();
+        if (longIndex >= oldLength) {
+            setArray(getArray().ensure(longIndex));
+            doesNotHaveEnsureDelete(longIndex, oldLength, false);
+        }
+        setArray(getArray().set(index, value, false));
     }
 
     private void checkIntegerKey(final String key) {
@@ -808,7 +787,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      *
      * @return FindPropertyData or null if not found.
      */
-    FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
+    protected FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
 
         final PropertyMap selfMap  = getMap();
         final Property    property = selfMap.findProperty(key);
@@ -972,10 +951,10 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * @param setter        setter for {@link UserAccessorProperty}, null if not present or N/A
      */
     protected final void initUserAccessors(final String key, final int propertyFlags, final ScriptFunction getter, final ScriptFunction setter) {
-        final int slot = spillLength;
-        ensureSpillSize(spillLength); //arguments=slot0, caller=slot0
-        objectSpill[slot] = new UserAccessorProperty.Accessors(getter, setter);
         final PropertyMap oldMap = getMap();
+        final int slot = oldMap.getFreeSpillSlot();
+        ensureSpillSize(slot);
+        objectSpill[slot] = new UserAccessorProperty.Accessors(getter, setter);
         Property    newProperty;
         PropertyMap newMap;
         do {
@@ -1002,19 +981,12 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
             final int slot = uc.getSlot();
 
             assert uc.getLocalType() == Object.class;
-            if (slot >= spillLength) {
-                uc.setAccessors(this, getMap(), new UserAccessorProperty.Accessors(getter, setter));
-            } else {
-                final UserAccessorProperty.Accessors gs = uc.getAccessors(this); //this crashes
-                if (gs == null) {
-                    uc.setAccessors(this, getMap(), new UserAccessorProperty.Accessors(getter, setter));
-                } else {
-                    //reuse existing getter setter for speed
-                    gs.set(getter, setter);
-                    if (uc.getFlags() == propertyFlags) {
-                        return oldProperty;
-                    }
-                }
+            final UserAccessorProperty.Accessors gs = uc.getAccessors(this); //this crashes
+            assert gs != null;
+            //reuse existing getter setter for speed
+            gs.set(getter, setter);
+            if (uc.getFlags() == propertyFlags) {
+                return oldProperty;
             }
             newProperty = new UserAccessorProperty(uc.getKey(), propertyFlags, slot);
         } else {
@@ -1647,23 +1619,12 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         return getMap().isFrozen();
     }
 
-
-    /**
-     * Flag this ScriptObject as scope
-     */
-    public final void setIsScope() {
-        if (Context.DEBUG) {
-            scopeCount++;
-        }
-        flags |= IS_SCOPE;
-    }
-
     /**
      * Check whether this ScriptObject is scope
      * @return true if scope
      */
-    public final boolean isScope() {
-        return (flags & IS_SCOPE) != 0;
+    public boolean isScope() {
+        return false;
     }
 
     /**
@@ -1938,14 +1899,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * Test whether this object contains in its prototype chain or is itself a with-object.
      * @return true if a with-object was found
      */
-    final boolean hasWithScope() {
-        if (isScope()) {
-            for (ScriptObject obj = this; obj != null; obj = obj.getProto()) {
-                if (obj instanceof WithObject) {
-                    return true;
-                }
-            }
-        }
+    boolean hasWithScope() {
         return false;
     }
 
@@ -2048,8 +2002,6 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         } else {
             protoSwitchPoint = null;
         }
-
-        assert OBJECT_FIELDS_ONLY || guard != null : "we always need a map guard here";
 
         final GuardedInvocation inv = new GuardedInvocation(mh, guard, protoSwitchPoint, exception);
         return inv.addSwitchPoint(findBuiltinSwitchPoint(name));
@@ -2527,13 +2479,14 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
     /**
      * Add a spill property for the given key.
-     * @param key           Property key.
-     * @param propertyFlags Property flags.
+     * @param key    Property key.
+     * @param flags  Property flags.
      * @return Added property.
      */
-    private Property addSpillProperty(final String key, final int propertyFlags, final Object value, final boolean hasInitialValue) {
+    private Property addSpillProperty(final String key, final int flags, final Object value, final boolean hasInitialValue) {
         final PropertyMap propertyMap = getMap();
         final int fieldSlot  = propertyMap.getFreeFieldSlot();
+        final int propertyFlags = flags | (useDualFields() ? Property.DUAL_FIELDS : 0);
 
         Property property;
         if (fieldSlot > -1) {
@@ -2558,7 +2511,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * @return Setter method handle.
      */
     MethodHandle addSpill(final Class<?> type, final String key) {
-        return addSpillProperty(key, 0, null, false).getSetter(OBJECT_FIELDS_ONLY ? Object.class : type, getMap());
+        return addSpillProperty(key, 0, null, false).getSetter(type, getMap());
     }
 
     /**
@@ -2600,7 +2553,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         final int callCount      = callType.parameterCount();
 
         final boolean isCalleeVarArg = parameterCount > 0 && methodType.parameterType(parameterCount - 1).isArray();
-        final boolean isCallerVarArg = callerVarArg != null ? callerVarArg.booleanValue() : callCount > 0 &&
+        final boolean isCallerVarArg = callerVarArg != null ? callerVarArg : callCount > 0 &&
                 callType.parameterType(callCount - 1).isArray();
 
         if (isCalleeVarArg) {
@@ -2645,9 +2598,9 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         final int spreadArgs = mh.type().parameterCount() - callSiteParamCount + 1;
         return MH.filterArguments(
             MH.asSpreader(
-            mh,
-            Object[].class,
-            spreadArgs),
+                mh,
+                Object[].class,
+                spreadArgs),
             callSiteParamCount - 1,
             MH.insertArguments(
                 TRUNCATINGFILTER,
@@ -3735,24 +3688,32 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         return uc;
     }
 
+    /**
+     * Returns {@code true} if properties for this object should use dual field mode, {@code false} otherwise.
+     * @return {@code true} if dual fields should be used.
+     */
+    protected boolean useDualFields() {
+        return !StructureLoader.isSingleFieldStructure(getClass().getName());
+    }
+
     Object ensureSpillSize(final int slot) {
-        if (slot < spillLength) {
+        final int oldLength = objectSpill == null ? 0 : objectSpill.length;
+        if (slot < oldLength) {
             return this;
         }
         final int newLength = alignUp(slot + 1, SPILL_RATE);
         final Object[] newObjectSpill    = new Object[newLength];
-        final long[]   newPrimitiveSpill = OBJECT_FIELDS_ONLY ? null : new long[newLength];
+        final long[]   newPrimitiveSpill = useDualFields() ? new long[newLength] : null;
 
         if (objectSpill != null) {
-            System.arraycopy(objectSpill, 0, newObjectSpill, 0, spillLength);
-            if (!OBJECT_FIELDS_ONLY) {
-                System.arraycopy(primitiveSpill, 0, newPrimitiveSpill, 0, spillLength);
+            System.arraycopy(objectSpill, 0, newObjectSpill, 0, oldLength);
+            if (primitiveSpill != null && newPrimitiveSpill != null) {
+                System.arraycopy(primitiveSpill, 0, newPrimitiveSpill, 0, oldLength);
             }
         }
 
         this.primitiveSpill = newPrimitiveSpill;
         this.objectSpill    = newObjectSpill;
-        this.spillLength = newLength;
 
         return this;
     }
@@ -3827,9 +3788,6 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     /** This is updated only in debug mode - counts number of {@code ScriptObject} instances created */
     private static int count;
 
-    /** This is updated only in debug mode - counts number of {@code ScriptObject} instances created that are scope */
-    private static int scopeCount;
-
     /**
      * Get number of {@code ScriptObject} instances created. If not running in debug
      * mode this is always 0
@@ -3839,15 +3797,4 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     public static int getCount() {
         return count;
     }
-
-    /**
-     * Get number of scope {@code ScriptObject} instances created. If not running in debug
-     * mode this is always 0
-     *
-     * @return number of scope ScriptObjects created
-     */
-    public static int getScopeCount() {
-        return scopeCount;
-    }
-
 }
