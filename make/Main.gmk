@@ -74,11 +74,14 @@ interim-langtools:
 interim-corba:
 	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterim.gmk)
 
+interim-cldrconverter:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
+
 buildtools-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk java-tools)
 
 ALL_TARGETS += buildtools-langtools interim-langtools interim-corba \
-    buildtools-jdk
+    interim-cldrconverter buildtools-jdk
 
 ################################################################################
 # Special targets for certain modules
@@ -404,7 +407,7 @@ else
 
   interim-langtools: $(LANGTOOLS_GENSRC_TARGETS)
 
-  buildtools-jdk: interim-langtools
+  buildtools-jdk: interim-langtools interim-cldrconverter
 
   $(CORBA_GENSRC_TARGETS): interim-langtools
 
