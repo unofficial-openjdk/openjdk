@@ -51,16 +51,15 @@ public class Main {
             ptest.testDynamicModule(d.loader, d.interfaces);
         }
 
-        for (Data d : proxiesWtihAddReads()) {
+        for (Data d : proxiesWithAddReads()) {
             System.out.println(d);
             ptest.test(d.module, d.loader, d.interfaces);
         }
 
-        // Disabled until we see if this test is needed
-        //for (Data d : proxiesWtihAddExports()) {
-        //    System.out.println(d);
-        //    ptest.test(d.module, d.loader, d.interfaces);
-        //}
+        for (Data d : proxiesWithAddExports()) {
+            System.out.println(d);
+            ptest.test(d.module, d.loader, d.interfaces);
+        }
     }
 
     static class Data {
@@ -182,7 +181,7 @@ public class Main {
      * Test cases for proxy class to implement accessible proxy interfaces
      * after addReads.
      */
-    static Data[] proxiesWtihAddReads() {
+    static Data[] proxiesWithAddReads() {
         Module unnamed = test.getClassLoader().getUnnamedModule();
         test.addReads(unnamed);
         return new Data[] {
@@ -194,15 +193,13 @@ public class Main {
 
     /*
      * Test cases for proxy class to implement accessible proxy interfaces
-     * after addExports
+     * that are qualified exports.
      */
-    static Data[] proxiesWtihAddExports() {
-        m3.addExports("p.three.internal", test);
+    static Data[] proxiesWithAddExports() {
         return new Data[] {
                 new Data(test, test.getClassLoader(),
-                         p.one.I.class,
-                         p.two.internal.C.class, m3InternalType), // module-private interfaces in m2 and m3
-
+                         p.one.internal.J.class,
+                         p.two.internal.C.class), // module-private interfaces in m1 and m2
         };
     }
 
