@@ -30,7 +30,8 @@
  * @summary Datagram Transport Layer Security (DTLS)
  * @modules java.base/sun.misc
  * @build DTLSOverDatagram
- * @run main/othervm NoMacInitialClientHello
+ * @run main/othervm -Djdk.tls.client.enableStatusRequestExtension=false
+ *      NoMacInitialClientHello
  */
 
 import java.net.DatagramPacket;

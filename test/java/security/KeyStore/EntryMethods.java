@@ -23,7 +23,7 @@
 
 /*
  * @test 1.5, 03/06/24
- * @bug 4850376
+ * @bug 4850376 8130850
  * @summary Provide generic storage KeyStore storage facilities
  */
 
@@ -45,6 +45,20 @@ public class EntryMethods
     public static class FooParameter implements KeyStore.LoadStoreParameter {
         public KeyStore.ProtectionParameter getProtectionParameter() {
             return null;
+        }
+    }
+
+    public static class MyLoadStoreParameter
+        implements KeyStore.LoadStoreParameter {
+
+        private KeyStore.ProtectionParameter protection;
+
+        MyLoadStoreParameter(KeyStore.ProtectionParameter protection) {
+            this.protection = protection;
+        }
+
+        public KeyStore.ProtectionParameter getProtectionParameter() {
+            return protection;
         }
     }
 
@@ -101,7 +115,15 @@ public class EntryMethods
             throw new SecurityException("[Pre1.5] test " + tNum + " failed");
         } catch (UnsupportedOperationException uoe) {
             System.out.println("[Pre1.5] test " + tNum++ + " passed");
+        } catch (NoSuchAlgorithmException nsae) {
+            System.out.println("[Pre1.5] test " + tNum++ + " passed");
         }
+
+
+        // TEST load custom param
+        ks.load(new MyLoadStoreParameter(
+            new KeyStore.PasswordProtection(password)));
+        System.out.println("[Pre1.5] test " + tNum++ + " passed");
 
 
         // TEST store random param

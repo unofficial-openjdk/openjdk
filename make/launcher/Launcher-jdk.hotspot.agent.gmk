@@ -30,3 +30,8 @@ $(eval $(call SetupLauncher,jsadebugd, \
         "-m"$(COMMA) "jdk.hotspot-.agent/sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     ,,,,,,,,,Info-privileged.plist))
 
+
+$(eval $(call SetupLauncher,jhsdb, \
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.SALauncher"$(COMMA) }' \
+    ,,,,,,,,,Info-privileged.plist))
+
