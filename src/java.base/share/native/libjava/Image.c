@@ -27,6 +27,7 @@
 
 #include "jni.h"
 #include "jvm.h"
+
 #include "jdk_internal_jimage_ImageNativeSubstrate.h"
 
 JNIEXPORT jlong JNICALL

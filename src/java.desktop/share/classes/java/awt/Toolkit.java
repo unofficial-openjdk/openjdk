@@ -464,7 +464,9 @@ public abstract class Toolkit {
      */
     private static void fallbackToLoadClassForAT(String atName) {
         try {
-            Class.forName(atName, false, ClassLoader.getSystemClassLoader()).newInstance();
+            Class<?> c = Class.forName(atName, false, ClassLoader.getSystemClassLoader());
+            Toolkit.class.getModule().addReads(c.getModule());
+            c.newInstance();
         } catch (ClassNotFoundException e) {
             newAWTError(e, "Assistive Technology not found: " + atName);
         } catch (InstantiationException e) {

@@ -32,6 +32,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.lang.reflect.Proxy;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
@@ -635,16 +636,14 @@ public final class LoaderHandler {
                                            boolean preferCodebase)
         throws ClassNotFoundException
     {
+        Module target = null;
         ClassLoader proxyLoader = null;
         Class<?>[] classObjs = new Class<?>[interfaceNames.length];
-        boolean[] nonpublic = { false };
 
       defaultLoaderCase:
         if (defaultLoader != null) {
             try {
-                proxyLoader =
-                    loadProxyInterfaces(interfaceNames, defaultLoader,
-                                        classObjs, nonpublic);
+                target = loadProxyInterfaces(interfaceNames, defaultLoader, classObjs);
                 if (loaderLog.isLoggable(Log.VERBOSE)) {
                     ClassLoader[] definingLoaders =
                         new ClassLoader[classObjs.length];
@@ -658,21 +657,22 @@ public final class LoaderHandler {
             } catch (ClassNotFoundException e) {
                 break defaultLoaderCase;
             }
-            if (!nonpublic[0]) {
+
+            if (target != null) {
+                return loadProxyClass(target, classObjs);
+            } else {
                 if (preferCodebase) {
                     try {
                         return Proxy.getProxyClass(codebaseLoader, classObjs);
                     } catch (IllegalArgumentException e) {
                     }
+                } else {
+                    return loadProxyClass(defaultLoader, classObjs);
                 }
-                proxyLoader = defaultLoader;
             }
-            return loadProxyClass(proxyLoader, classObjs);
         }
 
-        nonpublic[0] = false;
-        proxyLoader = loadProxyInterfaces(interfaceNames, codebaseLoader,
-                                          classObjs, nonpublic);
+        target = loadProxyInterfaces(interfaceNames, codebaseLoader, classObjs);
         if (loaderLog.isLoggable(Log.VERBOSE)) {
             ClassLoader[] definingLoaders = new ClassLoader[classObjs.length];
             for (int i = 0; i < definingLoaders.length; i++) {
@@ -682,10 +682,11 @@ public final class LoaderHandler {
                 "proxy interfaces found via codebase, " +
                 "defined by " + Arrays.asList(definingLoaders));
         }
-        if (!nonpublic[0]) {
-            proxyLoader = codebaseLoader;
+        if (target != null) {
+            return loadProxyClass(target, classObjs);
+        } else {
+            return loadProxyClass(codebaseLoader, classObjs);
         }
-        return loadProxyClass(proxyLoader, classObjs);
     }
 
     /**
@@ -702,52 +703,68 @@ public final class LoaderHandler {
                 "error creating dynamic proxy class", e);
         }
     }
+    private static Class<?> loadProxyClass(Module module, Class<?>[] interfaces)
+        throws ClassNotFoundException
+    {
+        try {
+            return Proxy.getProxyClass(module, interfaces);
+        } catch (IllegalArgumentException e) {
+            throw new ClassNotFoundException(
+                    "error creating dynamic proxy class", e);
+        }
+    }
+
 
     /*
      * Load Class objects for the names in the interfaces array fron
      * the given class loader.
      *
-     * We pass classObjs and nonpublic arrays to avoid needing a
-     * multi-element return value.  nonpublic is an array to enable
-     * the method to take a boolean argument by reference.
-     *
-     * nonpublic array is needed to signal when the return value of
-     * this method should be used as the proxy class loader.  Because
-     * null represents a valid class loader, that value is
-     * insufficient to signal that the return value should not be used
-     * as the proxy class loader.
+     * This method returns the Module where the proxy class should be
+     * defined if any of the interfaces is non-public or module-private.
+     * Otherwise, return null.
      */
-    private static ClassLoader loadProxyInterfaces(String[] interfaces,
+    private static Module loadProxyInterfaces(String[] interfaces,
                                                    ClassLoader loader,
-                                                   Class<?>[] classObjs,
-                                                   boolean[] nonpublic)
+                                                   Class<?>[] classObjs)
         throws ClassNotFoundException
     {
-        /* loader of a non-public interface class */
-        ClassLoader nonpublicLoader = null;
+        /* target module of a non-public interface class */
+        Module nonpublicTarget = null;
+        Module moduleprivateTarget = null;
 
         for (int i = 0; i < interfaces.length; i++) {
             Class<?> cl =
                 (classObjs[i] = loadClassForName(interfaces[i], false, loader));
-
+            Module module = cl.getModule();
             if (!Modifier.isPublic(cl.getModifiers())) {
-                ClassLoader current = cl.getClassLoader();
                 if (loaderLog.isLoggable(Log.VERBOSE)) {
                     loaderLog.log(Log.VERBOSE,
                         "non-public interface \"" + interfaces[i] +
-                        "\" defined by " + current);
+                        "\" defined by " + module);
                 }
-                if (!nonpublic[0]) {
-                    nonpublicLoader = current;
-                    nonpublic[0] = true;
-                } else if (current != nonpublicLoader) {
+                if (nonpublicTarget == null) {
+                    nonpublicTarget = module;
+                } else if (module != nonpublicTarget) {
                     throw new IllegalAccessError(
                         "non-public interfaces defined in different " +
                         "class loaders");
                 }
+            } else if (module.isNamed()) {
+                int pos = cl.getName().lastIndexOf('.');
+                String pn = pos > 0 ? cl.getName().substring(0, pos) : null;
+                if (pn != null && !module.isExported(pn)) {
+                    // module-private
+                    if (moduleprivateTarget == null) {
+                        moduleprivateTarget = module;
+                    } else if (module != moduleprivateTarget && !module.isExported(pn)) {
+                        throw new IllegalAccessError(
+                                "module-private interfaces defined in different " +
+                                        "modules");
+                    }
+                }
             }
         }
-        return nonpublicLoader;
+        return nonpublicTarget != null ? nonpublicTarget : moduleprivateTarget;
     }
 
     /**

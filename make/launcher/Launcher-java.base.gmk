@@ -50,7 +50,8 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 endif
 
 $(eval $(call SetupLauncher,keytool, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.base/sun.security.tools.keytool.Main"$(COMMA) }'))
 
 ################################################################################
 

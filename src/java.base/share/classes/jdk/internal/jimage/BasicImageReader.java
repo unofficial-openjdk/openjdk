@@ -108,6 +108,10 @@ public class BasicImageReader {
         return strings;
     }
 
+    public ImageLocation findLocation(String mn, String rn) {
+        return findLocation("/" + mn + "/" + rn);
+    }
+
     public ImageLocation findLocation(String name) {
         return findLocation(new UTF8String(name));
     }

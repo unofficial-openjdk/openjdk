@@ -30,6 +30,7 @@
 import java.io.InputStream;
 import java.io.DataInputStream;
 import java.nio.file.DirectoryStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -383,6 +384,8 @@ public class Basic {
             { "/modules/java.base/packages.offsets" },
             { "/modules/java.instrument/packages.offsets" },
             { "/modules/jdk.zipfs/packages.offsets" },
+            { "/modules/java.base/_the.java.base.vardeps" },
+            { "/modules/java.base/_the.java.base_batch" },
             { "/java/lang" },
             { "/java/util" },
         };
@@ -568,48 +571,16 @@ public class Basic {
     }
 
     @Test
-    public void testPackagesSubDirList() throws Exception {
+    public void invalidPathTest() {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-        String pathName = "/packages/javax.annotation";
-        Path path = fs.getPath(pathName);
-        boolean seenJavaCompiler = false, seenAnnotationsCommon = false;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path p : stream) {
-               String str = p.toString();
-               if (str.equals(pathName + "/java.compiler")) {
-                   seenJavaCompiler = true;
-               } else if (str.equals(pathName + "/java.annotations.common")) {
-                   seenAnnotationsCommon = true;
-               }
-            }
+        InvalidPathException ipe = null;
+        try {
+            boolean res = Files.exists(fs.getPath("/packages/\ud834\udd7b"));
+            assertFalse(res);
+            return;
+        } catch (InvalidPathException e) {
+            ipe = e;
         }
-        assertTrue(seenJavaCompiler);
-        assertTrue(seenAnnotationsCommon);
-    }
-
-    @Test
-    public void testRootDirList() throws Exception {
-        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-        Path path = fs.getPath("/");
-        // check /packages and /modules are not repeated
-        // and seen once.
-        boolean packages = false, modules = false;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path p : stream) {
-                String str = p.toString();
-                switch (str) {
-                    case "/packages":
-                        assertFalse(packages, "/packages repeated");
-                        packages = true;
-                        break;
-                    case "/modules":
-                        assertFalse(modules, "/modules repeated");
-                        modules = true;
-                        break;
-                }
-            }
-        }
-        assertTrue(packages, "/packages missing in / list!");
-        assertTrue(modules, "/modules missing in / list!");
+        assertTrue(ipe != null);
     }
 }
