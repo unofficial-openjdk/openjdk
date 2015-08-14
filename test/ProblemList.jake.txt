@@ -153,6 +153,11 @@ java/nio/file/Files/StreamLinesTest.java					generic-all
 java/net/NetworkInterface/NetworkInterfaceStreamTest.java			generic-all
 java/security/PermissionCollection/PermissionCollectionStreamTest.java		generic-all
 
+sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
+sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
+sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          generic-all
+sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
+sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
 ############################################################################
 
