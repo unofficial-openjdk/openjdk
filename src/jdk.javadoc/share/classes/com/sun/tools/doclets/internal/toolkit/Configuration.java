@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.tools.JavaFileManager;
+import javax.tools.JavaFileManager.Location;
 
 import com.sun.javadoc.*;
 import com.sun.tools.javac.sym.Profiles;
@@ -984,4 +986,6 @@ public abstract class Configuration {
     }
 
     public abstract boolean showMessage(SourcePosition pos, String key);
+
+    public abstract Location getLocationForPackage(PackageDoc pd);
 }

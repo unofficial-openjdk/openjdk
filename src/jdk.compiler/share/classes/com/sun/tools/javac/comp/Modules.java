@@ -98,10 +98,10 @@ public class Modules extends JCTree.Visitor {
     private final Symtab syms;
     private final JavaFileManager fileManager;
     private final ModuleFinder moduleFinder;
-    private final boolean multiModuleMode;
     private final boolean allowModules;
 
-    private final boolean noModules;
+    public final boolean multiModuleMode;
+    public final boolean noModules;
 
     private final String moduleOverride;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@
  */
 
 package com.sun.tools.doclets.internal.toolkit;
+
+import javax.tools.StandardLocation;
 
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.builders.*;
@@ -138,7 +140,7 @@ public abstract class AbstractDoclet {
         ClassTree classtree = new ClassTree(configuration, configuration.nodeprecated);
 
         generateClassFiles(root, classtree);
-        configuration.utils.copyDocFiles(configuration, DocPaths.DOC_FILES);
+        configuration.utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.DOC_FILES);
 
         PackageListWriter.generate(configuration);
         generatePackageFiles(classtree);

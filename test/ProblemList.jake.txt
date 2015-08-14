@@ -1,6 +1,7 @@
 ##### doclets ##################################################################
 
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java     	0 generic-all	javadoc can't find {@link java.math}
+com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 generic-all   test includes code that adds class into java.lang
 
 com/sun/javadoc/testCustomTag/TestCustomTag.java				0 generic-all	addExports
 com/sun/javadoc/testTaglets/TestTaglets.java					0 generic-all	addExports

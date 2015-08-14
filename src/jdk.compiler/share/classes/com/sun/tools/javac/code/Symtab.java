@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.ElementVisitor;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
@@ -754,25 +755,36 @@ public class Symtab {
         if (packageName.isEmpty())
             return java_base == noModule ? noModule : unnamedModule;//!
 
-        Map<ModuleSymbol, PackageSymbol> perModule = packages.get(packageName);
-
-        if (perModule == null || perModule.size() != 1) {
+        ModuleSymbol msym = null;
+        Map<ModuleSymbol,PackageSymbol> map = packages.get(packageName);
+        if (map == null)
             return null;
+        for (Map.Entry<ModuleSymbol,PackageSymbol> e: map.entrySet()) {
+            if (!e.getValue().members().isEmpty()) {
+                if (msym == null) {
+                    msym = e.getKey();
+                } else {
+                    return null;
+                }
+            }
         }
-
-        return perModule.keySet().iterator().next();
+        return msym;
     }
 
-    public Collection<ModuleSymbol> listPackageModules(Name packageName) {
+    public List<ModuleSymbol> listPackageModules(Name packageName) {
         if (packageName.isEmpty())
-            return Collections.emptyList();
+            return List.nil();
 
-        return packages.get(packageName)
-                       .entrySet()
-                       .stream()
-                       .filter(e -> !e.getValue().members().isEmpty())
-                       .map(e -> e.getKey())
-                       .collect(Collectors.toList());
+        List<ModuleSymbol> result = List.nil();
+        Map<ModuleSymbol,PackageSymbol> map = packages.get(packageName);
+        if (map != null) {
+            for (Map.Entry<ModuleSymbol, PackageSymbol> e: map.entrySet()) {
+                if (!e.getValue().members().isEmpty()) {
+                    result = result.prepend(e.getKey());
+                }
+            }
+        }
+        return result;
     }
 
     public Iterable<ModuleSymbol> getAllModules() {

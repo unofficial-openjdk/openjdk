@@ -292,11 +292,6 @@ public class Start extends ToolOption.Helper {
         // Make sure no obsolete source/target messages are reported
         compOpts.put("-Xlint:-options", "-Xlint:-options");
 
-        /*
-         *TEMPORARY: disable module processing for now in javadoc
-         */
-        compOpts.put("noModules", "true");
-
         // Parse arguments
         for (int i = 0 ; i < argv.length ; i++) {
             String arg = argv[i];

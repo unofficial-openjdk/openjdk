@@ -28,6 +28,8 @@ package com.sun.tools.doclets.internal.toolkit.builders;
 import java.io.IOException;
 import java.util.List;
 
+import javax.tools.StandardLocation;
+
 import com.sun.javadoc.*;
 import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.internal.toolkit.*;
@@ -129,7 +131,11 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         profileWriter.addProfileFooter(contentTree);
         profileWriter.printDocument(contentTree);
         profileWriter.close();
-        utils.copyDocFiles(configuration, DocPaths.profileSummary(profile.name));
+        // TEMPORARY:
+        // The use of SOURCE_PATH on the next line is temporary. As we transition into the
+        // modules world, this should migrate into using a location for the appropriate module
+        // on the MODULE_SOURCE_PATH, or (in the old doclet) simply deleted.
+        utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.profileSummary(profile.name));
     }
 
     /**

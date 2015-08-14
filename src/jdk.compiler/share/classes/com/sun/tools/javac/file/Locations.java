@@ -1094,8 +1094,9 @@ public class Locations {
                 if (markStart == -1) {
                     add(map, Paths.get(seg), null);
                 } else {
-                    if (markStart == 0 || !isSeparator(seg.charAt(markStart - 1)))
-                        throw new IllegalArgumentException("illegal use of " + MARKER);
+                    if (markStart == 0 || !isSeparator(seg.charAt(markStart - 1))) {
+                        throw new IllegalArgumentException("illegal use of " + MARKER + " in " + seg);
+                    }
                     Path prefix = Paths.get(seg.substring(0, markStart - 1));
                     Path suffix;
                     int markEnd = markStart + MARKER.length();
@@ -1103,7 +1104,7 @@ public class Locations {
                         suffix = null;
                     } else if (!isSeparator(seg.charAt(markEnd))
                             || seg.indexOf(MARKER, markEnd) != -1) {
-                        throw new IllegalArgumentException("illegal use of " + MARKER);
+                        throw new IllegalArgumentException("illegal use of " + MARKER + " in " + seg);
                     } else {
                         suffix = Paths.get(seg.substring(markEnd + 1));
                     }
