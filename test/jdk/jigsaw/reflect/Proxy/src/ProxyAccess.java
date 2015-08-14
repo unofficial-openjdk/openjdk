@@ -21,22 +21,21 @@
  * questions.
  */
 
-import java.lang.Exception;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Module;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+
 import jdk.test.ProxyTest;
 import static jdk.test.ProxyTest.*;
 
 public class ProxyAccess {
+
     private final static Module m1 = p.one.I.class.getModule();
     private final static Module m2 = p.two.A.class.getModule();
     private final static Module m3 = p.three.P.class.getModule();

@@ -21,13 +21,16 @@
  * questions.
  */
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Module;
+import java.lang.reflect.Proxy;
+
 /* @test
  * @summary Basic test of proxy module mapping and the access to Proxy class
  *          call Constructor.verifyNewInstanceAccess
  * @modules java.base/sun.invoke
  */
-
-import java.lang.reflect.*;
 
 public class ProxyModuleMapping {
     public static void main(String... args) throws Exception {
