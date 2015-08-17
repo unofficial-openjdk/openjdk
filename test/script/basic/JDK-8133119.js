@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,60 @@
  */
 
 /**
- * JDK-8068580: make JavaAdapterFactory.isAutoConvertibleFromFunction more robust
+ * JDK-8133119: Error message associated with TypeError for call and new should include stringified Node
  *
  * @test
  * @run
  */
 
-var BigAbstract = Java.type("jdk.nashorn.test.models.BigAbstract")
+var obj = {}
 try {
-    new BigAbstract({});
+    obj.func();
 } catch (e) {
-    Assert.assertTrue(e instanceof TypeError);
-    Assert.assertEquals(e.message, "Can not extend/implement [class jdk.nashorn.test.models.BigAbstract] because of java.lang.RuntimeException: Method code too large!");
+    print(e);
 }
+
+var arr = [33];
 try {
-    BigAbstract.accept(function() { });
+    arr[0].func();
 } catch (e) {
-    Assert.assertSame(e.class, java.lang.ClassCastException.class);
+    print(e);
+}
+
+try {
+    new obj.func();
+} catch (e) {
+    print(e);
+}
+
+try {
+    new arr[0].func();
+} catch (e) {
+    print(e);
+}
+
+obj.foo = {}
+try {
+    new obj.foo();
+} catch (e) {
+    print(e);
+}
+
+try {
+    obj.foo();
+} catch (e) {
+    print(e);
+}
+
+var v = new java.util.Vector();
+try {
+    v();
+} catch (e) {
+    print(e);
+}
+
+try {
+    new v();
+} catch (e) {
+    print(e);
 }
