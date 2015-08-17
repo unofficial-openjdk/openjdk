@@ -282,11 +282,6 @@ public abstract class Configuration {
     public abstract MessageRetriever getDocletSpecificMsg();
 
     /**
-     * A map of the profiles to packages.
-     */
-    public Map<String, List<PackageDoc>> profilePackages;
-
-    /**
      * A sorted set of packages specified on the command-line merged with a
      * collection of packages that contain the classes specified on the
      * command-line.
@@ -512,11 +507,6 @@ public abstract class Configuration {
         initPackages();
         initModules();
         setOptions(root.options());
-//        try {
-//            initProfiles();
-//        } catch (Exception e) {
-//            throw new DocletAbortException(e);
-//        }
         setSpecificDocletOptions(root.options());
     }
 

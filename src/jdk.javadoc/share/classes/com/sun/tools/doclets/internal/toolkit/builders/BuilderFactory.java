@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
@@ -96,27 +95,13 @@ public class BuilderFactory {
             writerFactory.getPackageSummaryWriter(pkg, prevPkg, nextPkg));
     }
 
-//    /**
-//     * Return the builder that builds the profile summary.
-//     *
-//     * @param profile the profile being documented.
-//     * @param prevProfile the previous profile being documented.
-//     * @param nextProfile the next profile being documented.
-//     * @return the builder that builds the profile summary.
-//     */
-//    public AbstractBuilder getProfileSummaryBuilder(Profile profile, Profile prevProfile,
-//            Profile nextProfile) throws Exception {
-//        return ModuleSummaryBuilder.getInstance(context, profile,
-//            writerFactory.getProfileSummaryWriter(profile, prevProfile, nextProfile));
-//    }
-
     /**
-     * Return the builder that builds the profile summary.
+     * Return the builder that builds the module summary.
      *
-     * @param profile the profile being documented.
-     * @param prevProfile the previous profile being documented.
-     * @param nextProfile the next profile being documented.
-     * @return the builder that builds the profile summary.
+     * @param module the module being documented.
+     * @param prevModule the previous module being documented.
+     * @param nextModule the next module being documented.
+     * @return the builder that builds the module summary.
      */
     public AbstractBuilder getModuleSummaryBuilder(String moduleName, String prevModuleName,
             String nextModuleName) throws Exception {

@@ -176,8 +176,6 @@ public class ModuleWriterImpl extends HtmlDocletWriter
      */
     public void addClassesSummary(ClassDoc[] classes, String label,
             String tableSummary, String[] tableHeader, Content packageSummaryContentTree) {
-//        addClassesSummary(classes, label, tableSummary, tableHeader,
-//                packageSummaryContentTree, profile.value);
     }
 
     /**

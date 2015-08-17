@@ -160,10 +160,6 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
             }
             htmlTree.addContent(ul);
             body.addContent(htmlTree);
-//            if (configuration.showProfiles && configuration.profilePackages.size() > 0) {
-//                Content profileSummary = configuration.getResource("doclet.Profiles");
-//                addProfilesList(profileSummary, body);
-//            }
             addPackagesList(packages, text, tableSummary, body);
         }
     }

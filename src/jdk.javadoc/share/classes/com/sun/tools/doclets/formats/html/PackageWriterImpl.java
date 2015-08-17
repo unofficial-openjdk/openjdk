@@ -116,7 +116,8 @@ public class PackageWriterImpl extends HtmlDocletWriter
             Content moduleNameContent = new HtmlTree(HtmlTag.P);
             moduleNameContent.addContent(moduleLabel);
             moduleNameContent.addContent(getSpace());
-            moduleNameContent.addContent(new StringContent(moduleName));
+            moduleNameContent.addContent(getTargetModuleLink("classFrame",
+                    new StringContent(moduleName), moduleName));
             div.addContent(moduleNameContent);
         }
         Content annotationContent = new HtmlTree(HtmlTag.P);
