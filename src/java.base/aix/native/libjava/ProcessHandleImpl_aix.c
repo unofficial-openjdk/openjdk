@@ -23,13 +23,28 @@
  * questions.
  */
 
-/**
- * Service-provider classes for the {@link java.net} package.
- *
- * <p> Only developers who are defining new URL stream handler providers
- * should need to make direct use of this package.
- *
- * @since 1.9
+#include "jni.h"
+
+#include "ProcessHandleImpl_unix.h"
+
+#include <sys/procfs.h>
+
+/*
+ * Implementation of native ProcessHandleImpl functions for AIX.
+ * See ProcessHandleImpl_unix.c for more details.
  */
 
-package java.net.spi;
+void os_initNative(JNIEnv *env, jclass clazz) {}
+
+jint os_getChildren(JNIEnv *env, jlong jpid, jlongArray jarray,
+                    jlongArray jparentArray, jlongArray jstimesArray) {
+    return unix_getChildren(env, jpid, jarray, jparentArray, jstimesArray);
+}
+
+pid_t os_getParentPidAndTimings(JNIEnv *env, pid_t pid, jlong *total, jlong *start) {
+    return unix_getParentPidAndTimings(env, pid, total, start);
+}
+
+void os_getCmdlineAndUserInfo(JNIEnv *env, jobject jinfo, pid_t pid) {
+    unix_getCmdlineAndUserInfo(env, jinfo, pid);
+}
