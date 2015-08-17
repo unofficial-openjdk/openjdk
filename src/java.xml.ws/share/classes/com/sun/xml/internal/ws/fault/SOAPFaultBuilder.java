@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.sun.xml.internal.ws.message.jaxb.JAXBMessage;
 import com.sun.xml.internal.ws.message.FaultMessage;
 import com.sun.xml.internal.ws.model.CheckedExceptionImpl;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
-import com.sun.xml.internal.ws.spi.db.WrapperComposite;
 import com.sun.xml.internal.ws.spi.db.XMLBridge;
 import com.sun.xml.internal.ws.util.DOMUtil;
 import com.sun.xml.internal.ws.util.StringUtils;
@@ -330,6 +329,7 @@ public abstract class SOAPFaultBuilder {
     private static Object getFaultDetail(CheckedExceptionImpl ce, Throwable exception) {
         if (ce == null)
             return null;
+        ModuleAccessHelper.ensureAccess(SOAPFaultBuilder.class, exception.getClass());
         if (ce.getExceptionType().equals(ExceptionType.UserDefined)) {
             return createDetailFromUserDefinedException(ce, exception);
         }

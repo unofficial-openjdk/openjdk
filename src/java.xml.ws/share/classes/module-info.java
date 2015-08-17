@@ -51,7 +51,8 @@ module java.xml.ws {
     exports com.oracle.webservices.internal.api.databinding to
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.addressing to
-        jdk.xml.ws;
+        jdk.xml.ws,
+        java.xml.bind;
     exports com.sun.xml.internal.ws.addressing.v200408 to
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.api to

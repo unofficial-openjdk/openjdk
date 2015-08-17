@@ -69,6 +69,7 @@ import javax.xml.namespace.QName;
 
 import com.sun.istack.internal.FinalArrayList;
 import com.sun.xml.internal.bind.annotation.OverrideAnnotationOf;
+import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
 import com.sun.xml.internal.bind.v2.model.annotation.Locatable;
 import com.sun.xml.internal.bind.v2.model.annotation.MethodLocatable;
 import com.sun.xml.internal.bind.v2.model.core.ClassInfo;
@@ -1007,6 +1008,7 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     private void collectGetterSetters(C c, Map<String,M> getters, Map<String,M> setters) {
+        ModuleAccessHelper.ensureAccess(ClassInfoImpl.class, (Class) c);
         // take super classes into account if they have @XmlTransient.
         // always visit them first so that
         //   1) order is right
