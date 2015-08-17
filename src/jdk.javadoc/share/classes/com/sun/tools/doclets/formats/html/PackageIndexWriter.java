@@ -124,33 +124,33 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void addProfilesList(Content profileSummary, Content body) {
-        Content h2 = HtmlTree.HEADING(HtmlTag.H2, profileSummary);
-        Content profilesDiv = HtmlTree.DIV(h2);
-        Content ul = new HtmlTree(HtmlTag.UL);
-        String profileName;
-        for (int i = 1; i < configuration.profiles.getProfileCount(); i++) {
-            profileName = Profile.lookup(i).name;
-            // If the profile has valid packages to be documented, add it to the
-            // profiles list on overview-summary.html page.
-            if (configuration.shouldDocumentProfile(profileName)) {
-                Content profileLinkContent = getTargetProfileLink("classFrame",
-                        new StringContent(profileName), profileName);
-                Content li = HtmlTree.LI(profileLinkContent);
-                ul.addContent(li);
-            }
-        }
-        profilesDiv.addContent(ul);
-        Content div = HtmlTree.DIV(HtmlStyle.contentContainer, profilesDiv);
-        if (configuration.allowTag(HtmlTag.MAIN)) {
-            htmlTree.addContent(div);
-        } else {
-            body.addContent(div);
-        }
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    protected void addProfilesList(Content profileSummary, Content body) {
+//        Content h2 = HtmlTree.HEADING(HtmlTag.H2, profileSummary);
+//        Content profilesDiv = HtmlTree.DIV(h2);
+//        Content ul = new HtmlTree(HtmlTag.UL);
+//        String profileName;
+//        for (int i = 1; i < configuration.profiles.getProfileCount(); i++) {
+//            profileName = Profile.lookup(i).name;
+//            // If the profile has valid packages to be documented, add it to the
+//            // profiles list on overview-summary.html page.
+//            if (configuration.shouldDocumentProfile(profileName)) {
+//                Content profileLinkContent = getTargetModuleLink("classFrame",
+//                        new StringContent(profileName), profileName);
+//                Content li = HtmlTree.LI(profileLinkContent);
+//                ul.addContent(li);
+//            }
+//        }
+//        profilesDiv.addContent(ul);
+//        Content div = HtmlTree.DIV(HtmlStyle.contentContainer, profilesDiv);
+//        if (configuration.allowTag(HtmlTag.MAIN)) {
+//            htmlTree.addContent(div);
+//        } else {
+//            body.addContent(div);
+//        }
+//    }
 
     /**
      * {@inheritDoc}

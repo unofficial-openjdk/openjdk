@@ -28,16 +28,15 @@ package com.sun.tools.doclets.formats.html;
 import java.io.*;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
- * Class to generate file for each profile contents in the right-hand
- * frame. This will list all the packages and Class Kinds in the profile. A click on any
+ * Class to generate file for each module contents in the right-hand
+ * frame. This will list all the packages and Class Kinds in the module. A click on any
  * class-kind will update the frame with the clicked class-kind page. A click on any
- * package will update the frame with the clicked profile package page.
+ * package will update the frame with the clicked module package page.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -46,23 +45,23 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  *
  * @author Bhavesh Patel
  */
-public class ProfileWriterImpl extends HtmlDocletWriter
-    implements ProfileSummaryWriter {
+public class ModuleWriterImpl extends HtmlDocletWriter
+    implements ModuleSummaryWriter {
 
     /**
-     * The prev profile name in the alpha-order list.
+     * The prev module name in the alpha-order list.
      */
-    protected Profile prevProfile;
+    protected String prevModuleName;
 
     /**
-     * The next profile name in the alpha-order list.
+     * The next module name in the alpha-order list.
      */
-    protected Profile nextProfile;
+    protected String nextModuleName;
 
     /**
-     * The profile being documented.
+     * The module being documented.
      */
-    protected Profile profile;
+    protected String moduleName;
 
     /**
      * The HTML tree for main tag.
@@ -70,29 +69,28 @@ public class ProfileWriterImpl extends HtmlDocletWriter
     protected HtmlTree mainTree = HtmlTree.MAIN();
 
     /**
-     * Constructor to construct ProfileWriter object and to generate
-     * "profileName-summary.html" file.
+     * Constructor to construct ModuleWriter object and to generate
+     * "moduleName-summary.html" file.
      *
      * @param configuration the configuration of the doclet.
-     * @param profile       Profile under consideration.
-     * @param prevProfile   Previous profile in the sorted array.
-     * @param nextProfile   Next profile in the sorted array.
+     * @param module        Module under consideration.
+     * @param prevModule   Previous module in the sorted array.
+     * @param nextModule   Next module in the sorted array.
      */
-    public ProfileWriterImpl(ConfigurationImpl configuration,
-            Profile profile, Profile prevProfile, Profile nextProfile)
+    public ModuleWriterImpl(ConfigurationImpl configuration,
+            String moduleName, String prevModuleName, String nextModuleName)
             throws IOException {
-        super(configuration, DocPaths.profileSummary(profile.name));
-        this.prevProfile = prevProfile;
-        this.nextProfile = nextProfile;
-        this.profile = profile;
+        super(configuration, DocPaths.moduleSummary(moduleName));
+        this.prevModuleName = prevModuleName;
+        this.nextModuleName = nextModuleName;
+        this.moduleName = moduleName;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Content getProfileHeader(String heading) {
-        String profileName = profile.name;
-        HtmlTree bodyTree = getBody(true, getWindowTitle(profileName));
+    public Content getModuleHeader(String heading) {
+        HtmlTree bodyTree = getBody(true, getWindowTitle(moduleName));
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.HEADER))
                 ? HtmlTree.HEADER()
                 : bodyTree;
@@ -104,10 +102,10 @@ public class ProfileWriterImpl extends HtmlDocletWriter
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
         Content tHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
-                HtmlStyle.title, profileLabel);
+                HtmlStyle.title, moduleLabel);
         tHeading.addContent(getSpace());
-        Content profileHead = new RawHtml(heading);
-        tHeading.addContent(profileHead);
+        Content moduleHead = new RawHtml(heading);
+        tHeading.addContent(moduleHead);
         div.addContent(tHeading);
         if (configuration.allowTag(HtmlTag.MAIN)) {
             mainTree.addContent(div);
@@ -149,8 +147,8 @@ public class ProfileWriterImpl extends HtmlDocletWriter
      */
     public Content getPackageSummaryHeader(PackageDoc pkg) {
         Content pkgName = new StringContent(pkg.name());
-        Content pkgNameLink = getTargetProfilePackageLink(pkg,
-                    "classFrame", pkgName, profile.name);
+        Content pkgNameLink = getTargetModulePackageLink(pkg,
+                    "classFrame", pkgName, moduleName);
         Content heading = HtmlTree.HEADING(HtmlTag.H3, pkgNameLink);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.SECTION))
                 ? HtmlTree.SECTION(heading)
@@ -178,26 +176,26 @@ public class ProfileWriterImpl extends HtmlDocletWriter
      */
     public void addClassesSummary(ClassDoc[] classes, String label,
             String tableSummary, String[] tableHeader, Content packageSummaryContentTree) {
-        addClassesSummary(classes, label, tableSummary, tableHeader,
-                packageSummaryContentTree, profile.value);
+//        addClassesSummary(classes, label, tableSummary, tableHeader,
+//                packageSummaryContentTree, profile.value);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void addProfileContent(Content contentTree, Content profileContentTree) {
+    public void addModuleContent(Content contentTree, Content moduleContentTree) {
         if (configuration.allowTag(HtmlTag.MAIN)) {
-            mainTree.addContent(profileContentTree);
+            mainTree.addContent(moduleContentTree);
             contentTree.addContent(mainTree);
         } else {
-            contentTree.addContent(profileContentTree);
+            contentTree.addContent(moduleContentTree);
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public void addProfileFooter(Content contentTree) {
+    public void addModuleFooter(Content contentTree) {
         Content htmlTree = (configuration.allowTag(HtmlTag.FOOTER))
                 ? HtmlTree.FOOTER()
                 : contentTree;
@@ -212,12 +210,12 @@ public class ProfileWriterImpl extends HtmlDocletWriter
      * {@inheritDoc}
      */
     public void printDocument(Content contentTree) throws IOException {
-        printHtmlDocument(configuration.metakeywords.getMetaKeywords(profile),
+        printHtmlDocument(configuration.metakeywords.getMetaKeywordsForModule(moduleName),
                 true, contentTree);
     }
 
     /**
-     * Add the profile package deprecation information to the documentation tree.
+     * Add the module package deprecation information to the documentation tree.
      *
      * @param li the content tree to which the deprecation information will be added
      * @param pkg the PackageDoc that is added
@@ -241,33 +239,33 @@ public class ProfileWriterImpl extends HtmlDocletWriter
     }
 
     /**
-     * Get "PREV PROFILE" link in the navigation bar.
+     * Get "PREV MODULE" link in the navigation bar.
      *
      * @return a content tree for the previous link
      */
     public Content getNavLinkPrevious() {
         Content li;
-        if (prevProfile == null) {
-            li = HtmlTree.LI(prevprofileLabel);
+        if (prevModuleName == null) {
+            li = HtmlTree.LI(prevmoduleLabel);
         } else {
-            li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.profileSummary(
-                    prevProfile.name)), prevprofileLabel, "", ""));
+            li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
+                    prevModuleName)), prevmoduleLabel, "", ""));
         }
         return li;
     }
 
     /**
-     * Get "NEXT PROFILE" link in the navigation bar.
+     * Get "NEXT MODULE" link in the navigation bar.
      *
      * @return a content tree for the next link
      */
     public Content getNavLinkNext() {
         Content li;
-        if (nextProfile == null) {
-            li = HtmlTree.LI(nextprofileLabel);
+        if (nextModuleName == null) {
+            li = HtmlTree.LI(nextmoduleLabel);
         } else {
-            li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.profileSummary(
-                    nextProfile.name)), nextprofileLabel, "", ""));
+            li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
+                    nextModuleName)), nextmoduleLabel, "", ""));
         }
         return li;
     }

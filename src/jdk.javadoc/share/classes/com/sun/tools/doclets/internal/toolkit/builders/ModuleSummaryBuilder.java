@@ -26,17 +26,16 @@
 package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 import javax.tools.StandardLocation;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
- * Builds the summary for a given profile.
+ * Builds the summary for a given module.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -45,67 +44,67 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  *
  * @author Bhavesh Patel
  */
-public class ProfileSummaryBuilder extends AbstractBuilder {
+public class ModuleSummaryBuilder extends AbstractBuilder {
     /**
-     * The root element of the profile summary XML is {@value}.
+     * The root element of the module summary XML is {@value}.
      */
-    public static final String ROOT = "ProfileDoc";
+    public static final String ROOT = "ModuleDoc";
 
     /**
-     * The profile being documented.
+     * The module being documented.
      */
-    private final Profile profile;
+    private final String moduleName;
 
     /**
      * The doclet specific writer that will output the result.
      */
-    private final ProfileSummaryWriter profileWriter;
+    private final ModuleSummaryWriter moduleWriter;
 
     /**
-     * The content that will be added to the profile summary documentation tree.
+     * The content that will be added to the module summary documentation tree.
      */
     private Content contentTree;
 
     /**
-     * The profile package being documented.
+     * The module package being documented.
      */
     private PackageDoc pkg;
 
     /**
-     * Construct a new ProfileSummaryBuilder.
+     * Construct a new ModuleSummaryBuilder.
      *
      * @param context  the build context.
-     * @param profile the profile being documented.
-     * @param profileWriter the doclet specific writer that will output the
+     * @param module the module being documented.
+     * @param moduleWriter the doclet specific writer that will output the
      *        result.
      */
-    private ProfileSummaryBuilder(Context context,
-            Profile profile, ProfileSummaryWriter profileWriter) {
+    private ModuleSummaryBuilder(Context context,
+            String moduleName, ModuleSummaryWriter moduleWriter) {
         super(context);
-        this.profile = profile;
-        this.profileWriter = profileWriter;
+        this.moduleName = moduleName;
+        this.moduleWriter = moduleWriter;
     }
 
     /**
-     * Construct a new ProfileSummaryBuilder.
+     * Construct a new ModuleSummaryBuilder.
      *
      * @param context  the build context.
-     * @param profile the profile being documented.
-     * @param profileWriter the doclet specific writer that will output the
+     * @param module the module being documented.
+     * @param moduleWriter the doclet specific writer that will output the
      *        result.
      *
-     * @return an instance of a ProfileSummaryBuilder.
+     * @return an instance of a ModuleSummaryBuilder.
      */
-    public static ProfileSummaryBuilder getInstance(Context context,
-            Profile profile, ProfileSummaryWriter profileWriter) {
-        return new ProfileSummaryBuilder(context, profile, profileWriter);
+    public static ModuleSummaryBuilder getInstance(Context context,
+            String moduleName, ModuleSummaryWriter moduleWriter) {
+        return new ModuleSummaryBuilder(context, moduleName, moduleWriter);
     }
 
     /**
-     * Build the profile summary.
+     * Build the module summary.
      */
     public void build() throws IOException {
-        if (profileWriter == null) {
+        if (moduleWriter == null) {
             //Doclet does not support this output.
             return;
         }
@@ -120,64 +119,64 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
     }
 
     /**
-     * Build the profile documentation.
+     * Build the module documentation.
      *
      * @param node the XML element that specifies which components to document
      * @param contentTree the content tree to which the documentation will be added
      */
-    public void buildProfileDoc(XMLNode node, Content contentTree) throws Exception {
-        contentTree = profileWriter.getProfileHeader(profile.name);
+    public void buildModuleDoc(XMLNode node, Content contentTree) throws Exception {
+        contentTree = moduleWriter.getModuleHeader(moduleName);
         buildChildren(node, contentTree);
-        profileWriter.addProfileFooter(contentTree);
-        profileWriter.printDocument(contentTree);
-        profileWriter.close();
+        moduleWriter.addModuleFooter(contentTree);
+        moduleWriter.printDocument(contentTree);
+        moduleWriter.close();
         // TEMPORARY:
         // The use of SOURCE_PATH on the next line is temporary. As we transition into the
         // modules world, this should migrate into using a location for the appropriate module
         // on the MODULE_SOURCE_PATH, or (in the old doclet) simply deleted.
-        utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.profileSummary(profile.name));
+        utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.moduleSummary(moduleName));
     }
 
     /**
-     * Build the content for the profile doc.
+     * Build the content for the module doc.
      *
      * @param node the XML element that specifies which components to document
-     * @param contentTree the content tree to which the profile contents
+     * @param contentTree the content tree to which the module contents
      *                    will be added
      */
     public void buildContent(XMLNode node, Content contentTree) {
-        Content profileContentTree = profileWriter.getContentHeader();
-        buildChildren(node, profileContentTree);
-        profileWriter.addProfileContent(contentTree, profileContentTree);
+        Content moduleContentTree = moduleWriter.getContentHeader();
+        buildChildren(node, moduleContentTree);
+        moduleWriter.addModuleContent(contentTree, moduleContentTree);
     }
 
     /**
-     * Build the profile summary.
+     * Build the module summary.
      *
      * @param node the XML element that specifies which components to document
-     * @param profileContentTree the profile content tree to which the summaries will
+     * @param moduleContentTree the module content tree to which the summaries will
      *                           be added
      */
-    public void buildSummary(XMLNode node, Content profileContentTree) {
-        Content summaryContentTree = profileWriter.getSummaryHeader();
+    public void buildSummary(XMLNode node, Content moduleContentTree) {
+        Content summaryContentTree = moduleWriter.getSummaryHeader();
         buildChildren(node, summaryContentTree);
-        profileContentTree.addContent(profileWriter.getSummaryTree(summaryContentTree));
+        moduleContentTree.addContent(moduleWriter.getSummaryTree(summaryContentTree));
     }
 
     /**
-     * Build the profile package summary.
+     * Build the module package summary.
      *
      * @param node the XML element that specifies which components to document
      * @param summaryContentTree the content tree to which the summaries will
      *                           be added
      */
     public void buildPackageSummary(XMLNode node, Content summaryContentTree) {
-        List<PackageDoc> packages = configuration.profilePackages.get(profile.name);
+        Set<PackageDoc> packages = configuration.modulePackages.get(moduleName);
         for (PackageDoc aPackage : packages) {
             this.pkg = aPackage;
-            Content packageSummaryContentTree = profileWriter.getPackageSummaryHeader(this.pkg);
+            Content packageSummaryContentTree = moduleWriter.getPackageSummaryHeader(this.pkg);
             buildChildren(node, packageSummaryContentTree);
-            summaryContentTree.addContent(profileWriter.getPackageSummaryTree(
+            summaryContentTree.addContent(moduleWriter.getPackageSummaryTree(
                     packageSummaryContentTree));
         }
     }
@@ -200,7 +199,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] interfaces = pkg.interfaces();
         if (interfaces.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     interfaces,
                     configuration.getText("doclet.Interface_Summary"),
                     interfaceTableSummary, interfaceTableHeader, packageSummaryContentTree);
@@ -225,7 +224,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] classes = pkg.ordinaryClasses();
         if (classes.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     classes,
                     configuration.getText("doclet.Class_Summary"),
                     classTableSummary, classTableHeader, packageSummaryContentTree);
@@ -250,7 +249,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] enums = pkg.enums();
         if (enums.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     enums,
                     configuration.getText("doclet.Enum_Summary"),
                     enumTableSummary, enumTableHeader, packageSummaryContentTree);
@@ -275,7 +274,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] exceptions = pkg.exceptions();
         if (exceptions.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     exceptions,
                     configuration.getText("doclet.Exception_Summary"),
                     exceptionTableSummary, exceptionTableHeader, packageSummaryContentTree);
@@ -300,7 +299,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] errors = pkg.errors();
         if (errors.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     errors,
                     configuration.getText("doclet.Error_Summary"),
                     errorTableSummary, errorTableHeader, packageSummaryContentTree);
@@ -325,7 +324,7 @@ public class ProfileSummaryBuilder extends AbstractBuilder {
         };
         ClassDoc[] annotationTypes = pkg.annotationTypes();
         if (annotationTypes.length > 0) {
-            profileWriter.addClassesSummary(
+            moduleWriter.addClassesSummary(
                     annotationTypes,
                     configuration.getText("doclet.Annotation_Types_Summary"),
                     annotationtypeTableSummary, annotationtypeTableHeader,

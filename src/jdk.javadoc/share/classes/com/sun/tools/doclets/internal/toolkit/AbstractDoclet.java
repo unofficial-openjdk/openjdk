@@ -90,6 +90,7 @@ public abstract class AbstractDoclet {
             root.printError(f.getMessage());
             return false;
         } catch (DocletAbortException e) {
+            e.printStackTrace();
             Throwable cause = e.getCause();
             if (cause != null) {
                 if (cause.getLocalizedMessage() != null) {
@@ -144,7 +145,7 @@ public abstract class AbstractDoclet {
 
         PackageListWriter.generate(configuration);
         generatePackageFiles(classtree);
-        generateProfileFiles();
+        generateModuleFiles();
 
         generateOtherFiles(root, classtree);
         configuration.tagletManager.printReport();
@@ -165,10 +166,10 @@ public abstract class AbstractDoclet {
     }
 
     /**
-     * Generate the profile documentation.
+     * Generate the module documentation.
      *
      */
-    protected abstract void generateProfileFiles() throws Exception;
+    protected abstract void generateModuleFiles() throws Exception;
 
     /**
      * Generate the package documentation.

@@ -26,17 +26,18 @@
 package com.sun.tools.doclets.formats.html;
 
 import java.io.*;
+import java.util.Map;
+import java.util.Set;
 
-import com.sun.tools.javac.sym.Profiles;
+import com.sun.javadoc.PackageDoc;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.javac.jvm.Profile;
 
 /**
- * Generate the profile index for the left-hand frame in the generated output.
- * A click on the profile name in this frame will update the page in the top
- * left hand frame with the listing of packages of the clicked profile.
+ * Generate the module index for the left-hand frame in the generated output.
+ * A click on the module name in this frame will update the page in the top
+ * left hand frame with the listing of packages of the clicked module.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -45,31 +46,31 @@ import com.sun.tools.javac.jvm.Profile;
  *
  * @author Bhavesh Patel
  */
-public class ProfileIndexFrameWriter extends AbstractProfileIndexWriter {
+public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
 
     /**
-     * Construct the ProfileIndexFrameWriter object.
+     * Construct the ModuleIndexFrameWriter object.
      *
      * @param configuration the configuration object
-     * @param filename Name of the profile index file to be generated.
+     * @param filename Name of the module index file to be generated.
      */
-    public ProfileIndexFrameWriter(ConfigurationImpl configuration,
+    public ModuleIndexFrameWriter(ConfigurationImpl configuration,
                                    DocPath filename) throws IOException {
         super(configuration, filename);
     }
 
     /**
-     * Generate the profile index file named "profile-overview-frame.html".
+     * Generate the module index file named "module-overview-frame.html".
      * @throws DocletAbortException
      * @param configuration the configuration object
      */
     public static void generate(ConfigurationImpl configuration) {
-        ProfileIndexFrameWriter profilegen;
-        DocPath filename = DocPaths.PROFILE_OVERVIEW_FRAME;
+        ModuleIndexFrameWriter modulegen;
+        DocPath filename = DocPaths.MODULE_OVERVIEW_FRAME;
         try {
-            profilegen = new ProfileIndexFrameWriter(configuration, filename);
-            profilegen.buildProfileIndexFile("doclet.Window_Overview", false);
-            profilegen.close();
+            modulegen = new ModuleIndexFrameWriter(configuration, filename);
+            modulegen.buildModuleIndexFile("doclet.Window_Overview", false);
+            modulegen.close();
         } catch (IOException exc) {
             configuration.standardmessage.error(
                         "doclet.exception_encountered",
@@ -81,40 +82,35 @@ public class ProfileIndexFrameWriter extends AbstractProfileIndexWriter {
     /**
      * {@inheritDoc}
      */
-    protected void addProfilesList(Profiles profiles, String text,
+    protected void addModulesList(Map<String, Set<PackageDoc>> modules, String text,
             String tableSummary, Content body) {
-        Content heading = HtmlTree.HEADING(HtmlConstants.PROFILE_HEADING, true,
-                profilesLabel);
+        Content heading = HtmlTree.HEADING(HtmlConstants.MODULE_HEADING, true,
+                modulesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
                 ? HtmlTree.MAIN(HtmlStyle.indexContainer, heading)
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
-        ul.setTitle(profilesLabel);
-        String profileName;
-        for (int i = 1; i < profiles.getProfileCount(); i++) {
-            profileName = (Profile.lookup(i)).name;
-            // If the profile has valid packages to be documented, add it to the
-            // left-frame generated for profile index.
-            if (configuration.shouldDocumentProfile(profileName))
-                ul.addContent(getProfile(profileName));
+        ul.setTitle(modulesLabel);
+        for (String moduleName: modules.keySet()) {
+            ul.addContent(getModuleLink(moduleName));
         }
         htmlTree.addContent(ul);
         body.addContent(htmlTree);
     }
 
     /**
-     * Returns each profile name as a separate link.
+     * Returns each module name as a separate link.
      *
-     * @param profileName the profile being documented
-     * @return content for the profile link
+     * @param moduleName the module being documented
+     * @return content for the module link
      */
-    protected Content getProfile(String profileName) {
-        Content profileLinkContent;
-        Content profileLabel;
-        profileLabel = new StringContent(profileName);
-        profileLinkContent = getHyperLink(DocPaths.profileFrame(profileName), profileLabel, "",
+    protected Content getModuleLink(String moduleName) {
+        Content moduleLinkContent;
+        Content moduleLabel;
+        moduleLabel = new StringContent(moduleName);
+        moduleLinkContent = getHyperLink(DocPaths.moduleFrame(moduleName), moduleLabel, "",
                     "packageListFrame");
-        Content li = HtmlTree.LI(profileLinkContent);
+        Content li = HtmlTree.LI(moduleLinkContent);
         return li;
     }
 
@@ -173,7 +169,7 @@ public class ProfileIndexFrameWriter extends AbstractProfileIndexWriter {
         body.addContent(p);
     }
 
-    protected void addProfilePackagesList(Profiles profiles, String text,
-            String tableSummary, Content body, String profileName) {
+    protected void addModulePackagesList(Map<String, Set<PackageDoc>> modules, String text,
+            String tableSummary, Content body, String moduleName) {
     }
 }

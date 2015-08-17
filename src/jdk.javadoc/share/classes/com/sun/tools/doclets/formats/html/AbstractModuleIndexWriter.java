@@ -26,16 +26,18 @@
 package com.sun.tools.doclets.formats.html;
 
 import java.io.*;
+import java.util.Map;
+import java.util.Set;
 
-import com.sun.tools.javac.sym.Profiles;
+import com.sun.javadoc.PackageDoc;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.DocPath;
 
 /**
- * Abstract class to generate the profile overview files in
+ * Abstract class to generate the module overview files in
  * Frame and Non-Frame format. This will be sub-classed to
- * generate profile-overview-frame.html as well as profile-overview-summary.html.
+ * generate module-overview-frame.html as well as module-overview-summary.html.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -44,23 +46,23 @@ import com.sun.tools.doclets.internal.toolkit.util.DocPath;
  *
  * @author Bhavesh Patel
  */
-public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
+public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
 
     /**
-     * Profiles to be documented.
+     * Modules to be documented.
      */
-    protected Profiles profiles;
+    protected Map<String, Set<PackageDoc>> modules;
 
     /**
-     * Constructor. Also initializes the profiles variable.
+     * Constructor. Also initializes the modules variable.
      *
      * @param configuration  The current configuration
-     * @param filename Name of the profile index file to be generated.
+     * @param filename Name of the module index file to be generated.
      */
-    public AbstractProfileIndexWriter(ConfigurationImpl configuration,
+    public AbstractModuleIndexWriter(ConfigurationImpl configuration,
                                       DocPath filename) throws IOException {
         super(configuration, filename);
-        profiles = configuration.profiles;
+        modules = configuration.modulePackages;
     }
 
     /**
@@ -85,37 +87,37 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     protected abstract void addOverviewHeader(Content body);
 
     /**
-     * Adds the profiles list to the documentation tree.
+     * Adds the modules list to the documentation tree.
      *
-     * @param profiles profiles object
+     * @param modules the set of modules
      * @param text caption for the table
      * @param tableSummary summary for the table
-     * @param body the document tree to which the profiles list will be added
+     * @param body the document tree to which the modules list will be added
      */
-    protected abstract void addProfilesList(Profiles profiles, String text,
+    protected abstract void addModulesList(Map<String, Set<PackageDoc>> modules, String text,
             String tableSummary, Content body);
 
     /**
-     * Adds the profile packages list to the documentation tree.
+     * Adds the module packages list to the documentation tree.
      *
-     * @param profiles profiles object
+     * @param modules the set of modules
      * @param text caption for the table
      * @param tableSummary summary for the table
-     * @param body the document tree to which the profiles list will be added
-     * @param profileName the name for the profile being documented
+     * @param body the document tree to which the modules list will be added
+     * @param moduleName the name for the module being documented
      */
-    protected abstract void addProfilePackagesList(Profiles profiles, String text,
-            String tableSummary, Content body, String profileName);
+    protected abstract void addModulePackagesList(Map<String, Set<PackageDoc>> modules, String text,
+            String tableSummary, Content body, String moduleName);
 
     /**
-     * Generate and prints the contents in the profile index file. Call appropriate
+     * Generate and prints the contents in the module index file. Call appropriate
      * methods from the sub-class in order to generate Frame or Non
      * Frame format.
      *
      * @param title the title of the window.
      * @param includeScript boolean set true if windowtitle script is to be included
      */
-    protected void buildProfileIndexFile(String title, boolean includeScript) throws IOException {
+    protected void buildModuleIndexFile(String title, boolean includeScript) throws IOException {
         String windowOverview = configuration.getText(title);
         Content body = getBody(includeScript, getWindowTitle(windowOverview));
         addNavigationBarHeader(body);
@@ -128,21 +130,21 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Generate and prints the contents in the profile packages index file. Call appropriate
+     * Generate and prints the contents in the module packages index file. Call appropriate
      * methods from the sub-class in order to generate Frame or Non
      * Frame format.
      *
      * @param title the title of the window.
      * @param includeScript boolean set true if windowtitle script is to be included
-     * @param profileName the name of the profile being documented
+     * @param moduleName the name of the module being documented
      */
-    protected void buildProfilePackagesIndexFile(String title,
-            boolean includeScript, String profileName) throws IOException {
+    protected void buildModulePackagesIndexFile(String title,
+            boolean includeScript, String moduleName) throws IOException {
         String windowOverview = configuration.getText(title);
         Content body = getBody(includeScript, getWindowTitle(windowOverview));
         addNavigationBarHeader(body);
         addOverviewHeader(body);
-        addProfilePackagesIndex(body, profileName);
+        addModulePackagesIndex(body, moduleName);
         addOverview(body);
         addNavigationBarFooter(body);
         printHtmlDocument(configuration.metakeywords.getOverviewMetaKeywords(title,
@@ -158,67 +160,41 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Adds the frame or non-frame profile index to the documentation tree.
+     * Adds the frame or non-frame module index to the documentation tree.
      *
      * @param body the document tree to which the index will be added
      */
     protected void addIndex(Content body) {
-        addIndexContents(profiles, "doclet.Profile_Summary",
+        addIndexContents(modules, "doclet.Module_Summary",
                 configuration.getText("doclet.Member_Table_Summary",
-                configuration.getText("doclet.Profile_Summary"),
-                configuration.getText("doclet.profiles")), body);
+                configuration.getText("doclet.Module_Summary"),
+                configuration.getText("doclet.modules")), body);
     }
 
     /**
-     * Adds the frame or non-frame profile packages index to the documentation tree.
+     * Adds the frame or non-frame module packages index to the documentation tree.
      *
      * @param body the document tree to which the index will be added
-     * @param profileName  the name of the profile being documented
+     * @param moduleName  the name of the module being documented
      */
-    protected void addProfilePackagesIndex(Content body, String profileName) {
-        addProfilePackagesIndexContents(profiles, "doclet.Profile_Summary",
+    protected void addModulePackagesIndex(Content body, String moduleName) {
+        addModulePackagesIndexContents("doclet.Module_Summary",
                 configuration.getText("doclet.Member_Table_Summary",
-                configuration.getText("doclet.Profile_Summary"),
-                configuration.getText("doclet.profiles")), body, profileName);
+                configuration.getText("doclet.Module_Summary"),
+                configuration.getText("doclet.modules")), body, moduleName);
     }
 
     /**
-     * Adds profile index contents. Call appropriate methods from
+     * Adds module index contents. Call appropriate methods from
      * the sub-classes. Adds it to the body HtmlTree
      *
-     * @param profiles profiles to be documented
+     * @param modules the modules to be documented
      * @param text string which will be used as the heading
      * @param tableSummary summary for the table
      * @param body the document tree to which the index contents will be added
      */
-    protected void addIndexContents(Profiles profiles, String text,
+    protected void addIndexContents(Map<String, Set<PackageDoc>> modules, String text,
             String tableSummary, Content body) {
-        if (profiles.getProfileCount() > 0) {
-            HtmlTree htmlTree = (configuration.allowTag(HtmlTag.NAV))
-                    ? HtmlTree.NAV()
-                    : new HtmlTree(HtmlTag.DIV);
-            htmlTree.addStyle(HtmlStyle.indexNav);
-            HtmlTree ul = new HtmlTree(HtmlTag.UL);
-            addAllClassesLink(ul);
-            addAllPackagesLink(ul);
-            htmlTree.addContent(ul);
-            body.addContent(htmlTree);
-            addProfilesList(profiles, text, tableSummary, body);
-        }
-    }
-
-    /**
-     * Adds profile packages index contents. Call appropriate methods from
-     * the sub-classes. Adds it to the body HtmlTree
-     *
-     * @param profiles profiles to be documented
-     * @param text string which will be used as the heading
-     * @param tableSummary summary for the table
-     * @param body the document tree to which the index contents will be added
-     * @param profileName the name of the profile being documented
-     */
-    protected void addProfilePackagesIndexContents(Profiles profiles, String text,
-            String tableSummary, Content body, String profileName) {
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.NAV))
                 ? HtmlTree.NAV()
                 : new HtmlTree(HtmlTag.DIV);
@@ -226,10 +202,34 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         addAllClassesLink(ul);
         addAllPackagesLink(ul);
-        addAllProfilesLink(ul);
         htmlTree.addContent(ul);
         body.addContent(htmlTree);
-        addProfilePackagesList(profiles, text, tableSummary, body, profileName);
+        addModulesList(modules, text, tableSummary, body);
+    }
+
+    /**
+     * Adds module packages index contents. Call appropriate methods from
+     * the sub-classes. Adds it to the body HtmlTree
+     *
+     * @param modules modules to be documented
+     * @param text string which will be used as the heading
+     * @param tableSummary summary for the table
+     * @param body the document tree to which the index contents will be added
+     * @param moduleName the name of the module being documented
+     */
+    protected void addModulePackagesIndexContents(String text,
+            String tableSummary, Content body, String moduleName) {
+        HtmlTree htmlTree = (configuration.allowTag(HtmlTag.NAV))
+                ? HtmlTree.NAV()
+                : new HtmlTree(HtmlTag.DIV);
+        htmlTree.addStyle(HtmlStyle.indexNav);
+        HtmlTree ul = new HtmlTree(HtmlTag.UL);
+        addAllClassesLink(ul);
+        addAllPackagesLink(ul);
+        addAllModulesLink(ul);
+        htmlTree.addContent(ul);
+        body.addContent(htmlTree);
+        addModulePackagesList(modules, text, tableSummary, body, moduleName);
     }
 
     /**
@@ -259,7 +259,7 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Do nothing. This will be overridden in ProfileIndexFrameWriter.
+     * Do nothing. This will be overridden in ModuleIndexFrameWriter.
      *
      * @param div the document tree to which the all classes link will be added
      */
@@ -267,7 +267,7 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Do nothing. This will be overridden in ProfileIndexFrameWriter.
+     * Do nothing. This will be overridden in ModuleIndexFrameWriter.
      *
      * @param div the document tree to which the all packages link will be added
      */
@@ -275,10 +275,10 @@ public abstract class AbstractProfileIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Do nothing. This will be overridden in ProfilePackageIndexFrameWriter.
+     * Do nothing. This will be overridden in ModulePackageIndexFrameWriter.
      *
-     * @param div the document tree to which the all profiles link will be added
+     * @param div the document tree to which the all modules link will be added
      */
-    protected void addAllProfilesLink(Content div) {
+    protected void addAllModulesLink(Content div) {
     }
 }

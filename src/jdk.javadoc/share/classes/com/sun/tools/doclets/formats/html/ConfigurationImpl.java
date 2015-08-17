@@ -42,6 +42,7 @@ import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.StringUtils;
+import com.sun.tools.javadoc.ClassDocImpl;
 import com.sun.tools.javadoc.PackageDocImpl;
 import com.sun.tools.javadoc.RootDocImpl;
 
@@ -646,5 +647,19 @@ public class ConfigurationImpl extends Configuration {
             }
         }
         return StandardLocation.SOURCE_PATH;
+    }
+
+    @Override
+    public String getModule(ClassDoc classDoc) {
+        if (!(classDoc instanceof ClassDocImpl))
+            return null;
+        return ((ClassDocImpl) classDoc).tsym.modle.name.toString();
+    }
+
+    @Override
+    public String getModule(PackageDoc packageDoc) {
+        if (!(packageDoc instanceof PackageDocImpl))
+            return null;
+        return ((PackageDocImpl) packageDoc).sym.modle.name.toString();
     }
 }

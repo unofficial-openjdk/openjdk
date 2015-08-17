@@ -26,18 +26,20 @@
 package com.sun.tools.doclets.formats.html;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.sym.Profiles;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
- * Generate the profile package index for the left-hand frame in the generated output.
+ * Generate the module package index for the left-hand frame in the generated output.
  * A click on the package name in this frame will update the page in the bottom
- * left hand frame with the listing of contents of the clicked profile package.
+ * left hand frame with the listing of contents of the clicked module package.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -46,32 +48,32 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  *
  * @author Bhavesh Patel
  */
-public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
+public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
 
     /**
-     * Construct the ProfilePackageIndexFrameWriter object.
+     * Construct the ModulePackageIndexFrameWriter object.
      *
      * @param configuration the configuration object
      * @param filename Name of the package index file to be generated.
      */
-    public ProfilePackageIndexFrameWriter(ConfigurationImpl configuration,
+    public ModulePackageIndexFrameWriter(ConfigurationImpl configuration,
                                    DocPath filename) throws IOException {
         super(configuration, filename);
     }
 
     /**
-     * Generate the profile package index file.
+     * Generate the module package index file.
      * @throws DocletAbortException
      * @param configuration the configuration object
-     * @param profileName the name of the profile being documented
+     * @param moduleName the name of the module being documented
      */
-    public static void generate(ConfigurationImpl configuration, String profileName) {
-        ProfilePackageIndexFrameWriter profpackgen;
-        DocPath filename = DocPaths.profileFrame(profileName);
+    public static void generate(ConfigurationImpl configuration, String moduleName) {
+        ModulePackageIndexFrameWriter modpackgen;
+        DocPath filename = DocPaths.moduleFrame(moduleName);
         try {
-            profpackgen = new ProfilePackageIndexFrameWriter(configuration, filename);
-            profpackgen.buildProfilePackagesIndexFile("doclet.Window_Overview", false, profileName);
-            profpackgen.close();
+            modpackgen = new ModulePackageIndexFrameWriter(configuration, filename);
+            modpackgen.buildModulePackagesIndexFile("doclet.Window_Overview", false, moduleName);
+            modpackgen.close();
         } catch (IOException exc) {
             configuration.standardmessage.error(
                         "doclet.exception_encountered",
@@ -83,11 +85,11 @@ public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
     /**
      * {@inheritDoc}
      */
-    protected void addProfilePackagesList(Profiles profiles, String text,
-            String tableSummary, Content body, String profileName) {
-        Content profNameContent = new StringContent(profileName);
+    protected void addModulePackagesList(Map<String, Set<PackageDoc>> modules, String text,
+            String tableSummary, Content body, String moduleName) {
+        Content profNameContent = new StringContent(moduleName);
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
-                getTargetProfileLink("classFrame", profNameContent, profileName));
+                getTargetModuleLink("classFrame", profNameContent, moduleName));
         heading.addContent(getSpace());
         heading.addContent(packagesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
@@ -95,10 +97,35 @@ public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.setTitle(packagesLabel);
-        List<PackageDoc> packages = configuration.profilePackages.get(profileName);
+        List<PackageDoc> packages = new ArrayList<>(modules.get(moduleName));
         for (PackageDoc packageDoc : packages) {
             if ((!(configuration.nodeprecated && utils.isDeprecated(packageDoc)))) {
-                ul.addContent(getPackage(packageDoc, profileName));
+                ul.addContent(getPackage(packageDoc, moduleName));
+            }
+        }
+        htmlTree.addContent(ul);
+        body.addContent(htmlTree);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void addModulePackagesList(Set<String> modules, String text,
+            String tableSummary, Content body, String moduleName) {
+        Content moduleNameContent = new StringContent(moduleName);
+        Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
+                getTargetModuleLink("classFrame", moduleNameContent, moduleName));
+        heading.addContent(getSpace());
+        heading.addContent(packagesLabel);
+        HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
+                ? HtmlTree.MAIN(HtmlStyle.indexContainer, heading)
+                : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
+        HtmlTree ul = new HtmlTree(HtmlTag.UL);
+        ul.setTitle(packagesLabel);
+        Set<PackageDoc> modulePackages = configuration.modulePackages.get(moduleName);
+        for (PackageDoc packageDoc: modulePackages) {
+            if ((!(configuration.nodeprecated && utils.isDeprecated(packageDoc)))) {
+                ul.addContent(getPackage(packageDoc, moduleName));
             }
         }
         htmlTree.addContent(ul);
@@ -109,16 +136,16 @@ public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
      * Returns each package name as a separate link.
      *
      * @param pd PackageDoc
-     * @param profileName the name of the profile being documented
+     * @param moduleName the name of the module being documented
      * @return content for the package link
      */
-    protected Content getPackage(PackageDoc pd, String profileName) {
+    protected Content getPackage(PackageDoc pd, String moduleName) {
         Content packageLinkContent;
         Content pkgLabel;
         if (pd.name().length() > 0) {
             pkgLabel = getPackageLabel(pd.name());
             packageLinkContent = getHyperLink(pathString(pd,
-                     DocPaths.profilePackageFrame(profileName)), pkgLabel, "",
+                     DocPaths.PACKAGE_FRAME), pkgLabel, "",
                     "packageFrame");
         } else {
             pkgLabel = new StringContent("<unnamed package>");
@@ -150,7 +177,7 @@ public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
     protected void addOverviewHeader(Content body) {
     }
 
-    protected void addProfilesList(Profiles profiles, String text,
+    protected void addModulesList(Map<String,Set<PackageDoc>> modules, String text,
             String tableSummary, Content body) {
     }
 
@@ -181,14 +208,14 @@ public class ProfilePackageIndexFrameWriter extends AbstractProfileIndexWriter {
     }
 
     /**
-     * Adds "All Profiles" link for the top of the left-hand frame page to the
+     * Adds "All Modules" link for the top of the left-hand frame page to the
      * documentation tree.
      *
-     * @param ul the Content object to which the all profiles link should be added
+     * @param ul the Content object to which the all modules link should be added
      */
-    protected void addAllProfilesLink(Content ul) {
-        Content linkContent = getHyperLink(DocPaths.PROFILE_OVERVIEW_FRAME,
-                allprofilesLabel, "", "packageListFrame");
+    protected void addAllModulesLink(Content ul) {
+        Content linkContent = getHyperLink(DocPaths.MODULE_OVERVIEW_FRAME,
+                allmodulesLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
     }

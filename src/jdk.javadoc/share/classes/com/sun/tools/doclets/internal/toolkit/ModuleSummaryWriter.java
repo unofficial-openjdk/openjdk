@@ -30,7 +30,7 @@ import java.io.*;
 import com.sun.javadoc.*;
 
 /**
- * The interface for writing profile summary output.
+ * The interface for writing module summary output.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -40,20 +40,20 @@ import com.sun.javadoc.*;
  * @author Bhavesh Patel
  */
 
-public interface ProfileSummaryWriter {
+public interface ModuleSummaryWriter {
 
     /**
      * Get the header for the summary.
      *
-     * @param heading profile name.
+     * @param heading module name.
      * @return the header to be added to the content tree
      */
-    public abstract Content getProfileHeader(String heading);
+    public abstract Content getModuleHeader(String heading);
 
     /**
-     * Get the header for the profile content.
+     * Get the header for the module content.
      *
-     * @return a content tree for the profile content header
+     * @return a content tree for the module content header
      */
     public abstract Content getContentHeader();
 
@@ -99,22 +99,22 @@ public interface ProfileSummaryWriter {
             String tableSummary, String[] tableHeader, Content packageSummaryContentTree);
 
     /**
-     * Adds the profile content tree to the documentation tree.
+     * Adds the module content tree to the documentation tree.
      *
-     * @param contentTree the tree to which the profile content tree will be added
-     * @param profileContentTree the content tree that will be added
+     * @param contentTree the tree to which the module content tree will be added
+     * @param moduleContentTree the content tree that will be added
      */
-    public abstract void addProfileContent(Content contentTree, Content profileContentTree);
+    public abstract void addModuleContent(Content contentTree, Content moduleContentTree);
 
     /**
      * Adds the footer to the documentation tree.
      *
      * @param contentTree the tree to which the footer will be added
      */
-    public abstract void addProfileFooter(Content contentTree);
+    public abstract void addModuleFooter(Content contentTree);
 
     /**
-     * Print the profile summary document.
+     * Print the module summary document.
      *
      * @param contentTree the content tree that will be printed
      */

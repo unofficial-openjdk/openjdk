@@ -7,6 +7,9 @@ com/sun/javadoc/testCustomTag/TestCustomTag.java				0 generic-all	addExports
 com/sun/javadoc/testTaglets/TestTaglets.java					0 generic-all	addExports
 com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java			0 generic-all	addExports
 
+com/sun/javadoc/testProfiles/TestProfiles.java					0 generic-all 	rewrite for modules instead of profiles
+com/sun/javadoc/testProfiles/TestProfilesConfiguration.java 			0 generic-all	rewrite for modules instead of profiles
+com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java				0 generic-all   update for modules instead of profiles
 
 ##### javac ####################################################################
 
