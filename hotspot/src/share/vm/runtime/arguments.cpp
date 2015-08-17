@@ -91,7 +91,7 @@ const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
 bool   Arguments::_sun_java_launcher_is_altjvm  = false;
 
-// These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
+// These parameters are reset in method parse_vm_init_args()
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
 bool   Arguments::_UseOnStackReplacement        = UseOnStackReplacement;
 bool   Arguments::_BackgroundCompilation        = BackgroundCompilation;
@@ -788,9 +788,11 @@ void Arguments::print_on(outputStream* st) {
   st->print_cr("VM Arguments:");
   if (num_jvm_flags() > 0) {
     st->print("jvm_flags: "); print_jvm_flags_on(st);
+    st->cr();
   }
   if (num_jvm_args() > 0) {
     st->print("jvm_args: "); print_jvm_args_on(st);
+    st->cr();
   }
   st->print_cr("java_command: %s", java_command() ? java_command() : "<unknown>");
   if (_java_class_path != NULL) {
@@ -800,12 +802,32 @@ void Arguments::print_on(outputStream* st) {
   st->print_cr("Launcher Type: %s", _sun_java_launcher);
 }
 
+void Arguments::print_summary_on(outputStream* st) {
+  // Print the command line.  Environment variables that are helpful for
+  // reproducing the problem are written later in the hs_err file.
+  // flags are from setting file
+  if (num_jvm_flags() > 0) {
+    st->print_raw("Settings File: ");
+    print_jvm_flags_on(st);
+    st->cr();
+  }
+  // args are the command line and environment variable arguments.
+  st->print_raw("Command Line: ");
+  if (num_jvm_args() > 0) {
+    print_jvm_args_on(st);
+  }
+  // this is the classfile and any arguments to the java program
+  if (java_command() != NULL) {
+    st->print("%s", java_command());
+  }
+  st->cr();
+}
+
 void Arguments::print_jvm_flags_on(outputStream* st) {
   if (_num_jvm_flags > 0) {
     for (int i=0; i < _num_jvm_flags; i++) {
       st->print("%s ", _jvm_flags_array[i]);
     }
-    st->cr();
   }
 }
 
@@ -814,7 +836,6 @@ void Arguments::print_jvm_args_on(outputStream* st) {
     for (int i=0; i < _num_jvm_args; i++) {
       st->print("%s ", _jvm_args_array[i]);
     }
-    st->cr();
   }
 }
 
@@ -1203,32 +1224,6 @@ void Arguments::set_tiered_flags() {
     FLAG_SET_ERGO(intx, Tier4CompileThreshold, scaled_compile_threshold(Tier4CompileThreshold));
     FLAG_SET_ERGO(intx, Tier4BackEdgeThreshold, scaled_compile_threshold(Tier4BackEdgeThreshold));
   }
-}
-
-/**
- * Returns the minimum number of compiler threads needed to run the JVM. The following
- * configurations are possible.
- *
- * 1) The JVM is build using an interpreter only. As a result, the minimum number of
- *    compiler threads is 0.
- * 2) The JVM is build using the compiler(s) and tiered compilation is disabled. As
- *    a result, either C1 or C2 is used, so the minimum number of compiler threads is 1.
- * 3) The JVM is build using the compiler(s) and tiered compilation is enabled. However,
- *    the option "TieredStopAtLevel < CompLevel_full_optimization". As a result, only
- *    C1 can be used, so the minimum number of compiler threads is 1.
- * 4) The JVM is build using the compilers and tiered compilation is enabled. The option
- *    'TieredStopAtLevel = CompLevel_full_optimization' (the default value). As a result,
- *    the minimum number of compiler threads is 2.
- */
-int Arguments::get_min_number_of_compiler_threads() {
-#if !defined(COMPILER1) && !defined(COMPILER2) && !defined(SHARK)
-  return 0;   // case 1
-#else
-  if (!TieredCompilation || (TieredStopAtLevel < CompLevel_full_optimization)) {
-    return 1; // case 2 or case 3
-  }
-  return 2;   // case 4 (tiered)
-#endif
 }
 
 #if INCLUDE_ALL_GCS
@@ -2178,10 +2173,6 @@ bool Arguments::check_vm_args_consistency() {
     status = false;
   }
 
-  int min_number_of_compiler_threads = get_min_number_of_compiler_threads();
-  // The default CICompilerCount's value is CI_COMPILER_COUNT.
-  assert(min_number_of_compiler_threads <= CI_COMPILER_COUNT, "minimum should be less or equal default number");
-
   if (!FLAG_IS_DEFAULT(CICompilerCount) && !FLAG_IS_DEFAULT(CICompilerCountPerCPU) && CICompilerCountPerCPU) {
     warning("The VM option CICompilerCountPerCPU overrides CICompilerCount.");
   }
@@ -2251,7 +2242,9 @@ Arguments::ArgsRange Arguments::parse_memory_size(const char* s,
 
 // Parse JavaVMInitArgs structure
 
-jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
+jint Arguments::parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
+                                   const JavaVMInitArgs *java_options_args,
+                                   const JavaVMInitArgs *cmd_line_args) {
   // For components of the system classpath.
   SysClassPath scp(Arguments::get_sysclasspath());
   bool scp_assembly_required = false;
@@ -2269,20 +2262,25 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
   // Setup flags for mixed which is the default
   set_mode_flags(_mixed);
 
-  // Parse JAVA_TOOL_OPTIONS environment variable (if present)
-  jint result = parse_java_tool_options_environment_variable(&scp, &scp_assembly_required);
+  // Parse args structure generated from JAVA_TOOL_OPTIONS environment
+  // variable (if present).
+  jint result = parse_each_vm_init_arg(
+      java_tool_options_args, &scp, &scp_assembly_required, Flag::ENVIRON_VAR);
   if (result != JNI_OK) {
     return result;
   }
 
-  // Parse JavaVMInitArgs structure passed in
-  result = parse_each_vm_init_arg(args, &scp, &scp_assembly_required, Flag::COMMAND_LINE);
+  // Parse args structure generated from the command line flags.
+  result = parse_each_vm_init_arg(cmd_line_args, &scp, &scp_assembly_required,
+                                  Flag::COMMAND_LINE);
   if (result != JNI_OK) {
     return result;
   }
 
-  // Parse _JAVA_OPTIONS environment variable (if present) (mimics classic VM)
-  result = parse_java_options_environment_variable(&scp, &scp_assembly_required);
+  // Parse args structure generated from the _JAVA_OPTIONS environment
+  // variable (if present) (mimics classic VM)
+  result = parse_each_vm_init_arg(
+      java_options_args, &scp, &scp_assembly_required, Flag::ENVIRON_VAR);
   if (result != JNI_OK) {
     return result;
   }
@@ -3385,20 +3383,73 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
   return JNI_OK;
 }
 
-jint Arguments::parse_java_options_environment_variable(SysClassPath* scp_p, bool* scp_assembly_required_p) {
-  return parse_options_environment_variable("_JAVA_OPTIONS", scp_p,
-                                            scp_assembly_required_p);
+// Helper class for controlling the lifetime of JavaVMInitArgs
+// objects.  The contents of the JavaVMInitArgs are guaranteed to be
+// deleted on the destruction of the ScopedVMInitArgs object.
+class ScopedVMInitArgs : public StackObj {
+ private:
+  JavaVMInitArgs _args;
+
+ public:
+  ScopedVMInitArgs() {
+    _args.version = JNI_VERSION_1_2;
+    _args.nOptions = 0;
+    _args.options = NULL;
+    _args.ignoreUnrecognized = false;
+  }
+
+  // Populates the JavaVMInitArgs object represented by this
+  // ScopedVMInitArgs object with the arguments in options.  The
+  // allocated memory is deleted by the destructor.  If this method
+  // returns anything other than JNI_OK, then this object is in a
+  // partially constructed state, and should be abandoned.
+  jint set_args(GrowableArray<JavaVMOption>* options) {
+    JavaVMOption* options_arr = NEW_C_HEAP_ARRAY_RETURN_NULL(
+        JavaVMOption, options->length(), mtInternal);
+    if (options_arr == NULL) {
+      return JNI_ENOMEM;
+    }
+    _args.options = options_arr;
+
+    for (int i = 0; i < options->length(); i++) {
+      options_arr[i] = options->at(i);
+      options_arr[i].optionString = os::strdup(options_arr[i].optionString);
+      if (options_arr[i].optionString == NULL) {
+        // Rely on the destructor to do cleanup.
+        _args.nOptions = i;
+        return JNI_ENOMEM;
+      }
+    }
+
+    _args.nOptions = options->length();
+    _args.ignoreUnrecognized = IgnoreUnrecognizedVMOptions;
+    return JNI_OK;
+  }
+
+  JavaVMInitArgs* get() { return &_args; }
+
+  ~ScopedVMInitArgs() {
+    if (_args.options == NULL) return;
+    for (int i = 0; i < _args.nOptions; i++) {
+      os::free(_args.options[i].optionString);
+    }
+    FREE_C_HEAP_ARRAY(JavaVMOption, _args.options);
+  }
+};
+
+jint Arguments::parse_java_options_environment_variable(ScopedVMInitArgs* args) {
+  return parse_options_environment_variable("_JAVA_OPTIONS", args);
 }
 
-jint Arguments::parse_java_tool_options_environment_variable(SysClassPath* scp_p, bool* scp_assembly_required_p) {
-  return parse_options_environment_variable("JAVA_TOOL_OPTIONS", scp_p,
-                                            scp_assembly_required_p);
+jint Arguments::parse_java_tool_options_environment_variable(ScopedVMInitArgs* args) {
+  return parse_options_environment_variable("JAVA_TOOL_OPTIONS", args);
 }
 
-jint Arguments::parse_options_environment_variable(const char* name, SysClassPath* scp_p, bool* scp_assembly_required_p) {
+jint Arguments::parse_options_environment_variable(const char* name,
+                                                   ScopedVMInitArgs* vm_args) {
   char *buffer = ::getenv(name);
 
-  // Don't check this variable if user has special privileges
+  // Don't check this environment variable if user has special privileges
   // (e.g. unix su command).
   if (buffer == NULL || os::have_special_privileges()) {
     return JNI_OK;
@@ -3443,48 +3494,20 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
         *wrt++ = *rd++;                     // copy to option string
       }
     }
-    // Need to check if we're done before writing a NULL,
-    // because the write could be to the byte that rd is pointing to.
-    if (*rd++ == 0) {
-      *wrt = 0;
-      break;
+    if (*rd != 0) {
+      // In this case, the assignment to wrt below will make *rd nul,
+      // which will interfere with the next loop iteration.
+      rd++;
     }
     *wrt = 0;                               // Zero terminate option
   }
-  JavaVMOption* options_arr =
-      NEW_C_HEAP_ARRAY_RETURN_NULL(JavaVMOption, options->length(), mtInternal);
-  if (options_arr == NULL) {
-    delete options;
-    os::free(buffer);
-    return JNI_ENOMEM;
-  }
-  for (int i = 0; i < options->length(); i++) {
-    options_arr[i] = options->at(i);
-  }
 
-  // Construct JavaVMInitArgs structure and parse as if it was part of the command line
-  JavaVMInitArgs vm_args;
-  vm_args.version = JNI_VERSION_1_2;
-  vm_args.options = options_arr;
-  vm_args.nOptions = options->length();
-  vm_args.ignoreUnrecognized = IgnoreUnrecognizedVMOptions;
+  // Fill out JavaVMInitArgs structure.
+  jint status = vm_args->set_args(options);
 
-  if (PrintVMOptions) {
-    const char* tail;
-    for (int i = 0; i < vm_args.nOptions; i++) {
-      const JavaVMOption *option = vm_args.options + i;
-      if (match_option(option, "-XX:", &tail)) {
-        logOption(tail);
-      }
-    }
-  }
-
-  jint result = parse_each_vm_init_arg(&vm_args, scp_p, scp_assembly_required_p,
-                                       Flag::ENVIRON_VAR);
-  FREE_C_HEAP_ARRAY(JavaVMOption, options_arr);
   delete options;
   os::free(buffer);
-  return result;
+  return status;
 }
 
 void Arguments::set_shared_spaces_flags() {
@@ -3567,32 +3590,18 @@ static bool use_vm_log() {
 }
 #endif // PRODUCT
 
-// Parse entry point called from JNI_CreateJavaVM
-
-jint Arguments::parse(const JavaVMInitArgs* args) {
-
-  // Initialize ranges and constraints
-  CommandLineFlagRangeList::init();
-  CommandLineFlagConstraintList::init();
-
+static jint match_special_option_and_act(const JavaVMInitArgs* args,
+                                        char** flags_file) {
   // Remaining part of option string
   const char* tail;
 
-  // If flag "-XX:Flags=flags-file" is used it will be the first option to be processed.
-  const char* hotspotrc = ".hotspotrc";
-  bool settings_file_specified = false;
-  bool needs_hotspotrc_warning = false;
-
-  const char* flags_file;
-  int index;
-  for (index = 0; index < args->nOptions; index++) {
-    const JavaVMOption *option = args->options + index;
+  for (int index = 0; index < args->nOptions; index++) {
+    const JavaVMOption* option = args->options + index;
     if (ArgumentsExt::process_options(option)) {
       continue;
     }
     if (match_option(option, "-XX:Flags=", &tail)) {
-      flags_file = tail;
-      settings_file_specified = true;
+      *flags_file = (char *) tail;
       continue;
     }
     if (match_option(option, "-XX:+PrintVMOptions")) {
@@ -3646,10 +3655,69 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     }
 #endif
   }
+  return JNI_OK;
+}
+
+static void print_options(const JavaVMInitArgs *args) {
+  const char* tail;
+  for (int index = 0; index < args->nOptions; index++) {
+    const JavaVMOption *option = args->options + index;
+    if (match_option(option, "-XX:", &tail)) {
+      logOption(tail);
+    }
+  }
+}
+
+// Parse entry point called from JNI_CreateJavaVM
+
+jint Arguments::parse(const JavaVMInitArgs* args) {
+
+  // Initialize ranges and constraints
+  CommandLineFlagRangeList::init();
+  CommandLineFlagConstraintList::init();
+
+  // If flag "-XX:Flags=flags-file" is used it will be the first option to be processed.
+  const char* hotspotrc = ".hotspotrc";
+  char* flags_file = NULL;
+  bool settings_file_specified = false;
+  bool needs_hotspotrc_warning = false;
+  ScopedVMInitArgs java_tool_options_args;
+  ScopedVMInitArgs java_options_args;
+
+  jint code =
+      parse_java_tool_options_environment_variable(&java_tool_options_args);
+  if (code != JNI_OK) {
+    return code;
+  }
+
+  code = parse_java_options_environment_variable(&java_options_args);
+  if (code != JNI_OK) {
+    return code;
+  }
+
+  code =
+      match_special_option_and_act(java_tool_options_args.get(), &flags_file);
+  if (code != JNI_OK) {
+    return code;
+  }
+
+  code = match_special_option_and_act(args, &flags_file);
+  if (code != JNI_OK) {
+    return code;
+  }
+
+  code = match_special_option_and_act(java_options_args.get(), &flags_file);
+  if (code != JNI_OK) {
+    return code;
+  }
+
+  settings_file_specified = (flags_file != NULL);
 
   if (IgnoreUnrecognizedVMOptions) {
     // uncast const to modify the flag args->ignoreUnrecognized
     *(jboolean*)(&args->ignoreUnrecognized) = true;
+    java_tool_options_args.get()->ignoreUnrecognized = true;
+    java_options_args.get()->ignoreUnrecognized = true;
   }
 
   // Parse specified settings file
@@ -3672,16 +3740,15 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
 
   if (PrintVMOptions) {
-    for (index = 0; index < args->nOptions; index++) {
-      const JavaVMOption *option = args->options + index;
-      if (match_option(option, "-XX:", &tail)) {
-        logOption(tail);
-      }
-    }
+    print_options(java_tool_options_args.get());
+    print_options(args);
+    print_options(java_options_args.get());
   }
 
   // Parse JavaVMInitArgs structure passed in, as well as JAVA_TOOL_OPTIONS and _JAVA_OPTIONS
-  jint result = parse_vm_init_args(args);
+  jint result = parse_vm_init_args(java_tool_options_args.get(),
+                                   java_options_args.get(), args);
+
   if (result != JNI_OK) {
     return result;
   }
@@ -3913,10 +3980,10 @@ jint Arguments::adjust_after_os() {
   return JNI_OK;
 }
 
-// Any custom code post the final range and constraint check
+// Any custom code post the 'CommandLineFlagConstraint::AfterErgo' constraint check
 // can be done here. We pass a flag that specifies whether
 // the check passed successfully
-void Arguments::post_final_range_and_constraint_check(bool check_passed) {
+void Arguments::post_after_ergo_constraint_check(bool check_passed) {
   // This does not set the flag itself, but stores the value in a safe place for later usage.
   _min_heap_free_ratio = MinHeapFreeRatio;
   _max_heap_free_ratio = MaxHeapFreeRatio;

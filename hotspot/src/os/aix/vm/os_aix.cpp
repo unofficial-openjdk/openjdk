@@ -1550,6 +1550,13 @@ void os::print_dll_info(outputStream *st) {
   LoadedLibraries::print(st);
 }
 
+void os::get_summary_os_info(char* buf, size_t buflen) {
+  // There might be something more readable than uname results for AIX.
+  struct utsname name;
+  uname(&name);
+  snprintf(buf, buflen, "%s %s", name.release, name.version);
+}
+
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
@@ -1654,14 +1661,18 @@ void os::print_memory_info(outputStream* st) {
   }
 }
 
+// Get a string for the cpuinfo that is a summary of the cpu type
+void os::get_summary_cpu_info(char* buf, size_t buflen) {
+  // This looks good
+  os::Aix::cpuinfo_t ci;
+  if (os::Aix::get_cpuinfo(&ci)) {
+    strncpy(buf, ci.version, buflen);
+  } else {
+    strncpy(buf, "AIX", buflen);
+  }
+}
+
 void os::pd_print_cpu_info(outputStream* st, char* buf, size_t buflen) {
-  // cpu
-  st->print("CPU:");
-  st->print("total %d", os::processor_count());
-  // It's not safe to query number of active processors after crash
-  // st->print("(active %d)", os::active_processor_count());
-  st->print(" %s", VM_Version::cpu_features());
-  st->cr();
 }
 
 void os::print_siginfo(outputStream* st, void* siginfo) {
@@ -3483,7 +3494,6 @@ void os::init(void) {
   // For now UseLargePages is just ignored.
   FLAG_SET_ERGO(bool, UseLargePages, false);
   _page_sizes[0] = 0;
-  _large_page_size = -1;
 
   // debug trace
   trcVerbose("os::vm_page_size %s\n", describe_pagesize(os::vm_page_size()));

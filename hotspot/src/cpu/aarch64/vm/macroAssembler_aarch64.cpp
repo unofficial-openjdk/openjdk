@@ -33,6 +33,7 @@
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
 #include "nativeInst_aarch64.hpp"
+#include "oops/klass.inline.hpp"
 #include "opto/compile.hpp"
 #include "opto/node.hpp"
 #include "runtime/biasedLocking.hpp"
@@ -2008,6 +2009,14 @@ void MacroAssembler::addw(Register Rd, Register Rn, RegisterOrConstant increment
   }
 }
 
+void MacroAssembler::sub(Register Rd, Register Rn, RegisterOrConstant decrement) {
+  if (decrement.is_register()) {
+    sub(Rd, Rn, decrement.as_register());
+  } else {
+    sub(Rd, Rn, decrement.as_constant());
+  }
+}
+
 void MacroAssembler::reinit_heapbase()
 {
   if (UseCompressedOops) {
@@ -2304,6 +2313,28 @@ Address MacroAssembler::offsetted_address(Register r, Register r1,
   } else {
     return Address(r, r1, ext);
   }
+}
+
+Address MacroAssembler::spill_address(int size, int offset, Register tmp)
+{
+  assert(offset >= 0, "spill to negative address?");
+  // Offset reachable ?
+  //   Not aligned - 9 bits signed offset
+  //   Aligned - 12 bits unsigned offset shifted
+  Register base = sp;
+  if ((offset & (size-1)) && offset >= (1<<8)) {
+    add(tmp, base, offset & ((1<<12)-1));
+    base = tmp;
+    offset &= -1<<12;
+  }
+
+  if (offset >= (1<<12) * size) {
+    add(tmp, base, offset & (((1<<12)-1)<<12));
+    base = tmp;
+    offset &= ~(((1<<12)-1)<<12);
+  }
+
+  return Address(base, offset);
 }
 
 /**
@@ -3791,8 +3822,8 @@ void MacroAssembler::eden_allocate(Register obj,
     br(Assembler::HI, slow_case);
 
     // If heap_top hasn't been changed by some other thread, update it.
-    stlxr(rscratch1, end, rscratch1);
-    cbnzw(rscratch1, retry);
+    stlxr(rscratch2, end, rscratch1);
+    cbnzw(rscratch2, retry);
   }
 }
 
