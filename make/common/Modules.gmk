@@ -91,6 +91,8 @@ $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
 	          /requires/ { sub(/;/, ""); \
 	                       sub(/requires/, ""); \
 	                       sub(/public/, ""); \
+	                       sub(/\/\/.*/, ""); \
+	                       sub(/\/\*.*\*\//, ""); \
 	                       gsub(/ /, ""); \
 	                       printf(" %s", $$0) } \
 	          END        { printf("\n") }' $m \
