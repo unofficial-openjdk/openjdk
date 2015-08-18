@@ -224,7 +224,7 @@ ALL_TARGETS += $(LAUNCHER_TARGETS)
 
 ifeq ($(BUILD_HOTSPOT),true)
   hotspot:
-	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk)
 endif
 
 ALL_TARGETS += hotspot
@@ -329,6 +329,26 @@ docs-jvmtidoc:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk jvmtidocs)
 
 ALL_TARGETS += docs-javadoc docs-jvmtidoc
+
+################################################################################
+# Cross compilation support
+
+ifeq ($(CREATE_BUILDJDK), true)
+  # This target is only called by the recursive call below.
+  create-buildjdk-helper: jdk.jlink-launchers java.base-copy
+endif
+
+create-buildjdk-copy:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateBuildJdkCopy.gmk)
+
+create-buildjdk-compile:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Main.gmk \
+	    create-buildjdk-helper \
+	    SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
+	    HOTSPOT_SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
+	    CREATE_BUILDJDK=true)
+
+ALL_TARGETS += create-buildjdk-copy create-buildjdk-compile
 
 ################################################################################
 # Build tests
@@ -476,8 +496,8 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
-  jdk.jdeps-gendata: java rmic  
-  
+  jdk.jdeps-gendata: java rmic
+
   # Declare dependencies from <module>-strip to libs, launchers, gendata and copy
   $(foreach m, $(LIBS_MODULES), $(eval $m-strip: $m-libs))
   $(foreach m, $(LAUNCHER_MODULES), $(eval $m-strip: $m-launchers))
@@ -500,6 +520,10 @@ else
   # Jmods cannot be created until we have the jlink tool ready to run, which requires
   # all java modules to be compiled and jdk.jlink-launchers.
   $(JMOD_TARGETS): java java.base-libs jdk.jlink-launchers
+
+  ifeq ($(CREATE_BUILDJDK), true)
+    $(JMOD_TARGETS): create-buildjdk
+  endif
 
   # To generate modules.xml all classes and a runnable image must be
   # present.
@@ -524,6 +548,10 @@ else
   docs-jvmtidoc: hotspot
 
   test: jimages test-image
+
+  create-buildjdk-copy: jdk.jlink-java java.base-gendata
+
+  create-buildjdk-compile: create-buildjdk-copy
 
   test-make: clean-test-make
 
@@ -583,6 +611,8 @@ samples: samples-jdk
 # The "exploded image" is a locally runnable JDK in $(BUILD_OUTPUT)/jdk.
 exploded-image: $(ALL_MODULES)
 
+create-buildjdk: create-buildjdk-compile create-buildjdk-copy
+
 mac-bundles: mac-bundles-jdk
 
 # The $(BUILD_OUTPUT)/images directory contain the resulting deliverables,
@@ -590,7 +620,13 @@ mac-bundles: mac-bundles-jdk
 
 # This target builds the product images, e.g. the JRE and JDK image
 # (and possibly other, more specific versions)
-product-images: jimages demos samples zip-security generate-summary
+product-images: jimages demos samples zip-security
+
+# When cross compiling and building a partial BUILDJDK for the build host,
+# the summary generation cannot be run.
+ifneq ($(CREATE_BUILDJDK), true)
+  product-images: generate-summary
+endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   product-images: mac-bundles
@@ -608,7 +644,7 @@ all-images: product-images test-image docs-image
 
 ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
     jdk.jdwp.agent-gensrc $(ALL_MODULES) demos samples exploded-image \
-    mac-bundles product-images docs-image test-image all-images
+    create-buildjdk mac-bundles product-images docs-image test-image all-images
 
 ################################################################################
 
@@ -633,7 +669,7 @@ ALL_TARGETS += default jdk images docs all
 # file.
 
 CLEAN_DIRS += hotspot jdk bootcycle-build test buildtools support \
-    images make-support test-make bundles
+    images make-support test-make bundles buildjdk
 CLEAN_DIR_TARGETS := $(addprefix clean-, $(CLEAN_DIRS))
 CLEAN_TESTS += hotspot-jtreg-native jdk-jtreg-native
 CLEAN_TEST_TARGETS += $(addprefix clean-test-, $(CLEAN_TESTS))

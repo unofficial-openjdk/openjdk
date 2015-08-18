@@ -36,11 +36,11 @@ endif
 ################################################################################
 
 LIBS_DIR := $(wildcard $(addsuffix /$(MODULE), $(IMPORT_MODULES_LIBS) \
-    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped))
+    $(MODULES_LIBS_OUTPUTDIR)-stripped))
 CMDS_DIR := $(wildcard $(addsuffix /$(MODULE), $(IMPORT_MODULES_CMDS) \
-    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped))
+    $(MODULES_CMDS_OUTPUTDIR)-stripped))
 CONF_DIR := $(wildcard $(addsuffix /$(MODULE), $(IMPORT_MODULES_CONF) \
-    $(SUPPORT_OUTPUTDIR)/modules_conf))
+    $(MODULES_CONF_OUTPUTDIR)))
 CLASSES_DIR := $(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE))
 
 $(eval $(call FillCacheFind, \

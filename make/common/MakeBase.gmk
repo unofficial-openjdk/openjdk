@@ -765,10 +765,10 @@ DependOnVariable = \
 # Param 1 - module name
 ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
   FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
+      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
 else
   FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
+      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)
 endif
 
 ################################################################################

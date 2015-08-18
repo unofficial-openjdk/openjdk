@@ -150,7 +150,7 @@ ALL_SOURCE_DIRS := $(wildcard \
       $(CORBA_TOPDIR)/src/*/share/classes \
       $(JAXP_TOPDIR)/src/*/share/classes \
       $(JAXWS_TOPDIR)/src/*/share/classes \
-      $(SUPPORT_OUTPUTDIR)/gensrc/j* \
+      $(GENSRC_OUTPUTDIR)/j* \
       $(SUPPORT_OUTPUTDIR)/rmic/j* \
       $(JDK_TOPDIR)/src/*/share/doc/stub \
       ) \
@@ -693,7 +693,7 @@ ALL_OTHER_TARGETS += jdwpdocs
 JDWP_DOCDIR = $(PLATFORM_DOCSDIR)/jpda/jdwp
 
 jdwpdocs: $(JDWP_DOCDIR)/jdwp-protocol.html
-$(JDWP_DOCDIR)/jdwp-protocol.html : $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/jdwp-protocol.html
+$(JDWP_DOCDIR)/jdwp-protocol.html : $(GENSRC_OUTPUTDIR)/jdk.jdi/jdwp-protocol.html
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(CP) $< $@

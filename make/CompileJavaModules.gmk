@@ -479,8 +479,8 @@ jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 # source before static source and platform specific source before shared.
 #
 GENERATED_SRC_DIRS += \
-    $(SUPPORT_OUTPUTDIR)/gensrc \
-    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
+    $(GENSRC_OUTPUTDIR) \
+    $(GENSRC_OUTPUTDIR)_no_docs \
     #
 
 TOP_SRC_DIRS += \
@@ -528,9 +528,9 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
     SRC := $(wildcard $(MODULE_SRC_DIRS)), \
-      INCLUDES:=$(JDK_USER_DEFINED_FILTER),\
+    INCLUDES := $(JDK_USER_DEFINED_FILTER),\
     BIN := $(if $($(MODULE)_BIN), $($(MODULE)_BIN), $(JDK_OUTPUTDIR)/modules), \
-    HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
+    HEADERS := $(HEADERS_OUTPUTDIR), \
     ADD_JAVAC_FLAGS := \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
@@ -543,8 +543,8 @@ TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
 # Declare dependencies between java compilations of different modules.
 # Since the other modules are declared in different invocations of this file,
 # use the macro to find the correct target file to depend on.
-  # Only the javac compilation actually depends on other modules so limit
-  # dependency declaration to that by using the *_COMPILE_TARGET variable.
+# Only the javac compilation actually depends on other modules so limit
+# dependency declaration to that by using the *_COMPILE_TARGET variable.
 $($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
     $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules/$d))
 
@@ -556,8 +556,8 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 
 CreateHkTargets = \
     $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules, \
-    $(subst /share/classes,, \
-      $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
+      $(subst /share/classes,, \
+        $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 
 ifeq ($(MODULE), java.sql.rowset)
   TARGETS += $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))

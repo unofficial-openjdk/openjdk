@@ -471,6 +471,7 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
   AC_ARG_WITH(build-jdk, [AS_HELP_STRING([--with-build-jdk],
       [path to JDK of same version as is being built@<:@the newly built JDK@:>@])])
 
+  CREATE_BUILDJDK_FOR_HOST=false
   BUILD_JDK_FOUND="no"
   if test "x$with_build_jdk" != "x"; then
     BOOTJDK_CHECK_BUILD_JDK([
@@ -481,15 +482,16 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
        fi])
   else
     if test "x$COMPILE_TYPE" = "xcross"; then
-      BOOTJDK_CHECK_BUILD_JDK([
-         BUILD_JDK=$BOOT_JDK
-         BUILD_JDK_FOUND=maybe
-         AC_MSG_NOTICE([Found potential Build JDK in the Boot JDK])])
+      BUILD_JDK="\$(BUILDJDK_OUTPUTDIR)/jdk"
+      BUILD_JDK_FOUND=yes
+      CREATE_BUILDJDK=true
+      AC_MSG_CHECKING([for Build JDK])
+      AC_MSG_RESULT([yes, will build it for the host platform])
     else
       BUILD_JDK="\$(JDK_OUTPUTDIR)"
       BUILD_JDK_FOUND=yes
       AC_MSG_CHECKING([for Build JDK])
-      AC_MSG_RESULT([yes (output dir)])
+      AC_MSG_RESULT([yes, will use output dir])
     fi
   fi
 
@@ -499,5 +501,6 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
     AC_MSG_ERROR([Could not find a suitable Build JDK])
   fi
 
+  AC_SUBST(CREATE_BUILDJDK)
   AC_SUBST(BUILD_JDK)
 ])
