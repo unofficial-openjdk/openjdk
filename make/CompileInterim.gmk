@@ -40,7 +40,7 @@ define SetupInterimModule
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(wildcard $(JDK_TOPDIR)/src/$(strip $1)/share/classes \
           $(CORBA_TOPDIR)/src/$(strip $1)/share/classes \
-          $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
+          $(GENSRC_OUTPUTDIR)/$(strip $1)), \
       EXCLUDES := com/sun/corba/se/PortableActivationIDL, \
       EXCLUDE_FILES := module-info.java \
           com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
