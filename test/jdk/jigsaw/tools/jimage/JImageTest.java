@@ -28,6 +28,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -103,9 +104,19 @@ public class JImageTest {
         unexpectedPaths.add(".jcov");
         unexpectedPaths.add("/META-INF/");
         File image = helper.generateImage(module).getImageFile();
-        File extractedDir = helper.extractImageFile(image, "bootmodules.jimage");
+        String imgName = "bootmodules.jimage";
+        File extractedDir = helper.extractImageFile(image, imgName);
         File recreatedImage = helper.recreateImageFile(extractedDir);
         JImageValidator.validate(recreatedImage, bootClasses, Collections.emptyList());
+
+        // Check replacing the boot image by recreated one
+        File destFile = new File(image, "lib" + File.separator + "modules"
+                + File.separator + imgName);
+        Files.copy(recreatedImage.toPath(), destFile.toPath(), REPLACE_EXISTING);
+        JImageValidator validator = new JImageValidator(module, Collections.emptyList(),
+                image, Collections.emptyList(), Collections.emptyList());
+        validator.validate();
+
         File recreatedImage2 = helper.recreateImageFile(extractedDir, "--compress-resources", "on");
         JImageValidator.validate(recreatedImage2, bootClasses, Collections.emptyList());
         File recreatedImage3 = helper.recreateImageFile(extractedDir, "--strip-java-debug", "on");
