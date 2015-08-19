@@ -97,10 +97,9 @@ class Main {
      */
     boolean cflag, uflag, xflag, tflag, vflag, flag0, Mflag, iflag, nflag, pflag;
 
-    /* To support additional GNU Style information options */
+    /* To support additional GNU Style informational options */
     enum Info {
         HELP(GNUStyleOptions::printHelp),
-        USAGE(GNUStyleOptions::printUsage),
         USAGE_SUMMARY(GNUStyleOptions::printUsageSummary),
         VERSION(GNUStyleOptions::printVersion);
 

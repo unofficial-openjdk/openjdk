@@ -155,19 +155,19 @@ class GNUStyleOptions {
                 }
             },
 
-            // P option // TODO hidden ???
+            // Hidden options
+            new Option(false, OptionType.OTHER, "-P") {
+                void process(Main jartool, String opt, String arg) {
+                    jartool.pflag = true;
+                }
+                boolean isHidden() { return true; }
+            },
 
             // Other options
             new Option(false, OptionType.OTHER, "--help", "-?") {
                 void process(Main jartool, String opt, String arg) {
                     if (jartool.info == null)
                         jartool.info = Main.Info.HELP;
-                }
-            },
-            new Option(false, OptionType.OTHER, "--usage") {
-                void process(Main jartool, String opt, String arg) {
-                    if (jartool.info == null)
-                        jartool.info = Main.Info.USAGE;
                 }
             },
             new Option(false, OptionType.OTHER, "--version") {
@@ -185,7 +185,10 @@ class GNUStyleOptions {
         CREATE_UPDATE("create.update"),
         CREATE_UPDATE_INDEX("create.update.index"),
         OTHER("other");
+
+        /** Resource lookup section prefix. */
         final String name;
+
         OptionType(String name) { this.name = name; }
     }
 
@@ -200,9 +203,7 @@ class GNUStyleOptions {
             this.aliases = aliases;
         }
 
-        boolean isHidden() {
-            return false;
-        }
+        boolean isHidden() { return false; }
 
         boolean matches(String opt) {
             for (String a : aliases) {
@@ -240,7 +241,7 @@ class GNUStyleOptions {
                     param = args[++count];
                 }
                 if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                    throw new BadArgs("error.missing.arg", name).showUsage(true);  // TODO: check all resource strings
+                    throw new BadArgs("error.missing.arg", name).showUsage(true);
                 }
             }
             option.process(jartool, name, param);
@@ -275,12 +276,6 @@ class GNUStyleOptions {
         }
         out.format("%n%s%n%n", Main.getMsg("main.help.postopt"));
         out.format("%s%n", Main.getMsg("usage.compat"));
-    }
-
-    static void printUsage(PrintStream out) {
-        out.format("%s%n", Main.getMsg("main.usage.summary"));
-        out.format("%s%n", Main.getMsg("main.usage.summary.try"));
-        // TODO: options
     }
 
     static void printUsageSummary(PrintStream out) {

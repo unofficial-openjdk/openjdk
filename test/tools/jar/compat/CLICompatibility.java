@@ -22,6 +22,7 @@
  */
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,7 +54,6 @@ import static org.testng.Assert.assertTrue;
  */
 
 public class CLICompatibility {
-    static final Path TEST_SRC = Paths.get(System.getProperty("test.src", "."));
     static final Path TEST_CLASSES = Paths.get(System.getProperty("test.classes", "."));
     static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
 
@@ -66,7 +66,7 @@ public class CLICompatibility {
     @BeforeTest
     public void setupResourcesForJar() throws Exception {
         // Copy the files that we are going to use for creating/updating test
-        // jar files, so that they can be referred to without [-C dir]
+        // jar files, so that they can be referred to without '-C dir'
         Files.copy(TEST_CLASSES.resolve(RES1), USER_DIR.resolve(RES1));
         Files.copy(TEST_CLASSES.resolve(RES2), USER_DIR.resolve(RES2));
     }
@@ -253,7 +253,7 @@ public class CLICompatibility {
         createJar(path, RES1);
         String jn = path.toString();
 
-        for (String opts : new String[]{"tf " + jn, "-tf " + jn, "--list --archive=" + jn}) {
+        for (String opts : new String[]{"tf " + jn, "-tf " + jn, "--list --archive " + jn}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
@@ -329,7 +329,9 @@ public class CLICompatibility {
 
     // -- Infrastructure
 
-    static boolean jarContains(JarInputStream jis, String entryName) throws IOException {
+    static boolean jarContains(JarInputStream jis, String entryName)
+        throws IOException
+    {
         JarEntry e;
         boolean found = false;
         while((e = jis.getNextJarEntry()) != null) {
@@ -395,11 +397,15 @@ public class CLICompatibility {
         return jarWithResultAndStdinAndWorkingDir(stdinSource, null, args);
     }
 
-    static Result jarWithResultAndStdinAndWorkingDir(File stdinFrom, File workingDir,  String... args) {
+    static Result jarWithResultAndStdinAndWorkingDir(File stdinFrom,
+                                                     File workingDir,
+                                                     String... args) {
         String jar = getJDKTool("jar");
         List<String> commands = new ArrayList<>();
         commands.add(jar);
-        Stream.of(args).map(s -> s.split(" ")).flatMap(Arrays::stream).forEach(x -> commands.add(x));
+        Stream.of(args).map(s -> s.split(" "))
+                       .flatMap(Arrays::stream)
+                       .forEach(x -> commands.add(x));
         ProcessBuilder p = new ProcessBuilder(commands);
         if (stdinFrom != null)
             p.redirectInput(stdinFrom);
@@ -507,25 +513,12 @@ public class CLICompatibility {
             legacyOnly = true;
 
         CLICompatibility test = new CLICompatibility(legacyOnly);
-        test.createBadArgs();
-        test.createWriteToFile();
-        test.createWriteToStdout();
-        test.createWriteToStdoutNoManifest();
-
-        test.updateBadArgs();
-        test.updateReadFileWriteFile();
-        test.updateReadStdinWriteStdout();
-        test.updateReadStdinWriteStdoutNoManifest();
-
-        test.listBadArgs();
-        test.listReadFromFileWriteToStdout();
-        test.listReadFromStdinWriteToStdout();
-
-        test.extractBadArgs();
-        test.extractReadFromFile();
-        test.extractReadFromStdin();
-
-        //badOptions();
+        for (Method m : CLICompatibility.class.getDeclaredMethods()) {
+            if (m.getAnnotation(Test.class) != null) {
+                System.out.println("Invoking " + m.getName());
+                m.invoke(test);
+            }
+        }
     }
     CLICompatibility(boolean legacyOnly) { this.legacyOnly = legacyOnly; }
     CLICompatibility() { this.legacyOnly = false; }
