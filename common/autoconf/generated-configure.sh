@@ -682,6 +682,8 @@ FIXPATH
 GCOV_ENABLED
 ZIP_DEBUGINFO_FILES
 ENABLE_DEBUG_SYMBOLS
+BUILD_SYSROOT_LDFLAGS
+BUILD_SYSROOT_CFLAGS
 CFLAGS_WARNINGS_ARE_ERRORS
 BUILD_CC_DISABLE_WARNING_PREFIX
 DISABLE_WARNING_PREFIX
@@ -3868,6 +3870,8 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+
+
 #
 # Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4416,7 +4420,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1439886801
+DATE_WHEN_GENERATED=1439973221
 
 ###############################################################################
 #
@@ -43789,6 +43793,17 @@ $as_echo "$supports" >&6; }
       ;;
   esac
 
+
+
+
+
+  if test "x$COMPILE_TYPE" = "xcross"; then
+    BUILD_SYSROOT_CFLAGS=""
+    BUILD_SYSROOT_LDFLAGS=""
+  else
+    BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
+    BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
+  fi
 
 
 
