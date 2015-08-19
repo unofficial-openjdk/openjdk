@@ -64,11 +64,30 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   MAIN_MODULES += jdk.deploy.osx
 endif
 
-# Hack for now
-IMPORTED_MODULES := $(call FindImportedModules)
-
 JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
-JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES) $(IMPORTED_MODULES)
+JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES)
+
+# Param 1 - Name of module
+define ReadImportMetaData
+  ifneq ($$(wildcard $(IMPORT_MODULES_MAKE)/$$(strip $1)/build.properties), )
+    include_in_jre :=
+    include_in_jdk :=
+    include $(IMPORT_MODULES_MAKE)/$$(strip $1)/build.properties
+    ifeq ($$(include_in_jre), true)
+      JRE_MODULES += $1
+    endif
+    ifeq ($$(include_in_jdk), true)
+      JDK_MODULES += $1
+    endif
+  else
+    # Default to include in all
+    JRE_MODULES += $1
+    JDK_MODULES += $1
+  endif
+endef
+
+IMPORTED_MODULES := $(call FindImportedModules)
+$(foreach m, $(IMPORTED_MODULES), $(eval $(call ReadImportMetaData, $m)))
 
 # compact2 and compact3 builds have additional modules
 JDK_COMPACT2_MODULES := java.compact2 jdk.xml.dom jdk.httpserver

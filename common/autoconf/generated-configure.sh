@@ -813,6 +813,7 @@ STATIC_LIBRARY_SUFFIX
 SHARED_LIBRARY_SUFFIX
 LIBRARY_PREFIX
 TOOLCHAIN_TYPE
+IMPORT_MODULES_MAKE
 IMPORT_MODULES_SRC
 IMPORT_MODULES_CONF
 IMPORT_MODULES_LIBS
@@ -4420,7 +4421,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1439973221
+DATE_WHEN_GENERATED=1439975849
 
 ###############################################################################
 #
@@ -27035,6 +27036,10 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
   if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
     IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
   fi
+  if test -d "$IMPORT_MODULES_TOPDIR/make"; then
+    IMPORT_MODULES_MAKE="$IMPORT_MODULES_TOPDIR/make"
+  fi
+
 
 
 
