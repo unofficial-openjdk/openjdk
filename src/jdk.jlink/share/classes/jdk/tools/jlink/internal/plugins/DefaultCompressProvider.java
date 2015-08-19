@@ -57,20 +57,21 @@ public class DefaultCompressProvider extends OnOffProvider {
         String[] patterns = filter == null ? null : filter.split(",");
         String level = otherOptions.get(LEVEL_OPTION);
         List<Plugin> plugins = new ArrayList<>();
+        ResourceFilter resFilter = new ResourceFilter(patterns);
         if (level != null) {
             if (LEVEL_0.equals(level)) {
-                plugins.add(new StringSharingPlugin(patterns));
+                plugins.add(new StringSharingPlugin(resFilter));
             } else if (LEVEL_1.equals(level)) {
-                plugins.add(new ZipPlugin(patterns));
+                plugins.add(new ZipPlugin(resFilter));
             } else if (LEVEL_2.equals(level)) {
-                plugins.add(new StringSharingPlugin(patterns));
-                plugins.add(new ZipPlugin(patterns));
+                plugins.add(new StringSharingPlugin(resFilter));
+                plugins.add(new ZipPlugin(resFilter));
             } else {
                 throw new IOException("Invalid level " + level);
             }
         } else {
-            plugins.add(new StringSharingPlugin(patterns));
-            plugins.add(new ZipPlugin(patterns));
+            plugins.add(new StringSharingPlugin(resFilter));
+            plugins.add(new ZipPlugin(resFilter));
         }
         ResourcePlugin[] array = new ResourcePlugin[plugins.size()];
         return plugins.toArray(array);
