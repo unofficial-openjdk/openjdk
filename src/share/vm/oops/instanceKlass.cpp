@@ -2320,9 +2320,20 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
     // been defined. Consider it defined within the unnamed module.
     if (_package_entry == NULL) {
       ResourceMark rm;
-      assert(loader->modules()->unnamed_module() != NULL, "unnamed module is NULL");
-      _package_entry = loader->packages()->lookup(pkg_name,
-                                                  loader->modules()->unnamed_module());
+
+      if (!ModuleEntryTable::javabase_defined()) {
+        // Before java.base is defined during bootstrapping, define all packages in
+        // the java.base module.  If a non-java.base package is erroneously placed
+        // in the java.base module it will be caught later when java.base
+        // is defined by ModuleEntryTable::verify_javabase_packages check.
+        assert(ModuleEntryTable::javabase_module() != NULL, "java.base module is NULL");
+        _package_entry = loader->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
+      } else {
+        assert(loader->modules()->unnamed_module() != NULL, "unnamed module is NULL");
+        _package_entry = loader->packages()->lookup(pkg_name,
+                                                    loader->modules()->unnamed_module());
+      }
+
       // A package should have been successfully created
       assert(_package_entry != NULL, err_msg("Package entry for class %s not found, loader %s",
                                              name->as_C_string(), loader->loader_name()));
@@ -2336,6 +2347,13 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
                     pkg_name->as_C_string(),
                     loader->loader_name(),
                     (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
+    }
+  } else {
+    if (TracePackages) {
+      ResourceMark rm;
+      tty->print_cr("[Setting package: class: %s, package: unnamed, loader: %s, module: unnamed]",
+                    external_name(),
+                    (loader != NULL) ? loader->loader_name() : "NULL");
     }
   }
 }

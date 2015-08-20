@@ -226,6 +226,26 @@ PackageEntry* PackageEntryTable::lookup_only(Symbol* name) {
   return NULL;
 }
 
+// Called when a define module for java.base is being processed.
+// Verify the packages loaded thus far are in java.base's package list.
+void PackageEntryTable::verify_javabase_packages(GrowableArray<Symbol*> *pkg_list) {
+  for (int i = 0; i < table_size(); i++) {
+    for (PackageEntry* entry = bucket(i);
+                       entry != NULL;
+                       entry = entry->next()) {
+      ModuleEntry* m = entry->module();
+      Symbol* module_name = (m == NULL ? NULL : m->name());
+      if (module_name != NULL &&
+          (module_name->fast_compare(vmSymbols::java_base()) == 0) &&
+          !pkg_list->contains(entry->name())) {
+        ResourceMark rm;
+        vm_exit_during_initialization("A non-java.base package was loaded prior to module system initialization", entry->name()->as_C_string());
+      }
+    }
+  }
+
+}
+
 // Remove dead entries from all packages' exported list
 void PackageEntryTable::purge_all_package_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
@@ -250,8 +270,8 @@ void PackageEntryTable::print() {
                 table_size(), number_of_entries());
   for (int i = 0; i < table_size(); i++) {
     for (PackageEntry* probe = bucket(i);
-                              probe != NULL;
-                              probe = probe->next()) {
+                       probe != NULL;
+                       probe = probe->next()) {
       probe->print();
     }
   }

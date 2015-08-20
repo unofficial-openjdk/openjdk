@@ -534,11 +534,17 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
       InstanceKlass* ik = (InstanceKlass*) k;
       module_entry = ik->module();
     } else {
-      module_entry = ModuleEntryTable::java_base_module();
+      module_entry = ModuleEntryTable::javabase_module();
     }
     // Obtain j.l.r.Module if available
-    Handle class_module(THREAD, (module_entry->is_named() ? module_entry->module() : (oop)NULL));
-    java_lang_Class::create_mirror(this, loader, class_module, protection_domain, CHECK);
+    oop jlrM_module = (oop)NULL;
+    if (module_entry != NULL &&
+        module_entry->is_named() &&
+        module_entry->jlrM_module() != NULL) {
+      jlrM_module = JNIHandles::resolve(module_entry->jlrM_module());
+    }
+    Handle jlrM_handle(THREAD, jlrM_module);
+    java_lang_Class::create_mirror(this, loader, jlrM_handle, protection_domain, CHECK);
   }
 }
 

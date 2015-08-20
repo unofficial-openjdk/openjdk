@@ -40,26 +40,26 @@ class ModuleClosure;
 
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
 // It contains:
-//   - a pointer to the java.lang.reflect.Module object for this module.
 //   - Symbol* containing the module's name.
+//   - pointer to the java.lang.reflect.Module for this module.
 //   - ClassLoaderData*, class loader of this module.
 //   - a growable array containg other module entries that this module can read.
 //   - a flag indicating if any of the packages defined within this module have qualified
 //     exports.
 //
-class ModuleEntry : public HashtableEntry<oop, mtClass> {
+class ModuleEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
-  Symbol* _name;
+  jobject _jlrM;                       // java.lang.reflect.Module
   ClassLoaderData* _loader;
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
-  Symbol* _version;   // module version number
-  Symbol* _location;  // module location
+  Symbol* _version;                    // module version number
+  Symbol* _location;                   // module location
   bool _can_read_unnamed;
   TRACE_DEFINE_TRACE_ID_FIELD;
 
 public:
   void init() {
-    _name = NULL;
+    _jlrM = NULL;
     _loader = NULL;
     _reads = NULL;
     _version = NULL;
@@ -67,11 +67,11 @@ public:
     _can_read_unnamed = false;
   }
 
-  oop                module() const                 { return literal(); }
-  void               set_module(oop m)              { set_literal(m); }
+  Symbol*            name() const                   { return literal(); }
+  void               set_name(Symbol* n)            { set_literal(n); }
 
-  Symbol*            name() const                   { return _name; }
-  void               set_name(Symbol* n)            { _name = n; }
+  jobject            jlrM_module() const            { return _jlrM; }
+  void               set_jlrM_module(jobject j)     { _jlrM = j; }
 
   ClassLoaderData*   loader() const                 { return _loader; }
   void               set_loader(ClassLoaderData* l) { _loader = l; }
@@ -86,7 +86,7 @@ public:
   bool               has_reads() const;
   void               add_read(ModuleEntry* m);
 
-  bool               is_named() const               { return _name != NULL; }
+  bool               is_named() const               { return (literal() != NULL); }
 
   bool can_read_unnamed() const {
     assert(is_named() || _can_read_unnamed == true,
@@ -95,18 +95,13 @@ public:
   }
 
   // Modules can only go from strict to loose.
-  void               set_can_read_unnamed()          { _can_read_unnamed = true; }
+  void set_can_read_unnamed() { _can_read_unnamed = true; }
 
   ModuleEntry* next() const {
-    return (ModuleEntry*)HashtableEntry<oop, mtClass>::next();
+    return (ModuleEntry*)HashtableEntry<Symbol*, mtClass>::next();
   }
   ModuleEntry** next_addr() {
-    return (ModuleEntry**)HashtableEntry<oop, mtClass>::next_addr();
-  }
-
-  // GC support
-  void oops_do(OopClosure* f) {
-    f->do_oop(literal_addr());
+    return (ModuleEntry**)HashtableEntry<Symbol*, mtClass>::next_addr();
   }
 
   // iteration support for readability
@@ -132,34 +127,29 @@ class ModuleClosure: public StackObj {
 // The ModuleEntryTable is a Hashtable containing a list of all modules defined
 // by a particular class loader.  Each module is represented as a ModuleEntry node.
 //
-// Each ModuleEntryTable contains a _javabase_created field indicating if java.base's
-// corresponding j.l.r.Module has been created.  Having this field provided a way to create a
-// ModuleEntry node for java.base very early in bootstrapping in order to obtain
-// java.base's containing packages.  This occurs prior to creation of the j.l.r.Module
-// for java.base during VM initialization.  java.base is the only module that does
-// not have a corresponding JVM_DefineModule() invocation.  It is the JVM's
-// responsibility to create.  Note, within the null boot class loader's ModulEntry table,
-// the ModuleEntry for java.base is hashed at bucket 0.
+// Each ModuleEntryTable contains a _javabase_module field which allows for the
+// creation of java.base's ModuleEntry very early in bootstrapping before the
+// corresponding JVM_DefineModule call for java.base occurs during module system
+// initialization.  Setting up java.base's ModuleEntry early enables classes,
+// loaded prior to the module system being initialized to be created with their
+// PackageEntry node's correctly pointing at java.base's ModuleEntry.  No class
+// outside of java.base is allowed to be loaded pre-module system initialization.
 //
-// The ModuleEntryTable's lookup is lock free.  Note, that the fastest lookup is to
-// invoke lookup_only with a j.l.r.M.  A lookup_only capability based on a module's
-// name is also provided.
+// The ModuleEntryTable's lookup is lock free.
 //
-class ModuleEntryTable : public Hashtable<oop, mtClass> {
+class ModuleEntryTable : public Hashtable<Symbol*, mtClass> {
   friend class VMStructs;
 public:
   enum Constants {
-    _moduletable_entry_size  = 1009  // number of entries in module entry table
+    _moduletable_entry_size  = 109 // number of entries in module entry table
   };
 
 private:
-  static ModuleEntry* _java_base_module;
+  static ModuleEntry* _javabase_module;
   ModuleEntry* _unnamed_module;
-  static bool _javabase_created;
 
-  ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, Symbol* version,
+  ModuleEntry* new_entry(unsigned int hash, Handle jlrM_handle, Symbol* name, Symbol* version,
                          Symbol* location, ClassLoaderData* class_loader);
-  void set_javabase_entry(oop m);
   void add_entry(int index, ModuleEntry* new_entry);
 
 public:
@@ -173,50 +163,34 @@ public:
 
   // Create module in loader's module entry table, if already exists then
   // return null.  Assume Module_lock has been locked by caller.
-  ModuleEntry* locked_create_entry_or_null(oop module, Symbol* module_name,
+  ModuleEntry* locked_create_entry_or_null(Handle jlrM_handle,
+                                           Symbol* module_name,
                                            Symbol* module_version,
                                            Symbol* module_location,
-                                           ClassLoaderData* loader);
+                                           ClassLoaderData* loader_data);
 
   // only lookup module within loader's module entry table
   ModuleEntry* lookup_only(Symbol* name);
 
   ModuleEntry* bucket(int i) {
-    return (ModuleEntry*)Hashtable<oop, mtClass>::bucket(i);
+    return (ModuleEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
   }
 
   ModuleEntry** bucket_addr(int i) {
-    return (ModuleEntry**)Hashtable<oop, mtClass>::bucket_addr(i);
+    return (ModuleEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
   }
 
-  static bool javabase_created() { return _javabase_created; }
-  static void patch_javabase_entries(TRAPS);
-  static ModuleEntryTable* create_module_entry_table(ClassLoaderData* class_loader);
-  static ModuleEntry* java_base_module() { return _java_base_module; }
-  static void set_java_base_module(ModuleEntry* java_base) { _java_base_module = java_base; }
+  static ModuleEntryTable* create_module_entry_table(ClassLoaderData* loader_data);
 
-  unsigned int compute_hash(oop module) {
-    if (module == NULL) {
-      // java.base prior to creation of its j.l.r.M
-      return 0;
-    }
+  // Special handling for java.base
+  static ModuleEntry* javabase_module()                   { return _javabase_module; }
+  static void set_javabase_module(ModuleEntry* java_base) { _javabase_module = java_base; }
+  static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
+                                                                    (_javabase_module->jlrM_module() != NULL)); }
+  static void patch_javabase_entries(Handle jlrM_module, TRAPS);
 
-    ModuleEntryTable* met = ClassLoaderData::the_null_class_loader_data()->modules();
-    assert(met != NULL, "The null class loader's moduleEntry table should be defined");
-    if (_javabase_created && (module == met->lookup_only(vmSymbols::java_base())->module())) {
-      // java.base after creation of its j.l.r.M
-      return 0;
-    } else {
-      return (unsigned int)(module->identity_hash());
-    }
-  }
-
-  int index_for(oop module) {
-    return hash_to_index(compute_hash(module));
-  }
-
-  // GC support
-  void oops_do(OopClosure* f);
+  static unsigned int compute_hash(Symbol* name) { return ((name == NULL) ? 0 : (unsigned int)(name->identity_hash())); }
+  int index_for(Symbol* name) const              { return hash_to_index(compute_hash(name)); }
 
   // purge dead weak references out of reads list
   void purge_all_module_reads();

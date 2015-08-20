@@ -316,16 +316,15 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
-  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists.
+  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists
   static void set_has_bootmodules_jimage(bool val) {
     _has_bootmodules_jimage = val;
   }
 
   static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
 
-  // Read the packages for module java.base from the bootmodules.jimage
-  // file, if it exists. If it does not, assume exploded build.
-  static void define_javabase();
+  // Create the ModuleEntry for java.base
+  static void create_javabase();
 
   // Load individual .class file
   static instanceKlassHandle load_classfile(Symbol* h_name, bool search_append_only, TRAPS);

@@ -667,10 +667,10 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
     fixup_mirror_list()->push(k());
   }
   // Keep list of classes needing java.base module fixup.
-  if (!ModuleEntryTable::javabase_created()) {
+  if (!ModuleEntryTable::javabase_defined()) {
     if (fixup_jlrM_list() == NULL) {
       GrowableArray<Klass*>* list =
-        new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(40, true);
+        new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(500, true);
       set_fixup_jlrM_list(list);
     }
     if (k->oop_is_instance()) {

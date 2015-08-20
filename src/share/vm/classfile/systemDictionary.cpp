@@ -1293,8 +1293,13 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
           // Class is either in the unnamed package or in
           // a named package within the unnamed module.  Either
           // case is outside of java.base, do not attempt to
-          // load the class.
-          return nh;
+          // load the class post java.base definition.  If
+          // java.base has not been defined, let the class load
+          // and its package will be checked later by
+          // ModuleEntryTable::verify_javabase_packages.
+          if (ModuleEntryTable::javabase_defined()) {
+            return nh;
+          }
         } else {
           // Check that the class' package is defined within java.base.
           ModuleEntry* mod_entry = pkg_entry->module();
@@ -1934,10 +1939,9 @@ void SystemDictionary::initialize_wk_klasses_until(WKID limit_id, WKID &start_id
 void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   assert(WK_KLASS(Object_klass) == NULL, "preloaded classes should only be initialized once");
 
-  // Define packages for module java.base from either the exploded build or the
-  // bootmodules.jimage file. This call needs to be done here, after vmSymbols::initialize()
-  // is called but before any classes are pre-loaded.
-  ClassLoader::define_javabase();
+  // Create the ModuleEntry for java.base.  This call needs to be done here,
+  // after vmSymbols::initialize() is called but before any classes are pre-loaded.
+  ClassLoader::create_javabase();
 
   // Preload commonly used klasses
   WKID scan = FIRST_WKID;

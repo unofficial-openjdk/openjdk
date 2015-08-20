@@ -3496,10 +3496,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   initialize_java_lang_classes(main_thread, CHECK_JNI_ERR);
 
-  // Create and patch the java.lang.reflect.Module entry for module java.base
-  // into existing classes.
-  ModuleEntryTable::patch_javabase_entries(CHECK_JNI_ERR);
-
   // We need this for ClassDataSharing - the initial vm.info property is set
   // with the default value of CDS "sharing" which may be reset through
   // command line options.

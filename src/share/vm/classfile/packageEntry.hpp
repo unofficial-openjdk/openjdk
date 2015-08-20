@@ -71,7 +71,7 @@ public:
   void               set_module(ModuleEntry* m) { _module = m; }
 
   // package's export state
-  bool               is_exported() const                 { return _is_exported; } // qualifiedly or unqualifiedly exported
+  bool is_exported() const { return _is_exported; } // qualifiedly or unqualifiedly exported
   bool is_qual_exported() const {
     return (_is_exported && (_qualified_exports != NULL || _is_exported_allUnnamed));
   }
@@ -83,10 +83,10 @@ public:
     _is_exported_allUnnamed = false;
     _qualified_exports = NULL;
   }
-  bool               exported_pending_delete() const     { return (_exported_pending_delete != NULL); }
+  bool exported_pending_delete() const     { return (_exported_pending_delete != NULL); }
 
-  void               set_exported(bool e)                { _is_exported = e; }
-  void               set_exported(ModuleEntry* m);
+  void set_exported(bool e)                { _is_exported = e; }
+  void set_exported(ModuleEntry* m);
 
   void set_is_exported_allUnnamed() {
     if (!is_unqual_exported()) {
@@ -101,13 +101,13 @@ public:
   }
 
   // returns true if the package is defined in the unnamed module
-  bool               in_unnamed_module() const  { return !_module->is_named(); }
+  bool in_unnamed_module() const  { return !_module->is_named(); }
 
   // returns true if the package specifies m as a qualified export
-  bool               is_qexported_to(ModuleEntry* m) const;
+  bool is_qexported_to(ModuleEntry* m) const;
 
   // add the module to the package's qualified exports
-  void               add_qexport(ModuleEntry* m);
+  void add_qexport(ModuleEntry* m);
 
   PackageEntry* next() const {
     return (PackageEntry*)HashtableEntry<Symbol*, mtClass>::next();
@@ -176,6 +176,8 @@ public:
   int index_for(Symbol* name) const {
     return hash_to_index(compute_hash(name));
   }
+
+  void verify_javabase_packages(GrowableArray<Symbol*> *pkg_list);
 
   // purge dead weak references out of exported list
   void purge_all_package_exports();

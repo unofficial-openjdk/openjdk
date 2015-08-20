@@ -4284,15 +4284,20 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       }
     }
 
-    // Obtain this_klass' module
+    // Obtain this_klass' module entry
     ModuleEntry* module_entry = this_klass->module();
     assert(module_entry != NULL, "module_entry should always be set");
+
     // Obtain j.l.r.Module
-    Handle class_module(THREAD, module_entry->is_named() ?
-                        module_entry->module() : (oop)NULL);
+    oop module_jlrM = (oop)NULL;
+    if (module_entry->is_named() &&
+        module_entry->jlrM_module() != NULL) {
+      module_jlrM = JNIHandles::resolve(module_entry->jlrM_module());
+    }
+    Handle jlrM_handle(THREAD, module_jlrM);
 
     // Allocate mirror and initialize static fields
-    java_lang_Class::create_mirror(this_klass, class_loader, class_module, protection_domain,
+    java_lang_Class::create_mirror(this_klass, class_loader, jlrM_handle, protection_domain,
                                    CHECK_(nullHandle));
 
     // Generate any default methods - default methods are interface methods
@@ -4303,8 +4308,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     }
 
     // Add read edges to the unnamed modules of the bootstrap and app class loaders.
-    if (cf_changed_in_CFLH && !class_module.is_null() && module_entry->is_named()) {
-      JvmtiExport::add_default_read_edges(class_module, THREAD);
+    if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named()) {
+      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
     }
 
     // Update the loader_data graph.
