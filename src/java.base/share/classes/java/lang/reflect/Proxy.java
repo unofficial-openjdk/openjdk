@@ -45,7 +45,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.Modules;
+import jdk.internal.module.Modules;
 import sun.misc.ProxyGenerator;
 import sun.misc.Unsafe;
 import sun.misc.VM;

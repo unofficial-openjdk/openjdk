@@ -107,11 +107,10 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.internal.module to
-        jdk.jartool,
-        jdk.jlink;
-    exports jdk.internal.misc to
         java.management,
         java.xml,
+        jdk.jartool,
+        jdk.jlink,
         jdk.scripting.nashorn;
     exports sun.net.dns to
         java.security.jgss,

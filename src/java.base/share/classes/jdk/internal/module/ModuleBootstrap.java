@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.BuiltinClassLoader;
-import jdk.internal.misc.Modules;
 import sun.misc.PerfCounter;
 
 /**

@@ -58,6 +58,7 @@ import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
 
 import jdk.internal.module.ModuleBootstrap;
+import jdk.internal.module.Modules;
 import jdk.internal.module.ServicesCatalog;
 
 /**
@@ -1244,7 +1245,7 @@ public final class System {
         Module base = Object.class.getModule();
         if (base == null)
             throw new InternalError();
-        jdk.internal.misc.Modules.addReads(base, null);
+        Modules.addReads(base, null);
 
         // module system initialized
         sun.misc.VM.initLevel(2);

@@ -23,12 +23,14 @@
  * questions.
  */
 
-package jdk.internal.misc;
+package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
 import java.util.Set;
 
+import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.ClassLoaders;
 import sun.misc.JavaLangReflectModuleAccess;
 import sun.misc.SharedSecrets;
 

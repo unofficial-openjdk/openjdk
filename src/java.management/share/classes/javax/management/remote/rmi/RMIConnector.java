@@ -105,7 +105,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.security.auth.Subject;
-import jdk.internal.misc.Modules;
+import jdk.internal.module.Modules;
 import sun.reflect.misc.ReflectUtil;
 import sun.rmi.server.UnicastRef2;
 import sun.rmi.transport.LiveRef;
