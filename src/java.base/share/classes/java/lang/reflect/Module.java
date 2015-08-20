@@ -51,7 +51,6 @@ import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
 import sun.misc.JavaLangReflectModuleAccess;
 import sun.misc.SharedSecrets;
-import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
@@ -121,8 +120,7 @@ public final class Module {
 
 
     /**
-     * Creates a new named Module. This method is for
-     * Used to create an unnamed Module.
+     * Create the unnamed Module for the given ClassLoader.
      *
      * @see ClassLoader#getUnnamedModule
      */

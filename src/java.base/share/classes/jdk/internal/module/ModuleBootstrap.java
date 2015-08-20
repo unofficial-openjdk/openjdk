@@ -76,7 +76,7 @@ public final class ModuleBootstrap {
         ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
 
         // Once we have the system module path then we define the base module.
-        // We do this here that java.base is defined to the VM as early as
+        // We do this here so that java.base is defined to the VM as early as
         // possible and also that resources in the base module can be located
         // for error messages that may happen from here on.
         Optional<ModuleReference> obase = systemModulePath.find(JAVA_BASE);
