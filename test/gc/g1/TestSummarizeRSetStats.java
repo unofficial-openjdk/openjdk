@@ -27,6 +27,7 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management/sun.management
+ * @ignore 8133499
  * @build TestSummarizeRSetStatsTools TestSummarizeRSetStats
  * @summary Verify output of -XX:+G1SummarizeRSetStats
  * @run main/othervm TestSummarizeRSetStats
