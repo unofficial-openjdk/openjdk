@@ -81,9 +81,6 @@ import sun.security.util.SecurityConstants;
 
 public final class Module {
 
-    private static final String JAVA_BASE = "java.base";
-
-
     // module name and loader, these fields are read by VM
     private final String name;
     private final ClassLoader loader;
@@ -93,28 +90,38 @@ public final class Module {
 
 
     /**
-     * Invoked by the VM to create java.base early in the startup.
+     * Creates a new named Module. The resulting Module will be defined to the
+     * VM but will not read any other modules, will not have any exports setup
+     * and will not be registered in the service catalog.
      */
-    private Module(ClassLoader loader, String name) {
-        if (!name.equals(JAVA_BASE))
-            throw new InternalError();
-        this.name = name;
-        this.loader = loader;
-        this.descriptor = null;
-    }
+    private Module(ClassLoader loader, ModuleDescriptor descriptor, URI uri) {
 
-    /**
-     * Used to create named Modules, except for java.base.
-     */
-    private Module(ClassLoader loader, ModuleDescriptor descriptor) {
         this.name = descriptor.name();
         this.loader = loader;
-
         this.descriptor = descriptor;
-        this.packages = descriptor.packages();
+
+        Set<String> packages = descriptor.packages();
+        this.packages = packages;
+
+        // define module to VM
+
+        int n = packages.size();
+        String[] array = new String[n];
+        int i = 0;
+        for (String pn : packages) {
+            array[i++] = pn.replace('.', '/');
+        }
+
+        Version version = descriptor.version().orElse(null);
+        String vs = Objects.toString(version, "");
+        String loc = Objects.toString(uri, null);
+
+        defineModule0(this, vs, loc, array);
     }
 
+
     /**
+     * Creates a new named Module. This method is for
      * Used to create an unnamed Module.
      *
      * @see ClassLoader#getUnnamedModule
@@ -127,6 +134,20 @@ public final class Module {
         // unnamed modules are loose
         this.loose = true;
     }
+
+
+    /**
+     * Creates a named module but without defining the module to the VM.
+     *
+     * @apiNote This constructor is for VM white-box testing.
+     */
+    private Module(ClassLoader loader, ModuleDescriptor descriptor) {
+        this.name = descriptor.name();
+        this.loader = loader;
+        this.descriptor = descriptor;
+        this.packages = descriptor.packages();
+    }
+
 
 
     /**
@@ -718,59 +739,6 @@ public final class Module {
     // -- creating Module objects --
 
     /**
-     * Define a new Module to the runtime. The resulting Module will be
-     * defined to the VM but will not read any other modules or have any
-     * exports. This method does not register the module with its class
-     * loader or register the module in the service catalog.
-     */
-    static Module defineModule(ClassLoader loader,
-                               ModuleDescriptor descriptor,
-                               URI uri)
-    {
-        Module m;
-
-        Set<String> packages = descriptor.packages();
-
-        // define module to VM, except java.base as it is defined by VM
-        String name = descriptor.name();
-        if (loader == null && name.equals(JAVA_BASE)) {
-            m = Object.class.getModule();
-
-            // set descriptor and packages fields
-            try {
-                final Unsafe U = Unsafe.getUnsafe();
-                Class<?> c = Module.class;
-                long address = U.objectFieldOffset(c.getDeclaredField("descriptor"));
-                U.putObject(m, address, descriptor);
-            } catch (Exception e) {
-                throw new Error(e);
-            }
-            m.packages = packages;
-
-        } else {
-            m = new Module(loader, descriptor);
-
-            // define module to VM
-
-            int n = packages.size();
-            String[] array = new String[n];
-            int i = 0;
-            for (String pn : packages) {
-                array[i++] = pn.replace('.', '/');
-            }
-
-            Version version = descriptor.version().orElse(null);
-            String vs = Objects.toString(version, "");
-
-            String loc = Objects.toString(uri, null);
-
-            defineModule0(m, vs, loc, array);
-        }
-
-        return m;
-    }
-
-    /**
      * Defines each of the module in the given configuration to the runtime.
      *
      * @return a map of module name to runtime {@code Module}
@@ -789,7 +757,14 @@ public final class Module {
             String name = descriptor.name();
             ClassLoader loader = clf.loaderForModule(name);
             URI uri = mref.location().orElse(null);
-            Module m = defineModule(loader, descriptor, uri);
+
+            Module m;
+            if (loader == null && name.equals("java.base")) {
+                m = Object.class.getModule();
+            } else {
+                m = new Module(loader, descriptor, uri);
+            }
+
             modules.put(name, m);
             loaders.put(name, loader);
         }
@@ -977,7 +952,7 @@ public final class Module {
                 public Module defineModule(ClassLoader loader,
                                            ModuleDescriptor descriptor,
                                            URI uri) {
-                   return Module.defineModule(loader, descriptor, uri);
+                   return new Module(loader, descriptor, uri);
                 }
                 @Override
                 public void addReads(Module m1, Module m2) {

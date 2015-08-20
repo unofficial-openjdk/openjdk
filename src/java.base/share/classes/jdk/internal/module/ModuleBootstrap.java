@@ -75,14 +75,17 @@ public final class ModuleBootstrap {
         // system module path, aka the installed modules
         ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
 
-        // Once we have the system module path then we define the base module
-        // to the boot loader. We do this here so that resources in the base
-        // module can be located for error messages that may happen from here
-        // on.
+        // Once we have the system module path then we define the base module.
+        // We do this here that java.base is defined to the VM as early as
+        // possible and also that resources in the base module can be located
+        // for error messages that may happen from here on.
         Optional<ModuleReference> obase = systemModulePath.find(JAVA_BASE);
         if (!obase.isPresent())
             throw new InternalError(JAVA_BASE + " not found");
-        BootLoader.loadModule(obase.get());
+        ModuleReference base = obase.get();
+        BootLoader.loadModule(base);
+        Modules.defineModule(null, base.descriptor(), base.location().orElse(null));
+
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath

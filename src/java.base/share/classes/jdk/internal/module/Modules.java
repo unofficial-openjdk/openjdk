@@ -27,6 +27,7 @@ package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
+import java.net.URI;
 import java.util.Set;
 
 import jdk.internal.misc.BootLoader;
@@ -50,9 +51,29 @@ public class Modules {
     private static final JavaLangReflectModuleAccess JLRMA
         = SharedSecrets.getJavaLangReflectModuleAccess();
 
+
+    /**
+     * Creates a new Module. The module has the given ModuleDescriptor and
+     * is defined to the given class loader.
+     *
+     * The resulting Module is in a larva state in that it does not not read
+     * any other module and does not have any exports.
+     *
+     * The URI is for information purposes only.
+     */
+    public static Module defineModule(ClassLoader loader,
+                                      ModuleDescriptor descriptor,
+                                      URI uri)
+    {
+        return JLRMA.defineModule(loader, descriptor, uri);
+    }
+
     /**
      * Define a new module to the VM. The module has the given set of
      * concealed packages and is defined to the given class loader.
+     *
+     * The resulting Module is in a larva state in that it does not not read
+     * any other module and does not have any exports.
      */
     public static Module defineModule(ClassLoader loader,
                                       String name,
