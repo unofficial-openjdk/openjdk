@@ -91,7 +91,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Module;
 import java.lang.reflect.Method;
-import jdk.internal.misc.Modules;
+import jdk.internal.module.Modules;
 
 /**
  * A wrapper around MethodHandles.Lookup that masks checked exceptions in those cases when you're looking up methods
