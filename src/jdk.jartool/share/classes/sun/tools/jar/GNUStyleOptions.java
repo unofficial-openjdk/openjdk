@@ -57,14 +57,14 @@ class GNUStyleOptions {
             // Main operations
             new Option(false, OptionType.MAIN_OPERATION, "--create", "-c") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.iflag || tool.tflag || tool.uflag || tool.xflag)
+                    if (tool.iflag || tool.tflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.cflag = true;
                 }
             },
             new Option(true, OptionType.MAIN_OPERATION, "--generate-index", "-i") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.tflag || tool.uflag || tool.xflag)
+                    if (tool.cflag || tool.tflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.iflag = true;
                     tool.rootjar = arg;
@@ -72,23 +72,30 @@ class GNUStyleOptions {
             },
             new Option(false, OptionType.MAIN_OPERATION, "--list", "-t") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag || tool.uflag || tool.xflag)
+                    if (tool.cflag || tool.iflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.tflag = true;
                 }
             },
             new Option(false, OptionType.MAIN_OPERATION, "--update", "-u") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag || tool.tflag || tool.xflag)
+                    if (tool.cflag || tool.iflag || tool.tflag || tool.xflag || tool.printModuleDescriptor)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.uflag = true;
                 }
             },
             new Option(false, OptionType.MAIN_OPERATION, "--extract", "-x") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag)
+                    if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.printModuleDescriptor)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.xflag = true;
+                }
+            },
+            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor") {
+                void process(Main tool, String opt, String arg) throws BadArgs {
+                    if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.xflag)
+                        throw new BadArgs("error.multiple.main.operations").showUsage(true);
+                    tool.printModuleDescriptor = true;
                 }
             },
 

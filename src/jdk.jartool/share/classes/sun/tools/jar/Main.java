@@ -27,10 +27,13 @@ package sun.tools.jar;
 
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -39,11 +42,12 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.*;
 import java.util.jar.*;
 import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 import java.text.MessageFormat;
 
 import jdk.internal.module.Hasher;
@@ -51,6 +55,7 @@ import jdk.internal.module.ModuleInfoExtender;
 import sun.misc.JarIndex;
 import static sun.misc.JarIndex.INDEX_NAME;
 import static java.util.jar.JarFile.MANIFEST_NAME;
+import static java.util.stream.Collectors.joining;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
@@ -110,6 +115,7 @@ class Main {
     Info info;
 
     /* Modular jar related options */
+    boolean printModuleDescriptor;
     Version moduleVersion;
     Pattern dependencesToHash;
     ModuleFinder moduleFinder = ModuleFinder.empty();
@@ -399,6 +405,18 @@ class Main {
                 }
             } else if (iflag) {
                 genIndex(rootjar, files);
+            } else if (printModuleDescriptor) {
+                FileInputStream fis;
+                if (fname != null) {
+                    fis = new FileInputStream(fname);
+                } else {
+                    fis = new FileInputStream(FileDescriptor.in);
+                }
+                try (FileInputStream fin = fis) {
+                    boolean found = printModuleDescriptor(fin);
+                    if (!found)
+                        error(getMsg("error.module.descriptor.not.found"));
+                }
             }
         } catch (IOException e) {
             fatalError(e);
@@ -537,7 +555,7 @@ class Main {
             return true;
         }
 
-        if (!cflag && !tflag && !xflag && !uflag && !iflag) {
+        if (!cflag && !tflag && !xflag && !uflag && !iflag && !printModuleDescriptor) {
             error(getMsg("error.bad.option"));
             usageError();
             return false;
@@ -1600,6 +1618,94 @@ class Main {
     }
 
     // Modular jar support
+
+    static <T> String toString(Set<T> set,
+                               CharSequence prefix,
+                               CharSequence suffix ) {
+        if (set.isEmpty())
+            return "";
+
+        return set.stream().map(e -> e.toString())
+                           .collect(joining(", ", prefix, suffix));
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean printModuleDescriptor(FileInputStream fis)
+        throws IOException
+    {
+        try (BufferedInputStream bis = new BufferedInputStream(fis);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+
+            ZipEntry e;
+            while ((e = zis.getNextEntry()) != null) {
+                if (e.getName().equals(MODULE_INFO)) {
+                    ModuleDescriptor md = ModuleDescriptor.read(zis);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("\nName:\n  " + md.toNameAndVersion());
+
+                    Set<Requires> requires = md.requires();
+                    if (!requires.isEmpty()) {
+                        sb.append("\nRequires:");
+                        requires.forEach(r ->
+                                sb.append("\n  ").append(r.name())
+                                        .append(toString(r.modifiers(), " [ ", " ]")));
+                    }
+
+                    Set<String> s = md.uses();
+                    if (!s.isEmpty()) {
+                        sb.append("\nUses: ");
+                        s.forEach(sv -> sb.append("\n  ").append(sv));
+                    }
+
+                    Set<Exports> exports = md.exports();
+                    if (!exports.isEmpty()) {
+                        sb.append("\nExports:");
+                        exports.forEach(sv -> sb.append("\n  ").append(sv));
+                    }
+
+                    Map<String,Provides> provides = md.provides();
+                    if (!provides.isEmpty()) {
+                        sb.append("\nProvides: ");
+                        provides.values().forEach(p ->
+                                sb.append("\n  ").append(p.service())
+                                  .append(" with ")
+                                  .append(toString(p.providers(), "", "")));
+                    }
+
+                    Optional<String> mc = md.mainClass();
+                    if (mc.isPresent())
+                        sb.append("\nMain class:\n  " + mc.get());
+
+                    s = md.conceals();
+                    if (!s.isEmpty()) {
+                        sb.append("\nConceals:");
+                        s.forEach(p -> sb.append("\n  ").append(p));
+                    }
+
+                    try {
+                        Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
+                        m.setAccessible(true);
+                        Optional<Hasher.DependencyHashes> optHashes =
+                                (Optional<Hasher.DependencyHashes>) m.invoke(md);
+
+                        if (optHashes.isPresent()) {
+                            Hasher.DependencyHashes hashes = optHashes.get();
+                            sb.append("\nHashes:");
+                            sb.append("\n  Algorithm: " + hashes.algorithm());
+                            hashes.names().stream().forEach(mod ->
+                                    sb.append("\n  ").append(mod)
+                                      .append(": ").append(hashes.hashFor(mod)));
+                        }
+                    } catch (ReflectiveOperationException x) {
+                        throw new InternalError(x);
+                    }
+                    output(sb.toString());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     private static String toBinaryName(String classname) {
         return (classname.replace('.', '/')) + ".class";
