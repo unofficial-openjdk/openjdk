@@ -346,7 +346,7 @@ create-buildjdk-compile:
 	    create-buildjdk-helper \
 	    SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
 	    HOTSPOT_SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
-	    CREATE_BUILDJDK=true)
+	    CREATING_BUILDJDK=true)
 
 ALL_TARGETS += create-buildjdk-copy create-buildjdk-compile
 
@@ -466,8 +466,11 @@ else
   $(foreach m, $(RMIC_MODULES), $(eval $m-rmic: $m-java))
 
   # Declare dependencies from <module>-lib to <module>-java
-  # Skip modules that do not have java source.
-  $(foreach m, $(filter $(JAVA_MODULES), $(LIBS_MODULES)), $(eval $m-libs: $m-java))
+  # Skip modules that do not have java source. When creating a BUILD_JDK, the
+  # java compilation has already been done by the normal build and copied in.
+  ifneq ($(CREATING_BUILDJDK), true)
+    $(foreach m, $(filter $(JAVA_MODULES), $(LIBS_MODULES)), $(eval $m-libs: $m-java))
+  endif
 
   # Declare dependencies from all other <module>-lib to java.base-lib
   $(foreach t, $(filter-out java.base-libs, $(LIBS_TARGETS)), \
