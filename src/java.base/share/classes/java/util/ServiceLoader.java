@@ -38,6 +38,7 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
@@ -453,23 +454,19 @@ public final class ServiceLoader<S>
     private Iterator<String> parse(Class<?> service, URL u)
         throws ServiceConfigurationError
     {
-        InputStream in = null;
-        BufferedReader r = null;
         ArrayList<String> names = new ArrayList<>();
         try {
-            in = u.openStream();
-            r = new BufferedReader(new InputStreamReader(in, "utf-8"));
-            int lc = 1;
-            while ((lc = parseLine(service, u, r, lc, names)) >= 0);
-        } catch (IOException x) {
-            fail(service, "Error reading configuration file", x);
-        } finally {
-            try {
-                if (r != null) r.close();
-                if (in != null) in.close();
-            } catch (IOException y) {
-                fail(service, "Error closing configuration file", y);
+            URLConnection uc = u.openConnection();
+            uc.setUseCaches(false);
+            try (InputStream in = uc.getInputStream();
+                 BufferedReader r
+                     = new BufferedReader(new InputStreamReader(in, "utf-8")))
+            {
+                int lc = 1;
+                while ((lc = parseLine(service, u, r, lc, names)) >= 0);
             }
+        } catch (IOException x) {
+            fail(service, "Error accessing configuration file", x);
         }
         return names.iterator();
     }
