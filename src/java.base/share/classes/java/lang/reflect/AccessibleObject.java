@@ -104,7 +104,7 @@ public class AccessibleObject implements AnnotatedElement {
      * @param array the array of AccessibleObjects
      * @param flag  the new value for the {@code accessible} flag
      *              in each object
-     * @throws InaccessibleObjectException
+     * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
@@ -151,21 +151,17 @@ public class AccessibleObject implements AnnotatedElement {
      * java.lang.reflect.Constructor} object for the class
      * {@code java.lang.Class}, and {@code flag} is true.
      *
-     * @apiNote This method is @CS and so should be final. We need to decide
-     * whether to change it to final (compatibility impact should be low)
-     * or alternatively have Constructor, Method and Field override this
-     * method. In addition, this method needs to be updated to disallow
-     * access to java.lang.reflect.Module. We need to create a solution for
-     * VM white-box tests before doing that.
+     * @apiNote This method needs to be updated to disallow access to
+     * java.lang.reflect.Module.
      *
      * @param flag the new value for the {@code accessible} flag
-     * @throws InaccessibleObjectException
-     * @throws SecurityException if the request is denied.
+     * @throws InaccessibleObjectException if access cannot be enabled
+     * @throws SecurityException if the request is denied
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
     @CallerSensitive
-    public void setAccessible(boolean flag) throws SecurityException {
+    public final void setAccessible(boolean flag) throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
         if (flag) checkCanSetAccessible(Reflection.getCallerClass(), this);
