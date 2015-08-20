@@ -23,8 +23,7 @@
 
 /**
  * @test
- * @library ../../lib
- * @modules java.base/jdk.internal.module
+ * @library ../lib
  * @build AutomaticModulesTest ModuleUtils
  * @run testng AutomaticModulesTest
  * @summary Basic tests for automatic modules
@@ -61,7 +60,9 @@ import static org.testng.Assert.*;
 @Test
 public class AutomaticModulesTest {
 
-    private static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
+    private static final Path USER_DIR
+         = Paths.get(System.getProperty("user.dir"));
+
 
     @DataProvider(name = "names")
     public Object[][] createNames() {

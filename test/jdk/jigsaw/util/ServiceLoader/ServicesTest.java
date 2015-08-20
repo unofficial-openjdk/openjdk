@@ -39,7 +39,7 @@ import static org.testng.Assert.*;
 
 /**
  * @test
- * @library ../lib /lib/testlibrary
+ * @library ../../lib /lib/testlibrary
  * @build ServicesTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng ServicesTest
  * @summary Tests ServiceLoader to locate service providers on the module path

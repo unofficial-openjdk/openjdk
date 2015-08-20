@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @library ../lib
+ * @library ../../lib
  * @build LayerTest ModuleUtils
  * @run testng LayerTest
  * @summary Basic tests for java.lang.reflect.Layer;
