@@ -4421,7 +4421,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1439975849
+DATE_WHEN_GENERATED=1440082962
 
 ###############################################################################
 #
@@ -13924,6 +13924,11 @@ $as_echo "$COMPILE_TYPE" >&6; }
   fi
   LP64=$A_LP64
 
+  if test "x$OPENJDK_BUILD_CPU_BITS" = x64; then
+    if test "x$OPENJDK_BUILD_OS" = xlinux || test "x$OPENJDK_BUILD_OS" = xmacosx; then
+      OPENJDK_BUILD_ADD_LP64="-D_LP64=1"
+    fi
+  fi
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
@@ -43196,9 +43201,6 @@ fi
       ;;
   esac
 
-  # Setup LP64
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK $ADD_LP64"
-
   # Set some common defines. These works for all compilers, but assume
   # -D is universally accepted.
 
@@ -43230,8 +43232,10 @@ fi
 
   # Setup target CPU
   OPENJDK_TARGET_CCXXFLAGS_JDK="$OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $ADD_LP64 \
       -DARCH='\"$OPENJDK_TARGET_CPU_LEGACY\"' -D$OPENJDK_TARGET_CPU_LEGACY"
   OPENJDK_BUILD_CCXXFLAGS_JDK="$OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $OPENJDK_BUILD_ADD_LP64 \
       -DARCH='\"$OPENJDK_BUILD_CPU_LEGACY\"' -D$OPENJDK_BUILD_CPU_LEGACY"
 
   # Setup debug/release defines

@@ -411,6 +411,11 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS],
     fi
   fi
   AC_SUBST(LP64,$A_LP64)
+  if test "x$OPENJDK_BUILD_CPU_BITS" = x64; then
+    if test "x$OPENJDK_BUILD_OS" = xlinux || test "x$OPENJDK_BUILD_OS" = xmacosx; then
+      OPENJDK_BUILD_ADD_LP64="-D_LP64=1"
+    fi
+  fi
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
