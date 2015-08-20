@@ -410,7 +410,7 @@ JvmtiExport::add_default_read_edges(Handle h_module, TRAPS) {
   // Invoke the transformedByAgent method
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result,
-                         SystemDictionary::misc_Modules_klass(),
+                         SystemDictionary::module_Modules_klass(),
                          vmSymbols::transformedByAgent_name(),
                          vmSymbols::transformedByAgent_signature(),
                          h_module,

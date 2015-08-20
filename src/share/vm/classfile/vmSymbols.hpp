@@ -600,7 +600,7 @@
   template(addThreadDumpForSynchronizers_signature,    "(Ljava/lang/management/ThreadInfo;[Ljava/lang/Object;)V")   \
                                                                                                                   \
   /* JVMTI/java.lang.instrument support and VM Attach mechanism */                                                \
-  template(jdk_internal_misc_Modules,                  "jdk/internal/misc/Modules")                               \
+  template(jdk_internal_module_Modules,                "jdk/internal/module/Modules")                             \
   template(sun_misc_VMSupport,                         "sun/misc/VMSupport")                                      \
   template(transformedByAgent_name,                    "transformedByAgent")                                      \
   template(transformedByAgent_signature,               "(Ljava/lang/reflect/Module;)V")                           \
