@@ -23,7 +23,7 @@
 # questions.
 #
 
-# Include the legacy hotspot-spec.gmk (which in turns includes spec.gmk)H
+# Include the legacy hotspot-spec.gmk (which in turns includes spec.gmk)
 BASE_SPEC:=$(SPEC)
 HOTSPOT_SPEC := $(dir $(SPEC))hotspot-spec.gmk
 include $(HOTSPOT_SPEC)

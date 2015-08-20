@@ -65,9 +65,9 @@ ifneq ($(wildcard $(MODULES_CMDS_OUTPUTDIR)/$(MODULE)), )
 endif
 
 ifneq ($(wildcard $(MODULES_LIBS_OUTPUTDIR)/$(MODULE)), )
-# OS X stores symbol information in a .dylib file inside a .dSYM directory -
-# that file should not be stripped, so we prune the tree at the .dSYM directory.
-# Example: support/modules_libs/java.base/libjsig.dylib.dSYM/Contents/Resources/DWARF/libjsig.dylib
+  # OS X stores symbol information in a .dylib file inside a .dSYM directory -
+  # that file should not be stripped, so we prune the tree at the .dSYM directory.
+  # Example: support/modules_libs/java.base/libjsig.dylib.dSYM/Contents/Resources/DWARF/libjsig.dylib
   STRIP_LIBS_SRC := \
       $(shell $(FIND) $(MODULES_LIBS_OUTPUTDIR)/$(MODULE) \
         -name '*$(SHARED_LIBRARY_SUFFIX)' -type f -print -o -name "*.dSYM" -prune)
