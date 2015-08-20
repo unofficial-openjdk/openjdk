@@ -47,7 +47,6 @@ import java.security.SecureClassLoader;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -68,6 +67,7 @@ import jdk.internal.misc.BootLoader;
  *
  * @since 1.9
  */
+
 public final class ModuleClassLoader
     extends SecureClassLoader
 {
@@ -93,7 +93,6 @@ public final class ModuleClassLoader
     private final AccessControlContext acc;
 
 
-
     private ModuleClassLoader(Void unused,
                               ClassLoader parent,
                               Set<ModuleReference> modules)
@@ -105,8 +104,15 @@ public final class ModuleClassLoader
 
         for (ModuleReference mref : modules) {
             nameToModule.put(mref.descriptor().name(), mref);
-            mref.descriptor().packages()
-                    .forEach(pn -> packageToModule.put(pn, mref));
+            for (String pn: mref.descriptor().packages()) {
+                ModuleReference other = packageToModule.putIfAbsent(pn, mref);
+                if (other != null) {
+                    String mn1 = mref.descriptor().name();
+                    String mn2 = other.descriptor().name();
+                    throw new IllegalArgumentException("Modules "
+                        + mn1 + " and " + mn2 + " both contain package " + pn);
+                }
+            }
         }
 
         this.parent = parent;
@@ -124,8 +130,11 @@ public final class ModuleClassLoader
      * <p> If there is a security manager then its {@code checkCreateClassLoader}
      * is invoked to ensure that creation of a class loader is allowed. </p>
      *
-     * @throws  SecurityException
-     *          If denied by the security manager
+     * @throws IllegalArgumentException
+     *         If two or more modules in the configuration have the same package
+     *         (exported or concealed)
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public ModuleClassLoader(Configuration cf) {
         this(ClassLoader.getSystemClassLoader(), cf);
@@ -139,58 +148,14 @@ public final class ModuleClassLoader
      * <p> If there is a security manager then its {@code checkCreateClassLoader}
      * is invoked to ensure that creation of a class loader is allowed. </p>
      *
-     * @throws  SecurityException
-     *          If denied by the security manager
+     * @throws IllegalArgumentException
+     *         If two or more modules in the configuration have the same package
+     *         (exported or concealed)
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public ModuleClassLoader(ClassLoader parent, Configuration cf) {
         this(checkCreateClassLoader(), parent, cf.modules());
-    }
-
-    /**
-     * Create a new {@code ModuleClassLoader} that loads classes and resources
-     * from a subset of the modules in the given {@code Configuration}. The
-     * class loader's parent is the system class loader.
-     *
-     * <p> The parameters {@code first} and {@code other} are the names of the
-     * modules in the {@code Configuration} that this class loader should load
-     * from. </p>
-     *
-     * <p> If there is a security manager then its {@code checkCreateClassLoader}
-     * is invoked to ensure that creation of a class loader is allowed. </p>
-     *
-     * @throws  IllegalArgumentException
-     *          If any of the modules are not in the given Configuration
-     * @throws  SecurityException
-     *          If denied by the security manager
-     */
-    public ModuleClassLoader(Configuration cf, String first, String... other) {
-        this(checkCreateClassLoader(),
-             ClassLoader.getSystemClassLoader(),
-             collect(cf, first, other));
-    }
-
-    /**
-     * Create a new {@code ModuleClassLoader} that loads classes and resources
-     * from a subset of the modules in the given {@code Configuration}. The
-     * class loader's parent is the given class loader
-     *
-     * <p> The parameters {@code first} and {@code other} are the names of the
-     * modules in the {@code Configuration} that this class loader should load
-     * from. </p>
-     *
-     * <p> If there is a security manager then its {@code checkCreateClassLoader}
-     * is invoked to ensure that creation of a class loader is allowed. </p>
-     *
-     * @throws  IllegalArgumentException
-     *          If any of the modules are not in the given Configuration
-     * @throws  SecurityException
-     *          If denied by the security manager
-     */
-    public ModuleClassLoader(ClassLoader parent,
-                             Configuration cf,
-                             String first,
-                             String... other) {
-        this(checkCreateClassLoader(), parent, collect(cf, first, other));
     }
 
 
@@ -200,27 +165,6 @@ public final class ModuleClassLoader
             security.checkCreateClassLoader();
         }
         return null;
-    }
-
-    private static Set<ModuleReference> collect(Configuration cf,
-                                                String first,
-                                                String... other)
-    {
-        Set<ModuleReference> modules = new HashSet<>();
-
-        Optional<ModuleReference> omref = cf.findModule(first);
-        if (!omref.isPresent())
-            throw new IllegalArgumentException(first + " not in Configuration");
-        modules.add(omref.get());
-
-        for (String mn : other) {
-            omref = cf.findModule(mn);
-            if (!omref.isPresent())
-                throw new IllegalArgumentException(mn + " not in Configuration");
-            modules.add(omref.get());
-        }
-
-        return modules;
     }
 
 
