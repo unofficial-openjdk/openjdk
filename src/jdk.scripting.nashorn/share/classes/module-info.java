@@ -33,5 +33,12 @@ module jdk.scripting.nashorn {
 
     exports jdk.nashorn.api.scripting;
     exports jdk.nashorn.api.tree;
+
+    exports jdk.nashorn.internal.runtime to
+        jdk.scripting.nashorn.shell;
+    exports jdk.nashorn.internal.objects to
+        jdk.scripting.nashorn.shell;
+    exports jdk.nashorn.tools to
+        jdk.scripting.nashorn.shell;
 }
 
