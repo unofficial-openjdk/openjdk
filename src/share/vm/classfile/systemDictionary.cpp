@@ -1194,6 +1194,11 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     instanceKlassHandle nh = instanceKlassHandle(); // null Handle
     Symbol* class_name = ik->name();
 
+    bool visible = is_shared_class_visible(class_name, ik, class_loader, CHECK_(nh));
+    if (!visible) {
+      return nh;
+    }
+
     // Found the class, now load the superclass and interfaces.  If they
     // are shared, add them to the main system dictionary and reset
     // their hierarchy references (supers, subs, and interfaces).
@@ -1260,6 +1265,40 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
                                              true /* shared class */);
   }
   return ik;
+}
+
+bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
+                                               instanceKlassHandle ik,
+                                               Handle class_loader,
+                                               TRAPS) {
+  int length;
+  TempNewSymbol pkg_name = NULL;
+  ClassLoaderData *loader_data = class_loader_data(class_loader);
+  PackageEntryTable* pkgEntryTable = loader_data->packages();
+  PackageEntry* pkg_entry = NULL;
+
+  const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+  if (pkg_string != NULL) {
+    pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(false));
+    pkg_entry = pkgEntryTable->lookup_only(pkg_name);
+  }
+
+  // Jimage contains only named module. Classes on the '-classpath' are in unnamed module.
+  // Before the module system is initialized, all archived classes in the archive are
+  // visible for boot loader.
+  if (Universe::is_module_initialized()) {
+    // If the class is from a named module, it must from jimage
+    if (pkg_entry != NULL && !pkg_entry->in_unnamed_module()) {
+      ModuleEntry* mod_entry = pkg_entry->module();
+      Symbol* location = mod_entry->location();
+      if (!location->starts_with("jrt:")) {
+          return false;
+      }
+    }
+  } else {
+    assert(class_loader.is_null() && ik->is_shared_boot_class(), "Sanity");
+  }
+  return true;
 }
 #endif // INCLUDE_CDS
 
