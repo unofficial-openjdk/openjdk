@@ -132,6 +132,11 @@ public class ModuleDescriptorTest {
         assertTrue(r2.compareTo(r1) == -n);
     }
 
+    public void testRequiresToString() {
+        Requires r = requires(EnumSet.noneOf(Modifier.class), "foo");
+        assertTrue(r.toString().contains("foo"));
+    }
+
 
     // exports
 
@@ -217,6 +222,18 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = NullPointerException.class )
     public void testExportsWithNullTargets() {
         new Builder("foo").exports("p", (Set<String>) null);
+    }
+
+    public void testExportsToString() {
+        String s = new Builder("foo")
+            .exports("p1", "bar")
+            .build()
+            .exports()
+            .iterator()
+            .next()
+            .toString();
+        assertTrue(s.contains("p1"));
+        assertTrue(s.contains("bar"));
     }
 
 
@@ -490,7 +507,7 @@ public class ModuleDescriptorTest {
     }
 
 
-    // equals/hashCode/compareTo
+    // equals/hashCode/compareTo/toString
 
     public void testEqualsAndHashCode() {
         ModuleDescriptor md1 = new Builder("foo").build();
@@ -505,6 +522,13 @@ public class ModuleDescriptorTest {
         int n = "foo".compareTo("bar");
         assertTrue(md1.compareTo(md2) == n);
         assertTrue(md2.compareTo(md1) == -n);
+    }
+
+    public void testToString() {
+        String s = new Builder("m1").requires("m2").exports("p1").build().toString();
+        assertTrue(s.contains("m1"));
+        assertTrue(s.contains("m2"));
+        assertTrue(s.contains("p1"));
     }
 
 }
