@@ -24,11 +24,14 @@
  */
 package com.sun.tools.javac.file;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -49,6 +52,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.NoSuchElementException;
@@ -119,6 +123,7 @@ public class Locations {
     static final Path JRT_MARKER_FILE = Paths.get("JRT_MARKER_FILE");
 
     Map<Path, FileSystem> fileSystems = new LinkedHashMap<>();
+    List<Closeable> closeables = new ArrayList<>();
 
     Locations() {
         initHandlers();
@@ -126,9 +131,9 @@ public class Locations {
 
     public void close() throws IOException {
         ListBuffer<IOException> list = new ListBuffer<>();
-        fileSystems.forEach((p, fs) -> {
+        closeables.forEach(closeable -> {
             try {
-                fs.close();
+                closeable.close();
             } catch (IOException ex) {
                 list.add(ex);
             }
@@ -1038,6 +1043,7 @@ public class Locations {
                                 String moduleName = readModuleName(fs.getPath("classes/module-info.class"));
                                 Path modulePath = fs.getPath("classes");
                                 fileSystems.put(p, fs);
+                                closeables.add(fs);
                                 fs = null; // prevent fs being closed in the finally clause
                                 return new Pair<>(moduleName, modulePath);
                             } finally {
@@ -1307,13 +1313,16 @@ public class Locations {
         }
 
         private void update(Path p) {
-            // for now, the only valid value is currently active JDK.
+            if (!isCurrentPlatform(p) && !Files.exists(p.resolve("jrt-fs.jar")) && !Files.exists(javaHome.resolve("modules")))
+                throw new IllegalArgumentException(p.toString());
+            javaHome = p;
+            modules = null;
+        }
+
+        private boolean isCurrentPlatform(Path p) {
             Path jh = Paths.get(System.getProperty("java.home"));
             try {
-                if (!Files.isSameFile(p, jh))
-                    throw new IllegalArgumentException(p.toString());
-                javaHome = jh;
-                modules = null;
+                return Files.isSameFile(p, jh);
             } catch (IOException ex) {
                 throw new IllegalArgumentException(p.toString(), ex);
             }
@@ -1326,7 +1335,22 @@ public class Locations {
 
             if (modules == null) {
                 try {
-                    FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+                    FileSystem jrtfs;
+
+                    if (isCurrentPlatform(javaHome)) {
+                        jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+                    } else {
+                        URL javaHomeURL = javaHome.resolve("jrt-fs.jar").toUri().toURL();
+                        ClassLoader currentLoader = Locations.class.getClassLoader();
+                        URLClassLoader fsLoader =
+                                new URLClassLoader(new URL[] {javaHomeURL}, currentLoader);
+
+                        jrtfs = FileSystems.newFileSystem(URI.create("jrt:/"), Collections.emptyMap(), fsLoader);
+
+                        closeables.add(jrtfs);
+                        closeables.add(fsLoader);
+                    }
+
                     modules = jrtfs.getPath("/modules");
                 } catch (FileSystemNotFoundException | ProviderNotFoundException e) {
                     modules = javaHome.resolve("modules");

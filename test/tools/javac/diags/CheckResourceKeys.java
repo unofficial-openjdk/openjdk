@@ -292,6 +292,7 @@ public class CheckResourceKeys {
             "jfxrt.jar",
             "bootmodules.jimage",
             "module-info.class",
+            "jrt-fs.jar",
             // -XD option names
             "process.packages",
             "ignore.symbol.file",
