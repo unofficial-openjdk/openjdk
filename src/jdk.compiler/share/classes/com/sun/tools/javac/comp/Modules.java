@@ -59,6 +59,7 @@ import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.jvm.ClassWriter;
 import com.sun.tools.javac.jvm.JNIWriter;
 import com.sun.tools.javac.main.Option;
@@ -82,6 +83,7 @@ import com.sun.tools.javac.util.Options;
 
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
+import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -96,6 +98,8 @@ public class Modules extends JCTree.Visitor {
     private final Log log;
     private final Names names;
     private final Symtab syms;
+    private final Attr attr;
+    private final TypeEnvs typeEnvs;
     private final JavaFileManager fileManager;
     private final ModuleFinder moduleFinder;
     private final boolean allowModules;
@@ -122,6 +126,8 @@ public class Modules extends JCTree.Visitor {
         log = Log.instance(context);
         names = Names.instance(context);
         syms = Symtab.instance(context);
+        attr = Attr.instance(context);
+        typeEnvs = TypeEnvs.instance(context);
         moduleFinder = ModuleFinder.instance(context);
         fileManager = context.get(JavaFileManager.class);
         allowModules = Source.instance(context).allowModules();
@@ -529,6 +535,83 @@ public class Modules extends JCTree.Visitor {
                 throw t;
             }
         }
+    }
+
+    public Completer getUsesProvidesCompleter() {
+        return sym -> {
+            ModuleSymbol msym = (ModuleSymbol) sym;
+            Env<AttrContext> env = typeEnvs.get(msym);
+            UsesProvidesVisitor v = new UsesProvidesVisitor(msym, env);
+            JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
+            try {
+                env.toplevel.defs.head.accept(v);
+            } finally {
+                log.useSource(prev);
+            }
+        };
+    }
+
+    class UsesProvidesVisitor extends JCTree.Visitor {
+        private final ModuleSymbol msym;
+        private final Env<AttrContext> env;
+
+        public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
+            this.msym = msym;
+            this.env = env;
+        }
+
+        private <T extends JCTree> void acceptAll(List<T> trees) {
+            for (List<T> l = trees; l.nonEmpty(); l = l.tail)
+                l.head.accept(this);
+        }
+
+        public void visitModuleDef(JCModuleDecl tree) {
+            msym.directives = List.nil();
+            msym.provides = List.nil();
+            msym.uses = List.nil();
+            acceptAll(tree.directives);
+            msym.directives = msym.directives.reverse();
+            msym.provides = msym.provides.reverse();
+            msym.uses = msym.uses.reverse();
+
+            if (msym.requires.nonEmpty() && msym.requires.head.flags.contains(RequiresFlag.MANDATED))
+                msym.directives = msym.directives.prepend(msym.requires.head);
+        }
+
+        public void visitExports(JCExports tree) {
+            msym.directives = msym.directives.prepend(tree.directive);
+        }
+
+        public void visitProvides(JCProvides tree) {
+            ModuleSymbol msym = env.toplevel.modle;
+
+            Type st = attr.attribType(tree.serviceName, env, syms.objectType);
+            Type it = attr.attribType(tree.implName, env, st);
+            if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
+                ClassSymbol service = (ClassSymbol) st.tsym;
+                ClassSymbol impl = (ClassSymbol) it.tsym;
+                Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+                msym.provides = msym.provides.prepend(d);
+                msym.directives = msym.directives.prepend(d);
+            }
+        }
+
+        public void visitRequires(JCRequires tree) {
+            ModuleSymbol msym = env.toplevel.modle;
+            msym.directives = msym.directives.prepend(tree.directive);
+        }
+
+        public void visitUses(JCUses tree) {
+            ModuleSymbol msym = env.toplevel.modle;
+            Type st = attr.attribType(tree.qualid, env, syms.objectType);
+            if (st.hasTag(CLASS)) {
+                ClassSymbol service = (ClassSymbol) st.tsym;
+                Directive.UsesDirective d = new Directive.UsesDirective(service);
+                msym.uses = msym.uses.prepend(d);
+                msym.directives = msym.directives.prepend(d);
+            }
+        }
+
     }
 
     private Completer getUnnamedModuleCompleter() {

@@ -375,7 +375,11 @@ public class Symtab {
         errModule = new ModuleSymbol(names.empty, null) { };
         addRootPackageFor(errModule);
 
-        noModule = new ModuleSymbol(names.empty, null) { };
+        noModule = new ModuleSymbol(names.empty, null) {
+            @Override public boolean isNoModule() {
+                return true;
+            }
+        };
         addRootPackageFor(noModule);
 
         noSymbol = new TypeSymbol(NIL, 0, names.empty, Type.noType, rootPackage) {

@@ -871,6 +871,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public PackageSymbol unnamedPackage;
         public Set<PackageSymbol> visiblePackages;
 
+        public Completer usesProvidesCompleter = Completer.NULL_COMPLETER;
+
         /**
          * Create a ModuleSymbol with an associated module-info ClassSymbol.
          * The name of the module may be null, if it is not known yet.
@@ -898,7 +900,16 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isUnnamed() {
-            return name.isEmpty() && owner != null;
+            return name.isEmpty() && owner == null;
+        }
+
+        public boolean isNoModule() {
+            return false;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ElementKind getKind() {
+            return ElementKind.MODULE;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -911,10 +922,19 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return Collections.unmodifiableList(exports);
         }
 
+        public void completeUsesProvides() {
+            if (usesProvidesCompleter != Completer.NULL_COMPLETER) {
+                Completer c = usesProvidesCompleter;
+                usesProvidesCompleter = Completer.NULL_COMPLETER;
+                c.complete(this);
+            }
+        }
+
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public java.util.List<ProvidesDirective> getProvidesDirectives() {
             while (!isCompleted())
                 complete();
+            completeUsesProvides();
             return Collections.unmodifiableList(provides);
         }
 
@@ -922,6 +942,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public java.util.List<UsesDirective> getUsesDirectives() {
             while (!isCompleted())
                 complete();
+            completeUsesProvides();
             return Collections.unmodifiableList(uses);
         }
 
@@ -1030,7 +1051,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @DefinedBy(Api.LANGUAGE_MODEL)
         public Symbol getEnclosingElement() {
-            return null;
+            return modle != null && !modle.isNoModule() ? modle : null;
         }
 
         @DefinedBy(Api.LANGUAGE_MODEL)

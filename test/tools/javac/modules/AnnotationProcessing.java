@@ -34,11 +34,16 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.ModuleElement.ProvidesDirective;
+import javax.lang.model.element.ModuleElement.UsesDirective;
 import javax.lang.model.element.TypeElement;
 
 public class AnnotationProcessing extends ModuleTestBase {
@@ -116,4 +121,128 @@ public class AnnotationProcessing extends ModuleTestBase {
         }
 
     }
+
+    @Test
+    void testVerifyUsesProvides(Path base) throws Exception {
+        Path moduleSrc = base.resolve("module-src");
+        Path m1 = moduleSrc.resolve("m1");
+
+        Path classes = base.resolve("classes");
+
+        Files.createDirectories(classes);
+
+        tb.writeJavaFiles(m1,
+                          "module m1 { exports api; uses api.Api; provides api.Api with impl.Impl; }",
+                          "package api; public class Api { }",
+                          "package impl; public class Impl extends api.Api { }");
+
+        String log = tb.new JavacTask()
+                .options("-doe", "-processor", VerifyUsesProvidesAP.class.getName())
+                .outdir(classes)
+                .files(findJavaFiles(moduleSrc))
+                .run()
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.isEmpty())
+            throw new AssertionError("Unexpected output: " + log);
+    }
+
+    @SupportedAnnotationTypes("*")
+    public static final class VerifyUsesProvidesAP extends AbstractProcessor {
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            TypeElement api = processingEnv.getElementUtils().getTypeElement("api.Api");
+
+            assertNonNull("Cannot find api.Api", api);
+
+            ModuleElement modle = (ModuleElement) processingEnv.getElementUtils().getPackageOf(api).getEnclosingElement();
+
+            assertNonNull("modle is null", modle);
+
+            List<? extends UsesDirective> uses = modle.getUsesDirectives();
+            assertEquals(1, uses.size());
+            assertEquals("api.Api", uses.iterator().next().getService().getQualifiedName().toString());
+
+            List<? extends ProvidesDirective> provides = modle.getProvidesDirectives();
+            assertEquals(1, provides.size());
+            assertEquals("api.Api", provides.iterator().next().getService().getQualifiedName().toString());
+            assertEquals("impl.Impl", provides.iterator().next().getImplementation().getQualifiedName().toString());
+
+            return false;
+        }
+
+        @Override
+        public SourceVersion getSupportedSourceVersion() {
+            return SourceVersion.latest();
+        }
+
+    }
+
+    @Test
+    void testPackageNoModule(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path classes = base.resolve("classes");
+
+        Files.createDirectories(classes);
+
+        tb.writeJavaFiles(src,
+                          "package api; public class Api { }");
+
+        String log = tb.new JavacTask()
+                .options("-processor", VerifyPackageNoModule.class.getName(),
+                         "-source", "8",
+                         "-Xlint:-options")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.isEmpty())
+            throw new AssertionError("Unexpected output: " + log);
+    }
+
+    @SupportedAnnotationTypes("*")
+    public static final class VerifyPackageNoModule extends AbstractProcessor {
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            TypeElement api = processingEnv.getElementUtils().getTypeElement("api.Api");
+
+            assertNonNull("Cannot find api.Api", api);
+
+            ModuleElement modle = (ModuleElement) processingEnv.getElementUtils().getPackageOf(api).getEnclosingElement();
+
+            assertNull("modle is not null", modle);
+
+            return false;
+        }
+
+        @Override
+        public SourceVersion getSupportedSourceVersion() {
+            return SourceVersion.latest();
+        }
+
+    }
+
+    private static void assertNonNull(String msg, Object val) {
+        if (val == null) {
+            throw new AssertionError(msg);
+        }
+    }
+
+    private static void assertNull(String msg, Object val) {
+        if (val != null) {
+            throw new AssertionError(msg);
+        }
+    }
+
+    private static void assertEquals(Object expected, Object actual) {
+        if (!Objects.equals(expected, actual)) {
+            throw new AssertionError("expected: " + expected + "; actual=" + actual);
+        }
+    }
+
 }

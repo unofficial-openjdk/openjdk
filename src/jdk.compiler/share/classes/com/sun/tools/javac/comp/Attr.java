@@ -4314,54 +4314,7 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitModuleDef(JCModuleDecl tree) {
-        ModuleSymbol msym = env.toplevel.modle;
-        msym.directives = List.nil();
-        msym.provides = List.nil();
-        msym.uses = List.nil();
-        attribStats(tree.directives, env);
-        msym.directives = msym.directives.reverse();
-        msym.provides = msym.provides.reverse();
-        msym.uses = msym.uses.reverse();
-
-        if (msym.requires.nonEmpty() && msym.requires.head.flags.contains(RequiresFlag.MANDATED))
-            msym.directives = msym.directives.prepend(msym.requires.head);
-    }
-
-    public void visitExports(JCExports tree) {
-        ModuleSymbol msym = env.toplevel.modle;
-        msym.directives = msym.directives.prepend(tree.directive);
-    }
-
-    public void visitProvides(JCProvides tree) {
-        ModuleSymbol msym = env.toplevel.modle;
-
-//        syms.enterPackage(msym, Convert.packagePart(TreeInfo.fullName(tree.implName))).complete();
-
-        Type st = attribType(tree.serviceName, env, syms.objectType);
-        Type it = attribType(tree.implName, env, st);
-        if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
-            ClassSymbol service = (ClassSymbol) st.tsym;
-            ClassSymbol impl = (ClassSymbol) it.tsym;
-            Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
-            msym.provides = msym.provides.prepend(d);
-            msym.directives = msym.directives.prepend(d);
-        }
-    }
-
-    public void visitRequires(JCRequires tree) {
-        ModuleSymbol msym = env.toplevel.modle;
-        msym.directives = msym.directives.prepend(tree.directive);
-    }
-
-    public void visitUses(JCUses tree) {
-        ModuleSymbol msym = env.toplevel.modle;
-        Type st = attribType(tree.qualid, env, syms.objectType);
-        if (st.hasTag(CLASS)) {
-            ClassSymbol service = (ClassSymbol) st.tsym;
-            Directive.UsesDirective d = new Directive.UsesDirective(service);
-            msym.uses = msym.uses.prepend(d);
-            msym.directives = msym.directives.prepend(d);
-        }
+        tree.sym.completeUsesProvides();
     }
 
     /** Finish the attribution of a class. */

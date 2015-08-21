@@ -720,7 +720,7 @@ public class JavaCompiler {
      */
     public Symbol resolveIdent(String name) {
         //TODO:
-        return resolveIdent(syms.unnamedModule, name);
+        return resolveIdent(modules.getDefaultModule(), name);
     }
 
     /** Resolve an identifier.
