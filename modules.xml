@@ -70,6 +70,9 @@
       <name>java.lang.invoke</name>
     </export>
     <export>
+      <name>java.lang.module</name>
+    </export>
+    <export>
       <name>java.lang.ref</name>
     </export>
     <export>
@@ -216,15 +219,17 @@
     </export>
     <export>
       <name>jdk.internal.jimage</name>
-      <to>jdk.dev</to>
+      <to>jdk.jlink</to>
     </export>
     <export>
       <name>jdk.internal.jimage.decompressor</name>
+      <to>jdk.jlink</to>
       <to>jdk.dev</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm</name>
       <to>java.instrument</to>
+      <to>jdk.jlink</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
     </export>
@@ -248,6 +253,11 @@
       <to>java.instrument</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
+    </export>
+    <export>
+      <name>jdk.internal.module</name>
+      <to>jdk.jlink</to>
+      <to>jdk.jartool</to>
     </export>
     <export>
       <name>jdk.internal</name>
@@ -279,6 +289,7 @@
       <to>jdk.pack200</to>
       <to>jdk.security.auth</to>
       <to>jdk.security.jgss</to>
+      <to>jdk.scripting.nashorn</to>
       <to>jdk.snmp</to>
       <to>java.instrument</to>
     </export>
@@ -433,6 +444,10 @@
     <export>
       <name>sun.text</name>
       <to>java.desktop</to>
+    </export>
+    <export>
+      <name>sun.text.resources</name>
+      <to>jdk.localedata</to>
     </export>
     <export>
       <name>sun.util</name>
@@ -928,6 +943,7 @@
   <module>
     <name>java.se</name>
     <depend re-exports="true">java.activation</depend>
+    <depend re-exports="true">java.annotations.common</depend>
     <depend re-exports="true">java.compact3</depend>
     <depend re-exports="true">java.corba</depend>
     <depend re-exports="true">java.datatransfer</depend>
@@ -1157,7 +1173,6 @@
     <depend re-exports="true">java.activation</depend>
     <depend>java.base</depend>
     <depend>java.compiler</depend>
-    <depend>java.datatransfer</depend>
     <depend>java.desktop</depend>
     <depend>java.logging</depend>
     <depend re-exports="true">java.xml</depend>
@@ -1798,7 +1813,13 @@
     <name>jdk.scripting.nashorn</name>
     <depend>java.base</depend>
     <depend>java.logging</depend>
-    <depend>java.scripting</depend>
+    <depend re-exports="true">java.scripting</depend>
+    <export>
+      <name>jdk.nashorn.api.scripting</name>
+    </export>
+    <export>
+      <name>jdk.nashorn.api.tree</name>
+    </export>
     <export>
       <name>jdk.nashorn.internal.runtime</name>
       <to>jdk.scripting.nashorn.shell</to>

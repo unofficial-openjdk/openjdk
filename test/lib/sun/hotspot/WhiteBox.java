@@ -360,6 +360,18 @@ public class WhiteBox {
                        .findAny()
                        .orElse(null);
   }
+
+  // Jigsaw
+  public native void DefineModule(Object module, String version, String location,
+                                  Object[] packages);
+  public native void AddModuleExports(Object from_module, String pkg, Object to_module);
+  public native void AddReadsModule(Object from_module, Object to_module);
+  public native boolean CanReadModule(Object asking_module, Object target_module);
+  public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
+  public native void AddModulePackage(Object module, String pkg);
+  public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
+  public native void AddModuleExportsToAll(Object module, String pkg);
+
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
     int offset = getOffsetForName0(name);
@@ -386,10 +398,17 @@ public class WhiteBox {
                               .orElse(null);
   }
 
+  // Safepoint Checking
+  public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
+
+  // Image File
   public native boolean readImageFile(String imagePath);
   public native long imageOpenImage(String imagePath, boolean bigEndian);
   public native void imageCloseImage(long id);
   public native long imageGetIndexAddress(long id);
+  // Sharing
+  public native boolean isShared(Object o);
+  public native boolean areSharedStringsIgnored();
   public native long imageGetDataAddress(long id);
   public native boolean imageReadCompressed(long id, long offset,
     ByteBuffer compressedBuffer, long compressedSize,
@@ -402,11 +421,5 @@ public class WhiteBox {
   public native long[] imageFindAttributes(long id, byte[] path);
   public native int[] imageAttributeOffsets(long id);
   public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
-
-  // Safepoint Checking
-  public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
-
-  // Sharing
-  public native boolean isShared(Object o);
-  public native boolean areSharedStringsIgnored();
 }
+

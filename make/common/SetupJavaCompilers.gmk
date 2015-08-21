@@ -38,7 +38,8 @@ JAVAC_WARNINGS := -Xlint:all -Werror
 # and the interim javac, to be run by the boot jdk.
 $(eval $(call SetupJavaCompiler,BOOT_JAVAC, \
     JAVAC := $(JAVAC), \
-    FLAGS := -XDignore.symbol.file=true -g -Xlint:all$(COMMA)-deprecation -Werror))
+    FLAGS := $(BOOT_JDK_SOURCETARGET) -XDignore.symbol.file=true -g \
+        -Xlint:all$(COMMA)-deprecation$(COMMA)-options -Werror))
 
 # Any java code executed during a JDK build to build other parts of the JDK must be
 # executed by the bootstrap JDK (probably with -Xbootclasspath/p: ) and for this
@@ -88,7 +89,7 @@ JDK_BOOTCLASSPATH := $(subst $(SPACE),$(PATH_SEP),\
 $(eval $(call SetupJavaCompiler,GENERATE_USINGJDKBYTECODE, \
     JVM := $(JAVA_SMALL), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -bootclasspath "$(JDK_BOOTCLASSPATH)" $(DISABLE_WARNINGS), \
+    FLAGS := -upgrademodulepath $(JDK_OUTPUTDIR)/modules -systemmodulepath none $(DISABLE_WARNINGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
