@@ -424,11 +424,11 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   }
   }
 }
+#endif
 
 bool ClassPathImageEntry::is_jrt() {
   return ClassLoader::string_ends_with(name(), BOOT_IMAGE_NAME);
 }
-#endif
 
 #if INCLUDE_CDS
 void ClassLoader::exit_with_path_failure(const char* error, const char* message) {
@@ -1539,10 +1539,6 @@ void ClassPathDirEntry::compile_the_world(Handle loader, TRAPS) {
   tty->cr();
 }
 
-bool ClassPathDirEntry::is_jrt() {
-  return false;
-}
-
 void ClassPathZipEntry::compile_the_world(Handle loader, TRAPS) {
   real_jzfile* zip = (real_jzfile*) _zip;
   tty->print_cr("CompileTheWorld : Compiling all classes in %s", zip->name);
@@ -1562,10 +1558,6 @@ void ClassPathZipEntry::compile_the_world(Handle loader, TRAPS) {
       tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
     }
   }
-}
-
-bool ClassPathZipEntry::is_jrt() {
-  return false;
 }
 
 void ClassLoader::compile_the_world() {

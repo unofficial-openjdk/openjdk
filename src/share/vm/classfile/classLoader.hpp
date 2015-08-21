@@ -58,6 +58,7 @@ class ClassPathEntry: public CHeapObj<mtClass> {
     OrderAccess::release_store_ptr(&_next, next);
   }
   virtual bool is_jar_file() = 0;
+  virtual bool is_jrt() = 0;
   virtual const char* name() = 0;
   virtual ImageFileReader* image() = 0;
   // Constructor
@@ -67,7 +68,6 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   virtual ClassFileStream* open_stream(const char* name, TRAPS) = 0;
   // Debugging
   NOT_PRODUCT(virtual void compile_the_world(Handle loader, TRAPS) = 0;)
-  NOT_PRODUCT(virtual bool is_jrt() = 0;)
 };
 
 
@@ -76,13 +76,13 @@ class ClassPathDirEntry: public ClassPathEntry {
   const char* _dir;           // Name of directory
  public:
   bool is_jar_file()       { return false;  }
+  bool is_jrt()            { return false; }
   const char* name()       { return _dir; }
   ImageFileReader* image() { return NULL; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -106,6 +106,7 @@ class ClassPathZipEntry: public ClassPathEntry {
   const char*   _zip_name;   // Name of zip archive
  public:
   bool is_jar_file()       { return true;  }
+  bool is_jrt()            { return false; }
   const char* name()       { return _zip_name; }
   ImageFileReader* image() { return NULL; }
   ClassPathZipEntry(jzfile* zip, const char* zip_name);
@@ -115,7 +116,6 @@ class ClassPathZipEntry: public ClassPathEntry {
   void contents_do(void f(const char* name, void* context), void* context);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -126,6 +126,7 @@ private:
   ImageModuleData* _module_data;
 public:
   bool is_jar_file()  { return false;  }
+  bool is_jrt();
   bool is_open()  { return _image != NULL; }
   const char* name();
   ImageFileReader* image() { return _image; }
@@ -136,7 +137,6 @@ public:
 
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_jrt();)
 };
 
 class PackageHashtable;
