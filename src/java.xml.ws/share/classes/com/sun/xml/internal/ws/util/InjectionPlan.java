@@ -86,7 +86,7 @@ public abstract class InjectionPlan<T, R> {
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 public Object run() {
                     try {
-                        ModuleAccessHelper.ensureAccess(getClass(), field.getType());
+                        ModuleAccessHelper.ensureAccess(getClass(), field.getDeclaringClass());
                         if (!field.isAccessible()) {
                             field.setAccessible(true);
                         }
