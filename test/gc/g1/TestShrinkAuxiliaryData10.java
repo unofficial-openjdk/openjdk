@@ -30,6 +30,7 @@
  * @library /testlibrary /../../test/lib
  * @modules java.base/sun.misc
  *          java.management
+ *          jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.* sun.hotspot.WhiteBox
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData10
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

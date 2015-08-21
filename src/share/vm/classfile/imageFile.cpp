@@ -54,7 +54,7 @@ s4 ImageStrings::hash_code(const char* string, s4 seed) {
 // for precise match (false positive.)
 s4 ImageStrings::find(Endian* endian, const char* name, s4* redirect, u4 length) {
   // If the table is empty, then short cut.
-  if (redirect == NULL || length == 0) {
+  if (!redirect || !length) {
     return NOT_FOUND;
   }
   // Compute the basic perfect hash for name.
@@ -67,7 +67,7 @@ s4 ImageStrings::find(Endian* endian, const char* name, s4* redirect, u4 length)
   //   value > 0 then value is seed for recomputing hash.
   s4 value = endian->get(redirect[index]);
   // if recompute is required.
-  if (value > 0) {
+  if (value > 0 ) {
     // Entry collision value, need to recompute hash.
     hash_code = ImageStrings::hash_code(name, value);
     // Modulo table size.
@@ -168,7 +168,7 @@ ImageModuleData::ImageModuleData(const ImageFileReader* image_file,
 
 // Release module data resource.
 ImageModuleData::~ImageModuleData() {
-  if (_data != NULL) {
+  if (_data) {
     FREE_C_HEAP_ARRAY(u1, _data);
   }
 }
@@ -179,7 +179,7 @@ void ImageModuleData::module_data_name(char* buffer, const char* image_file_name
   // Locate the last slash in the file name path.
   const char* slash = strrchr(image_file_name, os::file_separator()[0]);
   // Trim the path to name and extension.
-  const char* name = slash != NULL ? slash + 1 : (char *)image_file_name;
+  const char* name = slash ? slash + 1 : (char *)image_file_name;
   // Locate the extension period.
   const char* dot = strrchr(name, '.');
   guarantee(dot, "missing extension on jimage name");
@@ -242,26 +242,43 @@ GrowableArray<ImageFileReader*>* ImageFileReader::_reader_table =
 
 // Open an image file, reuse structure if file already open.
 ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
-  // Lock out _reader_table.
-  MutexLocker ml(ImageFileReaderTable_lock);
-  ImageFileReader* reader;
-  // Search for an exist image file.
-  for (int i = 0; i < _reader_table->length(); i++) {
-    // Retrieve table entry.
-    reader = _reader_table->at(i);
-    // If name matches, then reuse (bump up use count.)
-    if (strcmp(reader->name(), name) == 0) {
-      reader->inc_use();
-      return reader;
+  {
+    // Lock out _reader_table.
+    MutexLocker ml(ImageFileReaderTable_lock);
+    // Search for an exist image file.
+    for (int i = 0; i < _reader_table->length(); i++) {
+      // Retrieve table entry.
+      ImageFileReader* reader = _reader_table->at(i);
+      // If name matches, then reuse (bump up use count.)
+      if (strcmp(reader->name(), name) == 0) {
+        reader->inc_use();
+        return reader;
+      }
     }
-  }
+  } // Unlock the mutex
+
   // Need a new image reader.
-  reader = new ImageFileReader(name, big_endian);
+  ImageFileReader* reader = new ImageFileReader(name, big_endian);
   bool opened = reader->open();
   // If failed to open.
   if (!opened) {
     delete reader;
     return NULL;
+  }
+
+  // Lock to update
+  MutexLocker ml(ImageFileReaderTable_lock);
+  // Search for an exist image file.
+  for (int i = 0; i < _reader_table->length(); i++) {
+    // Retrieve table entry.
+    ImageFileReader* existing_reader = _reader_table->at(i);
+    // If name matches, then reuse (bump up use count.)
+    if (strcmp(existing_reader->name(), name) == 0) {
+      existing_reader->inc_use();
+      reader->close();
+      delete reader;
+      return existing_reader;
+    }
   }
   // Bump use count and add to table.
   reader->inc_use();
@@ -307,8 +324,9 @@ ImageFileReader* ImageFileReader::idToReader(u8 id) {
 // Constructor intializes to a closed state.
 ImageFileReader::ImageFileReader(const char* name, bool big_endian) {
   // Copy the image file name.
-  _name = NEW_C_HEAP_ARRAY(char, strlen(name) + 1, mtClass);
-  strcpy(_name, name);
+   int len = (int) strlen(name) + 1;
+  _name = NEW_C_HEAP_ARRAY(char, len, mtClass);
+  strncpy(_name, name, len);
   // Initialize for a closed file.
   _fd = -1;
   _endian = Endian::get_handler(big_endian);
@@ -320,7 +338,7 @@ ImageFileReader::~ImageFileReader() {
   // Ensure file is closed.
   close();
   // Free up name.
-  if (_name != NULL) {
+  if (_name) {
     FREE_C_HEAP_ARRAY(char, _name);
     _name = NULL;
   }
@@ -383,7 +401,7 @@ bool ImageFileReader::open() {
 // Close image file.
 void ImageFileReader::close() {
   // Dealllocate the index.
-  if (_index_data != NULL) {
+  if (_index_data) {
     os::unmap_memory((char*)_index_data, _index_size);
     _index_data = NULL;
   }
@@ -434,7 +452,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     guarantee(next - path + length + 2 < max, "buffer overflow");
     // Append '/module/'.
     *next++ = '/';
-    strcpy(next, module); next += length;
+    strncpy(next, module, length); next += length;
     *next++ = '/';
   }
   // Get parent (package) string.
@@ -446,7 +464,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     // Make sure there is no buffer overflow.
     guarantee(next - path + length + 1 < max, "buffer overflow");
     // Append 'patent/' .
-    strcpy(next, parent); next += length;
+    strncpy(next, parent, length); next += length;
     *next++ = '/';
   }
   // Get base name string.
@@ -456,7 +474,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
   // Make sure there is no buffer overflow.
   guarantee(next - path + length < max, "buffer overflow");
   // Append base name.
-  strcpy(next, base); next += length;
+  strncpy(next, base, length); next += length;
   // Get extension string.
   const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
   // If extension string is not empty string.
@@ -467,7 +485,7 @@ void ImageFileReader::location_path(ImageLocation& location, char* path, size_t 
     guarantee(next - path + length + 1 < max, "buffer overflow");
     // Append '.extension' .
     *next++ = '.';
-    strcpy(next, extension); next += length;
+    strncpy(next, extension, length); next += length;
   }
   // Make sure there is no buffer overflow.
   guarantee((size_t)(next - path) < max, "buffer overflow");
@@ -514,12 +532,13 @@ bool ImageFileReader::verify_location(ImageLocation& location, const char* path)
   return *next == '\0';
 }
 
-// Return the resource data for the supplied location.
+// Return the resource for the supplied location.
 void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_data) const {
   // Retrieve the byte offset and size of the resource.
   u8 offset = location.get_attribute(ImageLocation::ATTRIBUTE_OFFSET);
   u8 uncompressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
   u8 compressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_COMPRESSED);
+  // If the resource is compressed.
   if (compressed_size != 0) {
     ResourceMark rm;
     u1* compressed_data;
@@ -538,6 +557,10 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
     // Decompress resource.
     ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, uncompressed_size,
             &strings, false);
+    // If not memory mapped then release temporary buffer.
+    if (!MemoryMapImage) {
+        FREE_RESOURCE_ARRAY(u1, compressed_data, compressed_size);
+    }
   } else {
     // Read bytes from offset beyond the image index.
     bool is_read = read_at(uncompressed_data, uncompressed_size, _index_size + offset);

@@ -27,6 +27,7 @@
  * @test TestStableShort
  * @summary tests on stable fields and arrays
  * @library /testlibrary /../../test/lib
+ * @ignore 8077176
  * @build TestStableShort StableConfiguration sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main ClassFileInstaller

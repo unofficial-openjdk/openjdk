@@ -25,7 +25,6 @@
 #ifndef SHARE_VM_CLASSFILE_IMAGEDECOMPRESSOR_HPP
 #define SHARE_VM_CLASSFILE_IMAGEDECOMPRESSOR_HPP
 
-#include "runtime/thread.inline.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/imageFile.hpp"
 #include "classfile/symbolTable.hpp"
@@ -104,7 +103,7 @@ public:
   inline static ImageDecompressor* get_decompressor(const char * decompressor_name) {
     Thread* THREAD = Thread::current();
     TempNewSymbol sym = SymbolTable::new_symbol(decompressor_name,
-            (int) strlen(decompressor_name), CHECK_NULL);
+            (int) strlen(decompressor_name), THREAD);
     if (HAS_PENDING_EXCEPTION) {
       warning("can't create symbol\n");
       CLEAR_PENDING_EXCEPTION;
@@ -133,4 +132,43 @@ public:
     const ImageStrings* strings);
 };
 
+/*
+ * Shared Strings decompressor. This decompressor reconstruct the class
+ * constant pool UTF_U entries by retrieving strings stored in jimage strings table.
+ * In addition, if the UTF_8 entry is a descriptor, the descriptor has to be rebuilt,
+ * all java type having been removed from the descriptor and added to the sting table.
+ * eg: "(Ljava/lang/String;I)V" ==> "(L;I)V" and "java/lang", "String"
+ * stored in string table. offsets to the 2 strings are compressed and stored in the
+ * constantpool entry.
+ */
+class SharedStringDecompressor : public ImageDecompressor {
+private:
+  // the constant pool tag for UTF8 string located in strings table
+  static const int externalized_string = 23;
+  // the constant pool tag for UTF8 descriptors string located in strings table
+  static const int externalized_string_descriptor = 25;
+  // the constant pool tag for UTF8
+  static const int constant_utf8 = 1;
+  // the constant pool tag for long
+  static const int constant_long = 5;
+  // the constant pool tag for double
+  static const int constant_double = 6;
+  // array index is the constant pool tag. value is size.
+  // eg: array[5]  = 8; means size of long is 8 bytes.
+  static const u1 sizes[];
+  // bit 5 and 6 are used to store the length of the compressed integer.
+  // size can be 1 (01), 2 (10), 3 (11).
+  // 0x60 ==> 0110000
+  static const int compressed_index_size_mask = 0x60;
+  /*
+   * mask the length bits (5 and 6) and move to the right 5 bits.
+   */
+  inline static int get_compressed_length(char c) { return ((char) (c & compressed_index_size_mask) >> 5); }
+  inline static bool is_compressed(char b1) { return b1 < 0; }
+  static int decompress_int(unsigned char*& value);
+public:
+  SharedStringDecompressor(const Symbol* sym) : ImageDecompressor(sym){}
+  void decompress_resource(u1* data, u1* uncompressed, ResourceHeader* header,
+  const ImageStrings* strings);
+};
 #endif // SHARE_VM_CLASSFILE_IMAGEDECOMPRESSOR_HPP
