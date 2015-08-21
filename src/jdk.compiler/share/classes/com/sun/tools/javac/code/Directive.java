@@ -49,7 +49,7 @@ import com.sun.tools.javac.util.List;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public abstract class Directive {
+public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for RequiresDirective. */
     public enum RequiresFlag {
@@ -86,6 +86,11 @@ public abstract class Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement.DirectiveKind getKind() {
+            return ModuleElement.DirectiveKind.EXPORTS;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public PackageElement getPackage() {
             return packge;
         }
@@ -115,6 +120,11 @@ public abstract class Directive {
         public ProvidesDirective(ClassSymbol service, ClassSymbol impl) {
             this.service = service;
             this.impl = impl;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement.DirectiveKind getKind() {
+            return ModuleElement.DirectiveKind.PROVIDES;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -151,6 +161,11 @@ public abstract class Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement.DirectiveKind getKind() {
+            return ModuleElement.DirectiveKind.REQUIRES;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isPublic() {
             return flags.contains(RequiresFlag.PUBLIC);
         }
@@ -175,6 +190,11 @@ public abstract class Directive {
 
         public UsesDirective(ClassSymbol service) {
             this.service = service;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement.DirectiveKind getKind() {
+            return ModuleElement.DirectiveKind.USES;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)

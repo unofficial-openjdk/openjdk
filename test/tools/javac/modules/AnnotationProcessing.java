@@ -45,6 +45,7 @@ import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.ModuleElement.ProvidesDirective;
 import javax.lang.model.element.ModuleElement.UsesDirective;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 
 public class AnnotationProcessing extends ModuleTestBase {
 
@@ -161,11 +162,11 @@ public class AnnotationProcessing extends ModuleTestBase {
 
             assertNonNull("modle is null", modle);
 
-            List<? extends UsesDirective> uses = modle.getUsesDirectives();
+            List<? extends UsesDirective> uses = ElementFilter.usesIn(modle.getDirectives());
             assertEquals(1, uses.size());
             assertEquals("api.Api", uses.iterator().next().getService().getQualifiedName().toString());
 
-            List<? extends ProvidesDirective> provides = modle.getProvidesDirectives();
+            List<? extends ProvidesDirective> provides = ElementFilter.providesIn(modle.getDirectives());
             assertEquals(1, provides.size());
             assertEquals("api.Api", provides.iterator().next().getService().getQualifiedName().toString());
             assertEquals("impl.Impl", provides.iterator().next().getImplementation().getQualifiedName().toString());

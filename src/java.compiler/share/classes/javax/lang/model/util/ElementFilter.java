@@ -33,6 +33,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
 import javax.lang.model.element.*;
+import javax.lang.model.element.ModuleElement.Directive;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
+import javax.lang.model.element.ModuleElement.ExportsDirective;
+import javax.lang.model.element.ModuleElement.ProvidesDirective;
+import javax.lang.model.element.ModuleElement.RequiresDirective;
+import javax.lang.model.element.ModuleElement.UsesDirective;
 
 
 /**
@@ -229,5 +235,59 @@ public class ElementFilter {
                 set.add(clazz.cast(e));
         }
         return set;
+    }
+
+
+
+    /**
+     * Returns a list of export directives in {@code directives}.
+     * @return a list of export directives in {@code directives}
+     * @param directives the directives to filter
+     */
+    public static List<ExportsDirective>
+            exportsIn(Iterable<? extends Directive> directives) {
+        return listFilter(directives, DirectiveKind.EXPORTS, ExportsDirective.class);
+    }
+
+    /**
+     * Returns a list of provides directives in {@code directives}.
+     * @return a list of provides directives in {@code directives}
+     * @param directives the directives to filter
+     */
+    public static List<ProvidesDirective>
+            providesIn(Iterable<? extends Directive> directives) {
+        return listFilter(directives, DirectiveKind.PROVIDES, ProvidesDirective.class);
+    }
+
+    /**
+     * Returns a list of requires directives in {@code directives}.
+     * @return a list of requires directives in {@code directives}
+     * @param directives the directives to filter
+     */
+    public static List<RequiresDirective>
+            requiresIn(Iterable<? extends Directive> directives) {
+        return listFilter(directives, DirectiveKind.REQUIRES, RequiresDirective.class);
+    }
+
+    /**
+     * Returns a list of uses directives in {@code directives}.
+     * @return a list of uses directives in {@code directives}
+     * @param directives the directives to filter
+     */
+    public static List<UsesDirective>
+            usesIn(Iterable<? extends Directive> directives) {
+        return listFilter(directives, DirectiveKind.USES, UsesDirective.class);
+    }
+
+    // Assumes directiveKind and D are sensible.
+    private static <D extends Directive> List<D> listFilter(Iterable<? extends Directive> directives,
+                                                          DirectiveKind directiveKind,
+                                                          Class<D> clazz) {
+        List<D> list = new ArrayList<>();
+        for (Directive d : directives) {
+            if (d.getKind() == directiveKind)
+                list.add(clazz.cast(d));
+        }
+        return list;
     }
 }

@@ -80,10 +80,27 @@ public interface ModuleElement extends Element, QualifiedNameable {
     @Override
     Element getEnclosingElement();
 
+    List<? extends Directive> getDirectives();
+
+    enum DirectiveKind {
+        /** A "requires [public] module-name" directive. */
+        REQUIRES,
+        /** An "exports package-name [to module-name-list]" directive. */
+        EXPORTS,
+        /** A "uses service-name" directive. */
+        USES,
+        /** A "provides service-name with implementation-name" directive. */
+        PROVIDES
+    };
+
+    interface Directive {
+        DirectiveKind getKind();
+    }
+
     /**
      * A dependency of a module.
      */
-    interface RequiresDirective {
+    interface RequiresDirective extends Directive {
         /**
          * Returns whether or not this is a public dependency.
          * @return whether or not this is a public dependency
@@ -97,16 +114,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
         ModuleElement getDependency();
     }
 
-    /**
-     * Returns the list of dependencies of this module.
-     * @return the list of dependencies of this module
-     */
-    List<? extends RequiresDirective> getRequiresDirectives();
+//    /**
+//     * Returns the list of dependencies of this module.
+//     * @return the list of dependencies of this module
+//     */
+//    List<? extends RequiresDirective> getRequiresDirectives();
 
     /**
      * An exported package of a module.
      */
-    interface ExportsDirective {
+    interface ExportsDirective extends Directive {
         /**
          * Returns the package being exported.
          * @return the package being exported
@@ -122,16 +139,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
         List<? extends ModuleElement> getTargetModules();
     }
 
-    /**
-     * Returns the list of exports made available by this module.
-     * @return the list of exports made available by this module
-     */
-    List<? extends ExportsDirective> getExportsDirectives();
+//    /**
+//     * Returns the list of exports made available by this module.
+//     * @return the list of exports made available by this module
+//     */
+//    List<? extends ExportsDirective> getExportsDirectives();
 
     /**
      * An implementation of a service provided by a module.
      */
-    interface ProvidesDirective {
+    interface ProvidesDirective extends Directive {
         /**
          * Returns the service being provided.
          * @return the service being provided
@@ -145,16 +162,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getImplementation();
     }
 
-    /**
-     * Returns the list of services provided by this module.
-     * @return the list of services provided by this module
-     */
-    List<? extends ProvidesDirective> getProvidesDirectives();
+//    /**
+//     * Returns the list of services provided by this module.
+//     * @return the list of services provided by this module
+//     */
+//    List<? extends ProvidesDirective> getProvidesDirectives();
 
     /**
      * A reference to a service used by a module.
      */
-    interface UsesDirective {
+    interface UsesDirective extends Directive {
         /**
          * Returns the service that is used.
          * @return the service that is used
@@ -162,9 +179,9 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getService();
     }
 
-    /**
-     * Returns the list of services used by this module.
-     * @return the list of services used by this module
-     */
-    List<? extends UsesDirective> getUsesDirectives();
+//    /**
+//     * Returns the list of services used by this module.
+//     * @return the list of services used by this module
+//     */
+//    List<? extends UsesDirective> getUsesDirectives();
 }

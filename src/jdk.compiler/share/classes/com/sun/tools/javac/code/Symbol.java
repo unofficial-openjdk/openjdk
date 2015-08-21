@@ -28,21 +28,24 @@ package com.sun.tools.javac.code;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ElementVisitor;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.NestingKind;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Kinds.Kind;
-import com.sun.tools.javac.code.Attribute.Compound;
-import com.sun.tools.javac.code.TypeAnnotations.AnnotationType;
-import com.sun.tools.javac.code.TypeMetadata.Entry;
-import com.sun.tools.javac.comp.Annotate.AnnotationTypeCompleter;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeMetadata;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Type.*;
@@ -55,7 +58,6 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Name;
 
-import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -859,11 +861,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public JavaFileManager.Location classLocation;
 
         /** All directives, in natural order. */
-        public List<Directive> directives;
-        public List<Directive.RequiresDirective> requires;
-        public List<Directive.ExportsDirective> exports;
-        public List<Directive.ProvidesDirective> provides;
-        public List<Directive.UsesDirective> uses;
+        public List<com.sun.tools.javac.code.Directive> directives;
+        public List<com.sun.tools.javac.code.Directive.RequiresDirective> requires;
+        public List<com.sun.tools.javac.code.Directive.ExportsDirective> exports;
+        public List<com.sun.tools.javac.code.Directive.ProvidesDirective> provides;
+        public List<com.sun.tools.javac.code.Directive.UsesDirective> uses;
 
         public ClassSymbol module_info;
 
@@ -913,13 +915,9 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<RequiresDirective> getRequiresDirectives() {
-            return Collections.unmodifiableList(requires);
-        }
-
-        @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<ExportsDirective> getExportsDirectives() {
-            return Collections.unmodifiableList(exports);
+        public java.util.List<Directive> getDirectives() {
+            completeUsesProvides();
+            return Collections.unmodifiableList(directives);
         }
 
         public void completeUsesProvides() {
@@ -928,22 +926,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 usesProvidesCompleter = Completer.NULL_COMPLETER;
                 c.complete(this);
             }
-        }
-
-        @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<ProvidesDirective> getProvidesDirectives() {
-            while (!isCompleted())
-                complete();
-            completeUsesProvides();
-            return Collections.unmodifiableList(provides);
-        }
-
-        @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<UsesDirective> getUsesDirectives() {
-            while (!isCompleted())
-                complete();
-            completeUsesProvides();
-            return Collections.unmodifiableList(uses);
         }
 
         @Override
