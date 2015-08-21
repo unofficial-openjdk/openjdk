@@ -490,7 +490,6 @@ TOP_SRC_DIRS += \
     $(JAXP_TOPDIR)/src \
     $(JAXWS_TOPDIR)/src \
     $(NASHORN_TOPDIR)/src \
-    $(NASHORN_TOPDIR)/src/$1/share/classes \
     #
 
 SRC_SUBDIRS += $(OPENJDK_TARGET_OS)/classes
