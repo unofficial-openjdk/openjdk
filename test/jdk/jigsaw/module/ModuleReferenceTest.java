@@ -51,13 +51,14 @@ public class ModuleReferenceTest {
         };
     }
 
+
     public void testBasic() throws Exception {
-        ModuleDescriptor descriptor =
-                new ModuleDescriptor.Builder("m")
-                        .exports("p")
-                        .exports("q")
-                        .conceals("p.internal")
-                        .build();
+        ModuleDescriptor descriptor
+            = new ModuleDescriptor.Builder("m")
+                .exports("p")
+                .exports("q")
+                .conceals("p.internal")
+                .build();
 
         URI location = URI.create("module:/m");
 
@@ -67,19 +68,57 @@ public class ModuleReferenceTest {
         assertTrue(mref.location().get().equals(location));
     }
 
+
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         URI location = URI.create("module:/m");
         newModuleReference(null, location);
     }
 
+
     public void testNullLocation() {
-        ModuleDescriptor descriptor =
-                new ModuleDescriptor.Builder("m")
-                        .exports("p")
-                        .build();
+        ModuleDescriptor descriptor
+            = new ModuleDescriptor.Builder("m")
+                    .exports("p")
+                    .build();
         ModuleReference mref = newModuleReference(descriptor, null);
         assertTrue(!mref.location().isPresent());
+    }
+
+
+    public void testEqualsAndHashCode() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .exports("p")
+                .build();
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m1")
+                .exports("p")
+                .build();
+
+        URI location = URI.create("module:/m1");
+        ModuleReference mref1 = newModuleReference(descriptor1, location);
+        ModuleReference mref2 = newModuleReference(descriptor2, location);
+        ModuleReference mref3 = newModuleReference(descriptor1, null);
+
+        assertTrue(mref1.equals(mref1));
+        assertTrue(mref1.equals(mref1));
+        assertTrue(mref2.equals(mref1));
+        assertTrue(mref1.hashCode() == mref2.hashCode());
+
+        assertTrue(mref3.equals(mref3));
+        assertFalse(mref3.equals(mref1));
+        assertFalse(mref1.equals(mref3));
+    }
+
+
+    public void testToString() {
+        ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m1").build();
+        URI location = URI.create("module:/m1");
+        ModuleReference mref = newModuleReference(descriptor, location);
+        String s = mref.toString();
+        assertTrue(s.contains("m1"));
+        assertTrue(s.contains(location.toString()));
     }
 
 }
