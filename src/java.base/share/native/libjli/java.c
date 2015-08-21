@@ -388,7 +388,10 @@ JavaMain(void * _args)
     if (listModules != NULL) {
         ListModules(env, listModules);
         CHECK_EXCEPTION_LEAVE(1);
-        LEAVE();
+        if (what == NULL) {
+            /* No main class or module specified */
+            LEAVE();
+        }
     }
 
     if (printVersion || showVersion) {
@@ -1258,7 +1261,10 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        *pret = 1;
+        /* No main class or module specified */
+        if (listModules == NULL) {
+            *pret = 1;
+        }
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -jar and -cp option are
          * not specified */
