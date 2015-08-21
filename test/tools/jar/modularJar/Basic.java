@@ -22,6 +22,7 @@
  */
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +41,9 @@ import javax.tools.ToolProvider;
 
 import jdk.testlibrary.FileUtils;
 import jdk.testlibrary.JDKToolFinder;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
 import static java.lang.String.format;
 import static java.lang.System.out;
 
@@ -48,27 +52,29 @@ import static java.lang.System.out;
  * @library /lib/testlibrary
  * @build jdk.testlibrary.FileUtils jdk.testlibrary.JDKToolFinder
  * @compile Basic.java
- * @run main Basic
+ * @run testng Basic
  * @summary Basic test for Modular jars
  */
 
 public class Basic {
     static final Path TEST_SRC = Paths.get(System.getProperty("test.src", "."));
     static final Path TEST_CLASSES = Paths.get(System.getProperty("test.classes", "."));
+    static final Path MODULE_CLASSES = TEST_CLASSES.resolve("build");
+
+    // Details based on the checked in module source
+    static TestModuleData FOO = new TestModuleData("foo",
+                                                   "1.123",
+                                                   "jdk.test.foo.Foo",
+                                                   "Hello World!!!", null,
+                                                   "jdk.test.foo.internal");
+    static TestModuleData BAR = new TestModuleData("bar",
+                                                   "4.5.6.7",
+                                                   "jdk.test.bar.Bar",
+                                                   "Hello from Bar!", null,
+                                                   "jdk.test.bar",
+                                                   "jdk.test.bar.internal");
 
     static class TestModuleData {
-        // Details based on the checked in module source
-        static TestModuleData FOO = new TestModuleData("foo",
-                                                       "1.123",
-                                                       "jdk.test.foo.Foo",
-                                                       "Hello World!!!", null,
-                                                       "jdk.test.foo.internal");
-        static TestModuleData BAR = new TestModuleData("bar",
-                                                       "4.5.6.7",
-                                                       "jdk.test.bar.Bar",
-                                                       "Hello from Bar!", null,
-                                                       "jdk.test.bar",
-                                                       "jdk.test.bar.internal");
         final String moduleName;
         final String mainClass;
         final String version;
@@ -138,9 +144,9 @@ public class Basic {
         TestModuleData received = TestModuleData.from(r.output);
         if (expected.message != null)
             check(expected.message.equals(received.message),
-                  "Expected message:", expected.message, ", got:", received.message);
+                    "Expected message:", expected.message, ", got:", received.message);
         check(expected.moduleName.equals(received.moduleName),
-              "Expected moduleName: ", expected.moduleName, ", got:", received.moduleName);
+                "Expected moduleName: ", expected.moduleName, ", got:", received.moduleName);
         check(expected.version.equals(received.version),
                 "Expected version: ", expected.version, ", got:", received.version);
         check(expected.mainClass.equals(received.mainClass),
@@ -161,255 +167,269 @@ public class Basic {
         check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
     };
 
-    public static void main(String[] args) throws Throwable {
-        compileModule(TestModuleData.FOO.moduleName);
-        compileModule(TestModuleData.BAR.moduleName, TEST_CLASSES);
+    @BeforeTest
+    public void compileModules() throws Exception {
+        compileModule(FOO.moduleName);
+        compileModule(BAR.moduleName, MODULE_CLASSES);
         compileModule("baz");  // for service provider consistency checking
-
-        testCreate(TestModuleData.FOO, PASS);
-        testUpdate(TestModuleData.FOO, PASS);
-        testUpdatePartial(TestModuleData.FOO, PASS);
-        testDependences(TestModuleData.FOO, TestModuleData.BAR, BAR_PASS);
-
-        testBadOptions(TestModuleData.FOO, FAIL);
-        testServices();
     }
 
-    static void testCreate(TestModuleData testModule,
-                           BiConsumer<Result,TestModuleData> resultChecker)
-        throws IOException
-    {
-        Path mp = Paths.get(testModule.moduleName + "-create");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void createFoo() throws IOException {
+        Path mp = Paths.get("createFoo");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve(testModule.moduleName);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        Path modularJar = mp.resolve(testModule.moduleName + ".jar");
         jar("--create",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), ".");
-
-        Result r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-
-        resultChecker.accept(r, testModule);
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
     }
 
-    static void testUpdate(TestModuleData testModule,
-                           BiConsumer<Result,TestModuleData> resultChecker)
-        throws IOException
-    {
-        Path mp = Paths.get(testModule.moduleName + "-update");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void updateFoo() throws IOException {
+        Path mp = Paths.get("updateFoo");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve(testModule.moduleName);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        Path modularJar = mp.resolve(testModule.moduleName + ".jar");
         jar("--create",
             "--archive=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "jdk");
-
         jar("--update",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), "module-info.class");
-
-        Result r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-
-        resultChecker.accept(r, testModule);
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
     }
 
-    static void testUpdatePartial(TestModuleData testModule,
-                                  BiConsumer<Result,TestModuleData> resultChecker)
-        throws IOException
-    {
-        Path mp = Paths.get(testModule.moduleName + "-updatePartial");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void partialUpdateFooMainClass() throws IOException {
+        Path mp = Paths.get("partialUpdateFooMainClass");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve(testModule.moduleName);
-        Path modularJar = mp.resolve(testModule.moduleName + ".jar");
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        // just the main class in first create
+        // A "bad" main class in first create ( and no version )
         jar("--create",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + "IAmNotAnEntryPoint",  // no all attributes
+            "--main-class=" + "IAmNotTheEntryPoint",
             "--no-manifest",
             "-C", modClasses.toString(), ".");  // includes module-info.class
-
         jar("--update",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "--no-manifest");
-        Result r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-        resultChecker.accept(r, testModule);
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
+    }
 
-        // just the version in first create
-        FileUtils.deleteFileWithRetry(modularJar);
+    @Test
+    public void partialUpdateFooVersion() throws IOException {
+        Path mp = Paths.get("partialUpdateFooVersion");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        // A "bad" version in first create ( and no main class )
         jar("--create",
-                "--archive=" + modularJar.toString(),
-                "--module-version=" + "100000000",  // no all attributes
-                "--no-manifest",
-                "-C", modClasses.toString(), ".");  // includes module-info.class
-
+            "--archive=" + modularJar.toString(),
+            "--module-version=" + "100000000",
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");  // includes module-info.class
         jar("--update",
-                "--archive=" + modularJar.toString(),
-                "--main-class=" + testModule.mainClass,
-                "--module-version=" + testModule.version,
-                "--no-manifest");
-        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-        resultChecker.accept(r, testModule);
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest");
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
+    }
 
-        // just some files, no concealed packages, in first create
-        FileUtils.deleteFileWithRetry(modularJar);
+    @Test
+    public void partialUpdateFooNotAllFiles() throws IOException {
+        Path mp = Paths.get("partialUpdateFooNotAllFiles");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        // Not all files, and none from non-exported packages,
+        // i.e. no concealed list in first create
         jar("--create",
             "--archive=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "module-info.class",
             "-C", modClasses.toString(), "jdk/test/foo/Foo.class");
-
         jar("--update",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class");
-        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-        resultChecker.accept(r, testModule);
-
-        // all attributes and files
-        FileUtils.deleteFileWithRetry(modularJar);
-        jar("--create",
-            "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
-            "--no-manifest",
-            "-C", modClasses.toString(), ".");
-
-        jar("--update",
-            "--archive=" + modularJar.toString(),
-            "--main-class=" + testModule.mainClass,
-            "--module-version=" + testModule.version,
-            "--no-manifest",
-            "-C", modClasses.toString(), ".");
-        r = java(mp, testModule.moduleName + "/" + testModule.mainClass);
-        resultChecker.accept(r, testModule);
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
     }
 
-    static void testDependences(TestModuleData fooData, TestModuleData barData,
-                                BiConsumer<Result,TestModuleData> resultChecker)
-        throws IOException
-    {
-        Path mp = Paths.get(fooData.moduleName + "-" + barData.moduleName
-                            + "-dependences");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void partialUpdateFooAllFilesAndAttributes() throws IOException {
+        Path mp = Paths.get("partialUpdateFooAllFilesAndAttributes");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve(fooData.moduleName);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        Path modularJar = mp.resolve(fooData.moduleName + ".jar");
+        // all attributes and files
         jar("--create",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + fooData.mainClass,
-            "--module-version=" + fooData.version,
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");
+        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
+        PASS.accept(r, FOO);
+    }
+
+    @Test
+    public void dependencesFooBar() throws IOException {
+        Path mp = Paths.get("testDependencesFooBar");
+        createTestDir(mp);
+
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), ".");
 
-        modClasses = TEST_CLASSES.resolve(barData.moduleName);
-
-        modularJar = mp.resolve(barData.moduleName + ".jar");
+        modClasses = MODULE_CLASSES.resolve(BAR.moduleName);
+        modularJar = mp.resolve(BAR.moduleName + ".jar");
         jar("--create",
             "--archive=" + modularJar.toString(),
-            "--main-class=" + barData.mainClass,
-            "--module-version=" + barData.version,
+            "--main-class=" + BAR.mainClass,
+            "--module-version=" + BAR.version,
             "--modulepath=" + mp.toString(),
             "--hash-dependences=" + "foo",  // dependence on foo
             "--no-manifest",
             "-C", modClasses.toString(), ".");
 
-        Result r = java(mp, barData.moduleName + "/" + barData.mainClass,
+        Result r = java(mp, BAR.moduleName + "/" + BAR.mainClass,
                         "-XaddExports:java.base/jdk.internal.module=bar");
-
-        resultChecker.accept(r, barData);
+        BAR_PASS.accept(r, BAR);
     }
 
-    static void testBadOptions(TestModuleData testModule,
-                               BiConsumer<Result,TestModuleData> resultChecker)
-        throws IOException
-    {
-        Path mp = Paths.get(testModule.moduleName + "-bad-options");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void badOptionsFoo() throws IOException {
+        Path mp = Paths.get("badOptionsFoo");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve(testModule.moduleName);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        Path modularJar = mp.resolve(testModule.moduleName + ".jar");
         Result r = jarWithResult("--create",
                                  "--archive=" + modularJar.toString(),
                                  "--module-version=" + 1.1,   // no module-info.class
                                  "-C", modClasses.toString(), "jdk");
-
-        resultChecker.accept(r, null);  // TODO: expected failure message
+        FAIL.accept(r, null);  // TODO: expected failure message
 
          r = jarWithResult("--create",
                            "--archive=" + modularJar.toString(),
                            "--hash-dependences=" + ".*",   // no module-info.class
                            "-C", modClasses.toString(), "jdk");
-
-        resultChecker.accept(r, null);  // TODO: expected failure message
+        FAIL.accept(r, null);  // TODO: expected failure message
     }
 
-    static void testServices() throws IOException {
-        Path mp = Paths.get("baz" + "-services");
-        out.println("---Testing " + mp.getFileName());
+    @Test
+    public void servicesCreateWithoutFailure() throws IOException {
+        Path mp = Paths.get("servicesCreateWithoutFailure");
         createTestDir(mp);
-        Path modClasses = TEST_CLASSES.resolve("baz");
+        Path modClasses = MODULE_CLASSES.resolve("baz");
         Path modularJar = mp.resolve("baz" + ".jar");
 
         // Positive test, create
-        Result r = jarWithResult("--create",
-                                 "--archive=" + modularJar.toString(),
-                                 "-C", modClasses.toString(), "module-info.class",
-                                 "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
-                                 "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
+        Result r = jarWithResult(
+                "--create",
+                "--archive=" + modularJar.toString(),
+                "-C", modClasses.toString(), "module-info.class",
+                "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+                "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
         out.printf("%s%n", r.output);
         check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+    }
 
-        FileUtils.deleteFileWithRetry(modularJar);
+    @Test
+    public void servicesCreateWithoutServiceImpl() throws IOException {
+        Path mp = Paths.get("servicesWithoutServiceImpl");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path modularJar = mp.resolve("baz" + ".jar");
+
         // Omit service impl
-        r = jarWithResult("--create",
-                          "--archive=" + modularJar.toString(),
-                          "-C", modClasses.toString(), "module-info.class",
-                          "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
+        Result r = jarWithResult(
+                "--create",
+                "--archive=" + modularJar.toString(),
+                "-C", modClasses.toString(), "module-info.class",
+                "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
 
         out.printf("%s%n", r.output);
         check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
+    }
+
+    @Test
+    public void servicesUpdateWithoutFailure() throws IOException {
+        Path mp = Paths.get("servicesUpdateWithoutFailure");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path modularJar = mp.resolve("baz" + ".jar");
 
         // Positive test, update
         jar("--create",
             "--archive=" + modularJar.toString(),
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
             "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
-        r = jarWithResult("--update",
-                          "--archive=" + modularJar.toString(),
-                          "-C", modClasses.toString(), "module-info.class");
+        Result r = jarWithResult(
+                "--update",
+                "--archive=" + modularJar.toString(),
+                "-C", modClasses.toString(), "module-info.class");
         out.printf("%s%n", r.output);
         check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+    }
 
-        FileUtils.deleteFileWithRetry(modularJar);
+    @Test
+    public void servicesUpdateWithoutServiceImpl() throws IOException {
+        Path mp = Paths.get("servicesUpdateWithoutServiceImpl");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path modularJar = mp.resolve("baz" + ".jar");
+
         // Omit service impl
         jar("--create",
             "--archive=" + modularJar.toString(),
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
-        r = jarWithResult("--update",
-                          "--archive=" + modularJar.toString(),
-                          "-C", modClasses.toString(), "module-info.class");
+        Result r = jarWithResult(
+                "--update",
+                "--archive=" + modularJar.toString(),
+                "-C", modClasses.toString(), "module-info.class");
         out.printf("%s%n", r.output);
         check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
     }
+
+    // -- Infrastructure
 
     static void jar(String... args) {
         quickFail(jarWithResult(args));
@@ -432,7 +452,7 @@ public class Basic {
         throws IOException
     {
         Path fooSourcePath = TEST_SRC.resolve("src").resolve(mn);
-        Path build = Files.createDirectories(TEST_CLASSES.resolve(mn));
+        Path build = Files.createDirectories(MODULE_CLASSES.resolve(mn));
         javac(build, mp, fileList(fooSourcePath));
         return build;
     }
@@ -587,5 +607,17 @@ public class Basic {
         for (Object o : failedArgs)
             sb.append(o);
         throw new RuntimeException(sb.toString());
+    }
+
+    // Standalone entry point.
+    public static void main(String[] args) throws Throwable {
+        Basic test = new Basic();
+        test.compileModules();
+        for (Method m : Basic.class.getDeclaredMethods()) {
+            if (m.getAnnotation(Test.class) != null) {
+                System.out.println("Invoking " + m.getName());
+                m.invoke(test);
+            }
+        }
     }
 }

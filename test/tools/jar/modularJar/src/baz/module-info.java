@@ -24,6 +24,6 @@
  */
 
 module baz {
-    exports jdk.test.baz.BazService;
+    exports jdk.test.baz;
     provides jdk.test.baz.BazService with jdk.test.baz.internal.BazServiceImpl;
 }
