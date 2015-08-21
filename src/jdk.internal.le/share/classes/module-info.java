@@ -24,9 +24,13 @@
  */
 
 module jdk.internal.le {
-    //export jdk.internal.jline to jdk.scripting.nashorn;
-    //export jdk.internal.jline.console to jdk.scripting.nashorn;
-    //export jdk.internal.jline.console.completer to jdk.scripting.nashorn;
-    //export jdk.internal.jline.console.history to jdk.scripting.nashorn;
+    exports jdk.internal.jline to
+        jdk.scripting.nashorn.shell;
+    exports jdk.internal.jline.console to
+        jdk.scripting.nashorn.shell;
+    exports jdk.internal.jline.console.completer to
+        jdk.scripting.nashorn.shell;
+    exports jdk.internal.jline.console.history to
+        jdk.scripting.nashorn.shell;
 }
 
