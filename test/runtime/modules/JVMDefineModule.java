@@ -25,15 +25,14 @@
  * @test
  * @library /testlibrary  /../../test/lib /compiler/whitebox ..
  * @modules java.base/sun.misc
- * @ignore
  * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XaddExports:java.base/sun.misc=ALL-UNNAMED -Dsun.reflect.useHotSpotAccessCheck=true JVMDefineModule
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XaddExports:java.base/sun.misc=ALL-UNNAMED -Dsun.reflect.useHotSpotAccessCheck=false JVMDefineModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true JVMDefineModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false JVMDefineModule
  */
 
-import static com.oracle.java.testlibrary.Asserts.*;
+import static jdk.test.lib.Asserts.*;
 
 public class JVMDefineModule {
 
@@ -46,11 +45,10 @@ public class JVMDefineModule {
         assertNotNull(m, "Module should not be null");
         ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage" });
 
-/*
-Invalid test case: ModuleObject() throws IAE
+/* Invalid test, won't compile.
         // Invalid classloader argument, expect an IAE
-        m = ModuleHelper.ModuleObject("mymodule1", new Object(), new String[] { "mypackage1" });
         try {
+            m = ModuleHelper.ModuleObject("mymodule1", new Object(), new String[] { "mypackage1" });
             ModuleHelper.DefineModule(m,  "9.0", "mymodule/here", new String[] { "mypackage1" });
             throw new RuntimeException("Failed to get expected IAE for bad loader");
         } catch(IllegalArgumentException e) {
@@ -68,30 +66,32 @@ Invalid test case: ModuleObject() throws IAE
             ModuleHelper.DefineModule(null,  "9.0", "mymodule/here", new String[] { "mypackage1" });
             throw new RuntimeException("Failed to get expected NPE for null module");
         } catch(NullPointerException e) {
+            if (!e.getMessage().contains("Null module object")) {
+              throw new RuntimeException("Failed to get expected IAE message for null module: " + e.getMessage());
+            }
             // Expected
         }
 
-        // Invalid module argument, expect an IAE or NPE
+        // Invalid module argument, expect an IAE
         try {
             ModuleHelper.DefineModule(new Object(),  "9.0", "mymodule/here", new String[] { "mypackage1" });
             throw new RuntimeException("Failed to get expected IAE or NPE for bad module");
+        } catch(IllegalArgumentException e) {
+            if (!e.getMessage().contains("module is not a subclass")) {
+              throw new RuntimeException("Failed to get expected IAE message for bad module: " + e.getMessage());
+            }
+        }
+
+        // NULL module name, expect an IAE or NPE
+        try {
+            m = ModuleHelper.ModuleObject(null, cl, new String[] { "mypackage2" });
+            ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage2" });
+            throw new RuntimeException("Failed to get expected NPE for NULL module");
         } catch(IllegalArgumentException e) {
             // Expected
         } catch(NullPointerException e) {
             // Expected
         }
-
-/*
-Invalid test case: ModuleObject() throws NPE
-        // NULL module name, expect an NPE
-        m = ModuleHelper.ModuleObject(null, cl, new String[] { "mypackage2" });
-        try {
-            ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage2" });
-            throw new RuntimeException("Failed to get expected NPE for NULL module");
-        } catch(NullPointerException e) {
-            // Expected
-        }
-*/
 
         // module name is java.base, expect an IAE
         m = ModuleHelper.ModuleObject("java.base", cl, new String[] { "mypackage3" });
@@ -99,7 +99,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage3" });
             throw new RuntimeException("Failed to get expected IAE for java.base");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Module java.base is already defined")) {
+              throw new RuntimeException("Failed to get expected IAE message for java.base: " + e.getMessage());
+            }
         }
 
         // Duplicates in package list, expect an IAE
@@ -108,7 +110,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage4", "mypackage5", "mypackage4" });
             throw new RuntimeException("Failed to get IAE for duplicate packages");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Duplicate package name")) {
+              throw new RuntimeException("Failed to get expected IAE message for duplicate package: " + e.getMessage());
+            }
         }
 
         // Empty entry in package list, expect an IAE
@@ -117,7 +121,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackageX", "", "mypackageY" });
             throw new RuntimeException("Failed to get IAE for empty package");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Invalid package name")) {
+              throw new RuntimeException("Failed to get expected IAE message empty package entry: " + e.getMessage());
+            }
         }
 
         // Duplicate module name, expect an IAE
@@ -128,7 +134,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage6a" });
             throw new RuntimeException("Failed to get IAE for duplicate module");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Module module.name is already defined")) {
+              throw new RuntimeException("Failed to get expected IAE message for duplicate module: " + e.getMessage());
+            }
         }
 
         // Package is already defined for class loader, expect an IAE
@@ -137,7 +145,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage6" });
             throw new RuntimeException("Failed to get IAE for existing package");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Package mypackage6 for module dupl.pkg.module already exists for class loader")) {
+              throw new RuntimeException("Failed to get expected IAE message for duplicate package: " + e.getMessage());
+            }
         }
 
         // Empty module name, expect an IAE
@@ -168,8 +178,8 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Bad module name, expect an IAE
-        m = ModuleHelper.ModuleObject("trailingdot.", cl, new String[] { "mypackage9b" });
         try {
+            m = ModuleHelper.ModuleObject("trailingdot.", cl, new String[] { "mypackage9b" });
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9b" });
             throw new RuntimeException("Failed to get expected IAE for trailingdot.");
         } catch(IllegalArgumentException e) {
@@ -201,7 +211,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "your.package" });
             throw new RuntimeException("Failed to get expected IAE for your.package");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Invalid package name")) {
+              throw new RuntimeException("Failed to get expected IAE message for bad package name: " + e.getMessage());
+            }
         }
 
         // Invalid package name, expect an IAE
@@ -210,7 +222,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { ";your/package" });
             throw new RuntimeException("Failed to get expected IAE for ;your.package");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Invalid package name")) {
+              throw new RuntimeException("Failed to get expected IAE message for bad package name: " + e.getMessage());
+            }
         }
 
         // Invalid package name, expect an IAE
@@ -219,7 +233,9 @@ Invalid test case: ModuleObject() throws NPE
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "7[743" });
             throw new RuntimeException("Failed to get expected IAE for package 7[743");
         } catch(IllegalArgumentException e) {
-            // Expected
+            if (!e.getMessage().contains("Invalid package name")) {
+              throw new RuntimeException("Failed to get expected IAE message for bad package name: " + e.getMessage());
+            }
         }
 
         // module version that is null, should be okay

@@ -233,8 +233,6 @@ static void define_javabase_module(Handle h_loader,
 
     // Patch any previously loaded classes' module field with java.base's jlr.Module.
     ModuleEntryTable::patch_javabase_entries(jlrM_handle, CHECK);
-
-    return;
 }
 
 bool Modules::is_package_defined(Symbol* package, Handle h_loader, TRAPS) {
@@ -250,6 +248,10 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
   }
   Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_reflect_Module::is_subclass(jlrM_handle->klass())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "module is not a subclass of java.lang.reflect.Module");
+  }
 
   char* module_name = get_module_name(jlrM_handle(), CHECK);
   if (module_name == NULL) {
@@ -310,10 +312,15 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
 
   // Check for java.base
   if (!ModuleEntryTable::javabase_defined() &&
-      strcmp(module_name, vmSymbols::java_base()->as_C_string()) == 0) {
+      strcmp(module_name, "java.base") == 0) {
     define_javabase_module(h_loader, jlrM_handle, pkg_list, CHECK);
     // java.base entry complete, no further processing required.
     return;
+  }
+
+  if (strcmp(module_name, "java.base") == 0) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "Module java.base is already defined");
   }
 
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK);
