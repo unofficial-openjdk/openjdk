@@ -628,7 +628,8 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
      * Close the JavaFileManager, releasing resources.
      */
     @Override @DefinedBy(Api.COMPILER)
-    public void close() {
+    public void close() throws IOException {
+        locations.close();
         for (Iterator<Archive> i = archives.values().iterator(); i.hasNext(); ) {
             Archive a = i.next();
             i.remove();
@@ -713,7 +714,8 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
     @Override @DefinedBy(Api.COMPILER)
     public boolean hasLocation(Location location) {
-        return getLocation(location) != null;
+        nullCheck(location);
+        return locations.hasLocation(location);
     }
 
     @Override @DefinedBy(Api.COMPILER)
@@ -931,6 +933,54 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
     private Path getSourceOutDir() {
         return locations.getOutputLocation(SOURCE_OUTPUT);
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Location getModuleLocation(Location location, String moduleName) {
+        nullCheck(location);
+        nullCheck(moduleName);
+        return locations.getModuleLocation(location, moduleName);
+
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        nullCheck(location);
+        if (!(fo instanceof RegularFileObject))
+            throw new IllegalArgumentException(fo.getName());
+        int depth = 1; // allow 1 for filename
+        if (pkgName != null && !pkgName.isEmpty()) {
+            depth += 1;
+            for (int i = 0; i < pkgName.length(); i++) {
+                switch (pkgName.charAt(i)) {
+                    case '/': case '.':
+                        depth++;
+                }
+            }
+        }
+        Path f = Locations.normalize(((RegularFileObject) fo).file);
+        int fc = f.getNameCount();
+        if (depth < fc) {
+            Path root = f.getRoot();
+            Path subpath = f.subpath(0, fc - depth);
+            Path dir = (root == null) ? subpath : root.resolve(subpath);
+            // need to find dir in location
+            return locations.getModuleLocation(location, dir);
+        } else {
+            return null;
+        }
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public String inferModuleName(Location location) {
+        nullCheck(location);
+        return locations.inferModuleName(location);
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        nullCheck(location);
+        return locations.listModuleLocations(location);
     }
 
     @Override @DefinedBy(Api.COMPILER)

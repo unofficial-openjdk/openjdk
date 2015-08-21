@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,12 +102,12 @@ class StandardDocFileFactory extends DocFileFactory {
 
     @Override
     Iterable<DocFile> list(Location location, DocPath path) {
-        if (location != StandardLocation.SOURCE_PATH)
-            throw new IllegalArgumentException();
+        Location l = ((location == StandardLocation.SOURCE_PATH)
+                && !fileManager.hasLocation(StandardLocation.SOURCE_PATH))
+                ? StandardLocation.CLASS_PATH
+                : location;
 
         Set<DocFile> files = new LinkedHashSet<>();
-        Location l = fileManager.hasLocation(StandardLocation.SOURCE_PATH)
-                ? StandardLocation.SOURCE_PATH : StandardLocation.CLASS_PATH;
         for (File f: fileManager.getLocation(l)) {
             if (f.isDirectory()) {
                 f = new File(f, path.getPath());

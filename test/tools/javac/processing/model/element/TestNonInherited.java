@@ -45,6 +45,10 @@ import static javax.lang.model.util.ElementFilter.*;
 
 @TestNonInherited.Foo(1)
 public class TestNonInherited extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.javac.util");
+    }
+
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {
