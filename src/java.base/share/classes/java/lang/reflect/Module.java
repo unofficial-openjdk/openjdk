@@ -139,7 +139,7 @@ public final class Module {
      *
      * @apiNote This constructor is for VM white-box testing.
      */
-    private Module(ClassLoader loader, ModuleDescriptor descriptor) {
+    Module(ClassLoader loader, ModuleDescriptor descriptor) {
         this.name = descriptor.name();
         this.loader = loader;
         this.descriptor = descriptor;
@@ -228,24 +228,34 @@ public final class Module {
      */
     public boolean canRead(Module target) {
 
-        // all modules read themselves
-        if (target == this)
-            return true;
-
-        // loose modules read all unnamed modules
-        if (this.loose && (target == null || !target.isNamed()))
-            return true;
-
         // an unnamed module reads all modules
         if (!this.isNamed())
             return true;
 
-        // check if module reads target
-        Set<Module> reads = this.reads; // volatile read
-        if (reads.contains(target))
+        // all modules read themselves
+        if (target == this)
             return true;
 
-        // check if module reads the target temporarily
+        // test if this module is loose
+        if (target == null)
+            return this.loose;
+
+        // check if module reads target
+        if (target.isNamed()) {
+
+            Set<Module> reads = this.reads; // volatile read
+            if (reads.contains(target))
+                return true;
+
+        } else {
+
+            // loose modules read all unnamed modules
+            if (this.loose)
+                return true;
+
+        }
+
+        // check if this module reads the target module temporarily
         WeakSet<Module> tr = this.transientReads; // volatile read
         if (tr != null && tr.contains(target))
             return true;
