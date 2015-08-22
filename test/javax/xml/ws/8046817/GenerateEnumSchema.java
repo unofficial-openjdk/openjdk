@@ -32,9 +32,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class GenerateEnumSchema {
 
@@ -74,7 +75,11 @@ public class GenerateEnumSchema {
 
     //Read schema content from file
     private static void readSchemaContent() throws Exception {
-        schemaContent = Files.lines(schemaOutputFile.toPath()).collect(Collectors.joining(""));
+        List<String> content = Files.readAllLines(schemaOutputFile.toPath(), StandardCharsets.UTF_8);
+        StringBuilder builder = new StringBuilder();
+        for (String line : content)
+            builder.append(line);
+        schemaContent = builder.toString();
     }
 
     // Check if schema file contains specific string

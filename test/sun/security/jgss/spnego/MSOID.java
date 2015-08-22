@@ -27,6 +27,8 @@
  * @summary SPNEGO auth fails if client proposes MS krb5 OID
  */
 
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
@@ -36,7 +38,6 @@ import java.lang.Exception;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Base64;
 
 public class MSOID {
     public static void main(String[] args) throws Exception {
@@ -45,7 +46,7 @@ public class MSOID {
         // IIS server on a test machine. No sensitive info included.
         byte[] header = Files.readAllBytes(
                 Paths.get(System.getProperty("test.src"), "msoid.txt"));
-        byte[] token = Base64.getMimeDecoder().decode(
+        byte[] token = Base64.decode(
                 Arrays.copyOfRange(header, 10, header.length));
 
         GSSCredential cred = null;
