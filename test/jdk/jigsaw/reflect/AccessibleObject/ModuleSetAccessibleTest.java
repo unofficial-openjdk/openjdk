@@ -29,11 +29,14 @@
  * @summary Test java.lang.reflect.AccessibleObject with modules
  */
 
+import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 
 import sun.misc.Unsafe;
 
@@ -58,6 +61,7 @@ public class ModuleSetAccessibleTest {
         Unsafe unsafe = (Unsafe) ctor.newInstance();
     }
 
+
     /**
      * Invoke a private method on a public class in an exported package
      */
@@ -77,6 +81,7 @@ public class ModuleSetAccessibleTest {
             assertTrue(e.getCause() instanceof IllegalAccessError);
         }
     }
+
 
     /**
      * Access a private field in a public class that is an exported package
@@ -114,6 +119,7 @@ public class ModuleSetAccessibleTest {
         ctor.setAccessible(false); // should succeed
     }
 
+
     /**
      * Access a public field in a public class that in a non-exported package
      */
@@ -132,6 +138,81 @@ public class ModuleSetAccessibleTest {
         } catch (InaccessibleObjectException expected) { }
 
         f.setAccessible(false); // should succeed
+    }
+
+
+    /**
+     * Test that only public members of java.lang.reflect.Module can be make
+     * accessible.
+     */
+    public void testJavaLangReflectModule() throws Exception {
+
+        // non-public constructor
+        Constructor<?> ctor
+            = Module.class.getDeclaredConstructor(ClassLoader.class,
+                                                  ModuleDescriptor.class);
+        AccessibleObject[] ctors = { ctor };
+
+        try {
+            ctor.setAccessible(true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        try {
+            AccessibleObject.setAccessible(ctors, true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        // should succeed
+        ctor.setAccessible(false);
+        AccessibleObject.setAccessible(ctors, false);
+
+
+        // public method
+        Method method = Module.class.getMethod("addReads", Module.class);
+        AccessibleObject[] methods = { method };
+        method.setAccessible(true);
+        AccessibleObject.setAccessible(methods, true);
+        method.setAccessible(false);
+        AccessibleObject.setAccessible(methods, false);
+
+        // non-public method
+        method = Module.class.getDeclaredMethod("implAddReadsNoSync", Module.class);
+        methods[0] = method;
+
+        try {
+            method.setAccessible(true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        try {
+            AccessibleObject.setAccessible(methods, true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        // should succeed
+        method.setAccessible(false);
+        AccessibleObject.setAccessible(methods, false);
+
+
+        // non-public field
+        Field field = Module.class.getDeclaredField("name");
+        AccessibleObject[] fields = { field };
+
+        try {
+            field.setAccessible(true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        try {
+            AccessibleObject.setAccessible(fields, true);
+            assertTrue(false);
+        } catch (InaccessibleObjectException expected) { }
+
+        // should succeed
+        field.setAccessible(false);
+        AccessibleObject.setAccessible(fields, false);
+
     }
 
 }
