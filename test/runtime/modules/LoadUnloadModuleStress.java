@@ -25,8 +25,8 @@
  * @test
  * @summary Ensure module information is cleaned when owning class loader unloads
  * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @modules java.base/sun.misc
- * @build LoadUnloadModuleStress
+ * @build sun.hotspot.WhiteBox
+ * @compile/module=java.base java/lang/reflect/ModuleHelper.java
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -Dsun.reflect.useHotSpotAccessCheck=true -Xmx64m LoadUnloadModuleStress 15000

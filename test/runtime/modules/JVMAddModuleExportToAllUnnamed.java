@@ -26,10 +26,10 @@
  * @library /testlibrary /../../test/lib /compiler/whitebox ..
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @modules java.base/sun.misc
- * @build JVMAddModuleExportToAllUnnamed
+ * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @compile/module=java.base java/lang/reflect/ModuleHelper.java
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModuleExportToAllUnnamed
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModuleExportToAllUnnamed
  */
