@@ -247,50 +247,6 @@ public class Reflection {
         }
     }
 
-    /**
-     * A holder class for a property value to avoid System.getProperty
-     * early in the startup before java.lang.System is initialized.
-     * Also defines the {@code canAccess} method to use the VM to test
-     * module access.
-     */
-    private static class VMAccessCheck {
-        static final boolean USE_VM_ACCESS_CHECK;
-        static {
-            PrivilegedAction<Boolean> pa =
-                () -> Boolean.getBoolean("sun.reflect.useHotSpotAccessCheck");
-            USE_VM_ACCESS_CHECK = AccessController.doPrivileged(pa);
-        }
-
-        /**
-         * Returns true if m1 reads m2 and memberClass is in a package in m2
-         * that is exported to m1.
-         */
-        static boolean canAccess(Module m1, Module m2, Class<?> memberClass) {
-            if (m1 != null) {
-                // named module trying to access member in unnamed module
-                if (m2 == null)
-                    return true;
-
-                // named module trying to access member in another named module
-                if (!canReadModule0(m1, m2))
-                    return false;
-            }
-
-            // check that m2 exports the package to m1
-            String pkg = packageName(memberClass).replace('.', '/');
-            return isExportedToModule0(m2, pkg, m1);
-        }
-
-    }
-
-    // JVM_CanReadModule
-    private static native boolean canReadModule0(Module from, Module to);
-
-    // JVM_IsExportedToModule
-    private static native boolean isExportedToModule0(Module from, String pkg,
-                                                      Module to);
-
-
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {
         return isSameClassPackage(c1.getClassLoader(), c1.getName(),
                 c2.getClassLoader(), c2.getName());
