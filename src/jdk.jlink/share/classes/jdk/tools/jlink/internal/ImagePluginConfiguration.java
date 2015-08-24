@@ -200,7 +200,8 @@ public final class ImagePluginConfiguration {
             builder = new ImageBuilder() {
 
                 @Override
-                public void storeFiles(ImageFilePool files, Set<String> modules,
+                public void storeFiles(ImageFilePool files,
+                        List<ImageFilePool.ImageFile> removed, Set<String> modules,
                         String bom, Map<String, Path> mods)
                         throws IOException {
                     throw new IOException("No directory setup to store files");

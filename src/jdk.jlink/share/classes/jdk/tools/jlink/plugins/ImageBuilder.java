@@ -27,6 +27,7 @@ package jdk.tools.jlink.plugins;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,12 +41,14 @@ public interface ImageBuilder {
     /**
      * Store the external files.
      * @param files Set of module names that are composing this image.
+     * @param removed List of files that have been removed (if any).
      * @param modules The set of modules added to the image
      * @param bom The options used to build the image
      * @param mods The input modules.
      * @throws java.io.IOException
      */
-    public void storeFiles(ImageFilePool files, Set<String> modules, String bom,
+    public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
+            Set<String> modules, String bom,
             Map<String, Path> mods) throws IOException;
 
     /**

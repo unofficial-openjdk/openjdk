@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,6 +56,7 @@ import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
+
 /**
  *
  * @author jdenise
@@ -86,10 +88,10 @@ public class DefaultImageBuilder implements ImageBuilder {
         if (!f.exists()) {
             // XXX When jlink is exposed to user.
             //System.err.println("WARNING, no release file found in " + path +
-               //     ". release file not added to generated image");
+            //     ". release file not added to generated image");
         } else {
             release = new Properties();
-            try(FileInputStream fi = new FileInputStream(f)) {
+            try (FileInputStream fi = new FileInputStream(f)) {
                 release.load(fi);
             }
             addModules(release, modules);
@@ -97,7 +99,7 @@ public class DefaultImageBuilder implements ImageBuilder {
 
         if (release != null) {
             File r = new File(root.toFile(), "release");
-            try(FileOutputStream fo = new FileOutputStream(r)) {
+            try (FileOutputStream fo = new FileOutputStream(r)) {
                 release.store(fo, null);
             }
         }
@@ -124,20 +126,24 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(ImageFilePool files, Set<String> modules, String bom,
+    public void storeFiles(ImageFilePool pool, List<ImageFile> removedFiles,
+            Set<String> modules, String bom,
             Map<String, Path> mods) throws IOException {
+
+        ImageFilePool files = new JvmHandler().handlePlatforms(pool, removedFiles);
+
         for (ImageFile f : files.getFiles()) {
             accept(f);
         }
         storeFiles(modules, bom);
 
-         // launchers in the bin directory need execute permission
+        // launchers in the bin directory need execute permission
         Path bin = root.resolve("bin");
         if (Files.getFileStore(bin).supportsFileAttributeView(PosixFileAttributeView.class)) {
             Files.list(bin)
-                 .filter(f -> !f.toString().endsWith(".diz"))
-                 .filter(f -> Files.isRegularFile(f))
-                 .forEach(this::setExecutable);
+                    .filter(f -> !f.toString().endsWith(".diz"))
+                    .filter(f -> Files.isRegularFile(f))
+                    .forEach(this::setExecutable);
 
             // jspawnhelper is in lib or lib/<arch>
             Path lib = root.resolve("lib");
@@ -196,11 +202,11 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     private String getModuleInfoPath(String archive) throws IOException {
         String path = "module-info.class";
-        if(archive.endsWith(".jar")) {
+        if (archive.endsWith(".jar")) {
             return path;
         } else {
-            if(archive.endsWith(".jmod")) {
-                return "classes" +"/" + path;
+            if (archive.endsWith(".jmod")) {
+                return "classes" + "/" + path;
             }
         }
         throw new IOException("Unsupported archive " + archive);
@@ -267,9 +273,9 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     private static String nativeDir(String filename) {
-        if (System.getProperty("os.name").startsWith("Windows")) {
+        if (isWindows()) {
             if (filename.endsWith(".dll") || filename.endsWith(".diz")
-                || filename.endsWith(".pdb") || filename.endsWith(".map")) {
+                    || filename.endsWith(".pdb") || filename.endsWith(".map")) {
                 return "bin";
             } else {
                 return "lib";
@@ -277,6 +283,14 @@ public class DefaultImageBuilder implements ImageBuilder {
         } else {
             return "lib";
         }
+    }
+
+    static boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
+    static boolean isMac() {
+        return System.getProperty("os.name").startsWith("Mac OS");
     }
 
     /**
