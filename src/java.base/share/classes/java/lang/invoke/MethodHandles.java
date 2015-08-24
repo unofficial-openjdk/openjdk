@@ -1550,9 +1550,6 @@ return mh1;
             if (Modifier.isFinal(mods) &&
                     MethodHandleNatives.refKindIsSetter(refKind))
                 throw m.makeAccessException("unexpected set of a final field", this);
-            if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) &&
-                    !refc.getModule().isNamed() && allowedModes != 0)
-                return;  // public member and type in an unnamed module, common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
             if ((requestedModes & allowedModes) != 0) {
                 if (VerifyAccess.isMemberAccessible(refc, m.getDeclaringClass(),

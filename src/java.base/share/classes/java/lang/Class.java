@@ -798,7 +798,7 @@ public final class Class<T> implements java.io.Serializable,
             return module;
 
         // called early in the startup before patching
-        if (sun.misc.VM.initLevel() == 0)
+        if (Object.class.module == null)
             return null;
 
         if (isArray())
