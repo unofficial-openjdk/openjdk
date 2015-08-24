@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package use.internal;
 
-package javax.activity;
+import sun.net.ProgressMonitor;
 
-public class NotCompactProfile {
-    public static String name() {
-        return "not Java SE API";
-    }
+public class UseJdkInternalClass2 {
+    static ProgressMonitor monitor = ProgressMonitor.getDefault();
+
 }

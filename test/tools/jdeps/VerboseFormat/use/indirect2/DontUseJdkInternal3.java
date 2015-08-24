@@ -22,8 +22,6 @@
  */
 package use.indirect2;
 
-import use.unsafe.UseUnsafeClass;
+public class DontUseJdkInternal3 {
 
-public class UseUnsafeIndirectly2 {
-    static UseUnsafeClass use = new UseUnsafeClass();
 }

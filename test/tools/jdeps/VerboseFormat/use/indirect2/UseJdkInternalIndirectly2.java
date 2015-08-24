@@ -20,8 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package use.unsafe;
+package use.indirect2;
 
-public class DontUseUnsafe {
+import use.internal.UseJdkInternalClass;
 
+public class UseJdkInternalIndirectly2 {
+    static UseJdkInternalClass use = new UseJdkInternalClass();
 }

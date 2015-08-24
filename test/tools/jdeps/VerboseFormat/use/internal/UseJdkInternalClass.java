@@ -20,10 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package use.indirect2;
+package use.internal;
 
-import use.unsafe.*;
+import sun.net.ProgressMonitor;
 
-public class DontUseUnsafe3 {
+public class UseJdkInternalClass {
+    static ProgressMonitor monitor = ProgressMonitor.getDefault();
 
 }

@@ -20,11 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package use.unsafe;
+package use.indirect;
 
-import sun.misc.Unsafe;
+import use.internal.UseClassWithJdkInternal;
 
-public class UseUnsafeClass {
-    static Unsafe unsafe = Unsafe.getUnsafe();
-
+public class UseJdkInternalIndirectly {
+    static UseClassWithJdkInternal use = new UseClassWithJdkInternal();
 }

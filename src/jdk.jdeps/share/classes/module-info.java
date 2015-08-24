@@ -26,7 +26,6 @@
 module jdk.jdeps {
     requires java.base;
     requires java.compiler;
-    requires java.xml;
     requires jdk.compiler;
     exports com.sun.tools.javap;
     exports com.sun.tools.classfile to

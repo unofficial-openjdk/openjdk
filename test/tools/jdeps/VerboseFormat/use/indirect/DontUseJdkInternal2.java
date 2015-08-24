@@ -22,7 +22,5 @@
  */
 package use.indirect;
 
-import use.unsafe.*;
-
-public class DontUseUnsafe2 {
+public class DontUseJdkInternal2 {
 }
