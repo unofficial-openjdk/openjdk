@@ -541,7 +541,7 @@ compare_all_jar_files() {
 
     # TODO filter?
     ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" \
-        -o -name "*.jimage" | $SORT | $FILTER)
+        -o -name "*.jimage" -o -name "*.jmod" | $SORT | $FILTER)
 
     if [ -n "$ZIPS" ]; then
         echo Jar files...
