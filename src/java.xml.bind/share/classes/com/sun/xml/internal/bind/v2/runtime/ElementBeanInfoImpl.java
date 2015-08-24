@@ -35,7 +35,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 
 import com.sun.xml.internal.bind.api.AccessorException;
-import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
+import com.sun.xml.internal.bind.v2.Modules;
 import com.sun.xml.internal.bind.v2.model.core.PropertyKind;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeElementInfo;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimePropertyInfo;
@@ -88,7 +88,7 @@ public final class ElementBeanInfoImpl extends JaxBeanInfo<JAXBElement> {
         if(type==JAXBElement.class)
             constructor = null;
         else {
-            ModuleAccessHelper.ensureAccess(this.getClass(), type);
+            Modules.ensureReadable(this.getClass(), type);
             try {
                 constructor = type.getConstructor(expectedType);
             } catch (NoSuchMethodException e) {

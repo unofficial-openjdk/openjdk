@@ -38,7 +38,7 @@ import javax.xml.namespace.QName;
 import com.sun.xml.internal.bind.api.JAXBRIContext;
 import com.sun.xml.internal.bind.api.TypeReference;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeTypeInfoSet;
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.spi.db.BindingContext;
 import com.sun.xml.internal.ws.spi.db.XMLBridge;
 import com.sun.xml.internal.ws.spi.db.TypeInfo;
@@ -179,7 +179,7 @@ class JAXBRIContextWrapper implements BindingContext {
     public Object newWrapperInstace(Class<?> wrapperType)
             throws InstantiationException, IllegalAccessException {
 
-        ModuleAccessHelper.ensureAccess(JAXBRIContextWrapper.class, wrapperType);
+        Modules.ensureReadable(JAXBRIContextWrapper.class, wrapperType);
         return wrapperType.newInstance();
     }
 }

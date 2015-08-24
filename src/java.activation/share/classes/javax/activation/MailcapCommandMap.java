@@ -580,7 +580,7 @@ public class MailcapCommandMap extends CommandMap {
                 // if anything goes wrong, do it the old way
                 cl = Class.forName(name);
             }
-            ModuleAccessHelper.ensureAccess(getClass(), cl);
+            Modules.ensureReadable(getClass(), cl);
             return (DataContentHandler) cl.newInstance();
         } catch (IllegalAccessException e) {
             if (LogSupport.isLoggable())

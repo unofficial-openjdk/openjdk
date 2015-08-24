@@ -37,7 +37,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 
 import com.sun.xml.internal.bind.api.AccessorException;
-import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
+import com.sun.xml.internal.bind.v2.Modules;
 import com.sun.xml.internal.bind.v2.model.annotation.FieldLocatable;
 import com.sun.xml.internal.bind.v2.model.annotation.Locatable;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeEnumLeafInfo;
@@ -80,7 +80,7 @@ final class RuntimeEnumLeafInfoImpl<T extends Enum<T>,B> extends EnumLeafInfoImp
         T t;
         try {
             try {
-                ModuleAccessHelper.ensureAccess(getClass(), constant.getType());
+                Modules.ensureReadable(getClass(), constant.getType());
                 constant.setAccessible(true);
             } catch (SecurityException e) {
                 // in case the constant is already accessible, swallow this error.

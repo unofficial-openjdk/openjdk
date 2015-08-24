@@ -29,7 +29,7 @@ import java.util.List;
 
 import javax.jws.soap.SOAPBinding.Style;
 
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.message.MessageContextFactory;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
 import com.sun.xml.internal.ws.model.ParameterImpl;
@@ -103,7 +103,7 @@ public class StubAsyncHandler extends StubHandler {
 
         protected void initArgs(Object[] args) throws Exception {
             if (asyncBeanClass != null) {
-                ModuleAccessHelper.ensureAccess(this.getClass(), asyncBeanClass);
+                Modules.ensureReadable(this.getClass(), asyncBeanClass);
                 args[0] = asyncBeanClass.newInstance();
             }
         }

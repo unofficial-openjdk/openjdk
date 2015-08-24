@@ -29,7 +29,7 @@ import java.io.*;
 
 import java.util.Properties;
 import javax.xml.ws.WebServiceException;
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 
 class FactoryFinder {
 
@@ -45,7 +45,7 @@ class FactoryFinder {
     {
         try {
             Class spiClass = safeLoadClass(className, classLoader);
-            ModuleAccessHelper.ensureAccess(FactoryFinder.class, spiClass);
+            Modules.ensureReadable(FactoryFinder.class, spiClass);
             return spiClass.newInstance();
         } catch (ClassNotFoundException x) {
             throw new WebServiceException(

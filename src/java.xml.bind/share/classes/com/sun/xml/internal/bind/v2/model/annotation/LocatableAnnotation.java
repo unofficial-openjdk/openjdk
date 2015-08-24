@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.sun.xml.internal.bind.v2.runtime.Location;
-import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
+import com.sun.xml.internal.bind.v2.Modules;
 
 /**
  * {@link Annotation} that also implements {@link Locatable}.
@@ -85,7 +85,7 @@ public class LocatableAnnotation implements InvocationHandler, Locatable, Locati
     LocatableAnnotation(Annotation core, Locatable upstream) {
         this.core = core;
         this.upstream = upstream;
-        ModuleAccessHelper.ensureAccess(LocatableAnnotation.class, this.core.annotationType());
+        Modules.ensureReadable(LocatableAnnotation.class, this.core.annotationType());
     }
 
     public Locatable getUpstream() {

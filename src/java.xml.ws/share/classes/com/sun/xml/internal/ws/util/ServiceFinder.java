@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ package com.sun.xml.internal.ws.util;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.Component;
 import com.sun.xml.internal.ws.api.ComponentEx;
 import com.sun.xml.internal.ws.api.server.ContainerResolver;
@@ -507,7 +507,7 @@ public final class ServiceFinder<T> implements Iterable<T> {
             URL currentConfig = sn.config;
             try {
                 Class<?> clazz = Class.forName(cn, true, loader);
-                ModuleAccessHelper.ensureAccess(ServiceFinder.class, clazz);
+                Modules.ensureReadable(ServiceFinder.class, clazz);
                 return (T) service.cast(clazz.newInstance());
             } catch (ClassNotFoundException x) {
                 fail(service, "Provider " + cn + " is specified in "+currentConfig+" but not found");

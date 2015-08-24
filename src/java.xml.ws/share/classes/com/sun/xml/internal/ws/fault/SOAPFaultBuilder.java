@@ -27,7 +27,7 @@ package com.sun.xml.internal.ws.fault;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.SOAPVersion;
 import com.sun.xml.internal.ws.api.message.Message;
 import com.sun.xml.internal.ws.api.model.ExceptionType;
@@ -127,7 +127,7 @@ public abstract class SOAPFaultBuilder {
 
         }
         Class exceptionClass = ce.getExceptionClass();
-        ModuleAccessHelper.ensureAccess(SOAPFaultBuilder.class, exceptionClass);
+        Modules.ensureReadable(SOAPFaultBuilder.class, exceptionClass);
         try {
             Constructor constructor = exceptionClass.getConstructor(String.class, (Class) ce.getDetailType().type);
             Exception exception = (Exception) constructor.newInstance(getFaultString(), getJAXBObject(detail, ce));
@@ -329,7 +329,7 @@ public abstract class SOAPFaultBuilder {
     private static Object getFaultDetail(CheckedExceptionImpl ce, Throwable exception) {
         if (ce == null)
             return null;
-        ModuleAccessHelper.ensureAccess(SOAPFaultBuilder.class, exception.getClass());
+        Modules.ensureReadable(SOAPFaultBuilder.class, exception.getClass());
         if (ce.getExceptionType().equals(ExceptionType.UserDefined)) {
             return createDetailFromUserDefinedException(ce, exception);
         }
