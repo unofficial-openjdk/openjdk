@@ -528,9 +528,6 @@ else
     $(JMOD_TARGETS): create-buildjdk
   endif
 
-  # To generate modules.xml all classes and a runnable image must be
-  # present.
-
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
       $(filter jdk.crypto%, $(JAVA_TARGETS))
 
