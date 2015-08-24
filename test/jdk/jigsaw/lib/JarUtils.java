@@ -54,7 +54,7 @@ public final class JarUtils {
     public static void createJarFile(Path jarfile, Path dir, Path... file)
         throws IOException
     {
-        // create
+        // create the target directory
         Path parent = jarfile.getParent();
         if (parent != null)
             Files.createDirectories(parent);
