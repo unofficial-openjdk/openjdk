@@ -28,13 +28,14 @@ import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
  * Sort resources plugin provider
  */
-public final class SortResourcesProvider extends ResourcePluginProvider {
+public final class SortResourcesProvider extends CmdResourcePluginProvider {
     public static final String NAME = "sort-resources";
     public SortResourcesProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
@@ -48,7 +49,7 @@ public final class SortResourcesProvider extends ResourcePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.SORTER;
+        return PluginProvider.SORTER;
     }
 
     @Override

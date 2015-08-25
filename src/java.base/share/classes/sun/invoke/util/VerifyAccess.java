@@ -184,10 +184,17 @@ public class VerifyAccess {
             // 2. refc is in an exported package
             Module lookupModule = lookupClass.getModule();
             Module refModule = refc.getModule();
+
+            // early VM startup case, java.base not defined
+            if (lookupModule == null) {
+                if (refModule != null) throw new InternalError();
+                return true;
+            }
+
             if (!lookupModule.canRead(refModule))
                 return false;
 
-            // check the package is exported to everyone
+            // check the package is exported unconditionally
             if (refModule.isExported(getPackageName(refc)))
                 return true;
 

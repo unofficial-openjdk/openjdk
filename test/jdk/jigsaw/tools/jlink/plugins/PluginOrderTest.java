@@ -42,10 +42,9 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
 
@@ -119,38 +118,38 @@ public class PluginOrderTest {
         props.setProperty(ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY, "plugin2");
         props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "plugin3");
         props.setProperty(ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY, "plugin4");
-        int i = getNextIndex(props, ImagePluginConfiguration.FILTER);
+        int i = getNextIndex(props, PluginProvider.FILTER);
         if (i != 1) {
             throw new Exception("Unexpected index " + i);
         }
-        i = getNextIndex(props, ImagePluginConfiguration.TRANSFORMER);
+        i = getNextIndex(props, PluginProvider.TRANSFORMER);
         if (i != 1) {
             throw new Exception("Unexpected index " + i);
         }
-        i = getNextIndex(props, ImagePluginConfiguration.SORTER);
+        i = getNextIndex(props, PluginProvider.SORTER);
         if (i != 1) {
             throw new Exception("Unexpected index " + i);
         }
-        i = getNextIndex(props, ImagePluginConfiguration.COMPRESSOR);
+        i = getNextIndex(props, PluginProvider.COMPRESSOR);
         if (i != 1) {
             throw new Exception("Unexpected index " + i);
         }
 
-        i = getNextIndex(props, ImagePluginConfiguration.TRANSFORMER);
+        i = getNextIndex(props, PluginProvider.TRANSFORMER);
         if (i != 2) {
             throw new Exception("Unexpected index " + i);
         }
-        i = getNextIndex(props, ImagePluginConfiguration.SORTER);
+        i = getNextIndex(props, PluginProvider.SORTER);
         if (i != 2) {
             throw new Exception("Unexpected index " + i);
         }
-        i = getNextIndex(props, ImagePluginConfiguration.COMPRESSOR);
+        i = getNextIndex(props, PluginProvider.COMPRESSOR);
         if (i != 2) {
             throw new Exception("Unexpected index " + i);
         }
         props = new Properties();
         props.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY + ".500", "plugin1");
-        i = getNextIndex(props, ImagePluginConfiguration.FILTER);
+        i = getNextIndex(props, PluginProvider.FILTER);
         if (i != 501) {
             throw new Exception("Unexpected index " + i);
         }
@@ -259,19 +258,19 @@ public class PluginOrderTest {
         Properties props = new Properties();
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.FILTER))[0],
+                getRange(new CategoryProvider(PluginProvider.FILTER))[0],
                 "plugin1");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.TRANSFORMER))[0],
+                getRange(new CategoryProvider(PluginProvider.TRANSFORMER))[0],
                 "plugin3");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.SORTER))[0],
+                getRange(new CategoryProvider(PluginProvider.SORTER))[0],
                 "plugin2");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.COMPRESSOR))[0],
+                getRange(new CategoryProvider(PluginProvider.COMPRESSOR))[0],
                 "plugin4");
 
         check(props, Arrays.asList("plugin1", "plugin3", "plugin2", "plugin4"), order);
@@ -285,19 +284,19 @@ public class PluginOrderTest {
         props.setProperty(ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY, "plugin4");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + (ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.FILTER))[0] + 1),
+                getRange(new CategoryProvider(PluginProvider.FILTER))[0] + 1),
                 "plugin5");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + (ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.TRANSFORMER))[0] + 1),
+                getRange(new CategoryProvider(PluginProvider.TRANSFORMER))[0] + 1),
                 "plugin6");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + (ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.SORTER))[0] + 1),
+                getRange(new CategoryProvider(PluginProvider.SORTER))[0] + 1),
                 "plugin7");
         props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                         + (ImagePluginConfiguration.
-                        getRange(new CategoryProvider(ImagePluginConfiguration.COMPRESSOR))[0] + 1),
+                getRange(new CategoryProvider(PluginProvider.COMPRESSOR))[0] + 1),
                 "plugin8");
 
         List<String> expected = new ArrayList<>();
@@ -367,7 +366,7 @@ public class PluginOrderTest {
                 props.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "plugin1");
                 props.setProperty(ImagePluginConfiguration.RESOURCES_RADICAL_PROPERTY
                                 + ImagePluginConfiguration.getRange(
-                                new CategoryProvider(ImagePluginConfiguration.FILTER))[0],
+                                new CategoryProvider(PluginProvider.FILTER))[0],
                         "plugin5");
                 ImagePluginConfiguration.parseConfiguration(props);
             } catch (Exception ex) {
@@ -379,7 +378,7 @@ public class PluginOrderTest {
         }
     }
 
-    public static class PProvider extends PluginProvider {
+    public static class PProvider extends CmdResourcePluginProvider {
 
         private final List<String> order;
 
@@ -389,9 +388,8 @@ public class PluginOrderTest {
         }
 
         @Override
-        public Plugin[] newPlugins(String[] argument, Map<String, String> options) throws IOException {
-            return new PluginTrap[]{
-                    new PluginTrap(getName(), order)
+        public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> options) throws IOException {
+            return new ResourcePlugin[]{                    new PluginTrap(getName(), order)
             };
         }
 
@@ -439,7 +437,7 @@ public class PluginOrderTest {
         }
     }
 
-    public static class CategoryProvider extends ResourcePluginProvider {
+    public static class CategoryProvider extends CmdResourcePluginProvider {
 
         private final String category;
 

@@ -25,8 +25,9 @@
  * @test
  * @library ../../lib
  * @build LayerTest ModuleUtils
+ * @compile layertest/Test.java
  * @run testng LayerTest
- * @summary Basic tests for java.lang.reflect.Layer;
+ * @summary Basic tests for java.lang.reflect.Layer
  */
 
 import java.lang.module.Configuration;
@@ -357,5 +358,112 @@ public class LayerTest {
         Layer layer = Layer.create(cf, mn -> loader);
         assertTrue(layer.modules().size() == 1);
    }
+
+
+    /**
+     * Attempt to use Layer.create to create a layer with a module defined to a
+     * class loader that already has a module of the same name defined to the
+     * class loader.
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testModuleAlreadyDefinedToLoader() {
+
+        ModuleDescriptor md
+            = new ModuleDescriptor.Builder("m")
+                .requires("java.base")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(md);
+
+        Configuration cf
+            = Configuration.resolve(finder,
+                Layer.boot(),
+                ModuleFinder.empty(),
+                "m");
+
+        ClassLoader loader = new ClassLoader() { };
+
+        Layer.create(cf, mn -> loader);
+
+        // should throw LayerInstantiationException as m1 already defined to loader
+        Layer.create(cf, mn -> loader);
+
+    }
+
+
+    /**
+     * Attempt to use Layer.create to create a Layer with a module containing
+     * package {@code p} where the class loader already has a module defined
+     * to it containing package {@code p}.
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testPackageAlreadyInNamedModule() {
+
+        ModuleDescriptor md1
+            = new ModuleDescriptor.Builder("m1")
+                .conceals("p")
+                .requires("java.base")
+                .build();
+
+        ModuleDescriptor md2
+            = new ModuleDescriptor.Builder("m2")
+                .conceals("p")
+                .requires("java.base")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(md1, md2);
+
+        ClassLoader loader = new ClassLoader() { };
+
+        // define m1 containing package p to class loader
+
+        Configuration cf1
+            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
+
+        Layer layer1 = Layer.create(cf1, mn -> loader);
+
+        // attempt to define m2 containing package p to class loader
+
+        Configuration cf2
+            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m2");
+
+        // should throw exception because p already in m1
+        Layer layer2 = Layer.create(cf2, mn -> loader);
+
+    }
+
+
+    /**
+     * Attempt to use Layer.create to create a Layer with a module containing
+     * a package in which a type is already loaded by the class loader.
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testPackageAlreadyInUnnamedModule() throws Exception {
+
+        Class<?> c = layertest.Test.class;
+        assertFalse(c.getModule().isNamed());  // in unnamed module
+
+        ModuleDescriptor md
+            = new ModuleDescriptor.Builder("m")
+                .conceals(packageName(c))
+                .requires("java.base")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(md);
+
+        Configuration cf
+            = Configuration.resolve(finder,
+                Layer.boot(),
+                ModuleFinder.empty(),
+                "m");
+
+        Layer.create(cf, mn -> c.getClassLoader());
+    }
+
+    private static String packageName(Class<?> c) {
+        String cn = c.getName();
+        int dot = cn.lastIndexOf('.');
+        return cn.substring(0, dot);
+    }
 
 }

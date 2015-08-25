@@ -39,6 +39,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ResolutionException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Layer;
 import java.net.URI;
@@ -46,13 +47,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -68,6 +72,10 @@ import jdk.tools.jlink.internal.JmodArchive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
+import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 
 
 /**
@@ -75,7 +83,7 @@ import jdk.tools.jlink.internal.ImagePluginStack;
  *
  * ## Should use jdk.joptsimple some day.
  */
-class JlinkTask {
+public class JlinkTask {
 
     static <T extends Throwable> void fail(Class<T> type,
                                            String format,
@@ -101,12 +109,11 @@ class JlinkTask {
         }, "--help"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             String[] dirs = arg.split(File.pathSeparator);
-            Path[] paths = new Path[dirs.length];
+            task.options.modulePath = new Path[dirs.length];
             int i = 0;
             for (String dir : dirs) {
-                paths[i++] = Paths.get(dir);
+                task.options.modulePath[i++] = Paths.get(dir);
             }
-            task.options.moduleFinder = ModuleFinder.of(paths);
         }, "--modulepath", "--mp"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
@@ -162,7 +169,7 @@ class JlinkTask {
         boolean help;
         boolean version;
         boolean fullVersion;
-        ModuleFinder moduleFinder;
+        Path[] modulePath;
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
@@ -170,7 +177,7 @@ class JlinkTask {
 
     int run(String[] args) {
         if (log == null) {
-            setLog(new PrintWriter(System.out));
+            setLog(new PrintWriter(System.err));
         }
         try {
             optionsHelper.handleOptions(this, args);
@@ -186,46 +193,33 @@ class JlinkTask {
                 optionsHelper.showPlugins(log, true);
                  return EXIT_OK;
             }
-            if (options.moduleFinder == null)
+            if (options.modulePath == null || options.modulePath.length == 0)
                 throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
-
-            Path output = options.output;
-            if (output == null)
-                throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
-            Files.createDirectories(output);
-            if (Files.list(output).findFirst().isPresent())
-                throw taskHelper.newBadArgs("err.dir.not.empty", output);
-
-            // --addmods and/or --limitmods must be specified
-            if (options.addMods.isEmpty()) {
-                if (options.limitMods.isEmpty())
-                    throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
-                                    .showUsage(true);
-                options.addMods = options.limitMods;
-            }
-
-            // additional option combination validation
 
             createImage();
 
             return EXIT_OK;
+        } catch (IOException | ResolutionException e) {
+            log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
+            log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
+            return EXIT_ERROR;
         } catch (BadArgs e) {
             taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
                 log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             }
             return EXIT_CMDERR;
-        } catch (Exception x) {
-            taskHelper.reportUnknownError(x.getMessage());
-            log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
+        } catch (Throwable x) {
+            log.println(taskHelper.getMessage("main.msg.bug"));
+            x.printStackTrace(log);
             return EXIT_ABNORMAL;
         } finally {
             log.flush();
         }
     }
 
-    private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
-        ModuleFinder finder = options.moduleFinder;
+    private static Map<String, Path> modulesToPath(ModuleFinder finder,
+            Set<ModuleDescriptor> modules) {
 
         Map<String,Path> modPaths = new HashMap<>();
         for (ModuleDescriptor m : modules) {
@@ -265,35 +259,122 @@ class JlinkTask {
         return modPaths;
     }
 
-    private void createImage() throws IOException {
-        final Path output = options.output;
+    /*
+     * Jlink API entry point.
+     */
+    public static void createImage(JlinkConfiguration config,
+            PluginsConfiguration plugins) throws Exception {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(config.getOutput());
+        createOutputDirectory(config.getOutput());
+        plugins = plugins == null ? new PluginsConfiguration() : plugins;
 
-        ModuleFinder finder = options.moduleFinder;
+        if (config.getModulepaths().isEmpty()) {
+            throw new Exception("Empty module paths");
+        }
+        Path[] arr = new Path[config.getModulepaths().size()];
+        arr = config.getModulepaths().toArray(arr);
+        ModuleFinder finder = newModuleFinder(arr, config.getLimitmods());
 
-        // if --limitmods is specified then limit the universe
-        if (!options.limitMods.isEmpty())
-            finder = limitFinder(finder, options.limitMods);
+        Path[] pluginsPath = new Path[config.getPluginpaths().size()];
+        pluginsPath = config.getPluginpaths().toArray(pluginsPath);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                Layer.empty(),
-                ModuleFinder.empty(),
-                options.addMods);
-
-        cf = cf.bind();
-
-        Map<String, Path> mods = modulesToPath(cf.descriptors());
-
-        ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
-        imageHelper.createModularImage(output, mods, optionsHelper.getPluginsLayer());
+        ImageFileHelper imageHelper
+                = createImageFileHelper(config.getOutput(),
+                        finder,
+                        checkAddMods(config.getModules(), config.getLimitmods()),
+                        config.getLimitmods(),
+                        TaskHelper.createPluginsLayer(pluginsPath),
+                        genBOMContent(config, plugins));
+        imageHelper.createModularImage(plugins);
     }
+
+    private void createImage() throws Exception, BadArgs {
+        if (options.output == null) {
+            throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
+        }
+        try {
+            createOutputDirectory(options.output);
+        } catch (IllegalArgumentException ex) {
+            throw taskHelper.newBadArgs("err.dir.not.empty", options.output);
+        }
+        ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
+        try {
+            options.addMods = checkAddMods(options.addMods, options.limitMods);
+        } catch (IllegalArgumentException ex) {
+            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
+                    .showUsage(true);
+        }
+        ImageFileHelper imageHelper = createImageFileHelper(options.output,
+                finder,
+                options.addMods,
+                options.limitMods,
+                optionsHelper.getPluginsLayer(),
+                genBOMContent());
+
+        imageHelper.createModularImage(taskHelper.getPluginsProperties());
+    }
+
+    private static void createOutputDirectory(Path output) throws IOException,
+            IllegalArgumentException, BadArgs {
+        if (Files.isRegularFile(output)) {
+            throw taskHelper.newBadArgs("err.file.already.exists", output).showUsage(true);
+        }
+        Files.createDirectories(output);
+        if (Files.list(output).findFirst().isPresent()) {
+            throw new IllegalArgumentException(output + " already exists");
+        }
+    }
+
+    private static Set<String> checkAddMods(Set<String> addMods, Set<String> limitMods) {
+        if (addMods.isEmpty()) {
+            if (limitMods.isEmpty()) {
+                throw new IllegalArgumentException("empty modules and limitmodules");
+            }
+            addMods = limitMods;
+        }
+        return addMods;
+    }
+
+    private static ModuleFinder newModuleFinder(Path[] paths,
+            Set<String> limitMods) throws IllegalArgumentException {
+        ModuleFinder finder = ModuleFinder.of(paths);
+        // if limitmods is specified then limit the universe
+        if (!limitMods.isEmpty()) {
+            finder = limitFinder(finder, limitMods);
+        }
+        return finder;
+    }
+
+    private static ImageFileHelper createImageFileHelper(Path output,
+            ModuleFinder finder,
+            Set<String> addMods,
+            Set<String> limitMods,
+            Layer pluginsLayer,
+            String bom) throws IOException {
+        if (addMods.isEmpty()) {
+            if (limitMods.isEmpty()) {
+                throw new IllegalArgumentException("empty modules and limitmodules");
+            }
+            addMods = limitMods;
+        }
+        Configuration cf
+                = Configuration.resolve(finder,
+                        Layer.empty(),
+                        ModuleFinder.empty(),
+                        addMods);
+        cf = cf.bind();
+        Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
+        return new ImageFileHelper(cf, mods, output, pluginsLayer, bom);
+    }
+
 
     /**
      * Returns a ModuleFinder that locates modules via the given ModuleFinder
      * but limits what can be found to the given modules and their transitive
      * dependences.
      */
-    private ModuleFinder limitFinder(ModuleFinder finder, Set<String> mods) {
+    private static ModuleFinder limitFinder(ModuleFinder finder, Set<String> mods) {
         Configuration cf
             = Configuration.resolve(finder,
                 Layer.empty(),
@@ -321,10 +402,16 @@ class JlinkTask {
         };
     }
 
-    private String genBOMContent() throws IOException {
+    private static String getBomHeader() {
         StringBuilder sb = new StringBuilder();
         sb.append("#").append(new Date()).append("\n");
         sb.append("#Please DO NOT Modify this file").append("\n");
+        return sb.toString();
+    }
+
+    private String genBOMContent() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getBomHeader());
         StringBuilder command = new StringBuilder();
         for (String c : optionsHelper.getInputCommand()) {
             command.append(c).append(" ");
@@ -355,23 +442,46 @@ class JlinkTask {
         return sb.toString();
     }
 
-    private class ImageFileHelper {
+    private static String genBOMContent(JlinkConfiguration config,
+            PluginsConfiguration plugins) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getBomHeader());
+        sb.append(config);
+        sb.append(plugins);
+        return sb.toString();
+    }
+
+    private static class ImageFileHelper {
         final Set<ModuleDescriptor> modules;
         final Map<String, Path> modsPaths;
-
-        ImageFileHelper(Configuration cf, Map<String, Path> modsPaths) throws IOException {
+        final Path output;
+        final Set<Archive> archives;
+        final Layer pluginsLayer;
+        final String bom;
+        ImageFileHelper(Configuration cf, Map<String, Path> modsPaths,
+                Path output, Layer pluginsLayer,
+                String bom) throws IOException {
             this.modules = cf.descriptors();
             this.modsPaths = modsPaths;
-        }
-
-        void createModularImage(Path output, Map<String, Path> mods, Layer pluginsLayer) throws IOException {
-            Set<Archive> archives = modsPaths.entrySet().stream()
+            this.output = output;
+            this.pluginsLayer = pluginsLayer;
+            this.bom = bom;
+            archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
+        }
+
+        void createModularImage(Properties properties) throws Exception {
             ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output, mods,
-                            taskHelper.getPluginsProperties(), pluginsLayer,
-                            genBOMContent());
+                    parseConfiguration(output, modsPaths,
+                            properties, pluginsLayer,
+                            bom);
+            ImageFileCreator.create(archives, pc);
+        }
+
+        void createModularImage(PluginsConfiguration plugins) throws Exception {
+            ImagePluginStack pc = ImagePluginConfiguration.
+                    parseConfiguration(output, modsPaths, plugins, pluginsLayer, bom);
             ImageFileCreator.create(archives, pc);
         }
 
@@ -390,29 +500,6 @@ class JlinkTask {
             }
             return null;
         }
-
-        /**
-         * Read all lines from a text file in the native section of jmod.
-         */
-        private List<String> readConfFile(Path jmod, String name) throws IOException {
-            List<String> result = new ArrayList<>();
-            try (ZipFile zf = new ZipFile(jmod.toString())) {
-                String e = Section.NATIVE_LIBS.jmodDir() + "/" + name;
-                ZipEntry ze = zf.getEntry(e);
-                if (ze == null)
-                    throw new IOException(e + " not found in " + jmod);
-                try (InputStream in = zf.getInputStream(ze)) {
-                    BufferedReader reader =
-                        new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        result.add(line);
-                    }
-                }
-            }
-            return result;
-        }
-
     }
 
     private static enum Section {

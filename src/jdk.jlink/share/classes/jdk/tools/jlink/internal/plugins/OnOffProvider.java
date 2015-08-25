@@ -29,13 +29,13 @@ import java.util.Map;
 import java.util.Objects;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 
 /**
  *
  * Abstract class for provider that requires ON/OFF support
  */
-public abstract class OnOffProvider extends ResourcePluginProvider {
+public abstract class OnOffProvider extends CmdResourcePluginProvider {
 
     public OnOffProvider(String name, String description) {
         super(name, description);
@@ -59,10 +59,10 @@ public abstract class OnOffProvider extends ResourcePluginProvider {
         if(ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
             return new ResourcePlugin[0];
         }
-        return newPlugins(otherOptions);
+        return createPlugins(otherOptions);
     }
 
-    public abstract ResourcePlugin[] newPlugins(Map<String, String> otherOptions)
+    public abstract ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
             throws IOException;
 
     @Override

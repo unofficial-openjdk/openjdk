@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
+import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -260,6 +261,7 @@ public final class ImagePluginStack {
      * ImageFile Plugins stack entry point. All files are going through all the
      * plugins.
      *
+     * @param files
      * @param modules
      * @throws IOException
      */
@@ -276,6 +278,13 @@ public final class ImagePluginStack {
             }
             current = output;
         }
-        imageBuilder.storeFiles(current, modules, bom, mods);
+        // Build the diff between input and output
+        List<ImageFile> removed = new ArrayList<>();
+        for (ImageFile f : files.getFiles()) {
+            if (!current.contains(f)) {
+                removed.add(f);
+            }
+        }
+        imageBuilder.storeFiles(current, removed, modules, bom, mods);
     }
 }

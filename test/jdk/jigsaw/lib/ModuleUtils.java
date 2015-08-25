@@ -22,24 +22,18 @@
  */
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
-import jdk.internal.module.ModuleInfoWriter;
 
 /**
  * This class consists exclusively of static utility methods that are useful
@@ -49,28 +43,6 @@ import jdk.internal.module.ModuleInfoWriter;
 public final class ModuleUtils {
     private ModuleUtils() { }
 
-    /**
-     * Parses a string of the form {@code name[@version]} and returns a
-     * ModuleDescriptor with that name and version. The ModuleDescriptor
-     * will have a requires on java.base.
-     */
-    private static ModuleDescriptor newModuleDescriptor(String mid) {
-        String mn;
-        String vs;
-        int i = mid.indexOf("@");
-        if (i == -1) {
-            mn = mid;
-            vs = null;
-        } else {
-            mn = mid.substring(0, i);
-            vs = mid.substring(i+1);
-        }
-        ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn).requires("java.base");
-        if (vs != null)
-            builder.version(vs);
-        return builder.build();
-    }
 
     /**
      * Returns a ModuleFinder that finds modules with the given module
@@ -103,46 +75,6 @@ public final class ModuleUtils {
                 return new HashSet<>(namesToReference.values());
             }
         };
-    }
-
-
-    /**
-     * Creates an exploded module in the given directory and containing a
-     * module descriptor with the given module name.
-     */
-    static void createExplodedModule(Path dir, String mid) throws Exception {
-        ModuleDescriptor descriptor = newModuleDescriptor(mid);
-        Files.createDirectories(dir);
-        Path mi = dir.resolve("module-info.class");
-        try (OutputStream out = Files.newOutputStream(mi)) {
-            ModuleInfoWriter.write(descriptor, out);
-        }
-    }
-
-    /**
-     * Creates a JAR file with the given file path and containing a module
-     * descriptor with the given module name.
-     */
-    static void createModularJar(Path file, String mid, String ... entries)
-        throws Exception
-    {
-        ModuleDescriptor descriptor = newModuleDescriptor(mid);
-        try (OutputStream out = Files.newOutputStream(file)) {
-            try (JarOutputStream jos = new JarOutputStream(out)) {
-
-                JarEntry je = new JarEntry("module-info.class");
-                jos.putNextEntry(je);
-                ModuleInfoWriter.write(descriptor, jos);
-                jos.closeEntry();
-
-                for (String entry : entries) {
-                    je = new JarEntry(entry);
-                    jos.putNextEntry(je);
-                    jos.closeEntry();
-                }
-            }
-
-        }
     }
 
 }

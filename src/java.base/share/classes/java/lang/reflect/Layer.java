@@ -169,18 +169,12 @@ public final class Layer {
             checkForDuplicatePkgs(cf, clf);
         }
 
-        Layer layer;
         try {
-            layer = new Layer(cf, clf);
-        } catch (SecurityException se) {
-            throw se;
-        } catch (Exception | Error e) {
-            // FIXME: Need to reduce the range of exceptions that need
-            // to be caught here
-            throw new LayerInstantiationException(e);
+            return new Layer(cf, clf);
+        } catch (IllegalArgumentException iae) {
+            // IAE is thrown by VM when defining the module fails
+            throw new LayerInstantiationException(iae.getMessage());
         }
-
-        return layer;
     }
 
     /**

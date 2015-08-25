@@ -823,12 +823,24 @@ final class Resolver {
                     String source = export.source();
                     ModuleDescriptor other
                         = packageToExporter.put(source, descriptor2);
+
                     if (other != null && other != descriptor2) {
-                        fail("Modules %s and %s export package %s to module %s",
-                                descriptor2.name(),
-                                other.name(),
-                                source,
-                                descriptor1.name());
+                        // package might be local to descriptor1
+                        if (other == descriptor1) {
+                            fail("Module %s contains package %s"
+                                  + ", module %s exports package %s to %s",
+                                    descriptor1.name(),
+                                    source,
+                                    descriptor2.name(),
+                                    source,
+                                    descriptor1.name());
+                        } else {
+                            fail("Modules %s and %s export package %s to module %s",
+                                    descriptor2.name(),
+                                    other.name(),
+                                    source,
+                                    descriptor1.name());
+                        }
 
                     }
                 }

@@ -186,7 +186,7 @@ class JImageTask {
         }
     }
 
-    private void recreate() throws IOException, BadArgs {
+    private void recreate() throws Exception, BadArgs {
         File directory = new File(options.directory);
         if (!directory.isDirectory()) {
             throw taskHelper.newBadArgs("err.not.a.dir", directory.getAbsolutePath());
@@ -369,7 +369,7 @@ class JImageTask {
        }
     }
 
-    private boolean run() throws IOException, BadArgs {
+    private boolean run() throws Exception, BadArgs {
         switch (options.task) {
             case EXTRACT:
                 iterate(null, this::extract);

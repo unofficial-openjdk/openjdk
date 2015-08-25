@@ -24,13 +24,14 @@ package plugin;
 
 import java.io.IOException;
 import java.util.Map;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class HelloProvider extends ResourcePluginProvider {
+public final class HelloProvider extends CmdResourcePluginProvider {
 
     public static final String NAME = "hello";
     public static boolean called;
@@ -47,7 +48,7 @@ public final class HelloProvider extends ResourcePluginProvider {
 
     @Override
     public String getCategory() {
-        return "transformer";
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override

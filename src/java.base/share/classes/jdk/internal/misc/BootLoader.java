@@ -34,7 +34,6 @@ import java.util.Enumeration;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
-import sun.misc.VM;
 import sun.misc.SharedSecrets;
 
 /**
@@ -52,9 +51,6 @@ public class BootLoader {
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
-    // The ModuleReference for java.base
-    private static ModuleReference baseReference;
-
     /**
      * Returns the unnnamed module for the boot loader.
      */
@@ -68,11 +64,6 @@ public class BootLoader {
      */
     public static void loadModule(ModuleReference mref) {
         ClassLoaders.bootLoader().loadModule(mref);
-        if (baseReference == null) {
-            if (!mref.descriptor().name().equals("java.base"))
-                throw new InternalError();
-            baseReference = mref;
-        }
     }
 
     /**
@@ -89,12 +80,6 @@ public class BootLoader {
     public static InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
-        // special-case resources in java.base that are used early in the startup
-        if (moduleName == null) {
-            if (baseReference == null || VM.isBooted())
-                throw new InternalError();
-            moduleName = baseReference.descriptor().name();
-        }
         return ClassLoaders.bootLoader().getResourceAsStream(moduleName, name);
     }
 

@@ -41,7 +41,7 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -72,7 +72,7 @@ public class PluginsNegativeTest {
                 try {
                     ImagePluginProviderRepository.getPluginProvider(pluginName, Layer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
-                } catch (IOException ignored) {
+                } catch (Exception ignored) {
                 }
             } finally {
                 ImagePluginProviderRepository.unregisterPluginProvider(pluginName);
@@ -84,7 +84,7 @@ public class PluginsNegativeTest {
         try {
             ImagePluginProviderRepository.getPluginProvider("unknown", Layer.boot());
             throw new AssertionError("Exception expected for unknown plugin name");
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -145,7 +145,7 @@ public class PluginsNegativeTest {
         }
     }
 
-    public static class CustomProvider extends PluginProvider {
+    public static class CustomProvider extends CmdResourcePluginProvider {
 
         protected CustomProvider(String name) {
             super(name, "");
@@ -153,7 +153,7 @@ public class PluginsNegativeTest {
 
         @Override
         public String getCategory() {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
@@ -172,8 +172,8 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public Plugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-            return new Plugin[] { new CustomPlugin() };
+        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
+            return new ResourcePlugin[]{new CustomPlugin()};
         }
     }
 }

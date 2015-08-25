@@ -26,5 +26,6 @@
 module jdk.jcmd {
     requires jdk.attach;
     requires jdk.jvmstat;
+    requires jdk.hotspot.agent; // until JDK-8059035 is complete
 }
 

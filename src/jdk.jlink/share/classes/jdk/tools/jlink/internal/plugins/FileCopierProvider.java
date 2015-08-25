@@ -38,16 +38,17 @@ import java.util.List;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
+import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
  * Copy files to image from various locations.
  */
-public class FileCopierProvider extends ImageFilePluginProvider {
+public class FileCopierProvider extends CmdImageFilePluginProvider {
 
     private static class ImageFileImpl extends ImageFile {
 
@@ -268,7 +269,7 @@ public class FileCopierProvider extends ImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.TRANSFORMER;
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override

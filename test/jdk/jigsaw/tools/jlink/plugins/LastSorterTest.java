@@ -41,6 +41,8 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
@@ -73,7 +75,7 @@ public class LastSorterTest {
     private void checkTwoLastSorters() throws Exception {
         Properties props = new Properties();
         props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin6");
-        props.setProperty("sorterplugin6." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
+        props.setProperty("sorterplugin6." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
         props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin6");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(props);
@@ -122,9 +124,9 @@ public class LastSorterTest {
         props.setProperty(ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY, "sorterplugin2");
         props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin3");
 
-        props.setProperty("sorterplugin1." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
-        props.setProperty("sorterplugin2." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
-        props.setProperty("sorterplugin3." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
+        props.setProperty("sorterplugin1." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
+        props.setProperty("sorterplugin2." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
+        props.setProperty("sorterplugin3." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
 
         props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin3");
 
@@ -170,10 +172,10 @@ public class LastSorterTest {
         props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin3");
         props.setProperty(ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY, "sorterplugin4");
 
-        props.setProperty("sorterplugin1." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
-        props.setProperty("sorterplugin2." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
-        props.setProperty("sorterplugin3." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
-        props.setProperty("sorterplugin4." + PluginProvider.TOOL_ARGUMENT_PROPERTY, "/d");
+        props.setProperty("sorterplugin1." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
+        props.setProperty("sorterplugin2." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
+        props.setProperty("sorterplugin3." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
+        props.setProperty("sorterplugin4." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/d");
 
         props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin3");
 
@@ -232,16 +234,16 @@ public class LastSorterTest {
         }
     }
 
-    public static class SorterProvider extends PluginProvider {
+    public static class SorterProvider extends CmdResourcePluginProvider {
 
         SorterProvider(String name) {
             super(name, "");
         }
 
         @Override
-        public Plugin[] newPlugins(String[] arguments, Map<String, String> options)
+        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
                 throws IOException {
-            return new Plugin[] { new SorterPlugin(getName(), arguments == null ? null : arguments[0]) };
+            return new ResourcePlugin[]{new SorterPlugin(getName(), arguments == null ? null : arguments[0])};
         }
 
         @Override
@@ -272,11 +274,10 @@ public class LastSorterTest {
         }
 
         @Override
-        public Plugin[] newPlugins(String[] arguments, Map<String, String> options)
+        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
                 throws IOException {
             SorterPlugin sorterPlugin = (SorterPlugin) super.newPlugins(arguments, options)[0];
-            return new Plugin[] {
-                    sorterPlugin,
+            return new ResourcePlugin[]{                    sorterPlugin,
                     sorterPlugin
             };
         }

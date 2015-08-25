@@ -44,6 +44,8 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
@@ -151,17 +153,17 @@ public class PrevisitorTest {
         }
     }
 
-    public static class CustomProvider extends PluginProvider {
+    public static class CustomProvider extends CmdResourcePluginProvider {
 
         CustomProvider(String name) {
             super(name, "");
         }
 
         @Override
-        public Plugin[] newPlugins(String[] arguments, Map<String, String> options)
+        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
                 throws IOException {
             CustomPlugin customPlugin = new CustomPlugin();
-            return new Plugin[] {customPlugin};
+            return new ResourcePlugin[]{customPlugin};
         }
 
 

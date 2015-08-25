@@ -26,11 +26,11 @@ package plugin;
 import java.io.IOException;
 import java.util.Map;
 
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider;
 
-public class CustomImageFileProvider extends ImageFilePluginProvider {
+public class CustomImageFileProvider extends CmdImageFilePluginProvider {
 
     private final static String NAME = "custom-image-plugin";
 
@@ -40,7 +40,7 @@ public class CustomImageFileProvider extends ImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.TRANSFORMER;
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override

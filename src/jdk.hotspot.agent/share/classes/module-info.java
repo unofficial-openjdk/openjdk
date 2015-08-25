@@ -29,6 +29,7 @@ module jdk.hotspot.agent {
     requires java.rmi;
     requires java.scripting;
     requires jdk.jdi;
+    exports sun.jvm.hotspot.tools to jdk.jcmd;  // until JDK-8059035 is complete
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SACoreAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SADebugServerAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SAPIDAttachingConnector;

@@ -27,6 +27,10 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * An abstract Resource Plugin provider. Such provider are creating
+ * ResourcePlugin.
+ */
 public abstract class ResourcePluginProvider extends PluginProvider {
 
     protected ResourcePluginProvider(String name, String description) {
@@ -34,6 +38,6 @@ public abstract class ResourcePluginProvider extends PluginProvider {
     }
 
     @Override
-    public abstract ResourcePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
+    public abstract ResourcePlugin[] newPlugins(Map<Object, Object> config)
+            throws IOException;
 }

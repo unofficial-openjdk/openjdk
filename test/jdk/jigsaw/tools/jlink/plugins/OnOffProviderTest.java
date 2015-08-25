@@ -39,6 +39,7 @@ import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.plugins.OnOffProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
@@ -56,7 +57,7 @@ public class OnOffProviderTest {
         {
             Properties config = new Properties();
             CustomProvider customProvider = new CustomProvider();
-            config.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.OFF_ARGUMENT);
+            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.OFF_ARGUMENT);
             Plugin[] plugins = customProvider.newPlugins(config);
             if (plugins.length != 0) {
                 throw new AssertionError("Expected empty list of plugins");
@@ -65,7 +66,7 @@ public class OnOffProviderTest {
         {
             Properties config = new Properties();
             CustomProvider customProvider = new CustomProvider();
-            config.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.ON_ARGUMENT);
+            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.ON_ARGUMENT);
             config.setProperty(OPTION, VALUE);
             customProvider.newPlugins(config);
             if (!customProvider.isNewPluginsCalled()) {
@@ -74,7 +75,7 @@ public class OnOffProviderTest {
         }
         {
             Properties config = new Properties();
-            config.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                     ImagePluginConfiguration.ON_ARGUMENT + "," + ImagePluginConfiguration.OFF_ARGUMENT);
             CustomProvider customProvider = new CustomProvider();
             try {
@@ -85,7 +86,7 @@ public class OnOffProviderTest {
         }
         {
             Properties config = new Properties();
-            config.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, "INVALID");
+            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "INVALID");
             CustomProvider customProvider = new CustomProvider();
             try {
                 customProvider.newPlugins(config);
@@ -122,7 +123,7 @@ public class OnOffProviderTest {
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(Map<String, String> otherOptions) throws IOException {
+        public ResourcePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
             if (!additionalOptions.equals(otherOptions)) {
                 throw new AssertionError("Additional options: expected: " +
                         additionalOptions + ", got: " + otherOptions);

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,24 +21,11 @@
  * questions.
  */
 
-#include "jni.h"
-#include "jvm.h"
-#include "sun_reflect_Reflection.h"
+/**
+ * Supporting class for tests of java.lang.reflect.Layer.
+ */
 
-JNIEXPORT jclass JNICALL
-Java_sun_reflect_Reflection_getCallerClass__(JNIEnv *env, jclass unused)
-{
-    return JVM_GetCallerClass(env, JVM_CALLER_DEPTH);
-}
+package layertest;
 
-JNIEXPORT jclass JNICALL
-Java_sun_reflect_Reflection_getCallerClass__I(JNIEnv *env, jclass unused, jint depth)
-{
-    return JVM_GetCallerClass(env, depth);
-}
+public class Test { }
 
-JNIEXPORT jint JNICALL
-Java_sun_reflect_Reflection_getClassAccessFlags(JNIEnv *env, jclass unused, jclass cls)
-{
-    return JVM_GetClassAccessFlags(env, cls);
-}

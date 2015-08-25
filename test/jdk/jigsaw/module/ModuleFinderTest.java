@@ -23,13 +23,14 @@
 
 /**
  * @test
- * @library ../lib
- * @build ModuleFinderTest ModuleUtils
+ * @modules java.base/jdk.internal.module
+ * @build ModuleFinderTest
  * @run testng ModuleFinderTest
  * @summary Basic tests for java.lang.module.ModuleFinder
  */
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.module.FindException;
 import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
@@ -39,7 +40,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
+
+import jdk.internal.module.ModuleInfoWriter;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -47,7 +52,9 @@ import static org.testng.Assert.*;
 @Test
 public class ModuleFinderTest {
 
-    private static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
+    private static final Path USER_DIR
+        = Paths.get(System.getProperty("user.dir"));
+
 
     /**
      * Test ModuleFinder.ofInstalled
@@ -69,6 +76,7 @@ public class ModuleFinderTest {
         assertFalse(names.contains("java.rhubarb"));
     }
 
+
     /**
      * Test ModuleFinder.of with zero directories
      */
@@ -79,14 +87,15 @@ public class ModuleFinderTest {
         assertFalse(finder.find("java.rhubarb").isPresent());
     }
 
+
     /**
      * Test ModuleFinder.of with one directory
      */
     public void testOneDirectory() throws Exception {
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        ModuleUtils.createExplodedModule(dir.resolve("m1"), "m1");
-        ModuleUtils.createExplodedModule(dir.resolve("m2"), "m2");
+        createExplodedModule(dir.resolve("m1"), "m1");
+        createExplodedModule(dir.resolve("m2"), "m2");
 
         ModuleFinder finder = ModuleFinder.of(dir);
         assertTrue(finder.findAll().size() == 2);
@@ -95,20 +104,21 @@ public class ModuleFinderTest {
         assertFalse(finder.find("java.rhubarb").isPresent());
     }
 
+
     /**
      * Test ModuleFinder.of with two directories
      */
     public void testTwoDirectories() throws Exception {
 
         Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
-        ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
-        ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
         Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
-        ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
-        ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
-        ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");
-        ModuleUtils.createExplodedModule(dir2.resolve("m4"), "m4");
+        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        createExplodedModule(dir2.resolve("m3"), "m3");
+        createExplodedModule(dir2.resolve("m4"), "m4");
 
         ModuleFinder finder = ModuleFinder.of(dir1, dir2);
         assertTrue(finder.findAll().size() == 4);
@@ -127,6 +137,7 @@ public class ModuleFinderTest {
         assertEquals(m2.version().get().toString(), "1.0");
     }
 
+
     /**
      * Test ModuleFinder.of with a directory that contains two
      * versions of the same module
@@ -134,8 +145,8 @@ public class ModuleFinderTest {
     public void testDuplicateModules() throws Exception {
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        ModuleUtils.createModularJar(dir.resolve("m1@1.0.jar"), "m1");
-        ModuleUtils.createModularJar(dir.resolve("m1@2.0.jar"), "m1");
+        createModularJar(dir.resolve("m1@1.0.jar"), "m1");
+        createModularJar(dir.resolve("m1@2.0.jar"), "m1");
 
         ModuleFinder finder = ModuleFinder.of(dir);
         try {
@@ -149,6 +160,7 @@ public class ModuleFinderTest {
             assertTrue(false);
         } catch (FindException expected) { }
     }
+
 
     /**
      * Test ModuleFinder.of with a bad (does not exist) directory
@@ -174,6 +186,7 @@ public class ModuleFinderTest {
         }
 
     }
+
 
     /**
      * Test ModuleFinder.of with a truncated module-info.class
@@ -202,20 +215,21 @@ public class ModuleFinderTest {
         }
     }
 
+
     /**
      * Test ModuleFinder.concat
      */
     public void testConcat() throws Exception {
 
         Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
-        ModuleUtils.createExplodedModule(dir1.resolve("m1"), "m1@1.0");
-        ModuleUtils.createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
 
         Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
-        ModuleUtils.createExplodedModule(dir2.resolve("m1"), "m1@2.0");
-        ModuleUtils.createExplodedModule(dir2.resolve("m2"), "m2@2.0");
-        ModuleUtils.createExplodedModule(dir2.resolve("m3"), "m3");
-        ModuleUtils.createExplodedModule(dir2.resolve("m4"), "m4");
+        createExplodedModule(dir2.resolve("m1"), "m1@2.0");
+        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        createExplodedModule(dir2.resolve("m3"), "m3");
+        createExplodedModule(dir2.resolve("m4"), "m4");
 
         ModuleFinder finder1 = ModuleFinder.of(dir1);
         ModuleFinder finder2 = ModuleFinder.of(dir2);
@@ -237,6 +251,7 @@ public class ModuleFinderTest {
         assertEquals(m2.version().get().toString(), "1.0");
     }
 
+
     /**
      * Test ModuleFinder.empty
      */
@@ -245,6 +260,7 @@ public class ModuleFinderTest {
         assertTrue(finder.findAll().isEmpty());
         assertFalse(finder.find("java.rhubarb").isPresent());
     }
+
 
     /**
      * Test null handling
@@ -287,6 +303,69 @@ public class ModuleFinderTest {
             assertTrue(false);
         } catch (NullPointerException expected) { }
 
+    }
+
+
+    /**
+     * Parses a string of the form {@code name[@version]} and returns a
+     * ModuleDescriptor with that name and version. The ModuleDescriptor
+     * will have a requires on java.base.
+     */
+    static ModuleDescriptor newModuleDescriptor(String mid) {
+        String mn;
+        String vs;
+        int i = mid.indexOf("@");
+        if (i == -1) {
+            mn = mid;
+            vs = null;
+        } else {
+            mn = mid.substring(0, i);
+            vs = mid.substring(i+1);
+        }
+        ModuleDescriptor.Builder builder
+                = new ModuleDescriptor.Builder(mn).requires("java.base");
+        if (vs != null)
+            builder.version(vs);
+        return builder.build();
+    }
+
+    /**
+     * Creates an exploded module in the given directory and containing a
+     * module descriptor with the given module name/version.
+     */
+    static void createExplodedModule(Path dir, String mid) throws Exception {
+        ModuleDescriptor descriptor = newModuleDescriptor(mid);
+        Files.createDirectories(dir);
+        Path mi = dir.resolve("module-info.class");
+        try (OutputStream out = Files.newOutputStream(mi)) {
+            ModuleInfoWriter.write(descriptor, out);
+        }
+    }
+
+    /**
+     * Creates a JAR file with the given file path and containing a module
+     * descriptor with the given module name/version.
+     */
+    static void createModularJar(Path file, String mid, String ... entries)
+        throws Exception
+    {
+        ModuleDescriptor descriptor = newModuleDescriptor(mid);
+        try (OutputStream out = Files.newOutputStream(file)) {
+            try (JarOutputStream jos = new JarOutputStream(out)) {
+
+                JarEntry je = new JarEntry("module-info.class");
+                jos.putNextEntry(je);
+                ModuleInfoWriter.write(descriptor, jos);
+                jos.closeEntry();
+
+                for (String entry : entries) {
+                    je = new JarEntry(entry);
+                    jos.putNextEntry(je);
+                    jos.closeEntry();
+                }
+            }
+
+        }
     }
 
 }

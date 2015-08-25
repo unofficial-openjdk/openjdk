@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
@@ -42,14 +43,14 @@ public final class StripDebugProvider extends OnOffProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(Map<String, String> otherOptions)
+    public ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
             throws IOException {
         return new ResourcePlugin[]{new StripDebugPlugin()};
     }
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.TRANSFORMER;
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override

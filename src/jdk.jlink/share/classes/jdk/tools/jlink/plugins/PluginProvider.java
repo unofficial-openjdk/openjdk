@@ -25,21 +25,30 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 /**
  * Extend this class and make your class available to the ServiceLoader in order
- * to expose your Plugin. A provider has a name, a description, an optional
- * category, configuration and command line option.
+ * to expose your Plugin. A provider has a name, a description and an optional
+ * category.<br>
+ * Order of known categories are:
+ * <ol>
+ * <li>FILTER: Filter in/out resources.</li>
+ * <li>TRANSFORMER: Transform resources (eg: refactoring, bytecode
+ * manipulation).</li>
+ * <li>SORTER: Sort resources.</li>
+ * <li>COMPRESSOR: Compress resources.</li>
+ * <li>PACKAGER: Final processing</li>
+ * </ol>
  */
 public abstract class PluginProvider {
 
-    public static final String TOOL_ARGUMENT_PROPERTY = "argument";
+    public static final String COMPRESSOR = "compressor";
+    public static final String SORTER = "sorter";
+    public static final String TRANSFORMER = "transformer";
+    public static final String FILTER = "filter";
+    public static final String PACKAGER = "packager";
 
     private final String name;
     private final String description;
@@ -61,38 +70,13 @@ public abstract class PluginProvider {
         return description;
     }
 
-    public abstract String getToolArgument();
-
-    public abstract String getToolOption();
-
-    public abstract Map<String, String> getAdditionalOptions();
-
-    public final Plugin[] newPlugins(Properties properties) throws IOException {
-        String[] arguments = null;
-        Collection<String> options = Collections.emptyList();
-        if (getAdditionalOptions() != null) {
-            options = getAdditionalOptions().keySet();
-        }
-        Map<String, String> otherOptions = new HashMap<>();
-        for (String a : properties.stringPropertyNames()) {
-            if (options.contains(a)) {
-                otherOptions.put(a, properties.getProperty(a));
-                continue;
-            }
-            switch (a) {
-                case TOOL_ARGUMENT_PROPERTY: {
-                    arguments = properties.getProperty(a).
-                            split(",");
-                    for (int i = 0; i < arguments.length; i++) {
-                        arguments[i] = arguments[i].trim();
-                    }
-                    break;
-                }
-            }
-        }
-        return newPlugins(arguments, otherOptions);
-    }
-
-    public abstract Plugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
+    /**
+     * Create plugins based on passed configuration.
+     *
+     * @param config The plugins configuration.
+     * @return An array of plugins.
+     * @throws IOException
+     */
+    public abstract Plugin[] newPlugins(Map<Object, Object> config)
+            throws IOException;
 }

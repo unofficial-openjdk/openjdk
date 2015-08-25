@@ -33,9 +33,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 
 import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
 
 public class OptionsTest {
     public static void main(String[] args) throws IOException {
@@ -50,7 +50,7 @@ public class OptionsTest {
         }
     }
 
-    public static class OptionsProvider extends PluginProvider {
+    public static class OptionsProvider extends CmdPluginProvider {
 
         public static final String[] OPTIONS = {"a", "nnn", "cccc"};
 

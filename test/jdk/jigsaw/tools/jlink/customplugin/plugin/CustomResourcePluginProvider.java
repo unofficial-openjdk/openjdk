@@ -26,11 +26,11 @@ package plugin;
 import java.io.IOException;
 import java.util.Map;
 
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
 
-public class CustomResourcePluginProvider extends ResourcePluginProvider {
+public class CustomResourcePluginProvider extends CmdResourcePluginProvider {
 
     private final static String NAME = "custom-resource-plugin";
 
@@ -40,7 +40,7 @@ public class CustomResourcePluginProvider extends ResourcePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.TRANSFORMER;
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override

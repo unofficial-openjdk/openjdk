@@ -38,9 +38,9 @@ import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
 import jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.PluginProvider;
 
 public class ExcludeFilesPluginTest {
     public static void main(String[] args) throws Exception {
@@ -69,7 +69,7 @@ public class ExcludeFilesPluginTest {
 
     public void checkFiles(String s, String sample, String module, boolean exclude) throws Exception {
         Properties prop = new Properties();
-        prop.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, s);
+        prop.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeFilesProvider fprovider = new ExcludeFilesProvider();
         ImageFilePlugin fplug = (ImageFilePlugin) fprovider.newPlugins(prop)[0];
         ImageFilePool files = new ImageFilePoolImpl();
