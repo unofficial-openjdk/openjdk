@@ -142,30 +142,32 @@ $(FULL_COMPANY_NAME) in the US and other countries.
 # to $(PATH_SEP) being interpreted as an end of
 # command (newline or shell ; character)
 ALL_SOURCE_DIRS := $(wildcard \
-      $(JDK_TOPDIR)/src/*/share/classes \
+      $(GENSRC_OUTPUTDIR)/j* \
+      $(if $(IMPORT_MODULES_SRC), $(IMPORT_MODULES_SRC)/*) \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
+      $(JDK_TOPDIR)/src/*/share/classes \
       $(LANGTOOLS_TOPDIR)/src/*/share/classes \
       $(NASHORN_TOPDIR)/src/*/share/classes \
       $(CORBA_TOPDIR)/src/*/share/classes \
       $(JAXP_TOPDIR)/src/*/share/classes \
       $(JAXWS_TOPDIR)/src/*/share/classes \
-      $(GENSRC_OUTPUTDIR)/j* \
       $(SUPPORT_OUTPUTDIR)/rmic/j* \
       $(JDK_TOPDIR)/src/*/share/doc/stub \
       ) \
       #
 
 ALL_MODULE_SOURCE_DIRS := \
-      $(JDK_TOPDIR)/src/*/share/classes \
+      $(SUPPORT_OUTPUTDIR)/gensrc/* \
+      $(if $(IMPORT_MODULES_SRC), $(IMPORT_MODULES_SRC)/*) \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
+      $(JDK_TOPDIR)/src/*/share/classes \
       $(LANGTOOLS_TOPDIR)/src/*/share/classes \
       $(NASHORN_TOPDIR)/src/*/share/classes \
       $(CORBA_TOPDIR)/src/*/share/classes \
       $(JAXP_TOPDIR)/src/*/share/classes \
       $(JAXWS_TOPDIR)/src/*/share/classes \
-      $(SUPPORT_OUTPUTDIR)/gensrc/* \
       $(SUPPORT_OUTPUTDIR)/rmic/* \
       $(JDK_TOPDIR)/src/*/share/doc/stub \
       #
