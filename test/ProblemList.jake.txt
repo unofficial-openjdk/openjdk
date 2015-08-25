@@ -14,12 +14,6 @@ java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java	generic-all
 
 ############################################################################
 
-# jdk_net
-
-java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  generic-all
-
-############################################################################
-
 # jdk_security
 
 # 8038079
