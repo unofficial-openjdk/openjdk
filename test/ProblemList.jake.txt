@@ -46,9 +46,6 @@ com/sun/jdi/cds/CDSFieldWatchpoints.java			generic-all
 
 # core_tools
 
-# waiting for javac/jtreg support
-tools/launcher/ToolsOpts.java					generic-all
-
 # 8048100
 tools/pack200/Pack200Test.java					generic-all
 
