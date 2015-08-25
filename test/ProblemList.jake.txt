@@ -173,6 +173,9 @@ java/rmi/transport/dgcDeadLock/DGCDeadLock.java			generic-all
 # waiting for javac/jtreg support
 javax/xml/jaxp/common/8035437/run.sh                            generic-all
 
+# 8134418
+javax/xml/bind/jxc/8046817/GenerateEnumSchema.java		generic-all
+
 # 8130054, needs to be changed to headless
 javax/naming/module/basic.sh					generic-all
 
