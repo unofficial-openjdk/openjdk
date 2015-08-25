@@ -61,7 +61,7 @@ $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
 # seamlessly.
 $(eval $(call SetupJavaCompilation,jdk.scripting.nashorn, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
-    MODULE := $(MODULE), \
+    MODULE := jdk.scripting.nashorn, \
     SRC := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes, \
     EXCLUDE_FILES := META-INF/MANIFEST.MF, \
     COPY := .properties .js, \
