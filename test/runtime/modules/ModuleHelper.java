@@ -21,17 +21,13 @@
  * questions.
  */
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Module;
 import java.net.URI;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Module;
-import java.util.*;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleReader;
-import jdk.test.lib.*;
+import java.lang.reflect.Module;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import sun.hotspot.WhiteBox;
 
 public class ModuleHelper {
@@ -45,30 +41,31 @@ public class ModuleHelper {
     public static void AddModuleExports(Object from, String pkg, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExports(from, pkg, to);
-        invoke(findMethod("implAddExportsNoSync"), from, pkg, to);
+        java.lang.reflect.ModuleHelper.addExportsNoSync((Module)from, pkg, (Module)to);
     }
 
     public static void AddReadsModule(Object from, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddReadsModule(from, to);
-        invoke(findMethod("implAddReadsNoSync"), from, to);
+        java.lang.reflect.ModuleHelper.addReadsNoSync((Module)from, (Module)to);
     }
 
     public static void AddModulePackage(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModulePackage(m, pkg);
-        invoke(findMethod("implAddPackageNoSync"), m, pkg);
+        java.lang.reflect.ModuleHelper.addPackageNoSync((Module)m, pkg);
     }
+
     public static void AddModuleExportsToAllUnnamed(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExportsToAllUnnamed(m, pkg);
-        // TBD: invoke(findMethod("addModExpAllUnnNoSync"), m, pkg);
+        //java.lang.reflect.ModuleHelper.addExportsToAllUnnamedNoSync((Module)m, pkg);
     }
 
     public static void AddModuleExportsToAll(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExportsToAll(m, pkg);
-        invoke(findMethod("implAddExportsNoSync"), m, pkg, null);
+        java.lang.reflect.ModuleHelper.addExportsNoSync((Module)m, pkg, (Module)null);
     }
 
     public static boolean CanReadModule(Object from, Object to) throws Throwable {
@@ -96,45 +93,7 @@ public class ModuleHelper {
             new ModuleDescriptor.Builder(name).conceals(pkg_set).build();
         URI uri = URI.create("module:/" + name);
 
-        Class[] cArg = new Class[2];
-        cArg[0] = ClassLoader.class;
-        cArg[1] = java.lang.module.ModuleDescriptor.class;
-        Constructor ctor = findCtor(cArg);
-        return (Module)invokeCtor(ctor, loader, descriptor);
+        return java.lang.reflect.ModuleHelper.newModule(loader, descriptor);
     }
 
-    private static Object invokeCtor(Constructor c, Object... args) throws Throwable {
-        try {
-            return c.newInstance(args);
-        } catch (InvocationTargetException e) {
-            throw e.getCause();
-        }
-    }
-
-    private static Constructor findCtor(Class[] cArg) throws Throwable {
-        Constructor ctor = java.lang.reflect.Module.class.getDeclaredConstructor(cArg);
-        if (ctor != null) {
-            ctor.setAccessible(true);
-            return ctor;
-        }
-        throw new RuntimeException("Failed to find constructor in java.lang.reflect.Module");
-    }
-
-    private static Object invoke(Method m, Object obj, Object... args) throws Throwable {
-        try {
-            return m.invoke(obj, args);
-        } catch (InvocationTargetException e) {
-            throw e.getCause();
-        }
-    }
-
-    private static Method findMethod(String name) {
-        for (Method m : java.lang.reflect.Module.class.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                m.setAccessible(true);
-                return m;
-            }
-        }
-        throw new RuntimeException("Failed to find method " + name + " in java.lang.reflect.Module");
-    }
 }

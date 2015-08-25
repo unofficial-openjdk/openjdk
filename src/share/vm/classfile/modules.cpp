@@ -200,36 +200,38 @@ static void define_javabase_module(Handle h_loader,
     // Make sure java.base's ModuleEntry has been created
     assert(ModuleEntryTable::javabase_module() != NULL, "No ModuleEntry for java.base");
 
-    // loop through and add any new packages for java.base
-    MutexLocker m1(Module_lock, THREAD);
+    {
+      MutexLocker m1(Module_lock, THREAD);
 
-    // Verify that all java.base packages created during bootstrapping are in
-    // pkg_list.  If any are not in pkg_list, than a non-java.base class was
-    // loaded erroneously pre java.base module definition.
-    package_table->verify_javabase_packages(pkg_list);
+      // Verify that all java.base packages created during bootstrapping are in
+      // pkg_list.  If any are not in pkg_list, than a non-java.base class was
+      // loaded erroneously pre java.base module definition.
+      package_table->verify_javabase_packages(pkg_list);
 
-    ResourceMark rm;
-    PackageEntry* pkg;
-    for (int x = 0; x < pkg_list->length(); x++) {
-      // Some of java.base's packages were added early in bootstrapping, ignore duplicates.
-      if (package_table->lookup_only(pkg_list->at(x)) == NULL) {
-        pkg = package_table->locked_create_entry_or_null(pkg_list->at(x), ModuleEntryTable::javabase_module());
-        assert(pkg != NULL, "Unable to create a java.base package entry");
+      // loop through and add any new packages for java.base
+      ResourceMark rm;
+      PackageEntry* pkg;
+      for (int x = 0; x < pkg_list->length(); x++) {
+        // Some of java.base's packages were added early in bootstrapping, ignore duplicates.
+        if (package_table->lookup_only(pkg_list->at(x)) == NULL) {
+          pkg = package_table->locked_create_entry_or_null(pkg_list->at(x), ModuleEntryTable::javabase_module());
+          assert(pkg != NULL, "Unable to create a java.base package entry");
 
-        if (TraceModules || TracePackages) {
-          tty->print_cr("[In define_javabase_module(): creation of package %s for module java.base]",
-                        (pkg_list->at(x))->as_C_string());
+          if (TraceModules || TracePackages) {
+            tty->print_cr("[In define_javabase_module(): creation of package %s for module java.base]",
+                          (pkg_list->at(x))->as_C_string());
+          }
         }
+
+        // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
+        // the Symbol* that was created above for each package. The refcount was incremented
+        // by SymbolTable::new_symbol and as well by the PackageEntry creation.
+        pkg_list->at(x)->decrement_refcount();
       }
 
-      // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
-      // the Symbol* that was created above for each package. The refcount was incremented
-      // by SymbolTable::new_symbol and as well by the PackageEntry creation.
-      pkg_list->at(x)->decrement_refcount();
+      // Store pointer in java.lang.reflect.Module object.
+      java_lang_reflect_Module::set_module_entry(jlrM_handle(), ModuleEntryTable::javabase_module());
     }
-
-    // Store pointer in java.lang.reflect.Module object.
-    java_lang_reflect_Module::set_module_entry(jlrM_handle(), ModuleEntryTable::javabase_module());
 
     // Patch any previously loaded classes' module field with java.base's jlr.Module.
     ModuleEntryTable::patch_javabase_entries(jlrM_handle, CHECK);
