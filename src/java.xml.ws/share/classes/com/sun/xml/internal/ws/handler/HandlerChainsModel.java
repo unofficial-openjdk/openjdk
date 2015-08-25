@@ -27,7 +27,7 @@ package com.sun.xml.internal.ws.handler;
 
 import com.sun.xml.internal.ws.api.BindingID;
 import com.sun.xml.internal.ws.api.WSBinding;
-import com.sun.xml.internal.ws.ModuleAccessHelper;
+import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil;
 import com.sun.xml.internal.ws.transport.http.DeploymentDescriptorParser;
 import com.sun.xml.internal.ws.util.HandlerAnnotationInfo;
@@ -257,7 +257,7 @@ public class HandlerChainsModel {
                 try {
                     Class<?> handlerClass =
                         loadClass(classLoader, XMLStreamReaderUtil.getElementText(reader).trim());
-                    ModuleAccessHelper.ensureAccess(HandlerChainsModel.class, handlerClass);
+                    Modules.ensureReadable(HandlerChainsModel.class, handlerClass);
                     handler = (Handler) handlerClass.newInstance();
                 } catch (InstantiationException ie){
                     throw new RuntimeException(ie);
@@ -332,7 +332,7 @@ public class HandlerChainsModel {
                     try {
                         Class<?> clazz = loadClass(annotatedClass.getClassLoader(),
                                                    handler.getHandlerClass());
-                        ModuleAccessHelper.ensureAccess(HandlerChainsModel.class, clazz);
+                        Modules.ensureReadable(HandlerChainsModel.class, clazz);
                         Handler handlerClass = (Handler) clazz.newInstance();
                         callHandlerPostConstruct(handlerClass);
                         handlerClassList.add(handlerClass);

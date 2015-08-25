@@ -33,9 +33,9 @@ import java.util.logging.Logger;
  *
  * @author Miroslav Kos (miroslav.kos at oracle.com)
  */
-public class ModuleAccessHelper {
+public class Modules {
 
-    private static final Logger logger = Logger.getLogger(ModuleAccessHelper.class.getName());
+    private static final Logger logger = Logger.getLogger(Modules.class.getName());
 
     /**
      * This method uses jdk9 specific API. For all the JDKs <= 8 empty.
@@ -43,7 +43,7 @@ public class ModuleAccessHelper {
      * @param sourceClass class (current module) usinf Core Reflection API
      * @param targetClass class to be accessed via Core Reflection
      */
-    public static void ensureAccess(Class<?> sourceClass, Class<?> targetClass) {
+    public static void ensureReadable(Class<?> sourceClass, Class<?> targetClass) {
         java.lang.reflect.Module targetModule = targetClass.getModule();
         java.lang.reflect.Module sourceModule = sourceClass.getModule();
         if (!sourceModule.canRead(targetModule)) {

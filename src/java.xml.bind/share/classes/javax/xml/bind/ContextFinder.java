@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -40,7 +39,7 @@ import java.util.StringTokenizer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.sun.xml.internal.bind.v2.ModuleAccessHelper;
+import com.sun.xml.internal.bind.v2.Modules;
 
 
 /**
@@ -154,7 +153,7 @@ class ContextFinder {
 
         try {
             Class spFactory = ServiceLoaderUtil.safeLoadClass(className, PLATFORM_DEFAULT_FACTORY_CLASS, classLoader);
-            ModuleAccessHelper.ensureAccess(ContextFinder.class, spFactory);
+            Modules.ensureReadable(ContextFinder.class, spFactory);
             return newInstance(contextPath, spFactory, classLoader, properties);
         } catch (ClassNotFoundException x) {
             throw new JAXBException(Messages.format(Messages.PROVIDER_NOT_FOUND, className), x);
@@ -242,7 +241,7 @@ class ContextFinder {
         } catch (ClassNotFoundException e) {
             throw new JAXBException(e);
         }
-        ModuleAccessHelper.ensureAccess(ContextFinder.class, spi);
+        Modules.ensureReadable(ContextFinder.class, spi);
 
         if (logger.isLoggable(Level.FINE)) {
             // extra check to avoid costly which operation if not logged
