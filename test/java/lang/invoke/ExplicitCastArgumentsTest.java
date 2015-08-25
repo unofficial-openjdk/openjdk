@@ -21,14 +21,16 @@
  * questions.
  */
 
-package java.lang.invoke;
-
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import sun.invoke.util.Wrapper;
 
 /* @test
  * @summary unit tests for MethodHandles.explicitCastArguments()
  *
- * @run main/bootclasspath java.lang.invoke.ExplicitCastArgumentsTest
+ * @modules java.base/sun.invoke.util
+ * @run main/bootclasspath ExplicitCastArgumentsTest
  */
 public class ExplicitCastArgumentsTest {
     private static final boolean VERBOSE = Boolean.getBoolean("verbose");

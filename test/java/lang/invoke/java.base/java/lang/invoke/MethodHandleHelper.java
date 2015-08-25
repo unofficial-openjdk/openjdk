@@ -21,29 +21,32 @@
  * questions.
  */
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandleHelper;
-import java.lang.invoke.MethodType;
+package java.lang.invoke;
 
-/* @test
- * @summary Assertion in LambdaFormEditor.bindArgumentType is too strong
- *
- * @compile/module=java.base java/lang/invoke/MethodHandleHelper.java
- * @run main/othervm -esa CustomizedLambdaFormTest
+import java.lang.invoke.MethodHandles.Lookup;
+
+/**
+ * Helper class to inject into java.lang.invoke that provides access to
+ * package-private methods in this package.
  */
 
-public class CustomizedLambdaFormTest {
+public class MethodHandleHelper {
 
-    static void testExtendCustomizedBMH() throws Exception {
-        // Construct BMH
-        MethodHandle mh = MethodHandleHelper.IMPL_LOOKUP.findVirtual(String.class, "concat",
-                MethodType.methodType(String.class, String.class))
-                .bindTo("a");
-        MethodHandleHelper.customize(mh);
-        mh.bindTo("b"); // Try to extend customized BMH
+    private MethodHandleHelper() { }
+
+    public static Lookup IMPL_LOOKUP = Lookup.IMPL_LOOKUP;
+
+    public static void customize(MethodHandle mh) {
+        mh.customize();
     }
 
-    public static void main(String[] args) throws Throwable {
-        testExtendCustomizedBMH();
+    public static MethodHandle varargsArray(int nargs) {
+        return MethodHandleImpl.varargsArray(nargs);
     }
+
+    public static MethodHandle varargsArray(Class<?> arrayType, int nargs) {
+        return MethodHandleImpl.varargsArray(arrayType, nargs);
+    }
+
 }
+
