@@ -61,10 +61,11 @@ $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
 # seamlessly.
 $(eval $(call SetupJavaCompilation,jdk.scripting.nashorn, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
+    MODULE := $(MODULE), \
     SRC := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes, \
     EXCLUDE_FILES := META-INF/MANIFEST.MF, \
     COPY := .properties .js, \
-    BIN := $(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn))
+    BIN := $(SUPPORT_OUTPUTDIR)/special_classes))
 
 NASGEN_SRC := $(NASHORN_TOPDIR)/buildtools/nasgen/src
 ASM_SRC := $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/org/objectweb/asm
