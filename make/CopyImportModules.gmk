@@ -38,19 +38,40 @@ CONF_DIR := $(wildcard $(addsuffix /$(MODULE), $(IMPORT_MODULES_CONF)))
 $(eval $(call FillCacheFind, $(LIBS_DIR) $(CMDS_DIR) $(CONF_DIR)))
 
 ifneq ($(LIBS_DIR), )
-  $(eval $(call SetupCopyFiles, COPY_LIBS, \
-      SRC := $(LIBS_DIR), \
-      DEST := $(JDK_OUTPUTDIR)/lib, \
-      FILES := $(call CacheFind, $(LIBS_DIR)), \
-  ))
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    TO_BIN_FILTER := %$(SHARED_LIBRARY_SUFFIX) %.diz %.pdb %.map
+
+    $(eval $(call SetupCopyFiles,COPY_LIBS_TO_BIN, \
+        SRC := $(LIBS_DIR), \
+        DEST := $(JDK_OUTPUTDIR)/bin, \
+        FILES := $(filter $(TO_BIN_FILTER), \
+            $(call CacheFind, $(LIBS_DIR))) \
+    ))
+
+    $(eval $(call SetupCopyFiles,COPY_LIBS_TO_LIB, \
+        SRC := $(LIBS_DIR), \
+        DEST := $(JDK_OUTPUTDIR)/lib, \
+        FILES := $(filter-out $(TO_BIN_FILTER), \
+            $(call CacheFind, $(LIBS_DIR))) \
+    ))
+    TARGETS += $(COPY_LIBS_TO_BIN) $(COPY_LIBS_TO_LIB)
+  else
+    $(eval $(call SetupCopyFiles, COPY_LIBS, \
+        SRC := $(LIBS_DIR), \
+        DEST := $(JDK_OUTPUTDIR)/lib, \
+        FILES := $(call CacheFind, $(LIBS_DIR)), \
+    ))
+    TARGETS += $(COPY_LIBS)
+  endif
 endif
 
 ifneq ($(CMDS_DIR), )
   $(eval $(call SetupCopyFiles, COPY_CMDS, \
       SRC := $(CMDS_DIR), \
-      DEST := $(JDK_OUTPUTDIR)/lib, \
+      DEST := $(JDK_OUTPUTDIR)/bin, \
       FILES := $(call CacheFind, $(CMDS_DIR)), \
   ))
+  TARGETS += $(COPY_CMDS)
 endif
 
 ifneq ($(CONF_DIR), )
@@ -59,6 +80,7 @@ ifneq ($(CONF_DIR), )
       DEST := $(JDK_OUTPUTDIR)/lib, \
       FILES := $(call CacheFind, $(CONF_DIR)), \
   ))
+  TARGETS += $(COPY_CONF)
 endif
 
-all: $(COPY_CMDS) $(COPY_LIBS) $(COPY_CONF)
+all: $(TARGETS)
