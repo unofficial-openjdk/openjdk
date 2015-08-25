@@ -25,9 +25,6 @@ java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  gener
 # 8038079
 sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 
-# waiting for javac/jtreg support
-sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
-
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
 
