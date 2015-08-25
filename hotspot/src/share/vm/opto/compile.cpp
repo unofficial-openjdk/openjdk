@@ -594,6 +594,10 @@ uint Compile::scratch_emit_size(const Node* n) {
     n->as_MachBranch()->label_set(&fakeL, 0);
   }
   n->emit(buf, this->regalloc());
+
+  // Emitting into the scratch buffer should not fail
+  assert (!failing(), err_msg_res("Must not have pending failure. Reason is: %s", failure_reason()));
+
   if (is_branch) // Restore label.
     n->as_MachBranch()->label_set(saveL, save_bnum);
 
@@ -3311,7 +3315,7 @@ bool Compile::final_graph_reshaping() {
 
   // Visit everybody reachable!
   // Allocate stack of size C->unique()/2 to avoid frequent realloc
-  Node_Stack nstack(unique() >> 1);
+  Node_Stack nstack(live_nodes() >> 1);
   final_graph_reshaping_walk(nstack, root(), frc);
 
   // Check for unreachable (from below) code (i.e., infinite loops).
