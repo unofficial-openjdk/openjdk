@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
@@ -69,8 +68,8 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Properties properties, Path imageOutDir)
+    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir)
             throws IOException {
-        return new DefaultImageBuilder(properties, imageOutDir);
+        return new DefaultImageBuilder(config, imageOutDir);
     }
 }

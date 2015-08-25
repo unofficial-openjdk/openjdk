@@ -38,7 +38,7 @@ import java.util.Properties;
 
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.ExcludeProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
@@ -75,7 +75,7 @@ public class ExcludePluginTest {
 
     public void check(String s, String sample, boolean exclude) throws Exception {
         Properties p = new Properties();
-        p.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, s);
+        p.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeProvider provider = new ExcludeProvider();
         ResourcePlugin excludePlugin = (ResourcePlugin) provider.newPlugins(p)[0];
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());

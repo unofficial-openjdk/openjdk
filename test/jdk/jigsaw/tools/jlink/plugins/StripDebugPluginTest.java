@@ -57,7 +57,7 @@ import com.sun.tools.classfile.Method;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -109,7 +109,7 @@ public class StripDebugPluginTest {
     private void check(String path, byte[] content, String infoPath, byte[] moduleInfo) throws Exception {
         StripDebugProvider prov = new StripDebugProvider();
         Properties options = new Properties();
-        options.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+        options.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         ResourcePlugin debug = (ResourcePlugin) prov.newPlugins(options)[0];
         Resource result1 = stripDebug(debug, new Resource(path, ByteBuffer.wrap(content)), path, infoPath, moduleInfo);

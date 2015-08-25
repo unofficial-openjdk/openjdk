@@ -60,6 +60,7 @@ import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
 import jdk.tools.jlink.internal.plugins.StringSharingProvider;
 import jdk.tools.jlink.internal.plugins.ZipCompressProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
@@ -98,7 +99,7 @@ public class CompressorPluginTest {
 
         // compress == ZIP + String sharing
         Properties options = new Properties();
-        options.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+        options.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         checkCompress(classes, new DefaultCompressProvider(), options,
                 new ResourceDecompressorFactory[]{
@@ -118,7 +119,7 @@ public class CompressorPluginTest {
 
         // compress level 1 == ZIP
         Properties options1 = new Properties();
-        options1.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+        options1.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         options1.setProperty(DefaultCompressProvider.LEVEL_OPTION, "1");
         checkCompress(classes, new DefaultCompressProvider(),
@@ -139,7 +140,7 @@ public class CompressorPluginTest {
 
         // compress level 2 == ZIP + String sharing
         Properties options2 = new Properties();
-        options2.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+        options2.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         options2.setProperty(DefaultCompressProvider.LEVEL_OPTION, "2");
         checkCompress(classes, new DefaultCompressProvider(),
@@ -162,7 +163,7 @@ public class CompressorPluginTest {
 
         // compress level 0 == String sharing
         Properties options0 = new Properties();
-        options0.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY,
+        options0.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         options0.setProperty(DefaultCompressProvider.LEVEL_OPTION, "0");
         checkCompress(classes, new DefaultCompressProvider(),

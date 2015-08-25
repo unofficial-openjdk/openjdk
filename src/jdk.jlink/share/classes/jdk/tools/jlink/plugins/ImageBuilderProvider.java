@@ -27,15 +27,16 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Properties;
 
 /**
- * Implement this interface and make your class available to the ServiceLoader in order
- * to expose your ImageBuilder.
+ * Implement this interface and make your class available to the ServiceLoader
+ * in order to expose your ImageBuilder.
  */
 public interface ImageBuilderProvider {
+
     /**
      * The name that identifies this builder.
+     *
      * @return Builder name.
      */
     public String getName();
@@ -49,12 +50,13 @@ public interface ImageBuilderProvider {
 
     /**
      * Create the builder that will build the image.
-     * @param properties Configuration properties
+     *
+     * @param config Configuration properties
      * @param imageOutDir The directory where to store the image.
      * @return The builder.
      * @throws java.io.IOException
      */
-    public ImageBuilder newBuilder(Properties properties, Path imageOutDir)
+    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir)
             throws IOException;
 
     /**

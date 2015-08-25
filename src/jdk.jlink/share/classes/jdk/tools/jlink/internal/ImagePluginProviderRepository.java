@@ -51,23 +51,22 @@ public final class ImagePluginProviderRepository {
     private ImagePluginProviderRepository() {
     }
 
-    private static final Map<String, PluginProvider> registeredProviders =
-            new HashMap<>();
+    private static final Map<String, PluginProvider> registeredProviders = new HashMap<>();
 
     /**
      * Retrieve the provider to build a plugin for the passed name.
-     * @param properties Optional properties.
+     * @param config Optional config.
      * @param name Non null name.
      * @param pluginsLayer
      * @return An array of plugins.
      * @throws IOException
      */
-    public static Plugin[] newPlugins(Properties properties, String name,
+    public static Plugin[] newPlugins(Map<Object, Object> config, String name,
             Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
         PluginProvider fact = getPluginProvider(name, pluginsLayer);
-        return fact.newPlugins(properties);
+        return fact.newPlugins(config);
     }
 
     /**
@@ -84,8 +83,10 @@ public final class ImagePluginProviderRepository {
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
         PluginProvider provider = registeredProviders.get(name);
+        @SuppressWarnings("unchecked")
         Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
         while (javaProviders.hasNext()) {
+            @SuppressWarnings("unchecked")
             PluginProvider factory = javaProviders.next();
             if (factory.getName().equals(name)) {
                 if (provider != null) {
@@ -109,8 +110,10 @@ public final class ImagePluginProviderRepository {
     public static List<PluginProvider> getPluginProviders(Layer pluginsLayer) {
         Objects.requireNonNull(pluginsLayer);
         List<PluginProvider> factories = new ArrayList<>();
+        @SuppressWarnings("unchecked")
         Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
         while (javaProviders.hasNext()) {
+            @SuppressWarnings("unchecked")
             PluginProvider fact = javaProviders.next();
             factories.add(fact);
         }
@@ -141,9 +144,9 @@ public final class ImagePluginProviderRepository {
         registeredProviders.remove(name);
     }
 
-    public static ImageBuilder newImageBuilder(Properties properties, Path outputDir,
+    public static ImageBuilder newImageBuilder(Map<Object, Object> config, Path outputDir,
             String name, Layer pluginsLayer) throws IOException {
-        Objects.requireNonNull(properties);
+        Objects.requireNonNull(config);
         Objects.requireNonNull(outputDir);
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
@@ -157,7 +160,7 @@ public final class ImagePluginProviderRepository {
                      throw new IOException("Mutliple ImageBuilderProvider "
                             + "for the name " + name);
                 }
-                builder = fact.newBuilder(properties, outputDir);
+                builder = fact.newBuilder(config, outputDir);
             }
         }
         return builder;

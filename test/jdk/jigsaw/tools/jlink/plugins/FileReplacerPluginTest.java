@@ -45,9 +45,9 @@ import java.util.stream.Stream;
 
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
 import jdk.tools.jlink.internal.plugins.FileReplacerProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.PluginProvider;
 
 public class FileReplacerPluginTest {
     public static void main(String[] args) throws Exception {
@@ -104,7 +104,7 @@ public class FileReplacerPluginTest {
 
     private void testReplacement(String arguments, Replacement... replacements) throws Exception {
         Properties p = new Properties();
-        p.setProperty(PluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
+        p.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
         FileReplacerProvider provider = new FileReplacerProvider();
         ImageFilePlugin replacerPlugin = (ImageFilePlugin) provider.newPlugins(p)[0];
         ImageFilePool input = new ImageFilePoolImpl();

@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -48,8 +47,11 @@ import java.util.Map.Entry;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
+import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
@@ -83,6 +85,7 @@ public final class TaskHelper {
     public static class Option<T> {
 
         public interface Processing<T> {
+
             void process(T task, String opt, String arg) throws BadArgs;
         }
 
@@ -104,8 +107,8 @@ public final class TaskHelper {
             for (String a : aliases) {
                 if (a.equals(opt)) {
                     return true;
-                } else if (opt.startsWith("--") &&
-                        (hasArg && opt.startsWith(a + "="))) {
+                } else if (opt.startsWith("--")
+                        && (hasArg && opt.startsWith(a + "="))) {
                     return true;
                 }
             }
@@ -115,6 +118,7 @@ public final class TaskHelper {
         public boolean ignoreRest() {
             return false;
         }
+
         void process(T task, String opt, String arg) throws BadArgs {
             processing.process(task, opt, arg);
         }
@@ -162,55 +166,50 @@ public final class TaskHelper {
                     paths[i++] = Paths.get(dir);
                 }
 
-                ModuleFinder finder = ModuleFinder.of(paths);
-
-                Configuration cf
-                    = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
-
-                cf = cf.bind();
-
-                ClassLoader cl = new ModuleClassLoader(cf);
-                pluginsLayer = Layer.create(cf, mn -> cl);
+                pluginsLayer = createPluginsLayer(paths);
             }
 
             Map<String, List<String>> seen = new HashMap<>();
-            for (PluginProvider provider : ImagePluginProviderRepository.getPluginProviders(pluginsLayer)) {
-                if (provider.getToolOption() != null) {
-                    for (Entry<String, List<String>> entry : seen.entrySet()) {
-                        if (entry.getKey().equals(provider.getToolOption())
-                                || entry.getValue().contains(provider.getToolOption())) {
-                            throw new BadArgs("err.plugin.mutiple.options",
-                                    provider.getToolOption());
+            for (PluginProvider prov : ImagePluginProviderRepository.getPluginProviders(pluginsLayer)) {
+                if (prov instanceof CmdPluginProvider) {
+                    CmdPluginProvider provider = (CmdPluginProvider) prov;
+                    if (provider.getToolOption() != null) {
+                        for (Entry<String, List<String>> entry : seen.entrySet()) {
+                            if (entry.getKey().equals(provider.getToolOption())
+                                    || entry.getValue().contains(provider.getToolOption())) {
+                                throw new BadArgs("err.plugin.mutiple.options",
+                                        provider.getToolOption());
+                            }
                         }
-                    }
-                    List<String> optional = new ArrayList<>();
-                    seen.put(provider.getToolOption(), optional);
-                    PluginOption option
-                            = new PluginOption(provider.getToolArgument() != null,
-                                    (task, opt, arg) -> {
-                                        Map<String, String> m = plugins.get(provider);
-                                        if (m == null) {
-                                            m = new HashMap<>();
-                                            plugins.put(provider, m);
-                                        }
-                                        m.put(PluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
-                                    },
-                                    "--" + provider.getToolOption());
-                    pluginsOptions.add(option);
-                    if (provider.getAdditionalOptions() != null) {
-                        for (String other : provider.getAdditionalOptions().keySet()) {
-                            optional.add(other);
-                            PluginOption otherOption = new PluginOption(true,
-                                    (task, opt, arg) -> {
-                                        Map<String, String> m = plugins.get(provider);
-                                        if (m == null) {
-                                            m = new HashMap<>();
-                                            plugins.put(provider, m);
-                                        }
-                                        m.put(other, arg);
-                                    },
-                                    "--" + other);
-                            pluginsOptions.add(otherOption);
+                        List<String> optional = new ArrayList<>();
+                        seen.put(provider.getToolOption(), optional);
+                        PluginOption option
+                                = new PluginOption(provider.getToolArgument() != null,
+                                        (task, opt, arg) -> {
+                                            Map<String, String> m = plugins.get(provider);
+                                            if (m == null) {
+                                                m = new HashMap<>();
+                                                plugins.put(provider, m);
+                                            }
+                                            m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
+                                        },
+                                        "--" + provider.getToolOption());
+                        pluginsOptions.add(option);
+                        if (provider.getAdditionalOptions() != null) {
+                            for (String other : provider.getAdditionalOptions().keySet()) {
+                                optional.add(other);
+                                PluginOption otherOption = new PluginOption(true,
+                                        (task, opt, arg) -> {
+                                            Map<String, String> m = plugins.get(provider);
+                                            if (m == null) {
+                                                m = new HashMap<>();
+                                                plugins.put(provider, m);
+                                            }
+                                            m.put(other, arg);
+                                        },
+                                        "--" + other);
+                                pluginsOptions.add(otherOption);
+                            }
                         }
                     }
                 }
@@ -261,23 +260,23 @@ public final class TaskHelper {
         private Properties getPluginsProperties() throws IOException {
             Properties props = new Properties();
             if (pluginsProperties != null) {
-                try (FileInputStream stream =
-                        new FileInputStream(pluginsProperties);) {
+                try (FileInputStream stream
+                        = new FileInputStream(pluginsProperties);) {
                     props.load(stream);
                 } catch (FileNotFoundException ex) {
                     throw new IOException(bundleHelper.
-                            getMessage("err.path.not.valid") +
-                            " " + pluginsProperties);
+                            getMessage("err.path.not.valid")
+                            + " " + pluginsProperties);
                 }
             }
             for (Entry<PluginProvider, Map<String, String>> entry : plugins.entrySet()) {
                 PluginProvider provider = entry.getKey();
                 ImagePluginConfiguration.addPluginProperty(props, provider);
                 if (entry.getValue() != null) {
-                    for(Entry<String, String> opts : entry.getValue().entrySet()) {
+                    for (Entry<String, String> opts : entry.getValue().entrySet()) {
                         if (opts.getValue() != null) {
-                            props.setProperty(provider.getName() + "." +
-                                opts.getKey(), opts.getValue());
+                            props.setProperty(provider.getName() + "."
+                                    + opts.getKey(), opts.getValue());
                         }
                     }
                 }
@@ -341,6 +340,7 @@ public final class TaskHelper {
         private String[] expandedCommand;
         private String[] command;
         private String defaults;
+
         OptionsHelper(List<Option<T>> options) {
             this.options = options;
         }
@@ -351,7 +351,7 @@ public final class TaskHelper {
                 opt = pluginOptions.getOption(optionName);
                 if (opt == null) {
                     throw new BadArgs("err.unknown.option", optionName).
-                        showUsage(true);
+                            showUsage(true);
                 }
             }
             return opt.hasArg;
@@ -376,7 +376,7 @@ public final class TaskHelper {
                     defaults = p.getProperty(DEFAULTS_PROPERTY);
                     if (defaults == null) {
                         throw new BadArgs("err.config.defaults",
-                            DEFAULTS_PROPERTY);
+                                DEFAULTS_PROPERTY);
                     }
                     try {
                         defArgs = parseDefaults(defaults);
@@ -411,7 +411,7 @@ public final class TaskHelper {
                         if (hasArgument) {
                             if (a == null) {
                                 throw newBadArgs("err.unknown.option", arg).
-                                showUsage(true);
+                                        showUsage(true);
                             }
                             output.add(a);
                         }
@@ -429,6 +429,16 @@ public final class TaskHelper {
                 expandedCommand = ret;
             }
             return ret;
+        }
+        private Jlink.JlinkConfiguration config;
+        private List<Jlink.StackedPluginConfiguration> plugins;
+        private Jlink.PluginConfiguration imageBuilder;
+
+        public void handleOptions(T task, Jlink.JlinkConfiguration config, List<Jlink.StackedPluginConfiguration> plugins,
+                Jlink.PluginConfiguration imageBuilder) {
+            this.config = config;
+            this.plugins = plugins;
+            this.imageBuilder = imageBuilder;
         }
 
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
@@ -492,8 +502,8 @@ public final class TaskHelper {
                         } else if (i + 1 < args.length) {
                             param = args[++i];
                         }
-                        if (param == null || param.isEmpty() ||
-                                param.charAt(0) == '-') {
+                        if (param == null || param.isEmpty()
+                                || param.charAt(0) == '-') {
                             throw new BadArgs("err.missing.arg", name).
                                     showUsage(true);
                         }
@@ -539,25 +549,29 @@ public final class TaskHelper {
             log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
-            for (PluginProvider provider : ImagePluginProviderRepository.
+            for (PluginProvider prov : ImagePluginProviderRepository.
                     getPluginProviders(pluginOptions.pluginsLayer)) {
-                if (provider.getToolOption() != null) {
-                    StringBuilder line = new StringBuilder();
-                    line.append(" --").append(provider.getToolOption());
-                    if (provider.getToolArgument() != null) {
-                        line.append(" ").append(provider.getToolArgument());
-                    }
-                    line.append("\n ").append(provider.getDescription());
-                    if (provider.getAdditionalOptions() != null) {
-                        line.append("\n").append(bundleHelper.
-                                getMessage("main.plugin.additional.options")).
-                                append(": ");
-                        for (Entry<String, String> entry : provider.getAdditionalOptions().entrySet()) {
-                            line.append(" --").append(entry.getKey()).append(" ").
-                                    append(entry.getValue());
+                if (showsPlugin(prov, showsImageBuilder)) {
+                    CmdPluginProvider provider = (CmdPluginProvider) prov;
+
+                    if (provider.getToolOption() != null) {
+                        StringBuilder line = new StringBuilder();
+                        line.append(" --").append(provider.getToolOption());
+                        if (provider.getToolArgument() != null) {
+                            line.append(" ").append(provider.getToolArgument());
                         }
+                        line.append("\n ").append(provider.getDescription());
+                        if (provider.getAdditionalOptions() != null) {
+                            line.append("\n").append(bundleHelper.
+                                    getMessage("main.plugin.additional.options")).
+                                    append(": ");
+                            for (Entry<String, String> entry : provider.getAdditionalOptions().entrySet()) {
+                                line.append(" --").append(entry.getKey()).append(" ").
+                                        append(entry.getValue());
+                            }
+                        }
+                        log.println(line.toString() + "\n");
                     }
-                    log.println(line.toString() + "\n");
                 }
             }
             if (showsImageBuilder) {
@@ -572,38 +586,41 @@ public final class TaskHelper {
         }
 
         public void showPlugins(PrintWriter log, boolean showsImageBuilder) {
-            for (PluginProvider fact : ImagePluginProviderRepository.getPluginProviders(getPluginsLayer())) {
-                log.println("\n" + bundleHelper.getMessage("main.plugin.name")
-                        + ": " + fact.getName());
-                Integer[] range = ImagePluginConfiguration.getRange(fact);
-                String cat = range == null ? fact.getCategory() : fact.getCategory() +
-                        ". " + bundleHelper.getMessage("main.plugin.range.from") +
-                        " " + range[0] + " " + bundleHelper.
-                                getMessage("main.plugin.range.to") + " " +
-                        range[1] + ".";
-                log.println(bundleHelper.getMessage("main.plugin.category")
-                        + ": " + cat);
-                log.println(bundleHelper.getMessage("main.plugin.description")
-                        + ": " + fact.getDescription());
-                log.println(bundleHelper.getMessage("main.plugin.argument")
+            for (PluginProvider prov : ImagePluginProviderRepository.getPluginProviders(getPluginsLayer())) {
+                if (showsPlugin(prov, showsImageBuilder)) {
+                    CmdPluginProvider fact = (CmdPluginProvider) prov;
+                    log.println("\n" + bundleHelper.getMessage("main.plugin.name")
+                            + ": " + fact.getName());
+                    Integer[] range = ImagePluginConfiguration.getRange(fact);
+                    String cat = range == null ? fact.getCategory() : fact.getCategory()
+                            + ". " + bundleHelper.getMessage("main.plugin.range.from")
+                            + " " + range[0] + " " + bundleHelper.
+                            getMessage("main.plugin.range.to") + " "
+                            + range[1] + ".";
+                    log.println(bundleHelper.getMessage("main.plugin.category")
+                            + ": " + cat);
+                    log.println(bundleHelper.getMessage("main.plugin.description")
+                            + ": " + fact.getDescription());
+                    log.println(bundleHelper.getMessage("main.plugin.argument")
                             + ": " + (fact.getToolArgument() == null
                                     ? bundleHelper.getMessage("main.plugin.no.value")
                                     : fact.getToolArgument()));
-                String additionalOptions = bundleHelper.getMessage("main.plugin.no.value");
-                if(fact.getAdditionalOptions() != null) {
-                    StringBuilder builder = new StringBuilder();
-                    for(Entry<String, String> entry : fact.getAdditionalOptions().entrySet()) {
-                        builder.append("--" + entry.getKey()).append(" ").
-                                append(entry.getValue());
+                    String additionalOptions = bundleHelper.getMessage("main.plugin.no.value");
+                    if (fact.getAdditionalOptions() != null) {
+                        StringBuilder builder = new StringBuilder();
+                        for (Entry<String, String> entry : fact.getAdditionalOptions().entrySet()) {
+                            builder.append("--" + entry.getKey()).append(" ").
+                                    append(entry.getValue());
+                        }
+                        additionalOptions = builder.toString();
                     }
-                    additionalOptions = builder.toString();
-                }
-                log.println(bundleHelper.getMessage("main.plugin.additional.options")
-                        + ": " + additionalOptions);
-                String option = fact.getToolOption();
-                if (option != null) {
-                    log.println(bundleHelper.getMessage("main.plugin.option")
-                            + ": --" + option);
+                    log.println(bundleHelper.getMessage("main.plugin.additional.options")
+                            + ": " + additionalOptions);
+                    String option = fact.getToolOption();
+                    if (option != null) {
+                        log.println(bundleHelper.getMessage("main.plugin.option")
+                                + ": --" + option);
+                    }
                 }
             }
             if (showsImageBuilder) {
@@ -631,7 +648,7 @@ public final class TaskHelper {
         }
 
         String[] getExpandedCommand() {
-           return expandedCommand;
+            return expandedCommand;
         }
 
         String[] getInputCommand() {
@@ -701,8 +718,8 @@ public final class TaskHelper {
     }
 
     public void reportError(String key, Object... args) {
-        log.println(bundleHelper.getMessage("error.prefix") + " " +
-                bundleHelper.getMessage(key, args));
+        log.println(bundleHelper.getMessage("error.prefix") + " "
+                + bundleHelper.getMessage(key, args));
     }
 
     public void reportUnknownError(String message) {
@@ -710,8 +727,8 @@ public final class TaskHelper {
     }
 
     public void warning(String key, Object... args) {
-        log.println(bundleHelper.getMessage("warn.prefix") + " " +
-                bundleHelper.getMessage(key, args));
+        log.println(bundleHelper.getMessage("warn.prefix") + " "
+                + bundleHelper.getMessage(key, args));
     }
 
     public Properties getPluginsProperties() throws IOException {
@@ -758,6 +775,21 @@ public final class TaskHelper {
 
             defaults = remaining;
         }
-       return arguments;
+        return arguments;
+    }
+
+    static Layer createPluginsLayer(Path[] paths) {
+        ModuleFinder finder = ModuleFinder.of(paths);
+        Configuration cf
+                = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+        cf = cf.bind();
+        ClassLoader cl = new ModuleClassLoader(cf);
+        return Layer.create(cf, mn -> cl);
+    }
+
+    // Display all plugins or resource only.
+    private static boolean showsPlugin(PluginProvider prov, boolean showsImageBuilder) {
+        return (prov instanceof CmdPluginProvider && showsImageBuilder)
+                || (prov instanceof CmdResourcePluginProvider);
     }
 }

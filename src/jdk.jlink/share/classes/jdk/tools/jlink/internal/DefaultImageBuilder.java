@@ -68,12 +68,14 @@ public class DefaultImageBuilder implements ImageBuilder {
     private final String jimage;
     private final boolean genBom;
 
-    public DefaultImageBuilder(Properties properties, Path root) throws IOException {
+    public DefaultImageBuilder(Map<Object, Object> properties, Path root) throws IOException {
         Objects.requireNonNull(root);
-        String img = properties.getProperty(DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY);
+
+        @SuppressWarnings("unchecked")
+        String img = (String) properties.get(DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY);
         jimage = img == null ? BasicImageWriter.BOOT_IMAGE_NAME : img;
 
-        genBom = properties.getProperty(DefaultImageBuilderProvider.GEN_BOM) != null;
+        genBom = properties.get(DefaultImageBuilderProvider.GEN_BOM) != null;
 
         this.root = root;
         this.mdir = root.resolve(root.getFileSystem().getPath("lib", "modules"));

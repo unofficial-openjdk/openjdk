@@ -32,14 +32,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implement this interface to develop your own image layout.
- * First the jimage is written onto the output stream returned by getOutputStream
- * then storeFiles is called.
+ * Implement this interface to develop your own image layout. First the jimage
+ * is written onto the output stream returned by getOutputStream then storeFiles
+ * is called.
  */
 public interface ImageBuilder {
 
     /**
      * Store the external files.
+     *
      * @param files Set of module names that are composing this image.
      * @param removed List of files that have been removed (if any).
      * @param modules The set of modules added to the image
@@ -52,7 +53,8 @@ public interface ImageBuilder {
             Map<String, Path> mods) throws IOException;
 
     /**
-     * The OutputStream to store the jimage file
+     * The OutputStream to store the jimage file.
+     *
      * @return The output stream
      * @throws java.io.IOException
      */

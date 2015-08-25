@@ -27,6 +27,10 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * An abstract ImageFile Plugin provider. Such provider are creating
+ * ImageFilePlugin.
+ */
 public abstract class ImageFilePluginProvider extends PluginProvider {
 
     protected ImageFilePluginProvider(String name, String description) {
@@ -34,6 +38,6 @@ public abstract class ImageFilePluginProvider extends PluginProvider {
     }
 
     @Override
-    public abstract ImageFilePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
+    public abstract ImageFilePlugin[] newPlugins(Map<Object, Object> config)
+            throws IOException;
 }

@@ -32,6 +32,7 @@ import java.util.Map;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
@@ -51,7 +52,7 @@ public class DefaultCompressProvider extends OnOffProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(Map<String, String> otherOptions)
+    public ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
             throws IOException {
         String filter = otherOptions.get(FILTER_OPTION);
         String[] patterns = filter == null ? null : filter.split(",");
@@ -79,7 +80,7 @@ public class DefaultCompressProvider extends OnOffProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.COMPRESSOR;
+        return PluginProvider.COMPRESSOR;
     }
 
     @Override

@@ -252,6 +252,13 @@ public interface ResourcePool {
     public void visit(Visitor visitor, ResourcePool output, StringTable strings)
             throws Exception;
 
+    /**
+     * Add a transformed resource to the pool.
+     *
+     * @param original The original resource (located in the in pool).
+     * @param transformed The transformed content of the resource.
+     * @throws Exception
+     */
     public void addTransformedResource(Resource original, ByteBuffer transformed)
             throws Exception;
 }

@@ -28,13 +28,14 @@ import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
+import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
  * Exclude image files plugin provider
  */
-public final class ExcludeFilesProvider extends ImageFilePluginProvider {
+public final class ExcludeFilesProvider extends CmdImageFilePluginProvider {
     public static final String NAME = "exclude-files";
     public ExcludeFilesProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
@@ -50,7 +51,7 @@ public final class ExcludeFilesProvider extends ImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.FILTER;
+        return PluginProvider.FILTER;
     }
 
     @Override

@@ -24,8 +24,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
 
 /*
  * @test
@@ -43,7 +43,7 @@ import jdk.tools.jlink.plugins.ResourcePluginProvider;
  */
 public class JLinkOptionsTest {
 
-    private static class TestProvider extends ResourcePluginProvider {
+    private static class TestProvider extends CmdResourcePluginProvider {
 
         private final String option;
         private final Map<String, String> options;

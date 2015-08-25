@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /*
@@ -61,7 +62,7 @@ public class JLinkPluginsTest {
         {
             String properties = createProperties("plugins,properties",
                     ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n"
-                    + "zip." + PluginProvider.TOOL_ARGUMENT_PROPERTY
+                    + "zip." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY
                     + "=*Error.class,*Exception.class, ^/java.base/java/lang/*\n");
             String[] userOptions = {"--plugins-configuration", properties};
             helper.generateJModule("zipfiltercomposite", "composite2");
@@ -71,7 +72,7 @@ public class JLinkPluginsTest {
             // Skip debug
             String properties = createProperties("plugins.properties",
                     ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                    + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
+                    + "strip-java-debug." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY + "="
                     + "on");
             String[] userOptions = {"--plugins-configuration", properties};
             helper.generateJModule("skipdebugcomposite", "composite2");
@@ -81,7 +82,7 @@ public class JLinkPluginsTest {
             // Skip debug + zip
             String properties = createProperties("plugin.properties",
                     ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                    + "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "="
+                    + "strip-java-debug." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY + "="
                     + "on\n"
                     + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n");
             String[] userOptions = {"--plugins-configuration", properties};
@@ -92,7 +93,7 @@ public class JLinkPluginsTest {
             // Filter out files
             String properties = createProperties("plguins.properties",
                     ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY + "=exclude-resources\n"
-                    + "exclude-resources." + PluginProvider.TOOL_ARGUMENT_PROPERTY
+                    + "exclude-resources." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY
                     + "=*.jcov, */META-INF/*\n");
             String[] userOptions = {"--plugins-configuration", properties};
             helper.generateJModule("excludecomposite", "composite2");

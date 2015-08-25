@@ -28,14 +28,15 @@ import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
+import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
  * Replace files by custom content
  */
-public class FileReplacerProvider extends ImageFilePluginProvider {
+public class FileReplacerProvider extends CmdImageFilePluginProvider {
 
     public static final String NAME = "replace-file";
 
@@ -50,7 +51,7 @@ public class FileReplacerProvider extends ImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.TRANSFORMER;
+        return PluginProvider.TRANSFORMER;
     }
 
     @Override
