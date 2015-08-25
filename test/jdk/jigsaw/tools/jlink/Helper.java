@@ -70,7 +70,8 @@ public class Helper {
 
         File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
-        if (JImageGenerator.getJModsDir(jdkHome) == null) {
+        Path jmods = jdkHome.toPath().resolve("..").resolve("jmods");
+        if (!Files.exists(jmods)) {
             System.err.println("Test not run, NO jmods directory");
             return null;
         }
