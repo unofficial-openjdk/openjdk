@@ -169,7 +169,12 @@ public final class Layer {
             checkForDuplicatePkgs(cf, clf);
         }
 
-        return new Layer(cf, clf);
+        try {
+            return new Layer(cf, clf);
+        } catch (IllegalArgumentException iae) {
+            // IAE is thrown by VM when defining the module fails
+            throw new LayerInstantiationException(iae.getMessage());
+        }
     }
 
     /**

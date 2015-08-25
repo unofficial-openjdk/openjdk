@@ -750,12 +750,14 @@ public final class Module {
      * Defines each of the module in the given configuration to the runtime.
      *
      * @return a map of module name to runtime {@code Module}
+     *
+     * @throws IllegalArgumentException
+     *         If defining any of the modules to the VM fails
      */
     static Map<String, Module> defineModules(Configuration cf,
                                              Layer.ClassLoaderFinder clf,
                                              Layer layer)
     {
-
         Map<String, Module> modules = new HashMap<>();
         Map<String, ClassLoader> loaders = new HashMap<>();
 
