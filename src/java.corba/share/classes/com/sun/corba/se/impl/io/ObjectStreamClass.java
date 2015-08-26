@@ -58,6 +58,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import com.sun.corba.se.impl.util.Modules;
 import com.sun.corba.se.impl.util.RepositoryId;
 
 import org.omg.CORBA.ValueMember;
@@ -353,6 +354,8 @@ public class ObjectStreamClass implements java.io.Serializable {
     private ObjectStreamClass(java.lang.Class<?> cl, ObjectStreamClass superdesc,
                               boolean serial, boolean extern)
     {
+        Modules.ensureReadable(cl);
+
         ofClass = cl;           /* created from this class */
 
         if (Proxy.isProxyClass(cl)) {
