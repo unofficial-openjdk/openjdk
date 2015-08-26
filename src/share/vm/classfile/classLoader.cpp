@@ -28,8 +28,8 @@
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/classLoaderExt.hpp"
-#include "classfile/imageFile.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/jimage.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
@@ -71,7 +71,7 @@
 #include "classfile/sharedPathsMiscInfo.hpp"
 #endif
 
-// Entry points in zip.dll for loading zip/jar file entries and image file entries
+// Entry points in zip.dll for loading zip/jar file entries
 
 typedef void * * (JNICALL *ZipOpen_t)(const char *name, char **pmsg);
 typedef void (JNICALL *ZipClose_t)(jzfile *zip);
@@ -91,6 +91,15 @@ static GetNextEntry_t    GetNextEntry       = NULL;
 static canonicalize_fn_t CanonicalizeEntry  = NULL;
 static ZipInflateFully_t ZipInflateFully    = NULL;
 static Crc32_t           Crc32              = NULL;
+
+// Entry points for jimage.dll for loading jimage file entries
+
+static JImageOpen_t                    JImageOpen                    = NULL;
+static JImageClose_t                   JImageClose                   = NULL;
+static JImagePackageToModule_t         JImagePackageToModule         = NULL;
+static JImageFindResource_t            JImageFindResource            = NULL;
+static JImageGetResource_t             JImageGetResource             = NULL;
+static JImageResourceIterator_t        JImageResourceIterator        = NULL;
 
 // Globals
 
@@ -278,31 +287,45 @@ void ClassPathZipEntry::contents_do(void f(const char* name, void* context), voi
   }
 }
 
-ClassPathImageEntry::ClassPathImageEntry(ImageFileReader* image) :
+ClassPathImageEntry::ClassPathImageEntry(JImageFile* jimage, const char* name) :
   ClassPathEntry(),
-  _image(image),
-  _module_data(NULL) {
-  guarantee(image != NULL, "image file is null");
-
-  char module_data_name[JVM_MAXPATHLEN];
-  ImageModuleData::module_data_name(module_data_name, _image->name());
-  _module_data = new ImageModuleData(_image, module_data_name);
+  _jimage(jimage) {
+  guarantee(jimage != NULL, "jimage file is null");
+  guarantee(name != NULL, "jimage file name is null");
+  size_t len = strlen(name) + 1;
+  _name = NEW_C_HEAP_ARRAY(const char, len, mtClass);
+  strncpy((char *)_name, name, len);
 }
 
 ClassPathImageEntry::~ClassPathImageEntry() {
-  if (_module_data) {
-    delete _module_data;
-    _module_data = NULL;
+  if (_name != NULL) {
+    FREE_C_HEAP_ARRAY(const char, _name);
+    _name = NULL;
   }
-
-  if (_image) {
-    ImageFileReader::close(_image);
-    _image = NULL;
+  if (_jimage != NULL) {
+    (*JImageClose)(_jimage);
+    _jimage = NULL;
   }
 }
 
-const char* ClassPathImageEntry::name() {
-  return _image ? _image->name() : "";
+const char* ClassPathImageEntry::name_to_package(const char* name, char* package, int length) {
+  const char *pslash = strrchr(name, '/');
+  if (pslash == NULL) {
+    return NULL;
+  }
+  int len = pslash - name;
+#if INCLUDE_CDS
+  if (len <= 0 && DumpSharedSpaces) {
+    return NULL;
+  }
+#endif
+  assert(len > 0, "Bad length for package name");
+  if (len >= length) {
+    return NULL;
+  }
+  strncpy(package, name, len);
+  package[len] = '\0';
+  return package;
 }
 
 // For a class in a named module, look it up in the jimage file using this syntax:
@@ -313,115 +336,98 @@ const char* ClassPathImageEntry::name() {
 //     2. A package is in at most one module in the jimage file.
 //
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
-  ImageLocation location;
-  bool found = _image->find_location(name, location);
+  jlong size;
+  JImageLocationRef location = (*JImageFindResource)(_jimage,
+        "", BOOT_VERSION, name, &size);
 
-  if (!found) {
-    const char *pslash = strrchr(name, '/');
-    int len = pslash - name;
+  if (location == 0) {
+    char buffer[JIMAGE_MAX_PATH];
+    const char* package = name_to_package(name, buffer, JIMAGE_MAX_PATH);
 
 #if INCLUDE_CDS
-    if (len <= 0 && DumpSharedSpaces) {
+    if (package == NULL && DumpSharedSpaces) {
       return NULL;
     }
 #endif
-    assert(len > 0, "Bad length for package name");
-
-    // NOTE: IMAGE_MAX_PATH is used here since this path is internal to the jimage
-    // (effectively unlimited.)  There are several JCK tests that use paths over
-    // 1024 characters long, the limit on Windows systems.
-    if (pslash && 0 < len && len < IMAGE_MAX_PATH) {
-      char path[IMAGE_MAX_PATH];
-
+    if (package != NULL) {
       if (!Universe::is_module_initialized()) {
-        const char* base_module = "java.base";
-        if ((len + strlen(base_module) + 2) < IMAGE_MAX_PATH) {
-            // Module must be java.base (except when dumping CDS archive)
-            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", base_module, name);
-            location.clear_data();
-            found = _image->find_location(path, location);
-        }
+        location = (*JImageFindResource)(_jimage,
+                          "java.base", BOOT_VERSION, name, &size);
 #if INCLUDE_CDS
         // CDS uses the boot class loader to load classes whose packages are in
         // modules defined for other class loaders.  So, for now, get their module
         // names from the .jimage file.
-        if (DumpSharedSpaces && !found) {
-          strncpy(path, name, len);
-          path[len] = '\0';
-          const char* module_name = _module_data->package_to_module(path);
-          if (module_name && (len + strlen(module_name) + 2) < IMAGE_MAX_PATH) {
-            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", module_name, name);
-            location.clear_data();
-            found = _image->find_location(path, location);
+        if (DumpSharedSpaces && location == 0) {
+          const char* module_name = (*JImagePackageToModule)(_jimage, package);
+          if (module_name != NULL) {
+            location = (*JImageFindResource)(_jimage,
+                              module_name, BOOT_VERSION, name, &size);
           }
         }
 #endif
 
       } else {
-        strncpy(path, name, len);
-        path[len] = '\0';
-
         // Get boot class loader's package entry table
         PackageEntryTable* pkgEntryTable =
           ClassLoaderData::the_null_class_loader_data()->packages();
         // Get package's package entry
-        TempNewSymbol pkg_symbol = SymbolTable::new_symbol(path, CHECK_NULL);
-        PackageEntry* packageEntry = pkgEntryTable->lookup_only(pkg_symbol);
+        TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package, CHECK_NULL);
+        PackageEntry* package_entry = pkgEntryTable->lookup_only(pkg_symbol);
 
-        if (packageEntry != NULL) {
+        if (package_entry != NULL) {
+          ResourceMark rm;
           // Get the module name
-          ModuleEntry* module = packageEntry->module();
+          ModuleEntry* module = package_entry->module();
           assert(module != NULL, "Boot classLoader package missing module");
           assert(module->is_named(), "Boot classLoader package is in unnamed module");
-          const char* moduleName = module->name()->as_C_string();
-          if (moduleName != NULL && (len + strlen(moduleName) + 2) < IMAGE_MAX_PATH) {
-            jio_snprintf(path, IMAGE_MAX_PATH - 1, "/%s/%s", moduleName, name);
-            location.clear_data();
-            found = _image->find_location(path, location);
+          const char* module_name = module->name()->as_C_string();
+          if (module_name != NULL) {
+            location = (*JImageFindResource)(_jimage,
+                              module_name, BOOT_VERSION, name, &size);
           }
         }
       }
     }
   }
 
-  if (found) {
-    u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+  if (location != 0) {
     if (UsePerfData) {
       ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
     }
-    u1* data = NEW_RESOURCE_ARRAY(u1, size);
-    _image->get_resource(location, data);
-    return new ClassFileStream(data, (int)size, _image->name());  // Resource allocated
+    char* data = NEW_RESOURCE_ARRAY(char, size);
+    (*JImageGetResource)(_jimage, location, data, size);
+    return new ClassFileStream((u1*)data, (int)size, _name);  // Resource allocated
   }
 
   return NULL;
 }
 
 #ifndef PRODUCT
+bool ctw_visitor(JImageFile* jimage,
+        const char* module_name, const char* version, const char* package,
+        const char* name, const char* extension, void* arg) {
+  if (strcmp(extension, "class") == 0) {
+    Thread* THREAD = Thread::current();
+    char path[JIMAGE_MAX_PATH];
+    jio_snprintf(path, JIMAGE_MAX_PATH - 1, "%s/%s.class", package, name);
+    ClassLoader::compile_the_world_in(path, *(Handle*)arg, THREAD);
+    return !HAS_PENDING_EXCEPTION;
+  }
+  return true;
+}
+
 void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   tty->print_cr("CompileTheWorld : Compiling all classes in %s", name());
   tty->cr();
-  const ImageStrings strings = _image->get_strings();
-  // Retrieve each path component string.
-  u4 length = _image->table_length();
-  for (u4 i = 0; i < length; i++) {
-    u1* location_data = _image->get_location_data(i);
-
-    if (location_data) {
-       ImageLocation location(location_data);
-       char path[IMAGE_MAX_PATH];
-       _image->location_path(location, path, IMAGE_MAX_PATH);
-       ClassLoader::compile_the_world_in(path, loader, CHECK);
-    }
-  }
+  (*JImageResourceIterator)(_jimage, (JImageResourceVisitor_t)ctw_visitor, (void *)&loader);
   if (HAS_PENDING_EXCEPTION) {
-  if (PENDING_EXCEPTION->is_a(SystemDictionary::OutOfMemoryError_klass())) {
-    CLEAR_PENDING_EXCEPTION;
-    tty->print_cr("\nCompileTheWorld : Ran out of memory\n");
-    tty->print_cr("Increase class metadata storage if a limit was set");
-  } else {
-    tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
-  }
+    if (PENDING_EXCEPTION->is_a(SystemDictionary::OutOfMemoryError_klass())) {
+      CLEAR_PENDING_EXCEPTION;
+      tty->print_cr("\nCompileTheWorld : Ran out of memory\n");
+      tty->print_cr("Increase class metadata storage if a limit was set");
+    } else {
+      tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
+    }
   }
 }
 #endif
@@ -564,7 +570,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
   JavaThread* thread = JavaThread::current();
   ClassPathEntry* new_entry = NULL;
   if ((st->st_mode & S_IFREG) == S_IFREG) {
-    // Regular file, should be a zip or image file
+    // Regular file, should be a zip or jimage file
     // Canonicalized filename
     char canonical_path[JVM_MAXPATHLEN];
     if (!get_canonical_path(path, canonical_path, JVM_MAXPATHLEN)) {
@@ -575,9 +581,10 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
         return NULL;
       }
     }
-    ImageFileReader* image = ImageFileReader::open(canonical_path);
-    if (image) {
-      new_entry = new ClassPathImageEntry(image);
+    jint error;
+    JImageFile* jimage =(*JImageOpen)(canonical_path, &error);
+    if (jimage != NULL) {
+      new_entry = new ClassPathImageEntry(jimage, canonical_path);
     } else {
       char* error_msg = NULL;
       jzfile* zip;
@@ -800,6 +807,35 @@ void ClassLoader::load_zip_library() {
   // This lookup only works on 1.3. Do not check for non-null here
 }
 
+void ClassLoader::load_jimage_library() {
+  // First make sure native library is loaded
+  os::native_java_library();
+  // Load jimage library
+  char path[JVM_MAXPATHLEN];
+  char ebuf[1024];
+  void* handle = NULL;
+  if (os::dll_build_name(path, sizeof(path), Arguments::get_dll_dir(), "jimage")) {
+    handle = os::dll_load(path, ebuf, sizeof ebuf);
+  }
+  if (handle == NULL) {
+    vm_exit_during_initialization("Unable to load jimage library", path);
+  }
+
+  // Lookup jimage entry points
+  JImageOpen = CAST_TO_FN_PTR(JImageOpen_t, os::dll_lookup(handle, "JIMAGE_Open"));
+  guarantee(JImageOpen != NULL, "function JIMAGE_Open not found");
+  JImageClose = CAST_TO_FN_PTR(JImageClose_t, os::dll_lookup(handle, "JIMAGE_Close"));
+  guarantee(JImageClose != NULL, "function JIMAGE_Close not found");
+  JImagePackageToModule = CAST_TO_FN_PTR(JImagePackageToModule_t, os::dll_lookup(handle, "JIMAGE_PackageToModule"));
+  guarantee(JImagePackageToModule != NULL, "function JIMAGE_PackageToModule not found");
+  JImageFindResource = CAST_TO_FN_PTR(JImageFindResource_t, os::dll_lookup(handle, "JIMAGE_FindResource"));
+  guarantee(JImageFindResource != NULL, "function JIMAGE_FindResource not found");
+  JImageGetResource = CAST_TO_FN_PTR(JImageGetResource_t, os::dll_lookup(handle, "JIMAGE_GetResource"));
+  guarantee(JImageGetResource != NULL, "function JIMAGE_GetResource not found");
+  JImageResourceIterator = CAST_TO_FN_PTR(JImageResourceIterator_t, os::dll_lookup(handle, "JIMAGE_ResourceIterator"));
+  guarantee(JImageResourceIterator != NULL, "function JIMAGE_ResourceIterator not found");
+}
+
 jboolean ClassLoader::decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg) {
   return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
 }
@@ -809,17 +845,18 @@ int ClassLoader::crc32(int crc, const char* buf, int len) {
   return (*Crc32)(crc, (const jbyte*)buf, len);
 }
 
-void ClassLoader::initialize_module_loader_map(ImageFileReader* image_reader) {
-  ImageLocation location;
-  bool found = image_reader->find_location(MODULE_LOADER_MAP, location);
-  if (!found) {
+void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
+  jlong size;
+  JImageLocationRef location = (*JImageFindResource)(jimage,
+        "java.base", BOOT_VERSION, MODULE_LOADER_MAP,
+        &size);
+  if (location == 0) {
     vm_exit_during_initialization(
       "Cannot find ModuleLoaderMap location from bootmodules.jimage.", NULL);
   }
-  u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-  u1* buffer = NEW_RESOURCE_ARRAY(u1, size);
-  image_reader->get_resource(location, buffer);
-  if (buffer == NULL) {
+  char* buffer = NEW_RESOURCE_ARRAY(char, size);
+  jlong read = (*JImageGetResource)(jimage, location, buffer, size);
+  if (read != size) {
     vm_exit_during_initialization(
       "Cannot find ModuleLoaderMap resource from bootmodules.jimage.", NULL);
   }
@@ -1233,12 +1270,10 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
         const char *name = cpie->name();
         char* module_name;
         if (ClassLoader::string_ends_with(name, BOOT_IMAGE_NAME)) {
-          ImageModuleData* imd = cpie->module_data();
-          if (imd != NULL) {
-            module_name = (char*)imd->package_to_module(pkg_name_C_string);
-            if (module_name != NULL) {
-              classloader_type = ClassLoader::module_to_classloader(module_name);
-            }
+          JImageFile* jimage = cpie->jimage();
+          module_name = (char*)(*JImagePackageToModule)(jimage, pkg_name_C_string);
+          if (module_name != NULL) {
+            classloader_type = ClassLoader::module_to_classloader(module_name);
           }
         }
         cpe = cpe->next();
@@ -1342,6 +1377,8 @@ void ClassLoader::initialize() {
 
   // lookup zip library entry points
   load_zip_library();
+  // lookup jimage library entry points
+  load_jimage_library();
 #if INCLUDE_CDS
   // initialize search path
   if (DumpSharedSpaces) {
@@ -1462,10 +1499,10 @@ void ClassLoader::create_javabase() {
   ClassPathEntry* e = _first_entry;
   ClassPathEntry* last_e = _first_append_entry;
   while ((e != NULL) && (e != last_e)) {
-    ImageFileReader *image = e->image();
-    if (image != NULL && ClassLoader::string_ends_with(e->name(), BOOT_IMAGE_NAME)) {
+    JImageFile *jimage = e->jimage();
+    if (jimage != NULL && ClassLoader::string_ends_with(e->name(), BOOT_IMAGE_NAME)) {
       set_has_bootmodules_jimage(true);
-      ClassLoader::initialize_module_loader_map(image);
+      ClassLoader::initialize_module_loader_map(jimage);
       return;
     }
     e = e->next();
