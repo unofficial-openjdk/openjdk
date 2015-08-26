@@ -34,7 +34,7 @@ public class MethodHandleHelper {
 
     private MethodHandleHelper() { }
 
-    public static Lookup IMPL_LOOKUP = Lookup.IMPL_LOOKUP;
+    public static final Lookup IMPL_LOOKUP = Lookup.IMPL_LOOKUP;
 
     public static void customize(MethodHandle mh) {
         mh.customize();

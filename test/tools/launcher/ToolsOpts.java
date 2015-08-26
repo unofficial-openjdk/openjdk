@@ -91,7 +91,7 @@ public class ToolsOpts extends TestHelper {
 
         // compile Main.java into directory to override classes in jdk.compiler
         new File("jdk.compiler").mkdir();
-        compile("-d", "jdk.compiler", mainJava);
+        compile("-Xmodule:jdk.compiler", "-d", "jdk.compiler", mainJava);
     }
 
     static void pass(String msg) {
