@@ -35,11 +35,8 @@
 // Name of boot module image
 #define  BOOT_IMAGE_NAME "bootmodules.jimage"
 
-// Name boot module version
-#define BOOT_VERSION "9.0"
-
 // Name of the resource containing mapping from module names to defining class loader type
-#define MODULE_LOADER_MAP "jdk/internal/module/ModuleLoaderMap.dat"
+#define MODULE_LOADER_MAP "/java.base/jdk/internal/module/ModuleLoaderMap.dat"
 
 // Initial sizes of the following arrays are based on the generated ModuleLoaderMap.dat
 #define INITIAL_BOOT_MODULES_ARRAY_SIZE 30
@@ -47,7 +44,8 @@
 
 // Class path entry (directory or zip file)
 
-class JImageFile;
+class ImageFileReader;
+class ImageModuleData;
 
 class ClassPathEntry: public CHeapObj<mtClass> {
  private:
@@ -62,7 +60,7 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   virtual bool is_jar_file() = 0;
   virtual bool is_jrt() = 0;
   virtual const char* name() = 0;
-  virtual JImageFile* jimage() = 0;
+  virtual ImageFileReader* image() = 0;
   // Constructor
   ClassPathEntry();
   // Attempt to locate file_name through this class path entry.
@@ -80,7 +78,7 @@ class ClassPathDirEntry: public ClassPathEntry {
   bool is_jar_file()       { return false;  }
   bool is_jrt()            { return false; }
   const char* name()       { return _dir; }
-  JImageFile* jimage()     { return NULL; }
+  ImageFileReader* image() { return NULL; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
@@ -110,7 +108,7 @@ class ClassPathZipEntry: public ClassPathEntry {
   bool is_jar_file()       { return true;  }
   bool is_jrt()            { return false; }
   const char* name()       { return _zip_name; }
-  JImageFile* jimage()     { return NULL; }
+  ImageFileReader* image() { return NULL; }
   ClassPathZipEntry(jzfile* zip, const char* zip_name);
   ~ClassPathZipEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -124,17 +122,17 @@ class ClassPathZipEntry: public ClassPathEntry {
 // For java image files
 class ClassPathImageEntry: public ClassPathEntry {
 private:
-  JImageFile* _jimage;
-  const char* _name;
+  ImageFileReader* _image;
+  ImageModuleData* _module_data;
 public:
   bool is_jar_file()  { return false;  }
   bool is_jrt();
-  bool is_open()  { return _jimage != NULL; }
-  const char* name() { return _name == NULL ? "" : _name; }
-  JImageFile* jimage() { return _jimage; }
-  ClassPathImageEntry(JImageFile* jimage, const char* name);
+  bool is_open()  { return _image != NULL; }
+  const char* name();
+  ImageFileReader* image() { return _image; }
+  ImageModuleData* module_data() { return _module_data; }
+  ClassPathImageEntry(ImageFileReader* image);
   ~ClassPathImageEntry();
-  const char* name_to_package(const char* name, char* package, int length);
   ClassFileStream* open_stream(const char* name, TRAPS);
 
   // Debugging
@@ -240,7 +238,6 @@ class ClassLoader: AllStatic {
   static void setup_search_path(const char *class_path, bool setting_bootstrap);
 
   static void load_zip_library();
-  static void load_jimage_library();
   static ClassPathEntry* create_class_path_entry(const char *path, const struct stat* st,
                                                  bool throw_exception, TRAPS);
 
@@ -409,7 +406,7 @@ class ClassLoader: AllStatic {
 
   static bool string_ends_with(const char* str, const char* str_to_find);
 
-  static void initialize_module_loader_map(JImageFile* jimage);
+  static void initialize_module_loader_map(ImageFileReader* image_reader);
 
   static jshort module_to_classloader(const char* module_name);
   // Debugging
