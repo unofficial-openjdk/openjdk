@@ -34,6 +34,9 @@ sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          
 sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
 sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
+# 8133801
+sun/security/pkcs11/Provider/ConfigShortPath.java 				windows-all
+
 ############################################################################
 
 # i18n/ResourceBundle/CLDR breakage
