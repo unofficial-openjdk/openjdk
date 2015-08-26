@@ -237,6 +237,16 @@ SUNWprivate_1.1 {
 		Java_java_util_TimeZone_getSystemTimeZoneID;
 		Java_java_util_TimeZone_getSystemGMTOffsetID;
 		Java_java_util_concurrent_atomic_AtomicLong_VMSupportsCS8;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_openImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_closeImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getIndexAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getDataAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_read;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_readCompressed;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getStringBytes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_findAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_attributeOffsets;
 		Java_sun_misc_MessageUtils_toStderr;
 		Java_sun_misc_MessageUtils_toStdout;
 		Java_sun_misc_NativeSignalHandler_handle0;
@@ -283,6 +293,17 @@ SUNWprivate_1.1 {
                 Java_java_lang_reflect_Module_addExportsToAll0;
                 Java_java_lang_reflect_Module_addExportsToAllUnnamed0;
                 Java_java_lang_reflect_Module_addPackage0;
+
+                Java_jdk_internal_jimage_ImageNativeSubstrate_openImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_closeImage;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getIndexAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getDataAddress;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_read;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_readCompressed;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getStringBytes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_getAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_findAttributes;
+                Java_jdk_internal_jimage_ImageNativeSubstrate_attributeOffsets;
 
 		Java_jdk_internal_misc_BootLoader_getSystemPackageLocation;
 		Java_jdk_internal_misc_BootLoader_getSystemPackageNames;
