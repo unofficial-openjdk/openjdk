@@ -6,8 +6,10 @@
 
 # jdk_lang
 
-java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 java/lang/Package/annotation/PackageInfoTest.java	         generic-all
+
+# 8134485
+java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
 # 8132737
 java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java	generic-all
@@ -22,8 +24,15 @@ sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
 
-# 8130665
+# 8086002
 java/lang/SecurityManager/CheckSecurityProvider.java		macosx-all
+
+# 8134487
+sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
+sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
+sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          generic-all
+sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
+sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
 ############################################################################
 
@@ -138,12 +147,6 @@ java/nio/file/Files/StreamLinesTest.java					generic-all
 java/net/NetworkInterface/NetworkInterfaceStreamTest.java			generic-all
 java/security/PermissionCollection/PermissionCollectionStreamTest.java		generic-all
 
-sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
-sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
-sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          generic-all
-sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
-sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
-
 ############################################################################
 
 # jdk_rmi
@@ -158,7 +161,7 @@ java/rmi/transport/dgcDeadLock/DGCDeadLock.java			generic-all
 
 # jdk_other
 
-# waiting for javac/jtreg support
+# 8134489
 javax/xml/jaxp/common/8035437/run.sh                            generic-all
 
 # 8134418
