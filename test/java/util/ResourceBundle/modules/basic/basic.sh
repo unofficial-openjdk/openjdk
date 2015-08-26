@@ -22,8 +22,11 @@
 #
 
 # @test
-# @summary Basic test for ResourceBundle with modules;
-#          resource bundles are grouped in main, EU, and Asia.
+# @summary Basic test case for ResourceBundle with modules;
+#          ResourceBundle.getBundle caller is in module named "test",
+#          resource bundles are grouped in main (module "mainbundles"),
+#          EU (module "eubundles"), and Asia (module "asiabundles").
+#          Also adds a jar file containing resource bundles to the class path.
 
 set -e
 
@@ -39,10 +42,6 @@ JAVAC="$COMPILEJAVA/bin/javac"
 JAR="$COMPILEJAVA/bin/jar"
 JAVA="$TESTJAVA/bin/java"
 
-# This test is temporarily converted to use AbstractResourceBundleProvider class
-# to avoid calling Control.newBundle
-EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider=mainbundles"
-
 rm -rf mods
 
 CP=
@@ -52,7 +51,7 @@ do
   mkdir -p mods/$B
   CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
   if [ "x$CLASSES" != x ]; then
-    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
+    $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
   fi
   PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
   if [ "x$PROPS" != x ]; then
@@ -67,7 +66,7 @@ do
 done
 
 mkdir -p mods/test
-$JAVAC ${EXTRA_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
+$JAVAC -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
 # Create a jar to be added to the class path. Expected only properties files are
@@ -79,10 +78,10 @@ $JAR -cf extra.jar -C classes jdk/test/resources/eu \
                    -C $TESTSRC/src/extra jdk/test/resources/asia
 $JAR -tvf extra.jar
 
-$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
+$JAVA -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de ja-jp &&
     # properties files on the class path should be picked up.
-    $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en de vi &&
+    $JAVA -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de vi &&
     # classes on the class path shouldn't.
-    ! $JAVA ${EXTRA_OPTS} -cp extra.jar -mp mods -m test/jdk.test.Main es
+    ! $JAVA -cp extra.jar -mp mods -m test/jdk.test.Main es
 
 exit $?

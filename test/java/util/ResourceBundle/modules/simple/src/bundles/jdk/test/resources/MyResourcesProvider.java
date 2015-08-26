@@ -23,16 +23,15 @@
 
 package jdk.test.resources;
 
-import java.lang.reflect.Module;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.spi.ResourceBundleProvider;
-
-import sun.util.locale.provider.AbstractResourceBundleProvider;
+import java.util.spi.AbstractResourceBundleProvider;
 
 public class MyResourcesProvider extends AbstractResourceBundleProvider {
+    public MyResourcesProvider() {
+        super("java.class", "java.properties");
+        System.err.println("MyResourcesProvider called " + this);
+    }
+
     @Override
     protected String toBundleName(String baseName, Locale locale) {
         StringBuilder sb = new StringBuilder(baseName);

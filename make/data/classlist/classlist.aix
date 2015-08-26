@@ -344,7 +344,6 @@ java/util/Collections$UnmodifiableMap
 sun/awt/DebugHelperStub
 java/awt/Toolkit
 java/awt/Toolkit$3
-sun/util/CoreResourceBundleControl
 java/util/ResourceBundle$Control
 java/util/Arrays$ArrayList
 java/util/Collections$UnmodifiableRandomAccessList

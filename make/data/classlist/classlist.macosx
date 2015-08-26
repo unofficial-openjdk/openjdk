@@ -2148,7 +2148,6 @@ sun/swing/SwingUtilities2$AATextInfo
 sun/swing/SwingUtilities2$LSBCacheEntry
 sun/swing/UIAction
 sun/swing/UIClientPropertyKey
-sun/util/CoreResourceBundleControl
 sun/util/PreHashedMap
 sun/util/ResourceBundleEnumeration
 sun/util/calendar/AbstractCalendar

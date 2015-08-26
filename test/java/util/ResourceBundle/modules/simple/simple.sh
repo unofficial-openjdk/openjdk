@@ -22,8 +22,8 @@
 #
 
 # @test
-# @summary Basic test for ResourceBundle with modules;
-#          ResourceBundle.Control is provided by a ResourceBundleControlProvider,
+# @summary Simple test case for ResourceBundle with modules;
+#          ResourceBundle.getBundle caller is in module named "test" and
 #          all resource bundles are in single module named "bundles".
 
 
@@ -37,10 +37,6 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
-# This test is temporarily converted to use AbstractResourceBundleProvider class
-# to avoid calling Control.newBundle
-EXTRA_OPTS="-XaddExports:java.base/sun.util.locale.provider=bundles"
-
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
@@ -52,7 +48,7 @@ B=bundles
 mkdir -p mods/$B
 CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
 if [ "x$CLASSES" != x ]; then
-    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CLASSES
+    $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CLASSES
 fi
 PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
 if [ "x$PROPS" != x ]; then
@@ -64,9 +60,9 @@ if [ "x$PROPS" != x ]; then
     done
 fi
 
-$JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src \
-    -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
+$JAVAC -g -d mods -modulesourcepath $TESTSRC/src \
+       -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?

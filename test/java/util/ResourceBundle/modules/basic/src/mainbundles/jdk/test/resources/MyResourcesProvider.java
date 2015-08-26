@@ -23,9 +23,6 @@
 
 package jdk.test.resources;
 
-import java.lang.reflect.Module;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,8 +31,8 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
 import java.util.Set;
+import java.util.spi.AbstractResourceBundleProvider;
 
-import sun.util.locale.provider.AbstractResourceBundleProvider;
 
 public class MyResourcesProvider extends AbstractResourceBundleProvider {
     private final String region;
@@ -65,7 +62,9 @@ public class MyResourcesProvider extends AbstractResourceBundleProvider {
 
     @Override
     protected String toBundleName(String baseName, Locale locale) {
-        String name = addRegion(baseName);
+        // The resource bundle for Locale.JAPAN is loccated at jdk.test.resources
+        // in module "asiabundles".
+        String name = locale.equals(Locale.JAPAN) ? baseName : addRegion(baseName);
         return Control.getControl(Control.FORMAT_DEFAULT).toBundleName(name, locale);
     }
 

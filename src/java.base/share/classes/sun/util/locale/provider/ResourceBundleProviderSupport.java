@@ -34,100 +34,30 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-import java.util.spi.ResourceBundleProvider;
 
 import jdk.internal.misc.BootLoader;
 import sun.misc.Unsafe;
 
 
 /**
- * Support class for ResourceBundleProvider implementation
+ * ResourceBundleProviderSupport provides convenience methods for loading
+ * resource bundles.
  */
-public abstract class AbstractResourceBundleProvider implements ResourceBundleProvider {
-    private static final String FORMAT_CLASS = "java.class";
-    private static final String FORMAT_PROPERTIES = "java.properties";
-
-    private final String[] formats;
-
-    protected AbstractResourceBundleProvider() {
-        this(FORMAT_CLASS, FORMAT_PROPERTIES);
-    }
-
+public class ResourceBundleProviderSupport {
     /**
-     * This {@code AbstractResourceBundleProvider} specifies the formats
-     * it supports.
+     * Loads a {@code ResourceBundle} of the given {@code bundleName} local to
+     * the given {@code module}.
      *
-     * @apiNote The default implementation of the {@link #getBundle(String, Locale)}
-     * can skip looking up classes.  Perhaps the default should be "java.properties"
-     * which is the common cases.
-     *
-     * @param formats
-     * @throws IllegalArgumentException if the given formats is not "java.class"
-     *         or "java.properties".
-     */
-    protected AbstractResourceBundleProvider(String... formats) {
-        this.formats = formats.clone();  // defensive copy
-        for (String f : formats) {
-            if (!FORMAT_CLASS.equals(f) && !FORMAT_PROPERTIES.equals(f)) {
-                throw new IllegalArgumentException(f);
-            }
-        }
-    }
-
-    protected abstract String toBundleName(String baseName, Locale locale);
-
-    /**
-     * Returns a {@code ResourceBundle} for the given base name and locale.
-     *
-     * @implNote
-     * The default implementation of this method will find the resource bundle
-     * local to the module of this provider. If this provider supports .properties
-     * resource bundle, it will also find .properties resource bundle from
-     * the unnamed module of the module's class loader of this provider.
-     *
-     * @param baseName
-     *        the base bundle name of the resource bundle, a fully
-     *        qualified class name
-     * @param locale
-     *        the locale for which the resource bundle should be instantiated
-     * @return {@code ResourceBundle} of the given baseName and locale.
-     */
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        Module module = this.getClass().getModule();
-        String bundleName = toBundleName(baseName, locale);
-        ResourceBundle bundle = null;
-        for (String format : formats) {
-            try {
-                if (FORMAT_CLASS.equals(format)) {
-                    bundle = loadResourceBundle(module, bundleName);
-                } else if (FORMAT_PROPERTIES.equals(format)) {
-                    bundle = loadPropertyResourceBundle(module, bundleName);
-                }
-                if (bundle != null) {
-                    break;
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-        return bundle;
-    }
-
-    /**
-     * Load a {@code ResourceBundle} of the given bundleName local to the given module.
-     *
-     * @apiNote This method is intended for internal use.  Need to refactor.
-     *
-     * @param module the module from which the {@code ResourceBundle} is loaded
-     * @param bundleName bundle name
+     * @param module     the module from which the {@code ResourceBundle} is loaded
+     * @param bundleName the bundle name for the {@code ResourceBundle} class,
+     *                   such as "com.example.app.MyResources_fr"
      * @return the {@code ResourceBundle}, or null if no {@code ResourceBundle} is found
      */
     public static ResourceBundle loadResourceBundle(Module module, String bundleName)
     {
+        // TODO: security permission check to access a bundle in another module?
         PrivilegedAction<Class<?>> pa = () -> Class.forName(module, bundleName);
         Class<?> c = AccessController.doPrivileged(pa);
         if (c != null && ResourceBundle.class.isAssignableFrom(c)) {
@@ -156,14 +86,18 @@ public abstract class AbstractResourceBundleProvider implements ResourceBundlePr
     }
 
     /**
-     * Load a properties {@code ResourceBundle} of the given bundleName
-     * local to the given module.
+     * Loads properties of the given {@code bundleName} local to the given
+     * {@code module} and returns a {@code ResourceBundle} produced from the
+     * loaded properties.
      *
      * @apiNote This method is intended for internal use.  Need to refactor.
      *
-     * @param module the module from which the {@code ResourceBundle} is loaded
-     * @param bundleName bundle name
-     * @return the java.util.ResourceBundle
+     * @param module     the module from which the properties are loaded
+     * @param bundleName the bundle name of the properties,
+     *                   such as "com.example.app.MyResources_de"
+     * @return the {@code ResourceBundle} produced from the loaded properties,
+     *         or null if no properties are found
+     * @see PropertiesResourceBundle
      */
     public static ResourceBundle loadPropertyResourceBundle(Module module, String bundleName)
             throws IOException

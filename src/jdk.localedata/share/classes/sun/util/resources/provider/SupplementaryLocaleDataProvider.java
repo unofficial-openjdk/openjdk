@@ -29,6 +29,7 @@ import java.lang.reflect.Module;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import sun.util.locale.provider.ResourceBundleProviderSupport;
 import sun.util.resources.LocaleData;
 
 /**
@@ -51,6 +52,6 @@ public class SupplementaryLocaleDataProvider extends LocaleData.SupplementaryRes
     public ResourceBundle getBundle(String baseName, Locale locale) {
         Module module = LocaleDataProvider.class.getModule();
         String bundleName = toBundleName(baseName, locale);
-        return loadResourceBundle(module, bundleName);
+        return ResourceBundleProviderSupport.loadResourceBundle(module, bundleName);
     }
 }

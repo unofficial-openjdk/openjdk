@@ -27,17 +27,22 @@ package java.util.spi;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.ResourceBundle.Control;
 
 /**
  * {@code ResourceBundleProvider} is a provider interface that is used for
  * loading resource bundles. Implementation classes of this interface are loaded
- * with {@link java.util.ServiceLoader ServiceLoader} during a call to
- * {@link ResourceBundle#getBundle(String, Locale, ClassLoader, Control)
- * ResourceBundle.getBundle()}. The methods in this interface are called through
- * the resource bundle loading process instead of {@link
- * Control#newBundle(String, Locale, String, ClassLoader, boolean)
- * ResourceBundle.Control.newBundle()}.
+ * with {@link java.util.ServiceLoader ServiceLoader} during a call to the
+ * {@link ResourceBundle#getBundle(String, Locale, ClassLoader)
+ * ResourceBundle.getBundle} method. The provider service type is determined by
+ * {@code basename+"Provider"}. For example, if the base name is
+ * "com.example.app.MyResources", {@code com.example.app.MyResourcesProvider}
+ * will be the provider service type.
+ * <p>
+ * This providers's {@link #getBundle(String, Locale) getBundle} method is called
+ * through the resource bundle loading process instead of {@link
+ * java.util.ResourceBundle.Control#newBundle(String, Locale, String, ClassLoader, boolean)
+ * ResourceBundle.Control.newBundle()}. Refer to {@link ResourceBundle} for
+ * details.
  *
  * @since 1.9
  */
@@ -47,13 +52,12 @@ public interface ResourceBundleProvider {
      * This method returns null if there is no {@code ResourceBundle} found
      * for the given parameters.
      *
+     *
      * @param baseName
      *        the base bundle name of the resource bundle, a fully
      *        qualified class name
      * @param locale
-     *        the locale for which the resource bundle should be instantiated
-     * @throws NullPointerException
-     *         if {@code bundleName}, {@code locale}, or {@code loader} is null
+     *        the locale for which the resource bundle should be loaded
      * @return the ResourceBundle created for the given parameters, or null if no
      *         {@code ResourceBundle} for the given parameters is found
      */

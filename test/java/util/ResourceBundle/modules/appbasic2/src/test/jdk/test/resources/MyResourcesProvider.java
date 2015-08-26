@@ -26,8 +26,7 @@ package jdk.test.resources;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
-
-import sun.util.locale.provider.AbstractResourceBundleProvider;
+import java.util.spi.AbstractResourceBundleProvider;
 
 public abstract class MyResourcesProvider extends AbstractResourceBundleProvider {
     protected MyResourcesProvider(String... formats) {

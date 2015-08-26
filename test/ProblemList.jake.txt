@@ -39,11 +39,11 @@ sun/security/pkcs11/Provider/ConfigShortPath.java 				windows-all
 
 ############################################################################
 
-# i18n/ResourceBundle/CLDR breakage
-sun/text/resources/LocaleDataTest.java                                  generic-all
-
 # 8131141
 java/util/ResourceBundle/Bug6299235Test.sh                              generic-all
+
+# 8134544
+sun/util/resources/cldr/Bug8134250.java                                 generic-all
 
 ############################################################################
 

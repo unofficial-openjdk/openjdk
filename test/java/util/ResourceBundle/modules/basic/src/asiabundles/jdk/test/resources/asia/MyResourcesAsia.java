@@ -32,6 +32,7 @@ import jdk.test.resources.MyResourcesProvider;
 public class MyResourcesAsia extends MyResourcesProvider {
     public MyResourcesAsia() {
         super("java.properties", "asia",
-              Locale.JAPANESE, Locale.CHINESE, Locale.TAIWAN, new Locale("vi"));
+              Locale.JAPANESE, Locale.JAPAN, Locale.CHINESE, Locale.TAIWAN,
+              new Locale("vi"));
     }
 }
