@@ -288,10 +288,6 @@ public final class ModuleBootstrap {
     /**
      * The value of -XaddExports is a sequence of $MODULE/$PACKAGE=$TARGET
      * where $TARGET is a module name or the token "ALL-UNNAMED".
-     *
-     * If the sequence contains $MODULE/$PACKAGE (no =$TARGET) then an
-     * unqualified export is created. This is temporary and will be removed
-     * once jtreg and tests have been updated to export to ALL-UNNAMED.
      */
     private static void addMoreExports(Layer bootLayer, String moreExports) {
         for (String expr: moreExports.split(",")) {
