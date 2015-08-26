@@ -26,7 +26,6 @@ package sun.hotspot;
 
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Executable;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -401,25 +400,8 @@ public class WhiteBox {
   // Safepoint Checking
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
-  // Image File
-  public native boolean readImageFile(String imagePath);
-  public native long imageOpenImage(String imagePath, boolean bigEndian);
-  public native void imageCloseImage(long id);
-  public native long imageGetIndexAddress(long id);
   // Sharing
   public native boolean isShared(Object o);
   public native boolean areSharedStringsIgnored();
-  public native long imageGetDataAddress(long id);
-  public native boolean imageReadCompressed(long id, long offset,
-    ByteBuffer compressedBuffer, long compressedSize,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native boolean imageRead(long id, long offset,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native byte[] imageGetStringBytes(long id, int offset);
-  public native long imageGetStringsSize(long id);
-  public native long[] imageGetAttributes(long id, int offset);
-  public native long[] imageFindAttributes(long id, byte[] path);
-  public native int[] imageAttributeOffsets(long id);
-  public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
 }
 
