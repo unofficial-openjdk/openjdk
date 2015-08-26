@@ -71,6 +71,11 @@ public abstract class ModuleReference {
 
     /**
      * Constructs a new instance of this class.
+     *
+     * @param descriptor
+     *        The module descriptor
+     * @param location
+     *        The module location or {@code null} if not known
      */
     protected ModuleReference(ModuleDescriptor descriptor,
                               URI location)
@@ -80,6 +85,8 @@ public abstract class ModuleReference {
 
     /**
      * Returns the module descriptor.
+     *
+     * @return The module descriptor
      */
     public final ModuleDescriptor descriptor() {
         return descriptor;
@@ -93,6 +100,8 @@ public abstract class ModuleReference {
      * java.security.CodeSource CodeSource} so that a module's classes can be
      * granted specific permissions when loaded by a {@link
      * java.security.SecureClassLoader SecureClassLoader}.
+     *
+     * @return The location or an empty {@code Optional} if not known
      */
     public final Optional<URI> location() {
         return location;
@@ -101,6 +110,8 @@ public abstract class ModuleReference {
     /**
      * Opens the modules reference for reading, returning a {@code ModuleReader}
      * that may be used to locate or read classes and resources.
+     *
+     * @return A {@code ModuleReader} to read the module
      *
      * @throws IOException
      *         If an I/O error occurs

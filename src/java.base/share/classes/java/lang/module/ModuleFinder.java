@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,11 +38,10 @@ import java.util.stream.Stream;
 /**
  * A finder of module references.
  *
- * <p> An important property is that a {@code ModuleFinder} admits to
- * at most one module with a given name. A {@code ModuleFinder} that
- * finds modules in a sequence of directories for example, will locate the first
- * occurrence of a module and ignores other modules of that name that appear in
- * directories later in the sequence. </p>
+ * <p> A {@code ModuleFinder} admits to at most one module with a given name.
+ * A {@code ModuleFinder} that finds modules in a sequence of directories for
+ * example, will locate the first occurrence of a module and ignores other
+ * modules of that name that appear in directories later in the sequence. </p>
  *
  * <p> Example usage: </p>
  *
@@ -82,14 +81,19 @@ public interface ModuleFinder {
      * locate the same module (by name) then it will return the same result
      * each time. If a module is located then it is guaranteed to be a member
      * of the set of modules returned by the {@link #findAll() findAll}
-     * method.
+     * method. </p>
      *
-     * @return a reference to a module with the given name or an empty
+     * @param  name
+     *         The name of the module to find
+     *
+     * @return A reference to a module with the given name or an empty
      *         {@code Optional} if not found
      *
-     * @throws FindException If an error occurs finding the module
+     * @throws FindException
+     *         If an error occurs finding the module
      *
-     * @throws SecurityException If denied by the security manager
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public Optional<ModuleReference> find(String name);
 
@@ -101,15 +105,19 @@ public interface ModuleFinder {
      * several times then it will return the same (equals) result each time.
      * For each {@code ModuleReference} element of the returned set then it is
      * guaranteed that that {@link #find find} will locate that {@code
-     * ModuleReference} if invoked with the module name.
+     * ModuleReference} if invoked with the module name. </p>
      *
      * @apiNote This is important to have for methods such as {@link
      * Configuration#bind} that need to scan the module path to find
      * modules that provide a specific service.
      *
-     * @throws FindException If an error occurs finding all modules
+     * @return The set of all module references that this finder locates
      *
-     * @throws SecurityException If denied by the security manager
+     * @throws FindException
+     *         If an error occurs finding all modules
+     *
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public Set<ModuleReference> findAll();
 
@@ -121,8 +129,10 @@ public interface ModuleFinder {
      * image but are intended to be loaded by custom loaders. They are observable
      * but there should be way to restrict this so that they don't end up in the
      * boot layer. In that context, should this method be renamed to systemModules?
+     * Also need to decide if this method needs a permission check.
      *
-     * @apiNote Need to decide if this method needs a permission check.
+     * @return A {@code ModuleFinder} that locate all modules in the
+     *         run-time image
      */
     public static ModuleFinder ofInstalled() {
         String home = System.getProperty("java.home");
@@ -134,9 +144,7 @@ public interface ModuleFinder {
             if (Files.isDirectory(mlib)) {
                 return of(mlib);
             } else {
-                System.err.println("WARNING: " + mlib.toString() +
-                        " not found or not a directory");
-                return of(new Path[0]);
+                throw new InternalError("Unable to detect the run-time image");
             }
         }
     }
@@ -152,7 +160,10 @@ public interface ModuleFinder {
      * that the given file paths are directories. A call to the {@code find}
      * or {@code findAll} methods may fail as a result. </p>
      *
-     * @param dirs  The possibly-empty array of directories
+     * @param dirs
+     *        The possibly-empty array of directories
+     *
+     * @return A {@code ModuleFinder} that locates modules on the file system
      */
     public static ModuleFinder of(Path... dirs) {
         return new ModulePath(dirs);
@@ -160,13 +171,23 @@ public interface ModuleFinder {
 
     /**
      * Returns a finder that is the equivalent to concatenating the given
-     * finders. The resulting finder will locate modules references using {@code
-     * first}; if not found then it will attempt to locate module references
-     * using {@code second}.
+     * finders. The resulting finder will locate modules references using
+     * {@code first}; if not found then it will attempt to locate module
+     * references using {@code second}.
+     *
+     * <p> The {@link #findAll() findAll} method of the resulting module finder
+     * will locates all modules located by the first module finder. It will
+     * also locate all modules located by the second module finder that are not
+     * located by the first module finder. </p>
+     *
+     * @param first
+     *        The first module finder
+     * @param second
+     *        The second module finder
+     *
+     * @return A {@code ModuleFinder} that concatenates two module finders
      */
-    public static ModuleFinder concat(ModuleFinder first,
-                                      ModuleFinder second)
-    {
+    public static ModuleFinder concat(ModuleFinder first, ModuleFinder second) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
 
@@ -201,6 +222,8 @@ public interface ModuleFinder {
      *
      * @apiNote This is useful when using methods such as {@link
      * Configuration#resolve resolve} where two finders are specified.
+     *
+     * @return A {@code ModuleFinder} that does not find any modules
      */
     public static ModuleFinder empty() {
         // an alternative implementation of ModuleFinder.of()

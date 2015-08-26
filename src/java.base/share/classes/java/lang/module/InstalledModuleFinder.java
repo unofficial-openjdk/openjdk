@@ -51,20 +51,28 @@ import sun.misc.PerfCounter;
 
 class InstalledModuleFinder implements ModuleFinder {
 
+    private static final PerfCounter initTime
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
+    private static final PerfCounter moduleCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.modules");
+    private static final PerfCounter packageCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
+    private static final PerfCounter exportsCount
+        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
+
     private static final String MODULE_INFO = "module-info.class";
 
     // the set of modules in the run-time image
-    private final Set<ModuleReference> modules;
+    private static final Set<ModuleReference> modules;
 
     // maps module name to module reference
-    private final Map<String, ModuleReference> nameToModule;
+    private static final Map<String, ModuleReference> nameToModule;
 
     /**
-     * Creates the ModuleFinder. For now, the module references are created
-     * eagerly on the assumption that service binding will require all
-     * modules to be located.
+     * For now, the module references are created eagerly on the assumption
+     * that service binding will require all modules to be located.
      */
-    InstalledModuleFinder() {
+    static {
         long t0 = System.nanoTime();
 
         ImageReader imageReader = ImageReaderFactory.getImageReader();
@@ -76,40 +84,41 @@ class InstalledModuleFinder implements ModuleFinder {
 
         moduleCount.add(n);
 
-        Set<ModuleReference> modules = new HashSet<>(n);
-        Map<String, ModuleReference> nameToModule = new HashMap<>(n);
+        Set<ModuleReference> mods = new HashSet<>(n);
+        Map<String, ModuleReference> map = new HashMap<>(n);
 
         for (String mn : moduleNames) {
             ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
             ByteBuffer bb = imageReader.getResourceBuffer(loc);
             try {
 
-                // parse the module-info.class file and create the
-                // module reference.
-                ModuleDescriptor descriptor
-                    = ModuleInfo.readIgnoringHashes(bb, null);
+                // parse the module-info.class file
+                ModuleDescriptor md = ModuleInfo.readIgnoringHashes(bb, null);
+                if (!md.name().equals(mn))
+                    throw new InternalError();
+
                 URI uri = URI.create("jrt:/" + mn);
                 ModuleReference mref
-                    = ModuleReferences.newModuleReference(descriptor,
-                                                          uri,
-                                                          null);
-                modules.add(mref);
-                nameToModule.put(mn, mref);
+                    = ModuleReferences.newModuleReference(md, uri, null);
+                mods.add(mref);
+                map.put(mn, mref);
 
                 // counters
-                packageCount.add(descriptor.packages().size());
-                exportsCount.add(descriptor.exports().size());
+                packageCount.add(md.packages().size());
+                exportsCount.add(md.exports().size());
 
             } finally {
                 ImageReader.releaseByteBuffer(bb);
             }
         }
 
-        this.modules = Collections.unmodifiableSet(modules);
-        this.nameToModule = nameToModule;
+        modules = Collections.unmodifiableSet(mods);
+        nameToModule = map;
 
         initTime.addElapsedTimeFrom(t0);
     }
+
+    InstalledModuleFinder() { }
 
     @Override
     public Optional<ModuleReference> find(String name) {
@@ -122,12 +131,4 @@ class InstalledModuleFinder implements ModuleFinder {
         return modules;
     }
 
-    private static final PerfCounter initTime
-        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
-    private static final PerfCounter moduleCount
-        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.modules");
-    private static final PerfCounter packageCount
-        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
-    private static final PerfCounter exportsCount
-        = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
 }

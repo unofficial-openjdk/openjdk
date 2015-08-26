@@ -60,6 +60,12 @@ public interface ModuleReader extends Closeable {
     /**
      * Returns an input stream for reading the resource.
      *
+     * @param  name
+     *         The name of the resource to open for reading
+     *
+     * @return An input stream to read the resource or an empty
+     *         {@code Optional} if not found
+     *
      * @throws IOException
      *         If an I/O error occurs or the module reader is closed
      * @throws SecurityException
@@ -86,6 +92,12 @@ public interface ModuleReader extends Closeable {
      * @implSpec The default implementation invokes the {@link #open(String)
      * open} method and reads all bytes from the input stream into a byte
      * buffer.
+     *
+     * @param  name
+     *         The name of the resource to read
+     *
+     * @return A byte buffer containing the contents of the resource or an
+     *         empty {@code Optional} if not found
      *
      * @throws IOException
      *         If an I/O error occurs or the module reader is closed
@@ -146,6 +158,9 @@ public interface ModuleReader extends Closeable {
      * the behavior when invoked to release a buffer after a {@code
      * ModuleReader} is closed is implementation specific and therefore
      * not specified.
+     *
+     * @param  bb
+     *         The byte buffer to return to the buffer pool
      *
      * @implSpec The default implementation does nothing.
      */
