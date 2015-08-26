@@ -429,6 +429,27 @@ public class Basic {
         check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
     }
 
+    @Test
+    public void printModuleDescriptorFoo() throws IOException {
+        Path mp = Paths.get("printModuleDescriptorFoo");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".");
+        Result r = jarWithResult(
+                "--print-module-descriptor",
+                "--archive=" + modularJar.toString());
+        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+        check(r.output.contains(FOO.moduleName + "@" + FOO.version),
+              "Expected to find ", FOO.moduleName + "@" + FOO.version, " in ", r.output);
+    }
+
     // -- Infrastructure
 
     static void jar(String... args) {
