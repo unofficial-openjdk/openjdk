@@ -395,6 +395,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                 int mods = pf.getModifiers();
                 if (Modifier.isPrivate(mods) && Modifier.isStatic(mods) &&
                         Modifier.isFinal(mods)) {
+                    assert Modules.canRead(type);
                     pf.setAccessible(true);
                     java.io.ObjectStreamField[] fields =
                         (java.io.ObjectStreamField[])pf.get(type);
@@ -454,6 +455,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                  * Otherwise, extract the fields from the class itself.
                  */
                     fields = persistentFieldsValue.get(cl);
+                    assert Modules.canRead(cl);
 
                 if (fields == null) {
                     /* Get all of the declared fields for this
@@ -474,6 +476,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                         int modifiers = fld.getModifiers();
                         if (!Modifier.isStatic(modifiers) &&
                             !Modifier.isTransient(modifiers)) {
+                            assert Modules.canRead(cl);
                             fld.setAccessible(true) ;
                             tempFields[numFields++] = new ObjectStreamField(fld);
                         }
@@ -490,6 +493,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                         try {
                             Field reflField = cl.getDeclaredField(fields[j].getName());
                             if (fields[j].getType() == reflField.getType()) {
+                                assert Modules.canRead(cl);
                                 reflField.setAccessible(true);
                                 fields[j].setField(reflField);
                             }
@@ -521,6 +525,8 @@ public class ObjectStreamClass implements java.io.Serializable {
              // Lookup special Serializable members using reflection.
              AccessController.doPrivileged(new PrivilegedAction() {
                 public Object run() {
+                assert Modules.canRead(cl);
+
                 if (forProxyClass) {
                     // proxy classes always have serialVersionUID of 0L
                     suid = 0L;
@@ -530,6 +536,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                         int mods = f.getModifiers();
                         // SerialBug 5:  static final SUID should be read
                         if (Modifier.isStatic(mods) && Modifier.isFinal(mods) ) {
+                            assert Modules.canRead(cl);
                             f.setAccessible(true);
                             suid = f.getLong(cl);
                             // SerialBug 2: should be computed after writeObject
@@ -599,6 +606,7 @@ public class ObjectStreamClass implements java.io.Serializable {
     {
         try {
             Method meth = cl.getDeclaredMethod(name, argTypes);
+            assert Modules.canRead(cl);
             meth.setAccessible(true);
             int mods = meth.getModifiers();
             return ((meth.getReturnType() == returnType) &&
@@ -927,6 +935,7 @@ public class ObjectStreamClass implements java.io.Serializable {
     private static Constructor getExternalizableConstructor(Class<?> cl) {
         try {
             Constructor cons = cl.getDeclaredConstructor(new Class<?>[0]);
+            assert Modules.canRead(cl);
             cons.setAccessible(true);
             return ((cons.getModifiers() & Modifier.PUBLIC) != 0) ?
                 cons : null;
@@ -957,6 +966,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                 return null;
             }
             cons = bridge.newConstructorForSerialization(cl, cons);
+            assert Modules.canRead(cl);
             cons.setAccessible(true);
             return cons;
         } catch (NoSuchMethodException ex) {
@@ -1571,6 +1581,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                 throw new InternalError("Can't find hasStaticInitializer method on "
                                         + classWithThisMethod.getName());
             }
+            assert Modules.canRead(cl);
             hasStaticInitializerMethod.setAccessible(true);
         }
 
@@ -1757,6 +1768,7 @@ public class ObjectStreamClass implements java.io.Serializable {
         if ((meth == null) || (meth.getReturnType() != returnType)) {
             return null;
         }
+        assert Modules.canRead(cl);
         meth.setAccessible(true);
         int mods = meth.getModifiers();
         if ((mods & (Modifier.STATIC | Modifier.ABSTRACT)) != 0) {

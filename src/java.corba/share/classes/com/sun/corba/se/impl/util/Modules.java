@@ -29,10 +29,10 @@ import org.omg.CORBA.ORB;
 import java.lang.reflect.Method;
 
 /**
- * Utility class to aid calling java.lang.reflect.Module.addReads.
+ * Utility class to aid calling java.lang.reflect.Module.addReads/canRead.
  *
- * @implNote The implementation uses core reflection to call addReads. This
- * is because of bootstrapping issues in the build where the interim corba
+ * @implNote The implementation uses core reflection because of
+ * bootstrapping issues in the build where the interim corba
  * build is compiled with the boot JDK.
  */
 
@@ -50,6 +50,19 @@ public class Modules {
             Class<?> moduleClass = getModuleMethod.getReturnType();
             Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
             addReadsMethod.invoke(thisModule, targetModule);
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
+    }
+
+    public static boolean canRead(Class<?> targetClass) {
+        try {
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(ORB.class);
+            Object targetModule = getModuleMethod.invoke(targetClass);
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method canReadMethod = moduleClass.getMethod("canRead", moduleClass);
+            return (boolean) canReadMethod.invoke(thisModule, targetModule);
         } catch (Exception e) {
             throw new InternalError(e);
         }
