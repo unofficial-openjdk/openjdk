@@ -181,7 +181,7 @@ public class AccessibleObject implements AnnotatedElement {
                 String msg = "Unable to make member of "
                         + declaringClass + " accessible:  "
                         + callerModule + " does not read " + declaringModule;
-                throw new InaccessibleObjectException(msg);
+                Reflection.throwInaccessibleObjectException(msg);
             }
 
             // check exports to target module
@@ -191,7 +191,7 @@ public class AccessibleObject implements AnnotatedElement {
                         + declaringClass + " accessible:  "
                         + declaringModule + " does not export "
                         + pn + " to " + callerModule;
-                throw new InaccessibleObjectException(msg);
+                Reflection.throwInaccessibleObjectException(msg);
             }
 
         }
@@ -203,9 +203,11 @@ public class AccessibleObject implements AnnotatedElement {
             } else {
                 modifiers = ((Field)ao).getModifiers();
             }
-            if (!Modifier.isPublic(modifiers))
-                throw new InaccessibleObjectException("Cannot make a non-public"
-                    + " member of java.lang.reflect.Module accessible");
+            if (!Modifier.isPublic(modifiers)) {
+                String msg = "Cannot make a non-public member of "
+                    + Module.class + " accessible";
+                Reflection.throwInaccessibleObjectException(msg);
+            }
         }
 
         if (declaringClass == Class.class && ao instanceof Constructor) {

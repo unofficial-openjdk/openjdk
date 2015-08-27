@@ -41,13 +41,13 @@ import static org.testng.Assert.*;
 
 public class JdkModules {
     private static Set<ModuleReference> mrefs
-            = ModuleFinder.ofInstalled().findAll();
+        = ModuleFinder.ofInstalled().findAll();
 
     private static ModuleDescriptor base
         = new ModuleDescriptor.Builder("java.base").build();
 
     private static ModuleDescriptor compact2
-        = new ModuleDescriptor.Builder("java.compact1")
+        = new ModuleDescriptor.Builder("java.compact2")
             .requires(MANDATED, "java.base")
             .requires(PUBLIC, "java.compact1")
             .requires(PUBLIC, "java.rmi")

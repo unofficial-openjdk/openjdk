@@ -125,7 +125,7 @@ public class Reflection {
                     msg += " to " + m1;
             }
 
-            throwIAE(msg);
+            throwIllegalAccessException(msg);
         }
     }
 
@@ -421,27 +421,47 @@ public class Reflection {
     // true if printStackWhenAccessFails has been initialized
     private static volatile boolean printStackWhenAccessFailsSet;
 
-    /**
-     * Throws IllegalAccessException with the given exception message.
-     */
-    private static void throwIAE(String msg) throws IllegalAccessException {
-        IllegalAccessException iae = new IllegalAccessException(msg);
+    private static void printStackTraceIfNeeded(Throwable e) {
         if (!printStackWhenAccessFailsSet && VM.initLevel() >= 1) {
             // can't use method reference here, might be too early in startup
-            PrivilegedAction<String> pa = new PrivilegedAction<String>() {
-                public String run() {
+            PrivilegedAction<Boolean> pa = new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    String s;
+                    s = System.getProperty("sun.reflect.debugModuleAccessChecks");
+                    if (s != null)
+                        return true;
+
                     // legacy property name, it cannot be used to disable checks
-                    return System.getProperty("sun.reflect.enableModuleChecks");
+                    s = System.getProperty("sun.reflect.enableModuleChecks");
+                    return "debug".equals(s);
                 }
             };
-            String s = AccessController.doPrivileged(pa);
-            printStackWhenAccessFails = "debug".equals(s);
+            printStackWhenAccessFails = AccessController.doPrivileged(pa);
             printStackWhenAccessFailsSet = true;
         }
         if (printStackWhenAccessFails) {
-            iae.printStackTrace();
+            e.printStackTrace();
         }
-        throw iae;
+    }
+
+    /**
+     * Throws IllegalAccessException with the given exception message.
+     */
+    public static void throwIllegalAccessException(String msg)
+        throws IllegalAccessException
+    {
+        IllegalAccessException e = new IllegalAccessException(msg);
+        printStackTraceIfNeeded(e);
+        throw e;
+    }
+
+    /**
+     * Throws InaccessibleObjectException with the given exception message.
+     */
+    public static void throwInaccessibleObjectException(String msg) {
+        InaccessibleObjectException e = new InaccessibleObjectException(msg);
+        printStackTraceIfNeeded(e);
+        throw e;
     }
 
 }
