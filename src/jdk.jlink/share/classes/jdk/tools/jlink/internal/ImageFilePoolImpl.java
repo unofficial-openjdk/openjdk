@@ -79,12 +79,7 @@ public class ImageFilePoolImpl implements ImageFilePool {
     @Override
     public boolean contains(ImageFile file) {
         Objects.requireNonNull(file);
-        try {
-            getFile(file.getPath());
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+        return getFile(file.getPath()) != null;
     }
 
     /**
