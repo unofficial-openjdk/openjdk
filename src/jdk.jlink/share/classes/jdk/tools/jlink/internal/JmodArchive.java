@@ -70,7 +70,12 @@ public class JmodArchive extends JarArchive {
     }
 
     private static String getSection(String entryName) {
-        return entryName.substring(0, entryName.indexOf('/'));
+        int i = entryName.indexOf('/');
+        String section = null;
+        if (i > 0) {
+            section = entryName.substring(0, entryName.indexOf('/'));
+        }
+        return section;
     }
 
     @Override
