@@ -133,6 +133,14 @@ public final class ImageResourcesTree {
                 Node current = modules;
                 String module = null;
                 for (int i = 0; i < split.length; i++) {
+                    // When a non terminal node is marked as being a resource, something is wrong.
+                    // It has been observed some badly created jar file to contain
+                    // invalid directory entry marled as not directory (see 8131762)
+                    if (current.isResource) {
+                        System.err.println("Resources tree, invalid data structure, "
+                                + "skipping " + p);
+                        continue;
+                    }
                     String s = split[i];
                     if (!s.isEmpty()) {
                         if (module == null) {
@@ -233,7 +241,10 @@ public final class ImageResourcesTree {
         }
 
         private String removeRadical(String path, String str) {
-            return path.substring(str.length());
+            if (!(path.length() < str.length())) {
+                path = path.substring(str.length());
+            }
+            return path;
         }
 
         public Node getRoot() {
@@ -317,7 +328,10 @@ public final class ImageResourcesTree {
                     current.loc = outLocations.get(current.getPath());
                 }
             }
-            return current == tree.getRoot() ? 0 : current.loc.getLocationOffset();
+            if (current.loc == null && current != tree.getRoot()) {
+                System.err.println("Invalid path in metadata, skipping " + current.getPath());
+            }
+            return current.loc == null ? 0 : current.loc.getLocationOffset();
         }
     }
 

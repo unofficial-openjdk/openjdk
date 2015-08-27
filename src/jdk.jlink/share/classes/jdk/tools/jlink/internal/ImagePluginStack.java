@@ -166,7 +166,7 @@ public final class ImagePluginStack {
                 Collections.emptyMap());
     }
 
-    ImagePluginStack(ImageBuilder imageBuilder,
+    public ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
             List<ImageFilePlugin> filePlugins,
