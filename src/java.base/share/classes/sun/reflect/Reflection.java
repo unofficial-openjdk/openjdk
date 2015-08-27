@@ -428,7 +428,7 @@ public class Reflection {
                 public Boolean run() {
                     String s;
                     s = System.getProperty("sun.reflect.debugModuleAccessChecks");
-                    if (s != null)
+                    if (s != null && !s.equalsIgnoreCase("false"))
                         return true;
 
                     // legacy property name, it cannot be used to disable checks
