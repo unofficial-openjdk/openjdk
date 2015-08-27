@@ -3711,4 +3711,3 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
   info->is_attachable = AttachListener::is_attach_supported();
 }
 JVM_END
-
