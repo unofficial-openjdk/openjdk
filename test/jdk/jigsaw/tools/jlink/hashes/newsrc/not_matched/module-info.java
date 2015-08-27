@@ -21,8 +21,7 @@
  * questions.
  */
 
-module m1 {
-    requires m2;
-    requires not_matched;
+module not_matched {
+    exports org.not_matched;
 }
 
