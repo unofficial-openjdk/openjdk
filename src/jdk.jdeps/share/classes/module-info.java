@@ -31,4 +31,3 @@ module jdk.jdeps {
     exports com.sun.tools.classfile to
         jdk.jlink;
 }
-
