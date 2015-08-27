@@ -404,4 +404,3 @@ public class WhiteBox {
   public native boolean isShared(Object o);
   public native boolean areSharedStringsIgnored();
 }
-
