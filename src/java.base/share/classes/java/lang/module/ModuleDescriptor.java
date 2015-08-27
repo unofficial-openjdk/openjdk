@@ -708,12 +708,15 @@ public class ModuleDescriptor
          * Adds a module dependence with the given (and possibly empty) set
          * of modifiers.
          *
-         * @throws IllegalArgumentException if the module name is {@code null}
-         *         or is not a legal Java identifier
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or is equal to the module
+         *         name that this builder was initialized to build
          * @throws IllegalStateException if a dependency on the module has
          *         already been declared
          */
         public Builder requires(Set<Requires.Modifier> mods, String mn) {
+            if (name.equals(mn))
+                throw new IllegalArgumentException("Dependence on self");
             if (requires.containsKey(mn))
                 throw new IllegalStateException("Dependence upon " + mn
                                                 + " already declared");
@@ -724,8 +727,9 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence with an empty set of modifiers.
          *
-         * @throws IllegalArgumentException if the module name is {@code null}
-         *         or is not a legal Java identifier
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or is equal to the module
+         *         name that this builder was initialized to build
          * @throws IllegalStateException if a dependency on the module has
          *         already been declared
          */
@@ -736,8 +740,9 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence with the given modifier.
          *
-         * @throws IllegalArgumentException if the module name is {@code null}
-         *         or is not a legal Java identifier
+         * @throws IllegalArgumentException if the module name is {@code null},
+         *         is not a legal Java identifier, or is equal to the module
+         *         name that this builder was initialized to build
          * @throws IllegalStateException if a dependency on the module has
          *         already been declared
          */

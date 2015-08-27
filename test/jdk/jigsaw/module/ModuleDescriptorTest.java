@@ -118,6 +118,21 @@ public class ModuleDescriptorTest {
         assertEquals(r.name(), "foo");
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testRequiresSelfWithNoModifier() {
+        new Builder("m").requires("m");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testRequiresSelfWithOneModifier() {
+        new Builder("m").requires(PUBLIC, "m");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testRequiresSelfWithAllModifiers() {
+        new Builder("m").requires(EnumSet.allOf(Modifier.class), "m");
+    }
+
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testRequiresWithBadModuleName(String mn, String ignore) {
