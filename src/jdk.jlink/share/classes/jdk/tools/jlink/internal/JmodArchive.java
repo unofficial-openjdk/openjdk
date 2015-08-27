@@ -83,4 +83,3 @@ public class JmodArchive extends JarArchive {
         return entryName.substring(entryName.indexOf('/') + 1);
     }
 }
-
