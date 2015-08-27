@@ -32,9 +32,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Extend this class and make your class available to the ServiceLoader in order
- * to expose your Plugin to command line tool. A provider has a name, a
- * description, an optional * category, configuration and command line option.
+ * An abstract command line plugin provider class. Such a provider has a command
+ * line option, an optional argument, and optional additional options. The
+ * provider classes to extend to add plugins to jlink command line tool are:
+ * <ul>
+ * <li><code>CmdResourcePluginProvider</code></li>
+ * <li><code>CmdImageFilePluginProvider</code></li>
+ * </ul>
  */
 public abstract class CmdPluginProvider extends PluginProvider {
 
@@ -43,7 +47,7 @@ public abstract class CmdPluginProvider extends PluginProvider {
      */
     public static final String TOOL_ARGUMENT_PROPERTY = "argument";
 
-    protected CmdPluginProvider(String name, String description) {
+    CmdPluginProvider(String name, String description) {
         super(name, description);
     }
 

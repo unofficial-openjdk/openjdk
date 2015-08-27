@@ -29,9 +29,14 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Extend this class and make your class available to the ServiceLoader in order
- * to expose your Plugin. A provider has a name, a description and an optional
- * category.<br>
+ * An abstract plugin provider class. A provider has a name, a description and
+ * an optional category.<br>
+ * The provider classes to extend to add plugins to jlink are:
+ * <ul>
+ * <li><code>ResourcePluginProvider</code></li>
+ * <li><code>ImageFilePluginProvider</code></li>
+ * </ul>
+ *
  * Order of known categories are:
  * <ol>
  * <li>FILTER: Filter in/out resources.</li>
@@ -53,7 +58,7 @@ public abstract class PluginProvider {
     private final String name;
     private final String description;
 
-    protected PluginProvider(String name, String description) {
+    PluginProvider(String name, String description) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(description);
         this.name = name;

@@ -34,8 +34,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 
 import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 
 public class OptionsTest {
     public static void main(String[] args) throws IOException {
@@ -50,7 +52,7 @@ public class OptionsTest {
         }
     }
 
-    public static class OptionsProvider extends CmdPluginProvider {
+    public static class OptionsProvider extends CmdResourcePluginProvider {
 
         public static final String[] OPTIONS = {"a", "nnn", "cccc"};
 
@@ -61,7 +63,7 @@ public class OptionsTest {
         }
 
         @Override
-        public Plugin[] newPlugins(String[] argument, Map<String, String> options)
+        public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> options)
                 throws IOException {
             if (options.size() != OPTIONS.length) {
                 throw new IOException("Invalid options");
