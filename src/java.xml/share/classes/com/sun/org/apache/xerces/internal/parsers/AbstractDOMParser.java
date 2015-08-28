@@ -788,7 +788,8 @@ public class AbstractDOMParser extends AbstractXMLDocumentParser {
             else {
                 // use specified document class
                 try {
-                    Class documentClass = ObjectFactory.findProviderClass (fDocumentClassName, true);
+                    Class<?> documentClass = ObjectFactory.findProviderClass (fDocumentClassName, true);
+                    this.getClass().getModule().addReads(documentClass.getModule());
                     fDocument = (Document)documentClass.newInstance ();
 
                     // if subclass of our own class that's cool too
