@@ -61,6 +61,7 @@
 #include "runtime/os.hpp"
 #include "runtime/threadCritical.hpp"
 #include "runtime/timer.hpp"
+#include "runtime/vm_version.hpp"
 #include "services/management.hpp"
 #include "services/threadService.hpp"
 #include "utilities/events.hpp"
@@ -155,6 +156,15 @@ bool string_starts_with(const char* str, const char* str_to_find) {
     return false;
   }
   return (strncmp(str, str_to_find, str_to_find_len) == 0);
+}
+
+static const char* get_jimage_version_string() {
+  static char version_string[10] = "";
+  if (version_string[0] == '\0') {
+    jio_snprintf(version_string, sizeof(version_string), "%d.%d",
+                 Abstract_VM_Version::vm_minor_version(), Abstract_VM_Version::vm_micro_version());
+  }
+  return (const char*)version_string;
 }
 
 bool ClassLoader::string_ends_with(const char* str, const char* str_to_find) {
@@ -308,24 +318,29 @@ ClassPathImageEntry::~ClassPathImageEntry() {
   }
 }
 
-const char* ClassPathImageEntry::name_to_package(const char* name, char* package, int length) {
+void ClassPathImageEntry::name_to_package(const char* name, char* buffer, int length) {
   const char *pslash = strrchr(name, '/');
   if (pslash == NULL) {
-    return NULL;
+    buffer[0] = '\0';
+    return;
   }
   int len = pslash - name;
 #if INCLUDE_CDS
   if (len <= 0 && DumpSharedSpaces) {
-    return NULL;
+    buffer[0] = '\0';
+    return;
   }
 #endif
   assert(len > 0, "Bad length for package name");
   if (len >= length) {
-    return NULL;
+    buffer[0] = '\0';
+    return;
   }
-  strncpy(package, name, len);
-  package[len] = '\0';
-  return package;
+  // drop name after last slash (including slash)
+  // Ex., "java/lang/String.class" => "java/lang"
+  strncpy(buffer, name, len);
+  // ensure string termination (strncpy does not guarantee)
+  buffer[len] = '\0';
 }
 
 // For a class in a named module, look it up in the jimage file using this syntax:
@@ -337,22 +352,20 @@ const char* ClassPathImageEntry::name_to_package(const char* name, char* package
 //
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   jlong size;
-  JImageLocationRef location = (*JImageFindResource)(_jimage,
-        "", BOOT_VERSION, name, &size);
+  JImageLocationRef location = (*JImageFindResource)(_jimage, "", get_jimage_version_string(), name, &size);
 
   if (location == 0) {
-    char buffer[JIMAGE_MAX_PATH];
-    const char* package = name_to_package(name, buffer, JIMAGE_MAX_PATH);
+    char package[JIMAGE_MAX_PATH];
+    name_to_package(name, package, JIMAGE_MAX_PATH);
 
 #if INCLUDE_CDS
-    if (package == NULL && DumpSharedSpaces) {
+    if (package[0] == '\0' && DumpSharedSpaces) {
       return NULL;
     }
 #endif
-    if (package != NULL) {
+    if (package[0] != '\0') {
       if (!Universe::is_module_initialized()) {
-        location = (*JImageFindResource)(_jimage,
-                          "java.base", BOOT_VERSION, name, &size);
+        location = (*JImageFindResource)(_jimage, "java.base", get_jimage_version_string(), name, &size);
 #if INCLUDE_CDS
         // CDS uses the boot class loader to load classes whose packages are in
         // modules defined for other class loaders.  So, for now, get their module
@@ -360,8 +373,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
         if (DumpSharedSpaces && location == 0) {
           const char* module_name = (*JImagePackageToModule)(_jimage, package);
           if (module_name != NULL) {
-            location = (*JImageFindResource)(_jimage,
-                              module_name, BOOT_VERSION, name, &size);
+            location = (*JImageFindResource)(_jimage, module_name, get_jimage_version_string(), name, &size);
           }
         }
 #endif
@@ -382,8 +394,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
           assert(module->is_named(), "Boot classLoader package is in unnamed module");
           const char* module_name = module->name()->as_C_string();
           if (module_name != NULL) {
-            location = (*JImageFindResource)(_jimage,
-                              module_name, BOOT_VERSION, name, &size);
+            location = (*JImageFindResource)(_jimage, module_name, get_jimage_version_string(), name, &size);
           }
         }
       }
@@ -847,9 +858,7 @@ int ClassLoader::crc32(int crc, const char* buf, int len) {
 
 void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   jlong size;
-  JImageLocationRef location = (*JImageFindResource)(jimage,
-        "java.base", BOOT_VERSION, MODULE_LOADER_MAP,
-        &size);
+  JImageLocationRef location = (*JImageFindResource)(jimage, "java.base", get_jimage_version_string(), MODULE_LOADER_MAP, &size);
   if (location == 0) {
     vm_exit_during_initialization(
       "Cannot find ModuleLoaderMap location from bootmodules.jimage.", NULL);
@@ -1262,18 +1271,19 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
     const jbyte* pkg_string = InstanceKlass::package_from_name(h_name, length);
     TempNewSymbol pkg_name = NULL;
     if (pkg_string != NULL) {
+      ResourceMark rm;
       pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_NULL);
       const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
       ClassPathEntry *cpe = ClassLoader::classpath_entry(0);
       while (cpe != NULL) {
         ClassPathImageEntry* cpie = (ClassPathImageEntry*)cpe;
-        const char *name = cpie->name();
         char* module_name;
-        if (ClassLoader::string_ends_with(name, BOOT_IMAGE_NAME)) {
+        if (cpie->is_jrt()) {
           JImageFile* jimage = cpie->jimage();
           module_name = (char*)(*JImagePackageToModule)(jimage, pkg_name_C_string);
           if (module_name != NULL) {
             classloader_type = ClassLoader::module_to_classloader(module_name);
+            break;
           }
         }
         cpe = cpe->next();
@@ -1500,7 +1510,7 @@ void ClassLoader::create_javabase() {
   ClassPathEntry* last_e = _first_append_entry;
   while ((e != NULL) && (e != last_e)) {
     JImageFile *jimage = e->jimage();
-    if (jimage != NULL && ClassLoader::string_ends_with(e->name(), BOOT_IMAGE_NAME)) {
+    if (jimage != NULL && e->is_jrt()) {
       set_has_bootmodules_jimage(true);
       ClassLoader::initialize_module_loader_map(jimage);
       return;

@@ -35,9 +35,6 @@
 // Name of boot module image
 #define  BOOT_IMAGE_NAME "bootmodules.jimage"
 
-// Name boot module version
-#define BOOT_VERSION "9.0"
-
 // Name of the resource containing mapping from module names to defining class loader type
 #define MODULE_LOADER_MAP "jdk/internal/module/ModuleLoaderMap.dat"
 
@@ -134,7 +131,7 @@ public:
   JImageFile* jimage() { return _jimage; }
   ClassPathImageEntry(JImageFile* jimage, const char* name);
   ~ClassPathImageEntry();
-  const char* name_to_package(const char* name, char* package, int length);
+  void name_to_package(const char* name, char* package, int length);
   ClassFileStream* open_stream(const char* name, TRAPS);
 
   // Debugging
