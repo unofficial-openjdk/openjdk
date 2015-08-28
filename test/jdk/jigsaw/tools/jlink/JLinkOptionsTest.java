@@ -26,6 +26,7 @@ import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
+import tests.Helper;
 
 /*
  * @test
@@ -38,7 +39,7 @@ import jdk.tools.jlink.plugins.ResourcePlugin;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
- * @build Helper tests.JImageGenerator tests.JImageValidator
+ * @build tests.*
  * @run main JLinkOptionsTest
  */
 public class JLinkOptionsTest {
@@ -89,6 +90,7 @@ public class JLinkOptionsTest {
             System.err.println("Test not run");
             return;
         }
+        helper.generateDefaultModules();
         {
             // multiple plugins with same option
             String option = "test1";
@@ -96,17 +98,7 @@ public class JLinkOptionsTest {
                     registerPluginProvider(new TestProvider("test1", option, null));
             ImagePluginProviderRepository.
                     registerPluginProvider(new TestProvider("test2", option, null));
-            boolean failed = false;
-            try {
-                helper.checkImage("composite2", null, null, null);
-                failed = true;
-            } catch (Exception ex) {
-                System.err.println("OK, Got expected exception " + ex);
-                // XXX OK expected
-            }
-            if (failed) {
-                throw new Exception("Image creation should have failed");
-            }
+            helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
             ImagePluginProviderRepository.unregisterPluginProvider("test1");
             ImagePluginProviderRepository.unregisterPluginProvider("test2");
         }
@@ -119,20 +111,10 @@ public class JLinkOptionsTest {
                     registerPluginProvider(new TestProvider("test1", "test1", null));
             ImagePluginProviderRepository.
                     registerPluginProvider(new TestProvider("test2", "test2", options));
-            boolean failed = false;
-            try {
-                helper.checkImage("composite2", null, null, null);
-                failed = true;
-            } catch (Exception ex) {
-                System.err.println("OK, Got expected exception " + ex);
-                // XXX OK expected
-            }
-            if (failed) {
-                throw new Exception("Image creation should have failed");
-            }
+
+            helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
             ImagePluginProviderRepository.unregisterPluginProvider("test1");
             ImagePluginProviderRepository.unregisterPluginProvider("test2");
-
         }
     }
 }

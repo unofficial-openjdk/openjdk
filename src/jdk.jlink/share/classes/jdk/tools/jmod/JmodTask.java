@@ -775,7 +775,7 @@ public class JmodTask {
     private void showHelp() {
         out.println(getMessage("main.usage", PROGNAME));
         try {
-            parser.printHelpOn(System.out);
+            parser.printHelpOn(out);
         } catch (IOException x) {
             throw new AssertionError(x);
         }

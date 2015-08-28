@@ -132,9 +132,9 @@ public class ImageFilePoolTest {
         if (input.getFile("unknown") != null) {
             throw new AssertionError("ImageFilePool does not return null for unknown file");
         }
-        /*if (input.contains(new InMemoryImageFile("", "unknown", "", ImageFileType.CONFIG, "unknown"))) {
+        if (input.contains(new InMemoryImageFile("", "unknown", "", ImageFileType.CONFIG, "unknown"))) {
             throw new AssertionError("'contain' returns true for unknown file");
-        }*/
+        }
         input.addFile(new InMemoryImageFile("", "/aaa/bbb", "bbb", ImageFileType.CONFIG, ""));
         try {
             input.addFile(new InMemoryImageFile("", "/aaa/bbb", "bbb", ImageFileType.CONFIG, ""));

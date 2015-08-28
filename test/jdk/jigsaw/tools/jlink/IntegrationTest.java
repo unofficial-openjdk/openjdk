@@ -45,6 +45,7 @@ import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 
+import tests.Helper;
 import tests.JImageGenerator;
 
 /*
@@ -58,7 +59,7 @@ import tests.JImageGenerator;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
- * @build tests.JImageGenerator tests.JImageValidator
+ * @build tests.*
  * @run main IntegrationTest
  */
 public class IntegrationTest {

@@ -28,7 +28,7 @@
  * @modules java.base/jdk.internal.jimage.decompressor
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
- * @run main CompressorPluginTest
+ * @run main OnOffProviderTest
  */
 
 import java.io.IOException;
@@ -80,6 +80,7 @@ public class OnOffProviderTest {
             CustomProvider customProvider = new CustomProvider();
             try {
                 customProvider.newPlugins(config);
+                throw new AssertionError("IOException expected");
             } catch (IOException e) {
                 assertException(e, "Invalid number of arguments expecting on|off");
             }
@@ -90,6 +91,7 @@ public class OnOffProviderTest {
             CustomProvider customProvider = new CustomProvider();
             try {
                 customProvider.newPlugins(config);
+                throw new AssertionError("IOException expected");
             } catch (IOException e) {
                 assertException(e, "Invalid argument INVALID, expecting on or off");
             }
@@ -111,7 +113,7 @@ public class OnOffProviderTest {
 
         static {
             additionalOptions = new HashMap<>();
-            additionalOptions.put("option1", "value1");
+            additionalOptions.put(OPTION, VALUE);
         }
 
         public CustomProvider() {
