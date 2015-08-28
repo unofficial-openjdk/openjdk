@@ -26,6 +26,5 @@
 module jdk.deploy.osx {
     requires java.desktop;
     requires java.scripting;
-    provides java.security.Provider with apple.security.AppleProvider;
 }
 

@@ -27,3 +27,4 @@ exports jdk.internal.misc to java.desktop;
 exports sun.security.pkcs to jdk.deploy.osx;
 exports sun.security.util to jdk.deploy.osx;
 exports sun.security.x509 to jdk.deploy.osx;
+provides java.security.Provider with apple.security.AppleProvider;
