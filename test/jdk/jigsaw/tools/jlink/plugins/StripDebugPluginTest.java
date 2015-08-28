@@ -27,11 +27,12 @@
  * @author Jean-Francois Denise
  * @library ../../lib
  * @build tests.*
- * @modules jdk.jlink/jdk.tools.jlink.internal
+ * @modules java.base/jdk.internal.jimage
+ *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jlink
- *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
+ *          jdk.jlink/jdk.tools.jmod
  *          jdk.jdeps/com.sun.tools.classfile
  * @run main StripDebugPluginTest
  */
