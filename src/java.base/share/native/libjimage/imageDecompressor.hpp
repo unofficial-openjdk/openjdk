@@ -152,7 +152,7 @@ private:
    * mask the length bits (5 and 6) and move to the right 5 bits.
    */
   inline static int get_compressed_length(char c) { return ((char) (c & compressed_index_size_mask) >> 5); }
-  inline static bool is_compressed(char b1) { return b1 < 0; }
+  inline static bool is_compressed(signed char b1) { return b1 < 0; }
   static int decompress_int(unsigned char*& value);
 public:
   SharedStringDecompressor(const char* sym) : ImageDecompressor(sym){}
