@@ -418,8 +418,8 @@ public abstract class IIOMetadata {
         Module thisModule = IIOMetadata.class.getModule();
         Module targetModule = this.getClass().getModule();
         Class<?> c = Class.forName(targetModule, formatClassName);
-        if (c == null) {
-            return null;
+        if (thisModule.equals(targetModule) || c == null) {
+            return c;
         }
         if (!thisModule.canRead(targetModule)) {
             thisModule.addReads(targetModule);
