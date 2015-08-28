@@ -314,7 +314,7 @@ public class LocaleDataTest
             }
             ResourceBundle bundle = ResourceBundle.getBundle(fullName,
                                                              locale,
-                                                             JRELocaleResourceBundleControl.INSTANCE);
+                                                             Object.class.getModule());
             resource = bundle.getObject(resTag);
         }
         catch (MissingResourceException e) {
@@ -367,51 +367,6 @@ public class LocaleDataTest
                 out.println(key + "=" + expectedValue);
         }
         return true;
-    }
-
-    private static class JRELocaleResourceBundleControl extends ResourceBundle.Control {
-        static final JRELocaleResourceBundleControl INSTANCE = new JRELocaleResourceBundleControl();
-
-        private JRELocaleResourceBundleControl() {
-        }
-
-        @Override
-        public Locale getFallbackLocale(String baseName, Locale locale) {
-            if (baseName == null || locale == null) {
-                throw new NullPointerException();
-            }
-            return null;
-        }
-
-        /**
-         * Changes baseName to its per-language/country package name and
-         * calls the super class implementation. For example,
-         * if the baseName is "sun.text.resources.FormatData" and locale is ja_JP,
-         * the baseName is changed to "sun.text.resources.ja.JP.FormatData". If
-         * baseName contains "cldr", such as "sun.text.resources.cldr.FormatData",
-         * the name is changed to "sun.text.resources.cldr.ja.JP.FormatData".
-         */
-        @Override
-        public String toBundleName(String baseName, Locale locale) {
-            String newBaseName = baseName;
-            String lang = locale.getLanguage();
-            String ctry = locale.getCountry();
-            if (lang.length() > 0) {
-                if (baseName.startsWith(UTIL_RESOURCES_PACKAGE + cldrSuffix)
-                    || baseName.startsWith(TEXT_RESOURCES_PACKAGE + cldrSuffix)) {
-                    // Assume the lengths are the same.
-                    if (UTIL_RESOURCES_PACKAGE.length()
-                        != TEXT_RESOURCES_PACKAGE.length()) {
-                        throw new InternalError("The resources package names have different lengths.");
-                    }
-                    int index = (TEXT_RESOURCES_PACKAGE + cldrSuffix).length();
-                    ctry = (ctry.length() == 2) ? ("." + ctry) : "";
-                    newBaseName = baseName.substring(0, index + 1) + lang + ctry
-                                      + baseName.substring(index);
-                }
-            }
-            return super.toBundleName(newBaseName, locale);
-        }
     }
 }
 

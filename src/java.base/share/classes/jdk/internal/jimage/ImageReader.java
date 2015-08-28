@@ -105,14 +105,6 @@ public class ImageReader extends BasicImageReader {
                             UTF8String.SLASH_STRING, name);
                     location = super.findLocation(fullName);
                 }
-            } else {
-                // No package, try all modules.
-                for (String mod : moduleData.allModuleNames()) {
-                    location = super.findLocation("/" + mod + "/" + name);
-                    if (location != null) {
-                        break;
-                    }
-                }
             }
         }
 
@@ -287,11 +279,11 @@ public class ImageReader extends BasicImageReader {
         }
 
         static Directory create(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
-            Directory dir = new Directory(parent, name, fileAttrs);
+            Directory d = new Directory(parent, name, fileAttrs);
             if (parent != null) {
-                parent.addChild(dir);
+                parent.addChild(d);
             }
-            return dir;
+            return d;
         }
 
         @Override
@@ -329,21 +321,22 @@ public class ImageReader extends BasicImageReader {
             this(parent, loc.getFullName(true), loc, fileAttrs);
         }
 
-        private Resource(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
+        private Resource(Directory parent, UTF8String name, ImageLocation loc,
+                BasicFileAttributes fileAttrs) {
             super(name, fileAttrs);
             this.loc = loc;
-         }
+        }
 
         static Resource create(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource resource = new Resource(parent, loc, fileAttrs);
-            parent.addChild(resource);
-            return resource;
+            Resource rs = new Resource(parent, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
         }
 
         static Resource create(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource resource = new Resource(parent, name, loc, fileAttrs);
-            parent.addChild(resource);
-            return resource;
+            Resource rs = new Resource(parent, name, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
         }
 
         @Override
@@ -392,9 +385,9 @@ public class ImageReader extends BasicImageReader {
         }
 
         static LinkNode create(Directory parent, UTF8String name, Node link) {
-            LinkNode linkNode = new LinkNode(parent, name, link);
-            parent.addChild(linkNode);
-            return linkNode;
+            LinkNode ln = new LinkNode(parent, name, link);
+            parent.addChild(ln);
+            return ln;
         }
 
         @Override

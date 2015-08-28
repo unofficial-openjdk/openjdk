@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
 package java.lang.reflect;
 
 import java.security.AccessController;
+
+import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.ReflectionFactory;
 import java.lang.annotation.Annotation;
@@ -65,36 +67,58 @@ public class AccessibleObject implements AnnotatedElement {
         new ReflectPermission("suppressAccessChecks");
 
     /**
+     * Returns the {@code Class} object representing the class or interface
+     * that declares the executable represented by this object.
+     *
+     * This is overridden by {@code Constructor}, {@code Method} and
+     * {@code Field}.
+     */
+    Class<?> getDeclaringClass() {
+        return null;
+    }
+
+
+    /**
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
+     *
+     * <p>This method can not be used to enable access to an object that is a
+     * member of a declaring class when either the caller's module does not
+     * read the module of the declaring class, or the declaring class is in
+     * a package that is not exported to the caller's module. Additionally,
+     * this method can not be used to enable access to non-public members of
+     * {@link java.lang.reflect.Module}.
      *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
-     * <p>A {@code SecurityException} is raised if {@code flag} is
-     * {@code true} but accessibility of any of the elements of the input
-     * {@code array} may not be changed (for example, if the element
-     * object is a {@link Constructor} object for the class {@link
-     * java.lang.Class}).  In the event of such a SecurityException, the
-     * accessibility of objects is set to {@code flag} for array elements
-     * up to (and excluding) the element for which the exception occurred; the
-     * accessibility of elements beyond (and including) the element for which
-     * the exception occurred is unchanged.
+     * <p>A {@code SecurityException} is also thrown if any of the elements of
+     * the input {@code array} is a {@link java.lang.reflect.Constructor}
+     * object for the class {@code java.lang.Class} and {@code flag} is true.
      *
      * @param array the array of AccessibleObjects
      * @param flag  the new value for the {@code accessible} flag
      *              in each object
+     * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
+    @CallerSensitive
     public static void setAccessible(AccessibleObject[] array, boolean flag)
         throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        if (flag) {
+            Class<?> caller = Reflection.getCallerClass();
+            array = array.clone();
+            for (AccessibleObject ao : array) {
+                checkCanSetAccessible(caller, ao);
+            }
+        }
         for (AccessibleObject ao : array) {
-            setAccessible0(ao, flag);
+            ao.override = flag;
         }
     }
 
@@ -105,43 +129,107 @@ public class AccessibleObject implements AnnotatedElement {
      * checking when it is used.  A value of {@code false} indicates
      * that the reflected object should enforce Java language access checks.
      *
+     * <p>This method can not be used to enable access to an object that is a
+     * member of a declaring class when either the caller's module does not
+     * read the module of the declaring class, or the declaring class is in
+     * a package that is not exported to the caller's module. Additionally,
+     * this method can not be used to enable access to non-public members of
+     * {@link java.lang.reflect.Module}.
+     *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
-     * <p>A {@code SecurityException} is raised if {@code flag} is
-     * {@code true} but accessibility of this object may not be changed
-     * (for example, if this element object is a {@link Constructor} object for
-     * the class {@link java.lang.Class}).
-     *
-     * <p>A {@code SecurityException} is raised if this object is a {@link
+     * <p>A {@code SecurityException} is also thrown if this object is a {@link
      * java.lang.reflect.Constructor} object for the class
-     * {@code java.lang.Class}, and {@code flag} is true.
+     * {@code java.lang.Class} and {@code flag} is true.
      *
      * @param flag the new value for the {@code accessible} flag
-     * @throws SecurityException if the request is denied.
+     * @throws InaccessibleObjectException if access cannot be enabled
+     * @throws SecurityException if the request is denied
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
-    public void setAccessible(boolean flag) throws SecurityException {
+    @CallerSensitive
+    public final void setAccessible(boolean flag) throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-        setAccessible0(this, flag);
+        if (flag) checkCanSetAccessible(Reflection.getCallerClass(), this);
+        this.override = flag;
     }
 
-    /* Check that you aren't exposing java.lang.Class.<init> or sensitive
-       fields in java.lang.Class. */
-    private static void setAccessible0(AccessibleObject obj, boolean flag)
-        throws SecurityException
+    /**
+     * If the given AccessibleObject is a {@code Constructor}, {@code Method}
+     * or {@code Field} then checks that its declaring class is in a package
+     * that can be accessed by the given caller of setAccessible.
+     */
+    private static void checkCanSetAccessible(Class<?> caller,
+                                              AccessibleObject ao)
     {
-        if (obj instanceof Constructor && flag == true) {
-            Constructor<?> c = (Constructor<?>)obj;
-            if (c.getDeclaringClass() == Class.class) {
-                throw new SecurityException("Cannot make a java.lang.Class" +
-                                            " constructor accessible");
+        Class<?> declaringClass = ao.getDeclaringClass();
+        if (declaringClass == null)
+            return; // not a Constrictor, Method or Field
+
+        Module callerModule = caller.getModule();
+        Module declaringModule = declaringClass.getModule();
+
+        if (callerModule != declaringModule
+                && callerModule != Object.class.getModule()) {
+
+            // check reads
+            if (!callerModule.canRead(declaringModule)) {
+                String msg = "Unable to make member of "
+                        + declaringClass + " accessible:  "
+                        + callerModule + " does not read " + declaringModule;
+                Reflection.throwInaccessibleObjectException(msg);
+            }
+
+            // check exports to target module
+            String pn = packageName(declaringClass);
+            if (!declaringModule.isExported(pn, callerModule)) {
+                String msg = "Unable to make member of "
+                        + declaringClass + " accessible:  "
+                        + declaringModule + " does not export "
+                        + pn + " to " + callerModule;
+                Reflection.throwInaccessibleObjectException(msg);
+            }
+
+        }
+
+        if (declaringClass == Module.class) {
+            int modifiers;
+            if (ao instanceof Executable) {
+                modifiers = ((Executable)ao).getModifiers();
+            } else {
+                modifiers = ((Field)ao).getModifiers();
+            }
+            if (!Modifier.isPublic(modifiers)) {
+                String msg = "Cannot make a non-public member of "
+                    + Module.class + " accessible";
+                Reflection.throwInaccessibleObjectException(msg);
             }
         }
-        obj.override = flag;
+
+        if (declaringClass == Class.class && ao instanceof Constructor) {
+            // can we change this to InaccessibleObjectException?
+            throw new SecurityException("Cannot make a java.lang.Class"
+                    + " constructor accessible");
+        }
+
+    }
+
+    /**
+     * Returns the package name of the give class.
+     */
+    private static String packageName(Class<?> c) {
+        if (c.isArray()) {
+            return packageName(c.getComponentType());
+        } else {
+            String name = c.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) return "";
+            return name.substring(0, dot);
+        }
     }
 
     /**

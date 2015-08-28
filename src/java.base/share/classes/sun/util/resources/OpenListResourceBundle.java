@@ -115,6 +115,10 @@ public abstract class OpenListResourceBundle extends ResourceBundle {
         return keyset;
     }
 
+    void setParentBundle(ResourceBundle bundle) {
+        setParent(bundle);
+    }
+
     /**
      * See ListResourceBundle class description.
      */

@@ -33,7 +33,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   JAVA_AB_SRCDIR := $(ROOT_SRCDIR)/libjavaaccessbridge $(ROOT_SRCDIR)/common
   WIN_AB_SRCDIR := $(ROOT_SRCDIR)/libwindowsaccessbridge $(ROOT_SRCDIR)/common
   SYSINFO_SRCDIR := $(ROOT_SRCDIR)/libjabsysinfo
-  ACCESSBRIDGE_CFLAGS := -I$(SUPPORT_OUTPUTDIR)/headers/jdk.accessibility \
+  ACCESSBRIDGE_CFLAGS := -I$(HEADERS_OUTPUTDIR)/jdk.accessibility \
       -I$(JDK_TOPDIR)/src/java.desktop/windows/native/include \
       -I$(JDK_TOPDIR)/src/java.desktop/share/native/include
 
@@ -52,7 +52,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
             -DACCESSBRIDGE_ARCH_$2, \
         LDFLAGS := $(LDFLAGS_JDKLIB) kernel32.lib user32.lib gdi32.lib \
             winspool.lib comdlg32.lib advapi32.lib shell32.lib \
-            $(SUPPORT_OUTPUTDIR)/native/java.desktop/libjawt/jawt.lib \
+            $(NATIVE_OUTPUTDIR)/java.desktop/libjawt/jawt.lib \
             ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib \
             -subsystem:windows, \
         VERSIONINFO_RESOURCE := $(ROOT_SRCDIR)/common/AccessBridgeStatusWindow.rc, \
@@ -60,10 +60,10 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
             -D "JDK_FNAME=javaaccessbridge$1.dll" \
             -D "JDK_INTERNAL_NAME=javaaccessbridge$1" \
             -D "JDK_FTYPE=0x02L", \
-        OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjavaaccessbridge$1, \
+        OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libjavaaccessbridge$1, \
         DEBUG_SYMBOLS := true)
 
-    $$(BUILD_JAVAACCESSBRIDGE$1): $(SUPPORT_OUTPUTDIR)/native/java.desktop/libjawt/jawt.lib
+    $$(BUILD_JAVAACCESSBRIDGE$1): $(NATIVE_OUTPUTDIR)/java.desktop/libjawt/jawt.lib
 
     TARGETS += $$(BUILD_JAVAACCESSBRIDGE$1)
   endef
@@ -90,7 +90,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
             -D "JDK_FNAME=windowsaccessbridge$1.dll" \
             -D "JDK_INTERNAL_NAME=windowsaccessbridge$1" \
             -D "JDK_FTYPE=0x02L", \
-        OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libwindowsaccessbridge$1, \
+        OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libwindowsaccessbridge$1, \
         DEBUG_SYMBOLS := true)
 
     TARGETS += $$(BUILD_WINDOWSACCESSBRIDGE$1)
@@ -112,7 +112,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
             -D "JDK_FNAME=jabsysinfo.dll" \
             -D "JDK_INTERNAL_NAME=jabsysinfo" \
             -D "JDK_FTYPE=0x02L", \
-        OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/lib/libjabsysinfo, \
+        OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/lib/libjabsysinfo, \
         DEBUG_SYMBOLS := true)
 
     TARGETS += $$(BUILD_ACCESSBRIDGESYSINFO)
