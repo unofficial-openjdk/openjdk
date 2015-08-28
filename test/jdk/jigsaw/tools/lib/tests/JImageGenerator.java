@@ -25,42 +25,38 @@ package tests;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 /**
  *
  * A generator for jmods, jars and images.
  */
 public class JImageGenerator {
-
-    private static final String CREATE_CMD = "create";
 
     public static final String LOAD_ALL_CLASSES_TEMPLATE = "package PACKAGE;\n"
             + "\n"
@@ -109,83 +105,18 @@ public class JImageGenerator {
     private static final String MODULE_PATH_OPTION = "--modulepath";
     private static final String ADD_MODS_OPTION = "--addmods";
     private static final String LIMIT_MODS_OPTION = "--limitmods";
+    private static final String PLUGINS_MODULE_PATH = "--plugins-modulepath";
 
-    private static final String COMPILER_SRC_PATH_OPTION = "-sourcepath";
-    private static final String COMPILER_MODULE_PATH_OPTION = "-modulepath";
-    private static final String COMPILER_DIRECTORY_OPTION = "-d";
-    private static final String COMPILER_DEBUG_OPTION = "-g";
+    private static final String CMDS_OPTION = "--cmds";
+    private static final String CONFIG_OPTION = "--config";
+    private static final String HASH_DEPENDENCIES_OPTION = "--hash-dependeces";
+    private static final String LIBS_OPTION = "--libs";
+    private static final String MODULE_VERSION_OPTION = "--module-version";
 
-    private static class SourceFilesVisitor implements FileVisitor<Path> {
+    private JImageGenerator() {}
 
-        private final List<Path> files = new ArrayList<>();
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir,
-                BasicFileAttributes attrs) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file,
-                BasicFileAttributes attrs) throws IOException {
-            if (file.toString().endsWith(".java")) {
-                files.add(file);
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file,
-                IOException exc) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir,
-                IOException exc) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-    }
-
-    private final File jmodssrc;
-    private final File jarssrc;
-    private final File jmodsclasses;
-    private final File jarsclasses;
-    private final File jmods;
-    private final File jars;
-    private final File images;
-    private final File stdjmods;
-    private final File extracted;
-    private final File recreated;
-
-    public JImageGenerator(File output, File jdkHome) throws IOException {
-        stdjmods = getJModsDir(jdkHome);
-        if (stdjmods == null) {
-            throw new IOException("No standard jmods ");
-        }
-        if (!output.exists()) {
-            throw new IOException("Output directory doesn't exist " + output);
-        }
-
-        this.jmods = new File(output, "jmods");
-        this.jmods.mkdir();
-        this.jars = new File(output, "jars");
-        this.jars.mkdir();
-        this.jarssrc = new File(jars, "src");
-        jarssrc.mkdir();
-        this.jmodssrc = new File(jmods, "src");
-        jmodssrc.mkdir();
-        this.jmodsclasses = new File(jmods, "classes");
-        jmodsclasses.mkdir();
-        this.jarsclasses = new File(jars, "classes");
-        jarsclasses.mkdir();
-        this.images = new File(output, "images");
-        images.mkdir();
-        this.extracted = new File(output, "extracted");
-        extracted.mkdir();
-        this.recreated = new File(output, "recreated");
-        recreated.mkdir();
+    private static String optionsPrettyPrint(String... args) {
+        return Stream.of(args).collect(Collectors.joining(" "));
     }
 
     public static File getJModsDir(File jdkHome) {
@@ -200,35 +131,9 @@ public class JImageGenerator {
         return jdkjmods;
     }
 
-    public File generateModuleCompiledClasses(String moduleName,
-            String[] classNames, String... dependencies) throws Exception {
-        String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
-                jars.getAbsolutePath();
-        return generateModule(jmodsclasses, jmodssrc, moduleName, classNames,
-                modulePath, dependencies);
-    }
-
-    public File generateJModule(String moduleName, String[] classNames,
-            String... dependencies) throws IOException {
-        String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
-                jars.getAbsolutePath();
-        File compiled = generateModule(jmodsclasses, jmodssrc, moduleName,
-                classNames, modulePath, dependencies);
-        String mainClass = classNames == null || classNames.length == 0 ?
-                null : classNames[0];
-        // Generate garbage...
-        File metaInf = new File(compiled, "META-INF/services");
-        metaInf.mkdirs();
-        File provider = new File(metaInf, "MyProvider");
-        provider.createNewFile();
-        File jcov = new File(compiled, "toto.jcov");
-        jcov.createNewFile();
-        return buildJModule(moduleName, mainClass, compiled);
-    }
-
-    public File addFiles(File module, InMemoryFile... resources) throws IOException {
+    public static Path addFiles(Path module, InMemoryFile... resources) throws IOException {
         Path tempFile = Files.createTempFile("jlink-test", "");
-        try (JarInputStream in = new JarInputStream(new FileInputStream(module));
+        try (JarInputStream in = new JarInputStream(Files.newInputStream(module));
              JarOutputStream out = new JarOutputStream(new FileOutputStream(tempFile.toFile()))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
@@ -241,7 +146,7 @@ public class JImageGenerator {
                 addFile(r, out);
             }
         }
-        Files.move(tempFile, module.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.move(tempFile, module, StandardCopyOption.REPLACE_EXISTING);
         return module;
     }
 
@@ -253,295 +158,16 @@ public class JImageGenerator {
         }
     }
 
-    public File generateJarModule(String moduleName, String[] classNames,
-            String... dependencies) throws IOException {
-        String modulePath = jmods.getAbsolutePath() + File.pathSeparator +
-                jars.getAbsolutePath();
-        File compiled = generateModule(jarsclasses, jarssrc, moduleName,
-                classNames, modulePath, dependencies);
-        return buildJarModule(moduleName, compiled);
+    public static JModTask getJModTask() {
+        return new JModTask();
     }
 
-    public JLinkResult generateImage(String module) throws IOException {
-        return generateImage(createNewFile(images, module, ".image"), new String[0], module);
+    public static JLinkTask getJLinkTask() {
+        return new JLinkTask();
     }
 
-    public JLinkResult generateImage(String[] options, String module) throws IOException {
-        return generateImage(createNewFile(images, module, ".image"), options, module);
-    }
-
-    public JLinkResult generateImage(File outDir, String[] options, String module) throws IOException {
-        if (!getStandardJModule(module).exists() && !localModuleExists(module)) {
-            throw new IOException("No module for " + module);
-        }
-        // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
-        String modulePath = stdjmods.getAbsolutePath() + File.pathSeparator +
-                jmods.getAbsolutePath() + File.pathSeparator + jars.getAbsolutePath();
-        return generateImage(outDir, modulePath, options, module);
-    }
-
-    public JLinkResult generateImage(File outDir, String modulePath, String[] options, String module) throws IOException {
-        String[] args = optionsJLink(outDir, modulePath, options, module);
-        System.out.println("jlink options: " + Arrays.toString(args));
-        StringWriter writer = new StringWriter();
-        int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
-        System.err.println(writer.toString());
-        if (!outDir.exists() || outDir.list() == null || outDir.list().length == 0) {
-            throw new IOException("Error generating jimage, check log file");
-        }
-        return new JLinkResult(exitCode, writer.toString(), outDir);
-    }
-
-    public File extractImageFile(File root, String imgName) throws Exception {
-        File image = new File(root, "lib" + File.separator + "modules" +
-                File.separator + imgName);
-        if (!image.exists()) {
-            throw new Exception("file to extract doesn't exists");
-        }
-        File outDir = createNewFile(extracted, imgName, ".extracted");
-        outDir.mkdir();
-        String[] args = {"extract", "--dir", outDir.getAbsolutePath(),
-            image.getAbsolutePath()};
-        jdk.tools.jimage.Main.run(args, new PrintWriter(System.out));
-        if (!outDir.exists() || outDir.list() == null || outDir.list().length == 0) {
-            throw new Exception("Error extracting jimage, check log file");
-        }
-        return outDir;
-    }
-
-    public File recreateImageFile(File extractedDir, String... userOptions)
-            throws Exception {
-        File outFile = createNewFile(recreated, extractedDir.getName(), ".jimage");
-        List<String> options = new ArrayList<>();
-        options.add("recreate");
-        options.add("--dir");
-        options.add(extractedDir.getAbsolutePath());
-        for (String a : userOptions) {
-            options.add(a);
-        }
-        options.add(outFile.getAbsolutePath());
-        String[] args = new String[options.size()];
-        options.toArray(args);
-        jdk.tools.jimage.Main.run(args, new PrintWriter(System.out));
-        if (!outFile.exists() || outFile.length() == 0) {
-            throw new Exception("Error recreating jimage, check log file");
-        }
-        return outFile;
-    }
-
-    private String[] optionsJLink(File output, String modulePath, String[] userOptions, String module) {
-        List<String> opt = new ArrayList<>();
-
-        if (userOptions != null) {
-            opt.addAll(Arrays.asList(userOptions));
-        }
-
-        opt.add(OUTPUT_OPTION);
-        opt.add(output.toString());
-        opt.add(ADD_MODS_OPTION);
-        opt.add(module);
-        opt.add(LIMIT_MODS_OPTION);
-        opt.add(module);
-        opt.add(MODULE_PATH_OPTION);
-        opt.add(modulePath);
-        String[] options = new String[opt.size()];
-        return opt.toArray(options);
-    }
-
-    private static String[] jmodCreateOptions(File cp, String main, String name,
-            File outFile) {
-        List<String> opt = new ArrayList<>();
-        opt.add(CREATE_CMD);
-        if (main != null) {
-            opt.add(MAIN_CLASS_OPTION);
-            opt.add(main);
-        }
-        opt.add(CLASS_PATH_OPTION);
-        opt.add(cp.getAbsolutePath());
-        opt.add(outFile.getAbsolutePath());
-        System.out.println("jmod options " + opt);
-        String[] options = new String[opt.size()];
-        return opt.toArray(options);
-    }
-
-    private static File writeFile(File f, String s) throws IOException {
-        if (f.getParentFile() != null) {
-            f.getParentFile().mkdirs();
-        }
-        try (FileWriter out = new FileWriter(f)) {
-            out.write(s);
-        }
-        return f;
-    }
-
-    private File generateModule(File classes, File src, String name,
-            String[] classNames, String modulePath, String... dependencies)
-            throws IOException {
-        if (classNames == null || classNames.length == 0) {
-            classNames = new String[1];
-            classNames[0] = name + ".Main";
-        }
-        File moduleDirectory = new File(src, name);
-        moduleDirectory.mkdirs();
-        File moduleInfo = new File(moduleDirectory, "module-info.java");
-        StringBuilder dependenciesBuilder = new StringBuilder();
-        for (String dep : dependencies) {
-            dependenciesBuilder.append("requires ").append(dep).append(";\n");
-        }
-
-        Map<String, List<String>> pkgs = Arrays.asList(classNames).stream().
-                collect(Collectors.groupingBy(JImageGenerator::toPackage));
-
-        StringBuilder moduleMetaBuilder = new StringBuilder();
-        moduleMetaBuilder.append("module ").append(name).append("{\n").
-                append(dependenciesBuilder.toString());
-        for (Entry<String, List<String>> e : pkgs.entrySet()) {
-            String pkgName = e.getKey();
-            File pkgDirs = new File(moduleDirectory, pkgName.replaceAll("\\.",
-                    Matcher.quoteReplacement(File.separator)));
-            pkgDirs.mkdirs();
-            moduleMetaBuilder.append("exports ").append(pkgName).append(";\n");
-            for (String clazz : e.getValue()) {
-                String clazzName = clazz.substring(clazz.lastIndexOf(".") + 1,
-                        clazz.length());
-                File mainClass = new File(pkgDirs, clazzName + ".java");
-                String mainContent = readFromTemplate(LOAD_ALL_CLASSES_TEMPLATE,
-                        pkgName, clazzName);
-                writeFile(mainClass, mainContent);
-            }
-        }
-        moduleMetaBuilder.append("}");
-        writeFile(moduleInfo, moduleMetaBuilder.toString());
-
-        return compileModule(classes, moduleDirectory, modulePath);
-    }
-
-    private static String readFromTemplate(String template, String pkgName,
-            String className) throws IOException {
-        String content = template.replace("PACKAGE", pkgName);
-        content = content.replace("CLASS", className);
-        return content;
-    }
-
-    private static String toPackage(String name) {
-        int index = name.lastIndexOf('.');
-        if (index > 0) {
-            return name.substring(0, index);
-        } else {
-            throw new RuntimeException("No package name");
-        }
-    }
-
-    public File buildModule(String moduleName, File src) throws IOException {
-        File compiledDir = compileModule(jmodsclasses, src, "");
-        File outFile = new File(jmods, moduleName + ".jmod");
-        jdk.tools.jmod.Main.run(jmodCreateOptions(compiledDir, null, moduleName, outFile), System.out);
-        return outFile;
-    }
-
-    public File compileModule(File moduleDirectory, String modulePath, String... options) throws IOException {
-        return compileModule(jmodsclasses, moduleDirectory, modulePath, options);
-    }
-
-    public File compileModule(File classes, File moduleDirectory, String modulePath, String... options) throws IOException {
-        File outDir = new File(classes, moduleDirectory.getName());
-        outDir.mkdirs();
-        SourceFilesVisitor visitor = new SourceFilesVisitor();
-        Files.walkFileTree(moduleDirectory.toPath(), visitor);
-        List<String> args = new ArrayList<>();
-        args.add(COMPILER_SRC_PATH_OPTION);
-        args.add(moduleDirectory.getAbsolutePath());
-        args.add(COMPILER_DIRECTORY_OPTION);
-        args.add(outDir.getPath());
-        if (modulePath != null) {
-            args.add(COMPILER_MODULE_PATH_OPTION);
-            args.add(modulePath);
-        }
-        args.add(COMPILER_DEBUG_OPTION);
-        Collections.addAll(args, options);
-        visitor.files.forEach(f -> args.add(f.toString()));
-        System.out.println("compile: " + args);
-        StringWriter sw = new StringWriter();
-        int rc;
-        try (PrintWriter pw = new PrintWriter(sw)) {
-            rc = com.sun.tools.javac.Main.compile(args.toArray(new String[args.size()]), pw);
-        }
-        if (rc != 0) {
-            System.err.println(sw.toString());
-            throw new IOException("unexpected exit from javac: " + rc);
-        }
-        return outDir;
-    }
-
-    public File buildJModule(String name, String main, File moduleDirectory) {
-        File outFile = new File(jmods, name + ".jmod");
-        jdk.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main, name, outFile), System.out);
-        return outFile;
-    }
-
-    private File buildJarModule(String name, File moduleDirectory)
-            throws IOException {
-        File outFile = new File(jars, name + ".jar");
-        try (JarOutputStream classesJar = new JarOutputStream(new FileOutputStream(outFile))) {
-            String classDir = moduleDirectory.getPath();
-            Files.walkFileTree(moduleDirectory.toPath(), new FileVisitor<Path>() {
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                        BasicFileAttributes attrs) throws IOException {
-                    if (!dir.equals(moduleDirectory.toPath())) {
-                        addFile(classDir, dir.toFile(), classesJar);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file,
-                        BasicFileAttributes attrs) throws IOException {
-                    addFile(classDir, file.toFile(), classesJar);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file,
-                        IOException exc) throws IOException {
-                    throw exc;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir,
-                        IOException exc) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-        return outFile;
-    }
-
-    private static void addFile(String radical, File source,
-            JarOutputStream target) throws IOException {
-        String fileName = source.getPath();
-        if (fileName.startsWith(radical)) {
-            fileName = fileName.substring(radical.length() + 1);
-        }
-        fileName = fileName.replace("\\", "/");
-        if (source.isDirectory()) {
-            if (!fileName.isEmpty()) {
-                if (!fileName.endsWith("/")) {
-                    fileName += "/";
-                }
-                JarEntry entry = new JarEntry(fileName);
-                entry.setTime(source.lastModified());
-                target.putNextEntry(entry);
-                target.closeEntry();
-            }
-        } else {
-            JarEntry entry = new JarEntry(fileName);
-            entry.setTime(source.lastModified());
-            target.putNextEntry(entry);
-            Files.copy(source.toPath(), target);
-            target.closeEntry();
-        }
+    public static JImageTask getJImageTask() {
+        return new JImageTask();
     }
 
     private static void addFile(InMemoryFile resource, JarOutputStream target) throws IOException {
@@ -567,53 +193,449 @@ public class JImageGenerator {
         }
     }
 
-    public static File createNewFile(File root, String module, String extension) {
-        File outDir = new File(root, module + extension);
+    public static Path createNewFile(Path root, String pathName, String extension) {
+        Path out = root.resolve(pathName + extension);
         int i = 1;
-        while (outDir.exists()) {
-            outDir = new File(root, module + "-" + i + extension);
-            i += 1;
+        while (Files.exists(out)) {
+            out = root.resolve(pathName + "-" + (++i) + extension);
         }
-        return outDir;
+        return out;
     }
 
-    private File getJModule(String name) {
-        return new File(jmods, name + ".jmod");
+    public static Path generateSources(Path output, String moduleName, List<InMemorySourceFile> sources) throws IOException {
+        Path moduleDir = output.resolve(moduleName);
+        Files.createDirectory(moduleDir);
+        for (InMemorySourceFile source : sources) {
+            Path fileDir = moduleDir;
+            if (!source.packageName.isEmpty()) {
+                String dir = source.packageName.replace('.', File.separatorChar);
+                fileDir = moduleDir.resolve(dir);
+                Files.createDirectories(fileDir);
+            }
+            Files.write(fileDir.resolve(source.className + ".java"), source.source.getBytes());
+        }
+        return moduleDir;
     }
 
-    private File getJarModule(String name) {
-        return new File(jars, name + ".jar");
+    public static Path generateSourcesFromTemplate(Path output, String moduleName, String... classNames) throws IOException {
+        List<InMemorySourceFile> sources = new ArrayList<>();
+        for (String className : classNames) {
+            String packageName = getPackageName(className);
+            String simpleName = getSimpleName(className);
+            String content = LOAD_ALL_CLASSES_TEMPLATE
+                    .replace("CLASS", simpleName);
+            if (packageName.isEmpty()) {
+                content = content.replace("package PACKAGE;", packageName);
+            } else {
+                content = content.replace("PACKAGE", packageName);
+            }
+            sources.add(new InMemorySourceFile(packageName, simpleName, content));
+        }
+        return generateSources(output, moduleName, sources);
     }
 
-    private File getStandardJModule(String module) {
-        return new File(stdjmods, module + ".jmod");
+    public static void generateModuleInfo(Path moduleDir, List<String> packages, String[] dependencies) throws IOException {
+        StringBuilder moduleInfoBuilder = new StringBuilder();
+        Path file = moduleDir.resolve("module-info.java");
+        String moduleName = moduleDir.getFileName().toString();
+        moduleInfoBuilder.append("module ").append(moduleName).append("{\n");
+        for (String dep : dependencies) {
+            moduleInfoBuilder.append("requires ").append(dep).append(";\n");
+        }
+        for (String pkg : packages) {
+            if (!pkg.trim().isEmpty()) {
+                moduleInfoBuilder.append("exports ").append(pkg).append(";\n");
+            }
+        }
+        moduleInfoBuilder.append("}");
+        Files.write(file, moduleInfoBuilder.toString().getBytes());
     }
 
-    private boolean localModuleExists(String name) {
-        return getJModule(name).exists() || getJarModule(name).exists();
+    public static boolean compile(Path source, Path destination, String... options) throws IOException {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        try (StandardJavaFileManager jfm = compiler.getStandardFileManager(null, null, null)) {
+            List<Path> sources
+                    = Files.find(source, Integer.MAX_VALUE,
+                    (file, attrs) -> file.toString().endsWith(".java"))
+                    .collect(Collectors.toList());
+
+            Files.createDirectories(destination);
+            jfm.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, Collections.singleton(destination));
+
+            List<String> opts = Arrays.asList(options);
+            JavaCompiler.CompilationTask task
+                    = compiler.getTask(null, jfm, null, opts, null,
+                    jfm.getJavaFileObjectsFromPaths(sources));
+            List<String> list = new ArrayList<>(opts);
+            list.addAll(sources.stream()
+                    .map(Path::toString)
+                    .collect(Collectors.toList()));
+            System.err.println("javac options: " + optionsPrettyPrint(list.toArray(new String[list.size()])));
+            return task.call();
+        }
     }
 
-    public static class JLinkResult {
-        private final int exitCode;
-        private final String message;
-        private final File imageFile;
+    public static void createJarFile(Path jarfile, Path dir) throws IOException {
+        createJarFile(jarfile, dir, Paths.get("."));
+    }
 
-        public JLinkResult(int exitCode, String message, File imageFile) {
-            this.exitCode = exitCode;
-            this.message = message;
-            this.imageFile = imageFile;
+    public static void createJarFile(Path jarfile, Path dir, Path file) throws IOException {
+        // create the target directory
+        Path parent = jarfile.getParent();
+        if (parent != null)
+            Files.createDirectories(parent);
+
+        List<Path> entries = Files.find(dir.resolve(file), Integer.MAX_VALUE,
+                (p, attrs) -> attrs.isRegularFile())
+                .map(dir::relativize)
+                .collect(Collectors.toList());
+
+        try (OutputStream out = Files.newOutputStream(jarfile);
+             JarOutputStream jos = new JarOutputStream(out)) {
+            for (Path entry : entries) {
+                // map the file path to a name in the JAR file
+                Path normalized = entry.normalize();
+                String name = normalized
+                        .subpath(0, normalized.getNameCount())  // drop root
+                        .toString()
+                        .replace(File.separatorChar, '/');
+
+                jos.putNextEntry(new JarEntry(name));
+                Files.copy(dir.resolve(entry), jos);
+            }
+        }
+    }
+
+    public static class JModTask {
+
+        private final List<Path> classpath = new ArrayList<>();
+        private final List<Path> libs = new ArrayList<>();
+        private final List<Path> cmds = new ArrayList<>();
+        private final List<Path> config = new ArrayList<>();
+        private final List<Path> jars = new ArrayList<>();
+        private final List<Path> jmods = new ArrayList<>();
+        private final List<String> options = new ArrayList<>();
+        private Path output;
+        private String hashDependencies;
+        private String mainClass;
+        private String moduleVersion;
+
+        public JModTask addNativeLibraries(Path cp) {
+            this.libs.add(cp);
+            return this;
         }
 
-        public int getExitCode() {
-            return exitCode;
+        public JModTask hashDependencies(String hash) {
+            this.hashDependencies = hash;
+            return this;
         }
 
-        public String getMessage() {
-            return message;
+        public JModTask addCmds(Path cp) {
+            this.cmds.add(cp);
+            return this;
         }
 
-        public File getImageFile() {
-            return imageFile;
+        public JModTask addClassPath(Path cp) {
+            this.classpath.add(cp);
+            return this;
+        }
+
+        public JModTask addConfig(Path cp) {
+            this.config.add(cp);
+            return this;
+        }
+
+        public JModTask addJars(Path jars) {
+            this.jars.add(jars);
+            return this;
+        }
+
+        public JModTask addJmods(Path jmods) {
+            this.jmods.add(jmods);
+            return this;
+        }
+
+        public JModTask output(Path output) {
+            this.output = output;
+            return this;
+        }
+
+        public JModTask moduleVersion(String moduleVersion) {
+            this.moduleVersion = moduleVersion;
+            return this;
+        }
+
+        public JModTask mainClass(String mainClass) {
+            this.mainClass = mainClass;
+            return this;
+        }
+
+        public JModTask option(String o) {
+            this.options.add(o);
+            return this;
+        }
+
+        private String modulePath() {
+            // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
+            String jmods = toPath(this.jmods);
+            String jars = toPath(this.jars);
+            return jmods + File.pathSeparator + jars;
+        }
+
+        private String toPath(List<Path> paths) {
+            return paths.stream()
+                    .map(Path::toString)
+                    .collect(Collectors.joining(File.pathSeparator));
+        }
+
+        private String[] optionsJMod(String cmd) {
+            List<String> options = new ArrayList<>();
+            options.add(cmd);
+            if (!cmds.isEmpty()) {
+                options.add(CMDS_OPTION);
+                options.add(cmd);
+            }
+            if (!config.isEmpty()) {
+                options.add(CONFIG_OPTION);
+                options.add(toPath(config));
+            }
+            if (hashDependencies != null) {
+                options.add(HASH_DEPENDENCIES_OPTION);
+                options.add(hashDependencies);
+            }
+            if (mainClass != null) {
+                options.add(MAIN_CLASS_OPTION);
+                options.add(mainClass);
+            }
+            if (!libs.isEmpty()) {
+                options.add(LIBS_OPTION);
+                options.add(toPath(libs));
+            }
+            if (!classpath.isEmpty()) {
+                options.add(CLASS_PATH_OPTION);
+                options.add(toPath(classpath));
+            }
+            if (!jars.isEmpty() && jmods.isEmpty()) {
+                options.add(MODULE_PATH_OPTION);
+                options.add(modulePath());
+            }
+            if (moduleVersion != null) {
+                options.add(MODULE_VERSION_OPTION);
+                options.add(moduleVersion);
+            }
+            options.addAll(this.options);
+            if (output != null) {
+                options.add(output.toString());
+            }
+            return options.toArray(new String[options.size()]);
+        }
+
+        public Result create() {
+            return cmd("create");
+        }
+
+        public Result list() {
+            return cmd("list");
+        }
+
+        private Result cmd(String cmd) {
+            String[] args = optionsJMod(cmd);
+            System.err.println("jmod options: " + optionsPrettyPrint(args));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int exitCode = jdk.tools.jmod.Main.run(args, new PrintStream(baos));
+            String msg = new String(baos.toByteArray());
+            return new Result(exitCode, msg, output);
+        }
+    }
+
+    public static String getPackageName(String canonicalName) {
+        int index = canonicalName.lastIndexOf('.');
+        return index > 0 ? canonicalName.substring(0, index) : "";
+    }
+
+    public static String getSimpleName(String canonicalName) {
+        int index = canonicalName.lastIndexOf('.');
+        return canonicalName.substring(index + 1);
+    }
+
+    public static class JImageTask {
+
+        private final List<Path> pluginModulePath = new ArrayList<>();
+        private final List<String> options = new ArrayList<>();
+        private Path dir;
+        private Path image;
+
+        public JImageTask pluginModulePath(Path p) {
+            this.pluginModulePath.add(p);
+            return this;
+        }
+
+        public JImageTask image(Path image) {
+            this.image = image;
+            return this;
+        }
+
+        public JImageTask dir(Path dir) {
+            this.dir = dir;
+            return this;
+        }
+
+        public JImageTask option(String o) {
+            this.options.add(o);
+            return this;
+        }
+
+        private String toPath(List<Path> paths) {
+            return paths.stream()
+                    .map(Path::toString)
+                    .collect(Collectors.joining(File.pathSeparator));
+        }
+
+        private String[] optionsJImage(String cmd) {
+            List<String> options = new ArrayList<>();
+            options.add(cmd);
+            if (dir != null) {
+                options.add("--dir");
+                options.add(dir.toString());
+            }
+            if (!pluginModulePath.isEmpty()) {
+                options.add(PLUGINS_MODULE_PATH);
+                options.add(toPath(pluginModulePath));
+            }
+            options.addAll(this.options);
+            options.add(image.toString());
+            return options.toArray(new String[options.size()]);
+        }
+
+        private Result cmd(String cmd, Path returnPath) {
+            String[] args = optionsJImage(cmd);
+            System.err.println("jimage options: " + optionsPrettyPrint(args));
+            StringWriter writer = new StringWriter();
+            int exitCode = jdk.tools.jimage.Main.run(args, new PrintWriter(writer));
+            return new Result(exitCode, writer.toString(), returnPath);
+        }
+
+        public Result extract() {
+            return cmd("extract", dir);
+        }
+
+        public Result recreate() {
+            return cmd("recreate", image);
+        }
+    }
+
+    public static class JLinkTask {
+
+        private final List<Path> jars = new ArrayList<>();
+        private final List<Path> jmods = new ArrayList<>();
+        private final List<Path> pluginModulePath = new ArrayList<>();
+        private final List<String> addMods = new ArrayList<>();
+        private final List<String> limitMods = new ArrayList<>();
+        private final List<String> options = new ArrayList<>();
+        private String modulePath;
+        private Path output;
+
+        public JLinkTask modulePath(String modulePath) {
+            this.modulePath = modulePath;
+            return this;
+        }
+
+        public JLinkTask addJars(Path jars) {
+            this.jars.add(jars);
+            return this;
+        }
+
+        public JLinkTask addJmods(Path jmods) {
+            this.jmods.add(jmods);
+            return this;
+        }
+
+        public JLinkTask pluginModulePath(Path p) {
+            this.pluginModulePath.add(p);
+            return this;
+        }
+
+        public JLinkTask addMods(String moduleName) {
+            this.addMods.add(moduleName);
+            return this;
+        }
+
+        public JLinkTask limitMods(String moduleName) {
+            this.limitMods.add(moduleName);
+            return this;
+        }
+
+        public JLinkTask output(Path output) {
+            this.output = output;
+            return this;
+        }
+
+        public JLinkTask option(String o) {
+            this.options.add(o);
+            return this;
+        }
+
+        private String modulePath() {
+            // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
+            String jmods = toPath(this.jmods);
+            String jars = toPath(this.jars);
+            return jmods + File.pathSeparator + jars;
+        }
+
+        private String toPath(List<Path> paths) {
+            return paths.stream()
+                    .map(Path::toString)
+                    .collect(Collectors.joining(File.pathSeparator));
+        }
+
+        private String[] optionsJLink() {
+            List<String> options = new ArrayList<>();
+            if (output != null) {
+                options.add(OUTPUT_OPTION);
+                options.add(output.toString());
+            }
+            if (!addMods.isEmpty()) {
+                options.add(ADD_MODS_OPTION);
+                options.add(addMods.stream().collect(Collectors.joining(",")));
+            }
+            if (!limitMods.isEmpty()) {
+                options.add(LIMIT_MODS_OPTION);
+                options.add(limitMods.stream().collect(Collectors.joining(",")));
+            }
+            if (!jars.isEmpty() || !jmods.isEmpty()) {
+                options.add(MODULE_PATH_OPTION);
+                options.add(modulePath());
+            }
+            if (modulePath != null) {
+                options.add(MODULE_PATH_OPTION);
+                options.add(modulePath);
+            }
+            if (!pluginModulePath.isEmpty()) {
+                options.add(PLUGINS_MODULE_PATH);
+                options.add(toPath(pluginModulePath));
+            }
+            options.addAll(this.options);
+            return options.toArray(new String[options.size()]);
+        }
+
+        public Result call() {
+            String[] args = optionsJLink();
+            System.err.println("jlink options: " + optionsPrettyPrint(args));
+            StringWriter writer = new StringWriter();
+            int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
+            return new Result(exitCode, writer.toString(), output);
+        }
+    }
+
+    public static class InMemorySourceFile {
+        public final String packageName;
+        public final String className;
+        public final String source;
+
+        public InMemorySourceFile(String packageName, String simpleName, String source) {
+            this.packageName = packageName;
+            this.className = simpleName;
+            this.source = source;
         }
     }
 

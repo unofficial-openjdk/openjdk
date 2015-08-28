@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Layer;
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import tests.Helper;
 
 /*
  * @test
@@ -46,7 +48,7 @@ import jdk.tools.jlink.internal.ImagePluginProviderRepository;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
- * @build tests.JImageGenerator tests.JImageValidator
+ * @build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JLinkTest
  */
 public class JLinkTest {
@@ -58,7 +60,7 @@ public class JLinkTest {
             System.err.println("Test not run");
             return;
         }
-
+        helper.generateDefaultModules();
         {
             // number of built-in plugins
             List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
@@ -85,7 +87,8 @@ public class JLinkTest {
             String[] copyFiles = new String[2];
             copyFiles[0] = "--copy-files";
             copyFiles[1] = copied;
-            helper.checkImage("composite2", copyFiles, null, null, arr);
+            Path imageDir = helper.generateDefaultImage(copyFiles, "composite2").assertSuccess();
+            helper.checkImage(imageDir, "composite2", null, null, arr);
         }
 
         {
@@ -107,10 +110,12 @@ public class JLinkTest {
             String[] userOptions = {"--compress-resources", "on", "--strip-java-debug", "on",
                 "--exclude-resources", "*.jcov, */META-INF/*", "--exclude-files",
                 "*" + Helper.getDebugSymbolsExtension()};
-            helper.generateJModule("excludezipskipdebugcomposite2", "composite2");
+            String moduleName = "excludezipskipdebugcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
             String[] res = {".jcov", "/META-INF/"};
             String[] files = {Helper.getDebugSymbolsExtension()};
-            helper.checkImage("excludezipskipdebugcomposite2", userOptions, res, files);
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, res, files);
         }
 
         // filter out + Skip debug + compress with filter + sort resources
@@ -119,48 +124,59 @@ public class JLinkTest {
                 "^/java.base/*", "--strip-java-debug", "on", "--exclude-resources",
                 "*.jcov, */META-INF/*", "--sort-resources",
                 "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
-            helper.generateJModule("excludezipfilterskipdebugcomposite2", "composite2");
+            String moduleName = "excludezipfilterskipdebugcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
             String[] res = {".jcov", "/META-INF/"};
-            helper.checkImage("excludezipfilterskipdebugcomposite2", userOptions2,
-                    res, null);
+            Path imageDir = helper.generateDefaultImage(userOptions2, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, res, null);
         }
 
         // default compress
         {
             String[] userOptions = {"--compress-resources", "on"};
-            helper.generateJModule("compresscmdcomposite2", "composite2");
-            helper.checkImage("compresscmdcomposite2", userOptions, null, null);
+            String moduleName = "compresscmdcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, userOptions, null, null);
         }
 
         {
             String[] userOptions = {"--compress-resources", "on", "--compress-resources-filter",
                 "^/java.base/java/lang/*"};
-            helper.generateJModule("compressfiltercmdcomposite2", "composite2");
-            helper.checkImage("compressfiltercmdcomposite2", userOptions, null, null);
+            String moduleName = "compressfiltercmdcomposite2";
+            helper.generateDefaultJarModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, userOptions, null, null);
         }
 
         // compress 0
         {
             String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "0",
                 "--compress-resources-filter", "^/java.base/java/lang/*"};
-            helper.generateJModule("compress0filtercmdcomposite2", "composite2");
-            helper.checkImage("compress0filtercmdcomposite2", userOptions, null, null);
+            String moduleName = "compress0filtercmdcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, null, null);
         }
 
         // compress 1
         {
             String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "1",
                 "--compress-resources-filter", "^/java.base/java/lang/*"};
-            helper.generateJModule("compress1filtercmdcomposite2", "composite2");
-            helper.checkImage("compress1filtercmdcomposite2", userOptions, null, null);
+            String moduleName = "compress1filtercmdcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, null, null);
         }
 
         // compress 2
         {
             String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "2",
                 "--compress-resources-filter", "^/java.base/java/lang/*"};
-            helper.generateJModule("compress2filtercmdcomposite2", "composite2");
-            helper.checkImage("compress2filtercmdcomposite2", userOptions, null, null);
+            String moduleName = "compress2filtercmdcomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, null, null);
         }
 
         // configuration
@@ -170,9 +186,10 @@ public class JLinkTest {
                     "toto.unknown --compress-resources UNKNOWN\n"));
             String[] userOptions = {"--configuration", path.toAbsolutePath().toString(),
                     "--compress-resources", "off"};
-            helper.generateJModule("configembeddednocompresscomposite2", "composite2");
-            helper.checkImage("configembeddednocompresscomposite2",
-                    userOptions, null, null);
+            String moduleName = "configembeddednocompresscomposite2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+            helper.checkImage(imageDir, moduleName, null, null);
         }
 
         {

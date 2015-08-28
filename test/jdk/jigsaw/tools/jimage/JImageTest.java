@@ -28,14 +28,19 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import tests.Helper;
 import tests.JImageGenerator;
 import tests.JImageValidator;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 /*
  * jimage testing.
  * @test
@@ -88,45 +93,74 @@ public class JImageTest {
 
         File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
-        Path jmods = jdkHome.toPath().resolve("..").resolve("jmods");
-        if (!Files.exists(jmods)) {
+        Helper helper = Helper.newHelper();
+        if (helper == null) {
             System.err.println("Test not run, NO jmods directory");
             return;
         }
 
         // Generate the sample image
         String module = "mod1";
-        JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
         String[] classes = {module + ".Main"};
-        helper.generateJModule(module, classes, "java.management");
+        helper.generateDefaultJModule(module, Arrays.asList(classes), "java.management");
 
+        Path image = helper.generateDefaultImage(module).assertSuccess();
+        String imgName = "bootmodules.jimage";
+        Path extractedDir = JImageGenerator.getJImageTask()
+                .dir(helper.createNewExtractedDir(imgName))
+                .image(image.resolve("lib").resolve("modules").resolve(imgName))
+                .extract().assertSuccess();
+
+        Path recreatedImage = JImageGenerator.getJImageTask()
+                .dir(extractedDir)
+                .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
+                .recreate().assertSuccess();
+        JImageValidator.validate(recreatedImage.toFile(), bootClasses, Collections.emptyList());
+
+        // Check replacing the boot image by recreated one
+        Path destFile = image.resolve("lib").resolve("modules").resolve(imgName);
+        Files.copy(recreatedImage, destFile, REPLACE_EXISTING);
+        JImageValidator validator = new JImageValidator(module, Collections.emptyList(),
+                image.toFile(), Collections.emptyList(), Collections.emptyList());
+        validator.validate();
+
+        Path recreatedImage2 = JImageGenerator.getJImageTask()
+                .dir(extractedDir)
+                .option("--compress-resources")
+                .option("on")
+                .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
+                .recreate().assertSuccess();
+        JImageValidator.validate(recreatedImage2.toFile(), bootClasses, Collections.emptyList());
+
+        Path recreatedImage3 = JImageGenerator.getJImageTask()
+                .dir(extractedDir)
+                .option("--strip-java-debug")
+                .option("on")
+                .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
+                .recreate().assertSuccess();
+        JImageValidator.validate(recreatedImage3.toFile(), bootClasses, Collections.emptyList());
+
+        Path recreatedImage4 = JImageGenerator.getJImageTask()
+                .dir(extractedDir)
+                .option("--exclude-resources")
+                .option("*.jcov, */META-INF/*")
+                .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
+                .recreate().assertSuccess();
         List<String> unexpectedPaths = new ArrayList<>();
         unexpectedPaths.add(".jcov");
         unexpectedPaths.add("/META-INF/");
-        File image = helper.generateImage(module).getImageFile();
-        String imgName = "bootmodules.jimage";
-        File extractedDir = helper.extractImageFile(image, imgName);
-        File recreatedImage = helper.recreateImageFile(extractedDir);
-        JImageValidator.validate(recreatedImage, bootClasses, Collections.emptyList());
+        JImageValidator.validate(recreatedImage4.toFile(), bootClasses, unexpectedPaths);
 
-        // Check replacing the boot image by recreated one
-        File destFile = new File(image, "lib" + File.separator + "modules"
-                + File.separator + imgName);
-        Files.copy(recreatedImage.toPath(), destFile.toPath(), REPLACE_EXISTING);
-        JImageValidator validator = new JImageValidator(module, Collections.emptyList(),
-                image, Collections.emptyList(), Collections.emptyList());
-        validator.validate();
-
-        File recreatedImage2 = helper.recreateImageFile(extractedDir, "--compress-resources", "on");
-        JImageValidator.validate(recreatedImage2, bootClasses, Collections.emptyList());
-        File recreatedImage3 = helper.recreateImageFile(extractedDir, "--strip-java-debug", "on");
-        JImageValidator.validate(recreatedImage3, bootClasses, Collections.emptyList());
-        File recreatedImage4 = helper.recreateImageFile(extractedDir, "--exclude-resources",
-                "*.jcov, */META-INF/*");
-        JImageValidator.validate(recreatedImage4, bootClasses, unexpectedPaths);
-        File recreatedImage5 = helper.recreateImageFile(extractedDir, "--compress-resources", "on",
-                "--strip-java-debug", "on", "--exclude-resources", "*.jcov, */META-INF/*");
-        JImageValidator.validate(recreatedImage5, bootClasses, unexpectedPaths);
-
+        Path recreatedImage5 = JImageGenerator.getJImageTask()
+                .dir(extractedDir)
+                .option("--compress-resources")
+                .option("on")
+                .option("--strip-java-debug")
+                .option("on")
+                .option("--exclude-resources")
+                .option("*.jcov, */META-INF/*")
+                .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
+                .recreate().assertSuccess();
+        JImageValidator.validate(recreatedImage5.toFile(), bootClasses, unexpectedPaths);
     }
 }

@@ -38,12 +38,13 @@
  * @run main StringSharingPluginTest
  */
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -55,7 +56,7 @@ import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.StringTable;
-import tests.JImageGenerator;
+import tests.Helper;
 import tests.JImageValidator;
 
 public class StringSharingPluginTest {
@@ -63,16 +64,16 @@ public class StringSharingPluginTest {
     private static int strID = 1;
 
     public static void main(String[] args) throws Exception {
-        File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
-        if (JImageGenerator.getJModsDir(jdkHome) == null) {
+        Helper helper = Helper.newHelper();
+        if (helper == null) {
             System.err.println("Test not run, NO jmods directory");
             return;
         }
 
-        JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
-        String[] classes = {"toto.Main", "toto.com.foo.bar.X"};
-        File moduleFile = helper.generateModuleCompiledClasses("composite2", classes);
+        List<String> classes = Arrays.asList("toto.Main", "toto.com.foo.bar.X");
+        Path compiledClasses = helper.generateModuleCompiledClasses(
+                helper.getJmodSrcDir(), helper.getJmodClassesDir(), "composite2", classes);
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         Consumer<Path> c = (p) -> {
             // take only the .class resources.
@@ -89,7 +90,7 @@ public class StringSharingPluginTest {
                 }
             }
         };
-        try (java.util.stream.Stream<Path> stream = Files.walk(moduleFile.toPath())) {
+        try (java.util.stream.Stream<Path> stream = Files.walk(compiledClasses)) {
             stream.forEach(c);
         }
         ResourcePlugin plugin = new StringSharingProvider().newPlugins(null, null)[0];

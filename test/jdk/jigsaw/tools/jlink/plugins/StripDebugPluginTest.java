@@ -26,7 +26,7 @@
  * @summary Test StripDebugPlugin
  * @author Jean-Francois Denise
  * @library ../../lib
- * @build tests.JImageGenerator
+ * @build tests.*
  * @modules jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jlink
@@ -37,13 +37,13 @@
  */
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -62,7 +62,7 @@ import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.tools.jlink.plugins.StringTable;
-import tests.JImageGenerator;
+import tests.Helper;
 
 public class StripDebugPluginTest {
     public static void main(String[] args) throws Exception {
@@ -70,28 +70,27 @@ public class StripDebugPluginTest {
     }
 
     public void test() throws Exception {
-        File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
-        if (JImageGenerator.getJModsDir(jdkHome) == null) {
+        Helper helper = Helper.newHelper();
+        if (helper == null) {
             System.err.println("Test not run, NO jmods directory");
             return;
         }
 
-        JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
-        String[] classes = {"toto.Main", "toto.com.foo.bar.X"};
-        File moduleFile = helper.generateModuleCompiledClasses("leaf1", classes);
-        File moduleInfo = new File(moduleFile, "module-info.class");
+        List<String> classes = Arrays.asList("toto.Main", "toto.com.foo.bar.X");
+        Path moduleFile = helper.generateModuleCompiledClasses(
+                helper.getJmodSrcDir(), helper.getJmodClassesDir(), "leaf1", classes);
+        Path moduleInfo = moduleFile.resolve("module-info.class");
 
         // Classes have been compiled in debug.
         List<Path> covered = new ArrayList<>();
-        byte[] infoContent = Files.readAllBytes(moduleInfo.toPath());
-        try (Stream<Path> stream = Files.walk(moduleFile.toPath())) {
+        byte[] infoContent = Files.readAllBytes(moduleInfo);
+        try (Stream<Path> stream = Files.walk(moduleFile)) {
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
                 Path p = iterator.next();
                 if (Files.isRegularFile(p) && p.toString().endsWith(".class")) {
                     byte[] content = Files.readAllBytes(p);
-                    Path normalized = p.normalize();
-                    String path = "/" + normalized.subpath(2, normalized.getNameCount()).toString();
+                    String path = "/" + helper.getJmodClassesDir().relativize(p).toString();
                     String moduleInfoPath = path + "/module-info.class";
                     check(path, content, moduleInfoPath, infoContent);
                     covered.add(p);
