@@ -1218,6 +1218,7 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   bool has_jimage = (os::stat(jimage, &st) == 0);
   if (has_jimage) {
     Arguments::set_sysclasspath(jimage);
+    FREE_C_HEAP_ARRAY(char, jimage);
     return true;
   }
   FREE_C_HEAP_ARRAY(char, jimage);
@@ -1227,6 +1228,7 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   if (base_classes == NULL) return false;
   if (os::stat(base_classes, &st) == 0) {
     Arguments::set_sysclasspath(base_classes);
+    FREE_C_HEAP_ARRAY(char, base_classes);
     return true;
   }
   FREE_C_HEAP_ARRAY(char, base_classes);
