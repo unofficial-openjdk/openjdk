@@ -60,7 +60,6 @@ package com.sun.org.apache.bcel.internal.generic;
 
 import com.sun.org.apache.bcel.internal.Constants;
 import com.sun.org.apache.bcel.internal.classfile.*;
-import com.sun.org.apache.bcel.internal.classfile.ClassFormatException;
 import java.util.ArrayList;
 
 /**
