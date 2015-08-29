@@ -24,9 +24,6 @@ sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
 
-# 8086002
-java/lang/SecurityManager/CheckSecurityProvider.java		macosx-all
-
 # 8134487
 sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
 sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
