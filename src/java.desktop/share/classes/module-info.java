@@ -101,6 +101,7 @@ module java.desktop {
     uses javax.sound.sampled.spi.MixerProvider;
 
     provides sun.datatransfer.DesktopDatatransferService with sun.awt.datatransfer.DesktopDatatransferServiceImpl;
+    provides java.net.ContentHandlerFactory with sun.awt.www.content.MultimediaContentHandlers;
     provides javax.print.PrintServiceLookup with sun.print.PrintServiceLookupProvider;
     provides javax.print.StreamPrintServiceFactory with sun.print.PSStreamPrinterFactory;
     provides javax.sound.midi.spi.MidiDeviceProvider with com.sun.media.sound.MidiInDeviceProvider;
