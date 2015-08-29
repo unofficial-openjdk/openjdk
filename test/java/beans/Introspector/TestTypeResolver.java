@@ -24,8 +24,6 @@
 /*
  * @test
  * @summary Tests com.sun.beans.TypeResolver
- * @modules java.base/sun.reflect.generics.reflectiveObjects
- *          java.desktop/com.sun.beans
  * @author Eamonn McManus
  * @modules java.base/sun.reflect.generics.reflectiveObjects
  *          java.desktop/com.sun.beans

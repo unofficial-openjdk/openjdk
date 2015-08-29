@@ -21,7 +21,6 @@
  * questions.
  */
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
@@ -48,10 +47,7 @@ public class RedefineClassWithNativeMethodAgent {
         if (in == null) {
             throw new Exception("Cannot find class: " + agentArgs);
         }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        in.transferTo(baos);
-        byte[] buffer = baos.toByteArray();
+        byte[] buffer = in.readAllBytes();
 
         new Timer(true).schedule(new TimerTask() {
             public void run() {
