@@ -24,7 +24,6 @@
  */
 
 module jdk.scripting.nashorn.shell {
-    requires java.prefs;
     requires jdk.scripting.nashorn;
     requires jdk.internal.le;
 }
