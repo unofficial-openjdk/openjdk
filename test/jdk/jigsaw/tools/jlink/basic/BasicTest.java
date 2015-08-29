@@ -29,7 +29,9 @@
  * @modules java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jmod
- * @build jdk.testlibrary.ProcessTools jdk.testlibrary.OutputAnalyzer JarUtils CompilerUtils
+ * @build jdk.testlibrary.ProcessTools
+ *        jdk.testlibrary.OutputAnalyzer
+ *        JarUtils CompilerUtils
  * @run main BasicTest
  */
 
@@ -48,9 +50,9 @@ import jdk.testlibrary.ProcessTools;
 public class BasicTest {
 
     private final Path jdkHome = Paths.get(System.getProperty("test.jdk"));
-    private final Path stdJmods = jdkHome.resolve("..").resolve("jmods");
+    private final Path jdkMods = jdkHome.getParent().resolve("jmods");
     private final Path testSrc = Paths.get(System.getProperty("test.src"));
-    private final Path modSrc = testSrc.resolve("src");
+    private final Path src = testSrc.resolve("src");
     private final Path classes = Paths.get("classes");
     private final Path jmods = Paths.get("jmods");
     private final Path jars = Paths.get("jars");
@@ -60,44 +62,52 @@ public class BasicTest {
     }
 
     public void run() throws Throwable {
-        if (!Files.exists(stdJmods)) {
+        if (Files.notExists(jdkMods)) {
             return;
         }
-        if (!CompilerUtils.compile(modSrc, classes)) {
+
+        if (!CompilerUtils.compile(src, classes)) {
             throw new AssertionError("Compilation failure. See log.");
         }
+
         String modName = "test";
         Files.createDirectories(jmods);
         Files.createDirectories(jars);
         Path jarfile = jars.resolve("test.jar");
-        JarUtils.createJarFile(jarfile, classes.toAbsolutePath(),
-                Files.find(classes.toAbsolutePath(), Integer.MAX_VALUE,
-                        (p, attrs) -> attrs.isRegularFile()).toArray(Path[]::new));
-        String outdir1 = "mysmallimage";
+        JarUtils.createJarFile(jarfile, classes);
+
+        Path image = Paths.get("mysmallimage");
         runJmod(jarfile.toString(), modName);
-        runJlink(outdir1, modName, "--compress-resources", "on");
-        execute(outdir1, modName);
+        runJlink(image, modName, "--compress-resources", "on");
+        execute(image, modName);
 
         Files.delete(jmods.resolve(modName + ".jmod"));
-        String outdir2 = "myimage";
+
+        image = Paths.get("myimage");
         runJmod(classes.toString(), modName);
-        runJlink(outdir2, modName);
-        execute(outdir2, modName);
+        runJlink(image, modName);
+        execute(image, modName);
     }
 
-    private void execute(String image, String moduleName) throws Throwable {
-        OutputAnalyzer analyzer = ProcessTools.executeProcess(image + File.separator + "bin"
-                + File.separator + moduleName, "1", "2", "3");
+    private void execute(Path image, String moduleName) throws Throwable {
+        String cmd = image.resolve("bin").resolve(moduleName).toString();
+        OutputAnalyzer analyzer;
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            analyzer = ProcessTools.executeProcess("sh.exe", cmd, "1", "2", "3");
+        } else {
+            analyzer = ProcessTools.executeProcess(cmd, "1", "2", "3");
+        }
         if (analyzer.getExitValue() != 0) {
             throw new AssertionError("Image invocation failed: rc=" + analyzer.getExitValue());
         }
     }
 
-    private void runJlink(String outdir, String modName, String... options) {
+    private void runJlink(Path image, String modName, String... options) {
         List<String> args = new ArrayList<>();
-        Collections.addAll(args, "--modulepath",
-                stdJmods.toString() + File.pathSeparator + jmods.toString(),
-                "--addmods", modName, "--output", outdir);
+        Collections.addAll(args,
+                "--modulepath", jdkMods + File.pathSeparator + jmods,
+                "--addmods", modName,
+                "--output", image.toString());
         Collections.addAll(args, options);
         int rc = jdk.tools.jlink.Main.run(args.toArray(new String[args.size()]), new PrintWriter(System.out));
         if (rc != 0) {
@@ -106,9 +116,12 @@ public class BasicTest {
     }
 
     private void runJmod(String cp, String modName) {
-        int rc = jdk.tools.jmod.Main.run(new String[]{
-                "create", "--class-path", cp, "--module-version", "1.0",
-                "--main-class", "jdk.test.Test", jmods + File.separator + modName  + ".jmod"
+        int rc = jdk.tools.jmod.Main.run(new String[] {
+                "create",
+                "--class-path", cp,
+                "--module-version", "1.0",
+                "--main-class", "jdk.test.Test",
+                jmods.resolve(modName + ".jmod").toString(),
         }, System.out);
         if (rc != 0) {
             throw new AssertionError("Jmod failed: rc = " + rc);
