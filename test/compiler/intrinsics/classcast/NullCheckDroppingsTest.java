@@ -28,6 +28,7 @@
  * @library /testlibrary /../../test/lib
  * @modules java.base/sun.misc
  *          java.management
+ *          jdk.jvmstat/sun.jvmstat.monitor
  * @build ClassFileInstaller sun.hotspot.WhiteBox jdk.test.lib.*
  * @build NullCheckDroppingsTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
