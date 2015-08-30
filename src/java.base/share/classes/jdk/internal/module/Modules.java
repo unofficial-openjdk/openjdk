@@ -87,7 +87,7 @@ public class Modules {
 
     /**
      * Adds a read-edge so that module {@code m1} reads module {@code m1}.
-     * Same as m1.addReads(m2) but without a permission check.
+     * Same as m1.addReads(m2) but without a caller check.
      */
     public static void addReads(Module m1, Module m2) {
         JLRMA.addReads(m1, m2);
@@ -95,7 +95,7 @@ public class Modules {
 
     /**
      * Updates module m1 to export a package to module m2.
-     * Same as m1.addExports(pkg, m2) but without a permission check.
+     * Same as m1.addExports(pkg, m2) but without a caller check.
      */
     public static void addExports(Module m1, String pn, Module m2) {
         JLRMA.addExports(m1, pn, m2);
