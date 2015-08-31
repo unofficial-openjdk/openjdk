@@ -21,21 +21,28 @@
  * questions.
  */
 
-import java.awt.Toolkit;
-
-import javax.sound.midi.MidiSystem;
-
-/**
+/*
  * @test
- * @bug 8068412
- * @key headful
- * @author Sergey Bylokhov
+ * @bug 8048601
+ * @library ../
+ * @summary Test DES/DESede cipher with different MODES and padding
  */
-public final class InitializationHang {
 
-    public static void main(final String[] argv) throws Exception {
-        MidiSystem.getReceiver();
-        Toolkit.getDefaultToolkit();
+public class TestCipherDES extends TestCipher {
+
+    TestCipherDES() {
+        super("DES",
+                new String[]{"CBC", "CTR", "CTS", "ECB", "PCBC",
+                    //CFBx
+                    "CFB", "CFB8", "CFB16", "CFB24", "CFB32", "CFB40", "CFB48", "CFB56",
+                    "CFB64",
+                    //OFBx
+                    "OFB", "OFB8", "OFB16", "OFB24", "OFB32", "OFB40", "OFB48", "OFB56",
+                    "OFB64"},
+                new String[]{"NoPaDDing", "PKCS5Padding"});
+    }
+
+    public static void main(String[] args) throws Exception {
+        new TestCipherDES().runAll();
     }
 }
-
