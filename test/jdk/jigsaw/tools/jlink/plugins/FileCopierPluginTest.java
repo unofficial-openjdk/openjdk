@@ -31,17 +31,23 @@
  */
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.Set;
 import jdk.tools.jlink.internal.DefaultImageBuilder;
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
+import jdk.tools.jlink.internal.ResourcePoolImpl;
 
 import jdk.tools.jlink.internal.plugins.FileCopierProvider;
+import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.ResourcePool;
 
 public class FileCopierPluginTest {
 
@@ -101,8 +107,19 @@ public class FileCopierPluginTest {
         Path root = new File(".").toPath();
         DefaultImageBuilder builder = new DefaultImageBuilder(new Properties(),
                 root);
-        builder.storeFiles(pool, Collections.EMPTY_LIST, Collections.EMPTY_SET,
-                "", Collections.EMPTY_MAP);
+        builder.storeFiles(pool, Collections.EMPTY_LIST,
+                "", new ImageBuilder.ResourceRetriever() {
+
+                    @Override
+                    public ResourcePool.Resource retrieves(String path) throws IOException {
+                        return null;
+                    }
+
+                    @Override
+                    public Set<String> getModules() {
+                        return Collections.emptySet();
+                    }
+                });
 
         if (lic.exists()) {
             File license = new File(root.toFile(), "LICENSE");

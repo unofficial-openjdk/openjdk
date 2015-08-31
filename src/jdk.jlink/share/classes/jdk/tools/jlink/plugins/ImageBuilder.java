@@ -26,10 +26,9 @@ package jdk.tools.jlink.plugins;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
 
 /**
  * Implement this interface to develop your own image layout. First the jimage
@@ -39,18 +38,40 @@ import java.util.Set;
 public interface ImageBuilder {
 
     /**
+     * Retrieves resource. Retrieved resource content is, whatever the
+     * configuration, uncompressed.
+     */
+    public interface ResourceRetriever {
+
+        /**
+         * Retrieve a resource.
+         *
+         * @param path Resource path.
+         * @return A resource or null if not found.
+         * @throws java.io.IOException
+         */
+        public Resource retrieves(String path) throws IOException;
+
+        /**
+         * Returns the set of modules present in the jimage,
+         *
+         * @return
+         */
+        public Set<String> getModules();
+    }
+
+    /**
      * Store the external files.
      *
      * @param files Set of module names that are composing this image.
      * @param removed List of files that have been removed (if any).
-     * @param modules The set of modules added to the image
      * @param bom The options used to build the image
-     * @param mods The input modules.
+     * @param retriever To retrieve any resource that had been stored in the
+     * jimage file.
      * @throws java.io.IOException
      */
     public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
-            Set<String> modules, String bom,
-            Map<String, Path> mods) throws IOException;
+            String bom, ResourceRetriever retriever) throws IOException;
 
     /**
      * The OutputStream to store the jimage file.

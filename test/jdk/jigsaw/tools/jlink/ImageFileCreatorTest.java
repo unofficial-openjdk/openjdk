@@ -41,6 +41,7 @@ import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugins.ResourcePool;
 
 
 /*
@@ -192,14 +193,13 @@ public class ImageFileCreatorTest {
         ImageBuilder noopBuilder = new ImageBuilder() {
 
             @Override
-            public void storeFiles(ImageFilePool files,
-                    List<ImageFilePool.ImageFile> removed, Set<String> modules,
-                    String bom, Map<String, Path> mods) throws IOException {
+            public DataOutputStream getJImageOutputStream() throws IOException {
+                return new DataOutputStream(new ByteArrayOutputStream());
             }
 
             @Override
-            public DataOutputStream getJImageOutputStream() throws IOException {
-                return new DataOutputStream(new ByteArrayOutputStream());
+            public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
+                    String bom, ImageBuilder.ResourceRetriever retriever) throws IOException {
             }
         };
 

@@ -152,7 +152,8 @@ public final class ImageFileCreator {
         try (OutputStream fos = Files.newOutputStream(jimageFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 DataOutputStream out = new DataOutputStream(bos)) {
-            generateJImage(pools.resources, order, pluginSupport, out);
+            BasicImageWriter writer = new BasicImageWriter(order);
+            generateJImage(pools.resources, writer, pluginSupport, out);
         }
         //Close all archives
         for(Archive a : archives) {
@@ -166,13 +167,13 @@ public final class ImageFileCreator {
             throws IOException {
         Pools pools = createPools(modulePackagesMap,
                 entriesForModule, byteOrder);
-        generateJImage(pools.resources,
-                byteOrder, plugins, plugins.getJImageFileOutputStream());
+        BasicImageWriter writer = new BasicImageWriter(byteOrder);
+        ResourcePool result = generateJImage(pools.resources,
+                writer, plugins, plugins.getJImageFileOutputStream());
 
         //Handle files.
         try {
-            plugins.storeFiles(pools.files,
-                    pools.resources.getModulePackages().keySet());
+            plugins.storeFiles(pools.files, result, writer);
         } catch (Exception ex) {
             throw new IOException(ex);
         }
@@ -182,12 +183,11 @@ public final class ImageFileCreator {
         }
     }
 
-    private static void generateJImage(ResourcePoolImpl resources,
-            ByteOrder byteOrder,
+    private static ResourcePool generateJImage(ResourcePoolImpl resources,
+            BasicImageWriter writer,
             ImagePluginStack pluginSupport,
             DataOutputStream out
     ) throws IOException {
-        BasicImageWriter writer = new BasicImageWriter(byteOrder);
         ResourcePool resultResources;
         try {
             resultResources = pluginSupport.visitResources(resources, new StringTable() {
@@ -207,62 +207,64 @@ public final class ImageFileCreator {
         }
         Map<String, Set<String>> modulePackagesMap = resultResources.getModulePackages();
 
-            Set<String> duplicates = new HashSet<>();
-            ImageModuleDataWriter moduleData =
-            ImageModuleDataWriter.buildModuleData(writer, modulePackagesMap);
-            moduleData.addLocation(BasicImageWriter.BOOT_NAME, writer);
-            long offset = moduleData.size();
+        Set<String> duplicates = new HashSet<>();
+        ImageModuleDataWriter moduleData
+                = ImageModuleDataWriter.buildModuleData(writer, modulePackagesMap);
+        moduleData.addLocation(BasicImageWriter.BOOT_NAME, writer);
+        long offset = moduleData.size();
 
-            List<ResourcePool.Resource> content = new ArrayList<>();
-            List<String> paths = new ArrayList<>();
+        List<ResourcePool.Resource> content = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
                  // the order of traversing the resources and the order of
-            // the module content being written must be the same
-            for (ResourcePool.Resource res : resultResources.getResources()) {
-                String path = res.getPath();
-                content.add(res);
-                long uncompressedSize = res.getLength();
-                long compressedSize = 0;
-                if (res instanceof ResourcePool.CompressedResource) {
-                    ResourcePool.CompressedResource comp =
-                            (ResourcePool.CompressedResource) res;
-                    compressedSize = res.getLength();
-                    uncompressedSize = comp.getUncompressedSize();
-                }
-                long onFileSize = res.getLength();
+        // the module content being written must be the same
+        for (ResourcePool.Resource res : resultResources.getResources()) {
+            String path = res.getPath();
+            content.add(res);
+            long uncompressedSize = res.getLength();
+            long compressedSize = 0;
+            if (res instanceof ResourcePool.CompressedResource) {
+                ResourcePool.CompressedResource comp
+                        = (ResourcePool.CompressedResource) res;
+                compressedSize = res.getLength();
+                uncompressedSize = comp.getUncompressedSize();
+            }
+            long onFileSize = res.getLength();
 
-                if (duplicates.contains(path)) {
-                    System.err.format("duplicate resource \"%s\", skipping%n",
-                            path);
+            if (duplicates.contains(path)) {
+                System.err.format("duplicate resource \"%s\", skipping%n",
+                        path);
                      // TODO Need to hang bytes on resource and write
-                    // from resource not zip.
-                    // Skipping resource throws off writing from zip.
-                    offset += onFileSize;
-                    continue;
-                }
-                duplicates.add(path);
-                writer.addLocation(path, offset, compressedSize, uncompressedSize);
-                paths.add(path);
+                // from resource not zip.
+                // Skipping resource throws off writing from zip.
                 offset += onFileSize;
+                continue;
             }
+            duplicates.add(path);
+            writer.addLocation(path, offset, compressedSize, uncompressedSize);
+            paths.add(path);
+            offset += onFileSize;
+        }
 
-            ImageResourcesTree tree = new ImageResourcesTree(offset, writer, paths);
+        ImageResourcesTree tree = new ImageResourcesTree(offset, writer, paths);
 
-            // write header and indices
-            byte[] bytes = writer.getBytes();
-            out.write(bytes, 0, bytes.length);
+        // write header and indices
+        byte[] bytes = writer.getBytes();
+        out.write(bytes, 0, bytes.length);
 
-            // write module meta data
-            moduleData.writeTo(out);
+        // write module meta data
+        moduleData.writeTo(out);
 
-            // write module content
-            for(ResourcePool.Resource res : content) {
-                byte[] buf = res.getByteArray();
-                out.write(buf, 0, buf.length);
-            }
+        // write module content
+        for (ResourcePool.Resource res : content) {
+            byte[] buf = res.getByteArray();
+            out.write(buf, 0, buf.length);
+        }
 
-            tree.addContent(out);
+        tree.addContent(out);
 
-            out.close();
+        out.close();
+
+        return resultResources;
     }
 
     private static class Pools {

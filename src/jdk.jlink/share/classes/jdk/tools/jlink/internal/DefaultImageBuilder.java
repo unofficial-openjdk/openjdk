@@ -26,6 +26,7 @@ package jdk.tools.jlink.internal;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,13 +50,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
 
 /**
  *
@@ -129,14 +129,14 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     @Override
     public void storeFiles(ImageFilePool pool, List<ImageFile> removedFiles,
-            Set<String> modules, String bom,
-            Map<String, Path> mods) throws IOException {
+            String bom, ResourceRetriever retriever) throws IOException {
 
         ImageFilePool files = new JvmHandler().handlePlatforms(pool, removedFiles);
 
         for (ImageFile f : files.getFiles()) {
             accept(f);
         }
+        Set<String> modules = retriever.getModules();
         storeFiles(modules, bom);
 
         // launchers in the bin directory need execute permission
@@ -155,63 +155,40 @@ public class DefaultImageBuilder implements ImageBuilder {
         }
 
         // generate launch scripts for the modules with a main class
-        for (Map.Entry<String, Path> entry : mods.entrySet()) {
-            String module = entry.getKey();
-            if (modules.contains(module)) {
-                Path jmodpath = entry.getValue();
+        for (String module : modules) {
+            String path = "/" + module + "/module-info.class";
+            Resource res = retriever.retrieves(path);
+            if (res == null) {
+                throw new IOException("module-info not found for " + module);
+            }
+            Optional<String> mainClass;
+            ByteArrayInputStream stream = new ByteArrayInputStream(res.getByteArray());
+            mainClass = ModuleDescriptor.read(stream).mainClass();
+            if (mainClass.isPresent()) {
+                Path cmd = root.resolve("bin").resolve(module);
+                if (!Files.exists(cmd)) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("#!/bin/sh")
+                            .append("\n");
+                    sb.append("DIR=`dirname $0`")
+                            .append("\n");
+                    sb.append("$DIR/java -m ")
+                            .append(module).append('/')
+                            .append(mainClass.get())
+                            .append(" $@\n");
 
-                Optional<String> mainClass = Optional.empty();
-
-                try (ZipFile zf = new ZipFile(jmodpath.toString())) {
-                    String e = getModuleInfoPath(jmodpath.toString());
-                    ZipEntry ze = zf.getEntry(e);
-                    if (ze != null) {
-                        try (InputStream in = zf.getInputStream(ze)) {
-                            mainClass = ModuleDescriptor.read(in).mainClass();
-                        }
-                    } else {
-                        throw new IOException("module-info not found for " + module);
+                    try (BufferedWriter writer = Files.newBufferedWriter(cmd,
+                            StandardCharsets.ISO_8859_1,
+                            StandardOpenOption.CREATE_NEW)) {
+                        writer.write(sb.toString());
                     }
-                }
-
-                if (mainClass.isPresent()) {
-                    Path cmd = root.resolve("bin").resolve(module);
-                    if (!Files.exists(cmd)) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("#!/bin/sh")
-                                .append("\n");
-                        sb.append("DIR=`dirname $0`")
-                                .append("\n");
-                        sb.append("$DIR/java -m ")
-                                .append(module).append('/')
-                                .append(mainClass.get())
-                                .append(" $@\n");
-
-                        try (BufferedWriter writer = Files.newBufferedWriter(cmd,
-                                StandardCharsets.ISO_8859_1,
-                                StandardOpenOption.CREATE_NEW)) {
-                            writer.write(sb.toString());
-                        }
-                        if (Files.getFileStore(bin)
-                                .supportsFileAttributeView(PosixFileAttributeView.class)) {
-                            setExecutable(cmd);
-                        }
+                    if (Files.getFileStore(bin)
+                            .supportsFileAttributeView(PosixFileAttributeView.class)) {
+                        setExecutable(cmd);
                     }
                 }
             }
         }
-    }
-
-    private String getModuleInfoPath(String archive) throws IOException {
-        String path = "module-info.class";
-        if (archive.endsWith(".jar")) {
-            return path;
-        } else {
-            if (archive.endsWith(".jmod")) {
-                return "classes" + "/" + path;
-            }
-        }
-        throw new IOException("Unsupported archive " + archive);
     }
 
     @Override

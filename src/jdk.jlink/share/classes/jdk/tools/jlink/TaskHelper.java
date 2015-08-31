@@ -480,7 +480,7 @@ public final class TaskHelper {
                     } else {
                         i += 1;
                         String arg = args[i];
-                        if (arg.charAt(0) == '-') {
+                        if (!arg.isEmpty() && arg.charAt(0) == '-') {
                             throw new BadArgs("err.no.plugins.path").showUsage(true);
                         }
                         pp = args[i];
@@ -498,7 +498,7 @@ public final class TaskHelper {
             List<String> rest = new ArrayList<>();
             // process options
             for (int i = 0; i < args.length; i++) {
-                if (args[i].charAt(0) == '-') {
+                if (!args[i].isEmpty() && args[i].charAt(0) == '-') {
                     String name = args[i];
                     PluginOption pluginOption = null;
                     Option<T> option = getOption(name);

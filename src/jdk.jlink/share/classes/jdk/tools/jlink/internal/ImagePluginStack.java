@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal;
 import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -39,6 +40,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.internal.jimage.BasicImageWriter;
+import jdk.internal.jimage.decompressor.Decompressor;
+import jdk.internal.jimage.decompressor.ResourceDecompressor.StringsProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
@@ -254,18 +258,51 @@ public final class ImagePluginStack {
 
             current = output;
         }
+        current.setReadOnly();
         return current;
     }
 
+    private class RetrieverImpl implements ImageBuilder.ResourceRetriever {
+
+        private final ResourcePool resources;
+        private final BasicImageWriter writer;
+        private final Decompressor decompressor = new Decompressor();
+        private RetrieverImpl(ResourcePool resources, BasicImageWriter writer) {
+            this.resources = resources;
+            this.writer = writer;
+        }
+
+        @Override
+        public Resource retrieves(String path) throws IOException {
+            Resource res = resources.getResource(path);
+            if (res != null) {
+                if (res instanceof ResourcePool.CompressedResource) {
+                    byte[] content = decompressor.decompressResource(writer.getByteOrder(),
+                            (int offset) -> writer.getString(offset),
+                            res.getByteArray());
+                    res = new Resource(path, ByteBuffer.wrap(content));
+                }
+            }
+            return res;
+        }
+
+        @Override
+        public Set<String> getModules() {
+            return resources.getModulePackages().keySet();
+        }
+
+    }
     /**
      * ImageFile Plugins stack entry point. All files are going through all the
      * plugins.
      *
      * @param files
-     * @param modules
+     * @param resources
+     * @param writer
      * @throws IOException
      */
-    public void storeFiles(ImageFilePoolImpl files, Set<String> modules)
+    public void storeFiles(ImageFilePoolImpl files, ResourcePool resources,
+            BasicImageWriter writer)
             throws Exception {
         Objects.requireNonNull(files);
         ImageFilePoolImpl current = files;
@@ -278,6 +315,7 @@ public final class ImagePluginStack {
             }
             current = output;
         }
+        current.setReadOnly();
         // Build the diff between input and output
         List<ImageFile> removed = new ArrayList<>();
         for (ImageFile f : files.getFiles()) {
@@ -285,6 +323,7 @@ public final class ImagePluginStack {
                 removed.add(f);
             }
         }
-        imageBuilder.storeFiles(current, removed, modules, bom, mods);
+        RetrieverImpl retriever = new RetrieverImpl(resources, writer);
+        imageBuilder.storeFiles(current, removed, bom, retriever);
     }
 }

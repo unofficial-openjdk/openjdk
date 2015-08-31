@@ -46,6 +46,7 @@ public class ResourcePoolImpl implements ResourcePool {
 
     private final ByteOrder order;
     private boolean isReadOnly;
+    private Map<String, Set<String>> moduleToPackage;
 
     public ResourcePoolImpl(ByteOrder order) {
         Objects.requireNonNull(order);
@@ -107,12 +108,7 @@ public class ResourcePoolImpl implements ResourcePool {
     @Override
     public boolean contains(Resource res) {
         Objects.requireNonNull(res);
-        try {
-            getResource(res.getPath());
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+        return getResource(res.getPath()) != null;
     }
 
     /**
@@ -145,9 +141,16 @@ public class ResourcePoolImpl implements ResourcePool {
      */
     @Override
     public Map<String, Set<String>> getModulePackages() {
-        Map<String, Set<String>> moduleToPackage = new LinkedHashMap<>();
-        retrieveModulesPackages(moduleToPackage);
-        return moduleToPackage;
+        if (moduleToPackage == null) {
+            Map<String, Set<String>> map = new LinkedHashMap<>();
+            retrieveModulesPackages(map);
+            if (isReadOnly) {
+                moduleToPackage = map;
+            }
+            return map;
+        } else {
+            return moduleToPackage;
+        }
     }
 
     /**

@@ -47,6 +47,7 @@ import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.ResourcePool;
 
 /**
  * Plugins configuration.
@@ -250,8 +251,8 @@ public final class ImagePluginConfiguration {
 
                 @Override
                 public void storeFiles(ImageFilePool files,
-                        List<ImageFilePool.ImageFile> removed, Set<String> modules,
-                        String bom, Map<String, Path> mods)
+                        List<ImageFilePool.ImageFile> removed,
+                        String bom, ResourceRetriever resources)
                         throws IOException {
                     throw new IOException("No directory setup to store files");
                 }

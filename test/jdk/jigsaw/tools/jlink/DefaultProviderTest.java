@@ -22,6 +22,7 @@
  */
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
@@ -30,6 +31,7 @@ import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
 import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
+import tests.Helper;
 
 /*
  * @test
@@ -42,7 +44,7 @@ import jdk.tools.jlink.plugins.ResourcePlugin;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
- * @build tests.JImageGenerator tests.JImageValidator
+ * @build tests.*
  * @run main/othervm DefaultProviderTest
  */
 
@@ -138,6 +140,7 @@ public class DefaultProviderTest {
             System.err.println("Test not run");
             return;
         }
+        helper.generateDefaultModules();
         test(helper, new CustomProvider());
         test(helper, new CustomProvider2());
     }
@@ -147,8 +150,8 @@ public class DefaultProviderTest {
 
         {
             String[] userOptions = {};
-            helper.generateJModule("img1", "composite2");
-            helper.checkImage("img1", userOptions, null, null);
+            Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
+            helper.checkImage(imageDir, "composite2", null, null);
             if (!isNewPluginsCalled) {
                 throw new Exception("Should have been called");
             }
@@ -157,8 +160,8 @@ public class DefaultProviderTest {
 
         {
             String[] userOptions = {"--option1", "value1", "--option2", "value2"};
-            helper.generateJModule("img1", "composite2");
-            helper.checkImage("img1", userOptions, null, null);
+            Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
+            helper.checkImage(imageDir, "composite2", null, null);
             if (!isNewPluginsCalled) {
                 throw new Exception("Should have been called");
             }
@@ -172,8 +175,8 @@ public class DefaultProviderTest {
 
         {
             String[] userOptions = {"--toto", "off", "--option1", "value1"};
-            helper.generateJModule("img1", "composite2");
-            helper.checkImage("img1", userOptions, null, null);
+            Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
+            helper.checkImage(imageDir, "composite2", null, null);
             if (isNewPluginsCalled) {
                 throw new Exception("Should not have been called");
             }
