@@ -203,6 +203,8 @@ module java.base {
         jdk.localedata;
     exports sun.util to
         java.desktop;
+    exports sun.util.calendar to
+        java.corba;
     exports sun.util.locale.provider to
         java.desktop,
         jdk.localedata;
