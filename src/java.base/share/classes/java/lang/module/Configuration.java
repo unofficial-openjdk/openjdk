@@ -34,23 +34,41 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * The configuration that is the result of resolution or binding.
+ * The configuration that is the result of resolution or service binding.
+ *
+ * <p> Resolution is the process of computing the transitive closure of a set
+ * of root modules over a set of observable modules with respect to a
+ * dependence relation. Computing the transitive closure results in a
+ * <em>dependence graph</em> that is then transformed to a <em>readability
+ * graph</em> by adding edges indicated by the readability relation ({@code
+ * requires} or {@code requires public}). </p>
+ *
+ * <p> Resolution is an additive process. The dependence relation may include
+ * dependences on modules that have already been instantiated in the Java
+ * virtual machine (in a module {@link Layer Layer}). The result is a
+ * <em>relative configuration</em> where the readability graph has read
+ * edges to modules in a previously instantiated configuration. </p>
+ *
+ * <p> Service binding is the process of augmenting a configuration with
+ * modules from the set of observable modules induced by the service-use
+ * relation. Any module that was not previously in the graph requires
+ * resolution to compute its transitive closure. Service binding is an iterative
+ * process as adding a module that satisfies some service-use dependence may
+ * introduce new service-use dependences. </p>
  *
  * <p> The following example resolves a module named <em>myapp</em> that results
- * in a configuration. It then augments that configuration with additional modules
- * (and edges) induced by service-use relationships. </p>
+ * in a configuration. It then augments that configuration with additional
+ * modules (and edges) induced by service-use relationships. </p>
  *
  * <pre>{@code
- *
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     Configuration cf =
+ *     Configuration cf
  *         = Configuration.resolve(ModuleFinder.empty(),
  *                                 Layer.boot(),
  *                                 finder,
  *                                 "myapp")
  *                        .bind();
- *
  * }</pre>
  *
  * @since 1.9
@@ -70,10 +88,12 @@ public final class Configuration {
      * Resolves the collection of root modules, specified by module names,
      * returning the resulting configuration.
      *
-     * <p> The root modules and their transitive dependences are located using
-     * the given {@code beforeFinder}, parent {@code Layer} and {@code
-     * afterFinder}, in this order. Dependences located in the parent {@code
-     * Layer} are resolved no further. </p>
+     * <p> Each root module is located using the given {@code beforeFinder}
+     * and if not found, using the given {@code afterFinder}. Their transitive
+     * dependences are located using the given {@code beforeFinder}, if found
+     * then the parent {@code Layer}, and if found then the given {@code
+     * afterFinder}. Dependences located in the parent {@code Layer} are
+     * resolved no further. </p>
      *
      * <p> When all modules have been resolved then the resulting <em>dependency
      * graph</em> is checked to ensure that it does not contain cycles. A
@@ -107,6 +127,20 @@ public final class Configuration {
      *          modules may not be combined in the same configuration. </li>
      * </ul>
      *
+     * @param  beforeFinder
+     *         The module finder to find modules
+     * @param  parent
+     *         The parent layer, may be the {@link Layer#empty() empty} layer
+     * @param  afterFinder
+     *         The module finder to locate modules when not located by the
+     *         {@code beforeFinder} or parent layer
+     * @param  roots
+     *         The possibly-empty collection of module names of the modules
+     *         to resolve
+     *
+     * @return The configuration that is the result of resolving the given
+     *         root modules
+     *
      * @throws ResolutionException If resolution or the post-resolution checks
      *         fail for any of the reasons listed
      */
@@ -129,6 +163,14 @@ public final class Configuration {
      * Resolves the root modules, specified by module names, returning the
      * resulting configuration.
      *
+     * This method is equivalent to:
+     * <pre>{@code
+     * resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
+     * }</pre>
+     *
+     * @return The configuration that is the result of resolving the given
+     *         root modules
+     *
      * @throws ResolutionException If resolution or the post-resolution checks
      *         fail for any of the reasons listed
      */
@@ -142,24 +184,37 @@ public final class Configuration {
 
     /**
      * Returns the parent {@code Layer} on which this configuration is based.
+     *
+     * @return The parent layer
      */
     public Layer layer() {
         return parent;
     }
 
     /**
-     * Returns a configuration that is this configuration augmented with modules
-     * (located via the module reference finders) that are induced by service-use
-     * relationships.
+     * Returns a new configuration that is this configuration augmented with
+     * modules induced by the service-use relation.
      *
-     * <p> Binding involves resolution to resolve the dependences of service
-     * provider modules. It may therefore fail with {@code ResolutionException}
-     * for exactly the same reasons as the {@link #resolve resolve} methods.
+     * <p> Service binding works by examining all modules in the configuration
+     * and its parent layers with {@link ModuleDescriptor#uses()
+     * service-dependences}. All observable modules that {@link
+     * ModuleDescriptor#provides provide} an implementation of one or more of
+     * the service types are added to the configuration and resolved as if by
+     * calling the {@link #resolve resolve} method. Adding modules to the
+     * configuration may introduce new service-use dependences and so service
+     * binding proceeds iteratively until no more modules are added. </p>
+     *
+     * <p> As service binding involves resolution then it may fail with {@link
+     * ResolutionException} for exactly the same reasons as the {@link #resolve
+     * resolve} methods. </p>
+     *
+     * @return A new configuration that is this configuration augmented
+     *         with modules that are induced by the service-use relation
      *
      * @throws ResolutionException If resolution or the post-resolution checks
      *         fail for any of the reasons listed
      *
-     * @apiNote This method is not thread safe
+     * @apiNote This method is not required to be thread safe
      */
     public Configuration bind() {
         Resolver.Resolution r = resolution.bind();
@@ -169,14 +224,20 @@ public final class Configuration {
     /**
      * Returns an immutable set of the module descriptors in this
      * configuration.
+     *
+     * @return A possibly-empty unmodifiable set of module descriptors
+     *         for the modules in this configuration
      */
     public Set<ModuleDescriptor> descriptors() {
         return resolution.selected();
     }
 
     /**
-     * Returns an immutable set of the module references in this
+     * Returns an immutable set of the module references to the modules in this
      * configuration.
+     *
+     * @return A possibly-empty unmodifiable set of modules references
+     *         to modules in this configuration
      */
     public Set<ModuleReference> modules() {
         return resolution.references();
@@ -185,7 +246,10 @@ public final class Configuration {
     /**
      * Returns the {@code ModuleDescriptor} for the named module.
      *
-     * @apiNote It's not clear that this method is useful.
+     * @apiNote Should this check parent to be consistent with Layer#findModule?
+     *
+     * @return The module descriptor for the module with the given name or an
+     *         empty {@code Optional} if not in this configuration
      */
     public Optional<ModuleDescriptor> findDescriptor(String name) {
         return findModule(name).map(ModuleReference::descriptor);
@@ -193,6 +257,11 @@ public final class Configuration {
 
     /**
      * Returns the {@code ModuleReference} for the named module.
+     *
+     * @apiNote Should this check parent to be consistent with Layer#findModule?
+     *
+     * @return The reference to a module with the given name or an empty
+     *         {@code Optional} if not in this configuration
      */
     public Optional<ModuleReference> findModule(String name) {
         return resolution.findModule(name);
@@ -200,10 +269,13 @@ public final class Configuration {
 
     /**
      * Returns an immutable set of the read dependences of the given module
-     * descriptor.
+     * descriptor. The set may include {@code ModuleDescriptor}s for modules
+     * that are in a parent {@code Layer} rather than this configuration.
      *
-     * @throws IllegalArgumentException if the module descriptor is not in
-     * this configuration.
+     * @return A possibly-empty unmodifiable set of the read dependences
+     *
+     * @throws IllegalArgumentException
+     *         If the module descriptor is not in this configuration
      */
     public Set<ModuleDescriptor> reads(ModuleDescriptor descriptor) {
         Set<ModuleDescriptor> reads = resolution.reads(descriptor);
@@ -221,6 +293,9 @@ public final class Configuration {
      *
      * If this {@code Configuration} is not the result of {@link #bind()
      * binding} then an empty set is returned.
+     *
+     * @return A possibly-empty unmodifiable set of the modules that provide
+     *         implementations of the given service
      */
     public Set<ModuleDescriptor> provides(String sn) {
         return resolution.provides(sn);
