@@ -47,11 +47,12 @@ import java.util.Map.Entry;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
 import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
+import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
@@ -210,6 +211,22 @@ public final class TaskHelper {
                                         "--" + other);
                                 pluginsOptions.add(otherOption);
                             }
+                        }
+                        // On/Off enabled by default plugin
+                        // Command line option can override it
+                        boolean edefault = false;
+                        if (provider instanceof OnOffResourcePluginProvider) {
+                            edefault = ((OnOffResourcePluginProvider) provider).isEnabledByDefault();
+                        } else {
+                            if (provider instanceof OnOffImageFilePluginProvider) {
+                                edefault = ((OnOffImageFilePluginProvider) provider).isEnabledByDefault();
+                            }
+                        }
+                        if (edefault) {
+                            Map<String, String> m = new HashMap<>();
+                            m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
+                                    ImagePluginConfiguration.ON_ARGUMENT);
+                            plugins.put(provider, m);
                         }
                     }
                 }

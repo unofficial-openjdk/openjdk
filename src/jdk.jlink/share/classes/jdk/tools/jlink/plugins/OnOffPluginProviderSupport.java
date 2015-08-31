@@ -22,51 +22,50 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.internal.plugins;
+package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 
 /**
  *
- * Abstract class for provider that requires ON/OFF support
+ * On/Off plugin provider support class.
  */
-public abstract class OnOffProvider extends CmdResourcePluginProvider {
+abstract class OnOffPluginProviderSupport {
 
-    public OnOffProvider(String name, String description) {
-        super(name, description);
+    interface PluginBuilder<T> {
+
+        List<T> buildPlugins(Map<String, String> otherOptions) throws IOException;
     }
 
-    @Override
-    public ResourcePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions)
+    private OnOffPluginProviderSupport() {
+    }
+
+    static <T> List<T> newPlugins(String[] arguments,
+            Map<String, String> otherOptions, PluginBuilder<T> builder)
             throws IOException {
         Objects.requireNonNull(arguments);
-        if(arguments.length != 1) {
-            throw new IOException("Invalid number of arguments expecting " +
-                    getToolArgument());
+        if (arguments.length != 1) {
+            throw new IOException("Invalid number of arguments expecting "
+                    + getToolArgument());
         }
-        if(!ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0]) &&
-           !ImagePluginConfiguration.ON_ARGUMENT.equals(arguments[0])     ) {
-            throw new IOException("Invalid argument " + arguments[0] +
-                    ", expecting " + ImagePluginConfiguration.ON_ARGUMENT + " or " +
-                    ImagePluginConfiguration.OFF_ARGUMENT);
+        if (!ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])
+                && !ImagePluginConfiguration.ON_ARGUMENT.equals(arguments[0])) {
+            throw new IOException("Invalid argument " + arguments[0]
+                    + ", expecting " + ImagePluginConfiguration.ON_ARGUMENT + " or "
+                    + ImagePluginConfiguration.OFF_ARGUMENT);
         }
-        if(ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
-            return new ResourcePlugin[0];
+        if (ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
+            return Collections.emptyList();
         }
-        return createPlugins(otherOptions);
+        return builder.buildPlugins(otherOptions);
     }
 
-    public abstract ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException;
-
-    @Override
-    public String getToolArgument() {
+    static String getToolArgument() {
         return ImagePluginConfiguration.ON_ARGUMENT + "|"
                 + ImagePluginConfiguration.OFF_ARGUMENT;
     }

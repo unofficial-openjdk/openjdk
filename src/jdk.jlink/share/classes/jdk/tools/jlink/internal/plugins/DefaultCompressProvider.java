@@ -24,13 +24,13 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
 
@@ -38,7 +38,7 @@ import jdk.tools.jlink.plugins.PluginProvider;
  *
  * Default compression provider.
  */
-public class DefaultCompressProvider extends OnOffProvider {
+public class DefaultCompressProvider extends OnOffResourcePluginProvider {
 
     public static final String NAME = "compress-resources";
     public static final String LEVEL_OPTION = "compress-resources-level";

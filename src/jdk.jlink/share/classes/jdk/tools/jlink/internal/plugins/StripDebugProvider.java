@@ -24,17 +24,17 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class StripDebugProvider extends OnOffProvider {
+public final class StripDebugProvider extends OnOffResourcePluginProvider {
 
     public static final String NAME = "strip-java-debug";
 
