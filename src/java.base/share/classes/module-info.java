@@ -203,6 +203,7 @@ module java.base {
         jdk.localedata;
     exports sun.util to
         java.desktop;
+    // Reflective access during modular Serialization
     exports sun.util.calendar to
         java.corba;
     exports sun.util.locale.provider to
