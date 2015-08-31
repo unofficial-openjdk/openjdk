@@ -21,21 +21,31 @@
  * questions.
  */
 
-import java.awt.Toolkit;
+import java.security.NoSuchAlgorithmException;
 
-import javax.sound.midi.MidiSystem;
-
-/**
+/*
  * @test
- * @bug 8068412
- * @key headful
- * @author Sergey Bylokhov
+ * @bug 8048601
+ * @library ../
+ * @summary Test Blowfish cipher with different MODES and padding
  */
-public final class InitializationHang {
 
-    public static void main(final String[] argv) throws Exception {
-        MidiSystem.getReceiver();
-        Toolkit.getDefaultToolkit();
+public class TestCipherBlowfish extends TestCipher {
+
+    TestCipherBlowfish() throws NoSuchAlgorithmException {
+        super("Blowfish",
+                new String[]{"CBC", "CTR", "CTS", "ECB", "PCBC",
+                    //CFBx
+                    "CFB", "CFB8", "CFB16", "CFB24", "CFB32", "CFB40", "CFB48", "CFB56",
+                    "CFB64",
+                    //OFBx
+                    "OFB", "OFB8", "OFB16", "OFB24", "OFB32", "OFB40", "OFB48", "OFB56",
+                    "OFB64"},
+                new String[]{"NoPaDDing", "PKCS5Padding"},
+                true);
+    }
+
+    public static void main(String[] args) throws Exception {
+        new TestCipherBlowfish().runAll();
     }
 }
-
