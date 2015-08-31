@@ -23,7 +23,9 @@
 
 /*
  * @test
- * @summary
+ * @summary Test Package object is local to each ClassLoader.
+ *          There can be one Package object of "foo" name defined by
+ *          different class loader.
  * @compile Foo.java
  * @run testng GetPackages
  */
@@ -43,6 +45,11 @@ import static org.testng.Assert.*;
 public class GetPackages {
     final TestClassLoader loader;
     final Class<?> fooClass;
+    /*
+     * Each TestClassLoader defines a "foo.Foo" class which has a unique
+     * Package object of "foo" regardless whether its ancestor class loader
+     * defines a package "foo" or not.
+     */
     GetPackages(TestClassLoader loader) throws ClassNotFoundException {
         this.loader = loader;
         this.fooClass = loader.loadClass("foo.Foo");
@@ -77,6 +84,8 @@ public class GetPackages {
         TestClassLoader loader2 = new TestClassLoader(loader1);
         TestClassLoader loader3 = new TestClassLoader(loader2);
 
+        // Verify the number of expected Package object of "foo" visible
+        // to the class loader
         return new Object[][] {
                 { loader1, 1 },
                 { loader2, 2 },
