@@ -727,8 +727,8 @@ public class JmodTask {
                     throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }
 
-            if (options.help)
-                return;  // help message will be shown
+            if (options.help || options.version)
+                return;  // informational message will be shown
 
             List<String> words = opts.valuesOf(nonOptions);
             if (words.isEmpty())
