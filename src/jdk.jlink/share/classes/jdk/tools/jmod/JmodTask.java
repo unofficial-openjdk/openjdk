@@ -605,7 +605,7 @@ public class JmodTask {
 
         @Override  public Class<Path> valueType() { return Path.class; }
 
-        @Override  public String valuePattern() { return null; }
+        @Override  public String valuePattern() { return "path"; }
     }
 
     static class ModuleVersionConverter implements ValueConverter<Version> {
@@ -620,7 +620,7 @@ public class JmodTask {
 
         @Override public Class<Version> valueType() { return Version.class; }
 
-        @Override public String valuePattern() { return null; }
+        @Override public String valuePattern() { return "module-version"; }
     }
 
     static class PatternConverter implements ValueConverter<Pattern> {
@@ -635,7 +635,7 @@ public class JmodTask {
 
         @Override public Class<Pattern> valueType() { return Pattern.class; }
 
-        @Override public String valuePattern() { return null; }
+        @Override public String valuePattern() { return "pattern"; }
     }
 
     private final OptionParser parser = new OptionParser();
@@ -715,7 +715,8 @@ public class JmodTask {
             if (opts.has(libs))
                 options.libs = opts.valuesOf(libs);
             if (opts.has(modulePath))
-                options.moduleFinder = ModuleFinder.of(opts.valuesOf(modulePath).toArray(new Path[0]));
+                options.moduleFinder = ModuleFinder.of(
+                        opts.valuesOf(modulePath).toArray(new Path[0]));
             if (opts.has(moduleVersion))
                 options.moduleVersion = opts.valueOf(moduleVersion);
             if (opts.has(mainClass))
@@ -751,7 +752,8 @@ public class JmodTask {
             options.jmodFile = path;
 
             if (words.size() > 2)
-                throw new CommandException("err.unknown.option", words.subList(2, words.size())).showUsage(true);
+                throw new CommandException("err.unknown.option",
+                        words.subList(2, words.size())).showUsage(true);
 
             if (options.task.equals(Task.CREATE) && options.classpath == null)
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
