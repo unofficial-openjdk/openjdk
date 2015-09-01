@@ -1526,7 +1526,7 @@ public class XMLDocumentFragmentScannerImpl
         
         scanAttributeValue(tmpStr, fTempString2,
                 fAttributeQName.rawname, attributes,
-                attIndex, isVC);
+                attIndex, isVC, fCurrentElement.rawname);
 
         // content
         int oldLen = attributes.getLength();

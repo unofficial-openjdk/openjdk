@@ -828,6 +828,7 @@ public abstract class XMLScanner
      * @param attrIndex The index of the attribute to use from the list.
      * @param checkEntities true if undeclared entities should be reported as VC violation,
      *                      false if undeclared entities should be reported as WFC violation.
+     * @param eleName The name of element to which this attribute belongs.
      *
      * <strong>Note:</strong> This method uses fStringBuffer2, anything in it
      * at the time of calling is lost.
@@ -836,13 +837,13 @@ public abstract class XMLScanner
             XMLString nonNormalizedValue,
             String atName,
             XMLAttributes attributes, int attrIndex,
-            boolean checkEntities)
+            boolean checkEntities, String eleName)
             throws IOException, XNIException {
         XMLStringBuffer stringBuffer = null;
         // quote
         int quote = fEntityScanner.peekChar();
         if (quote != '\'' && quote != '"') {
-            reportFatalError("OpenQuoteExpected", new Object[]{atName});
+            reportFatalError("OpenQuoteExpected", new Object[]{eleName, atName});
         }
         
         fEntityScanner.scanChar();
@@ -968,7 +969,7 @@ public abstract class XMLScanner
                     }
                 } else if (c == '<') {
                     reportFatalError("LessthanInAttValue",
-                            new Object[] { null, atName });
+                            new Object[] { eleName, atName });
                             fEntityScanner.scanChar();
                             if (entityDepth == fEntityDepth && fNeedNonNormalizedValue) {
                                 fStringBuffer2.append((char)c);
@@ -1003,7 +1004,7 @@ public abstract class XMLScanner
                     }
                 } else if (c != -1 && isInvalidLiteral(c)) {
                     reportFatalError("InvalidCharInAttValue",
-                            new Object[] {Integer.toString(c, 16)});
+                            new Object[] {eleName, atName, Integer.toString(c, 16)});
                             fEntityScanner.scanChar();
                             if (entityDepth == fEntityDepth && fNeedNonNormalizedValue) {
                                 fStringBuffer2.append((char)c);
@@ -1032,7 +1033,7 @@ public abstract class XMLScanner
         // quote
         int cquote = fEntityScanner.scanChar();
         if (cquote != quote) {
-            reportFatalError("CloseQuoteExpected", new Object[]{atName});
+            reportFatalError("CloseQuoteExpected", new Object[]{eleName, atName});
         }
     } // scanAttributeValue()
     
