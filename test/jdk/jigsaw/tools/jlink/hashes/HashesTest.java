@@ -82,7 +82,7 @@ public class HashesTest {
 
         compileClasses(modSrc, m1Classes, "-mp", jmods.toString());
         runJmod(m1Classes.toString(), m1Classes.getFileName().toString(),
-                "--modulepath", jmods.toString(), "--hash-dependences", "m2");
+                "--modulepath", jmods.toString(), "--hash-dependencies", "m2");
         runJava(0, "-mp", jmods.toString(), "-m", "m1/org.m1.Main");
 
         deleteDirectory(m3Classes);

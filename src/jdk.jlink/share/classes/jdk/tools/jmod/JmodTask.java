@@ -156,7 +156,7 @@ public class JmodTask {
         ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
-        Pattern dependencesToHash;
+        Pattern dependenciesToHash;
     }
 
     public int run(String[] args) {
@@ -273,7 +273,7 @@ public class JmodTask {
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
         final ModuleFinder moduleFinder = options.moduleFinder;
-        final Pattern dependencesToHash = options.dependencesToHash;
+        final Pattern dependenciesToHash = options.dependenciesToHash;
 
         JmodFileWriter() { }
 
@@ -373,8 +373,8 @@ public class JmodTask {
                 if (moduleVersion != null)
                     extender.version(moduleVersion);
 
-                // --hash-dependences
-                if (dependencesToHash != null) {
+                // --hash-dependencies
+                if (dependenciesToHash != null) {
                     String name = descriptor.name();
                     Set<Requires> dependences = descriptor.requires();
                     extender.hashes(hashDependences(name, dependences));
@@ -392,7 +392,7 @@ public class JmodTask {
         /**
          * Examines the module dependences of the given module
          * and computes the hash of any module that matches the
-         * pattern {@code dependencesToHash}.
+         * pattern {@code dependenciesToHash}.
          */
         DependencyHashes hashDependences(String name, Set<Requires> moduleDependences)
             throws IOException
@@ -400,7 +400,7 @@ public class JmodTask {
             Set<ModuleDescriptor> descriptors = new HashSet<>();
             for (Requires md: moduleDependences) {
                 String dn = md.name();
-                if (dependencesToHash.matcher(dn).find()) {
+                if (dependenciesToHash.matcher(dn).find()) {
                     Optional<ModuleReference> omref = moduleFinder.find(dn);
                     if (!omref.isPresent()) {
                         throw new RuntimeException("Hashing module " + name
@@ -659,8 +659,8 @@ public class JmodTask {
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(PathConverter.INSTANCE);
 
-        OptionSpec<Pattern> hashDependences
-                = parser.accepts("hash-dependences", getMessage("main.opt.hash-dependences"))
+        OptionSpec<Pattern> hashDependencies
+                = parser.accepts("hash-dependencies", getMessage("main.opt.hash-dependencies"))
                         .withRequiredArg()
                         .withValuesConvertedBy(new PatternConverter());
 
@@ -721,9 +721,9 @@ public class JmodTask {
                 options.moduleVersion = opts.valueOf(moduleVersion);
             if (opts.has(mainClass))
                 options.mainClass = opts.valueOf(mainClass);
-            if (opts.has(hashDependences)) {
-                options.dependencesToHash = opts.valueOf(hashDependences);
-                // if storing hashes of dependences then the module path is required
+            if (opts.has(hashDependencies)) {
+                options.dependenciesToHash = opts.valueOf(hashDependencies);
+                // if storing hashes of dependencies then the module path is required
                 if (options.moduleFinder == null)
                     throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }

@@ -117,7 +117,7 @@ class Main {
     /* Modular jar related options */
     boolean printModuleDescriptor;
     Version moduleVersion;
-    Pattern dependencesToHash;
+    Pattern dependenciesToHash;
     ModuleFinder moduleFinder = ModuleFinder.empty();
 
     private static final String MODULE_INFO = "module-info.class";
@@ -241,7 +241,7 @@ class Main {
                 if (isModularJar()) {
                     moduleInfoBytes = addExtendedModuleAttributes(
                             new InputStreamSupplier(moduleInfo));
-                } else if (moduleVersion != null || dependencesToHash != null) {
+                } else if (moduleVersion != null || dependenciesToHash != null) {
                     error(getMsg("error.module.options.without.info"));
                     return false;
                 }
@@ -807,7 +807,7 @@ class Main {
                 }
             } else if (isModuleInfoEntry
                        && ((newModuleInfo == null) || (ename != null)
-                           || moduleVersion != null || dependencesToHash != null)) {
+                           || moduleVersion != null || dependenciesToHash != null)) {
                 if (newModuleInfo == null) {
                     // Update existing module-info.class
                     newModuleInfo = (new InputStreamSupplier(zis));
@@ -867,7 +867,7 @@ class Main {
             if (!updateModuleInfo(moduleInfoBytes, zos)) {
                 updateOk = false;
             }
-        } else if (moduleVersion != null || dependencesToHash != null) {
+        } else if (moduleVersion != null || dependenciesToHash != null) {
             error(getMsg("error.module.options.without.info"));
             updateOk = false;
         }
@@ -1776,8 +1776,8 @@ class Main {
             if (moduleVersion != null)
                 extender.version(moduleVersion);
 
-            // --hash-dependences
-            if (dependencesToHash != null)
+            // --hash-dependencies
+            if (dependenciesToHash != null)
                 extender.hashes(hashDependences(name, dependences));
 
             extender.write(baos);
@@ -1787,7 +1787,7 @@ class Main {
 
     /**
      * Examines the module dependences of the given module and computes the
-     * hash of any module that matches the pattern {@code dependencesToHash}.
+     * hash of any module that matches the pattern {@code dependenciesToHash}.
      */
     private Hasher.DependencyHashes
     hashDependences(String name,
@@ -1797,7 +1797,7 @@ class Main {
         Map<String, Path> map = new HashMap<>();
         for (ModuleDescriptor.Requires md: moduleDependences) {
             String dn = md.name();
-            if (dependencesToHash.matcher(dn).find()) {
+            if (dependenciesToHash.matcher(dn).find()) {
                 Optional<ModuleReference> omref = moduleFinder.find(dn);
                 if (!omref.isPresent()) {
                     throw new IOException(formatMsg2("error.hash.dep", name , dn));

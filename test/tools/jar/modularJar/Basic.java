@@ -325,7 +325,7 @@ public class Basic {
             "--main-class=" + BAR.mainClass,
             "--module-version=" + BAR.version,
             "--modulepath=" + mp.toString(),
-            "--hash-dependences=" + "foo",  // dependence on foo
+            "--hash-dependencies=" + "foo",  // dependency on foo
             "--no-manifest",
             "-C", modClasses.toString(), ".");
 
@@ -349,7 +349,7 @@ public class Basic {
 
          r = jarWithResult("--create",
                            "--archive=" + modularJar.toString(),
-                           "--hash-dependences=" + ".*",   // no module-info.class
+                           "--hash-dependencies=" + ".*",   // no module-info.class
                            "-C", modClasses.toString(), "jdk");
         FAIL.accept(r, null);  // TODO: expected failure message
     }
