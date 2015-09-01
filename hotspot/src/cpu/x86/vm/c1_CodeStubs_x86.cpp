@@ -416,7 +416,8 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
   int jmp_off = __ offset();
   __ jmp(_patch_site_entry);
   // Add enough nops so deoptimization can overwrite the jmp above with a call
-  // and not destroy the world.
+  // and not destroy the world. We cannot use fat nops here, since the concurrent
+  // code rewrite may transiently create the illegal instruction sequence.
   for (int j = __ offset() ; j < jmp_off + 5 ; j++ ) {
     __ nop();
   }
@@ -503,6 +504,9 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
   ce->align_call(lir_static_call);
 
   ce->emit_static_call_stub();
+  if (ce->compilation()->bailed_out()) {
+    return; // CodeCache is full
+  }
   AddressLiteral resolve(SharedRuntime::get_resolve_static_call_stub(),
                          relocInfo::static_call_type);
   __ call(resolve);

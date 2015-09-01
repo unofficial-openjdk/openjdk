@@ -2231,7 +2231,7 @@ void PhaseIdealLoop::build_and_optimize(bool do_split_ifs, bool skip_loop_opts) 
   // _nodes array holds the earliest legal controlling CFG node.
 
   // Allocate stack with enough space to avoid frequent realloc
-  int stack_size = (C->unique() >> 1) + 16; // (unique>>1)+16 from Java2D stats
+  int stack_size = (C->live_nodes() >> 1) + 16; // (live_nodes>>1)+16 from Java2D stats
   Node_Stack nstack( a, stack_size );
 
   visited.Clear();
@@ -2317,7 +2317,11 @@ void PhaseIdealLoop::build_and_optimize(bool do_split_ifs, bool skip_loop_opts) 
     // Reassociate invariants and prep for split_thru_phi
     for (LoopTreeIterator iter(_ltree_root); !iter.done(); iter.next()) {
       IdealLoopTree* lpt = iter.current();
-      if (!lpt->is_counted() || !lpt->is_inner()) continue;
+      bool is_counted = lpt->is_counted();
+      if (!is_counted || !lpt->is_inner()) continue;
+
+      // check for vectorized loops, any reassociation of invariants was already done
+      if (is_counted && lpt->_head->as_CountedLoop()->do_unroll_only()) continue;
 
       lpt->reassociate_invariants(this);
 
@@ -2687,7 +2691,7 @@ void PhaseIdealLoop::recompute_dom_depth() {
     }
   }
   if (_dom_stk == NULL) {
-    uint init_size = C->unique() / 100; // Guess that 1/100 is a reasonable initial size.
+    uint init_size = C->live_nodes() / 100; // Guess that 1/100 is a reasonable initial size.
     if (init_size < 10) init_size = 10;
     _dom_stk = new GrowableArray<uint>(init_size);
   }
@@ -2777,8 +2781,8 @@ IdealLoopTree *PhaseIdealLoop::sort( IdealLoopTree *loop, IdealLoopTree *innermo
 // The sort is of size number-of-control-children, which generally limits
 // it to size 2 (i.e., I just choose between my 2 target loops).
 void PhaseIdealLoop::build_loop_tree() {
-  // Allocate stack of size C->unique()/2 to avoid frequent realloc
-  GrowableArray <Node *> bltstack(C->unique() >> 1);
+  // Allocate stack of size C->live_nodes()/2 to avoid frequent realloc
+  GrowableArray <Node *> bltstack(C->live_nodes() >> 1);
   Node *n = C->root();
   bltstack.push(n);
   int pre_order = 1;
@@ -3668,7 +3672,7 @@ void PhaseIdealLoop::dump_bad_graph(const char* msg, Node* n, Node* early, Node*
 void PhaseIdealLoop::dump( ) const {
   ResourceMark rm;
   Arena* arena = Thread::current()->resource_area();
-  Node_Stack stack(arena, C->unique() >> 2);
+  Node_Stack stack(arena, C->live_nodes() >> 2);
   Node_List rpo_list;
   VectorSet visited(arena);
   visited.set(C->top()->_idx);
@@ -3678,7 +3682,6 @@ void PhaseIdealLoop::dump( ) const {
 }
 
 void PhaseIdealLoop::dump( IdealLoopTree *loop, uint idx, Node_List &rpo_list ) const {
-  CloneMap& cm = C->clone_map();
   loop->dump_head();
 
   // Now scan for CFG nodes in the same loop
@@ -3710,7 +3713,6 @@ void PhaseIdealLoop::dump( IdealLoopTree *loop, uint idx, Node_List &rpo_list ) 
         cached_idom = find_non_split_ctrl(cached_idom);
       }
       tty->print(" ID:%d",computed_idom->_idx);
-      cm.dump(n->_idx);
       n->dump();
       if( cached_idom != computed_idom ) {
         tty->print_cr("*** BROKEN IDOM!  Computed as: %d, cached as: %d",
@@ -3730,7 +3732,6 @@ void PhaseIdealLoop::dump( IdealLoopTree *loop, uint idx, Node_List &rpo_list ) 
           for( uint j = 0; j < loop->_nest; j++ )
             tty->print("  ");
           tty->print(" ");
-          cm.dump(m->_idx);
           m->dump();
         }
       }

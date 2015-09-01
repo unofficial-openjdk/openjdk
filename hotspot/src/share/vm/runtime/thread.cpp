@@ -52,6 +52,8 @@
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.inline.hpp"
 #include "runtime/biasedLocking.hpp"
+#include "runtime/commandLineFlagConstraintList.hpp"
+#include "runtime/commandLineFlagRangeList.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/frame.inline.hpp"
@@ -1802,14 +1804,25 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
   assert(!this->has_pending_exception(), "ensure_join should have cleared");
 
   // 6282335 JNI DetachCurrentThread spec states that all Java monitors
-  // held by this thread must be released.  A detach operation must only
-  // get here if there are no Java frames on the stack.  Therefore, any
-  // owned monitors at this point MUST be JNI-acquired monitors which are
-  // pre-inflated and in the monitor cache.
+  // held by this thread must be released. The spec does not distinguish
+  // between JNI-acquired and regular Java monitors. We can only see
+  // regular Java monitors here if monitor enter-exit matching is broken.
   //
-  // ensure_join() ignores IllegalThreadStateExceptions, and so does this.
-  if (exit_type == jni_detach && JNIDetachReleasesMonitors) {
-    assert(!this->has_last_Java_frame(), "detaching with Java frames?");
+  // Optionally release any monitors for regular JavaThread exits. This
+  // is provided as a work around for any bugs in monitor enter-exit
+  // matching. This can be expensive so it is not enabled by default.
+  // ObjectMonitor::Knob_ExitRelease is a superset of the
+  // JNIDetachReleasesMonitors option.
+  //
+  // ensure_join() ignores IllegalThreadStateExceptions, and so does
+  // ObjectSynchronizer::release_monitors_owned_by_thread().
+  if ((exit_type == jni_detach && JNIDetachReleasesMonitors) ||
+      ObjectMonitor::Knob_ExitRelease) {
+    // Sanity check even though JNI DetachCurrentThread() would have
+    // returned JNI_ERR if there was a Java frame. JavaThread exit
+    // should be done executing Java code by the time we get here.
+    assert(!this->has_last_Java_frame(),
+           "should not have a Java frame when detaching or exiting");
     ObjectSynchronizer::release_monitors_owned_by_thread(this);
     assert(!this->has_pending_exception(), "release_monitors should have cleared");
   }
@@ -2728,6 +2741,9 @@ void JavaThread::metadata_do(void f(Metadata*)) {
     if (ct->env() != NULL) {
       ct->env()->metadata_do(f);
     }
+    if (ct->task() != NULL) {
+      ct->task()->metadata_do(f);
+    }
   }
 }
 
@@ -3308,8 +3324,15 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   jint ergo_result = Arguments::apply_ergo();
   if (ergo_result != JNI_OK) return ergo_result;
 
-  // Final check of all arguments after ergonomics which may change values.
-  if (!CommandLineFlags::check_all_ranges_and_constraints()) {
+  // Final check of all ranges after ergonomics which may change values.
+  if (!CommandLineFlagRangeList::check_ranges()) {
+    return JNI_EINVAL;
+  }
+
+  // Final check of all 'AfterErgo' constraints after ergonomics which may change values.
+  bool constraint_result = CommandLineFlagConstraintList::check_constraints(CommandLineFlagConstraint::AfterErgo);
+  Arguments::post_after_ergo_constraint_check(constraint_result);
+  if (!constraint_result) {
     return JNI_EINVAL;
   }
 

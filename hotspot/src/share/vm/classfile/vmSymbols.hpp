@@ -568,6 +568,11 @@
   template(java_lang_management_ThreadInfo_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;)V") \
   template(java_lang_management_ThreadInfo_with_locks_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;[Ljava/lang/Object;[I[Ljava/lang/Object;)V") \
   template(long_long_long_long_void_signature,         "(JJJJ)V")                                                 \
+  template(finalizer_histogram_klass,                  "java/lang/ref/FinalizerHistogram")                        \
+  template(void_finalizer_histogram_entry_array_signature,  "()[Ljava/lang/ref/FinalizerHistogram$Entry;")                        \
+  template(get_finalizer_histogram_name,               "getFinalizerHistogram")                                   \
+  template(finalizer_histogram_entry_name_field,       "className")                                               \
+  template(finalizer_histogram_entry_count_field,      "instanceCount")                                           \
                                                                                                                   \
   template(java_lang_management_MemoryPoolMXBean,      "java/lang/management/MemoryPoolMXBean")                   \
   template(java_lang_management_MemoryManagerMXBean,   "java/lang/management/MemoryManagerMXBean")                \
@@ -658,7 +663,10 @@
 // annotation. If CheckIntrinsics is enabled, the VM performs the following
 // checks when a class C is loaded: (1) all intrinsics defined by the VM for
 // class C are present in the loaded class file and are marked;
-// (2) an intrinsic is defined by the VM for all marked methods of class C.
+// (2) an intrinsic is defined by the VM for all marked methods of class C;
+// (3) check for orphan methods in class C (i.e., methods for which the VM
+// declares an intrinsic but that are not declared for the loaded class C.
+// Check (3) is available only in debug builds.
 //
 // If a mismatch is detected for a method, the VM behaves differently depending
 // on the type of build. A fastdebug build exits and reports an error on a mismatch.
@@ -679,6 +687,10 @@
    do_name(     getClass_name,                                   "getClass")                                            \
   do_intrinsic(_clone,                    java_lang_Object,       clone_name, void_object_signature,             F_R)   \
    do_name(     clone_name,                                      "clone")                                               \
+  do_intrinsic(_notify,                   java_lang_Object,       notify_name, void_method_signature,            F_R)   \
+   do_name(     notify_name,                                     "notify")                                              \
+  do_intrinsic(_notifyAll,                java_lang_Object,       notifyAll_name, void_method_signature,         F_R)   \
+   do_name(     notifyAll_name,                                  "notifyAll")                                           \
                                                                                                                         \
   /* Math & StrictMath intrinsics are defined in terms of just a few signatures: */                                     \
   do_class(java_lang_Math,                "java/lang/Math")                                                             \
@@ -1361,6 +1373,25 @@ public:
 
   // Raw conversion:
   static ID for_raw_conversion(BasicType src, BasicType dest);
+
+  // The methods below provide information related to compiling intrinsics.
+
+  // (1) Information needed by the C1 compiler.
+
+  static bool preserves_state(vmIntrinsics::ID id);
+  static bool can_trap(vmIntrinsics::ID id);
+
+  // (2) Information needed by the C2 compiler.
+
+  // Returns true if the intrinsic for method 'method' will perform a virtual dispatch.
+  static bool does_virtual_dispatch(vmIntrinsics::ID id);
+  // A return value larger than 0 indicates that the intrinsic for method
+  // 'method' requires predicated logic.
+  static int predicates_needed(vmIntrinsics::ID id);
+
+  // Returns true if a compiler intrinsic is disabled by command-line flags
+  // and false otherwise.
+  static bool is_disabled_by_flags(methodHandle method, methodHandle compilation_context);
 };
 
 #endif // SHARE_VM_CLASSFILE_VMSYMBOLS_HPP

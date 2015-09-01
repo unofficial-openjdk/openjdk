@@ -27,7 +27,6 @@
 
 #include "gc/g1/concurrentMark.hpp"
 #include "gc/g1/evacuationInfo.hpp"
-#include "gc/g1/g1AllocRegion.hpp"
 #include "gc/g1/g1AllocationContext.hpp"
 #include "gc/g1/g1Allocator.hpp"
 #include "gc/g1/g1BiasedArray.hpp"
@@ -187,13 +186,11 @@ class G1CollectedHeap : public CollectedHeap {
   friend class MutatorAllocRegion;
   friend class SurvivorGCAllocRegion;
   friend class OldGCAllocRegion;
-  friend class G1Allocator;
-  friend class G1ArchiveAllocator;
 
   // Closures used in implementation.
   friend class G1ParScanThreadState;
   friend class G1ParTask;
-  friend class G1ParGCAllocator;
+  friend class G1PLABAllocator;
   friend class G1PrepareCompactClosure;
 
   // Other related classes.
@@ -248,8 +245,17 @@ private:
   // The sequence of all heap regions in the heap.
   HeapRegionManager _hrm;
 
-  // Class that handles the different kinds of allocations.
+  // Handles non-humongous allocations in the G1CollectedHeap.
   G1Allocator* _allocator;
+
+  // Outside of GC pauses, the number of bytes used in all regions other
+  // than the current allocation region(s).
+  size_t _summary_bytes_used;
+
+  void increase_used(size_t bytes);
+  void decrease_used(size_t bytes);
+
+  void set_used(size_t bytes);
 
   // Class that handles archive allocation ranges.
   G1ArchiveAllocator* _archive_allocator;
@@ -270,22 +276,6 @@ private:
   // Currently, it is only consulted during GC and it's reset at the
   // start of each GC.
   bool _expand_heap_after_alloc_failure;
-
-  // It resets the mutator alloc region before new allocations can take place.
-  void init_mutator_alloc_region();
-
-  // It releases the mutator alloc region.
-  void release_mutator_alloc_region();
-
-  // It initializes the GC alloc regions at the start of a GC.
-  void init_gc_alloc_regions(EvacuationInfo& evacuation_info);
-
-  // It releases the GC alloc regions at the end of a GC.
-  void release_gc_alloc_regions(EvacuationInfo& evacuation_info);
-
-  // It does any cleanup that needs to be done on the GC alloc regions
-  // before a Full GC.
-  void abandon_gc_alloc_regions();
 
   // Helper for monitoring and management support.
   G1MonitoringSupport* _g1mm;
@@ -542,31 +532,6 @@ protected:
                                             AllocationContext_t context,
                                             bool expect_null_mutator_alloc_region);
 
-  // It dirties the cards that cover the block so that so that the post
-  // write barrier never queues anything when updating objects on this
-  // block. It is assumed (and in fact we assert) that the block
-  // belongs to a young region.
-  inline void dirty_young_block(HeapWord* start, size_t word_size);
-
-  // Allocate blocks during garbage collection. Will ensure an
-  // allocation region, either by picking one or expanding the
-  // heap, and then allocate a block of the given size. The block
-  // may not be a humongous - it must fit into a single heap region.
-  inline HeapWord* par_allocate_during_gc(InCSetState dest,
-                                          size_t word_size,
-                                          AllocationContext_t context);
-  // Ensure that no further allocations can happen in "r", bearing in mind
-  // that parallel threads might be attempting allocations.
-  void par_allocate_remaining_space(HeapRegion* r);
-
-  // Allocation attempt during GC for a survivor object / PLAB.
-  inline HeapWord* survivor_attempt_allocation(size_t word_size,
-                                               AllocationContext_t context);
-
-  // Allocation attempt during GC for an old object / PLAB.
-  inline HeapWord* old_attempt_allocation(size_t word_size,
-                                          AllocationContext_t context);
-
   // These methods are the "callbacks" from the G1AllocRegion class.
 
   // For mutator alloc regions.
@@ -579,10 +544,6 @@ protected:
                                   InCSetState dest);
   void retire_gc_alloc_region(HeapRegion* alloc_region,
                               size_t allocated_bytes, InCSetState dest);
-
-  // Allocate the highest free region in the reserved heap. This will commit
-  // regions as necessary.
-  HeapRegion* alloc_highest_free_region();
 
   // - if explicit_gc is true, the GC is for a System.gc() or a heap
   //   inspection request and should collect the entire heap
@@ -716,6 +677,13 @@ public:
 
   G1HRPrinter* hr_printer() { return &_hr_printer; }
 
+  // Allocates a new heap region instance.
+  HeapRegion* new_heap_region(uint hrs_index, MemRegion mr);
+
+  // Allocate the highest free region in the reserved heap. This will commit
+  // regions as necessary.
+  HeapRegion* alloc_highest_free_region();
+
   // Frees a non-humongous region by initializing its contents and
   // adding it to the free list that's passed as a parameter (this is
   // usually a local list which will be appended to the master free
@@ -728,6 +696,12 @@ public:
                    FreeRegionList* free_list,
                    bool par,
                    bool locked = false);
+
+  // It dirties the cards that cover the block so that the post
+  // write barrier never queues anything when updating objects on this
+  // block. It is assumed (and in fact we assert) that the block
+  // belongs to a young region.
+  inline void dirty_young_block(HeapWord* start, size_t word_size);
 
   // Frees a humongous region by collapsing it into individual regions
   // and calling free_region() for each of them. The freed regions
@@ -858,44 +832,27 @@ protected:
   // forwarding pointers to themselves.  Reset them.
   void remove_self_forwarding_pointers();
 
-  // Together, these store an object with a preserved mark, and its mark value.
-  Stack<oop, mtGC>     _objs_with_preserved_marks;
-  Stack<markOop, mtGC> _preserved_marks_of_objs;
+  struct OopAndMarkOop {
+   private:
+    oop _o;
+    markOop _m;
+   public:
+    OopAndMarkOop(oop obj, markOop m) : _o(obj), _m(m) {
+    }
+
+    void set_mark() {
+      _o->set_mark(_m);
+    }
+  };
+
+  typedef Stack<OopAndMarkOop,mtGC> OopAndMarkOopStack;
+  // Stores marks with the corresponding oop that we need to preserve during evacuation
+  // failure.
+  OopAndMarkOopStack*  _preserved_objs;
 
   // Preserve the mark of "obj", if necessary, in preparation for its mark
   // word being overwritten with a self-forwarding-pointer.
-  void preserve_mark_if_necessary(oop obj, markOop m);
-
-  // The stack of evac-failure objects left to be scanned.
-  GrowableArray<oop>*    _evac_failure_scan_stack;
-  // The closure to apply to evac-failure objects.
-
-  OopsInHeapRegionClosure* _evac_failure_closure;
-  // Set the field above.
-  void
-  set_evac_failure_closure(OopsInHeapRegionClosure* evac_failure_closure) {
-    _evac_failure_closure = evac_failure_closure;
-  }
-
-  // Push "obj" on the scan stack.
-  void push_on_evac_failure_scan_stack(oop obj);
-  // Process scan stack entries until the stack is empty.
-  void drain_evac_failure_scan_stack();
-  // True iff an invocation of "drain_scan_stack" is in progress; to
-  // prevent unnecessary recursion.
-  bool _drain_in_progress;
-
-  // Do any necessary initialization for evacuation-failure handling.
-  // "cl" is the closure that will be used to process evac-failure
-  // objects.
-  void init_for_evac_failure(OopsInHeapRegionClosure* cl);
-  // Do any necessary cleanup for evacuation-failure handling data
-  // structures.
-  void finalize_for_evac_failure();
-
-  // An attempt to evacuate "obj" has failed; take necessary steps.
-  oop handle_evacuation_failure_par(G1ParScanThreadState* _par_scan_state, oop obj);
-  void handle_evacuation_failure_common(oop obj, markOop m);
+  void preserve_mark_during_evac_failure(uint worker_id, oop obj, markOop m);
 
 #ifndef PRODUCT
   // Support for forcing evacuation failures. Analogous to
@@ -1224,6 +1181,7 @@ public:
     }
   }
 
+  inline void old_set_add(HeapRegion* hr);
   inline void old_set_remove(HeapRegion* hr);
 
   size_t non_young_capacity_bytes() {
@@ -1271,7 +1229,7 @@ public:
 
   // Return "TRUE" iff the given object address is within the collection
   // set. Slow implementation.
-  inline bool obj_in_cs(oop obj);
+  bool obj_in_cs(oop obj);
 
   inline bool is_in_cset(const HeapRegion *hr);
   inline bool is_in_cset(oop obj);

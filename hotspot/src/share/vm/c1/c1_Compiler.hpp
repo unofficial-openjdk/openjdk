@@ -55,6 +55,9 @@ class Compiler: public AbstractCompiler {
   // Print compilation timers and statistics
   virtual void print_timers();
 
+  // Check if the C1 compiler supports an intrinsic for 'method'.
+  virtual bool is_intrinsic_supported(methodHandle method);
+
   // Size of the code buffer
   static int code_buffer_size();
 };

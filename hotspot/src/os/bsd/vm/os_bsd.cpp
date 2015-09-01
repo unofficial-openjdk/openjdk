@@ -739,39 +739,34 @@ bool os::create_thread(Thread* thread, ThreadType thr_type, size_t stack_size) {
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-  // stack size
-  if (os::Bsd::supports_variable_stack_size()) {
-    // calculate stack size if it's not specified by caller
-    if (stack_size == 0) {
-      stack_size = os::Bsd::default_stack_size(thr_type);
+  // calculate stack size if it's not specified by caller
+  if (stack_size == 0) {
+    stack_size = os::Bsd::default_stack_size(thr_type);
 
-      switch (thr_type) {
-      case os::java_thread:
-        // Java threads use ThreadStackSize which default value can be
-        // changed with the flag -Xss
-        assert(JavaThread::stack_size_at_create() > 0, "this should be set");
-        stack_size = JavaThread::stack_size_at_create();
+    switch (thr_type) {
+    case os::java_thread:
+      // Java threads use ThreadStackSize which default value can be
+      // changed with the flag -Xss
+      assert(JavaThread::stack_size_at_create() > 0, "this should be set");
+      stack_size = JavaThread::stack_size_at_create();
+      break;
+    case os::compiler_thread:
+      if (CompilerThreadStackSize > 0) {
+        stack_size = (size_t)(CompilerThreadStackSize * K);
         break;
-      case os::compiler_thread:
-        if (CompilerThreadStackSize > 0) {
-          stack_size = (size_t)(CompilerThreadStackSize * K);
-          break;
-        } // else fall through:
-          // use VMThreadStackSize if CompilerThreadStackSize is not defined
-      case os::vm_thread:
-      case os::pgc_thread:
-      case os::cgc_thread:
-      case os::watcher_thread:
-        if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-        break;
-      }
+      } // else fall through:
+        // use VMThreadStackSize if CompilerThreadStackSize is not defined
+    case os::vm_thread:
+    case os::pgc_thread:
+    case os::cgc_thread:
+    case os::watcher_thread:
+      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
+      break;
     }
-
-    stack_size = MAX2(stack_size, os::Bsd::min_stack_allowed);
-    pthread_attr_setstacksize(&attr, stack_size);
-  } else {
-    // let pthread_create() pick the default value.
   }
+
+  stack_size = MAX2(stack_size, os::Bsd::min_stack_allowed);
+  pthread_attr_setstacksize(&attr, stack_size);
 
   ThreadState state;
 
@@ -1600,24 +1595,6 @@ void* os::dll_lookup(void* handle, const char* name) {
   return dlsym(handle, name);
 }
 
-
-static bool _print_ascii_file(const char* filename, outputStream* st) {
-  int fd = ::open(filename, O_RDONLY);
-  if (fd == -1) {
-    return false;
-  }
-
-  char buf[32];
-  int bytes;
-  while ((bytes = ::read(fd, buf, sizeof(buf))) > 0) {
-    st->print_raw(buf, bytes);
-  }
-
-  ::close(fd);
-
-  return true;
-}
-
 int _print_dll_info_cb(const char * name, address base_address, address top_address, void * param) {
   outputStream * out = (outputStream *) param;
   out->print_cr(PTR_FORMAT " \t%s", base_address, name);
@@ -1678,15 +1655,38 @@ int os::get_loaded_modules_info(os::LoadedModulesCallbackFunc callback, void *pa
 #endif
 }
 
-void os::print_os_info_brief(outputStream* st) {
-  st->print("Bsd");
+void os::get_summary_os_info(char* buf, size_t buflen) {
+  // These buffers are small because we want this to be brief
+  // and not use a lot of stack while generating the hs_err file.
+  char os[100];
+  size_t size = sizeof(os);
+  int mib_kern[] = { CTL_KERN, KERN_OSTYPE };
+  if (sysctl(mib_kern, 2, os, &size, NULL, 0) < 0) {
+#ifdef __APPLE__
+      strncpy(os, "Darwin", sizeof(os));
+#elif __OpenBSD__
+      strncpy(os, "OpenBSD", sizeof(os));
+#else
+      strncpy(os, "BSD", sizeof(os));
+#endif
+  }
 
+  char release[100];
+  size = sizeof(release);
+  int mib_release[] = { CTL_KERN, KERN_OSRELEASE };
+  if (sysctl(mib_release, 2, release, &size, NULL, 0) < 0) {
+      // if error, leave blank
+      strncpy(release, "", sizeof(release));
+  }
+  snprintf(buf, buflen, "%s %s", os, release);
+}
+
+void os::print_os_info_brief(outputStream* st) {
   os::Posix::print_uname_info(st);
 }
 
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
-  st->print("Bsd");
 
   os::Posix::print_uname_info(st);
 
@@ -1699,6 +1699,33 @@ void os::pd_print_cpu_info(outputStream* st, char* buf, size_t buflen) {
   // Nothing to do for now.
 }
 
+void os::get_summary_cpu_info(char* buf, size_t buflen) {
+  unsigned int mhz;
+  size_t size = sizeof(mhz);
+  int mib[] = { CTL_HW, HW_CPU_FREQ };
+  if (sysctl(mib, 2, &mhz, &size, NULL, 0) < 0) {
+    mhz = 1;  // looks like an error but can be divided by
+  } else {
+    mhz /= 1000000;  // reported in millions
+  }
+
+  char model[100];
+  size = sizeof(model);
+  int mib_model[] = { CTL_HW, HW_MODEL };
+  if (sysctl(mib_model, 2, model, &size, NULL, 0) < 0) {
+    strncpy(model, cpu_arch, sizeof(model));
+  }
+
+  char machine[100];
+  size = sizeof(machine);
+  int mib_machine[] = { CTL_HW, HW_MACHINE };
+  if (sysctl(mib_machine, 2, machine, &size, NULL, 0) < 0) {
+      strncpy(machine, "", sizeof(machine));
+  }
+
+  snprintf(buf, buflen, "%s %s %d MHz", model, machine, mhz);
+}
+
 void os::print_memory_info(outputStream* st) {
 
   st->print("Memory:");
@@ -1708,11 +1735,6 @@ void os::print_memory_info(outputStream* st) {
             os::physical_memory() >> 10);
   st->print("(" UINT64_FORMAT "k free)",
             os::available_memory() >> 10);
-  st->cr();
-
-  // meminfo
-  st->print("\n/proc/meminfo:\n");
-  _print_ascii_file("/proc/meminfo", st);
   st->cr();
 }
 

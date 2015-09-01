@@ -33,6 +33,7 @@
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
 #include "nativeInst_aarch64.hpp"
+#include "oops/klass.inline.hpp"
 #include "opto/compile.hpp"
 #include "opto/node.hpp"
 #include "runtime/biasedLocking.hpp"
@@ -663,7 +664,7 @@ void MacroAssembler::call_VM_helper(Register oop_result, address entry_point, in
 // Maybe emit a call via a trampoline.  If the code cache is small
 // trampolines won't be emitted.
 
-void MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
+address MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
   assert(entry.rspec().type() == relocInfo::runtime_call_type
          || entry.rspec().type() == relocInfo::opt_virtual_call_type
          || entry.rspec().type() == relocInfo::static_call_type
@@ -671,7 +672,10 @@ void MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
 
   unsigned int start_offset = offset();
   if (far_branches() && !Compile::current()->in_scratch_emit_size()) {
-    emit_trampoline_stub(offset(), entry.target());
+    address stub = emit_trampoline_stub(start_offset, entry.target());
+    if (stub == NULL) {
+      return NULL; // CodeCache is full
+    }
   }
 
   if (cbuf) cbuf->set_insts_mark();
@@ -681,6 +685,8 @@ void MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
   } else {
     bl(pc());
   }
+  // just need to return a non-null address
+  return pc();
 }
 
 
@@ -695,13 +701,11 @@ void MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
 //   load the call target from the constant pool
 //   branch (LR still points to the call site above)
 
-void MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
+address MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
                                              address dest) {
   address stub = start_a_stub(Compile::MAX_stubs_size/2);
   if (stub == NULL) {
-    start_a_stub(Compile::MAX_stubs_size/2);
-    Compile::current()->env()->record_out_of_memory_failure();
-    return;
+    return NULL;  // CodeBuffer::expand failed
   }
 
   // Create a trampoline stub relocation which relates this trampoline stub
@@ -728,15 +732,16 @@ void MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
   assert(is_NativeCallTrampolineStub_at(stub_start_addr), "doesn't look like a trampoline");
 
   end_a_stub();
+  return stub;
 }
 
-void MacroAssembler::ic_call(address entry) {
+address MacroAssembler::ic_call(address entry) {
   RelocationHolder rh = virtual_call_Relocation::spec(pc());
   // address const_ptr = long_constant((jlong)Universe::non_oop_word());
   // unsigned long offset;
   // ldr_constant(rscratch2, const_ptr);
   movptr(rscratch2, (uintptr_t)Universe::non_oop_word());
-  trampoline_call(Address(entry, rh));
+  return trampoline_call(Address(entry, rh));
 }
 
 // Implementation of call_VM versions
@@ -2008,6 +2013,14 @@ void MacroAssembler::addw(Register Rd, Register Rn, RegisterOrConstant increment
   }
 }
 
+void MacroAssembler::sub(Register Rd, Register Rn, RegisterOrConstant decrement) {
+  if (decrement.is_register()) {
+    sub(Rd, Rn, decrement.as_register());
+  } else {
+    sub(Rd, Rn, decrement.as_constant());
+  }
+}
+
 void MacroAssembler::reinit_heapbase()
 {
   if (UseCompressedOops) {
@@ -2304,6 +2317,28 @@ Address MacroAssembler::offsetted_address(Register r, Register r1,
   } else {
     return Address(r, r1, ext);
   }
+}
+
+Address MacroAssembler::spill_address(int size, int offset, Register tmp)
+{
+  assert(offset >= 0, "spill to negative address?");
+  // Offset reachable ?
+  //   Not aligned - 9 bits signed offset
+  //   Aligned - 12 bits unsigned offset shifted
+  Register base = sp;
+  if ((offset & (size-1)) && offset >= (1<<8)) {
+    add(tmp, base, offset & ((1<<12)-1));
+    base = tmp;
+    offset &= -1<<12;
+  }
+
+  if (offset >= (1<<12) * size) {
+    add(tmp, base, offset & (((1<<12)-1)<<12));
+    base = tmp;
+    offset &= ~(((1<<12)-1)<<12);
+  }
+
+  return Address(base, offset);
 }
 
 /**
@@ -3791,8 +3826,8 @@ void MacroAssembler::eden_allocate(Register obj,
     br(Assembler::HI, slow_case);
 
     // If heap_top hasn't been changed by some other thread, update it.
-    stlxr(rscratch1, end, rscratch1);
-    cbnzw(rscratch1, retry);
+    stlxr(rscratch2, end, rscratch1);
+    cbnzw(rscratch2, retry);
   }
 }
 

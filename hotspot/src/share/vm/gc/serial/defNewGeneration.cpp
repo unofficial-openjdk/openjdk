@@ -96,7 +96,7 @@ EvacuateFollowersClosure(GenCollectedHeap* gch,
 void DefNewGeneration::EvacuateFollowersClosure::do_void() {
   do {
     _gch->oop_since_save_marks_iterate(GenCollectedHeap::YoungGen, _scan_cur_or_nonheap, _scan_older);
-  } while (!_gch->no_allocs_since_save_marks(GenCollectedHeap::YoungGen));
+  } while (!_gch->no_allocs_since_save_marks());
 }
 
 DefNewGeneration::FastEvacuateFollowersClosure::
@@ -112,7 +112,7 @@ FastEvacuateFollowersClosure(GenCollectedHeap* gch,
 void DefNewGeneration::FastEvacuateFollowersClosure::do_void() {
   do {
     _gch->oop_since_save_marks_iterate(GenCollectedHeap::YoungGen, _scan_cur_or_nonheap, _scan_older);
-  } while (!_gch->no_allocs_since_save_marks(GenCollectedHeap::YoungGen));
+  } while (!_gch->no_allocs_since_save_marks());
   guarantee(_gen->promo_failure_scan_is_complete(), "Failed to finish scan");
 }
 
@@ -597,7 +597,7 @@ void DefNewGeneration::collect(bool   full,
 
   gch->rem_set()->prepare_for_younger_refs_iterate(false);
 
-  assert(gch->no_allocs_since_save_marks(GenCollectedHeap::YoungGen),
+  assert(gch->no_allocs_since_save_marks(),
          "save marks have not been newly set.");
 
   // Not very pretty.
@@ -617,13 +617,13 @@ void DefNewGeneration::collect(bool   full,
                                                   &fsc_with_no_gc_barrier,
                                                   &fsc_with_gc_barrier);
 
-  assert(gch->no_allocs_since_save_marks(GenCollectedHeap::YoungGen),
+  assert(gch->no_allocs_since_save_marks(),
          "save marks have not been newly set.");
 
   {
     // DefNew needs to run with n_threads == 0, to make sure the serial
     // version of the card table scanning code is used.
-    // See: CardTableModRefBS::non_clean_card_iterate_possibly_parallel.
+    // See: CardTableModRefBSForCTRS::non_clean_card_iterate_possibly_parallel.
     StrongRootsScope srs(0);
 
     gch->gen_process_roots(&srs,

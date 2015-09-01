@@ -677,6 +677,52 @@ class MacroAssembler: public Assembler {
   void char_arrays_equalsImm(Register str1_reg, Register str2_reg, int cntval, Register result_reg,
                              Register tmp1_reg, Register tmp2_reg);
 
+  // Emitters for BigInteger.multiplyToLen intrinsic.
+  inline void multiply64(Register dest_hi, Register dest_lo,
+                         Register x, Register y);
+  void add2_with_carry(Register dest_hi, Register dest_lo,
+                       Register src1, Register src2);
+  void multiply_64_x_64_loop(Register x, Register xstart, Register x_xstart,
+                             Register y, Register y_idx, Register z,
+                             Register carry, Register product_high, Register product,
+                             Register idx, Register kdx, Register tmp);
+  void multiply_add_128_x_128(Register x_xstart, Register y, Register z,
+                              Register yz_idx, Register idx, Register carry,
+                              Register product_high, Register product, Register tmp,
+                              int offset);
+  void multiply_128_x_128_loop(Register x_xstart,
+                               Register y, Register z,
+                               Register yz_idx, Register idx, Register carry,
+                               Register product_high, Register product,
+                               Register carry2, Register tmp);
+  void multiply_to_len(Register x, Register xlen,
+                       Register y, Register ylen,
+                       Register z, Register zlen,
+                       Register tmp1, Register tmp2, Register tmp3, Register tmp4, Register tmp5,
+                       Register tmp6, Register tmp7, Register tmp8, Register tmp9, Register tmp10,
+                       Register tmp11, Register tmp12, Register tmp13);
+
+  // CRC32 Intrinsics.
+  void load_reverse_32(Register dst, Register src);
+  int  crc32_table_columns(Register table, Register tc0, Register tc1, Register tc2, Register tc3);
+  void fold_byte_crc32(Register crc, Register val, Register table, Register tmp);
+  void fold_8bit_crc32(Register crc, Register table, Register tmp);
+  void update_byte_crc32(Register crc, Register val, Register table);
+  void update_byteLoop_crc32(Register crc, Register buf, Register len, Register table,
+                             Register data, bool loopAlignment, bool invertCRC);
+  void update_1word_crc32(Register crc, Register buf, Register table, int bufDisp, int bufInc,
+                          Register t0,  Register t1,  Register t2,  Register t3,
+                          Register tc0, Register tc1, Register tc2, Register tc3);
+  void kernel_crc32_2word(Register crc, Register buf, Register len, Register table,
+                          Register t0,  Register t1,  Register t2,  Register t3,
+                          Register tc0, Register tc1, Register tc2, Register tc3);
+  void kernel_crc32_1word(Register crc, Register buf, Register len, Register table,
+                          Register t0,  Register t1,  Register t2,  Register t3,
+                          Register tc0, Register tc1, Register tc2, Register tc3);
+  void kernel_crc32_1byte(Register crc, Register buf, Register len, Register table,
+                          Register t0,  Register t1,  Register t2,  Register t3);
+  void kernel_crc32_singleByte(Register crc, Register buf, Register len, Register table, Register tmp);
+
   //
   // Debugging
   //

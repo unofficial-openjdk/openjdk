@@ -31,13 +31,13 @@
 #include "oops/oop.inline.hpp"
 #include "runtime/prefetch.inline.hpp"
 
-G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num, ReferenceProcessor* rp)
+G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint worker_id, ReferenceProcessor* rp)
   : _g1h(g1h),
-    _refs(g1h->task_queue(queue_num)),
+    _refs(g1h->task_queue(worker_id)),
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
-    _hash_seed(17), _queue_num(queue_num),
+    _hash_seed(17), _worker_id(worker_id),
     _term_attempts(0),
     _tenuring_threshold(g1h->g1_policy()->tenuring_threshold()),
     _age_table(false), _scanner(g1h, rp),
@@ -59,7 +59,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num,
   _surviving_young_words = _surviving_young_words_base + PADDING_ELEM_NUM;
   memset(_surviving_young_words, 0, (size_t) real_length * sizeof(size_t));
 
-  _g1_par_allocator = G1ParGCAllocator::create_allocator(_g1h);
+  _plab_allocator = G1PLABAllocator::create_allocator(_g1h->allocator());
 
   _dest[InCSetState::NotInCSet]    = InCSetState::NotInCSet;
   // The dest for Young is used when the objects are aged enough to
@@ -71,37 +71,29 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num,
 }
 
 G1ParScanThreadState::~G1ParScanThreadState() {
-  _g1_par_allocator->retire_alloc_buffers();
-  delete _g1_par_allocator;
+  _plab_allocator->retire_alloc_buffers();
+  delete _plab_allocator;
   FREE_C_HEAP_ARRAY(size_t, _surviving_young_words_base);
 }
 
-void
-G1ParScanThreadState::print_termination_stats_hdr(outputStream* const st)
-{
+void G1ParScanThreadState::print_termination_stats_hdr(outputStream* const st) {
   st->print_raw_cr("GC Termination Stats");
-  st->print_raw_cr("     elapsed  --strong roots-- -------termination-------"
-                   " ------waste (KiB)------");
-  st->print_raw_cr("thr     ms        ms      %        ms      %    attempts"
-                   "  total   alloc    undo");
-  st->print_raw_cr("--- --------- --------- ------ --------- ------ --------"
-                   " ------- ------- -------");
+  st->print_raw_cr("     elapsed  --strong roots-- -------termination------- ------waste (KiB)------");
+  st->print_raw_cr("thr     ms        ms      %        ms      %    attempts  total   alloc    undo");
+  st->print_raw_cr("--- --------- --------- ------ --------- ------ -------- ------- ------- -------");
 }
 
-void
-G1ParScanThreadState::print_termination_stats(int i,
-                                              outputStream* const st) const
-{
+void G1ParScanThreadState::print_termination_stats(outputStream* const st) const {
   const double elapsed_ms = elapsed_time() * 1000.0;
   const double s_roots_ms = strong_roots_time() * 1000.0;
   const double term_ms    = term_time() * 1000.0;
   size_t alloc_buffer_waste = 0;
   size_t undo_waste = 0;
-  _g1_par_allocator->waste(alloc_buffer_waste, undo_waste);
-  st->print_cr("%3d %9.2f %9.2f %6.2f "
+  _plab_allocator->waste(alloc_buffer_waste, undo_waste);
+  st->print_cr("%3u %9.2f %9.2f %6.2f "
                "%9.2f %6.2f " SIZE_FORMAT_W(8) " "
                SIZE_FORMAT_W(7) " " SIZE_FORMAT_W(7) " " SIZE_FORMAT_W(7),
-               i, elapsed_ms, s_roots_ms, s_roots_ms * 100 / elapsed_ms,
+               _worker_id, elapsed_ms, s_roots_ms, s_roots_ms * 100 / elapsed_ms,
                term_ms, term_ms * 100 / elapsed_ms, term_attempts(),
                (alloc_buffer_waste + undo_waste) * HeapWordSize / K,
                alloc_buffer_waste * HeapWordSize / K,
@@ -144,8 +136,6 @@ bool G1ParScanThreadState::verify_task(StarTask ref) const {
 #endif // ASSERT
 
 void G1ParScanThreadState::trim_queue() {
-  assert(_evac_failure_cl != NULL, "not set");
-
   StarTask ref;
   do {
     // Drain the overflow stack first, so other threads can steal.
@@ -169,8 +159,9 @@ HeapWord* G1ParScanThreadState::allocate_in_next_plab(InCSetState const state,
   // Right now we only have two types of regions (young / old) so
   // let's keep the logic here simple. We can generalize it when necessary.
   if (dest->is_young()) {
-    HeapWord* const obj_ptr = _g1_par_allocator->allocate(InCSetState::Old,
-                                                          word_sz, context);
+    HeapWord* const obj_ptr = _plab_allocator->allocate(InCSetState::Old,
+                                                        word_sz,
+                                                        context);
     if (obj_ptr == NULL) {
       return NULL;
     }
@@ -211,18 +202,18 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
 
   uint age = 0;
   InCSetState dest_state = next_state(state, old_mark, age);
-  HeapWord* obj_ptr = _g1_par_allocator->plab_allocate(dest_state, word_sz, context);
+  HeapWord* obj_ptr = _plab_allocator->plab_allocate(dest_state, word_sz, context);
 
   // PLAB allocations should succeed most of the time, so we'll
   // normally check against NULL once and that's it.
   if (obj_ptr == NULL) {
-    obj_ptr = _g1_par_allocator->allocate_direct_or_new_plab(dest_state, word_sz, context);
+    obj_ptr = _plab_allocator->allocate_direct_or_new_plab(dest_state, word_sz, context);
     if (obj_ptr == NULL) {
       obj_ptr = allocate_in_next_plab(state, &dest_state, word_sz, context);
       if (obj_ptr == NULL) {
         // This will either forward-to-self, or detect that someone else has
         // installed a forwarding pointer.
-        return _g1h->handle_evacuation_failure_par(this, old);
+        return handle_evacuation_failure_par(old, old_mark);
       }
     }
   }
@@ -235,8 +226,8 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
   if (_g1h->evacuation_should_fail()) {
     // Doing this after all the allocation attempts also tests the
     // undo_allocation() method too.
-    _g1_par_allocator->undo_allocation(dest_state, obj_ptr, word_sz, context);
-    return _g1h->handle_evacuation_failure_par(this, old);
+    _plab_allocator->undo_allocation(dest_state, obj_ptr, word_sz, context);
+    return handle_evacuation_failure_par(old, old_mark);
   }
 #endif // !PRODUCT
 
@@ -276,7 +267,7 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
              "sanity");
       G1StringDedup::enqueue_from_evacuation(is_from_young,
                                              is_to_young,
-                                             queue_num(),
+                                             _worker_id,
                                              obj);
     }
 
@@ -297,7 +288,40 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
     }
     return obj;
   } else {
-    _g1_par_allocator->undo_allocation(dest_state, obj_ptr, word_sz, context);
+    _plab_allocator->undo_allocation(dest_state, obj_ptr, word_sz, context);
     return forward_ptr;
   }
 }
+
+oop G1ParScanThreadState::handle_evacuation_failure_par(oop old, markOop m) {
+  assert(_g1h->obj_in_cs(old),
+         err_msg("Object " PTR_FORMAT " should be in the CSet", p2i(old)));
+
+  oop forward_ptr = old->forward_to_atomic(old);
+  if (forward_ptr == NULL) {
+    // Forward-to-self succeeded. We are the "owner" of the object.
+    HeapRegion* r = _g1h->heap_region_containing(old);
+
+    if (!r->evacuation_failed()) {
+      r->set_evacuation_failed(true);
+     _g1h->hr_printer()->evac_failure(r);
+    }
+
+    _g1h->preserve_mark_during_evac_failure(_worker_id, old, m);
+
+    _scanner.set_region(r);
+    old->oop_iterate_backwards(&_scanner);
+
+    return old;
+  } else {
+    // Forward-to-self failed. Either someone else managed to allocate
+    // space for this object (old != forward_ptr) or they beat us in
+    // self-forwarding it (old == forward_ptr).
+    assert(old == forward_ptr || !_g1h->obj_in_cs(forward_ptr),
+           err_msg("Object " PTR_FORMAT " forwarded to: " PTR_FORMAT " "
+                   "should not be in the CSet",
+                   p2i(old), p2i(forward_ptr)));
+    return forward_ptr;
+  }
+}
+

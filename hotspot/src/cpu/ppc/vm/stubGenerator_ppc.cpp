@@ -2053,6 +2053,127 @@ class StubGenerator: public StubCodeGenerator {
     __ blr();
   }
 
+  // Stub for BigInteger::multiplyToLen()
+  //
+  //  Arguments:
+  //
+  //  Input:
+  //    R3 - x address
+  //    R4 - x length
+  //    R5 - y address
+  //    R6 - y length
+  //    R7 - z address
+  //    R8 - z length
+  //
+  address generate_multiplyToLen() {
+
+    StubCodeMark mark(this, "StubRoutines", "multiplyToLen");
+
+    address start = __ function_entry();
+
+    const Register x     = R3;
+    const Register xlen  = R4;
+    const Register y     = R5;
+    const Register ylen  = R6;
+    const Register z     = R7;
+    const Register zlen  = R8;
+
+    const Register tmp1  = R2; // TOC not used.
+    const Register tmp2  = R9;
+    const Register tmp3  = R10;
+    const Register tmp4  = R11;
+    const Register tmp5  = R12;
+
+    // non-volatile regs
+    const Register tmp6  = R31;
+    const Register tmp7  = R30;
+    const Register tmp8  = R29;
+    const Register tmp9  = R28;
+    const Register tmp10 = R27;
+    const Register tmp11 = R26;
+    const Register tmp12 = R25;
+    const Register tmp13 = R24;
+
+    BLOCK_COMMENT("Entry:");
+
+    // Save non-volatile regs (frameless).
+    int current_offs = 8;
+    __ std(R24, -current_offs, R1_SP); current_offs += 8;
+    __ std(R25, -current_offs, R1_SP); current_offs += 8;
+    __ std(R26, -current_offs, R1_SP); current_offs += 8;
+    __ std(R27, -current_offs, R1_SP); current_offs += 8;
+    __ std(R28, -current_offs, R1_SP); current_offs += 8;
+    __ std(R29, -current_offs, R1_SP); current_offs += 8;
+    __ std(R30, -current_offs, R1_SP); current_offs += 8;
+    __ std(R31, -current_offs, R1_SP);
+
+    __ multiply_to_len(x, xlen, y, ylen, z, zlen, tmp1, tmp2, tmp3, tmp4, tmp5,
+                       tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13);
+
+    // Restore non-volatile regs.
+    current_offs = 8;
+    __ ld(R24, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R25, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R26, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R27, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R28, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R29, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R30, -current_offs, R1_SP); current_offs += 8;
+    __ ld(R31, -current_offs, R1_SP);
+
+    __ blr();  // Return to caller.
+
+    return start;
+  }
+
+  /**
+   * Arguments:
+   *
+   * Inputs:
+   *   R3_ARG1    - int   crc
+   *   R4_ARG2    - byte* buf
+   *   R5_ARG3    - int   length (of buffer)
+   *
+   * scratch:
+   *   R6_ARG4    - crc table address
+   *   R7_ARG5    - tmp1
+   *   R8_ARG6    - tmp2
+   *
+   * Ouput:
+   *   R3_RET     - int   crc result
+   */
+  // Compute CRC32 function.
+  address generate_CRC32_updateBytes(const char* name) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", name);
+    address start = __ function_entry();  // Remember stub start address (is rtn value).
+
+    // arguments to kernel_crc32:
+    Register       crc     = R3_ARG1;  // Current checksum, preset by caller or result from previous call.
+    Register       data    = R4_ARG2;  // source byte array
+    Register       dataLen = R5_ARG3;  // #bytes to process
+    Register       table   = R6_ARG4;  // crc table address
+
+    Register       t0      = R9;       // work reg for kernel* emitters
+    Register       t1      = R10;      // work reg for kernel* emitters
+    Register       t2      = R11;      // work reg for kernel* emitters
+    Register       t3      = R12;      // work reg for kernel* emitters
+
+    BLOCK_COMMENT("Stub body {");
+    assert_different_registers(crc, data, dataLen, table);
+
+    StubRoutines::ppc64::generate_load_crc_table_addr(_masm, table);
+
+    __ kernel_crc32_1byte(crc, data, dataLen, table, t0, t1, t2, t3);
+
+    BLOCK_COMMENT("return");
+    __ mr_if_needed(R3_RET, crc);      // Updated crc is function result. No copying required (R3_ARG1 == R3_RET).
+    __ blr();
+
+    BLOCK_COMMENT("} Stub body");
+    return start;
+  }
+
   // Initialization
   void generate_initial() {
     // Generates all stubs and initializes the entry points
@@ -2071,6 +2192,12 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_throw_StackOverflowError_entry   =
       generate_throw_exception("StackOverflowError throw_exception",
                                CAST_FROM_FN_PTR(address, SharedRuntime::throw_StackOverflowError), false);
+
+    // CRC32 Intrinsics.
+    if (UseCRC32Intrinsics) {
+      StubRoutines::_crc_table_adr    = (address)StubRoutines::ppc64::_crc_table;
+      StubRoutines::_updateBytesCRC32 = generate_CRC32_updateBytes("CRC32_updateBytes");
+    }
   }
 
   void generate_all() {
@@ -2102,6 +2229,12 @@ class StubGenerator: public StubCodeGenerator {
     generate_safefetch("SafeFetchN", sizeof(intptr_t), &StubRoutines::_safefetchN_entry,
                                                        &StubRoutines::_safefetchN_fault_pc,
                                                        &StubRoutines::_safefetchN_continuation_pc);
+
+#ifdef COMPILER2
+    if (UseMultiplyToLenIntrinsic) {
+      StubRoutines::_multiplyToLen = generate_multiplyToLen();
+    }
+#endif
   }
 
  public:

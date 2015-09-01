@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -345,6 +345,14 @@ void CompileTask::mark_on_stack() {
   }
 }
 
+// RedefineClasses support
+void CompileTask::metadata_do(void f(Metadata*)) {
+  f(method());
+  if (hot_method() != NULL && hot_method() != method()) {
+    f(hot_method());
+  }
+}
+
 // ------------------------------------------------------------------
 // CompileTask::print_line_on_error
 //
@@ -501,8 +509,8 @@ void CompileTask::log_task(xmlStream* log) {
   methodHandle method(thread, this->method());
   ResourceMark rm(thread);
 
-  // <task id='9' method='M' osr_bci='X' level='1' blocking='1' stamp='1.234'>
-  log->print(" compile_id='%d'", _compile_id);
+  // <task compiler='Cx' id='9' method='M' osr_bci='X' level='1' blocking='1' stamp='1.234'>
+  log->print(" compiler='%s' compile_id='%d'", _comp_level <= CompLevel_full_profile ? "C1" : "C2", _compile_id);
   if (_osr_bci != CompileBroker::standard_entry_bci) {
     log->print(" compile_kind='osr'");  // same as nmethod::compile_kind
   } // else compile_kind='c2c'
@@ -660,6 +668,11 @@ void CompileQueue::free_all() {
  * Get the next CompileTask from a CompileQueue
  */
 CompileTask* CompileQueue::get() {
+  // save methods from RedefineClasses across safepoint
+  // across MethodCompileQueue_lock below.
+  methodHandle save_method;
+  methodHandle save_hot_method;
+
   MutexLocker locker(MethodCompileQueue_lock);
   // If _first is NULL we have no more compile jobs. There are two reasons for
   // having no compile jobs: First, we compiled everything we wanted. Second,
@@ -693,6 +706,12 @@ CompileTask* CompileQueue::get() {
     No_Safepoint_Verifier nsv;
     task = CompilationPolicy::policy()->select_task(this);
   }
+
+  // Save method pointers across unlock safepoint.  The task is removed from
+  // the compilation queue, which is walked during RedefineClasses.
+  save_method = methodHandle(task->method());
+  save_hot_method = methodHandle(task->hot_method());
+
   remove(task);
   purge_stale_tasks(); // may temporarily release MCQ lock
   return task;

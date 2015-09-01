@@ -971,34 +971,32 @@ bool os::create_thread(Thread* thread, ThreadType thr_type, size_t stack_size) {
   guarantee(pthread_attr_setsuspendstate_np(&attr, PTHREAD_CREATE_SUSPENDED_NP) == 0, "???");
 
   // calculate stack size if it's not specified by caller
-  if (os::Aix::supports_variable_stack_size()) {
-    if (stack_size == 0) {
-      stack_size = os::Aix::default_stack_size(thr_type);
+  if (stack_size == 0) {
+    stack_size = os::Aix::default_stack_size(thr_type);
 
-      switch (thr_type) {
-      case os::java_thread:
-        // Java threads use ThreadStackSize whose default value can be changed with the flag -Xss.
-        assert(JavaThread::stack_size_at_create() > 0, "this should be set");
-        stack_size = JavaThread::stack_size_at_create();
+    switch (thr_type) {
+    case os::java_thread:
+      // Java threads use ThreadStackSize whose default value can be changed with the flag -Xss.
+      assert(JavaThread::stack_size_at_create() > 0, "this should be set");
+      stack_size = JavaThread::stack_size_at_create();
+      break;
+    case os::compiler_thread:
+      if (CompilerThreadStackSize > 0) {
+        stack_size = (size_t)(CompilerThreadStackSize * K);
         break;
-      case os::compiler_thread:
-        if (CompilerThreadStackSize > 0) {
-          stack_size = (size_t)(CompilerThreadStackSize * K);
-          break;
-        } // else fall through:
-          // use VMThreadStackSize if CompilerThreadStackSize is not defined
-      case os::vm_thread:
-      case os::pgc_thread:
-      case os::cgc_thread:
-      case os::watcher_thread:
-        if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-        break;
-      }
+      } // else fall through:
+        // use VMThreadStackSize if CompilerThreadStackSize is not defined
+    case os::vm_thread:
+    case os::pgc_thread:
+    case os::cgc_thread:
+    case os::watcher_thread:
+      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
+      break;
     }
+  }
 
-    stack_size = MAX2(stack_size, os::Aix::min_stack_allowed);
-    pthread_attr_setstacksize(&attr, stack_size);
-  } //else let thread_create() pick the default value (96 K on AIX)
+  stack_size = MAX2(stack_size, os::Aix::min_stack_allowed);
+  pthread_attr_setstacksize(&attr, stack_size);
 
   pthread_t tid;
   int ret = pthread_create(&tid, &attr, (void* (*)(void*)) java_start, thread);
@@ -1550,6 +1548,13 @@ void os::print_dll_info(outputStream *st) {
   LoadedLibraries::print(st);
 }
 
+void os::get_summary_os_info(char* buf, size_t buflen) {
+  // There might be something more readable than uname results for AIX.
+  struct utsname name;
+  uname(&name);
+  snprintf(buf, buflen, "%s %s", name.release, name.version);
+}
+
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
@@ -1654,14 +1659,18 @@ void os::print_memory_info(outputStream* st) {
   }
 }
 
+// Get a string for the cpuinfo that is a summary of the cpu type
+void os::get_summary_cpu_info(char* buf, size_t buflen) {
+  // This looks good
+  os::Aix::cpuinfo_t ci;
+  if (os::Aix::get_cpuinfo(&ci)) {
+    strncpy(buf, ci.version, buflen);
+  } else {
+    strncpy(buf, "AIX", buflen);
+  }
+}
+
 void os::pd_print_cpu_info(outputStream* st, char* buf, size_t buflen) {
-  // cpu
-  st->print("CPU:");
-  st->print("total %d", os::processor_count());
-  // It's not safe to query number of active processors after crash
-  // st->print("(active %d)", os::active_processor_count());
-  st->print(" %s", VM_Version::cpu_features());
-  st->cr();
 }
 
 void os::print_siginfo(outputStream* st, void* siginfo) {
@@ -3483,7 +3492,6 @@ void os::init(void) {
   // For now UseLargePages is just ignored.
   FLAG_SET_ERGO(bool, UseLargePages, false);
   _page_sizes[0] = 0;
-  _large_page_size = -1;
 
   // debug trace
   trcVerbose("os::vm_page_size %s\n", describe_pagesize(os::vm_page_size()));

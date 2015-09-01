@@ -36,7 +36,6 @@ public:
 
   // Name
   const char *name() { return "C2"; }
-
   void initialize();
 
   // Compilation entry point for methods
@@ -51,6 +50,19 @@ public:
 
   // Print compilation timers and statistics
   void print_timers();
+
+  // Return true if the intrinsification of a method supported by the compiler
+  // assuming a non-virtual dispatch. (A virtual dispatch is
+  // possible for only a limited set of available intrinsics whereas
+  // a non-virtual dispatch is possible for all available intrinsics.)
+  // Return false otherwise.
+  virtual bool is_intrinsic_supported(methodHandle method) {
+    return is_intrinsic_supported(method, false);
+  }
+
+  // Check if the compiler supports an intrinsic for 'method' given the
+  // the dispatch mode specified by the 'is_virtual' parameter.
+  virtual bool is_intrinsic_supported(methodHandle method, bool is_virtual);
 
   // Initial size of the code buffer (may be increased at runtime)
   static int initial_code_buffer_size();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,8 +103,10 @@
 // The knob* variables are effectively final.  Once set they should
 // never be modified hence.  Consider using __read_mostly with GCC.
 
+int ObjectMonitor::Knob_ExitRelease = 0;
 int ObjectMonitor::Knob_Verbose     = 0;
 int ObjectMonitor::Knob_VerifyInUse = 0;
+int ObjectMonitor::Knob_VerifyMatch = 0;
 int ObjectMonitor::Knob_SpinLimit   = 5000;    // derived by an external tool -
 static int Knob_LogSpins            = 0;       // enable jvmstat tally for spins
 static int Knob_HandOff             = 0;
@@ -250,24 +252,6 @@ static volatile int InitDone        = 0;
 
 // -----------------------------------------------------------------------------
 // Enter support
-
-bool ObjectMonitor::try_enter(Thread* THREAD) {
-  if (THREAD != _owner) {
-    if (THREAD->is_lock_owned ((address)_owner)) {
-      assert(_recursions == 0, "internal state error");
-      _owner = THREAD;
-      _recursions = 1;
-      return true;
-    }
-    if (Atomic::cmpxchg_ptr (THREAD, &_owner, NULL) != NULL) {
-      return false;
-    }
-    return true;
-  } else {
-    _recursions++;
-    return true;
-  }
-}
 
 void NOINLINE ObjectMonitor::enter(TRAPS) {
   // The following code is ordered to check the most common cases first
@@ -446,6 +430,8 @@ int ObjectMonitor::TryLock(Thread * Self) {
   return -1;
 }
 
+#define MAX_RECHECK_INTERVAL 1000
+
 void NOINLINE ObjectMonitor::EnterI(TRAPS) {
   Thread * const Self = THREAD;
   assert(Self->is_Java_thread(), "invariant");
@@ -555,7 +541,7 @@ void NOINLINE ObjectMonitor::EnterI(TRAPS) {
 
   TEVENT(Inflated enter - Contention);
   int nWakeups = 0;
-  int RecheckInterval = 1;
+  int recheckInterval = 1;
 
   for (;;) {
 
@@ -569,10 +555,12 @@ void NOINLINE ObjectMonitor::EnterI(TRAPS) {
     // park self
     if (_Responsible == Self || (SyncFlags & 1)) {
       TEVENT(Inflated enter - park TIMED);
-      Self->_ParkEvent->park((jlong) RecheckInterval);
-      // Increase the RecheckInterval, but clamp the value.
-      RecheckInterval *= 8;
-      if (RecheckInterval > 1000) RecheckInterval = 1000;
+      Self->_ParkEvent->park((jlong) recheckInterval);
+      // Increase the recheckInterval, but clamp the value.
+      recheckInterval *= 8;
+      if (recheckInterval > MAX_RECHECK_INTERVAL) {
+        recheckInterval = MAX_RECHECK_INTERVAL;
+      }
     } else {
       TEVENT(Inflated enter - park UNTIMED);
       Self->_ParkEvent->park();
@@ -725,7 +713,7 @@ void NOINLINE ObjectMonitor::ReenterI(Thread * Self, ObjectWaiter * SelfNode) {
       // or java_suspend_self()
       jt->set_suspend_equivalent();
       if (SyncFlags & 1) {
-        Self->_ParkEvent->park((jlong)1000);
+        Self->_ParkEvent->park((jlong)MAX_RECHECK_INTERVAL);
       } else {
         Self->_ParkEvent->park();
       }
@@ -1652,15 +1640,8 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
 // then instead of transferring a thread from the WaitSet to the EntryList
 // we might just dequeue a thread from the WaitSet and directly unpark() it.
 
-void ObjectMonitor::notify(TRAPS) {
-  CHECK_OWNER();
-  if (_WaitSet == NULL) {
-    TEVENT(Empty-Notify);
-    return;
-  }
-  DTRACE_MONITOR_PROBE(notify, this, object(), THREAD);
-
-  int Policy = Knob_MoveNotifyee;
+void ObjectMonitor::INotify(Thread * Self) {
+  const int policy = Knob_MoveNotifyee;
 
   Thread::SpinAcquire(&_WaitSetLock, "WaitSet - notify");
   ObjectWaiter * iterator = DequeueWaiter();
@@ -1668,74 +1649,76 @@ void ObjectMonitor::notify(TRAPS) {
     TEVENT(Notify1 - Transfer);
     guarantee(iterator->TState == ObjectWaiter::TS_WAIT, "invariant");
     guarantee(iterator->_notified == 0, "invariant");
-    if (Policy != 4) {
+    // Disposition - what might we do with iterator ?
+    // a.  add it directly to the EntryList - either tail (policy == 1)
+    //     or head (policy == 0).
+    // b.  push it onto the front of the _cxq (policy == 2).
+    // For now we use (b).
+    if (policy != 4) {
       iterator->TState = ObjectWaiter::TS_ENTER;
     }
     iterator->_notified = 1;
-    Thread * Self = THREAD;
     iterator->_notifier_tid = Self->osthread()->thread_id();
 
-    ObjectWaiter * List = _EntryList;
-    if (List != NULL) {
-      assert(List->_prev == NULL, "invariant");
-      assert(List->TState == ObjectWaiter::TS_ENTER, "invariant");
-      assert(List != iterator, "invariant");
+    ObjectWaiter * list = _EntryList;
+    if (list != NULL) {
+      assert(list->_prev == NULL, "invariant");
+      assert(list->TState == ObjectWaiter::TS_ENTER, "invariant");
+      assert(list != iterator, "invariant");
     }
 
-    if (Policy == 0) {       // prepend to EntryList
-      if (List == NULL) {
+    if (policy == 0) {       // prepend to EntryList
+      if (list == NULL) {
         iterator->_next = iterator->_prev = NULL;
         _EntryList = iterator;
       } else {
-        List->_prev = iterator;
-        iterator->_next = List;
+        list->_prev = iterator;
+        iterator->_next = list;
         iterator->_prev = NULL;
         _EntryList = iterator;
       }
-    } else if (Policy == 1) {      // append to EntryList
-      if (List == NULL) {
+    } else if (policy == 1) {      // append to EntryList
+      if (list == NULL) {
         iterator->_next = iterator->_prev = NULL;
         _EntryList = iterator;
       } else {
         // CONSIDER:  finding the tail currently requires a linear-time walk of
         // the EntryList.  We can make tail access constant-time by converting to
         // a CDLL instead of using our current DLL.
-        ObjectWaiter * Tail;
-        for (Tail = List; Tail->_next != NULL; Tail = Tail->_next) /* empty */;
-        assert(Tail != NULL && Tail->_next == NULL, "invariant");
-        Tail->_next = iterator;
-        iterator->_prev = Tail;
+        ObjectWaiter * tail;
+        for (tail = list; tail->_next != NULL; tail = tail->_next) /* empty */;
+        assert(tail != NULL && tail->_next == NULL, "invariant");
+        tail->_next = iterator;
+        iterator->_prev = tail;
         iterator->_next = NULL;
       }
-    } else if (Policy == 2) {      // prepend to cxq
-      // prepend to cxq
-      if (List == NULL) {
+    } else if (policy == 2) {      // prepend to cxq
+      if (list == NULL) {
         iterator->_next = iterator->_prev = NULL;
         _EntryList = iterator;
       } else {
         iterator->TState = ObjectWaiter::TS_CXQ;
         for (;;) {
-          ObjectWaiter * Front = _cxq;
-          iterator->_next = Front;
-          if (Atomic::cmpxchg_ptr (iterator, &_cxq, Front) == Front) {
+          ObjectWaiter * front = _cxq;
+          iterator->_next = front;
+          if (Atomic::cmpxchg_ptr(iterator, &_cxq, front) == front) {
             break;
           }
         }
       }
-    } else if (Policy == 3) {      // append to cxq
+    } else if (policy == 3) {      // append to cxq
       iterator->TState = ObjectWaiter::TS_CXQ;
       for (;;) {
-        ObjectWaiter * Tail;
-        Tail = _cxq;
-        if (Tail == NULL) {
+        ObjectWaiter * tail = _cxq;
+        if (tail == NULL) {
           iterator->_next = NULL;
-          if (Atomic::cmpxchg_ptr (iterator, &_cxq, NULL) == NULL) {
+          if (Atomic::cmpxchg_ptr(iterator, &_cxq, NULL) == NULL) {
             break;
           }
         } else {
-          while (Tail->_next != NULL) Tail = Tail->_next;
-          Tail->_next = iterator;
-          iterator->_prev = Tail;
+          while (tail->_next != NULL) tail = tail->_next;
+          tail->_next = iterator;
+          iterator->_prev = tail;
           iterator->_next = NULL;
           break;
         }
@@ -1747,10 +1730,6 @@ void ObjectMonitor::notify(TRAPS) {
       ev->unpark();
     }
 
-    if (Policy < 4) {
-      iterator->wait_reenter_begin(this);
-    }
-
     // _WaitSetLock protects the wait queue, not the EntryList.  We could
     // move the add-to-EntryList operation, above, outside the critical section
     // protected by _WaitSetLock.  In practice that's not useful.  With the
@@ -1758,133 +1737,63 @@ void ObjectMonitor::notify(TRAPS) {
     // is the only thread that grabs _WaitSetLock.  There's almost no contention
     // on _WaitSetLock so it's not profitable to reduce the length of the
     // critical section.
+
+    if (policy < 4) {
+      iterator->wait_reenter_begin(this);
+    }
   }
-
   Thread::SpinRelease(&_WaitSetLock);
+}
 
-  if (iterator != NULL && ObjectMonitor::_sync_Notifications != NULL) {
-    ObjectMonitor::_sync_Notifications->inc();
+// Consider: a not-uncommon synchronization bug is to use notify() when
+// notifyAll() is more appropriate, potentially resulting in stranded
+// threads; this is one example of a lost wakeup. A useful diagnostic
+// option is to force all notify() operations to behave as notifyAll().
+//
+// Note: We can also detect many such problems with a "minimum wait".
+// When the "minimum wait" is set to a small non-zero timeout value
+// and the program does not hang whereas it did absent "minimum wait",
+// that suggests a lost wakeup bug. The '-XX:SyncFlags=1' option uses
+// a "minimum wait" for all park() operations; see the recheckInterval
+// variable and MAX_RECHECK_INTERVAL.
+
+void ObjectMonitor::notify(TRAPS) {
+  CHECK_OWNER();
+  if (_WaitSet == NULL) {
+    TEVENT(Empty-Notify);
+    return;
+  }
+  DTRACE_MONITOR_PROBE(notify, this, object(), THREAD);
+  INotify(THREAD);
+  if (ObjectMonitor::_sync_Notifications != NULL) {
+    ObjectMonitor::_sync_Notifications->inc(1);
   }
 }
 
 
+// The current implementation of notifyAll() transfers the waiters one-at-a-time
+// from the waitset to the EntryList. This could be done more efficiently with a
+// single bulk transfer but in practice it's not time-critical. Beware too,
+// that in prepend-mode we invert the order of the waiters. Let's say that the
+// waitset is "ABCD" and the EntryList is "XYZ". After a notifyAll() in prepend
+// mode the waitset will be empty and the EntryList will be "DCBAXYZ".
+
 void ObjectMonitor::notifyAll(TRAPS) {
   CHECK_OWNER();
-  ObjectWaiter* iterator;
   if (_WaitSet == NULL) {
     TEVENT(Empty-NotifyAll);
     return;
   }
+
   DTRACE_MONITOR_PROBE(notifyAll, this, object(), THREAD);
-
-  int Policy = Knob_MoveNotifyee;
-  int Tally = 0;
-  Thread::SpinAcquire(&_WaitSetLock, "WaitSet - notifyall");
-
-  for (;;) {
-    iterator = DequeueWaiter();
-    if (iterator == NULL) break;
-    TEVENT(NotifyAll - Transfer1);
-    ++Tally;
-
-    // Disposition - what might we do with iterator ?
-    // a.  add it directly to the EntryList - either tail or head.
-    // b.  push it onto the front of the _cxq.
-    // For now we use (a).
-
-    guarantee(iterator->TState == ObjectWaiter::TS_WAIT, "invariant");
-    guarantee(iterator->_notified == 0, "invariant");
-    iterator->_notified = 1;
-    Thread * Self = THREAD;
-    iterator->_notifier_tid = Self->osthread()->thread_id();
-    if (Policy != 4) {
-      iterator->TState = ObjectWaiter::TS_ENTER;
-    }
-
-    ObjectWaiter * List = _EntryList;
-    if (List != NULL) {
-      assert(List->_prev == NULL, "invariant");
-      assert(List->TState == ObjectWaiter::TS_ENTER, "invariant");
-      assert(List != iterator, "invariant");
-    }
-
-    if (Policy == 0) {       // prepend to EntryList
-      if (List == NULL) {
-        iterator->_next = iterator->_prev = NULL;
-        _EntryList = iterator;
-      } else {
-        List->_prev = iterator;
-        iterator->_next = List;
-        iterator->_prev = NULL;
-        _EntryList = iterator;
-      }
-    } else if (Policy == 1) {      // append to EntryList
-      if (List == NULL) {
-        iterator->_next = iterator->_prev = NULL;
-        _EntryList = iterator;
-      } else {
-        // CONSIDER:  finding the tail currently requires a linear-time walk of
-        // the EntryList.  We can make tail access constant-time by converting to
-        // a CDLL instead of using our current DLL.
-        ObjectWaiter * Tail;
-        for (Tail = List; Tail->_next != NULL; Tail = Tail->_next) /* empty */;
-        assert(Tail != NULL && Tail->_next == NULL, "invariant");
-        Tail->_next = iterator;
-        iterator->_prev = Tail;
-        iterator->_next = NULL;
-      }
-    } else if (Policy == 2) {      // prepend to cxq
-      // prepend to cxq
-      iterator->TState = ObjectWaiter::TS_CXQ;
-      for (;;) {
-        ObjectWaiter * Front = _cxq;
-        iterator->_next = Front;
-        if (Atomic::cmpxchg_ptr (iterator, &_cxq, Front) == Front) {
-          break;
-        }
-      }
-    } else if (Policy == 3) {      // append to cxq
-      iterator->TState = ObjectWaiter::TS_CXQ;
-      for (;;) {
-        ObjectWaiter * Tail;
-        Tail = _cxq;
-        if (Tail == NULL) {
-          iterator->_next = NULL;
-          if (Atomic::cmpxchg_ptr (iterator, &_cxq, NULL) == NULL) {
-            break;
-          }
-        } else {
-          while (Tail->_next != NULL) Tail = Tail->_next;
-          Tail->_next = iterator;
-          iterator->_prev = Tail;
-          iterator->_next = NULL;
-          break;
-        }
-      }
-    } else {
-      ParkEvent * ev = iterator->_event;
-      iterator->TState = ObjectWaiter::TS_RUN;
-      OrderAccess::fence();
-      ev->unpark();
-    }
-
-    if (Policy < 4) {
-      iterator->wait_reenter_begin(this);
-    }
-
-    // _WaitSetLock protects the wait queue, not the EntryList.  We could
-    // move the add-to-EntryList operation, above, outside the critical section
-    // protected by _WaitSetLock.  In practice that's not useful.  With the
-    // exception of  wait() timeouts and interrupts the monitor owner
-    // is the only thread that grabs _WaitSetLock.  There's almost no contention
-    // on _WaitSetLock so it's not profitable to reduce the length of the
-    // critical section.
+  int tally = 0;
+  while (_WaitSet != NULL) {
+    tally++;
+    INotify(THREAD);
   }
 
-  Thread::SpinRelease(&_WaitSetLock);
-
-  if (Tally != 0 && ObjectMonitor::_sync_Notifications != NULL) {
-    ObjectMonitor::_sync_Notifications->inc(Tally);
+  if (tally != 0 && ObjectMonitor::_sync_Notifications != NULL) {
+    ObjectMonitor::_sync_Notifications->inc(tally);
   }
 }
 
@@ -2272,7 +2181,7 @@ void ObjectWaiter::wait_reenter_end(ObjectMonitor * const mon) {
 }
 
 inline void ObjectMonitor::AddWaiter(ObjectWaiter* node) {
-  assert(node != NULL, "should not dequeue NULL node");
+  assert(node != NULL, "should not add NULL node");
   assert(node->_prev == NULL, "node already in list");
   assert(node->_next == NULL, "node already in list");
   // put node at end of queue (circular doubly linked list)
@@ -2407,8 +2316,8 @@ static int kvGetInt(char * kvList, const char * Key, int Default) {
   char * v = kvGet(kvList, Key);
   int rslt = v ? ::strtol(v, NULL, 0) : Default;
   if (Knob_ReportSettings && v != NULL) {
-    ::printf ("  SyncKnob: %s %d(%d)\n", Key, rslt, Default) ;
-    ::fflush(stdout);
+    tty->print_cr("INFO: SyncKnob: %s %d(%d)", Key, rslt, Default) ;
+    tty->flush();
   }
   return rslt;
 }
@@ -2442,8 +2351,10 @@ void ObjectMonitor::DeferredInitialize() {
 
   #define SETKNOB(x) { Knob_##x = kvGetInt(knobs, #x, Knob_##x); }
   SETKNOB(ReportSettings);
+  SETKNOB(ExitRelease);
   SETKNOB(Verbose);
   SETKNOB(VerifyInUse);
+  SETKNOB(VerifyMatch);
   SETKNOB(FixedSpin);
   SETKNOB(SpinLimit);
   SETKNOB(SpinBase);
@@ -2477,7 +2388,9 @@ void ObjectMonitor::DeferredInitialize() {
 
   if (os::is_MP()) {
     BackOffMask = (1 << Knob_SpinBackOff) - 1;
-    if (Knob_ReportSettings) ::printf("BackOffMask=%X\n", BackOffMask);
+    if (Knob_ReportSettings) {
+      tty->print_cr("INFO: BackOffMask=0x%X", BackOffMask);
+    }
     // CONSIDER: BackOffMask = ROUNDUP_NEXT_POWER2 (ncpus-1)
   } else {
     Knob_SpinLimit = 0;
