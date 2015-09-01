@@ -165,8 +165,19 @@ public final class Configuration {
      *
      * This method is equivalent to:
      * <pre>{@code
-     * resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
+     *   resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
      * }</pre>
+     *
+     * @param  beforeFinder
+     *         The module finder to find modules
+     * @param  parent
+     *         The parent layer, may be the {@link Layer#empty() empty} layer
+     * @param  afterFinder
+     *         The module finder to locate modules when not located by the
+     *         {@code beforeFinder} or parent layer
+     * @param  roots
+     *         The possibly-empty array of module names of the modules
+     *         to resolve
      *
      * @return The configuration that is the result of resolving the given
      *         root modules
@@ -175,11 +186,11 @@ public final class Configuration {
      *         fail for any of the reasons listed
      */
     public static Configuration resolve(ModuleFinder beforeFinder,
-                                        Layer layer,
+                                        Layer parent,
                                         ModuleFinder afterFinder,
                                         String... roots)
     {
-        return resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
+        return resolve(beforeFinder, parent, afterFinder, Arrays.asList(roots));
     }
 
     /**
@@ -198,7 +209,7 @@ public final class Configuration {
      * <p> Service binding works by examining all modules in the configuration
      * and its parent layers with {@link ModuleDescriptor#uses()
      * service-dependences}. All observable modules that {@link
-     * ModuleDescriptor#provides provide} an implementation of one or more of
+     * ModuleDescriptor#provides() provide} an implementation of one or more of
      * the service types are added to the configuration and resolved as if by
      * calling the {@link #resolve resolve} method. Adding modules to the
      * configuration may introduce new service-use dependences and so service
@@ -248,6 +259,9 @@ public final class Configuration {
      *
      * @apiNote Should this check parent to be consistent with Layer#findModule?
      *
+     * @param name
+     *        The name of the module to find
+     *
      * @return The module descriptor for the module with the given name or an
      *         empty {@code Optional} if not in this configuration
      */
@@ -259,6 +273,9 @@ public final class Configuration {
      * Returns the {@code ModuleReference} for the named module.
      *
      * @apiNote Should this check parent to be consistent with Layer#findModule?
+     *
+     * @param name
+     *        The name of the module to find
      *
      * @return The reference to a module with the given name or an empty
      *         {@code Optional} if not in this configuration
@@ -294,11 +311,14 @@ public final class Configuration {
      * If this {@code Configuration} is not the result of {@link #bind()
      * binding} then an empty set is returned.
      *
+     * @param  st
+     *         The service type
+     *
      * @return A possibly-empty unmodifiable set of the modules that provide
      *         implementations of the given service
      */
-    public Set<ModuleDescriptor> provides(String sn) {
-        return resolution.provides(sn);
+    public Set<ModuleDescriptor> provides(String st) {
+        return resolution.provides(st);
     }
 
     @Override

@@ -42,9 +42,10 @@ import sun.misc.SharedSecrets;
 /**
  * Represents a layer of modules in the Java virtual machine.
  *
- * <p> The following example resolves a module named <em>myapp</em> and creates
- * a {@code Layer} with the resulting {@link Configuration}. In the example
- * then all modules are associated with the same class loader. </p>
+ * <p> The following example resolves a module named <em>myapp</em>. It then
+ * instantiates the {@link Configuration} as a {@code Layer}. In the example
+ * then all modules in the configuration are defined to the same class loader.
+ * </p>
  *
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
@@ -86,6 +87,8 @@ public final class Layer {
          * module (by name) then it will return the same result each time.
          * Failure to do so will lead to unspecified behavior when creating
          * a Layer. </p>
+         *
+         * @return The class loader for the given module
          */
         ClassLoader loaderForModule(String moduleName);
     }
@@ -145,12 +148,18 @@ public final class Layer {
      *
      * @apiNote Need to decide if there is a permission check needed here. We
      * can't have an untrusted ClassLoaderFinder returning null and have this
-     * method define modules to the boot loader. For now, the built-in class
-     * loaders do a permission check to defend against this.
+     * method define modules to the boot loader.
      *
      * @implNote Some of the failure reasons listed cannot be detected in
      * advance, hence it is possible for Layer.create to fail with some of the
      * modules in the configuration defined to the run-time.
+     *
+     * @param  cf
+     *         The configuration to instantiate
+     * @param  clf
+     *         The {@code ClassLoaderFinder} to map modules to class loaders
+     *
+     * @return The newly created layer
      *
      * @throws LayerInstantiationException
      *         If creating the {@code Layer} fails for any of the reasons
@@ -239,6 +248,8 @@ public final class Layer {
     /**
      * Returns the {@code Configuration} used to create this layer unless this
      * is the {@linkplain #empty empty layer}, which has no configuration.
+     *
+     * @return The configuration used to create this layer
      */
     public Optional<Configuration> configuration() {
         return Optional.ofNullable(cf);
@@ -248,6 +259,8 @@ public final class Layer {
     /**
      * Returns this layer's parent unless this is the {@linkplain #empty empty
      * layer}, which has no parent.
+     *
+     * @return This layer's parent
      */
     public Optional<Layer> parent() {
         if (cf == null) {
@@ -260,6 +273,8 @@ public final class Layer {
 
     /**
      * Returns a set of the {@code Module}s in this layer.
+     *
+     * @return The set of modules in this layer
      */
     public Set<Module> modules() {
         return nameToModule.values().stream().collect(Collectors.toSet());
@@ -269,6 +284,13 @@ public final class Layer {
     /**
      * Returns the {@code Module} with the given name in this layer, or if not
      * in this layer, the {@linkplain #parent parent} layer.
+     *
+     * @param  name
+     *         The name of the module to find
+     *
+     * @return The module with the given name or an empty {@code Optional}
+     *         if there isn't a module with this name in this layer or any
+     *         parent layer
      */
     public Optional<Module> findModule(String name) {
         Module m = nameToModule.get(Objects.requireNonNull(name));
@@ -291,6 +313,11 @@ public final class Layer {
      * @apiNote This method does not return an {@code Optional<ClassLoader>}
      * because `null` must be used to represent the bootstrap class loader.
      *
+     * @param  name
+     *         The name of the module to find
+     *
+     * @return The ClassLoader that the module is defined to
+     *
      * @throws IllegalArgumentException if a module of the given name is not
      * defined in this layer or any parent of this layer
      *
@@ -310,6 +337,8 @@ public final class Layer {
 
     /**
      * Returns the <em>empty</em> layer.
+     *
+     * @return The empty layer
      */
     public static Layer empty() {
         return EMPTY_LAYER;
@@ -324,6 +353,8 @@ public final class Layer {
      * method if first called with a {@code RuntimePermission("getBootLayer")}
      * permission to check that the caller is allowed access to the boot
      * {@code Layer}. </p>
+     *
+     * @return The boot layer
      *
      * @throws SecurityException if denied by the security manager
      */
