@@ -757,9 +757,33 @@ public class JmodTask {
 
             if (options.task.equals(Task.CREATE) && options.classpath == null)
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
+            if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
+                throw new CommandException("err.invalid.main-class", options.mainClass);
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
         }
+    }
+
+    /**
+     * Returns true if, and only if, the given main class is a legal.
+     */
+    static boolean isValidJavaIdentifier(String mainClass) {
+        if (mainClass.length() == 0)
+            return false;
+
+        if (!Character.isJavaIdentifierStart(mainClass.charAt(0)))
+            return false;
+
+        int n = mainClass.length();
+        for (int i=1; i < n; i++) {
+            char c = mainClass.charAt(i);
+            if (!Character.isJavaIdentifierPart(c) && c != '.')
+                return false;
+        }
+        if (mainClass.charAt(n-1) == '.')
+            return false;
+
+        return true;
     }
 
     private void reportError(String message) {
