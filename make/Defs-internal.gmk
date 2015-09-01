@@ -139,6 +139,18 @@ ifndef ALT_JAXWS_DIST
   ABS_JAXWS_DIST = $(JAXWS_OUTPUTDIR)/dist
 endif
 
+# Command to PaX mark the VM
+ifndef PAX_COMMAND
+  PAX_COMMAND = /usr/sbin/paxmark.sh
+endif
+
+# Command arguments to PaX mark the VM
+ifeq ($(ARCH), i586)
+  PAX_COMMAND_ARGS="-vmsp"
+else
+  PAX_COMMAND_ARGS="-vm"
+endif
+
 # Common make arguments (supplied to all component builds)
 COMMON_BUILD_ARGUMENTS = \
     JDK_TOPDIR=$(ABS_JDK_TOPDIR) \
@@ -154,7 +166,9 @@ COMMON_BUILD_ARGUMENTS = \
     JDK_MKTG_VERSION=$(JDK_MKTG_VERSION) \
     JDK_MAJOR_VERSION=$(JDK_MAJOR_VERSION) \
     JDK_MINOR_VERSION=$(JDK_MINOR_VERSION) \
-    JDK_MICRO_VERSION=$(JDK_MICRO_VERSION)
+    JDK_MICRO_VERSION=$(JDK_MICRO_VERSION) \
+    PAX_COMMAND=$(PAX_COMMAND) \
+    PAX_COMMAND_ARGS=$(PAX_COMMAND_ARGS)
 
 ifdef ARCH_DATA_MODEL
   COMMON_BUILD_ARGUMENTS += ARCH_DATA_MODEL=$(ARCH_DATA_MODEL)
