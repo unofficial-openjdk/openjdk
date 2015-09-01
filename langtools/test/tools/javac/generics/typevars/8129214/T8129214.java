@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,18 +25,14 @@
 
 /*
  * @test
- * @bug 8024809
- * @summary javac, some lambda programs are rejected by flow analysis
- * @compile/fail/ref=SelfInitializerInLambdaTestb.out -XDrawDiagnostics SelfInitializerInLambdaTestb.java
+ * @bug     8129214
+ * @summary Access error when unboxing a primitive whose target is a type-variable in a different package
+ * @compile T8129214.java
  */
+import pkg.Foo;
 
-public class SelfInitializerInLambdaTestb {
-
-    final Runnable r1;
-
-    final Runnable r2 = ()-> System.out.println(r1);
-
-    SelfInitializerInLambdaTestb() {
-        r1 = ()->System.out.println(r1);
+class T8129214 {
+    void test() {
+        Foo.foo(10);
     }
 }

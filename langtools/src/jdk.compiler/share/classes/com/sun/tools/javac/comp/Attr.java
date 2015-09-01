@@ -44,7 +44,6 @@ import com.sun.tools.javac.code.TypeMetadata.Annotations;
 import com.sun.tools.javac.code.Types.FunctionDescriptorLookupError;
 import com.sun.tools.javac.comp.Check.CheckContext;
 import com.sun.tools.javac.comp.DeferredAttr.AttrMode;
-import com.sun.tools.javac.comp.Infer.InferenceContext;
 import com.sun.tools.javac.comp.Infer.FreeTypeListener;
 import com.sun.tools.javac.jvm.*;
 import static com.sun.tools.javac.resources.CompilerProperties.Fragments.Diamond;
@@ -3687,10 +3686,6 @@ public class Attr extends JCTree.Visitor {
                                Env<AttrContext> env,
                                VarSymbol v,
                                boolean onlyWarning) {
-//          System.err.println(v + " " + ((v.flags() & STATIC) != 0) + " " +
-//                             tree.pos + " " + v.pos + " " +
-//                             Resolve.isStatic(env));//DEBUG
-
             // A forward reference is diagnosed if the declaration position
             // of the variable is greater than the current tree position
             // and the tree and variable definition occur in the same class
@@ -3698,14 +3693,15 @@ public class Attr extends JCTree.Visitor {
             // This check applies only to class and instance
             // variables.  Local variables follow different scope rules,
             // and are subject to definite assignment checking.
-            if ((env.info.enclVar == v || v.pos > tree.pos) &&
+            Env<AttrContext> initEnv = enclosingInitEnv(env);
+            if (initEnv != null &&
+                (initEnv.info.enclVar == v || v.pos > tree.pos) &&
                 v.owner.kind == TYP &&
-                enclosingInitEnv(env) != null &&
                 v.owner == env.info.scope.owner.enclClass() &&
                 ((v.flags() & STATIC) != 0) == Resolve.isStatic(env) &&
                 (!env.tree.hasTag(ASSIGN) ||
                  TreeInfo.skipParens(((JCAssign) env.tree).lhs) != tree)) {
-                String suffix = (env.info.enclVar == v) ?
+                String suffix = (initEnv.info.enclVar == v) ?
                                 "self.ref" : "forward.ref";
                 if (!onlyWarning || isStaticEnumField(v)) {
                     log.error(tree.pos(), "illegal." + suffix);
