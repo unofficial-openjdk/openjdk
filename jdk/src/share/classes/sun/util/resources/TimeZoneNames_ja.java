@@ -117,8 +117,6 @@ public final class TimeZoneNames_ja extends TimeZoneNamesBundle {
                                         "\u82f1\u56fd\u590f\u6642\u9593", "BST"};
         String GST[] = new String[] {"\u6e7e\u5cb8\u6a19\u6e96\u6642", "GST",
                                      "\u6e7e\u5cb8\u590f\u6642\u9593", "GDT"};
-        String HAST[] = new String[] {"\u30cf\u30ef\u30a4 - \u30a2\u30ea\u30e5\u30fc\u30b7\u30e3\u30f3\u6a19\u6e96\u6642", "HAST",
-                                      "\u30cf\u30ef\u30a4 - \u30a2\u30ea\u30e5\u30fc\u30b7\u30e3\u30f3\u590f\u6642\u9593", "HADT"};
         String HKT[] =  new String[] {"\u9999\u6e2f\u6642\u9593", "HKT",
                                       "\u9999\u6e2f\u590f\u6642\u9593", "HKST"};
         String HST[] = new String[] {"\u30cf\u30ef\u30a4\u6a19\u6e96\u6642", "HST",
@@ -296,7 +294,7 @@ public final class TimeZoneNames_ja extends TimeZoneNamesBundle {
             {"Africa/Tripoli", EET},
             {"Africa/Tunis", CET},
             {"Africa/Windhoek", WAT},
-            {"America/Adak", HAST},
+            {"America/Adak", HST},
             {"America/Anguilla", AST},
             {"America/Antigua", AST},
             {"America/Araguaina", BRT},
@@ -317,7 +315,7 @@ public final class TimeZoneNames_ja extends TimeZoneNamesBundle {
             {"America/Asuncion", new String[] {"\u30d1\u30e9\u30b0\u30a2\u30a4\u6642\u9593", "PYT",
                                                "\u30d1\u30e9\u30b0\u30a2\u30a4\u590f\u6642\u9593", "PYST"}},
             {"America/Atikokan", EST},
-            {"America/Atka", HAST},
+            {"America/Atka", HST},
             {"America/Bahia", BRT},
             {"America/Bahia_Banderas", CST},
             {"America/Barbados", AST},
@@ -861,7 +859,7 @@ public final class TimeZoneNames_ja extends TimeZoneNamesBundle {
             {"UCT", UTC},
             {"Universal", UTC},
             {"US/Alaska", AKST},
-            {"US/Aleutian", HAST},
+            {"US/Aleutian", HST},
             {"US/Arizona", MST},
             {"US/Central", CST},
             {"US/Eastern", EST},

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,36 +23,9 @@
  * questions.
  */
 
-#import "CWrapper.h"
-
 #import <JavaNativeFoundation/JavaNativeFoundation.h>
-
-#import "AWTWindow.h"
-#import "LWCToolkit.h"
-#import "GeomUtilities.h"
 #import "ThreadUtilities.h"
-
 #import "sun_lwawt_macosx_CWrapper_NSWindow.h"
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSObject
- * Method:    release
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSObject_release
-(JNIEnv *env, jclass cls, jlong objectPtr)
-{
-JNF_COCOA_ENTER(env);
-
-    id obj = (id)jlong_to_ptr(objectPtr);
-    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-        CFRelease(obj);
-    }];
-
-JNF_COCOA_EXIT(env);
-}
-
 
 /*
  * Class:     sun_lwawt_macosx_CWrapper$NSWindow
@@ -308,32 +281,12 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_removeChildWindow
 {
 JNF_COCOA_ENTER(env);
 
-    AWTWindow *parent = (AWTWindow *)jlong_to_ptr(parentPtr);
-    AWTWindow *child = (AWTWindow *)jlong_to_ptr(childPtr);
+    NSWindow *parent = (NSWindow *)jlong_to_ptr(parentPtr);
+    NSWindow *child = (NSWindow *)jlong_to_ptr(childPtr);
     [ThreadUtilities performOnMainThread:@selector(removeChildWindow:)
                                       on:parent
                               withObject:child
                            waitUntilDone:NO];
-
-JNF_COCOA_EXIT(env);
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSWindow
- * Method:    setFrame
- * Signature: (JIIIIZ)V
- */
-JNIEXPORT void JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setFrame
-(JNIEnv *env, jclass cls, jlong windowPtr, jint x, jint y, jint w, jint h, jboolean display)
-{
-JNF_COCOA_ENTER(env);
-
-    AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
-    NSRect frame = NSMakeRect(x, y, w, h);
-    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-        [window setFrame:frame display:display];
-    }];
 
 JNF_COCOA_EXIT(env);
 }
@@ -349,7 +302,7 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setAlphaValue
 {
 JNF_COCOA_ENTER(env);
 
-    AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
+    NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
     [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
         [window setAlphaValue:(CGFloat)alpha];
     }];
@@ -368,7 +321,7 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setOpaque
 {
 JNF_COCOA_ENTER(env);
 
-    AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
+    NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
     [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
         [window setOpaque:(BOOL)opaque];
     }];
@@ -387,7 +340,7 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setBackgroundColor
 {
 JNF_COCOA_ENTER(env);
 
-    AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
+    NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
     NSColor *color = (NSColor *)jlong_to_ptr(colorPtr);
     [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
         [window setBackgroundColor:color];
@@ -398,30 +351,6 @@ JNF_COCOA_EXIT(env);
 
 /*
  * Class:     sun_lwawt_macosx_CWrapper$NSWindow
- * Method:    screen
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSWindow_screen
-(JNIEnv *env, jclass cls, jlong windowPtr)
-{
-    __block jlong screenPtr = 0L;
-
-JNF_COCOA_ENTER(env);
-
-    AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
-    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        const NSScreen *screen = [window screen];
-        CFRetain(screen); // GC
-        screenPtr = ptr_to_jlong(screen);
-    }];
-
-JNF_COCOA_EXIT(env);
-
-    return screenPtr;
-}
-
-/*
  * Method:    miniaturize
  * Signature: (J)V
  */
@@ -458,6 +387,29 @@ JNF_COCOA_ENTER(env);
                            waitUntilDone:NO];
 
 JNF_COCOA_EXIT(env);
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CWrapper$NSWindow
+ * Method:    isZoomed
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL
+Java_sun_lwawt_macosx_CWrapper_00024NSWindow_isZoomed
+(JNIEnv *env, jclass cls, jlong windowPtr)
+{
+    __block jboolean isZoomed = JNI_FALSE;
+    
+JNF_COCOA_ENTER(env);
+    
+    NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
+    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
+        isZoomed = [window isZoomed];
+    }];
+    
+JNF_COCOA_EXIT(env);
+    
+    return isZoomed;
 }
 
 /*
@@ -562,73 +514,6 @@ JNF_COCOA_EXIT(env);
 
 /*
  * Class:     sun_lwawt_macosx_CWrapper$NSView
- * Method:    frame
- * Signature: (J)Ljava/awt/Rectangle;
- */
-JNIEXPORT jobject JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSView_frame
-(JNIEnv *env, jclass cls, jlong viewPtr)
-{
-    jobject jRect = NULL;
-
-JNF_COCOA_ENTER(env);
-
-    __block NSRect rect = NSZeroRect;
-
-    NSView *view = (NSView *)jlong_to_ptr(viewPtr);
-    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        rect = [view frame];
-    }];
-
-    jRect = NSToJavaRect(env, rect);
-
-JNF_COCOA_EXIT(env);
-
-    return jRect;
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSView
- * Method:    enterFullScreenMode
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSView_enterFullScreenMode
-(JNIEnv *env, jclass cls, jlong viewPtr)
-{
-JNF_COCOA_ENTER(env);
-
-    NSView *view = (NSView *)jlong_to_ptr(viewPtr);
-    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-        NSScreen *screen = [[view window] screen];
-        NSDictionary *opts = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO], NSFullScreenModeAllScreens, nil];
-        [view enterFullScreenMode:screen withOptions:opts];
-    }];
-
-JNF_COCOA_EXIT(env);
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSView
- * Method:    exitFullScreenMode
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSView_exitFullScreenMode
-(JNIEnv *env, jclass cls, jlong viewPtr)
-{
-JNF_COCOA_ENTER(env);
-
-    NSView *view = (NSView *)jlong_to_ptr(viewPtr);
-    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-        [view exitFullScreenModeWithOptions:nil];
-    }];
-
-JNF_COCOA_EXIT(env);
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSView
  * Method:    window
  * Signature: (J)J
  */
@@ -688,92 +573,6 @@ Java_sun_lwawt_macosx_CWrapper_00024NSView_setHidden
     }];
     
     JNF_COCOA_EXIT(env);
-}
-
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper$NSScreen
- * Method:    frame
- * Signature: (J)Ljava/awt/Rectangle;
- */
-JNIEXPORT jobject JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSScreen_frame
-(JNIEnv *env, jclass cls, jlong screenPtr)
-{
-    jobject jRect = NULL;
-
-JNF_COCOA_ENTER(env);
-
-    __block NSRect rect = NSZeroRect;
-
-    NSScreen *screen = (NSScreen *)jlong_to_ptr(screenPtr);
-    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        rect = [screen frame];
-    }];
-
-    jRect = NSToJavaRect(env, rect);
-
-JNF_COCOA_EXIT(env);
-
-    return jRect;
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper_NSScreen
- * Method:    visibleFrame
- * Signature: (J)Ljava/awt/geom/Rectangle2D;
- */
-JNIEXPORT jobject JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSScreen_visibleFrame
-(JNIEnv *env, jclass cls, jlong screenPtr)
-{
-    jobject jRect = NULL;
-
-JNF_COCOA_ENTER(env);
-
-    __block NSRect rect = NSZeroRect;
-
-    NSScreen *screen = (NSScreen *)jlong_to_ptr(screenPtr);
-    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        rect = [screen visibleFrame];
-    }];
-
-    jRect = NSToJavaRect(env, rect);
-
-JNF_COCOA_EXIT(env);
-
-    return jRect;
-}
-
-/*
- * Class:     sun_lwawt_macosx_CWrapper_NSScreen
- * Method:    screenByDisplayId
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL
-Java_sun_lwawt_macosx_CWrapper_00024NSScreen_screenByDisplayId
-(JNIEnv *env, jclass cls, jint displayID)
-{
-    __block jlong screenPtr = 0L;
-
-JNF_COCOA_ENTER(env);
-
-    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        NSArray *screens = [NSScreen screens];
-        for (NSScreen *screen in screens) {
-            NSDictionary *screenInfo = [screen deviceDescription];
-            NSNumber *screenID = [screenInfo objectForKey:@"NSScreenNumber"];
-            if ([screenID intValue] == displayID){
-                CFRetain(screen); // GC
-                screenPtr = ptr_to_jlong(screen);
-                break;
-            }
-        }
-    }];
-
-JNF_COCOA_EXIT(env);
-
-    return screenPtr;
 }
 
 /*

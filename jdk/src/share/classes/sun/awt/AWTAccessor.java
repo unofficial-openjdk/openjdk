@@ -742,6 +742,13 @@ public final class AWTAccessor {
     }
 
     /*
+     * An accessor object for the SystemColor class
+     */
+    public interface SystemColorAccessor {
+        void updateSystemColors();
+    }
+
+    /*
      * Accessor instances are initialized in the static initializers of
      * corresponding AWT classes by using setters defined below.
      */
@@ -769,6 +776,7 @@ public final class AWTAccessor {
     private static DefaultKeyboardFocusManagerAccessor defaultKeyboardFocusManagerAccessor;
     private static SequencedEventAccessor sequencedEventAccessor;
     private static InvocationEventAccessor invocationEventAccessor;
+    private static SystemColorAccessor systemColorAccessor;
     private static ToolkitAccessor toolkitAccessor;
     private static AccessibleContextAccessor accessibleContextAccessor;
 
@@ -1197,6 +1205,24 @@ public final class AWTAccessor {
     public static InvocationEventAccessor getInvocationEventAccessor() {
         return invocationEventAccessor;
     }
+
+    /*
+     * Get the accessor object for the java.awt.SystemColor class.
+     */
+    public static SystemColorAccessor getSystemColorAccessor() {
+        if (systemColorAccessor == null) {
+            unsafe.ensureClassInitialized(SystemColor.class);
+        }
+
+        return systemColorAccessor;
+    }
+
+     /*
+     * Set the accessor object for the java.awt.SystemColor class.
+     */
+     public static void setSystemColorAccessor(SystemColorAccessor systemColorAccessor) {
+         AWTAccessor.systemColorAccessor = systemColorAccessor;
+     }
 
 
     /*

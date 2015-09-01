@@ -29,7 +29,7 @@
 #import "CDragSource.h"
 #import "CDropTarget.h"
 
-@interface AWTView : NSView<NSTextInputClient> {
+@interface AWTView : NSView<NSTextInputClient, CDragSourceHolder, CDropTargetHolder> {
 @private
     jobject m_cPlatformView;
 
@@ -61,13 +61,7 @@
 
 - (id) initWithRect:(NSRect) rect platformView:(jobject)cPlatformView windowLayer:(CALayer*)windowLayer;
 - (void) deliverJavaMouseEvent: (NSEvent *) event;
-- (void) resetTrackingArea;
-- (void) deliverJavaKeyEventHelper: (NSEvent *) event;
 - (jobject) awtComponent:(JNIEnv *)env;
-
-- (void) setDragSource:(CDragSource *)source;
-- (void) setDropTarget:(CDropTarget *)target;
-
 
 // Input method-related events
 - (void)setInputMethod:(jobject)inputMethod;

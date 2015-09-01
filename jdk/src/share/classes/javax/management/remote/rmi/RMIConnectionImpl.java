@@ -34,6 +34,7 @@ import com.sun.jmx.remote.util.ClassLoaderWithRepository;
 import com.sun.jmx.remote.util.ClassLogger;
 import com.sun.jmx.remote.util.EnvHelp;
 import com.sun.jmx.remote.util.OrderClassLoaders;
+import javax.management.loading.ClassLoaderRepository;
 
 import java.io.IOException;
 import java.rmi.MarshalledObject;
@@ -43,7 +44,6 @@ import java.rmi.server.Unreferenced;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Permission;
-import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -152,20 +152,24 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
 
         final ClassLoader dcl = defaultClassLoader;
 
-        this.classLoaderWithRepository =
-            AccessController.doPrivileged(
-                new PrivilegedAction<ClassLoaderWithRepository>() {
-                    public ClassLoaderWithRepository run() {
-                        return new ClassLoaderWithRepository(
-                                      mbeanServer.getClassLoaderRepository(),
-                                      dcl);
-                    }
-                },
-
-                withPermissions( new MBeanPermission("*", "getClassLoaderRepository"),
-                                 new RuntimePermission("createClassLoader"))
-            );
-
+        final ClassLoaderRepository repository = AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoaderRepository>() {
+                public ClassLoaderRepository run() {
+                    return mbeanServer.getClassLoaderRepository();
+                }
+            },
+            withPermissions(new MBeanPermission("*", "getClassLoaderRepository"))
+        );
+        this.classLoaderWithRepository = AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoaderWithRepository>() {
+                public ClassLoaderWithRepository run() {
+                    return new ClassLoaderWithRepository(
+                        repository,
+                        dcl);
+                }
+            },
+            withPermissions(new RuntimePermission("createClassLoader"))
+        );
 
         this.defaultContextClassLoader =
             AccessController.doPrivileged(

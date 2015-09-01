@@ -114,13 +114,21 @@ RMIC_JAVA = $(OUTPUTDIR)/bin/sparcv9/java
 endif
 
 ifeq ($(CROSS_COMPILE_ARCH),)
-RMIC = $(RMIC_JAVA) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
+RMIC_VM = $(RMIC_JAVA)
 else
-RMIC = $(BOOT_JAVA_CMD)  $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
+RMIC_VM = $(BOOT_JAVA_CMD)
 endif  
+RMIC = $(RMIC_VM) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
 
 $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
 	$(prep-target)
+	if [ -x $(PAX_COMMAND) ] ; then \
+	  if $(CAT) /proc/self/status | grep '^PaX' > /dev/null ; then \
+	    if [ -w $(RMIC_VM) ] ; then \
+	      $(PAX_COMMAND) $(PAX_COMMAND_ARGS) $(RMIC_VM) ; \
+	    fi ; \
+	  fi ; \
+	fi
 	$(RMIC) -classpath "$(CLASSDESTDIR)"    \
                 -d $(CLASSDESTDIR)              \
                 -v1.2                           \
