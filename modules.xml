@@ -1565,6 +1565,10 @@
       <to>jdk.javadoc</to>
     </export>
     <export>
+      <name>com.sun.tools.javac.platform</name>
+      <to>jdk.javadoc</to>
+    </export>
+    <export>
       <name>com.sun.tools.javac.sym</name>
       <to>jdk.javadoc</to>
     </export>
@@ -1617,10 +1621,6 @@
     <depend>java.rmi</depend>
     <depend>java.scripting</depend>
     <depend>jdk.jdi</depend>
-  </module>
-  <module>
-    <name>jdk.hprof.agent</name>
-    <depend>java.base</depend>
   </module>
   <module>
     <name>jdk.httpserver</name>
@@ -1777,6 +1777,11 @@
     <name>jdk.policytool</name>
     <depend>java.base</depend>
     <depend>java.desktop</depend>
+    <depend>java.logging</depend>
+    <depend>java.management</depend>
+    <depend>java.security.jgss</depend>
+    <depend>java.sql</depend>
+    <depend>jdk.security.jgss</depend>
   </module>
   <module>
     <name>jdk.rmic</name>
@@ -1789,7 +1794,31 @@
     <name>jdk.scripting.nashorn</name>
     <depend>java.base</depend>
     <depend>java.logging</depend>
-    <depend>java.scripting</depend>
+    <depend re-exports="true">java.scripting</depend>
+    <export>
+      <name>jdk.nashorn.internal.runtime</name>
+      <to>jdk.scripting.nashorn.shell</to>
+    </export>
+    <export>
+      <name>jdk.nashorn.internal.objects</name>
+      <to>jdk.scripting.nashorn.shell</to>
+    </export>
+    <export>
+      <name>jdk.nashorn.tools</name>
+      <to>jdk.scripting.nashorn.shell</to>
+    </export>
+    <export>
+      <name>jdk.nashorn.api.scripting</name>
+    </export>
+    <export>
+      <name>jdk.nashorn.api.tree</name>
+    </export>
+  </module>
+  <module>
+    <name>jdk.scripting.nashorn.shell</name>
+    <depend>java.base</depend>
+    <depend>jdk.scripting.nashorn</depend>
+    <depend>jdk.internal.le</depend>
   </module>
   <module>
     <name>jdk.sctp</name>
