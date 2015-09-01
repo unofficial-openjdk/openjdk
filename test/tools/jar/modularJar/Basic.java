@@ -306,7 +306,7 @@ public class Basic {
 
     @Test
     public void dependencesFooBar() throws IOException {
-        Path mp = Paths.get("testDependencesFooBar");
+        Path mp = Paths.get("dependencesFooBar");
         createTestDir(mp);
 
         Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
@@ -332,6 +332,53 @@ public class Basic {
         Result r = java(mp, BAR.moduleName + "/" + BAR.mainClass,
                         "-XaddExports:java.base/jdk.internal.module=bar");
         BAR_PASS.accept(r, BAR);
+    }
+
+    @Test
+    public void badDependencyFooBar() throws IOException {
+        Path mp = Paths.get("badDependencyFooBar");
+        createTestDir(mp);
+
+        Path fooClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path fooJar = mp.resolve(FOO.moduleName + ".jar");
+        jar("--create",
+            "--archive=" + fooJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", fooClasses.toString(), ".");
+
+        Path barClasses = MODULE_CLASSES.resolve(BAR.moduleName);
+        Path barJar = mp.resolve(BAR.moduleName + ".jar");
+        jar("--create",
+            "--archive=" + barJar.toString(),
+            "--main-class=" + BAR.mainClass,
+            "--module-version=" + BAR.version,
+            "--modulepath=" + mp.toString(),
+            "--hash-dependencies=" + "foo",  // dependency on foo
+            "--no-manifest",
+            "-C", barClasses.toString(), ".");
+
+        // Rebuild foo.jar with a change that will cause its hash to be different
+        FileUtils.deleteFileWithRetry(fooJar);
+        jar("--create",
+            "--archive=" + fooJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version + ".1", // a newer version
+            "--no-manifest",
+            "-C", fooClasses.toString(), ".");
+
+        Result r = java(mp, BAR.moduleName + "/" + BAR.mainClass,
+                "-XaddExports:java.base/jdk.internal.module=bar");
+        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
+
+        // Expect similar output: "java.lang.module.ResolutionException: Hash
+        // of foo (WdktSIQSkd4+CEacpOZoeDrCosMATNrIuNub9b5yBeo=) differs to
+        // expected hash (iepvdv8xTeVrFgMtUhcFnmetSub6qQHCHc92lSaSEg0=)"
+        Pattern p = Pattern.compile(".*Hash of foo.*differs to expected hash.*");
+        check(p.matcher(r.output).find(),
+              "Expecting error message containing \"Hash of foo ... differs to" +
+                      " expected hash...\" but got: ", r.output);
     }
 
     @Test
