@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.KeyAgreement;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.*;
+import java.util.EnumSet;
+
+import sun.security.util.AlgorithmConstraints;
+import sun.security.util.CryptoPrimitive;
 import sun.security.util.KeyUtil;
 
 /**
@@ -184,7 +188,7 @@ final class DHCrypt {
      *  the same size as the Diffie-Hellman modulus.
      */
     SecretKey getAgreedSecret(BigInteger peerPublicValue,
-            boolean keyIsValidated) throws IOException {
+            boolean keyIsValidated) throws SSLHandshakeException {
         try {
             KeyFactory kf = JsseJce.getKeyFactory("DiffieHellman");
             DHPublicKeySpec spec =
@@ -205,7 +209,30 @@ final class DHCrypt {
             ka.doPhase(publicKey, true);
             return ka.generateSecret("TlsPremasterSecret");
         } catch (GeneralSecurityException e) {
-            throw new RuntimeException("Could not generate secret", e);
+            throw (SSLHandshakeException) new SSLHandshakeException(
+                "Could not generate secret").initCause(e);
+        }
+    }
+
+    // Check constraints of the specified DH public key.
+    void checkConstraints(AlgorithmConstraints constraints,
+            BigInteger peerPublicValue) throws SSLHandshakeException {
+
+        try {
+            KeyFactory kf = JsseJce.getKeyFactory("DiffieHellman");
+            DHPublicKeySpec spec =
+                        new DHPublicKeySpec(peerPublicValue, modulus, base);
+            DHPublicKey publicKey = (DHPublicKey)kf.generatePublic(spec);
+
+            // check constraints of DHPublicKey
+            if (!constraints.permits(
+                    EnumSet.of(CryptoPrimitive.KEY_AGREEMENT), publicKey)) {
+                throw new SSLHandshakeException(
+                    "DHPublicKey does not comply to algorithm constraints");
+            }
+        } catch (GeneralSecurityException gse) {
+            throw (SSLHandshakeException) new SSLHandshakeException(
+                    "Could not generate DHPublicKey").initCause(gse);
         }
     }
 

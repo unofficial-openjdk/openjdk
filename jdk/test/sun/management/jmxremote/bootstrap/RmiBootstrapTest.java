@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,15 @@ import sun.management.jmxremote.ConnectorBootstrap;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.BindException;
+import java.net.ServerSocket;
+import java.rmi.server.ExportException;
 
 import java.util.Properties;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,8 @@ import javax.management.remote.*;
 import javax.management.*;
 
 import sun.management.AgentConfigurationError;
+
+import java.security.Security;
 
 import util.TestLogger;
 
@@ -54,7 +57,7 @@ import util.TestLogger;
  * bootstrap & connection test will fail.</p>
  *
  * <p>The rmi port number can be specified with the "rmi.port" system property.
- * If not, this test will use 12424</p>
+ * If not, this test will use the first available port</p>
  *
  * <p>When called with some argument, the main() will interprete its args to
  * be Java M&M configuration file names. The filenames are expected to end
@@ -69,7 +72,8 @@ import util.TestLogger;
  * <p>Debug traces are logged in "sun.management.test"</p>
  **/
 public class RmiBootstrapTest {
-
+    // the number of consecutive ports to test for availability
+    private static final int PORT_TEST_LEN = 800;
     static TestLogger log =
         new TestLogger("RmiBootstrapTest");
 
@@ -78,6 +82,7 @@ public class RmiBootstrapTest {
      * to avoid falling into "port number already in use" problems.
      **/
     static int testPort = 0;
+    static int basePort = 0;
 
     /**
      * Default values for RMI configuration properties.
@@ -130,6 +135,8 @@ public class RmiBootstrapTest {
             "com.sun.management.jmxremote.ssl.enabled.protocols";
         public static final String SSL_NEED_CLIENT_AUTH =
             "com.sun.management.jmxremote.ssl.need.client.auth";
+        public static final String SSL_CLIENT_ENABLED_CIPHER_SUITES =
+            "javax.rmi.ssl.client.enabledCipherSuites";
     }
 
     /**
@@ -431,7 +438,7 @@ public class RmiBootstrapTest {
     }
 
 
-    private void setSslProperties() {
+    private void setSslProperties(String clientEnabledCipherSuites) {
         final String defaultKeyStore =
             getDefaultStoreName(DefaultValues.KEYSTORE);
         final String defaultTrustStore =
@@ -462,6 +469,13 @@ public class RmiBootstrapTest {
         System.setProperty(PropertyNames.TRUSTSTORE_PASSWD,trustword);
         log.trace("setSslProperties",
                   PropertyNames.TRUSTSTORE_PASSWD+"="+trustword);
+
+        if (clientEnabledCipherSuites != null) {
+            System.setProperty("javax.rmi.ssl.client.enabledCipherSuites",
+                    clientEnabledCipherSuites);
+        } else {
+            System.clearProperty("javax.rmi.ssl.client.enabledCipherSuites");
+        }
     }
 
     private void checkSslConfiguration() {
@@ -514,7 +528,10 @@ public class RmiBootstrapTest {
                       PropertyNames.SSL_ENABLED_PROTOCOLS + "=" +
                       sslProtocols);
 
-            if (useSsl) setSslProperties();
+            if (useSsl) {
+                setSslProperties(props.getProperty(
+                        PropertyNames.SSL_CLIENT_ENABLED_CIPHER_SUITES));
+            }
         } catch (Exception x) {
             System.out.println("Failed to setup SSL configuration: " + x);
             log.debug("checkSslConfiguration",x);
@@ -624,7 +641,7 @@ public class RmiBootstrapTest {
      * eventually cleans up by calling ConnectorBootstrap.terminate().
      * @return null if the test succeeds, an error message otherwise.
      **/
-    private String testConfiguration(File file,int port) {
+    private String testConfiguration(File file,int port) throws BindException {
 
         final String path;
         try {
@@ -644,7 +661,7 @@ public class RmiBootstrapTest {
         System.out.println("***");
 
         System.setProperty("com.sun.management.jmxremote.port",
-                           Integer.toString(port));
+                            Integer.toString(port));
         if (path != null)
             System.setProperty("com.sun.management.config.file", path);
         else
@@ -661,6 +678,11 @@ public class RmiBootstrapTest {
         try {
             cs = ConnectorBootstrap.initialize();
         } catch (AgentConfigurationError x) {
+            if (x.getCause() instanceof ExportException) {
+                if (x.getCause().getCause() instanceof BindException) {
+                    throw (BindException)x.getCause().getCause();
+                }
+            }
             final String err = "Failed to initialize connector:" +
                 "\n\tcom.sun.management.jmxremote.port=" + port +
                 ((path!=null)?"\n\tcom.sun.management.config.file="+path:
@@ -713,7 +735,15 @@ public class RmiBootstrapTest {
      * @return null if the test succeeds, an error message otherwise.
      **/
     private String testConfigurationKo(File conf,int port) {
-        final String errStr = testConfiguration(conf,port+testPort++);
+        String errStr = null;
+        for (int i = 0; i < PORT_TEST_LEN; i++) {
+            try {
+                errStr = testConfiguration(conf,port+testPort++);
+                break;
+            } catch (BindException e) {
+                // port conflict; try another port
+            }
+        }
         if (errStr == null) {
             return "Configuration " +
                 conf + " should have failed!";
@@ -733,11 +763,21 @@ public class RmiBootstrapTest {
      **/
     private String testConfigurationFile(String fileName) {
         File file = new File(fileName);
-        final String portStr = System.getProperty("rmi.port","12424");
-        final int port       = Integer.parseInt(portStr);
+        final String portStr = System.getProperty("rmi.port",null);
+        final int port       = portStr != null ?
+                                Integer.parseInt(portStr) : basePort;
 
         if (fileName.endsWith("ok.properties")) {
-            return testConfiguration(file,port+testPort++);
+            String errStr = null;
+            for (int i = 0; i < PORT_TEST_LEN; i++) {
+                try {
+                    errStr = testConfiguration(file,port+testPort++);
+                    return errStr;
+                } catch (BindException e) {
+                    // port conflict; try another port
+                }
+            }
+            return "Can not locate available port";
         }
         if (fileName.endsWith("ko.properties")) {
             return testConfigurationKo(file,port+testPort++);
@@ -752,8 +792,9 @@ public class RmiBootstrapTest {
      * @throws RuntimeException if the test fails.
      **/
     public void runko() {
-        final String portStr = System.getProperty("rmi.port","12424");
-        final int port       = Integer.parseInt(portStr);
+        final String portStr = System.getProperty("rmi.port",null);
+        final int port       = portStr != null ?
+                                Integer.parseInt(portStr) : basePort;
         final File[] conf = findConfigurationFilesKo();
         if ((conf == null)||(conf.length == 0))
             throw new RuntimeException("No configuration found");
@@ -774,15 +815,23 @@ public class RmiBootstrapTest {
      * @throws RuntimeException if the test fails.
      **/
     public void runok() {
-        final String portStr = System.getProperty("rmi.port","12424");
-        final int port       = Integer.parseInt(portStr);
+        final String portStr = System.getProperty("rmi.port",null);
+        final int port       = portStr != null ?
+                                Integer.parseInt(portStr) : basePort;
         final File[] conf = findConfigurationFilesOk();
         if ((conf == null)||(conf.length == 0))
             throw new RuntimeException("No configuration found");
 
-        String errStr;
+        String errStr = null;
         for (int i=0;i<conf.length;i++) {
-            errStr = testConfiguration(conf[i],port+testPort++);
+            for (int j = 0; j < PORT_TEST_LEN; i++) {
+                try {
+                    errStr = testConfiguration(conf[i],port+testPort++);
+                    break;
+                } catch (BindException e) {
+                    // port conflict; try another port
+                }
+            }
             if (errStr != null) {
                 throw new RuntimeException(errStr);
             }
@@ -835,7 +884,10 @@ public class RmiBootstrapTest {
      * Calls run(args[]).
      * exit(1) if the test fails.
      **/
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+
+        setupBasePort();
         RmiBootstrapTest manager = new RmiBootstrapTest();
         try {
             manager.run(args);
@@ -850,4 +902,9 @@ public class RmiBootstrapTest {
         System.out.println("**** Test  RmiBootstrap Passed ****");
     }
 
+    private static void setupBasePort() throws IOException {
+        try (ServerSocket s = new ServerSocket(0)) {
+            basePort = s.getLocalPort() + 1;
+        }
+    }
 }

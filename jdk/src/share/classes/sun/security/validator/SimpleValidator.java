@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,8 +139,21 @@ public final class SimpleValidator extends Validator {
             date = new Date();
         }
 
+        // create distrusted certificates checker
+        UntrustedChecker untrustedChecker = new UntrustedChecker();
+
+        // check if anchor is untrusted
+        X509Certificate anchorCert = chain[chain.length - 1];
+        try {
+            untrustedChecker.check(anchorCert, Collections.<String>emptySet());
+        } catch (CertPathValidatorException cpve) {
+            throw new ValidatorException(
+                "Untrusted certificate: "+ anchorCert.getSubjectX500Principal(),
+                ValidatorException.T_UNTRUSTED_CERT, anchorCert, cpve);
+        }
+
         // create default algorithm constraints checker
-        TrustAnchor anchor = new TrustAnchor(chain[chain.length - 1], null);
+        TrustAnchor anchor = new TrustAnchor(anchorCert, null);
         AlgorithmChecker defaultAlgChecker = new AlgorithmChecker(anchor);
 
         // create application level algorithm constraints checker
@@ -149,16 +162,13 @@ public final class SimpleValidator extends Validator {
             appAlgChecker = new AlgorithmChecker(anchor, constraints);
         }
 
-        // create distrusted certificates checker
-        UntrustedChecker untrustedChecker = new UntrustedChecker();
-
         // verify top down, starting at the certificate issued by
         // the trust anchor
         int maxPathLength = chain.length - 1;
         for (int i = chain.length - 2; i >= 0; i--) {
             X509Certificate issuerCert = chain[i + 1];
             X509Certificate cert = chain[i];
-            
+
             // check untrusted certificate
             try {
                 // Untrusted checker does not care about the unresolved
@@ -172,8 +182,8 @@ public final class SimpleValidator extends Validator {
 
             // check certificate algorithm
             try {
-                // Algorithm checker don't care about the unresolved critical
-                // extensions.
+                // Algorithm checker does not care about the unresolved
+                // critical extensions.
                 defaultAlgChecker.check(cert, Collections.<String>emptySet());
                 if (appAlgChecker != null) {
                     appAlgChecker.check(cert, Collections.<String>emptySet());

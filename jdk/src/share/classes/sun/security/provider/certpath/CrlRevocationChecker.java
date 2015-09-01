@@ -82,6 +82,10 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         {true, true, true, true, true, true, true, true, true};
     private boolean mOnlyEECert = false;
 
+    // Maximum clock skew in milliseconds (15 minutes) allowed when checking
+    // validity of CRLs
+    private static final long MAX_CLOCK_SKEW = 900000;
+
     /**
      * Creates a <code>CrlRevocationChecker</code>.
      *
@@ -296,7 +300,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         try {
             X509CRLSelector sel = new X509CRLSelector();
             sel.setCertificateChecking(currCert);
-            sel.setDateAndTime(mCurrentTime);
+            CertPathHelper.setDateAndTime(sel, mCurrentTime, MAX_CLOCK_SKEW);
 
             for (CertStore mStore : mStores) {
                 for (java.security.cert.CRL crl : mStore.getCRLs(sel)) {

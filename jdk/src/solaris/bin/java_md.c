@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -432,9 +432,10 @@ CreateExecutionEnvironment(int *_argcp,
       /* runpath contains current effective LD_LIBRARY_PATH setting */
 
       jvmpath = JLI_StringDup(jvmpath);
-      new_runpath = JLI_MemAlloc( ((runpath!=NULL)?strlen(runpath):0) +
+      size_t new_runpath_size = ((runpath != NULL) ? strlen(runpath) : 0) +
                               2*strlen(jrepath) + 2*strlen(arch) +
-                              strlen(jvmpath) + 52);
+                              strlen(jvmpath) + 52;
+      new_runpath = JLI_MemAlloc(new_runpath_size);
       newpath = new_runpath + strlen("LD_LIBRARY_PATH=");
 
 
@@ -489,6 +490,11 @@ CreateExecutionEnvironment(int *_argcp,
        * loop of execv() because we test for the prefix, above.
        */
       if (runpath != 0 && (runpath[0] != '\0')) {
+	/* ensure storage for runpath + colon + NULL */
+	if ((strlen(runpath) + 1 + 1) > new_runpath_size) {
+          ReportErrorMessage(JRE_ERROR11, JNI_TRUE);
+	  exit(1);
+	}
         strcat(new_runpath, ":");
         strcat(new_runpath, runpath);
       }
@@ -622,8 +628,14 @@ GetJREPath(char *path, jint pathsize, char * arch, jboolean speculative)
         sprintf(libjava, "%s/lib/%s/" JAVA_DLL, path, arch);
         if (access(libjava, F_OK) == 0) {
             goto found;
+	}
+        /* ensure storage for path + /jre + NULL */
+        if ((strlen(path) + 4  + 1) > pathsize) {
+	    if (_launcher_debug) {
+		printf("Insufficient space to store JRE path\n");
+	    }
+            return JNI_FALSE;
         }
-
         /* Does the app ship a private JRE in <apphome>/jre directory? */
         sprintf(libjava, "%s/jre/lib/%s/" JAVA_DLL, path, arch);
         if (access(libjava, F_OK) == 0) {

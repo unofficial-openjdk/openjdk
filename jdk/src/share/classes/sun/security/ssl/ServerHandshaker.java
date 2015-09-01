@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.interfaces.*;
 import java.security.spec.ECParameterSpec;
+import java.math.BigInteger;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -47,6 +48,8 @@ import sun.security.jgss.GSSCaller;
 
 import com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager;
 
+import sun.security.util.AlgorithmConstraints;
+import sun.security.util.LegacyAlgorithmConstraints;
 import sun.security.ssl.HandshakeMessage.*;
 import sun.security.ssl.CipherSuite.*;
 import static sun.security.ssl.CipherSuite.*;
@@ -96,6 +99,12 @@ final class ServerHandshaker extends Handshaker {
     private ProtocolVersion clientRequestedVersion;
 
     private SupportedEllipticCurvesExtension supportedCurves;
+
+    // legacy algorithm constraints
+    private static final AlgorithmConstraints legacyAlgorithmConstraints =
+            new LegacyAlgorithmConstraints(
+                    LegacyAlgorithmConstraints.PROPERTY_TLS_LEGACY_ALGS,
+                    new SSLAlgorithmDecomposer());
 
     /*
      * Constructor ... use the keys found in the auth context.
@@ -330,7 +339,7 @@ final class ServerHandshaker extends Handshaker {
                 }
 
                 // verify the client_verify_data value
-                if (!Arrays.equals(clientVerifyData,
+                if (!MessageDigest.isEqual(clientVerifyData,
                                 clientHelloRI.getRenegotiatedConnection())) {
                     fatalSE(Alerts.alert_handshake_failure,
                         "Incorrect verify data in ClientHello " +
@@ -791,6 +800,7 @@ final class ServerHandshaker extends Handshaker {
      * the cipherSuite and keyExchange variables.
      */
     private void chooseCipherSuite(ClientHello mesg) throws IOException {
+        List<CipherSuite> legacySuites = new ArrayList<CipherSuite>();
         for (CipherSuite suite : mesg.getCipherSuites().collection()) {
             if (isNegotiable(suite) == false) {
                 continue;
@@ -802,11 +812,24 @@ final class ServerHandshaker extends Handshaker {
                     continue;
                 }
             }
+
+            if (!legacyAlgorithmConstraints.permits(null, suite.name, null)) {
+                legacySuites.add(suite);
+                continue;
+            }
+
             if (trySetCipherSuite(suite) == false) {
                 continue;
             }
             return;
         }
+
+        for (CipherSuite suite : legacySuites) {
+            if (trySetCipherSuite(suite)) {
+                return;
+            }
+        }
+
         fatalSE(Alerts.alert_handshake_failure,
                     "no cipher suites in common");
     }
@@ -1155,7 +1178,13 @@ final class ServerHandshaker extends Handshaker {
         if (debug != null && Debug.isOn("handshake")) {
             mesg.print(System.out);
         }
-        return dh.getAgreedSecret(mesg.getClientPublicKey(), false);
+
+        BigInteger publicKeyValue = mesg.getClientPublicKey();
+
+        // check algorithm constraints
+        dh.checkConstraints(algorithmConstraints, publicKeyValue);
+
+        return dh.getAgreedSecret(publicKeyValue, false);
     }
 
     private SecretKey clientKeyExchange(ECDHClientKeyExchange mesg)
@@ -1164,7 +1193,13 @@ final class ServerHandshaker extends Handshaker {
         if (debug != null && Debug.isOn("handshake")) {
             mesg.print(System.out);
         }
-        return ecdh.getAgreedSecret(mesg.getEncodedPoint());
+
+        byte[] publicPoint = mesg.getEncodedPoint();
+
+        // check algorithm constraints
+        ecdh.checkConstraints(algorithmConstraints, publicPoint);
+
+        return ecdh.getAgreedSecret(publicPoint);
     }
 
     /*

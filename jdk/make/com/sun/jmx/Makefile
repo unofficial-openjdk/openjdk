@@ -111,10 +111,18 @@ ifeq ($(PLATFORM)-$(LIBARCH), solaris-sparcv9)
 RMIC_JAVA = $(OUTPUTDIR)/bin/sparcv9/java
 endif
 
-RMIC = $(RMIC_JAVA) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
+RMIC_VM = $(RMIC_JAVA)
+RMIC = $(RMIC_VM) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
 
 $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
 	$(prep-target)
+	if [ -x $(PAX_COMMAND) ] ; then \
+	  if $(GREP) '^PaX' /proc/self/status > /dev/null ; then \
+	    if [ -w $(RMIC_VM) ] ; then \
+	      $(PAX_COMMAND) $(PAX_COMMAND_ARGS) $(RMIC_VM) ; \
+	    fi ; \
+	  fi ; \
+	fi
 	$(RMIC) -classpath "$(CLASSDESTDIR)"    \
                 -d $(CLASSDESTDIR)              \
                 -v1.2                           \
