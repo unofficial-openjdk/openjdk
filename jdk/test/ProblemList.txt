@@ -129,6 +129,9 @@ java/beans/XMLDecoder/8028054/TestMethodFinder.java           generic-all
 # 8029891
 java/lang/ClassLoader/deadlock/GetResource.java                 generic-all
 
+# 8133552
+java/lang/ProcessHandle/InfoTest.java                           generic-all
+
 ############################################################################
 
 # jdk_instrument
@@ -139,6 +142,9 @@ java/lang/instrument/RetransformBigClass.sh                     generic-all
 
 # 8072130
 java/lang/instrument/BootClassPath/BootClassPathTest.sh         macosx-all
+
+# 8130339
+java/lang/management/MemoryMXBean/LowMemoryTest.java		generic-all
 
 ############################################################################
 
@@ -151,17 +157,6 @@ javax/management/MBeanServer/OldMBeanServerTest.java            aix-all
 
 # 8042215
 javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java			generic-all
-
-############################################################################
-
-# jdk_math
-
-############################################################################
-
-# jdk_other
-
-# 6988950
-demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java	generic-all
 
 ############################################################################
 
@@ -361,6 +356,10 @@ com/sun/jdi/GetLocalVariables4Test.sh				windows-all
 # 8062512
 java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java generic-all
 
+# 8029453
+java/util/concurrent/locks/ReentrantLock/TimeoutLockLoops.java linux-all
+
+
 ############################################################################
 
 # jdk_instrument
@@ -387,13 +386,7 @@ sun/tools/jinfo/JInfoRunningProcessFlagTest.java		generic-all
 # 8057732
 sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    generic-all
 
-# 8064572 8060736 8062938
-sun/jvmstat/monitor/MonitoredVm/CR6672135.java			generic-all
-
-# 8079273
-demo/jvmti/hprof/CpuOldTest.java            generic-all
-demo/jvmti/hprof/CpuTimesTest.java          generic-all
-demo/jvmti/hprof/OptionsTest.java           generic-all
-demo/jvmti/hprof/StackMapTableTest.java     generic-all
+# 8132648
+sun/tools/jhsdb/BasicLauncherTest.java                  generic-all
 
 ############################################################################
