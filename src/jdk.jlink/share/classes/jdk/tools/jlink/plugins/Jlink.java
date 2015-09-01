@@ -24,6 +24,7 @@
  */
 package jdk.tools.jlink.plugins;
 
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -228,6 +229,31 @@ public final class Jlink {
         private final Set<String> modules;
         private final Set<String> limitmods;
         private final List<Path> pluginpaths;
+        private final ByteOrder endian;
+
+        /**
+         * jlink configuration,
+         *
+         * @param output Output directory, must not exist.
+         * @param modulepaths Modules paths
+         * @param modules Root modules to resolve
+         * @param limitmods Limit the universe of observable modules
+         * @param pluginpaths Custom plugins module path
+         * @param endian Jimage byte order. Native order by default
+         */
+        public JlinkConfiguration(Path output,
+                List<Path> modulepaths,
+                Set<String> modules,
+                Set<String> limitmods,
+                List<Path> pluginpaths,
+                ByteOrder endian) {
+            this.output = output;
+            this.modulepaths = modulepaths == null ? Collections.emptyList() : modulepaths;
+            this.modules = modules == null ? Collections.emptySet() : modules;
+            this.limitmods = limitmods == null ? Collections.emptySet() : limitmods;
+            this.pluginpaths = pluginpaths == null ? Collections.emptyList() : pluginpaths;
+            this.endian = endian == null ? ByteOrder.nativeOrder() : endian;
+        }
 
         /**
          * jlink configuration,
@@ -243,11 +269,8 @@ public final class Jlink {
                 Set<String> modules,
                 Set<String> limitmods,
                 List<Path> pluginpaths) {
-            this.output = output;
-            this.modulepaths = modulepaths == null ? Collections.emptyList() : modulepaths;
-            this.modules = modules == null ? Collections.emptySet() : modules;
-            this.limitmods = limitmods == null ? Collections.emptySet() : limitmods;
-            this.pluginpaths = pluginpaths == null ? Collections.emptyList() : pluginpaths;
+            this(output, modulepaths, modules, limitmods, pluginpaths,
+                    ByteOrder.nativeOrder());
         }
 
         /**
@@ -255,6 +278,13 @@ public final class Jlink {
          */
         public List<Path> getModulepaths() {
             return modulepaths;
+        }
+
+        /**
+         * @return the byte ordering
+         */
+        public ByteOrder getByteOrder() {
+            return endian;
         }
 
         /**
@@ -313,6 +343,7 @@ public final class Jlink {
                 pluginsBuilder.append(p).append(",");
             }
             builder.append("pluginspaths=").append(pluginsBuilder).append("\n");
+            builder.append("endian=").append(endian).append("\n");
             return builder.toString();
         }
     }

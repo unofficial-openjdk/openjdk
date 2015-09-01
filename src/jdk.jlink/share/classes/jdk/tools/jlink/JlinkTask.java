@@ -43,6 +43,7 @@ import java.lang.module.ResolutionException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Layer;
 import java.net.URI;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -137,6 +138,17 @@ public class JlinkTask {
             Path path = Paths.get(arg);
             task.options.output = path;
         }, "--output"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            if ("little".equals(arg)) {
+                task.options.endian = ByteOrder.LITTLE_ENDIAN;
+            } else {
+                if ("big".equals(arg)) {
+                    task.options.endian = ByteOrder.BIG_ENDIAN;
+                } else {
+                    throw taskHelper.newBadArgs("err.unknown.byte.order", arg);
+                }
+            }
+        }, "--endian"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
@@ -173,6 +185,7 @@ public class JlinkTask {
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
+        ByteOrder endian = ByteOrder.nativeOrder();
     }
 
     int run(String[] args) {
@@ -285,7 +298,7 @@ public class JlinkTask {
                         checkAddMods(config.getModules(), config.getLimitmods()),
                         config.getLimitmods(),
                         TaskHelper.createPluginsLayer(pluginsPath),
-                        genBOMContent(config, plugins));
+                        genBOMContent(config, plugins), config.getByteOrder());
         imageHelper.createModularImage(plugins);
     }
 
@@ -310,7 +323,7 @@ public class JlinkTask {
                 options.addMods,
                 options.limitMods,
                 optionsHelper.getPluginsLayer(),
-                genBOMContent());
+                genBOMContent(), options.endian);
 
         imageHelper.createModularImage(taskHelper.getPluginsProperties());
     }
@@ -351,7 +364,8 @@ public class JlinkTask {
             Set<String> addMods,
             Set<String> limitMods,
             Layer pluginsLayer,
-            String bom) throws IOException {
+            String bom,
+            ByteOrder order) throws IOException {
         if (addMods.isEmpty()) {
             if (limitMods.isEmpty()) {
                 throw new IllegalArgumentException("empty modules and limitmodules");
@@ -365,7 +379,7 @@ public class JlinkTask {
                         addMods);
         cf = cf.bind();
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
-        return new ImageFileHelper(cf, mods, output, pluginsLayer, bom);
+        return new ImageFileHelper(cf, mods, output, pluginsLayer, bom, order);
     }
 
 
@@ -458,9 +472,10 @@ public class JlinkTask {
         final Set<Archive> archives;
         final Layer pluginsLayer;
         final String bom;
+        final ByteOrder order;
         ImageFileHelper(Configuration cf, Map<String, Path> modsPaths,
                 Path output, Layer pluginsLayer,
-                String bom) throws IOException {
+                String bom, ByteOrder order) throws IOException {
             this.modules = cf.descriptors();
             this.modsPaths = modsPaths;
             this.output = output;
@@ -469,6 +484,7 @@ public class JlinkTask {
             archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
+            this.order = order;
         }
 
         void createModularImage(Properties properties) throws Exception {
@@ -476,13 +492,13 @@ public class JlinkTask {
                     parseConfiguration(output, modsPaths,
                             properties, pluginsLayer,
                             bom);
-            ImageFileCreator.create(archives, pc);
+            ImageFileCreator.create(archives, order, pc);
         }
 
         void createModularImage(PluginsConfiguration plugins) throws Exception {
             ImagePluginStack pc = ImagePluginConfiguration.
                     parseConfiguration(output, modsPaths, plugins, pluginsLayer, bom);
-            ImageFileCreator.create(archives, pc);
+            ImageFileCreator.create(archives, order, pc);
         }
 
         private Archive newArchive(String module, Path path) {
