@@ -226,6 +226,7 @@ void setInetAddress_hostName(JNIEnv *env, jobject iaObj, jobject host) {
     init(env);
     holder = (*env)->GetObjectField(env, iaObj, ia_holderID);
     (*env)->SetObjectField(env, holder, iac_hostNameID, host);
+    (*env)->SetObjectField(env, holder, iac_origHostNameID, host);
 }
 
 JNIEXPORT
