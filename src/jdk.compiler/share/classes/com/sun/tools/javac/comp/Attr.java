@@ -4886,4 +4886,22 @@ public class Attr extends JCTree.Visitor {
         }
     }
     // </editor-fold>
+
+    public void setPackageSymbols(JCExpression pid, Symbol pkg) {
+        new TreeScanner() {
+            Symbol packge = pkg;
+            @Override
+            public void visitIdent(JCIdent that) {
+                that.sym = packge;
+            }
+
+            @Override
+            public void visitSelect(JCFieldAccess that) {
+                that.sym = packge;
+                packge = packge.owner;
+                super.visitSelect(that);
+            }
+        }.scan(pid);
+    }
+
 }

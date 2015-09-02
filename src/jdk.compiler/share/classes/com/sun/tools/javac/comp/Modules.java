@@ -479,6 +479,7 @@ public class Modules extends JCTree.Visitor {
         public void visitExports(JCExports tree) {
             Name name = TreeInfo.fullName(tree.qualid);
             PackageSymbol packge = syms.enterPackage(sym, name);
+            attr.setPackageSymbols(tree.qualid, packge);
             if (!allExports.add(packge)) {
                 log.error(tree.qualid.pos(), "duplicate.exports", packge);
             }
@@ -529,7 +530,9 @@ public class Modules extends JCTree.Visitor {
         private ModuleSymbol lookupModule(JCExpression moduleName) {
             try {
             Name name = TreeInfo.fullName(moduleName);
-            return moduleFinder.findModule(name);
+            ModuleSymbol msym = moduleFinder.findModule(name);
+            TreeInfo.setSymbol(moduleName, msym);
+            return msym;
             } catch (Throwable t) {
                 System.err.println("Module " + sym + "; lookup export " + moduleName);
                 throw t;

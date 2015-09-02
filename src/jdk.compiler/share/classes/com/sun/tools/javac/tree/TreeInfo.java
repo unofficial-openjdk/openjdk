@@ -763,7 +763,12 @@ public class TreeInfo {
         node = skipParens(node);
         switch (node.getTag()) {
         case TOPLEVEL:
-            return ((JCCompilationUnit) node).packge;
+            JCCompilationUnit cut = (JCCompilationUnit) node;
+            if (isModuleInfo(cut) && cut.defs.nonEmpty() && cut.defs.head.hasTag(MODULEDEF))
+                return symbolFor(cut.defs.head);
+            return cut.packge;
+        case MODULEDEF:
+            return ((JCModuleDecl) node).sym;
         case PACKAGEDEF:
             return ((JCPackageDecl) node).packge;
         case CLASSDEF:
