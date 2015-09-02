@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @modules jdk.jlink/jdk.tools.jmod
+ * @modules jdk.jartool/sun.tools.jar
  * @build ContainerTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng ContainerTest
  * @summary Starts a simple container that uses dynamic configurations
@@ -67,18 +67,20 @@ public class ContainerTest {
         boolean compiled = CompilerUtils.compile(src, output);
         assertTrue(compiled);
 
-        // jmod create ...
+        // jar --create ...
         Path mlib = Files.createDirectories(MLIB_DIR);
-        String cp = output.toString();
-        String jmod = mlib.resolve(CONTAINER_MODULE + "@1.0.jmod").toString();
+        String classes = output.toString();
+        String jar = mlib.resolve(CONTAINER_MODULE + "@1.0.jar").toString();
         String[] args = {
-            "create",
-            "--class-path", cp,
-            "--main-class", CONTAINER_MAIN_CLASS,
-            jmod
+            "--create",
+            "--archive=" + jar,
+            "--main-class=" + CONTAINER_MAIN_CLASS,
+            "-C", classes, "."
         };
-        jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
-        assertEquals(task.run(args), 0);
+        boolean success
+            = new sun.tools.jar.Main(System.out, System.out, "jar")
+                .run(args);
+        assertTrue(success);
     }
 
     /**

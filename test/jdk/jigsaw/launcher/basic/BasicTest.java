@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @modules jdk.jlink/jdk.tools.jmod
+ * @modules jdk.jartool/sun.tools.jar
  * @build BasicTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng BasicTest
  * @summary Basic test of starting an application as a module
@@ -89,23 +89,24 @@ public class BasicTest {
     }
 
     /**
-     * The initial module is loaded from a JMOD file
+     * The initial module is loaded from a modular JAR file
      */
-    public void testRunFromJMod() throws Exception {
+    public void testRunFromJar() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
-        // jmod create --class-path mods/${TESTMODULE} \
-        //     --main-class $MAIN_CLASS mlib/${TESTMODULE}.jmod
-        String cp = MODS_DIR.resolve(TEST_MODULE).toString();
-        String jmod = dir.resolve("m.jmod").toString();
+        // jar --create ...
+        String classes = MODS_DIR.resolve(TEST_MODULE).toString();
+        String jar = dir.resolve("m.jar").toString();
         String[] args = {
-            "create",
-            "--class-path", cp,
-            "--main-class", MAIN_CLASS,
-            jmod
+            "--create",
+            "--archive=" + jar,
+            "--main-class=" + MAIN_CLASS,
+            "-C", classes, "."
         };
-        jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
-        assertEquals(task.run(args), 0);
+        boolean success
+            = new sun.tools.jar.Main(System.out, System.out, "jar")
+                .run(args);
+        assertTrue(success);
 
         // java -mp mods -m $TESTMODULE
         int exitValue

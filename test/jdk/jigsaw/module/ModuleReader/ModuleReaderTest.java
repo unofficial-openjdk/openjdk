@@ -24,7 +24,8 @@
 /**
  * @test
  * @library ../../lib
- * @modules jdk.jlink/jdk.tools.jmod
+ * @modules java.base/jdk.internal.module
+ *          jdk.jlink/jdk.tools.jmod
  * @build ModuleReaderTest CompilerUtils JarUtils
  * @run testng ModuleReaderTest
  * @summary Basic tests for java.lang.module.ModuleReader
@@ -42,6 +43,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
+
+import jdk.internal.module.ConfigurableModuleFinder;
+import jdk.internal.module.ConfigurableModuleFinder.Phase;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -126,6 +130,11 @@ public class ModuleReaderTest {
     void test(Path mp) throws Exception {
 
         ModuleFinder finder = ModuleFinder.of(mp);
+        if (finder instanceof ConfigurableModuleFinder) {
+            // need ModuleFinder to be in the phase to find JMOD files
+            ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
+        }
+
         ModuleReference mref = finder.find(TEST_MODULE).get();
         ModuleReader reader = mref.open();
 

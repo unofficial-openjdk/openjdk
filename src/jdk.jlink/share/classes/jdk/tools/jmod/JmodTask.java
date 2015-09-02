@@ -77,6 +77,8 @@ import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
+import jdk.internal.module.ConfigurableModuleFinder;
+import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
 import jdk.internal.module.ModuleInfoExtender;
@@ -714,9 +716,12 @@ public class JmodTask {
                 options.configs = opts.valuesOf(config);
             if (opts.has(libs))
                 options.libs = opts.valuesOf(libs);
-            if (opts.has(modulePath))
-                options.moduleFinder = ModuleFinder.of(
-                        opts.valuesOf(modulePath).toArray(new Path[0]));
+            if (opts.has(modulePath)) {
+                Path[] dirs = opts.valuesOf(modulePath).toArray(new Path[0]);
+                options.moduleFinder = ModuleFinder.of(dirs);
+                if (options.moduleFinder instanceof ConfigurableModuleFinder)
+                    ((ConfigurableModuleFinder)options.moduleFinder).configurePhase(Phase.LINK_TIME);
+            }
             if (opts.has(moduleVersion))
                 options.moduleVersion = opts.valueOf(moduleVersion);
             if (opts.has(mainClass))
