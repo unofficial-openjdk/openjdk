@@ -207,6 +207,8 @@ class ClassLoader: AllStatic {
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_append_entry;
 
+  static ClassPathEntry* _last_append_entry;
+
   // Hash table used to keep track of loaded packages
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;

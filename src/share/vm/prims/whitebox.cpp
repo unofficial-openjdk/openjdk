@@ -1271,6 +1271,10 @@ WB_ENTRY(jboolean, WB_IsShared(JNIEnv* env, jobject wb, jobject obj))
   return MetaspaceShared::is_in_shared_space((void*)obj_oop);
 WB_END
 
+WB_ENTRY(jboolean, WB_IsSharedClass(JNIEnv* env, jobject wb, jclass clazz))
+  return (jboolean)MetaspaceShared::is_in_shared_space(java_lang_Class::as_Klass(JNIHandles::resolve_non_null(clazz)));
+WB_END
+
 WB_ENTRY(jboolean, WB_AreSharedStringsIgnored(JNIEnv* env))
   return StringTable::shared_string_ignored();
 WB_END
@@ -1520,6 +1524,7 @@ static JNINativeMethod methods[] = {
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/String;",
                                                       (void*)&WB_GetMethodStringOption},
   {CC"isShared",           CC"(Ljava/lang/Object;)Z", (void*)&WB_IsShared },
+  {CC"isSharedClass",      CC"(Ljava/lang/Class;)Z",  (void*)&WB_IsSharedClass },
   {CC"areSharedStringsIgnored",           CC"()Z",    (void*)&WB_AreSharedStringsIgnored },
 };
 

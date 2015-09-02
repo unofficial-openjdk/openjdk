@@ -140,6 +140,7 @@ ClassPathEntry* ClassLoader::_first_entry = NULL;
 ClassPathEntry* ClassLoader::_last_entry  = NULL;
 int             ClassLoader::_num_entries = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
+ClassPathEntry* ClassLoader::_last_append_entry = NULL;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 bool              ClassLoader::_has_bootmodules_jimage = false;
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
@@ -572,6 +573,16 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
 #endif
     while (class_path[end] == os::path_separator()[0]) {
       end++;
+    }
+  }
+
+  if (DumpSharedSpaces) {
+    // Mark the last entry corresponding to the -Xbootclasspath/a
+    if (_first_append_entry != NULL && bootstrap_search) {
+      _last_append_entry = _first_append_entry;
+      while (_last_append_entry->next() != NULL) {
+        _last_append_entry = _last_append_entry->next();
+      }
     }
   }
 }
@@ -1219,6 +1230,18 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
     PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
                                ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
                                PerfClassTraceTime::CLASS_LOAD);
+    if (DumpSharedSpaces) {
+      ClassPathEntry* tmp_e = _first_append_entry;
+      while ((tmp_e != NULL) && (tmp_e != _last_append_entry->next())) {
+        stream = tmp_e->open_stream(file_name, CHECK_NULL);
+        if (stream != NULL) {
+           tty->print_cr("Preload Warning: skipping class from -Xbootclasspath/a %s", class_name);
+           //...close the stream ...
+           return h; // NULL
+        }
+        tmp_e = tmp_e->next();
+      }
+    }
     if (search_append_only) {
       // For the boot loader append path search, must calculate
       // the starting classpath_index prior to attempting to
@@ -1266,6 +1289,12 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
       }
       return h;
     }
+
+    // obtain the classloader type based on the class name.
+    // First obtain the package name based on the class name. Then obtain
+    // the classloader type based on the package name from the jimage using
+    // a jimage API. If the classloader type cannot be found from the
+    // jimage, it is default to the app classloader type.
     jshort classloader_type = ClassLoader::APP;
     int length;
     const jbyte* pkg_string = InstanceKlass::package_from_name(h_name, length);
@@ -1278,7 +1307,9 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
       while (cpe != NULL) {
         ClassPathImageEntry* cpie = (ClassPathImageEntry*)cpe;
         char* module_name;
-        if (cpie->is_jrt()) {
+        // the cpe == e check is to ensure we are inspecting the correct ClassPathEntry
+        // from which the class was found
+        if (cpie->is_jrt() && cpe == e) {
           JImageFile* jimage = cpie->jimage();
           module_name = (char*)(*JImagePackageToModule)(jimage, pkg_name_C_string);
           if (module_name != NULL) {
