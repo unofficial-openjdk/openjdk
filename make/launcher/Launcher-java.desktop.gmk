@@ -30,7 +30,7 @@ $(eval $(call IncludeCustomExtension, jdk, launcher/Launcher-java.desktop.gmk))
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,appletviewer, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.applet.Main"$(COMMA) }',, \
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "-m"$(COMMA) "java.desktop/sun.applet.Main"$(COMMA) }',, \
       $(XLIBS)))
 endif
 

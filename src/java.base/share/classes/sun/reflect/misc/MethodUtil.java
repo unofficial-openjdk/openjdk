@@ -25,6 +25,7 @@
 
 package sun.reflect.misc;
 
+import java.lang.reflect.Module;
 import java.security.AllPermission;
 import java.security.AccessController;
 import java.security.PermissionCollection;
@@ -38,7 +39,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,6 +68,19 @@ class Trampoline {
     private static Object invoke(Method m, Object obj, Object[] params)
         throws InvocationTargetException, IllegalAccessException
     {
+        // throw exception if the method is non-exported API to help catching issue
+        Module module = m.getDeclaringClass().getModule();
+        if (module.isNamed()) {
+            String cn = m.getDeclaringClass().getName();
+            int i = cn.lastIndexOf(".");
+            assert i > 0;
+            String pn = cn.substring(0, i);
+            if (!module.isExported(pn)) {
+                throw new InternalError("MethodUtil.invoke doesn't support non-exported API: " +
+                        m.toString());
+            }
+        }
+
         ensureInvocableMethod(m);
         return m.invoke(obj, params);
     }
@@ -329,24 +342,26 @@ public final class MethodUtil extends SecureClassLoader {
             throw new ClassNotFoundException(name);
         }
         String path = name.replace('.', '/').concat(".class");
-        URL res = getResource(path);
-        if (res != null) {
-            try {
-                return defineClass(name, res);
-            } catch (IOException e) {
-                throw new ClassNotFoundException(name, e);
+        try {
+            InputStream in = Object.class.getModule().getResourceAsStream(path);
+            if (in != null) {
+                try (in) {
+                    byte[] b = in.readAllBytes();
+                    return defineClass(name, b);
+                }
             }
-        } else {
-            throw new ClassNotFoundException(name);
+        } catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
         }
+
+        throw new ClassNotFoundException(name);
     }
 
 
     /*
      * Define the proxy classes
      */
-    private Class<?> defineClass(String name, URL url) throws IOException {
-        byte[] b = getBytes(url);
+    private Class<?> defineClass(String name, byte[] b) throws IOException {
         CodeSource cs = new CodeSource(null, (java.security.cert.Certificate[])null);
         if (!name.equals(TRAMPOLINE)) {
             throw new IOException("MethodUtil: bad name " + name);

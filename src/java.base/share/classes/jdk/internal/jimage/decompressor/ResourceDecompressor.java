@@ -26,7 +26,7 @@ package jdk.internal.jimage.decompressor;
 
 /**
  *
- * JImage Decompressor.
+ * JLink Image Decompressor.
  */
 public interface ResourceDecompressor {
 

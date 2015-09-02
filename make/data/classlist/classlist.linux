@@ -2374,7 +2374,6 @@ sun/text/resources/CollationData
 sun/text/resources/FormatData
 sun/text/resources/en/FormatData_en
 sun/text/resources/en/FormatData_en_US
-sun/util/CoreResourceBundleControl
 sun/util/PreHashedMap
 sun/util/ResourceBundleEnumeration
 sun/util/calendar/AbstractCalendar

@@ -26,18 +26,12 @@
 package sun.util.cldr;
 
 import java.security.AccessController;
-import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.spi.BreakIteratorProvider;
 import java.text.spi.CollatorProvider;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -56,9 +50,6 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
     private static final CLDRBaseLocaleDataMetaInfo baseMetaInfo = new CLDRBaseLocaleDataMetaInfo();
     // Assumption: CLDR has only one non-Base module.
     private final LocaleDataMetaInfo nonBaseMetaInfo;
-
-    // parent locales map
-    private static volatile Map<Locale, Locale> parentLocalesMap = null;
 
     public CLDRLocaleProviderAdapter() {
         try {
@@ -136,42 +127,6 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
             tagset.add(tokens.nextToken());
         }
         return tagset;
-    }
-
-    // Implementation of ResourceBundleBasedAdapter
-    @Override
-    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-        List<Locale> candidates = super.getCandidateLocales(baseName, locale);
-        return applyParentLocales(baseName, candidates);
-}
-
-    private List<Locale> applyParentLocales(String baseName, List<Locale> candidates) {
-        if (Objects.isNull(parentLocalesMap)) {
-            Map<Locale, Locale> map = new HashMap<>();
-            Map<String, String> parentLocales = baseMetaInfo.parentLocales();
-            parentLocales.keySet().forEach(parent -> {
-                Arrays.asList(parentLocales.get(parent).split(" ")).stream().forEach(child -> {
-                    map.put(Locale.forLanguageTag(child),
-                        "root".equals(parent) ? Locale.ROOT : Locale.forLanguageTag(parent));
-                });
-            });
-            parentLocalesMap = Collections.unmodifiableMap(map);
-        }
-
-        // check irregular parents
-        for (int i = 0; i < candidates.size(); i++) {
-            Locale l = candidates.get(i);
-            Locale p = parentLocalesMap.get(l);
-            if (!l.equals(Locale.ROOT) &&
-                Objects.nonNull(p) &&
-                !candidates.get(i+1).equals(p)) {
-                List<Locale> applied = candidates.subList(0, i+1);
-                applied.addAll(applyParentLocales(baseName, super.getCandidateLocales(baseName, p)));
-                return applied;
-            }
-        }
-
-        return candidates;
     }
 
     @Override

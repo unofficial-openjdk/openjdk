@@ -1284,6 +1284,7 @@ public class Introspector {
         // First check with sibling's classloader (if any).
         ClassLoader cl = sibling.getClassLoader();
         Class<?> cls = ClassFinder.findClass(className, cl);
+        Introspector.class.getModule().addReads(cls.getModule());
         return cls.newInstance();
     }
 
