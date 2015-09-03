@@ -30,6 +30,7 @@
  * @summary Basic test of starting an application as a module
  */
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -121,6 +122,26 @@ public class BasicTest {
     }
 
     /**
+     * Attempt to run with a non-existant directory as the first element
+     * of the module path
+     */
+    public void testRunFromBadModulePath() throws Exception {
+        String mp = "DoesNotExist" + File.pathSeparator + MODS_DIR.toString();
+        String mid = TEST_MODULE + "/" + MAIN_CLASS;
+
+        // java -mp mods -m $TESTMODULE/$MAINCLASS
+        int exitValue
+            = executeTestJava("-mp", mp,
+                              "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
+
+
+    /**
      * Attempt to run an unknown module
      */
     public void testRunWithUnknownModule() throws Exception {
@@ -130,6 +151,25 @@ public class BasicTest {
         int exitValue
             = executeTestJava("-mp", modulepath,
                               "-m", "rhubarb")
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
+
+
+    /**
+     * Attempt to run an unknown main class in a module
+     */
+    public void testRunWithUnknownMainClass() throws Exception {
+        String modulepath = MODS_DIR.toString();
+        String mid = TEST_MODULE + "/p.rhubarb";
+
+        // java -mp mods -m $TESTMODULE/$MAINCLASS
+        int exitValue
+            = executeTestJava("-mp", modulepath,
+                              "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
