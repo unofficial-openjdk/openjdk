@@ -80,7 +80,7 @@ public class JMapHProfLargeHeapTest {
         }
 
         // Small heap 22 megabytes, should create 1.0.1 file format
-        testHProfFileFormat("-Xmx1g", 22 * M, HPROF_HEADER_1_0_1);
+        testHProfFileFormat("-XaddExports:java.management/sun.management -Xmx1g", 22 * M, HPROF_HEADER_1_0_1);
 
         /**
          * This test was deliberately commented out since the test system lacks
@@ -89,7 +89,7 @@ public class JMapHProfLargeHeapTest {
          * the test environment the test should be enabled again.
          * */
         // Large heap 2,2 gigabytes, should create 1.0.2 file format
-        // testHProfFileFormat("-Xmx4g", 2 * G + 2 * M, HPROF_HEADER_1_0_2);
+        // testHProfFileFormat("-XaddExports:java.management/sun.management -Xmx4g", 2 * G + 2 * M, HPROF_HEADER_1_0_2);
     }
 
     private static void testHProfFileFormat(String vmArgs, long heapSize,
