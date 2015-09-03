@@ -131,7 +131,7 @@ public final class JavaAdapterServices {
      * @throws Throwable if anything goes wrong.
      */
     public static void invokeNoPermissions(final MethodHandle method, final Object arg) throws Throwable {
-        NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
+        // NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
     }
 
     /**
@@ -195,7 +195,7 @@ public final class JavaAdapterServices {
         });
 
         try {
-            return MethodHandles.lookup().findStatic(Class.forName(className, true, loader), "invoke",
+            return MethodHandles.publicLookup().findStatic(Class.forName(className, true, loader), "invoke",
                     MethodType.methodType(void.class, MethodHandle.class, Object.class));
         } catch(final ReflectiveOperationException e) {
             throw new AssertionError(e.getMessage(), e);
