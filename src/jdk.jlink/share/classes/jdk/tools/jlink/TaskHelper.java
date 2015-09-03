@@ -481,6 +481,8 @@ public final class TaskHelper {
                     if (i == args.length - 1) {
                         throw new BadArgs("err.no.plugins.path").showUsage(true);
                     } else {
+                        warning("warn.thirdparty.plugins.enabled");
+                        log.println(bundleHelper.getMessage("warn.thirdparty.plugins"));
                         i += 1;
                         String arg = args[i];
                         if (!arg.isEmpty() && arg.charAt(0) == '-') {
@@ -565,7 +567,9 @@ public final class TaskHelper {
                 }
                 log.println(bundleHelper.getMessage("main.opt." + name));
             }
-            log.println(bundleHelper.getMessage("main.plugins-modulepath"));
+            log.println(bundleHelper.getMessage("main.plugins-modulepath")
+                    + ". " + bundleHelper.getMessage("warn.prefix") + " "
+                    + bundleHelper.getMessage("warn.thirdparty.plugins"));
             log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
