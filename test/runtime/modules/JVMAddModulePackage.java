@@ -28,8 +28,7 @@
  * @compile/module=java.base java/lang/reflect/ModuleHelper.java
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModulePackage
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModulePackage
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddModulePackage
  */
 
 import static jdk.test.lib.Asserts.*;

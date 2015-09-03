@@ -33,8 +33,7 @@ import static jdk.test.lib.Asserts.*;
  * @compile/module=java.base java/lang/reflect/ModuleHelper.java
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckUnnamed
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckUnnamed
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckUnnamed
  */
 
 public class AccessCheckUnnamed {
