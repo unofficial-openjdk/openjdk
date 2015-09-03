@@ -89,10 +89,11 @@ public class BasicTest {
         assertTrue(exitValue == 0);
     }
 
+
     /**
      * The initial module is loaded from a modular JAR file
      */
-    public void testRunFromJar() throws Exception {
+    public void testRunFromModularJar() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
         // jar --create ...
@@ -118,12 +119,12 @@ public class BasicTest {
                 .getExitValue();
 
         assertTrue(exitValue == 0);
-
     }
 
+
     /**
-     * Attempt to run with a non-existant directory as the first element
-     * of the module path
+     * Attempt to run with a directory that does not exist as the first
+     * element of the module path
      */
     public void testRunFromBadModulePath() throws Exception {
         String mp = "DoesNotExist" + File.pathSeparator + MODS_DIR.toString();
@@ -142,9 +143,9 @@ public class BasicTest {
 
 
     /**
-     * Attempt to run an unknown module
+     * Attempt to run an unknown initial module
      */
-    public void testRunWithUnknownModule() throws Exception {
+    public void testRunWithBadModule() throws Exception {
         String modulepath = MODS_DIR.toString();
 
         // java -mp mods -m $TESTMODULE
@@ -160,11 +161,64 @@ public class BasicTest {
 
 
     /**
-     * Attempt to run an unknown main class in a module
+     * Attempt to run with -m specifying a main class that does not
+     * exist.
      */
-    public void testRunWithUnknownMainClass() throws Exception {
+    public void testRunWithBadMainClass() throws Exception {
         String modulepath = MODS_DIR.toString();
         String mid = TEST_MODULE + "/p.rhubarb";
+
+        // java -mp mods -m $TESTMODULE/$MAINCLASS
+        int exitValue
+            = executeTestJava("-mp", modulepath,
+                              "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
+
+
+    /**
+     * Attempt to run with -m specifying a modular JAR that does not have
+     * a MainClass attribute
+     */
+    public void testRunWithMissingMainClass() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mlib");
+
+        // jar --create ...
+        String classes = MODS_DIR.resolve(TEST_MODULE).toString();
+        String jar = dir.resolve("m.jar").toString();
+        String[] args = {
+            "--create",
+            "--archive=" + jar,
+            "-C", classes, "."
+        };
+        boolean success
+            = new sun.tools.jar.Main(System.out, System.out, "jar")
+                .run(args);
+        assertTrue(success);
+
+        // java -mp mods -m $TESTMODULE
+        int exitValue
+            = executeTestJava("-mp", dir.toString(),
+                              "-m", TEST_MODULE)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
+
+
+    /**
+     * Attempt to run with -m specifying a main class that is a different
+     * module to that specified to -m
+     */
+    public void testRunWithMainClassInWrongModule() throws Exception {
+        String modulepath = MODS_DIR.toString();
+        String mid = "java.base/" + MAIN_CLASS;
 
         // java -mp mods -m $TESTMODULE/$MAINCLASS
         int exitValue
