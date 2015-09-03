@@ -162,6 +162,7 @@ public class AddExportsTest {
         return new Object[][]{
 
             { "java.base/sun.misc",                  null }, // missing target
+            { "java.base/sun.misc=sun.monkey",       null }, // unknown target
             { "java.monkey/sun.monkey=ALL-UNNAMED",  null }, // unknown module
             { "java.base/sun.monkey=ALL-UNNAMED",    null }, // unknown package
             { "java.monkey/sun.monkey=ALL-UNNAMED",  null }, // unknown module/package

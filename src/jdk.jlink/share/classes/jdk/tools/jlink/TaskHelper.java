@@ -25,8 +25,6 @@
 package jdk.tools.jlink;
 
 import java.io.File;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -47,6 +45,11 @@ import java.util.Map.Entry;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
+
+import jdk.internal.module.ConfigurableModuleFinder;
+import jdk.internal.module.ConfigurableModuleFinder.Phase;
+import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
@@ -478,6 +481,8 @@ public final class TaskHelper {
                     if (i == args.length - 1) {
                         throw new BadArgs("err.no.plugins.path").showUsage(true);
                     } else {
+                        warning("warn.thirdparty.plugins.enabled");
+                        log.println(bundleHelper.getMessage("warn.thirdparty.plugins"));
                         i += 1;
                         String arg = args[i];
                         if (!arg.isEmpty() && arg.charAt(0) == '-') {
@@ -562,7 +567,9 @@ public final class TaskHelper {
                 }
                 log.println(bundleHelper.getMessage("main.opt." + name));
             }
-            log.println(bundleHelper.getMessage("main.plugins-modulepath"));
+            log.println(bundleHelper.getMessage("main.plugins-modulepath")
+                    + ". " + bundleHelper.getMessage("warn.prefix") + " "
+                    + bundleHelper.getMessage("warn.thirdparty.plugins"));
             log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
@@ -680,9 +687,9 @@ public final class TaskHelper {
             String ret = null;
             if (pluginOptions.pluginsProperties != null) {
                 Properties props = new Properties();
-                try (FileInputStream stream
+                try (FileInputStream fis
                         = new FileInputStream(pluginOptions.pluginsProperties)) {
-                    props.load(stream);
+                    props.load(fis);
                 } catch (FileNotFoundException ex) {
                     throw new IOException(bundleHelper.
                             getMessage("err.path.not.valid")
@@ -797,8 +804,13 @@ public final class TaskHelper {
 
     static Layer createPluginsLayer(Path[] paths) {
         ModuleFinder finder = ModuleFinder.of(paths);
+
+        // jmods are located at link-time
+        if (finder instanceof ConfigurableModuleFinder)
+            ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
+
         Configuration cf
-                = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+            = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
         cf = cf.bind();
         ClassLoader cl = new ModuleClassLoader(cf);
         return Layer.create(cf, mn -> cl);

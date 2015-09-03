@@ -90,10 +90,10 @@ public final class Configuration {
      *
      * <p> Each root module is located using the given {@code beforeFinder}
      * and if not found, using the given {@code afterFinder}. Their transitive
-     * dependences are located using the given {@code beforeFinder}, if found
-     * then the parent {@code Layer}, and if found then the given {@code
-     * afterFinder}. Dependences located in the parent {@code Layer} are
-     * resolved no further. </p>
+     * dependences are located using the given {@code beforeFinder}, or if not
+     * found then the parent {@code Layer}, or if not found then the given
+     * {@code afterFinder}. Dependences located in the parent {@code Layer}
+     * are resolved no further. </p>
      *
      * <p> When all modules have been resolved then the resulting <em>dependency
      * graph</em> is checked to ensure that it does not contain cycles. A

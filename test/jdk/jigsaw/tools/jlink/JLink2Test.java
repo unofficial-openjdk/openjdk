@@ -77,12 +77,12 @@ public class JLink2Test {
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(unknownDir)
                 .option("--help")
-                .call().assertFailure("Error: java.nio.file.NoSuchFileException: .*jar.image(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NoSuchFileException: .*jar.image(\n|\r|.)*");
         Files.createFile(jar);
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar)
                 .option("--help")
-                .call().assertFailure("Error: java.nio.file.NotDirectoryException: .*bad.jar(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NotDirectoryException: .*bad.jar(\n|\r|.)*");
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar.getParent())
                 .option("--help")

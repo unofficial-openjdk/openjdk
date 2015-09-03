@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary Test the recording and checking of dependency hashes
  * @author Andrei Eremeev
  * @library /jdk/jigsaw/lib /lib/testlibrary

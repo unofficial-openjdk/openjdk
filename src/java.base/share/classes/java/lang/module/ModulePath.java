@@ -55,22 +55,31 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.internal.module.Hasher;
+import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.Hasher.HashSupplier;
+import jdk.internal.module.Hasher;
 import sun.misc.PerfCounter;
 
 
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
- * a sequence of directories for JMOD, modular JAR or exploded modules.
+ * a sequence of directories for modules.
+ *
+ * The {@code ModuleFinder} can be configured to work in either the run-time
+ * or link-time phases. In both cases it locates modular JAR and exploded
+ * modules. When configured for link-time then it additionally locates
+ * modules in JMOD files.
  */
 
-class ModulePath implements ModuleFinder {
+class ModulePath implements ConfigurableModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
 
     // the directories on this module path
     private final Path[] dirs;
     private int next;
+
+    // true if in the link phase
+    private boolean isLinkPhase;
 
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
@@ -80,6 +89,11 @@ class ModulePath implements ModuleFinder {
         for (Path dir : this.dirs) {
             Objects.requireNonNull(dir);
         }
+    }
+
+    @Override
+    public void configurePhase(Phase phase) {
+        isLinkPhase = (phase == Phase.LINK_TIME);
     }
 
     @Override
@@ -162,10 +176,10 @@ class ModulePath implements ModuleFinder {
                 try {
 
                     if (attrs.isRegularFile()) {
-                        if (entry.toString().endsWith(".jmod")) {
-                            mref = readJMod(entry);
-                        } else if (entry.toString().endsWith(".jar")) {
+                        if (entry.toString().endsWith(".jar")) {
                             mref = readJar(entry);
+                        } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
+                            mref = readJMod(entry);
                         }
                     } else if (attrs.isDirectory()) {
                         mref = readExploded(entry);

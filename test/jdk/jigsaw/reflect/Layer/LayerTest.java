@@ -68,6 +68,7 @@ public class LayerTest {
         // findModule
         Module base = Object.class.getModule();
         assertTrue(bootLayer.findModule("java.base").get() == base);
+        assertTrue(base.getLayer() == bootLayer);
 
         // findLoader
         assertTrue(bootLayer.findLoader("java.base") == null);
@@ -162,6 +163,9 @@ public class LayerTest {
         assertEquals(m1.getName(), "m1");
         assertEquals(m2.getName(), "m2");
         assertEquals(m3.getName(), "m3");
+        assertTrue(m1.getLayer() == layer);
+        assertTrue(m2.getLayer() == layer);
+        assertTrue(m3.getLayer() == layer);
         assertTrue(modules.contains(m1));
         assertTrue(modules.contains(m2));
         assertTrue(modules.contains(m3));
@@ -227,6 +231,8 @@ public class LayerTest {
         Module m2 = layer.findModule("m2").get();
         assertEquals(m1.getName(), "m1");
         assertEquals(m2.getName(), "m2");
+        assertTrue(m1.getLayer() == layer);
+        assertTrue(m2.getLayer() == layer);
         assertTrue(modules.contains(m1));
         assertTrue(modules.contains(m2));
         assertTrue(layer.findModule("java.base").get() == Object.class.getModule());
