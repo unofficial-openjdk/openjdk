@@ -54,7 +54,7 @@ SRC_ZIP_SRCS += $(wildcard \
     $(CORBA_TOPDIR)/src/*/share/classes \
     $(JAXP_TOPDIR)/src/*/share/classes \
     $(JAXWS_TOPDIR)/src/*/share/classes \
-    $(SUPPORT_OUTPUTDIR)/gensrc/j* \
+    $(GENSRC_OUTPUTDIR)/j* \
     $(SUPPORT_OUTPUTDIR)/rmic/j* \
     ) \
     #

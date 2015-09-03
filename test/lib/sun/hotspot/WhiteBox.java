@@ -26,7 +26,6 @@ package sun.hotspot;
 
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Executable;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -360,6 +359,18 @@ public class WhiteBox {
                        .findAny()
                        .orElse(null);
   }
+
+  // Jigsaw
+  public native void DefineModule(Object module, String version, String location,
+                                  Object[] packages);
+  public native void AddModuleExports(Object from_module, String pkg, Object to_module);
+  public native void AddReadsModule(Object from_module, Object to_module);
+  public native boolean CanReadModule(Object asking_module, Object target_module);
+  public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
+  public native void AddModulePackage(Object module, String pkg);
+  public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
+  public native void AddModuleExportsToAll(Object module, String pkg);
+
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
     int offset = getOffsetForName0(name);
@@ -386,27 +397,11 @@ public class WhiteBox {
                               .orElse(null);
   }
 
-  public native boolean readImageFile(String imagePath);
-  public native long imageOpenImage(String imagePath, boolean bigEndian);
-  public native void imageCloseImage(long id);
-  public native long imageGetIndexAddress(long id);
-  public native long imageGetDataAddress(long id);
-  public native boolean imageReadCompressed(long id, long offset,
-    ByteBuffer compressedBuffer, long compressedSize,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native boolean imageRead(long id, long offset,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native byte[] imageGetStringBytes(long id, int offset);
-  public native long imageGetStringsSize(long id);
-  public native long[] imageGetAttributes(long id, int offset);
-  public native long[] imageFindAttributes(long id, byte[] path);
-  public native int[] imageAttributeOffsets(long id);
-  public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
-
   // Safepoint Checking
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
   // Sharing
   public native boolean isShared(Object o);
+  public native boolean isSharedClass(Class c);
   public native boolean areSharedStringsIgnored();
 }
