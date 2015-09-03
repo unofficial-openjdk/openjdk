@@ -56,8 +56,8 @@ endef
 define Clean-gensrc
 	@$(PRINTF) "Cleaning gensrc $(if $1,for $(strip $1) )..."
 	@$(PRINTF) "\n" $(LOG_DEBUG)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/gensrc_no_docs/$(strip $1)
+	$(RM) -r $(GENSRC_OUTPUTDIR)/$(strip $1)
+	$(RM) -r $(GENSRC_OUTPUTDIR)_no_docs/$(strip $1)
 	@$(PRINTF) " done\n"
 endef
 
@@ -68,25 +68,25 @@ define Clean-java
 	$(RM) -r $(SUPPORT_OUTPUTDIR)/special_classes/$(strip $1)
 	$(PRINTF) " done\n"
 	$(PRINTF) "Cleaning headers $(if $1,for $(strip $1)) ..."
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/headers/$(strip $1)
+	$(RM) -r $(HEADERS_OUTPUTDIR)/$(strip $1)
 	@$(PRINTF) " done\n"
 endef
 
 define Clean-native
 	@$(PRINTF) "Cleaning native $(if $1,for $(strip $1) )..."
 	@$(PRINTF) "\n" $(LOG_DEBUG)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/native/$(strip $1)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(strip $1)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/modules_cmds/$(strip $1)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(strip $1)
+	$(RM) -r $(NATIVE_OUTPUTDIR)/$(strip $1)
+	$(RM) -r $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)
+	$(RM) -r $(MODULES_LIBS_OUTPUTDIR)-stripped/$(strip $1)
+	$(RM) -r $(MODULES_CMDS_OUTPUTDIR)/$(strip $1)
+	$(RM) -r $(MODULES_CMDS_OUTPUTDIR)-stripped/$(strip $1)
 	@$(PRINTF) " done\n"
 endef
 
 define Clean-include
 	@$(PRINTF) "Cleaning include $(if $1,for $(strip $1) )..."
 	@$(PRINTF) "\n" $(LOG_DEBUG)
-	$(RM) -r $(SUPPORT_OUTPUTDIR)/modules_include/$(strip $1)
+	$(RM) -r $(MODULES_INCLUDE_OUTPUTDIR)/$(strip $1)
 	@$(PRINTF) " done\n"
 endef
 

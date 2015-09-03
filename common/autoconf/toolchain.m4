@@ -617,19 +617,31 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     BASIC_FIXUP_EXECUTABLE(BUILD_CC)
     BASIC_PATH_PROGS(BUILD_CXX, [cl CC g++])
     BASIC_FIXUP_EXECUTABLE(BUILD_CXX)
-    BASIC_PATH_PROGS(BUILD_LD, ld)
-    BASIC_FIXUP_EXECUTABLE(BUILD_LD)
+    BASIC_PATH_PROGS(BUILD_NM, nm)
+    BASIC_FIXUP_EXECUTABLE(BUILD_NM)
+    BASIC_PATH_PROGS(BUILD_AR, ar)
+    BASIC_FIXUP_EXECUTABLE(BUILD_AR)
+    # Assume the C compiler is the assembler
+    BUILD_AS="$BUILD_CC -c"
+    # Just like for the target compiler, use the compiler as linker
+    BUILD_LD="$BUILD_CC"
   else
     # If we are not cross compiling, use the normal target compilers for
     # building the build platform executables.
     BUILD_CC="$CC"
     BUILD_CXX="$CXX"
     BUILD_LD="$LD"
+    BUILD_NM="$NM"
+    BUILD_AS="$AS"
+    BUILD_AR="$AR"
   fi
 
   AC_SUBST(BUILD_CC)
   AC_SUBST(BUILD_CXX)
   AC_SUBST(BUILD_LD)
+  AC_SUBST(BUILD_NM)
+  AC_SUBST(BUILD_AS)
+  AC_SUBST(BUILD_AR)
 ])
 
 # Setup legacy variables that are still needed as alternative ways to refer to
