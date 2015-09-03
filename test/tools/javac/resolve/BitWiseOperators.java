@@ -25,6 +25,7 @@
  * @bug 8082311
  * @summary Verify that bitwise operators don't allow to mix numeric and boolean operands.
  * @library ../lib
+ * @modules jdk.compiler/com.sun.tools.javac.util
  */
 
 import com.sun.tools.javac.util.StringUtils;

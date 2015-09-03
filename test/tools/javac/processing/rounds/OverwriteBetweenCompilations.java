@@ -53,6 +53,14 @@ import com.sun.tools.javac.util.Log.WriterKind;
 
 @SupportedOptions("pass")
 public class OverwriteBetweenCompilations extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler",
+            "com.sun.tools.javac.api",
+            "com.sun.tools.javac.main",
+            "com.sun.tools.javac.processing",
+            "com.sun.tools.javac.util");
+    }
+
     int round = 1;
     @Override
     public boolean process(Set<? extends TypeElement> annotations,

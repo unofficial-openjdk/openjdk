@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ package com.sun.tools.doclets.internal.toolkit.util;
 import java.util.*;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.internal.toolkit.*;
 
 /**
@@ -108,14 +107,13 @@ public class MetaKeywords {
     }
 
     /**
-     * Get the profile keywords.
+     * Get the module keywords.
      *
-     * @param profile the profile being documented
+     * @param module the module being documented
      */
-    public String[] getMetaKeywords(Profile profile) {
+    public String[] getMetaKeywordsForModule(String moduleName) {
         if( configuration.keywords ) {
-            String profileName = profile.name;
-            return new String[] { profileName + " " + "profile" };
+            return new String[] { moduleName + " " + "module" };
         } else {
             return new String[] {};
         }
