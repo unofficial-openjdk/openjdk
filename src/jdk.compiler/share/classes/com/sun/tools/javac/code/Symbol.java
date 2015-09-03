@@ -929,6 +929,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
         @Override
+        public ClassSymbol outermostClass() {
+            return null;
+        }
+
+        @Override
         public String toString() {
             // TODO: the following strings should be localized
             // Do this with custom anon subtypes in Symtab

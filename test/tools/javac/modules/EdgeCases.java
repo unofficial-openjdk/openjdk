@@ -27,6 +27,7 @@
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
+ *      jdk.compiler/com.sun.tools.javac.code
  *      jdk.compiler/com.sun.tools.javac.main
  * @build ToolBox ModuleTestBase
  * @run main EdgeCases
@@ -35,6 +36,12 @@
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+
+import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 
 public class EdgeCases extends ModuleTestBase {
 
@@ -63,6 +70,25 @@ public class EdgeCases extends ModuleTestBase {
 
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
+    }
+
+    @Test
+    void testModuleSymbolOutterMostClass(Path base) throws Exception {
+        try (StandardJavaFileManager fm = tb.compiler.getStandardFileManager(null, null, null)) {
+            Path moduleSrc = base.resolve("module-src");
+            Path m1 = moduleSrc.resolve("m1");
+
+            tb.writeJavaFiles(m1, "module m1 { }");
+
+            Iterable<? extends JavaFileObject> files = fm.getJavaFileObjects(findJavaFiles(moduleSrc));
+            JavacTask task = (JavacTask) tb.compiler.getTask(null, fm, null, null, null, files);
+
+            task.analyze();
+
+            ModuleSymbol msym = (ModuleSymbol) task.getElements().getModuleElement("m1");
+
+            msym.outermostClass();
+        }
     }
 
 }
