@@ -27,6 +27,7 @@
  * @summary Basher for star-import scopes
  * @modules jdk.compiler/com.sun.tools.javac.code
  *          jdk.compiler/com.sun.tools.javac.file
+ *          jdk.compiler/com.sun.tools.javac.tree
  *          jdk.compiler/com.sun.tools.javac.util
  */
 
@@ -175,7 +176,7 @@ public class StarImportTest {
             Name name = names.fromString("p" + (++nextPackageSerial));
             int count = rgen.nextInt(MAX_SETUP_PACKAGE_COUNT);
             log("setup: creating package " + name + " with " + count + " entries");
-            PackageSymbol p = new PackageSymbol(name, symtab.rootPackage);
+            PackageSymbol p = new PackageSymbol(name, symtab.unnamedModule.rootPackage);
             p.members_field = WriteableScope.create(p);
             for (int i = 0; i < count; i++) {
                 String outer = name + "c" + i;
@@ -199,7 +200,7 @@ public class StarImportTest {
             Name name = names.fromString("c" + (++nextClassSerial));
             int count = rgen.nextInt(MAX_SETUP_CLASS_COUNT);
             log("setup: creating class " + name + " with " + count + " entries");
-            ClassSymbol c = createClass(name, symtab.unnamedPackage);
+            ClassSymbol c = createClass(name, symtab.unnamedModule.unnamedPackage);
 //            log("setup: created " + c);
             for (int i = 0; i < count; i++) {
                 ClassSymbol ic = createClass(names.fromString("Entry" + i), c);
@@ -216,7 +217,7 @@ public class StarImportTest {
          */
         void createStarImportScope() throws Exception {
             log ("createStarImportScope");
-            PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.rootPackage);
+            PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.unnamedModule.rootPackage);
 
             starImportScope = new StarImportScope(pkg);
             starImportModel = new Model();
@@ -290,7 +291,7 @@ public class StarImportTest {
         ClassSymbol createClass(Name name, Symbol owner) {
             ClassSymbol sym = new ClassSymbol(0, name, owner);
             sym.members_field = WriteableScope.create(sym);
-            if (owner != symtab.unnamedPackage)
+            if (owner != symtab.unnamedModule.unnamedPackage)
                 owner.members().enter(sym);
             return sym;
         }
