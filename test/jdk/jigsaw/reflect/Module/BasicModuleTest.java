@@ -77,6 +77,7 @@ public class BasicModuleTest {
         assertFalse(thisModule.isNamed());
         assertTrue(thisModule.getName() == null);
         assertTrue(thisModule.getDescriptor() == null);
+        assertTrue(thisModule.getLayer() == null);
 
         ClassLoader thisLoader = BasicModuleTest.class.getClassLoader();
         assertTrue(thisLoader == thisModule.getClassLoader());
@@ -115,6 +116,9 @@ public class BasicModuleTest {
         assertFalse(m1.isNamed());
         assertFalse(m2.isNamed());
 
+        assertTrue(m1.getLayer() == null);
+        assertTrue(m2.getLayer() == null);
+
         // unnamed module reads all modules
         assertTrue(m1.canRead(m2));
         assertTrue(m2.canRead(m1));
@@ -137,20 +141,23 @@ public class BasicModuleTest {
         Module base = Object.class.getModule();
         Module thisModule = BasicModuleTest.class.getModule();
 
+        // getName
+        assertTrue(base.getName().equals("java.base"));
+
+        // getDescriptor
+        assertTrue(base.getDescriptor().exports().stream()
+                .anyMatch(doesExport("java.lang")));
+
         // getClassLoader
         assertTrue(base.getClassLoader() == null);
 
-        // descriptor
-        assertTrue(base.getDescriptor().exports().stream()
-                   .anyMatch(doesExport("java.lang")));
+        // getLayer
+        assertTrue(base.getLayer() == Layer.boot());
 
-        // name
-        assertTrue(base.getName().equals("java.base"));
-
-        // packages
+        // getPackages
         assertTrue(contains(base.getPackages(), "java.lang"));
 
-        // reads
+        // canRead
         assertTrue(base.canRead(base));
 
         // isExported
@@ -168,21 +175,24 @@ public class BasicModuleTest {
         Module xml = javax.xml.XMLConstants.class.getModule();
         Module thisModule = BasicModuleTest.class.getModule();
 
-        // getClassLoader
-        assertTrue(desktop.getClassLoader() == null);
+        // name
+        assertTrue(desktop.getName().equals("java.desktop"));
 
         // descriptor
         assertTrue(desktop.getDescriptor().exports().stream()
                    .anyMatch(doesExport("java.awt")));
 
-        // name
-        assertTrue(desktop.getName().equals("java.desktop"));
+        // getClassLoader
+        assertTrue(desktop.getClassLoader() == null);
 
-        // packages
+        // getLayer
+        assertTrue(base.getLayer() == Layer.boot());
+
+        // getPackages
         assertTrue(contains(desktop.getPackages(), "java.awt"));
         assertTrue(contains(desktop.getPackages(), "sun.awt"));
 
-        // reads
+        // canRead
         assertTrue(desktop.canRead(base));
         assertTrue(desktop.canRead(xml));
 

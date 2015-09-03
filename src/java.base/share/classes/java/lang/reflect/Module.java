@@ -80,6 +80,9 @@ import sun.security.util.SecurityConstants;
 
 public final class Module {
 
+    // the layer that contains this module, can be null
+    private final Layer layer;
+
     // module name and loader, these fields are read by VM
     private final String name;
     private final ClassLoader loader;
@@ -93,8 +96,12 @@ public final class Module {
      * VM but will not read any other modules, will not have any exports setup
      * and will not be registered in the service catalog.
      */
-    private Module(ClassLoader loader, ModuleDescriptor descriptor, URI uri) {
-
+    private Module(Layer layer,
+                   ClassLoader loader,
+                   ModuleDescriptor descriptor,
+                   URI uri)
+    {
+        this.layer = layer;
         this.name = descriptor.name();
         this.loader = loader;
         this.descriptor = descriptor;
@@ -125,6 +132,7 @@ public final class Module {
      * @see ClassLoader#getUnnamedModule
      */
     private Module(ClassLoader loader) {
+        this.layer = null;
         this.name = null;
         this.loader = loader;
         this.descriptor = null;
@@ -140,6 +148,7 @@ public final class Module {
      * @apiNote This constructor is for VM white-box testing.
      */
     Module(ClassLoader loader, ModuleDescriptor descriptor) {
+        this.layer = null;
         this.name = descriptor.name();
         this.loader = loader;
         this.descriptor = descriptor;
@@ -197,10 +206,34 @@ public final class Module {
     }
 
     /**
-     * @apiNote Need to decide whether to add this method as a public method.
+     * Returns the layer that contains this module or {@code null} if this
+     * module is not in a layer.
+     *
+     * <p> A module {@code Layer} contains named modules and therefore this
+     * method always returns {@code null} when invoked on an unnamed {@code
+     * Module}. </p>
+     *
+     * <p> <i>Dynamic modules</i> are named modules that are generated at
+     * runtime. A dynamic module may or may not be in a module Layer. </p>
+     *
+     * @return The layer that this module is in
+     *
+     * @see Layer#create
+     * @see Proxy
      */
-    Layer getLayer() {
-        throw new RuntimeException();
+    public Layer getLayer() {
+        if (isNamed()) {
+            Layer layer = this.layer;
+            if (layer != null)
+                return layer;
+
+            // special-case java.base as it is created before the boot Layer
+            if (loader == null && name.equals("java.base")) {
+                return SharedSecrets.getJavaLangAccess().getBootLayer();
+            }
+        }
+
+        return null;
     }
 
 
@@ -772,7 +805,7 @@ public final class Module {
             if (loader == null && name.equals("java.base")) {
                 m = Object.class.getModule();
             } else {
-                m = new Module(loader, descriptor, uri);
+                m = new Module(layer, loader, descriptor, uri);
             }
 
             modules.put(name, m);
@@ -962,7 +995,7 @@ public final class Module {
                 public Module defineModule(ClassLoader loader,
                                            ModuleDescriptor descriptor,
                                            URI uri) {
-                   return new Module(loader, descriptor, uri);
+                   return new Module(null, loader, descriptor, uri);
                 }
                 @Override
                 public void addReads(Module m1, Module m2) {
