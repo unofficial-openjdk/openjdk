@@ -25,6 +25,13 @@
 
 package jdk.internal.jimage;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
@@ -227,13 +234,41 @@ public final class UTF8String implements CharSequence {
         return bytes;
     }
 
+    /**
+     * Convert the string bytes into Modified UTF-8 encoding (as defined in
+     * <code>java.io.DataInput</code>
+     * @param string
+     * @return bytes encoded into modified UTF-8
+     */
     private static byte[] stringToBytes(String string) {
-        return string.getBytes(UTF_8);
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            DataOutputStream ss = new DataOutputStream(bos);
+            ss.writeUTF(string);
+            byte[] content = bos.toByteArray();
+            // first 2 items are length;
+            if(content.length <= 2) {
+                return new byte[0];
+            }
+            return Arrays.copyOfRange(content, 2, content.length);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public String toString() {
-        return new String(bytes, offset, count, UTF_8);
+        ByteBuffer buffer = ByteBuffer.allocate(bytes.length+2);
+        buffer.order(ByteOrder.BIG_ENDIAN);
+        buffer.putShort((short)bytes.length);
+        buffer.put(bytes);
+        ByteArrayInputStream stream = new ByteArrayInputStream(buffer.array());
+        DataInputStream in = new DataInputStream(stream);
+        try {
+            return in.readUTF();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override

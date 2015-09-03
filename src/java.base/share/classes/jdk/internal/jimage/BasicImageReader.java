@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import java.nio.IntBuffer;
 import java.util.Comparator;
 import java.util.stream.IntStream;
 
-public class BasicImageReader {
+public class BasicImageReader implements AutoCloseable {
     private final String imagePath;
     private final ImageSubstrate substrate;
     private final ByteOrder byteOrder;
@@ -106,6 +106,10 @@ public class BasicImageReader {
 
     public ImageStringsReader getStrings() {
         return strings;
+    }
+
+    public ImageLocation findLocation(String mn, String rn) {
+        return findLocation("/" + mn + "/" + rn);
     }
 
     public ImageLocation findLocation(String name) {

@@ -36,9 +36,7 @@ import java.text.spi.DecimalFormatSymbolsProvider;
 import java.text.spi.NumberFormatProvider;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -379,13 +377,6 @@ public class JRELocaleProviderAdapter extends LocaleProviderAdapter implements R
             }
         }
         return localeData;
-    }
-
-    @Override
-    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-        return ResourceBundle.Control
-            .getNoFallbackControl(ResourceBundle.Control.FORMAT_DEFAULT)
-            .getCandidateLocales(baseName, locale);
     }
 
     /**

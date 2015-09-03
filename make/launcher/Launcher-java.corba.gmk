@@ -26,22 +26,24 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,idlj, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.corba/com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,orbd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.DbDir=./orb.db"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.Port=1049"$(COMMA) \
         "-J-Dcom.sun.CORBA.POA.ORBServerId=1"$(COMMA) \
-        "com.sun.corba.se.impl.activation.ORBD"$(COMMA) }'))
+        "-m"$(COMMA) "java.corba/com.sun.corba.se.impl.activation.ORBD"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,servertool, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.corba.se.impl.activation.ServerTool"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.corba/com.sun.corba.se.impl.activation.ServerTool"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,tnameserv, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.DbDir=./orb.db"$(COMMA) \
         "-J-Djava.util.logging.LoggingPermission=contol"$(COMMA) \
         "-J-Dcom.sun.CORBA.POA.ORBServerId=1"$(COMMA) \
-        "com.sun.corba.se.impl.naming.cosnaming.TransientNameServer"$(COMMA) }'))
+        "-m"$(COMMA) "java.corba/com.sun.corba.se.impl.naming.cosnaming.TransientNameServer"$(COMMA) }'))
 
