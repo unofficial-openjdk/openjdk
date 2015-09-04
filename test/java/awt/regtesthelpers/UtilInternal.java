@@ -33,7 +33,6 @@ import java.awt.Frame;
 
 import sun.awt.AWTAccessor;
 
-
 /**
    Class with static methods using internal/proprietary API by necessity.
 */
@@ -50,10 +49,10 @@ public final class UtilInternal {
                                           .getPeer(embedder);
         System.out.println("frame's peer = " + frame_peer);
         if ("sun.awt.windows.WToolkit".equals(tk.getClass().getName())) {
+            java.awt.Helper.addExports("sun.awt.windows", UtilInternal.class.getModule());
+
             Class comp_peer_class =
                 Class.forName("sun.awt.windows.WComponentPeer");
-            comp_peer_class.getModule().
-                         addExports("sun.awt.windows",UtilInternal.class.getModule());
             System.out.println("comp peer class = " + comp_peer_class);
             Field hwnd_field = comp_peer_class.getDeclaredField("hwnd");
             hwnd_field.setAccessible(true);
@@ -65,10 +64,8 @@ public final class UtilInternal {
             Constructor constructor = clazz.getConstructor (new Class [] {Long.TYPE});
             return (Frame) constructor.newInstance (new Object[] {hwnd});
         } else if ("sun.awt.X11.XToolkit".equals(tk.getClass().getName())) {
+            java.awt.Helper.addExports("sun.awt.X11", UtilInternal.class.getModule());
             Class x_base_window_class = Class.forName("sun.awt.X11.XBaseWindow");
-            x_base_window_class.getModule().
-                         addExports("sun.awt.X11",UtilInternal.class.getModule());
-            System.out.println("x_base_window_class = " + x_base_window_class);
             Method get_window = x_base_window_class.getMethod("getWindow", new Class[0]);
             System.out.println("get_window = " + get_window);
             long window = (Long) get_window.invoke(frame_peer, new Object[0]);
