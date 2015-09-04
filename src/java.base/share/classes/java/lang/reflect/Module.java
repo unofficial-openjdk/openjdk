@@ -216,7 +216,7 @@ public final class Module {
      * <p> <i>Dynamic modules</i> are named modules that are generated at
      * runtime. A dynamic module may or may not be in a module Layer. </p>
      *
-     * @return The layer that this module is in
+     * @return The layer that contains this module
      *
      * @see Layer#create
      * @see Proxy
@@ -315,8 +315,8 @@ public final class Module {
      *
      * @return this module
      *
-     * @throws IllegalStateException if this is a named module and the caller
-     *         is in a different module
+     * @throws IllegalStateException
+     *         If this is a named module and the caller is not this module
      *
      * @see #canRead
      */
@@ -338,7 +338,7 @@ public final class Module {
      *
      * @apiNote This method is for Proxy use
      *
-     * @throws IllegalArgumentException is the target is an unnamed module
+     * @throws IllegalArgumentException if the target is an unnamed module
      */
     void implAddReadAll(Module target) {
         if (!target.isNamed())
@@ -551,11 +551,11 @@ public final class Module {
      *
      * @return this module
      *
-     * @throws IllegalArgumentException if {@code pn} is {@code null}, or
-     *         this is a named module and the package {@code pn} is not a
-     *         package in this module
-     * @throws IllegalStateException if this is a named module and the caller
-     *         is in a different module
+     * @throws IllegalArgumentException
+     *         If {@code pn} is {@code null}, or this is a named module and the
+     *         package {@code pn} is not a package in this module
+     * @throws IllegalStateException
+     *         If this is a named module and the caller is not this module
      */
     @CallerSensitive
     public Module addExports(String pn, Module target) {

@@ -398,10 +398,10 @@ public final class Class<T> implements java.io.Serializable,
      * @apiNote This is an experimental API.  This method returns {@code null} on
      * failure rather than throw a {@link ClassNotFoundException}, as is done by
      * the existing {@link #forName(String)} method.
-     * The security check is stack-based permission check rather than caller-sensitive
-     * check as in the 3-arg Class.forName method.  Caller-sensitiveness security check
-     * has been one target of exploits. This needs to be re-examined if it deserves a
-     * new permission than RuntimePermission("getClassLoader").
+     * The security check is a stack-based permission check rather than a
+     * caller-sensitive check as in the 3-arg Class.forName method. The 3-arg
+     * method needs to be re-examined to see if its permission check should be
+     * changed.
      *
      * @param  module   Named module
      * @param  name     Fully-qualified class name

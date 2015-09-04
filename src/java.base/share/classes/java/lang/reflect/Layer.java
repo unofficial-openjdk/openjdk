@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import sun.misc.SharedSecrets;
+import sun.security.util.SecurityConstants;
 
 
 /**
@@ -127,9 +128,9 @@ public final class Layer {
      *
      * <p> Modules are mapped to module-capable class loaders by means of the
      * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
-     * The caller of this method must arrange for the class loaders to be
-     * ready to load from these modules before attempting to load classes or
-     * resources. This can be before or after the {@code Layer} is created. </p>
+     * The entity creating the layer should arrange for the class loaders to be
+     * ready to load from these modules before there are any attempts to load
+     * classes or resources. </p>
      *
      * <p> Creating a {@code Layer} may fail for several reasons: </p>
      *
@@ -146,9 +147,10 @@ public final class Layer {
      *
      * </ul>
      *
-     * @apiNote Need to decide if there is a permission check needed here. We
-     * can't have an untrusted ClassLoaderFinder returning null and have this
-     * method define modules to the boot loader.
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method if first called with a {@code RuntimePermission("getClassLoader")}
+     * permission to check that the caller is allowed to get access to the
+     * class loaders that the {@code ClassLoaderFinder} returns. </p>
      *
      * @implNote Some of the failure reasons listed cannot be detected in
      * advance, hence it is possible for Layer.create to fail with some of the
@@ -168,6 +170,11 @@ public final class Layer {
     public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+        }
 
         // For now, no two modules in the boot Layer may contain the same
         // package so we use a simple check for the boot Layer to keep

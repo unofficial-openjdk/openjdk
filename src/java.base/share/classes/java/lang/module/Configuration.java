@@ -43,22 +43,93 @@ import java.util.stream.Collectors;
  * graph</em> by adding edges indicated by the readability relation ({@code
  * requires} or {@code requires public}). </p>
  *
+ * <p> Suppose we have the following observable modules: </p>
+ * <pre> {@code
+ *     module m1 { requires m2; }
+ *     module m2 { requires public m3; }
+ *     module m3 { }
+ *     module m4 { }
+ * } </pre>
+ *
+ * <p> If the module {@code m1} is resolved then the resulting configuration
+ * contains three modules ({@code m1}, {@code m2}, {@code m3}). The edges in
+ * its readability graph are: </p>
+ * <pre> {@code
+ *     m1 --> m2  (meaning m1 reads m2)
+ *     m1 --> m3
+ *     m2 --> m3
+ * } </pre>
+ *
  * <p> Resolution is an additive process. The dependence relation may include
  * dependences on modules that have already been instantiated in the Java
  * virtual machine (in a module {@link Layer Layer}). The result is a
- * <em>relative configuration</em> where the readability graph has read
- * edges to modules in a previously instantiated configuration. </p>
+ * <em>relative configuration</em> that is relative to a module layer and
+ * where readability graph has read edges to modules in the layer (or
+ * parent layers). </p>
+ *
+ * <p> Suppose we have the following observable modules: </p>
+ * <pre> {@code
+ *     module m1 { requires m2; requires java.xml; }
+ *     module m2 { }
+ * } </pre>
+ *
+ * <p> If module {@code m1} is resolved with the {@link Layer#boot() boot}
+ * layer as the parent layer then the resulting configuration contains two
+ * modules ({@code m1}, {@code m2}). The edges in its readability graph
+ * are:
+ * <pre> {@code
+ *     m1 --> m2
+ *     m1 --> java.xml
+ * } </pre>
+ * where module {@code java.xml} is in the parent layer. For simplicity, this
+ * example omits the implicitly declared dependence on the {@code java.base}
+ * module. </p>
  *
  * <p> Service binding is the process of augmenting a configuration with
  * modules from the set of observable modules induced by the service-use
  * relation. Any module that was not previously in the graph requires
- * resolution to compute its transitive closure. Service binding is an iterative
- * process as adding a module that satisfies some service-use dependence may
- * introduce new service-use dependences. </p>
+ * resolution to compute its transitive closure. Service binding is an
+ * iterative process as adding a module that satisfies some service-use
+ * dependence may introduce new service-use dependences. </p>
  *
- * <p> The following example resolves a module named <em>myapp</em> that results
- * in a configuration. It then augments that configuration with additional
- * modules (and edges) induced by service-use relationships. </p>
+ * <p> Suppose we have the following observable modules: </p>
+ * <pre> {@code
+ *     module m1 { uses p.S; }
+ *     module m2 { provides p.S with p2.S2; }
+ *     module m3 { requires m4; provides p.S with p3.S3; }
+ *     module m4 { }
+ * } </pre>
+ *
+ * <p> If the module {@code m1} is resolved then the resulting configuration
+ * contains one module ({@code m1}). If service binding is then performed then
+ * it results in a new configuration that contains four modules ({@code m1},
+ * {@code m2}, {@code m3}, {@code m4}). The edges in its readability graph
+ * are:</p>
+ * <pre> {@code
+ *     m3 --> m4
+ * } </pre>
+ * <p> The edges in its service-use graph are: </p>
+ * <pre> {@code
+ *     m1 --> m2  (meaning m1 uses a service that is provided by m2)
+ *     m1 --> m3
+ * } </pre>
+ *
+ * <p> If this configuration is instantiated as a {@code Layer}, and if code in
+ * module {@code m1} uses {@link java.util.ServiceLoader ServiceLoader} to
+ * iterate over implementations of {@code p.S.class}, then it will iterate over
+ * an instance of {@code p2.S2} and {@code p3.S3}. </p>
+ *
+ * <p> {@code Configuration} defines the {@link #resolve resolve} and {@link
+ * #bind bind} methods to do resolution and service binding respectively. It
+ * defines the {@link #reads reads} method to examine the readability graph,
+ * and the {@link #provides provides} method to get the set of modules in
+ * the configuration that provide one or more implementations of a service
+ * type. </p>
+ *
+ * <p> The following example invokes the {@code resolve} method to resolve a
+ * module named <em>myapp</em>. It then invokes {@code bind} on the
+ * configuration to obtain a new configuration with additional modules (and
+ * edges) induced by service-use relationships. </p>
  *
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
@@ -72,6 +143,7 @@ import java.util.stream.Collectors;
  * }</pre>
  *
  * @since 1.9
+ * @see Layer
  */
 
 public final class Configuration {

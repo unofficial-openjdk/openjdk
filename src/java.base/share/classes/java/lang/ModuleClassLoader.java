@@ -65,6 +65,13 @@ import jdk.internal.misc.BootLoader;
  * loader. If not found then it delegates the search to the parent class
  * loader.</p>
  *
+ * @apiNote This is an experimental API at this time. It is intended for
+ * simple plugin-like scenarios where all modules in the plugin are in a layer
+ * that has the boot Layer as its parent. It does not handle interference.
+ * An alternative to this class loader is a set of factory methods that create
+ * ClassLoaderFinder implementations that map modules to loader in
+ * topologies needed to support the modules in the configuration.
+ *
  * @since 1.9
  */
 
