@@ -24,4 +24,4 @@
  */
 
 
-provides javax.accessibility.AccessibilityProvider with com.sun.java.accessibility.ProviderImpl;
+provides javax.accessibility.AccessibilityProvider with com.sun.java.accessibility.internal.ProviderImpl;
