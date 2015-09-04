@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
+import java.lang.module.FindException;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor.Requires;
@@ -68,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -187,7 +189,7 @@ public class JmodTask {
                     ok = list();
                     break;
                 default:
-                    throw new CommandException("err.invalid.task", options.task.name()).showUsage(true);
+                    throw new AssertionError("Unknown task: " + options.task.name());
             }
 
             return ok ? EXIT_OK : EXIT_ERROR;
@@ -197,6 +199,7 @@ public class JmodTask {
                 showUsageSummary();
             return EXIT_CMDERR;
         } catch (Exception x) {
+            reportError(x.getMessage());
             x.printStackTrace();
             return EXIT_ABNORMAL;
         } finally {
@@ -205,11 +208,21 @@ public class JmodTask {
     }
 
     private boolean list() throws IOException {
-        ZipFile zip = new ZipFile(options.jmodFile.toFile());
+        ZipFile zip = null;
+        try {
+            try {
+                zip = new ZipFile(options.jmodFile.toFile());
+            } catch (IOException x) {
+                throw new IOException("error opening jmod file", x);
+            }
 
-        // Trivially print the archive entries for now, pending a more complete implementation
-        zip.stream().forEach(e -> out.println(e.getName()));
-        return true;
+            // Trivially print the archive entries for now, pending a more complete implementation
+            zip.stream().forEach(e -> out.println(e.getName()));
+            return true;
+        } finally {
+            if (zip != null)
+                zip.close();
+        }
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
@@ -317,6 +330,8 @@ public class JmodTask {
                             jf.getInputStream(entry).transferTo(baos);
                             break;
                         }
+                    } catch (ZipException x) {
+                        // Skip. Do nothing. No packages will be added.
                     }
                 }
             }
@@ -403,13 +418,17 @@ public class JmodTask {
             for (Requires md: moduleDependences) {
                 String dn = md.name();
                 if (dependenciesToHash.matcher(dn).find()) {
-                    Optional<ModuleReference> omref = moduleFinder.find(dn);
-                    if (!omref.isPresent()) {
-                        throw new RuntimeException("Hashing module " + name
-                            + " dependences, unable to find module " + dn
-                            + " on module path");
+                    try {
+                        Optional<ModuleReference> omref = moduleFinder.find(dn);
+                        if (!omref.isPresent()) {
+                            throw new RuntimeException("Hashing module " + name
+                                + " dependencies, unable to find module " + dn
+                                + " on module path");
+                        }
+                        descriptors.add(omref.get().descriptor());
+                    } catch (FindException x) {
+                        throw new IOException("error reading module path", x);
                     }
-                    descriptors.add(omref.get().descriptor());
                 }
             }
 
@@ -433,6 +452,8 @@ public class JmodTask {
                 } else if (Files.isRegularFile(path) && path.toString().endsWith(".jar")) {
                     try (JarFile jf = new JarFile(path.toString())) {
                         packages.addAll(findPackages(jf));
+                    } catch (ZipException x) {
+                        // Skip. Do nothing. No packages will be added.
                     } catch (IOException ioe) {
                         throw new UncheckedIOException(ioe);
                     }
@@ -588,8 +609,8 @@ public class JmodTask {
         String jmodDir() { return jmodDir; }
     }
 
-    static class PathConverter implements ValueConverter<Path> {
-        static final ValueConverter<Path> INSTANCE = new PathConverter();
+    static class ClassPathConverter implements ValueConverter<Path> {
+        static final ValueConverter<Path> INSTANCE = new ClassPathConverter();
 
         private static final Path CWD = Paths.get("");
 
@@ -599,6 +620,33 @@ public class JmodTask {
                 Path path = CWD.resolve(value);
                 if (Files.notExists(path))
                     throw new CommandException("err.path.not.found", path);
+                if (! (Files.isDirectory(path) ||
+                       (Files.isRegularFile(path) && path.toString().endsWith(".jar"))))
+                    throw new CommandException("err.invalid.class.path.entry", path);
+                return path;
+            } catch (InvalidPathException x) {
+                throw new CommandException("err.path.not.valid", value);
+            }
+        }
+
+        @Override  public Class<Path> valueType() { return Path.class; }
+
+        @Override  public String valuePattern() { return "path"; }
+    }
+
+    static class DirPathConverter implements ValueConverter<Path> {
+        static final ValueConverter<Path> INSTANCE = new DirPathConverter();
+
+        private static final Path CWD = Paths.get("");
+
+        @Override
+        public Path convert(String value) {
+            try {
+                Path path = CWD.resolve(value);
+                if (Files.notExists(path))
+                    throw new CommandException("err.path.not.found", path);
+                if (!Files.isDirectory(path))
+                    throw new CommandException("err.path.not.a.dir", path);
                 return path;
             } catch (InvalidPathException x) {
                 throw new CommandException("err.path.not.valid", value);
@@ -647,19 +695,19 @@ public class JmodTask {
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(PathConverter.INSTANCE);
+                        .withValuesConvertedBy(ClassPathConverter.INSTANCE);
 
         OptionSpec<Path> cmds
                 = parser.accepts("cmds", getMessage("main.opt.cmds"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(PathConverter.INSTANCE);
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<Path> config
                 = parser.accepts("config", getMessage("main.opt.config"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(PathConverter.INSTANCE);
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<Pattern> hashDependencies
                 = parser.accepts("hash-dependencies", getMessage("main.opt.hash-dependencies"))
@@ -674,7 +722,7 @@ public class JmodTask {
                 = parser.accepts("libs", getMessage("main.opt.libs"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(PathConverter.INSTANCE);
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<String> mainClass
                 = parser.accepts("main-class", getMessage("main.opt.main-class"))
@@ -686,7 +734,7 @@ public class JmodTask {
                                     getMessage("main.opt.modulepath"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(PathConverter.INSTANCE);
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<Version> moduleVersion
                 = parser.accepts("module-version", getMessage("main.opt.module-version"))
