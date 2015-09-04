@@ -26,7 +26,7 @@
 #define LIBJIMAGE_OSSUPPORT_HPP
 
 #ifdef WIN32
-#include <synchapi.h>
+#include <Windows.h>
 #else
 #include <pthread.h>
 #endif
