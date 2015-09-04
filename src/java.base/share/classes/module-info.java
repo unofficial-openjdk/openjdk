@@ -121,7 +121,6 @@ module java.base {
         jdk.naming.dns;
     exports sun.net.www to
         java.desktop,
-        jdk.compiler,
         jdk.jartool;
     exports sun.net.www.protocol.http to
         java.security.jgss;
