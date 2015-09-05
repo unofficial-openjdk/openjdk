@@ -37,8 +37,10 @@ import sun.misc.SharedSecrets;
 
 
 /**
- * A helper class to allow JDK classes, the VM, and internal tests to easily
- * create modules, update modules, and update the readability graph.
+ * A helper class to allow JDK classes create dynamic modules and to update
+ * modules, exports and the readability graph. It is also invoked by the VM
+ * to add read edges when agents are instrumenting code that need to link
+ * to supporting classes.
  *
  * The parameters that are package names in this API are the fully-qualified
  * names of the packages as defined in section 6.5.3 of <cite>The Java&trade;
