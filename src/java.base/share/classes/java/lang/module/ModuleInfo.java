@@ -49,16 +49,20 @@ import static jdk.internal.module.ClassFileConstants.*;
 /**
  * Read module information from a {@code module-info} class file.
  *
- * @implNote The rationale for the hand-coded reader is performance and fine
- * control over the throwing of InvalidModuleDescriptorException.
+ * @implNote The rationale for the hand-coded reader is startup performance
+ * and fine control over the throwing of InvalidModuleDescriptorException.
  */
 
 final class ModuleInfo {
 
+    // supplies the set of packages when ConcealedPackages not present
+    private final Supplier<Set<String>> packageFinder;
+
+    // indicates if the Hashes attribute should be parsed
     private final boolean parseHashes;
-    private String name;
+
+    // the builder, created when parsing
     private ModuleDescriptor.Builder builder;
-    private Supplier<Set<String>> packageFinder;
 
     private ModuleInfo(Supplier<Set<String>> pf, boolean ph) {
         packageFinder = pf;
@@ -165,8 +169,8 @@ final class ModuleInfo {
         int suffix = mn.indexOf("/module-info");
         if (suffix < 1)
             throw invalidModuleDescriptor("this_class not of form name/module-info");
-        name = mn.substring(0, suffix).replace('/', '.');
-        builder = new ModuleDescriptor.Builder(name);
+        mn = mn.substring(0, suffix).replace('/', '.');
+        builder = new ModuleDescriptor.Builder(mn);
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
@@ -188,53 +192,65 @@ final class ModuleInfo {
 
 
         // the names of the attributes found in the class file
-        Set<String> namesFound = new HashSet<>();
+        Set<String> attributes = new HashSet<>();
 
         for (int i = 0; i < attributes_count ; i++) {
             int name_index = in.readUnsignedShort();
-            String name = cpool.getUtf8(name_index);
+            String attribute_name = cpool.getUtf8(name_index);
             int length = in.readInt();
 
-            boolean added = namesFound.add(name);
+            boolean added = attributes.add(attribute_name);
             if (!added) {
                 throw invalidModuleDescriptor("More than one "
-                                              + name + " attribute");
+                                              + attribute_name + " attribute");
             }
 
-            switch (name) {
+            switch (attribute_name) {
+
                 case MODULE :
-                    readModuleAttribute(in, cpool);
+                    readModuleAttribute(mn, in, cpool);
                     break;
+
                 case CONCEALED_PACKAGES :
                     readConcealedPackagesAttribute(in, cpool);
                     break;
+
                 case VERSION :
                     readVersionAttribute(in, cpool);
                     break;
+
                 case MAIN_CLASS :
                     readMainClassAttribute(in, cpool);
                     break;
+
+                case SYNETHETIC :
+                    if (length != 0) {
+                        throw invalidModuleDescriptor(SYNETHETIC + " attribute"
+                                                      + " length should be zero");
+                    }
+                    break;
+
                 case HASHES :
                     if (parseHashes) {
                         readHashesAttribute(in, cpool);
                         break;
                     }
-                    // fallthrough
+                    // fallthrough to skip
+
                 default:
-                    // Should check that it's one of Synthetic, SourceFile,
-                    // SourceDebugExtension, Deprecated?
                     in.skipBytes(length);
+
             }
         }
 
         // the Module attribute is required
-        if (!namesFound.contains(MODULE)) {
+        if (!attributes.contains(MODULE)) {
             throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
         // If the ConcealedPackages attribute is not present then the
         // packageFinder is used to to find any non-exported packages.
-        if (!namesFound.contains(CONCEALED_PACKAGES) && packageFinder != null) {
+        if (!attributes.contains(CONCEALED_PACKAGES) && packageFinder != null) {
             Set<String> pkgs;
             try {
                 pkgs = new HashSet<>(packageFinder.get());
@@ -251,11 +267,11 @@ final class ModuleInfo {
     /**
      * Reads the Module attribute.
      */
-    private void readModuleAttribute(DataInput in, ConstantPool cpool)
+    private void readModuleAttribute(String mn, DataInput in, ConstantPool cpool)
         throws IOException
     {
         int requires_count = in.readUnsignedShort();
-        if (requires_count == 0 && !name.equals("java.base")) {
+        if (requires_count == 0 && !mn.equals("java.base")) {
             throw invalidModuleDescriptor("The requires table must have"
                                           + " at least one entry");
         }

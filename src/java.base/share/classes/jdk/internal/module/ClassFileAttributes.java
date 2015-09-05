@@ -57,7 +57,7 @@ class ClassFileAttributes {
 
     /**
      * Module_attribute {
-     *   // See jcp/spec/raw-file/tip/web/lang-vm.html for details.
+     *   // See lang-vm.html for details.
      * }
      */
     static class ModuleAttribute extends Attribute {
@@ -239,6 +239,41 @@ class ClassFileAttributes {
     }
 
     /**
+     * Synthetic attribute.
+     */
+    static class SyntheticAttribute extends Attribute {
+        SyntheticAttribute() {
+            super(SYNETHETIC);
+        }
+
+        @Override
+        protected Attribute read(ClassReader cr,
+                                 int off,
+                                 int len,
+                                 char[] buf,
+                                 int codeOff,
+                                 Label[] labels)
+        {
+            return new SyntheticAttribute();
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter cw,
+                                   byte[] code,
+                                   int len,
+                                   int maxStack,
+                                   int maxLocals)
+        {
+            ByteVector attr = new ByteVector();
+            return attr;
+        }
+    }
+
+    /**
+     * ConcealedPackages attribute.
+     *
+     * <pre> {@code
+     *
      * ConcealedPackages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "ConcealedPackages"
@@ -250,6 +285,8 @@ class ClassFileAttributes {
      *   { // index to CONSTANT_CONSTANT_utf8_info structure with the package name
      *     u2 package_index
      *   } package[package_count];
+     *
+     * }</pre>
      */
     static class ConcealedPackagesAttribute extends Attribute {
         private final Set<String> packages;
@@ -311,6 +348,10 @@ class ClassFileAttributes {
     }
 
     /**
+     * Version attribute.
+     *
+     * <pre> {@code
+     *
      * Version_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "Version"
@@ -320,6 +361,8 @@ class ClassFileAttributes {
      *   // index to CONSTANT_CONSTANT_utf8_info structure with the version
      *   u2 version_index;
      * }
+     *
+     * } </pre>
      */
     static class VersionAttribute extends Attribute {
         private final Version version;
@@ -360,6 +403,10 @@ class ClassFileAttributes {
     }
 
     /**
+     * MainClass attribute.
+     *
+     * <pre> {@code
+     *
      * MainClass_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "MainClass"
@@ -369,6 +416,8 @@ class ClassFileAttributes {
      *   // index to CONSTANT_Class_info structure with the main class name
      *   u2 main_class_index;
      * }
+     *
+     * } </pre>
      */
     static class MainClassAttribute extends Attribute {
         private final String mainClass;
@@ -409,6 +458,10 @@ class ClassFileAttributes {
     }
 
     /**
+     * Hashes attribute.
+     *
+     * <pre> {@code
+     *
      * Hashes_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "Hashes"
@@ -424,8 +477,10 @@ class ClassFileAttributes {
      *       u2 hash_index;
      *   } hashes[hash_count];
      *
-     * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
-     * should be changed to be an array of u1.
+     * } </pre>
+     *
+     * @apiNote For now the hash is stored in base64 as a UTF-8 string, an
+     * alternative is to store it as an array of u1.
      */
     static class HashesAttribute extends Attribute {
         private final DependencyHashes hashes;
