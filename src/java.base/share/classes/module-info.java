@@ -194,8 +194,6 @@ module java.base {
         jdk.crypto.pkcs11,
         jdk.jartool,
         jdk.security.auth;
-    exports sun.text to
-        java.desktop;
     exports sun.text.resources to
         jdk.localedata;
     exports sun.text.resources.cldr to
