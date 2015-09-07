@@ -98,6 +98,12 @@ module java.base {
     exports jdk.internal.org.objectweb.asm to
         jdk.jlink,
         jdk.scripting.nashorn;
+    exports jdk.internal.org.objectweb.asm.tree to
+        jdk.jlink;
+    exports jdk.internal.org.objectweb.asm.util to
+        jdk.jlink;
+    exports jdk.internal.org.objectweb.asm.tree.analysis to
+        jdk.jlink;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
@@ -210,7 +216,8 @@ module java.base {
         java.desktop,
         java.logging,
         java.management,
-        java.prefs;
+        java.prefs,
+        jdk.jlink;
     exports sun.util.resources to
         jdk.localedata;
     exports sun.util.resources.cldr to

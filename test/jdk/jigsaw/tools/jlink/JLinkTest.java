@@ -61,7 +61,7 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 10;
+        int numPlugins = 11;
         {
             // number of built-in plugins
             List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(Layer.boot());

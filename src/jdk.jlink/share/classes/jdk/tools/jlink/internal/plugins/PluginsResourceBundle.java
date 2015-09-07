@@ -49,8 +49,8 @@ public final class PluginsResourceBundle {
     private PluginsResourceBundle() {
     }
 
-    public static String getArgument(String name) {
-        return getMessage(name + "." + ARGUMENT);
+    public static String getArgument(String name, Object... args) {
+        return getMessage(name + "." + ARGUMENT, args);
     }
 
     public static String getDescription(String name) {

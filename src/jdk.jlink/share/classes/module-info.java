@@ -45,5 +45,6 @@ module jdk.jlink {
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.SortResourcesProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
+    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.OptimizationProvider;
 }
 
