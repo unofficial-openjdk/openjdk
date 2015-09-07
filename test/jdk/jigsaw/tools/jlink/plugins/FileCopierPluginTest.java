@@ -38,7 +38,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
-import jdk.tools.jlink.internal.DefaultImageBuilder;
+import jdk.tools.jlink.plugins.DefaultImageBuilder;
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 

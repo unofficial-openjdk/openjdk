@@ -25,6 +25,8 @@
 package jdk.tools.jlink.internal;
 
 import java.io.DataOutputStream;
+
+import jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
 import java.lang.reflect.Layer;
@@ -36,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
+
 import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;
@@ -47,7 +49,6 @@ import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePool;
 
 /**
  * Plugins configuration.

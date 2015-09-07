@@ -22,18 +22,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.internal;
+package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageBuilderProvider;
 
 /**
- *
+ * Default Image Builder provider.
  */
 public class DefaultImageBuilderProvider implements ImageBuilderProvider {
 

@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+
+import jdk.tools.jlink.plugins.DefaultImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 
@@ -66,6 +68,14 @@ public final class JvmHandler {
     }
 
     private static final String JVM_CFG = "jvm.cfg";
+
+    static boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
+    static boolean isMac() {
+        return System.getProperty("os.name").startsWith("Mac OS");
+    }
 
     public ImageFilePool handlePlatforms(ImageFilePool files,
             List<ImageFile> removedFiles) throws IOException {
@@ -184,10 +194,10 @@ public final class JvmHandler {
 
     private static String jvmlib() {
         String lib = "libjvm.so";
-        if (DefaultImageBuilder.isWindows()) {
+        if (isWindows()) {
             lib = "jvm.dll";
         } else {
-            if (DefaultImageBuilder.isMac()) {
+            if (isMac()) {
                 lib = "libjvm.dylib";
             }
         }

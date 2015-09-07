@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.internal;
+package jdk.tools.jlink.plugins;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -51,15 +51,14 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import jdk.internal.jimage.BasicImageWriter;
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.internal.JvmHandler;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 
 /**
  *
- * @author jdenise
+ * Default Image Builder.
  */
 public class DefaultImageBuilder implements ImageBuilder {
 
@@ -139,21 +138,29 @@ public class DefaultImageBuilder implements ImageBuilder {
         Set<String> modules = retriever.getModules();
         storeFiles(modules, bom);
 
-        // launchers in the bin directory need execute permission
-        Path bin = root.resolve("bin");
-        if (Files.getFileStore(bin).supportsFileAttributeView(PosixFileAttributeView.class)) {
-            Files.list(bin)
-                    .filter(f -> !f.toString().endsWith(".diz"))
-                    .filter(f -> Files.isRegularFile(f))
-                    .forEach(this::setExecutable);
+        if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
+            // launchers in the bin directory need execute permission
+            Path bin = root.resolve("bin");
+            if (Files.isDirectory(bin)) {
+                Files.list(bin)
+                        .filter(f -> !f.toString().endsWith(".diz"))
+                        .filter(f -> Files.isRegularFile(f))
+                        .forEach(this::setExecutable);
+            }
 
             // jspawnhelper is in lib or lib/<arch>
             Path lib = root.resolve("lib");
-            Files.find(lib, 2, (path, attrs) -> {
-                return path.getFileName().toString().equals("jspawnhelper");
-            }).forEach(this::setExecutable);
+            if (Files.isDirectory(lib)) {
+                Files.find(lib, 2, (path, attrs) -> {
+                    return path.getFileName().toString().equals("jspawnhelper");
+                }).forEach(this::setExecutable);
+            }
         }
 
+        prepareApplicationFiles(retriever, modules);
+    }
+
+    protected void prepareApplicationFiles(ResourceRetriever retriever, Set<String> modules) throws IOException {
         // generate launch scripts for the modules with a main class
         for (String module : modules) {
             String path = "/" + module + "/module-info.class";
@@ -182,7 +189,7 @@ public class DefaultImageBuilder implements ImageBuilder {
                             StandardOpenOption.CREATE_NEW)) {
                         writer.write(sb.toString());
                     }
-                    if (Files.getFileStore(bin)
+                    if (Files.getFileStore(root.resolve("bin"))
                             .supportsFileAttributeView(PosixFileAttributeView.class)) {
                         setExecutable(cmd);
                     }

@@ -25,18 +25,23 @@
 
 module jdk.jlink {
     exports jdk.tools.jlink.plugins;
+
     requires jdk.compiler;
     requires jdk.internal.opt;
     requires jdk.jdeps;
+
     uses jdk.tools.jlink.plugins.PluginProvider;
     uses jdk.tools.jlink.plugins.ImageBuilderProvider;
-    provides jdk.tools.jlink.plugins.ImageBuilderProvider with jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+
+    provides jdk.tools.jlink.plugins.ImageBuilderProvider with jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
+
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileCopierProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileReplacerProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StringSharingProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
+    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripNativeCommandsProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.SortResourcesProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
     provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.DefaultCompressProvider;

@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+import jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import tests.Helper;
 import tests.JImageGenerator;
