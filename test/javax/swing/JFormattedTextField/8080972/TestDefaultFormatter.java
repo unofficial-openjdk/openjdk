@@ -38,10 +38,15 @@ public class TestDefaultFormatter {
         System.setSecurityManager(new SecurityManager());
         SwingUtilities.invokeAndWait(TestDefaultFormatter::testDefaultFormatter);
     }
-
     private static void testDefaultFormatter() {
+        testDefaultFormatter(new DefaultFormatter() {
+        });
+        testDefaultFormatter(new DefaultFormatter());
+    }
+
+    private static void testDefaultFormatter(DefaultFormatter formatter ) {
         try {
-            DefaultFormatter formatter = new DefaultFormatter();
+            System.out.println("formatter: " + formatter.getClass());
             formatter.setValueClass(UserValueClass.class);
             UserValueClass userValue = (UserValueClass) formatter.stringToValue("test");
 

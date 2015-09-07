@@ -33,11 +33,46 @@ import javax.swing.UIDefaults;
 public class TestProxyLazyValue {
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Without security manager");
+        SwingUtilities.invokeAndWait(TestProxyLazyValue::testUserProxyLazyValue);
         SwingUtilities.invokeAndWait(TestProxyLazyValue::testProxyLazyValue);
-        System.out.println("With security manager");
         System.setSecurityManager(new SecurityManager());
+        SwingUtilities.invokeAndWait(TestProxyLazyValue::testUserProxyLazyValue);
         SwingUtilities.invokeAndWait(TestProxyLazyValue::testProxyLazyValue);
+    }
+
+    private static void testUserProxyLazyValue() {
+
+        Object obj = new UserProxyLazyValue(
+                UserLazyClass.class.getName()).createValue(null);
+
+        if (!(obj instanceof UserLazyClass)) {
+            throw new RuntimeException("Object is not UserLazyClass!");
+        }
+
+        obj = new UserProxyLazyValue(UserLazyClass.class.getName(),
+                new Object[]{UserLazyClass.CONSTRUCTOR_ARG}).createValue(null);
+
+        if (!(obj instanceof UserLazyClass)) {
+            throw new RuntimeException("Object is not UserLazyClass!");
+        }
+
+        if (((UserLazyClass) obj).arg != UserLazyClass.CONSTRUCTOR_ARG) {
+            throw new RuntimeException("Constructt argument is wrong!");
+        }
+
+        obj = new UserProxyLazyValue(UserLazyClass.class.getName(),
+                "method1").createValue(null);
+
+        if (!UserLazyClass.RESULT_1.equals(obj)) {
+            throw new RuntimeException("Result is wrong!");
+        }
+
+        obj = new UserProxyLazyValue(UserLazyClass.class.getName(),
+                "method2", new Object[]{UserLazyClass.RESULT_2}).createValue(null);
+
+        if (!UserLazyClass.RESULT_2.equals(obj)) {
+            throw new RuntimeException("Result is wrong!");
+        }
     }
 
     private static void testProxyLazyValue() {
@@ -45,16 +80,13 @@ public class TestProxyLazyValue {
         Object obj = new UIDefaults.ProxyLazyValue(
                 UserLazyClass.class.getName()).createValue(null);
 
-        System.out.println("obj: " + obj);
         if (!(obj instanceof UserLazyClass)) {
             throw new RuntimeException("Object is not UserLazyClass!");
         }
 
-        System.out.println("obj: " + obj);
         obj = new UIDefaults.ProxyLazyValue(UserLazyClass.class.getName(),
                 new Object[]{UserLazyClass.CONSTRUCTOR_ARG}).createValue(null);
 
-        System.out.println("obj: " + obj);
         if (!(obj instanceof UserLazyClass)) {
             throw new RuntimeException("Object is not UserLazyClass!");
         }
@@ -66,12 +98,10 @@ public class TestProxyLazyValue {
         obj = new UIDefaults.ProxyLazyValue(UserLazyClass.class.getName(),
                 "method1").createValue(null);
 
-        System.out.println("obj: " + obj);
         if (!UserLazyClass.RESULT_1.equals(obj)) {
             throw new RuntimeException("Result is wrong!");
         }
 
-        System.out.println("obj: " + obj);
         obj = new UIDefaults.ProxyLazyValue(UserLazyClass.class.getName(),
                 "method2", new Object[]{UserLazyClass.RESULT_2}).createValue(null);
 
@@ -101,6 +131,26 @@ public class TestProxyLazyValue {
 
         public static String method2(String arg) {
             return arg;
+        }
+    }
+
+    public static class UserProxyLazyValue extends UIDefaults.ProxyLazyValue {
+
+        public UserProxyLazyValue(String className) {
+            super(className);
+        }
+
+        public UserProxyLazyValue(String className, Object[] constructorArgs) {
+            super(className, constructorArgs);
+        }
+
+        public UserProxyLazyValue(String className, String methodName) {
+            super(className, methodName);
+        }
+
+        public UserProxyLazyValue(String className, String methodName,
+                Object[] methodArgs) {
+            super(className, methodName, methodArgs);
         }
     }
 }

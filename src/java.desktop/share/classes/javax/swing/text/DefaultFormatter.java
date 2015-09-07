@@ -259,7 +259,7 @@ public class DefaultFormatter extends JFormattedTextField.AbstractFormatter
             if (cons != null) {
                 try {
                     SwingUtilities2.checkAccess(cons.getModifiers());
-                    this.getClass().getModule().addReads(
+                    DefaultFormatter.class.getModule().addReads(
                             cons.getDeclaringClass().getModule());
                     return cons.newInstance(new Object[] { string });
                 } catch (Throwable ex) {

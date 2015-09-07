@@ -1141,7 +1141,7 @@ public class UIDefaults extends Hashtable<Object,Object>
                             Class<?>[] types = getClassArray(args);
                             Constructor<?> constructor = c.getConstructor(types);
                             SwingUtilities2.checkAccess(constructor.getModifiers());
-                            this.getClass().getModule().addReads(c.getModule());
+                            UIDefaults.class.getModule().addReads(c.getModule());
                             return constructor.newInstance(args);
                         }
                     } catch(Exception e) {
