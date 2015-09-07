@@ -708,12 +708,7 @@ class Main {
             if (vflag) {
                 output(getMsg("out.added.module-info"));
             }
-            ZipEntry e = new ZipEntry("./");
-            e.setTime(System.currentTimeMillis());
-            e.setSize(0);
-            e.setCrc(0);
-            zos.putNextEntry(e);
-            e = new ZipEntry(MODULE_INFO);
+            ZipEntry e = new ZipEntry(MODULE_INFO);
             e.setTime(System.currentTimeMillis());
             if (flag0) {
                 crc32ModuleInfo(e, moduleInfoBytes);

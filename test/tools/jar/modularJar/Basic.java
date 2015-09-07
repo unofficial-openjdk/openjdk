@@ -31,6 +31,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
@@ -189,6 +191,12 @@ public class Basic {
             "-C", modClasses.toString(), ".");
         Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
         PASS.accept(r, FOO);
+
+        try (InputStream fis = Files.newInputStream(modularJar);
+             JarInputStream jis = new JarInputStream(fis)) {
+            check(!jarContains(jis, "./"),
+                  "Unexpected ./ found in ", modularJar.toString());
+        }
     }
 
     @Test
@@ -605,6 +613,18 @@ public class Basic {
         if (Files.exists(p))
             FileUtils.deleteFileTreeWithRetry(p);
         Files.createDirectory(p);
+    }
+
+    static boolean jarContains(JarInputStream jis, String entryName)
+        throws IOException
+    {
+        JarEntry e;
+        boolean found = false;
+        while((e = jis.getNextJarEntry()) != null) {
+            if (e.getName().equals(entryName))
+                return true;
+        }
+        return false;
     }
 
     static void quickFail(Result r) {
