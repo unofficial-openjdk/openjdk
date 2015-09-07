@@ -361,6 +361,24 @@ public class JmodNegativeTest {
         }
     }
 
+    @Test
+    public void testFileInModulePath() throws IOException {
+        Path jmod = MODS_DIR.resolve("output.jmod");
+        FileUtils.deleteFileIfExistsWithRetry(jmod);
+        Path file = MODS_DIR.resolve("testFileInModulePath.txt");
+        FileUtils.deleteFileIfExistsWithRetry(file);
+        Files.createFile(file);
+
+        jmod("create",
+             "--hash-dependencies", ".*",
+             "--modulepath", file.toString(),
+             jmod.toString())
+            .assertFailure()
+            .resultChecker(r ->
+                assertContains(r.output, "Error: path must be a directory")
+            );
+    }
+
     @DataProvider(name = "pathDoesNotExist")
     public Object[][] pathDoesNotExist() throws IOException {
         Path jmod = MODS_DIR.resolve("output.jmod");

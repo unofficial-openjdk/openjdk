@@ -264,26 +264,6 @@ public class JmodTest {
             );
     }
 
-    // TODO: rewrite
-//    @Test(enabled = false)
-//    public void testFileInModulePath() throws IOException {
-//        Path mod = helper.generateDefaultJModule("mod").assertSuccess();
-//
-//        String moduleName = "module";
-//        Path module = Paths.get(moduleName);
-//        Files.createDirectory(module);
-//        generateModuleInfo(module, new ModuleDescriptor.Builder(moduleName)
-//                                                       .requires("java.base")
-//                                                       .build());
-//        JImageGenerator
-//                .getJModTask()
-//                .addClassPath(module)
-//                .hashDependencies(".*")
-//                .addJmods(mod)
-//                .jmod(Paths.get("output.jmod"))
-//                .create().assertSuccess();
-//    }
-
     // ---
 
     static boolean compileModule(String name, Path dest) throws IOException {
