@@ -101,14 +101,13 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
-        jdk.jlink;
+        jdk.jlink,
+        jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.tree.analysis to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
-        jdk.scripting.nashorn;
-    exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.internal.module to
         java.management,
