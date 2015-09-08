@@ -26,6 +26,7 @@
 package com.sun.tools.doclets.internal.toolkit;
 
 import java.io.*;
+import java.util.Set;
 
 import com.sun.javadoc.*;
 
@@ -73,30 +74,15 @@ public interface ModuleSummaryWriter {
     public abstract Content getSummaryTree(Content summaryContentTree);
 
     /**
-     * Get the header for the package summary header.
+     * Adds the table of packages to the documentation tree.
      *
-     * @return a content tree with the package summary header
-     */
-    public abstract Content getPackageSummaryHeader(PackageDoc pkg);
-
-    /**
-     * Get the header for the package summary tree.
-     *
-     * @return a content tree with the package summary
-     */
-    public abstract Content getPackageSummaryTree(Content packageSummaryContentTree);
-
-    /**
-     * Adds the table of classes to the documentation tree.
-     *
-     * @param classes the array of classes to document.
+     * @param packages the set of packages that should be added.
      * @param label the label for this table.
      * @param tableSummary the summary string for the table
-     * @param tableHeader array of table headers
-     * @param packageSummaryContentTree the content tree to which the summaries will be added
+     * @param summaryContentTree the content tree to which the summary will be added
      */
-    public abstract void addClassesSummary(ClassDoc[] classes, String label,
-            String tableSummary, String[] tableHeader, Content packageSummaryContentTree);
+    public abstract void addPackagesSummary(Set<PackageDoc> packages, String label,
+            String tableSummary, Content summaryContentTree);
 
     /**
      * Adds the module content tree to the documentation tree.

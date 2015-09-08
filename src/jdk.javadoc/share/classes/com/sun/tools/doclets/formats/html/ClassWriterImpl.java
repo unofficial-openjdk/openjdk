@@ -175,7 +175,8 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         String moduleName = configuration.getModule(classDoc);
         if (moduleName != null && !moduleName.isEmpty()) {
             Content moduleNameContent = new HtmlTree(HtmlTag.P);
-            moduleNameContent.addContent(moduleLabel);
+            Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInClass, moduleLabel);
+            moduleNameContent.addContent(classModuleLabel);
             moduleNameContent.addContent(getSpace());
             moduleNameContent.addContent(getTargetModuleLink("classFrame",
                     new StringContent(moduleName), moduleName));
@@ -183,9 +184,12 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             div.addContent(moduleNameDiv);
         }
         if (pkgname.length() > 0) {
+            Content classPackageLabel = HtmlTree.SPAN(HtmlStyle.packageLabelInClass, packageLabel);
+            Content pkgNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, classPackageLabel);
+            pkgNameDiv.addContent(getSpace());
             Content pkgNameContent = getTargetPackageLink(classDoc.containingPackage(),
                     "classFrame", new StringContent(pkgname));
-            Content pkgNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, pkgNameContent);
+            pkgNameDiv.addContent(pkgNameContent);
             div.addContent(pkgNameDiv);
         }
         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,

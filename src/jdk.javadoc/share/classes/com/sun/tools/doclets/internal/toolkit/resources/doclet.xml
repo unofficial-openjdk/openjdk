@@ -31,14 +31,7 @@
     <ModuleDoc>
         <Content>
             <Summary>
-                <PackageSummary>
-                    <InterfaceSummary/>
-                    <ClassSummary/>
-                    <EnumSummary/>
-                    <ExceptionSummary/>
-                    <ErrorSummary/>
-                    <AnnotationTypeSummary/>
-                </PackageSummary>
+                <PackageSummary/>
             </Summary>
         </Content>
     </ModuleDoc>

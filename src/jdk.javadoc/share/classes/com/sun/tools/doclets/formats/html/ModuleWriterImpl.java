@@ -26,6 +26,7 @@
 package com.sun.tools.doclets.formats.html;
 
 import java.io.*;
+import java.util.Set;
 
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.formats.html.markup.*;
@@ -138,44 +139,48 @@ public class ModuleWriterImpl extends HtmlDocletWriter
      */
     public Content getSummaryTree(Content summaryContentTree) {
         HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, summaryContentTree);
-        HtmlTree div = HtmlTree.DIV(HtmlStyle.summary, ul);
-        return div;
+        return ul;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Content getPackageSummaryHeader(PackageDoc pkg) {
-        Content pkgName = new StringContent(pkg.name());
-        Content pkgNameLink = getTargetModulePackageLink(pkg,
-                    "classFrame", pkgName, moduleName);
-        Content heading = HtmlTree.HEADING(HtmlTag.H3, pkgNameLink);
-        HtmlTree htmlTree = (configuration.allowTag(HtmlTag.SECTION))
-                ? HtmlTree.SECTION(heading)
-                : HtmlTree.LI(HtmlStyle.blockList, heading);
-        addPackageDeprecationInfo(htmlTree, pkg);
-        return htmlTree;
+    public void addPackagesSummary(Set<PackageDoc> packages, String text,
+            String tableSummary, Content summaryContentTree) {
+        Content table = (configuration.isOutputHtml5())
+                ? HtmlTree.TABLE(HtmlStyle.overviewSummary, getTableCaption(new RawHtml(text)))
+                : HtmlTree.TABLE(HtmlStyle.overviewSummary, tableSummary, getTableCaption(new RawHtml(text)));
+        table.addContent(getSummaryTableHeader(packageTableHeader, "col"));
+        Content tbody = new HtmlTree(HtmlTag.TBODY);
+        addPackagesList(packages, tbody);
+        table.addContent(tbody);
+        summaryContentTree.addContent(table);
     }
 
     /**
-     * {@inheritDoc}
+     * Adds list of packages in the package summary table. Generate link to each package.
+     *
+     * @param packages Packages to which link is to be generated
+     * @param tbody the documentation tree to which the list will be added
      */
-    public Content getPackageSummaryTree(Content packageSummaryContentTree) {
-        HtmlTree htmlTree;
-        if (configuration.allowTag(HtmlTag.SECTION)) {
-            htmlTree = HtmlTree.UL(HtmlStyle.blockList,
-                    HtmlTree.LI(HtmlStyle.blockList, packageSummaryContentTree));
-        } else {
-            htmlTree = HtmlTree.UL(HtmlStyle.blockList, packageSummaryContentTree);
+    protected void addPackagesList(Set<PackageDoc> packages, Content tbody) {
+        boolean altColor = true;
+        for (PackageDoc pkg : packages) {
+            if (pkg != null && !pkg.name().isEmpty()) {
+                if (!(configuration.nodeprecated && utils.isDeprecated(pkg))) {
+                    Content packageLinkContent = getPackageLink(pkg, getPackageName(pkg));
+                    Content tdPackage = HtmlTree.TD(HtmlStyle.colFirst, packageLinkContent);
+                    HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
+                    tdSummary.addStyle(HtmlStyle.colLast);
+                    addSummaryComment(pkg, tdSummary);
+                    HtmlTree tr = HtmlTree.TR(tdPackage);
+                    tr.addContent(tdSummary);
+                    tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
+                    tbody.addContent(tr);
+                }
+            }
+            altColor = !altColor;
         }
-        return htmlTree;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void addClassesSummary(ClassDoc[] classes, String label,
-            String tableSummary, String[] tableHeader, Content packageSummaryContentTree) {
     }
 
     /**
