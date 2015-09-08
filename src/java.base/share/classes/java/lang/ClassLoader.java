@@ -190,6 +190,9 @@ public abstract class ClassLoader {
     // must be added *after* it.
     private final ClassLoader parent;
 
+    // the unnamed module for this ClassLoader
+    private final Module unnamedModule;
+
     /**
      * Encapsulates the set of parallel capable loader types.
      */
@@ -241,7 +244,7 @@ public abstract class ClassLoader {
     // is parallel capable and the appropriate lock object for class loading.
     private final ConcurrentHashMap<String, Object> parallelLockMap;
 
-    // Hashtable that maps packages to certs
+    // Maps packages to certs
     private final Map <String, Certificate[]> package2certs;
 
     // Shared among all packages with unsigned classes
@@ -280,6 +283,9 @@ public abstract class ClassLoader {
 
     private ClassLoader(Void unused, ClassLoader parent) {
         this.parent = parent;
+        this.unnamedModule
+            = SharedSecrets.getJavaLangReflectModuleAccess()
+                           .defineUnnamedModule(this);
         if (ParallelLoaders.isRegistered(this.getClass())) {
             parallelLockMap = new ConcurrentHashMap<>();
             package2certs = new ConcurrentHashMap<>();
@@ -1439,6 +1445,18 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Returns the unnamed {@code Module} for this class loader.
+     *
+     * @return The unnamed Module for this class loader
+     *
+     * @see Module#isNamed()
+     * @since 1.9
+     */
+    public final Module getUnnamedModule() {
+        return unnamedModule;
+    }
+
+    /**
      * Returns the system class loader for delegation.  This is the default
      * delegation parent for new <tt>ClassLoader</tt> instances, and is
      * typically the class loader used to start the application.
@@ -2313,32 +2331,6 @@ public abstract class ClassLoader {
 
     // Retrieves the assertion directives from the VM.
     private static native AssertionStatusDirectives retrieveDirectives();
-
-
-    /**
-     * Returns the unnamed {@code Module} for this class loader.
-     *
-     * @return The unnamed Module for this class loader
-     *
-     * @see Module#isNamed()
-     * @since 1.9
-     */
-    public Module getUnnamedModule() {
-        Module module = unnamedModule;
-        if (module == null) {
-            module = SharedSecrets.getJavaLangReflectModuleAccess()
-                                  .defineUnnamedModule(this);
-            boolean set = trySetObjectField("unnamedModule", module);
-            if (!set) {
-                // beaten by someone else
-                module = unnamedModule;
-            }
-        }
-        return module;
-    }
-
-    // the unnamed Module for this ClassLoader, created lazily
-    private volatile Module unnamedModule;
 
 
     /**
