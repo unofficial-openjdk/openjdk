@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,13 @@ module java.corba {
         jdk.rmic;
     exports com.sun.jndi.cosnaming to
         java.naming;
+    exports com.sun.jndi.url.corbaname to
+        java.naming;
+    exports com.sun.jndi.url.iiop to
+        java.naming;
+    exports com.sun.jndi.url.iiopname to
+        java.naming;
+
     provides javax.naming.spi.InitialContextFactory
         with com.sun.jndi.cosnaming.CNCtxFactory;
 }
