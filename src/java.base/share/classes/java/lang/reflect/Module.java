@@ -252,32 +252,32 @@ public final class Module {
 
     /**
      * Indicates if this module reads the given {@code Module}.
-     * If {@code target} is {@code null} then this method tests if this
+     * If {@code source} is {@code null} then this method tests if this
      * module reads all unnamed modules.
      *
-     * @return {@code true} if this module reads {@code target}
+     * @return {@code true} if this module reads {@code source}
      *
      * @see #addReads(Module)
      */
-    public boolean canRead(Module target) {
+    public boolean canRead(Module source) {
 
         // an unnamed module reads all modules
         if (!this.isNamed())
             return true;
 
         // all modules read themselves
-        if (target == this)
+        if (source == this)
             return true;
 
         // test if this module is loose
-        if (target == null)
+        if (source == null)
             return this.loose;
 
-        // check if module reads target
-        if (target.isNamed()) {
+        // check if module reads source
+        if (source.isNamed()) {
 
             Set<Module> reads = this.reads; // volatile read
-            if (reads.contains(target))
+            if (reads.contains(source))
                 return true;
 
         } else {
@@ -288,9 +288,9 @@ public final class Module {
 
         }
 
-        // check if this module reads the target module temporarily
+        // check if this module reads the source module temporarily
         WeakSet<Module> tr = this.transientReads; // volatile read
-        if (tr != null && tr.contains(target))
+        if (tr != null && tr.contains(source))
             return true;
 
         return false;
@@ -298,13 +298,13 @@ public final class Module {
 
     /**
      * If the caller's module is this module then update this module to read
-     * the given target {@code Module}.
+     * the given source {@code Module}.
      *
-     * <p> This method is a no-op if {@code target} is {@code this} module (all
+     * <p> This method is a no-op if {@code source} is {@code this} module (all
      * modules can read themselves) or this module is not a {@link #isNamed()
      * named} module (an unnamed module reads all other modules). </p>
      *
-     * <p> If {@code target} is {@code null}, and this module does not read
+     * <p> If {@code source} is {@code null}, and this module does not read
      * all unnamed modules, then this method changes this module so that it
      * reads all unnamed modules (both present and future) in the Java
      * virtual machine. </p>
@@ -321,43 +321,43 @@ public final class Module {
      * @see #canRead
      */
     @CallerSensitive
-    public Module addReads(Module target) {
+    public Module addReads(Module source) {
         if (this.isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-            implAddReads(target, true);
+            implAddReads(source, true);
         }
         return this;
     }
 
     /**
-     * Updates this module to read the target module and all modules that the
-     * target module reads in the original readability graph.
+     * Updates this module to read the source module and all modules that the
+     * source module reads in the original readability graph.
      *
      * @apiNote This method is for Proxy use
      *
-     * @throws IllegalArgumentException if the target is an unnamed module
+     * @throws IllegalArgumentException if the source is an unnamed module
      */
-    void implAddReadAll(Module target) {
-        if (!target.isNamed())
+    void implAddReadAll(Module source) {
+        if (!source.isNamed())
             throw new IllegalArgumentException("unnamed module not allowed");
 
         if (this.isNamed()) {
-            // add target and its read dependences
-            implAddReads(target, true);
-            target.reads.stream().forEach(m -> implAddReads(m, true));
+            // add source and its read dependences
+            implAddReads(source, true);
+            source.reads.stream().forEach(m -> implAddReads(m, true));
         }
     }
 
     /**
-     * Updates this module to read the target module.
+     * Updates this module to read the source module.
      *
      * @apiNote This method is for Proxy use and white-box testing.
      */
-    void implAddReads(Module target) {
-        implAddReads(target, true);
+    void implAddReads(Module source) {
+        implAddReads(source, true);
     }
 
     /**
@@ -366,8 +366,8 @@ public final class Module {
      *
      * @apiNote This method is for VM white-box testing.
      */
-    void implAddReadsNoSync(Module target) {
-        implAddReads(target, false);
+    void implAddReadsNoSync(Module source) {
+        implAddReads(source, false);
     }
 
     /**
@@ -375,14 +375,14 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddReads(Module target, boolean syncVM) {
+    private void implAddReads(Module source, boolean syncVM) {
 
         // nothing to do
-        if (target == this || !this.isNamed())
+        if (source == this || !this.isNamed())
             return;
 
-        // if the target is null then change this module to be loose.
-        if (target == null) {
+        // if the source is null then change this module to be loose.
+        if (source == null) {
             if (syncVM)
                 addReads0(this, null);
             this.loose = true;
@@ -391,12 +391,12 @@ public final class Module {
 
         // check if we already read this module
         Set<Module> reads = this.reads;
-        if (reads.contains(target))
+        if (reads.contains(source))
             return;
 
         // update VM first, just in case it fails
         if (syncVM)
-            addReads0(this, target);
+            addReads0(this, source);
 
         // add temporary read.
         WeakSet<Module> tr = this.transientReads;
@@ -409,7 +409,7 @@ public final class Module {
                 }
             }
         }
-        tr.add(target);
+        tr.add(source);
     }
 
     /**
