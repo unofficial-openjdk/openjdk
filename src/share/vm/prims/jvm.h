@@ -407,10 +407,10 @@ JNIEXPORT void JNICALL
 JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package);
 
 JNIEXPORT void JNICALL
-JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module);
+JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject source_module);
 
 JNIEXPORT jboolean JNICALL
-JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module);
+JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module);
 
 JNIEXPORT jboolean JNICALL
 JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);

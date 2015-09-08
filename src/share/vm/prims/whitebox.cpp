@@ -1134,12 +1134,12 @@ WB_ENTRY(void, WB_AddModuleExportsToAll(JNIEnv* env, jobject o, jclass module, j
   Modules::add_module_exports(env, module, package, NULL);
 WB_END
 
-WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject to_module))
-  Modules::add_reads_module(env, from_module, to_module);
+WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject source_module))
+  Modules::add_reads_module(env, from_module, source_module);
 WB_END
 
-WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject target_module))
-  return Modules::can_read_module(env, asking_module, target_module);
+WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject source_module))
+  return Modules::can_read_module(env, asking_module, source_module);
 WB_END
 
 WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
