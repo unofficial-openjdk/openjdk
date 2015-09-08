@@ -37,7 +37,7 @@ import sun.util.resources.LocaleData;
  * service agent between {@code ResourceBundle.getBundle} callers in java.base
  * and resource bundles in jdk.localedata.
  */
-public class LocaleDataProvider extends LocaleData.BaseResourceBundleProvider {
+public class LocaleDataProvider extends LocaleData.CommonResourceBundleProvider {
     @Override
     protected boolean isSupportedInModule(String baseName, Locale locale) {
         // The assumption here is that there are two modules containing

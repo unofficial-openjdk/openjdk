@@ -248,61 +248,15 @@ module java.base {
     uses javax.security.auth.spi.LoginModule;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.security.ssl.ClientKeyExchangeService;
-    uses sun.text.resources.cldr.FormatDataProvider;
     uses sun.util.spi.CalendarProvider;
     uses sun.util.locale.provider.LocaleDataMetaInfo;
-    uses sun.util.resources.cldr.LocaleNamesProvider;
-    uses sun.util.resources.cldr.TimeZoneNamesProvider;
-    uses sun.util.resources.cldr.CalendarDataProvider;
-    uses sun.util.resources.cldr.CurrencyNamesProvider;
+    uses sun.util.resources.LocaleData.CommonResourceBundleProvider;
+    uses sun.util.resources.LocaleData.SupplementaryResourceBundleProvider;
 
     provides java.nio.file.spi.FileSystemProvider with jdk.internal.jrtfs.JrtFileSystemProvider;
     provides java.security.Provider with sun.security.provider.Sun;
     provides java.security.Provider with sun.security.rsa.SunRsaSign;
     provides java.security.Provider with com.sun.crypto.provider.SunJCE;
     provides java.security.Provider with com.sun.net.ssl.internal.ssl.Provider;
-    provides sun.text.resources.cldr.FormatDataProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.cldr.LocaleNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.cldr.TimeZoneNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.cldr.CalendarDataProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.cldr.CurrencyNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-
-    // CLDR and JRE data are separate resource bundles in the current
-    // implementation.  CLDR and JRE data could be merged into a single bundle.
-    // As JRE resource bundles will be removed in a future JDK release,
-    // we leave them as separate bundles and the following will be removed
-    // when JRE data goes away.
-    uses sun.text.resources.BreakIteratorInfoProvider;
-    uses sun.text.resources.BreakIteratorRulesProvider;
-    uses sun.text.resources.FormatDataProvider;
-    uses sun.text.resources.CollationDataProvider;
-    uses sun.text.resources.JavaTimeSupplementaryProvider;
-    uses sun.util.resources.LocaleNamesProvider;
-    uses sun.util.resources.TimeZoneNamesProvider;
-    uses sun.util.resources.CalendarDataProvider;
-    uses sun.util.resources.CurrencyNamesProvider;
-    provides sun.text.resources.BreakIteratorInfoProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.text.resources.BreakIteratorRulesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.text.resources.FormatDataProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.text.resources.CollationDataProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.text.resources.JavaTimeSupplementaryProvider with
-        sun.util.resources.LocaleData.SupplementaryResourceBundleProvider;
-    provides sun.util.resources.LocaleNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.TimeZoneNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.CalendarDataProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
-    provides sun.util.resources.CurrencyNamesProvider with
-        sun.util.resources.LocaleData.BaseResourceBundleProvider;
 }
 

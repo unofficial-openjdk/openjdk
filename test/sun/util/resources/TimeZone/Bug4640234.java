@@ -29,6 +29,7 @@
  *          ISO country codes.
  *          The test program also displays which timezone, country and
  *          language names are not translated
+ * @modules java.base/sun.util.resources
  */
 
 
@@ -48,6 +49,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
+
+import sun.util.resources.LocaleData;
 
 public class Bug4640234  {
     static SimpleDateFormat sdfEn = new SimpleDateFormat("zzzz", Locale.US);
@@ -83,9 +86,8 @@ public class Bug4640234  {
             String[] countries = locEn.getISOCountries();
             String[] languages = locEn.getISOLanguages();
 
-            ResourceBundle resEn = ResourceBundle.getBundle(
-                        "sun.util.resources.LocaleNames",
-                        locEn, Object.class.getModule());
+            ResourceBundle resEn = LocaleData.getBundle("sun.util.resources.LocaleNames",
+                                                        locEn);
             Map<String, String> countryMapEn = getList(resEn, true);
             Map<String, String> languageMapEn = getList(resEn, false);
 
@@ -94,9 +96,8 @@ public class Bug4640234  {
             Map<String, String> languageMap;
 
             for (Locale locale : locales2Test) {
-                resLoc = ResourceBundle.getBundle(
-                        "sun.util.resources.LocaleNames",
-                        locale, Object.class.getModule());
+                resLoc = LocaleData.getBundle("sun.util.resources.LocaleNames",
+                                              locale);
 
                 sdfLoc = new SimpleDateFormat("zzzz", locale);
                 sdfLocShort = new SimpleDateFormat("z", locale);

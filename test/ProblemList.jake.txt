@@ -37,10 +37,10 @@ sun/security/pkcs11/Provider/ConfigShortPath.java 				windows-all
 ############################################################################
 
 # 8131141
-java/util/ResourceBundle/Bug6299235Test.sh                              generic-all
+java/util/ResourceBundle/Bug6299235Test.sh                               generic-all
 
-# 8134544
-sun/util/resources/cldr/Bug8134250.java                                 generic-all
+# 8134916
+sun/text/resources/LocaleDataTest.java                                   generic-all
 
 ############################################################################
 

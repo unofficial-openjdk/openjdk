@@ -38,6 +38,7 @@
  *      7114053 7074882 7040556 8008577 8013836 8021121 6192407 6931564 8027695
  *      8017142 8037343 8055222 8042126 8074791 8075173 8080774 8129361
  * @summary Verify locale data
+ * @modules java.base/sun.util.resources
  * @run main LocaleDataTest
  * @run main LocaleDataTest -cldr
  *
@@ -149,6 +150,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
 import java.util.MissingResourceException;
+import sun.util.resources.LocaleData;
 
 public class LocaleDataTest
 {
@@ -312,9 +314,7 @@ public class LocaleDataTest
             } else {
                 locale = new Locale(language, country, variant);
             }
-            ResourceBundle bundle = ResourceBundle.getBundle(fullName,
-                                                             locale,
-                                                             Object.class.getModule());
+            ResourceBundle bundle = LocaleData.getBundle(fullName, locale);
             resource = bundle.getObject(resTag);
         }
         catch (MissingResourceException e) {

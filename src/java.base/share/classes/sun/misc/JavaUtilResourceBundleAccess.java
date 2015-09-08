@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,32 @@
  * questions.
  */
 
-module jdk.localedata {
-    provides sun.util.locale.provider.LocaleDataMetaInfo with
-        sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo_jdk_localedata;
-    provides sun.util.locale.provider.LocaleDataMetaInfo with
-        sun.util.resources.provider.NonBaseLocaleDataMetaInfo;
-    provides sun.util.resources.LocaleData.CommonResourceBundleProvider with
-        sun.util.resources.provider.LocaleDataProvider;
-    provides sun.util.resources.LocaleData.SupplementaryResourceBundleProvider with
-        sun.util.resources.provider.SupplementaryLocaleDataProvider;
+package sun.misc;
+
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+/**
+ * Provides access to non-public methods in java.util.ResourceBundle.
+ */
+public interface JavaUtilResourceBundleAccess {
+    /**
+     * Sets the bundle's parent to the given parent.
+     */
+    void setParent(ResourceBundle bundle, ResourceBundle parent);
+
+    /**
+     * Returns the parent of the given bundle or null if the bundle has no parent.
+     */
+    ResourceBundle getParent(ResourceBundle bundle);
+
+    /**
+     * Sets the bundle's locale to the given locale.
+     */
+    void setLocale(ResourceBundle bundle, Locale locale);
+
+    /**
+     * Sets the bundle's base name to the given name.
+     */
+    void setName(ResourceBundle bundle, String name);
 }

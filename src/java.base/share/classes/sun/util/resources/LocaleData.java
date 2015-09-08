@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,21 +40,25 @@
 
 package sun.util.resources;
 
-import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.spi.AbstractResourceBundleProvider;
-import sun.text.resources.JavaTimeSupplementaryProvider;
-import sun.util.locale.provider.ResourceBundleProviderSupport;
+import java.util.spi.ResourceBundleProvider;
+import sun.util.locale.provider.JRELocaleProviderAdapter;
 import sun.util.locale.provider.LocaleProviderAdapter;
+import static sun.util.locale.provider.LocaleProviderAdapter.Type.CLDR;
 import static sun.util.locale.provider.LocaleProviderAdapter.Type.JRE;
+import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
 /**
  * Provides information about and access to resource bundles in the
@@ -68,6 +72,12 @@ import static sun.util.locale.provider.LocaleProviderAdapter.Type.JRE;
 public class LocaleData {
     private static final ResourceBundle.Control defaultControl
         = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_DEFAULT);
+
+    private static final String DOTCLDR      = ".cldr";
+
+    // Map of key (base name + locale) to candidates
+    private static final Map<String, List<Locale>> candidatesMap = new ConcurrentHashMap<>();
+
     private final LocaleProviderAdapter.Type type;
 
     public LocaleData(LocaleProviderAdapter.Type type) {
@@ -163,21 +173,10 @@ public class LocaleData {
     }
 
     public static ResourceBundle getBundle(final String baseName, final Locale locale) {
-        ResourceBundle bundle;
-        bundle = AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public ResourceBundle run() {
-                return ResourceBundle.getBundle(baseName, locale);
-            }
-        });
-        // Make sure the bundle is for the given locale
-        if (isRequestedBundle(bundle, locale)) {
-            return bundle;
-        }
         return AccessController.doPrivileged(new PrivilegedAction<>() {
             @Override
             public ResourceBundle run() {
-                return ResourceBundle.getBundle(baseName, Locale.ROOT);
+                return Bundles.of(baseName, locale, LocaleDataStrategy.INSTANCE);
             }
         });
     }
@@ -188,13 +187,7 @@ public class LocaleData {
            public OpenListResourceBundle run() {
                OpenListResourceBundle rb = null;
                try {
-                   rb = (OpenListResourceBundle) ResourceBundle.getBundle(baseName,
-                                                                          locale);
-                   // getSupplementary() requires strict bundle loading for the
-                   // given locale.
-                   if (!locale.equals(rb.getLocale())) {
-                       rb = null;
-                   }
+                   rb = (OpenListResourceBundle) Bundles.of(baseName, locale, SupplementaryStrategy.INSTANCE);
                } catch (MissingResourceException e) {
                    // return null if no supplementary is available
                }
@@ -203,26 +196,8 @@ public class LocaleData {
         });
     }
 
-    /**
-     * Returns true if the targetLocale is the default Locale, or if the Locale
-     * of the given bundle is any of the candidate locales (including
-     * Locale.ROOT) for the targetLocale.
-     */
-    private static boolean isRequestedBundle(ResourceBundle bundle, Locale targetLocale) {
-        if (targetLocale.equals(Locale.getDefault())) {
-            return true;
-        }
-        Locale bundleLocale = bundle.getLocale();
-        if (targetLocale.equals(bundleLocale)) {
-            return true;
-        }
-        List<Locale> candidates = defaultControl.getCandidateLocales("", targetLocale);
-        return candidates.stream().anyMatch((candidate) -> (bundleLocale.equals(candidate)));
-    }
-
-    private static abstract class LocaleDataResourceBundleProvider extends AbstractResourceBundleProvider {
-        protected static final String DOTCLDR = ".cldr";
-
+    private static abstract class LocaleDataResourceBundleProvider
+                                            implements ResourceBundleProvider {
         abstract protected boolean isSupportedInModule(String baseName, Locale locale);
 
         /**
@@ -230,14 +205,97 @@ public class LocaleData {
          * calls the super class implementation. For example,
          * if the baseName is "sun.text.resources.FormatData" and locale is ja_JP,
          * the baseName is changed to "sun.text.resources.ja.JP.FormatData". If
-         * baseName contains "cldr", such as "sun.text.resources.cldr.FormatData",
+         * baseName contains ".cldr", such as "sun.text.resources.cldr.FormatData",
          * the name is changed to "sun.text.resources.cldr.ja.JP.FormatData".
          */
-        @Override
         protected String toBundleName(String baseName, Locale locale) {
+            return LocaleDataStrategy.INSTANCE.toBundleName(baseName, locale);
+        }
+    }
+
+    /**
+     * A ResourceBundleProvider implementation for loading locale data
+     * resource bundles except for the java.time supplementary data.
+     */
+    public static abstract class CommonResourceBundleProvider extends LocaleDataResourceBundleProvider {
+        @Override
+        protected boolean isSupportedInModule(String baseName, Locale locale) {
+            return LocaleDataStrategy.INSTANCE.inJavaBaseModule(baseName, locale);
+        }
+    }
+
+    /**
+     * A ResourceBundleProvider implementation for loading supplementary
+     * resource bundles for java.time.
+     */
+    public static abstract class SupplementaryResourceBundleProvider extends LocaleDataResourceBundleProvider {
+        @Override
+        protected boolean isSupportedInModule(String baseName, Locale locale) {
+            // TODO: avoid hard-coded Locales
+            return SupplementaryStrategy.INSTANCE.inJavaBaseModule(baseName, locale);
+        }
+    }
+
+    // Bundles.Strategy implementations
+
+    private static class LocaleDataStrategy implements Bundles.Strategy {
+        private static final LocaleDataStrategy INSTANCE = new LocaleDataStrategy();
+        private static final ServiceLoader<? extends ResourceBundleProvider> commonProviders
+                = ServiceLoader.load(CommonResourceBundleProvider.class);
+
+        private LocaleDataStrategy() {
+        }
+
+        /*
+         * This method overrides the default implementation to search
+         * from a prebaked locale string list to determin the candidate
+         * locale list.
+         *
+         * @param baseName the resource bundle base name.
+         *        locale   the requested locale for the resource bundle.
+         * @return a list of candidate locales to search from.
+         * @exception NullPointerException if baseName or locale is null.
+         */
+        @Override
+        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+            String key = baseName + '-' + locale.toLanguageTag();
+            List<Locale> candidates = candidatesMap.get(key);
+            if (candidates == null) {
+                LocaleProviderAdapter.Type type = baseName.contains(DOTCLDR) ? CLDR : JRE;
+                LocaleProviderAdapter adapter = LocaleProviderAdapter.forType(type);
+                candidates = adapter instanceof ResourceBundleBasedAdapter ?
+                    ((ResourceBundleBasedAdapter)adapter).getCandidateLocales(baseName, locale) :
+                    defaultControl.getCandidateLocales(baseName, locale);
+
+                // Weed out Locales which are known to have no resource bundles
+                int lastDot = baseName.lastIndexOf('.');
+                String category = (lastDot >= 0) ? baseName.substring(lastDot + 1) : baseName;
+                Set<String> langtags = ((JRELocaleProviderAdapter)adapter).getLanguageTagSet(category);
+                if (!langtags.isEmpty()) {
+                    for (Iterator<Locale> itr = candidates.iterator(); itr.hasNext();) {
+                        if (!adapter.isSupportedProviderLocale(itr.next(), langtags)) {
+                            itr.remove();
+                        }
+                    }
+                }
+                candidatesMap.putIfAbsent(key, candidates);
+            }
+            return candidates;
+        }
+
+         boolean inJavaBaseModule(String baseName, Locale locale) {
+            // TODO: avoid hard-coded Locales
+            return locale.equals(Locale.ROOT) ||
+                (locale.getLanguage() == "en" &&
+                    (locale.getCountry().isEmpty() ||
+                     locale.getCountry() == "US" ||
+                     locale.getCountry().length() == 3)); // UN.M49
+        }
+
+        @Override
+        public String toBundleName(String baseName, Locale locale) {
             String newBaseName = baseName;
             String lang = locale.getLanguage();
-            String ctry = locale.getCountry();
             if (lang.length() > 0) {
                 if (baseName.startsWith(JRE.getUtilResourcesPackage())
                         || baseName.startsWith(JRE.getTextResourcesPackage())) {
@@ -248,6 +306,7 @@ public class LocaleData {
                     if (baseName.indexOf(DOTCLDR, index) > 0) {
                         index += DOTCLDR.length();
                     }
+                    String ctry = locale.getCountry();
                     ctry = (ctry.length() == 2) ? ("." + ctry) : "";
                     newBaseName = baseName.substring(0, index + 1) + lang + ctry
                                       + baseName.substring(index);
@@ -257,80 +316,41 @@ public class LocaleData {
         }
 
         @Override
-        public ResourceBundle getBundle(String baseName, Locale locale) {
-            if (isSupportedInModule(baseName, locale)) {
-                Module module = LocaleData.class.getModule();
-                String bundleName = toBundleName(baseName, locale);
-                return ResourceBundleProviderSupport.loadResourceBundle(module, bundleName);
-            }
-            return null;
+        @SuppressWarnings("unchecked")
+        public ServiceLoader<ResourceBundleProvider> getResourceBundleProvders(String baseName,
+                                                                               Locale locale) {
+            return inJavaBaseModule(baseName, locale) ?
+                    null : (ServiceLoader<ResourceBundleProvider>) commonProviders;
         }
     }
 
-    public static class BaseResourceBundleProvider extends LocaleDataResourceBundleProvider
-                                                   implements sun.text.resources.BreakIteratorInfoProvider,
-                                                              sun.text.resources.BreakIteratorRulesProvider,
-                                                              sun.text.resources.FormatDataProvider,
-                                                              sun.text.resources.CollationDataProvider,
-                                                              sun.text.resources.cldr.FormatDataProvider,
-                                                              sun.util.resources.LocaleNamesProvider,
-                                                              sun.util.resources.TimeZoneNamesProvider,
-                                                              sun.util.resources.CalendarDataProvider,
-                                                              sun.util.resources.CurrencyNamesProvider,
-                                                              sun.util.resources.cldr.LocaleNamesProvider,
-                                                              sun.util.resources.cldr.TimeZoneNamesProvider,
-                                                              sun.util.resources.cldr.CalendarDataProvider,
-                                                              sun.util.resources.cldr.CurrencyNamesProvider {
-        @Override
-        protected boolean isSupportedInModule(String baseName, Locale locale) {
-            // TODO: avoid hard-coded Locales
-            return locale.equals(Locale.ROOT) ||
-                (locale.getLanguage() == "en" &&
-                    (locale.getCountry().isEmpty() ||
-                     locale.getCountry() == "US" ||
-                     locale.getCountry().length() == 3)); // UN.M49
-        }
-    }
+    private static class SupplementaryStrategy extends LocaleDataStrategy {
+        private static final SupplementaryStrategy INSTANCE
+                = new SupplementaryStrategy();
+        private static final ServiceLoader<? extends ResourceBundleProvider> supplementaryProviders
+                = ServiceLoader.load(SupplementaryResourceBundleProvider.class);
 
-    public static class SupplementaryResourceBundleProvider extends LocaleDataResourceBundleProvider
-                                                            implements JavaTimeSupplementaryProvider {
+        private SupplementaryStrategy() {
+        }
+
         @Override
-        protected boolean isSupportedInModule(String baseName, Locale locale) {
+        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+            // Specifiy only the given locale
+            return Arrays.asList(locale);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public ServiceLoader<ResourceBundleProvider> getResourceBundleProvders(String baseName,
+                                                                               Locale locale) {
+            return inJavaBaseModule(baseName, locale) ?
+                    null : (ServiceLoader<ResourceBundleProvider>) supplementaryProviders;
+        }
+
+        @Override
+        boolean inJavaBaseModule(String baseName, Locale locale) {
             // TODO: avoid hard-coded Locales
             return locale.equals(Locale.ROOT) || locale.getLanguage() == "en";
-        }
-
-        @Override
-        public ResourceBundle getBundle(String baseName, Locale locale) {
-            ResourceBundle bundle = super.getBundle(baseName, locale);
-            if (bundle instanceof OpenListResourceBundle && !locale.equals(Locale.ROOT)) {
-                // Set the parent bundle to the empty one so that the getter methods
-                // don't look up its parents.
-                ((OpenListResourceBundle)bundle).setParentBundle(EmptyBundle.INSTANCE);
-            }
-            return bundle;
-        }
-    }
-
-    private static class EmptyBundle extends ResourceBundle {
-        private static final EmptyBundle INSTANCE = new EmptyBundle();
-
-        private EmptyBundle() {
-        }
-
-        @Override
-        protected Object handleGetObject(String key) {
-            return null;
-        }
-
-        @Override
-        protected Set<String> handleKeySet() {
-            return Collections.emptySet();
-        }
-
-        @Override
-        public Enumeration<String> getKeys() {
-            return Collections.emptyEnumeration();
         }
     }
 }

@@ -57,6 +57,7 @@ public class SharedSecrets {
     private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaUtilZipFileAccess javaUtilZipFileAccess;
+    private static JavaUtilResourceBundleAccess javaUtilResourceBundleAccess;
     private static JavaAWTAccess javaAWTAccess;
     private static JavaAWTFontAccess javaAWTFontAccess;
     private static JavaBeansAccess javaBeansAccess;
@@ -231,5 +232,13 @@ public class SharedSecrets {
 
     public static void setJavaBeansAccess(JavaBeansAccess access) {
         javaBeansAccess = access;
+    }
+
+    public static JavaUtilResourceBundleAccess getJavaUtilResourceBundleAccess() {
+        return javaUtilResourceBundleAccess;
+    }
+
+    public static void setJavaUtilResourceBundleAccess(JavaUtilResourceBundleAccess access) {
+        javaUtilResourceBundleAccess = access;
     }
 }

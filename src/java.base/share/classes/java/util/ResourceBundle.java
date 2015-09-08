@@ -62,6 +62,8 @@ import java.util.jar.JarEntry;
 import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
 
+import sun.misc.JavaUtilResourceBundleAccess;
+import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
@@ -344,6 +346,32 @@ public abstract class ResourceBundle {
 
     /** initial size of the bundle cache */
     private static final int INITIAL_CACHE_SIZE = 32;
+
+    static {
+        SharedSecrets.setJavaUtilResourceBundleAccess(
+            new JavaUtilResourceBundleAccess() {
+                @Override
+                public void setParent(ResourceBundle bundle,
+                                      ResourceBundle parent) {
+                    bundle.setParent(parent);
+                }
+
+                @Override
+                public ResourceBundle getParent(ResourceBundle bundle) {
+                    return bundle.parent;
+                }
+
+                @Override
+                public void setLocale(ResourceBundle bundle, Locale locale) {
+                    bundle.locale = locale;
+                }
+
+                @Override
+                public void setName(ResourceBundle bundle, String name) {
+                    bundle.name = name;
+                }
+            });
+    }
 
     /** constant indicating that no resource bundle exists */
     private static final ResourceBundle NONEXISTENT_BUNDLE = new ResourceBundle() {

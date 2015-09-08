@@ -36,7 +36,9 @@ import java.text.spi.DecimalFormatSymbolsProvider;
 import java.text.spi.NumberFormatProvider;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -379,6 +381,13 @@ public class JRELocaleProviderAdapter extends LocaleProviderAdapter implements R
         return localeData;
     }
 
+    @Override
+    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+        return ResourceBundle.Control
+            .getNoFallbackControl(ResourceBundle.Control.FORMAT_DEFAULT)
+            .getCandidateLocales(baseName, locale);
+    }
+
     /**
      * Returns a list of the installed locales. Currently, this simply returns
      * the list of locales for which a sun.text.resources.FormatData bundle
@@ -422,25 +431,21 @@ public class JRELocaleProviderAdapter extends LocaleProviderAdapter implements R
 
         // Use ServiceLoader to dynamically acquire installed locales' tags.
         try {
-            String nonBaseTags = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
-                @Override
-                public String run() {
-                    String tags = null;
-                    for (LocaleDataMetaInfo ldmi :
-                         ServiceLoader.loadInstalled(LocaleDataMetaInfo.class)) {
-                        if (ldmi.getType() == LocaleProviderAdapter.Type.JRE) {
-                            String t = ldmi.availableLanguageTags(category);
-                            if (t != null) {
-                                if (tags == null) {
-                                    tags = t;
-                                } else {
-                                    tags += " " + t;
-                                }
+            String nonBaseTags = AccessController.doPrivileged((PrivilegedExceptionAction<String>) () -> {
+                StringBuilder tags = new StringBuilder();
+                for (LocaleDataMetaInfo ldmi :
+                        ServiceLoader.loadInstalled(LocaleDataMetaInfo.class)) {
+                    if (ldmi.getType() == LocaleProviderAdapter.Type.JRE) {
+                        String t = ldmi.availableLanguageTags(category);
+                        if (t != null) {
+                            if (tags.length() > 0) {
+                                tags.append(' ');
                             }
+                            tags.append(t);
                         }
                     }
-                    return tags;
                 }
+                return tags.toString();
             });
 
             if (nonBaseTags != null) {
