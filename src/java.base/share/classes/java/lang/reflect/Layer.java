@@ -166,6 +166,8 @@ public final class Layer {
      * @throws LayerInstantiationException
      *         If creating the {@code Layer} fails for any of the reasons
      *         listed above
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
