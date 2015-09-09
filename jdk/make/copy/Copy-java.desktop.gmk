@@ -1,0 +1,102 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+include CopyCommon.gmk
+
+$(eval $(call IncludeCustomExtension, jdk, copy/Copy-java.desktop.gmk))
+
+################################################################################
+
+TARGETS += \
+    $(INCLUDE_DST_DIR)/jawt.h \
+    $(INCLUDE_DST_OS_DIR)/jawt_md.h \
+    #
+
+$(INCLUDE_DST_DIR)/%.h: $(JDK_TOPDIR)/src/java.desktop/share/native/include/%.h
+	$(call install-file)
+
+$(INCLUDE_DST_OS_DIR)/%.h: \
+    $(JDK_TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_EXPORT_DIR)/native/include/%.h
+	$(call install-file)
+
+################################################################################
+
+ifneq ($(FREETYPE_BUNDLE_LIB_PATH), )
+  # We need to bundle the freetype library, so it will be available at runtime as well as link time.
+  #
+  # NB: Default freetype build system uses -h linker option and
+  # result .so contains hardcoded library name that is later
+  # used for adding dependencies to other objects
+  # (e.g. libfontmanager.so).
+  #
+  # It is not obvious how to extract that hardcoded name (libfreetype.so.6)
+  # without overcomplicating logic here.
+  # To workaround this we hardcode .6 suffix for now.
+  #
+  # Note that .so.6 library will not be found by System.loadLibrary()
+  # but fortunately we need to load FreeType library explicitly
+  # on windows only
+  #
+  #TODO: rework this to avoid hardcoding library name in the makefile
+  #
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    FREETYPE_TARGET_LIB := $(LIB_DST_DIR)/$(call SHARED_LIBRARY,freetype)
+  else
+    FREETYPE_TARGET_LIB := $(LIB_DST_DIR)$(OPENJDK_TARGET_CPU_LIBDIR)/$(call SHARED_LIBRARY,freetype).6
+  endif
+
+  # We can't use $(install-file) in this rule because it preserves symbolic links and
+  # libfreetype.so is usually a symbolic link to something like libfreetype.so.6 on Unix.
+  $(FREETYPE_TARGET_LIB): $(FREETYPE_BUNDLE_LIB_PATH)/$(call SHARED_LIBRARY,freetype)
+	$(MKDIR) -p $(@D)
+	$(CP) $< $@
+        ifeq ($(OPENJDK_BUILD_OS), windows)
+	  $(CHMOD) +rx $@
+        endif
+
+  TARGETS += $(FREETYPE_TARGET_LIB)
+endif
+
+################################################################################
+
+$(CONF_DST_DIR)/sound.properties: $(JDK_TOPDIR)/src/java.desktop/share/conf/sound.properties
+	$(call install-file)
+
+TARGETS += $(CONF_DST_DIR)/sound.properties
+
+################################################################################
+#
+# Copy property files from sun/print to LIB_DST_DIR
+#
+PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/src/java.desktop/share/conf
+PSFONTPROPFILE_SRCS := $(wildcard $(PSFONTPROPFILE_SRC_DIR)/psfont*.properties*)
+PSFONTPROPFILE_TARGET_FILES := $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIB_DST_DIR),$(PSFONTPROPFILE_SRCS))
+
+$(LIB_DST_DIR)/%: $(PSFONTPROPFILE_SRC_DIR)/%
+	$(call install-file)
+
+TARGETS += $(PSFONTPROPFILE_TARGET_FILES)
+
+################################################################################
