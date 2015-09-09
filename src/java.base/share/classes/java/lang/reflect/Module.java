@@ -432,20 +432,22 @@ public final class Module {
 
     // -- exports --
 
-    // Dummy module that is the target for a qualified export. If a package
-    // is exported to this module then it indicates that the package is
-    // exported to all unnamed modules.
-    private static final Module ALL_UNNAMED_MODULE = new Module(null);
-
-    // Dummy module that is the target for a qualified export. The dummy
-    // module is strongly reachable and thus prevents the set of exports
-    // from being empty when all other target modules have been GC'ed.
-    private static final Module STRONGLY_REACHABLE_MODULE = new Module(null);
-
-    // module exports. The key is the package name; the value is an empty map
-    // for unqualified exports; the value is a WeakHashMap when there are
-    // qualified exports
+    // Module exports. The key is the package name; The value is a map of
+    // the modules that the package is exported to. When exports are
+    // changed at run-time then the value is a WeakHashMap to allow for
+    // target Modules to be GC'ed.
     private volatile Map<String, Map<Module, Boolean>> exports = Collections.emptyMap();
+
+    // Placeholder module: if a package is exported to this Module then it
+    // means the package is exported to all modules
+    private static final Module EVERYONE_MODULE = new Module(null);
+
+    private static final Map<Module, Boolean> EVERYONE
+        = Collections.singletonMap(EVERYONE_MODULE, Boolean.TRUE);
+
+    // Placeholder module: if a package is exported to this Module then it
+    // means the package is exported to all unnamed modules
+    private static final Module ALL_UNNAMED_MODULE = new Module(null);
 
 
     /**
@@ -473,13 +475,13 @@ public final class Module {
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
-        return implIsExported(pn, null);
+        return implIsExported(pn, EVERYONE_MODULE);
     }
 
     /**
      * Returns {@code true} if this module exports the given package to the
-     * given module. If {@code target} is {@code null} then returns {@code
-     * true} if the package is exported un-conditionally by this module.
+     * given module. If the target module is {@code EVERYONE_MODULE} then
+     * this method tests if the package is exported unconditionally.
      */
     private boolean implIsExported(String pn, Module target) {
 
@@ -489,26 +491,24 @@ public final class Module {
 
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
         Map<Module, Boolean> targets = exports.get(pn);
+
         if (targets != null) {
 
-            // unqualified export
-            if (targets.isEmpty())
+            // exported to all
+            if (targets.containsKey(EVERYONE_MODULE))
                 return true;
 
-            // qualified export
-            if (target != null) {
+            // exported to target
+            if (targets.containsKey(target))
+                return true;
 
-                // exported to target
-                if (targets.containsKey(target))
-                    return true;
+            // target is an unnamed module && exported to all unnamed modules
+            if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
+                return true;
 
-                // target is an unnamed module && exported to all unnamed modules
-                if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
-                    return true;
-            }
         }
 
-        // not exported
+        // not exported or not exported to target
         return false;
     }
 
@@ -559,6 +559,8 @@ public final class Module {
      * @apiNote This method is for VM white-box testing.
      */
     void implAddExportsNoSync(String pn, Module target) {
+        if (target == null)
+            target = EVERYONE_MODULE;
         implAddExports(pn.replace('/', '.'), target, false);
     }
 
@@ -566,7 +568,7 @@ public final class Module {
      * Updates the exports so that package {@code pn} is exported to module
      * {@code target}.
      *
-     * @apiNote This method is for Proxy use and white-box testing.
+     * @apiNote This method is for white-box testing.
      */
     void implAddExports(String pn, Module target) {
         implAddExports(pn, target, true);
@@ -579,6 +581,7 @@ public final class Module {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddExports(String pn, Module target, boolean syncVM) {
+        Objects.requireNonNull(target);
         Objects.requireNonNull(pn);
 
         // unnamed modules export all packages
@@ -599,7 +602,7 @@ public final class Module {
             // update VM first, just in case it fails
             if (syncVM) {
                 String pkgInternalForm = pn.replace('.', '/');
-                if (target == null) {
+                if (target == EVERYONE_MODULE) {
                     addExportsToAll0(this, pkgInternalForm);
                 } else if (target == ALL_UNNAMED_MODULE) {
                     addExportsToAllUnnamed0(this, pkgInternalForm);
@@ -611,51 +614,26 @@ public final class Module {
             // copy existing map
             Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
 
-            // the package may be exported already, need to handle all cases
-            Map<Module, Boolean> targets = exports.get(pn);
-            if (targets == null) {
+            if (target == EVERYONE_MODULE) {
 
-                // package not previously exported
-
-                if (target == null) {
-
-                    // unqualified export
-                    exports.put(pn, Collections.emptyMap());
-
-                } else {
-
-                    // qualified export to (possible transient) target. We
-                    // insert a strongly reachable placeholder module into
-                    // the map to ensure that it never becomes empty.
-                    targets = new WeakHashMap<>();
-                    targets.put(STRONGLY_REACHABLE_MODULE, Boolean.TRUE);
-                    targets.put(target, Boolean.TRUE);
-                    exports.put(pn, targets);
-                }
+                // export to everyone
+                exports.put(pn, EVERYONE);
 
             } else {
 
-                // package already exported, nothing to do if already
-                // exported unconditionally
-
-                if (!targets.isEmpty()) {
-
-                    if (target == null) {
-
-                        // change from qualified to unqualified
-                        exports.put(pn, Collections.emptyMap());
-
-                    } else {
-
-                        // extend existing qualified exports
-                        assert (!(targets instanceof WeakHashMap))
-                                || targets.containsKey(STRONGLY_REACHABLE_MODULE);
-                        targets = new WeakHashMap<>(targets);
-                        targets.putIfAbsent(STRONGLY_REACHABLE_MODULE, Boolean.TRUE);
-                        targets.put(target, Boolean.TRUE);
-                        exports.put(pn, targets);
-                    }
+                // the package may or may not be exported already
+                Map<Module, Boolean> targets = exports.get(pn);
+                if (targets == null) {
+                    // not already exported
+                    targets = new WeakHashMap<>();
+                } else {
+                    // already exported, need to copy
+                    targets = new WeakHashMap<>(targets);
                 }
+
+                targets.put(target, Boolean.TRUE);
+                exports.put(pn, targets);
+
             }
 
             // volatile write
@@ -828,7 +806,7 @@ public final class Module {
                 if (!export.targets().isPresent()) {
 
                     // unqualified export
-                    exports.put(source, Collections.emptyMap());
+                    exports.put(source, EVERYONE);
                     addExportsToAll0(m, sourceInternalForm);
 
                 } else {
@@ -985,7 +963,7 @@ public final class Module {
                 }
                 @Override
                 public void addExportsToAll(Module m, String pn) {
-                    m.implAddExports(pn, null, true);
+                    m.implAddExports(pn, Module.EVERYONE_MODULE, true);
                 }
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
