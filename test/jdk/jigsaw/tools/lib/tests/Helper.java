@@ -46,13 +46,16 @@ import tests.JImageGenerator.JModTask;
  */
 public class Helper {
 
+    private final Path explodedmodssrc;
     private final Path jmodssrc;
     private final Path jarssrc;
+    private final Path explodedmodsclasses;
     private final Path jmodsclasses;
     private final Path jarsclasses;
     private final Path jmods;
     private final Path jars;
     private final Path images;
+    private final Path explodedmods;
     private final Path stdjmods;
     private final Path extracted;
     private final Path recreated;
@@ -94,10 +97,16 @@ public class Helper {
         Files.createDirectories(jmods);
         this.jars = Paths.get("jars").toAbsolutePath();
         Files.createDirectories(jars);
+        this.explodedmods = Paths.get("exlodedmods").toAbsolutePath();
+        Files.createDirectories(explodedmods);
+        this.explodedmodssrc = explodedmods.resolve("src");
+        Files.createDirectories(explodedmodssrc);
         this.jarssrc = jars.resolve("src");
         Files.createDirectories(jarssrc);
         this.jmodssrc = jmods.resolve("src");
         Files.createDirectories(jmodssrc);
+        this.explodedmodsclasses = explodedmods.resolve("classes");
+        Files.createDirectories(explodedmodsclasses);
         this.jmodsclasses = jmods.resolve("classes");
         Files.createDirectories(jmodsclasses);
         this.jarsclasses = jars.resolve("classes");
@@ -118,15 +127,19 @@ public class Helper {
         generateDefaultJarModule("leaf4");
         generateDefaultJarModule("leaf5");
 
-        generateDefaultJarModule("composite1", "leaf1", "leaf2", "leaf4");
-        generateDefaultJModule("composite2", "composite1", "leaf3", "leaf5",
+        generateDefaultExplodedModule("leaf6");
+        generateDefaultExplodedModule("leaf7");
+
+        generateDefaultJarModule("composite1", "leaf1", "leaf2", "leaf4", "leaf6");
+        generateDefaultJModule("composite2", "composite1", "leaf3", "leaf5", "leaf7",
                 "java.management");
     }
 
     public String defaultModulePath() {
-        return stdjmods.toAbsolutePath().toString() + File.pathSeparator +
-                jmods.toAbsolutePath().toString() + File.pathSeparator +
-                jars.toAbsolutePath().toString();
+        return stdjmods.toAbsolutePath().toString() + File.pathSeparator
+                + jmods.toAbsolutePath().toString() + File.pathSeparator
+                + jars.toAbsolutePath().toString() + File.pathSeparator
+                + explodedmodsclasses.toAbsolutePath().toString();
     }
 
     public Path generateModuleCompiledClasses(
@@ -191,6 +204,19 @@ public class Helper {
         Path jarFile = jars.resolve(moduleName + ".jar");
         JImageGenerator.createJarFile(jarFile, jarsclasses.resolve(moduleName));
         return new Result(0, "", jarFile);
+    }
+
+    public Result generateDefaultExplodedModule(String moduleName, String... dependencies) throws IOException {
+        return generateDefaultExplodedModule(moduleName, getDefaultClasses(moduleName), dependencies);
+    }
+
+    public Result generateDefaultExplodedModule(String moduleName, List<String> classNames,
+            String... dependencies) throws IOException {
+        generateModuleCompiledClasses(explodedmodssrc, explodedmodsclasses,
+                moduleName, classNames, dependencies);
+
+        Path dir = explodedmods.resolve(moduleName);
+        return new Result(0, "", dir);
     }
 
     private void generateGarbage(Path compiled) throws IOException {
@@ -348,6 +374,10 @@ public class Helper {
 
     public Path getJmodDir() {
         return jmods;
+    }
+
+    public Path getExplodedModsDir() {
+        return explodedmods;
     }
 
     public Path getJarDir() {

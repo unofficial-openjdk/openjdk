@@ -26,11 +26,9 @@ package jdk.tools.jimage;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -39,138 +37,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import jdk.internal.jimage.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageModuleDataWriter;
 import jdk.tools.jlink.internal.ImagePluginStack;
-
+import jdk.tools.jlink.internal.DirArchive;
 /**
  *
  * Support for extracted image.
  */
 public final class ExtractedImage {
 
-    /**
-     * An Archive backed by a directory.
-     */
-    public class DirArchive implements Archive {
-
-        /**
-         * A File located in a Directory.
-         */
-        private class FileEntry extends Archive.Entry {
-
-            private final long size;
-            private final Path path;
-
-            FileEntry(Path path, String name) {
-                super(DirArchive.this, getPathName(path), name,
-                        Archive.Entry.EntryType.CLASS_OR_RESOURCE);
-                this.path = path;
-                try {
-                    size = Files.size(path);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-
-            /**
-             * Returns the number of bytes of this file.
-             */
-            @Override
-            public long size() {
-                return size;
-            }
-
-            @Override
-            public InputStream stream() throws IOException {
-                InputStream stream = Files.newInputStream(path);
-                open.add(stream);
-                return stream;
-            }
-        }
-
-        private static final String MODULE_INFO = "module-info.class";
-
-        private final Path dirPath;
-        private final String moduleName;
-        private final List<InputStream> open = new ArrayList<>();
-        private final int chop;
-
-        protected DirArchive(Path dirPath) throws IOException {
-            if (!Files.isDirectory(dirPath)) {
-                throw new IOException("Not a directory");
-            }
-            chop = dirPath.toString().length() + 1;
-            this.moduleName = dirPath.getFileName().toString();
-            this.dirPath = dirPath;
-        }
-
-        @Override
-        public String moduleName() {
-            return moduleName;
-        }
-
-        @Override
-        public Stream<Entry> entries() {
-            Stream<Entry> ret = null;
-            try {
-                ret = Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            return ret;
-        }
-
-        private Archive.Entry toEntry(Path p) {
-            if (Files.isDirectory(p)) {
-                return null;
-            }
-            String name = getPathName(p).substring(chop);
-            if (name.startsWith("_")) {
-                return null;
-            }
-            if (verbose) {
-                String verboseName = moduleName + "/" + name;
-                log.println(verboseName);
-            }
-
-            if (name.equals(MODULE_INFO)) {
-                name = moduleName + "/" + MODULE_INFO;
-            }
-            return new FileEntry(p, name);
-        }
-
-        @Override
-        public void close() throws IOException {
-            IOException e = null;
-            for (InputStream stream : open) {
-                try {
-                    stream.close();
-                } catch (IOException ex) {
-                    if (e == null) {
-                        e = ex;
-                    } else {
-                        e.addSuppressed(ex);
-                    }
-                }
-            }
-            if (e != null) {
-                throw e;
-            }
-        }
-
-        @Override
-        public void open() throws IOException {
-            // NOOP
-        }
-    }
     private Map<String, Set<String>> modulePackages = new LinkedHashMap<>();
     private Set<Archive> archives = new HashSet<>();
-    private final PrintWriter log;
-    private final boolean verbose;
     private final ImagePluginStack plugins;
 
     ExtractedImage(Path dirPath, ImagePluginStack plugins, PrintWriter log,
@@ -178,6 +58,11 @@ public final class ExtractedImage {
         if (!Files.isDirectory(dirPath)) {
             throw new IOException("Not a directory");
         }
+        Consumer<String> cons = (String t) -> {
+            if (verbose) {
+                log.println(t);
+            }
+        };
         this.plugins = plugins;
         Files.walk(dirPath, 1).forEach((p) -> {
             try {
@@ -194,7 +79,7 @@ public final class ExtractedImage {
                         modulePackages = Collections.unmodifiableMap(modulePackages);
                     } else {
                         if (Files.isDirectory(p)) {
-                            Archive a = new DirArchive(p);
+                            Archive a = new DirArchive(p, cons);
                             archives.add(a);
                         }
                     }
@@ -204,12 +89,9 @@ public final class ExtractedImage {
             }
         });
         archives = Collections.unmodifiableSet(archives);
-        this.log = log;
-        this.verbose = verbose;
     }
 
     void recreateJImage(Path path) throws IOException {
-
         ImageFileCreator.recreateJimage(path, archives, modulePackages, plugins);
     }
 

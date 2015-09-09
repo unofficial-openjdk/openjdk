@@ -60,6 +60,7 @@ import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ModularJarArchive;
 import jdk.tools.jlink.internal.JmodArchive;
+import jdk.tools.jlink.internal.DirArchive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
@@ -238,11 +239,12 @@ public class JlinkTask {
 
             URI location = omref.get().location().get();
             String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
+            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")
+                    && !scheme.equalsIgnoreCase("file")) {
                 fail(RuntimeException.class,
-                     "Selected module %s (%s) not in jmod or modular jar format",
-                     name,
-                     location);
+                        "Selected module %s (%s) not in jmod, modular jar or directory format",
+                        name,
+                        location);
             }
 
             // convert to file URIs
@@ -252,9 +254,13 @@ public class JlinkTask {
                 String s = location.toString();
                 fileURI = URI.create(s.substring(5, s.length()-2));
             } else {
-                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                String s = location.toString();
-                fileURI = URI.create(s.substring(4, s.length()-2));
+                if (scheme.equalsIgnoreCase("jar")) {
+                    // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
+                    String s = location.toString();
+                    fileURI = URI.create(s.substring(4, s.length() - 2));
+                } else {
+                    fileURI = URI.create(location.toString());
+                }
             }
 
             modPaths.put(name, Paths.get(fileURI));
@@ -518,10 +524,14 @@ public class JlinkTask {
                 if (path.toString().endsWith(".jar")) {
                     return new ModularJarArchive(module, path);
                 } else {
-                    fail(RuntimeException.class,
-                     "Selected module %s (%s) not in jmod or modular jar format",
-                     module,
-                     path);
+                    if (Files.isDirectory(path)) {
+                        return new DirArchive(path);
+                    } else {
+                        fail(RuntimeException.class,
+                                "Selected module %s (%s) not in jmod or modular jar format",
+                                module,
+                                path);
+                    }
                 }
             }
             return null;
