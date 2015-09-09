@@ -780,19 +780,19 @@ public class Proxy implements java.io.Serializable {
          * the proxy interfaces
          */
         static Set<Class<?>> referencedTypes(ClassLoader loader, List<Class<?>> interfaces) {
-            Stream<Class<?>> types = Stream.empty();
+            Set<Class<?>> types = new HashSet<>();
             for (Class<?> intf : interfaces) {
                 for (Method m : intf.getMethods()) {
                     // return type, parameter types, and exception types
-                    Stream<Class<?>> refs = Stream.concat(Stream.concat(Stream.of(m.getReturnType()),
-                                    Arrays.stream(m.getParameterTypes())),
-                            Arrays.stream(m.getExceptionTypes()))
-                            .map(ProxyBuilder::getElementType)
-                            .filter(t -> !t.isPrimitive());
-                    types = Stream.concat(types, refs);
+                    Stream.concat(Stream.concat(Stream.of(m.getReturnType()),
+                                                Arrays.stream(m.getParameterTypes())),
+                                  Arrays.stream(m.getExceptionTypes()))
+                          .map(ProxyBuilder::getElementType)
+                          .filter(t -> !t.isPrimitive())
+                          .forEach(types::add);
                 }
             }
-            return types.collect(Collectors.toSet());
+            return types;
         }
 
         /**
