@@ -23,7 +23,12 @@
  * questions.
  */
 
+/**
+ * java.base defines and exports the core APIs of the Java SE platform.
+ */
+
 module java.base {
+
     exports java.io;
     exports java.lang;
     exports java.lang.annotation;
@@ -76,18 +81,52 @@ module java.base {
     exports javax.security.auth.x500;
     exports javax.security.cert;
 
-    // JDK-8049422
+    // see JDK-8049422
     exports jdk;
 
-    // JDK-8044773
+    // see JDK-8044773
     exports jdk.net;
 
-    // These will move to a jdk.internal module via JEP-XXX
+    // These will move to a jdk.internal module via JEP-260
     exports sun.misc;
     exports sun.reflect;
 
+
+    // the service types defined by the APIs in this module
+
+    uses java.net.ContentHandlerFactory;
+    uses java.net.spi.URLStreamHandlerProvider;
+    uses java.nio.channels.spi.AsynchronousChannelProvider;
+    uses java.nio.channels.spi.SelectorProvider;
+    uses java.nio.charset.spi.CharsetProvider;
+    uses java.nio.file.spi.FileSystemProvider;
+    uses java.nio.file.spi.FileTypeDetector;
+    uses java.security.Provider;
+    uses java.text.spi.BreakIteratorProvider;
+    uses java.text.spi.CollatorProvider;
+    uses java.text.spi.DateFormatProvider;
+    uses java.text.spi.DateFormatSymbolsProvider;
+    uses java.text.spi.DecimalFormatSymbolsProvider;
+    uses java.text.spi.NumberFormatProvider;
+    uses java.time.chrono.AbstractChronology;
+    uses java.time.chrono.Chronology;
+    uses java.time.zone.ZoneRulesProvider;
+    uses java.util.spi.CalendarDataProvider;
+    uses java.util.spi.CalendarNameProvider;
+    uses java.util.spi.CurrencyNameProvider;
+    uses java.util.spi.LocaleNameProvider;
+    uses java.util.spi.ResourceBundleControlProvider;
+    uses java.util.spi.ResourceBundleProvider;
+    uses java.util.spi.TimeZoneNameProvider;
+    uses javax.security.auth.spi.LoginModule;
+
+
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
+
+    // CORBA serialization needs reflective access
+    exports sun.util.calendar to
+        java.corba;
 
     exports com.sun.security.ntlm to
         java.security.sasl;
@@ -205,9 +244,6 @@ module java.base {
         jdk.localedata;
     exports sun.util to
         java.desktop;
-    // Reflective access during modular Serialization
-    exports sun.util.calendar to
-        java.corba;
     exports sun.util.locale.provider to
         java.desktop,
         jdk.localedata;
@@ -221,31 +257,9 @@ module java.base {
         jdk.localedata;
     exports sun.util.resources.cldr to
         jdk.localedata;
-    uses java.net.ContentHandlerFactory;
-    uses java.net.spi.URLStreamHandlerProvider;
-    uses java.nio.channels.spi.AsynchronousChannelProvider;
-    uses java.nio.channels.spi.SelectorProvider;
-    uses java.nio.charset.spi.CharsetProvider;
-    uses java.nio.file.spi.FileSystemProvider;
-    uses java.nio.file.spi.FileTypeDetector;
-    uses java.security.Provider;
-    uses java.text.spi.BreakIteratorProvider;
-    uses java.text.spi.CollatorProvider;
-    uses java.text.spi.DateFormatProvider;
-    uses java.text.spi.DateFormatSymbolsProvider;
-    uses java.text.spi.DecimalFormatSymbolsProvider;
-    uses java.text.spi.NumberFormatProvider;
-    uses java.time.chrono.AbstractChronology;
-    uses java.time.chrono.Chronology;
-    uses java.time.zone.ZoneRulesProvider;
-    uses java.util.spi.CalendarDataProvider;
-    uses java.util.spi.CalendarNameProvider;
-    uses java.util.spi.CurrencyNameProvider;
-    uses java.util.spi.LocaleNameProvider;
-    uses java.util.spi.ResourceBundleControlProvider;
-    uses java.util.spi.ResourceBundleProvider;
-    uses java.util.spi.TimeZoneNameProvider;
-    uses javax.security.auth.spi.LoginModule;
+
+
+    // JDK-internal service types
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.security.ssl.ClientKeyExchangeService;
     uses sun.util.spi.CalendarProvider;
@@ -253,7 +267,11 @@ module java.base {
     uses sun.util.resources.LocaleData.CommonResourceBundleProvider;
     uses sun.util.resources.LocaleData.SupplementaryResourceBundleProvider;
 
-    provides java.nio.file.spi.FileSystemProvider with jdk.internal.jrtfs.JrtFileSystemProvider;
+
+    // Built-in service providers that are located via ServiceLoader
+
+    provides java.nio.file.spi.FileSystemProvider with
+        jdk.internal.jrtfs.JrtFileSystemProvider;
     provides java.security.Provider with sun.security.provider.Sun;
     provides java.security.Provider with sun.security.rsa.SunRsaSign;
     provides java.security.Provider with com.sun.crypto.provider.SunJCE;
