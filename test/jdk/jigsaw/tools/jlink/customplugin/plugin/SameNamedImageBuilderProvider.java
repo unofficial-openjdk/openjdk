@@ -21,12 +21,41 @@
  * questions.
  */
 
-module customplugin {
-    requires jdk.jlink;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.HelloProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.CustomImageFileProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.CustomResourcePluginProvider;
-    provides jdk.tools.jlink.plugins.ImageBuilderProvider with plugin.CustomImageBuilderProvider;
-    provides jdk.tools.jlink.plugins.ImageBuilderProvider with plugin.SecondImageBuilderProvider;
-}
+package plugin;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+
+import jdk.tools.jlink.plugins.ImageBuilder;
+import jdk.tools.jlink.plugins.ImageBuilderProvider;
+
+public class SameNamedImageBuilderProvider implements ImageBuilderProvider {
+
+    private static final String NAME = "custom-image-builder";
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return NAME + "-description";
+    }
+
+    @Override
+    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir) throws IOException {
+        return new CustomImageBuilder(config, imageOutDir);
+    }
+
+    @Override
+    public Map<String, String> getOptions() {
+        return null;
+    }
+
+    @Override
+    public boolean hasArgument(String option) {
+        return false;
+    }
+}

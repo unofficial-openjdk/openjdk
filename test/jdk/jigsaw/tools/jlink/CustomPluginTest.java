@@ -75,21 +75,19 @@ public class CustomPluginTest {
                 .option("--help")
                 .pluginModulePath(pluginModulePath)
                 .call();
+        result.assertSuccess();
         String output = result.getMessage();
-        if (result.getExitCode() != 0) {
-            System.err.println(output);
-            throw new AssertionError("jlink crashed: " + result.getExitCode());
-        }
         List<String> plugins = new ArrayList<>();
         String[] lines = output.split("\n");
         for (String s : lines) {
-            if (s.startsWith(" --custom") || s.startsWith(" custom")) {
+            if (s.startsWith(" --custom-image-plugin") || s.startsWith(" custom-image-plugin") ||
+                    s.startsWith(" --custom-resource-plugin") || s.startsWith(" custom-resource-plugin")) {
                 plugins.add(s);
             }
         }
         if (plugins.size() != 4) {
             System.err.println(output);
-            throw new AssertionError("Expected three plugins " + plugins);
+            throw new AssertionError("Expected two plugins " + plugins);
         }
         for (int i = 0; i < plugins.size(); i += 2) {
             String[] ss = plugins.get(i).trim().split(" +");
@@ -134,7 +132,7 @@ public class CustomPluginTest {
         JImageGenerator.compile(src, classes, "-XaddExports:jdk.jlink/jdk.tools.jlink.internal=customplugin");
         return JImageGenerator.getJModTask()
                 .addClassPath(classes)
-                .output(helper.getJmodDir().resolve(name + ".jmod"))
+                .jmod(helper.getJmodDir().resolve(name + ".jmod"))
                 .create().assertSuccess();
     }
 

@@ -36,6 +36,8 @@ import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import tests.Helper;
+import tests.JImageGenerator;
+import tests.JImageGenerator.InMemoryFile;
 
 /*
  * @test
@@ -68,6 +70,37 @@ public class JLinkTest {
             if (builtInPluginsProviders.size() != numPlugins) {
                 throw new AssertionError("Plugins not found: " + builtInPluginsProviders.size());
             }
+        }
+
+        {
+            String moduleName = "bug8134651";
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods("leaf1")
+                    .option("")
+                    .call().assertSuccess();
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .addMods("leaf1")
+                    .option("--output")
+                    .option("")
+                    .call().assertFailure("Error: no value given for --output");
+            JImageGenerator.getJLinkTask()
+                    .modulePath("")
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods("leaf1")
+                    .option("")
+                    .call().assertFailure("Error: no value given for --modulepath");
+        }
+
+        {
+            String moduleName = "filter";
+            Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
+            String className = "_A.class";
+            JImageGenerator.addFiles(jmod, new InMemoryFile(className, new byte[0]));
+            Path image = helper.generateDefaultImage(moduleName).assertSuccess();
+            helper.checkImage(image, moduleName, new String[] {"/" + moduleName + "/" + className}, null);
         }
 
         {

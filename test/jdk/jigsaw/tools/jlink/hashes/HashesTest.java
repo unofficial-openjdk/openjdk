@@ -23,13 +23,13 @@
 
 /*
  * @test
- * @ignore
  * @summary Test the recording and checking of dependency hashes
  * @author Andrei Eremeev
  * @library /jdk/jigsaw/lib /lib/testlibrary
  * @modules java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jmod
+ * @ignore
  * @build jdk.testlibrary.ProcessTools jdk.testlibrary.OutputAnalyzer CompilerUtils
  * @run main HashesTest
  */

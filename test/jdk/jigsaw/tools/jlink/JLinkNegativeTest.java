@@ -28,6 +28,7 @@
  * @author Andrei Eremeev
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
+ *          java.base/jdk.internal.module
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
@@ -38,16 +39,21 @@
  */
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.module.ModuleDescriptor;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import jdk.internal.module.ModuleInfoWriter;
 import org.testng.SkipException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import tests.Helper;
 import tests.JImageGenerator;
@@ -59,25 +65,13 @@ public class JLinkNegativeTest {
 
     private Helper helper;
 
-    @BeforeMethod
+    @BeforeClass
     public void setUp() throws IOException {
         helper = Helper.newHelper();
         if (helper == null) {
             throw new SkipException("Not run");
         }
         helper.generateDefaultModules();
-    }
-
-    @AfterMethod
-    public void cleanUp() throws IOException {
-        if (helper != null) {
-            deleteDirectory(helper.getJmodDir());
-            deleteDirectory(helper.getJarDir());
-            deleteDirectory(helper.getImageDir());
-            deleteDirectory(helper.getExtractedDir());
-            deleteDirectory(helper.getRecreatedDir());
-            helper = null;
-        }
     }
 
     private void deleteDirectory(Path dir) throws IOException {
@@ -155,44 +149,60 @@ public class JLinkNegativeTest {
         Path imageFile = helper.createNewImageDir("test");
         Path dirJmod = helper.createNewJmodFile("dir");
         Files.createDirectory(dirJmod);
-        JImageGenerator.getJLinkTask()
-                .output(imageFile)
-                .addMods("dir")
-                .modulePath(helper.defaultModulePath())
-                .call().assertFailure("Error: Module dir not found");
+        try {
+            JImageGenerator.getJLinkTask()
+                    .output(imageFile)
+                    .addMods("dir")
+                    .modulePath(helper.defaultModulePath())
+                    .call().assertFailure("Error: Module dir not found");
+        } finally {
+            deleteDirectory(dirJmod);
+        }
     }
 
     public void testJarIsDir() throws IOException {
         Path imageFile = helper.createNewImageDir("test");
         Path dirJar = helper.createNewJarFile("dir");
         Files.createDirectory(dirJar);
-        JImageGenerator.getJLinkTask()
-                .output(imageFile)
-                .addMods("dir")
-                .modulePath(helper.defaultModulePath())
-                .call().assertFailure("Error: Module dir not found");
+        try {
+            JImageGenerator.getJLinkTask()
+                    .output(imageFile)
+                    .addMods("dir")
+                    .modulePath(helper.defaultModulePath())
+                    .call().assertFailure("Error: Module dir not found");
+        } finally {
+            deleteDirectory(dirJar);
+        }
     }
 
     public void testMalformedJar() throws IOException {
         Path imageFile = helper.createNewImageDir("test");
         Path jar = helper.createNewJarFile("not_zip");
         Files.createFile(jar);
-        JImageGenerator.getJLinkTask()
-                .output(imageFile)
-                .addMods("not_zip")
-                .modulePath(helper.defaultModulePath())
-                .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+        try {
+            JImageGenerator.getJLinkTask()
+                    .output(imageFile)
+                    .addMods("not_zip")
+                    .modulePath(helper.defaultModulePath())
+                    .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+        } finally {
+            deleteDirectory(jar);
+        }
     }
 
     public void testMalformedJmod() throws IOException {
         Path imageFile = helper.createNewImageDir("test");
         Path jmod = helper.createNewJmodFile("not_zip");
         Files.createFile(jmod);
-        JImageGenerator.getJLinkTask()
-                .output(imageFile)
-                .addMods("not_zip")
-                .modulePath(helper.defaultModulePath())
-                .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+        try {
+            JImageGenerator.getJLinkTask()
+                    .output(imageFile)
+                    .addMods("not_zip")
+                    .modulePath(helper.defaultModulePath())
+                    .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+        } finally {
+            deleteDirectory(jmod);
+        }
     }
 
     public void testAddDefaultPackage() throws IOException {
@@ -202,7 +212,7 @@ public class JLinkNegativeTest {
         JImageGenerator
                 .getJModTask()
                 .addClassPath(module)
-                .output(helper.getJmodDir().resolve(moduleName + ".jmod"))
+                .jmod(helper.getJmodDir().resolve(moduleName + ".jmod"))
                 .create().assertSuccess();
         Path image = helper.generateDefaultImage(moduleName).assertSuccess();
         helper.checkImage(image, moduleName, null, null);
@@ -211,28 +221,144 @@ public class JLinkNegativeTest {
     public void testAddSomeTopLevelFiles() throws IOException {
         String moduleName = "hacked2";
         Path module = helper.generateModuleCompiledClasses(helper.getJmodSrcDir(), helper.getJmodClassesDir(),
-                moduleName, null);
+                moduleName);
         Files.createFile(module.resolve("top-level-file"));
-        JImageGenerator
+        Path jmod = JImageGenerator
                 .getJModTask()
                 .addClassPath(module)
-                .output(helper.getJmodDir().resolve(moduleName + ".jmod"))
+                .jmod(helper.getJmodDir().resolve(moduleName + ".jmod"))
                 .create().assertSuccess();
-        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-        helper.checkImage(image, moduleName, null, null);
+        try {
+            Path image = helper.generateDefaultImage(moduleName).assertSuccess();
+            helper.checkImage(image, moduleName, null, null);
+        } finally {
+            deleteDirectory(jmod);
+        }
     }
 
     public void testAddNonStandardSection() throws IOException {
         String moduleName = "hacked3";
         Path module = helper.generateDefaultJModule(moduleName).assertSuccess();
         JImageGenerator.addFiles(module, new InMemoryFile("unknown/A.class", new byte[0]));
-        Result result = helper.generateDefaultImage(moduleName);
-        if (result.getExitCode() != 4) {
-            throw new AssertionError("Crash expected");
+        try {
+            Result result = helper.generateDefaultImage(moduleName);
+            if (result.getExitCode() != 4) {
+                throw new AssertionError("Crash expected");
+            }
+            if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: unknown")) {
+                System.err.println(result.getMessage());
+                throw new AssertionError("InternalError expected");
+            }
+        } finally {
+            deleteDirectory(module);
         }
-        if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: unknown")) {
-            System.err.println(result.getMessage());
-            throw new AssertionError("InternalError expected");
+    }
+
+    @Test(enabled = false)
+    public void testSectionsAreFiles() throws IOException {
+        String moduleName = "module";
+        Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
+        JImageGenerator.addFiles(jmod,
+                new InMemoryFile("/native", new byte[0]),
+                new InMemoryFile("/conf", new byte[0]),
+                new InMemoryFile("/bin", new byte[0]));
+        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
+        helper.checkImage(image, moduleName, null, null);
+    }
+
+    public void testDuplicateModule1() throws IOException {
+        String moduleName1 = "dupRes1Jmod1";
+        String moduleName2 = "dupRes1Jmod2";
+        List<String> classNames = Arrays.asList("java.A", "javax.B");
+        Path module1 = helper.generateModuleCompiledClasses(
+                helper.getJmodSrcDir(), helper.getJmodClassesDir(), moduleName1, classNames);
+        Path module2 = helper.generateModuleCompiledClasses(
+                helper.getJmodSrcDir(), helper.getJmodClassesDir(), moduleName2, classNames);
+
+        try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
+            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+                    .requires("java.base").build(), out);
         }
+
+        Path jmod1 = JImageGenerator.getJModTask()
+                .addClassPath(module1)
+                .jmod(helper.createNewJmodFile(moduleName1))
+                .create()
+                .assertSuccess();
+        Path jmod2 = JImageGenerator.getJModTask()
+                .addClassPath(module2)
+                .jmod(helper.createNewJmodFile(moduleName2))
+                .create()
+                .assertSuccess();
+        try {
+            helper.generateDefaultImage(moduleName1)
+                    .assertFailure("Error: Two versions of module dupRes1Jmod1 found in");
+        } finally {
+            deleteDirectory(jmod1);
+            deleteDirectory(jmod2);
+        }
+    }
+
+    public void testDuplicateModule2() throws IOException {
+        String moduleName = "dupRes2Jmod";
+        List<String> classNames = Arrays.asList("java.A", "javax.B");
+        Path module1 = helper.generateModuleCompiledClasses(
+                helper.getJmodSrcDir(), helper.getJmodClassesDir(), moduleName, classNames);
+        Path module2 = helper.generateModuleCompiledClasses(
+                helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName, classNames);
+
+        Path jmod = JImageGenerator.getJModTask()
+                .addClassPath(module1)
+                .jmod(helper.createNewJmodFile(moduleName))
+                .create()
+                .assertSuccess();
+        Path jar = JImageGenerator.createJarFile(helper.getJarDir().resolve(moduleName + ".jar"), module2);
+        Path newJar = helper.getJmodDir().resolve(jar.getFileName());
+        Files.move(jar, newJar);
+        try {
+            helper.generateDefaultImage(moduleName)
+                    .assertFailure("Error: Two versions of module dupRes2Jmod found in");
+        } finally {
+            deleteDirectory(jmod);
+            deleteDirectory(newJar);
+        }
+    }
+
+    public void testDuplicateModule3() throws IOException {
+        String moduleName1 = "dupRes3Jar1";
+        String moduleName2 = "dupRes3Jar2";
+        List<String> classNames = Arrays.asList("java.A", "javax.B");
+        Path module1 = helper.generateModuleCompiledClasses(
+                helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName1, classNames);
+        Path module2 = helper.generateModuleCompiledClasses(
+                helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName2, classNames);
+
+        try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
+            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+                    .requires("java.base").build(), out);
+        }
+
+        Path jar1 = JImageGenerator.createJarFile(helper.getJarDir().resolve(moduleName1 + ".jar"), module1);
+        Path jar2 = JImageGenerator.createJarFile(helper.getJarDir().resolve(moduleName2 + ".jar"), module2);
+        try {
+            helper.generateDefaultImage(moduleName1)
+                    .assertFailure("Error: Two versions of module dupRes3Jar1 found in");
+        } finally {
+            deleteDirectory(jar1);
+            deleteDirectory(jar2);
+        }
+    }
+
+    @Test(enabled = false)
+    public void testCustomImageBuilderNotFound() throws IOException {
+        Path configFile = Paths.get("builder.cfg");
+        Files.write(configFile, "jdk.jlink.image.builder=not-found-image-builder".getBytes());
+        JImageGenerator.getJLinkTask()
+                .option("--plugins-configuration")
+                .option(configFile.toAbsolutePath().toString())
+                .modulePath(helper.defaultModulePath())
+                .output(helper.createNewImageDir("leaf1"))
+                .addMods("leaf1")
+                .call().assertFailure("FIX_ME");
     }
 }

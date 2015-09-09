@@ -39,7 +39,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -109,7 +112,7 @@ public class JImageGenerator {
 
     private static final String CMDS_OPTION = "--cmds";
     private static final String CONFIG_OPTION = "--config";
-    private static final String HASH_DEPENDENCIES_OPTION = "--hash-dependeces";
+    private static final String HASH_DEPENDENCIES_OPTION = "--hash-dependencies";
     private static final String LIBS_OPTION = "--libs";
     private static final String MODULE_VERSION_OPTION = "--module-version";
 
@@ -234,7 +237,7 @@ public class JImageGenerator {
         return generateSources(output, moduleName, sources);
     }
 
-    public static void generateModuleInfo(Path moduleDir, List<String> packages, String[] dependencies) throws IOException {
+    public static void generateModuleInfo(Path moduleDir, List<String> packages, String... dependencies) throws IOException {
         StringBuilder moduleInfoBuilder = new StringBuilder();
         Path file = moduleDir.resolve("module-info.java");
         String moduleName = moduleDir.getFileName().toString();
@@ -249,6 +252,12 @@ public class JImageGenerator {
         }
         moduleInfoBuilder.append("}");
         Files.write(file, moduleInfoBuilder.toString().getBytes());
+    }
+
+    public static void compileSuccess(Path source, Path destination, String... options) throws IOException {
+        if (!compile(source, destination, options)) {
+            throw new AssertionError("Compilation failed.");
+        }
     }
 
     public static boolean compile(Path source, Path destination, String... options) throws IOException {
@@ -275,11 +284,11 @@ public class JImageGenerator {
         }
     }
 
-    public static void createJarFile(Path jarfile, Path dir) throws IOException {
-        createJarFile(jarfile, dir, Paths.get("."));
+    public static Path createJarFile(Path jarfile, Path dir) throws IOException {
+        return createJarFile(jarfile, dir, Paths.get("."));
     }
 
-    public static void createJarFile(Path jarfile, Path dir, Path file) throws IOException {
+    public static Path createJarFile(Path jarfile, Path dir, Path file) throws IOException {
         // create the target directory
         Path parent = jarfile.getParent();
         if (parent != null)
@@ -303,6 +312,31 @@ public class JImageGenerator {
                 jos.putNextEntry(new JarEntry(name));
                 Files.copy(dir.resolve(entry), jos);
             }
+        }
+        return jarfile;
+    }
+
+    public static Set<String> getModuleContent(Path module) {
+        Result result = JImageGenerator.getJModTask()
+                .jmod(module)
+                .list();
+        result.assertSuccess();
+        return Stream.of(result.getMessage().split("\r?\n"))
+                .collect(Collectors.toSet());
+    }
+
+    public static void checkModule(Path module, Set<String> expected) throws IOException {
+        Set<String> actual = getModuleContent(module);
+        if (!Objects.equals(actual, expected)) {
+            Set<String> unexpected = new HashSet<>(actual);
+            unexpected.removeAll(expected);
+            Set<String> notFound = new HashSet<>(expected);
+            notFound.removeAll(actual);
+            System.err.println("Unexpected files:");
+            unexpected.forEach(s -> System.err.println("\t" + s));
+            System.err.println("Not found files:");
+            notFound.forEach(s -> System.err.println("\t" + s));
+            throw new AssertionError("Module check failed.");
         }
     }
 
@@ -355,7 +389,7 @@ public class JImageGenerator {
             return this;
         }
 
-        public JModTask output(Path output) {
+        public JModTask jmod(Path output) {
             this.output = output;
             return this;
         }
@@ -393,7 +427,7 @@ public class JImageGenerator {
             options.add(cmd);
             if (!cmds.isEmpty()) {
                 options.add(CMDS_OPTION);
-                options.add(cmd);
+                options.add(toPath(cmds));
             }
             if (!config.isEmpty()) {
                 options.add(CONFIG_OPTION);
@@ -415,7 +449,7 @@ public class JImageGenerator {
                 options.add(CLASS_PATH_OPTION);
                 options.add(toPath(classpath));
             }
-            if (!jars.isEmpty() && jmods.isEmpty()) {
+            if (!jars.isEmpty() || !jmods.isEmpty()) {
                 options.add(MODULE_PATH_OPTION);
                 options.add(modulePath());
             }
@@ -436,6 +470,10 @@ public class JImageGenerator {
 
         public Result list() {
             return cmd("list");
+        }
+
+        public Result call() {
+            return cmd("");
         }
 
         private Result cmd(String cmd) {

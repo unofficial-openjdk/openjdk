@@ -70,6 +70,8 @@ public class Result {
                 throw new AssertionError("Output does not fit regexp: " + expected);
             }
         }
+        System.err.println("Failed as expected. " + (expected != null ? expected : ""));
+        System.err.println(getMessage());
     }
 
     public Path assertSuccess() {

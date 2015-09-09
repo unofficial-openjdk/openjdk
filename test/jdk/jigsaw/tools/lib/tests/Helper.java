@@ -130,6 +130,11 @@ public class Helper {
     }
 
     public Path generateModuleCompiledClasses(
+            Path src, Path classes, String moduleName, String... dependencies) throws IOException {
+        return generateModuleCompiledClasses(src, classes, moduleName, getDefaultClasses(moduleName), dependencies);
+    }
+
+    public Path generateModuleCompiledClasses(
             Path src, Path classes, String moduleName,
             List<String> classNames, String... dependencies) throws IOException {
         if (classNames == null) {
@@ -149,7 +154,6 @@ public class Helper {
         if (!JImageGenerator.compile(srcMod, destination, "-modulepath", modulePath, "-g")) {
             throw new AssertionError("Compilation failure");
         }
-        generateGarbage(destination);
         return destination;
     }
 
@@ -160,10 +164,11 @@ public class Helper {
     public Result generateDefaultJModule(String moduleName, List<String> classNames,
                                              String... dependencies) throws IOException {
         generateModuleCompiledClasses(jmodssrc, jmodsclasses, moduleName, classNames, dependencies);
+        generateGarbage(jmodsclasses.resolve(moduleName));
 
         Path jmodFile = jmods.resolve(moduleName + ".jmod");
         JModTask task = JImageGenerator.getJModTask()
-                .output(jmodFile)
+                .jmod(jmodFile)
                 .addJmods(stdjmods)
                 .addJmods(jmods.toAbsolutePath())
                 .addJars(jars.toAbsolutePath())
@@ -181,6 +186,7 @@ public class Helper {
     public Result generateDefaultJarModule(String moduleName, List<String> classNames,
                                          String... dependencies) throws IOException {
         generateModuleCompiledClasses(jarssrc, jarsclasses, moduleName, classNames, dependencies);
+        generateGarbage(jarsclasses.resolve(moduleName));
 
         Path jarFile = jars.resolve(moduleName + ".jar");
         JImageGenerator.createJarFile(jarFile, jarsclasses.resolve(moduleName));
@@ -226,12 +232,8 @@ public class Helper {
     }
 
     private void putAppClasses(String module, List<String> classes) {
-        List<String> appClasses = new ArrayList<>();
-        for (String clazz : toLocation(module, classes)) {
-            appClasses.add(clazz);
-        }
-        String moduleClazz = toLocation(module, "module-info");
-        appClasses.add(moduleClazz);
+        List<String> appClasses = toLocation(module, classes).stream().collect(Collectors.toList());
+        appClasses.add(toLocation(module, "module-info"));
         moduleClassDependencies.put(module, appClasses);
     }
 
@@ -240,11 +242,9 @@ public class Helper {
     }
 
     public static List<String> toLocation(String module, List<String> classNames) {
-        List<String> classes = new ArrayList<>();
-        for (String clazz : classNames) {
-            classes.add(toLocation(module, clazz));
-        }
-        return classes;
+        return classNames.stream()
+                .map(clazz -> toLocation(module, clazz))
+                .collect(Collectors.toList());
     }
 
     public void checkImage(Path imageDir, String module, String[] paths, String[] files) throws IOException {
