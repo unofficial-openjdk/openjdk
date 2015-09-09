@@ -40,6 +40,8 @@ import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.Data;
 
 /**
  * MethodOptimizer that removes Class.forName when possible.
+ * WARNING: This code is experimental.
+ * TODO: Need to check that the type is accessible prior to replace with a constant.
  */
 public class ForNameFolding implements MethodOptimizer {
 
