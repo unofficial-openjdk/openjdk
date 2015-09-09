@@ -23,20 +23,58 @@
 
 package jdk.test;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Module;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
 
 public class ProxyTest {
-    public void test(Module module, ClassLoader ld, Class<?>[] interfaces) {
-        testProxyClass(module, ld, interfaces);
-        testModuleProxyClass(module, ld, interfaces);
+    public static class Data {
+        private static int count = 0;
+        final int testcase;
+        final ClassLoader loader;
+        final Module module;
+        final Class<?>[] interfaces;
+        // Expected the proxy class in the specified module
+        public Data(Module m, ClassLoader loader, Class<?>... interfaces) {
+            this.module = m;
+            this.loader = loader;
+            this.interfaces = interfaces;
+            this.testcase = ++count;
+        }
+        // Expected the proxy class in a dynamic module
+        public Data(ClassLoader loader, Class<?>... interfaces) {
+            this(null, loader, interfaces);
+        }
+
+        @Override
+        public String toString() {
+            String expected = module != null
+                    ? (module.isNamed() ? module.getName() : "unnamed")
+                    : "dynamic";
+            return String.format("%2d: Expected: %s %s loader: %s", testcase, expected,
+                    Arrays.toString(interfaces), loader);
+        }
     }
 
-    public void testDynamicModule(ClassLoader ld, Class<?>[] interfaces) {
-        Class<?> proxyClass = Proxy.getProxyClass(ld, interfaces);
-        assertDynamicModule(proxyClass.getModule(), ld, proxyClass);
+    public void test(Data d) {
+        System.out.println(d);
 
-        Object proxy = Proxy.newProxyInstance(ld, interfaces, handler);
-        assertDynamicModule(proxy.getClass().getModule(), ld, proxy.getClass());
+        if (d.module != null) {
+            testProxyClass(d.module, d.loader, d.interfaces);
+        } else {
+            testDynamicModule(d);
+        }
+    }
+
+    private void testDynamicModule(Data d) {
+        Class<?> proxyClass = Proxy.getProxyClass(d.loader, d.interfaces);
+        assertDynamicModule(proxyClass.getModule(), d.loader, proxyClass);
+
+        Object proxy = Proxy.newProxyInstance(d.loader, d.interfaces, handler);
+        assertDynamicModule(proxy.getClass().getModule(), d.loader, proxy.getClass());
     }
 
     private static void testProxyClass(Module module, ClassLoader ld, Class<?>... interfaces) {
@@ -44,14 +82,6 @@ public class ProxyTest {
         assertEquals(proxyClass.getModule(), module);
 
         Object proxy = Proxy.newProxyInstance(ld, interfaces, handler);
-        assertEquals(proxy.getClass().getModule(), module);
-    }
-
-    private static void testModuleProxyClass(Module module, ClassLoader ld,  Class<?>... interfaces) {
-        Class<?> proxyClass = Proxy.getProxyClass(module, interfaces);
-        assertEquals(proxyClass.getModule(), module);
-
-        Object proxy = Proxy.newProxyInstance(module, handler, interfaces);
         assertEquals(proxy.getClass().getModule(), module);
     }
 

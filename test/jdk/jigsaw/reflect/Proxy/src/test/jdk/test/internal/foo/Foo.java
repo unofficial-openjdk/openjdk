@@ -21,12 +21,11 @@
  * questions.
  */
 
-package p.three;
+package jdk.test.internal.foo;
 
-import p.two.Bar;
-
-public interface P {
-    public Bar bar();
-
-    public Bar[][][] barArrays();
+public class Foo {
+    @Override
+    public String toString() {
+        return this.getClass().getName();
+    }
 }

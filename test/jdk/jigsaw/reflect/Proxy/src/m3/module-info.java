@@ -22,6 +22,6 @@
  */
 
 module m3 {
-    requires m2;
+    requires public m2;
     exports p.three;
 }

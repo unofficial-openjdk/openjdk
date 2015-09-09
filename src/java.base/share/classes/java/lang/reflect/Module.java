@@ -333,25 +333,6 @@ public final class Module {
     }
 
     /**
-     * Updates this module to read the source module and all modules that the
-     * source module reads in the original readability graph.
-     *
-     * @apiNote This method is for Proxy use
-     *
-     * @throws IllegalArgumentException if the source is an unnamed module
-     */
-    void implAddReadAll(Module source) {
-        if (!source.isNamed())
-            throw new IllegalArgumentException("unnamed module not allowed");
-
-        if (this.isNamed()) {
-            // add source and its read dependences
-            implAddReads(source, true);
-            source.reads.stream().forEach(m -> implAddReads(m, true));
-        }
-    }
-
-    /**
      * Updates this module to read the source module.
      *
      * @apiNote This method is for Proxy use and white-box testing.

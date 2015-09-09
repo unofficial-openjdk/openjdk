@@ -21,12 +21,11 @@
  * questions.
  */
 
-package p.three;
+package jdk.test;
 
-import p.two.Bar;
-
-public interface P {
-    public Bar bar();
-
-    public Bar[][][] barArrays();
+/*
+ * Non-public interface
+ */
+interface NP {
+    void test();
 }

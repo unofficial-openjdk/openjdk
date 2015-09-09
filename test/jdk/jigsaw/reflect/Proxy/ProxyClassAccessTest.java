@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -35,23 +36,22 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build ProxyTest q.U CompilerUtils jdk.testlibrary.ProcessTools
- * @run testng ProxyTest
- * @summary Driver for testing proxies accessing interfaces in named modules
+ * @build ProxyClassAccessTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @run testng ProxyClassAccessTest
+ * @summary Driver for testing proxy class doesn't have access to
+ *          types referenced by proxy interfaces
  */
 
-public class ProxyTest {
+public class ProxyClassAccessTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");
 
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
-    private static final Path CPATH_DIR = Paths.get(TEST_CLASSES);
 
     // the names of the modules in this test
-    private static List<String> modules = Arrays.asList("test", "m1", "m2", "m3");
-
+    private static List<String> modules = Arrays.asList("m1", "m2", "m3", "test");
 
     /**
      * Compiles all modules used by the test
@@ -69,9 +69,8 @@ public class ProxyTest {
      */
     @Test
     public void runTest() throws Exception {
-        int exitValue = executeTestJava("-cp", CPATH_DIR.toString(),
-                                        "-mp", MODS_DIR.toString(),
-                                        "-m", "test/jdk.test.Main")
+        int exitValue = executeTestJava("-mp", MODS_DIR.toString(),
+                                        "-m", "test/jdk.test.ProxyClassAccess")
                             .outputTo(System.out)
                             .errorTo(System.out)
                             .getExitValue();

@@ -35,56 +35,69 @@ import java.lang.reflect.Proxy;
 public class ProxyModuleMapping {
     public static void main(String... args) throws Exception {
         ClassLoader ld = ProxyModuleMapping.class.getClassLoader();
-        ProxyModuleMapping p1 = new ProxyModuleMapping(ld, Runnable.class);
-        p1.verifyNewInstanceAccess(ld.getUnnamedModule());
+        Module unnamed = ld.getUnnamedModule();
+        new ProxyModuleMapping(unnamed, Runnable.class).test();
 
         // unnamed module gets access to sun.invoke package (e.g. via -XaddExports)
-        ProxyModuleMapping p2 = new ProxyModuleMapping(ld, sun.invoke.WrapperInstance.class);
-        p2.checkDynamicModule();
+        new ProxyModuleMapping(sun.invoke.WrapperInstance.class).test();
 
         Class<?> modulePrivateIntf = Class.forName("sun.net.ProgressListener");
-        ProxyModuleMapping p3 = new ProxyModuleMapping(ld, modulePrivateIntf);
-        p3.checkDynamicModule();
+        new ProxyModuleMapping(modulePrivateIntf).test();
     }
 
+    final Module target;
     final ClassLoader loader;
     final Class<?>[] interfaces;
-    ProxyModuleMapping(ClassLoader loader, Class<?>... interfaces) {
-        this.loader = loader;
+    ProxyModuleMapping(Module m, Class<?>... interfaces) {
+        this.target = m;
+        this.loader = m.getClassLoader();
         this.interfaces = interfaces;
     }
 
-    Class<?> getProxyClass() {
-        return Proxy.getProxyClass(loader, interfaces);
+    ProxyModuleMapping(Class<?>... interfaces) {
+        this.target = null;  // expected to be dynamic module
+        this.loader = interfaces[0].getClassLoader();   // same class loader
+        this.interfaces = interfaces;
     }
 
-    void verifyNewInstanceAccess(Module expectd) throws Exception {
-        Class<?> c = getProxyClass();
-        if (c.getModule() != expectd) {
-            throw new RuntimeException(c.getModule() + " not expected: " + expectd);
-        }
-
-        Constructor<?> cons = c.getConstructor(InvocationHandler.class);
-        cons.newInstance(ih);
+    void test() throws Exception {
+        verifyProxyClass();
+        verifyNewProxyInstance();
     }
 
-    void checkDynamicModule() throws Exception {
-        Class<?> c = getProxyClass();
+    void verifyProxyClass() throws Exception {
+        Class<?> c = Proxy.getProxyClass(loader, interfaces);
         Module m = c.getModule();
-        if (!m.isNamed() || !m.getName().startsWith("jdk.proxy")) {
+        if (target != null && m != target) {
+            throw new RuntimeException(c.getModule() + " not expected: " + target);
+        }
+        // expect dynamic module
+        if (target == null && (!m.isNamed() || !m.getName().startsWith("jdk.proxy"))) {
             throw new RuntimeException("Unexpected:" + m);
         }
 
+        Module module = c.getModule();
         try {
             Constructor<?> cons = c.getConstructor(InvocationHandler.class);
             cons.newInstance(ih);
-            throw new RuntimeException("expected IAE not thrown");
-        } catch (IllegalAccessException e) {}
+            if (module.isNamed()) {
+                throw new RuntimeException("expected IAE not thrown");
+            }
+        } catch (IllegalAccessException e) {
+            if (!module.isNamed()) {
+                throw e;
+            }
+        }
+    }
 
+    void verifyNewProxyInstance() throws Exception {
         Object o = Proxy.newProxyInstance(loader, interfaces, ih);
-        m = o.getClass().getModule();
-        if (!m.isNamed() || !m.getName().startsWith("jdk.proxy")) {
-            throw new RuntimeException(c.getModule() + " not expected: dynamic module");
+        Module m = o.getClass().getModule();
+        if (target != null && m != target) {
+            throw new RuntimeException(m + " not expected: " + target);
+        }
+        if (target == null && (!m.isNamed() || !m.getName().startsWith("jdk.proxy"))) {
+            throw new RuntimeException(m + " not expected: dynamic module");
         }
     }
     private final static InvocationHandler ih =

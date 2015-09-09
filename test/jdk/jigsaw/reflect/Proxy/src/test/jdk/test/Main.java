@@ -26,66 +26,31 @@ package jdk.test;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.lang.reflect.Module;
-import java.util.Arrays;
+import static jdk.test.ProxyTest.*;
 
 public class Main {
     public static void main(String... args) {
         ProxyTest ptest = new jdk.test.ProxyTest();
         for (Data d : proxiesForExportedTypes()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
+            ptest.test(d);
         }
 
         for (Data d : proxiesForPackagePrivateTypes()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
+            ptest.test(d);
         }
 
         for (Data d : proxiesForModulePrivateTypes()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
-        }
-
-        for (Data d : proxiesInDynamicModule()) {
-            System.out.println(d);
-            ptest.testDynamicModule(d.loader, d.interfaces);
+            ptest.test(d);
         }
 
         for (Data d : proxiesWithAddReads()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
+            ptest.test(d);
         }
 
         for (Data d : proxiesWithAddExports()) {
-            System.out.println(d);
-            ptest.test(d.module, d.loader, d.interfaces);
+            ptest.test(d);
         }
     }
-
-    static class Data {
-        final ClassLoader loader;
-        final Module module;
-        final Class<?>[] interfaces;
-        Data(Module m, ClassLoader loader, Class<?>... interfaces) {
-            this.module = m;
-            this.loader = loader;
-            this.interfaces = interfaces;
-        }
-
-        private String moduleName() {
-            if (module == null) {
-                return "dynamic";
-            } else {
-                return module.isNamed() ? module.getName() : "unnamed";
-            }
-        }
-        @Override
-        public String toString() {
-            return String.format("Proxy test for %s loaded by %s Expected: %s%n",
-                                 Arrays.toString(interfaces), loader, moduleName());
-        }
-    }
-
 
     private final static Module m1 = p.one.I.class.getModule();
     private final static Module m2 = p.two.A.class.getModule();
@@ -137,55 +102,40 @@ public class Main {
     }
 
     /*
-     * Test cases for proxy class to implement module-private type from one module
-     * will result in the same module as the module-private proxy interface.
+     * Test cases for proxy class to implement one or more module-private types.
      *
-     * The proxy class is accessible to classes within the same module
-     */
-    static Data[] proxiesForModulePrivateTypes() {
-        return new Data[] {
-            new Data(m1, m1.getClassLoader(), p.one.internal.J.class),
-            new Data(m2, m2.getClassLoader(), p.two.internal.C.class, Runnable.class),
-            new Data(m2, m2.getClassLoader(), p.two.internal.C.class, p.two.A.class),
-            // p.two.A is accessible to m3
-            new Data(m3, m3.getClassLoader(), m3InternalType, p.two.A.class),
-            // only one module-private type: ambiguous since the same class loader
-            new Data(test, test.getClassLoader(), p.three.P.class, jdk.test.internal.R.class)
-        };
-    }
-
-    /*
-     * Test cases for proxy class to implement module-private proxy interfaces
-     * in multiple modules and not accessible to unnamed module.  This will
-     * result in a dynamic module which can read the modules of the proxy interfaces
+     * This will result in a dynamic module which can read the modules of the interfaces
      * and their dependences and also qualified exports to the module-private packages.
-     *
      * The proxy class is not accessible to any module.
      */
-    static Data[] proxiesInDynamicModule() {
+    static Data[] proxiesForModulePrivateTypes() {
         ClassLoader ld = Main.class.getClassLoader();
         ClassLoader customLoader = new URLClassLoader(new URL[0], ld);
-
         return new Data[] {
-            new Data(null, customLoader, p.one.internal.J.class),
-            new Data(null, customLoader , p.two.internal.C.class, p.two.A.class),
-            new Data(null, customLoader, unnamedModuleClass, jdk.test.internal.R.class, p.one.I.class),
-
+            // different loaders
+            new Data(m1.getClassLoader(), p.one.internal.J.class),
+            new Data(customLoader, p.one.internal.J.class),
+            new Data(m2.getClassLoader(), p.two.internal.C.class, Runnable.class),
+            // interfaces from m2 only
+            new Data(m2.getClassLoader(), p.two.internal.C.class, p.two.A.class),
+            // p.two.A is accessible to m3
+            new Data(m3.getClassLoader(), m3InternalType, p.two.A.class),
+            new Data(customLoader, unnamedModuleClass, jdk.test.internal.R.class, p.one.I.class),
             // two module-private types in two different modules
-            new Data(null, m3.getClassLoader(), p.two.internal.C.class, m3InternalType),
-            new Data(null, m3.getClassLoader(), p.three.P.class, m3InternalType, jdk.test.internal.R.class),
+            new Data(m3.getClassLoader(), p.two.internal.C.class, m3InternalType),
+            new Data(m3.getClassLoader(), p.three.P.class, m3InternalType, jdk.test.internal.R.class),
         };
     }
 
     /*
      * Test cases for proxy class to implement accessible proxy interfaces
-     * after addReads.
+     * after addReads. That does not change the target module.
      */
     static Data[] proxiesWithAddReads() {
         Module unnamed = test.getClassLoader().getUnnamedModule();
         test.addReads(unnamed);
         return new Data[] {
-             new Data(test, test.getClassLoader(),
+             new Data(test.getClassLoader(),
                       unnamedModuleClass, p.one.I.class,
                       jdk.test.internal.R.class), // module-private interface in test
         };
@@ -193,13 +143,13 @@ public class Main {
 
     /*
      * Test cases for proxy class to implement accessible proxy interfaces
-     * that are qualified exports.
+     * after addExports.  That does not change the target module.
      */
     static Data[] proxiesWithAddExports() {
         return new Data[] {
-                new Data(test, test.getClassLoader(),
+                new Data(test.getClassLoader(),
                          p.one.internal.J.class,
-                         p.two.internal.C.class), // module-private interfaces in m1 and m2
+                         p.two.internal.C.class), // module-private interfaces in m2 and m3
         };
     }
 

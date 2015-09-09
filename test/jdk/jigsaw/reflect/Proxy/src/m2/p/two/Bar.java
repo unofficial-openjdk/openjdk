@@ -21,12 +21,14 @@
  * questions.
  */
 
-package p.three;
+package p.two;
 
-import p.two.Bar;
+public class Bar {
+    public Bar() {
+    }
 
-public interface P {
-    public Bar bar();
-
-    public Bar[][][] barArrays();
+    @Override
+    public String toString() {
+        return this.getClass().getName();
+    }
 }
