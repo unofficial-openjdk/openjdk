@@ -466,13 +466,10 @@ public final class Module {
 
     /**
      * Returns {@code true} if this module exports the given package
-     * un-conditionally.
+     * unconditionally.
      *
      * <p> If invoked on an unnamed module then this method always returns
      * {@code true} for any non-{@code null} package name. </p>
-     *
-     * <p> This method does not check if the given module reads this
-     * module. </p>
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
