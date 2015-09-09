@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
@@ -138,36 +138,23 @@ public class Basic {
         }
     }
 
-    static final BiConsumer<Result,TestModuleData> PASS = (r,expected) -> {
-        out.printf("%s%n", r.output);
-
-        check(r.exitValue == 0, "Expected exitValue 0, got:", r.exitValue);
-
+    static void assertModuleData(Result r, TestModuleData expected) {
+        //out.printf("%s%n", r.output);
         TestModuleData received = TestModuleData.from(r.output);
         if (expected.message != null)
-            check(expected.message.equals(received.message),
-                    "Expected message:", expected.message, ", got:", received.message);
-        check(expected.moduleName.equals(received.moduleName),
-                "Expected moduleName: ", expected.moduleName, ", got:", received.moduleName);
-        check(expected.version.equals(received.version),
-                "Expected version: ", expected.version, ", got:", received.version);
-        check(expected.mainClass.equals(received.mainClass),
-                "Expected mainClass: ", expected.mainClass, ", got:", received.mainClass);
-        expected.conceals.forEach(p -> check(received.conceals.contains(p),
-                                             "Expected ", p, ", in ", received.conceals));
-        received.conceals.forEach(p -> check(expected.conceals.contains(p),
-                                            "Expected ", p, ", in ", expected.conceals));
-    };
-    static final BiConsumer<Result,TestModuleData> BAR_PASS = (r,expected) -> {
-        PASS.accept(r, expected);
-
-        TestModuleData received = TestModuleData.from(r.output);
-        check(received.hashes != null, "Expected non-null hashes value.");
-    };
-    static final BiConsumer<Result,TestModuleData> FAIL = (r,expected) -> {
-        out.printf("%s%n", r.output);
-        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
-    };
+            assertTrue(expected.message.equals(received.message),
+                       "Expected message:", expected.message, ", got:", received.message);
+        assertTrue(expected.moduleName.equals(received.moduleName),
+                   "Expected moduleName: ", expected.moduleName, ", got:", received.moduleName);
+        assertTrue(expected.version.equals(received.version),
+                   "Expected version: ", expected.version, ", got:", received.version);
+        assertTrue(expected.mainClass.equals(received.mainClass),
+                   "Expected mainClass: ", expected.mainClass, ", got:", received.mainClass);
+        expected.conceals.forEach(p -> assertTrue(received.conceals.contains(p),
+                                                  "Expected ", p, ", in ", received.conceals));
+        received.conceals.forEach(p -> assertTrue(expected.conceals.contains(p),
+                                                  "Expected ", p, ", in ", expected.conceals));
+    }
 
     @BeforeTest
     public void compileModules() throws Exception {
@@ -188,14 +175,16 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO) );
 
         try (InputStream fis = Files.newInputStream(modularJar);
              JarInputStream jis = new JarInputStream(fis)) {
-            check(!jarContains(jis, "./"),
-                  "Unexpected ./ found in ", modularJar.toString());
+            assertTrue(!jarContains(jis, "./"),
+                       "Unexpected ./ found in ", modularJar.toString());
         }
     }
 
@@ -209,15 +198,18 @@ public class Basic {
         jar("--create",
             "--archive=" + modularJar.toString(),
             "--no-manifest",
-            "-C", modClasses.toString(), "jdk");
+            "-C", modClasses.toString(), "jdk")
+            .assertSuccess();
         jar("--update",
             "--archive=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), "module-info.class");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "-C", modClasses.toString(), "module-info.class")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
     }
 
     @Test
@@ -232,14 +224,17 @@ public class Basic {
             "--archive=" + modularJar.toString(),
             "--main-class=" + "IAmNotTheEntryPoint",
             "--no-manifest",
-            "-C", modClasses.toString(), ".");  // includes module-info.class
+            "-C", modClasses.toString(), ".")  // includes module-info.class
+           .assertSuccess();
         jar("--update",
             "--archive=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
-            "--no-manifest");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "--no-manifest")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
     }
 
     @Test
@@ -254,14 +249,17 @@ public class Basic {
             "--archive=" + modularJar.toString(),
             "--module-version=" + "100000000",
             "--no-manifest",
-            "-C", modClasses.toString(), ".");  // includes module-info.class
+            "-C", modClasses.toString(), ".")  // includes module-info.class
+            .assertSuccess();
         jar("--update",
             "--archive=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
-            "--no-manifest");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "--no-manifest")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
     }
 
     @Test
@@ -277,15 +275,18 @@ public class Basic {
             "--archive=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "module-info.class",
-            "-C", modClasses.toString(), "jdk/test/foo/Foo.class");
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
+            .assertSuccess();
         jar("--update",
             "--archive=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
     }
 
     @Test
@@ -301,15 +302,18 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
         jar("--update",
             "--archive=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
-        Result r = java(mp, FOO.moduleName + "/" + FOO.mainClass);
-        PASS.accept(r, FOO);
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
     }
 
     @Test
@@ -324,7 +328,8 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
 
         modClasses = MODULE_CLASSES.resolve(BAR.moduleName);
         modularJar = mp.resolve(BAR.moduleName + ".jar");
@@ -335,11 +340,17 @@ public class Basic {
             "--modulepath=" + mp.toString(),
             "--hash-dependencies=" + "foo",  // dependency on foo
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
 
-        Result r = java(mp, BAR.moduleName + "/" + BAR.mainClass,
-                        "-XaddExports:java.base/jdk.internal.module=bar");
-        BAR_PASS.accept(r, BAR);
+        java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "-XaddExports:java.base/jdk.internal.module=bar")
+            .assertSuccess()
+            .resultChecker(r -> {
+                assertModuleData(r, BAR);
+                TestModuleData received = TestModuleData.from(r.output);
+                assertTrue(received.hashes != null, "Expected non-null hashes value.");
+            });
     }
 
     @Test
@@ -354,7 +365,7 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", fooClasses.toString(), ".");
+            "-C", fooClasses.toString(), ".").assertSuccess();
 
         Path barClasses = MODULE_CLASSES.resolve(BAR.moduleName);
         Path barJar = mp.resolve(BAR.moduleName + ".jar");
@@ -365,7 +376,7 @@ public class Basic {
             "--modulepath=" + mp.toString(),
             "--hash-dependencies=" + "foo",  // dependency on foo
             "--no-manifest",
-            "-C", barClasses.toString(), ".");
+            "-C", barClasses.toString(), ".").assertSuccess();
 
         // Rebuild foo.jar with a change that will cause its hash to be different
         FileUtils.deleteFileWithRetry(fooJar);
@@ -374,19 +385,20 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version + ".1", // a newer version
             "--no-manifest",
-            "-C", fooClasses.toString(), ".");
+            "-C", fooClasses.toString(), ".").assertSuccess();
 
-        Result r = java(mp, BAR.moduleName + "/" + BAR.mainClass,
-                "-XaddExports:java.base/jdk.internal.module=bar");
-        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
-
-        // Expect similar output: "java.lang.module.ResolutionException: Hash
-        // of foo (WdktSIQSkd4+CEacpOZoeDrCosMATNrIuNub9b5yBeo=) differs to
-        // expected hash (iepvdv8xTeVrFgMtUhcFnmetSub6qQHCHc92lSaSEg0=)"
-        Pattern p = Pattern.compile(".*Hash of foo.*differs to expected hash.*");
-        check(p.matcher(r.output).find(),
-              "Expecting error message containing \"Hash of foo ... differs to" +
-                      " expected hash...\" but got: ", r.output);
+        java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "-XaddExports:java.base/jdk.internal.module=bar")
+            .assertFailure()
+            .resultChecker(r -> {
+                // Expect similar output: "java.lang.module.ResolutionException: Hash
+                // of foo (WdktSIQSkd4+CEacpOZoeDrCosMATNrIuNub9b5yBeo=) differs to
+                // expected hash (iepvdv8xTeVrFgMtUhcFnmetSub6qQHCHc92lSaSEg0=)"
+                Pattern p = Pattern.compile(".*Hash of foo.*differs to expected hash.*");
+                assertTrue(p.matcher(r.output).find(),
+                      "Expecting error message containing \"Hash of foo ... differs to"
+                              + " expected hash...\" but got: [", r.output + "]");
+            });
     }
 
     @Test
@@ -396,17 +408,17 @@ public class Basic {
         Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
-        Result r = jarWithResult("--create",
-                                 "--archive=" + modularJar.toString(),
-                                 "--module-version=" + 1.1,   // no module-info.class
-                                 "-C", modClasses.toString(), "jdk");
-        FAIL.accept(r, null);  // TODO: expected failure message
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "--module-version=" + 1.1,   // no module-info.class
+            "-C", modClasses.toString(), "jdk")
+            .assertFailure();      // TODO: expected failure message
 
-         r = jarWithResult("--create",
-                           "--archive=" + modularJar.toString(),
-                           "--hash-dependencies=" + ".*",   // no module-info.class
-                           "-C", modClasses.toString(), "jdk");
-        FAIL.accept(r, null);  // TODO: expected failure message
+         jar("--create",
+             "--archive=" + modularJar.toString(),
+             "--hash-dependencies=" + ".*",   // no module-info.class
+             "-C", modClasses.toString(), "jdk")
+             .assertFailure();      // TODO: expected failure message
     }
 
     @Test
@@ -417,14 +429,12 @@ public class Basic {
         Path modularJar = mp.resolve("baz" + ".jar");
 
         // Positive test, create
-        Result r = jarWithResult(
-                "--create",
-                "--archive=" + modularJar.toString(),
-                "-C", modClasses.toString(), "module-info.class",
-                "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
-                "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
-        out.printf("%s%n", r.output);
-        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
+            .assertSuccess();
     }
 
     @Test
@@ -435,14 +445,11 @@ public class Basic {
         Path modularJar = mp.resolve("baz" + ".jar");
 
         // Omit service impl
-        Result r = jarWithResult(
-                "--create",
-                "--archive=" + modularJar.toString(),
-                "-C", modClasses.toString(), "module-info.class",
-                "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
-
-        out.printf("%s%n", r.output);
-        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
+        jar("--create",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class")
+            .assertFailure();
     }
 
     @Test
@@ -456,13 +463,12 @@ public class Basic {
         jar("--create",
             "--archive=" + modularJar.toString(),
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
-            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class");
-        Result r = jarWithResult(
-                "--update",
-                "--archive=" + modularJar.toString(),
-                "-C", modClasses.toString(), "module-info.class");
-        out.printf("%s%n", r.output);
-        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
+            .assertSuccess();
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class")
+            .assertSuccess();
     }
 
     @Test
@@ -475,13 +481,12 @@ public class Basic {
         // Omit service impl
         jar("--create",
             "--archive=" + modularJar.toString(),
-            "-C", modClasses.toString(), "jdk/test/baz/BazService.class");
-        Result r = jarWithResult(
-                "--update",
-                "--archive=" + modularJar.toString(),
-                "-C", modClasses.toString(), "module-info.class");
-        out.printf("%s%n", r.output);
-        check(r.exitValue != 0, "Expected exitValue != 0, got:", r.exitValue);
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class")
+            .assertSuccess();
+        jar("--update",
+            "--archive=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class")
+            .assertFailure();
     }
 
     @Test
@@ -496,22 +501,21 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
-            "-C", modClasses.toString(), ".");
-        Result r = jarWithResult(
-                "--print-module-descriptor",
-                "--archive=" + modularJar.toString());
-        check(r.exitValue == 0, "Expected exitValue = 0, got:", r.exitValue);
-        check(r.output.contains(FOO.moduleName + "@" + FOO.version),
-              "Expected to find ", FOO.moduleName + "@" + FOO.version, " in ", r.output);
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        jar("--print-module-descriptor",
+            "--archive=" + modularJar.toString())
+            .assertSuccess()
+            .resultChecker( r ->
+                assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),
+                           "Expected to find ", FOO.moduleName + "@" + FOO.version,
+                           " in [", r.output, "]")
+            );
     }
 
     // -- Infrastructure
 
-    static void jar(String... args) {
-        quickFail(jarWithResult(args));
-    }
-
-    static Result jarWithResult(String... args) {
+    static Result jar(String... args) {
         String jar = getJDKTool("jar");
         List<String> commands = new ArrayList<>();
         commands.add(jar);
@@ -619,7 +623,6 @@ public class Basic {
         throws IOException
     {
         JarEntry e;
-        boolean found = false;
         while((e = jis.getNextJarEntry()) != null) {
             if (e.getName().equals(entryName))
                 return true;
@@ -628,7 +631,7 @@ public class Basic {
     }
 
     static void quickFail(Result r) {
-        if (r.exitValue != 0)
+        if (r.ec != 0)
             throw new RuntimeException(r.output);
     }
 
@@ -679,22 +682,31 @@ public class Basic {
     }
 
     static class Result {
-        final int exitValue;
+        final int ec;
         final String output;
 
-        private Result(int exitValue, String output) {
-            this.exitValue = exitValue;
+        private Result(int ec, String output) {
+            this.ec = ec;
             this.output = output;
         }
+        Result assertSuccess() {
+            assertTrue(ec == 0, "Expected ec 0, got: ", ec, " , output [", output, "]");
+            return this;
+        }
+        Result assertFailure() {
+            assertTrue(ec != 0, "Expected ec != 0, got:", ec, " , output [", output, "]");
+            return this;
+        }
+        Result resultChecker(Consumer<Result> r) { r.accept(this); return this; }
     }
 
-    static void check(boolean cond, Object ... failedArgs) {
+    static void assertTrue(boolean cond, Object ... failedArgs) {
         if (cond)
             return;
         StringBuilder sb = new StringBuilder();
         for (Object o : failedArgs)
             sb.append(o);
-        throw new RuntimeException(sb.toString());
+        org.testng.Assert.assertTrue(false, sb.toString());
     }
 
     // Standalone entry point.
