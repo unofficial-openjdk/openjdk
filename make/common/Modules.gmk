@@ -1,0 +1,118 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+ifndef _MODULES_GMK
+_MODULES_GMK := 1
+
+include JavaCompilation.gmk
+include SetupJavaCompilers.gmk
+
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, , common/Modules.gmk))
+
+################################################################################
+# Module list macros
+
+# Use append so that the custom extension may add to this variable
+ALL_TOP_SRC_DIRS += \
+    $(JDK_TOPDIR)/src \
+    $(LANGTOOLS_TOPDIR)/src \
+    $(CORBA_TOPDIR)/src \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src \
+    $(NASHORN_TOPDIR)/src \
+    #
+
+# Find all module-info.java files for the current build target platform and
+# configuration.
+# Param 1 - Module to find for, set to * for finding all
+FindAllModuleInfos = \
+    $(wildcard \
+        $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS_TYPE)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/share/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/module-info.java, $(IMPORT_MODULES_SRC)))
+
+# Extract the module names from the paths of module-info.java files. The
+# position of the module directory differs depending on if this is an imported
+# src dir or not.
+GetModuleNameFromModuleInfo = \
+    $(strip $(foreach mi, $1, \
+      $(if $(filter $(addsuffix %, $(IMPORT_MODULES_SRC)), $(mi)), \
+        $(notdir $(patsubst %/,%, $(dir $(mi)))), \
+        $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi)))))))))))
+
+# Find all modules by looking for module-info.java files and looking at parent
+# directories.
+FindAllModules = \
+    $(sort $(filter-out $(MODULES_FILTER), \
+    $(call GetModuleNameFromModuleInfo, $(MODULE_INFOS))))
+
+FindImportedModules = \
+    $(if $(IMPORT_MODULES_CLASSES), $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*)))
+
+################################################################################
+# Extract module dependencies from module-info.java files.
+
+MODULE_DEPS_MAKEFILE := $(MAKESUPPORT_OUTPUTDIR)/module-deps.gmk
+
+MODULE_INFOS := $(call FindAllModuleInfos, *)
+
+$(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
+    $(call DependOnVariable, MODULE_INFOS, $(MAKESUPPORT_OUTPUTDIR)/MODULE_INFOS.vardeps)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(foreach m, $(MODULE_INFOS), \
+	    ( $(PRINTF) "DEPS_$(call GetModuleNameFromModuleInfo, $m) :=" && \
+	      $(NAWK) -v MODULE=$(call GetModuleNameFromModuleInfo, $m) '\
+	          BEGIN      { if (MODULE != "java.base") printf(" java.base"); } \
+	          /requires/ { sub(/;/, ""); \
+	                       sub(/requires/, ""); \
+	                       sub(/public/, ""); \
+	                       sub(/\/\/.*/, ""); \
+	                       sub(/\/\*.*\*\//, ""); \
+	                       gsub(/ /, ""); \
+	                       printf(" %s", $$0) } \
+	          END        { printf("\n") }' $m \
+	    ) >> $@ $(NEWLINE))
+
+-include $(MODULE_DEPS_MAKEFILE)
+
+# Param 1: Module to find deps for
+FindDepsForModule = \
+    $(DEPS_$(strip $1))
+
+# Finds transitive dependencies in 3 levels.
+# Param 1: Module to find transitive deps for
+FindTransitiveDepsForModule = \
+    $(sort $(call FindDepsForModule, $1) \
+        $(foreach m, $(call FindDepsForModule, $1), \
+            $(call FindDepsForModule, $m) \
+            $(foreach n, $(call FindDepsForModule, $m), \
+                 $(call FindDepsForModule, $n))))
+
+################################################################################
+
+endif # _MODULES_GMK
