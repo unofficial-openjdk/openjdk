@@ -333,10 +333,28 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
 
   int dupl_pkg_index = -1;
   bool dupl_modules = false;
+
+  // Create symbol* entry for module version.
+  TempNewSymbol version_symbol = SymbolTable::new_symbol(module_version, CHECK);
+
+  // Create symbol* entry for module location.
+  const char* module_location = NULL;
+  TempNewSymbol location_symbol = NULL;
+  if (location != NULL) {
+    module_location =
+      java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(location));
+    if (module_location != NULL) {
+      location_symbol = SymbolTable::new_symbol(module_location, CHECK);
+    }
+  }
+
+  ClassLoaderData* loader_data = ClassLoaderData::class_loader_data_or_null(h_loader());
+  assert(loader_data != NULL, "class loader data shouldn't be null");
+
+  PackageEntryTable* package_table = NULL;
   {
     MutexLocker ml(Module_lock, THREAD);
 
-    PackageEntryTable* package_table = NULL;
     if (num_packages > 0) {
       package_table = get_package_entry_table(h_loader, CHECK);
       assert(package_table != NULL, "Missing package_table");
@@ -360,22 +378,6 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     if (!dupl_modules && dupl_pkg_index == -1) {
       // Create the entry for this module in the class loader's module entry table.
 
-      // Create symbol* entry for module version.
-      TempNewSymbol version_symbol = SymbolTable::new_symbol(module_version, CHECK);
-
-      // Create symbol* entry for module location.
-      const char* module_location = NULL;
-      TempNewSymbol location_symbol = NULL;
-      if (location != NULL) {
-        module_location =
-          java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(location));
-        if (module_location != NULL) {
-          location_symbol = SymbolTable::new_symbol(module_location, CHECK);
-        }
-      }
-
-      ClassLoaderData* loader_data = ClassLoaderData::class_loader_data_or_null(h_loader());
-      assert(loader_data != NULL, "class loader data shouldn't be null");
       ModuleEntry* module_entry = module_table->locked_create_entry_or_null(jlrM_handle, module_symbol,
           version_symbol, location_symbol, loader_data);
 
