@@ -23,9 +23,8 @@
  * questions.
  */
 
-package java.lang.module;
-
-
 /**
  * @since 1.9
  */
+
+package java.lang.module;
