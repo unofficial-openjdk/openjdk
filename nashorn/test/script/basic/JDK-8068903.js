@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,19 @@
  */
 
 /**
- * JDK-8078612: Persistent code cache should support more configurations
+ * JDK-8068903: Can't invoke vararg @FunctionalInterface methods
  *
  * @test
- * @runif external.prototype
- * @option -pcc
- * @option --lazy-compilation=false
- * @option -Dnashorn.persistent.code.cache=build/nashorn_code_cache
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
- * @fork
+ * @run
  */
 
-load(__DIR__ + 'prototype.js');
+var vc = new (Java.type("jdk.nashorn.test.models.VarArgConsumer"))(
+    function(x) {
+        Assert.assertTrue(x.length == 3);
+        Assert.assertTrue(x[0] == 1);
+        Assert.assertTrue(x[1] == 2);
+        Assert.assertTrue(x[2] == 3);
+    }
+);
+
+vc(1, 2, 3);

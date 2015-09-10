@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,25 @@
  */
 
 /**
- * JDK-8078612: Persistent code cache should support more configurations
+ * JDK-8134731: `Function.prototype.apply` interacts incorrectly with `arguments` 
  *
  * @test
- * @runif external.prototype
- * @option -pcc
- * @option --lazy-compilation=false
- * @option -Dnashorn.persistent.code.cache=build/nashorn_code_cache
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
- * @fork
+ * @run
  */
 
-load(__DIR__ + 'prototype.js');
+function func() {
+    return (function(f){
+        return function(a1, a2, a3, a4){
+            return (f.apply(this, arguments));
+        }
+    })(function(){
+        return arguments.length;
+    })
+}
+
+Assert.assertTrue(func()() == 0);
+Assert.assertTrue(func()(33) == 1);
+Assert.assertTrue(func()(33, true) == 2);
+Assert.assertTrue(func()(33, true, "hello") == 3);
+Assert.assertTrue(func()(33, true, "hello", "world") == 4);
+Assert.assertTrue(func()(33, true, "hello", "world", 42) == 5);

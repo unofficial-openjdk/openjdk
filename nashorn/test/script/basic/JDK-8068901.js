@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,28 @@
  */
 
 /**
- * JDK-8078612: Persistent code cache should support more configurations
+ * JDK-8068901: Surprising behavior with more than one functional interface on a class
  *
  * @test
- * @runif external.prototype
- * @option -pcc
- * @option --lazy-compilation=false
- * @option -Dnashorn.persistent.code.cache=build/nashorn_code_cache
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
- * @fork
+ * @run
  */
 
-load(__DIR__ + 'prototype.js');
+var Consumer = java.util.function.Consumer;
+var JFunction = java.util.function.Function;
+
+var fc = new (Java.extend(JFunction, Consumer))({
+    apply: function(x) { print("fc invoked as a function") },
+    accept: function(x) { print("fc invoked as a consumer") }
+});
+
+var c = new Consumer(function(x) { print("c invoked as a consumer") });
+
+var cf = new (Java.extend(Consumer, JFunction))({
+    apply: function(x) { print("cf invoked as a function") },
+    accept: function(x) { print("cf invoked as a consumer") }
+});
+
+var f = new JFunction(function(x) { print("f invoked as a function") });
+
+for each(x in [fc, c, fc, cf, f, cf, c, fc, f, cf]) { x(null); }
+
