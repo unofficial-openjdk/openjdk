@@ -66,10 +66,6 @@ tools/javac/tree/ArrayTypeToString.java						0 generic-all	addExports
 tools/javac/tree/MakeTypeTest.java						0 generic-all	addExports
 tools/javac/treeannotests/AnnoTreeTests.java					0 generic-all	addExports
 
-# b81 failures
-tools/javac/lambda/bytecode/TestLambdaBytecode.java                             0 generic-all
-tools/javac/resolve/BitWiseOperators.java                                       0 generic-all
-
 ##### javah ####################################################################
 
 tools/javah/T7185778.java     							0 generic-all	Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
