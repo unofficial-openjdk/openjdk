@@ -66,9 +66,29 @@ tools/javac/tree/ArrayTypeToString.java						0 generic-all	addExports
 tools/javac/tree/MakeTypeTest.java						0 generic-all	addExports
 tools/javac/treeannotests/AnnoTreeTests.java					0 generic-all	addExports
 
-# b81 failures
+# b81 failures - compilation error and NCDFE
+tools/javac/T7093325.java                 					0 generic-all
+tools/javac/cast/intersection/IntersectionTypeCastTest.java                     0 generic-all
+tools/javac/defaultMethods/static/hiding/InterfaceMethodHidingTest.java         0 generic-all
+tools/javac/defaultMethods/super/TestDefaultSuperCall.java                 	0 generic-all
+tools/javac/failover/CheckAttributedTree.java                 			0 generic-all
+tools/javac/generics/diamond/7046778/DiamondAndInnerClassTest.java              0 generic-all
+tools/javac/generics/rawOverride/7062745/GenericOverrideTest.java               0 generic-all
+tools/javac/lambda/FunctionalInterfaceConversionTest.java                 	0 generic-all
+tools/javac/lambda/LambdaParserTest.java                 			0 generic-all
+tools/javac/lambda/MethodReferenceParserTest.java                 		0 generic-all
+tools/javac/lambda/TestBootstrapMethodsCount.java                 		0 generic-all
+tools/javac/lambda/TestInvokeDynamic.java                 			0 generic-all
+tools/javac/lambda/TestLambdaToMethodStats.java                 		0 generic-all
 tools/javac/lambda/bytecode/TestLambdaBytecode.java                             0 generic-all
+tools/javac/lambda/mostSpecific/StructuralMostSpecificTest.java                 0 generic-all
+tools/javac/lambda/typeInference/combo/TypeInferenceComboTest.java              0 generic-all
+tools/javac/multicatch/7030606/DisjunctiveTypeWellFormednessTest.java           0 generic-all
 tools/javac/resolve/BitWiseOperators.java                                       0 generic-all
+tools/javac/varargs/7042566/T7042566.java                 			0 generic-all
+tools/javac/varargs/warning/Warn4.java                 				0 generic-all
+tools/javac/varargs/warning/Warn5.java                 				0 generic-all
+
 
 ##### javah ####################################################################
 
