@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,38 @@
 # questions.
 #
 
-# Include the legacy hotspot-spec.gmk (which in turns includes spec.gmk)
-BASE_SPEC:=$(SPEC)
-HOTSPOT_SPEC := $(dir $(SPEC))hotspot-spec.gmk
-include $(HOTSPOT_SPEC)
-include MakeBase.gmk
-
-# Inclusion of this pseudo-target will cause make to execute this file
-# serially, regardless of -j. Recursively called makefiles will not be
-# affected, however. This is required for correct dependency management.
-.NOTPARALLEL:
-
+# This must be the first rule
 default: all
 
-# Get all files except .hg in the hotspot directory.
-HOTSPOT_FILES := $(shell $(FIND) -L $(HOTSPOT_TOPDIR) -name ".hg" -prune -o -print)
+include $(SPEC)
+include MakeBase.gmk
+include JavaCompilation.gmk
+include SetupJavaCompilers.gmk
 
-# The old build creates hotspot output dir before calling hotspot and
-# not doing it breaks builds on msys.
-$(HOTSPOT_OUTPUTDIR)/_hotspot.timestamp: $(HOTSPOT_FILES)
-	@$(MKDIR) -p $(HOTSPOT_OUTPUTDIR)
-	@($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(HOTSPOT_MAKE_ARGS) LOG_LEVEL=$(LOG_LEVEL) SPEC=$(HOTSPOT_SPEC) BASE_SPEC=$(BASE_SPEC))
-	$(TOUCH) $@
+################################################################################
 
-hotspot: $(HOTSPOT_OUTPUTDIR)/_hotspot.timestamp
+GENMODULES_DIR := $(SUPPORT_OUTPUTDIR)/genmodules
+MODULEINFO_DIR := $(GENMODULES_DIR)/src
 
-all: hotspot
+ALL_MODULES := $(filter-out modules.config, $(notdir $(wildcard $(MODULEINFO_DIR)/*)))
 
-.PHONY: default all hotspot
+# This macro sets up compilation of a module
+# Param 1 - module name
+define SetupModuleCompilation
+
+  $$(eval $$(call SetupJavaCompilation,$1-module-info, \
+      SETUP := GENERATE_USINGJDKBYTECODE, \
+      SRC := $(MODULEINFO_DIR)/$1, \
+      BIN := $(JDK_OUTPUTDIR)/modules/$1, \
+      DISABLE_SJAVAC := true))
+
+  $1: $$($1-module-info)
+
+endef
+
+# Setup compilation for each module
+$(foreach m,$(ALL_MODULES),$(eval $(call SetupModuleCompilation,$m)))
+
+################################################################################
+
+all: $(ALL_MODULES)
