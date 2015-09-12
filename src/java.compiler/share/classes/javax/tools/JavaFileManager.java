@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -385,6 +385,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * @throws IOException if an I/O error occurred
      * @see #close
      */
+    @Override
     void flush() throws IOException;
 
     /**
@@ -398,5 +399,41 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * @throws IOException if an I/O error occurred
      * @see #flush
      */
+    @Override
     void close() throws IOException;
+
+    /**
+     * Gets a location for a named module within a module-oriented location.
+     */
+    default Location getModuleLocation(Location location, String moduleName) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Gets a location for the module containing a specific file.
+     */
+    default Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Infer the name of the module from its location, as returned by
+     * getModuleLocation or listModuleLocations.
+     * @param location
+     * @return
+     * @throws IOException
+     */
+    default String inferModuleName(Location location) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Lists the modules in a module-oriented location.
+     * @param location  the location for which to list the modules
+     * @return  a series of sets of locations containing modules
+     */
+    default Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
 }

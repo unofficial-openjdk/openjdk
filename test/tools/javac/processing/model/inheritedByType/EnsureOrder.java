@@ -64,6 +64,10 @@ class Base {}
 class Sub extends Base {}
 
 public class EnsureOrder<@Foos({@Foo(0), @Foo(1)}) @Foo(2)T> extends JavacTestingAbstractProcessor {
+    {
+        addExports("jdk.compiler", "com.sun.tools.javac.util");
+    }
+
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,5 +162,17 @@ public class ForwardingJavaFileManager<M extends JavaFileManager> implements Jav
 
     public void close() throws IOException {
         fileManager.close();
+    }
+
+    public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        return fileManager.getModuleLocation(location, fo, pkgName);
+    }
+
+    public String inferModuleName(Location location) throws IOException {
+        return fileManager.inferModuleName(location);
+    }
+
+    public Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        return fileManager.listModuleLocations(location);
     }
 }
