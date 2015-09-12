@@ -289,10 +289,6 @@ class Arguments : AllStatic {
 
   static uintx  _min_heap_size;
 
-  // Used to store original flag values
-  static uintx _min_heap_free_ratio;
-  static uintx _max_heap_free_ratio;
-
   // -Xrun arguments
   static AgentLibraryList _libraryList;
   static void add_init_library(const char* name, char* options)
@@ -471,8 +467,6 @@ class Arguments : AllStatic {
   static jint apply_ergo();
   // Adjusts the arguments after the OS have adjusted the arguments
   static jint adjust_after_os();
-  // Set any arguments that need to be set after the 'CommandLineFlagConstraint::AfterErgo' constraint check
-  static void post_after_ergo_constraint_check(bool check_passed);
 
   static void set_gc_specific_flags();
   static inline bool gc_selected(); // whether a gc has been selected
@@ -544,10 +538,6 @@ class Arguments : AllStatic {
 
   // -Xoverride
   static const char* override_dir()         { return _override_dir; }
-
-  // Returns the original values of -XX:MinHeapFreeRatio and -XX:MaxHeapFreeRatio
-  static uintx min_heap_free_ratio()        { return _min_heap_free_ratio; }
-  static uintx max_heap_free_ratio()        { return _max_heap_free_ratio; }
 
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
