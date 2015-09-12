@@ -98,7 +98,7 @@ class ReusableContext extends Context implements TaskListener {
                 public Void visitClass(ClassTree node, Void aVoid) {
                     Symbol sym = ((JCClassDecl)node).sym;
                     if (sym != null) {
-                        syms.classes.remove(sym.flatName());
+                        syms.removeClass(sym.packge().modle, sym.flatName());
                         if (sym.flatName().toString().startsWith("java.")) {
                             polluted = true;
                         }
