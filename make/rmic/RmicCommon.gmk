@@ -34,7 +34,7 @@ include RMICompilation.gmk
 ifeq ($(BOOT_JDK_MODULAR), true)
   BTRMIC_ARGS := $(INTERIM_OVERRIDE_MODULES_ARGS)
 else
-  BTRMIC_CP := $(call CreatePath, \
+  BTRMIC_CP := $(call PathList, \
       $(wildcard $(BUILDTOOLS_OUTPUTDIR)/override_modules/*))
   BTRMIC_ARGS := $(INTERIM_OVERRIDE_MODULES_ARGS) -cp "$(BTRMIC_CP)"
 endif

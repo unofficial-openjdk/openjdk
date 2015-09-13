@@ -131,15 +131,15 @@ TOOL_CLDRCONVERTER = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes
     build.tools.cldrconverter.CLDRConverter
 
 TOOL_GENMODULESXML = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    -cp $(call PathList, $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes) \
     build.tools.module.GenJdepsModulesXml
 
 TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    -cp $(call PathList, $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes) \
     build.tools.module.GenModuleInfoSource
 
 TOOL_GENCLASSLOADERMAP = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    -cp $(call PathList, $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes) \
     build.tools.module.GenModuleLoaderMap
 
 ##########################################################################################

@@ -130,5 +130,3 @@ else
 fi
 rm -rf OUT.TXT ${RMIREG_OUT} rmi_tmp
 exit ${exitCode}
-
-
