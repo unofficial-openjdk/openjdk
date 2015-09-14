@@ -22,47 +22,39 @@
  */
 
 /*
- * Test closing image opened multiple time. Test closing mutiple time an image.
- * @test ImageCloseTest
- * @summary Unit test for JVM_ImageClose() method
+ * @test BlobSanityTest
+ * @bug 8132980
  * @library /testlibrary /../../test/lib
- * @build ImageCloseTest
+ * @modules java.management/sun.management
+ * @build BlobSanityTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI ImageCloseTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI BlobSanityTest
+ * @summary sanity testing of allocateCodeBlob, freeCodeBlob and getCodeBlob
  */
 
-import java.io.File;
-import java.nio.ByteOrder;
+
 import sun.hotspot.WhiteBox;
 
-public class ImageCloseTest {
+import java.util.function.Consumer;
+import jdk.test.lib.Utils;
 
-    public static final WhiteBox wb = WhiteBox.getWhiteBox();
+public class BlobSanityTest {
 
-    public static void main(String... args) throws Exception {
-        String javaHome = System.getProperty("java.home");
-        String imageFile = javaHome + File.separator + "lib" + File.separator
-                + "modules" + File.separator + "bootmodules.jimage";
+    private static void runTest(Consumer<Integer> consumer, int val, String testCaseName, Class<? extends Throwable>
+            expectedException) {
+            System.out.println("Calling " + testCaseName);
+            Utils.runAndCheckException(() -> consumer.accept(val), expectedException);
+            System.out.println("Looks ok");
+    }
 
-        if (!(new File(imageFile)).exists()) {
-            System.out.printf("Test skipped.");
-            return;
-        }
+    public static void main(String[] args) throws Exception {
+        System.out.println("Crash means that sanity check failed");
 
-        boolean bigEndian = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
-        long id = 0;
+        WhiteBox wb = WhiteBox.getWhiteBox();
 
-        // too many opens
-        for (int i = 0; i < 100; i++) {
-            id = wb.imageOpenImage(imageFile, bigEndian);
-        }
-        wb.imageCloseImage(id);
-
-        // too many closes
-        id = wb.imageOpenImage(imageFile, bigEndian);
-        for (int i = 0; i < 100; i++) {
-            wb.imageCloseImage(id);
-        }
+        runTest(wb::freeCodeBlob, 0, "wb::freeCodeBlob(0)", null);
+        runTest(wb::getCodeBlob, 0, "wb::getCodeBlob(0)", NullPointerException.class);
+        runTest(x -> wb.allocateCodeBlob(x, 0), -1, "wb::allocateCodeBlob(-1,0)", IllegalArgumentException.class);
     }
 }
