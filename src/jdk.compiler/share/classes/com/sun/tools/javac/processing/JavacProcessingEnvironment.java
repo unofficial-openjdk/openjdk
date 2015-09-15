@@ -80,6 +80,7 @@ import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.MatchingUtils;
+import com.sun.tools.javac.util.ModuleHelper;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
@@ -117,6 +118,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final JavacTypes typeUtils;
     private final JavaCompiler compiler;
     private final Modules modules;
+    private final ModuleHelper moduleHelper;
     private final Types types;
 
     /**
@@ -220,11 +222,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         enter = Enter.instance(context);
         initialCompleter = ClassFinder.instance(context).getCompleter();
         chk = Check.instance(context);
+        moduleHelper = ModuleHelper.instance(context);
         initProcessorClassLoader();
 
         defaultModule = source.allowModules() && options.isUnset("noModules")
                 ? symtab.unnamedModule : symtab.noModule;
-
     }
 
     public void setProcessors(Iterable<? extends Processor> processors) {
@@ -251,6 +253,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             processorClassLoader = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
                 ? fileManager.getClassLoader(ANNOTATION_PROCESSOR_PATH)
                 : fileManager.getClassLoader(CLASS_PATH);
+
+            moduleHelper.addExports(processorClassLoader);
 
             if (processorClassLoader != null && processorClassLoader instanceof Closeable) {
                 compiler.closeables = compiler.closeables.prepend((Closeable) processorClassLoader);

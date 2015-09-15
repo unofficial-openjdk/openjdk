@@ -32,7 +32,7 @@
  *          jdk.compiler/com.sun.tools.javac.tree
  *          jdk.compiler/com.sun.tools.javac.util
  * @build JavacTestingAbstractProcessor DPrinter BasicAnnoTests
- * @compile/process -processor BasicAnnoTests -proc:only BasicAnnoTests.java
+ * @compile/process -XDaccessInternalAPI -processor BasicAnnoTests -proc:only BasicAnnoTests.java
  */
 
 import java.io.PrintWriter;
@@ -81,15 +81,6 @@ import static com.sun.tools.javac.code.Attribute.Compound;
  * The test scans this file looking for test cases annotated with @Test.
  */
 public class BasicAnnoTests extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler",
-            "com.sun.tools.javac.api",
-            "com.sun.tools.javac.code",
-            "com.sun.tools.javac.processing",
-            "com.sun.tools.javac.tree",
-            "com.sun.tools.javac.util");
-    }
-
     DPrinter dprinter;
     PrintWriter out;
     boolean verbose = true;

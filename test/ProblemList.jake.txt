@@ -49,22 +49,6 @@ tools/javac/processing/loader/testClose/TestClose.java				0 generic-all	addExpor
 tools/javac/diags/MessageInfo.java						0 generic-all	addExports
 tools/javac/diags/RunExamples.java						0 generic-all	addExports
 tools/javac/api/taskListeners/CompileEvent.java					0 generic-all	addExports
-tools/javac/annotations/typeAnnotations/packageanno/PackageProcessor.java	0 generic-all	addExports
-tools/javac/cast/intersection/model/Model01.java				0 generic-all	addExports
-tools/javac/processing/environment/ProcessingEnvAnnoDiscovery.java		0 generic-all	addExports
-tools/javac/processing/errors/EnsureAnnotationTypeMismatchException/Source.java 0 generic-all	addExports
-tools/javac/processing/errors/EnsureMirroredTypeException/Source.java		0 generic-all	addExports
-tools/javac/processing/errors/StopOnInapplicableAnnotations/GenerateFunctionalInterface.java	0 generic-all	addExports
-tools/javac/processing/model/element/8009367/TestQualifiedNameUsed.java		0 generic-all	addExports
-tools/javac/processing/model/element/TestEmptyContainer.java			0 generic-all	addExports
-tools/javac/processing/model/element/TestMissingElement/TestMissingElement.java	0 generic-all	addExports
-tools/javac/processing/model/element/TestNonInherited.java			0 generic-all	addExports
-tools/javac/processing/model/inheritedByType/EnsureOrder.java			0 generic-all	addExports
-tools/javac/processing/model/type/BasicAnnoTests.java				0 generic-all	addExports
-tools/javac/processing/rounds/OverwriteBetweenCompilations.java			0 generic-all	addExports
-tools/javac/tree/ArrayTypeToString.java						0 generic-all	addExports
-tools/javac/tree/MakeTypeTest.java						0 generic-all	addExports
-tools/javac/treeannotests/AnnoTreeTests.java					0 generic-all	addExports
 
 ##### javah ####################################################################
 

@@ -39,15 +39,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.Layer;
 import java.lang.reflect.Field;
-import java.lang.reflect.Module;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -134,11 +131,7 @@ public class TestClose implements TaskListener {
                 List<? extends JavaFileObject> files = Arrays.asList(
                         new MemFile("AnnoProc.java", annoProc),
                         new MemFile("Callback.java", callback));
-                List<String> options = Arrays.asList(
-                    "-XaddExports:"
-                        + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
-                        + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
-                );
+                List<String> options = Arrays.asList("-XDaccessInternalAPI");
                 JavacTask task = tool.getTask(null, fm, null, options, null, files);
                 check(task.call());
             }
@@ -157,7 +150,7 @@ public class TestClose implements TaskListener {
                             Arrays.asList(extraClasses, testClasses));
                     List<? extends JavaFileObject> files = Arrays.asList(
                             new MemFile("my://dummy", "class Dummy { }"));
-                    List<String> options = Arrays.asList("-processor", "AnnoProc");
+                    List<String> options = Arrays.asList("-XDaccessInternalAPI", "-processor", "AnnoProc");
                     JavacTask task = tool.getTask(null, fm, null, options, null, files);
                     task.setTaskListener(this);
                     check(task.call());
@@ -196,7 +189,6 @@ public class TestClose implements TaskListener {
 
     public static void add(ProcessingEnvironment env, Runnable r) {
         // ensure this class in this class loader can access javac internals
-        addExports("jdk.compiler", "com.sun.tools.javac.api");
         try {
             JavacTask task = JavacTask.instance(env);
             TaskListener l = ((BasicJavacTask) task).getTaskListeners().iterator().next();
@@ -214,20 +206,6 @@ public class TestClose implements TaskListener {
             runnables.add(r);
         } catch (Throwable t) {
             t.printStackTrace();
-        }
-    }
-
-    private static void addExports(String moduleName, String... packageNames) {
-        for (String packageName : packageNames) {
-            try {
-                Layer layer = Layer.boot();
-                Optional<Module> m = layer.findModule(moduleName);
-                if (!m.isPresent())
-                    throw new Error("module not found: " + moduleName);
-                m.get().addExports(packageName, TestClose.class.getModule());
-            } catch (Exception e) {
-                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-            }
         }
     }
 

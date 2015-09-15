@@ -29,18 +29,11 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeKind;
-import javax.tools.*;
 
 import com.sun.tools.javac.util.Assert;
-import com.sun.tools.javac.code.Symbol;
 import static com.sun.tools.javac.code.Symbol.TypeSymbol;
 
 public class Processor extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler",
-            "com.sun.tools.javac.code",
-            "com.sun.tools.javac.util");
-    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {

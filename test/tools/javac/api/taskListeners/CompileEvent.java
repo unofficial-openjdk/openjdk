@@ -31,8 +31,6 @@
  */
 
 import java.io.*;
-import java.lang.module.*;
-import java.lang.reflect.*;
 import java.util.*;
 
 import javax.tools.*;
@@ -70,7 +68,7 @@ public class CompileEvent {
         //when starting compiler using Main.compile
         out = new StringWriter();
         int mainResult = Main.compile(new String[] {
-            "-Xplugin:compile-event", "-processorpath", testClasses, test.getAbsolutePath()
+            "-XDaccessInternalAPI", "-Xplugin:compile-event", "-processorpath", testClasses, test.getAbsolutePath()
         }, new PrintWriter(out, true));
         if (mainResult != 0)
             throw new AssertionError("Compilation failed unexpectedly, exit code: " + mainResult);
@@ -83,7 +81,7 @@ public class CompileEvent {
             //test events fired to listeners registered from plugins
             //when starting compiler using JavaCompiler.getTask(...).call
             List<String> options =
-                    Arrays.asList("-Xplugin:compile-event", "-processorpath", testClasses);
+                    Arrays.asList("-XDaccessInternalAPI", "-Xplugin:compile-event", "-processorpath", testClasses);
             out = new StringWriter();
             boolean compResult = comp.getTask(out, null, null, options, null, testFileObjects).call();
             if (!compResult)
@@ -143,12 +141,6 @@ public class CompileEvent {
     }
 
     public static final class PluginImpl implements Plugin {
-        {
-            addExports("jdk.compiler",
-                "com.sun.tools.javac.api",
-                "com.sun.tools.javac.util");
-        }
-
         @Override public String getName() {
             return "compile-event";
         }
@@ -156,20 +148,6 @@ public class CompileEvent {
             Context context = ((BasicJavacTask) task).getContext();
             Log log = Log.instance(context);
             task.addTaskListener(new TaskListenerImpl(log.getWriter(WriterKind.NOTICE)));
-        }
-
-        private void addExports(String moduleName, String... packageNames) {
-            for (String packageName: packageNames) {
-                try {
-                    Layer layer = Layer.boot();
-                    Optional<Module> m = layer.findModule(moduleName);
-                    if (!m.isPresent())
-                        throw new Error("module not found: " + moduleName);
-                    m.get().addExports(packageName, getClass().getModule());
-                } catch (Exception e) {
-                    throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-                }
-            }
         }
     }
 }

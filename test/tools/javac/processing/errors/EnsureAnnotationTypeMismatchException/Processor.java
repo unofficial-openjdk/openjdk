@@ -32,10 +32,6 @@ import javax.tools.*;
 import com.sun.tools.javac.util.Assert;
 
 public class Processor extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler", "com.sun.tools.javac.util");
-    }
-
     private boolean seenGenerated;
 
     @Override

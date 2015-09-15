@@ -22,9 +22,6 @@
  */
 
 import java.io.*;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
-import java.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -57,14 +54,6 @@ import static com.sun.tools.javac.comp.CompileStates.CompileState;
  */
 @SupportedAnnotationTypes("*")
 public class TypeProcOnly extends AbstractProcessor {
-    {
-        addExports("jdk.compiler",
-            "com.sun.tools.javac.comp",
-            "com.sun.tools.javac.main",
-            "com.sun.tools.javac.processing",
-            "com.sun.tools.javac.util");
-    }
-
     private static final String INDICATOR = "INDICATOR";
 
     private final AttributionTaskListener listener = new AttributionTaskListener();
@@ -93,20 +82,6 @@ public class TypeProcOnly extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
-    }
-
-    protected void addExports(String moduleName, String... packageNames) {
-        for (String packageName : packageNames) {
-            try {
-                Layer layer = Layer.boot();
-                Optional<Module> m = layer.findModule(moduleName);
-                if (!m.isPresent())
-                    throw new Error("module not found: " + moduleName);
-                m.get().addExports(packageName, getClass().getModule());
-            } catch (Exception e) {
-                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-            }
-        }
     }
 
     private final class AttributionTaskListener implements TaskListener {
@@ -143,7 +118,7 @@ public class TypeProcOnly extends AbstractProcessor {
 
         try {
             File f = writeTestFile();
-            com.sun.tools.javac.Main.compile(new String[] {"-proc:only", "-processor", "TypeProcOnly", f.getAbsolutePath()});
+            com.sun.tools.javac.Main.compile(new String[] {"-XDaccessInternalAPI", "-proc:only", "-processor", "TypeProcOnly", f.getAbsolutePath()});
         } finally {
             System.setOut(prevOut);
         }
