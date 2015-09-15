@@ -78,14 +78,12 @@ public class TestTrees extends AbstractProcessor {
                 }
             };
 
-        String addExports = "-XDaccessInternalAPI";
-
         try (StandardJavaFileManager fm = tool.getStandardFileManager(dl, null, null)) {
             Iterable<? extends JavaFileObject> files =
                 fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
 
             Iterable<String> opts = Arrays.asList(
-                addExports,
+                "-XDaccessInternalAPI",
                 "-d", ".",
                 "-XDcompilePolicy=simple");
 
