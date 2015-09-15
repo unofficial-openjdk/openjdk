@@ -168,14 +168,14 @@ public class ToolProvider {
     private static <T> T getSystemTool(Class<T> clazz, String moduleName, String className) {
         if (useLegacy) {
             try {
-                return Class.forName(className).asSubclass(clazz).newInstance();
+                return Class.forName(className, true, ClassLoader.getSystemClassLoader()).asSubclass(clazz).newInstance();
             } catch (ReflectiveOperationException e) {
                 return trace(Level.WARNING, e);
             }
         }
 
         try {
-            ServiceLoader<T> sl = ServiceLoader.load(clazz);
+            ServiceLoader<T> sl = ServiceLoader.load(clazz, ClassLoader.getSystemClassLoader());
             for (Iterator<T> iter = sl.iterator(); iter.hasNext(); ) {
                 T tool = iter.next();
                 if (matches(tool, moduleName))
