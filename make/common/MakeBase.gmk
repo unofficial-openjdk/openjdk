@@ -99,12 +99,6 @@ EscapeDollar = $(subst $$,\$$,$(subst \$$,$$,$(strip $1)))
 DoubleDollar = $(subst $$,$$$$,$(strip $1))
 
 ################################################################################
-# Create a path string from a list of paths and surround it in quotes.
-# Param 1 - List of paths to combine
-CreatePath = \
-    "$(subst $(SPACE),$(PATH_SEP),$(strip $1))"
-
-################################################################################
 
 # If the variable that you want to send to stdout for piping into a file or otherwise,
 # is potentially long, for example the a list of file paths, eg a list of all package directories.
@@ -761,6 +755,20 @@ DependOnVariable = \
     $(call DependOnVariableHelper,$(strip $1),$(strip $2))
 
 ################################################################################
+# Failure logging support macros. These are supposed to be used by the Setup*
+# compilation macros.
+#
+# LogFailures will run a command and store a copy of output in a specified file.
+# If the command succeeds, the file is deleted, otherwise it is moved to the
+# failure-logs directory.
+# Param 1 - The log file of the failed command
+# Param 2 - A compact but representative name to describe this command
+# Param 3 - Command to run
+LogFailures = \
+  ( ($(BASH) $(SRC_ROOT)/common/bin/logger.sh $1 $3 && $(RM) $1) || \
+  (exitcode=$(DOLLAR)$(DOLLAR)? && $(MV) $1 $(MAKESUPPORT_OUTPUTDIR)/failure-logs/$(strip $2).log && exit $(DOLLAR)$(DOLLAR)exitcode) )
+
+################################################################################
 # Find lib dir for module
 # Param 1 - module name
 ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
@@ -770,6 +778,14 @@ else
   FindLibDirForModule = \
       $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)
 endif
+
+################################################################################
+# Return a string suitable for use after a -classpath option. It will correct and safe to use
+# on all platforms. Arguments are given as space separate classpath entries.
+# param 1 : A space separated list of classpath entries
+# The surrounding strip is needed to keep additional whitespace out
+PathList = \
+  "$(subst $(SPACE),$(PATH_SEP),$(strip $1))"
 
 ################################################################################
 

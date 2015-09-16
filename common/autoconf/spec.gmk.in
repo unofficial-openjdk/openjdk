@@ -513,7 +513,7 @@ else
   INTERIM_OVERRIDE_MODULES := java.compiler jdk.compiler \
       jdk.jdeps jdk.javadoc java.corba jdk.rmic
   INTERIM_OVERRIDE_MODULES_ARGS = \
-      -Xbootclasspath/p:$(call CreatePath, \
+      -Xbootclasspath/p:$(call PathList, \
           $(addprefix $(BUILDTOOLS_OUTPUTDIR)/override_modules/, \
               $(INTERIM_OVERRIDE_MODULES)))
   INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS) \
