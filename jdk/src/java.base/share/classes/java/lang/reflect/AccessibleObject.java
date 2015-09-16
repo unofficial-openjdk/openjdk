@@ -66,15 +66,9 @@ public class AccessibleObject implements AnnotatedElement {
     static final private java.security.Permission ACCESS_PERMISSION =
         new ReflectPermission("suppressAccessChecks");
 
-    /**
-     * Returns the {@code Class} object representing the class or interface
-     * that declares the executable represented by this object.
-     *
-     * This is overridden by {@code Constructor}, {@code Method} and
-     * {@code Field}.
-     */
-    Class<?> getDeclaringClass() {
-        return null;
+    static void checkPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
     }
 
 
@@ -106,19 +100,17 @@ public class AccessibleObject implements AnnotatedElement {
      * @see java.lang.RuntimePermission
      */
     @CallerSensitive
-    public static void setAccessible(AccessibleObject[] array, boolean flag)
-        throws SecurityException {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+    public static void setAccessible(AccessibleObject[] array, boolean flag) {
+        checkPermission();
         if (flag) {
             Class<?> caller = Reflection.getCallerClass();
             array = array.clone();
             for (AccessibleObject ao : array) {
-                checkCanSetAccessible(caller, ao);
+                ao.checkCanSetAccessible(caller);
             }
         }
         for (AccessibleObject ao : array) {
-            ao.override = flag;
+            ao.setAccessible0(flag);
         }
     }
 
@@ -150,26 +142,25 @@ public class AccessibleObject implements AnnotatedElement {
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
-    @CallerSensitive
-    public final void setAccessible(boolean flag) throws SecurityException {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-        if (flag) checkCanSetAccessible(Reflection.getCallerClass(), this);
+    public void setAccessible(boolean flag) {
+        AccessibleObject.checkPermission();
+        setAccessible0(flag);
+    }
+
+    void setAccessible0(boolean flag) {
         this.override = flag;
     }
 
-    /**
-     * If the given AccessibleObject is a {@code Constructor}, {@code Method}
-     * or {@code Field} then checks that its declaring class is in a package
-     * that can be accessed by the given caller of setAccessible.
-     */
-    private static void checkCanSetAccessible(Class<?> caller,
-                                              AccessibleObject ao)
-    {
-        Class<?> declaringClass = ao.getDeclaringClass();
-        if (declaringClass == null)
-            return; // not a Constrictor, Method or Field
+   /**
+    * If the given AccessibleObject is a {@code Constructor}, {@code Method}
+    * or {@code Field} then checks that its declaring class is in a package
+    * that can be accessed by the given caller of setAccessible.
+    */
+    void checkCanSetAccessible(Class<?> caller) {
+        // do nothing, needs to be overridden by Constructor, Method, Field
+    }
 
+    void checkCanSetAccessible(Class<?> caller, Class<?> declaringClass) {
         Module callerModule = caller.getModule();
         Module declaringModule = declaringClass.getModule();
 
@@ -196,26 +187,21 @@ public class AccessibleObject implements AnnotatedElement {
 
         }
 
+        // TODO: This should throw IOE for AccessibleObject and other classes
+        // that can be easily abused to break encapsulation
         if (declaringClass == Module.class) {
             int modifiers;
-            if (ao instanceof Executable) {
-                modifiers = ((Executable)ao).getModifiers();
+            if (this instanceof Executable) {
+                modifiers = ((Executable) this).getModifiers();
             } else {
-                modifiers = ((Field)ao).getModifiers();
+                modifiers = ((Field) this).getModifiers();
             }
             if (!Modifier.isPublic(modifiers)) {
                 String msg = "Cannot make a non-public member of "
-                    + Module.class + " accessible";
+                        + declaringClass + " accessible";
                 Reflection.throwInaccessibleObjectException(msg);
             }
         }
-
-        if (declaringClass == Class.class && ao instanceof Constructor) {
-            // can we change this to InaccessibleObjectException?
-            throw new SecurityException("Cannot make a java.lang.Class"
-                    + " constructor accessible");
-        }
-
     }
 
     /**

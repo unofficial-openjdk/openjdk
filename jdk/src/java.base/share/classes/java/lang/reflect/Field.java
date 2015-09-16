@@ -156,6 +156,19 @@ class Field extends AccessibleObject implements Member {
         return res;
     }
 
+    @Override
+    @CallerSensitive
+    public void setAccessible(boolean flag) {
+        AccessibleObject.checkPermission();
+        if (flag) checkCanSetAccessible(Reflection.getCallerClass());
+        setAccessible0(flag);
+    }
+
+    @Override
+    void checkCanSetAccessible(Class<?> caller) {
+        checkCanSetAccessible(caller, clazz);
+    }
+
     /**
      * Returns the {@code Class} object representing the class or interface
      * that declares the field represented by this {@code Field} object.

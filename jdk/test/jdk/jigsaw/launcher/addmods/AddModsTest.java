@@ -25,9 +25,9 @@
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jlink/jdk.tools.jmod
- * @build MixedModeTest CompilerUtils jdk.testlibrary.ProcessTools
- * @run testng MixedModeTest
- * @summary Test running with both a module path and class path
+ * @build AddModsTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @run testng AddModsTest
+ * @summary Basic test for java -addmods
  */
 
 import java.nio.file.Path;
@@ -41,7 +41,7 @@ import static org.testng.Assert.*;
 
 
 @Test
-public class MixedModeTest {
+public class AddModsTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
 
@@ -84,7 +84,7 @@ public class MixedModeTest {
      * Run application on class path that makes use of module on the
      * application module path. Uses -addmods.
      */
-    public void runRunInMixedMode() throws Exception {
+    public void testRunWithAddMods() throws Exception {
 
         // java -mp mods -addmods lib -cp classes app.Main
         int exitValue
@@ -100,12 +100,13 @@ public class MixedModeTest {
 
     }
 
+
     /**
      * Run application on class path that makes use of module on the
      * application module path. Does not use -addmods and so will
      * fail at run-time.
      */
-    public void runRunInMixedModeWithoutAddMods() throws Exception {
+    public void testRunMissingAddMods() throws Exception {
 
         // java -mp mods -cp classes app.Main
         int exitValue
@@ -117,6 +118,26 @@ public class MixedModeTest {
                 .getExitValue();
 
         // CNFE or other error/exception
+        assertTrue(exitValue != 0);
+
+    }
+
+
+    /**
+     * Attempt to run with a bad module name specified to -addmods
+     */
+    public void testRunWithBadAddMods() throws Exception {
+
+        // java -mp mods -addmods,DoesNotExist lib -cp classes app.Main
+        int exitValue
+            = executeTestJava("-mp", MODS_DIR.toString(),
+                              "-addmods", LIB_MODULE + ",DoesNotExist",
+                              "-cp", CLASSES_DIR.toString(),
+                MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
         assertTrue(exitValue != 0);
 
     }

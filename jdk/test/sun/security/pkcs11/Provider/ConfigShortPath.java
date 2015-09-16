@@ -22,47 +22,65 @@
  */
 /**
  * @test
- * @library ..
- * @bug 6581254 6986789 7196009 8062170 7191662
+ * @bug 6581254 6986789 7196009 8062170
  * @summary Allow '~', '+', and quoted paths in config file
  * @author Valerie Peng
  */
 
 import java.security.*;
 import java.io.*;
+import java.lang.reflect.*;
 
 public class ConfigShortPath {
 
-    private static final String[] configNames = {
-        "csp.cfg", "cspPlus.cfg", "cspSpace.cfg", "cspQuotedPath.cfg"
+    private static final String[] winConfigNames = {
+        "csp.cfg", "cspSpace.cfg", "cspQuotedPath.cfg"
+    };
+    private static final String[] solConfigNames = {
+        "cspPlus.cfg"
     };
 
     public static void main(String[] args) throws Exception {
-        try {
-            String testSrc = System.getProperty("test.src", ".");
-            for (int i = 0; i < configNames.length; i++) {
-                String configFile = testSrc + File.separator + configNames[i];
-                System.out.println("Testing against " + configFile);
+        Provider p = Security.getProvider("SunPKCS11");
+        if (p == null) {
+            // re-try w/ SunPKCS11-Solaris
+            p = Security.getProvider("SunPKCS11-Solaris");
+            if (p == null) {
+                System.out.println("Skipping test - no PKCS11 provider available");
+                return;
+            }
+        }
 
-                Provider p = PKCS11Test.getSunPKCS11(configFile);
-                if (p == null) {
-                    System.out.println("Skipping test - no PKCS11 provider available");
-                    return;
+        String osInfo = System.getProperty("os.name", "");
+        String[] configNames = (osInfo.contains("Windows")?
+            winConfigNames : solConfigNames);
+
+        String testSrc = System.getProperty("test.src", ".");
+        for (int i = 0; i < configNames.length; i++) {
+            String configFile = testSrc + File.separator + configNames[i];
+
+            System.out.println("Testing against " + configFile);
+            try {
+                p.configure(configFile);
+            } catch (InvalidParameterException ipe) {
+                ipe.printStackTrace();
+                Throwable cause = ipe.getCause();
+                // Indicate failure if due to parsing config
+                if (cause.getClass().getName().equals
+                        ("sun.security.pkcs11.ConfigurationException")) {
+                    // Error occurred during parsing
+                    if (cause.getMessage().indexOf("Unexpected") != -1) {
+                        throw (ProviderException) cause;
+                    }
+                }
+            } catch (ProviderException pe) {
+                pe.printStackTrace();
+                if (pe.getCause() instanceof IOException) {
+                    // Thrown when the directory does not exist which is ok
+                    System.out.println("Pass: config parsed ok");
+                    continue;
                 }
             }
-        } catch (InvalidParameterException ipe) {
-            System.out.println(ipe);
-            String causeMsg = ipe.getMessage();
-            // Indicate failure if due to parsing config
-            if (causeMsg.indexOf("Unexpected") != -1) {
-                throw ipe;
-            }
-            // Consider the test passes if the exception is
-            // thrown after parsing, i.e. due to the absolute
-            // path requirement or the non-existent path.
-        } catch (Exception ex) {
-            // unexpected exception
-            throw new RuntimeException("Unexpected Exception", ex);
         }
     }
 }
