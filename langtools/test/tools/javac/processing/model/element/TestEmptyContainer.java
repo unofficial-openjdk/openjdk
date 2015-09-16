@@ -29,7 +29,7 @@
  * @library /tools/javac/lib
  * @modules jdk.compiler/com.sun.tools.javac.util
  * @build   JavacTestingAbstractProcessor TestEmptyContainer
- * @compile -processor TestEmptyContainer -proc:only TestEmptyContainer.java
+ * @compile -XDaccessInternalAPI -processor TestEmptyContainer -proc:only TestEmptyContainer.java
  */
 
 import com.sun.tools.javac.util.Assert;
@@ -45,9 +45,6 @@ import static javax.lang.model.util.ElementFilter.*;
 
 @TestEmptyContainer.Foo(1)
 public class TestEmptyContainer extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler", "com.sun.tools.javac.util");
-    }
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {

@@ -25,9 +25,6 @@ import com.sun.tools.javac.util.Assert;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -37,9 +34,6 @@ import javax.lang.model.element.TypeElement;
 
 @SupportedAnnotationTypes("*")
 public class GenerateSuperInterfaceProcessor extends AbstractProcessor {
-    {
-        addExports("jdk.compiler", "com.sun.tools.javac.util");
-    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -57,20 +51,6 @@ public class GenerateSuperInterfaceProcessor extends AbstractProcessor {
         }
 
         return false;
-    }
-
-    protected void addExports(String moduleName, String... packageNames) {
-        for (String packageName : packageNames) {
-            try {
-                Layer layer = Layer.boot();
-                Optional<Module> m = layer.findModule(moduleName);
-                if (!m.isPresent())
-                    throw new Error("module not found: " + moduleName);
-                m.get().addExports(packageName, getClass().getModule());
-            } catch (Exception e) {
-                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-            }
-        }
     }
 
 }

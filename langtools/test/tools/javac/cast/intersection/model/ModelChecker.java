@@ -45,10 +45,6 @@ import javax.lang.model.util.SimpleTypeVisitor7;
 
 @SupportedAnnotationTypes("Check")
 public class ModelChecker extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler", "com.sun.tools.javac.tree");
-    }
-
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver())

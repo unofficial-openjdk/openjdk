@@ -40,12 +40,6 @@ public class T6406771 extends AbstractProcessor {
 
     // White-space after this point does not matter
 
-    {
-        addExports("jdk.compiler",
-            "com.sun.tools.javac.api",
-            "com.sun.tools.javac.tree");
-    }
-
     public static void main(String[] args) throws IOException {
         String self = T6406771.class.getName();
         String testSrc = System.getProperty("test.src");
@@ -56,9 +50,7 @@ public class T6406771 extends AbstractProcessor {
             JavaFileObject f = fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, self+".java"))).iterator().next();
 
             List<String> opts = Arrays.asList(
-                "-XaddExports:"
-                    + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
-                    + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+                "-XDaccessInternalAPI",
                 "-d", ".",
                 "-processorpath", testClasses,
                 "-processor", self,
@@ -119,19 +111,5 @@ public class T6406771 extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
-    }
-
-    protected void addExports(String moduleName, String... packageNames) {
-        for (String packageName : packageNames) {
-            try {
-                Layer layer = Layer.boot();
-                Optional<Module> m = layer.findModule(moduleName);
-                if (!m.isPresent())
-                    throw new Error("module not found: " + moduleName);
-                m.get().addExports(packageName, getClass().getModule());
-            } catch (Exception e) {
-                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-            }
-        }
     }
 }

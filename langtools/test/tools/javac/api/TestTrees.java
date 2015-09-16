@@ -33,8 +33,6 @@
 
 import java.io.*;
 import java.lang.annotation.*;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.*;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -51,12 +49,6 @@ import com.sun.tools.javac.tree.TreeInfo;
 @Anno
 @SupportedAnnotationTypes("*")
 public class TestTrees extends AbstractProcessor {
-    {
-        addExports("jdk.compiler",
-            "com.sun.tools.javac.api",
-            "com.sun.tools.javac.tree");
-    }
-
     @Anno
     void annoMethod() { }
 
@@ -86,16 +78,12 @@ public class TestTrees extends AbstractProcessor {
                 }
             };
 
-        String addExports = "-XaddExports:"
-            + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
-            + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED";
-
         try (StandardJavaFileManager fm = tool.getStandardFileManager(dl, null, null)) {
             Iterable<? extends JavaFileObject> files =
                 fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
 
             Iterable<String> opts = Arrays.asList(
-                addExports,
+                "-XDaccessInternalAPI",
                 "-d", ".",
                 "-XDcompilePolicy=simple");
 
@@ -244,20 +232,6 @@ public class TestTrees extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
-    }
-
-    protected void addExports(String moduleName, String... packageNames) {
-        for (String packageName : packageNames) {
-            try {
-                Layer layer = Layer.boot();
-                Optional<Module> m = layer.findModule(moduleName);
-                if (!m.isPresent())
-                    throw new Error("module not found: " + moduleName);
-                m.get().addExports(packageName, getClass().getModule());
-            } catch (Exception e) {
-                throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-            }
-        }
     }
 
     class MyTaskListener implements TaskListener {

@@ -29,7 +29,7 @@
  * @library /tools/javac/lib
  * @modules jdk.compiler/com.sun.tools.javac.util
  * @build   JavacTestingAbstractProcessor TestNonInherited
- * @compile -processor TestNonInherited -proc:only TestNonInherited.java
+ * @compile -XDaccessInternalAPI -processor TestNonInherited -proc:only TestNonInherited.java
  */
 
 import com.sun.tools.javac.util.Assert;
@@ -39,16 +39,11 @@ import java.util.Arrays;
 import java.util.Set;
 import javax.annotation.processing.*;
 import javax.lang.model.element.*;
-import javax.lang.model.util.*;
 
 import static javax.lang.model.util.ElementFilter.*;
 
 @TestNonInherited.Foo(1)
 public class TestNonInherited extends JavacTestingAbstractProcessor {
-    {
-        addExports("jdk.compiler", "com.sun.tools.javac.util");
-    }
-
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {
