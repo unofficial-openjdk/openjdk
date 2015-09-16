@@ -349,8 +349,8 @@ public class Proxy implements java.io.Serializable {
      *
      * @deprecated Proxy classes generated in a named module are encapsulated and not
      *      accessible to code outside its module.
-     *      {@link Constructor#newInstance(Object...)} Constructor.newInstance} will throw
-     *      {@code IllegalAccessError} when it is called on an inaccessible proxy class.
+     *      {@link Constructor#newInstance(Object...) Constructor.newInstance} will throw
+     *      {@code IllegalAccessException} when it is called on an inaccessible proxy class.
      *      Use {@link #newProxyInstance(ClassLoader, Class[], InvocationHandler)}
      *      to create a proxy instance instead.
      *
