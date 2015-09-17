@@ -743,6 +743,7 @@ void MetaspaceShared::link_and_cleanup_shared_classes(TRAPS) {
 }
 
 void MetaspaceShared::prepare_for_dumping() {
+  Arguments::check_unsupported_dumping_properties();
   ClassLoader::initialize_shared_path();
   FileMapInfo::allocate_classpath_entry_table();
 }

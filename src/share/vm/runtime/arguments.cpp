@@ -1046,6 +1046,32 @@ bool Arguments::add_property(const char* prop) {
   return true;
 }
 
+#if INCLUDE_CDS
+void Arguments::check_unsupported_dumping_properties() {
+  assert(DumpSharedSpaces, "this function is only used with -Xshare:dump");
+  const char* unsupported_properties[5] = { "java.module.main",
+                                           "java.module.path",
+                                           "java.upgrade.module.path",
+                                           "jdk.launcher.addmods",
+                                           "jdk.launcher.limitmods" };
+  const char* unsupported_options[5] = { "-m",
+                                        "-modulepath",
+                                        "-upgrademodulepath",
+                                        "-addmods",
+                                        "-limitmods" };
+  SystemProperty* sp = system_properties();
+  while (sp != NULL) {
+    for (int i = 0; i < 5; i++) {
+      if (strcmp(sp->key(), unsupported_properties[i]) == 0) {
+          vm_exit_during_initialization(
+            "Cannot use the following option when dumping the shared archive", unsupported_options[i]);
+      }
+    }
+    sp = sp->next();
+  }
+}
+#endif
+
 //===========================================================================================================
 // Setting int/mixed/comp mode flags
 
@@ -3537,7 +3563,7 @@ void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
     if (Arguments::override_dir() != NULL) {
       vm_exit_during_initialization(
-        "Cannot use -Xoverride when dumping the shared archive.", NULL);
+        "Cannot use the following option when dumping the shared archive", "-Xoverride");
     }
 
     if (RequireSharedSpaces) {
