@@ -220,7 +220,7 @@ import sun.security.util.SecurityConstants;
  * A dynamic module is a named module generated at runtime. A proxy class
  * defined in a dynamic module is encapsulated and not accessible to any module.
  * Calling {@link Constructor#newInstance(Object...)} on a proxy class in
- * a dynamic module will throw {@code IllegalAccessError};
+ * a dynamic module will throw {@code IllegalAccessException};
  * {@code Proxy.newProxyInstance} method should be used instead.
  *
  * <p>
