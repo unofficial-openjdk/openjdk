@@ -586,8 +586,6 @@ public class Modules extends JCTree.Visitor {
         }
 
         public void visitProvides(JCProvides tree) {
-            ModuleSymbol msym = env.toplevel.modle;
-
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
             Type it = attr.attribType(tree.implName, env, st);
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
@@ -600,12 +598,10 @@ public class Modules extends JCTree.Visitor {
         }
 
         public void visitRequires(JCRequires tree) {
-            ModuleSymbol msym = env.toplevel.modle;
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
         public void visitUses(JCUses tree) {
-            ModuleSymbol msym = env.toplevel.modle;
             Type st = attr.attribType(tree.qualid, env, syms.objectType);
             if (st.hasTag(CLASS)) {
                 ClassSymbol service = (ClassSymbol) st.tsym;
