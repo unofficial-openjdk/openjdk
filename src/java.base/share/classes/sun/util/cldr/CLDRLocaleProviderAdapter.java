@@ -135,10 +135,9 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
     private List<Locale> applyParentLocales(String baseName, List<Locale> candidates) {
         if (Objects.isNull(parentLocalesMap)) {
             Map<Locale, Locale> map = new HashMap<>();
-            baseMetaInfo.parentLocales().forEach((parent, children) -> {
-                Locale p = "root".equals(parent) ? Locale.ROOT : Locale.forLanguageTag(parent);
-                Stream.of(children.split(" ")).forEach(child -> {
-                    map.put(Locale.forLanguageTag(child), p);
+             baseMetaInfo.parentLocales().forEach((parent, children) -> {
+                Stream.of(children).forEach(child -> {
+                    map.put(Locale.forLanguageTag(child), parent);
                 });
             });
             parentLocalesMap = map;
