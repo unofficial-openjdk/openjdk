@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.decompressor.Decompressor;
 import jdk.internal.jimage.decompressor.ResourceDecompressor.StringsProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;

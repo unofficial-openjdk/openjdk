@@ -35,7 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import jdk.tools.jlink.internal.Archive;
+import jdk.internal.jimage.Archive;
+import jdk.internal.jimage.Archive.Entry;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.plugins.ImageBuilder;
@@ -155,16 +156,9 @@ public class ImageFileCreatorTest {
         }
 
         {
-            // 2 '/' characters
+            // Single '/' character
             List<String> entries = new ArrayList<>();
             entries.add("//");
-            test(entries);
-        }
-
-        {
-            // 3 '/' characters
-            List<String> entries = new ArrayList<>();
-            entries.add("///");
             test(entries);
         }
 
@@ -179,7 +173,6 @@ public class ImageFileCreatorTest {
             // all together
             List<String> entries = new ArrayList<>();
             entries.add("");
-            entries.add("///");
             entries.add("//");
             entries.add("/");
             entries.add("classes/////class/");

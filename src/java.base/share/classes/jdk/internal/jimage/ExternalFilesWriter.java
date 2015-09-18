@@ -23,11 +23,12 @@
  * questions.
  */
 
-package jdk.tools.jlink.internal;
+package jdk.internal.jimage;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -48,7 +49,7 @@ class ExternalFilesWriter implements Consumer<Entry> {
     public void accept(Entry entry) {
         String name = entry.path();
         try {
-            String filename = name.substring(name.indexOf('/') + 1);
+            String filename = entry.path();
             try (InputStream in = entry.stream()) {
                 switch (entry.type()) {
                     case NATIVE_LIB:
@@ -57,7 +58,7 @@ class ExternalFilesWriter implements Consumer<Entry> {
                     case NATIVE_CMD:
                         Path path = destFile("bin", filename);
                         writeEntry(in, path);
-                        path.toFile().setExecutable(true);
+                        path.toFile().setExecutable(true, false);
                         break;
                     case CONFIG:
                         writeEntry(in, destFile("conf", filename));
@@ -73,6 +74,8 @@ class ExternalFilesWriter implements Consumer<Entry> {
                         throw new InternalError("unexpected entry: " + name + " " + name);
                 }
             }
+        } catch (FileAlreadyExistsException x) {
+            System.err.println("File already exists (skipped) " + name);
         } catch (IOException x) {
             throw new UncheckedIOException(x);
         }

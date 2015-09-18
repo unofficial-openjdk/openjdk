@@ -29,40 +29,40 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-public class ImageStream {
+class ImageStream {
     private ByteBuffer buffer;
 
-    public ImageStream() {
+    ImageStream() {
         this(1024, ByteOrder.nativeOrder());
     }
 
-    public ImageStream(int size) {
+    ImageStream(int size) {
         this(size, ByteOrder.nativeOrder());
     }
 
-    public ImageStream(byte[] bytes) {
+    ImageStream(byte[] bytes) {
        this(bytes, ByteOrder.nativeOrder());
     }
 
-    public ImageStream(ByteOrder byteOrder) {
+    ImageStream(ByteOrder byteOrder) {
         this(1024, byteOrder);
     }
 
-    public ImageStream(int size, ByteOrder byteOrder) {
+    ImageStream(int size, ByteOrder byteOrder) {
         buffer = ByteBuffer.allocate(size);
         buffer.order(byteOrder);
     }
 
-    public ImageStream(byte[] bytes, ByteOrder byteOrder) {
+    ImageStream(byte[] bytes, ByteOrder byteOrder) {
         buffer = ByteBuffer.wrap(bytes);
         buffer.order(byteOrder);
     }
 
-    public ImageStream(ByteBuffer buffer) {
+    ImageStream(ByteBuffer buffer) {
         this.buffer = buffer;
     }
 
-    public ImageStream align(int alignment) {
+    ImageStream align(int alignment) {
         int padding = (getSize() - 1) & ((1 << alignment) - 1);
 
         for (int i = 0; i < padding; i++) {
@@ -72,7 +72,7 @@ public class ImageStream {
         return this;
     }
 
-    public void ensure(int needs) {
+    void ensure(int needs) {
         assert 0 <= needs : "Negative needs";
 
         if (needs > buffer.remaining()) {
@@ -86,109 +86,109 @@ public class ImageStream {
         }
     }
 
-    public boolean hasByte() {
+    boolean hasByte() {
         return buffer.remaining() != 0;
     }
 
-    public boolean hasBytes(int needs) {
+    boolean hasBytes(int needs) {
         return needs <= buffer.remaining();
     }
 
-    public void skip(int n) {
+    void skip(int n) {
         assert 0 <= n : "Negative offset";
         buffer.position(buffer.position() + n);
     }
 
-    public int get() {
+    int get() {
         return buffer.get() & 0xFF;
     }
 
-    public void get(byte bytes[], int offset, int size) {
+    void get(byte bytes[], int offset, int size) {
         buffer.get(bytes, offset, size);
     }
 
-    public int getShort() {
+    int getShort() {
         return buffer.getShort();
     }
 
-    public int getInt() {
+    int getInt() {
         return buffer.getInt();
     }
 
-    public long getLong() {
+    long getLong() {
         return buffer.getLong();
     }
 
-    public ImageStream put(byte byt) {
+    ImageStream put(byte byt) {
         ensure(1);
         buffer.put(byt);
 
         return this;
     }
 
-    public ImageStream put(int byt) {
+    ImageStream put(int byt) {
         return put((byte)byt);
     }
 
-    public ImageStream put(byte bytes[], int offset, int size) {
+    ImageStream put(byte bytes[], int offset, int size) {
         ensure(size);
         buffer.put(bytes, offset, size);
 
         return this;
     }
 
-    public ImageStream put(ImageStream stream) {
+    ImageStream put(ImageStream stream) {
         put(stream.buffer.array(), 0, stream.buffer.position());
 
         return this;
     }
 
-    public ImageStream putShort(short value) {
+    ImageStream putShort(short value) {
         ensure(2);
         buffer.putShort(value);
 
         return this;
     }
 
-    public ImageStream putShort(int value) {
+    ImageStream putShort(int value) {
         return putShort((short)value);
     }
 
-    public ImageStream putInt(int value) {
+    ImageStream putInt(int value) {
         ensure(4);
         buffer.putInt(value);
 
         return this;
     }
 
-    public ImageStream putLong(long value) {
+    ImageStream putLong(long value) {
         ensure(8);
         buffer.putLong(value);
 
         return this;
     }
 
-    public ByteBuffer getBuffer() {
+    ByteBuffer getBuffer() {
         return buffer;
     }
 
-    public int getPosition() {
+    int getPosition() {
         return buffer.position();
     }
 
-    public int getSize() {
+    int getSize() {
         return buffer.position();
     }
 
-    public byte[] getBytes() {
+    byte[] getBytes() {
         return buffer.array();
     }
 
-    public void setPosition(int offset) {
+    void setPosition(int offset) {
         buffer.position(offset);
     }
 
-    public byte[] toArray() {
+    byte[] toArray() {
         return Arrays.copyOf(buffer.array(), buffer.position());
     }
 }

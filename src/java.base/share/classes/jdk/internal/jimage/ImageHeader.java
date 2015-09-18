@@ -82,7 +82,7 @@ public final class ImageHeader {
             resourceCount, tableLength, locationsSize, stringsSize);
     }
 
-    public void writeTo(ImageStream stream) {
+    void writeTo(ImageStream stream) {
         stream.ensure(getHeaderSize());
         writeTo(stream.getBuffer());
     }

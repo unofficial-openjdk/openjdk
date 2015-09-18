@@ -51,7 +51,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.tools.jlink.internal.Archive;
+import jdk.internal.jimage.Archive;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.TaskHelper.BadArgs;

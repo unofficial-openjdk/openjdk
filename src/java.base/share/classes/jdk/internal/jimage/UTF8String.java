@@ -39,15 +39,15 @@ public final class UTF8String implements CharSequence {
     // Same as StandardCharsets.UTF_8 without loading all of the standard charsets
     static final Charset UTF_8 = Charset.forName("UTF-8");
 
-    public static final int NOT_FOUND = -1;
-    public static final int HASH_MULTIPLIER = 0x01000193;
-    public static final UTF8String EMPTY_STRING = new UTF8String("");
-    public static final UTF8String SLASH_STRING = new UTF8String("/");
-    public static final UTF8String DOT_STRING = new UTF8String(".");
+    static final int NOT_FOUND = -1;
+    static final int HASH_MULTIPLIER = 0x01000193;
+    static final UTF8String EMPTY_STRING = new UTF8String("");
+    static final UTF8String SLASH_STRING = new UTF8String("/");
+    static final UTF8String DOT_STRING = new UTF8String(".");
 
     // TODO This strings are implementation specific and should be defined elsewhere.
-    public static final UTF8String MODULES_STRING = new UTF8String("/modules");
-    public static final UTF8String PACKAGES_STRING = new UTF8String("/packages");
+    static final UTF8String MODULES_STRING = new UTF8String("/modules");
+    static final UTF8String PACKAGES_STRING = new UTF8String("/packages");
 
     final byte[] bytes;
     final int offset;
@@ -159,11 +159,11 @@ public final class UTF8String implements CharSequence {
         return NOT_FOUND;
     }
 
-    public void writeTo(ImageStream buffer) {
+    void writeTo(ImageStream buffer) {
         buffer.put(bytes, offset, count);
     }
 
-    public static int hashCode(int seed, byte[] bytes, int offset, int count) {
+    static int hashCode(int seed, byte[] bytes, int offset, int count) {
         for (int i = offset, limit = offset + count; i < limit; i++) {
             seed = (seed * HASH_MULTIPLIER) ^ (bytes[i] & 0xFF);
         }
@@ -171,7 +171,7 @@ public final class UTF8String implements CharSequence {
         return seed & 0x7FFFFFFF;
     }
 
-    public int hashCode(int seed) {
+    int hashCode(int seed) {
         return hashCode(seed, bytes, offset, count);
     }
 

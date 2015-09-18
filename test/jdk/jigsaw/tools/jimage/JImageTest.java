@@ -51,7 +51,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jimage
- *          jdk.jlink/jdk.tools.jlink.internal
  * @run build JImageTest
  * @run build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JImageTest
