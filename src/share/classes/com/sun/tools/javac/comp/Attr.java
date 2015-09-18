@@ -825,9 +825,18 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitClassDef(JCClassDecl tree) {
-        // Local classes have not been entered yet, so we need to do it now:
-        if ((env.info.scope.owner.kind & (VAR | MTH)) != 0)
+        // Local and anonymous classes have not been entered yet, so we need to
+        // do it now.
+        if ((env.info.scope.owner.kind & (VAR | MTH)) != 0) {
             enter.classEnter(tree, env);
+        } else {
+            // If this class declaration is part of a class level annotation,
+            // as in @MyAnno(new Object() {}) class MyClass {}, enter it in
+            // order to simplify later steps and allow for sensible error
+            // messages.
+            if (env.tree.hasTag(NEWCLASS) && TreeInfo.isInAnnotation(env, tree))
+                enter.classEnter(tree, env);
+        }
 
         ClassSymbol c = tree.sym;
         if (c == null) {
@@ -4268,6 +4277,8 @@ public class Attr extends JCTree.Visitor {
             chk.validate(tree.extending, env);
             chk.validate(tree.implementing, env);
         }
+
+        c.markAbstractIfNeeded(types);
 
         // If this is a non-abstract class, check that it has no abstract
         // methods or unimplemented methods of an implemented interface.
