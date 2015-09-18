@@ -50,7 +50,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import jdk.internal.jimage.BasicImageWriter;
+import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.tools.jlink.internal.JvmHandler;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;

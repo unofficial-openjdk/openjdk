@@ -27,7 +27,7 @@ package jdk.tools.jlink.internal;
 
 import jdk.tools.jlink.internal.JarArchive;
 import java.nio.file.Path;
-import jdk.internal.jimage.Archive.Entry.EntryType;
+import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
