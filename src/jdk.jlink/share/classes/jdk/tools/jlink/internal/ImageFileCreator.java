@@ -43,12 +43,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.Archive.Entry;
-import jdk.internal.jimage.Archive.Entry.EntryType;
-import jdk.internal.jimage.BasicImageWriter;
-import jdk.internal.jimage.ImageModuleDataWriter;
-import jdk.internal.jimage.ImageResourcesTree;
+import jdk.tools.jlink.internal.Archive.Entry;
+import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile.ImageFileType;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -100,19 +96,16 @@ public final class ImageFileCreator {
         throws IOException
     {
         ImageFileCreator image = new ImageFileCreator(plugins);
-        // get all entries
-        Map<String, Set<String>> modulePackagesMap = new HashMap<>();
-        image.readAllEntries(modulePackagesMap, archives);
+        image.readAllEntries(archives);
         // write to modular image
-        image.writeImage(modulePackagesMap, archives, byteOrder);
+        image.writeImage(archives, byteOrder);
         return image;
     }
 
-    private void readAllEntries(Map<String, Set<String>> modulePackagesMap,
-                                  Set<Archive> archives) {
+    private void readAllEntries(Set<Archive> archives) {
         archives.stream().forEach((archive) -> {
             Map<Boolean, List<Entry>> es;
-            try(Stream<Entry> entries = archive.entries()) {
+            try (Stream<Entry> entries = archive.entries()) {
                 es = entries.collect(Collectors.partitioningBy(n -> n.type()
                         == EntryType.CLASS_OR_RESOURCE));
             }
@@ -121,12 +114,6 @@ public final class ImageFileCreator {
             all.addAll(es.get(false));
             all.addAll(es.get(true));
             entriesForModule.put(mn, all);
-            // Extract package names
-            Set<String> pkgs = es.get(true).stream().map(Entry::name)
-                    .filter(n -> isClassPackage(n))
-                    .map(ImageFileCreator::toPackage)
-                    .collect(Collectors.toSet());
-            modulePackagesMap.put(mn, pkgs);
         });
     }
 
@@ -136,7 +123,6 @@ public final class ImageFileCreator {
 
     public static void recreateJimage(Path jimageFile,
             Set<Archive> archives,
-            Map<String, Set<String>> modulePackages,
             ImagePluginStack pluginSupport)
             throws IOException {
         Map<String, List<Entry>> entriesForModule
@@ -148,7 +134,7 @@ public final class ImageFileCreator {
                                     }
                                 }));
         ByteOrder order = ByteOrder.nativeOrder();
-        Pools pools = createPools(modulePackages, entriesForModule, order);
+        Pools pools = createPools(archives, entriesForModule, order);
         try (OutputStream fos = Files.newOutputStream(jimageFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 DataOutputStream out = new DataOutputStream(bos)) {
@@ -161,11 +147,10 @@ public final class ImageFileCreator {
         }
     }
 
-    private void writeImage(Map<String, Set<String>> modulePackagesMap,
-            Set<Archive> archives,
+    private void writeImage(Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
-        Pools pools = createPools(modulePackagesMap,
+        Pools pools = createPools(archives,
                 entriesForModule, byteOrder);
         BasicImageWriter writer = new BasicImageWriter(byteOrder);
         ResourcePool result = generateJImage(pools.resources,
@@ -205,13 +190,8 @@ public final class ImageFileCreator {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
-        Map<String, Set<String>> modulePackagesMap = resultResources.getModulePackages();
-
         Set<String> duplicates = new HashSet<>();
-        ImageModuleDataWriter moduleData
-                = ImageModuleDataWriter.buildModuleData(writer, modulePackagesMap);
-        moduleData.addLocation(BasicImageWriter.BOOT_NAME, writer);
-        long offset = moduleData.size();
+        long offset = 0;
 
         List<ResourcePool.Resource> content = new ArrayList<>();
         List<String> paths = new ArrayList<>();
@@ -250,9 +230,6 @@ public final class ImageFileCreator {
         // write header and indices
         byte[] bytes = writer.getBytes();
         out.write(bytes, 0, bytes.length);
-
-        // write module meta data
-        moduleData.writeTo(out);
 
         // write module content
         for (ResourcePool.Resource res : content) {
@@ -308,13 +285,13 @@ public final class ImageFileCreator {
         return null;
     }
 
-    private static Pools createPools(Map<String, Set<String>> modulePackagesMap,
+    private static Pools createPools(Set<Archive> archives,
             Map<String, List<Entry>> entriesForModule,
             ByteOrder byteOrder) throws IOException {
         ResourcePoolImpl resources = new ResourcePoolImpl(byteOrder);
         ImageFilePoolImpl files = new ImageFilePoolImpl();
-        Set<String> mods = modulePackagesMap.keySet();
-        for (String mn : mods) {
+        for (Archive archive : archives) {
+            String mn = archive.moduleName();
             for (Entry entry : entriesForModule.get(mn)) {
                 String path = entry.name();
                 if (entry.type() == EntryType.CLASS_OR_RESOURCE) {
@@ -393,10 +370,6 @@ public final class ImageFileCreator {
 
         String[] array = new String[result.size()];
         return result.toArray(array);
-    }
-
-    private static String toPackage(String name) {
-        return toPackage(name, true);
     }
 
     private static String toPackage(String name, boolean log) {

@@ -23,7 +23,7 @@
  * questions.
 */
 
-package jdk.internal.jimage;
+package jdk.tools.jlink.internal;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import jdk.internal.jimage.UTF8String;
 
 public class PerfectHashBuilder<E> {
     private final static int RETRY_LIMIT = 1000;

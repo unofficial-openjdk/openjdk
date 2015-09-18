@@ -23,7 +23,12 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+package jdk.tools.jlink.internal;
+
+import jdk.internal.jimage.ImageLocation;
+import jdk.internal.jimage.ImageLocationBase;
+import jdk.internal.jimage.ImageStream;
+import jdk.internal.jimage.UTF8String;
 
 public final class ImageLocationWriter extends ImageLocationBase {
     private int locationOffset;

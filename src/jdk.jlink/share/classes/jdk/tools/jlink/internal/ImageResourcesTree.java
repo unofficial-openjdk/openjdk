@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.jimage;
+package jdk.tools.jlink.internal;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -32,9 +32,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import jdk.internal.jimage.ImageModuleData;
+import jdk.internal.jimage.UTF8String;
 
 /**
  * A class to build a sorted tree of Resource paths as a tree of ImageLocation.
@@ -45,23 +48,21 @@ public final class ImageResourcesTree {
 
     private static final String MODULES = "modules";
     private static final String PACKAGES = "packages";
-    public static final String MODULES_STRING = UTF8String.MODULES_STRING.toString();
     public static final String PACKAGES_STRING = UTF8String.PACKAGES_STRING.toString();
 
     public static boolean isTreeInfoResource(String path) {
-        return path.startsWith(PACKAGES_STRING) || path.startsWith(MODULES_STRING);
+        return path.startsWith(PACKAGES_STRING) || path.startsWith(ImageModuleData.MODULES_STRING);
     }
 
     /**
      * Path item tree node.
      */
-    private static final class Node {
+    private static class Node {
 
         private final String name;
         private final Map<String, Node> children = new TreeMap<>();
         private final Node parent;
         private ImageLocationWriter loc;
-        private boolean isResource;
 
         private Node(String name, Node parent) {
             this.name = name;
@@ -101,6 +102,72 @@ public final class ImageResourcesTree {
         }
     }
 
+    private static final class ResourceNode extends Node {
+
+        public ResourceNode(String name, Node parent) {
+            super(name, parent);
+        }
+    }
+
+    private static class PackageNode extends Node {
+        /**
+         * A reference to a package. Empty packages can be located inside one or
+         * more modules. A package with classes exist in only one module.
+         */
+        final class PackageReference implements Comparable<PackageReference> {
+
+            private final String name;
+            private final boolean isEmpty;
+
+            PackageReference(String name, boolean isEmpty) {
+                Objects.requireNonNull(name);
+                this.name = name;
+                this.isEmpty = isEmpty;
+            }
+
+            @Override
+            public int compareTo(PackageReference t) {
+                return name.compareTo(t.name);
+            }
+
+            @Override
+            public String toString() {
+                return name + "[empty:" + isEmpty + "]";
+            }
+        }
+
+        private final Map<String, PackageReference> references = new TreeMap<>();
+
+        PackageNode(String name, Node parent) {
+            super(name, parent);
+        }
+
+        private void addReference(String name, boolean isEmpty) {
+            PackageReference ref = references.get(name);
+            if (ref == null) {
+                references.put(name, new PackageReference(name, isEmpty));
+            } else {
+                if (ref.isEmpty) { // replace with new one incase non empty.
+                    references.put(name, new PackageReference(name, isEmpty));
+                }
+            }
+        }
+
+        private void validate() {
+            boolean exists = false;
+            for (PackageReference ref : references.values()) {
+                if (!ref.isEmpty) {
+                    if (exists) {
+                        throw new RuntimeException("Multiple modules to contain package "
+                                + getName());
+                    } else {
+                        exists = true;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Tree of nodes.
      */
@@ -130,28 +197,36 @@ public final class ImageResourcesTree {
                     continue;
                 }
                 String[] split = p.split("/");
+                // minimum length is 3 items: /<mod>/<pkg>
+                if (split.length < 3) {
+                    System.err.println("Resources tree, invalid data structure, "
+                            + "skipping " + p);
+                    continue;
+                }
                 Node current = modules;
                 String module = null;
                 for (int i = 0; i < split.length; i++) {
                     // When a non terminal node is marked as being a resource, something is wrong.
                     // It has been observed some badly created jar file to contain
                     // invalid directory entry marled as not directory (see 8131762)
-                    if (current.isResource) {
+                    if (current instanceof ResourceNode) {
                         System.err.println("Resources tree, invalid data structure, "
                                 + "skipping " + p);
                         continue;
                     }
                     String s = split[i];
                     if (!s.isEmpty()) {
+                        // First item, this is the module, simply add a new node to the
+                        // tree.
                         if (module == null) {
                             module = s;
                         }
                         Node n = current.children.get(s);
                         if (n == null) {
-                            n = new Node(s, current);
                             if (i == split.length - 1) { // Leaf
-                                n.isResource = true;
+                                n = new ResourceNode(s, current);
                                 String pkg = toPackageName(n.parent);
+                                //System.err.println("Adding a resource node. pkg " + pkg + ", name " + s);
                                 if (pkg != null && !pkg.startsWith("META-INF")) {
                                     Set<String> pkgs = moduleToPackage.get(module);
                                     if (pkgs == null) {
@@ -161,6 +236,7 @@ public final class ImageResourcesTree {
                                     pkgs.add(pkg);
                                 }
                             } else { // put only sub trees, no leaf
+                                n = new Node(s, current);
                                 directAccess.put(n.getPath(), n);
                                 String pkg = toPackageName(n);
                                 if (pkg != null && !pkg.startsWith("META-INF")) {
@@ -170,7 +246,6 @@ public final class ImageResourcesTree {
                                         packageToModule.put(pkg, mods);
                                     }
                                     mods.add(module);
-
                                 }
                             }
                         }
@@ -180,23 +255,34 @@ public final class ImageResourcesTree {
             }
             packages = new Node(PACKAGES, root);
             directAccess.put(packages.getPath(), packages);
+            // The subset of package nodes that have some content.
+            // These packages exist only in a single module.
             for (Map.Entry<String, Set<String>> entry : moduleToPackage.entrySet()) {
                 for (String pkg : entry.getValue()) {
-                    Node pkgNode = new Node(pkg, packages);
+                    PackageNode pkgNode = new PackageNode(pkg, packages);
+                    pkgNode.addReference(entry.getKey(), false);
                     directAccess.put(pkgNode.getPath(), pkgNode);
+                }
+            }
 
-                    Node modNode = new Node(entry.getKey(), pkgNode);
-                    directAccess.put(modNode.getPath(), modNode);
-                }
-            }
+            // All packages
             for (Map.Entry<String, Set<String>> entry : packageToModule.entrySet()) {
-                Node pkgNode = new Node(entry.getKey(), packages);
-                directAccess.put(pkgNode.getPath(), pkgNode);
-                for (String module : entry.getValue()) {
-                    Node modNode = new Node(module, pkgNode);
-                    directAccess.put(modNode.getPath(), modNode);
+                // Do we already have a package node?
+                PackageNode pkgNode = (PackageNode) packages.getChildren(entry.getKey());
+                if (pkgNode == null) {
+                    pkgNode = new PackageNode(entry.getKey(), packages);
                 }
+                for (String module : entry.getValue()) {
+                    pkgNode.addReference(module, true);
+                }
+                directAccess.put(pkgNode.getPath(), pkgNode);
             }
+            // Validate that the packages are well formed.
+            for (Node n : packages.children.values()) {
+                PackageNode pkg = (PackageNode) n;
+                pkg.validate();
+            }
+
         }
 
         public String toResourceName(Node node) {
@@ -207,8 +293,8 @@ public final class ImageResourcesTree {
         }
 
         public String getModule(Node node) {
-            if (node.parent == null || node.getName().equals(MODULES) ||
-                node.getName().startsWith(PACKAGES)) {
+            if (node.parent == null || node.getName().equals(MODULES)
+                    || node.getName().startsWith(PACKAGES)) {
                 return null;
             }
             String path = removeRadical(node);
@@ -271,16 +357,23 @@ public final class ImageResourcesTree {
         }
 
         private int addLocations(Node current) {
-            int[] ret = new int[current.children.size()];
-            int i = 0;
-            for (java.util.Map.Entry<String, Node> entry : current.children.entrySet()) {
-                ret[i] = addLocations(entry.getValue());
-                i += 1;
-            }
-            if (current != tree.getRoot() && !current.isResource) {
-                int size = ret.length * 4;
+            if (current instanceof PackageNode) {
+                PackageNode pkgNode = (PackageNode) current;
+                int size = pkgNode.references.size() * 8;
                 writer.addLocation(current.getPath(), offset, 0, size);
                 offset += size;
+            } else {
+                int[] ret = new int[current.children.size()];
+                int i = 0;
+                for (java.util.Map.Entry<String, Node> entry : current.children.entrySet()) {
+                    ret[i] = addLocations(entry.getValue());
+                    i += 1;
+                }
+                if (current != tree.getRoot() && !(current instanceof ResourceNode)) {
+                    int size = ret.length * 4;
+                    writer.addLocation(current.getPath(), offset, 0, size);
+                    offset += size;
+                }
             }
             return 0;
         }
@@ -303,33 +396,48 @@ public final class ImageResourcesTree {
         }
 
         private int computeContent(Node current, Map<String, ImageLocationWriter> outLocations) {
-            int[] ret = new int[current.children.size()];
-            int i = 0;
-            for (java.util.Map.Entry<String, Node> entry : current.children.entrySet()) {
-                ret[i] = computeContent(entry.getValue(), outLocations);
-                i += 1;
-            }
-            if (ret.length > 0) {
-                int size = ret.length * 4;
+            if (current instanceof PackageNode) {
+                // /packages/<pkg name>
+                PackageNode pkgNode = (PackageNode) current;
+                int size = pkgNode.references.size() * 8;
                 ByteBuffer buff = ByteBuffer.allocate(size);
                 buff.order(writer.getByteOrder());
-                for (int val : ret) {
-                    buff.putInt(val);
+                for (PackageNode.PackageReference mod : pkgNode.references.values()) {
+                    buff.putInt(mod.isEmpty ? 1 : 0);
+                    buff.putInt(writer.addString(mod.name));
                 }
                 byte[] arr = buff.array();
                 content.add(arr);
+                current.loc = outLocations.get(current.getPath());
             } else {
-                if (current.isResource) {
-                    // A resource location, remove "/modules"
-                    String s = tree.toResourceName(current);
-                    current.loc = outLocations.get(s);
-                } else {
-                    // "/packages" leaf node, empty "/packages" or empty "/modules" paths
-                    current.loc = outLocations.get(current.getPath());
+                int[] ret = new int[current.children.size()];
+                int i = 0;
+                for (java.util.Map.Entry<String, Node> entry : current.children.entrySet()) {
+                    ret[i] = computeContent(entry.getValue(), outLocations);
+                    i += 1;
                 }
-            }
-            if (current.loc == null && current != tree.getRoot()) {
-                System.err.println("Invalid path in metadata, skipping " + current.getPath());
+                if (ret.length > 0) {
+                    int size = ret.length * 4;
+                    ByteBuffer buff = ByteBuffer.allocate(size);
+                    buff.order(writer.getByteOrder());
+                    for (int val : ret) {
+                        buff.putInt(val);
+                    }
+                    byte[] arr = buff.array();
+                    content.add(arr);
+                } else {
+                    if (current instanceof ResourceNode) {
+                        // A resource location, remove "/modules"
+                        String s = tree.toResourceName(current);
+                        current.loc = outLocations.get(s);
+                    } else {
+                        // empty "/packages" or empty "/modules" paths
+                        current.loc = outLocations.get(current.getPath());
+                    }
+                }
+                if (current.loc == null && current != tree.getRoot()) {
+                    System.err.println("Invalid path in metadata, skipping " + current.getPath());
+                }
             }
             return current.loc == null ? 0 : current.loc.getLocationOffset();
         }

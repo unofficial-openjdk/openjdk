@@ -23,11 +23,14 @@
  * questions.
 */
 
-package jdk.internal.jimage;
+package jdk.tools.jlink.internal;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import jdk.internal.jimage.ImageHeader;
+import jdk.internal.jimage.ImageStream;
+import jdk.internal.jimage.UTF8String;
 
 public final class BasicImageWriter {
 

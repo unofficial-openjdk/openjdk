@@ -34,8 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.Archive.Entry.EntryType;
+import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jar file.

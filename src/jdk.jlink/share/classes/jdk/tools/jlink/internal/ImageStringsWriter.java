@@ -23,10 +23,13 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+package jdk.tools.jlink.internal;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import jdk.internal.jimage.ImageStream;
+import jdk.internal.jimage.ImageStrings;
+import jdk.internal.jimage.UTF8String;
 
 class ImageStringsWriter implements ImageStrings {
     private static final int NOT_FOUND = -1;
