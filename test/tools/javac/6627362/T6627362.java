@@ -67,7 +67,7 @@ public class T6627362 {
         // compile and disassemble E.java, using modified Object.java,
         // check for reference to System.arraycopy
         File x = new File(testSrc, "x");
-        String[] jcArgs = { "-d", ".",
+        String[] jcArgs = { "-d", ".", "-XDnoModules=true", //TODO: noModules, as we are compiling java.lang.Object *outside* of java.base
                             new File(x, "E.java").getPath(),
                             new File(x, "Object.java").getPath()};
         compile(jcArgs);

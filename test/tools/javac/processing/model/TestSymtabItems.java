@@ -83,6 +83,7 @@ public class TestSymtabItems {
             if (f.getName().toLowerCase().contains("methodhandle"))
                 continue;
 
+            f.setAccessible(true);
             Class<?> ft = f.getType();
             if (TypeMirror.class.isAssignableFrom(ft))
                 print(f.getName(), (TypeMirror) f.get(syms), types);

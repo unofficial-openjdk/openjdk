@@ -43,9 +43,7 @@ mylib="$mydir/../lib"
 # dependent jar files for additional dependencies.
 
 if [ "$LANGTOOLS_USE_BOOTCLASSPATH" != "no" ]; then
-   cp=`echo "$mylib"/*.jar |
-       sed -e 's|\([a-z.]*\.jar\) *|\1#PS#|g'`
-   bcp=$cp
+   bcp=-Xoverride:"$mylib"
 fi
 
 # tools currently assumes that assertions are enabled in the launcher
@@ -71,4 +69,4 @@ done
 unset DUALCASE
 
 IFS=$nl
-"#TARGET_JAVA#" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} com.sun.tools.#PROGRAM#.Main ${toolOpts}
+"#TARGET_JAVA#" $bcp ${ea} ${javaOpts} com.sun.tools.#PROGRAM#.Main ${toolOpts}

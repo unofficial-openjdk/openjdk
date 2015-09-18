@@ -31,8 +31,6 @@
  *          jdk.compiler/com.sun.tools.javac.tree
  */
 
-import com.sun.source.tree.*;
-import com.sun.source.util.*;
 import java.io.*;
 import java.lang.annotation.*;
 import java.util.*;
@@ -41,6 +39,9 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.*;
 import javax.tools.*;
+
+import com.sun.source.tree.*;
+import com.sun.source.util.*;
 import com.sun.tools.javac.api.JavacTool;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeInfo;
@@ -48,7 +49,6 @@ import com.sun.tools.javac.tree.TreeInfo;
 @Anno
 @SupportedAnnotationTypes("*")
 public class TestTrees extends AbstractProcessor {
-
     @Anno
     void annoMethod() { }
 
@@ -82,7 +82,10 @@ public class TestTrees extends AbstractProcessor {
             Iterable<? extends JavaFileObject> files =
                 fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
 
-            Iterable<String> opts = Arrays.asList("-d", ".", "-XDcompilePolicy=simple");
+            Iterable<String> opts = Arrays.asList(
+                "-XDaccessInternalAPI",
+                "-d", ".",
+                "-XDcompilePolicy=simple");
 
             System.err.println("simple compilation, no processing");
             JavacTask task = tool.getTask(out, fm, dl, opts, null, files);
@@ -90,7 +93,11 @@ public class TestTrees extends AbstractProcessor {
             if (!task.call())
                 throw new AssertionError("compilation failed");
 
-            opts =  Arrays.asList("-d", ".", "-processorpath", testClassDir, "-processor", self,
+            opts =  Arrays.asList(
+                addExports,
+                "-d", ".",
+                "-processorpath", testClassDir,
+                "-processor", self,
                 "-XDcompilePolicy=simple");
 
             System.err.println();

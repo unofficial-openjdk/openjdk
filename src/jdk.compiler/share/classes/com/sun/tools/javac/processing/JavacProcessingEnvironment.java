@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -41,12 +42,15 @@ import javax.lang.model.element.*;
 import javax.lang.model.util.*;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
+
 import static javax.tools.StandardLocation.*;
 
 import com.sun.source.util.TaskEvent;
 import com.sun.tools.javac.api.MultiTaskListener;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.Types;
@@ -54,6 +58,7 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.model.JavacElements;
@@ -75,10 +80,12 @@ import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.MatchingUtils;
+import com.sun.tools.javac.util.ModuleHelper;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.util.ServiceLoader;
+
 import static com.sun.tools.javac.code.Lint.LintCategory.PROCESSING;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.main.Option.*;
@@ -109,8 +116,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final JavacMessager messager;
     private final JavacElements elementUtils;
     private final JavacTypes typeUtils;
-    private final Types types;
     private final JavaCompiler compiler;
+    private final Modules modules;
+    private final ModuleHelper moduleHelper;
+    private final Types types;
 
     /**
      * Holds relevant state history of which processors have been
@@ -164,6 +173,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final Enter enter;
     private final Completer initialCompleter;
     private final Check chk;
+    private final ModuleSymbol defaultModule;
 
     private final Context context;
 
@@ -201,6 +211,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         messager = new JavacMessager(context, this);
         elementUtils = JavacElements.instance(context);
         typeUtils = JavacTypes.instance(context);
+        modules = Modules.instance(context);
         types = Types.instance(context);
         processorOptions = initProcessorOptions();
         unmatchedProcessorOptions = initUnmatchedProcessorOptions();
@@ -211,7 +222,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         enter = Enter.instance(context);
         initialCompleter = ClassFinder.instance(context).getCompleter();
         chk = Check.instance(context);
+        moduleHelper = ModuleHelper.instance(context);
         initProcessorClassLoader();
+
+        defaultModule = source.allowModules() && options.isUnset("noModules")
+                ? symtab.unnamedModule : symtab.noModule;
     }
 
     public void setProcessors(Iterable<? extends Processor> processors) {
@@ -238,6 +253,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             processorClassLoader = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
                 ? fileManager.getClassLoader(ANNOTATION_PROCESSOR_PATH)
                 : fileManager.getClassLoader(CLASS_PATH);
+
+            moduleHelper.addExports(processorClassLoader);
 
             if (processorClassLoader != null && processorClassLoader instanceof Closeable) {
                 compiler.closeables = compiler.closeables.prepend((Closeable) processorClassLoader);
@@ -434,8 +451,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     Processor processor;
                     try {
                         try {
+                            Class<?> processorClass = processorCL.loadClass(processorName);
+                            ensureReadable(processorClass);
                             processor =
-                                (Processor) (processorCL.loadClass(processorName).newInstance());
+                                (Processor) (processorClass.newInstance());
                         } catch (ClassNotFoundException cnfe) {
                             log.error("proc.processor.not.found", processorName);
                             return false;
@@ -469,6 +488,26 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
         public void remove () {
             throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Ensures that the module of the given class is readable to this
+         * module.
+         */
+        private void ensureReadable(Class<?> targetClass) {
+            try {
+                Method getModuleMethod = Class.class.getMethod("getModule");
+                Object thisModule = getModuleMethod.invoke(this.getClass());
+                Object targetModule = getModuleMethod.invoke(targetClass);
+
+                Class<?> moduleClass = getModuleMethod.getReturnType();
+                Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+                addReadsMethod.invoke(thisModule, targetModule);
+            } catch (NoSuchMethodException e) {
+                // ignore
+            } catch (Exception e) {
+                throw new InternalError(e);
+            }
         }
     }
 
@@ -1001,21 +1040,24 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 if (file.getKind() != JavaFileObject.Kind.CLASS)
                     throw new AssertionError(file);
                 ClassSymbol cs;
+                // TODO: for now, we assume that generated code is in a default module;
+                // in time, we need a way to be able to specify the module for generated code
                 if (isPkgInfo(file, JavaFileObject.Kind.CLASS)) {
                     Name packageName = Convert.packagePart(name);
-                    PackageSymbol p = symtab.enterPackage(packageName);
+                    PackageSymbol p = symtab.enterPackage(defaultModule, packageName);
                     if (p.package_info == null)
-                        p.package_info = symtab.enterClass(Convert.shortName(name), p);
+                        p.package_info = symtab.enterClass(defaultModule, Convert.shortName(name), p);
                     cs = p.package_info;
                     cs.reset();
                     if (cs.classfile == null)
                         cs.classfile = file;
                     cs.completer = initialCompleter;
                 } else {
-                    cs = symtab.enterClass(name);
+                    cs = symtab.enterClass(defaultModule, name);
                     cs.reset();
                     cs.classfile = file;
                     cs.completer = initialCompleter;
+                    cs.owner.members().enter(cs); //XXX - OverwriteBetweenCompilations; syms.getClass is not sufficient anymore
                 }
                 list = list.prepend(cs);
             }
@@ -1024,7 +1066,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
         /** Enter a set of syntax trees. */
         private void enterTrees(List<JCCompilationUnit> roots) {
-            compiler.enterTrees(roots);
+            compiler.enterTrees(compiler.initModules(roots));
         }
 
         /** Run a processing round. */
@@ -1100,11 +1142,12 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             filer.newRound();
             messager.newRound();
             compiler.newRound();
+            modules.newRound();
             types.newRound();
 
             boolean foundError = false;
 
-            for (ClassSymbol cs : symtab.classes.values()) {
+            for (ClassSymbol cs : symtab.getAllClasses()) {
                 if (cs.kind == ERR) {
                     foundError = true;
                     break;
@@ -1112,7 +1155,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             }
 
             if (foundError) {
-                for (ClassSymbol cs : symtab.classes.values()) {
+                for (ClassSymbol cs : symtab.getAllClasses()) {
                     if (cs.classfile != null || cs.kind == ERR) {
                         cs.reset();
                         cs.type = new ClassType(cs.type.getEnclosingType(), null, cs);
@@ -1350,6 +1393,14 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                         node.packge.package_info.reset();
                     }
                     node.packge.reset();
+                }
+                boolean isModuleInfo = node.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
+                if (isModuleInfo) {
+                    node.modle.reset();
+                    node.modle.module_info.reset();
+                    node.modle.module_info.classfile = null;
+                    node.modle.module_info.sourcefile = null;
+                    node.modle.module_info.members_field = WriteableScope.create(node.modle.module_info);
                 }
                 node.packge = null;
                 topLevel = node;
