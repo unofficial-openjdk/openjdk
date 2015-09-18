@@ -26,6 +26,7 @@
  * @bug 8080535
  * @summary Static storages should be initialized with optimal capacity
  * @library /lib/testlibrary
+ * @modules java.base/sun.invoke.anon
  * @build jdk.testlibrary.OptimalCapacity
  * @run main OptimalMapSize
  */

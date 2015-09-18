@@ -38,6 +38,7 @@ import javax.swing.event.TableModelListener;
 @library ../../regtesthelpers
 @modules java.desktop/sun.awt
          java.desktop/java.awt.peer
+@compile/module=java.desktop java/awt/Helper.java
 @build Util
 @run main JTableInGlassPaneOverlapping
  */

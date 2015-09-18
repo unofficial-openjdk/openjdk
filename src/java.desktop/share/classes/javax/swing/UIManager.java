@@ -582,6 +582,7 @@ public class UIManager implements Serializable
         }
         else {
             Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
+            UIManager.class.getModule().addReads(lnfClass.getModule());
             setLookAndFeel((LookAndFeel)(lnfClass.newInstance()));
         }
     }
@@ -1050,6 +1051,7 @@ public class UIManager implements Serializable
             String className = getLAFState().swingProps.getProperty(multiplexingLAFKey, defaultName);
             try {
                 Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
+                UIManager.class.getModule().addReads(lnfClass.getModule());
                 multiLookAndFeel = (LookAndFeel)lnfClass.newInstance();
             } catch (Exception exc) {
                 System.err.println("UIManager: failed loading " + className);
@@ -1384,6 +1386,7 @@ public class UIManager implements Serializable
             String className = p.nextToken();
             try {
                 Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
+                UIManager.class.getModule().addReads(lnfClass.getModule());
                 LookAndFeel newLAF = (LookAndFeel)lnfClass.newInstance();
                 newLAF.initialize();
                 auxLookAndFeels.addElement(newLAF);

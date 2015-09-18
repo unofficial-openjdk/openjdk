@@ -159,6 +159,26 @@ public final class Constructor<T> extends Executable {
     }
 
     @Override
+    @CallerSensitive
+    public void setAccessible(boolean flag) {
+        AccessibleObject.checkPermission();
+        if (flag) {
+            checkCanSetAccessible(Reflection.getCallerClass());
+            if (clazz == Class.class) {
+                // can we change this to InaccessibleObjectException?
+                throw new SecurityException("Cannot make a java.lang.Class"
+                                            + " constructor accessible");
+            }
+        }
+        setAccessible0(flag);
+    }
+
+    @Override
+    void checkCanSetAccessible(Class<?> caller) {
+        checkCanSetAccessible(caller, clazz);
+    }
+
+    @Override
     boolean hasGenericInformation() {
         return (getSignature() != null);
     }
@@ -410,10 +430,8 @@ public final class Constructor<T> extends Executable {
                IllegalArgumentException, InvocationTargetException
     {
         if (!override) {
-            if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class<?> caller = Reflection.getCallerClass();
-                checkAccess(caller, clazz, null, modifiers);
-            }
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, null, modifiers);
         }
         if ((clazz.getModifiers() & Modifier.ENUM) != 0)
             throw new IllegalArgumentException("Cannot reflectively create enum objects");

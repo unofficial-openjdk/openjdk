@@ -28,6 +28,7 @@
 # @bug 4954921 8009259
 # @summary Ensure that if a cleaner throws an exception then the VM exits
 #
+# @modules java.base/sun.misc
 # @build ExitOnThrow
 # @run shell exitOnThrow.sh
 
@@ -39,7 +40,9 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES=`pwd`
 fi
 
-if $TESTJAVA/bin/java ${TESTVMOPTS} -cp $TESTCLASSES ExitOnThrow; then
+EXTRAOPTS="-XaddExports:java.base/sun.misc"
+
+if $TESTJAVA/bin/java ${TESTVMOPTS} ${EXTRAOPTS} -cp $TESTCLASSES ExitOnThrow; then
   echo Failed: VM exited normally
   exit 1
 else

@@ -27,6 +27,7 @@ include LauncherCommon.gmk
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,policytool, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.policytool.PolicyTool"$(COMMA) }',, \
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.policytool/sun.security.tools.policytool.PolicyTool"$(COMMA) }',, \
       $(XLIBS)))
 endif

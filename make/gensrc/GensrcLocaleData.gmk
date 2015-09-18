@@ -42,17 +42,17 @@ LOCALE_FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/java.base/share/classes \
 LOCALE_RESOURCES := $(sort $(subst .properties,,$(subst .java,,$(notdir $(LOCALE_FILES)))))
 
 # Include the list of resources found during the previous compile.
--include $(SUPPORT_OUTPUTDIR)/gensrc/_the.locale_resources
+-include $(GENSRC_OUTPUTDIR)/_the.locale_resources
 
 MISSING_RESOURCES := $(filter-out $(LOCALE_RESOURCES), $(PREV_LOCALE_RESOURCES))
 NEW_RESOURCES := $(filter-out $(PREV_LOCALE_RESOURCES), $(LOCALE_RESOURCES))
 
 ifneq (, $(MISSING_RESOURCES)$(NEW_RESOURCES))
   # There is a difference in the number of supported resources. Trigger a regeneration.
-  $(shell $(RM) $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java \
-    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java \
-    $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/util/cldr/CLDRBaseLocaleDataMetaInfo.java \
-    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.localedata/sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo_jdk_localedata.java)
+  $(shell $(RM) $(GENSRC_OUTPUTDIR)/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java \
+    $(GENSRC_OUTPUTDIR)/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java \
+    $(GENSRC_OUTPUTDIR)/java.base/sun/util/cldr/CLDRBaseLocaleDataMetaInfo.java \
+    $(GENSRC_OUTPUTDIR)/jdk.localedata/sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo_jdk_localedata.java)
 endif
 
 # The base locales
@@ -119,38 +119,25 @@ $(eval $(call CaptureLocale,CalendarData))
 SED_BASEARGS += -e 's/$(HASH)AvailableLocales_Locales$(HASH)/$(sort $(ALL_BASE_LOCALES))/g'
 SED_NONBASEARGS += -e 's/$(HASH)AvailableLocales_Locales$(HASH)/$(sort $(ALL_NON_BASE_LOCALES))/g'
 
-$(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java: \
+$(GENSRC_OUTPUTDIR)/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java: \
     $(JDK_TOPDIR)/src/java.base/share/classes/sun/util/locale/provider/LocaleDataMetaInfo-XLocales.java.template
 	$(MKDIR) -p $(@D)
 	$(ECHO) Creating sun/util/locale/provider/BaseLocaleDataMetaInfo.java from $(words $(LOCALE_RESOURCES)) found resources.
 	$(PRINTF) "PREV_LOCALE_RESOURCES:=$(LOCALE_RESOURCES)" \
-	    > $(SUPPORT_OUTPUTDIR)/gensrc/_the.locale_resources
+	    > $(GENSRC_OUTPUTDIR)/_the.locale_resources
 	$(SED) $(SED_BASEARGS) $< > $@
 
-$(SUPPORT_OUTPUTDIR)/gensrc/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java: \
+$(GENSRC_OUTPUTDIR)/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java: \
     $(JDK_TOPDIR)/src/java.base/share/classes/sun/util/locale/provider/LocaleDataMetaInfo-XLocales.java.template
 	$(MKDIR) -p $(@D)
 	$(ECHO) Creating sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java from $(words $(LOCALE_RESOURCES)) found resources.
 	$(PRINTF) "PREV_LOCALE_RESOURCES:=$(LOCALE_RESOURCES)" \
-	    > $(SUPPORT_OUTPUTDIR)/gensrc/_the.locale_resources
+	    > $(GENSRC_OUTPUTDIR)/_the.locale_resources
 	$(SED) $(SED_NONBASEARGS) $< > $@
 
-GENSRC_BASELOCALEDATA := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java
-GENSRC_LOCALEDATA := $(SUPPORT_OUTPUTDIR)/gensrc/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java
+GENSRC_BASELOCALEDATA := $(GENSRC_OUTPUTDIR)/java.base/sun/util/locale/provider/BaseLocaleDataMetaInfo.java
+GENSRC_LOCALEDATA := $(GENSRC_OUTPUTDIR)/jdk.localedata/sun/util/resources/provider/NonBaseLocaleDataMetaInfo.java
 
-################################################################################
-
-GENSRC_CRBC_DST := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/util/CoreResourceBundleControl.java
-GENSRC_CRBC_CMD := $(JDK_TOPDIR)/make/scripts/localelist.sh
-
-JRE_NONEXIST_LOCALES := en en_US de_DE es_ES fr_FR it_IT ja_JP ko_KR sv_SE zh
-
-$(GENSRC_CRBC_DST): $(JDK_TOPDIR)/src/java.base/share/classes/sun/util/CoreResourceBundleControl-XLocales.java.template \
-    $(GENSRC_CRBC_CMD)
-	$(MKDIR) -p $(@D)
-	NAWK="$(NAWK)" SED="$(SED)" $(SH) $(GENSRC_CRBC_CMD) "$(JRE_NONEXIST_LOCALES)" $< $@
-
-GENSRC_BASELOCALEDATA += $(GENSRC_CRBC_DST)
 GENSRC_JAVA_BASE += $(GENSRC_BASELOCALEDATA)
 GENSRC_JDK_LOCALEDATA += $(GENSRC_LOCALEDATA)
 

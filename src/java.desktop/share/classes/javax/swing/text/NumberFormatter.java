@@ -437,6 +437,8 @@ public class NumberFormatter extends InternationalFormatter {
                                               new Class<?>[] { String.class });
                         if (cons != null) {
                             SwingUtilities2.checkAccess(cons.getModifiers());
+                            NumberFormatter.class.getModule().addReads(
+                                    cons.getDeclaringClass().getModule());
                             return cons.newInstance(new Object[]{string});
                         }
                     } catch (Throwable ex) { }

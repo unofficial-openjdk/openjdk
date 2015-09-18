@@ -30,7 +30,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNET, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(LIBNET_SRC_DIRS), \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(HEADERS_OUTPUTDIR)/java.base \
         $(LIBJAVA_HEADER_FLAGS) $(addprefix -I, $(LIBNET_SRC_DIRS)), \
     DISABLED_WARNINGS_gcc := format-nonliteral, \
     DISABLED_WARNINGS_clang := parentheses-equality constant-logical-operand, \
@@ -51,7 +51,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNET, \
         -D "JDK_FNAME=net.dll" \
         -D "JDK_INTERNAL_NAME=net" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnet, \
+    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libnet, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
 $(BUILD_LIBNET): $(BUILD_LIBJAVA)

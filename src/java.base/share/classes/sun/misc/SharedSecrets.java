@@ -45,6 +45,8 @@ public class SharedSecrets {
     private static final Unsafe unsafe = Unsafe.getUnsafe();
     private static JavaUtilJarAccess javaUtilJarAccess;
     private static JavaLangAccess javaLangAccess;
+    private static JavaLangModuleAccess javaLangModuleAccess;
+    private static JavaLangReflectModuleAccess javaLangReflectModuleAccess;
     private static JavaLangRefAccess javaLangRefAccess;
     private static JavaIOAccess javaIOAccess;
     private static JavaNetAccess javaNetAccess;
@@ -55,6 +57,7 @@ public class SharedSecrets {
     private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaUtilZipFileAccess javaUtilZipFileAccess;
+    private static JavaUtilResourceBundleAccess javaUtilResourceBundleAccess;
     private static JavaAWTAccess javaAWTAccess;
     private static JavaAWTFontAccess javaAWTFontAccess;
     private static JavaBeansAccess javaBeansAccess;
@@ -78,6 +81,24 @@ public class SharedSecrets {
 
     public static JavaLangAccess getJavaLangAccess() {
         return javaLangAccess;
+    }
+
+    public static void setJavaLangModuleAccess(JavaLangModuleAccess jlrma) {
+        javaLangModuleAccess = jlrma;
+    }
+
+    public static JavaLangModuleAccess getJavaLangModuleAccess() {
+        return javaLangModuleAccess;
+    }
+
+    public static void setJavaLangReflectModuleAccess(JavaLangReflectModuleAccess jlrma) {
+        javaLangReflectModuleAccess = jlrma;
+    }
+
+    public static JavaLangReflectModuleAccess getJavaLangReflectModuleAccess() {
+        if (javaLangReflectModuleAccess == null)
+            unsafe.ensureClassInitialized(java.lang.reflect.Module.class);
+        return javaLangReflectModuleAccess;
     }
 
     public static void setJavaLangRefAccess(JavaLangRefAccess jlra) {
@@ -211,5 +232,13 @@ public class SharedSecrets {
 
     public static void setJavaBeansAccess(JavaBeansAccess access) {
         javaBeansAccess = access;
+    }
+
+    public static JavaUtilResourceBundleAccess getJavaUtilResourceBundleAccess() {
+        return javaUtilResourceBundleAccess;
+    }
+
+    public static void setJavaUtilResourceBundleAccess(JavaUtilResourceBundleAccess access) {
+        javaUtilResourceBundleAccess = access;
     }
 }
