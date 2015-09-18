@@ -27,6 +27,7 @@ package javax.xml.soap;
 
 import java.io.*;
 import java.util.Properties;
+import com.sun.xml.internal.ws.Modules;
 
 
 class FactoryFinder {
@@ -44,6 +45,7 @@ class FactoryFinder {
     {
         try {
             Class spiClass = safeLoadClass(className, classLoader);
+            Modules.ensureReadable(FactoryFinder.class, spiClass);
             return spiClass.newInstance();
 
         } catch (ClassNotFoundException x) {
