@@ -27,6 +27,7 @@ package jdk.internal.jimage.decompressor;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -71,8 +72,9 @@ public final class Decompressor {
                     String storedContent = header.getStoredContent(provider);
                     Properties props = new Properties();
                     if (storedContent != null) {
-                        try (ByteArrayInputStream stream =
-                                new ByteArrayInputStream(storedContent.getBytes());) {
+                        try (ByteArrayInputStream stream
+                                = new ByteArrayInputStream(storedContent.
+                                        getBytes(StandardCharsets.UTF_8));) {
                             props.loadFromXML(stream);
                         }
                     }

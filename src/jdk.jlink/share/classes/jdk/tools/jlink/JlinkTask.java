@@ -65,9 +65,7 @@ import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 
 
 /**
@@ -476,8 +474,6 @@ public class JlinkTask {
     }
 
     private static class ImageFileHelper {
-        final Set<ModuleDescriptor> modules;
-        final Map<String, Path> modsPaths;
         final Path output;
         final Set<Archive> archives;
         final Layer pluginsLayer;
@@ -492,8 +488,6 @@ public class JlinkTask {
                         ByteOrder order)
             throws IOException
         {
-            this.modules = cf.descriptors();
-            this.modsPaths = modsPaths;
             this.output = output;
             this.pluginsLayer = pluginsLayer;
             this.bom = bom;
@@ -505,7 +499,7 @@ public class JlinkTask {
 
         void createModularImage(Properties properties) throws Exception {
             ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output, modsPaths,
+                    parseConfiguration(output,
                             properties, pluginsLayer,
                             bom);
             ImageFileCreator.create(archives, order, pc);
@@ -513,7 +507,7 @@ public class JlinkTask {
 
         void createModularImage(PluginsConfiguration plugins) throws Exception {
             ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output, modsPaths, plugins, pluginsLayer, bom);
+                    parseConfiguration(output, plugins, pluginsLayer, bom);
             ImageFileCreator.create(archives, order, pc);
         }
 

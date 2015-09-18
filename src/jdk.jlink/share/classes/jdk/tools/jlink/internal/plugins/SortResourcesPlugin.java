@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -57,9 +58,10 @@ final class SortResourcesPlugin implements ResourcePlugin {
                 File f = new File(filePath);
                 if (f.exists()) {
                     isf = true;
-                    try (FileInputStream fis = new FileInputStream(f)) {
-                        BufferedReader reader
-                                = new BufferedReader(new InputStreamReader(fis));
+                    try (FileInputStream fis = new FileInputStream(f);
+                            InputStreamReader ins
+                            = new InputStreamReader(fis, StandardCharsets.UTF_8);
+                            BufferedReader reader = new BufferedReader(ins)) {
                         paths = reader.lines().collect(Collectors.toList());
                     }
                 }

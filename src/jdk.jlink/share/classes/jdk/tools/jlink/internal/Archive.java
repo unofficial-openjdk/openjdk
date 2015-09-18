@@ -26,6 +26,7 @@ package jdk.tools.jlink.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -55,6 +56,10 @@ public interface Archive {
         private final String path;
 
         public Entry(Archive archive, String path, String name, EntryType type) {
+            Objects.requireNonNull(archive);
+            Objects.requireNonNull(path);
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(type);
             this.archive = archive;
             this.path = path;
             this.name = name;

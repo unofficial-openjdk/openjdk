@@ -114,7 +114,7 @@ public final class ImageResourcesTree {
          * A reference to a package. Empty packages can be located inside one or
          * more modules. A package with classes exist in only one module.
          */
-        final class PackageReference implements Comparable<PackageReference> {
+        final static class PackageReference {
 
             private final String name;
             private final boolean isEmpty;
@@ -123,11 +123,6 @@ public final class ImageResourcesTree {
                 Objects.requireNonNull(name);
                 this.name = name;
                 this.isEmpty = isEmpty;
-            }
-
-            @Override
-            public int compareTo(PackageReference t) {
-                return name.compareTo(t.name);
             }
 
             @Override
@@ -322,7 +317,6 @@ public final class ImageResourcesTree {
         }
 
         public String removeRadical(Node node) {
-            String s = node.getPath();
             return removeRadical(node.getPath(), "/" + MODULES);
         }
 

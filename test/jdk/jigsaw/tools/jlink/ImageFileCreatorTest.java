@@ -211,7 +211,7 @@ public class ImageFileCreatorTest {
         };
 
         ImagePluginStack stack = new ImagePluginStack(noopBuilder, Collections.emptyList(),
-                null, Collections.emptyList(), "", Collections.emptyMap());
+                null, Collections.emptyList(), "");
 
         ImageFileCreator.create(archives, ByteOrder.nativeOrder(), stack);
     }

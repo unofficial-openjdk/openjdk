@@ -82,14 +82,14 @@ public abstract class CmdPluginProvider extends PluginProvider {
             options = getAdditionalOptions().keySet();
         }
         Map<String, String> otherOptions = new HashMap<>();
-        for (String a : config.keySet()) {
-            if (options.contains(a)) {
-                otherOptions.put(a, config.get(a));
+        for (Entry<String, String> a : config.entrySet()) {
+            if (options.contains(a.getKey())) {
+                otherOptions.put(a.getKey(), a.getValue());
                 continue;
             }
-            switch (a) {
+            switch (a.getKey()) {
                 case TOOL_ARGUMENT_PROPERTY: {
-                    arguments = config.get(a).
+                    arguments = a.getValue().
                             split(",");
                     for (int i = 0; i < arguments.length; i++) {
                         arguments[i] = arguments[i].trim();

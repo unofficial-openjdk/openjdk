@@ -131,7 +131,7 @@ public final class ImageLocationWriter extends ImageLocationBase {
             return false;
         }
 
-        ImageLocation other = (ImageLocation)obj;
+        ImageLocationWriter other = (ImageLocationWriter) obj;
 
         return getModuleOffset() == other.getModuleOffset() &&
                getParentOffset() == other.getParentOffset() &&

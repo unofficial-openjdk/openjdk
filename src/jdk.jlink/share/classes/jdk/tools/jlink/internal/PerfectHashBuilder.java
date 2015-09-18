@@ -78,6 +78,18 @@ public class PerfectHashBuilder<E> {
         public int hashCode() {
             return key.hashCode();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            if (!(other instanceof Entry)) {
+                return false;
+            }
+            Entry<?> entry = (Entry<?>) other;
+            return entry.key.equals(key);
+        }
     }
 
     static class Bucket<E> implements Comparable<Bucket<E>> {
@@ -127,11 +139,11 @@ public class PerfectHashBuilder<E> {
     }
 
     public int[] getRedirect() {
-        return redirect;
+        return redirect.clone();
     }
 
     public Entry<E>[] getOrder() {
-        return order;
+        return order.clone();
     }
 
     public Entry<E> put(String key, E value) {
@@ -178,7 +190,7 @@ public class PerfectHashBuilder<E> {
                     }
 
                     order[free] = bucket.getFirst();
-                    redirect[bucket.hashCode() % count] = -1 - free;
+                    redirect[(bucket.hashCode() & 0x7FFFFFFF) % count] = -1 - free;
                     free++;
                 }
             }
@@ -194,7 +206,7 @@ public class PerfectHashBuilder<E> {
         Bucket<E>[] buckets = (Bucket<E>[])Array.newInstance(bucketComponent, count);
 
         map.values().stream().forEach((entry) -> {
-            int index = entry.hashCode() % count;
+            int index = (entry.hashCode() & 0x7FFFFFFF) % count;
             Bucket<E> bucket = buckets[index];
 
             if (bucket == null) {
@@ -246,7 +258,7 @@ public class PerfectHashBuilder<E> {
                 undo.add(index);
             }
 
-            redirect[bucket.hashCode() % count] = seed;
+            redirect[(bucket.hashCode() & 0x7FFFFFFF) % count] = seed;
 
             break;
         }

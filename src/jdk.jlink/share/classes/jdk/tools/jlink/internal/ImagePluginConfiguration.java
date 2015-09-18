@@ -74,6 +74,25 @@ public final class ImagePluginConfiguration {
             return diff;
         }
 
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            if (!(other instanceof OrderedPlugin)) {
+                return false;
+            }
+            OrderedPlugin op = (OrderedPlugin) other;
+            return op.plugin.equals(plugin) && op.order == order;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 71 * hash + this.order;
+            hash = 71 * hash + Objects.hashCode(this.plugin);
+            return hash;
+        }
     }
 
     public static final String ON_ARGUMENT = "on";
@@ -145,7 +164,7 @@ public final class ImagePluginConfiguration {
      */
     public static ImagePluginStack parseConfiguration(Properties p)
             throws Exception {
-        return parseConfiguration(null, Collections.emptyMap(), p, Layer.boot(), null);
+        return parseConfiguration(null, p, Layer.boot(), null);
     }
 
     /*
@@ -153,7 +172,6 @@ public final class ImagePluginConfiguration {
      *
      */
     public static ImagePluginStack parseConfiguration(Path outDir,
-            Map<String, Path> mods,
             Jlink.PluginsConfiguration plugins,
             Layer pluginsLayer,
             String bom)
@@ -274,7 +292,7 @@ public final class ImagePluginConfiguration {
                     pluginsLayer);
         }
         return new ImagePluginStack(builder, resourcePluginsList,
-                lastSorter, filePluginsList, bom, mods);
+                lastSorter, filePluginsList, bom);
     }
 
     private static boolean isResourceProvider(PluginProvider prov) {
@@ -294,7 +312,7 @@ public final class ImagePluginConfiguration {
             return index;
         }
         // If non null category and not absolute, get index within category
-        if (category != null && !absolute) {
+        if (category != null) {
             String prop = radical + category + "." + index;
             return getAbsoluteIndex(prop, radical, ranges);
         }
@@ -314,7 +332,6 @@ public final class ImagePluginConfiguration {
      * Create a stack of plugins from a configuration file.
      * @param outDir The directory where to generate the image.
      * Used to build an ImageBuilder.
-     * @param mods
      * @param p Properties file.
      * @param pluginsLayer Layer to retrieve plugins
      * @param bom The tooling config data
@@ -322,13 +339,12 @@ public final class ImagePluginConfiguration {
      * @throws Exception
      */
     public static ImagePluginStack parseConfiguration(Path outDir,
-            Map<String, Path> mods,
             Properties p,
             Layer pluginsLayer,
             String bom)
             throws Exception {
         if (p == null) {
-            return parseConfiguration(outDir, mods,
+            return parseConfiguration(outDir,
                     (Jlink.PluginsConfiguration) null, pluginsLayer, bom);
         }
         String lastSorterName = (String) p.remove(RESOURCES_LAST_SORTER_PROPERTY);
@@ -350,7 +366,7 @@ public final class ImagePluginConfiguration {
         Map<Object, Object> builderConfig = filter(p, builderName);
         Jlink.PluginsConfiguration config = new Jlink.PluginsConfiguration(lst,
                 new Jlink.PluginConfiguration(builderName, builderConfig), lastSorterName);
-        return parseConfiguration(outDir, mods, config, pluginsLayer, bom);
+        return parseConfiguration(outDir, config, pluginsLayer, bom);
     }
 
     private static Map<Object, Object> filter(Properties p, String name) {

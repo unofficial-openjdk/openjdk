@@ -80,8 +80,7 @@ public final class BasicImageWriter {
     }
 
     public String getString(int offset) {
-        UTF8String utf8 = strings.get(offset);
-        return utf8 != null? utf8.toString() : null;
+        return strings.get(offset).toString();
     }
 
     public void addLocation(String fullname, long contentOffset,
@@ -104,8 +103,8 @@ public final class BasicImageWriter {
     private void generatePerfectHash() {
         PerfectHashBuilder<ImageLocationWriter> builder =
             new PerfectHashBuilder<>(
-                new PerfectHashBuilder.Entry<ImageLocationWriter>().getClass(),
-                new PerfectHashBuilder.Bucket<ImageLocationWriter>().getClass());
+                        PerfectHashBuilder.Entry.class, // PerfectHashBuilder.Entry<ImageLocationWriter>().getClass()
+                        PerfectHashBuilder.Bucket.class); // PerfectHashBuilder.Bucket<ImageLocationWriter>().getClass()
 
         input.forEach((location) -> {
             builder.put(location.getFullName(), location);
@@ -185,7 +184,7 @@ public final class BasicImageWriter {
     }
 
     ImageLocationWriter find(UTF8String key) {
-        int index = redirect[key.hashCode() % length];
+        int index = redirect[(key.hashCode() & 0x7FFFFFFF) % length];
 
         if (index < 0) {
             index = -index - 1;

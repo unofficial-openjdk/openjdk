@@ -87,20 +87,26 @@ public class ForNameFolding implements MethodOptimizer {
 
     private void logNotReplaced(String type) {
         numNotReplaced += 1;
-        logger.accept(type + " not resolved");
+        if (logger != null) {
+            logger.accept(type + " not resolved");
+        }
     }
 
     private void logRemoval(String content) {
         numRemovedHandlers += 1;
-        logger.accept(content);
+        if (logger != null) {
+            logger.accept(content);
+        }
     }
 
     @Override
     public void close() throws IOException {
-        logger.accept("Class.forName Folding results:\n " + numReplacement
-                + " removed reflection. " + numRemovedHandlers
-                + " removed exception handlers."
-                + numNotReplaced + " types unknown. "
-                + instructionsRemoved + " instructions removed\n");
+        if (logger != null) {
+            logger.accept("Class.forName Folding results:\n " + numReplacement
+                    + " removed reflection. " + numRemovedHandlers
+                    + " removed exception handlers."
+                    + numNotReplaced + " types unknown. "
+                    + instructionsRemoved + " instructions removed\n");
+        }
     }
 }

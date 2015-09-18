@@ -81,7 +81,7 @@ public class CompressIndexes {
         ByteBuffer buffer = ByteBuffer.allocate(INTEGER_SIZE);
         if (isCompressed(b1)) { // compressed
             int length = getLength(b1);
-            byte clearedValue = b1 &= 0x1F;
+            byte clearedValue = (byte) (b1 & 0x1F);
 
             int start = INTEGER_SIZE - length;
             buffer.put(start, clearedValue);

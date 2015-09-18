@@ -53,7 +53,6 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
-import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
 import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
@@ -67,7 +66,7 @@ public final class TaskHelper {
     private static final String DEFAULTS_PROPERTY = "jdk.jlink.defaults";
     private static final String CONFIGURATION = "configuration";
 
-    public class BadArgs extends Exception {
+    public final class BadArgs extends Exception {
 
         static final long serialVersionUID = 8765093759964640721L;
 
@@ -149,7 +148,7 @@ public final class TaskHelper {
         }
     }
 
-    private class PluginsOptions {
+    private final class PluginsOptions {
 
         private static final String PLUGINS_PATH = "--plugins-modulepath";
 
@@ -326,7 +325,7 @@ public final class TaskHelper {
         }
     }
 
-    private class ResourceBundleHelper {
+    private static final class ResourceBundleHelper {
 
         private final ResourceBundle bundle;
         private final ResourceBundle pluginBundle;
@@ -354,7 +353,7 @@ public final class TaskHelper {
 
     }
 
-    public class OptionsHelper<T> {
+    public final class OptionsHelper<T> {
 
         private final List<Option<T>> options;
         private String[] expandedCommand;
@@ -449,16 +448,6 @@ public final class TaskHelper {
                 expandedCommand = ret;
             }
             return ret;
-        }
-        private Jlink.JlinkConfiguration config;
-        private List<Jlink.StackedPluginConfiguration> plugins;
-        private Jlink.PluginConfiguration imageBuilder;
-
-        public void handleOptions(T task, Jlink.JlinkConfiguration config, List<Jlink.StackedPluginConfiguration> plugins,
-                Jlink.PluginConfiguration imageBuilder) {
-            this.config = config;
-            this.plugins = plugins;
-            this.imageBuilder = imageBuilder;
         }
 
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
@@ -812,6 +801,9 @@ public final class TaskHelper {
         Configuration cf
             = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
         cf = cf.bind();
+        // The creation of this classloader is done outside privileged block in purpose
+        // If a security manager is set, then permission must be granted to jlink
+        // codebase to create a classloader. This is the expected behavior.
         ClassLoader cl = new ModuleClassLoader(cf);
         return Layer.create(cf, mn -> cl);
     }

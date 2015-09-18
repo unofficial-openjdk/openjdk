@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.Decompressor;
-import jdk.internal.jimage.decompressor.ResourceDecompressor.StringsProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
@@ -56,7 +55,7 @@ import jdk.tools.jlink.plugins.StringTable;
  */
 public final class ImagePluginStack {
 
-    private final class OrderedResourcePool extends ResourcePoolImpl {
+    private static final class OrderedResourcePool extends ResourcePoolImpl {
 
         private final List<Resource> orderedList = new ArrayList<>();
 
@@ -81,7 +80,7 @@ public final class ImagePluginStack {
         }
     }
 
-    private final class CheckOrderResourcePool extends ResourcePoolImpl {
+    private final static class CheckOrderResourcePool extends ResourcePoolImpl {
 
         private final List<Resource> orderedList;
         private int currentIndex;
@@ -108,7 +107,7 @@ public final class ImagePluginStack {
         }
     }
 
-    private final class PreVisitStrings implements StringTable {
+    private static final class PreVisitStrings implements StringTable {
 
         private int currentid = 0;
         private final Map<String, Integer> stringsUsage = new HashMap<>();
@@ -162,21 +161,18 @@ public final class ImagePluginStack {
     private final ImageBuilder imageBuilder;
 
     private final String bom;
-    private final Map<String, Path> mods;
 
     public ImagePluginStack(String bom) {
-        this(null, Collections.emptyList(), null, Collections.emptyList(), null,
-                Collections.emptyMap());
+        this(null, Collections.emptyList(), null, Collections.emptyList(), null);
     }
 
     public ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
             List<ImageFilePlugin> filePlugins,
-            String bom, Map<String, Path> mods) {
+            String bom) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
-        Objects.requireNonNull(mods);
         this.lastSorter = lastSorter;
         for (ResourcePlugin p : resourcePlugins) {
             Objects.requireNonNull(p);
@@ -191,7 +187,6 @@ public final class ImagePluginStack {
         }
         this.imageBuilder = imageBuilder;
         this.bom = bom;
-        this.mods = mods;
     }
 
     public DataOutputStream getJImageFileOutputStream() throws IOException {
@@ -261,7 +256,7 @@ public final class ImagePluginStack {
         return current;
     }
 
-    private class RetrieverImpl implements ImageBuilder.ResourceRetriever {
+    private static final class RetrieverImpl implements ImageBuilder.ResourceRetriever {
 
         private final ResourcePool resources;
         private final BasicImageWriter writer;

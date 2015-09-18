@@ -40,29 +40,18 @@ final class ZipDecompressor implements ResourceDecompressor {
         return ZipDecompressorFactory.NAME;
     }
 
-    static byte[] decompress(byte[] bytesIn, int offset) {
+    static byte[] decompress(byte[] bytesIn, int offset) throws Exception {
         Inflater inflater = new Inflater();
         inflater.setInput(bytesIn, offset, bytesIn.length - offset);
         ByteArrayOutputStream stream = new ByteArrayOutputStream(bytesIn.length - offset);
         byte[] buffer = new byte[1024];
 
         while (!inflater.finished()) {
-            int count;
-
-            try {
-                count = inflater.inflate(buffer);
-            } catch (DataFormatException ex) {
-                return null;
-            }
-
+            int count = inflater.inflate(buffer);
             stream.write(buffer, 0, count);
         }
 
-        try {
-            stream.close();
-        } catch (IOException ex) {
-            return null;
-        }
+        stream.close();
 
         byte[] bytesOut = stream.toByteArray();
         inflater.end();

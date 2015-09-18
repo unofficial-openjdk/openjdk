@@ -36,7 +36,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import java.util.Objects;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePool;
@@ -50,7 +50,7 @@ import jdk.tools.jlink.plugins.PluginProvider;
  */
 public class FileCopierProvider extends CmdImageFilePluginProvider {
 
-    private static class ImageFileImpl extends ImageFile {
+    private static final class ImageFileImpl extends ImageFile {
 
         private final Path file;
 
@@ -75,7 +75,7 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
 
     }
 
-    private static class SymImageFileImpl extends SymImageFile {
+    private static final class SymImageFileImpl extends SymImageFile {
 
         private final Path file;
         public SymImageFileImpl(String targetPath, Path file, String module,
@@ -100,7 +100,7 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
 
     }
 
-    private static class DirectoryCopy implements FileVisitor<Path> {
+    private static final class DirectoryCopy implements FileVisitor<Path> {
 
         private final Path source;
         private final ImageFilePool pool;
@@ -122,12 +122,17 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
         @Override
         public FileVisitResult visitFile(Path file,
                 BasicFileAttributes attrs) throws IOException {
+            Objects.requireNonNull(file);
+            Objects.requireNonNull(attrs);
             String path = targetDir + "/" + source.relativize(file);
             if (attrs.isSymbolicLink()) {
                 Path symTarget = Files.readSymbolicLink(file);
                 if (!Files.exists(symTarget)) {
                     // relative to file parent?
-                    symTarget = file.getParent().resolve(symTarget);
+                    Path parent = file.getParent();
+                    if (parent != null) {
+                        symTarget = parent.resolve(symTarget);
+                    }
                 }
                 if (!Files.exists(symTarget)) {
                     System.err.println("WARNING: Skipping sym link, target "
@@ -136,7 +141,7 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
                 }
                 SymImageFileImpl impl = new SymImageFileImpl(symTarget.toString(),
                         file, "$jlink-file-copier",
-                        path, file.getFileName().toString(),
+                        path, Objects.requireNonNull(file.getFileName()).toString(),
                         ImageFile.ImageFileType.OTHER);
                 symlinks.add(impl);
             } else {
@@ -163,8 +168,11 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
 
     private static void addFile(ImageFilePool pool, Path file, String path)
             throws IOException {
+        Objects.requireNonNull(pool);
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(path);
         ImageFileImpl impl = new ImageFileImpl(file, "$jlink-file-copier",
-                path, file.getFileName().toString(),
+                path, Objects.requireNonNull(file.getFileName()).toString(),
                 ImageFile.ImageFileType.OTHER);
         try {
             pool.addFile(impl);
@@ -173,12 +181,13 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
         }
     }
 
-    public class FileCopier implements ImageFilePlugin {
-        class CopiedFile {
+    public static final class FileCopier implements ImageFilePlugin {
 
+        private static final class CopiedFile {
             Path source;
             Path target;
         }
+
         private final List<CopiedFile> files = new ArrayList<>();
 
         public FileCopier(String[] argument) {

@@ -336,7 +336,7 @@ public final class AsmPools {
      * @return The module pool array.
      */
     public AsmModulePool[] getModulePools() {
-        return poolsArray;
+        return poolsArray.clone();
     }
 
     /**

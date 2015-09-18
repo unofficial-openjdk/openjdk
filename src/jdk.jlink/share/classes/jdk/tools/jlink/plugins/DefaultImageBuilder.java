@@ -249,12 +249,16 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     private void writeEntry(InputStream in, Path dstFile) throws IOException {
-        Files.createDirectories(dstFile.getParent());
+        Objects.requireNonNull(in);
+        Objects.requireNonNull(dstFile);
+        Files.createDirectories(Objects.requireNonNull(dstFile.getParent()));
         Files.copy(in, dstFile);
     }
 
     private void writeSymEntry(Path dstFile, Path target) throws IOException {
-        Files.createDirectories(dstFile.getParent());
+        Objects.requireNonNull(dstFile);
+        Objects.requireNonNull(target);
+        Files.createDirectories(Objects.requireNonNull(dstFile.getParent()));
         Files.createLink(dstFile, target);
     }
 

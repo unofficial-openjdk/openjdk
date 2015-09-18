@@ -68,7 +68,7 @@ public final class CompressedResourceHeader {
     }
 
     public String getStoredContent(StringsProvider provider) {
-        Objects.nonNull(provider);
+        Objects.requireNonNull(provider);
         if(contentOffset == -1) {
             return null;
         }

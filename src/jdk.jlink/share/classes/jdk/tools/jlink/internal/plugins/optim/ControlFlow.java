@@ -449,7 +449,7 @@ public final class ControlFlow {
             return false;
         }
 
-        private class StackItem {
+        private static final class StackItem {
 
             private final InstructionNode instr;
             private final Block currentBlock;

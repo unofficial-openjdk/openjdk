@@ -29,7 +29,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.StreamTokenizer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,10 +75,12 @@ public class CommandLine {
     }
 
     private static void loadCmdFile(String name, List<String> args)
-        throws IOException
-    {
-        try (Reader r = new BufferedReader(new FileReader(name))) {
-            StreamTokenizer st = new StreamTokenizer(r);
+            throws IOException {
+        try (FileInputStream fis = new FileInputStream(name);
+                InputStreamReader ins
+                = new InputStreamReader(fis, StandardCharsets.UTF_8);
+                BufferedReader reader = new BufferedReader(ins)) {
+            StreamTokenizer st = new StreamTokenizer(reader);
             st.resetSyntax();
             st.wordChars(' ', 255);
             st.whitespaceChars(0, ' ');

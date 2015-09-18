@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal;
 
 import jdk.tools.jlink.internal.JarArchive;
 import java.nio.file.Path;
+import java.util.Objects;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
@@ -44,7 +45,7 @@ public class JmodArchive extends JarArchive {
 
     public JmodArchive(String mn, Path jmod) {
         super(mn, jmod);
-        String filename = jmod.getFileName().toString();
+        String filename = Objects.requireNonNull(jmod.getFileName()).toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
     }
