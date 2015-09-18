@@ -29,6 +29,7 @@
   @modules java.desktop/java.awt.peer
            java.desktop/sun.awt
   @library ../../regtesthelpers
+  @compile/module=java.desktop java/awt/Helper.java
   @build Util UtilInternal
   @run main EmbeddedFrameTest1
 */

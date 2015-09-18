@@ -34,6 +34,7 @@ import java.awt.image.BufferedImage;
  *          are added.
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
  * @library ../../../../lib/testlibrary ../
+ * @compile/module=java.desktop java/awt/Helper.java
  * @build ExtendedRobot SystemTrayIconHelper
  * @run main ActionEventMask
  */

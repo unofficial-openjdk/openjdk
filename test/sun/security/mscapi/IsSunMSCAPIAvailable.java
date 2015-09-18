@@ -43,10 +43,6 @@ public class IsSunMSCAPIAvailable {
             return;
         }
 
-        // Dynamically register the SunMSCAPI provider
-        Security.addProvider(new sun.security.mscapi.SunMSCAPI());
-
-
         Provider p = Security.getProvider("SunMSCAPI");
 
         System.out.println("SunMSCAPI provider classname is " +

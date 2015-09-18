@@ -371,8 +371,8 @@ java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java generic-
 # 8031482
 sun/tools/jcmd/TestJcmdSanity.java				windows-all
 
-# 8072131
-sun/tools/jmap/heapconfig/JMapHeapConfigTest.java macosx-all
+# 8072131, 8132452
+sun/tools/jmap/heapconfig/JMapHeapConfigTest.java generic-all
 
 # 8046285
 sun/tools/jstatd/TestJstatdExternalRegistry.java                generic-all
@@ -388,5 +388,8 @@ sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    generic-all
 
 # 8132648
 sun/tools/jhsdb/BasicLauncherTest.java                  generic-all
+
+# 8059035
+sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 
 ############################################################################
