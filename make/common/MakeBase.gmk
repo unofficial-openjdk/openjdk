@@ -41,6 +41,29 @@ endif
 # next make invocation.
 .DELETE_ON_ERROR:
 
+################################################################################
+# Definitions for special characters
+################################################################################
+
+# When calling macros, the spaces between arguments are
+# often semantically important! Sometimes we need to subst
+# spaces and commas, therefore we need the following macros.
+X:=
+SPACE:=$(X) $(X)
+COMMA:=,
+DOLLAR:=$$
+HASH:=\#
+LEFT_PAREN:=(
+RIGHT_PAREN:=)
+SQUOTE:='
+#'
+DQUOTE:="
+#"
+define NEWLINE
+
+
+endef
+
 ##############################
 # Functions
 ##############################
