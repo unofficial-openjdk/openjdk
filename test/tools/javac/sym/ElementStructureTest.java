@@ -256,7 +256,7 @@ public class ElementStructureTest {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         JavacTaskImpl task = (JavacTaskImpl) compiler.getTask(null, null, null, options, null, files);
 
-        task.parse();
+        task.analyze();
 
         JavaFileManager fm = task.getContext().get(JavaFileManager.class);
 
