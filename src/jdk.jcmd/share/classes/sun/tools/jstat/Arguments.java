@@ -413,8 +413,8 @@ public class Arguments {
         return optionFormat;
     }
 
-    public List<InputStream> optionsSources() {
-        List<InputStream> sources = new ArrayList<>();
+    public List<String> optionsSources() {
+        List<String> sources = new ArrayList<>();
         int i = 0;
 
         String filename = OPTIONS_FILENAME;
@@ -424,7 +424,7 @@ public class Arguments {
             String userDir = userHome + "/" + JVMSTAT_USERDIR;
             File home = new File(userDir + "/" + filename);
             if (home.exists()) {
-                sources.add(new FileInputStream(home));
+                sources.add(home.getAbsolutePath());
             }
         } catch (Exception e) {
             if (debug) {
@@ -433,14 +433,10 @@ public class Arguments {
             }
             throw new IllegalArgumentException(e);
         }
-        InputStream in = this.getClass().getResourceAsStream("resources/" + filename);
-        assert in != null;
-        sources.add(in);
+        sources.add("resources/" + filename);
 
-        if (showUnsupported) {
-            in = this.getClass().getResourceAsStream("resources/" +  UNSUPPORTED_OPTIONS_FILENAME);
-            assert in != null;
-            sources.add(in);
+        if (showUnsupported) {;
+            sources.add("resources/" + UNSUPPORTED_OPTIONS_FILENAME);
         }
         return sources;
     }

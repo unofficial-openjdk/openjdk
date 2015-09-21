@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,52 +25,31 @@
 
 package sun.tools.jstat;
 
-import java.util.*;
-import java.net.*;
 import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * A class for finding a specific special option in the jstat_options file.
+ * A factory class encapsulating processing the {@linkplain Parser} definitions.
  *
- * @author Brian Doherty
- * @since 1.5
+ * @author Jaroslav Bachorik
+ * @since 1.9
  */
-public class OptionFinder {
+class OptionParserFactory {
 
-    private static final boolean debug = false;
-
-    final List<String> optionsSources;
-
-
-    public OptionFinder(List<String> optionsSources) {
-        this.optionsSources = Collections.unmodifiableList(optionsSources);
-    }
-
-    public OptionFormat getOptionFormat(String option, boolean useTimestamp) {
-        OptionFormat of = getOptionFormat(option);
-        OptionFormat tof = null;
-        if ((of != null) && (useTimestamp)) {
-            // prepend the timestamp column as first column
-            tof = getOptionFormat("timestamp");
-            if (tof != null) {
-                ColumnFormat cf = (ColumnFormat)tof.getSubFormat(0);
-                of.insertSubFormat(0, cf);
-            }
-        }
-        return of;
-    }
-
-    protected OptionFormat getOptionFormat(String option) {
-        for (Parser parser : getOptionParsers()) {
-            try {
-                OptionFormat of = parser.parse(option);
-                if (of != null)
-                    return of;
-            } catch (IOException | ParserException e) {
-                if (debug) e.printStackTrace();
-            }
-        }
-        return null;
+    /**
+     * Returns a configured {@linkplain Parser} instance based on the given
+     * configuration file.
+     *
+     * @param filename The configuration file name
+     * @return A configured {@linkplain Parser} instance based on the given
+     * configuration file
+     */
+    static Parser newParser(String filename) {
+        InputStream in = OptionParserFactory.class.getResourceAsStream(filename);
+        assert in != null;
+        Reader r = new BufferedReader(new InputStreamReader(in));
+        return new Parser(r);
     }
 
     /**
@@ -80,10 +59,12 @@ public class OptionFinder {
      * ! Parsers can not be restarted !
      * Therefore we need to create new instances to parse each option.
      * </p>
+     * @param optionSources list of the option sources file names
      * @return list of {@linkplain Parser} instances created out of the
      * provided {@linkplain InputStream}s
      */
-    private List<Parser> getOptionParsers() {
-        return OptionParserFactory.getOptionParsers(optionsSources);
+    static List<Parser> getOptionParsers(List<String> optionsSources) {
+        return optionsSources.stream()
+                .map(OptionParserFactory::newParser).collect(Collectors.toList());
     }
 }

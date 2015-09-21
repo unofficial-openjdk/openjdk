@@ -61,9 +61,6 @@ sun/tools/jmap/heapconfig/JMapHeapConfigTest.java		generic-all
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
 
-# 8078656
-sun/tools/jstat/jstatTimeStamp1.sh				generic-all
-
 # 8059035
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 

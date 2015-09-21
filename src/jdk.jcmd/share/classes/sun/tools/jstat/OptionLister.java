@@ -28,7 +28,6 @@ package sun.tools.jstat;
 import java.util.*;
 import java.net.*;
 import java.io.*;
-import java.util.stream.Collectors;
 
 /**
  * A class for listing the available options in the jstat_options file.
@@ -40,14 +39,8 @@ public class OptionLister {
     private static final boolean debug = false;
     private final List<Parser> optionParsers;
 
-    private Parser newParser(InputStream in) {
-        Reader r = new BufferedReader(new InputStreamReader(in));
-        return new Parser(r);
-    }
-
-    public OptionLister(List<InputStream> sources) {
-        this.optionParsers = sources.stream()
-            .map(in -> newParser(in)).collect(Collectors.toList());
+    public OptionLister(List<String> sources) {
+        this.optionParsers = OptionParserFactory.getOptionParsers(sources);
     }
 
     public void print(PrintStream ps) {
