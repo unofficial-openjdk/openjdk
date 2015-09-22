@@ -21,7 +21,6 @@
  * questions.
  */
 
-module test {
-    requires java.transaction;
+module java.enterprise {
+    exports javax.enterprise.context;
 }
-

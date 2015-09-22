@@ -21,14 +21,7 @@
  * questions.
  */
 
-package javax.annotation.more;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
-
-@Target({TYPE, FIELD, METHOD})
-@Retention(RUNTIME)
-public @interface BigResource {
+module java.transaction {
+    requires public java.enterprise;
+    exports javax.transaction;
 }

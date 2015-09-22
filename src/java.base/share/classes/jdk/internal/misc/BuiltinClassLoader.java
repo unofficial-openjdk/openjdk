@@ -77,12 +77,14 @@ import sun.misc.VM;
  *
  * <p> The delegation model used by this ClassLoader differs to the regular
  * delegation model. When requested to load a class then this ClassLoader first
- * checks the modules defined to the ClassLoader. If not found then it delegates
- * the search to the parent class loader and if not found in the parent then it
- * searches the class path. The rational for this approach is that modules defined
- * to this ClassLoader are assumed to be in the boot Layer and so should not have
- * any overlapping packages with modules defined to the parent or the boot class
- * loader. </p>
+ * maps the class name to its package name. If there is a module defined to a
+ * BuiltinClassLoader containing this package then the class loader delegates
+ * directly to that class loader. If there isn't a module containing the
+ * package then it delegates the search to the parent class loader and if not
+ * found in the parent then it searches the class path. The main difference
+ * between this and the usual delegation model is that it allows the extension
+ * class loader to delegate to the application class loader, important with
+ * upgraded modules defined to the extension class loader.
  */
 
 public class BuiltinClassLoader
@@ -111,27 +113,30 @@ public class BuiltinClassLoader
      * defining classes or packages.
      */
     private static class LoadedModule {
+        private final BuiltinClassLoader loader;
         private final ModuleReference mref;
         private final URL url;          // May be null
 
-        LoadedModule(ModuleReference mref) {
+        LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e1) {
-                }
+                } catch (MalformedURLException e) { }
             }
+            this.loader = loader;
             this.mref = mref;
             this.url = url;
         }
 
+        BuiltinClassLoader loader() { return loader; }
         ModuleReference mref() { return mref; }
         URL location() { return url; }
     }
 
-    // maps package name to a module loaded by this class loader
-    private final Map<String, LoadedModule> packageToModule;
+    // maps package name to loaded module for modules in the boot layer
+    private static final Map<String, LoadedModule> packageToModule
+        = new ConcurrentHashMap<>(1024);
 
     // maps a module name to a module reference
     private final Map<String, ModuleReference> nameToModule;
@@ -139,17 +144,13 @@ public class BuiltinClassLoader
     // maps a module reference to a module reader
     private final Map<ModuleReference, ModuleReader> moduleToReader;
 
+
     /**
      * Create a new instance.
-     *
-     * @param nModules an estimate on the number of modules
-     * @param nPackages an estimate for the total number of packages
      */
     BuiltinClassLoader(BuiltinClassLoader parent,
                        Path overrideDir,
-                       URLClassPath ucp,
-                       int nModules,
-                       int nPackages)
+                       URLClassPath ucp)
     {
         // ensure getParent() returns null when the parent is the boot loader
         super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
@@ -158,9 +159,8 @@ public class BuiltinClassLoader
         this.overrideDir = overrideDir;
         this.ucp = ucp;
 
-        this.packageToModule = new ConcurrentHashMap<>(nPackages);
-        this.nameToModule = new ConcurrentHashMap<>(nModules);
-        this.moduleToReader = new ConcurrentHashMap<>(nModules);
+        this.nameToModule = new ConcurrentHashMap<>();
+        this.moduleToReader = new ConcurrentHashMap<>();
     }
 
     /**
@@ -173,9 +173,13 @@ public class BuiltinClassLoader
             throw new InternalError(mn + " already defined to this loader");
         }
 
-        LoadedModule loadedModule = new LoadedModule(mref);
+        LoadedModule loadedModule = new LoadedModule(this, mref);
         for (String pn : mref.descriptor().packages()) {
-            packageToModule.put(pn, loadedModule);
+            LoadedModule other = packageToModule.putIfAbsent(pn, loadedModule);
+            if (other != null) {
+                throw new InternalError(pn + " in modules " + mn + " and "
+                        + other.mref().descriptor().name());
+            }
         }
     }
 
@@ -260,11 +264,19 @@ public class BuiltinClassLoader
 
         Class<?> c = null;
         if (loadedModule != null) {
-            c = findClassInModuleOrNull(loadedModule, cn);
+
+            // attempt to load class in module defined to this loader
+            if (loadedModule.loader() == this) {
+                c = findClassInModuleOrNull(loadedModule, cn);
+            }
+
         } else {
-            // check class path
-            if (ucp != null)
+
+            // search class path
+            if (ucp != null) {
                 c = findClassOnClassPathOrNull(cn);
+            }
+
         }
 
         // not found
@@ -302,10 +314,20 @@ public class BuiltinClassLoader
                 // find the candidate module for this class
                 LoadedModule loadedModule = findModule(cn);
                 if (loadedModule != null) {
-                    if (VM.isModuleSystemInited()) {
-                        c = findClassInModuleOrNull(loadedModule, cn);
+
+                    // package is in a module
+                    BuiltinClassLoader loader = loadedModule.loader();
+                    if (loader == this) {
+                        if (VM.isModuleSystemInited()) {
+                            c = findClassInModuleOrNull(loadedModule, cn);
+                        }
+                    } else {
+                        // delegate to the other loader
+                        c = loader.loadClassOrNull(cn);
                     }
+
                 } else {
+
                     // check parent
                     if (parent != null) {
                         c = parent.loadClassOrNull(cn);
@@ -474,7 +496,7 @@ public class BuiltinClassLoader
         Package pkg = getPackage(pn);
         if (pkg == null) {
             LoadedModule loadedModule = packageToModule.get(pn);
-            if (loadedModule == null) {
+            if (loadedModule == null || loadedModule.loader() != this) {
                 pkg = definePackage(pn, null, null, null, null, null, null, null);
             } else {
                 pkg = definePackage(pn, loadedModule);

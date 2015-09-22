@@ -21,8 +21,16 @@
  * questions.
  */
 
-module java.annotations.common {
-    exports javax.annotation;
-    exports javax.annotation.more;
-}
+package javax.transaction;
 
+import javax.enterprise.context.Scope;
+
+public class Transaction {
+
+    public Transaction() { }
+
+    public Scope getScope() {
+        return new Scope();
+    }
+
+}

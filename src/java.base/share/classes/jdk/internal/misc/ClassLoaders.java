@@ -118,8 +118,7 @@ public class ClassLoaders {
         private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
 
         BootClassLoader(Path overrideDir, URLClassPath bcp) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(null, overrideDir, bcp, 32, 640);
+            super(null, overrideDir, bcp);
         }
 
         @Override
@@ -134,8 +133,7 @@ public class ClassLoaders {
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
         ExtClassLoader(BootClassLoader parent, Path overrideDir) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(parent, overrideDir, null, 24, 1024);
+            super(parent, overrideDir, null);
         }
     }
 
@@ -147,8 +145,7 @@ public class ClassLoaders {
         final URLClassPath ucp;
 
         AppClassLoader(ExtClassLoader parent, Path overrideDir, URLClassPath ucp) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(parent, overrideDir, ucp, 32, 512);
+            super(parent, overrideDir, ucp);
             this.ucp = ucp;
         }
 
