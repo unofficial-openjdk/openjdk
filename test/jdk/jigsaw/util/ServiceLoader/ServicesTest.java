@@ -40,7 +40,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build ServicesTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build ServicesTest CompilerUtils jdk.testlibrary.*
  * @run testng ServicesTest
  * @summary Tests ServiceLoader to locate service providers on the module path
  *          and class path. Also tests ServiceLoader with a custom Layer.

@@ -63,6 +63,9 @@ public final class ModuleBootstrap {
 
     private static final String JAVA_BASE = "java.base";
 
+    // the token for "all unnamed modules"
+    private static final String ALL_UNNAMED = "ALL-UNNAMED";
+
     /**
      * Initialize the module system, returning the boot Layer.
      *
@@ -217,6 +220,11 @@ public final class ModuleBootstrap {
             }
         }
 
+        // if -XaddReads is specified then may need to add more read edges
+        propValue= System.getProperty("jdk.launcher.addreads");
+        if (propValue != null)
+            addMoreReads(bootLayer, propValue);
+
         // if -XaddExports is specified then process the value to export
         // additional API packages
         propValue= System.getProperty("jdk.launcher.addexports");
@@ -241,9 +249,9 @@ public final class ModuleBootstrap {
                                             Set<String> mods)
     {
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.empty(),
-                                                 ModuleFinder.empty(),
-                                                 mods);
+                Layer.empty(),
+                ModuleFinder.empty(),
+                mods);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -285,12 +293,49 @@ public final class ModuleBootstrap {
         }
     }
 
+
+    /**
+     * The value of -XaddReads is a sequence of $MODULE=$SOURCE where $SOURCE
+     * is the source module name or the token "ALL-UNNAMED".
+     */
+    private static void addMoreReads(Layer bootLayer, String moreReads) {
+        for (String expr : moreReads.split(",")) {
+            if (expr.length() > 0) {
+
+                String[] s = expr.split("=");
+                if (s.length == 1)
+                    fail("Missing source module: " + expr);
+                if (s.length != 2)
+                    fail("Unable to parse: " + expr);
+
+                String mn = s[0];
+                String sm = s[1];
+
+                Optional<Module> om = bootLayer.findModule(mn);
+                if (!om.isPresent())
+                    fail("Unknown module: " + mn);
+
+                Module source;
+                if (ALL_UNNAMED.equals(sm)) {
+                    source = null;  // loose
+                } else {
+                    Optional<Module> osource = bootLayer.findModule(sm);
+                    if (!osource.isPresent())
+                        fail("Unknown module: " + sm);
+                    source = osource.get();
+                }
+
+                Modules.addReads(om.get(), source);
+            }
+        }
+    }
+
     /**
      * The value of -XaddExports is a sequence of $MODULE/$PACKAGE=$TARGET
      * where $TARGET is a module name or the token "ALL-UNNAMED".
      */
     private static void addMoreExports(Layer bootLayer, String moreExports) {
-        for (String expr: moreExports.split(",")) {
+        for (String expr : moreExports.split(",")) {
             if (expr.length() > 0) {
 
                 String[] s = expr.split("=");
@@ -318,7 +363,7 @@ public final class ModuleBootstrap {
                 boolean allUnnamed = false;
                 String tn = s[1];
                 Module target = null;
-                if ("ALL-UNNAMED".equals(tn)) {
+                if (ALL_UNNAMED.equals(tn)) {
                     allUnnamed = true;
                 } else {
                     om = bootLayer.findModule(tn);

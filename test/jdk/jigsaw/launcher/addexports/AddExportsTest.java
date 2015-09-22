@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build AddExportsTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build AddExportsTest CompilerUtils jdk.testlibrary.*
  * @run testng AddExportsTest
  * @summary Basic tests for java -XaddExports
  */
@@ -135,6 +135,7 @@ public class AddExportsTest {
                                "-version")
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("can only be specified once")
                 .getExitValue();
 
         assertTrue(exitValue != 0);

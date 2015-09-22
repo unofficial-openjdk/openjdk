@@ -103,6 +103,7 @@ static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
+static void SetAddReadsProp(const char *s);
 static void SetAddExportsProp(const char *s);
 static void SetOverrideProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
@@ -922,6 +923,14 @@ SetLimitModulesProp(const char *mods) {
 }
 
 static void
+SetAddReadsProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads=%s", s);
+    AddOption(prop, NULL);
+}
+
+static void
 SetAddExportsProp(const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
@@ -1150,9 +1159,21 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
             listModules = arg;
+        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
+            static jboolean haveAddReads = JNI_FALSE;
+            /* -XaddReads only allowed once */
+            if (haveAddReads) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddReads");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 11;
+                SetAddReadsProp(value);
+                haveAddReads = JNI_TRUE;
+            }
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
             static jboolean haveAddExports = JNI_FALSE;
-            /* Unlike other arguments, -XaddExports only allowed once */
+            /* -XaddExports only allowed once */
             if (haveAddExports) {
                 JLI_ReportErrorMessage(ARG_ERROR7, "-XaddExports");
                 *pret = 1;
@@ -1164,7 +1185,7 @@ ParseArguments(int *pargc, char ***pargv,
             }
         } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0) {
             static jboolean haveOverride = JNI_FALSE;
-            /* Unlike other arguments, -Xoverride only allowed once */
+            /* -Xoverride only allowed once */
             if (haveOverride) {
                 JLI_ReportErrorMessage(ARG_ERROR7, "-Xoverride");
                 *pret = 1;

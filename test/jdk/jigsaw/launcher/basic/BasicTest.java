@@ -26,7 +26,7 @@
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jartool/sun.tools.jar
  *          jdk.jlink/jdk.tools.jmod
- * @build BasicTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build BasicTest CompilerUtils jdk.testlibrary.*
  * @run testng BasicTest
  * @summary Basic test of starting an application as a module
  */
@@ -185,6 +185,7 @@ public class BasicTest {
                               "-m", "rhubarb")
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("not found")
                 .getExitValue();
 
         assertTrue(exitValue != 0);
@@ -237,6 +238,7 @@ public class BasicTest {
                               "-m", TEST_MODULE)
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("does not have a MainClass attribute")
                 .getExitValue();
 
         assertTrue(exitValue != 0);

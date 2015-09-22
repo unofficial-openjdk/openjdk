@@ -25,7 +25,7 @@
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jartool/sun.tools.jar
- * @build ContainerTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build ContainerTest CompilerUtils jdk.testlibrary.*
  * @run testng ContainerTest
  * @summary Starts a simple container that uses dynamic configurations
  *          and launches two applications in the same VM

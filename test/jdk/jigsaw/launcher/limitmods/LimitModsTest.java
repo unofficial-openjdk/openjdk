@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build LimitModsTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build LimitModsTest CompilerUtils jdk.testlibrary.*
  * @run testng LimitModsTest
  * @summary Basic tests for java -limitmods
  */
@@ -78,6 +78,7 @@ public class LimitModsTest {
                               MAIN_CLASS)
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("NoClassDefFoundError")
                 .getExitValue();
 
         assertTrue(exitValue1 != 0);

@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build UpgradeModulePathTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build UpgradeModulePathTest CompilerUtils jdk.testlibrary.*
  * @run testng UpgradeModulePathTest
  * @summary Basic test for java -upgrademodulepath
  */

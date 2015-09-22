@@ -24,7 +24,7 @@
 /**
  * @test
  * @library /lib/testlibrary
- * @build ListModsTest jdk.testlibrary.ProcessTools
+ * @build ListModsTest jdk.testlibrary.*
  * @run testng ListModsTest
  * @summary Basic test for java -listmods
  */

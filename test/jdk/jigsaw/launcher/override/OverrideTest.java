@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build OverrideTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build OverrideTest CompilerUtils jdk.testlibrary.*
  * @run testng OverrideTest
  * @summary Basic test for -Xoverride
  */

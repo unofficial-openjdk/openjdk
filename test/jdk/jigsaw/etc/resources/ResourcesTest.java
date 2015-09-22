@@ -33,7 +33,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build ResourcesTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build ResourcesTest CompilerUtils jdk.testlibrary.*
  * @run testng ResourcesTest
  * @summary Driver for basic test of resource encapsulation
  */

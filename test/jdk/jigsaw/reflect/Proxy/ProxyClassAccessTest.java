@@ -36,7 +36,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build ProxyClassAccessTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @build ProxyClassAccessTest CompilerUtils jdk.testlibrary.*
  * @run testng ProxyClassAccessTest
  * @summary Driver for testing proxy class doesn't have access to
  *          types referenced by proxy interfaces

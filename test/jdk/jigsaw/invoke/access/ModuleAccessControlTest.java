@@ -35,7 +35,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build CompilerUtils jdk.testlibrary.ProcessTools
+ * @build CompilerUtils jdk.testlibrary.*
  * @run testng ModuleAccessControlTest
  * @summary Driver for testing module access checking by MethodHandles.Lookup
  */
