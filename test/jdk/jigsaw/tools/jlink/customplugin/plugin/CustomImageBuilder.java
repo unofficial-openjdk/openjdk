@@ -39,9 +39,9 @@ import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 public class CustomImageBuilder implements ImageBuilder {
 
     private final Path image;
-    private final Map<Object, Object> config;
+    private final Map<String, Object> config;
 
-    public CustomImageBuilder(Map<Object, Object> config, Path image) throws IOException {
+    public CustomImageBuilder(Map<String, Object> config, Path image) throws IOException {
         this.image = image;
         this.config = config;
         System.err.println(config);

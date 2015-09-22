@@ -67,7 +67,7 @@ public class DefaultImageBuilder implements ImageBuilder {
     private final String jimage;
     private final boolean genBom;
 
-    public DefaultImageBuilder(Map<Object, Object> properties, Path root) throws IOException {
+    public DefaultImageBuilder(Map<String, Object> properties, Path root) throws IOException {
         Objects.requireNonNull(root);
 
         @SuppressWarnings("unchecked")

@@ -102,7 +102,7 @@ public class IntegrationTest {
         }
 
         @Override
-        public ImageFilePlugin[] newPlugins(Map<Object, Object> config) throws IOException {
+        public ImageFilePlugin[] newPlugins(Map<String, Object> config) throws IOException {
             return new ImageFilePlugin[]{new MyPlugin1((Integer) config.get(INDEX))};
         }
 
@@ -196,7 +196,7 @@ public class IntegrationTest {
 
         //Strip debug
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
             StackedPluginConfiguration strip
                     = new StackedPluginConfiguration("strip-java-debug", 0, false, config1);
@@ -204,7 +204,7 @@ public class IntegrationTest {
         }
         // compress
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
             config1.put("compress-resources-level", "0");
             StackedPluginConfiguration compress
@@ -212,7 +212,7 @@ public class IntegrationTest {
             lst.add(compress);
         }
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         config1.put("genbom", "true");
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
@@ -258,7 +258,7 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 2);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
@@ -267,7 +267,7 @@ public class IntegrationTest {
 
         // packager 2
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 0);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, true, config1);
@@ -276,7 +276,7 @@ public class IntegrationTest {
 
         // packager 3
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 1);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 1, true, config1);
@@ -285,7 +285,7 @@ public class IntegrationTest {
 
         // packager 4
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 3);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 1, false, config1);
@@ -293,7 +293,7 @@ public class IntegrationTest {
         }
 
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
@@ -330,7 +330,7 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 2);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
@@ -339,7 +339,7 @@ public class IntegrationTest {
 
         // packager 2
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 0);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
@@ -347,7 +347,7 @@ public class IntegrationTest {
         }
 
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins

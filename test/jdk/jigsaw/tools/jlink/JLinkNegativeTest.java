@@ -109,7 +109,9 @@ public class JLinkNegativeTest {
         JImageGenerator.getJLinkTask()
                 .modulePath(helper.defaultModulePath())
                 .output(image)
-                .call().assertFailure("Error: not empty: .*failure3.image\n");
+                .addMods("leaf1")
+                .limitMods("leaf1")
+                .call().assertFailure("Error: not empty: .*failure3.image(\n|\r|.)*");
     }
 
     public void testOutputIsFile() throws IOException {

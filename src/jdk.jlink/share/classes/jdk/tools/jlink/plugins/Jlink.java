@@ -45,7 +45,7 @@ public final class Jlink {
     public static class PluginConfiguration {
 
         private final String name;
-        private final Map<Object, Object> config;
+        private final Map<String, Object> config;
 
         /**
          * A configuration.
@@ -53,7 +53,7 @@ public final class Jlink {
          * @param name Plugin name
          * @param config Plugin configuration. Can be null;
          */
-        public PluginConfiguration(String name, Map<Object, Object> config) {
+        public PluginConfiguration(String name, Map<String, Object> config) {
             Objects.requireNonNull(name);
             this.name = name;
             this.config = config == null ? Collections.emptyMap() : config;
@@ -69,7 +69,7 @@ public final class Jlink {
         /**
          * @return the config
          */
-        public Map<Object, Object> getConfig() {
+        public Map<String, Object> getConfig() {
             return config;
         }
 
@@ -108,7 +108,7 @@ public final class Jlink {
          * @param config Plugin configuration. Can be null;
          */
         public StackedPluginConfiguration(String name, int index, boolean absIndex,
-                Map<Object, Object> config) {
+                Map<String, Object> config) {
             super(name, config);
             if (index < 0) {
                 throw new IllegalArgumentException("negative index");

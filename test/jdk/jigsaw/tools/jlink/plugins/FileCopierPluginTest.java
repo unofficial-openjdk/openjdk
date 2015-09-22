@@ -36,6 +36,7 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 import jdk.tools.jlink.plugins.DefaultImageBuilder;
@@ -105,7 +106,7 @@ public class FileCopierPluginTest {
 
         }
         Path root = new File(".").toPath();
-        DefaultImageBuilder builder = new DefaultImageBuilder(new Properties(),
+        DefaultImageBuilder builder = new DefaultImageBuilder(new HashMap<String, Object>(),
                 root);
         builder.storeFiles(pool, Collections.EMPTY_LIST,
                 "", new ImageBuilder.ResourceRetriever() {

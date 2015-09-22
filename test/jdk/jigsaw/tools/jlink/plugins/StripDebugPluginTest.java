@@ -55,6 +55,8 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
+import java.util.HashMap;
+import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
@@ -108,8 +110,8 @@ public class StripDebugPluginTest {
 
     private void check(String path, byte[] content, String infoPath, byte[] moduleInfo) throws Exception {
         StripDebugProvider prov = new StripDebugProvider();
-        Properties options = new Properties();
-        options.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
+        Map<String, Object> options = new HashMap<>();
+        options.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 ImagePluginConfiguration.ON_ARGUMENT);
         ResourcePlugin debug = (ResourcePlugin) prov.newPlugins(options)[0];
         Resource result1 = stripDebug(debug, new Resource(path, ByteBuffer.wrap(content)), path, infoPath, moduleInfo);

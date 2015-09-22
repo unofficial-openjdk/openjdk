@@ -45,7 +45,7 @@ public class SameNamedImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir) throws IOException {
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
         return new CustomImageBuilder(config, imageOutDir);
     }
 

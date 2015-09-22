@@ -284,7 +284,7 @@ public final class ImagePluginConfiguration {
         } else {
             String builderName = plugins.getImageBuilder() == null
                     ? DefaultImageBuilderProvider.NAME : plugins.getImageBuilder().getName();
-            Map<Object, Object> builderConfig = plugins.getImageBuilder() == null
+            Map<String, Object> builderConfig = plugins.getImageBuilder() == null
                     ? Collections.emptyMap() : plugins.getImageBuilder().getConfig();
             builder = ImagePluginProviderRepository.newImageBuilder(builderConfig,
                     outDir,
@@ -363,14 +363,14 @@ public final class ImagePluginConfiguration {
         String builderName = p.getProperty(IMAGE_BUILDER_PROPERTY);
         builderName = builderName == null ? DefaultImageBuilderProvider.NAME : builderName;
 
-        Map<Object, Object> builderConfig = filter(p, builderName);
+        Map<String, Object> builderConfig = filter(p, builderName);
         Jlink.PluginsConfiguration config = new Jlink.PluginsConfiguration(lst,
                 new Jlink.PluginConfiguration(builderName, builderConfig), lastSorterName);
         return parseConfiguration(outDir, config, pluginsLayer, bom);
     }
 
-    private static Map<Object, Object> filter(Properties p, String name) {
-        Map<Object, Object> filtered = new HashMap<>();
+    private static Map<String, Object> filter(Properties p, String name) {
+        Map<String, Object> filtered = new HashMap<>();
         p.stringPropertyNames().stream().filter(
                 (n) -> (n.startsWith(name))).forEach((n) -> {
                     String pluginProp = n.substring(name.length() + 1);
@@ -517,7 +517,7 @@ public final class ImagePluginConfiguration {
     }
 
     private static List<OrderedPlugin> createOrderedPlugins(int index,
-            String name, Map<Object, Object> config, Layer pluginsLayer) throws IOException {
+            String name, Map<String, Object> config, Layer pluginsLayer) throws IOException {
         Plugin[] plugins = ImagePluginProviderRepository.newPlugins(config,
                 name, pluginsLayer);
         List<OrderedPlugin> ordered = new ArrayList<>();

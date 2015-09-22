@@ -82,6 +82,6 @@ public abstract class PluginProvider {
      * @return An array of plugins.
      * @throws IOException
      */
-    public abstract Plugin[] newPlugins(Map<Object, Object> config)
+    public abstract Plugin[] newPlugins(Map<String, Object> config)
             throws IOException;
 }

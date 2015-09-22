@@ -25,6 +25,7 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,8 +67,12 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir)
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
             throws IOException {
+        if (Files.list(imageOutDir).findFirst().isPresent()) {
+            throw new IOException(PluginsResourceBundle.
+                    getMessage("err.dir.not.empty", imageOutDir));
+        }
         return new DefaultImageBuilder(config, imageOutDir);
     }
 }

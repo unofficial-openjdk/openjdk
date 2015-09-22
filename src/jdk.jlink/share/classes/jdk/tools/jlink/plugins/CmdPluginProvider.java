@@ -74,7 +74,7 @@ public abstract class CmdPluginProvider extends PluginProvider {
     public abstract Map<String, String> getAdditionalOptions();
 
     @Override
-    public final Plugin[] newPlugins(Map<Object, Object> conf) throws IOException {
+    public final Plugin[] newPlugins(Map<String, Object> conf) throws IOException {
         Map<String, String> config = toString(conf);
         String[] arguments = null;
         Collection<String> options = Collections.emptyList();
@@ -112,16 +112,15 @@ public abstract class CmdPluginProvider extends PluginProvider {
     public abstract Plugin[] newPlugins(String[] arguments,
             Map<String, String> otherOptions) throws IOException;
 
-    static Map<String, String> toString(Map<Object, Object> input) {
+    static Map<String, String> toString(Map<String, Object> input) {
         Map<String, String> map = new HashMap<>();
-        for (Entry<Object, Object> entry : input.entrySet()) {
+        for (Entry<String, Object> entry : input.entrySet()) {
             if (!(entry.getKey() instanceof String)
                     || !(entry.getValue() instanceof String)) {
                 throw new RuntimeException("Config should be string for "
                         + entry.getKey());
             }
-            @SuppressWarnings("unchecked")
-            String k = (String) entry.getKey();
+            String k = entry.getKey();
             @SuppressWarnings("unchecked")
             String v = (String) entry.getValue();
             map.put(k, v);

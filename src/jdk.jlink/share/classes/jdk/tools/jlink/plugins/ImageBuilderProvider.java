@@ -56,7 +56,7 @@ public interface ImageBuilderProvider {
      * @return The builder.
      * @throws java.io.IOException
      */
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir)
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
             throws IOException;
 
     /**

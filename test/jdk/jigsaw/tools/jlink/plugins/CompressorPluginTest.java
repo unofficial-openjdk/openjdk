@@ -232,9 +232,11 @@ public class CompressorPluginTest {
                     .map(Pattern::compile)
                     .collect(Collectors.toList());
 
-            Properties props = new Properties();
+            Map<String, Object> props = new HashMap<>();
             if (config != null) {
-                props.putAll(config);
+                for (String p : config.stringPropertyNames()) {
+                    props.put(p, config.getProperty(p));
+                }
             }
             Plugin[] compressors = prov.newPlugins(props);
             ResourcePool inputResources = new ResourcePoolImpl(ByteOrder.nativeOrder());

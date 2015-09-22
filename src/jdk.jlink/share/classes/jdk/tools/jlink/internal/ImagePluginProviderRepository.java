@@ -61,7 +61,7 @@ public final class ImagePluginProviderRepository {
      * @return An array of plugins.
      * @throws IOException
      */
-    public static Plugin[] newPlugins(Map<Object, Object> config, String name,
+    public static Plugin[] newPlugins(Map<String, Object> config, String name,
             Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
@@ -144,7 +144,7 @@ public final class ImagePluginProviderRepository {
         registeredProviders.remove(name);
     }
 
-    public static ImageBuilder newImageBuilder(Map<Object, Object> config, Path outputDir,
+    public static ImageBuilder newImageBuilder(Map<String, Object> config, Path outputDir,
             String name, Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(config);
         Objects.requireNonNull(outputDir);

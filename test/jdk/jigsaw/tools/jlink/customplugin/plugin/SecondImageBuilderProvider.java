@@ -48,7 +48,7 @@ public class SecondImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir) throws IOException {
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
         return new ImageBuilder() {
             @Override
             public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,

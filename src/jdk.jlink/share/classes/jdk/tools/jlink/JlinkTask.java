@@ -302,11 +302,7 @@ public class JlinkTask {
         if (options.output == null) {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
-        try {
-            createOutputDirectory(options.output);
-        } catch (IllegalArgumentException ex) {
-            throw taskHelper.newBadArgs("err.dir.not.empty", options.output);
-        }
+        createOutputDirectory(options.output);
         ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
         try {
             options.addMods = checkAddMods(options.addMods, options.limitMods);
@@ -334,9 +330,6 @@ public class JlinkTask {
             throw taskHelper.newBadArgs("err.file.already.exists", output).showUsage(true);
         }
         Files.createDirectories(output);
-        if (Files.list(output).findFirst().isPresent()) {
-            throw new IllegalArgumentException(output + " already exists");
-        }
     }
 
     private static Set<String> checkAddMods(Set<String> addMods, Set<String> limitMods) {
