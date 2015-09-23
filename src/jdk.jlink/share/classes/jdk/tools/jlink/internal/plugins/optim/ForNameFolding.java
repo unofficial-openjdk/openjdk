@@ -36,6 +36,7 @@ import jdk.tools.jlink.internal.plugins.OptimizationPlugin.MethodOptimizer;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow.Block;
 import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.Data;
+import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
 
 
 /**
@@ -55,23 +56,9 @@ public class ForNameFolding implements MethodOptimizer {
     @Override
     public boolean optimize(Consumer<String> logger, AsmPools pools,
             AsmModulePool modulePool,
-            ClassNode cn, MethodNode m) throws Exception {
+            ClassNode cn, MethodNode m, TypeResolver resolver) throws Exception {
         this.logger = logger;
-        Data data = ReflectionOptimizer.replaceWithClassConstant(cn, m,
-                (type) -> {
-                    try {
-                        ClassReader reader = pools.getGlobalPool().getClassReader(type);
-                        if (reader != null) {
-                            logReplacement(type);
-                        } else {
-                            logNotReplaced(type);
-                        }
-                        return reader;
-                    } catch (IOException ex) {
-                        System.err.println("Exception resolving " + type + ". " + ex);
-                        return null;
-                    }
-                });
+        Data data = ReflectionOptimizer.replaceWithClassConstant(cn, m, createResolver(resolver));
         instructionsRemoved += data.removedInstructions();
         numRemovedHandlers += data.removedHandlers().size();
         for (Entry<String, Set<Block>> entry : data.removedHandlers().entrySet()) {
@@ -81,7 +68,19 @@ public class ForNameFolding implements MethodOptimizer {
         return data.removedInstructions() > 0;
     }
 
-    private void logReplacement(String type) {
+    public TypeResolver createResolver(TypeResolver resolver) {
+        return (ClassNode cn, MethodNode mn, String type) -> {
+            ClassReader reader = resolver.resolve(cn, mn, type);
+            if (reader == null) {
+                logNotReplaced(type);
+            } else {
+                logReplaced(type);
+            }
+            return reader;
+        };
+    }
+
+    private void logReplaced(String type) {
         numReplacement += 1;
     }
 

@@ -26,15 +26,20 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier.PUBLIC;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -249,6 +254,51 @@ public final class AsmPools {
             }
             p.addPackage(pkg);
         }
+
+        @Override
+        public Set<String> getAccessiblePackages(String module) {
+            AsmModulePool p = pools.get(module);
+            if (p == null) {
+                return null;
+            }
+            ModuleDescriptor desc = p.getDescriptor();
+            Set<String> packages = new HashSet<>();
+            packages.addAll(p.getAllPackages());
+
+            // Retrieve direct dependencies and indirect ones (public)
+            Set<String> modules = new HashSet<>();
+            for (Requires req : desc.requires()) {
+                modules.add(req.name());
+                addAllRequirePublicModules(req.name(), modules);
+            }
+            // Add exported packages of readable modules
+            for (String readable : modules) {
+                AsmModulePool mp = pools.get(readable);
+                if (mp != null) {
+                    for (Exports ex : mp.getDescriptor().exports()) {
+                        // exported to all or to the targeted module
+                        if (!ex.targets().isPresent() || ex.targets().get().contains(module)) {
+                            packages.add(ex.source().replaceAll("\\.", "/"));
+                        }
+                    }
+
+                }
+            }
+            return packages;
+        }
+
+        private void addAllRequirePublicModules(String module, Set<String> modules) {
+            AsmModulePool p = pools.get(module);
+            if (p != null) {
+                for (Requires req : p.getDescriptor().requires()) {
+                    if (req.modifiers().contains(PUBLIC)) {
+                        modules.add(req.name());
+                        addAllRequirePublicModules(req.name(), modules);
+                    }
+                }
+            }
+        }
+
     }
 
     private interface VoidPoolVisitor {

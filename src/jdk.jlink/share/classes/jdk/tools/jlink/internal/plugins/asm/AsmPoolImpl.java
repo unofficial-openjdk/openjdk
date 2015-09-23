@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -619,6 +620,22 @@ final class AsmPoolImpl implements AsmModulePool {
             throw new IOException(mod + " module already contains package " + pkg);
         }
         newPackageMapping.put(pkg, moduleName);
+    }
+
+    @Override
+    public Set<String> getAllPackages() {
+        ModuleDescriptor desc = getDescriptor();
+        Set<String> packages = new HashSet<>();
+        for (String p : desc.conceals()) {
+            packages.add(p.replaceAll("\\.", "/"));
+        }
+        for (String p : newPackageMapping.keySet()) {
+            packages.add(p.replaceAll("\\.", "/"));
+        }
+        for (Exports ex : desc.exports()) {
+            packages.add(ex.source().replaceAll("\\.", "/"));
+        }
+        return packages;
     }
 
     private static ClassReader newClassReader(byte[] bytes) throws IOException {

@@ -24,6 +24,8 @@
  */
 package jdk.tools.jlink.internal.plugins.asm;
 
+import java.util.Set;
+
 /**
  * A pool containing all class and resource files.
  */
@@ -40,4 +42,12 @@ public interface AsmGlobalPool extends AsmPool {
      * @throws java.lang.Exception If a mapping already exist for this package.
      */
     public void addPackageModuleMapping(String pkg, String module) throws Exception;
+
+    /**
+     * Return the set of accessible packages for a given module.
+     *
+     * @param module The module from which packages are accessible.
+     * @return Set of packages or null if the module is not found.
+     */
+    public Set<String> getAccessiblePackages(String module);
 }
