@@ -90,7 +90,7 @@ public final class ImagePluginProviderRepository {
             PluginProvider factory = javaProviders.next();
             if (factory.getName().equals(name)) {
                 if (provider != null) {
-                    throw new IOException("Mutliple ImageWriterProvider "
+                    throw new IOException("Multiple ImageWriterProvider "
                             + "for the name " + name);
                 }
                 provider = factory;
@@ -157,11 +157,14 @@ public final class ImagePluginProviderRepository {
             ImageBuilderProvider fact = providers.next();
             if (fact.getName().equals(name)) {
                 if(builder != null) {
-                     throw new IOException("Mutliple ImageBuilderProvider "
+                     throw new IOException("Multiple ImageBuilderProvider "
                             + "for the name " + name);
                 }
                 builder = fact.newBuilder(config, outputDir);
             }
+        }
+        if (builder == null) {
+            throw new IOException("Image builder not found for " + name);
         }
         return builder;
     }
