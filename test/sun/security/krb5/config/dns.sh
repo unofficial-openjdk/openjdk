@@ -47,4 +47,4 @@ $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d modules/java.naming
 
 $TESTJAVA/bin/java ${TESTVMOPTS} \
         -XaddExports:java.security.jgss/sun.security.krb5=ALL-UNNAMED \
-        -Xoverride:modules DNS
+        -Xpatch:modules DNS

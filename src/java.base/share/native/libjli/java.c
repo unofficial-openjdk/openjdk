@@ -105,7 +105,7 @@ static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
 static void SetAddReadsProp(const char *s);
 static void SetAddExportsProp(const char *s);
-static void SetOverrideProp(const char *s);
+static void SetPatchProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -939,10 +939,10 @@ SetAddExportsProp(const char *s) {
 }
 
 static void
-SetOverrideProp(const char *s) {
+SetPatchProp(const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.override=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patchdirs=%s", s);
     AddOption(prop, NULL);
 }
 
@@ -1183,17 +1183,22 @@ ParseArguments(int *pargc, char ***pargv,
                 SetAddExportsProp(value);
                 haveAddExports = JNI_TRUE;
             }
-        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0) {
-            static jboolean haveOverride = JNI_FALSE;
-            /* -Xoverride only allowed once */
-            if (haveOverride) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-Xoverride");
+        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0 ||
+                   JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+            static jboolean havePatchDirs = JNI_FALSE;
+            if (havePatchDirs) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
                 *pret = 1;
                 return JNI_FALSE;
             } else {
-                char *value = arg + 11;
-                SetOverrideProp(value);
-                haveOverride = JNI_TRUE;
+                char *value;
+                if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+                    value = arg + 8;
+                } else {
+                    value = arg + 11;
+                }
+                SetPatchProp(value);
+                havePatchDirs = JNI_TRUE;
             }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||

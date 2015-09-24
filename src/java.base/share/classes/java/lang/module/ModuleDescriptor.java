@@ -40,11 +40,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static java.lang.module.Checks.*;
 import static java.util.Objects.*;
 
 import jdk.internal.module.Hasher.DependencyHashes;
-
-import static java.lang.module.Checks.*;
 
 
 /**
@@ -557,6 +557,31 @@ public class ModuleDescriptor
         this.packages = Collections.unmodifiableSet(pkgs);
 
     }
+
+    /**
+     * Clones the given module descriptor with an augmented set of packages
+     */
+    ModuleDescriptor(ModuleDescriptor md, Set<String> pkgs) {
+        this.name = md.name;
+        this.automatic = md.automatic;
+
+        this.requires = md.requires;
+        this.exports = md.exports;
+        this.uses = md.uses;
+        this.provides = md.provides;
+
+        this.version = md.version;
+        this.mainClass = md.mainClass;
+        this.hashes = Optional.empty(); // need to ignore
+
+        // compute new set of concealed packages
+        Set<String> conceals = new HashSet<>(pkgs);
+        exports.stream().map(Exports::source).forEach(conceals::remove);
+
+        this.conceals = Collections.unmodifiableSet(conceals);
+        this.packages = Collections.unmodifiableSet(pkgs);
+    }
+
 
     /**
      * <p> The module name </p>

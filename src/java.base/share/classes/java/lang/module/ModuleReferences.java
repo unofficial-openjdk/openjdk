@@ -68,6 +68,9 @@ class ModuleReferences {
                                               URI location,
                                               Hasher.HashSupplier hasher)
     {
+        // use new ModuleDescriptor if new packages added by -Xpatch
+        md = ModulePatcher.patchIfNeeded(md);
+
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))
             return new JrtModuleReference(md, location, hasher);
@@ -250,7 +253,7 @@ class ModuleReferences {
                 return dir.resolve(path);
             } else {
                 // drop the root component so that the resource is
-                // locate relative to the module directory
+                // located relative to the module directory
                 int n = path.getNameCount();
                 return (n > 0) ? dir.resolve(path.subpath(0, n)) : null;
             }

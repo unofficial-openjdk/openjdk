@@ -36,6 +36,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -98,11 +99,12 @@ public class BuiltinClassLoader
     // parent ClassLoader
     private final BuiltinClassLoader parent;
 
-    // -Xoverride directory, can be null
-    private final Path overrideDir;
+    // -Xpatch directories, can be empty
+    private final List<Path> patchDirs;
 
     // the URL class path or null if there is no class path
     private final URLClassPath ucp;
+
 
     /**
      * A module defined/loaded by a built-in class loader.
@@ -149,14 +151,14 @@ public class BuiltinClassLoader
      * Create a new instance.
      */
     BuiltinClassLoader(BuiltinClassLoader parent,
-                       Path overrideDir,
+                       List<Path> patchDirs,
                        URLClassPath ucp)
     {
         // ensure getParent() returns null when the parent is the boot loader
         super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
 
         this.parent = parent;
-        this.overrideDir = overrideDir;
+        this.patchDirs = patchDirs;
         this.ucp = ucp;
 
         this.nameToModule = new ConcurrentHashMap<>();
@@ -697,11 +699,11 @@ public class BuiltinClassLoader
             return new NullModuleReader();
         }
 
-        // if -Xoverride is specified then wrap the ModuleReader so
-        // that the override directory is checked first
-        if (overrideDir != null) {
+        // if -Xpatch is specified then wrap the ModuleReader so that the
+        // patch directories are searched first
+        if (!patchDirs.isEmpty()) {
             String mn = mref.descriptor().name();
-            reader = new OverrideModuleReader(mn, overrideDir, reader);
+            reader = new OverrideModuleReader(mn, patchDirs, reader);
         }
 
         return reader;
@@ -722,29 +724,43 @@ public class BuiltinClassLoader
     };
 
     /**
-     * A ModuleReader to prepend an override directory to another ModuleReader.
+     * A ModuleReader to prepend a sequence of patch directories to
+     * another ModuleReader.
      */
     private static class OverrideModuleReader implements ModuleReader {
         private final String module;
-        private final Path overrideDir;
+        private final List<Path> patchDirs;
         private final ModuleReader reader;
 
-        OverrideModuleReader(String module, Path overrideDir, ModuleReader reader) {
+        OverrideModuleReader(String module,
+                             List<Path> patchDirs,
+                             ModuleReader reader) {
             this.module = module;
-            this.overrideDir = overrideDir;
+            this.patchDirs = patchDirs;
             this.reader = reader;
         }
 
         /**
-         * Returns the path to a .class file if overridden with -Xoverride
-         * or {@code null} if not found.
+         * Returns the path to the resource in the first patch directory
+         * where the resource is found.
          */
-        private Path findOverriddenClass(String name) {
-            if (overrideDir != null && name.endsWith(".class")) {
-                String path = name.replace('/', File.separatorChar);
-                Path file = overrideDir.resolve(module).resolve(path);
-                if (Files.isRegularFile(file)) {
-                    return file;
+        private Path findResource(String name) {
+            for (Path patchDir : patchDirs) {
+                Path dir = patchDir.resolve(module);
+
+                Path path = Paths.get(name.replace('/', File.separatorChar));
+                if (path.getRoot() == null) {
+                    path = dir.resolve(path);
+                } else {
+                    // drop the root component so that the resource is
+                    // located relative to the module directory
+                    int n = path.getNameCount();
+                    if (n == 0) return null;
+                    path = dir.resolve(path.subpath(0, n));
+                }
+
+                if (Files.isRegularFile(path)) {
+                    return path;
                 }
             }
             return null;
@@ -752,7 +768,7 @@ public class BuiltinClassLoader
 
         @Override
         public Optional<InputStream> open(String name) throws IOException {
-            Path path = findOverriddenClass(name);
+            Path path = findResource(name);
             if (path != null) {
                 return Optional.of(Files.newInputStream(path));
             } else {
@@ -762,7 +778,7 @@ public class BuiltinClassLoader
 
         @Override
         public Optional<ByteBuffer> read(String name) throws IOException {
-            Path path = findOverriddenClass(name);
+            Path path = findResource(name);
             if (path != null) {
                 return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
             } else {

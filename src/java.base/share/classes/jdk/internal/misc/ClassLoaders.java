@@ -33,6 +33,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
@@ -74,14 +77,14 @@ public class ClassLoaders {
         if (cp != null && cp.length() > 0)
             ucp = toURLClassPath(cp);
 
-        // is -Xoverride specified?
-        s = System.getProperty("jdk.launcher.override");
-        Path overrideDir = (s != null) ? Paths.get(s) : null;
+        // is -Xpatch specified?
+        s = System.getProperty("jdk.launcher.patchdirs");
+        List<Path> patchDirs = toPathList(s);
 
         // create the class loaders
-        BOOT_LOADER = new BootClassLoader(overrideDir, bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, overrideDir);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, overrideDir, ucp);
+        BOOT_LOADER = new BootClassLoader(patchDirs, bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, patchDirs);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, patchDirs, ucp);
     }
 
     /**
@@ -117,8 +120,8 @@ public class ClassLoaders {
     private static class BootClassLoader extends BuiltinClassLoader {
         private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
 
-        BootClassLoader(Path overrideDir, URLClassPath bcp) {
-            super(null, overrideDir, bcp);
+        BootClassLoader(List<Path> patchDirs, URLClassPath bcp) {
+            super(null, patchDirs, bcp);
         }
 
         @Override
@@ -132,8 +135,8 @@ public class ClassLoaders {
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
-        ExtClassLoader(BootClassLoader parent, Path overrideDir) {
-            super(parent, overrideDir, null);
+        ExtClassLoader(BootClassLoader parent, List<Path> patchDirs) {
+            super(parent, patchDirs, null);
         }
     }
 
@@ -144,8 +147,8 @@ public class ClassLoaders {
     private static class AppClassLoader extends BuiltinClassLoader {
         final URLClassPath ucp;
 
-        AppClassLoader(ExtClassLoader parent, Path overrideDir, URLClassPath ucp) {
-            super(parent, overrideDir, ucp);
+        AppClassLoader(ExtClassLoader parent, List<Path> patchDirs, URLClassPath ucp) {
+            super(parent, patchDirs, ucp);
             this.ucp = ucp;
         }
 
@@ -218,6 +221,26 @@ public class ClassLoaders {
             } catch (InvalidPathException | IOException ignore) {
                 // malformed path string or class path element does not exist
             }
+        }
+    }
+
+    /**
+     * Parses the given string as a sequence of directories, returning a list
+     * of Path objects to represent each directory.
+     */
+    private static List<Path> toPathList(String s) {
+        if (s == null) {
+            return Collections.emptyList();
+        } else {
+            String[] dirs = s.split(File.pathSeparator);
+
+            // too early in startup to use Stream.of(dirs)
+            List<Path> result = new ArrayList<>();
+            for (String dir : dirs) {
+                if (dir.length() > 0)
+                    result.add(Paths.get(dir));
+            }
+            return result;
         }
     }
 
