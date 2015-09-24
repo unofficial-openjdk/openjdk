@@ -1254,7 +1254,7 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
     }
 
     // Attempt to load the classfile from either:
-    //   - [-Xoverride:dir]; exploded build | bootmodules.jimage
+    //   - [-Xpatch:dir]; exploded build | bootmodules.jimage
     //     or
     //   - [-Xbootclasspath/a]; [jvmti appended entries]
     while ((e != NULL) && (e != last_e)) {
@@ -1535,7 +1535,7 @@ void ClassLoader::create_javabase() {
 
   // When looking for the jimage file, only
   // search the boot loader's module path which
-  // can consist of [-Xoverride]; exploded build | bootmodules.jimage
+  // can consist of [-Xpatch]; exploded build | bootmodules.jimage
   // Do not search the boot loader's append path.
   ClassPathEntry* e = _first_entry;
   ClassPathEntry* last_e = _first_append_entry;

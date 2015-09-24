@@ -25,18 +25,18 @@
  * @test
  * @bug 8069469
  * @summary Make sure -XX:+TraceClassLoading works properly with bootmodules.jimage,
-            -Xoverride, and with -Xbootclasspath/a
+            -Xpatch, and with -Xbootclasspath/a
  * @library /testlibrary
- * @compile XoverrideMain.java
+ * @compile XpatchMain.java
  * @modules java.base/sun.misc
  *          java.management
- * @run main XoverrideTraceCL
+ * @run main XpatchTraceCL
  */
 
 import java.io.File;
 import jdk.test.lib.*;
 
-public class XoverrideTraceCL {
+public class XpatchTraceCL {
 
     public static void main(String[] args) throws Exception {
         String source = "package javax.naming.spi; "                +
@@ -46,40 +46,40 @@ public class XoverrideTraceCL {
                         "    } "                                    +
                         "}";
 
-        // Test -XX:+TraceClassLoading output for -Xoverride
+        // Test -XX:+TraceClassLoading output for -Xpatch
         ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
              InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source),
              "mods/java.naming");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:mods",
-             "-XX:+TraceClassLoading", "XoverrideMain", "javax.naming.spi.NamingManager");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods",
+             "-XX:+TraceClassLoading", "XpatchMain", "javax.naming.spi.NamingManager");
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         // bootmodules.jimage case.
         output.shouldContain("Loaded java.lang.Thread from jrt:/java.base");
-        // -Xoverride case.
+        // -Xpatch case.
         output.shouldContain("Loaded javax.naming.spi.NamingManager from mods" +
             File.separator + "java.naming");
         // -cp case.
-        output.shouldContain("Loaded XoverrideMain from file");
+        output.shouldContain("Loaded XpatchMain from file");
 
         // Test -XX:+TraceClassLoading output for -Xbootclasspath/a
-        source = "package XoverrideTraceCL_pkg; "                 +
+        source = "package XpatchTraceCL_pkg; "                 +
                  "public class ItIsI { "                          +
                  "    static { "                                  +
                  "        System.out.println(\"I also pass!\"); " +
                  "    } "                                         +
                  "}";
 
-        ClassFileInstaller.writeClassToDisk("XoverrideTraceCL_pkg/ItIsI",
-             InMemoryJavaCompiler.compile("XoverrideTraceCL_pkg.ItIsI", source),
+        ClassFileInstaller.writeClassToDisk("XpatchTraceCL_pkg/ItIsI",
+             InMemoryJavaCompiler.compile("XpatchTraceCL_pkg.ItIsI", source),
              "xbcp");
 
         pb = ProcessTools.createJavaProcessBuilder("-Xbootclasspath/a:xbcp",
-             "-XX:+TraceClassLoading", "XoverrideMain", "XoverrideTraceCL_pkg.ItIsI");
+             "-XX:+TraceClassLoading", "XpatchMain", "XpatchTraceCL_pkg.ItIsI");
         output = new OutputAnalyzer(pb.start());
         // -Xbootclasspath/a case.
-        output.shouldContain("Loaded XoverrideTraceCL_pkg.ItIsI from xbcp");
+        output.shouldContain("Loaded XpatchTraceCL_pkg.ItIsI from xbcp");
         output.shouldHaveExitValue(0);
     }
 }

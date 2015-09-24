@@ -25,22 +25,22 @@
  * @test
  * @library /testlibrary
  * @modules java.base/sun.misc
- * @run main XoverrideCDS
+ * @run main XpatchCDS
  */
 
 import java.io.File;
 import jdk.test.lib.*;
 
-public class XoverrideCDS {
+public class XpatchCDS {
 
     public static void main(String args[]) throws Throwable {
-        System.out.println("Test that -Xoverride and -Xshare:dump are incompatibable");
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:.", "-Xshare:dump");
+        System.out.println("Test that -Xpatch and -Xshare:dump are incompatibable");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:.", "-Xshare:dump");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        output.shouldContain("Cannot use the following option when dumping the shared archive: -Xoverride");
+        output.shouldContain("Cannot use the following option when dumping the shared archive: -Xpatch");
 
-        System.out.println("Test that -Xoverride and -Xshare:on are incompatibable");
-        String filename = "XoverrideCDS.jsa";
+        System.out.println("Test that -Xpatch and -Xshare:on are incompatibable");
+        String filename = "Xpatch.jsa";
         pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:SharedArchiveFile=" + filename,
@@ -52,10 +52,10 @@ public class XoverrideCDS {
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:SharedArchiveFile=" + filename,
             "-Xshare:on",
-            "-Xoverride:.",
+            "-Xpatch:.",
             "-version");
         output = new OutputAnalyzer(pb.start());
-        output.shouldContain("The shared archive file cannot be used with -Xoverride");
+        output.shouldContain("The shared archive file cannot be used with -Xpatch");
 
         output.shouldHaveExitValue(1);
     }

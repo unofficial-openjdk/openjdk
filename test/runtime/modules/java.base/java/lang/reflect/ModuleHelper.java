@@ -27,7 +27,7 @@ import java.lang.module.ModuleDescriptor;
 
 /**
  * A helper class intended to be injected into java.lang.reflect using the
- * java -Xoverride option. The helper class provides access to package private
+ * java -Xpatch option. The helper class provides access to package private
  * methods in java.lang.reflect.Module.
  */
 

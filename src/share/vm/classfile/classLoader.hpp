@@ -193,7 +193,7 @@ class ClassLoader: AllStatic {
   // First entry in linked list of ClassPathEntry instances.
   // This consists of entries made up by:
   //   - boot loader modules
-  //     [-Xoverride]; exploded build | bootmodules.jimage;
+  //     [-Xpatch]; exploded build | bootmodules.jimage;
   //   - boot loader append path
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_entry;

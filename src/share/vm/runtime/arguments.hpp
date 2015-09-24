@@ -317,9 +317,11 @@ class Arguments : AllStatic {
   // mark the boot loader's append path observability boundary.
   static int _bootclassloader_append_index;
 
-  // -Xoverride flag
-  static const char* _override_dir;
-  static void set_override_dir(const char* dir) { _override_dir = dir; }
+  // -Xpatch flag
+  static char** _patch_dirs;
+  static int _patch_dirs_count;
+  static void set_patch_dirs(char** dirs) { _patch_dirs = dirs; }
+  static void set_patch_dirs_count(int count) { _patch_dirs_count = count; }
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -536,8 +538,9 @@ class Arguments : AllStatic {
     _bootclassloader_append_index = value;
   }
 
-  // -Xoverride
-  static const char* override_dir()         { return _override_dir; }
+  // -Xpatch
+  static char** patch_dirs()             { return _patch_dirs; }
+  static int patch_dirs_count()          { return _patch_dirs_count; }
 
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }

@@ -23,36 +23,46 @@
 
 /*
  * @test
- * @bug 8130399
- * @summary Make sure -Xoverride works for modules besides java.base.
+ * @summary Make sure -Xpatch works with multiple directories.
  * @library /testlibrary
- * @compile XoverrideMain.java
+ * @compile Xpatch2DirsMain.java
  * @modules java.base/sun.misc
  *          java.management
- * @run main XoverrideTest
+ * @run main Xpatch2Dirs
  */
 
 import jdk.test.lib.*;
 
-public class XoverrideTest {
+public class Xpatch2Dirs {
 
     public static void main(String[] args) throws Exception {
-        String source = "package javax.naming.spi; "                +
+        String source1 = "package javax.naming.spi; "               +
                         "public class NamingManager { "             +
                         "    static { "                             +
-                        "        System.out.println(\"I pass!\"); " +
+                        "        System.out.println(\"I pass one!\"); " +
+                        "    } "                                    +
+                        "}";
+        String source2 = "package java.beans; "                     +
+                        "public class Encoder { "                   +
+                        "    static { "                             +
+                        "        System.out.println(\"I pass two!\"); " +
                         "    } "                                    +
                         "}";
 
         ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
-             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source),
+             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source1),
              "mods/java.naming");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:mods",
-             "XoverrideMain", "javax.naming.spi.NamingManager");
+        ClassFileInstaller.writeClassToDisk("java/beans/Encoder",
+             InMemoryJavaCompiler.compile("java.beans.Encoder", source2),
+             "mods2/java.desktop");
 
-        new OutputAnalyzer(pb.start())
-            .shouldContain("I pass!")
-            .shouldHaveExitValue(0);
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods:mods2",
+             "Xpatch2DirsMain", "javax.naming.spi.NamingManager", "java.beans.Encoder");
+
+        OutputAnalyzer oa = new OutputAnalyzer(pb.start());
+        oa.shouldContain("I pass one!");
+        oa.shouldContain("I pass two!");
+        oa.shouldHaveExitValue(0);
     }
 }

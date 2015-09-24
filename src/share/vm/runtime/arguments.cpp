@@ -88,7 +88,8 @@ const char*  Arguments::_java_vendor_url_bug    = DEFAULT_VENDOR_URL_BUG;
 const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
 bool   Arguments::_sun_java_launcher_is_altjvm  = false;
-const char*  Arguments::_override_dir           = NULL;
+int    Arguments::_patch_dirs_count          = 0;
+char** Arguments::_patch_dirs                = NULL;
 int    Arguments::_bootclassloader_append_index = -1;
 
 // These parameters are reset in method parse_vm_init_args()
@@ -316,8 +317,8 @@ bool Arguments::is_newly_obsolete(const char *s, JDK_Version* version) {
 // Constructs the system class path (aka boot class path) from the following
 // components, in order:
 //
-//     prefix           // from -Xbootclasspath/p:...
-//     base             // from os::get_system_properties() or -Xbootclasspath=
+//     prefix           // from -Xpatch:...
+//     base             // from os::get_system_properties()
 //     suffix           // from -Xbootclasspath/a:...
 //
 // This could be AllStatic, but it isn't needed after argument processing is
@@ -351,7 +352,7 @@ private:
   // Array indices for the items that make up the sysclasspath.  All except the
   // base are allocated in the C heap and freed by this class.
   enum {
-    _scp_prefix,        // was -Xbootclasspath/p:...
+    _scp_prefix,        // was -Xpatch:...
     _scp_base,          // the default sysclasspath
     _scp_suffix,        // from -Xbootclasspath/a:...
     _scp_nitems         // the number of items, must be last.
@@ -2762,16 +2763,77 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         return JNI_ERR;
 #endif
       }
-      if (match_option(option, "-Djdk.launcher.override=", &tail)) {
-        // -Xoverride
-        size_t len = strlen(tail);
-        char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
-        sprintf(dir, "%s%sjava.base", tail, os::file_separator());
-        scp_p->add_prefix(dir);
-        *scp_assembly_required_p = true;
-        dir[len] = '\0';
-        set_override_dir(dir);
+      if (match_option(option, "-Djdk.launcher.patchdirs=", &tail)) {
+        // -Xpatch
+        int dir_count;
+        char** patch_dirs = os::split_path(tail, &dir_count);
+        if (patch_dirs == NULL) {
+          jio_fprintf(defaultStream::output_stream(),
+            "Bad value for -Xpatch.\n");
+          return JNI_ERR;
+        }
+        // Create a path for each patch dir consisting of dir/java.base.
+        bool added_prefix = false;
+        char file_sep = os::file_separator()[0];
+        for (int x = 0; x < dir_count; x++) {
+          // Really shouldn't be NULL, but check can't hurt
+          if (patch_dirs[x] != NULL) {
+            size_t len = strlen(patch_dirs[x]);
+            if (len != 0) { // Ignore empty strings.
+              char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
+              sprintf(dir, "%s%cjava.base", patch_dirs[x], file_sep);
+
+              // TBD should we check that the directory exists?
+              scp_p->add_prefix(dir);
+              dir[len] = '\0';
+              added_prefix = true;
+            }
+          }
+        }
+        if (added_prefix) {
+          *scp_assembly_required_p = true;
+          set_patch_dirs(patch_dirs);
+          set_patch_dirs_count(dir_count);
+        }
       }
+/* Remove this code once -Xoverride is replaced with -Xpatch */
+
+if (match_option(option, "-Djdk.launcher.override=", &tail)) {
+        // -Xoverride
+        int dir_count;
+        char** patch_dirs = os::split_path(tail, &dir_count);
+        if (patch_dirs == NULL) {
+          jio_fprintf(defaultStream::output_stream(),
+            "Bad value for -Xoverride.\n");
+          return JNI_ERR;
+        }
+        // Create a path for each patch dir consisting of dir/java.base.
+        bool added_prefix = false;
+        char file_sep = os::file_separator()[0];
+        for (int x = 0; x < dir_count; x++) {
+          // Really shouldn't be NULL, but check can't hurt
+          if (patch_dirs[x] != NULL) {
+            size_t len = strlen(patch_dirs[x]);
+            if (len != 0) { // Ignore empty strings.
+              char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
+              sprintf(dir, "%s%cjava.base", patch_dirs[x], file_sep);
+
+              // TBD should we check that the directory exists?
+              scp_p->add_prefix(dir);
+              dir[len] = '\0';
+              added_prefix = true;
+            }
+          }
+        }
+        if (added_prefix) {
+          *scp_assembly_required_p = true;
+          set_patch_dirs(patch_dirs);
+          set_patch_dirs_count(dir_count);
+        }
+      }
+
+/* End of code to remove once -Xoverride is replaced with -Xpatch */
+
     // -Xint
     } else if (match_option(option, "-Xint")) {
           set_mode_flags(_int);
@@ -3561,9 +3623,9 @@ jint Arguments::parse_options_environment_variable(const char* name,
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
-    if (Arguments::override_dir() != NULL) {
+    if (Arguments::patch_dirs() != NULL) {
       vm_exit_during_initialization(
-        "Cannot use the following option when dumping the shared archive", "-Xoverride");
+        "Cannot use the following option when dumping the shared archive", "-Xpatch");
     }
 
     if (RequireSharedSpaces) {

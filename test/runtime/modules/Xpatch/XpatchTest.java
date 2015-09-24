@@ -23,34 +23,36 @@
 
 /*
  * @test
- * @bug 6583051
- * @summary Give error if java.lang.Object has been incompatibly overridden on the bootpath
+ * @bug 8130399
+ * @summary Make sure -Xpatch works for modules besides java.base.
  * @library /testlibrary
- * @ignore 8132924
+ * @compile XpatchMain.java
  * @modules java.base/sun.misc
  *          java.management
- * @run main BootstrapRedefine
+ * @run main XpatchTest
  */
 
 import jdk.test.lib.*;
 
-public class BootstrapRedefine {
+public class XpatchTest {
 
     public static void main(String[] args) throws Exception {
-        String source = "package java.lang;" +
-                        "public class Object {" +
-                        "    void dummy1() { return; }" +
-                        "    void dummy2() { return; }" +
-                        "    void dummy3() { return; }" +
+        String source = "package javax.naming.spi; "                +
+                        "public class NamingManager { "             +
+                        "    static { "                             +
+                        "        System.out.println(\"I pass!\"); " +
+                        "    } "                                    +
                         "}";
 
-        ClassFileInstaller.writeClassToDisk("java/lang/Object",
-                                        InMemoryJavaCompiler.compile("java.lang.Object", source),
-                                        "mods/java.base");
+        ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
+             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source),
+             "mods/java.naming");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods", "-version");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods",
+             "XpatchMain", "javax.naming.spi.NamingManager");
+
         new OutputAnalyzer(pb.start())
-            .shouldContain("Incompatible definition of java.lang.Object")
-            .shouldHaveExitValue(1);
+            .shouldContain("I pass!")
+            .shouldHaveExitValue(0);
     }
 }

@@ -22,7 +22,7 @@
 # 
 
 # @test
-# @summary -Xoverride is not considered within boot class loader's observable boundaries
+# @summary -Xpatch is not considered within boot class loader's observable boundaries
 
 set -e
 
@@ -44,5 +44,5 @@ mkdir -p mods2/java.base
 ${JAVAC} -d mods2/java.base $TESTSRC/p2/Observability2_B.java
 ${JAVAC} -cp mods2/java.base -d $TESTCLASSES $TESTSRC/Observability2_A.java
 
-${JAVA} -Xoverride:mods2 -cp $TESTCLASSES Observability2_A
+${JAVA} -Xpatch:mods2 -cp $TESTCLASSES Observability2_A
 exit $?

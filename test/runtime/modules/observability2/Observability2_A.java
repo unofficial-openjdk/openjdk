@@ -28,7 +28,7 @@ public class Observability2_A {
         try {
             // Try loading a class within a named package that is
             // in a module which has not been defined to the boot
-            // loader.  Ensure that class is not found via -Xoverride.
+            // loader.  Ensure that class is not found via -Xpatch.
             p2.Observability2_B b = new p2.Observability2_B();
             b.m();
         } catch (Error e) {

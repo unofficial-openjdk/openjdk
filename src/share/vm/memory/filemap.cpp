@@ -884,8 +884,8 @@ bool FileMapInfo::FileMapHeader::validate() {
     return false;
   }
 
-  if (Arguments::override_dir() != NULL) {
-    FileMapInfo::fail_continue("The shared archive file cannot be used with -Xoverride.");
+  if (Arguments::patch_dirs() != NULL) {
+    FileMapInfo::fail_continue("The shared archive file cannot be used with -Xpatch.");
     return false;
   }
 
