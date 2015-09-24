@@ -49,10 +49,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.spi.AbstractResourceBundleProvider;
 import java.util.spi.ResourceBundleProvider;
 import sun.util.locale.provider.JRELocaleProviderAdapter;
 import sun.util.locale.provider.LocaleProviderAdapter;
@@ -187,7 +185,8 @@ public class LocaleData {
            public OpenListResourceBundle run() {
                OpenListResourceBundle rb = null;
                try {
-                   rb = (OpenListResourceBundle) Bundles.of(baseName, locale, SupplementaryStrategy.INSTANCE);
+                   rb = (OpenListResourceBundle) Bundles.of(baseName, locale,
+                                                            SupplementaryStrategy.INSTANCE);
                } catch (MissingResourceException e) {
                    // return null if no supplementary is available
                }
@@ -240,8 +239,6 @@ public class LocaleData {
 
     private static class LocaleDataStrategy implements Bundles.Strategy {
         private static final LocaleDataStrategy INSTANCE = new LocaleDataStrategy();
-        private static final ServiceLoader<? extends ResourceBundleProvider> commonProviders
-                = ServiceLoader.load(CommonResourceBundleProvider.class);
 
         private LocaleDataStrategy() {
         }
@@ -283,7 +280,7 @@ public class LocaleData {
             return candidates;
         }
 
-         boolean inJavaBaseModule(String baseName, Locale locale) {
+        boolean inJavaBaseModule(String baseName, Locale locale) {
             // TODO: avoid hard-coded Locales
             return locale.equals(Locale.ROOT) ||
                 (locale.getLanguage() == "en" &&
@@ -316,19 +313,16 @@ public class LocaleData {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public ServiceLoader<ResourceBundleProvider> getResourceBundleProvders(String baseName,
-                                                                               Locale locale) {
+        public Class<? extends ResourceBundleProvider> getResourceBundleProviderType(String baseName,
+                                                                                     Locale locale) {
             return inJavaBaseModule(baseName, locale) ?
-                    null : (ServiceLoader<ResourceBundleProvider>) commonProviders;
+                        null : CommonResourceBundleProvider.class;
         }
     }
 
     private static class SupplementaryStrategy extends LocaleDataStrategy {
         private static final SupplementaryStrategy INSTANCE
                 = new SupplementaryStrategy();
-        private static final ServiceLoader<? extends ResourceBundleProvider> supplementaryProviders
-                = ServiceLoader.load(SupplementaryResourceBundleProvider.class);
 
         private SupplementaryStrategy() {
         }
@@ -340,11 +334,10 @@ public class LocaleData {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public ServiceLoader<ResourceBundleProvider> getResourceBundleProvders(String baseName,
-                                                                               Locale locale) {
+        public Class<? extends ResourceBundleProvider> getResourceBundleProviderType(String baseName,
+                                                                                     Locale locale) {
             return inJavaBaseModule(baseName, locale) ?
-                    null : (ServiceLoader<ResourceBundleProvider>) supplementaryProviders;
+                    null : SupplementaryResourceBundleProvider.class;
         }
 
         @Override
