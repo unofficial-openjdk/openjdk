@@ -56,7 +56,7 @@ public class TestStdDoclet {
         String thisClassName = TestStdDoclet.class.getName();
         Process p = new ProcessBuilder()
             .command(javadoc.getPath(),
-                "-J-Xoverride:" + System.getProperty("jdk.launcher.override", ""),
+                "-J-Xpatch:" + System.getProperty("jdk.launcher.patchdirs", ""),
                 "-classpath", ".", // insulates us from ambient classpath
                 "-Xdoclint:none",
                 "-package",
