@@ -28,8 +28,6 @@
             -Xpatch, and with -Xbootclasspath/a
  * @library /testlibrary
  * @compile XpatchMain.java
- * @modules java.base/sun.misc
- *          java.management
  * @run main XpatchTraceCL
  */
 

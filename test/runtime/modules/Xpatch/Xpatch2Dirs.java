@@ -26,8 +26,6 @@
  * @summary Make sure -Xpatch works with multiple directories.
  * @library /testlibrary
  * @compile Xpatch2DirsMain.java
- * @modules java.base/sun.misc
- *          java.management
  * @run main Xpatch2Dirs
  */
 

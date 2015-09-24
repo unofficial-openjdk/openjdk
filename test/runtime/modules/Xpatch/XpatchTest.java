@@ -27,8 +27,6 @@
  * @summary Make sure -Xpatch works for modules besides java.base.
  * @library /testlibrary
  * @compile XpatchMain.java
- * @modules java.base/sun.misc
- *          java.management
  * @run main XpatchTest
  */
 
