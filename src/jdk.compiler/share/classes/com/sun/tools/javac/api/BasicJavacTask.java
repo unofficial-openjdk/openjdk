@@ -28,6 +28,7 @@ package com.sun.tools.javac.api;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,6 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.PropagatedException;
-import com.sun.tools.javac.util.ServiceLoader;
 
 /**
  * Provides basic functionality for implementations of JavacTask.

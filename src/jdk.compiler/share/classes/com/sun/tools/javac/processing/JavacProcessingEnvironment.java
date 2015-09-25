@@ -84,7 +84,6 @@ import com.sun.tools.javac.util.ModuleHelper;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
-import com.sun.tools.javac.util.ServiceLoader;
 
 import static com.sun.tools.javac.code.Lint.LintCategory.PROCESSING;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
