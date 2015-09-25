@@ -197,7 +197,14 @@ public enum Option {
 
     SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
 
-    XOVERRIDE("-Xoverride:", "opt.arg.path", "opt.Xoverride", EXTENDED, FILEMANAGER),
+    XPATCH("-Xpatch:", "opt.arg.path", "opt.Xpatch", EXTENDED, FILEMANAGER),
+
+    XOVERRIDE("-Xoverride:", "opt.arg.path", "opt.Xoverride", EXTENDED, FILEMANAGER){
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return super.process(helper, "-Xpatch:", arg);
+        }
+    },
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override

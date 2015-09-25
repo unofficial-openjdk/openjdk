@@ -26,7 +26,7 @@ tools/javac/api/T6430241.java     						0 generic-all	test for disabling symbol 
 tools/javac/api/TestResolveIdent.java     					0 generic-all	NPE in Resolve
 tools/javac/api/TestSearchPaths.java     					0 generic-all	need to update for new StandardLocations
 tools/javac/diags/CheckExamples.java    					0 generic-all	need to update resource files
-tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xoverride?
+tools/javac/file/BootClassPathPrepend.java      				0 generic-all	currently verifies -Xbcp/p; rewrite for -Xpatch?
 tools/javac/file/ExplodedImage.java      					0 generic-all   "Did not load java.util.List from correct place"
 tools/javac/generics/diamond/neg/T8078473_2.java      				0 generic-all	need -Xmodule to be able to define class in java.util.stream
 tools/javac/importscope/dependencies/DependenciesTest.java     			0 generic-all	NPE in test's internal scanner

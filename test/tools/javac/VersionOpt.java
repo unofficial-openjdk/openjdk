@@ -44,7 +44,7 @@ public class VersionOpt {
         // Test functions by comparing the version string from javac against
         // a "golden" version generated automatically from the underlying JVM.
         // As such, it is only effective in testing the "standard" compiler,
-        // and not any development version being tested via -Xoverride.
+        // and not any development version being tested via -Xpatch.
         // Check the version of the compiler being used, and let the test pass
         // automatically if is is a development version.
         Class<?> javacClass = com.sun.tools.javac.Main.class;

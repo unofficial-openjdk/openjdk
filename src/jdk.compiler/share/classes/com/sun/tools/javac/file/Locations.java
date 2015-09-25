@@ -1409,6 +1409,7 @@ public class Locations {
     boolean handleOption(Option option, String value) {
         switch (option) {
             case XOVERRIDE:
+            case XPATCH:
                 moduleOverrideSearchPath = new SearchPath().addFiles(value);
                 return true;
             default:
