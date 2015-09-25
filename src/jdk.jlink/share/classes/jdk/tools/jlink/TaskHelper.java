@@ -32,7 +32,6 @@ import java.io.PrintWriter;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -451,13 +450,6 @@ public final class TaskHelper {
         }
 
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
-            try {
-                args = CommandLine.parse(args);
-            } catch (FileNotFoundException | NoSuchFileException e) {
-                throw new BadArgs("err.file.not.found", e.getMessage());
-            } catch (IOException ex) {
-                throw new BadArgs("err.file.error", ex.getMessage());
-            }
             command = args;
             // Handle defaults.
             args = handleDefaults(args);

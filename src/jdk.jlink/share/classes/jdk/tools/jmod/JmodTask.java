@@ -49,7 +49,10 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +76,9 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import jdk.internal.joptsimple.BuiltinHelpFormatter;
 import jdk.internal.joptsimple.NonOptionArgumentSpec;
+import jdk.internal.joptsimple.OptionDescriptor;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
@@ -688,9 +693,89 @@ public class JmodTask {
         @Override public String valuePattern() { return "pattern"; }
     }
 
+    /* Support for @<file> in jmod help */
+    private static final String CMD_FILENAME = "@<filename>";
+
+    /**
+     * This formatter is adding the @filename option and does the required
+     * formatting.
+     */
+    private static final class JmodHelpFormatter extends BuiltinHelpFormatter {
+
+        private JmodHelpFormatter() {
+            super(80, 2);
+        }
+
+        @Override
+        public String format(Map<String, ? extends OptionDescriptor> options) {
+            Map<String, OptionDescriptor> all = new HashMap<>();
+            all.putAll(options);
+            all.put(CMD_FILENAME, new OptionDescriptor() {
+                @Override
+                public Collection<String> options() {
+                    List<String> ret = new ArrayList<>();
+                    ret.add(CMD_FILENAME);
+                    return ret;
+                }
+                @Override
+                public String description() {
+                    return getMessage("main.opt.cmdfile");
+
+                }
+                @Override
+                public List<?> defaultValues() {
+                    return Collections.emptyList();
+                }
+                @Override
+                public boolean isRequired() {
+                    return false;
+                }
+                @Override
+                public boolean acceptsArguments() {
+                    return false;
+                }
+                @Override
+                public boolean requiresArgument() {
+                    return false;
+                }
+                @Override
+                public String argumentDescription() {
+                    return null;
+                }
+                @Override
+                public String argumentTypeIndicator() {
+                    return null;
+                }
+
+                @Override
+                public boolean representsNonOptions() {
+                    return false;
+                }
+            });
+            String content = super.format(all);
+            String[] lines = content.split("\n");
+            StringBuilder builder = new StringBuilder();
+            String cmdfile = null;
+            for (String line : lines) {
+                if (line.startsWith("--@")) {
+                    cmdfile = line.replace("--" + CMD_FILENAME,
+                            CMD_FILENAME + "  ");
+                } else {
+                    builder.append(line).append("\n");
+                }
+            }
+            if (cmdfile != null) {
+                builder.append(cmdfile).append("\n");
+            }
+            return builder.toString();
+        }
+    }
+
     private final OptionParser parser = new OptionParser();
 
     private void handleOptions(String[] args) {
+        parser.formatHelpWith(new JmodHelpFormatter());
+
         OptionSpec<Path> classPath
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
                         .withRequiredArg()
