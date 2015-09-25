@@ -62,6 +62,9 @@ import jdk.tools.jlink.plugins.PluginProvider;
  */
 public final class TaskHelper {
 
+    public static final String JLINK_BUNDLE = "jdk.tools.jlink.resources.jlink";
+    public static final String JIMAGE_BUNDLE = "jdk.tools.jimage.resources.jimage";
+
     private static final String DEFAULTS_PROPERTY = "jdk.jlink.defaults";
     private static final String CONFIGURATION = "configuration";
 
@@ -696,6 +699,9 @@ public final class TaskHelper {
     private final ResourceBundleHelper bundleHelper;
 
     public TaskHelper(String path) {
+        if (!JLINK_BUNDLE.equals(path) && !JIMAGE_BUNDLE.equals(path)) {
+            throw new IllegalArgumentException("Invalid Bundle");
+        }
         this.bundleHelper = new ResourceBundleHelper(path);
     }
 

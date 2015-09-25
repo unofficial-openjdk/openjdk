@@ -49,6 +49,7 @@ import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.TaskHelper.JIMAGE_BUNDLE;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
 
@@ -75,7 +76,7 @@ class JImageTask {
         }, "--version")
     };
     private static final TaskHelper taskHelper
-            = new TaskHelper("jdk.tools.jimage.resources.jimage");
+            = new TaskHelper(JIMAGE_BUNDLE);
     private static final OptionsHelper<JImageTask> optionsHelper
             = taskHelper.newOptionsHelper(JImageTask.class, recognizedOptions);
 

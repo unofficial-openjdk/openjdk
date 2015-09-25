@@ -56,6 +56,7 @@ import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ModularJarArchive;
@@ -75,9 +76,9 @@ import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
  */
 public class JlinkTask {
 
-    static <T extends Throwable> void fail(Class<T> type,
-                                           String format,
-                                           Object... args) throws T {
+    private static <T extends Throwable> void fail(Class<T> type,
+            String format,
+            Object... args) throws T {
         String msg = new Formatter().format(format, args).toString();
         try {
             T t = type.getConstructor(String.class).newInstance(msg);
@@ -91,7 +92,7 @@ public class JlinkTask {
     }
 
     private static final TaskHelper taskHelper
-            = new TaskHelper("jdk.tools.jlink.resources.jlink");
+            = new TaskHelper(JLINK_BUNDLE);
 
     static Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
