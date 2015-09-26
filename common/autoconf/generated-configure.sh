@@ -4421,7 +4421,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1441958217
+DATE_WHEN_GENERATED=1443267610
 
 ###############################################################################
 #
@@ -26307,13 +26307,13 @@ $as_echo "$tool_specified" >&6; }
 
 
 
-  $ECHO "Check if jvm arg is ok: -Xoverride:" >&5
-  $ECHO "Command: $JAVA -Xoverride: -version" >&5
-  OUTPUT=`$JAVA -Xoverride: -version 2>&1`
+  $ECHO "Check if jvm arg is ok: -Xpatch:" >&5
+  $ECHO "Command: $JAVA -Xpatch: -version" >&5
+  OUTPUT=`$JAVA -Xpatch: -version 2>&1`
   FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
   FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    dummy="$dummy -Xoverride:"
+    dummy="$dummy -Xpatch:"
     JVM_ARG_OK=true
   else
     $ECHO "Arg failed:" >&5

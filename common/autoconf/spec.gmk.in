@@ -486,7 +486,7 @@ BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 BOOT_JDK_MODULAR ?= @BOOT_JDK_MODULAR@
 
 ifeq ($(BOOT_JDK_MODULAR), true)
-  INTERIM_OVERRIDE_MODULES_ARGS = -Xoverride:$(BUILDTOOLS_OUTPUTDIR)/override_modules
+  INTERIM_OVERRIDE_MODULES_ARGS = -Xpatch:$(BUILDTOOLS_OUTPUTDIR)/override_modules
   INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS)
   JAVAC_MAIN_CLASS = -m jdk.compiler/com.sun.tools.javac.Main
   JAVADOC_MAIN_CLASS = -m jdk.javadoc/com.sun.tools.javadoc.Main
