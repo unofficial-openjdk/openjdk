@@ -85,7 +85,7 @@ NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 
 ifeq ($(BOOT_JDK_MODULAR), true)
   NASGEN_BOOTCLASSPATH := \
-      -Xoverride:$(SUPPORT_OUTPUTDIR)/special_classes \
+      -Xpatch:$(SUPPORT_OUTPUTDIR)/special_classes \
       -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
       -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
           java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
