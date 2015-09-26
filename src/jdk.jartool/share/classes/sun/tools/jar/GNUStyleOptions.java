@@ -100,7 +100,7 @@ class GNUStyleOptions {
             },
 
             // Additional options
-            new Option(true, OptionType.ANY, "--archive", "-f") {
+            new Option(true, OptionType.ANY, "--file", "-f") {
                 void process(Main jartool, String opt, String arg) {
                     jartool.fname = arg;
                 }

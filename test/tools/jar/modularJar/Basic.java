@@ -171,7 +171,7 @@ public class Basic {
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -196,12 +196,12 @@ public class Basic {
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "jdk")
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -221,13 +221,13 @@ public class Basic {
 
         // A "bad" main class in first create ( and no version )
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + "IAmNotTheEntryPoint",
             "--no-manifest",
             "-C", modClasses.toString(), ".")  // includes module-info.class
            .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest")
@@ -246,13 +246,13 @@ public class Basic {
 
         // A "bad" version in first create ( and no main class )
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--module-version=" + "100000000",
             "--no-manifest",
             "-C", modClasses.toString(), ".")  // includes module-info.class
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest")
@@ -272,13 +272,13 @@ public class Basic {
         // Not all files, and none from non-exported packages,
         // i.e. no concealed list in first create
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "module-info.class",
             "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -298,14 +298,14 @@ public class Basic {
 
         // all attributes and files
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), ".")
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -324,7 +324,7 @@ public class Basic {
         Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -334,7 +334,7 @@ public class Basic {
         modClasses = MODULE_CLASSES.resolve(BAR.moduleName);
         modularJar = mp.resolve(BAR.moduleName + ".jar");
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + BAR.mainClass,
             "--module-version=" + BAR.version,
             "--modulepath=" + mp.toString(),
@@ -361,7 +361,7 @@ public class Basic {
         Path fooClasses = MODULE_CLASSES.resolve(FOO.moduleName);
         Path fooJar = mp.resolve(FOO.moduleName + ".jar");
         jar("--create",
-            "--archive=" + fooJar.toString(),
+            "--file=" + fooJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
@@ -370,7 +370,7 @@ public class Basic {
         Path barClasses = MODULE_CLASSES.resolve(BAR.moduleName);
         Path barJar = mp.resolve(BAR.moduleName + ".jar");
         jar("--create",
-            "--archive=" + barJar.toString(),
+            "--file=" + barJar.toString(),
             "--main-class=" + BAR.mainClass,
             "--module-version=" + BAR.version,
             "--modulepath=" + mp.toString(),
@@ -381,7 +381,7 @@ public class Basic {
         // Rebuild foo.jar with a change that will cause its hash to be different
         FileUtils.deleteFileWithRetry(fooJar);
         jar("--create",
-            "--archive=" + fooJar.toString(),
+            "--file=" + fooJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version + ".1", // a newer version
             "--no-manifest",
@@ -409,13 +409,13 @@ public class Basic {
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--module-version=" + 1.1,   // no module-info.class
             "-C", modClasses.toString(), "jdk")
             .assertFailure();      // TODO: expected failure message
 
          jar("--create",
-             "--archive=" + modularJar.toString(),
+             "--file=" + modularJar.toString(),
              "--hash-dependencies=" + ".*",   // no module-info.class
              "-C", modClasses.toString(), "jdk")
              .assertFailure();      // TODO: expected failure message
@@ -430,7 +430,7 @@ public class Basic {
 
         // Positive test, create
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "module-info.class",
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
             "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
@@ -446,7 +446,7 @@ public class Basic {
 
         // Omit service impl
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "module-info.class",
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class")
             .assertFailure();
@@ -461,12 +461,12 @@ public class Basic {
 
         // Positive test, update
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
             "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "module-info.class")
             .assertSuccess();
     }
@@ -480,11 +480,11 @@ public class Basic {
 
         // Omit service impl
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class")
             .assertSuccess();
         jar("--update",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "-C", modClasses.toString(), "module-info.class")
             .assertFailure();
     }
@@ -497,14 +497,14 @@ public class Basic {
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
 
         jar("--create",
-            "--archive=" + modularJar.toString(),
+            "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), ".")
             .assertSuccess();
         jar("--print-module-descriptor",
-            "--archive=" + modularJar.toString())
+            "--file=" + modularJar.toString())
             .assertSuccess()
             .resultChecker( r ->
                 assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),

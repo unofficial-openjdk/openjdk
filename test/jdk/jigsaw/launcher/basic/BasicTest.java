@@ -102,7 +102,7 @@ public class BasicTest {
         String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "--main-class=" + MAIN_CLASS,
             "-C", classes, "."
         };
@@ -224,7 +224,7 @@ public class BasicTest {
         String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "-C", classes, "."
         };
         boolean success

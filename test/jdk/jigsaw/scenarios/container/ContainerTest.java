@@ -73,7 +73,7 @@ public class ContainerTest {
         String jar = mlib.resolve(CONTAINER_MODULE + "@1.0.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "--main-class=" + CONTAINER_MAIN_CLASS,
             "-C", classes, "."
         };
