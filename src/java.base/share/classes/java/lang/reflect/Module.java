@@ -658,8 +658,8 @@ public final class Module {
      * created. </p>
      *
      * <p> For unnamed modules, this method is the equivalent of invoking
-     * the {@link ClassLoader#getPackages() getPackages} method of this
-     * module's class loader and returning the array of package names. </p>
+     * the {@link ClassLoader#getDefinedPackages() getDefinedPackages} method
+     * of this module's class loader and returning the array of package names. </p>
      *
      * <p> A package name appears at most once in the returned array. </p>
      *

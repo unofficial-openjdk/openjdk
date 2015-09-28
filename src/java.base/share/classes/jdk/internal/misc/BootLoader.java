@@ -120,6 +120,10 @@ public class BootLoader {
         return ClassLoaders.bootLoader().definePackage(pn);
     }
 
+    public static Package definePackage(Class<?> c) {
+        return ClassLoaders.bootLoader().definePackage(c);
+    }
+
     /**
      * Returns a stream of the packages defined to the boot loader.
      */

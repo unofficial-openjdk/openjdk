@@ -27,9 +27,13 @@ package java.lang;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.File;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Module;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -43,6 +47,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
@@ -159,8 +165,8 @@ import sun.security.util.SecurityConstants;
  *
  * <h3> <a name="name">Binary names</a> </h3>
  *
- * <p> Any class name provided as a {@link String} parameter to methods in
- * <tt>ClassLoader</tt> must be a binary name as defined by
+ * <p> Any class name provided as a {@code String} parameter to methods in
+ * {@code ClassLoader} must be a binary name as defined by
  * <cite>The Java&trade; Language Specification</cite>.
  *
  * <p> Examples of valid class names include:
@@ -171,9 +177,12 @@ import sun.security.util.SecurityConstants;
  *   "java.net.URLClassLoader$3$1"
  * </pre></blockquote>
  *
- * {@code Class} objects for array classes are not created by {@code ClassLoader};
- * use the {@link Class#forName} method instead.
+ * <p> Any package name provided as a {@code String} parameter to methods in
+ * {@code ClassLoader} must be either the empty string (denoting an unnamed package)
+ * or a fully qualified name as defined by
+ * <cite>The Java&trade; Language Specification</cite>.
  *
+ * @jls 6.7  Fully Qualified Names
  * @jls 13.1 The Form of a Binary
  * @see      #resolveClass(Class)
  * @since 1.0
@@ -609,60 +618,63 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Converts an array of bytes into an instance of class <tt>Class</tt>.
-     * Before the <tt>Class</tt> can be used it must be resolved.
+     * Converts an array of bytes into an instance of class {@code Class}.
+     * Before the {@code Class} can be used it must be resolved.
      *
      * <p> This method assigns a default {@link java.security.ProtectionDomain
-     * <tt>ProtectionDomain</tt>} to the newly defined class.  The
-     * <tt>ProtectionDomain</tt> is effectively granted the same set of
+     * ProtectionDomain} to the newly defined class.  The
+     * {@code ProtectionDomain} is effectively granted the same set of
      * permissions returned when {@link
      * java.security.Policy#getPermissions(java.security.CodeSource)
-     * <tt>Policy.getPolicy().getPermissions(new CodeSource(null, null))</tt>}
-     * is invoked.  The default domain is created on the first invocation of
-     * {@link #defineClass(String, byte[], int, int) <tt>defineClass</tt>},
+     * Policy.getPolicy().getPermissions(new CodeSource(null, null))}
+     * is invoked.  The default protection domain is created on the first invocation
+     * of {@link #defineClass(String, byte[], int, int) defineClass},
      * and re-used on subsequent invocations.
      *
-     * <p> To assign a specific <tt>ProtectionDomain</tt> to the class, use
+     * <p> To assign a specific {@code ProtectionDomain} to the class, use
      * the {@link #defineClass(String, byte[], int, int,
-     * java.security.ProtectionDomain) <tt>defineClass</tt>} method that takes a
-     * <tt>ProtectionDomain</tt> as one of its arguments.  </p>
+     * java.security.ProtectionDomain) defineClass} method that takes a
+     * {@code ProtectionDomain} as one of its arguments.  </p>
      *
      * <p>
-     * If a {@code Package} object for the {@code Class} is not defined,
-     * this class loader will first define a {@code Package} object with the
-     * package name and with no other information about this package.
+     * This method defines a package in this class loader corresponding to the
+     * package of the {@code Class} (if such a package has not already been defined
+     * in this class loader). The name of the defined package is derived from
+     * the <a href="#name">binary name</a> of the class specified by
+     * the byte array {@code b}.
+     * Other properties of the defined package are as specified by {@link Package}.
      *
      * @param  name
      *         The expected <a href="#name">binary name</a> of the class, or
-     *         <tt>null</tt> if not known
+     *         {@code null} if not known
      *
      * @param  b
      *         The bytes that make up the class data.  The bytes in positions
-     *         <tt>off</tt> through <tt>off+len-1</tt> should have the format
+     *         {@code off} through {@code off+len-1} should have the format
      *         of a valid class file as defined by
      *         <cite>The Java&trade; Virtual Machine Specification</cite>.
      *
      * @param  off
-     *         The start offset in <tt>b</tt> of the class data
+     *         The start offset in {@code b} of the class data
      *
      * @param  len
      *         The length of the class data
      *
-     * @return  The <tt>Class</tt> object that was created from the specified
+     * @return  The {@code Class} object that was created from the specified
      *          class data.
      *
      * @throws  ClassFormatError
      *          If the data did not contain a valid class
      *
      * @throws  IndexOutOfBoundsException
-     *          If either <tt>off</tt> or <tt>len</tt> is negative, or if
-     *          <tt>off+len</tt> is greater than <tt>b.length</tt>.
+     *          If either {@code off} or {@code len} is negative, or if
+     *          {@code off+len} is greater than {@code b.length}.
      *
      * @throws  SecurityException
      *          If an attempt is made to add this class to a package that
      *          contains classes that were signed by a different set of
      *          certificates than this class (which is unsigned), or if
-     *          <tt>name</tt> begins with "<tt>java.</tt>".
+     *          {@code name} begins with "{@code java.}".
      *
      * @see  #loadClass(String, boolean)
      * @see  #resolveClass(Class)
@@ -700,24 +712,37 @@ public abstract class ClassLoader {
 
         if (name != null) {
             checkCerts(name, pd.getCodeSource());
-            ensureDefinePackage(packageName(name));
         }
 
         return pd;
     }
 
-    private String packageName(String cn) {
-        int i = cn.lastIndexOf('.');
-        return i > 0 ? cn.substring(0, i) : "";
-    }
-
     /*
      * Define a Package of the given name if not present.
      */
-    Package ensureDefinePackage(String pn) {
-        Package p = packages.get(pn);
+    Package definePackage(Class<?> c) {
+        Module m = c.getModule();
+        String cn = c.getName();
+        int pos = cn.lastIndexOf('.');
+        if (pos < 0 && m.isNamed()) {
+            throw new InternalError("unnamed package in named module " + m.getName());
+        }
+        String pn = pos != -1 ? cn.substring(0, pos) : "";
+        Package p = getDefinedPackage(pn);
         if (p == null) {
-            p = definePackage(pn);
+            URL url = null;
+            if (m.isNamed() && m.getLayer() != null) {
+                Optional<Configuration> cf = m.getLayer().configuration();
+                if (cf.isPresent()) {
+                    ModuleReference mref = cf.get().findModule(m.getName()).orElse(null);
+                    URI uri = mref != null ? mref.location().orElse(null) : null;
+                    try {
+                        url = uri != null ? uri.toURL() : null;
+                    } catch (MalformedURLException e) {
+                    }
+                }
+            }
+            p = definePackage(pn, null, null, null, null, null, null, url);
         }
         return p;
     }
@@ -734,6 +759,7 @@ public abstract class ClassLoader {
 
     private void postDefineClass(Class<?> c, ProtectionDomain pd)
     {
+        definePackage(c);
         if (pd.getCodeSource() != null) {
             Certificate certs[] = pd.getCodeSource().getCertificates();
             if (certs != null)
@@ -742,74 +768,78 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Converts an array of bytes into an instance of class <tt>Class</tt>,
-     * with an optional <tt>ProtectionDomain</tt>.  If the domain is
-     * <tt>null</tt>, then a default domain will be assigned to the class as
-     * specified in the documentation for {@link #defineClass(String, byte[],
-     * int, int)}.  Before the class can be used it must be resolved.
+     * Converts an array of bytes into an instance of class {@code Class},
+     * with a given {@code ProtectionDomain}.
+     *
+     * <p> If the given {@code ProtectionDomain} is {@code null},
+     * then a default protection domain will be assigned to the class as specified
+     * in the documentation for {@link #defineClass(String, byte[], int, int)}.
+     * Before the class can be used it must be resolved.
      *
      * <p> The first class defined in a package determines the exact set of
      * certificates that all subsequent classes defined in that package must
      * contain.  The set of certificates for a class is obtained from the
-     * {@link java.security.CodeSource <tt>CodeSource</tt>} within the
-     * <tt>ProtectionDomain</tt> of the class.  Any classes added to that
+     * {@link java.security.CodeSource CodeSource} within the
+     * {@code ProtectionDomain} of the class.  Any classes added to that
      * package must contain the same set of certificates or a
-     * <tt>SecurityException</tt> will be thrown.  Note that if
-     * <tt>name</tt> is <tt>null</tt>, this check is not performed.
+     * {@code SecurityException} will be thrown.  Note that if
+     * {@code name} is {@code null}, this check is not performed.
      * You should always pass in the <a href="#name">binary name</a> of the
      * class you are defining as well as the bytes.  This ensures that the
      * class you are defining is indeed the class you think it is.
      *
-     * <p> The specified <tt>name</tt> cannot begin with "<tt>java.</tt>", since
-     * all classes in the "<tt>java.*</tt> packages can only be defined by the
-     * bootstrap class loader.  If <tt>name</tt> is not <tt>null</tt>, it
+     * <p> The specified {@code name} cannot begin with "{@code java.}", since
+     * all classes in the {@code java.*} packages can only be defined by the
+     * bootstrap class loader.  If {@code name} is not {@code null}, it
      * must be equal to the <a href="#name">binary name</a> of the class
-     * specified by the byte array "<tt>b</tt>", otherwise a {@link
-     * NoClassDefFoundError <tt>NoClassDefFoundError</tt>} will be thrown. </p>
+     * specified by the byte array {@code b}, otherwise a {@link
+     * NoClassDefFoundError NoClassDefFoundError} will be thrown.
      *
-     * <p>
-     * If a {@code Package} object for the {@code Class} is not defined,
-     * this class loader will first define a {@code Package} object with the
-     * package name and with no other information about this package.
+     * <p> This method defines a package in this class loader corresponding to the
+     * package of the {@code Class} (if such a package has not already been defined
+     * in this class loader). The name of the defined package is derived from
+     * the <a href="#name">binary name</a> of the class specified by
+     * the byte array {@code b}.
+     * Other properties of the defined package are as specified by {@link Package}.
      *
      * @param  name
      *         The expected <a href="#name">binary name</a> of the class, or
-     *         <tt>null</tt> if not known
+     *         {@code null} if not known
      *
      * @param  b
      *         The bytes that make up the class data. The bytes in positions
-     *         <tt>off</tt> through <tt>off+len-1</tt> should have the format
+     *         {@code off} through {@code off+len-1} should have the format
      *         of a valid class file as defined by
      *         <cite>The Java&trade; Virtual Machine Specification</cite>.
      *
      * @param  off
-     *         The start offset in <tt>b</tt> of the class data
+     *         The start offset in {@code b} of the class data
      *
      * @param  len
      *         The length of the class data
      *
      * @param  protectionDomain
-     *         The ProtectionDomain of the class
+     *         The {@code ProtectionDomain} of the class
      *
-     * @return  The <tt>Class</tt> object created from the data,
-     *          and optional <tt>ProtectionDomain</tt>.
+     * @return  The {@code Class} object created from the data,
+     *          and {@code ProtectionDomain}.
      *
      * @throws  ClassFormatError
      *          If the data did not contain a valid class
      *
      * @throws  NoClassDefFoundError
-     *          If <tt>name</tt> is not equal to the <a href="#name">binary
-     *          name</a> of the class specified by <tt>b</tt>
+     *          If {@code name} is not {@code null} and not equal to the
+     *          <a href="#name">binary name</a> of the class specified by {@code b}
      *
      * @throws  IndexOutOfBoundsException
-     *          If either <tt>off</tt> or <tt>len</tt> is negative, or if
-     *          <tt>off+len</tt> is greater than <tt>b.length</tt>.
+     *          If either {@code off} or {@code len} is negative, or if
+     *          {@code off+len} is greater than {@code b.length}.
      *
      * @throws  SecurityException
      *          If an attempt is made to add this class to a package that
      *          contains classes that were signed by a different set of
-     *          certificates than this class, or if <tt>name</tt> begins with
-     *          "<tt>java.</tt>".
+     *          certificates than this class, or if {@code name} begins with
+     *          "{@code java.}".
      */
     protected final Class<?> defineClass(String name, byte[] b, int off, int len,
                                          ProtectionDomain protectionDomain)
@@ -823,15 +853,16 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Converts a {@link java.nio.ByteBuffer <tt>ByteBuffer</tt>}
-     * into an instance of class <tt>Class</tt>,
-     * with an optional <tt>ProtectionDomain</tt>.  If the domain is
-     * <tt>null</tt>, then a default domain will be assigned to the class as
+     * Converts a {@link java.nio.ByteBuffer ByteBuffer} into an instance
+     * of class {@code Class}, with the given {@code ProtectionDomain}.
+     * If the given {@code ProtectionDomain} is {@code null}, then a default
+     * protection domain will be assigned to the class as
      * specified in the documentation for {@link #defineClass(String, byte[],
      * int, int)}.  Before the class can be used it must be resolved.
      *
      * <p>The rules about the first class defined in a package determining the
-     * set of certificates for the package, and the restrictions on class names
+     * set of certificates for the package, the restrictions on class names,
+     * and the defined package of the class
      * are identical to those specified in the documentation for {@link
      * #defineClass(String, byte[], int, int, ProtectionDomain)}.
      *
@@ -851,11 +882,6 @@ public abstract class ClassLoader {
      * temp.length, pd);<br>
      * </tt></p>
      *
-     * <p>
-     * If a {@code Package} object for the {@code Class} is not defined,
-     * this class loader will first define a {@code Package} object with the
-     * package name and with no other information about this package.
-     *
      * @param  name
      *         The expected <a href="#name">binary name</a>. of the class, or
      *         <tt>null</tt> if not known
@@ -867,23 +893,23 @@ public abstract class ClassLoader {
      *         <cite>The Java&trade; Virtual Machine Specification</cite>.
      *
      * @param  protectionDomain
-     *         The ProtectionDomain of the class, or <tt>null</tt>.
+     *         The {@code ProtectionDomain} of the class, or {@code null}.
      *
-     * @return  The <tt>Class</tt> object created from the data,
-     *          and optional <tt>ProtectionDomain</tt>.
+     * @return  The {@code Class} object created from the data,
+     *          and {@code ProtectionDomain}.
      *
      * @throws  ClassFormatError
      *          If the data did not contain a valid class.
      *
      * @throws  NoClassDefFoundError
-     *          If <tt>name</tt> is not equal to the <a href="#name">binary
-     *          name</a> of the class specified by <tt>b</tt>
+     *          If {@code name} is not {@code null} and not equal to the
+     *          <a href="#name">binary name</a> of the class specified by {@code b}
      *
      * @throws  SecurityException
      *          If an attempt is made to add this class to a package that
      *          contains classes that were signed by a different set of
-     *          certificates than this class, or if <tt>name</tt> begins with
-     *          "<tt>java.</tt>".
+     *          certificates than this class, or if {@code name} begins with
+     *          "{@code java.}".
      *
      * @see      #defineClass(String, byte[], int, int, ProtectionDomain)
      *
@@ -1120,6 +1146,12 @@ public abstract class ClassLoader {
      * Returns an input stream to a resource in a module defined to this class
      * loader. Class loader implementations that support the loading from
      * modules should override this method.
+     *
+     * @param  moduleName
+     *         The name of the module to load resource from
+     *
+     * @param  name
+     *         The resource name
      *
      * @return An input stream to the resource; {@code null} if the resource
      * could not be found or there isn't a module of the given name defined to
@@ -1464,8 +1496,8 @@ public abstract class ClassLoader {
      * <p> This method is first invoked early in the runtime's startup
      * sequence, at which point it creates the system class loader. This
      * class loader will be the context class loader for the main application
-     * thread, the thread that invokes the {@code main} method of the main
-     * class for example.
+     * thread (for example, the thread that invokes the {@code main} method of
+     * the main class).
      *
      * <p> The default system class loader is an implementation-dependent
      * instance of this class.
@@ -1647,16 +1679,28 @@ public abstract class ClassLoader {
     // -- Package --
 
     /**
-     * Defines a package by name in this {@code ClassLoader}.
-     * Packages must be created before the class is defined for a {@code Package}
-     * to contain the version information about its specification and
-     * implementation and sealBase; otherwise the {@code defineClass}
-     * method will call this method with the name but no other information.
-     * Package names must be unique within a class loader and cannot be redefined
-     * or changed once created.
+     * Defines a package by <a href="#name">name</a> in this {@code ClassLoader}.
+     * <p>
+     * <a href="#name">Package names</a> must be unique within a class loader and
+     * cannot be redefined or changed once created.
+     * <p>
+     * If a class loader wishes to define a package with specific properties,
+     * such as version information, then the class loader should call this
+     * {@code definePackage} method before calling {@code defineClass}.
+     * Otherwise, the
+     * {@link #defineClass(String, byte[], int, int, ProtectionDomain) defineClass}
+     * method will define a package in this class loader corresponding to the package
+     * of the newly defined class; the properties of this defined package are
+     * specified by {@link Package}.
+     * <p>
+     * A class loader that wishes to define a package for classes in a JAR
+     * typically uses the specification and implementation titles, versions, and
+     * vendors from the JAR's manifest. If the package is specified as
+     * {@linkplain java.util.jar.Attributes.Name#SEALED sealed} in the JAR's manifest,
+     * the {@code URL} of the JAR file is typically used as the {@code sealBase}.
      *
      * @param  name
-     *         The package name
+     *         The <a href="#name">package name</a>
      *
      * @param  specTitle
      *         The specification title
@@ -1677,23 +1721,32 @@ public abstract class ClassLoader {
      *         The implementation vendor
      *
      * @param  sealBase
-     *         If not <tt>null</tt>, then this package is sealed with
-     *         respect to the given code source {@link java.net.URL
-     *         <tt>URL</tt>}  object.  Otherwise, the package is not sealed.
+     *         If not {@code null}, then this package is sealed with
+     *         respect to the given code source {@link java.net.URL URL}
+     *         object.  Otherwise, the package is not sealed.
      *
-     * @return  The newly defined <tt>Package</tt> object
+     * @return  The newly defined {@code Package} object
+     *
+     * @throws  NullPointerException
+     *          if {@code name} is {@code null}.
      *
      * @throws  IllegalArgumentException
-     *          if package name duplicates an existing package defined by
-     *          this class loader
+     *          if {@code name} denotes a package already defined by this class loader.
      *
      * @since  1.2
+     *
+     * @see <a href="../../../technotes/guides/jar/jar.html#versioning">
+     *      The JAR File Specification: Package Versioning</a>
+     * @see <a href="../../../technotes/guides/jar/jar.html#sealing">
+     *      The JAR File Specification: Package Sealing</a>
      */
     protected Package definePackage(String name, String specTitle,
                                     String specVersion, String specVendor,
                                     String implTitle, String implVersion,
                                     String implVendor, URL sealBase)
     {
+        Objects.requireNonNull(name);
+
         // definePackage is not final and may be overridden by custom class loader
         Package p = new Package(name, specTitle, specVersion, specVendor,
                                 implTitle, implVersion, implVendor,
@@ -1707,92 +1760,104 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Defines a package by name in this {@code ClassLoader} if not already
-     * defined.
+     * Returns a {@code Package} of the given <a href="#name">name</a> that has been
+     * defined by this class loader.
      *
-     * <p> This method is intended to be overridden by ClassLoader
-     * implementations that are capable of loading classes from modules.
-     * The overridden implementation should define packages that are sealed
-     * with the code source that is the module location. </p>
+     * @param  name The <a href="#name">package name</a>
      *
-     * @implSpec The default implementation defines the package that is
-     * not sealed.
+     * @return The {@code Package} of the given name defined by this class loader,
+     *         or {@code null} if not found
      *
-     * @throws IllegalArgumentException if a duplicated {@code Package} of
-     *         the given name is defined from a different code source by
-     *         this class loader.
-     *
-     * @since 1.9
+     * @since  1.9
      */
-    protected Package definePackage(String name) {
-        Package pkg = new Package(name, null, null, null,
-                                  null, null, null, null, this);
-        Package previous = packages.putIfAbsent(name, pkg);
-        // if a Package is already defined with other attributes but not sealed,
-        // return the defined one and no IAE thrown
-        if (previous != null && previous.isSealed()) {
-            throw new IllegalArgumentException(name +
-                    " has been defined with a different location");
-        }
-        return (previous == null) ? pkg : previous;
-    }
-
-    /**
-     * Returns a {@code Package} that has been defined by this class loader.
-     *
-     * @param  name
-     *         The package name
-     *
-     * @return  The {@code Package} corresponding to the given name, or
-     *          {@code null} if not found
-     *
-     * @since  1.2
-     */
-    protected Package getPackage(String name) {
+    public final Package getDefinedPackage(String name) {
         return packages.get(name);
     }
 
     /**
      * Returns all of the {@code Package}s defined by this class loader.
+     * The returned array has no duplicated {@code Package}s of the same name.
+     *
+     * @apiNote This method returns an array rather than a {@code Set} or {@code Stream}
+     *          for consistency with the existing {@link #getPackages} method.
+     *
+     * @return The array of {@code Package} objects defined by this class loader;
+     *         or an zero length array if no package has been defined by this class loader.
+     *
+     * @since  1.9
+     */
+    public final Package[] getDefinedPackages() {
+        return packages().toArray(Package[]::new);
+    }
+
+    /**
+     * Finds a package by <a href="#name">name</a> in this class loader and its ancestors.
+     * <p>
+     * If this class loader defines a {@code Package} of the given name,
+     * the {@code Package} is returned. Otherwise, the ancestors of
+     * this class loader are searched recursively (parent by parent)
+     * for a {@code Package} of the given name.
+     *
+     * @param  name
+     *         The <a href="#name">package name</a>
+     *
+     * @return The {@code Package} corresponding to the given name defined by
+     *         this class loader or its ancestors, or {@code null} if not found.
+     *
+     * @deprecated
+     * If multiple class loaders delegate to each other and define classes
+     * with the same package name, and one such loader relies on the lookup
+     * behavior of {@code getPackage} to return a {@code Package} from
+     * a parent loader, then the properties exposed by the {@code Package}
+     * may not be as expected in the rest of the program.
+     * For example, the {@code Package} will only expose annotations from the
+     * {@code package-info.class} file defined by the parent loader, even if
+     * annotations exist in a {@code package-info.class} file defined by
+     * a child loader.  A more robust approach is to use the
+     * {@link ClassLoader#getDefinedPackage} method which returns
+     * a {@code Package} for the specified class loader.
+     *
+     * @since  1.2
+     */
+    @Deprecated
+    protected Package getPackage(String name) {
+        Package pkg = packages.get(name);
+        if (pkg == null) {
+            if (parent != null) {
+                pkg = parent.getPackage(name);
+            } else {
+                pkg = BootLoader.getPackage(name);
+            }
+        }
+        return pkg;
+    }
+
+    /**
+     * Returns all of the {@code Package}s defined by this class loader
+     * and its ancestors.  The returned array may contain more than one
+     * {@code Package} object of the same package name, each defined by
+     * a different class loader in the class loader hierarchy.
      *
      * @return  The array of {@code Package} objects defined by this
-     *          {@code ClassLoader}
+     *          class loader and its ancestors
      *
      * @since  1.2
      */
     protected Package[] getPackages() {
-        if (packages.values().isEmpty()) {
-            return new Package[0];
-        }
-        return packages().toArray(Package[]::new);
-    }
-
-    // package-private
-
-    Stream<Package> packages() {
-        return packages.values().stream();
-    }
-
-    Stream<Package> packagesFromAncestors() {
         Stream<Package> pkgs = packages();
         ClassLoader ld = parent;
         while (ld != null) {
             pkgs = Stream.concat(ld.packages(), pkgs);
             ld = ld.parent;
         }
-        return Stream.concat(BootLoader.packages(), pkgs);
+        return Stream.concat(BootLoader.packages(), pkgs)
+                     .toArray(Package[]::new);
     }
 
-    Package findPackageFromAncestors(String name) {
-        Package pkg = getPackage(name);
-        if (pkg == null) {
-            if (parent != null) {
-                pkg = parent.findPackageFromAncestors(name);
-            } else {
-                pkg = BootLoader.getPackage(name);
-            }
-        }
-        return pkg;
+    // package-private
+
+    Stream<Package> packages() {
+        return packages.values().stream();
     }
 
     // -- Native library access --

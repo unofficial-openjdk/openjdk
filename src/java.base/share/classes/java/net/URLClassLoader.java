@@ -42,7 +42,6 @@ import java.security.SecureClassLoader;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.jar.Attributes;
@@ -390,7 +389,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      */
     private Package getAndVerifyPackage(String pkgname,
                                         Manifest man, URL url) {
-        Package pkg = getPackage(pkgname);
+        Package pkg = getDefinedPackage(pkgname);
         if (pkg != null) {
             // Package found, so check package sealing.
             if (pkg.isSealed()) {

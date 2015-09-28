@@ -378,7 +378,7 @@ public final class ModuleClassLoader
                 // define a package in the named module
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
-                if (getPackage(pn) == null) {
+                if (getDefinedPackage(pn) == null) {
                     definePackage(pn, mref);
                 }
 
@@ -400,28 +400,11 @@ public final class ModuleClassLoader
     // -- packages
 
     /**
-     * Defines a package by name in this {@code ModuleClassLoader}.
-     * The defined {@code Package} is {@linkplain Package#isSealed() sealed}
-     * with the module location.
-     *
-     * @param name  name of the package to be defined.
-     * @return {@code Package} object of the given name
-     *
-     * @throws IllegalArgumentException if a duplicated {@code Package} of the
-     *         given name is defined in different module by this class loader.
-     */
-    @Override
-    protected Package definePackage(String name) {
-        ModuleReference mref = packageToModule.get(name);
-        return definePackage(name, mref);
-    }
-
-    /**
      * Defines a package of the give name.  mref can be {@code null}
      * if it's defined in the unnamed module.
      */
     private Package definePackage(String name, ModuleReference mref) {
-        Package pkg = getPackage(name);
+        Package pkg = getDefinedPackage(name);
         try {
             URL url = mref != null ? mref.location().get().toURL() : null;
             if (pkg == null) {

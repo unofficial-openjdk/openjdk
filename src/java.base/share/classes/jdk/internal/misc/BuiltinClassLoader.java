@@ -29,9 +29,12 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
+import java.lang.reflect.Module;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -431,7 +434,7 @@ public class BuiltinClassLoader
                 // define a package in the named module
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
-                if (getPackage(pn) == null) {
+                if (getDefinedPackage(pn) == null) {
                     definePackage(pn, loadedModule);
                 }
 
@@ -493,9 +496,8 @@ public class BuiltinClassLoader
      *
      * @param pn package name
      */
-    @Override
-    protected Package definePackage(String pn) {
-        Package pkg = getPackage(pn);
+    Package definePackage(String pn) {
+        Package pkg = getDefinedPackage(pn);
         if (pkg == null) {
             LoadedModule loadedModule = packageToModule.get(pn);
             if (loadedModule == null || loadedModule.loader() != this) {
@@ -505,6 +507,40 @@ public class BuiltinClassLoader
             }
         }
         return pkg;
+    }
+
+    /**
+     * Define a package of the given class, if not present.
+     *
+     * @param c a Class defined by this class loader
+     */
+    Package definePackage(Class<?> c) {
+        Module m = c.getModule();
+        String cn = c.getName();
+        int pos = cn.lastIndexOf('.');
+        if (pos < 0 && m.isNamed()) {
+            throw new InternalError("unnamed package in named module " + m.getName());
+        }
+        String pn = pos != -1 ? cn.substring(0, pos) : "";
+        Package p = getDefinedPackage(pn);
+        if (p == null) {
+            URL url = null;
+            // The given class may be dynamically generated and
+            // its package is not in packageToModule map.
+            if (m.isNamed() && m.getLayer() != null) {
+                Optional<Configuration> cf = m.getLayer().configuration();
+                if (cf.isPresent()) {
+                    ModuleReference mref = cf.get().findModule(m.getName()).orElse(null);
+                    URI uri = mref != null ? mref.location().orElse(null) : null;
+                    try {
+                        url = uri != null ? uri.toURL() : null;
+                    } catch (MalformedURLException e) {
+                    }
+                }
+            }
+            p = definePackage(pn, null, null, null, null, null, null, url);
+        }
+        return p;
     }
 
     /**
@@ -549,7 +585,7 @@ public class BuiltinClassLoader
      * @throws SecurityException if there is a sealing violation (JAR spec)
      */
     private Package getAndVerifyPackage(String pn, Manifest man, URL url) {
-        Package pkg = getPackage(pn);
+        Package pkg = getDefinedPackage(pn);
         if (pkg != null) {
             if (pkg.isSealed()) {
                 if (!pkg.isSealed(url)) {

@@ -62,9 +62,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import sun.misc.JavaLangReflectModuleAccess;
 import sun.misc.Unsafe;
-import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -909,32 +907,13 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Gets the package for this class.  If this class is in unnamed package,
-     * {@code null} will be returned.
+     * Gets the package of this class.
      *
-     * <p>Packages have attributes for versions and specifications only if the
-     * information was defined in the manifests that accompany the classes, and
-     * if the class loader created the package instance with the attributes
-     * from the manifest.
-     *
-     * @return the package of this class, or {@code null} if this class is in
-     *         unnamed package
+     * @return the package of this class
      */
     public Package getPackage() {
-        String n = getName();
-        int i = n.lastIndexOf('.');
-        if (i == -1) {
-            // unnamed package
-            return null;
-        }
         ClassLoader cl = getClassLoader0();
-        String pn = n.substring(0, i);
-        if (cl != null) {
-            return cl.ensureDefinePackage(pn);
-        } else {
-            // BootLoader.getPackage defines the system package, if exists
-            return BootLoader.getPackage(pn);
-        }
+        return cl != null ? cl.definePackage(this) : BootLoader.definePackage(this);
     }
 
 
