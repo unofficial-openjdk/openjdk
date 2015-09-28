@@ -976,7 +976,7 @@ public class Proxy implements java.io.Serializable {
      * and those inherited by their superinterfaces
      * must be visible by name through the specified class loader.
      *
-     * <li>All non-public interfaces must be in the same package and
+     * <li>All non-public interfaces must be in the same package
      * and module and defined by the specified class loader;
      * otherwise, it would not be possible for the proxy class to
      * implement all of the interfaces, regardless of what package it is
