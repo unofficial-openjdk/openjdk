@@ -81,6 +81,7 @@ class NewInstance {
         } else {
             driverClass = classLoader.loadClass(className);
         }
+        NewInstance.class.getModule().addReads(driverClass.getModule());
         return driverClass.newInstance();
     }
 
