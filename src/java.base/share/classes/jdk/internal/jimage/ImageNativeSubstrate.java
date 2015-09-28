@@ -77,20 +77,6 @@ public final class ImageNativeSubstrate implements ImageSubstrate {
     public static native String JIMAGE_PackageToModule(long imageHandle,
                     String packageName);
 
-    public native static long JIMAGE_Open(String path) throws IOException;
-    public native static void JIMAGE_Close(long jimageHandle);
-    public native static long JIMAGE_FindResource(long jimageHandle,
-                    String moduleName, String Version, String path,
-                    long[] size);
-    public native static long JIMAGE_GetResource(long jimageHandle,
-                    long locationHandle, byte[] buffer, long size);
-    // Get an array of names that match; return the count found upto array size
-    public native static int JIMAGE_Resources(long jimageHandle,
-                    String[] outputNames);
-    // Return the module name for the package
-    public native static String JIMAGE_PackageToModule(long imageHandle,
-                    String packageName);
-
     static ByteBuffer newDirectByteBuffer(long address, long capacity) {
         assert capacity < Integer.MAX_VALUE;
         return NIOACCESS.newDirectByteBuffer(address, (int)capacity, null);
