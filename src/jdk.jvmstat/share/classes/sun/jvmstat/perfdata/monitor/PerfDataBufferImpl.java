@@ -162,29 +162,20 @@ public abstract class PerfDataBufferImpl {
     private void buildAliasMap() {
         assert Thread.holdsLock(this);
 
-        URL aliasURL = null;
         String filename = System.getProperty("sun.jvmstat.perfdata.aliasmap");
-
-        if (filename != null) {
-            File f = new File(filename);
-            try {
-                aliasURL = f.toURL();
-
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException(e);
-            }
-        } else {
-            aliasURL = getClass().getResource(
-                "/sun/jvmstat/perfdata/resources/aliasmap");
-        }
-
-        assert aliasURL != null;
-
-        AliasFileParser aliasParser = new AliasFileParser(aliasURL);
-
         try {
-            aliasParser.parse(aliasMap);
-
+            InputStream in;
+            if (filename != null) {
+                in = new FileInputStream(filename);
+            } else {
+                in = getClass().getResourceAsStream(
+                    "/sun/jvmstat/perfdata/resources/aliasmap");
+            }
+            if (in != null)  {
+                try (in) {
+                   new AliasFileParser(in).parse(aliasMap);
+                }
+            }
         } catch (IOException e) {
             System.err.println("Error processing " + filename + ": "
                                + e.getMessage());

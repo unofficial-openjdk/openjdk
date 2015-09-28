@@ -375,6 +375,8 @@ public class InstrumentationImpl implements Instrumentation {
             }
         }
 
+        this.getClass().getModule().addReads(javaAgentClass.getModule());
+
         // the premain method should not be required to be public,
         // make it accessible so we can call it
         // Note: The spec says the following:
@@ -387,9 +389,6 @@ public class InstrumentationImpl implements Instrumentation {
         } else {
             m.invoke(null, new Object[] { optionsString });
         }
-
-        // don't let others access a non-public premain method
-        setAccessible(m, false);
     }
 
     // WARNING: the native code knows the name & signature of this method

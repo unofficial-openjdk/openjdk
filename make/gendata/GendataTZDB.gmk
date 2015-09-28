@@ -32,7 +32,7 @@ TZDATA_DIR := $(JDK_TOPDIR)/make/data/tzdata
 TZDATA_TZFILE := africa antarctica asia australasia europe northamerica pacificnew southamerica backward etcetera gmt jdk11_backward
 TZDATA_TZFILES := $(addprefix $(TZDATA_DIR)/,$(TZDATA_TZFILE))
 
-GENDATA_TZDB_DAT := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE)/tzdb.dat
+GENDATA_TZDB_DAT := $(MODULES_LIBS_OUTPUTDIR)/$(MODULE)/tzdb.dat
 
 $(GENDATA_TZDB_DAT): $(TZDATA_TZFILES)
 	$(RM) $(GENDATA_TZDB_DAT)

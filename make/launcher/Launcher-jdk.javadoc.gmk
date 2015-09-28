@@ -28,5 +28,6 @@ include LauncherCommon.gmk
 $(eval $(call SetupLauncher,javadoc, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javadoc.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.javadoc/com.sun.tools.javadoc.Main"$(COMMA) }'))
 

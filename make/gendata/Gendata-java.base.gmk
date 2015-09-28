@@ -62,7 +62,7 @@ TARGETS += $(GENDATA_CURDATA)
 ################################################################################
 
 GENDATA_JAVA_SECURITY_SRC := $(JDK_TOPDIR)/src/java.base/share/conf/security/java.security
-GENDATA_JAVA_SECURITY := $(SUPPORT_OUTPUTDIR)/modules_conf/java.base/security/java.security
+GENDATA_JAVA_SECURITY := $(MODULES_CONF_OUTPUTDIR)/java.base/security/java.security
 
 # RESTRICTED_PKGS_SRC is optionally set in custom extension for this makefile
 
@@ -76,13 +76,13 @@ TARGETS += $(GENDATA_JAVA_SECURITY)
 
 ################################################################################
 
-$(SUPPORT_OUTPUTDIR)/modules_libs/java.base/classlist: \
+$(MODULES_LIBS_OUTPUTDIR)/java.base/classlist: \
     $(JDK_TOPDIR)/make/data/classlist/classlist.$(OPENJDK_TARGET_OS)
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(TOOL_ADDJSUM) $< $@.tmp
 	$(MV) $@.tmp $@
 
-TARGETS += $(SUPPORT_OUTPUTDIR)/modules_libs/java.base/classlist
+TARGETS += $(MODULES_LIBS_OUTPUTDIR)/java.base/classlist
 
 ################################################################################

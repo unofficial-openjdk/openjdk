@@ -86,7 +86,7 @@ define SetupLauncher
   $(call LogSetupMacroEntry,SetupLauncher($1),$2,$3,$4,$5,$6,$7,$8,$9,$(10),$(11))
   $(if $(13),$(error Internal makefile error: Too many arguments to SetupLauncher, please update CompileLaunchers.gmk))
 
-  $1_WINDOWS_JLI_LIB := $(SUPPORT_OUTPUTDIR)/native/java.base/libjli/jli.lib
+  $1_WINDOWS_JLI_LIB := $(NATIVE_OUTPUTDIR)/java.base/libjli/jli.lib
   ifneq ($6, )
     $1_WINDOWS_JLI_LIB := $6
   endif
@@ -106,14 +106,14 @@ define SetupLauncher
       endif
     endif
 
-    $1_LDFLAGS += -Wl,-all_load $(SUPPORT_OUTPUTDIR)/native/java.base/libjli_static.a \
+    $1_LDFLAGS += -Wl,-all_load $(NATIVE_OUTPUTDIR)/java.base/libjli_static.a \
         -framework Cocoa -framework Security -framework ApplicationServices \
         -sectcreate __TEXT __info_plist $(MACOSX_PLIST_DIR)/$$($1_PLIST_FILE)
         $1_LDFLAGS_SUFFIX += -pthread
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), aix)
-    $1_LDFLAGS_SUFFIX += -L$(SUPPORT_OUTPUTDIR)/native/java.base -ljli_static
+    $1_LDFLAGS_SUFFIX += -L$(NATIVE_OUTPUTDIR)/java.base -ljli_static
   endif
 
   ifeq ($(USE_EXTERNAL_LIBZ), true)
@@ -122,7 +122,7 @@ define SetupLauncher
 
   $1_OUTPUT_DIR_ARG := $9
   ifeq (, $$($1_OUTPUT_DIR_ARG))
-    $1_OUTPUT_DIR_ARG := $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE)
+    $1_OUTPUT_DIR_ARG := $(MODULES_CMDS_OUTPUTDIR)/$(MODULE)
   endif
 
   # TODO: maybe it's better to move this if-statement out of this function
@@ -181,10 +181,10 @@ define SetupLauncher
       LDFLAGS_SUFFIX := $(LDFLAGS_JDKEXE_SUFFIX) $$($1_LDFLAGS_SUFFIX), \
       LDFLAGS_SUFFIX_unix := $4, \
       LDFLAGS_SUFFIX_windows := $$($1_WINDOWS_JLI_LIB) \
-          $(SUPPORT_OUTPUTDIR)/native/java.base/libjava/java.lib advapi32.lib $5, \
-      LDFLAGS_SUFFIX_linux := -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli -ljli $(LIBDL) -lc, \
-      LDFLAGS_SUFFIX_solaris := -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli -ljli -lthread $(LIBDL) -lc, \
-      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/$1_objs$(OUTPUT_SUBDIR), \
+          $(NATIVE_OUTPUTDIR)/java.base/libjava/java.lib advapi32.lib $5, \
+      LDFLAGS_SUFFIX_linux := -L$(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli -ljli $(LIBDL) -lc, \
+      LDFLAGS_SUFFIX_solaris := -L$(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli -ljli -lthread $(LIBDL) -lc, \
+      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/$1_objs$(OUTPUT_SUBDIR), \
       OUTPUT_DIR := $$($1_OUTPUT_DIR_ARG)$(OUTPUT_SUBDIR), \
       PROGRAM := $1, \
       DEBUG_SYMBOLS := true, \
@@ -202,11 +202,11 @@ define SetupLauncher
   TARGETS += $$(BUILD_LAUNCHER_$1)
 
   ifneq (,$(filter $(OPENJDK_TARGET_OS), macosx aix))
-    $$(BUILD_LAUNCHER_$1): $(SUPPORT_OUTPUTDIR)/native/java.base/libjli_static.a
+    $$(BUILD_LAUNCHER_$1): $(NATIVE_OUTPUTDIR)/java.base/libjli_static.a
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
-    $$(BUILD_LAUNCHER_$1): $(SUPPORT_OUTPUTDIR)/native/java.base/libjava/java.lib \
+    $$(BUILD_LAUNCHER_$1): $(NATIVE_OUTPUTDIR)/java.base/libjava/java.lib \
         $$($1_WINDOWS_JLI_LIB)
   endif
 endef

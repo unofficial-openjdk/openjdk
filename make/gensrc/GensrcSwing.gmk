@@ -27,25 +27,25 @@
 # Generate java files for javax.swing.plaf package
 #
 NIMBUS_PACKAGE = javax.swing.plaf
-NIMBUS_GENSRC_DIR = $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/javax/swing/plaf/nimbus
+NIMBUS_GENSRC_DIR = $(GENSRC_OUTPUTDIR)/java.desktop/javax/swing/plaf/nimbus
 NIMBUS_SKIN_FILE = $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/skin.laf
 
-$(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS_JDK)
+$(GENSRC_OUTPUTDIR)/java.desktop/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(@D)
 	$(ECHO) "Generating Nimbus source files"
 	$(TOOL_GENERATENIMBUS) $(LOG_INFO) \
-	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop \
+	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(GENSRC_OUTPUTDIR)/java.desktop \
 	    -packagePrefix $(NIMBUS_PACKAGE).nimbus -lafName Nimbus
 	$(ECHO) $(LOG_INFO) "Finished generating Nimbus source files"
 	$(TOUCH) $@
 
-GENSRC_SWING_NIMBUS := $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/_the.generated_nimbus
+GENSRC_SWING_NIMBUS := $(GENSRC_OUTPUTDIR)/java.desktop/_the.generated_nimbus
 
 #
 # Generate beaninfo java files
 #
 
-BEANINFO_OUTPUTDIR := $(SUPPORT_OUTPUTDIR)/gensrc_no_docs/java.desktop
+BEANINFO_OUTPUTDIR := $(GENSRC_OUTPUTDIR)_no_docs/java.desktop
 DOCLET_DATA_DIR := $(JDK_TOPDIR)/make/data/swingbeaninfo
 
 # javax.swing package
@@ -79,12 +79,13 @@ $(BEANINFO_OUTPUTDIR)/_the.generated_beaninfo: $(BEANS_SRC) \
 	$(JAVA) -Djava.awt.headless=true $(NEW_JAVADOC) \
 	    -sourcepath $(call PathList,\
 	        $(wildcard $(JDK_TOPDIR)/src/*/*/classes) \
-	        $(SUPPORT_OUTPUTDIR)/gensrc/java.base) \
+	        $(GENSRC_OUTPUTDIR)/java.base) \
 	    -doclet build.tools.swingbeaninfo.GenDocletBeanInfo \
 	    -x $(SWINGBEAN_DEBUG_FLAG) -d $(BEANINFO_OUTPUTDIR)/javax/swing \
 	    -t $(DOCLET_DATA_DIR)/SwingBeanInfo.template \
 	    -docletpath $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
 	    -XDignore.symbol.file=true \
+	    -XDnoModules=true \
 	    -classpath $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes $(BEANS_SRC) $(LOG_INFO)
         # Move the JTextComponent into its proper package directory.
 	$(MKDIR) -p $(BEANINFO_OUTPUTDIR)/javax/swing/text

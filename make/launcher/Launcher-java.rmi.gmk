@@ -26,17 +26,19 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,rmid, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.server.Activation"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.rmi/sun.rmi.server.Activation"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,rmiregistry, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.rmi/sun.rmi.registry.RegistryImpl"$(COMMA) }'))
 
 ##########################################################################################
 
 #
 # The java-rmi.cgi script in bin/ only gets delivered in certain situations
 #
-JAVA_RMI_CGI := $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE)/java-rmi.cgi
+JAVA_RMI_CGI := $(MODULES_CMDS_OUTPUTDIR)/$(MODULE)/java-rmi.cgi
 ifeq ($(OPENJDK_TARGET_OS), linux)
   TARGETS += $(JAVA_RMI_CGI)
 endif

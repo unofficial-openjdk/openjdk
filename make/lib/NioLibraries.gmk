@@ -36,7 +36,7 @@ BUILD_LIBNIO_SRC := \
 
 BUILD_LIBNIO_CFLAGS := \
     $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
-    -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
+    -I$(HEADERS_OUTPUTDIR)/java.base \
     $(LIBJAVA_HEADER_FLAGS) \
     $(addprefix -I, $(BUILD_LIBNET_SRC))
 
@@ -77,7 +77,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO, \
     LDFLAGS_SUFFIX_solaris := -ljvm -lsocket -lposix4 $(LIBDL) \
         -lsendfile -ljava -lnet -lc, \
     LDFLAGS_SUFFIX_windows := jvm.lib ws2_32.lib $(WIN_JAVA_LIB) \
-        $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnet/net.lib \
+        $(NATIVE_OUTPUTDIR)/$(MODULE)/libnet/net.lib \
         advapi32.lib, \
     LDFLAGS_SUFFIX_macosx := -ljava -lnet -pthread \
         -framework CoreFoundation -framework CoreServices, \
@@ -87,7 +87,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO, \
         -D "JDK_FNAME=nio.dll" \
         -D "JDK_INTERNAL_NAME=nio" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnio, \
+    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libnio, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
 TARGETS += $(BUILD_LIBNIO)

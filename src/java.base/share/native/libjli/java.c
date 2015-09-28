@@ -69,6 +69,7 @@ static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static char     *showSettings = NULL;      /* print but continue */
+static char     *listModules = NULL;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -97,6 +98,14 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
+static void SetModulePath(const char *s);
+static void SetUpgradeModulePath(const char *s);
+static void SetMainModule(const char *s);
+static void SetAddModulesProp(const char *mods);
+static void SetLimitModulesProp(const char *mods);
+static void SetAddReadsProp(const char *s);
+static void SetAddExportsProp(const char *s);
+static void SetPatchProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -115,6 +124,7 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
+static void ListModules(JNIEnv* env, char *optString);
 
 static void SetPaths(int argc, char **argv);
 
@@ -194,7 +204,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
 {
     int mode = LM_UNKNOWN;
     char *what = NULL;
-    char *cpath = 0;
     char *main_class = NULL;
     int ret;
     InvocationFunctions ifn;
@@ -270,13 +279,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         if (!AddApplicationOptions(appclassc, appclassv)) {
             return(1);
         }
-    } else {
-        /* Set default CLASSPATH */
-        cpath = getenv("CLASSPATH");
-        if (cpath == NULL) {
-            cpath = ".";
-        }
-        SetClassPath(cpath);
     }
 
     /* Parse command line options; if the return value of
@@ -382,6 +384,15 @@ JavaMain(void * _args)
     if (showSettings != NULL) {
         ShowSettings(env, showSettings);
         CHECK_EXCEPTION_LEAVE(1);
+    }
+
+    if (listModules != NULL) {
+        ListModules(env, listModules);
+        CHECK_EXCEPTION_LEAVE(1);
+        if (what == NULL) {
+            /* No main class or module specified */
+            LEAVE();
+        }
     }
 
     if (printVersion || showVersion) {
@@ -522,7 +533,10 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
             }
         } else {
             if (JLI_StrCmp(arg, "-classpath") == 0 ||
-                JLI_StrCmp(arg, "-cp") == 0) {
+                JLI_StrCmp(arg, "-cp") == 0 ||
+                JLI_StrCmp(arg, "-modulepath") == 0 ||
+                JLI_StrCmp(arg, "-mp") == 0 ||
+                JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
                 newArgv[newArgvIdx++] = arg;
                 argi++;
                 if (argi < argc) {
@@ -845,6 +859,93 @@ SetClassPath(const char *s)
         JLI_MemFree((char *) s);
 }
 
+static void
+SetModulePath(const char *s)
+{
+    char *def;
+    const char *orig = s;
+    static const char format[] = "-Djava.module.path=%s";
+    if (s == NULL)
+        return;
+    s = JLI_WildcardExpandClasspath(s);
+    def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetUpgradeModulePath(const char *s)
+{
+    char *def;
+    const char *orig = s;
+    static const char format[] = "-Djava.upgrade.module.path=%s";
+    if (s == NULL)
+        return;
+    s = JLI_WildcardExpandClasspath(s);
+    def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetMainModule(const char *s)
+{
+    static const char format[] = "-Djava.module.main=%s";
+    char *def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+}
+
+static void
+SetAddModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addmods=%s", mods);
+    AddOption(prop, NULL);
+}
+
+static void
+SetLimitModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.limitmods=%s", mods);
+    AddOption(prop, NULL);
+}
+
+static void
+SetAddReadsProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads=%s", s);
+    AddOption(prop, NULL);
+}
+
+static void
+SetAddExportsProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports=%s", s);
+    AddOption(prop, NULL);
+}
+
+static void
+SetPatchProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patchdirs=%s", s);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1032,9 +1133,73 @@ ParseArguments(int *pargc, char ***pargv,
             SetClassPath(*argv);
             mode = LM_CLASS;
             argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetModulePath(*argv);
+            argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetUpgradeModulePath(*argv);
+            argv++; --argc;
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
             mode = LM_JAR;
+        } else if (JLI_StrCmp(arg, "-m") == 0) {
+            ARG_CHECK (argc, ARG_ERROR5, arg);
+            SetMainModule(*argv);
+            mode = LM_MODULE;
+        } else if (JLI_StrCmp(arg, "-addmods") == 0) {
+            ARG_CHECK (argc, ARG_ERROR6, arg);
+            SetAddModulesProp(*argv);
+            argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
+            ARG_CHECK (argc, ARG_ERROR6, arg);
+            SetLimitModulesProp(*argv);
+            argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
+                   JLI_StrCCmp(arg, "-listmods:") == 0) {
+            listModules = arg;
+        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
+            static jboolean haveAddReads = JNI_FALSE;
+            /* -XaddReads only allowed once */
+            if (haveAddReads) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddReads");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 11;
+                SetAddReadsProp(value);
+                haveAddReads = JNI_TRUE;
+            }
+        } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
+            static jboolean haveAddExports = JNI_FALSE;
+            /* -XaddExports only allowed once */
+            if (haveAddExports) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddExports");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 13;
+                SetAddExportsProp(value);
+                haveAddExports = JNI_TRUE;
+            }
+        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0 ||
+                   JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+            static jboolean havePatchDirs = JNI_FALSE;
+            if (havePatchDirs) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value;
+                if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+                    value = arg + 8;
+                } else {
+                    value = arg + 11;
+                }
+                SetPatchProp(value);
+                havePatchDirs = JNI_TRUE;
+            }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
@@ -1053,10 +1218,13 @@ ParseArguments(int *pargc, char ***pargv,
  * In the latter case, any SUBOPT value not recognized will default to "all"
  */
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
-                JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
+                   JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
+            AddOption("-Djdk.launcher.traceResolver=true", NULL);
+        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0) {
+            AddOption("-Djdk.launcher.traceResolver=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
  * command line options.
@@ -1110,10 +1278,18 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        *pret = 1;
+        /* No main class or module specified */
+        if (listModules == NULL) {
+            *pret = 1;
+        }
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -jar and -cp option are
          * not specified */
+        char* cpath = getenv("CLASSPATH");
+        if (cpath == NULL) {
+            cpath = ".";
+        }
+        SetClassPath(cpath);
         mode = LM_CLASS;
     }
 
@@ -1503,6 +1679,24 @@ ShowSettings(JNIEnv *env, char *optString)
                                  (jlong)maxHeapSize,
                                  (jlong)threadStackSize,
                                  ServerClassMachine());
+}
+
+/**
+ * List modules supported by the runtime
+ */
+static void
+ListModules(JNIEnv *env, char *optString)
+{
+    jmethodID listModulesID;
+    jstring joptString;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listModules", "(ZLjava/lang/String;)V"));
+    joptString = (*env)->NewStringUTF(env, optString);
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID,
+                                 USE_STDERR,
+                                 joptString);
 }
 
 /*

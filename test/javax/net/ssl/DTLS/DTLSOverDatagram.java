@@ -28,6 +28,7 @@
  * @test
  * @bug 8043758
  * @summary Datagram Transport Layer Security (DTLS)
+ * @modules java.base/sun.misc
  * @run main/othervm DTLSOverDatagram
  */
 

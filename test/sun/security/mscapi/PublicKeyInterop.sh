@@ -60,9 +60,11 @@ case "$OS" in
 	    -noprompt
 
         echo
-	echo "Running the test..."
-        ${TESTJAVA}/bin/javac ${TESTTOOLVMOPTS} ${TESTJAVACOPTS} -d . ${TESTSRC}\\PublicKeyInterop.java
-        ${TESTJAVA}/bin/java ${TESTVMOPTS} PublicKeyInterop
+        echo "Running the test..."
+        ${TESTJAVA}/bin/javac -XaddExports:java.base/sun.misc=ALL-UNNAMED \
+            ${TESTTOOLVMOPTS} ${TESTJAVACOPTS} -d . ${TESTSRC}\\PublicKeyInterop.java
+        ${TESTJAVA}/bin/java -XaddExports:java.base/sun.misc=ALL-UNNAMED \
+            ${TESTVMOPTS} PublicKeyInterop
 
         rc=$?
 

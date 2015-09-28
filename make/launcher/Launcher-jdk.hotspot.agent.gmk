@@ -26,7 +26,8 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,jsadebugd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.hotspot-.agent/sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     ,,,,,,,,,Info-privileged.plist))
 
 

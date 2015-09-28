@@ -39,13 +39,13 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I, $(LIBJ2GSS_SRC)) \
           $(LIBJAVA_HEADER_FLAGS) \
-          -I$(SUPPORT_OUTPUTDIR)/headers/java.security.jgss, \
+          -I$(HEADERS_OUTPUTDIR)/java.security.jgss, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2gss/mapfile-vers, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX := $(LIBDL), \
       LDFLAGS_SUFFIX_solaris := -lc, \
-      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libj2gss, \
+      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libj2gss, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   TARGETS += $(BUILD_LIBJ2GSS)
@@ -81,7 +81,7 @@ ifneq ($(BUILD_CRYPTO), no)
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
             $(addprefix -I, $(BUILD_LIBKRB5_SRC)) \
-            -I$(SUPPORT_OUTPUTDIR)/headers/java.security.jgss, \
+            -I$(HEADERS_OUTPUTDIR)/java.security.jgss, \
         DISABLED_WARNINGS_clang := deprecated-declarations, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -91,7 +91,7 @@ ifneq ($(BUILD_CRYPTO), no)
             -D "JDK_FNAME=$(BUILD_LIBKRB5_NAME).dll" \
             -D "JDK_INTERNAL_NAME=$(BUILD_LIBKRB5_NAME)" \
             -D "JDK_FTYPE=0x2L", \
-        OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libkrb5, \
+        OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libkrb5, \
         DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
     TARGETS += $(BUILD_LIBKRB5)

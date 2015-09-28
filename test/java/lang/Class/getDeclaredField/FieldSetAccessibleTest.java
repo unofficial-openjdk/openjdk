@@ -224,7 +224,7 @@ public class FieldSetAccessibleTest {
                     .filter(x -> x.getNameCount() > 2)
                     .map( x-> x.subpath(2, x.getNameCount()))
                     .map( x -> x.toString())
-                    .filter(s -> s.endsWith(".class"));
+                    .filter(s -> s.endsWith(".class") && !s.endsWith("module-info.class"));
         }
 
         @Override

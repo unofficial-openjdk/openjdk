@@ -26,7 +26,8 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,pack200, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.base/com.sun.java.util.jar.pack.Driver"$(COMMA) }'))
 
 ################################################################################
 # The order of the object files on the link command line affects the size of the resulting
@@ -43,16 +44,16 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   UNPACKEXE_ZIPOBJS := -lz
 else
   UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/java.base/share/native/libzip/zlib-1.2.8
-  UNPACKEXE_ZIPOBJS := $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/zcrc32$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/deflate$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/trees$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/zadler32$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/compress$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/zutil$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/inflate$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/infback$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/inftrees$(OBJ_SUFFIX) \
-      $(SUPPORT_OUTPUTDIR)/native/java.base/libzip/inffast$(OBJ_SUFFIX)
+  UNPACKEXE_ZIPOBJS := $(NATIVE_OUTPUTDIR)/java.base/libzip/zcrc32$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/deflate$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/trees$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/zadler32$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/compress$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/zutil$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/inflate$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/infback$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/inftrees$(OBJ_SUFFIX) \
+      $(NATIVE_OUTPUTDIR)/java.base/libzip/inffast$(OBJ_SUFFIX)
 
 endif
 
@@ -93,8 +94,8 @@ $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
     LDFLAGS_linux := -lc, \
     LDFLAGS_solaris := $(UNPACKEXE_LDFLAGS_solaris) -lc, \
     LDFLAGS_SUFFIX := $(LIBCXX), \
-    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/unpackexe$(OUTPUT_SUBDIR), \
-    OUTPUT_DIR := $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE), \
+    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/unpackexe$(OUTPUT_SUBDIR), \
+    OUTPUT_DIR := $(MODULES_CMDS_OUTPUTDIR)/$(MODULE), \
     PROGRAM := unpack200, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
