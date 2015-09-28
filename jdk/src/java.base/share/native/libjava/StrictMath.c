@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,12 +101,6 @@ Java_java_lang_StrictMath_atan2(JNIEnv *env, jclass unused, jdouble d1, jdouble 
 }
 
 JNIEXPORT jdouble JNICALL
-Java_java_lang_StrictMath_pow(JNIEnv *env, jclass unused, jdouble d1, jdouble d2)
-{
-    return (jdouble) jpow((double)d1, (double)d2);
-}
-
-JNIEXPORT jdouble JNICALL
 Java_java_lang_StrictMath_IEEEremainder(JNIEnv *env, jclass unused,
                                   jdouble dividend,
                                   jdouble divisor)
@@ -131,14 +125,6 @@ Java_java_lang_StrictMath_tanh(JNIEnv *env, jclass unused, jdouble d)
 {
     return (jdouble) jtanh((double)d);
 }
-
-JNIEXPORT jdouble JNICALL
-Java_java_lang_StrictMath_hypot(JNIEnv *env, jclass unused, jdouble x, jdouble y)
-{
-    return (jdouble) jhypot((double)x, (double)y);
-}
-
-
 
 JNIEXPORT jdouble JNICALL
 Java_java_lang_StrictMath_log1p(JNIEnv *env, jclass unused, jdouble d)
