@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,19 +39,18 @@ public class OptionFinder {
 
     private static final boolean debug = false;
 
-    final List<String> optionsSources;
+    List<URL> optionsSources;
 
-
-    public OptionFinder(List<String> optionsSources) {
-        this.optionsSources = Collections.unmodifiableList(optionsSources);
+    public OptionFinder(List<URL> optionsSources) {
+        this.optionsSources = optionsSources;
     }
 
     public OptionFormat getOptionFormat(String option, boolean useTimestamp) {
-        OptionFormat of = getOptionFormat(option);
+        OptionFormat of = getOptionFormat(option, optionsSources);
         OptionFormat tof = null;
         if ((of != null) && (useTimestamp)) {
             // prepend the timestamp column as first column
-            tof = getOptionFormat("timestamp");
+            tof = getOptionFormat("timestamp", optionsSources);
             if (tof != null) {
                 ColumnFormat cf = (ColumnFormat)tof.getSubFormat(0);
                 of.insertSubFormat(0, cf);
@@ -60,30 +59,27 @@ public class OptionFinder {
         return of;
     }
 
-    protected OptionFormat getOptionFormat(String option) {
-        for (Parser parser : getOptionParsers()) {
+    protected OptionFormat getOptionFormat(String option, List<URL> sources) {
+        OptionFormat of = null;
+        for (URL u : sources) {
             try {
-                OptionFormat of = parser.parse(option);
+                Reader r = new BufferedReader(
+                        new InputStreamReader(u.openStream()));
+                of = new Parser(r).parse(option);
                 if (of != null)
-                    return of;
-            } catch (IOException | ParserException e) {
-                if (debug) e.printStackTrace();
+                    break;
+            } catch (IOException e) {
+                if (debug) {
+                    System.err.println("Error processing " + u
+                                       + " : " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } catch (ParserException e) {
+                // Exception in parsing the options file.
+                System.err.println(u + ": " + e.getMessage());
+                System.err.println("Parsing of " + u + " aborted");
             }
         }
-        return null;
-    }
-
-    /**
-     * Returns a list of {@linkplain Parser} instances created out of the
-     * provided {@linkplain InputStream}s.
-     * <p>
-     * ! Parsers can not be restarted !
-     * Therefore we need to create new instances to parse each option.
-     * </p>
-     * @return list of {@linkplain Parser} instances created out of the
-     * provided {@linkplain InputStream}s
-     */
-    private List<Parser> getOptionParsers() {
-        return OptionParserFactory.getOptionParsers(optionsSources);
+        return of;
     }
 }
