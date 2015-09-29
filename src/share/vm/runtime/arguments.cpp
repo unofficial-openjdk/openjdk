@@ -2808,45 +2808,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
           }
         }
       }
-/* Remove this code once -Xoverride is replaced with -Xpatch */
-
-      if (match_option(option, "-Djdk.launcher.override=", &tail)) {
-        // -Xoverride
-        int dir_count;
-        char** patch_dirs = os::split_path(tail, &dir_count);
-        if (patch_dirs == NULL) {
-          jio_fprintf(defaultStream::output_stream(),
-            "Bad value for -Xoverride.\n");
-          return JNI_ERR;
-        }
-        set_patch_dirs(patch_dirs);
-        set_patch_dirs_count(dir_count);
-
-        // Create a path for each patch dir consisting of dir/java.base.
-        char file_sep = os::file_separator()[0];
-        for (int x = 0; x < dir_count; x++) {
-          // Really shouldn't be NULL, but check can't hurt
-          if (patch_dirs[x] != NULL) {
-            size_t len = strlen(patch_dirs[x]);
-            if (len != 0) { // Ignore empty strings.
-              len += 11; // file_sep + "java.base" + null terminator.
-              char* dir = NEW_C_HEAP_ARRAY(char, len, mtInternal);
-              jio_snprintf(dir, len, "%s%cjava.base", patch_dirs[x], file_sep);
-
-              // See if Xoverride module path exists.
-              struct stat st;
-              if ((os::stat(dir, &st) == 0)) {
-                scp_p->add_prefix(dir);
-                *scp_assembly_required_p = true;
-              }
-              FREE_C_HEAP_ARRAY(char, dir);
-            }
-          }
-        }
-      }
-
-/* End of code to remove once -Xoverride is replaced with -Xpatch */
-
     // -Xint
     } else if (match_option(option, "-Xint")) {
           set_mode_flags(_int);
