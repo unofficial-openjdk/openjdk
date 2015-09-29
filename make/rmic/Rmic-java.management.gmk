@@ -40,7 +40,7 @@ JMX_RMI_CLASSES := javax.management.remote.rmi.RMIConnectionImpl \
 $(eval $(call SetupRMICompilation,RMI_GEN, \
     CLASSES := $(JMX_RMI_CLASSES), \
     CLASSES_DIR := $(CLASSES_DIR)/java.management, \
-    STUB_CLASSES_DIR := $(RMIC_GENSRC_DIR), \
+    STUB_CLASSES_DIR := $(RMIC_GENSRC_DIR)/java.management, \
     RUN_V12 := true, \
     KEEP_GENERATED := true, \
 ))
