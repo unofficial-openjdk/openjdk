@@ -406,6 +406,6 @@ public class WhiteBox {
 
   // Sharing
   public native boolean isShared(Object o);
-  public native boolean isSharedClass(Class c);
+  public native boolean isSharedClass(Class<?> c);
   public native boolean areSharedStringsIgnored();
 }
