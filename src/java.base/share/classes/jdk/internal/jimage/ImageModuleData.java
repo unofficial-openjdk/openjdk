@@ -35,7 +35,7 @@ import java.util.Set;
  * Manage module meta data.
  *
  */
-final public class ImageModuleData {
+public final class ImageModuleData {
     public static final String MODULES_STRING = UTF8String.MODULES_STRING.toString();
     private final BasicImageReader reader;
     private static final int SIZE_OF_OFFSET = 4;

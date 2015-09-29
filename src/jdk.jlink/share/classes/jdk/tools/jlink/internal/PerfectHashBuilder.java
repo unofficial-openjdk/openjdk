@@ -34,7 +34,7 @@ import java.util.Map;
 import jdk.internal.jimage.UTF8String;
 
 public class PerfectHashBuilder<E> {
-    private final static int RETRY_LIMIT = 1000;
+    private static final int RETRY_LIMIT = 1000;
 
     private Class<?> entryComponent;
     private Class<?> bucketComponent;
