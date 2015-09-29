@@ -133,6 +133,7 @@ java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpTest.java	generi
 
 # these tests use the streams tests
 java/util/regex/PatternStreamTest.java						generic-all
+java/util/Scanner/ScannerStreamTest.java                                        generic-all
 java/nio/file/Files/StreamLinesTest.java					generic-all
 java/net/NetworkInterface/NetworkInterfaceStreamTest.java			generic-all
 java/security/PermissionCollection/PermissionCollectionStreamTest.java		generic-all

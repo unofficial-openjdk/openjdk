@@ -98,7 +98,7 @@ public final class System {
      * corresponds to keyboard input or another input source specified by
      * the host environment or user.
      */
-    public final static InputStream in = null;
+    public static final InputStream in = null;
 
     /**
      * The "standard" output stream. This stream is already
@@ -125,7 +125,7 @@ public final class System {
      * @see     java.io.PrintStream#println(java.lang.Object)
      * @see     java.io.PrintStream#println(java.lang.String)
      */
-    public final static PrintStream out = null;
+    public static final PrintStream out = null;
 
     /**
      * The "standard" error output stream. This stream is already
@@ -139,7 +139,7 @@ public final class System {
      * variable <code>out</code>, has been redirected to a file or other
      * destination that is typically not continuously monitored.
      */
-    public final static PrintStream err = null;
+    public static final PrintStream err = null;
 
     /* The security manager for the system.
      */
