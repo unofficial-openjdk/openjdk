@@ -27,6 +27,7 @@ package java.lang.module;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -49,6 +50,7 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.Hasher;
+import sun.net.www.ParseUtil;
 
 
 /**
@@ -183,12 +185,26 @@ class ModuleReferences {
          * Returns the ImageLocation for the given resource, {@code null}
          * if not found.
          */
-        private ImageLocation findImageLocation(String name) {
+        private ImageLocation findImageLocation(String name) throws IOException {
+            if (closed)
+                throw new IOException("ModuleReader is closed");
+
             if (imageReader != null) {
                 return imageReader.findLocation(module, name);
             } else {
                 // not an images build
                 return null;
+            }
+        }
+
+        @Override
+        public Optional<URI> find(String name) throws IOException {
+            ImageLocation location = findImageLocation(name);
+            if (location != null) {
+                URI u = URI.create("jrt:/" + module + "/" + name);
+                return Optional.of(u);
+            } else {
+                return Optional.empty();
             }
         }
 
@@ -210,15 +226,11 @@ class ModuleReferences {
 
         @Override
         public Optional<ByteBuffer> read(String name) throws IOException {
-            if (closed) {
-                throw new IOException("ModuleReader is closed");
+            ImageLocation location = findImageLocation(name);
+            if (location != null) {
+                return Optional.of(imageReader.getResourceBuffer(location));
             } else {
-                ImageLocation location = findImageLocation(name);
-                if (location != null) {
-                    return Optional.of(imageReader.getResourceBuffer(location));
-                } else {
-                    return Optional.empty();
-                }
+                return Optional.empty();
             }
         }
 
@@ -242,6 +254,13 @@ class ModuleReferences {
 
         ExplodedModuleReader(ModuleReference mref) {
             dir = Paths.get(mref.location().get());
+
+            // when running with a security manager then check that the caller
+            // has access to the directory.
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                boolean unused = Files.isDirectory(dir);
+            }
         }
 
         /**
@@ -264,6 +283,21 @@ class ModuleReferences {
          */
         private void ensureOpen() throws IOException {
             if (closed) throw new IOException("ModuleReader is closed");
+        }
+
+        @Override
+        public Optional<URI> find(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                try {
+                    return Optional.of(path.toUri());
+                } catch (IOError e) {
+                    throw (IOException) e.getCause();
+                }
+            } else {
+                return Optional.empty();
+            }
         }
 
         @Override
@@ -309,6 +343,12 @@ class ModuleReferences {
         SafeCloseModuleReader() { }
 
         /**
+         * Returns a URL to  resource. This method is invoked by the find
+         * method to do the actual work of finding the resource.
+         */
+        abstract Optional<URI> implFind(String name) throws IOException;
+
+        /**
          * Returns an input stream for reading a resource. This method is
          * invoked by the open method to do the actual work of opening
          * an input stream to the resource.
@@ -320,6 +360,21 @@ class ModuleReferences {
          * actual work of closing the module reader.
          */
         abstract void implClose() throws IOException;
+
+        @Override
+        public final Optional<URI> find(String name) throws IOException {
+            readLock.lock();
+            try {
+                if (!closed) {
+                    return implFind(name);
+                } else {
+                    throw new IOException("ModuleReader is closed");
+                }
+            } finally {
+                readLock.unlock();
+            }
+        }
+
 
         @Override
         public final Optional<InputStream> open(String name) throws IOException {
@@ -353,22 +408,35 @@ class ModuleReferences {
      * A ModuleReader for a jmod file.
      */
     static class JModModuleReader extends SafeCloseModuleReader {
+        private final URI uri;
         private final ZipFile zf;
 
         JModModuleReader(ModuleReference mref) throws IOException {
             URI uri = mref.location().get();
             String s = uri.toString();
-            String fileURIString = s.substring(5, s.length()-2);
-            this.zf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
+            URI fileURI = URI.create(s.substring(5, s.length() - 2));
+            this.uri = uri;
+            this.zf = new ZipFile(Paths.get(fileURI).toString());
         }
 
-        private ZipEntry find(String name) {
+        private ZipEntry getEntry(String name) {
             return zf.getEntry("classes/" + Objects.requireNonNull(name));
         }
 
         @Override
+        Optional<URI> implFind(String name) {
+            ZipEntry ze = getEntry(name);
+            if (ze != null) {
+                String encodedPath = ParseUtil.encodePath(name, false);
+                return Optional.of(URI.create(uri + encodedPath));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
         Optional<InputStream> implOpen(String name) throws IOException {
-            ZipEntry ze = find(name);
+            ZipEntry ze = getEntry(name);
             if (ze != null) {
                 return Optional.of(zf.getInputStream(ze));
             } else {
@@ -386,22 +454,35 @@ class ModuleReferences {
      * A ModuleReader for a modular JAR file.
      */
     static class JarModuleReader extends SafeCloseModuleReader {
+        private final URI uri;
         private final JarFile jf;
 
         JarModuleReader(ModuleReference mref) throws IOException {
             URI uri = mref.location().get();
             String s = uri.toString();
-            String fileURIString = s.substring(4, s.length()-2);
-            this.jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
+            URI fileURI = URI.create(s.substring(4, s.length()-2));
+            this.uri = uri;
+            this.jf = new JarFile(Paths.get(fileURI).toString());
         }
 
-        private JarEntry find(String name) {
-            return jf.getJarEntry(name);
+        private JarEntry getEntry(String name) {
+            return jf.getJarEntry(Objects.requireNonNull(name));
+        }
+
+        @Override
+        Optional<URI> implFind(String name) throws IOException {
+            JarEntry je = getEntry(name);
+            if (je != null) {
+                String encodedPath = ParseUtil.encodePath(name, false);
+                return Optional.of(URI.create(uri + encodedPath));
+            } else {
+                return Optional.empty();
+            }
         }
 
         @Override
         Optional<InputStream> implOpen(String name) throws IOException {
-            JarEntry je = find(name);
+            JarEntry je = getEntry(name);
             if (je != null) {
                 return Optional.of(jf.getInputStream(je));
             } else {

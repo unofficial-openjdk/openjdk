@@ -453,15 +453,14 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Loads the class with the specified <a href="#name">binary name</a> defined
-     * in this class loader.
+     * Loads the class with the specified <a href="#name">binary name</a>
+     * defined in this class loader.
      *
      * @param name The <a href="#name">binary name</a> of the class
-     * @return
+     * @return The resulting {@code Class} object or {@code null}
      */
     Class<?> loadLocalClassOrNull(String name) {
-        synchronized (getClassLoadingLock(name))
-        {
+        synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             Class<?> c = findLoadedClass(name);
             if (c == null) {
@@ -747,8 +746,7 @@ public abstract class ClassLoader {
         return p;
     }
 
-    private String defineClassSourceLocation(ProtectionDomain pd)
-    {
+    private String defineClassSourceLocation(ProtectionDomain pd) {
         CodeSource cs = pd.getCodeSource();
         String source = null;
         if (cs != null && cs.getLocation() != null) {
@@ -757,8 +755,7 @@ public abstract class ClassLoader {
         return source;
     }
 
-    private void postDefineClass(Class<?> c, ProtectionDomain pd)
-    {
+    private void postDefineClass(Class<?> c, ProtectionDomain pd) {
         definePackage(c);
         if (pd.getCodeSource() != null) {
             Certificate certs[] = pd.getCodeSource().getCertificates();
@@ -1140,31 +1137,33 @@ public abstract class ClassLoader {
     }
 
 
-    // -- Resource --
+    // -- Resources --
 
     /**
-     * Returns an input stream to a resource in a module defined to this class
-     * loader. Class loader implementations that support the loading from
-     * modules should override this method.
-     *
-     * @param  moduleName
-     *         The name of the module to load resource from
-     *
-     * @param  name
-     *         The resource name
-     *
-     * @return An input stream to the resource; {@code null} if the resource
-     * could not be found or there isn't a module of the given name defined to
-     * this class loader.
+     * Returns a URL to a resource in a module defined to this class loader.
+     * Class loader implementations that support the loading from modules
+     * should override this method.
      *
      * @implSpec The default implementation returns {@code null}.
      *
+     * @param  moduleName
+     *         The module name
+     * @param  name
+     *         The resource name
+     *
+     * @return A URL to the resource; {@code null} if the resource could not be
+     *         found, a URL could not be constructed to locate the resource,
+     *         access to the resource is denied by the security manager, or
+     *         there isn't a module of the given name defined to the class
+     *         loader.
+     *
+     * @throws IOException
+     *         If I/O errors occur
+     *
+     * @see java.lang.module.ModuleReader#find(String)
      * @since 1.9
-     * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
-    protected InputStream getResourceAsStream(String moduleName, String name)
-        throws IOException
-    {
+    protected URL findResource(String moduleName, String name) throws IOException {
         return null;
     }
 

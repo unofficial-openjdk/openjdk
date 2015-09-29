@@ -27,9 +27,9 @@ package jdk.internal.misc;
 
 import java.io.File;
 import java.io.FilePermission;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
@@ -120,7 +120,7 @@ public class BuiltinClassLoader
     private static class LoadedModule {
         private final BuiltinClassLoader loader;
         private final ModuleReference mref;
-        private final URL url;          // May be null
+        private final URL url;          // may be null
 
         LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
@@ -138,6 +138,7 @@ public class BuiltinClassLoader
         ModuleReference mref() { return mref; }
         URL location() { return url; }
     }
+
 
     // maps package name to loaded module for modules in the boot layer
     private static final Map<String, LoadedModule> packageToModule
@@ -191,15 +192,60 @@ public class BuiltinClassLoader
     // -- finding resources
 
     /**
+     * Returns a URL to a resource of the given name in a module defined to
+     * this class loader.
+     */
+    @Override
+    public URL findResource(String mn, String name) throws IOException {
+        ModuleReference mref = nameToModule.get(mn);
+        if (mref == null)
+            return null;   // not defined to this class loader
+
+        URL url;
+
+        try {
+            url = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<URL>() {
+                    @Override
+                    public URL run() throws IOException {
+                        URI u = moduleReaderFor(mref).find(name).orElse(null);
+                        if (u != null) {
+                            try {
+                                return u.toURL();
+                            } catch (MalformedURLException e) { }
+                        }
+                        return null;
+                    }
+                });
+        } catch (PrivilegedActionException pae) {
+            throw (IOException) pae.getCause();
+        }
+
+        // check access to the URL
+        return checkURL(url);
+    }
+
+    /**
      * Returns an input stream to a resource of the given name in a module
      * defined to this class loader.
      */
-    @Override
-    public InputStream getResourceAsStream(String moduleName, String name)
+    public InputStream findResourceAsStream(String mn, String name)
         throws IOException
     {
-        ModuleReference mref = nameToModule.get(moduleName);
-        if (mref != null) {
+        // Need URL to resource when running with a security manager so that
+        // the right permission check is done.
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+
+            URL url = findResource(mn, name);
+            return (url != null) ? url.openStream() : null;
+
+        } else {
+
+            ModuleReference mref = nameToModule.get(mn);
+            if (mref == null)
+                return null;   // not defined to this class loader
+
             try {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<InputStream>() {
@@ -212,8 +258,6 @@ public class BuiltinClassLoader
                 throw (IOException) pae.getCause();
             }
         }
-        // module not defined to this class loader or not found
-        return null;
     }
 
     /**
@@ -486,6 +530,7 @@ public class BuiltinClassLoader
         }
     }
 
+
     // -- packages
 
     /**
@@ -510,7 +555,8 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Define a package of the given class, if not present.
+     * Define a package for the given class to this class loader, if not
+     * already defined.
      *
      * @param c a Class defined by this class loader
      */
@@ -519,25 +565,29 @@ public class BuiltinClassLoader
         String cn = c.getName();
         int pos = cn.lastIndexOf('.');
         if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package in named module " + m.getName());
+            throw new InternalError("unnamed package in named module "
+                                    + m.getName());
         }
-        String pn = pos != -1 ? cn.substring(0, pos) : "";
+        String pn = (pos != -1) ? cn.substring(0, pos) : "";
         Package p = getDefinedPackage(pn);
+
         if (p == null) {
             URL url = null;
+
             // The given class may be dynamically generated and
             // its package is not in packageToModule map.
-            if (m.isNamed() && m.getLayer() != null) {
-                Optional<Configuration> cf = m.getLayer().configuration();
-                if (cf.isPresent()) {
-                    ModuleReference mref = cf.get().findModule(m.getName()).orElse(null);
-                    URI uri = mref != null ? mref.location().orElse(null) : null;
-                    try {
-                        url = uri != null ? uri.toURL() : null;
-                    } catch (MalformedURLException e) {
+            if (m.isNamed()) {
+                ModuleReference mref = nameToModule.get(m.getName());
+                if (mref != null) {
+                    URI uri = mref.location().orElse(null);
+                    if (uri != null) {
+                        try {
+                            url = uri.toURL();
+                        } catch (MalformedURLException e) { }
                     }
                 }
             }
+
             p = definePackage(pn, null, null, null, null, null, null, url);
         }
         return p;
@@ -712,6 +762,7 @@ public class BuiltinClassLoader
         return perms;
     }
 
+
     // -- miscellaneous supporting methods
 
     /**
@@ -750,7 +801,7 @@ public class BuiltinClassLoader
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public Optional<InputStream> open(String name) {
+        public Optional<URI> find(String name) {
             return Optional.empty();
         }
         @Override
@@ -800,6 +851,20 @@ public class BuiltinClassLoader
                 }
             }
             return null;
+        }
+
+        @Override
+        public Optional<URI> find(String name) throws IOException {
+            Path path = findResource(name);
+            if (path != null) {
+                try {
+                    return Optional.of(path.toUri());
+                } catch (IOError e) {
+                    throw (IOException) e.getCause();
+                }
+            } else {
+                return reader.find(name);
+            }
         }
 
         @Override

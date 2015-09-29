@@ -37,6 +37,8 @@ import java.io.InputStream;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -147,6 +149,7 @@ public class ModuleReaderTest {
                         .resolve(TEST_MODULE)
                         .resolve(name.replace('/', File.separatorChar)));
 
+                testFind(reader, name, expectedBytes);
                 testOpen(reader, name, expectedBytes);
                 testRead(reader, name, expectedBytes);
             }
@@ -156,6 +159,11 @@ public class ModuleReaderTest {
             assertFalse(reader.read(NOT_A_RESOURCE).isPresent());
 
             // test nulls
+            try {
+                reader.find(null);
+                assertTrue(false);
+            } catch (NullPointerException expected) { }
+
             try {
                 reader.open(null);
                 assertTrue(false);
@@ -181,6 +189,24 @@ public class ModuleReaderTest {
             reader.read(RESOURCES[0]);
             assertTrue(false);
         } catch (IOException expected) { }
+    }
+
+    /**
+     * Test ModuleReader#find
+     */
+    void testFind(ModuleReader reader, String name, byte[] expectedBytes)
+        throws Exception
+    {
+        Optional<URI> ouri = reader.find(name);
+        assertTrue(ouri.isPresent());
+
+        URL url = ouri.get().toURL();
+        if (!url.getProtocol().equalsIgnoreCase("jmod")) {
+            try (InputStream in = url.openStream()) {
+                byte[] bytes = in.readAllBytes();
+                assertTrue(Arrays.equals(bytes, expectedBytes));
+            }
+        }
     }
 
     /**

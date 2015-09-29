@@ -62,6 +62,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.BuiltinClassLoader;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
@@ -2303,10 +2304,9 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Finds a resource with a given name.
-     * If this class is in a named {@link Module Module}, and the caller of
-     * this method is in the same module, then this method will attempt to find
-     * the resource in that module.
+     * Finds a resource with a given name. If this class is in a named {@link
+     * Module Module}, and the caller of this method is in the same module,
+     * then this method will attempt to find the resource in that module.
      * Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
@@ -2337,8 +2337,8 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return      A {@link java.io.InputStream} object or {@code null} if
-     *              no resource with this name is found
+     * @return  A {@link java.io.InputStream} object or {@code null} if
+     *          no resource with this name is found
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
@@ -2354,16 +2354,21 @@ public final class Class<T> implements java.io.Serializable,
             Class<?> caller = Reflection.getCallerClass();
             if (caller != null && caller.getModule() == module) {
                 ClassLoader cl = getClassLoader0();
+                String mn = module.getName();
                 try {
-                    InputStream in;
-                    String mn = module.getName();
+
+                    // special-case built-in class loaders to avoid the
+                    // need for a URL connection
                     if (cl == null) {
-                        in = BootLoader.getResourceAsStream(mn, name);
+                        return BootLoader.findResourceAsStream(mn, name);
+                    } else if (cl instanceof BuiltinClassLoader) {
+                        return ((BuiltinClassLoader) cl).findResourceAsStream(mn, name);
                     } else {
-                        in = cl.getResourceAsStream(mn, name);
+                        URL url = cl.findResource(mn, name);
+                        return (url != null) ? url.openStream() : null;
                     }
-                    return in;
-                } catch (IOException ioe) {
+
+                } catch (IOException | SecurityException e) {
                     return null;
                 }
             }
@@ -2379,13 +2384,15 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Finds a resource with a given name.  The rules for searching resources
+     * Finds a resource with a given name. If this class is in a named {@link
+     * Module Module}, and the caller of this method is in the same module,
+     * then this method will attempt to find the resource in that module.
+     * Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
-     * delegates to this object's class loader.  If this object was loaded by
+     * delegates to this object's class loader. If this object was loaded by
      * the bootstrap class loader, the method delegates to {@link
-     * ClassLoader#getSystemResource}. This method does not find resources in
-     * named modules.
+     * ClassLoader#getSystemResource}.
      *
      * <p> Before delegation, an absolute resource name is constructed from the
      * given resource name using this algorithm:
@@ -2409,12 +2416,35 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return      A  {@link java.net.URL} object or {@code null} if no
-     *              resource with this name is found
+     * @return A {@link java.net.URL} object; {@code null} if no
+     *         resource with this name is found or the resource cannot
+     *         be located by a URL.
      * @since  1.1
      */
+    @CallerSensitive
     public URL getResource(String name) {
         name = resolveName(name);
+
+        // if this Class and the caller are in the same named module
+        // then attempt to get URL to the resource in the module
+        Module module = getModule();
+        if (module.isNamed()) {
+            Class<?> caller = Reflection.getCallerClass();
+            if (caller != null && caller.getModule() == module) {
+                String mn = getModule().getName();
+                ClassLoader cl = getClassLoader0();
+                try {
+                    if (cl == null) {
+                        return BootLoader.findResource(mn, name);
+                    } else {
+                        return cl.findResource(mn, name);
+                    }
+                } catch (IOException ioe) {
+                    return null;
+                }
+            }
+        }
+
         ClassLoader cl = getClassLoader0();
         if (cl == null) {
             return ClassLoader.getSystemResource(name);
@@ -2422,7 +2452,6 @@ public final class Class<T> implements java.io.Serializable,
             return cl.getResource(name);
         }
     }
-
 
     /** protection domain returned when the internal domain is null */
     private static java.security.ProtectionDomain allPermDomain;

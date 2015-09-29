@@ -28,6 +28,7 @@ package java.lang.module;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Optional;
@@ -40,16 +41,19 @@ import java.util.Optional;
  * module are required, regardless of whether the module has been instantiated.
  * A framework that scans a collection of packaged modules on the file system,
  * for example, may use a module reader to access a specific resource in each
- * module.
- *
- * <p> A module reader is also intended to be used by {@code ClassLoader}
- * implementations that load classes and resources from modules.
+ * module. A module reader is also intended to be used by {@code ClassLoader}
+ * implementations that load classes and resources from modules. </p>
  *
  * <p> A {@code ModuleReader} is {@linkplain ModuleReference#open open} upon
  * creation and is closed by invoking the {@link #close close} method.  Failure
  * to close a module reader may result in a resource leak.  The {@code
  * try-with-resources} statement provides a useful construct to ensure that
- * module readers are closed.
+ * module readers are closed. </p>
+ *
+ * <p> A {@code ModuleReader} implementation may require permissions to access
+ * resources in the module. Consequently the {@link #find find}, {#link #open
+ * open} and {@link #read read} methods may throw {@code SecurityException} if
+ * access is denied by the security manager. </p>
  *
  * @see ModuleReference
  * @since 1.9
@@ -58,7 +62,31 @@ import java.util.Optional;
 public interface ModuleReader extends Closeable {
 
     /**
-     * Returns an input stream for reading the resource.
+     * Returns a URI to a resource in the module.
+     *
+     * @param  name
+     *         The name of the resource to open for reading
+     *
+     * @return A URI to the resource; an empty {@code Optional} if the resource
+     *         is not found or a URI cannot be constructed to locate the
+     *         resource
+     *
+     * @throws IOException
+     *         If an I/O error occurs or the module reader is closed
+     * @throws SecurityException
+     *         If denied by the security manager
+     *
+     * @see ClassLoader#getResource(String)
+     */
+    Optional<URI> find(String name) throws IOException;
+
+    /**
+     * Returns an input stream for reading a resource in the module.
+     *
+     * @implSpec The default implementation invokes the {@link #find(String)
+     * find} method to get a URI to the resource. If found, then it attempts
+     * to construct a {@link java.net.URL URL} and open a connection to the
+     * resource.
      *
      * @param  name
      *         The name of the resource to open for reading
@@ -70,10 +98,15 @@ public interface ModuleReader extends Closeable {
      *         If an I/O error occurs or the module reader is closed
      * @throws SecurityException
      *         If denied by the security manager
-     *
-     * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
-    Optional<InputStream> open(String name) throws IOException;
+    default Optional<InputStream> open(String name) throws IOException {
+        Optional<URI> ouri = find(name);
+        if (ouri.isPresent()) {
+            return Optional.of(ouri.get().toURL().openStream());
+        } else {
+            return Optional.empty();
+        }
+    }
 
     /**
      * Returns a byte buffer with the contents of a resource.  The element at

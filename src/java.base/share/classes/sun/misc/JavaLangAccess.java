@@ -26,10 +26,10 @@
 package sun.misc;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
+import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -160,11 +160,10 @@ public interface JavaLangAccess {
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
 
     /**
-     * Returns an input stream to a resource with the given name in a module
-     * that is defined to the given class loader.
+     * Returns a URL to a resource with the given name in a module that is
+     * defined to the given class loader.
      */
-    InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
-        throws IOException;
+    URL findResource(ClassLoader cl, String moduleName, String name) throws IOException;
 
     /**
      * Returns the Packages for the given class loader.

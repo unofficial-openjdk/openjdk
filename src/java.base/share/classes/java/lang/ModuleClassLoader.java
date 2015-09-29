@@ -28,10 +28,11 @@ package java.lang;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.security.AccessControlContext;
@@ -177,37 +178,32 @@ public final class ModuleClassLoader
 
     // -- finding resources
 
-    /**
-     * Returns an input stream to a resource in a module defined to this class
-     * loader.
-     *
-     * @return An input stream to the resource; {@code null} if the resource
-     * could not be found or there isn't a module of the given name defined to
-     * this class loader.
-     *
-     * @throws IOException if I/O error occurs
-     *
-     * @see java.lang.reflect.Module#getResourceAsStream(String)
-     */
     @Override
-    public InputStream getResourceAsStream(String moduleName, String name)
+    protected URL findResource(String moduleName, String name)
         throws IOException
     {
         ModuleReference mref = nameToModule.get(moduleName);
         if (mref != null) {
             try {
                 return AccessController.doPrivileged(
-                    new PrivilegedExceptionAction<InputStream>() {
+                    new PrivilegedExceptionAction<URL>() {
                         @Override
-                        public InputStream run() throws IOException {
-                            return moduleReaderFor(mref).open(name).orElse(null);
+                        public URL run() throws IOException {
+                            URI u = moduleReaderFor(mref).find(name).orElse(null);
+                            if (u != null) {
+                                try {
+                                    return u.toURL();
+                                } catch (MalformedURLException e) { }
+                            }
+                            return null;
                         }
                     }, acc);
             } catch (PrivilegedActionException pae) {
                 throw (IOException) pae.getCause();
             }
         }
-        // module not defined to this class loader or not found
+
+        // module not defined to this class loader
         return null;
     }
 
@@ -481,7 +477,7 @@ public final class ModuleClassLoader
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public Optional<InputStream> open(String name) {
+        public Optional<URI> find(String name) {
             return Optional.empty();
         }
 

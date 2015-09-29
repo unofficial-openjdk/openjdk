@@ -47,6 +47,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
+import jdk.internal.misc.BuiltinClassLoader;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
 import sun.misc.JavaLangReflectModuleAccess;
@@ -657,9 +658,9 @@ public final class Module {
      * elements corresponding to packages added to the module after it was
      * created. </p>
      *
-     * <p> For unnamed modules, this method is the equivalent of invoking
-     * the {@link ClassLoader#getDefinedPackages() getDefinedPackages} method
-     * of this module's class loader and returning the array of package names. </p>
+     * <p> For unnamed modules, this method is the equivalent of invoking the
+     * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
+     * this module's class loader and returning the array of package names. </p>
      *
      * <p> A package name appears at most once in the returned array. </p>
      *
@@ -869,34 +870,51 @@ public final class Module {
      * invoking the {@link ClassLoader#getResourceAsStream(String)
      * getResourceAsStream} method on the class loader for this module.
      *
+     * @param  name
+     *         The resource name
+     *
      * @throws IOException
      *         If an I/O error occurs
+     *
+     * @see java.lang.module.ModuleReader#open(String)
      */
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
+        URL url = null;
+
         if (isNamed()) {
+            String mn = this.name;
+
+            // special-case built-in class loaders to avoid URL connection
             if (loader == null) {
-                return BootLoader.getResourceAsStream(this.name, name);
-            } else {
-                // use SharedSecrets to invoke protected method
-                return SharedSecrets.getJavaLangAccess()
-                        .getResourceAsStream(loader, this.name, name);
+                return BootLoader.findResourceAsStream(mn, name);
+            } else if (loader instanceof BuiltinClassLoader) {
+                return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
             }
+
+            // use SharedSecrets to invoke protected method
+            url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
+
+        } else {
+
+            // unnamed module
+            if (loader == null) {
+                url = BootLoader.findResource(name);
+            } else {
+                return loader.getResourceAsStream(name);
+            }
+
         }
 
-        // unnamed module
-        URL url;
-        if (loader == null) {
-            url = BootLoader.findResource(name);
-        } else {
-            url = loader.getResource(name);
+        // fallthrough to URL case
+        if (url != null) {
+            try {
+                return url.openStream();
+            } catch (SecurityException e) { }
         }
-        try {
-            return url != null ? url.openStream() : null;
-        } catch (IOException e) {
-            return null;
-        }
+
+        return null;
     }
 
 

@@ -40,6 +40,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
+import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
@@ -1363,10 +1364,8 @@ public final class System {
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }
-            public InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
-                throws IOException
-            {
-                return cl.getResourceAsStream(moduleName, name);
+            public URL findResource(ClassLoader cl, String mn, String name) throws IOException {
+                return cl.findResource(mn, name);
             }
             public Stream<Package> packages(ClassLoader cl) {
                 return cl.packages();

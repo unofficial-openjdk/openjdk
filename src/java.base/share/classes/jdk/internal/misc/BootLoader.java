@@ -52,10 +52,17 @@ public class BootLoader {
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
     /**
-     * Returns the unnnamed module for the boot loader.
+     * Returns the unnamed module for the boot loader.
      */
     public static Module getUnnamedModule() {
         return UNNAMED_MODULE;
+    }
+
+    /**
+     * Returns the ServiceCatalog for modules defined to the boot class loader.
+     */
+    public static ServicesCatalog getServicesCatalog() {
+        return SERVICES_CATALOG;
     }
 
     /**
@@ -74,13 +81,20 @@ public class BootLoader {
     }
 
     /**
-     * Returns an input stream to a resource in the given module reference if
-     * the module is defined to the boot loader.
+     * Returns a URL to a resource in a named module defined to the boot loader.
      */
-    public static InputStream getResourceAsStream(String moduleName, String name)
+    public static URL findResource(String mn, String name) throws IOException {
+        return ClassLoaders.bootLoader().findResource(mn, name);
+    }
+
+    /**
+     * Returns an input stream to a resource in a named module defined to the
+     * boot loader.
+     */
+    public static InputStream findResourceAsStream(String mn, String name)
         throws IOException
     {
-        return ClassLoaders.bootLoader().getResourceAsStream(moduleName, name);
+        return ClassLoaders.bootLoader().findResourceAsStream(mn, name);
     }
 
     /**
@@ -102,10 +116,11 @@ public class BootLoader {
     }
 
     /**
-     * Returns the ServiceCatalog for modules defined to the boot class loader.
+     * Define a package for the given class to the boot loader, if not already
+     * defined.
      */
-    public static ServicesCatalog getServicesCatalog() {
-        return SERVICES_CATALOG;
+    public static Package definePackage(Class<?> c) {
+        return ClassLoaders.bootLoader().definePackage(c);
     }
 
     /**
@@ -118,10 +133,6 @@ public class BootLoader {
             return null;
         }
         return ClassLoaders.bootLoader().definePackage(pn);
-    }
-
-    public static Package definePackage(Class<?> c) {
-        return ClassLoaders.bootLoader().definePackage(c);
     }
 
     /**

@@ -62,9 +62,13 @@ public class Main {
         URL url1 = p1.Main.getResource("/" + NAME);
         URL url2 = p2.Main.getResource("/" + NAME);
         URL url3 = p3.Main.getResource("/" + NAME);
-        assertNull(url1);
-        assertNull(url2);
+        assertNotNull(url1);
+        assertNotNull(url2);
         assertNull(url3);
+
+        // check contents of resurces at url1 and url2
+        assertEquals(new String(readAll(url1), "UTF-8"), "m1");
+        assertEquals(new String(readAll(url2), "UTF-8"), "m2");
 
         // invoke Class getResourceAsStream from the unnamed module
         InputStream in0 = Main.class.getResourceAsStream("/" + NAME);
@@ -95,6 +99,19 @@ public class Main {
         String s2 = new String(in2.readAllBytes(), "UTF-8");
         assertEquals(s1, "m1");
         assertEquals(s2, "m2");
+
+        // SecurityManager case
+        System.setSecurityManager(new SecurityManager());
+
+        assertNull(Main.class.getResource("/" + NAME));
+        assertNull(p1.Main.getResource("/" + NAME));
+        assertNull(p2.Main.getResource("/" + NAME));
+        assertNull(p3.Main.getResource("/" + NAME));
+
+        assertNull(Main.class.getResourceAsStream("/" + NAME));
+        assertNull(p1.Main.getResourceAsStream("/" + NAME));
+        assertNull(p2.Main.getResourceAsStream("/" + NAME));
+        assertNull(p3.Main.getResourceAsStream("/" + NAME));
 
         System.out.println("Success!");
     }
