@@ -664,7 +664,7 @@ public class ModuleSummary {
         }
 
         private static final String[] STYLES = new String[]{
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://openjdk.java.net/.fonts/dejavu.css\"/>",
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"/.fonts/dejavu.css\"/>",
                 "<style type=\"text/css\">",
                 "        HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,",
                 "        BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,",
