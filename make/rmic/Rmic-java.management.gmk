@@ -50,7 +50,7 @@ $(RMIC_GENSRC_DIR)/_classes.moved: $(RMI_GEN)
 	$(eval classfiles := $(shell $(FIND) $(RMIC_GENSRC_DIR) -name "*.class"))
 	$(foreach src, $(classfiles), \
 	    $(eval target := $(patsubst $(RMIC_GENSRC_DIR)/%, \
-	        $(STUB_CLASSES_DIR)/java.management/%, $(src))) \
+	        $(STUB_CLASSES_DIR)/%, $(src))) \
 	    $(MKDIR) -p $(dir $(target)) ; \
 	    $(MV) $(src) $(target) $(NEWLINE))
 	$(TOUCH) $@
