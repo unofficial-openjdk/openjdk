@@ -39,6 +39,7 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -202,7 +203,9 @@ public class ModuleReaderTest {
 
         URL url = ouri.get().toURL();
         if (!url.getProtocol().equalsIgnoreCase("jmod")) {
-            try (InputStream in = url.openStream()) {
+            URLConnection uc = url.openConnection();
+            uc.setUseCaches(false);
+            try (InputStream in = uc.getInputStream()) {
                 byte[] bytes = in.readAllBytes();
                 assertTrue(Arrays.equals(bytes, expectedBytes));
             }
