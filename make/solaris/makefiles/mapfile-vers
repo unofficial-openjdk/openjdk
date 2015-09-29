@@ -190,12 +190,23 @@ SUNWprivate_1.1 {
                 JVM_Yield;
                 JVM_handle_solaris_signal;
 
+                # Modules
+                JVM_DefineModule;
+                JVM_AddReadsModule;
+                JVM_AddModuleExports;
+                JVM_AddModuleExportsToAllUnnamed;
+                JVM_AddModuleExportsToAll;
+                JVM_CanReadModule;
+                JVM_IsExportedToModule;
+                JVM_AddModulePackage;
+
                 # miscellaneous functions
                 jio_fprintf;
                 jio_printf;
                 jio_snprintf;
                 jio_vfprintf;
                 jio_vsnprintf;
+
 
                 # Needed because there is no JVM interface for this.
                 sysThreadAvailableStackWithSlack;

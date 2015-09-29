@@ -25,7 +25,7 @@
  * @test
  * @bug 6805724
  * @summary ModLNode::Ideal() generates functionally incorrect graph when divisor is any (2^k-1) constant.
- *
+ * @ignore 8072369
  * @run main/othervm -Xcomp -XX:CompileOnly=Test6805724.fcomp Test6805724
  */
 

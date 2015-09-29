@@ -25,8 +25,11 @@
 #ifndef SHARE_VM_OOPS_INSTANCEKLASS_HPP
 #define SHARE_VM_OOPS_INSTANCEKLASS_HPP
 
+#include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.hpp"
+#include "classfile/packageEntry.hpp"
 #include "gc/shared/specialized_oop_closures.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "memory/referenceType.hpp"
 #include "oops/annotations.hpp"
 #include "oops/constMethod.hpp"
@@ -155,6 +158,8 @@ class InstanceKlass: public Klass {
  protected:
   // Annotations for this class
   Annotations*    _annotations;
+  // Package this class is defined in
+  PackageEntry*   _package_entry;
   // Array classes holding elements of this class.
   Klass*          _array_klasses;
   // Constant pool for this class.
@@ -208,8 +213,14 @@ class InstanceKlass: public Klass {
     _misc_has_default_methods      = 1 << 5, // class/superclass/implemented interfaces has default methods
     _misc_declares_default_methods = 1 << 6, // directly declares default methods (any access)
     _misc_has_been_redefined       = 1 << 7, // class has been redefined
-    _misc_is_scratch_class         = 1 << 8  // class is the redefined scratch class
+    _misc_is_scratch_class         = 1 << 8, // class is the redefined scratch class
+    _misc_is_shared_boot_class     = 1 << 9, // defining class loader is boot class loader
+    _misc_is_shared_ext_class      = 1 << 10,// defining class loader is ext class loader
+    _misc_is_shared_app_class      = 1 << 11 // defining class loader is app class loader
   };
+  u2 loader_type_bits() {
+    return _misc_is_shared_boot_class|_misc_is_shared_ext_class|_misc_is_shared_app_class;
+  }
   u2              _misc_flags;
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
@@ -293,6 +304,39 @@ class InstanceKlass: public Klass {
   friend class SystemDictionary;
 
  public:
+  u2 loader_type() {
+    return _misc_flags & loader_type_bits();
+  }
+
+  bool is_shared_boot_class() const {
+    return (_misc_flags & _misc_is_shared_boot_class) != 0;
+  }
+  bool is_shared_ext_class() const {
+    return (_misc_flags & _misc_is_shared_ext_class) != 0;
+  }
+  bool is_shared_app_class() const {
+    return (_misc_flags & _misc_is_shared_app_class) != 0;
+  }
+
+  void set_class_loader_type(jshort loader_type) {
+    assert(( _misc_flags & loader_type_bits()) == 0,
+           "Should only be called once for each class.");
+    switch (loader_type) {
+    case ClassLoader::BOOT:
+      _misc_flags |= _misc_is_shared_boot_class;
+       break;
+    case ClassLoader::EXT:
+      _misc_flags |= _misc_is_shared_ext_class;
+      break;
+    case ClassLoader::APP:
+      _misc_flags |= _misc_is_shared_app_class;
+      break;
+    default:
+      ShouldNotReachHere();
+      break;
+    }
+  }
+
   bool has_nonstatic_fields() const        {
     return (_misc_flags & _misc_has_nonstatic_fields) != 0;
   }
@@ -402,6 +446,11 @@ class InstanceKlass: public Klass {
   bool is_override(methodHandle super_method, Handle targetclassloader, Symbol* targetclassname, TRAPS);
 
   // package
+  PackageEntry* package() const     { return _package_entry; }
+  ModuleEntry* module() const;
+  bool in_unnamed_package() const   { return (_package_entry == NULL); }
+  void set_package(PackageEntry* p) { _package_entry = p; }
+  void set_package(Symbol* name, ClassLoaderData* loader, TRAPS);
   bool is_same_class_package(Klass* class2);
   bool is_same_class_package(oop classloader2, Symbol* classname2);
   static bool is_same_class_package(oop class_loader1, Symbol* class_name1, oop class_loader2, Symbol* class_name2);
@@ -816,7 +865,7 @@ class InstanceKlass: public Klass {
 
   // support for stub routines
   static ByteSize init_state_offset()  { return in_ByteSize(offset_of(InstanceKlass, _init_state)); }
-  TRACE_DEFINE_OFFSET;
+  TRACE_DEFINE_KLASS_TRACE_ID_OFFSET;
   static ByteSize init_thread_offset() { return in_ByteSize(offset_of(InstanceKlass, _init_thread)); }
 
   // subclass/subinterface checks
@@ -1010,6 +1059,7 @@ class InstanceKlass: public Klass {
 
   // Naming
   const char* signature_name() const;
+  static const jbyte* package_from_name(Symbol* name, int& length);
 
   // GC specific object visitors
   //

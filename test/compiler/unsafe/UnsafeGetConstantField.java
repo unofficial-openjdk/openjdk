@@ -27,6 +27,8 @@
  * @test
  * @summary tests on constant folding of unsafe get operations
  * @library /testlibrary /../../test/lib
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ * @ignore 8134102
  * @run main/bootclasspath -XX:+UnlockDiagnosticVMOptions
  *                   -Xbatch -XX:-TieredCompilation
  *                   -XX:+FoldStableValues

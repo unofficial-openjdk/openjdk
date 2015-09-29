@@ -24,6 +24,8 @@
 /**
  * @test
  * @bug 8057967
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ * @ignore 8134101
  * @run main/bootclasspath -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:+TraceClassUnloading
  *                         -XX:+PrintCompilation -XX:+TraceDependencies -XX:+TraceReferenceGC
  *                         -verbose:gc java.lang.invoke.CallSiteDepContextTest
