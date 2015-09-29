@@ -28,7 +28,6 @@ package java.lang.module;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,7 +75,7 @@ final class Resolver {
         // the readability graph
         private final Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
-        // maps a service type (by name) to the set of modules that provide
+        // maps a service type (by name) to the set of modules that provide services
         private final Map<String, Set<ModuleDescriptor>> serviceToProviders;
 
         Resolution(Set<ModuleDescriptor> selected,
@@ -156,6 +155,7 @@ final class Resolver {
         this.layer = layer;
         this.afterFinder = afterFinder;
     }
+
 
     /**
      * Resolves the given named modules. Module dependences are resolved by
@@ -478,8 +478,8 @@ final class Resolver {
      * The readability graph is created by propagating "requires" through the
      * "public requires" edges of the module dependence graph. So if the module
      * dependence graph has m1 requires m2 && m2 requires public m3 then the
-     * resulting readability graph will contain m1 requires requires m2, m1
-     * requires m3, and m2 requires m3.
+     * resulting readability graph will contain m1 reads m2, m1
+     * reads m3, and m2 reads m3.
      */
     private Map<ModuleDescriptor, Set<ModuleDescriptor>> makeGraph() {
 
