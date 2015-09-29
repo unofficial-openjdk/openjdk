@@ -862,7 +862,6 @@ JDK_MINOR_VERSION
 JDK_MAJOR_VERSION
 USER_RELEASE_SUFFIX
 COMPRESS_JARS
-RMICONNECTOR_IIOP
 UNLIMITED_CRYPTO
 CACERTS_FILE
 TEST_IN_BUILD
@@ -1085,7 +1084,6 @@ enable_headful
 enable_hotspot_test_in_build
 with_cacerts_file
 enable_unlimited_crypto
-enable_rmiconnector_iiop
 with_milestone
 with_update_version
 with_user_release_suffix
@@ -1876,9 +1874,6 @@ Optional Features:
                           run the Queens test after Hotspot build [disabled]
   --enable-unlimited-crypto
                           Enable unlimited crypto policy [disabled]
-  --enable-rmiconnector-iiop
-                          enable the JMX RMIConnector iiop transport
-                          [disabled]
   --disable-warnings-as-errors
                           do not consider native warnings to be an error
                           [enabled]
@@ -4002,7 +3997,7 @@ pkgadd_help() {
 
 
 #
-# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20210,22 +20205,6 @@ fi
   #
   # Enable or disable the elliptic curve crypto implementation
   #
-
-
-  ###############################################################################
-  #
-  # --enable-rmiconnector-iiop
-  #
-  # Check whether --enable-rmiconnector-iiop was given.
-if test "${enable_rmiconnector_iiop+set}" = set; then :
-  enableval=$enable_rmiconnector_iiop;
-fi
-
-  if test "x$enable_rmiconnector_iiop" = "xyes"; then
-    RMICONNECTOR_IIOP=true
-  else
-    RMICONNECTOR_IIOP=false
-  fi
 
 
   ###############################################################################
