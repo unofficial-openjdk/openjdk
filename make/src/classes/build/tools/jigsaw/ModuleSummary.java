@@ -25,30 +25,21 @@
 
 package build.tools.jigsaw;
 
-import com.sun.tools.classfile.AccessFlags;
-import static com.sun.tools.classfile.AccessFlags.ACC_PROTECTED;
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.ConstantPoolException;
-import com.sun.tools.classfile.Dependencies;
-import com.sun.tools.classfile.Dependency;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.lang.reflect.Layer;
@@ -56,17 +47,18 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
+import static java.lang.module.ModuleDescriptor.*;
+import static build.tools.jigsaw.ModuleSummary.HtmlDocument.Selector.*;
+import static build.tools.jigsaw.ModuleSummary.HtmlDocument.Division.*;
 
 public class ModuleSummary {
-    private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
+    private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile> [-root mn]*";
 
     public static void main(String[] args) throws Exception {
         int i=0;
         Path modpath = null;
         Path outfile = null;
+        Set<String> roots = new HashSet<>();
         while (i < args.length && args[i].startsWith("-")) {
             String arg = args[i++];
             switch (arg) {
@@ -76,6 +68,8 @@ public class ModuleSummary {
                 case "-o":
                     outfile = Paths.get(args[i++]);
                     break;
+                case "-root":
+                    roots.add(args[i++]);
                 default:
                     System.err.println(USAGE);
                     System.exit(-1);
@@ -87,254 +81,120 @@ public class ModuleSummary {
         }
         Path dir = outfile.getParent() != null ? outfile.getParent() : Paths.get(".");
         Files.createDirectories(dir);
-        ModuleSummary ms = new ModuleSummary(modpath);
-        ms.genReport(outfile, ms.modules(), "JDK Module Summary");
-        ms.genReport(dir.resolve("java.se.html"),
-                     Collections.singleton("java.se"), "Java SE Modules");
-        ms.genCSV(dir.resolve("jdk.csv"), ms.modules());
-    }
 
-    private final Map<String, ModuleReference> nameToReference = new HashMap<>();
-    private final Map<String, JmodInfo> jmods = new HashMap<>();
-    private final Map<String, Set<String>> deps = new HashMap<>();
-    private final Map<String, ModuleDescriptor> packageMap = new HashMap<>();
-    private final Path modpath;
-
-    ModuleSummary(Path modpath) throws IOException, ConstantPoolException {
-        this.modpath = modpath;
-
+        Map<String, ModuleSummary> modules = new HashMap<>();
         Set<ModuleReference> mrefs = ModuleFinder.ofInstalled().findAll();
-        mrefs.forEach(m -> nameToReference.put(m.descriptor().name(), m));
-
-        // build package map for all modules for API dependency analysis
-        mrefs.forEach(m -> m.descriptor().packages().stream()
-                 .forEach(p -> packageMap.put(p, m.descriptor())));
-
         for (ModuleReference mref : mrefs) {
-            String name = mref.descriptor().name();
-            Path jmod = modpath.resolve(name + ".jmod");
-            jmods.put(name, new JmodInfo(jmod));
-            deps.put(name, getAPIDependences(mref, jmod));
-        }
-    }
-
-    Set<String> modules() {
-        return nameToReference.keySet();
-    }
-
-    public void genCSV(Path outfile, Set<String> roots) throws IOException {
-        Configuration cf  = resolve(roots);
-        Set<ModuleDescriptor> selectedModules = cf.descriptors();
-        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            out.format("module,size,\"direct deps\",\"indirect deps\",total," +
-                       "\"compressed size\",\"compressed direct deps\",\"compressed indirect deps\",total%n");
-            selectedModules.stream()
-                   .sorted(Comparator.comparing(ModuleDescriptor::name))
-                   .forEach(m -> {
-                        Set<ModuleDescriptor> deps = resolve(Collections.singleton(m.name())).descriptors();
-                        long reqBytes = 0;
-                        long reqJmodSize = 0;
-                        long otherBytes = 0;
-                        long otherJmodSize = 0;
-                        Set<String> reqs = m.requires().stream()
-                                                .map(d -> d.name())
-                                                .collect(Collectors.toSet());
-                        reqBytes = deps.stream()
-                                        .filter(d -> reqs.contains(d.name()))
-                                        .mapToLong(d -> jmods.get(d.name()).size).sum();
-                        reqJmodSize = deps.stream()
-                                        .filter(d -> reqs.contains(d.name()))
-                                        .mapToLong(d -> jmods.get(d.name()).filesize).sum();
-                        otherBytes = deps.stream()
-                                        .filter(d -> !reqs.contains(d.name()))
-                                        .mapToLong(d -> jmods.get(d.name()).size).sum();
-                        otherJmodSize = deps.stream()
-                                        .filter(d -> !reqs.contains(d.name()))
-                                        .mapToLong(d -> jmods.get(d.name()).filesize).sum();
-
-                        String name = m.name();
-                        out.format("%s,%d,%d,%d,%d,%d,%d,%d,%d%n", name,
-                                   jmods.get(name).size, reqBytes, otherBytes,
-                                   jmods.get(name).size + reqBytes + otherBytes,
-                                   jmods.get(name).filesize, reqJmodSize, otherJmodSize,
-                                   jmods.get(name).filesize + reqJmodSize + otherJmodSize);
-                   });
-        }
-    }
-
-    public void genReport(Path outfile, Set<String> roots, String title) throws IOException {
-        Configuration cf = resolve(roots);
-        Set<ModuleDescriptor> selectedModules = cf.descriptors();
-        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            long totalBytes = selectedModules.stream()
-                                  .mapToLong(m -> jmods.get(m.name()).size).sum();
-            writeHeader(out, title, selectedModules.size(), totalBytes);
-            selectedModules.stream()
-                   .sorted(Comparator.comparing(ModuleDescriptor::name))
-                   .forEach(m -> {
-                        try {
-                            String name = m.name();
-                            Set<ModuleDescriptor> deps =
-                                resolve(Collections.singleton(name)).descriptors();
-                            long reqBytes = jmods.get(name).size;
-                            long reqJmodSize = jmods.get(name).filesize;
-                            int reqCount = deps.size();
-                            reqBytes += deps.stream()
-                                        .mapToLong(d -> jmods.get(d.name()).size).sum();
-                            reqJmodSize += deps.stream()
-                                    .mapToLong(d -> jmods.get(d.name()).filesize).sum();
-                            genSummary(out, m, jmods.get(name), reqCount, reqBytes, reqJmodSize);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-            out.format("</table>");
-            out.format("</body></html>%n");
-        }
-    }
-
-    private String toRequires(String from, Requires d) {
-        String name = d.name();
-        String ref = String.format("<a href=\"#%s\">%s</a>",
-                                   name, name);
-        Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());
-        String result = (Stream.concat(Stream.of("requires"),
-                                       Stream.concat(mods, Stream.of(ref)))
-                .collect(Collectors.joining(" ")));
-        if (name.equals("java.base")) {
-            return result;
+            String mn = mref.descriptor().name();
+            Path jmod = modpath.resolve(mn + ".jmod");
+            modules.put(mn, new ModuleSummary(mref, jmod));
         }
 
-        // API dependency: bold
-        // aggregator module's require: italic
-        ModuleReference mref = nameToReference.get(from);
-        boolean reexport = d.modifiers().contains(Requires.Modifier.PUBLIC);
-        if (deps.containsKey(from) && deps.get(from).contains(name)) {
-            // has API dependency
-            return reexport ? String.format("<b>%s</b>", result)
-                            : String.format("<b><font color=\"red\">%s</font></b>", result);
-        } else if (mref.descriptor().packages().size() == 0) {
-            // aggregator module
-            return String.format("<em>%s</em>", result);
-        } else {
-            // "requires public" whose types are not referenced from exported APIs
-            return reexport ? String.format("<font color=\"brown\">%s</font>", result) : result;
+        if (roots.isEmpty()) {
+            roots.addAll(modules.keySet());
         }
+        genReport(outfile, modules, roots, "JDK Module Summary");
     }
 
-    private void genSummary(PrintStream out, ModuleDescriptor descriptor, JmodInfo jm,
-                            int requireModules, long requireUncompressed, long requireJmodFileSize)
-            throws IOException
+    static void genReport(Path outfile, Map<String, ModuleSummary> modules, Set<String> roots, String title)
+        throws IOException
     {
-        String name = descriptor.name();
-        out.format("<tr>%n");
-        out.format("<td class=\"name\"><b><a name=\"%s\">%s</a></b><br><br>%n",
-                   name, name);
-        // statistic about module content
-        out.format("jmod file<br>%n");
-        out.format("uncompressed<br>%n");
-        out.format("%8d %s<br>%n", jm.classCount, "classes");
-        out.format("%8d %s<br>%n", jm.resourceCount, "resources");
-        out.format("%8d %s<br>%n", jm.configCount, "config");
-        out.format("%8d %s<br>%n", jm.nativeLibs.size() - jm.debugInfoLibCount, "native libs");
-        out.format("%8d %s<br>%n", jm.debugInfoLibCount, "debugInfo libs");
-        out.format("%8d %s<br>%n", jm.nativeCmds.size() - jm.debugInfoCmdCount, "launchers");
-        out.format("%8d %s<br>%n", jm.debugInfoCmdCount, "debugInfo");
-        out.format("<br>Transitive dependences<br>%n");
-        out.format("Total uncompressed<br>%n");
-        out.format("Approx compressed<br>%n");
-
-        out.format("</td>%n");
-        out.format("<td class=\"num\"><br><br>%n");
-        out.format("%12d<br>%n", jm.filesize);
-        out.format("%12d<br>%n", jm.size);
-        out.format("%10d<br>%n", jm.classBytes);
-        out.format("%10d<br>%n", jm.resourceBytes);
-        out.format("%10d<br>%n", jm.configBytes);
-        out.format("%10d<br>%n", jm.nativeLibs.values().stream()
-                                   .mapToLong(l -> l.longValue()).sum() - jm.debugInfoLibBytes);
-        out.format("%10d<br>%n", jm.debugInfoLibBytes);
-        out.format("%10d<br>%n", jm.nativeCmds.values().stream()
-                                   .mapToLong(l -> l.longValue()).sum());
-        out.format("%10d<br>%n", jm.debugInfoCmdBytes);
-        // total size due to the transitive dependences
-        out.format("<br>%10d<br>%n", requireModules);
-        out.format("%10d<br>%n", requireUncompressed);
-        out.format("%10d<br>%n", requireJmodFileSize);
-
-        out.format("</td>%n");
-
-        out.format("<td>%n");
-        jm.nativeCmds.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> out.format("%s <br>%n", e.getKey()));
-        out.format("</td>%n");
-        String requires = descriptor.requires().stream()
-            .map(md -> toRequires(name, md))
-            .sorted()
-            .collect(Collectors.joining("<br>\n"));
-        out.format("<td>%s</td>%n", requires);
-        String exports = descriptor.exports().stream()
-            .filter(e -> !e.targets().isPresent())
-            .map(e -> e.source())
-            .sorted()
-            .collect(Collectors.joining("<br>\n"));
-        out.format("<td>%s</td>%n", exports);
-        Stream<String> uses = descriptor.uses().stream()
-            .map(s -> "uses " + s)
-            .sorted();
-        Stream<String> providers = descriptor.provides().entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
-            .flatMap(e -> e.getValue().providers().stream().map(p ->
-                String.format("provides %s<br>&nbsp; <em>with %s</em>", e.getKey(), p)));
-        out.format("<td>%s</td>%n", Stream.concat(uses, providers)
-                                          .collect(Collectors.joining("<br>\n")));
-        if (jm.nativeLibs.size() > 0) {
-            String nativeLibs = jm.nativeLibs.keySet().stream()
-                .sorted()
-                .collect(Collectors.joining("<br>\n"));
-            out.format("<td class=\"name\">%s</td>%n", nativeLibs);
-            String sizes = jm.nativeLibs.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getValue().toString())
-                .collect(Collectors.joining("<br>\n"));
-            out.format("<td class=\"num\">%s</td>%n", sizes);
+        Configuration cf = resolve(roots);
+        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
+            HtmlDocument doc = new HtmlDocument(title, modules);
+            doc.writeTo(out, cf.descriptors());
         }
-        out.format("</td>%n");
-        out.format("</tr>%n");
     }
 
-    private void writeHeader(PrintStream out, String title, int numModules, long size) {
-        out.format("<html>%n");
-        out.format("<head>%n");
-        out.format("<title>%s</title>%n", title);
-        out.format("<style type=\"text/css\">%n");
-        out.format("table {border: 1px solid black; border-collapse: collapse;}%n");
-        out.format("td { font-family: monospace; padding: 3px 6px}%n");
-        out.format("td {vertical-align:text-top; border: 1px solid;}%n");
-        out.format("td.name {border-right: none;}");
-        out.format("td.num {border-left: none; text-align:right;}");
-        out.format("th {border: 1px solid black;}%n");
-        out.format("th.name {border-right: none;}");
-        out.format("th.num {border-left: none; text-align:right;}");
-        out.format("</style>%n</head>%n");
-        out.format("<h1>%s</h1>%n", title);
-        out.format("<h3>Number of Modules = %d<br>%n", numModules);
-        out.format("Total Uncompressed Size = %,d bytes</h3>%n", size);
-        out.format("(*) <b>bold</b> indicates a dependence due to an exported API's signature. ");
-        out.format("<em>italic</em> indicates a dependence from an aggregator module<p>%n");
-        out.format("<table>");
-        out.format("<tr>%n");
-        out.format("<th class=\"name\">Module</th>%n");
-        out.format("<th class=\"num\">Bytes</th>%n");
-        out.format("<th>Launchers</th>%n");
-        out.format("<th>Dependences (*)</th>%n");
-        out.format("<th>Exports</th>%n");
-        out.format("<th>Services</th>%n");
-        out.format("<th class=\"name\">Native libs</th>%n");
-        out.format("<th class=\"num\">Bytes</th>%n");
-        out.format("</tr>%n");
+    private final String name;
+    private final ModuleDescriptor descriptor;
+    private final JmodInfo jmodInfo;
+    ModuleSummary(ModuleReference mref, Path jmod) throws IOException {
+        this.name = mref.descriptor().name();
+        this.descriptor = mref.descriptor();
+        this.jmodInfo = new JmodInfo(jmod);
     }
+
+    String name() {
+        return name;
+    }
+
+    long uncompressedSize() {
+        return jmodInfo.size;
+    }
+
+    long jmodFileSize() {
+        return jmodInfo.filesize; // estimated compressed size
+    }
+
+    ModuleDescriptor descriptor() {
+        return descriptor;
+    }
+
+    int numClasses() {
+        return jmodInfo.classCount;
+    }
+
+    long classBytes() {
+        return jmodInfo.classBytes;
+    }
+
+    int numResources() {
+        return jmodInfo.resourceCount;
+    }
+
+    long resourceBytes() {
+        return jmodInfo.resourceBytes;
+    }
+
+    int numConfigs() {
+        return jmodInfo.configCount;
+    }
+    long configBytes() {
+        return jmodInfo.configBytes;
+    }
+    int numCommands() {
+        return jmodInfo.nativeCmds.size();
+    }
+
+    long commandBytes() {
+        return jmodInfo.nativeCmds.values().stream()
+                .mapToLong(l -> l.longValue()).sum() - jmodInfo.debugInfoCmdBytes;
+    }
+    int numCommandsDebug() {
+        return jmodInfo.debugInfoCmdCount;
+    }
+    long commandDebugBytes() {
+        return jmodInfo.debugInfoCmdBytes;
+    }
+    int numNativeLibraries() {
+        return jmodInfo.nativeLibs.size();
+    }
+
+    long nativeLibrariesBytes() {
+        return jmodInfo.nativeLibs.values().stream()
+                .mapToLong(l -> l.longValue()).sum() - jmodInfo.debugInfoLibBytes;
+    }
+    int numNativeLibrariesDebug() {
+        return jmodInfo.debugInfoLibCount;
+    }
+
+    long nativeLibrariesDebugBytes() {
+        return jmodInfo.debugInfoLibBytes;
+    }
+
+    Map<String,Long> commands() {
+        return jmodInfo.nativeCmds;
+    }
+
+    Map<String,Long> nativeLibs() {
+        return jmodInfo.nativeLibs;
+    }
+
+    Map<String,Long> configFiles() {
+        return jmodInfo.configFiles;
+    }
+
 
     static class JmodInfo {
         final long size;
@@ -345,44 +205,40 @@ public class ModuleSummary {
         final long resourceBytes;
         final int  configCount;
         final long configBytes;
-        final int debugInfoLibCount;
+        final int  debugInfoLibCount;
         final long debugInfoLibBytes;
-        final int debugInfoCmdCount;
+        final int  debugInfoCmdCount;
         final long debugInfoCmdBytes;
+        final Map<String,Long> configFiles = new HashMap<>();
         final Map<String,Long> nativeCmds = new HashMap<>();
         final Map<String,Long> nativeLibs = new HashMap<>();
 
         JmodInfo(Path jmod) throws IOException {
-            this.filesize = jmod.toFile().length();
             long total = 0;
-            int cCount = 0;
-            long cBytes = 0;
-            int rCount = 0;
-            long rBytes = 0;
-            int cfCount = 0;
-            long cfBytes = 0;
-            int dizLibCount = 0;
-            long dizLibBytes = 0;
-            int dizCmdCount = 0;
-            long dizCmdBytes = 0;
+            long cBytes = 0, rBytes = 0, cfBytes = 0, dizLibBytes = 0, dizCmdBytes = 0;
+            int  cCount = 0, rCount = 0, cfCount = 0, dizLibCount = 0, dizCmdCount = 0;
             try (ZipFile zf = new ZipFile(jmod.toFile())) {
-                for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+                for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements(); ) {
                     ZipEntry ze = e.nextElement();
                     String fn = ze.getName();
-                    String dir = fn.substring(0, fn.indexOf('/'));
+                    int pos = fn.indexOf('/');
+                    String dir = fn.substring(0, pos);
                     String filename = fn.substring(fn.lastIndexOf('/') + 1);
+                    // name shown in the column
+                    String name = filename;
+
                     long len = ze.getSize();
                     total += len;
                     switch (dir) {
                         case NATIVE_LIBS:
-                            nativeLibs.put(filename, len);
+                            nativeLibs.put(name, len);
                             if (filename.endsWith(".diz")) {
                                 dizLibCount++;
                                 dizLibBytes += len;
                             }
                             break;
                         case NATIVE_CMDS:
-                            nativeCmds.put(filename, len);
+                            nativeCmds.put(name, len);
                             if (filename.endsWith(".diz")) {
                                 dizCmdCount++;
                                 dizCmdBytes += len;
@@ -392,12 +248,13 @@ public class ModuleSummary {
                             if (filename.endsWith(".class")) {
                                 cCount++;
                                 cBytes += len;
-                            } else {
+                            } else if (!filename.startsWith("_the")) {  // workaround build issue
                                 rCount++;
                                 rBytes += len;
                             }
                             break;
                         case CONFIG:
+                            configFiles.put(name, len);
                             cfCount++;
                             cfBytes += len;
                             break;
@@ -405,6 +262,7 @@ public class ModuleSummary {
                             break;
                     }
                 }
+                this.filesize = jmod.toFile().length();
                 this.classCount = cCount;
                 this.classBytes = cBytes;
                 this.resourceCount = rCount;
@@ -421,64 +279,481 @@ public class ModuleSummary {
 
         static final String NATIVE_LIBS = "native";
         static final String NATIVE_CMDS = "bin";
-        static final String CLASSES = "classes";
-        static final String CONFIG = "conf";
+        static final String CLASSES     = "classes";
+        static final String CONFIG      = "conf";
 
         static final String MODULE_ID = "module/id";
         static final String MODULE_MAIN_CLASS = "module/main-class";
     }
 
-    Set<String> getAPIDependences(ModuleReference mref, Path jmod)
-        throws IOException, ConstantPoolException
-    {
-        ModuleDescriptor descriptor = mref.descriptor();
-        Dependency.Finder finder = Dependencies.getAPIFinder(ACC_PROTECTED);
-        Dependency.Filter filter =
-            (Dependency d) -> !mref.descriptor().packages()
-                                   .contains(d.getTarget().getPackageName());
-        Set<String> exports = descriptor.exports().stream()
-                    .map(Exports::source)
-                    .sorted()
-                    .collect(Collectors.toSet());
-        Set<String> deps = new HashSet<>();
-        try (ZipFile zf = new ZipFile(jmod.toFile())) {
-            for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
-                ZipEntry ze = e.nextElement();
-                String fn = ze.getName();
-                String dir = fn.substring(0, fn.indexOf('/'));
-                if (JmodInfo.CLASSES.equals(dir) && fn.endsWith(".class")) {
-                    if (fn.equals("classes/module-info.class"))
-                        continue;   // skip module-info.class
-                    String pn = fn.substring(fn.indexOf('/')+1, fn.lastIndexOf('/')).replace('/', '.');
-                    if (exports.contains(pn)) {
-                        // analyze only exported APIs
-                        try (InputStream in = zf.getInputStream(ze)) {
-                            ClassFile cf = ClassFile.read(in);
-                            if (cf.access_flags.is(AccessFlags.ACC_PUBLIC)) {
-                                for (Dependency d : finder.findDependencies(cf)) {
-                                    if (filter.accepts(d)) {
-                                       ModuleDescriptor a = packageMap.get(d.getTarget().getPackageName());
-                                       if (a == null) {
-                                           throw new Error(d.getOrigin() + " -> " +
-                                                           d.getTarget() + " not found");
-                                       }
-                                       deps.add(a.name());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return deps;
-    }
-
-    static Configuration resolve(Collection<String> roots) {
+    static Configuration resolve(Set<String> roots) {
         return Configuration.resolve(ModuleFinder.ofInstalled(),
                                      Layer.empty(),
                                      ModuleFinder.empty(),
                                      roots);
     }
 
+    static class HtmlDocument {
+        final String title;
+        final Map<String, ModuleSummary> modules;
+        boolean requiresPublicNote = false;
+        boolean aggregatorNote = false;
+        boolean totalBytesNote = false;
+        HtmlDocument(String title, Map<String, ModuleSummary> modules) {
+            this.title = title;
+            this.modules = modules;
+        }
+
+        void writeTo(PrintStream out, Set<ModuleDescriptor> selectedModules) {
+            out.format("<html><head>%n");
+            out.format("<title>%s</title>%n", title);
+            // stylesheet
+            Arrays.stream(HtmlDocument.STYLES).forEach(out::println);
+            out.format("</head>%n");
+
+            // body begins
+            out.format("<body>%n");
+
+            // title and date
+            out.println(DOCTITLE.toString(title));
+            out.println(VERSION.toString(String.format("%tc", new Date())));
+
+            // total modules and sizes
+            long totalBytes = selectedModules.stream()
+                    .map(ModuleDescriptor::name)
+                    .map(modules::get)
+                    .mapToLong(ModuleSummary::uncompressedSize)
+                    .sum();
+            String[] sections = new String[] {
+                    String.format("%s: %d", "Total modules", selectedModules.size()),
+                    String.format("%s: %,d bytes (%s %s)", "Total size",
+                                  totalBytes,
+                                  System.getProperty("os.name"),
+                                  System.getProperty("os.arch"))
+            };
+            out.println(SECTION.toString(sections));
+
+            // write table and header
+            out.println(String.format("<table class=\"%s\">", MODULES));
+            out.println(header("Module", "Requires", "Exports",
+                    "Services", "Commands/Native Libraries/Configs"));
+
+            // write contents - one row per module
+            selectedModules.stream()
+                    .sorted(Comparator.comparing(ModuleDescriptor::name))
+                    .map(m -> modules.get(m.name()))
+                    .map(ModuleTableRow::new)
+                    .forEach(table -> table.writeTo(out));
+
+            out.format("</table>");  // end table
+            out.format("</body>");
+            out.println("</html>");
+        }
+
+        String header(String... columns) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<tr>");
+            Arrays.stream(columns)
+                    .forEach(cn -> sb.append("  <th>").append(cn).append("</th>").append("\n"));
+            sb.append("</tr>");
+            return sb.toString();
+        }
+
+        static enum Selector {
+            MODULES("modules"),
+            MODULE("module"),
+            MODULE_DEF("code name def"),
+            AGGREGATOR("code name def agg"),
+            REQUIRES("code"),
+            REQUIRES_PUBLIC("code reexp"),
+            BR("br"),
+            CODE("code"),
+            NUMBER("number"),;
+            final String name;
+            Selector(String name) {
+                this.name = name;
+            }
+            @Override
+            public String toString() {
+                return name;
+            }
+        }
+
+        static enum Division {
+            DOCTITLE("doctitle"),
+            VERSION("versions"),
+            SECTION("section");
+            final String name;
+
+            Division(String name) {
+                this.name = name;
+            }
+
+            public String toString(String... lines) {
+                String value = Arrays.stream(lines).collect(Collectors.joining("<br>\n"));
+                return "<div class=\"" + name + "\">" + value + "</div>";
+            }
+        }
+
+        class ModuleTableRow {
+            private final ModuleSummary ms;
+            private final Set<ModuleDescriptor> deps;
+            private final int maxRows;
+            private final boolean aggregator;
+            ModuleTableRow(ModuleSummary ms) {
+                this.ms = ms;
+                this.deps = resolve(Collections.singleton(ms.name())).descriptors();
+                int count = (ms.numClasses() > 0 ? 1 : 0) +
+                            (ms.numResources() > 0 ? 1 : 0) +
+                            (ms.numConfigs() > 0 ? 1 : 0) +
+                            (ms.numNativeLibraries() > 0 ? 1 : 0) +
+                            (ms.numNativeLibrariesDebug() > 0 ? 1 : 0) +
+                            (ms.numCommands() > 0 ? 1 : 0) +
+                            (ms.numCommandsDebug() > 0 ? 1 : 0);
+                this.aggregator = ms.numClasses() == 1 && count == 1; // only module-info.class
+
+                // 5 fixed rows (name + 2 transitive count/size + 2 blank rows)
+                this.maxRows = 5 + count + (aggregator && !aggregatorNote ? 2 : 0);
+            }
+
+            public void writeTo(PrintStream out) {
+                out.println(String.format("<tr id=\"%s\" class=\"%s\">", ms.name(), MODULE));
+                out.println(moduleColumn());
+                out.println(requiresColumn());
+                out.println(exportsColumn());
+                out.println(servicesColumn());
+                out.println(otherSectionColumn());
+                out.println("</td>");
+                out.println("</tr>");
+            }
+
+            public String moduleColumn() {
+                // module name
+                StringBuilder sb = new StringBuilder("  ");
+                sb.append("<td>");
+                sb.append(String.format("<table class=\"%s\">", MODULE)).append("\n");
+                sb.append(moduleName(ms.name()));
+                sb.append(blankRow());
+                // metadata
+                sb.append(toTableRow("class", "classes", ms.numClasses(), ms.classBytes()));
+                sb.append(toTableRow("resource", "resources", ms.numResources(), ms.resourceBytes()));
+                sb.append(toTableRow("config", "configs", ms.numConfigs(), ms.configBytes()));
+                sb.append(toTableRow("native library", "native libraries",
+                                     ms.numNativeLibraries(), ms.nativeLibrariesBytes()));
+                sb.append(toTableRow("native library debug", "native libraries debug",
+                                     ms.numNativeLibrariesDebug(), ms.nativeLibrariesDebugBytes()));
+                sb.append(toTableRow("command", "commands", ms.numCommands(), ms.commandBytes()));
+                sb.append(toTableRow("command debug", "commands debug",
+                                     ms.numCommandsDebug(), ms.commandDebugBytes()));
+                sb.append(blankRow());
+
+                // transitive dependencies
+                long reqBytes = deps.stream()
+                                    .filter(d -> !d.name().equals(ms.name()))
+                                    .mapToLong(d -> modules.get(d.name()).uncompressedSize())
+                                    .sum();
+                long reqJmodFileSize = deps.stream()
+                                            .mapToLong(d -> modules.get(d.name()).jmodFileSize())
+                                            .sum();
+                // size
+                if (totalBytesNote) {
+                    sb.append(toTableRow("Total bytes", ms.uncompressedSize()));
+                    sb.append(toTableRow("Total bytes of dependencies", reqBytes));
+                } else {
+                    // print footnote
+                    sb.append(toTableRow("Total bytes<sup>1</sup>", ms.uncompressedSize()));
+                    sb.append(toTableRow("Total bytes of dependencies<sup>2</sup>", reqBytes));
+                }
+                String files = deps.size() == 1 ? "file" : "files";
+                sb.append(toTableRow(String.format("Total jmod bytes (%d %s)", deps.size(), files), reqJmodFileSize));
+
+                if (aggregator && !aggregatorNote) {
+                    aggregatorNote = true;
+                    sb.append(blankRow());
+                    sb.append(toTableRow("<i>* aggregator is a module with module-info.class only</i>", BR));
+                }
+                if (!totalBytesNote) {
+                    totalBytesNote = true;
+                    sb.append(blankRow());
+                    sb.append(toTableRow("<i><sup>1</sup>sum of all files including debug files</i>", BR));
+                    sb.append(toTableRow("<i><sup>2</sup>sum of direct and indirect dependencies</i>", BR));
+                }
+                sb.append("</table>").append("</td>");
+                return sb.toString();
+            }
+
+            private String moduleName(String mn) {
+                if (aggregator) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.format("<tr><td colspan=\"2\"><span class=\"%s\">", AGGREGATOR))
+                      .append(mn)
+                      .append("</span>").append("&nbsp;&nbsp;");
+                    if (!aggregatorNote) {
+                        sb.append("(aggregator<sup>*</sup>)");
+                    } else {
+                        sb.append("(aggregator)");
+                    }
+                    sb.append("</td></tr>");
+                    return sb.toString();
+                } else {
+                    return toTableRow(mn, MODULE_DEF);
+                }
+            }
+
+            public String requiresColumn() {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("<td>"));
+                boolean footnote = requiresPublicNote;
+                ms.descriptor().requires().stream()
+                        .sorted(Comparator.comparing(Requires::name))
+                        .forEach(r -> {
+                            boolean requiresPublic = r.modifiers().contains(Requires.Modifier.PUBLIC);
+                            Selector sel = requiresPublic ? REQUIRES_PUBLIC : REQUIRES;
+                            String req = String.format("<a class=\"%s\" href=\"#%s\">%s</a>",
+                                                       sel, r.name(), r.name());
+                            if (!requiresPublicNote && requiresPublic) {
+                                requiresPublicNote = true;
+                                req += "<sup>*</sup>";
+                            }
+                            sb.append(req).append("\n").append("<br>");
+                        });
+
+                if (!ms.name().equals("java.base")) {
+                    int directDeps = ms.descriptor().requires().size();
+                    int indirectDeps = deps.size()-directDeps-1;
+                    for (int i=directDeps; i< (maxRows-1); i++) {
+                        sb.append("<br>");
+                    }
+                    sb.append("<br>");
+                    sb.append("<i>+").append(indirectDeps).append(" transitive dependencies</i>");
+                }
+                if (footnote != requiresPublicNote) {
+                    sb.append("<br><br>").append("<i>* bold denotes requires public</i>");
+                }
+                sb.append("</td>");
+                return sb.toString();
+            }
+
+            public String exportsColumn() {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("  <td class=\"%s\">", CODE));
+                ms.descriptor().exports().stream()
+                        .sorted(Comparator.comparing(Exports::source))
+                        .filter(e -> !e.targets().isPresent())
+                        .forEach(e -> sb.append(e.source()).append("<br>").append("\n"));
+                sb.append("</td>");
+                return sb.toString();
+            }
+
+            public String servicesColumn() {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("  <td class=\"%s\">", CODE));
+                ms.descriptor().uses().stream()
+                        .sorted()
+                        .forEach(s -> sb.append("uses ").append(s).append("<br>").append("\n"));
+                ms.descriptor().provides().entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .flatMap(e -> e.getValue().providers().stream()
+                                .map(p -> String.format("provides %s<br>&nbsp;&nbsp;&nbsp;&nbsp;with %s",
+                                                        e.getKey(), p)))
+                        .forEach(p -> sb.append(p).append("<br>").append("\n"));
+                sb.append("</td>");
+                return sb.toString();
+            }
+
+            public String otherSectionColumn() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("<td>");
+                sb.append(String.format("<table class=\"%s\">", MODULE)).append("\n");
+                // commands
+                if (ms.numCommands() > 0) {
+                    sb.append(toTableRow("bin/", CODE));
+                    ms.commands().entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .forEach(e -> sb.append(toTableRow(e.getKey(), e.getValue(), CODE)));
+                    sb.append(blankRow());
+                }
+
+                // native libraries
+                if (ms.numNativeLibraries() > 0) {
+                    sb.append(toTableRow("lib/", CODE));
+                    ms.nativeLibs().entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .forEach(e -> sb.append(toTableRow(e.getKey(), e.getValue(), CODE)));
+                    sb.append(blankRow());
+                }
+
+                // config files
+                if (ms.numConfigs() > 0) {
+                    sb.append(toTableRow("conf/", CODE));
+                    ms.configFiles().entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .forEach(e -> sb.append(toTableRow(e.getKey(), e.getValue(), CODE)));
+                }
+                // totals
+                sb.append("</table>").append("</td>");
+                return sb.toString();
+            }
+
+            private String blankRow() {
+                return toTableRow("&nbsp;", BR);
+            }
+
+            private String toTableRow(String col, Selector selector) {
+                TableDataBuilder builder = new TableDataBuilder();
+                builder.colspan(selector, 2, col);
+                return builder.build();
+            }
+
+            private String toTableRow(String col1, long col2) {
+                return toTableRow(col1, col2, BR);
+            }
+
+            private String toTableRow(String col1, long col2, Selector selector) {
+                TableDataBuilder builder = new TableDataBuilder();
+                builder.data(selector, col1);
+                builder.data(col2);
+                return builder.build();
+
+            }
+
+            private String toTableRow(String singular, String plural, int count, long bytes) {
+                if (count == 0) {
+                    return "";
+                }
+                TableDataBuilder builder = new TableDataBuilder();
+                if (count == 1) {
+                    builder.data(count + " " + singular);
+                } else {
+                    builder.data(count + " " + plural);
+                }
+                builder.data(bytes);
+                return builder.build();
+            }
+
+            class TableDataBuilder {
+                private final StringBuilder sb;
+                TableDataBuilder() {
+                    this.sb = new StringBuilder("<tr>");
+                }
+                TableDataBuilder data(String s) {
+                    data(BR, s);
+                    return this;
+                }
+                TableDataBuilder data(long num) {
+                    data(NUMBER, String.format("%,d", num));
+                    return this;
+                }
+                TableDataBuilder colspan(Selector selector, int columns, String data) {
+                    sb.append("<td colspan=\"").append(columns).append("\">");
+                    sb.append("<span class=\"").append(selector).append("\">");
+                    sb.append(data).append("</span></td>");
+                    return this;
+                }
+
+                TableDataBuilder data(Selector selector, String data) {
+                    sb.append("<td class=\"").append(selector).append("\">");
+                    sb.append(data).append("</td>");
+                    return this;
+                }
+                String build() {
+                    sb.append("</tr>");
+                    return sb.toString();
+                }
+            }
+        }
+
+        private static final String[] STYLES = new String[]{
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://openjdk.java.net/.fonts/dejavu.css\"/>",
+                "<style type=\"text/css\">",
+                "        HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,",
+                "        BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,",
+                "        IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,",
+                "        I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,",
+                "        CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,",
+                "        EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,",
+                "        SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {",
+                "          margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;",
+                "          vertical-align: baseline; }",
+                "        ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, ",
+                "        FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }",
+                "        BLOCKQUOTE, Q { quotes: none; }",
+                "        BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {",
+                "                content: ''; content: none; }",
+                "        TABLE { border-collapse: collapse; border-spacing: 0; }",
+                "        A { text-decoration: none; }",
+                "        A:link { color: #437291; }",
+                "        A:visited { color: #666666; }",
+                "        A.anchor:link, A.anchor:visited { color: black; }",
+                "        A[href]:hover { color: #e76f00; }",
+                "        A IMG { border-width: 0px; }",
+                "        HTML { font-size: 20px; } /* baseline grid */",
+                "        HTML > BODY { font-size: 14px; }",
+                "        BODY {",
+                "          background: white;",
+                "          margin: 40px;",
+                "          margin-bottom: 150%;",
+                "          line-height: 20px;",
+                "          -webkit-text-size-adjust: 100%; /* iOS */",
+                "          color: #222;",
+                "        }",
+                "        BODY { font-family: \"DejaVu Serif\", \"Lucida Bright\", \"Bookman Old Style\",",
+                "                            Georgia, serif; }",
+                "        CODE, TT, .jref, DIV.spec .open, TABLE.profiles {",
+                "          font-family: \"DejaVu Sans\", \"Lucida Sans\", Helvetica, sans-serif; }",
+                "        PRE, .code { font-family: \"DejaVu Sans Mono\", \"Bitstream Vera Sans Mono\",",
+                "                            Monaco, \"Courier New\", monospace; }",
+                "        H1, H2, H3, H4 { color: green; font-weight: bold; }",
+                "        I { font-style: italic; }",
+                "        TH { font-weight: bold; }",
+                "        P { text-indent: 40px; }",
+                "        P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,",
+                "          P.break, DIV.profiles-table + P { text-indent: 0; }",
+                "        P.break { margin-top: 10px; }",
+                "        P.subsection { margin-top: 20px; }",
+                "        P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }",
+                "        UL, OL { margin: 10px 0; padding-left: 40px; }",
+                "        LI { margin-bottom: 10px; }",
+                "        UL.compact LI { margin-bottom: 0; }",
+                "        PRE { padding: 0; margin: 10px 0 10px 20px; background: #eee; width: 45em; }",
+                "        BLOCKQUOTE { margin: 10px 0; margin-left: 20px; }",
+                "        LI BLOCKQUOTE { margin-left: 0; }",
+                "        UL LI { list-style-type: square; }",
+                "        .todo { color: darkred; text-align: right; }",
+                "        .error { color: red; font-weight: bold; }",
+                "        .warn { color: #ee0000; font-weight: bold; }",
+                "        DIV.doctitle { margin-top: -13px;",
+                "          font-size: 22px; line-height: 40px; font-weight: bold; }",
+                "        DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }",
+                "        DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }",
+                "        DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }",
+                "        DIV.author A { font-style: italic; }",
+                "        DIV.version { margin-top: 10px; font-size: 12px; }",
+                "        DIV.version, DIV.legal-notice { font-size: 12px; line-height: 15px; }",
+                "        SPAN.hash { font-size: 9px; }",
+                "        DIV.version SPAN.modified { color: green; font-weight: bold; }",
+                "        DIV.head { margin-bottom: 20px; }",
+                "        DIV.section > DIV.title, DIV.section DIV.number SPAN {",
+                "          font-size: 15px; font-weight: bold; }",
+                "        TABLE { border-collapse: collapse; border: none; }",
+                "        TD.number { text-align: right; }",
+                "        TD, TH { text-align: left; white-space: nowrap; }",
+                "        TD.name, SPAN.name { font-weight: bold; }",
+                "        ",
+                "        TABLE.module { width: 100%; }",
+                "        TABLE.module TD:first-child { padding-right: 10px; }",
+                "        TR.module > TD { padding: 10px 0; border-top: 1px solid black; }",
+                "        TR > TH { padding-bottom: 10px; }",
+                "        TR.br TD { padding-top: 20px; }",
+                "        TABLE.modules { margin-top: 20px; }",
+                "        TABLE.modules > TBODY > TR > TD:nth-child(even) { background: #eee; }",
+                "        TABLE.modules > TBODY > TR > TD, TABLE.modules > TBODY > TR > TH {",
+                "          padding-left: 10px; padding-right: 10px; }",
+                "        .reexp, .def { font-weight: bold; }",
+                "        .agg { font-style: italic; }",
+                "        SUP { height: 0; line-height: 1; position: relative;",
+                "              vertical-align: baseline; bottom: 1ex; font-size: 11px; }",
+                "</style>",
+        };
+    }
 }
