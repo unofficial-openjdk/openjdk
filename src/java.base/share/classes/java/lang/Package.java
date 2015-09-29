@@ -301,9 +301,23 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return The {@code Package} of the given name defined by the caller's
      *         class loader or its ancestors, or {@code null} if not found.
      *
+     * @deprecated
+     * If multiple class loaders delegate to each other and define classes
+     * with the same package name, and one such loader relies on the lookup
+     * behavior of {@code getPackage} to return a {@code Package} from
+     * a parent loader, then the properties exposed by the {@code Package}
+     * may not be as expected in the rest of the program.
+     * For example, the {@code Package} will only expose annotations from the
+     * {@code package-info.class} file defined by the parent loader, even if
+     * annotations exist in a {@code package-info.class} file defined by
+     * a child loader.  A more robust approach is to use the
+     * {@link ClassLoader#getDefinedPackage} method which returns
+     * a {@code Package} for the specified class loader.
+     *
      * @see ClassLoader#getDefinedPackage
      */
     @CallerSensitive
+    @Deprecated
     @SuppressWarnings("deprecation")
     public static Package getPackage(String name) {
         ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
