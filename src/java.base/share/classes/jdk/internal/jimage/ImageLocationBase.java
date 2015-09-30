@@ -26,15 +26,15 @@
 package jdk.internal.jimage;
 
 public class ImageLocationBase {
-    public final static int ATTRIBUTE_END = 0;
-    public final static int ATTRIBUTE_MODULE = 1;
-    public final static int ATTRIBUTE_PARENT = 2;
-    public final static int ATTRIBUTE_BASE = 3;
-    public final static int ATTRIBUTE_EXTENSION = 4;
-    public final static int ATTRIBUTE_OFFSET = 5;
-    public final static int ATTRIBUTE_COMPRESSED = 6;
-    public final static int ATTRIBUTE_UNCOMPRESSED = 7;
-    public final static int ATTRIBUTE_COUNT = 8;
+    public static final int ATTRIBUTE_END = 0;
+    public static final int ATTRIBUTE_MODULE = 1;
+    public static final int ATTRIBUTE_PARENT = 2;
+    public static final int ATTRIBUTE_BASE = 3;
+    public static final int ATTRIBUTE_EXTENSION = 4;
+    public static final int ATTRIBUTE_OFFSET = 5;
+    public static final int ATTRIBUTE_COMPRESSED = 6;
+    public static final int ATTRIBUTE_UNCOMPRESSED = 7;
+    public static final int ATTRIBUTE_COUNT = 8;
 
     protected final long[] attributes;
 
