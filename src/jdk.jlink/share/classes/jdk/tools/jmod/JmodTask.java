@@ -41,10 +41,12 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -166,6 +168,7 @@ public class JmodTask {
         Version moduleVersion;
         String mainClass;
         Pattern dependenciesToHash;
+        List<PathMatcher> excludes;
     }
 
     public int run(String[] args) {
@@ -294,6 +297,7 @@ public class JmodTask {
         final String mainClass = options.mainClass;
         final ModuleFinder moduleFinder = options.moduleFinder;
         final Pattern dependenciesToHash = options.dependenciesToHash;
+        final List<PathMatcher> excludes = options.excludes;
 
         JmodFileWriter() { }
 
@@ -547,14 +551,16 @@ public class JmodTask {
         void processSection(ZipOutputStream zos, Section section, Path top)
             throws IOException
         {
+            final String prefix = section.jmodDir();
+
             Files.walkFileTree(top, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException
                 {
-                    if (!file.getFileName().toString().equals(MODULE_INFO)) {
-                        Path relPath = top.relativize(file);
-                        String prefix = section.jmodDir();
+                    Path relPath = top.relativize(file);
+                    if (!relPath.toString().equals(MODULE_INFO)
+                            && !matches(relPath, excludes)) {
                         try (InputStream in = Files.newInputStream(file)) {
                             writeZipEntry(zos, in, prefix, relPath.toString());
                         }
@@ -562,6 +568,16 @@ public class JmodTask {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        }
+
+        boolean matches(Path path, List<PathMatcher> matchers) {
+            if (matchers != null) {
+                for (PathMatcher pm : matchers) {
+                    if (pm.matches(path))
+                        return true;
+                }
+            }
+            return false;
         }
 
         void writeZipEntry(ZipOutputStream zos, InputStream in, String prefix, String other)
@@ -593,6 +609,7 @@ public class JmodTask {
             @Override
             public boolean test(JarEntry je) {
                 String name = je.getName();
+                // ## no support for excludes. Is it really needed?
                 return !name.endsWith(MODULE_INFO) && !je.isDirectory();
             }
         }
@@ -693,6 +710,22 @@ public class JmodTask {
         @Override public String valuePattern() { return "pattern"; }
     }
 
+    static class GlobConverter implements ValueConverter<PathMatcher> {
+        @Override
+        public PathMatcher convert(String pattern) {
+            try {
+                return FileSystems.getDefault()
+                                  .getPathMatcher("glob:" + pattern);
+            } catch (PatternSyntaxException e) {
+                throw new CommandException("err.bad.pattern", pattern);
+            }
+        }
+
+        @Override public Class<PathMatcher> valueType() { return PathMatcher.class; }
+
+        @Override public String valuePattern() { return "pattern"; }
+    }
+
     /* Support for @<file> in jmod help */
     private static final String CMD_FILENAME = "@<filename>";
 
@@ -702,9 +735,7 @@ public class JmodTask {
      */
     private static final class JmodHelpFormatter extends BuiltinHelpFormatter {
 
-        private JmodHelpFormatter() {
-            super(80, 2);
-        }
+        private JmodHelpFormatter() { super(80, 2); }
 
         @Override
         public String format(Map<String, ? extends OptionDescriptor> options) {
@@ -718,39 +749,21 @@ public class JmodTask {
                     return ret;
                 }
                 @Override
-                public String description() {
-                    return getMessage("main.opt.cmdfile");
-
-                }
+                public String description() { return getMessage("main.opt.cmdfile"); }
                 @Override
-                public List<?> defaultValues() {
-                    return Collections.emptyList();
-                }
+                public List<?> defaultValues() { return Collections.emptyList(); }
                 @Override
-                public boolean isRequired() {
-                    return false;
-                }
+                public boolean isRequired() { return false; }
                 @Override
-                public boolean acceptsArguments() {
-                    return false;
-                }
+                public boolean acceptsArguments() { return false; }
                 @Override
-                public boolean requiresArgument() {
-                    return false;
-                }
+                public boolean requiresArgument() { return false; }
                 @Override
-                public String argumentDescription() {
-                    return null;
-                }
+                public String argumentDescription() { return null; }
                 @Override
-                public String argumentTypeIndicator() {
-                    return null;
-                }
-
+                public String argumentTypeIndicator() { return null; }
                 @Override
-                public boolean representsNonOptions() {
-                    return false;
-                }
+                public boolean representsNonOptions() { return false; }
             });
             String content = super.format(all);
             String[] lines = content.split("\n");
@@ -758,8 +771,7 @@ public class JmodTask {
             String cmdfile = null;
             for (String line : lines) {
                 if (line.startsWith("--@")) {
-                    cmdfile = line.replace("--" + CMD_FILENAME,
-                            CMD_FILENAME + "  ");
+                    cmdfile = line.replace("--" + CMD_FILENAME, CMD_FILENAME + "  ");
                 } else {
                     builder.append(line).append("\n");
                 }
@@ -793,6 +805,11 @@ public class JmodTask {
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);
+
+        OptionSpec<PathMatcher> excludes
+                = parser.accepts("exclude", getMessage("main.opt.exclude"))
+                        .withRequiredArg()
+                        .withValuesConvertedBy(new GlobConverter());
 
         OptionSpec<Pattern> hashDependencies
                 = parser.accepts("hash-dependencies", getMessage("main.opt.hash-dependencies"))
@@ -847,6 +864,8 @@ public class JmodTask {
                 options.cmds = opts.valuesOf(cmds);
             if (opts.has(config))
                 options.configs = opts.valuesOf(config);
+            if (opts.has(excludes))
+                options.excludes = opts.valuesOf(excludes);
             if (opts.has(libs))
                 options.libs = opts.valuesOf(libs);
             if (opts.has(modulePath)) {

@@ -91,7 +91,7 @@ public class JmodTest {
                 assertContains(r.output, CLASSES_PREFIX + "module-info.class");
                 assertContains(r.output, CLASSES_PREFIX + "jdk/test/foo/Foo.class");
                 assertContains(r.output, CLASSES_PREFIX + "jdk/test/foo/internal/Message.class");
-             });
+            });
     }
 
     @Test
@@ -226,6 +226,35 @@ public class JmodTest {
     }
 
     @Test
+    public void testExcludes() throws IOException {
+        Path jmod = MODS_DIR.resolve("fooLibs.jmod");
+        FileUtils.deleteFileIfExistsWithRetry(jmod);
+        Path cp = EXPLODED_DIR.resolve("foo").resolve("classes");
+        Path lp = EXPLODED_DIR.resolve("foo").resolve("lib");
+
+        jmod("create",
+             "--libs=", lp.toString(),
+             "--class-path", cp.toString(),
+             "--exclude", "**internal**",
+             "--exclude", "first.so",
+             jmod.toString())
+             .assertSuccess()
+             .resultChecker(r -> {
+                 Set<String> expectedFilenames = new HashSet<>();
+                 expectedFilenames.add(CLASSES_PREFIX + "module-info.class");
+                 expectedFilenames.add(CLASSES_PREFIX + "jdk/test/foo/Foo.class");
+                 expectedFilenames.add(LIBS_PREFIX + "second.so");
+                 expectedFilenames.add(LIBS_PREFIX + "third/third.so");
+                 assertJmodContent(jmod, expectedFilenames);
+
+                 Set<String> unexpectedFilenames = new HashSet<>();
+                 unexpectedFilenames.add(CLASSES_PREFIX + "jdk/test/foo/internal/Message.class");
+                 unexpectedFilenames.add(LIBS_PREFIX + "first.so");
+                 assertJmodDoesNotContain(jmod, unexpectedFilenames);
+             });
+    }
+
+    @Test
     public void testVersion() {
         jmod("--version")
             .assertSuccess()
@@ -318,6 +347,24 @@ public class JmodTest {
             unexpected.forEach(s -> sb.append("\t" + s + "\n"));
             sb.append("Expected but not found:\n");
             notFound.forEach(s -> sb.append("\t" + s + "\n"));
+            assertTrue(false, "Jmod content check failed.\n" + sb.toString());
+        }
+    }
+
+    static void assertJmodDoesNotContain(Path jmod, Set<String> unexpectedNames) {
+        Set<String> actual = getJmodContent(jmod);
+        Set<String> unexpected = new HashSet<>();
+        for (String name : unexpectedNames) {
+            if (actual.contains(name))
+                unexpected.add(name);
+        }
+        if (!unexpected.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : unexpected)
+                sb.append("Unexpected but found: " + s + "\n");
+            sb.append("In :");
+            for (String s : actual)
+                sb.append("\t" + s + "\n");
             assertTrue(false, "Jmod content check failed.\n" + sb.toString());
         }
     }
