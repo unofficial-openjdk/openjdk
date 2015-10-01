@@ -465,11 +465,11 @@ public class JImageGenerator {
         }
 
         public Result create() {
-            return cmd("create");
+            return cmd("--create");
         }
 
         public Result list() {
-            return cmd("list");
+            return cmd("--list");
         }
 
         public Result call() {
