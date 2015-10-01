@@ -115,10 +115,10 @@ public class ModuleReaderTest {
     public void testJMod() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
-        // jmod create --class-path mods/${TESTMODULE}  mlib/${TESTMODULE}.jmod
+        // jmod --create --class-path mods/${TESTMODULE}  mlib/${TESTMODULE}.jmod
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
-        String[] args = { "create", "--class-path", cp, jmod };
+        String[] args = { "--create", "--class-path", cp, jmod };
         jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
         assertEquals(task.run(args), 0);
 

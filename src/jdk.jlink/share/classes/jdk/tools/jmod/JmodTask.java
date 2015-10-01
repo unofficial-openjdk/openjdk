@@ -25,9 +25,11 @@
 
 package jdk.tools.jmod;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +42,7 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -76,6 +79,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import jdk.internal.joptsimple.BuiltinHelpFormatter;
@@ -91,6 +95,8 @@ import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
 import jdk.internal.module.ModuleInfoExtender;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * Implementation for the jmod tool.
@@ -150,13 +156,14 @@ public class JmodTask {
                      EXIT_SYSERR = 3, // System error or resource exhaustion.
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
-    enum Task {
+    enum Mode {
         CREATE,
-        LIST
+        LIST,
+        PRINT_DESCRIPTOR
     };
 
     static class Options {
-        Task task;
+        Mode mode;
         Path jmodFile;
         boolean help;
         boolean version;
@@ -189,15 +196,18 @@ public class JmodTask {
             }
 
             boolean ok;
-            switch (options.task) {
+            switch (options.mode) {
                 case CREATE:
                     ok = create();
                     break;
                 case LIST:
                     ok = list();
                     break;
+                case PRINT_DESCRIPTOR:
+                    ok = printModuleDescriptor();
+                    break;
                 default:
-                    throw new AssertionError("Unknown task: " + options.task.name());
+                    throw new AssertionError("Unknown mode: " + options.mode.name());
             }
 
             return ok ? EXIT_OK : EXIT_ERROR;
@@ -272,6 +282,114 @@ public class JmodTask {
             modPaths.put(name, Paths.get(fileURI));
         }
         return modPaths;
+    }
+
+    private boolean printModuleDescriptor() throws IOException {
+        ZipFile zip = null;
+        try {
+            try {
+                zip = new ZipFile(options.jmodFile.toFile());
+            } catch (IOException x) {
+                throw new IOException("error opening jmod file", x);
+            }
+
+            try (FileInputStream fis = new FileInputStream(options.jmodFile.toFile())) {
+                boolean found = printModuleDescriptor(fis);
+                if (!found)
+                    throw new CommandException("err.module.descriptor.not.found");
+                return found;
+            }
+        } finally {
+            if (zip != null)
+                zip.close();
+        }
+    }
+
+    static <T> String toString(Set<T> set,
+                               CharSequence prefix,
+                               CharSequence suffix ) {
+        if (set.isEmpty()) { return ""; }
+        return set.stream().map(e -> e.toString())
+                  .collect(joining(", ", prefix, suffix));
+    }
+
+    private boolean printModuleDescriptor(FileInputStream fis)
+        throws IOException
+    {
+        final String mi = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
+        try (BufferedInputStream bis = new BufferedInputStream(fis);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+
+            ZipEntry e;
+            while ((e = zis.getNextEntry()) != null) {
+                if (e.getName().equals(mi)) {
+                    ModuleDescriptor md = ModuleDescriptor.read(zis);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("\nName:\n  " + md.toNameAndVersion());
+
+                    Set<Requires> requires = md.requires();
+                    if (!requires.isEmpty()) {
+                        sb.append("\nRequires:");
+                        requires.forEach(r ->
+                                sb.append("\n  ").append(r.name())
+                                  .append(toString(r.modifiers(), " [ ", " ]")));
+                    }
+
+                    Set<String> s = md.uses();
+                    if (!s.isEmpty()) {
+                        sb.append("\nUses: ");
+                        s.forEach(sv -> sb.append("\n  ").append(sv));
+                    }
+
+                    Set<ModuleDescriptor.Exports> exports = md.exports();
+                    if (!exports.isEmpty()) {
+                        sb.append("\nExports:");
+                        exports.forEach(sv -> sb.append("\n  ").append(sv));
+                    }
+
+                    Map<String, ModuleDescriptor.Provides> provides = md.provides();
+                    if (!provides.isEmpty()) {
+                        sb.append("\nProvides: ");
+                        provides.values().forEach(p ->
+                                sb.append("\n  ").append(p.service())
+                                  .append(" with ")
+                                  .append(toString(p.providers(), "", "")));
+                    }
+
+                    Optional<String> mc = md.mainClass();
+                    if (mc.isPresent())
+                        sb.append("\nMain class:\n  " + mc.get());
+
+                    s = md.conceals();
+                    if (!s.isEmpty()) {
+                        sb.append("\nConceals:");
+                        s.forEach(p -> sb.append("\n  ").append(p));
+                    }
+
+                    try {
+                        Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
+                        m.setAccessible(true);
+                        @SuppressWarnings("unchecked")
+                        Optional<Hasher.DependencyHashes> optHashes =
+                                (Optional<Hasher.DependencyHashes>) m.invoke(md);
+
+                        if (optHashes.isPresent()) {
+                            Hasher.DependencyHashes hashes = optHashes.get();
+                            sb.append("\nHashes:");
+                            sb.append("\n  Algorithm: " + hashes.algorithm());
+                            hashes.names().stream().forEach(mod ->
+                                    sb.append("\n  ").append(mod)
+                                      .append(": ").append(hashes.hashFor(mod)));
+                        }
+                    } catch (ReflectiveOperationException x) {
+                        throw new InternalError(x);
+                    }
+                    out.print(sb.toString());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean create() throws IOException {
@@ -768,16 +886,32 @@ public class JmodTask {
             String content = super.format(all);
             String[] lines = content.split("\n");
             StringBuilder builder = new StringBuilder();
+
+            String modes = ".*--create.*|.*--list.*|.*--print-module-descriptor.*";
+            boolean first = true;
+            for (String line : lines) {
+                if (line.matches(modes)) {
+                    if (first) {
+                        builder.append("\n").append(" Main operation modes:\n");
+                        first = false;
+                    }
+                    builder.append("  ").append(line).append("\n");
+                }
+            }
+            builder.append("\n");
+
             String cmdfile = null;
             for (String line : lines) {
                 if (line.startsWith("--@")) {
                     cmdfile = line.replace("--" + CMD_FILENAME, CMD_FILENAME + "  ");
-                } else {
-                    builder.append(line).append("\n");
+                } else if (line.startsWith("Option") || line.startsWith("------")) {
+                    builder.append(" ").append(line).append("\n");
+                } else if (!line.matches(modes)){
+                    builder.append("  ").append(line).append("\n");
                 }
             }
             if (cmdfile != null) {
-                builder.append(cmdfile).append("\n");
+                builder.append("  ").append(cmdfile).append("\n");
             }
             return builder.toString();
         }
@@ -787,6 +921,21 @@ public class JmodTask {
 
     private void handleOptions(String[] args) {
         parser.formatHelpWith(new JmodHelpFormatter());
+
+        // Main operation modes
+        OptionSpec<Void> create
+                = parser.acceptsAll(Arrays.asList("c", "create"),
+                                    getMessage("main.opt.mode.create"));
+
+        OptionSpec<Void> list
+                = parser.acceptsAll(Arrays.asList("t", "list"),
+                                    getMessage("main.opt.mode.list"));
+
+        OptionSpec<Void> printDescriptor
+                = parser.acceptsAll(Arrays.asList("p", "print-module-descriptor"),
+                                    getMessage("main.opt.mode.pmd"));
+
+        // options
 
         OptionSpec<Path> classPath
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
@@ -847,17 +996,38 @@ public class JmodTask {
                 = parser.accepts("version", getMessage("main.opt.version"));
 
         NonOptionArgumentSpec<String> nonOptions
-                = parser.nonOptions(getMessage("main.non.opt.args"));
+                = parser.nonOptions();
 
         try {
             OptionSet opts = parser.parse(args);
 
-            if (opts.specs().isEmpty() && opts.valuesOf(nonOptions).isEmpty())
-                return;  // usage summary will be shown
+            if (opts.has(help) || opts.has(version)) {
+                options = new Options();
+                options.help = opts.has(help);
+                options.version = opts.has(version);
+                return;  // informational message will be shown
+            }
+
+            if (opts.specs().isEmpty() ||
+                !(opts.has(create) || opts.has(list) || opts.has(printDescriptor)))
+                throw new CommandException("err.bad.main.mode").showUsage(true);
 
             options = new Options();
-            options.help = opts.has(help);
-            options.version = opts.has(version);
+
+            if (opts.has(create)) {
+                if (opts.has(list) || opts.has(printDescriptor))
+                    throw new CommandException("err.multiple.main.modes").showUsage(true);
+                options.mode = Mode.CREATE;
+            } else if (opts.has(list)) {
+                if (opts.has(create) || opts.has(printDescriptor))
+                    throw new CommandException("err.multiple.main.modes").showUsage(true);
+                options.mode = Mode.LIST;
+            } else if (opts.has(printDescriptor)) {
+                if (opts.has(create) || opts.has(list))
+                    throw new CommandException("err.multiple.main.modes").showUsage(true);
+                options.mode = Mode.PRINT_DESCRIPTOR;
+            }
+
             if (opts.has(classPath))
                 options.classpath = opts.valuesOf(classPath);
             if (opts.has(cmds))
@@ -885,34 +1055,23 @@ public class JmodTask {
                     throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }
 
-            if (options.help || options.version)
-                return;  // informational message will be shown
-
             List<String> words = opts.valuesOf(nonOptions);
             if (words.isEmpty())
-                throw new CommandException("err.missing.task").showUsage(true);
-
-            String verb = words.get(0);
-            try {
-                options.task = Enum.valueOf(Task.class, verb.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new CommandException("err.invalid.task", verb).showUsage(true);
-            }
-
-            if (words.size() == 1)
                 throw new CommandException("err.jmod.must.be.specified").showUsage(true);
-            Path path = Paths.get(words.get(1));
-            if (options.task.equals(Task.CREATE) && Files.exists(path))
+            Path path = Paths.get(words.get(0));
+            if (options.mode.equals(Mode.CREATE) && Files.exists(path))
                 throw new CommandException("err.file.already.exists", path);
-            else if (options.task.equals(Task.LIST) && Files.notExists(path))
+            else if ((options.mode.equals(Mode.LIST) ||
+                          options.mode.equals(Mode.PRINT_DESCRIPTOR))
+                      && Files.notExists(path))
                 throw new CommandException("err.jmod.not.found", path);
             options.jmodFile = path;
 
-            if (words.size() > 2)
+            if (words.size() > 1)
                 throw new CommandException("err.unknown.option",
-                        words.subList(2, words.size())).showUsage(true);
+                        words.subList(1, words.size())).showUsage(true);
 
-            if (options.task.equals(Task.CREATE) && options.classpath == null)
+            if (options.mode.equals(Mode.CREATE) && options.classpath == null)
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
             if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
                 throw new CommandException("err.invalid.main-class", options.mainClass);
