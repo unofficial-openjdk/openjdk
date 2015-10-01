@@ -91,7 +91,7 @@ class GNUStyleOptions {
                     tool.xflag = true;
                 }
             },
-            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor") {
+            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor", "-p") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
                     if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.xflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);

@@ -503,14 +503,17 @@ public class Basic {
             "--no-manifest",
             "-C", modClasses.toString(), ".")
             .assertSuccess();
-        jar("--print-module-descriptor",
-            "--file=" + modularJar.toString())
-            .assertSuccess()
-            .resultChecker( r ->
-                assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),
-                           "Expected to find ", FOO.moduleName + "@" + FOO.version,
-                           " in [", r.output, "]")
-            );
+
+        for (String option : new String[]  {"--print-module-descriptor", "-p" }) {
+            jar(option,
+                "--file=" + modularJar.toString())
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),
+                               "Expected to find ", FOO.moduleName + "@" + FOO.version,
+                               " in [", r.output, "]")
+                );
+        }
     }
 
     // -- Infrastructure
