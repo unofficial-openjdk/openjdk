@@ -248,7 +248,7 @@ public class ModuleSummary {
                             if (filename.endsWith(".class")) {
                                 cCount++;
                                 cBytes += len;
-                            } else if (!filename.startsWith("_the")) {  // workaround build issue
+                            } else {
                                 rCount++;
                                 rBytes += len;
                             }
