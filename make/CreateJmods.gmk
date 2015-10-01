@@ -75,6 +75,7 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(RM) $@.tmp
 	$(JMOD) --create --module-version 9.0 \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependencies '.*' \
+            --exclude '**_the.*' \
 	    $(JMOD_FLAGS) $@.tmp
 	$(MV) $@.tmp $@
 
