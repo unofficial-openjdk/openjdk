@@ -561,21 +561,27 @@ public class BuiltinClassLoader
      * @param c a Class defined by this class loader
      */
     Package definePackage(Class<?> c) {
-        Module m = c.getModule();
-        String cn = c.getName();
-        int pos = cn.lastIndexOf('.');
-        if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package in named module "
-                                    + m.getName());
+        String pn;
+        if (c.isPrimitive()) {
+            pn = "";
+        } else {
+            Module m = c.getModule();
+            String cn = c.getName();
+            int pos = cn.lastIndexOf('.');
+            if (pos < 0 && m.isNamed()) {
+                throw new InternalError("unnamed package in named module "
+                                        + m.getName());
+            }
+            pn = (pos != -1) ? cn.substring(0, pos) : "";
         }
-        String pn = (pos != -1) ? cn.substring(0, pos) : "";
-        Package p = getDefinedPackage(pn);
 
+        Package p = getDefinedPackage(pn);
         if (p == null) {
             URL url = null;
 
             // The given class may be dynamically generated and
             // its package is not in packageToModule map.
+            Module m = c.getModule();
             if (m.isNamed()) {
                 ModuleReference mref = nameToModule.get(m.getName());
                 if (mref != null) {
