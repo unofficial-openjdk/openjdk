@@ -30,6 +30,7 @@
  */
 
 import jdk.test.lib.*;
+import java.io.File;
 
 public class Xpatch2Dirs {
 
@@ -55,7 +56,8 @@ public class Xpatch2Dirs {
              InMemoryJavaCompiler.compile("java.beans.Encoder", source2),
              "mods2/java.desktop");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods:mods2",
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+             "-Xpatch:mods" + File.pathSeparator + "mods2",
              "Xpatch2DirsMain", "javax.naming.spi.NamingManager", "java.beans.Encoder");
 
         OutputAnalyzer oa = new OutputAnalyzer(pb.start());
