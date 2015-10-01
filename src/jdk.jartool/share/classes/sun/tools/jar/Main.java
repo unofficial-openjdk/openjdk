@@ -801,7 +801,7 @@ class Main {
                     return false;
                 }
             } else if (isModuleInfoEntry
-                       && ((newModuleInfo == null) || (ename != null)
+                       && ((newModuleInfo != null) || (ename != null)
                            || moduleVersion != null || dependenciesToHash != null)) {
                 if (newModuleInfo == null) {
                     // Update existing module-info.class

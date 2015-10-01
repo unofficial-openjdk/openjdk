@@ -179,7 +179,7 @@ public class Basic {
             .assertSuccess();
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
             .assertSuccess()
-            .resultChecker(r -> assertModuleData(r, FOO) );
+            .resultChecker(r -> assertModuleData(r, FOO));
 
         try (InputStream fis = Files.newInputStream(modularJar);
              JarInputStream jis = new JarInputStream(fis)) {
@@ -314,6 +314,44 @@ public class Basic {
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
             .assertSuccess()
             .resultChecker(r -> assertModuleData(r, FOO));
+    }
+
+    @Test
+    public void partialUpdateFooModuleInfo() throws IOException {
+        Path mp = Paths.get("partialUpdateFooModuleInfo");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+        Path barModInfo = MODULE_CLASSES.resolve(BAR.moduleName);
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        jar("--update",
+            "--file=" + modularJar.toString(),
+            "--no-manifest",
+            "-C", barModInfo.toString(), "module-info.class")  // stuff in bar's info
+            .assertSuccess();
+        jar("-p",
+            "--file=" + modularJar.toString())
+            .assertSuccess()
+            .resultChecker(r -> {
+                // Expect similar output: "Name:bar,  Requires: foo,...
+                // Conceals: jdk.test.foo, jdk.test.foo.internal"
+                Pattern p = Pattern.compile("\\s+Name:\\s+bar\\s+Requires:\\s+foo");
+                assertTrue(p.matcher(r.output).find(),
+                           "Expecting to find \"Name: bar, Requires: foo,...\"",
+                           "in output, but did not: [" + r.output + "]");
+                p = Pattern.compile(
+                        "Conceals:\\s+jdk.test.foo\\s+jdk.test.foo.internal");
+                assertTrue(p.matcher(r.output).find(),
+                           "Expecting to find \"Conceals: jdk.test.foo,...\"",
+                           "in output, but did not: [" + r.output + "]");
+            });
     }
 
     @Test
