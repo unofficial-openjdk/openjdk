@@ -34,9 +34,10 @@ public class OtherResources {
     public static void main(String[] args) throws IOException {
 
         // check that java.desktop is not in the set of readable modules
-        if (ClassLoader.getSystemResource("java/awt/Component.class") != null) {
+        try {
+            Class.forName("java.awt.Component");
             throw new RuntimeException("Need to run with -limitmods java.base");
-        }
+        } catch (ClassNotFoundException expected) { }
 
         // access resource in the java.desktop module
         URL url = new URL("jrt:/java.desktop/java/awt/Component.class");
