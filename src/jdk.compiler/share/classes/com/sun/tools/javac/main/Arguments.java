@@ -520,6 +520,11 @@ public class Arguments {
             }
         }
 
+        if (fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH) &&
+            fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH)) {
+            log.error("processorpath.no.procesormodulepath");
+        }
+
         if (obsoleteOptionFound)
             log.warning(LintCategory.OPTIONS, "option.obsolete.suppression");
 

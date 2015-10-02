@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -195,8 +195,7 @@ public class BasicJavacTask extends JavacTask {
 
         Set<List<String>> pluginsToCall = new LinkedHashSet<>(pluginOpts);
         JavacProcessingEnvironment pEnv = JavacProcessingEnvironment.instance(context);
-        ClassLoader cl = pEnv.getProcessorClassLoader();
-        ServiceLoader<Plugin> sl = ServiceLoader.load(Plugin.class, cl);
+        ServiceLoader<Plugin> sl = pEnv.getServiceLoader(Plugin.class);
         for (Plugin plugin : sl) {
             for (List<String> p : pluginsToCall) {
                 if (plugin.getName().equals(p.head)) {

@@ -29,7 +29,9 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.ServiceLoader;
 import java.util.Set;
+
 import static javax.tools.JavaFileObject.Kind;
 
 /**
@@ -124,6 +126,16 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
          * @return true if this is an output location, false otherwise
          */
         boolean isOutputLocation();
+
+        /**
+         * Indicates if this location is expected to contain modules,
+         * as compared to a location which contains packages and classes.
+         *
+         * @return true if this location is expected to contain modules
+         */
+        default boolean isModuleLocation() {
+            return false;
+        }
     }
 
     /**
@@ -413,6 +425,16 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * Gets a location for the module containing a specific file.
      */
     default Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Get a service loader for a specific service class from a given location.
+     * @param location the location
+     * @param service  the service class
+     * @return a service loader for the given service class
+     */
+    default <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws  IOException {
         throw new UnsupportedOperationException();
     }
 

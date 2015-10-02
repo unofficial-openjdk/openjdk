@@ -59,7 +59,9 @@ module jdk.compiler {
     uses javax.annotation.processing.Processor;
     uses com.sun.source.util.Plugin;
     uses com.sun.tools.javac.platform.PlatformProvider;
-    provides com.sun.tools.javac.platform.PlatformProvider with com.sun.tools.javac.platform.JDKPlatformProvider;
+
+    provides com.sun.tools.javac.platform.PlatformProvider
+        with com.sun.tools.javac.platform.JDKPlatformProvider;
 
     provides javax.tools.JavaCompiler
         with com.sun.tools.javac.api.JavacTool;

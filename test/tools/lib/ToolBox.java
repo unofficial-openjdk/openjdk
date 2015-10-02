@@ -535,13 +535,17 @@ public class ToolBox {
         }
 
         /**
-         * Returns the content of a named stream as a list of lines.
-         * @param outputKind the kind of the selected stream
-         * @return the content that was written to that stream when the tool
+         * Returns the content of named streams as a list of lines.
+         * @param outputKinds the kinds of the selected streams
+         * @return the content that was written to the given streams when the tool
          *  was executed.
          */
-        public List<String> getOutputLines(OutputKind outputKind) {
-            return Arrays.asList(outputMap.get(outputKind).split(lineSeparator));
+        public List<String> getOutputLines(OutputKind... outputKinds) {
+            List<String> result = new ArrayList<>();
+            for (OutputKind outputKind : outputKinds) {
+                result.addAll(Arrays.asList(outputMap.get(outputKind).split(lineSeparator)));
+            }
+            return result;
         }
 
         /**

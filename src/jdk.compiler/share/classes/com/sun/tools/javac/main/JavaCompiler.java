@@ -1281,6 +1281,7 @@ public class JavaCompiler {
         return
             options.isSet(PROCESSOR) ||
             options.isSet(PROCESSORPATH) ||
+            options.isSet(PROCESSORMODULEPATH) ||
             options.isSet(PROC, "only") ||
             options.isSet(XPRINT);
     }

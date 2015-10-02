@@ -39,9 +39,10 @@ import javax.annotation.processing.*;
 import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
+import javax.tools.JavaFileObject.Kind;
+
 import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
-import javax.tools.JavaFileObject.Kind;
 
 public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
@@ -60,7 +61,8 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             defaultFileManager = fm;
 
-            for (Method m: getMethodsExcept(JavaFileManager.class, "close", "getJavaFileForInput", "getModuleLocation")) {
+            for (Method m: getMethodsExcept(JavaFileManager.class,
+                        "close", "getJavaFileForInput", "getModuleLocation", "getServiceLoader")) {
                 test(m);
             }
 
@@ -321,6 +323,12 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
+        public <S> ServiceLoader getServiceLoader(Location location, Class<S> service) throws IOException {
+            throwUserExceptionIfNeeded(fileManagerMethod, "getServiceLoader");
+            return super.getServiceLoader(location, service);
+        }
+
+        @Override
         public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse) throws IOException {
             throwUserExceptionIfNeeded(fileManagerMethod, "list");
             return wrap(super.list(location, packageName, kinds, recurse));
@@ -415,7 +423,6 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
             throwUserExceptionIfNeeded(fileManagerMethod, "listModuleLocations");
             return super.listModuleLocations(location);
         }
-
 
         public FileObject wrap(FileObject fo) {
             if (fileObjectMethod == null || fo == null)
