@@ -47,7 +47,6 @@ BOOT_MODULES += \
     java.sql \
     java.xml \
     java.xml.crypto \
-    jdk.hprof.agent \
     jdk.httpserver \
     jdk.management \
     jdk.sctp \
