@@ -718,8 +718,15 @@ public abstract class ClassLoader {
 
     /*
      * Define a Package of the given name if not present.
+     *
+     * If the given class represents an array type, a primitive type or void,
+     * this method returns {@code null}.
      */
     Package definePackage(Class<?> c) {
+        if (c.isPrimitive() || c.isArray()) {
+            return null;
+        }
+
         Module m = c.getModule();
         String cn = c.getName();
         int pos = cn.lastIndexOf('.');

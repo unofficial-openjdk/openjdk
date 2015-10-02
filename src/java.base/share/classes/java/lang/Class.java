@@ -910,9 +910,15 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Gets the package of this class.
      *
-     * @return the package of this class
+     * <p>If this class represents an array type, a primitive type or void,
+     * this method returns {@code null}.
+     *
+     * @return the package of this class.
      */
     public Package getPackage() {
+        if (isPrimitive() || isArray()) {
+            return null;
+        }
         ClassLoader cl = getClassLoader0();
         return cl != null ? cl.definePackage(this) : BootLoader.definePackage(this);
     }
