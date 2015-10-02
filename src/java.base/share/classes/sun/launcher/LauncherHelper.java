@@ -456,7 +456,7 @@ public enum LauncherHelper {
     /**
      * Returns the main class for a module. The query is either a module name
      * or module-name/main-class. For the former then the module's main class
-     * is obtained from its extended module descriptor.
+     * is obtained from the module descriptor (MainClass attribute).
      */
     static String getMainClassForModule(String query) {
         int i = query.indexOf('/');
@@ -549,7 +549,7 @@ public enum LauncherHelper {
     {
         initOutput(printToStderr);
 
-        // get the class name
+        // get the main class name
         String cn = null;
         switch (mode) {
             case LM_CLASS:
@@ -565,6 +565,8 @@ public enum LauncherHelper {
                 // should never happen
                 throw new InternalError("" + mode + ": Unknown launch mode");
         }
+
+        // load the main class
         cn = cn.replace('/', '.');
         Class<?> mainClass = null;
         ClassLoader scloader = ClassLoader.getSystemClassLoader();
@@ -585,7 +587,11 @@ public enum LauncherHelper {
                 abort(cnfe, "java.launcher.cls.error1", cn);
             }
         }
-        // set to mainClass
+
+        // record the main class
+        if (mode == LM_MODULE) {
+            System.setProperty("jdk.module.main.class", mainClass.getName());
+        }
         appClass = mainClass;
 
         /*

@@ -71,7 +71,7 @@ public class ClassLoaders {
 
         // we have a class path if -cp is specified or -m is not specified
         URLClassPath ucp = null;
-        String mainMid = System.getProperty("java.module.main");
+        String mainMid = System.getProperty("jdk.module.main");
         String defaultClassPath = (mainMid == null) ? "." : null;
         String cp = System.getProperty("java.class.path", defaultClassPath);
         if (cp != null && cp.length() > 0)

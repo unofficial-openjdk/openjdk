@@ -92,10 +92,10 @@ public final class ModuleBootstrap {
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("java.upgrade.module.path");
+            = createModulePathFinder("jdk.upgrade.module.path");
 
         // -modulepath option specified to the launcher
-        ModuleFinder appModulePath = createModulePathFinder("java.module.path");
+        ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
         // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
         ModuleFinder finder = systemModulePath;
@@ -104,19 +104,12 @@ public final class ModuleBootstrap {
         if (appModulePath != null)
             finder = ModuleFinder.concat(finder, appModulePath);
 
-
         // launcher -m option to specify the initial module
-        String mainModule = null;
-        String propValue = System.getProperty("java.module.main");
-        if (propValue != null) {
-            int i = propValue.indexOf('/');
-            String s = (i == -1) ? propValue : propValue.substring(0, i);
-            mainModule = s;
-        }
+        String mainModule = System.getProperty("jdk.module.main");
 
         // additional module(s) specified by -addmods
         Set<String> additionalMods = null;
-        propValue = System.getProperty("jdk.launcher.addmods");
+        String propValue = System.getProperty("jdk.launcher.addmods");
         if (propValue != null) {
             additionalMods = new HashSet<>();
             for (String mod: propValue.split(",")) {

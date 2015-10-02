@@ -864,7 +864,7 @@ SetModulePath(const char *s)
 {
     char *def;
     const char *orig = s;
-    static const char format[] = "-Djava.module.path=%s";
+    static const char format[] = "-Djdk.module.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
@@ -882,7 +882,7 @@ SetUpgradeModulePath(const char *s)
 {
     char *def;
     const char *orig = s;
-    static const char format[] = "-Djava.upgrade.module.path=%s";
+    static const char format[] = "-Djdk.upgrade.module.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
@@ -898,11 +898,22 @@ SetUpgradeModulePath(const char *s)
 static void
 SetMainModule(const char *s)
 {
-    static const char format[] = "-Djava.module.main=%s";
-    char *def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
+    static const char format[] = "-Djdk.module.main=%s";
+    char* slash = JLI_StrChr(s, '/');
+    size_t s_len, def_len;
+    char *def;
+
+    /* value may be <module> or <module>/<mainclass> */
+    if (slash == NULL) {
+        s_len = JLI_StrLen(s);
+    } else {
+        s_len = (size_t) (slash - s);
+    }
+    def_len = sizeof(format)
+               - 2 /* strlen("%s") */
+               + s_len;
+    def = JLI_MemAlloc(def_len);
+    snprintf(def, def_len, format, s);
     AddOption(def, NULL);
 }
 
