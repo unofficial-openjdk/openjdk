@@ -54,6 +54,10 @@ public:
   bool is_dir() {
     return _filesize == -1;
   }
+
+  bool is_jrt() {
+    return ClassLoader::is_jrt(_name);
+  }
 };
 
 class FileMapInfo : public CHeapObj<mtInternal> {

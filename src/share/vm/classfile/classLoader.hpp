@@ -408,6 +408,8 @@ class ClassLoader: AllStatic {
 
   static bool string_ends_with(const char* str, const char* str_to_find);
 
+  static bool is_jrt(const char* name) { return string_ends_with(name, BOOT_IMAGE_NAME); }
+
   static void initialize_module_loader_map(JImageFile* jimage);
 
   static jshort module_to_classloader(const char* module_name);

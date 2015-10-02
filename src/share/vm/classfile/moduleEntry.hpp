@@ -50,6 +50,8 @@ class ModuleClosure;
 class ModuleEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   jobject _jlrM;                       // java.lang.reflect.Module
+  jobject _pd;                         // java.security.ProtectionDomain, cached
+                                       // for shared classes from this module
   ClassLoaderData* _loader;
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   Symbol* _version;                    // module version number
@@ -61,6 +63,7 @@ public:
   void init() {
     _jlrM = NULL;
     _loader = NULL;
+    _pd = NULL;
     _reads = NULL;
     _version = NULL;
     _location = NULL;
@@ -72,6 +75,15 @@ public:
 
   jobject            jlrM_module() const            { return _jlrM; }
   void               set_jlrM_module(jobject j)     { _jlrM = j; }
+
+  // The shared ProtectionDomain reference is set once the VM loads a shared class
+  // originated from the current Module. The referenced ProtectionDomain object is
+  // created by the ClassLoader when loading a class (shared or non-shared) from the
+  // Module for the first time. This ProtectionDomain object is used for all
+  // classes from the Module loaded by the same ClassLoader.
+  Handle             shared_protection_domain();
+  void               set_shared_protection_domain(ClassLoaderData *loader_data,
+                                                  Handle pd);
 
   ClassLoaderData*   loader() const                 { return _loader; }
   void               set_loader(ClassLoaderData* l) { _loader = l; }

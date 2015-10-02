@@ -179,7 +179,8 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   volatile int _claimed;   // true if claimed, for example during GC traces.
                            // To avoid applying oop closure more than once.
                            // Has to be an int because we cas it.
-  JNIHandleBlock* _handles; // Handles to constant pool arrays
+  JNIHandleBlock* _handles; // Handles to constant pool arrays, Modules, etc, which
+                            // have the same life cycle of the corresponding ClassLoader.
 
   Klass* _klasses;         // The classes defined by the class loader.
   PackageEntryTable* _packages; // The packages defined by the class loader.
@@ -303,6 +304,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   const char* loader_name();
 
   jobject add_handle(Handle h);
+  void remove_handle(jobject h);
   void add_class(Klass* k);
   void remove_class(Klass* k);
   bool contains_klass(Klass* k);

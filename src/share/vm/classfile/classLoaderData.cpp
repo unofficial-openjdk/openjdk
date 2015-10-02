@@ -499,6 +499,10 @@ jobject ClassLoaderData::add_handle(Handle h) {
   return handles()->allocate_handle(h());
 }
 
+void ClassLoaderData::remove_handle(jobject h) {
+  _handles->release_handle(h);
+}
+
 // Add this metadata pointer to be freed when it's safe.  This is only during
 // class unloading because Handles might point to this metadata field.
 void ClassLoaderData::add_to_deallocate_list(Metadata* m) {

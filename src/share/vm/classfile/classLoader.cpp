@@ -445,7 +445,7 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 #endif
 
 bool ClassPathImageEntry::is_jrt() {
-  return ClassLoader::string_ends_with(name(), BOOT_IMAGE_NAME);
+  return ClassLoader::is_jrt(name());
 }
 
 #if INCLUDE_CDS
