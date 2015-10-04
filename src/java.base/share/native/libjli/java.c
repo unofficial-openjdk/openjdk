@@ -913,7 +913,7 @@ SetMainModule(const char *s)
                - 2 /* strlen("%s") */
                + s_len;
     def = JLI_MemAlloc(def_len);
-    snprintf(def, def_len, format, s);
+    JLI_Snprintf(def, def_len, format, s);
     AddOption(def, NULL);
 }
 
