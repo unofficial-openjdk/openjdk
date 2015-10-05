@@ -357,6 +357,13 @@ public final class Jlink {
         }
     }
 
+    public Jlink() {
+        if (System.getSecurityManager() != null) {
+            System.getSecurityManager().
+                    checkPermission(new JlinkPermission("jlink"));
+        }
+    }
+
     /**
      * Build the image.
      *
