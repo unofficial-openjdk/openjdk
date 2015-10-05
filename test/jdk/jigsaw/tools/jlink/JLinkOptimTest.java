@@ -381,6 +381,17 @@ public class JLinkOptimTest {
             helper.checkImage(imageDir, "optim1", null, null);
         }
 
+        /*{
+         Path dir = Paths.get("dir.log");
+         Files.createDirectory(dir);
+         String[] userOptions = {"--class-optim", "all", "--class-optim-log-file", dir.toString()};
+         helper.generateDefaultImage(userOptions, "optim1")
+         .assertFailure("java.io.FileNotFoundException: dir.log (Is a directory)");
+         }*/
+        /*{
+         String[] userOptions = {"--class-optim", "UNKNOWN"};
+         helper.generateDefaultImage(userOptions, "optim1").assertFailure("Unknown optimization");
+         }*/
         {
             String[] userOptions = {"--class-optim", "forName-folding",
                 "--class-optim-log-file", "./class-optim-log.txt"};

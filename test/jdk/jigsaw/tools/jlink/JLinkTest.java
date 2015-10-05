@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Layer;
@@ -167,50 +168,42 @@ public class JLinkTest {
 
         // default compress
         {
-            String[] userOptions = {"--compress-resources", "on"};
-            String moduleName = "compresscmdcomposite2";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, userOptions, null, null);
+            testCompress(helper, "compresscmdcomposite2", "--compress-resources", "on");
         }
 
         {
-            String[] userOptions = {"--compress-resources", "on", "--compress-resources-filter",
-                "^/java.base/java/lang/*"};
-            String moduleName = "compressfiltercmdcomposite2";
-            helper.generateDefaultJarModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, userOptions, null, null);
+            testCompress(helper, "compressfiltercmdcomposite2",
+                    "--compress-resources", "on", "--compress-resources-filter",
+                    "^/java.base/java/lang/*");
         }
 
         // compress 0
         {
-            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "0",
-                "--compress-resources-filter", "^/java.base/java/lang/*"};
-            String moduleName = "compress0filtercmdcomposite2";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
+            testCompress(helper, "compress0filtercmdcomposite2",
+                    "--compress-resources", "on", "--compress-resources-level", "0",
+                    "--compress-resources-filter", "^/java.base/java/lang/*");
         }
 
         // compress 1
         {
-            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "1",
-                "--compress-resources-filter", "^/java.base/java/lang/*"};
-            String moduleName = "compress1filtercmdcomposite2";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
+            testCompress(helper, "compress1filtercmdcomposite2",
+                    "--compress-resources", "on", "--compress-resources-level", "1",
+                    "--compress-resources-filter", "^/java.base/java/lang/*");
         }
 
         // compress 2
         {
-            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "2",
-                "--compress-resources-filter", "^/java.base/java/lang/*"};
-            String moduleName = "compress2filtercmdcomposite2";
+            testCompress(helper, "compress2filtercmdcomposite2",
+                    "--compress-resources", "on", "--compress-resources-level", "2",
+                    "--compress-resources-filter", "^/java.base/java/lang/*");
+        }
+
+        // invalid compress level
+        {
+            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "invalid"};
+            String moduleName = "invalidCompressLevel";
             helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid level invalid");
         }
 
         // configuration
@@ -236,6 +229,12 @@ public class JLinkTest {
             checkDefaults(sample + " ", lst);
         }
 
+    }
+
+    private static void testCompress(Helper helper, String moduleName, String... userOptions) throws IOException {
+        helper.generateDefaultJModule(moduleName, "composite2");
+        Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
+        helper.checkImage(imageDir, moduleName, null, null);
     }
 
     private static void checkDefaults(String value, List<String> expected)
