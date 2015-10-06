@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,7 +21,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 #include <string.h>
@@ -27,8 +28,6 @@
 #include "jimage.hpp"
 
 #include "imageFile.hpp"
-
-#define BOOT_VERSION "9.0"
 
 /*
  * JImageOpen - Given the supplied full path file name, open an image file. This
@@ -97,15 +96,12 @@ extern "C" const char* JIMAGE_PackageToModule(JImageFile* image, const char* pac
  *
  *  Ex.
  *   jlong size;
- *   JImageLocationRef location = (*JImageFindResource)(image, "java.base", "9.0", "java/lang/String.class", &size);
+ *   JImageLocationRef location = (*JImageFindResource)(image,
+ *                                 "java.base", "9.0", "java/lang/String.class", &size);
  */
 extern "C" JImageLocationRef JIMAGE_FindResource(JImageFile* image,
         const char* module_name, const char* version, const char* name,
         jlong* size) {
-    if (strcmp(version, BOOT_VERSION) != 0) {
-        return (JImageLocationRef) 0;
-    }
-
     ImageLocation location;
     char fullpath[IMAGE_MAX_PATH];
 
@@ -129,7 +125,8 @@ extern "C" JImageLocationRef JIMAGE_FindResource(JImageFile* image,
  *
  * Ex.
  *  jlong size;
- *  JImageLocationRef* location = (*JImageFindResource)(image, "java.base", "9.0", "java/lang/String.class", &size);
+ *   JImageLocationRef location = (*JImageFindResource)(image,
+ *                                 "java.base", "9.0", "java/lang/String.class", &size);
  *  char* buffer = new char[size];
  *  (*JImageGetResource)(image, location, buffer, size);
  */
@@ -148,7 +145,8 @@ extern "C" jlong JIMAGE_GetResource(JImageFile* image, JImageLocationRef locatio
  * required. All strings are utf-8, zero byte terminated.file.
  *
  * Ex.
- *   bool ctw_visitor(JImageFile* jimage, const char* module_name, const char* version, const char* package, const char* name, const char* extension, void* arg) {
+ *   bool ctw_visitor(JImageFile* jimage, const char* module_name, const char* version,
+ *                  const char* package, const char* name, const char* extension, void* arg) {
  *     if (strcmp(extension, “class”) == 0) {
  *       char path[JIMAGE_MAX_PATH];
  *       Thread* THREAD = Thread::current();

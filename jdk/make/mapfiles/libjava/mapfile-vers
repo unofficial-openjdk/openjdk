@@ -157,7 +157,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_StrictMath_cosh;
 		Java_java_lang_StrictMath_sinh;
 		Java_java_lang_StrictMath_tanh;
-		Java_java_lang_StrictMath_hypot;
 		Java_java_lang_StrictMath_log1p;
 		Java_java_lang_StrictMath_expm1;
 		Java_java_lang_Object_getClass;
@@ -283,8 +282,9 @@ SUNWprivate_1.1 {
 
                 # ZipFile.c needs this one
 		throwFileNotFoundException;
-                # zip_util.c needs this one
+                # zip_util.c needs these
 		getLastErrorString;
+		getErrorString;
 
 	# Outcalls from libjvm done using dlsym().
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,8 +145,8 @@ public class Options
 
     /**
      * this switch determines how carefully the compiler will follow
-     * the compatibility rules in the spec. Either <code>STRICT</code>
-     * or <code>EXTENSION</code>.
+     * the compatibility rules in the spec. Either {@code STRICT}
+     * or {@code EXTENSION}.
      */
     public int compatibilityMode = STRICT;
 
@@ -187,7 +187,7 @@ public class Options
     public EntityResolver entityResolver = null;
 
     /**
-     * Type of input schema language. One of the <code>SCHEMA_XXX</code>
+     * Type of input schema language. One of the {@code SCHEMA_XXX}
      * constants.
      */
     private Language schemaLanguage = null;
@@ -466,7 +466,7 @@ public class Options
 
 
     /**
-     * Parses an option <code>args[i]</code> and return
+     * Parses an option {@code args[i]} and return
      * the number of tokens consumed.
      *
      * @return
@@ -560,14 +560,6 @@ public class Options
         }
         if (args[i].equals("-dtd")) {
             schemaLanguage = Language.DTD;
-            return 1;
-        }
-        if (args[i].equals("-relaxng")) {
-            schemaLanguage = Language.RELAXNG;
-            return 1;
-        }
-        if (args[i].equals("-relaxng-compact")) {
-            schemaLanguage = Language.RELAXNG_COMPACT;
             return 1;
         }
         if (args[i].equals("-xmlschema")) {
@@ -842,7 +834,7 @@ public class Options
     }
 
     /**
-     * Finds the <tt>META-INF/sun-jaxb.episode</tt> file to add as a binding customization.
+     * Finds the {@code META-INF/sun-jaxb.episode} file to add as a binding customization.
      */
     public void scanEpisodeFile(File jar) throws BadCommandLineException {
         try {
@@ -869,10 +861,6 @@ public class Options
         if ((grammars != null) && (grammars.size() > 0)) {
             String name = grammars.get(0).getSystemId().toLowerCase();
 
-            if (name.endsWith(".rng"))
-                return Language.RELAXNG;
-            if (name.endsWith(".rnc"))
-                return Language.RELAXNG_COMPACT;
             if (name.endsWith(".dtd"))
                 return Language.DTD;
             if (name.endsWith(".wsdl"))
