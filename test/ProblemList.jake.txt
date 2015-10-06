@@ -29,9 +29,6 @@ sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 
 
 ############################################################################
 
-# 8131141
-java/util/ResourceBundle/Bug6299235Test.sh                               generic-all
-
 # 8134916
 sun/text/resources/LocaleDataTest.java                                   generic-all
 
