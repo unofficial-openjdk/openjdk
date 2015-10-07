@@ -155,15 +155,11 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
             htmlTree.addStyle(HtmlStyle.indexNav);
             HtmlTree ul = new HtmlTree(HtmlTag.UL);
             addAllClassesLink(ul);
-            if (configuration.showProfiles) {
-                addAllProfilesLink(ul);
+            if (configuration.showModules) {
+                addAllModulesLink(ul);
             }
             htmlTree.addContent(ul);
             body.addContent(htmlTree);
-            if (configuration.showProfiles && configuration.profilePackages.size() > 0) {
-                Content profileSummary = configuration.getResource("doclet.Profiles");
-                addProfilesList(profileSummary, body);
-            }
             addPackagesList(packages, text, tableSummary, body);
         }
     }
@@ -205,17 +201,8 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
     /**
      * Do nothing. This will be overridden.
      *
-     * @param div the document tree to which the all profiles link will be added
+     * @param div the document tree to which the all modules link will be added
      */
-    protected void addAllProfilesLink(Content div) {
-    }
-
-    /**
-     * Do nothing. This will be overridden.
-     *
-     * @param profileSummary the profile summary heading
-     * @param body the content tree to which the profiles list will be added
-     */
-    protected void addProfilesList(Content profileSummary, Content body) {
+    protected void addAllModulesLink(Content div) {
     }
 }

@@ -25,6 +25,9 @@
  * @test
  * @bug 8044411 8079060
  * @summary Tests the RuntimeParameterVisibleAnnotations/RuntimeParameterInvisibleAnnotations attribute.
+ * @modules jdk.jdeps/com.sun.tools.classfile
+ *          jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
  * @library /tools/lib /tools/javac/lib ../lib
  * @ignore 8079060 javac does not generate RuntimeParameterAnnotation attributes for lambda expressions
  * @build WorkAnnotations TestBase TestResult InMemoryFileManager ToolBox

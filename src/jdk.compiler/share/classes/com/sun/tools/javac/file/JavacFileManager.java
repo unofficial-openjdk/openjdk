@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,6 +69,11 @@ import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import com.sun.tools.javac.util.ModuleWrappers.Configuration;
+import com.sun.tools.javac.util.ModuleWrappers.Layer;
+import com.sun.tools.javac.util.ModuleWrappers.ModuleClassLoader;
+import com.sun.tools.javac.util.ModuleWrappers.ModuleFinder;
+import com.sun.tools.javac.util.ModuleWrappers.ServiceLoaderHelper;
 
 import static javax.tools.StandardLocation.*;
 
@@ -628,7 +634,8 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
      * Close the JavaFileManager, releasing resources.
      */
     @Override @DefinedBy(Api.COMPILER)
-    public void close() {
+    public void close() throws IOException {
+        locations.close();
         for (Iterator<Archive> i = archives.values().iterator(); i.hasNext(); ) {
             Archive a = i.next();
             i.remove();
@@ -713,7 +720,8 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
     @Override @DefinedBy(Api.COMPILER)
     public boolean hasLocation(Location location) {
-        return getLocation(location) != null;
+        nullCheck(location);
+        return locations.hasLocation(location);
     }
 
     @Override @DefinedBy(Api.COMPILER)
@@ -931,6 +939,70 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
     private Path getSourceOutDir() {
         return locations.getOutputLocation(SOURCE_OUTPUT);
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Location getModuleLocation(Location location, String moduleName) {
+        nullCheck(location);
+        nullCheck(moduleName);
+        return locations.getModuleLocation(location, moduleName);
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws IOException {
+        nullCheck(location);
+        nullCheck(service);
+        if (location.isModuleLocation()) {
+            Collection<Path> paths = locations.getLocation(location);
+            ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
+            Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+            cf = cf.bind();
+            ModuleClassLoader cl = new ModuleClassLoader(cf);
+            Layer layer = Layer.create(cf, cl);
+            return ServiceLoaderHelper.load(layer, service);
+        } else {
+            return ServiceLoader.load(service, getClassLoader(location));
+        }
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        nullCheck(location);
+        if (!(fo instanceof RegularFileObject))
+            throw new IllegalArgumentException(fo.getName());
+        int depth = 1; // allow 1 for filename
+        if (pkgName != null && !pkgName.isEmpty()) {
+            depth += 1;
+            for (int i = 0; i < pkgName.length(); i++) {
+                switch (pkgName.charAt(i)) {
+                    case '/': case '.':
+                        depth++;
+                }
+            }
+        }
+        Path f = Locations.normalize(((RegularFileObject) fo).file);
+        int fc = f.getNameCount();
+        if (depth < fc) {
+            Path root = f.getRoot();
+            Path subpath = f.subpath(0, fc - depth);
+            Path dir = (root == null) ? subpath : root.resolve(subpath);
+            // need to find dir in location
+            return locations.getModuleLocation(location, dir);
+        } else {
+            return null;
+        }
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public String inferModuleName(Location location) {
+        nullCheck(location);
+        return locations.inferModuleName(location);
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        nullCheck(location);
+        return locations.listModuleLocations(location);
     }
 
     @Override @DefinedBy(Api.COMPILER)

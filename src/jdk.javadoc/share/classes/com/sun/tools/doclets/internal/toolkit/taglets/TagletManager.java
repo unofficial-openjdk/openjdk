@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -233,7 +233,9 @@ public class TagletManager {
                 tagClassLoader = new URLClassLoader(pathToURLs(cpString));
             }
 
+            addExports(tagClassLoader);
             customTagClass = tagClassLoader.loadClass(classname);
+            ensureReadable(customTagClass);
             Method meth = customTagClass.getMethod("register",
                                                    Map.class);
             Object[] list = customTags.values().toArray();
@@ -256,6 +258,43 @@ public class TagletManager {
             message.error("doclet.Error_taglet_not_registered", exc.getClass().getName(), classname);
         }
 
+    }
+
+    /**
+     * Ensures that the module of the given class is readable to this
+     * module.
+     */
+    private void ensureReadable(Class<?> targetClass) {
+        try {
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(this.getClass());
+            Object targetModule = getModuleMethod.invoke(targetClass);
+
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+            addReadsMethod.invoke(thisModule, targetModule);
+        } catch (NoSuchMethodException e) {
+            // ignore
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
+    }
+
+    private void addExports(ClassLoader targetLoader) {
+        try {
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(this.getClass());
+            Method getUnnamedModuleMethod = ClassLoader.class.getMethod("getUnnamedModule");
+            Object targetModule = getUnnamedModuleMethod.invoke(targetLoader);
+
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addExportsMethod = moduleClass.getMethod("addExports", String.class, moduleClass);
+            addExportsMethod.invoke(thisModule, "com.sun.tools.doclets.internal.toolkit.taglets", targetModule);
+        } catch (NoSuchMethodException e) {
+            // ignore
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
     }
 
     private String appendPath(String path1, String path2) {

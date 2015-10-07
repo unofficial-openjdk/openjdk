@@ -150,22 +150,27 @@ public class ExtDirTest {
     void compileWithExtDirs() throws Exception {
         tb.new JavacTask()
                 .outdir(".")
-                .options("-extdirs", "ext1")
+                .options("-source", "8",
+                        "-extdirs", "ext1")
                 .sources(ExtDirTest_1Src)
                 .run()
                 .writeAll();
 
         tb.new JavacTask()
                 .outdir(".")
-                .options("-extdirs", "ext1" + File.pathSeparator + "ext2")
+                .options("-source", "8",
+                        "-extdirs", "ext1" + File.pathSeparator + "ext2")
                 .sources(ExtDirTest_2Src)
-                .run();
+                .run()
+                .writeAll();
 
         tb.new JavacTask()
                 .outdir(".")
-                .options("-extdirs", "ext3")
+                .options("-source", "8",
+                        "-extdirs", "ext3")
                 .sources(ExtDirTest_3Src)
-                .run();
+                .run()
+                .writeAll();
     }
 
 }
