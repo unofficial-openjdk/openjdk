@@ -306,7 +306,7 @@ public:
     ImageModuleData(const ImageFileReader* image_file);
     ~ImageModuleData();
 
-  // Return the module in which a package resides.  Returns NULL if not found.
+    // Return the module in which a package resides.    Returns NULL if not found.
     const char* package_to_module(const char* package_name);
 };
 

@@ -314,7 +314,7 @@ int SharedStringDecompressor::decompress_int(unsigned char*& value) {
     int len = 4;
     int res = 0;
     char b1 = *value;
-    if (is_compressed((signed char) b1)) { // compressed
+    if (is_compressed((signed char)b1)) { // compressed
         len = get_compressed_length(b1);
         char clearedValue = b1 &= 0x1F;
         if (len == 1) {

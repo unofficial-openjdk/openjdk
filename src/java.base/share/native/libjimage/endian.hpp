@@ -60,7 +60,7 @@ public:
     virtual void set(s8& x, s8 y) = 0;
 
     // Quick little endian test.
-    static bool is_little_endian() {    u4 x = 1; return *(u1 *)&x != 0; }
+    static bool is_little_endian() { u4 x = 1; return *(u1 *)&x != 0; }
 
     // Quick big endian test.
     static bool is_big_endian() { return !is_little_endian(); }
