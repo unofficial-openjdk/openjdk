@@ -25,10 +25,7 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.OnOffPluginProviderSupport.PluginBuilder;
 
 /**
  *
@@ -36,48 +33,19 @@ import jdk.tools.jlink.plugins.OnOffPluginProviderSupport.PluginBuilder;
  * support. Plugin created by this provider can be enabled by default (enabled
  * although no option is provided to the command line).
  */
-public abstract class OnOffResourcePluginProvider extends CmdResourcePluginProvider {
+public abstract class OnOffResourcePluginProvider extends ResourcePluginProvider
+        implements OnOffPluginProvider<ResourcePlugin> {
 
     public OnOffResourcePluginProvider(String name, String description) {
         super(name, description);
     }
 
+    // Must be implemented, an abstract method can't be implemented with a default method
     @Override
-    public ResourcePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions)
-            throws IOException {
-        PluginBuilder<ResourcePlugin> builder = (Map<String, String> otherOptions1) -> {
-            ResourcePlugin[] ret = createPlugins(otherOptions1);
-            List<ResourcePlugin> lst = new ArrayList<>();
-            if (ret != null) {
-                for (ResourcePlugin p : ret) {
-                    lst.add(p);
-                }
-            }
-            return lst;
-        };
-        List<ResourcePlugin> ret = OnOffPluginProviderSupport.newPlugins(arguments,
-                otherOptions, builder);
-        ResourcePlugin[] arr = new ResourcePlugin[ret.size()];
-        return ret.toArray(arr);
-    }
-
-    public abstract ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException;
-
-    @Override
-    public String getToolArgument() {
-        return OnOffPluginProviderSupport.getToolArgument();
-    }
-
-    /**
-     * Plugin wishing to be enabled by default (no need for command line option)
-     * can override this method and return true.
-     *
-     * @return true, the plugin is enabled by default, otherwise is is not.
-     */
-    public boolean isEnabledByDefault() {
-        return false;
+    public ResourcePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
+        ResourcePlugin[] arr = OnOffPluginProvider.super.newPlugins(conf);
+        arr = arr == null ? new ResourcePlugin[0] : arr;
+        return arr;
     }
 
 }

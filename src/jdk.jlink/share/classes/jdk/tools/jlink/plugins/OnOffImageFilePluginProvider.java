@@ -25,10 +25,7 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.OnOffPluginProviderSupport.PluginBuilder;
 
 /**
  *
@@ -36,47 +33,18 @@ import jdk.tools.jlink.plugins.OnOffPluginProviderSupport.PluginBuilder;
  * support. Plugin created by this provider can be enabled by default (enabled
  * although no option is provided to the command line).
  */
-public abstract class OnOffImageFilePluginProvider extends CmdImageFilePluginProvider {
+public abstract class OnOffImageFilePluginProvider extends ImageFilePluginProvider
+        implements OnOffPluginProvider<ImageFilePlugin> {
 
     public OnOffImageFilePluginProvider(String name, String description) {
         super(name, description);
     }
 
+    // Must be implemented, an abstract method can't be implemented with a default method
     @Override
-    public ImageFilePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions)
-            throws IOException {
-        PluginBuilder<ImageFilePlugin> builder = (Map<String, String> otherOptions1) -> {
-            ImageFilePlugin[] ret = createPlugins(otherOptions1);
-            List<ImageFilePlugin> lst = new ArrayList<>();
-            if (ret != null) {
-                for (ImageFilePlugin p : ret) {
-                    lst.add(p);
-                }
-            }
-            return lst;
-        };
-        List<ImageFilePlugin> ret = OnOffPluginProviderSupport.newPlugins(arguments,
-                otherOptions, builder);
-        ImageFilePlugin[] arr = new ImageFilePlugin[ret.size()];
-        return ret.toArray(arr);
-    }
-
-    public abstract ImageFilePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException;
-
-    @Override
-    public String getToolArgument() {
-        return OnOffPluginProviderSupport.getToolArgument();
-    }
-
-    /**
-     * Plugin wishing to be enabled by default (no need for command line option)
-     * can override this method and return true.
-     *
-     * @return true, the plugin is enabled by default, otherwise is is not.
-     */
-    public boolean isEnabledByDefault() {
-        return false;
+    public ImageFilePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
+        ImageFilePlugin[] arr = OnOffPluginProvider.super.newPlugins(conf);
+        arr = arr == null ? new ImageFilePlugin[0] : arr;
+        return arr;
     }
 }

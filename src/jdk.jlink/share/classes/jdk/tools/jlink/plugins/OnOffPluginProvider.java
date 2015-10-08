@@ -25,8 +25,6 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
@@ -34,19 +32,13 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 /**
  *
  * On/Off plugin provider support class.
+ * @param <T>
  */
-abstract class OnOffPluginProviderSupport {
+public interface OnOffPluginProvider<T> extends CmdPluginProvider<T> {
 
-    interface PluginBuilder<T> {
-
-        List<T> buildPlugins(Map<String, String> otherOptions) throws IOException;
-    }
-
-    private OnOffPluginProviderSupport() {
-    }
-
-    static <T> List<T> newPlugins(String[] arguments,
-            Map<String, String> otherOptions, PluginBuilder<T> builder)
+    @Override
+    public default T[] newPlugins(String[] arguments,
+            Map<String, String> otherOptions)
             throws IOException {
         Objects.requireNonNull(arguments);
         if (arguments.length != 1) {
@@ -60,14 +52,22 @@ abstract class OnOffPluginProviderSupport {
                     + ImagePluginConfiguration.OFF_ARGUMENT);
         }
         if (ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
-            return Collections.emptyList();
+            return null;
         }
-        return builder.buildPlugins(otherOptions);
+        return createPlugins(otherOptions);
     }
 
-    static String getToolArgument() {
+    public T[] createPlugins(Map<String, String> otherOptions)
+            throws IOException;
+
+    @Override
+    public default String getToolArgument() {
         return ImagePluginConfiguration.ON_ARGUMENT + "|"
                 + ImagePluginConfiguration.OFF_ARGUMENT;
+    }
+
+    public default boolean isEnabledByDefault() {
+        return false;
     }
 
 }

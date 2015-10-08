@@ -39,8 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePluginProvider;
@@ -296,13 +294,11 @@ public final class ImagePluginConfiguration {
     }
 
     private static boolean isResourceProvider(PluginProvider prov) {
-        return prov instanceof ResourcePluginProvider
-                || prov instanceof CmdResourcePluginProvider;
+        return prov instanceof ResourcePluginProvider;
     }
 
     private static boolean isImageFileProvider(PluginProvider prov) {
-        return prov instanceof ImageFilePluginProvider
-                || prov instanceof CmdImageFilePluginProvider;
+        return prov instanceof ImageFilePluginProvider;
     }
 
     private static int getIndex(int index, String radical, String category,
@@ -442,14 +438,14 @@ public final class ImagePluginConfiguration {
 
         String radical = null;
         Map<String, Integer> ranges = null;
-        if (provider instanceof CmdResourcePluginProvider) {
+        if (isResourceProvider(provider)) {
             ranges = RESOURCES_RANGES;
             radical = RESOURCES_RADICAL_PROPERTY;
-        } else if (provider instanceof CmdImageFilePluginProvider) {
+        } else if (isImageFileProvider(provider)) {
             ranges = FILES_RANGES;
             radical = FILES_RADICAL_PROPERTY;
         } else {
-            throw new IllegalArgumentException("Unknown provider type");
+            throw new IllegalArgumentException("Unknown provider type" + provider);
         }
         int index = getNextIndex(properties, provider.getCategory(), radical, ranges);
         properties.setProperty(radical
@@ -521,9 +517,11 @@ public final class ImagePluginConfiguration {
         Plugin[] plugins = ImagePluginProviderRepository.newPlugins(config,
                 name, pluginsLayer);
         List<OrderedPlugin> ordered = new ArrayList<>();
-        for (Plugin plugin : plugins) {
-            ordered.add(new OrderedPlugin(index, plugin));
-            index = index+1;
+        if (plugins != null) {
+            for (Plugin plugin : plugins) {
+                ordered.add(new OrderedPlugin(index, plugin));
+                index = index + 1;
+            }
         }
         return ordered;
     }

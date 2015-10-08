@@ -177,7 +177,7 @@ public final class TaskHelper {
             Map<String, List<String>> seen = new HashMap<>();
             for (PluginProvider prov : ImagePluginProviderRepository.getPluginProviders(pluginsLayer)) {
                 if (prov instanceof CmdPluginProvider) {
-                    CmdPluginProvider provider = (CmdPluginProvider) prov;
+                    CmdPluginProvider<?> provider = (CmdPluginProvider<?>) prov;
                     if (provider.getToolOption() != null) {
                         for (Entry<String, List<String>> entry : seen.entrySet()) {
                             if (entry.getKey().equals(provider.getToolOption())
@@ -194,7 +194,7 @@ public final class TaskHelper {
                                             Map<String, String> m = plugins.get(provider);
                                             if (m == null) {
                                                 m = new HashMap<>();
-                                                plugins.put(provider, m);
+                                                plugins.put(prov, m);
                                             }
                                             m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
                                         },
@@ -208,7 +208,7 @@ public final class TaskHelper {
                                             Map<String, String> m = plugins.get(provider);
                                             if (m == null) {
                                                 m = new HashMap<>();
-                                                plugins.put(provider, m);
+                                                plugins.put(prov, m);
                                             }
                                             m.put(other, arg);
                                         },
@@ -230,7 +230,7 @@ public final class TaskHelper {
                             Map<String, String> m = new HashMap<>();
                             m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                                     ImagePluginConfiguration.ON_ARGUMENT);
-                            plugins.put(provider, m);
+                            plugins.put(prov, m);
                         }
                     }
                 }
@@ -560,7 +560,7 @@ public final class TaskHelper {
             for (PluginProvider prov : ImagePluginProviderRepository.
                     getPluginProviders(pluginOptions.pluginsLayer)) {
                 if (showsPlugin(prov, showsImageBuilder)) {
-                    CmdPluginProvider provider = (CmdPluginProvider) prov;
+                    CmdPluginProvider<?> provider = (CmdPluginProvider<?>) prov;
 
                     if (provider.getToolOption() != null) {
                         StringBuilder line = new StringBuilder();
@@ -568,7 +568,7 @@ public final class TaskHelper {
                         if (provider.getToolArgument() != null) {
                             line.append(" ").append(provider.getToolArgument());
                         }
-                        line.append("\n ").append(provider.getDescription());
+                        line.append("\n ").append(prov.getDescription());
                         if (provider.getAdditionalOptions() != null) {
                             line.append("\n").append(bundleHelper.
                                     getMessage("main.plugin.additional.options")).
@@ -596,11 +596,11 @@ public final class TaskHelper {
         public void showPlugins(PrintWriter log, boolean showsImageBuilder) {
             for (PluginProvider prov : ImagePluginProviderRepository.getPluginProviders(getPluginsLayer())) {
                 if (showsPlugin(prov, showsImageBuilder)) {
-                    CmdPluginProvider fact = (CmdPluginProvider) prov;
+                    CmdPluginProvider<?> fact = (CmdPluginProvider<?>) prov;
                     log.println("\n" + bundleHelper.getMessage("main.plugin.name")
-                            + ": " + fact.getName());
-                    Integer[] range = ImagePluginConfiguration.getRange(fact);
-                    String cat = range == null ? fact.getCategory() : fact.getCategory()
+                            + ": " + prov.getName());
+                    Integer[] range = ImagePluginConfiguration.getRange(prov);
+                    String cat = range == null ? prov.getCategory() : prov.getCategory()
                             + ". " + bundleHelper.getMessage("main.plugin.range.from")
                             + " " + range[0] + " " + bundleHelper.
                             getMessage("main.plugin.range.to") + " "
@@ -608,7 +608,7 @@ public final class TaskHelper {
                     log.println(bundleHelper.getMessage("main.plugin.category")
                             + ": " + cat);
                     log.println(bundleHelper.getMessage("main.plugin.description")
-                            + ": " + fact.getDescription());
+                            + ": " + prov.getDescription());
                     log.println(bundleHelper.getMessage("main.plugin.argument")
                             + ": " + (fact.getToolArgument() == null
                                     ? bundleHelper.getMessage("main.plugin.no.value")

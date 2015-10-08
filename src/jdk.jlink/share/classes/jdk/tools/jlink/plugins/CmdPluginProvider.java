@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -39,17 +40,14 @@ import java.util.Map.Entry;
  * <li><code>CmdResourcePluginProvider</code></li>
  * <li><code>CmdImageFilePluginProvider</code></li>
  * </ul>
+ * @param <T>
  */
-public abstract class CmdPluginProvider extends PluginProvider {
+public interface CmdPluginProvider<T> {
 
     /**
      * This property is the main argument (if any) passed to the plugin.
      */
     public static final String TOOL_ARGUMENT_PROPERTY = "argument";
-
-    CmdPluginProvider(String name, String description) {
-        super(name, description);
-    }
 
     /**
      * Returns the description
@@ -73,8 +71,7 @@ public abstract class CmdPluginProvider extends PluginProvider {
      */
     public abstract Map<String, String> getAdditionalOptions();
 
-    @Override
-    public final Plugin[] newPlugins(Map<String, Object> conf) throws IOException {
+    public default T[] newPlugins(Map<String, Object> conf) throws IOException {
         Map<String, String> config = toString(conf);
         String[] arguments = null;
         Collection<String> options = Collections.emptyList();
@@ -109,7 +106,7 @@ public abstract class CmdPluginProvider extends PluginProvider {
      * @return An array of plugins.
      * @throws IOException
      */
-    public abstract Plugin[] newPlugins(String[] arguments,
+    public abstract T[] newPlugins(String[] arguments,
             Map<String, String> otherOptions) throws IOException;
 
     static Map<String, String> toString(Map<String, Object> input) {
