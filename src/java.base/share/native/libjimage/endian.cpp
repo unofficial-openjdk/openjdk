@@ -29,19 +29,19 @@
 // Most modern compilers optimize the bswap routines to native instructions.
 inline static u2 bswap_16(u2 x) {
     return ((x & 0xFF) << 8) |
-                 ((x >> 8) & 0xFF);
+           ((x >> 8) & 0xFF);
 }
 
 inline static u4 bswap_32(u4 x) {
     return ((x & 0xFF) << 24) |
-             ((x & 0xFF00) << 8) |
-             ((x >> 8) & 0xFF00) |
-             ((x >> 24) & 0xFF);
+           ((x & 0xFF00) << 8) |
+           ((x >> 8) & 0xFF00) |
+           ((x >> 24) & 0xFF);
 }
 
 inline static u8 bswap_64(u8 x) {
     return (u8)bswap_32((u4)x) << 32 |
-                 (u8)bswap_32((u4)(x >> 32));
+           (u8)bswap_32((u4)(x >> 32));
 }
 
 u2 NativeEndian::get(u2 x) { return x; }
