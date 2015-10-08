@@ -127,7 +127,7 @@
   </target>
 
   <target name="compile" depends="prepare" description="Compiles nashorn">
-    <javac srcdir="${src.dir}"
+    <javac srcdir="${nashorn.module.src.dir}"
            destdir="${build.classes.dir}"
            classpath="${javac.classpath}"
            source="${javac.source}"
@@ -139,7 +139,6 @@
       <compilerarg value="-XDignore.symbol.file"/>
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
-      <compilerarg value="-XaddExports:${nashorn.module.imports}"/>
     </javac>
     <copy todir="${build.classes.dir}/META-INF/services">
        <fileset dir="${meta.inf.dir}/services/"/>
@@ -294,7 +293,7 @@
            debug="${javac.debug}"
            encoding="${javac.encoding}"
            includeantruntime="false" fork="true">
-        <compilerarg value="-J${nashorn.override.option}"/>
+        <compilerarg value="${nashorn.override.option}"/>
         <compilerarg value="-Xlint:unchecked"/>
         <compilerarg value="-Xlint:deprecation"/>
         <compilerarg value="-Xdiags:verbose"/>
