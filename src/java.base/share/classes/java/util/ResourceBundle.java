@@ -200,7 +200,7 @@ import sun.util.locale.provider.ResourceBundleProviderSupport;
  * known concrete subclasses {@code ListResourceBundle} and
  * {@code PropertyResourceBundle} are thread-safe.
  *
- * <h3>Resource Bundles in Named Modules</h3>
+ * <h3><a name="bundleprovider">Resource Bundles in Named Modules</a></h3>
  *
  * When resource bundles are deployed in named modules, some modules-specific
  * requirements and restrictions are applied.
@@ -987,7 +987,7 @@ public abstract class ResourceBundle {
 
     /**
      * Gets a resource bundle using the specified base name and the default locale
-     * on behalf of the specified module. Calling this method is equivalent to calling
+     * on behalf of the specified module. This method is equivalent to calling
      * <blockquote>
      * <code>getBundle(baseName, Locale.getDefault(), module)</code>
      * </blockquote>
@@ -1014,11 +1014,20 @@ public abstract class ResourceBundle {
      * Gets a resource bundle using the specified base name and locale
      * on behalf of the specified module.
      *
-     * This method will load the service providers for
-     * {@link java.util.spi.ResourceBundleProvider} and also resource bundles
-     * local to the specified module.  The module must declare "{@code uses}"
-     * and the service interface name is the concatenation of the base name and
-     * the string "Provider".
+     * <p>
+     * If the given {@code module} is a named module, this method will
+     * load the service providers for {@link java.util.spi.ResourceBundleProvider}
+     * and also resource bundles local in the given module (refer to the
+     * <a href="#bundleprovider">Resource Bundles in Named Modules</a> section
+     * for details).
+     *
+     * <p>
+     * If the given {@code module} is an unnamed module, then this method is
+     * equivalent to calling {@link #getBundle(String, Locale, ClassLoader)
+     * getBundle(baseName, targetLocale, module.getClassLoader()} to load
+     * resource bundles that are in unnamed modules visible to the
+     * class loader of the given unnamed module.  It will not find resource
+     * bundles from named modules.
      *
      * @apiNote This is an experimental API. The specification of this method may change.
      *
@@ -1027,10 +1036,10 @@ public abstract class ResourceBundle {
      * @param targetLocale the locale for which a resource bundle is desired
      * @param module   the module for which the resource bundle is searched
      * @throws NullPointerException
-     *         if {@code baseName}, {@code targetLocale}, or {@code moduke} is null
+     *         if {@code baseName}, {@code targetLocale}, or {@code module} is null
      * @throws MissingResourceException
      *         if no resource bundle for the specified base name and locale can
-     *         be found in the specified module
+     *         be found in the specified {@code module}
      * @return a resource bundle for the given base name and locale in the module
      * @since 1.9
      */
@@ -3098,9 +3107,8 @@ public abstract class ResourceBundle {
                         // bundles have split package if they are packaged separate
                         // from the consumer.)
                         if (bundleClass.getModule().isNamed()) {
-                            // throw exception for now to help identify issues
-                            throw new InternalError("legacy getBundle can't be used to find " +
-                                    bundleClass.getName() + " in module " + bundleClass.getModule().getName());
+                            throw new IllegalAccessException("unnamed modules can't load " + bundleName
+                                     + " in named module " + bundleClass.getModule().getName());
                         }
                         try {
                             // bundle in a unnamed module
