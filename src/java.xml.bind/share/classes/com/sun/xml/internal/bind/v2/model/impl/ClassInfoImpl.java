@@ -1008,7 +1008,11 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     private void collectGetterSetters(C c, Map<String,M> getters, Map<String,M> setters) {
-        Modules.ensureReadable(ClassInfoImpl.class, (Class) c);
+        // at runtime, we work with instances of java.lang.Class
+        // whereas at tool time with javax.lang.model.element.TypeElement
+        if (c instanceof Class<?>) {
+            Modules.ensureReadable(ClassInfoImpl.class, (Class<?>) c);
+        }
         // take super classes into account if they have @XmlTransient.
         // always visit them first so that
         //   1) order is right
