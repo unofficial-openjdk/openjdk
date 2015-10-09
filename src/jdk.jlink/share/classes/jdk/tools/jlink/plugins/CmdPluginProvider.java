@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -48,6 +47,9 @@ public interface CmdPluginProvider<T> {
      * This property is the main argument (if any) passed to the plugin.
      */
     public static final String TOOL_ARGUMENT_PROPERTY = "argument";
+
+    public static final String FIRST = "FIRST";
+    public static final String LAST = "LAST";
 
     /**
      * Returns the description
@@ -112,14 +114,18 @@ public interface CmdPluginProvider<T> {
     static Map<String, String> toString(Map<String, Object> input) {
         Map<String, String> map = new HashMap<>();
         for (Entry<String, Object> entry : input.entrySet()) {
-            if (!(entry.getKey() instanceof String)
-                    || !(entry.getValue() instanceof String)) {
-                throw new RuntimeException("Config should be string for "
-                        + entry.getKey());
+            if (!(entry.getKey() instanceof String)) {
+                throw new RuntimeException("Option name should be a String");
+            }
+            if (!(entry.getValue() instanceof String)) {
+                if (entry.getValue() != null) {
+                    throw new RuntimeException("Option value should be String for "
+                            + entry.getKey());
+                }
             }
             String k = entry.getKey();
             @SuppressWarnings("unchecked")
-            String v = (String) entry.getValue();
+            String v = entry.getValue() == null ? "" : (String) entry.getValue();
             map.put(k, v);
         }
         return map;

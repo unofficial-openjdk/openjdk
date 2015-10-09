@@ -65,7 +65,6 @@ public class JLink2Test {
         helper.generateDefaultModules();
 
         testSameNames(helper);
-        testCustomization(helper);
         testBomFile(helper);
         testFileReplacement(helper);
         testModulePath(helper);
@@ -134,30 +133,12 @@ public class JLink2Test {
         validator.validate();
     }
 
-    private static void testCustomization(Helper helper) throws Exception {
-        File f = new File("plugins.properties");
-        String fileName = "toto.jimage";
-        Files.write(f.toPath(), (DefaultImageBuilderProvider.NAME + "."
-                + DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY + "=" + fileName).getBytes());
-        String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
-        helper.generateDefaultJModule("totoimagemodule", "composite2");
-        File img = helper.generateDefaultImage(userOptions, "totoimagemodule").assertSuccess().toFile();
-        File imgFile = new File(img, "lib" + File.separator + "modules" + File.separator + fileName);
-        if (!imgFile.exists()) {
-            throw new RuntimeException("Expected file doesn't exist " + imgFile);
-        }
-    }
-
     private static void testBomFile(Helper helper) throws Exception {
-        File fplugins = new File("plugins.properties");
-        Files.write(fplugins.toPath(),
-                (ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n").getBytes());
         File defaults = new File("embedded.properties");
         Files.write(defaults.toPath(), ("jdk.jlink.defaults=--genbom --exclude-resources *.jcov,*/META-INF/*" +
                 " --addmods UNKNOWN\n").getBytes());
-        String[] userOptions = {"--plugins-configuration",
-                fplugins.getAbsolutePath(),
-                "--strip-java-debug", "on",
+        String[] userOptions = {"--zip",
+            "*",                "--strip-java-debug", "on",
                 "--configuration", defaults.getAbsolutePath()};
         String moduleName = "bomzip";
         helper.generateDefaultJModule(moduleName, "composite2");
@@ -169,11 +150,9 @@ public class JLink2Test {
         }
         String bomcontent = new String(Files.readAllBytes(bom.toPath()));
         if (!bomcontent.contains("--strip-java-debug")
-                || !bomcontent.contains("--plugins-configuration")
-                || !bomcontent.contains(fplugins.getAbsolutePath())
+                || !bomcontent.contains("--zip")
+                || !bomcontent.contains("*")
                 || !bomcontent.contains("--genbom")
-                || !bomcontent.contains(ImagePluginConfiguration.
-                        RESOURCES_COMPRESSOR_PROPERTY)
                 || !bomcontent.contains("zip")
                 || !bomcontent.contains("--exclude-resources *.jcov,"
                         + "*/META-INF/*")

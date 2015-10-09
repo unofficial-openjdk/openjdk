@@ -26,7 +26,6 @@ package jdk.tools.jlink;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.module.Configuration;
@@ -49,12 +48,18 @@ import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.OnOffPluginProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
+import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
 import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PluginProvider.ORDER;
 
 /**
  *
@@ -135,6 +140,43 @@ public final class TaskHelper {
                 Processing<PluginsOptions> processing, String... aliases) {
             super(hasArg, processing, aliases);
         }
+
+        @Override
+        public boolean matches(String opt) {
+            return super.matches(removeIndex(opt));
+        }
+    }
+
+    private int getIndex(String opt) throws BadArgs {
+        String orig = opt;
+        int i = opt.indexOf(":");
+        int index = -1;
+        if (i != -1) {
+            opt = opt.substring(i + 1);
+            if (opt.equals(CmdPluginProvider.FIRST)) {
+                index = 0;
+            } else {
+                if (opt.equals(CmdPluginProvider.LAST)) {
+                    index = Integer.MAX_VALUE;
+                } else {
+                    try {
+                        index = Integer.valueOf(opt);
+                    } catch (NumberFormatException ex) {
+                        throw newBadArgs("err.invalid.index", orig);
+                    }
+                }
+            }
+        }
+        return index;
+    }
+
+    private static String removeIndex(String opt) {
+        //has index? remove it
+        int i = opt.indexOf(":");
+        if (i != -1) {
+            opt = opt.substring(0, i);
+        }
+        return opt;
     }
 
     private static class HiddenPluginOption extends PluginOption {
@@ -153,14 +195,20 @@ public final class TaskHelper {
     private final class PluginsOptions {
 
         private static final String PLUGINS_PATH = "--plugins-modulepath";
+        private static final String NO_CATEGORY = "jlink.no.category";
 
         private Layer pluginsLayer = Layer.boot();
-        private String pluginsProperties;
+        private String imgBuilder;
+        private String lastSorter;
         private boolean listPlugins;
         private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
         private final Map<ImageBuilderProvider, Map<String, String>> builders = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
+        // The order in which options are declared is the stack order.
+        // Order is within provider category
+        private final Map<String, List<PluginProvider>> providersOrder = new HashMap<>();
+        private final Map<PluginProvider, Integer> providersIndexes = new HashMap<>();
         private PluginsOptions(String pp) throws BadArgs {
 
             if (pp != null) {
@@ -191,12 +239,18 @@ public final class TaskHelper {
                         PluginOption option
                                 = new PluginOption(provider.getToolArgument() != null,
                                         (task, opt, arg) -> {
-                                            Map<String, String> m = plugins.get(provider);
+                                            Map<String, String> m = plugins.get(prov);
                                             if (m == null) {
                                                 m = new HashMap<>();
                                                 plugins.put(prov, m);
                                             }
                                             m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
+                                            int index = computeIndex(prov);
+                                            // Overriden index?
+                                            if (index == -1) {
+                                                index = getIndex(opt);
+                                            }
+                                            providersIndexes.put(prov, index);
                                         },
                                         "--" + provider.getToolOption());
                         pluginsOptions.add(option);
@@ -205,7 +259,7 @@ public final class TaskHelper {
                                 optional.add(other);
                                 PluginOption otherOption = new PluginOption(true,
                                         (task, opt, arg) -> {
-                                            Map<String, String> m = plugins.get(provider);
+                                            Map<String, String> m = plugins.get(prov);
                                             if (m == null) {
                                                 m = new HashMap<>();
                                                 plugins.put(prov, m);
@@ -229,17 +283,22 @@ public final class TaskHelper {
                         if (edefault) {
                             Map<String, String> m = new HashMap<>();
                             m.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                                    ImagePluginConfiguration.ON_ARGUMENT);
+                                    OnOffPluginProvider.ON_ARGUMENT);
                             plugins.put(prov, m);
                         }
                     }
                 }
             }
-            pluginsOptions.add(new HiddenPluginOption(true,
+            pluginsOptions.add(new PluginOption(true,
                     (task, opt, arg) -> {
-                        pluginsProperties = arg;
+                        imgBuilder = arg;
                     },
-                    "--plugins-configuration"));
+                    "--image-builder"));
+            pluginsOptions.add(new PluginOption(true,
+                    (task, opt, arg) -> {
+                        lastSorter = arg;
+                    },
+                    "--resources-last-sorter "));
             pluginsOptions.add(new HiddenPluginOption(false,
                     (task, opt, arg) -> {
                         listPlugins = true;
@@ -269,6 +328,26 @@ public final class TaskHelper {
             }
         }
 
+        private int computeIndex(PluginProvider prov) {
+            String category = prov.getCategory() == null ? NO_CATEGORY : prov.getCategory();
+            List<PluginProvider> order = providersOrder.get(category);
+            if (order == null) {
+                order = new ArrayList<>();
+                providersOrder.put(category, order);
+            }
+            order.add(prov);
+            int index = -1;
+            ORDER defaultOrder = prov.getOrder();
+            if (defaultOrder == ORDER.FIRST) {
+                index = 0;
+            } else {
+                if (defaultOrder == ORDER.LAST) {
+                    index = Integer.MAX_VALUE;
+                }
+            }
+            return index;
+        }
+
         private PluginOption getOption(String name) throws BadArgs {
             for (PluginOption o : pluginsOptions) {
                 if (o.matches(name)) {
@@ -278,39 +357,46 @@ public final class TaskHelper {
             return null;
         }
 
-        private Properties getPluginsProperties() throws IOException {
-            Properties props = new Properties();
-            if (pluginsProperties != null) {
-                try (FileInputStream stream
-                        = new FileInputStream(pluginsProperties);) {
-                    props.load(stream);
-                } catch (FileNotFoundException ex) {
-                    throw new IOException(bundleHelper.
-                            getMessage("err.path.not.valid")
-                            + " " + pluginsProperties);
-                }
-            }
+        private PluginsConfiguration getPluginsConfig() throws IOException {
+            List<StackedPluginConfiguration> lst = new ArrayList<>();
             for (Entry<PluginProvider, Map<String, String>> entry : plugins.entrySet()) {
                 PluginProvider provider = entry.getKey();
-                ImagePluginConfiguration.addPluginProperty(props, provider);
-                if (entry.getValue() != null) {
-                    for (Entry<String, String> opts : entry.getValue().entrySet()) {
-                        if (opts.getValue() != null) {
-                            props.setProperty(provider.getName() + "."
-                                    + opts.getKey(), opts.getValue());
-                        }
+                // User defined index?
+                Integer i = providersIndexes.get(provider);
+                if (i == null) {
+                    // Enabled by default provider. Find it an index.
+                    i = computeIndex(provider);
+                }
+                boolean absolute = false;
+                if (i == -1) {
+                    String category = provider.getCategory();
+                    if (provider.getCategory() == null) {
+                        absolute = true;
+                        category = NO_CATEGORY;
                     }
+                    List<PluginProvider> lstProviders
+                            = providersOrder.get(category);
+                    i = lstProviders.indexOf(provider);
+                }
+                if (i == -1) {
+                    throw new IllegalArgumentException("Invalid index " + i);
+                }
+                Map<String, Object> config = new HashMap<>();
+                config.putAll(entry.getValue());
+                lst.add(new Jlink.StackedPluginConfiguration(provider.getName(), i, absolute, config));
+            }
+
+            imgBuilder = imgBuilder == null ? DefaultImageBuilderProvider.NAME : imgBuilder;
+            Map<String, Object> builderConfig = new HashMap<>();
+            if (!builders.isEmpty()) {
+                Map<String, String> conf = builders.entrySet().iterator().next().getValue();
+                if (conf != null) {
+                    builderConfig.putAll(conf);
                 }
             }
-            for (Entry<ImageBuilderProvider, Map<String, String>> provs : builders.entrySet()) {
-                ImageBuilderProvider provider = provs.getKey();
-                for (Entry<String, String> entry : provs.getValue().entrySet()) {
-                    props.setProperty(provider.getName() + "."
-                            + entry.getKey(), entry.getValue() == null ? ""
-                                    : entry.getValue());
-                }
-            }
-            return props;
+            return new Jlink.PluginsConfiguration(lst,
+                    new Jlink.PluginConfiguration(imgBuilder, builderConfig),
+                    lastSorter);
         }
     }
 
@@ -421,7 +507,17 @@ public final class TaskHelper {
                             i++;
                             a = defArgs.get(i);
                         }
-                        int overIndex = override.indexOf(arg);
+
+                        int overIndex = -1;
+                        // Retrieve the command line option
+                        // compare by erasing possible index
+                        for (int j = 0; j < override.size(); j++) {
+                            if (removeIndex(override.get(j)).equals(removeIndex(arg))) {
+                                overIndex = j;
+                                break;
+                            }
+                        }
+
                         if (overIndex >= 0) {
                             if (hasArgument) {
                                 a = override.get(overIndex + 1);
@@ -617,7 +713,7 @@ public final class TaskHelper {
                     if (fact.getAdditionalOptions() != null) {
                         StringBuilder builder = new StringBuilder();
                         for (Entry<String, String> entry : fact.getAdditionalOptions().entrySet()) {
-                            builder.append("--" + entry.getKey()).append(" ").
+                            builder.append("--").append(entry.getKey()).append(" ").
                                     append(entry.getValue());
                         }
                         additionalOptions = builder.toString();
@@ -665,28 +761,6 @@ public final class TaskHelper {
 
         String getDefaults() {
             return defaults;
-        }
-
-        String getPluginsConfig() throws IOException {
-            String ret = null;
-            if (pluginOptions.pluginsProperties != null) {
-                Properties props = new Properties();
-                try (FileInputStream fis
-                        = new FileInputStream(pluginOptions.pluginsProperties)) {
-                    props.load(fis);
-                } catch (FileNotFoundException ex) {
-                    throw new IOException(bundleHelper.
-                            getMessage("err.path.not.valid")
-                            + " " + pluginOptions.pluginsProperties);
-                }
-                StringBuilder sb = new StringBuilder();
-                for (String str : props.stringPropertyNames()) {
-                    sb.append(str).append(" = ").append(props.getProperty(str)).
-                            append("\n");
-                }
-                ret = sb.toString();
-            }
-            return ret;
         }
 
         Layer getPluginsLayer() {
@@ -742,8 +816,8 @@ public final class TaskHelper {
                 + bundleHelper.getMessage(key, args));
     }
 
-    public Properties getPluginsProperties() throws IOException {
-        return pluginOptions.getPluginsProperties();
+    public PluginsConfiguration getPluginsConfig() throws IOException {
+        return pluginOptions.getPluginsConfig();
     }
 
     public void showVersion(boolean full) {

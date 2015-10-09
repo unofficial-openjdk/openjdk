@@ -352,12 +352,10 @@ public class JLinkNegativeTest {
     }
 
     public void testCustomImageBuilderNotFound() throws IOException {
-        Path configFile = Paths.get("builder.cfg");
         String builderName = "not-found-image-builder";
-        Files.write(configFile, ("jdk.jlink.image.builder=" + builderName).getBytes());
         JImageGenerator.getJLinkTask()
-                .option("--plugins-configuration")
-                .option(configFile.toAbsolutePath().toString())
+                .option("--image-builder")
+                .option("not-found-image-builder")
                 .modulePath(helper.defaultModulePath())
                 .output(helper.createNewImageDir("leaf1"))
                 .addMods("leaf1")

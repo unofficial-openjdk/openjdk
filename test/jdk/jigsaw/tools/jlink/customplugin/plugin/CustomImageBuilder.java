@@ -54,7 +54,7 @@ public class CustomImageBuilder implements ImageBuilder {
     private void handleOption(String option) throws IOException {
         if (config.containsKey(option)) {
             String firstValue = (String) config.get(option);
-            Files.write(image.resolve(option), Objects.toString(firstValue).getBytes());
+            Files.write(image.resolve(option), Objects.toString(firstValue == null ? "" : firstValue).getBytes());
         }
     }
 

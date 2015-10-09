@@ -64,17 +64,12 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     private final Path root;
     private final Path mdir;
-    private final String jimage;
     private final boolean genBom;
 
     public DefaultImageBuilder(Map<String, Object> properties, Path root) throws IOException {
         Objects.requireNonNull(root);
 
-        @SuppressWarnings("unchecked")
-        String img = (String) properties.get(DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY);
-        jimage = img == null ? BasicImageWriter.BOOT_IMAGE_NAME : img;
-
-        genBom = properties.get(DefaultImageBuilderProvider.GEN_BOM) != null;
+        genBom = properties.containsKey(DefaultImageBuilderProvider.GEN_BOM);
 
         this.root = root;
         this.mdir = root.resolve(root.getFileSystem().getPath("lib", "modules"));
@@ -200,7 +195,7 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     @Override
     public DataOutputStream getJImageOutputStream() throws IOException {
-        Path jimageFile = mdir.resolve(jimage);
+        Path jimageFile = mdir.resolve(BasicImageWriter.BOOT_IMAGE_NAME);
         OutputStream fos = Files.newOutputStream(jimageFile);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
         return new DataOutputStream(bos);

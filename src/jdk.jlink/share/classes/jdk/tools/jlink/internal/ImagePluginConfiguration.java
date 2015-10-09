@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
@@ -93,31 +92,6 @@ public final class ImagePluginConfiguration {
         }
     }
 
-    public static final String ON_ARGUMENT = "on";
-    public static final String OFF_ARGUMENT = "off";
-
-    public static final String IMAGE_BUILDER_PROPERTY = "jdk.jlink.image.builder";
-
-    public static final String RESOURCES_RADICAL_PROPERTY = "jdk.jlink.plugins.resources.";
-    public static final String FILES_RADICAL_PROPERTY = "jdk.jlink.plugins.files.";
-
-    public static final String FILES_TRANSFORMER_PROPERTY = FILES_RADICAL_PROPERTY +
- PluginProvider.TRANSFORMER;
-    public static final String FILES_FILTER_PROPERTY = FILES_RADICAL_PROPERTY +
- PluginProvider.FILTER;
-
-    public static final String RESOURCES_COMPRESSOR_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.COMPRESSOR;
-    public static final String RESOURCES_SORTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.SORTER;
-    public static final String RESOURCES_TRANSFORMER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.TRANSFORMER;
-    public static final String RESOURCES_FILTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.FILTER;
-    public static final String RESOURCES_LAST_SORTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
-            "resources.last-sorter";
-
-
     private static final Map<String, Integer> RESOURCES_RANGES = new HashMap<>();
     private static final List<String> RESOURCES_CATEGORIES = new ArrayList<>();
 
@@ -152,19 +126,13 @@ public final class ImagePluginConfiguration {
         }
     }
 
-    private ImagePluginConfiguration() {}
-
-    /**
-     * Create a stack of plugins from a configuration file.
-     * @param p Properties file.
-     * @return A stack of plugins.
-     * @throws IOException
-     */
-    public static ImagePluginStack parseConfiguration(Properties p)
-            throws Exception {
-        return parseConfiguration(null, p, Layer.boot(), null);
+    private ImagePluginConfiguration() {
     }
 
+    public static ImagePluginStack parseConfiguration(Jlink.PluginsConfiguration plugins)
+            throws Exception {
+        return parseConfiguration(null, plugins, Layer.boot(), null);
+    }
     /*
      * Create a stack of plugins from a a configuration.
      *
@@ -185,6 +153,7 @@ public final class ImagePluginConfiguration {
         // Validate stack
         Map<String, List<Integer>> resources = new HashMap<>();
         Map<String, List<Integer>> files = new HashMap<>();
+        List<String> seen = new ArrayList<>();
         for (Jlink.StackedPluginConfiguration plug : plugins.getPluginsConfig()) {
             if (plug.getIndex() < 0) {
                 throw new Exception("Invalid index " + plug.getIndex() + " for "
@@ -198,6 +167,11 @@ public final class ImagePluginConfiguration {
                 throw new Exception("Invalid provider type " + prov);
             }
 
+            if (seen.contains(prov.getName())) {
+                throw new Exception("Plugin " + prov.getName()
+                        + " added more than once to stack ");
+            }
+            seen.add(prov.getName());
             Map<String, List<Integer>> map = isResourceProvider(prov) ? resources : files;
             List<Integer> lst = map.get(prov.getCategory());
             if (lst == null) {
@@ -206,14 +180,12 @@ public final class ImagePluginConfiguration {
             }
             int index;
             if (isResourceProvider(prov)) {
-                index = getIndex(plug.getIndex(),
-                        RESOURCES_RADICAL_PROPERTY,
+                index = getAbsoluteIndex(plug.getIndex(),
                         prov.getCategory(),
                         plug.isAbsoluteIndex(),
                         RESOURCES_RANGES);
             } else {
-                index = getIndex(plug.getIndex(),
-                        FILES_RADICAL_PROPERTY,
+                index = getAbsoluteIndex(plug.getIndex(),
                         prov.getCategory(),
                         plug.isAbsoluteIndex(),
                         FILES_RANGES);
@@ -227,8 +199,7 @@ public final class ImagePluginConfiguration {
         for (Jlink.StackedPluginConfiguration prop : plugins.getPluginsConfig()) {
             PluginProvider prov = providers.get(prop.getName());
             if (isResourceProvider(prov)) {
-                int index = getIndex(prop.getIndex(),
-                        RESOURCES_RADICAL_PROPERTY,
+                int index = getAbsoluteIndex(prop.getIndex(),
                         prov.getCategory(),
                         prop.isAbsoluteIndex(),
                         RESOURCES_RANGES);
@@ -236,14 +207,12 @@ public final class ImagePluginConfiguration {
                         prop.getConfig(), pluginsLayer));
             } else {
                 if (isImageFileProvider(prov)) {
-                    int index = getIndex(prop.getIndex(),
-                            FILES_RADICAL_PROPERTY,
+                    int index = getAbsoluteIndex(prop.getIndex(),
                             prov.getCategory(),
                             prop.isAbsoluteIndex(),
                             FILES_RANGES);
                     filePlugins.addAll(createOrderedPlugins(index, prop.getName(),
                             prop.getConfig(), pluginsLayer));
-
                 }
             }
         }
@@ -301,7 +270,7 @@ public final class ImagePluginConfiguration {
         return prov instanceof ImageFilePluginProvider;
     }
 
-    private static int getIndex(int index, String radical, String category,
+    private static int getAbsoluteIndex(int index, String category,
             boolean absolute, Map<String, Integer> ranges) throws Exception {
 
         if (absolute) {
@@ -309,8 +278,7 @@ public final class ImagePluginConfiguration {
         }
         // If non null category and not absolute, get index within category
         if (category != null) {
-            String prop = radical + category + "." + index;
-            return getAbsoluteIndex(prop, radical, ranges);
+            return ranges.get(category) + index;
         }
 
         throw new Exception("Can't compute index, no category");
@@ -322,57 +290,6 @@ public final class ImagePluginConfiguration {
             ret.put(prov.getName(), prov);
         }
         return ret;
-    }
-
-    /**
-     * Create a stack of plugins from a configuration file.
-     * @param outDir The directory where to generate the image.
-     * Used to build an ImageBuilder.
-     * @param p Properties file.
-     * @param pluginsLayer Layer to retrieve plugins
-     * @param bom The tooling config data
-     * @return A stack of plugins.
-     * @throws Exception
-     */
-    public static ImagePluginStack parseConfiguration(Path outDir,
-            Properties p,
-            Layer pluginsLayer,
-            String bom)
-            throws Exception {
-        if (p == null) {
-            return parseConfiguration(outDir,
-                    (Jlink.PluginsConfiguration) null, pluginsLayer, bom);
-        }
-        String lastSorterName = (String) p.remove(RESOURCES_LAST_SORTER_PROPERTY);
-        List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
-        for (String prop : p.stringPropertyNames()) {
-            String value = p.getProperty(prop);
-            if (prop.startsWith(RESOURCES_RADICAL_PROPERTY)) {
-                int index = getAbsoluteIndex(prop, RESOURCES_RADICAL_PROPERTY,
-                        RESOURCES_RANGES);
-                lst.add(new Jlink.StackedPluginConfiguration(value, index, true, filter(p, value)));
-            } else if (prop.startsWith(FILES_RADICAL_PROPERTY)) {
-                int index = getAbsoluteIndex(prop, FILES_RADICAL_PROPERTY, FILES_RANGES);
-                lst.add(new Jlink.StackedPluginConfiguration(value, index, true, filter(p, value)));
-            }
-        }
-        String builderName = p.getProperty(IMAGE_BUILDER_PROPERTY);
-        builderName = builderName == null ? DefaultImageBuilderProvider.NAME : builderName;
-
-        Map<String, Object> builderConfig = filter(p, builderName);
-        Jlink.PluginsConfiguration config = new Jlink.PluginsConfiguration(lst,
-                new Jlink.PluginConfiguration(builderName, builderConfig), lastSorterName);
-        return parseConfiguration(outDir, config, pluginsLayer, bom);
-    }
-
-    private static Map<String, Object> filter(Properties p, String name) {
-        Map<String, Object> filtered = new HashMap<>();
-        p.stringPropertyNames().stream().filter(
-                (n) -> (n.startsWith(name))).forEach((n) -> {
-                    String pluginProp = n.substring(name.length() + 1);
-                    filtered.put(pluginProp, p.getProperty(n));
-                });
-        return filtered;
     }
 
     /**
@@ -431,85 +348,6 @@ public final class ImagePluginConfiguration {
      */
     public List<String> getOrderedFilesCategories() {
         return Collections.unmodifiableList(FILES_CATEGORIES);
-    }
-
-    public static void addPluginProperty(Properties properties,
-            PluginProvider provider) throws IllegalArgumentException {
-
-        String radical = null;
-        Map<String, Integer> ranges = null;
-        if (isResourceProvider(provider)) {
-            ranges = RESOURCES_RANGES;
-            radical = RESOURCES_RADICAL_PROPERTY;
-        } else if (isImageFileProvider(provider)) {
-            ranges = FILES_RANGES;
-            radical = FILES_RADICAL_PROPERTY;
-        } else {
-            throw new IllegalArgumentException("Unknown provider type" + provider);
-        }
-        int index = getNextIndex(properties, provider.getCategory(), radical, ranges);
-        properties.setProperty(radical
-                + provider.getCategory() + "." + index, provider.getName());
-    }
-
-    private static int getNextIndex(Properties props,
-            String category, String radical, Map<String, Integer> ranges)
-            throws IllegalArgumentException {
-        Objects.requireNonNull(props);
-        Objects.requireNonNull(category);
-        Integer range_start = ranges.get(category);
-        if (range_start == null) {
-            throw new IllegalArgumentException("Unknown " + category);
-        }
-        int index = range_start;
-        for (String prop : props.stringPropertyNames()) {
-            if (prop.startsWith(radical)) {
-                int i = getAbsoluteIndex(prop, radical, ranges);
-                // we are in same range
-                if (i >= range_start && i < range_start + RANGE_LENGTH) {
-                    if (i > index) {
-                        index = i;
-                    }
-                }
-            }
-        }
-        index = index - range_start + 1;
-        if (index >= RANGE_LENGTH) {
-            throw new IllegalArgumentException("Can't find an available index for "
-                    + category);
-        }
-        return index;
-    }
-
-    private static int getAbsoluteIndex(String prop, String radical,
-            Map<String, Integer> ranges) {
-        String suffix = prop.substring(radical.length());
-        String[] split = suffix.split("\\.");
-        if (split.length > 2 || split.length == 0) {
-            throw new IllegalArgumentException("Invalid property " + prop);
-        }
-        int order = 0;
-        boolean label = false;
-        // radical.label[.num] or radical.num
-        for (int i = 0; i < split.length; i++) {
-            Integer val = null;
-            String s = split[i];
-            if (i == 0) {
-                val = ranges.get(s);
-                if (val == null) {
-                    val = Integer.valueOf(s);
-                } else {
-                    label = true;
-                }
-            } else {
-                if (!label) {
-                    throw new IllegalArgumentException("Invalid property " + prop);
-                }
-                val = Integer.valueOf(s);
-            }
-            order += val;
-        }
-        return order;
     }
 
     private static List<OrderedPlugin> createOrderedPlugins(int index,

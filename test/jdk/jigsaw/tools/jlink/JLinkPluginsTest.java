@@ -61,11 +61,8 @@ public class JLinkPluginsTest {
         }
         helper.generateDefaultModules();
         {
-            String properties = createProperties("plugins,properties",
-                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n"
-                    + "zip." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY
-                    + "=*Error.class,*Exception.class, ^/java.base/java/lang/*\n");
-            String[] userOptions = {"--plugins-configuration", properties};
+            // zip
+            String[] userOptions = {"--zip", "toto"};
             String moduleName = "zipfiltercomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
@@ -73,36 +70,15 @@ public class JLinkPluginsTest {
         }
         {
             // Skip debug
-            String properties = createProperties("plugins.properties",
-                    ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                    + "strip-java-debug." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY + "="
-                    + "on");
-            String[] userOptions = {"--plugins-configuration", properties};
+            String[] userOptions = {"--strip-java-debug", "on"};
             String moduleName = "skipdebugcomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, null, null);
         }
         {
-            // Skip debug + zip
-            String properties = createProperties("plugin.properties",
-                    ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY + "=strip-java-debug\n"
-                    + "strip-java-debug." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY + "="
-                    + "on\n"
-                    + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=zip\n");
-            String[] userOptions = {"--plugins-configuration", properties};
-            String moduleName = "zipskipdebugcomposite";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
-        }
-        {
             // Filter out files
-            String properties = createProperties("plguins.properties",
-                    ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY + "=exclude-resources\n"
-                    + "exclude-resources." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY
-                    + "=*.jcov, */META-INF/*\n");
-            String[] userOptions = {"--plugins-configuration", properties};
+            String[] userOptions = {"--exclude-resources", "*.jcov, */META-INF/*"};
             String moduleName = "excludecomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             String[] res = {".jcov", "/META-INF/"};
@@ -111,19 +87,15 @@ public class JLinkPluginsTest {
         }
         {
             // Shared UTF_8 Constant Pool entries
-            String properties = createProperties("plugins.properties",
-                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + "=compact-cp\n");
-            String[] userOptions = {"--plugins-configuration", properties};
+            String[] userOptions = {"--compact-cp", "*"};
             String moduleName = "cpccomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, null, null);
         }
         {
-            String properties = createProperties("plugins.properties",
-                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + ".0=compact-cp\n"
-                    + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY + ".1=zip\n");
-            String[] userOptions = {"--plugins-configuration", properties};
+            // Ordered zip and constant cp
+            String[] userOptions = {"--zip:1", "*", "--compact-cp:0", "*"};
             String moduleName = "zipcpccomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();

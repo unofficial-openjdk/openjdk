@@ -27,7 +27,6 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 
 /**
  *
@@ -35,6 +34,9 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
  * @param <T>
  */
 public interface OnOffPluginProvider<T> extends CmdPluginProvider<T> {
+
+    public static final String ON_ARGUMENT = "on";
+    public static final String OFF_ARGUMENT = "off";
 
     @Override
     public default T[] newPlugins(String[] arguments,
@@ -45,13 +47,13 @@ public interface OnOffPluginProvider<T> extends CmdPluginProvider<T> {
             throw new IOException("Invalid number of arguments expecting "
                     + getToolArgument());
         }
-        if (!ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])
-                && !ImagePluginConfiguration.ON_ARGUMENT.equals(arguments[0])) {
+        if (!OFF_ARGUMENT.equals(arguments[0])
+                && !ON_ARGUMENT.equals(arguments[0])) {
             throw new IOException("Invalid argument " + arguments[0]
-                    + ", expecting " + ImagePluginConfiguration.ON_ARGUMENT + " or "
-                    + ImagePluginConfiguration.OFF_ARGUMENT);
+                    + ", expecting " + ON_ARGUMENT + " or "
+                    + OFF_ARGUMENT);
         }
-        if (ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
+        if (OFF_ARGUMENT.equals(arguments[0])) {
             return null;
         }
         return createPlugins(otherOptions);
@@ -62,8 +64,8 @@ public interface OnOffPluginProvider<T> extends CmdPluginProvider<T> {
 
     @Override
     public default String getToolArgument() {
-        return ImagePluginConfiguration.ON_ARGUMENT + "|"
-                + ImagePluginConfiguration.OFF_ARGUMENT;
+        return ON_ARGUMENT + "|"
+                + OFF_ARGUMENT;
     }
 
     public default boolean isEnabledByDefault() {

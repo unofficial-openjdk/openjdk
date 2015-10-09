@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -320,7 +319,7 @@ public class JlinkTask {
                                     genBOMContent(),
                                     options.endian);
 
-        imageHelper.createModularImage(taskHelper.getPluginsProperties());
+        imageHelper.createModularImage(taskHelper.getPluginsConfig());
     }
 
 
@@ -448,11 +447,6 @@ public class JlinkTask {
             sb.append("\n");
         }
 
-        String pluginsContent = optionsHelper.getPluginsConfig();
-        if (pluginsContent != null) {
-            sb.append("\n").append("# Plugins configuration\n");
-            sb.append(pluginsContent);
-        }
         return sb.toString();
     }
 
@@ -489,14 +483,6 @@ public class JlinkTask {
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             this.order = order;
-        }
-
-        void createModularImage(Properties properties) throws Exception {
-            ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output,
-                            properties, pluginsLayer,
-                            bom);
-            ImageFileCreator.create(archives, order, pc);
         }
 
         void createModularImage(PluginsConfiguration plugins) throws Exception {

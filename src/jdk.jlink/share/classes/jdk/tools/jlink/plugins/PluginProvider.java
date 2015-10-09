@@ -55,6 +55,12 @@ public abstract class PluginProvider {
     public static final String FILTER = "filter";
     public static final String PACKAGER = "packager";
 
+    public static enum ORDER {
+        FIRST,
+        ANY,
+        LAST
+    }
+
     private final String name;
     private final String description;
 
@@ -70,6 +76,15 @@ public abstract class PluginProvider {
     }
 
     public abstract String getCategory();
+
+    /**
+     * Order of the plugin within its category. By default ANY.
+     *
+     * @return Expected order.
+     */
+    public ORDER getOrder() {
+        return ORDER.ANY;
+    }
 
     public String getDescription() {
         return description;

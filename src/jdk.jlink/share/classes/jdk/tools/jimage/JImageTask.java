@@ -201,7 +201,7 @@ class JImageTask {
         Path jimage = options.jimages.get(0).toPath();
 
         if (jimage.toFile().createNewFile()) {
-            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.getPluginsProperties());
+            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.getPluginsConfig());
             ExtractedImage img = new ExtractedImage(dirPath, pc, log, options.verbose);
             img.recreateJImage(jimage);
         } else {

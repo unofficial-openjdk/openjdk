@@ -34,20 +34,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePrevisitor;
@@ -59,12 +57,16 @@ public class PrevisitorTest {
         new PrevisitorTest().test();
     }
 
+    private static Jlink.StackedPluginConfiguration createConfig(String name, int index) {
+        return new Jlink.StackedPluginConfiguration(name, index, true, Collections.emptyMap());
+    }
+
     public void test() throws Exception {
         CustomProvider provider = new CustomProvider("plugin");
         ImagePluginProviderRepository.registerPluginProvider(provider);
-        Properties properties = new Properties();
-        properties.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "plugin");
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(properties);
+        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("plugin", 0));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins, null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res1.class", ByteBuffer.allocate(90)));
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res2.class", ByteBuffer.allocate(90)));
