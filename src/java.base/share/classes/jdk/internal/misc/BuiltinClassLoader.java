@@ -121,6 +121,7 @@ public class BuiltinClassLoader
         private final BuiltinClassLoader loader;
         private final ModuleReference mref;
         private final URL url;          // may be null
+        private final CodeSource cs;
 
         LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
@@ -132,11 +133,14 @@ public class BuiltinClassLoader
             this.loader = loader;
             this.mref = mref;
             this.url = url;
+            this.cs = new CodeSource(url, (CodeSigner[]) null);
         }
 
         BuiltinClassLoader loader() { return loader; }
         ModuleReference mref() { return mref; }
+        String name() { return mref.descriptor().name(); }
         URL location() { return url; }
+        CodeSource codeSource() { return cs; }
     }
 
 
@@ -189,6 +193,7 @@ public class BuiltinClassLoader
         }
     }
 
+
     // -- finding resources
 
     /**
@@ -208,6 +213,13 @@ public class BuiltinClassLoader
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
+
+                        // -Xpatch
+                        Resource r = findResourceInPatchDirs(mn, name);
+                        if (r != null) {
+                            return r.getURL();
+                        }
+
                         URI u = moduleReaderFor(mref).find(name).orElse(null);
                         if (u != null) {
                             try {
@@ -251,7 +263,15 @@ public class BuiltinClassLoader
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(mref).open(name).orElse(null);
+
+                            // -Xpatch
+                            Resource r = findResourceInPatchDirs(mn, name);
+                            if (r != null) {
+                                return r.getInputStream();
+                            } else {
+                                return moduleReaderFor(mref).open(name).orElse(null);
+                            }
+
                         }
                     });
             } catch (PrivilegedActionException pae) {
@@ -296,6 +316,7 @@ public class BuiltinClassLoader
             return Collections.emptyEnumeration();
         }
     }
+
 
     // -- finding/loading classes
 
@@ -465,9 +486,20 @@ public class BuiltinClassLoader
         ModuleReader reader = moduleReaderFor(mref);
 
         try {
-            // read class file
+            ByteBuffer bb;
+            CodeSource cs;
+
+            // read class file, trying -Xpatch dirs first
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.read(rn).orElse(null);
+            Resource r = findResourceInPatchDirs(loadedModule.name(), rn);
+            if (r != null) {
+                bb = r.getByteBuffer();
+                cs = new CodeSource(r.getCodeSourceURL(), (CodeSigner[]) null);
+            } else {
+                bb = reader.read(rn).orElse(null);
+                cs = loadedModule.codeSource();
+            }
+
             if (bb == null) {
                 // class not found
                 return null;
@@ -483,12 +515,11 @@ public class BuiltinClassLoader
                 }
 
                 // define class to VM
-                URL url = loadedModule.location();
-                CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
 
             } finally {
-                reader.release(bb);
+                if (r == null)
+                    reader.release(bb);
             }
 
         } catch (IOException ioe) {
@@ -779,24 +810,13 @@ public class BuiltinClassLoader
      * Creates a ModuleReader for the given module.
      */
     private ModuleReader createModuleReader(ModuleReference mref) {
-        ModuleReader reader;
-
         try {
-            reader = mref.open();
+            return mref.open();
         } catch (IOException e) {
             // Return a null module reader to avoid a future class load
             // attempting to open the module again.
             return new NullModuleReader();
         }
-
-        // if -Xpatch is specified then wrap the ModuleReader so that the
-        // patch directories are searched first
-        if (!patchDirs.isEmpty()) {
-            String mn = mref.descriptor().name();
-            reader = new OverrideModuleReader(mn, patchDirs, reader);
-        }
-
-        return reader;
     }
 
     /**
@@ -813,94 +833,77 @@ public class BuiltinClassLoader
         }
     };
 
+
     /**
-     * A ModuleReader to prepend a sequence of patch directories to
-     * another ModuleReader.
+     * Attempts to locate a resource for a given module in the directories
+     * specified to -Xpatch.
      */
-    private static class OverrideModuleReader implements ModuleReader {
-        private final String module;
-        private final List<Path> patchDirs;
-        private final ModuleReader reader;
+    private Resource findResourceInPatchDirs(String mn, String name)
+        throws IOException
+    {
+        for (Path patchDir : patchDirs) {
+            Path dir = patchDir.resolve(mn);
 
-        OverrideModuleReader(String module,
-                             List<Path> patchDirs,
-                             ModuleReader reader) {
-            this.module = module;
-            this.patchDirs = patchDirs;
-            this.reader = reader;
-        }
-
-        /**
-         * Returns the path to the resource in the first patch directory
-         * where the resource is found.
-         */
-        private Path findResource(String name) {
-            for (Path patchDir : patchDirs) {
-                Path dir = patchDir.resolve(module);
-
-                Path path = Paths.get(name.replace('/', File.separatorChar));
-                if (path.getRoot() == null) {
-                    path = dir.resolve(path);
-                } else {
-                    // drop the root component so that the resource is
-                    // located relative to the module directory
-                    int n = path.getNameCount();
-                    if (n == 0) return null;
-                    path = dir.resolve(path.subpath(0, n));
-                }
-
-                if (Files.isRegularFile(path)) {
-                    return path;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public Optional<URI> find(String name) throws IOException {
-            Path path = findResource(name);
-            if (path != null) {
-                try {
-                    return Optional.of(path.toUri());
-                } catch (IOError e) {
-                    throw (IOException) e.getCause();
-                }
+            Path file = Paths.get(name.replace('/', File.separatorChar));
+            if (file.getRoot() == null) {
+                file = dir.resolve(file);
             } else {
-                return reader.find(name);
+                // drop the root component so that the resource is
+                // located relative to the module directory
+                int n = file.getNameCount();
+                if (n == 0) return null;
+                file = dir.resolve(file.subpath(0, n));
+            }
+
+            if (Files.isRegularFile(file)) {
+                return newResource(name, dir, file);
             }
         }
 
-        @Override
-        public Optional<InputStream> open(String name) throws IOException {
-            Path path = findResource(name);
-            if (path != null) {
-                return Optional.of(Files.newInputStream(path));
-            } else {
-                return reader.open(name);
-            }
-        }
-
-        @Override
-        public Optional<ByteBuffer> read(String name) throws IOException {
-            Path path = findResource(name);
-            if (path != null) {
-                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
-            } else {
-                return reader.read(name);
-            }
-        }
-
-        @Override
-        public void release(ByteBuffer bb) {
-            if (bb.isDirect())
-                reader.release(bb);
-        }
-
-        @Override
-        public void close() throws IOException {
-            throw new InternalError("Should not get here");
-        }
+        return null;
     }
+
+    /**
+     * Returns a Resource to a file on the file system.
+     */
+    private Resource newResource(String name, Path top, Path file) {
+        return new Resource() {
+            @Override
+            public String getName() {
+                return name;
+            }
+            @Override
+            public URL getURL() {
+                try {
+                    return file.toUri().toURL();
+                } catch (IOException | IOError e) {
+                    return null;
+                }
+            }
+            @Override
+            public URL getCodeSourceURL() {
+                try {
+                    return top.toUri().toURL();
+                } catch (IOException | IOError e) {
+                    return null;
+                }
+            }
+            @Override
+            public ByteBuffer getByteBuffer() throws IOException {
+                return ByteBuffer.wrap(Files.readAllBytes(file));
+            }
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return Files.newInputStream(file);
+            }
+            @Override
+            public int getContentLength() throws IOException {
+                long size = Files.size(file);
+                return (size > Integer.MAX_VALUE) ? -1 : (int)size;
+            }
+        };
+    }
+
 
     /**
      * Checks access to the given URL. We use URLClassPath for consistent
