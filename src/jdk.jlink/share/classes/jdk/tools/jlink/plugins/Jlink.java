@@ -90,7 +90,7 @@ public final class Jlink {
     }
 
     /**
-     * A plugin located inside the stack of plugins. Such plugin as an index in
+     * A plugin located inside a stack of plugins. Such plugin as an index in
      * the stack.
      */
     public static final class StackedPluginConfiguration extends PluginConfiguration {
@@ -153,7 +153,8 @@ public final class Jlink {
      */
     public static final class PluginsConfiguration {
 
-        private final List<StackedPluginConfiguration> pluginsConfig;
+        private final List<StackedPluginConfiguration> transformerPluginsConfig;
+        private final List<StackedPluginConfiguration> processorPluginsConfig;
         private final PluginConfiguration imageBuilder;
         private final String lastSorterPluginName;
 
@@ -161,42 +162,59 @@ public final class Jlink {
          * Empty plugins configuration.
          */
         public PluginsConfiguration() {
-            this(Collections.emptyList(), null);
+            this(Collections.emptyList(), Collections.emptyList(), null);
         }
 
         /**
          * Plugins configuration.
          *
-         * @param pluginsConfig List of plugins configuration.
+         * @param transformerPluginsConfig List of transformer plugins
+         * configuration.
+         * @param processorPluginsConfig List of processor plugins
+         * configuration.
          * @param imageBuilder Image builder (null default builder).
          */
-        public PluginsConfiguration(List<StackedPluginConfiguration> pluginsConfig,
+        public PluginsConfiguration(List<StackedPluginConfiguration> transformerPluginsConfig,
+                List<StackedPluginConfiguration> processorPluginsConfig,
                 PluginConfiguration imageBuilder) {
-            this(pluginsConfig, imageBuilder, null);
+            this(transformerPluginsConfig, processorPluginsConfig, imageBuilder, null);
         }
 
         /**
          * Plugins configuration with a last sorter. No sorting can occur after
          * the last sorter plugin.
          *
-         * @param pluginsConfig List of plugins configuration.
+         * @param transformerPluginsConfig List of transformer plugins
+         * configuration.
+         * @param processorPluginsConfig List of processor plugins
+         * configuration.
          * @param imageBuilder Image builder (null default builder).
          * @param lastSorterPluginName Name of last sorter plugin, no sorting
          * can occur after it.
          */
-        public PluginsConfiguration(List<StackedPluginConfiguration> pluginsConfig,
+        public PluginsConfiguration(List<StackedPluginConfiguration> transformerPluginsConfig,
+                List<StackedPluginConfiguration> processorPluginsConfig,
                 PluginConfiguration imageBuilder, String lastSorterPluginName) {
-            this.pluginsConfig = pluginsConfig == null ? Collections.emptyList()
-                    : pluginsConfig;
+            this.transformerPluginsConfig = transformerPluginsConfig == null ? Collections.emptyList()
+                    : transformerPluginsConfig;
+            this.processorPluginsConfig = processorPluginsConfig == null ? Collections.emptyList()
+                    : processorPluginsConfig;
             this.imageBuilder = imageBuilder;
             this.lastSorterPluginName = lastSorterPluginName;
         }
 
         /**
-         * @return the pluginsConfig
+         * @return the transformer pluginsConfig
          */
-        public List<StackedPluginConfiguration> getPluginsConfig() {
-            return pluginsConfig;
+        public List<StackedPluginConfiguration> getTransformerPluginsConfig() {
+            return transformerPluginsConfig;
+        }
+
+        /**
+         * @return the post processors pluginsConfig
+         */
+        public List<StackedPluginConfiguration> getPostProcessorPluginsConfig() {
+            return processorPluginsConfig;
         }
 
         /**
@@ -218,7 +236,10 @@ public final class Jlink {
             StringBuilder builder = new StringBuilder();
             builder.append("imagebuilder=").append(imageBuilder).append("\n");
             StringBuilder pluginsBuilder = new StringBuilder();
-            for (PluginConfiguration p : pluginsConfig) {
+            for (PluginConfiguration p : transformerPluginsConfig) {
+                pluginsBuilder.append(p).append(",");
+            }
+            for (PluginConfiguration p : processorPluginsConfig) {
                 pluginsBuilder.append(p).append(",");
             }
             builder.append("plugins=").append(pluginsBuilder).append("\n");

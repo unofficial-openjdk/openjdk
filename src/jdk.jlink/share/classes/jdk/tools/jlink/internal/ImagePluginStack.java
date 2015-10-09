@@ -29,7 +29,6 @@ import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,9 +40,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.Decompressor;
+import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.PostProcessingPlugin;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -54,6 +55,13 @@ import jdk.tools.jlink.plugins.StringTable;
  * Plugins Stack. Plugins entry point to apply transformations onto resources and files.
  */
 public final class ImagePluginStack {
+
+    public interface ImageProvider {
+        ExecutableImage retrieve(ImagePluginStack stack) throws IOException;
+
+        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image,
+                List<String> args) throws IOException;
+    }
 
     private static final class OrderedResourcePool extends ResourcePoolImpl {
 
@@ -156,6 +164,7 @@ public final class ImagePluginStack {
     private final Plugin lastSorter;
     private final List<ResourcePlugin> resourcePlugins = new ArrayList<>();
     private final List<ImageFilePlugin> filePlugins = new ArrayList<>();
+    private final List<PostProcessingPlugin> postProcessingPlugins = new ArrayList<>();
     private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
 
     private final ImageBuilder imageBuilder;
@@ -163,13 +172,15 @@ public final class ImagePluginStack {
     private final String bom;
 
     public ImagePluginStack(String bom) {
-        this(null, Collections.emptyList(), null, Collections.emptyList(), null);
+        this(null, Collections.emptyList(), null, Collections.emptyList(),
+                Collections.emptyList(), null);
     }
 
     public ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
             List<ImageFilePlugin> filePlugins,
+            List<PostProcessingPlugin> postprocessingPlugins,
             String bom) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
@@ -185,12 +196,40 @@ public final class ImagePluginStack {
             Objects.requireNonNull(p);
             this.filePlugins.add(p);
         }
+        for (PostProcessingPlugin p : postprocessingPlugins) {
+            Objects.requireNonNull(p);
+            this.postProcessingPlugins.add(p);
+        }
         this.imageBuilder = imageBuilder;
         this.bom = bom;
     }
 
+    public void operate(ImageProvider provider) throws Exception {
+        ExecutableImage img = provider.retrieve(this);
+        List<String> arguments;
+        // Could be autocloseable but not right behavior
+        // with InterruptedException
+        ProcessingManagerImpl manager = new ProcessingManagerImpl(img);
+        arguments = new ArrayList<>();
+        try {
+            for (PostProcessingPlugin plugin : postProcessingPlugins) {
+                List<String> lst = plugin.process(manager);
+                if (lst != null) {
+                    arguments.addAll(lst);
+                }
+            }
+        } finally {
+            manager.close();
+        }
+        provider.storeLauncherArgs(this, img, arguments);
+    }
+
     public DataOutputStream getJImageFileOutputStream() throws IOException {
         return imageBuilder.getJImageOutputStream();
+    }
+
+    public ImageBuilder getImageBuilder() {
+        return imageBuilder;
     }
 
     /**
@@ -319,5 +358,9 @@ public final class ImagePluginStack {
         }
         RetrieverImpl retriever = new RetrieverImpl(resources, writer);
         imageBuilder.storeFiles(current, removed, bom, retriever);
+    }
+
+    public ExecutableImage getExecutableImage() throws IOException {
+        return imageBuilder.getExecutableImage();
     }
 }

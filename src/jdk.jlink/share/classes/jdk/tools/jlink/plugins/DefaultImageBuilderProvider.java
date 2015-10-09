@@ -24,12 +24,18 @@
  */
 package jdk.tools.jlink.plugins;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
+import static jdk.tools.jlink.plugins.DefaultImageBuilder.isWindows;
 
 /**
  * Default Image Builder provider.
@@ -74,5 +80,46 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
                     getMessage("err.dir.not.empty", imageOutDir));
         }
         return new DefaultImageBuilder(config, imageOutDir);
+    }
+
+    @Override
+    public ExecutableImage canExecute(Path root) {
+        if (Files.exists(root.resolve("bin").resolve(getJavaProcessName()))) {
+            return new DefaultImageBuilder.DefaultExecutableImage(root,
+                    retrieveModules(root));
+        }
+        return null;
+    }
+
+    static String getJavaProcessName() {
+        return isWindows() ? "java.exe" : "java";
+    }
+
+    private static Set<String> retrieveModules(Path root) {
+        Path releaseFile = root.resolve("release");
+        Set<String> modules = new HashSet<>();
+        if (Files.exists(releaseFile)) {
+            Properties release = new Properties();
+            try (FileInputStream fi = new FileInputStream(releaseFile.toFile())) {
+                release.load(fi);
+            } catch (IOException ex) {
+                System.err.println("Cant read release file " + ex);
+            }
+            String mods = release.getProperty("MODULES");
+            if (mods != null) {
+                String[] arr = mods.split(",");
+                for (String m : arr) {
+                    modules.add(m);
+                }
+
+            }
+        }
+        return modules;
+    }
+
+    @Override
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments)
+            throws IOException {
+        DefaultImageBuilder.patchScripts(image, arguments);
     }
 }

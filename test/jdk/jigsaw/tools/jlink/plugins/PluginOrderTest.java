@@ -170,7 +170,7 @@ public class PluginOrderTest {
             lst.add(new StackedPluginConfiguration(name, index,
                     absolute, Collections.emptyMap()));
         }
-        return new PluginsConfiguration(lst, null);
+        return new PluginsConfiguration(lst, Collections.emptyList(), null);
     }
 
     private void test1(List<String> order) throws Exception {

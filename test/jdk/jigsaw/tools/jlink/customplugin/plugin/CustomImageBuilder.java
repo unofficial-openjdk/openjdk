@@ -28,9 +28,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
@@ -68,5 +70,16 @@ public class CustomImageBuilder implements ImageBuilder {
     @Override
     public DataOutputStream getJImageOutputStream() throws IOException {
         return new DataOutputStream(Files.newOutputStream(image.resolve("image.jimage")));
+    }
+
+    @Override
+    public ExecutableImage getExecutableImage() throws IOException {
+        return new ExecutableImage(image, Collections.emptySet(),
+                Collections.emptyList()) {
+                };
+    }
+
+    @Override
+    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
     }
 }

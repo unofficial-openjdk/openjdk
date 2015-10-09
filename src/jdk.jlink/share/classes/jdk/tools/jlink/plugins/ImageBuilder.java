@@ -80,4 +80,21 @@ public interface ImageBuilder {
      * @throws java.io.IOException
      */
     public DataOutputStream getJImageOutputStream() throws IOException;
+
+    /**
+     * Gets executable image.
+     *
+     * @return The executable image.
+     * @throws java.io.IOException
+     */
+    public ExecutableImage getExecutableImage() throws IOException;
+
+    /**
+     * Store the options that would have bee nadded by the post processing
+     * @param image
+     * @param args
+     * @throws java.io.IOException
+     */
+    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args)
+            throws IOException;
 }

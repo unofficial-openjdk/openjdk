@@ -66,7 +66,8 @@ public class PrevisitorTest {
         ImagePluginProviderRepository.registerPluginProvider(provider);
         List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins, null));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res1.class", ByteBuffer.allocate(90)));
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res2.class", ByteBuffer.allocate(90)));

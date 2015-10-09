@@ -57,9 +57,11 @@ import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
+import jdk.tools.jlink.plugins.OnOffPostProcessingPluginProvider;
 import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider.ORDER;
+import jdk.tools.jlink.plugins.PostProcessingPluginProvider;
 
 /**
  *
@@ -278,6 +280,8 @@ public final class TaskHelper {
                         } else {
                             if (provider instanceof OnOffImageFilePluginProvider) {
                                 edefault = ((OnOffImageFilePluginProvider) provider).isEnabledByDefault();
+                            } else if (provider instanceof OnOffImageFilePluginProvider) {
+                                edefault = ((OnOffPostProcessingPluginProvider) provider).isEnabledByDefault();
                             }
                         }
                         if (edefault) {
@@ -358,7 +362,8 @@ public final class TaskHelper {
         }
 
         private PluginsConfiguration getPluginsConfig() throws IOException {
-            List<StackedPluginConfiguration> lst = new ArrayList<>();
+            List<StackedPluginConfiguration> preProcessing = new ArrayList<>();
+            List<StackedPluginConfiguration> postProcessing = new ArrayList<>();
             for (Entry<PluginProvider, Map<String, String>> entry : plugins.entrySet()) {
                 PluginProvider provider = entry.getKey();
                 // User defined index?
@@ -383,7 +388,14 @@ public final class TaskHelper {
                 }
                 Map<String, Object> config = new HashMap<>();
                 config.putAll(entry.getValue());
-                lst.add(new Jlink.StackedPluginConfiguration(provider.getName(), i, absolute, config));
+                StackedPluginConfiguration conf
+                        = new Jlink.StackedPluginConfiguration(provider.getName(),
+                                i, absolute, config);
+                if (provider instanceof PostProcessingPluginProvider) {
+                    postProcessing.add(conf);
+                } else {
+                    preProcessing.add(conf);
+                }
             }
 
             imgBuilder = imgBuilder == null ? DefaultImageBuilderProvider.NAME : imgBuilder;
@@ -394,7 +406,7 @@ public final class TaskHelper {
                     builderConfig.putAll(conf);
                 }
             }
-            return new Jlink.PluginsConfiguration(lst,
+            return new Jlink.PluginsConfiguration(preProcessing, postProcessing,
                     new Jlink.PluginConfiguration(imgBuilder, builderConfig),
                     lastSorter);
         }

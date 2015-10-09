@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -208,10 +209,20 @@ public class ImageFileCreatorTest {
             public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
                     String bom, ImageBuilder.ResourceRetriever retriever) throws IOException {
             }
+
+            @Override
+            public ExecutableImage getExecutableImage() throws IOException {
+                return null;
+            }
+
+            @Override
+            public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
+
+            }
         };
 
         ImagePluginStack stack = new ImagePluginStack(noopBuilder, Collections.emptyList(),
-                null, Collections.emptyList(), "");
+                null, Collections.emptyList(), Collections.emptyList(), "");
 
         ImageFileCreator.create(archives, ByteOrder.nativeOrder(), stack);
     }

@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,9 +63,29 @@ import jdk.tools.jlink.plugins.ResourcePool.Resource;
  */
 public class DefaultImageBuilder implements ImageBuilder {
 
+    /**
+     * The default java executable Image.
+     */
+    public static class DefaultExecutableImage extends ExecutableImage {
+
+        public DefaultExecutableImage(Path home, Set<String> modules) {
+            super(home, modules, createArgs(home));
+        }
+
+        private static List<String> createArgs(Path home) {
+            Objects.requireNonNull(home);
+            List<String> javaArgs = new ArrayList<>();
+            javaArgs.add(home.resolve("bin").
+                    resolve(DefaultImageBuilderProvider.
+                            getJavaProcessName()).toString());
+            return javaArgs;
+        }
+    }
+
     private final Path root;
     private final Path mdir;
     private final boolean genBom;
+    private Set<String> modules;
 
     public DefaultImageBuilder(Map<String, Object> properties, Path root) throws IOException {
         Objects.requireNonNull(root);
@@ -130,7 +151,7 @@ public class DefaultImageBuilder implements ImageBuilder {
         for (ImageFile f : files.getFiles()) {
             accept(f);
         }
-        Set<String> modules = retriever.getModules();
+        modules = retriever.getModules();
         storeFiles(modules, bom);
 
         if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
@@ -172,9 +193,11 @@ public class DefaultImageBuilder implements ImageBuilder {
                     StringBuilder sb = new StringBuilder();
                     sb.append("#!/bin/sh")
                             .append("\n");
+                    sb.append("JLINK_VM_OPTIONS=")
+                            .append("\n");
                     sb.append("DIR=`dirname $0`")
                             .append("\n");
-                    sb.append("$DIR/java -m ")
+                    sb.append("$DIR/java $JLINK_VM_OPTIONS -m ")
                             .append(module).append('/')
                             .append(mainClass.get())
                             .append(" $@\n");
@@ -297,6 +320,51 @@ public class DefaultImageBuilder implements ImageBuilder {
         try (OutputStream fout = new FileOutputStream(file);
                 Writer output = new OutputStreamWriter(fout, "UTF-8")) {
             output.write(content);
+        }
+    }
+
+    @Override
+    public ExecutableImage getExecutableImage() {
+        return new DefaultExecutableImage(root, modules);
+    }
+
+    @Override
+    public void storeJavaLauncherOptions(ExecutableImage img, List<String> args) throws IOException {
+        patchScripts(img, args);
+    }
+
+    // This is experimental, we should get rid-off the scripts in a near future
+    static void patchScripts(ExecutableImage img, List<String> args) throws IOException {
+        Objects.requireNonNull(args);
+        if (!args.isEmpty()) {
+            Files.find(img.getHome().resolve("bin"), 2, (path, attrs) -> {
+                return img.getModules().contains(path.getFileName().toString());
+            }).forEach((p) -> {
+                try {
+                    String pattern = "JLINK_VM_OPTIONS=";
+                    byte[] content = Files.readAllBytes(p);
+                    String str = new String(content, StandardCharsets.UTF_8);
+                    int index = str.indexOf(pattern);
+                    StringBuilder builder = new StringBuilder();
+                    if (index != -1) {
+                        builder.append(str.substring(0, index)).
+                                append(pattern);
+                        for (String s : args) {
+                            builder.append(s).append(" ");
+                        }
+                        String remain = str.substring(index + pattern.length());
+                        builder.append(remain);
+                        str = builder.toString();
+                        try (BufferedWriter writer = Files.newBufferedWriter(p,
+                                StandardCharsets.ISO_8859_1,
+                                StandardOpenOption.WRITE)) {
+                            writer.write(str);
+                        }
+                    }
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
         }
     }
 }

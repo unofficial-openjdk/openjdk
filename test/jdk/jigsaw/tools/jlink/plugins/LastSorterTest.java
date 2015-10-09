@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,8 @@ public class LastSorterTest {
     private void checkTwoLastSorters() throws Exception {
         List<StackedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin6", "/a", 0));
-        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins, null, "sorterplugin6");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin6");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -129,7 +131,8 @@ public class LastSorterTest {
         plugins.add(createConfig("sorterplugin2", "/b", 1));
         plugins.add(createConfig("sorterplugin3", "/a", 2));
 
-        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins, null, "sorterplugin3");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin3");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -156,7 +159,8 @@ public class LastSorterTest {
         plugins.add(createConfig("sorterplugin3", "/1", 2));
         plugins.add(createConfig("sorterplugin4", "/1", 3));
 
-        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins, null, "sorterplugin5");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin5");
         try {
             ImagePluginConfiguration.parseConfiguration(config);
             throw new AssertionError("Unknown plugin should have failed.");
@@ -172,7 +176,8 @@ public class LastSorterTest {
         plugins.add(createConfig("sorterplugin3", "/a", 2));
         plugins.add(createConfig("sorterplugin4", "/d", 3));
 
-        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins, null, "sorterplugin3");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin3");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 

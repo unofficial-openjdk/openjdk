@@ -39,21 +39,31 @@ import java.util.Objects;
  *
  * Order of known categories are:
  * <ol>
- * <li>FILTER: Filter in/out resources.</li>
- * <li>TRANSFORMER: Transform resources (eg: refactoring, bytecode
+ * <li>FILTER: Filter in/out resources or files.</li>
+ * <li>TRANSFORMER: Transform resources or files(eg: refactoring, bytecode
  * manipulation).</li>
- * <li>SORTER: Sort resources.</li>
- * <li>COMPRESSOR: Compress resources.</li>
+ * <li>SORTER: Sort resources within the resource container.</li>
+ * <li>COMPRESSOR: Compress resource within the resouce containers.</li>
+ * <li>VERIFIER: Does some image verification.</li>
+ * <li>PROCESSOR: Does some post processing on image.</li>
  * <li>PACKAGER: Final processing</li>
  * </ol>
  */
 public abstract class PluginProvider {
+
+    /**
+     * This option is present in the configuration passed at Plugin creation
+     * time.
+     */
+    public static final String PLATFORM_NAME_OPTION = "jlink.platform";
 
     public static final String COMPRESSOR = "compressor";
     public static final String SORTER = "sorter";
     public static final String TRANSFORMER = "transformer";
     public static final String FILTER = "filter";
     public static final String PACKAGER = "packager";
+    public static final String PROCESSOR = "processor";
+    public static final String VERIFIER = "verifier";
 
     public static enum ORDER {
         FIRST,

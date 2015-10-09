@@ -26,6 +26,7 @@ package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,6 +58,24 @@ public interface ImageBuilderProvider {
      * @throws java.io.IOException
      */
     public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
+            throws IOException;
+
+    /**
+     * Image builder provider can execute the image located in the passed dir
+     *
+     * @param root The image directory.
+     * @return An ExecutableImage if runnable, otherwise null.
+     */
+    public ExecutableImage canExecute(Path root);
+
+    /**
+     * Ask the provider to store some options in the image launcher(s).
+     *
+     * @param image
+     * @param arguments The arguments to add to the launcher.
+     * @throws java.io.IOException
+     */
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments)
             throws IOException;
 
     /**

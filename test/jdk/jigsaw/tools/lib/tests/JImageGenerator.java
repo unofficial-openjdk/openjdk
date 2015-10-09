@@ -103,6 +103,7 @@ public class JImageGenerator {
             + "}\n";
 
     private static final String OUTPUT_OPTION = "--output";
+    private static final String POST_PROCESS_OPTION = "--post-process-path";
     private static final String MAIN_CLASS_OPTION = "--main-class";
     private static final String CLASS_PATH_OPTION = "--class-path";
     private static final String MODULE_PATH_OPTION = "--modulepath";
@@ -572,6 +573,7 @@ public class JImageGenerator {
         private final List<String> options = new ArrayList<>();
         private String modulePath;
         private Path output;
+        private Path existing;
 
         public JLinkTask modulePath(String modulePath) {
             this.modulePath = modulePath;
@@ -605,6 +607,11 @@ public class JImageGenerator {
 
         public JLinkTask output(Path output) {
             this.output = output;
+            return this;
+        }
+
+        public JLinkTask existing(Path existing) {
+            this.existing = existing;
             return this;
         }
 
@@ -656,8 +663,26 @@ public class JImageGenerator {
             return options.toArray(new String[options.size()]);
         }
 
+        private String[] optionsPostProcessJLink() {
+            List<String> options = new ArrayList<>();
+            if (existing != null) {
+                options.add(POST_PROCESS_OPTION);
+                options.add(existing.toString());
+            }
+            options.addAll(this.options);
+            return options.toArray(new String[options.size()]);
+        }
+
         public Result call() {
             String[] args = optionsJLink();
+            System.err.println("jlink options: " + optionsPrettyPrint(args));
+            StringWriter writer = new StringWriter();
+            int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
+            return new Result(exitCode, writer.toString(), output);
+        }
+
+        public Result callPostProcess() {
+            String[] args = optionsPostProcessJLink();
             System.err.println("jlink options: " + optionsPrettyPrint(args));
             StringWriter writer = new StringWriter();
             int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));

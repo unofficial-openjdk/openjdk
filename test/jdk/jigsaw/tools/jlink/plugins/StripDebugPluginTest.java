@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Stream;
 
 import com.sun.tools.classfile.Attribute;
@@ -57,10 +56,10 @@ import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.plugins.OnOffPluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -112,7 +111,7 @@ public class StripDebugPluginTest {
         StripDebugProvider prov = new StripDebugProvider();
         Map<String, Object> options = new HashMap<>();
         options.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                ImagePluginConfiguration.ON_ARGUMENT);
+                OnOffPluginProvider.ON_ARGUMENT);
         ResourcePlugin debug = (ResourcePlugin) prov.newPlugins(options)[0];
         Resource result1 = stripDebug(debug, new Resource(path, ByteBuffer.wrap(content)), path, infoPath, moduleInfo);
 

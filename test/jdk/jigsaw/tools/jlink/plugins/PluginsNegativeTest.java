@@ -98,7 +98,8 @@ public class PluginsNegativeTest {
     private void testEmptyOutputResource() throws Exception {
         List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins, null));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
+                Collections.emptyList(), null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/A", ByteBuffer.allocate(10)));
         try {
@@ -121,7 +122,8 @@ public class PluginsNegativeTest {
     private void testEmptyInputResource() throws Exception {
         List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins, null));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
+                Collections.emptyList(), null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         ResourcePoolImpl outResources = (ResourcePoolImpl) stack.visitResources(inResources, new StringTable() {
             @Override

@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive.Entry;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
+import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile.ImageFileType;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -76,30 +77,30 @@ public final class ImageFileCreator {
         this.plugins = plugins;
     }
 
-    public static ImageFileCreator create(Set<Archive> archives,
+    public static ExecutableImage create(Set<Archive> archives,
             ImagePluginStack plugins)
             throws IOException {
         return ImageFileCreator.create(archives, ByteOrder.nativeOrder(),
                 plugins);
     }
 
-    public static ImageFileCreator create(Set<Archive> archives,
+    public static ExecutableImage create(Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
         return ImageFileCreator.create(archives, byteOrder,
                 new ImagePluginStack(null));
     }
 
-    public static ImageFileCreator create(Set<Archive> archives,
-                                   ByteOrder byteOrder,
-                                   ImagePluginStack plugins)
-        throws IOException
+    public static ExecutableImage create(Set<Archive> archives,
+            ByteOrder byteOrder,
+            ImagePluginStack plugins)
+            throws IOException
     {
         ImageFileCreator image = new ImageFileCreator(plugins);
         image.readAllEntries(archives);
         // write to modular image
         image.writeImage(archives, byteOrder);
-        return image;
+        return plugins.getExecutableImage();
     }
 
     private void readAllEntries(Set<Archive> archives) {
