@@ -643,6 +643,92 @@ public final class Module {
     }
 
 
+    // -- services --
+
+    // created lazily, additional service types that this module uses
+    private volatile WeakSet<Class<?>> transientUses;
+
+    /**
+     * If the caller's module is this module then update this module to add a
+     * service dependence on the given service type. This method is intended
+     * for use by frameworks that invoke {@link java.util.ServiceLoader
+     * ServiceLoader} on behalf of other modules or where the framework is
+     * passed a reference to the service type by other code.
+     *
+     * <p> This method does not trigger {@link java.lang.module.Configuration#bind
+     * service-binding}. </p>
+     *
+     * @apiNote As this method can only be used to update the caller's module
+     * then this method could be static and the IllegalStateException would
+     * not be needed.
+     *
+     * @return this module
+     *
+     * @throws IllegalStateException
+     *         If this is a named module and the caller is not this module
+     *
+     * @see #canUse(Class)
+     * @see ModuleDescriptor#uses()
+     */
+    @CallerSensitive
+    public Module addUses(Class<?> st) {
+        Objects.requireNonNull(st);
+
+        if (isNamed()) {
+
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this) {
+                throw new IllegalStateException(caller + " != " + this);
+            }
+
+            if (!canUse(st)) {
+                WeakSet<Class<?>> uses = this.transientUses;
+                if (uses == null) {
+                    synchronized (this) {
+                        uses = this.transientUses;
+                        if (uses == null) {
+                            uses = new WeakSet<>();
+                            this.transientUses = uses;
+                        }
+                    }
+                }
+                uses.add(st);
+            }
+
+        }
+
+        return this;
+    }
+
+    /**
+     * Indicates if this module has a service dependence on the given type.
+     *
+     * @return {@code true} if this module uses service type {@code st}
+     *
+     * @see #addUses(Class)
+     */
+    public boolean canUse(Class<?> st) {
+        Objects.requireNonNull(st);
+
+        if (!isNamed())
+            return true;
+
+        if (SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor))
+            return true;
+
+        // uses was declared
+        if (descriptor.uses().contains(st.getName()))
+            return true;
+
+        // uses added via addUses
+        WeakSet<Class<?>> uses = this.transientUses;
+        if (uses != null && uses.contains(st))
+            return true;
+
+        return false;
+    }
+
+
 
     // -- packages --
 

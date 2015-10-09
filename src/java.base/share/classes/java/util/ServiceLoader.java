@@ -367,16 +367,10 @@ public final class ServiceLoader<S>
             fail(svc, "not accessible to " + module);
         }
 
-        // If the caller is in a named module then it must declare that it
-        // uses the service type
-        if (module.isNamed()) {
-            ModuleDescriptor descriptor = module.getDescriptor();
-            if (!SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor)) {
-                String sn = svc.getName();
-                if (!module.getDescriptor().uses().contains(sn)) {
-                    fail(svc, "use not declared in " + module);
-                }
-            }
+        // If the caller is in a named module then it should "uses" the
+        // service type
+        if (!module.canUse(svc)) {
+            fail(svc, "use not declared in " + module);
         }
 
     }
