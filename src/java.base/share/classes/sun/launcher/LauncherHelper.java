@@ -52,6 +52,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -68,7 +69,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -77,7 +77,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -453,52 +452,6 @@ public enum LauncherHelper {
         return null;
     }
 
-    /**
-     * Returns the main class for a module. The query is either a module name
-     * or module-name/main-class. For the former then the module's main class
-     * is obtained from the module descriptor (MainClass attribute).
-     */
-    static String getMainClassForModule(String query) {
-        int i = query.indexOf('/');
-        String mainModule;
-        String mainClass;
-        if (i == -1) {
-            mainModule = query;
-            mainClass = null;
-        } else {
-            mainModule = query.substring(0, i);
-            mainClass = query.substring(i+1);
-        }
-
-        // main module should be in the boot layer
-        Layer layer = Layer.boot();
-        ModuleReference mref
-            = layer.configuration().get().findModule(mainModule).orElse(null);
-        if (mref == null)
-            abort(null, "java.launcher.module.error1", mainModule);
-
-        // if query included the main-class then we return that
-        if (mainClass != null) {
-            i = mainClass.lastIndexOf('.');
-            if (i > 0) {
-                String pkg = mainClass.substring(0, i);
-                if (!mref.descriptor().packages().contains(pkg)) {
-                    // main class not in a package that the module defines
-                    abort(null, "java.launcher.module.error2", mainModule, mainClass);
-                }
-            } else {
-                // main-class cannot be in the unnamed package
-                abort(null, "java.launcher.module.error2", mainModule, "<unnamed>");
-            }
-            return mainClass;
-        }
-
-        Optional<String> omc = mref.descriptor().mainClass();
-        if (!omc.isPresent())
-            abort(null, "java.launcher.module.error3", mainModule);
-        return omc.get();
-    }
-
     // From src/share/bin/java.c:
     //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE }
 
@@ -522,34 +475,100 @@ public enum LauncherHelper {
     }
 
     /**
-     * This method does the following:
-     * 1. gets the classname from a Jar's manifest, if necessary
-     * 2. loads the class using the System ClassLoader
-     * 3. ensures the availability and accessibility of the main method,
-     *    using signatureDiagnostic method.
-     *    a. does the class exist
-     *    b. is there a main
-     *    c. is the main public
-     *    d. is the main static
-     *    e. does the main take a String array for args
-     * 4. if no main method and if the class extends FX Application, then call
-     *    on FXHelper to determine the main class to launch
-     * 5. and off we go......
+     * This method:
+     * 1. Loads the main class from the module or class path
+     * 2. Checks the public static void main method.
+     * 3. In the case of no main method and if the class extends FX Application,
+     *    then call on FXHelper to determine the main class to launch
      *
      * @param printToStderr if set, all output will be routed to stderr
      * @param mode LaunchMode as determined by the arguments passed on the
-     * command line
-     * @param what either the jar file to launch or the main class when using
-     * LM_CLASS mode
+     *             command line
+     * @param what the module name[/class], JAR file, or the main class
+     *             depending on the mode
+     *
      * @return the application's main class
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what)
-    {
+                                            String what) {
         initOutput(printToStderr);
 
-        // get the main class name
+        Class<?> mainClass;
+        if (mode == LM_MODULE) {
+            mainClass = loadModuleMainClass(what);
+        } else {
+            mainClass = loadMainClass(mode, what);
+        }
+
+        validateMainClass(mainClass);
+
+        // record main class if not already set
+        if (appClass == null)
+            appClass = mainClass;
+
+        return mainClass;
+    }
+
+    /**
+     * Returns the main class for a module. The query is either a module name
+     * or module-name/main-class. For the former then the module's main class
+     * is obtained from the module descriptor (MainClass attribute).
+     */
+    private static Class<?> loadModuleMainClass(String what) {
+        int i = what.indexOf('/');
+        String mainModule;
+        String mainClass;
+        if (i == -1) {
+            mainModule = what;
+            mainClass = null;
+        } else {
+            mainModule = what.substring(0, i);
+            mainClass = what.substring(i+1);
+        }
+
+        // main module is in the boot layer
+        Layer layer = Layer.boot();
+        Optional<Module> om = layer.findModule(mainModule);
+        if (!om.isPresent()) {
+            // should not happen
+            throw new InternalError("Module " + mainModule + " not in boot Layer");
+        }
+        Module m = om.get();
+
+        // get main class
+        if (mainClass == null) {
+            Optional<String> omc = m.getDescriptor().mainClass();
+            if (!omc.isPresent()) {
+                abort(null, "java.launcher.module.error1", mainModule);
+            }
+            mainClass = omc.get();
+        }
+
+        // load the class from the module
+        Class<?> c = Class.forName(m, mainClass);
+        if (c == null &&  System.getProperty("os.name", "").contains("OS X")
+                && Normalizer.isNormalized(mainClass, Normalizer.Form.NFD)) {
+
+            String cn = Normalizer.normalize(mainClass, Normalizer.Form.NFC);
+            c = Class.forName(m, cn);
+
+        }
+        if (c == null) {
+            abort(null, "java.launcher.cls.error6", mainClass, mainModule);
+        }
+
+        System.setProperty("jdk.module.main.class", c.getName());
+        return c;
+    }
+
+    /**
+     * Loads the main class from the class path (LM_CLASS or LM_JAR).
+     * If the main class extends FX Application then call on FXHelper to
+     * determine the main class to launch.
+     */
+    private static Class<?> loadMainClass(int mode, String what) {
+        // get the class name
         String cn = null;
         switch (mode) {
             case LM_CLASS:
@@ -558,28 +577,24 @@ public enum LauncherHelper {
             case LM_JAR:
                 cn = getMainClassFromJar(what);
                 break;
-            case LM_MODULE:
-                cn = getMainClassForModule(what);
-                break;
             default:
                 // should never happen
                 throw new InternalError("" + mode + ": Unknown launch mode");
         }
-
-        // load the main class
+        // set to mainClass
         cn = cn.replace('/', '.');
         Class<?> mainClass = null;
-        ClassLoader scloader = ClassLoader.getSystemClassLoader();
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
         try {
-            mainClass = scloader.loadClass(cn);
+            mainClass = scl.loadClass(cn);
         } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
             if (System.getProperty("os.name", "").contains("OS X")
-                && Normalizer.isNormalized(cn, Normalizer.Form.NFD)) {
+                    && Normalizer.isNormalized(cn, Normalizer.Form.NFD)) {
                 try {
                     // On Mac OS X since all names with diacretic symbols are given as decomposed it
                     // is possible that main class name comes incorrectly from the command line
                     // and we have to re-compose it
-                    mainClass = scloader.loadClass(Normalizer.normalize(cn, Normalizer.Form.NFC));
+                    mainClass = scl.loadClass(Normalizer.normalize(cn, Normalizer.Form.NFC));
                 } catch (NoClassDefFoundError | ClassNotFoundException cnfe1) {
                     abort(cnfe, "java.launcher.cls.error1", cn);
                 }
@@ -589,9 +604,6 @@ public enum LauncherHelper {
         }
 
         // record the main class
-        if (mode == LM_MODULE) {
-            System.setProperty("jdk.module.main.class", mainClass.getName());
-        }
         appClass = mainClass;
 
         /*
@@ -605,8 +617,6 @@ public enum LauncherHelper {
             FXHelper.setFXLaunchParameters(what, mode);
             return FXHelper.class;
         }
-
-        validateMainClass(mainClass);
         return mainClass;
     }
 
@@ -767,6 +777,9 @@ public enum LauncherHelper {
 
     static final class FXHelper {
 
+        private static final String JAVAFX_GRAPHICS_MODULE_NAME =
+                "javafx.graphics";
+
         private static final String JAVAFX_LAUNCHER_CLASS_NAME =
                 "com.sun.javafx.application.LauncherImpl";
 
@@ -799,10 +812,20 @@ public enum LauncherHelper {
          * issue with loading the FX runtime or with the launcher method.
          */
         private static void setFXLaunchParameters(String what, int mode) {
-            // Check for the FX launcher classes
+
+            // find the module with the FX launcher
+            Optional<Module> om = Layer.boot().findModule(JAVAFX_GRAPHICS_MODULE_NAME);
+            if (!om.isPresent()) {
+                abort(null, "java.launcher.cls.error5");
+            }
+
+            // load the FX launcher class
+            fxLauncherClass = Class.forName(om.get(), JAVAFX_LAUNCHER_CLASS_NAME);
+            if (fxLauncherClass == null) {
+                abort(null, "java.launcher.cls.error5");
+            }
+
             try {
-                fxLauncherClass = ClassLoader.getSystemClassLoader()
-                        .loadClass(JAVAFX_LAUNCHER_CLASS_NAME);
                 /*
                  * signature must be:
                  * public static void launchApplication(String launchName,
@@ -819,7 +842,7 @@ public enum LauncherHelper {
                 if (fxLauncherMethod.getReturnType() != java.lang.Void.TYPE) {
                     abort(null, "java.launcher.javafx.error1");
                 }
-            } catch (ClassNotFoundException | NoSuchMethodException ex) {
+            } catch (NoSuchMethodException ex) {
                 abort(ex, "java.launcher.cls.error5", ex);
             }
 
