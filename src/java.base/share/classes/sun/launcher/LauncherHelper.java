@@ -478,8 +478,6 @@ public enum LauncherHelper {
      * This method:
      * 1. Loads the main class from the module or class path
      * 2. Checks the public static void main method.
-     * 3. In the case of no main method and if the class extends FX Application,
-     *    then call on FXHelper to determine the main class to launch
      *
      * @param printToStderr if set, all output will be routed to stderr
      * @param mode LaunchMode as determined by the arguments passed on the
@@ -555,7 +553,7 @@ public enum LauncherHelper {
 
         }
         if (c == null) {
-            abort(null, "java.launcher.cls.error6", mainClass, mainModule);
+            abort(null, "java.launcher.module.error2", mainClass, mainModule);
         }
 
         System.setProperty("jdk.module.main.class", c.getName());
@@ -569,7 +567,7 @@ public enum LauncherHelper {
      */
     private static Class<?> loadMainClass(int mode, String what) {
         // get the class name
-        String cn = null;
+        String cn;
         switch (mode) {
             case LM_CLASS:
                 cn = what;
@@ -581,7 +579,8 @@ public enum LauncherHelper {
                 // should never happen
                 throw new InternalError("" + mode + ": Unknown launch mode");
         }
-        // set to mainClass
+
+        // load the main class
         cn = cn.replace('/', '.');
         Class<?> mainClass = null;
         ClassLoader scl = ClassLoader.getSystemClassLoader();
