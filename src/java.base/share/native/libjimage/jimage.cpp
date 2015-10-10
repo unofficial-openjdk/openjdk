@@ -142,9 +142,7 @@ extern "C" jlong JIMAGE_GetResource(JImageFile* image, JImageLocationRef locatio
     return size;
 }
 
-/* *   JImageLocationRef location = (*JImageFindResource)(image,
- *                                 "java.base", "9.0", "java/lang/String.class", &size);
-
+/*
  * JImageResourceIterator - Given an open image file (see JImageOpen), a visitor
  * function and a visitor argument, iterator through each of the image's resources.
  * The visitor function is called with the image file, the module name, the
