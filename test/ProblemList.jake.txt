@@ -7,9 +7,6 @@
 # 8134485
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
-# 8132737
-java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java	generic-all
-
 ############################################################################
 
 # jdk_security
