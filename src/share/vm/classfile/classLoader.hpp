@@ -207,8 +207,6 @@ class ClassLoader: AllStatic {
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_append_entry;
 
-  static ClassPathEntry* _last_append_entry;
-
   // Hash table used to keep track of loaded packages
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
@@ -223,6 +221,7 @@ class ClassLoader: AllStatic {
   static GrowableArray<char*>* _ext_modules_array;
 
   // Info used by CDS
+  CDS_ONLY(static ClassPathEntry* _last_append_entry;)
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
   // Hash function
@@ -373,6 +372,8 @@ class ClassLoader: AllStatic {
   static void* get_shared_paths_misc_info();
   static bool  check_shared_paths_misc_info(void* info, int size);
   static void  exit_with_path_failure(const char* error, const char* message);
+
+  static bool class_in_append_entries(const char* file_name, TRAPS);
 #endif
 
   static void  trace_class_path(const char* msg, const char* name = NULL);
