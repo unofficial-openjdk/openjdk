@@ -418,6 +418,10 @@ public final class Class<T> implements java.io.Serializable,
         Objects.requireNonNull(module);
         Objects.requireNonNull(name);
 
+        if (!module.isNamed()) {
+            throw new IllegalArgumentException(module.toString() + " is not a named module");
+        }
+
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -432,10 +436,10 @@ public final class Class<T> implements java.io.Serializable,
         } else {
             c = cl.loadLocalClassOrNull(name);
         }
-        if (c != null && c.getModule() != module) {
-            throw new InternalError(c.getName() + " not in " + module);
+        if (c != null && c.getModule() == module) {
+            return c;
         }
-        return c;
+        return null;
     }
 
     /**
