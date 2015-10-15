@@ -1211,7 +1211,7 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 bool ClassLoader::class_in_append_entries(const char* file_name, TRAPS) {
   ClassPathEntry* tmp_e = _first_append_entry;
   while ((tmp_e != NULL) && (tmp_e != _last_append_entry->next())) {
-    ClassFileStream* stream = tmp_e->open_stream(file_name, CHECK_NULL);
+    ClassFileStream* stream = tmp_e->open_stream(file_name, CHECK_false);
     if (stream != NULL) {
       return true;
     }
