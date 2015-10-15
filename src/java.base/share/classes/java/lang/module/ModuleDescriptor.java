@@ -534,16 +534,16 @@ public class ModuleDescriptor
         assert (rqs.stream().map(Requires::name).sorted().distinct().count()
                 == rqs.size())
             : "Module " + name + " has duplicate requires";
-        this.requires = Collections.unmodifiableSet(rqs);
+        this.requires = emptyOrUnmodifiableSet(rqs);
 
         Set<Exports> exs = new HashSet<>(exports.values());
         assert (exs.stream().map(Exports::source).sorted().distinct().count()
                 == exs.size())
             : "Module " + name + " has duplicate exports";
-        this.exports = Collections.unmodifiableSet(exs);
+        this.exports = emptyOrUnmodifiableSet(exs);
 
-        this.uses = Collections.unmodifiableSet(uses);
-        this.provides = Collections.unmodifiableMap(provides);
+        this.uses = emptyOrUnmodifiableSet(uses);
+        this.provides = emptyOrUnmodifiableMap(provides);
 
         this.version = Optional.ofNullable(version);
         this.mainClass = Optional.ofNullable(mainClass);
@@ -551,10 +551,10 @@ public class ModuleDescriptor
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
             : "Module " + name + ": Package sets overlap";
-        this.conceals = Collections.unmodifiableSet(conceals);
+        this.conceals = emptyOrUnmodifiableSet(conceals);
         Set<String> pkgs = new HashSet<>(conceals);
         pkgs.addAll(exports.keySet());
-        this.packages = Collections.unmodifiableSet(pkgs);
+        this.packages = emptyOrUnmodifiableSet(pkgs);
 
     }
 
@@ -578,8 +578,8 @@ public class ModuleDescriptor
         Set<String> conceals = new HashSet<>(pkgs);
         exports.stream().map(Exports::source).forEach(conceals::remove);
 
-        this.conceals = Collections.unmodifiableSet(conceals);
-        this.packages = Collections.unmodifiableSet(pkgs);
+        this.conceals = emptyOrUnmodifiableSet(conceals);
+        this.packages = emptyOrUnmodifiableSet(pkgs);
     }
 
 
@@ -1133,6 +1133,21 @@ public class ModuleDescriptor
         return ModuleInfo.read(bb, null);
     }
 
+    private static <K,V> Map<K,V> emptyOrUnmodifiableMap(Map<K,V> map) {
+        if (map.isEmpty()) {
+            return Collections.emptyMap();
+        } else {
+            return Collections.unmodifiableMap(map);
+        }
+    }
+
+    private static <T> Set<T> emptyOrUnmodifiableSet(Set<T> set) {
+        if (set.isEmpty()) {
+            return Collections.emptySet();
+        } else {
+            return Collections.unmodifiableSet(set);
+        }
+    }
 
     static {
         /**
