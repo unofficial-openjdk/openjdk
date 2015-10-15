@@ -32,6 +32,7 @@
  * @library /testlibrary /../../test/lib
  * @modules java.base/sun.misc
  *          java.management
+ *          jdk.jartool/sun.tools.jar
  * @build SharedStringsWb SharedStrings BasicJarBuilder sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  * @run main SharedStrings
