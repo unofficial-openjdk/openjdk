@@ -99,30 +99,32 @@ public class Reflection {
             String memberSuffix = "";
             Module m1 = currentClass.getModule();
             if (m1.isNamed())
-                currentSuffix = " (" + m1 + ")";
+                currentSuffix = " (in " + m1 + ")";
             Module m2 = memberClass.getModule();
             if (m2.isNamed())
-                memberSuffix = " (" + m2 + ")";
+                memberSuffix = " (in " + m2 + ")";
 
-            String msg = "Class " + currentClass.getName() +
-                    currentSuffix +
-                    " can not access a member of class " +
-                    memberClass.getName() + memberSuffix +
-                    " with modifiers \"" +
-                    Modifier.toString(modifiers) + "\"";
+            String memberPackageName = packageName(memberClass);
+            boolean canRead = m1.canRead(m2);
 
-            // Expand the message to help troubleshooting
-            if (!m1.canRead(m2)) {
-                msg += ", " + m1;
-                if (!m1.canRead(null))
-                    msg += " (strict module)";
-                msg += " does not read " + m2;
-            }
-            String pkg = packageName(memberClass);
-            if (!m2.isExported(pkg, m1)) {
-                msg += ", " + m2 + " does not export " + pkg;
-                if (m2.isNamed())
-                    msg += " to " + m1;
+            String msg = currentClass + currentSuffix + " cannot access ";
+            if (canRead && m2.isExported(memberPackageName, m1)) {
+
+                // module access okay so include the modifiers in the message
+                msg += "a member of " + memberClass + memberSuffix +
+                        " with modifiers \"" + Modifier.toString(modifiers) + "\"";
+
+            } else {
+
+                // module access failed
+                msg += memberClass + memberSuffix + " because ";
+                if (!canRead) {
+                    msg += m1 + " does not read " + m2;
+                } else {
+                    msg += m2 + " does not export package " + memberPackageName;
+                    if (m2.isNamed()) msg += " to " + m1;
+                }
+
             }
 
             throwIllegalAccessException(msg);
