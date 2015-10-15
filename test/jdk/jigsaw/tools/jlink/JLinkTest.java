@@ -68,6 +68,10 @@ public class JLinkTest {
         {
             // number of built-in plugins
             List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
+            for (PluginProvider p : builtInPluginsProviders) {
+                p.isExposed();
+                p.isFunctional();
+            }
             if (builtInPluginsProviders.size() != numPlugins) {
                 throw new AssertionError("Plugins not found: " + builtInPluginsProviders.size());
             }

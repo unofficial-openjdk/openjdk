@@ -222,7 +222,7 @@ class ProcessingManagerImpl implements ProcessingManager {
         String id = name.replaceAll(" ", "_") + System.currentTimeMillis();
         Path dirPath = tmp.resolve(id);
         Files.createDirectory(dirPath);
-        return new ProcessingSessionImpl(name, tmp);
+        return new ProcessingSessionImpl(name, dirPath);
     }
 
     @Override

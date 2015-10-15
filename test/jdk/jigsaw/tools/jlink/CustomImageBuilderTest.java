@@ -103,8 +103,9 @@ public class CustomImageBuilderTest {
                 .call();
         result.assertSuccess();
         String message = result.getMessage();
-        if (!message.contains("Image Builder Name: custom-image-builder\n" +
-                " --custom-image-option-1 custom-image-option-description")) {
+        if (!message.contains("Image Builder Name: custom-image-builder\n"
+                + "Functional state: Functional.\n"
+                + " --custom-image-option-1 custom-image-option-description")) {
             System.err.println(result.getMessage());
             throw new AssertionError("Custom image builder not found");
         }

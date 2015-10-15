@@ -27,6 +27,7 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
  * An abstract plugin provider class. A provider has a name, a description and
@@ -98,6 +99,36 @@ public abstract class PluginProvider {
 
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * An exposed provider wants to be advertised (e.g.: displayed in help).
+     *
+     * @return True, the provider is exposed, false the provider is hidden.
+     */
+    public boolean isExposed() {
+        return true;
+    }
+
+    /**
+     * Check if the provider can properly operate in the current context.
+     *
+     * @return true, the provider can operate
+     */
+    public boolean isFunctional() {
+        return true;
+    }
+
+    /**
+     * Return a message indicating the status of the provider.
+     *
+     * @param functional
+     * @return A status description.
+     */
+    public String getFunctionalStateDescription(boolean functional) {
+        return functional
+                ? PluginsResourceBundle.getMessage("main.status.ok")
+                : PluginsResourceBundle.getMessage("main.status.not.ok");
     }
 
     /**

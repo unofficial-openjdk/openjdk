@@ -241,6 +241,10 @@ public final class TaskHelper {
                         PluginOption option
                                 = new PluginOption(provider.getToolArgument() != null,
                                         (task, opt, arg) -> {
+                                            if (!prov.isFunctional()) {
+                                                throw newBadArgs("err.provider.not.functional",
+                                                        prov.getName());
+                                            }
                                             Map<String, String> m = plugins.get(prov);
                                             if (m == null) {
                                                 m = new HashMap<>();
@@ -275,14 +279,8 @@ public final class TaskHelper {
                         // On/Off enabled by default plugin
                         // Command line option can override it
                         boolean edefault = false;
-                        if (provider instanceof OnOffResourcePluginProvider) {
-                            edefault = ((OnOffResourcePluginProvider) provider).isEnabledByDefault();
-                        } else {
-                            if (provider instanceof OnOffImageFilePluginProvider) {
-                                edefault = ((OnOffImageFilePluginProvider) provider).isEnabledByDefault();
-                            } else if (provider instanceof OnOffImageFilePluginProvider) {
-                                edefault = ((OnOffPostProcessingPluginProvider) provider).isEnabledByDefault();
-                            }
+                        if (provider instanceof OnOffPluginProvider) {
+                            edefault = prov.isFunctional() && ((OnOffPluginProvider) provider).isEnabledByDefault();
                         }
                         if (edefault) {
                             Map<String, String> m = new HashMap<>();
@@ -617,7 +615,8 @@ public final class TaskHelper {
                             param = args[++i];
                         }
                         if (param == null || param.isEmpty()
-                                || param.charAt(0) == '-') {
+                                || (param.length() >= 2 && param.charAt(0) == '-'
+                                && param.charAt(1) == '-')) {
                             throw new BadArgs("err.missing.arg", name).
                                     showUsage(true);
                         }
@@ -677,6 +676,8 @@ public final class TaskHelper {
                             line.append(" ").append(provider.getToolArgument());
                         }
                         line.append("\n ").append(prov.getDescription());
+                        line.append("\n").append(bundleHelper.getMessage("main.plugin.state")).
+                                append(": ").append(prov.getFunctionalStateDescription(prov.isFunctional()));
                         if (provider.getAdditionalOptions() != null) {
                             line.append("\n").append(bundleHelper.
                                     getMessage("main.plugin.additional.options")).
@@ -694,9 +695,13 @@ public final class TaskHelper {
                 log.println(bundleHelper.getMessage("main.image.builders"));
                 for (ImageBuilderProvider prov
                         : ImagePluginProviderRepository.getImageBuilderProviders(getPluginsLayer())) {
-                    log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
-                            + ": " + prov.getName());
-                    logBuilderOptions(prov.getOptions());
+                    if (prov.isExposed()) {
+                        log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
+                                + ": " + prov.getName());
+                        log.println(bundleHelper.getMessage("main.plugin.state")
+                                + ": " + prov.getFunctionalStateDescription(prov.isFunctional()));
+                        logBuilderOptions(prov.getOptions());
+                    }
                 }
             }
         }
@@ -721,6 +726,8 @@ public final class TaskHelper {
                             + ": " + (fact.getToolArgument() == null
                                     ? bundleHelper.getMessage("main.plugin.no.value")
                                     : fact.getToolArgument()));
+                    log.println(bundleHelper.getMessage("main.plugin.state")
+                            + ": " + prov.getFunctionalStateDescription(prov.isFunctional()));
                     String additionalOptions = bundleHelper.getMessage("main.plugin.no.value");
                     if (fact.getAdditionalOptions() != null) {
                         StringBuilder builder = new StringBuilder();
@@ -742,11 +749,15 @@ public final class TaskHelper {
             if (showsImageBuilder) {
                 for (ImageBuilderProvider prov
                         : ImagePluginProviderRepository.getImageBuilderProviders(getPluginsLayer())) {
-                    log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
-                            + ": " + prov.getName());
-                    log.println(bundleHelper.getMessage("main.image.builder.description")
-                            + ": " + prov.getDescription());
-                    logBuilderOptions(prov.getOptions());
+                    if (prov.isExposed()) {
+                        log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
+                                + ": " + prov.getName());
+                        log.println(bundleHelper.getMessage("main.image.builder.description")
+                                + ": " + prov.getDescription());
+                        log.println(bundleHelper.getMessage("main.plugin.state")
+                                + ": " + prov.getFunctionalStateDescription(prov.isFunctional()));
+                        logBuilderOptions(prov.getOptions());
+                    }
                 }
             }
         }
@@ -894,7 +905,7 @@ public final class TaskHelper {
 
     // Display all plugins or resource only.
     private static boolean showsPlugin(PluginProvider prov, boolean showsImageBuilder) {
-        return (prov instanceof CmdPluginProvider && showsImageBuilder)
-                || (prov instanceof CmdResourcePluginProvider);
+        return prov.isExposed() && ((prov instanceof CmdPluginProvider && showsImageBuilder)
+                || (prov instanceof CmdResourcePluginProvider));
     }
 }

@@ -244,6 +244,9 @@ public final class ImagePluginConfiguration {
         List<String> seen = new ArrayList<>();
         for (StackedPluginConfiguration prop : allPlugins) {
             PluginProvider prov = providers.get(prop.getName());
+            if (!prov.isFunctional()) {
+                throw new Exception("Provider " + prov.getName() + " is not functional");
+            }
             if (seen.contains(prov.getName())) {
                 throw new Exception("Plugin " + prov.getName()
                         + " added more than once to stack ");
