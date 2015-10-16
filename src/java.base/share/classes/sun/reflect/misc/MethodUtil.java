@@ -26,6 +26,7 @@
 package sun.reflect.misc;
 
 import java.lang.reflect.Module;
+import java.io.EOFException;
 import java.security.AllPermission;
 import java.security.AccessController;
 import java.security.PermissionCollection;
@@ -43,7 +44,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import sun.misc.IOUtils;
 
 
 class Trampoline {

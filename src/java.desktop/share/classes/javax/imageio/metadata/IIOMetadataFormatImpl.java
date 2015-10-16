@@ -1235,7 +1235,7 @@ public abstract class IIOMetadataFormatImpl implements IIOMetadataFormat {
 
     // Standard format descriptor
 
-    private synchronized static void createStandardFormat() {
+    private static synchronized void createStandardFormat() {
         if (standardFormat == null) {
             standardFormat = new StandardMetadataFormat();
         }

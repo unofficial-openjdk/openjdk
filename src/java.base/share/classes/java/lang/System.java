@@ -57,6 +57,8 @@ import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.JavaLangAccess;;
+import jdk.internal.misc.SharedSecrets;;
 
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.Modules;
@@ -229,7 +231,7 @@ public final class System {
      public static Console console() {
          if (cons == null) {
              synchronized (System.class) {
-                 cons = sun.misc.SharedSecrets.getJavaIOAccess().console();
+                 cons = SharedSecrets.getJavaIOAccess().console();
              }
          }
          return cons;
@@ -1323,7 +1325,7 @@ public final class System {
 
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
-        sun.misc.SharedSecrets.setJavaLangAccess(new sun.misc.JavaLangAccess(){
+        SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
             public sun.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
