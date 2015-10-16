@@ -24,6 +24,7 @@
  */
 package org.omg.PortableServer;
 
+import com.sun.corba.se.impl.util.Modules;
 import org.omg.CORBA.ORB;
 import org.omg.PortableServer.portable.Delegate;
 
@@ -234,6 +235,7 @@ abstract public class Servant {
                 java.lang.reflect.Method meth =
                      delegate.getClass().getMethod("get_interface", argc);
                 Object[] argx = { this };
+                Modules.ensureReadable(meth.getDeclaringClass());
                 return (org.omg.CORBA.Object)meth.invoke(delegate, argx);
             } catch( java.lang.reflect.InvocationTargetException exs ) {
                 Throwable t = exs.getTargetException();
