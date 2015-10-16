@@ -87,6 +87,24 @@ public class ProtectionDomain {
                     return doIntersectionPrivilege(action,
                         AccessController.getContext(), context);
                 }
+
+                public <T> T doPrivileged(PrivilegedAction<T> action,
+                                          AccessControlContext context,
+                                          Permission... perms)
+                {
+                    return AccessController.doPrivileged(action, context,
+                                                         perms);
+                }
+
+                public <T> T doPrivileged(PrivilegedExceptionAction<T> action,
+                                          AccessControlContext context,
+                                          Permission... perms)
+                throws PrivilegedActionException
+                {
+                    return AccessController.doPrivileged(action, context,
+                                                         perms);
+                }
+
             }
        );
     }
