@@ -535,13 +535,17 @@ public class ToolBox {
         }
 
         /**
-         * Returns the content of a named stream as a list of lines.
-         * @param outputKind the kind of the selected stream
-         * @return the content that was written to that stream when the tool
+         * Returns the content of named streams as a list of lines.
+         * @param outputKinds the kinds of the selected streams
+         * @return the content that was written to the given streams when the tool
          *  was executed.
          */
-        public List<String> getOutputLines(OutputKind outputKind) {
-            return Arrays.asList(outputMap.get(outputKind).split(lineSeparator));
+        public List<String> getOutputLines(OutputKind... outputKinds) {
+            List<String> result = new ArrayList<>();
+            for (OutputKind outputKind : outputKinds) {
+                result.addAll(Arrays.asList(outputMap.get(outputKind).split(lineSeparator)));
+            }
+            return result;
         }
 
         /**
@@ -840,9 +844,9 @@ public class ToolBox {
      */
     public class JavacTask extends AbstractTask<JavacTask> {
         private boolean includeStandardOptions;
-        private String classpath;
-        private String sourcepath;
-        private String outdir;
+        private List<Path> classpath;
+        private List<Path> sourcepath;
+        private Path outdir;
         private List<String> options;
         private List<String> classes;
         private List<String> files;
@@ -870,7 +874,20 @@ public class ToolBox {
          * @return this task object
          */
         public JavacTask classpath(String classpath) {
-            this.classpath = classpath;
+            this.classpath = Stream.of(classpath.split(File.pathSeparator))
+                    .filter(s -> !s.isEmpty())
+                    .map(s -> Paths.get(s))
+                    .collect(Collectors.toList());
+            return this;
+        }
+
+        /**
+         * Sets the classpath.
+         * @param classpath the classpath
+         * @return this task object
+         */
+        public JavacTask classpath(Path... classpath) {
+            this.classpath = Arrays.asList(classpath);
             return this;
         }
 
@@ -880,7 +897,20 @@ public class ToolBox {
          * @return this task object
          */
         public JavacTask sourcepath(String sourcepath) {
-            this.sourcepath = sourcepath;
+            this.sourcepath = Stream.of(sourcepath.split(File.pathSeparator))
+                    .filter(s -> !s.isEmpty())
+                    .map(s -> Paths.get(s))
+                    .collect(Collectors.toList());
+            return this;
+        }
+
+        /**
+         * Sets the sourcepath.
+         * @param classpath the sourcepath
+         * @return this task object
+         */
+        public JavacTask sourcepath(Path... sourcepath) {
+            this.sourcepath = Arrays.asList(sourcepath);
             return this;
         }
 
@@ -890,6 +920,16 @@ public class ToolBox {
          * @return this task object
          */
         public JavacTask outdir(String outdir) {
+            this.outdir = Paths.get(outdir);
+            return this;
+        }
+
+        /**
+         * Sets the output directory.
+         * @param outdir the output directory
+         * @return this task object
+         */
+        public JavacTask outdir(Path outdir) {
             this.outdir = outdir;
             return this;
         }
@@ -1020,11 +1060,11 @@ public class ToolBox {
             if (fileManager == null)
                 fileManager = compiler.getStandardFileManager(null, null, null);
             if (outdir != null)
-                setLocation(StandardLocation.CLASS_OUTPUT, toFiles(outdir));
+                setLocationFromPaths(StandardLocation.CLASS_OUTPUT, Collections.singletonList(outdir));
             if (classpath != null)
-                setLocation(StandardLocation.CLASS_PATH, toFiles(classpath));
+                setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
             if (sourcepath != null)
-                setLocation(StandardLocation.SOURCE_PATH, toFiles(sourcepath));
+                setLocationFromPaths(StandardLocation.SOURCE_PATH, sourcepath);
             List<String> allOpts = new ArrayList<>();
             if (options != null)
                 allOpts.addAll(options);
@@ -1043,6 +1083,12 @@ public class ToolBox {
             if (!(fileManager instanceof StandardJavaFileManager))
                 throw new IllegalStateException("not a StandardJavaFileManager");
             ((StandardJavaFileManager) fileManager).setLocation(location, files);
+        }
+
+        private void setLocationFromPaths(StandardLocation location, List<Path> files) throws IOException {
+            if (!(fileManager instanceof StandardJavaFileManager))
+                throw new IllegalStateException("not a StandardJavaFileManager");
+            ((StandardJavaFileManager) fileManager).setLocationFromPaths(location, files);
         }
 
         private int runCommand(PrintWriter pw) {
@@ -1077,15 +1123,15 @@ public class ToolBox {
                 args.addAll(options);
             if (outdir != null) {
                 args.add("-d");
-                args.add(outdir);
+                args.add(outdir.toString());
             }
             if (classpath != null) {
                 args.add("-classpath");
-                args.add(classpath);
+                args.add(toSearchPath(classpath));
             }
             if (sourcepath != null) {
                 args.add("-sourcepath");
-                args.add(sourcepath);
+                args.add(toSearchPath(sourcepath));
             }
             if (classes != null)
                 args.addAll(classes);
@@ -1095,13 +1141,8 @@ public class ToolBox {
             return args;
         }
 
-        private List<File> toFiles(String path) {
-            List<File> result = new ArrayList<>();
-            for (String s : path.split(File.pathSeparator)) {
-                if (!s.isEmpty())
-                    result.add(new File(s));
-            }
-            return result;
+        private String toSearchPath(List<Path> files) {
+            return files.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
         }
 
         private Iterable<? extends JavaFileObject> joinFiles(
@@ -1336,6 +1377,15 @@ public class ToolBox {
         }
 
         /**
+         * Creates a JarTask for use with a given jar file.
+         * @param path the file
+         */
+        public JarTask(Path path) {
+            this();
+            jar = path;
+        }
+
+        /**
          * Sets a manifest for the jar file.
          * @param manifest the manifest
          * @return this task object
@@ -1385,6 +1435,16 @@ public class ToolBox {
          */
         public JarTask baseDir(String baseDir) {
             this.baseDir = Paths.get(baseDir);
+            return this;
+        }
+
+        /**
+         * Sets the base directory for files to be written into the jar file.
+         * @param baseDir the base directory
+         * @return this task object
+         */
+        public JarTask baseDir(Path baseDir) {
+            this.baseDir = baseDir;
             return this;
         }
 
@@ -1880,6 +1940,8 @@ public class ToolBox {
             return source;
         }
 
+        private static Pattern modulePattern =
+                Pattern.compile("module\\s+((?:\\w+\\.)*)");
         private static Pattern packagePattern =
                 Pattern.compile("package\\s+(((?:\\w+\\.)*)(?:\\w+))");
         private static Pattern classPattern =
@@ -1893,7 +1955,11 @@ public class ToolBox {
         static String getJavaFileNameFromSource(String source) {
             String packageName = null;
 
-            Matcher matcher = packagePattern.matcher(source);
+            Matcher matcher = modulePattern.matcher(source);
+            if (matcher.find())
+                return "module-info.java";
+
+            matcher = packagePattern.matcher(source);
             if (matcher.find())
                 packageName = matcher.group(1).replace(".", "/");
 

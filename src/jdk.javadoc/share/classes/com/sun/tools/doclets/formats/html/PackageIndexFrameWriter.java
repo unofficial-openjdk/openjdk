@@ -158,14 +158,14 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
     }
 
     /**
-     * Adds "All Profiles" link for the top of the left-hand frame page to the
+     * Adds "All Modules" link for the top of the left-hand frame page to the
      * documentation tree.
      *
-     * @param ul the Content object to which the "All Profiles" link should be added
+     * @param ul the Content object to which the "All Modules" link should be added
      */
-    protected void addAllProfilesLink(Content ul) {
-        Content linkContent = getHyperLink(DocPaths.PROFILE_OVERVIEW_FRAME,
-                allprofilesLabel, "", "packageListFrame");
+    protected void addAllModulesLink(Content ul) {
+        Content linkContent = getHyperLink(DocPaths.MODULE_OVERVIEW_FRAME,
+                allmodulesLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
     }
