@@ -262,6 +262,7 @@ class Arguments : AllStatic {
   static SystemProperty *_java_home;
   static SystemProperty *_java_class_path;
   static SystemProperty *_sun_boot_class_path;
+  static SystemProperty *_jdk_boot_class_path_append;
 
   // temporary: to emit warning if the default ext dirs are not empty.
   // remove this variable when the warning is no longer needed.
@@ -286,7 +287,7 @@ class Arguments : AllStatic {
   // Value of the conservative maximum heap alignment needed
   static size_t  _conservative_max_heap_alignment;
 
-  static uintx _min_heap_size;
+  static uintx  _min_heap_size;
 
   // -Xrun arguments
   static AgentLibraryList _libraryList;
@@ -310,6 +311,17 @@ class Arguments : AllStatic {
   static bool _java_compiler;
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
+
+  // Capture the index location of -Xbootclasspath\a within sysclasspath.
+  // Used when setting up the bootstrap search path in order to
+  // mark the boot loader's append path observability boundary.
+  static int _bootclassloader_append_index;
+
+  // -Xpatch flag
+  static char** _patch_dirs;
+  static int _patch_dirs_count;
+  static void set_patch_dirs(char** dirs) { _patch_dirs = dirs; }
+  static void set_patch_dirs_count(int count) { _patch_dirs_count = count; }
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -546,6 +558,18 @@ class Arguments : AllStatic {
   static size_t min_heap_size()             { return _min_heap_size; }
   static void  set_min_heap_size(size_t v)  { _min_heap_size = v;  }
 
+  // -Xbootclasspath/a
+  static int  bootclassloader_append_index() {
+    return _bootclassloader_append_index;
+  }
+  static void set_bootclassloader_append_index(int value) {
+    _bootclassloader_append_index = value;
+  }
+
+  // -Xpatch
+  static char** patch_dirs()             { return _patch_dirs; }
+  static int patch_dirs_count()          { return _patch_dirs_count; }
+
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
   static bool init_libraries_at_startup()   { return !_libraryList.is_empty(); }
@@ -602,8 +626,15 @@ class Arguments : AllStatic {
   static void set_java_home(const char *value) { _java_home->set_value(value); }
   static void set_library_path(const char *value) { _java_library_path->set_value(value); }
   static void set_ext_dirs(char *value)     { _ext_dirs = os::strdup_check_oom(value); }
-  static void set_sysclasspath(const char *value) { _sun_boot_class_path->set_value(value); }
-  static void append_sysclasspath(const char *value) { _sun_boot_class_path->append_value(value); }
+  static void set_jdkbootclasspath_append();
+  static void set_sysclasspath(const char *value) {
+    _sun_boot_class_path->set_value(value);
+    set_jdkbootclasspath_append();
+  }
+  static void append_sysclasspath(const char *value) {
+    _sun_boot_class_path->append_value(value);
+    set_jdkbootclasspath_append();
+  }
 
   static char* get_java_home() { return _java_home->value(); }
   static char* get_dll_dir() { return _sun_boot_library_path->value(); }
@@ -614,12 +645,14 @@ class Arguments : AllStatic {
 
 
   // Operation modi
-  static Mode mode()                { return _mode; }
+  static Mode mode()                        { return _mode; }
   static bool is_interpreter_only() { return mode() == _int; }
 
 
   // Utility: copies src into buf, replacing "%%" with "%" and "%p" with pid.
   static bool copy_expand_pid(const char* src, size_t srclen, char* buf, size_t buflen);
+
+  static void check_unsupported_dumping_properties() NOT_CDS_RETURN;
 };
 
 bool Arguments::gc_selected() {

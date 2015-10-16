@@ -27,9 +27,10 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management/sun.management
+ * @ignore 8133499
  * @build TestSummarizeRSetStatsTools TestSummarizeRSetStatsPerRegion
  * @summary Verify output of -XX:+G1SummarizeRSetStats in regards to per-region type output
- * @run main TestSummarizeRSetStatsPerRegion
+ * @run main/othervm TestSummarizeRSetStatsPerRegion
  */
 
 import jdk.test.lib.*;

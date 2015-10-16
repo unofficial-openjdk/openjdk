@@ -697,6 +697,21 @@ void MetaspaceShared::check_one_shared_class(Klass* k) {
   }
 }
 
+void MetaspaceShared::check_shared_class_loader_type(Klass* obj) {
+  InstanceKlass* ik = (InstanceKlass*)obj;
+  u2 loader_type = ik->loader_type();
+  if (loader_type == 0) {
+    tty->print_cr("Class loader type is not set for this class %s",
+      ik->name()->as_C_string());
+    exit(1);
+  }
+  if ((loader_type && !(loader_type & (loader_type - 1))) == 0) {
+    tty->print_cr("More than one loader type is set for this class %s",
+      ik->name()->as_C_string());
+    exit(1);
+  }
+}
+
 void MetaspaceShared::link_and_cleanup_shared_classes(TRAPS) {
   // We need to iterate because verification may cause additional classes
   // to be loaded.
@@ -728,6 +743,7 @@ void MetaspaceShared::link_and_cleanup_shared_classes(TRAPS) {
 }
 
 void MetaspaceShared::prepare_for_dumping() {
+  Arguments::check_unsupported_dumping_properties();
   ClassLoader::initialize_shared_path();
   FileMapInfo::allocate_classpath_entry_table();
 }
@@ -800,6 +816,8 @@ void MetaspaceShared::preload_and_dump(TRAPS) {
   if (PrintSharedSpaces) {
     tty->print_cr("Shared spaces: preloaded %d classes", class_count);
   }
+
+  SystemDictionary::classes_do(check_shared_class_loader_type);
 
   // Rewrite and link classes
   tty->print_cr("Rewriting and linking classes ...");
@@ -884,7 +902,7 @@ bool MetaspaceShared::try_link_class(InstanceKlass* ik, TRAPS) {
   assert(DumpSharedSpaces, "should only be called during dumping");
   if (ik->init_state() < InstanceKlass::linked) {
     bool saved = BytecodeVerificationLocal;
-    if (!SharedClassUtil::is_shared_boot_class(ik)) {
+    if (!(ik->is_shared_boot_class())) {
       // The verification decision is based on BytecodeVerificationRemote
       // for non-system classes. Since we are using the NULL classloader
       // to load non-system classes during dumping, we need to temporarily
