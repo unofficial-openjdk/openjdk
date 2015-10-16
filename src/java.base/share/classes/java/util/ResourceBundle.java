@@ -62,8 +62,8 @@ import java.util.jar.JarEntry;
 import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
 
-import sun.misc.JavaUtilResourceBundleAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaUtilResourceBundleAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;

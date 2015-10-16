@@ -34,7 +34,7 @@ import java.util.Enumeration;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * Find resources and packages in modules defined to the boot class loader or

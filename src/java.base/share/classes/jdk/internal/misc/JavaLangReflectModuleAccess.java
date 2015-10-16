@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.internal.misc;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
