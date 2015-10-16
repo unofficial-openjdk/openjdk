@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,6 +69,7 @@ import javax.xml.namespace.QName;
 
 import com.sun.istack.internal.FinalArrayList;
 import com.sun.xml.internal.bind.annotation.OverrideAnnotationOf;
+import com.sun.xml.internal.bind.v2.Modules;
 import com.sun.xml.internal.bind.v2.model.annotation.Locatable;
 import com.sun.xml.internal.bind.v2.model.annotation.MethodLocatable;
 import com.sun.xml.internal.bind.v2.model.core.ClassInfo;
@@ -1007,6 +1008,11 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     private void collectGetterSetters(C c, Map<String,M> getters, Map<String,M> setters) {
+        // at runtime, we work with instances of java.lang.Class
+        // whereas at tool time with javax.lang.model.element.TypeElement
+        if (c instanceof Class<?>) {
+            Modules.ensureReadable(ClassInfoImpl.class, (Class<?>) c);
+        }
         // take super classes into account if they have @XmlTransient.
         // always visit them first so that
         //   1) order is right

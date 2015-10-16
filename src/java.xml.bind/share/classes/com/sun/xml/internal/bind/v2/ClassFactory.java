@@ -122,7 +122,7 @@ public final class ClassFactory {
 
             m.put(clazz,new WeakReference<Constructor>(cons));
         }
-
+        Modules.ensureReadable(ClassFactory.class, clazz);
         return cons.newInstance(emptyObject);
     }
 
