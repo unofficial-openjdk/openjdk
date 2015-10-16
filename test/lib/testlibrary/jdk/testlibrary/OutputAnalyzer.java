@@ -145,7 +145,7 @@ public final class OutputAnalyzer {
      * @throws RuntimeException
      *             If the string was found
      */
-    public void shouldNotContain(String notExpectedString) {
+    public OutputAnalyzer shouldNotContain(String notExpectedString) {
         if (getStdout().contains(notExpectedString)) {
             reportDiagnosticSummary();
             throw new RuntimeException("'" + notExpectedString
@@ -156,6 +156,7 @@ public final class OutputAnalyzer {
             throw new RuntimeException("'" + notExpectedString
                     + "' found in stderr \n");
         }
+        return this;
     }
 
     /**

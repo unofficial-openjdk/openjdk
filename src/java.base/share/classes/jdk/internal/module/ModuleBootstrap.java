@@ -66,6 +66,10 @@ public final class ModuleBootstrap {
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
 
+    // the token for "all system modules"
+    private static final String ALL_SYSTEM = "ALL-SYSTEM";
+
+
     /**
      * Initialize the module system, returning the boot Layer.
      *
@@ -108,12 +112,17 @@ public final class ModuleBootstrap {
         String mainModule = System.getProperty("jdk.module.main");
 
         // additional module(s) specified by -addmods
-        Set<String> additionalMods = null;
+        boolean addAllSystemModules = false;
+        Set<String> addModules = null;
         String propValue = System.getProperty("jdk.launcher.addmods");
         if (propValue != null) {
-            additionalMods = new HashSet<>();
+            addModules = new HashSet<>();
             for (String mod: propValue.split(",")) {
-                additionalMods.add(mod);
+                if (mod.equals(ALL_SYSTEM)) {
+                    addAllSystemModules = true;
+                } else {
+                    addModules.add(mod);
+                }
             }
         }
 
@@ -127,26 +136,31 @@ public final class ModuleBootstrap {
             }
             if (mainModule != null)
                 mods.add(mainModule);
+            if (addModules != null)
+                mods.addAll(addModules);
             finder = limitFinder(finder, mods);
             limitmods = true;
         }
 
         // The root modules to resolve
         Set<String> roots = new HashSet<>();
-        if (mainModule != null) {
 
-            // main/initial module
+        // main/initial module
+        if (mainModule != null)
             roots.add(mainModule);
 
-        } else {
+        // If -addmods is specified then those modules need to be resolved
+        if (addModules != null)
+            roots.addAll(addModules);
 
-            // If there is no initial module specified then assume that the
-            // initial module is the unnamed module of the application class
-            // loader. By convention, and for compatibility, this is
-            // implemented by putting the names of all modules on the system
-            // module path into the set of modules to resolve. If the
-            // -limitmods option is specified then it may be a subset of the
-            // system module path.
+        // If there is no initial module specified then assume that the
+        // initial module is the unnamed module of the application class
+        // loader. By convention, and for compatibility, this is
+        // implemented by putting the names of all modules on the system
+        // module path into the set of modules to resolve. If the
+        // -limitmods option is specified then it may be a subset of the
+        // system module path.
+        if (mainModule == null || addAllSystemModules) {
             Set<ModuleReference> mrefs = systemModulePath.findAll();
             if (limitmods) {
                 ModuleFinder f = finder;
@@ -159,10 +173,6 @@ public final class ModuleBootstrap {
                 roots.add(mref.descriptor().name());
             }
         }
-
-        // If -addmods is specified then these module names must be resolved
-        if (additionalMods != null)
-            roots.addAll(additionalMods);
 
         long t1 = System.nanoTime();
 
