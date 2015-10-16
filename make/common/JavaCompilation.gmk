@@ -582,7 +582,7 @@ define SetupJavaCompilationBody
 
     $$($1_COMPILE_TARGETS): $$($1_SRCS) $$($1_DEPENDS) $$($1_VARDEPS_FILE)
 	$(MKDIR) -p $$(@D) $$(dir $$($1_SJAVAC_PORTFILE))
-	$$(call ListPathsSafely,$1_SRCS,\n, >> $$($1_COMPILE_TARGETS).tmp)
+        $$(eval $$(call ListPathsSafely,$1_SRCS, $$($1_COMPILE_TARGETS).tmp))
 	$(ECHO) Compiling $1
 	$(call LogFailures, $$($1_BIN)/_the.$$($1_SAFE_NAME)_batch.log, $$($1_SAFE_NAME), \
 	    $$($1_JVM) $$($1_SJAVAC) \
@@ -645,7 +645,7 @@ define SetupJavaCompilationBody
     $$($1_COMPILE_TARGETS): $$($1_SRCS) $$($1_DEPENDS) $$($1_VARDEPS_FILE)
 	$(MKDIR) -p $$(@D)
 	$(RM) $$($1_COMPILE_TARGETS) $$($1_COMPILE_TARGETS).tmp
-	$$(call ListPathsSafely,$1_SRCS,\n, >> $$($1_COMPILE_TARGETS).tmp)
+        $$(eval $$(call ListPathsSafely,$1_SRCS, $$($1_COMPILE_TARGETS).tmp))
 	$(ECHO) Compiling `$(WC) $$($1_COMPILE_TARGETS).tmp | $(TR) -s ' ' | $(CUT) -f 2 -d ' '` files for $1
 	$(call LogFailures, $$($1_BIN)/_the.$$($1_SAFE_NAME)_batch.log, $$($1_SAFE_NAME), \
 	    $$($1_JVM) $$($1_JAVAC) $$($1_FLAGS) \

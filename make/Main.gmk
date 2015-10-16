@@ -437,7 +437,7 @@ else
 
   $(GENDATA_TARGETS): interim-langtools buildtools-jdk
 
-  $(RMIC_TARGETS): interim-langtools interim-corba
+  $(RMIC_TARGETS): interim-langtools
 
   $(JAVA_TARGETS): interim-langtools
 
