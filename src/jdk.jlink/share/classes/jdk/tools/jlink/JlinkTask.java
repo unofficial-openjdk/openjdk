@@ -309,7 +309,7 @@ public class JlinkTask {
         ImageProvider imageProvider
                 = createImageProvider(config.getOutput(),
                         finder,
-                        checkAddMods(config.getModules(), config.getLimitmods()),
+                        checkAddMods(config.getModules()),
                         config.getLimitmods(),
                         genBOMContent(config, plugins), config.getByteOrder());
 
@@ -368,7 +368,7 @@ public class JlinkTask {
         createOutputDirectory(options.output);
         ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
         try {
-            options.addMods = checkAddMods(options.addMods, options.limitMods);
+            options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
             throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
                     .showUsage(true);
@@ -401,12 +401,9 @@ public class JlinkTask {
         Files.createDirectories(output);
     }
 
-    private static Set<String> checkAddMods(Set<String> addMods, Set<String> limitMods) {
+    private static Set<String> checkAddMods(Set<String> addMods) {
         if (addMods.isEmpty()) {
-            if (limitMods.isEmpty()) {
-                throw new IllegalArgumentException("empty modules and limitmodules");
-            }
-            addMods = limitMods;
+            throw new IllegalArgumentException("no modules to add");
         }
         return addMods;
     }
@@ -433,17 +430,13 @@ public class JlinkTask {
             ByteOrder order)
             throws IOException {
         if (addMods.isEmpty()) {
-            if (limitMods.isEmpty()) {
-                throw new IllegalArgumentException("empty modules and limitmods");
-            }
-            addMods = limitMods;
+            throw new IllegalArgumentException("empty modules and limitmods");
         }
         Configuration cf
                 = Configuration.resolve(finder,
                         Layer.empty(),
                         ModuleFinder.empty(),
                         addMods);
-        cf = cf.bind();
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
         return new ImageHelper(cf, mods, output, bom, order);
     }
