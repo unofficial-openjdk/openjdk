@@ -789,8 +789,6 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             showAppletLog(msg);
             repaint();
         }
-            this.getClass().getModule().addReads(appletClass.getModule());
-            applet = (Applet)appletClass.newInstance();
 
         // Determine the JDK level that the applet targets.
         // This is critical for enabling certain backward
