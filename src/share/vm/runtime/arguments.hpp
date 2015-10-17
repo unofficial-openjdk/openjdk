@@ -373,6 +373,9 @@ class Arguments : AllStatic {
   // System properties
   static bool add_property(const char* prop);
 
+  // Miscellaneous system property setter
+  static bool append_to_addmods_property(const char* module_name);
+
   // Aggressive optimization flags.
   static jint set_aggressive_opts_flags();
 
