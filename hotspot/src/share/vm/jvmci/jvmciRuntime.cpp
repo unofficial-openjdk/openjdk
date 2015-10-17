@@ -70,7 +70,7 @@ BasicType JVMCIRuntime::kindToBasicType(jchar ch) {
     case 'a': return T_OBJECT;
     case '-': return T_ILLEGAL;
     default:
-      fatal(err_msg("unexpected Kind: %c", ch));
+      fatal("unexpected Kind: %c", ch);
       break;
   }
   return T_ILLEGAL;
@@ -487,8 +487,10 @@ JRT_ENTRY(void, JVMCIRuntime::vm_error(JavaThread* thread, jlong where, jlong fo
     size_t detail_msg_length = strlen(buf) * 2;
     detail_msg = (char *) NEW_RESOURCE_ARRAY(u_char, detail_msg_length);
     jio_snprintf(detail_msg, detail_msg_length, buf, value);
+    report_vm_error(__FILE__, __LINE__, error_msg, "%s", detail_msg);
+  } else {
+    report_vm_error(__FILE__, __LINE__, error_msg);
   }
-  report_vm_error(__FILE__, __LINE__, error_msg, detail_msg);
 JRT_END
 
 JRT_LEAF(oopDesc*, JVMCIRuntime::load_and_clear_exception(JavaThread* thread))
@@ -538,7 +540,7 @@ JRT_LEAF(void, JVMCIRuntime::vm_message(jboolean vmError, jlong format, jlong v1
   const char *buf = (const char*) (address) format;
   if (vmError) {
     if (buf != NULL) {
-      fatal(err_msg(buf, v1, v2, v3));
+      fatal(buf, v1, v2, v3);
     } else {
       fatal("<anonymous error>");
     }

@@ -54,8 +54,6 @@
 #include "utilities/events.hpp"
 #include "utilities/xmlstream.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 #if INCLUDE_JVMCI
 #include "jvmci/jvmciRuntime.hpp"
 #include "jvmci/jvmciJavaClasses.hpp"
@@ -119,7 +117,7 @@ void Deoptimization::UnrollBlock::print() {
   tty->print_cr("  size_of_deoptimized_frame = %d", _size_of_deoptimized_frame);
   tty->print(   "  frame_sizes: ");
   for (int index = 0; index < number_of_frames(); index++) {
-    tty->print("%d ", frame_sizes()[index]);
+    tty->print(INTX_FORMAT " ", frame_sizes()[index]);
   }
   tty->cr();
 }
@@ -140,7 +138,7 @@ JRT_BLOCK_ENTRY(Deoptimization::UnrollBlock*, Deoptimization::fetch_unroll_info(
   // that can confuse an asynchronous stack walker. This counter is
   // decremented at the end of unpack_frames().
   if (TraceDeoptimization) {
-    tty->print_cr("Deoptimizing thread " INTPTR_FORMAT, thread);
+    tty->print_cr("Deoptimizing thread " INTPTR_FORMAT, p2i(thread));
   }
   thread->inc_in_deopt_handler();
 
@@ -219,7 +217,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
         assert(Universe::heap()->is_in_or_null(result), "must be heap pointer");
         if (TraceDeoptimization) {
           ttyLocker ttyl;
-          tty->print_cr("SAVED OOP RESULT " INTPTR_FORMAT " in thread " INTPTR_FORMAT, (void *)result, thread);
+          tty->print_cr("SAVED OOP RESULT " INTPTR_FORMAT " in thread " INTPTR_FORMAT, p2i(result), p2i(thread));
         }
       }
       if (objects != NULL) {
@@ -230,7 +228,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 #ifndef PRODUCT
         if (TraceDeoptimization) {
           ttyLocker ttyl;
-          tty->print_cr("REALLOC OBJECTS in thread " INTPTR_FORMAT, thread);
+          tty->print_cr("REALLOC OBJECTS in thread " INTPTR_FORMAT, p2i(thread));
           print_objects(objects, realloc_failures);
         }
 #endif
@@ -260,13 +258,13 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
               if (mi->eliminated()) {
                 if (first) {
                   first = false;
-                  tty->print_cr("RELOCK OBJECTS in thread " INTPTR_FORMAT, thread);
+                  tty->print_cr("RELOCK OBJECTS in thread " INTPTR_FORMAT, p2i(thread));
                 }
                 if (mi->owner_is_scalar_replaced()) {
                   Klass* k = java_lang_Class::as_Klass(mi->owner_klass());
                   tty->print_cr("     failed reallocation for klass %s", k->external_name());
                 } else {
-                  tty->print_cr("     object <" INTPTR_FORMAT "> locked", (void *)mi->owner());
+                  tty->print_cr("     object <" INTPTR_FORMAT "> locked", p2i(mi->owner()));
                 }
               }
             }
@@ -340,7 +338,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
          cb->is_uncommon_trap_stub() ||
          strcmp("Stub<DeoptimizationStub.deoptimizationHandler>", cb->name()) == 0 ||
          strcmp("Stub<UncommonTrapStub.uncommonTrapHandler>", cb->name()) == 0,
-         err_msg("unexpected code blob: %s", cb->name()));
+         "unexpected code blob: %s", cb->name());
 #endif
 #else
   intptr_t* unpack_sp = stub_frame.sender(&dummy_map).unextended_sp();
@@ -572,11 +570,12 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
 #ifndef PRODUCT
   if (TraceDeoptimization) {
     ttyLocker ttyl;
-    tty->print_cr("DEOPT UNPACKING thread " INTPTR_FORMAT " vframeArray " INTPTR_FORMAT " mode %d", thread, array, exec_mode);
+    tty->print_cr("DEOPT UNPACKING thread " INTPTR_FORMAT " vframeArray " INTPTR_FORMAT " mode %d",
+                  p2i(thread), p2i(array), exec_mode);
   }
 #endif
   Events::log(thread, "DEOPT UNPACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT " mode %d",
-              stub_frame.pc(), stub_frame.sp(), exec_mode);
+              p2i(stub_frame.pc()), p2i(stub_frame.sp()), exec_mode);
 
   UnrollBlock* info = array->unroll_block();
 
@@ -712,7 +711,7 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
         tty->print_cr("  top_frame_expression_stack_adjustment = %d", top_frame_expression_stack_adjustment);
         tty->print_cr("  exec_mode = %d", exec_mode);
         tty->print_cr("  cur_invoke_parameter_size = %d", cur_invoke_parameter_size);
-        tty->print_cr("  Thread = " INTPTR_FORMAT ", thread ID = " UINTX_FORMAT, thread, thread->osthread()->thread_id());
+        tty->print_cr("  Thread = " INTPTR_FORMAT ", thread ID = %d", p2i(thread), thread->osthread()->thread_id());
         tty->print_cr("  Interpreted frames:");
         for (int k = 0; k < cur_array->frames(); k++) {
           vframeArrayElement* el = cur_array->element(k);
@@ -1062,7 +1061,7 @@ void Deoptimization::print_objects(GrowableArray<ScopeValue*>* objects, bool rea
     KlassHandle k(java_lang_Class::as_Klass(sv->klass()->as_ConstantOopReadValue()->value()()));
     Handle obj = sv->value();
 
-    tty->print("     object <" INTPTR_FORMAT "> of type ", (void *)sv->value()());
+    tty->print("     object <" INTPTR_FORMAT "> of type ", p2i(sv->value()()));
     k->print_value();
     assert(obj.not_null() || realloc_failures, "reallocation was missed");
     if (obj.is_null()) {
@@ -1081,12 +1080,12 @@ void Deoptimization::print_objects(GrowableArray<ScopeValue*>* objects, bool rea
 #endif // COMPILER2 || INCLUDE_JVMCI
 
 vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk, bool realloc_failures) {
-  Events::log(thread, "DEOPT PACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT, fr.pc(), fr.sp());
+  Events::log(thread, "DEOPT PACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT, p2i(fr.pc()), p2i(fr.sp()));
 
 #ifndef PRODUCT
   if (PrintDeoptimizationDetails) {
     ttyLocker ttyl;
-    tty->print("DEOPT PACKING thread " INTPTR_FORMAT " ", thread);
+    tty->print("DEOPT PACKING thread " INTPTR_FORMAT " ", p2i(thread));
     fr.print_on(tty);
     tty->print_cr("     Virtual frames (innermost first):");
     for (int index = 0; index < chunk->length(); index++) {
@@ -1131,7 +1130,7 @@ vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, Re
 #ifndef PRODUCT
   if (PrintDeoptimizationDetails) {
     ttyLocker ttyl;
-    tty->print_cr("     Created vframeArray " INTPTR_FORMAT, array);
+    tty->print_cr("     Created vframeArray " INTPTR_FORMAT, p2i(array));
   }
 #endif // PRODUCT
 
@@ -1256,7 +1255,7 @@ void Deoptimization::deoptimize_single_frame(JavaThread* thread, frame fr, Deopt
     assert(nm != NULL, "only compiled methods can deopt");
 
     ttyLocker ttyl;
-    xtty->begin_head("deoptimized thread='" UINTX_FORMAT "'", thread->osthread()->thread_id());
+    xtty->begin_head("deoptimized thread='" UINTX_FORMAT "'", (uintx)thread->osthread()->thread_id());
     nm->log_identity(xtty);
     xtty->end_head();
     for (ScopeDesc* sd = nm->scope_desc_at(fr.pc()); ; sd = sd->sender()) {
@@ -1422,7 +1421,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
 
   // Log a message
   Events::log(thread, "Uncommon trap: trap_request=" PTR32_FORMAT " fr.pc=" INTPTR_FORMAT " relative=" INTPTR_FORMAT,
-              trap_request, fr.pc(), fr.pc() - fr.cb()->code_begin());
+              trap_request, p2i(fr.pc()), fr.pc() - fr.cb()->code_begin());
 
   {
     ResourceMark rm;
@@ -1446,7 +1445,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
 
     if (TraceDeoptimization) {
       ttyLocker ttyl;
-      tty->print_cr("  bci=%d pc=" INTPTR_FORMAT ", relative_pc=%d, method=%s" JVMCI_ONLY(", debug_id=%d"), trap_scope->bci(), fr.pc(), fr.pc() - nm->code_begin(), trap_scope->method()->name_and_sig_as_C_string()
+      tty->print_cr("  bci=%d pc=" INTPTR_FORMAT ", relative_pc=" INTPTR_FORMAT ", method=%s" JVMCI_ONLY(", debug_id=%d"), trap_scope->bci(), p2i(fr.pc()), fr.pc() - nm->code_begin(), trap_scope->method()->name_and_sig_as_C_string()
 #if INCLUDE_JVMCI
           , debug_id
 #endif
@@ -1531,7 +1530,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
 
     // Log a message
     Events::log_deopt_message(thread, "Uncommon trap: reason=%s action=%s pc=" INTPTR_FORMAT " method=%s @ %d",
-                              trap_reason_name(reason), trap_action_name(action), fr.pc(),
+                              trap_reason_name(reason), trap_action_name(action), p2i(fr.pc()),
                               trap_method->name_and_sig_as_C_string(), trap_bci);
 
     // Print a bunch of diagnostics, if requested.
@@ -1603,7 +1602,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
         }
 #endif
         tty->print(" (@" INTPTR_FORMAT ") thread=" UINTX_FORMAT " reason=%s action=%s unloaded_class_index=%d" JVMCI_ONLY(" debug_id=%d"),
-                   fr.pc(),
+                   p2i(fr.pc()),
                    os::current_thread_id(),
                    trap_reason_name(reason),
                    trap_action_name(action),

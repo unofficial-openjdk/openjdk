@@ -146,20 +146,20 @@ static void record_metadata_reference(oop obj, jlong prim, jboolean compressed, 
   if (obj->is_a(HotSpotResolvedObjectTypeImpl::klass())) {
     Klass* klass = java_lang_Class::as_Klass(HotSpotResolvedObjectTypeImpl::javaClass(obj));
     if (compressed) {
-      assert(Klass::decode_klass((narrowKlass) prim) == klass, err_msg("%s @ " INTPTR_FORMAT " != " PTR64_FORMAT, klass->name()->as_C_string(), p2i(klass), prim));
+      assert(Klass::decode_klass((narrowKlass) prim) == klass, "%s @ " INTPTR_FORMAT " != " PTR64_FORMAT, klass->name()->as_C_string(), p2i(klass), prim);
     } else {
-      assert((Klass*) prim == klass, err_msg("%s @ " INTPTR_FORMAT " != " PTR64_FORMAT, klass->name()->as_C_string(), p2i(klass), prim));
+      assert((Klass*) prim == klass, "%s @ " INTPTR_FORMAT " != " PTR64_FORMAT, klass->name()->as_C_string(), p2i(klass), prim);
     }
     int index = oop_recorder->find_index(klass);
     TRACE_jvmci_3("metadata[%d of %d] = %s", index, oop_recorder->metadata_count(), klass->name()->as_C_string());
   } else if (obj->is_a(HotSpotResolvedJavaMethodImpl::klass())) {
     Method* method = (Method*) (address) HotSpotResolvedJavaMethodImpl::metaspaceMethod(obj);
-    assert(!compressed, err_msg("unexpected compressed method pointer %s @ " INTPTR_FORMAT " = " PTR64_FORMAT, method->name()->as_C_string(), p2i(method), prim));
+    assert(!compressed, "unexpected compressed method pointer %s @ " INTPTR_FORMAT " = " PTR64_FORMAT, method->name()->as_C_string(), p2i(method), prim);
     int index = oop_recorder->find_index(method);
     TRACE_jvmci_3("metadata[%d of %d] = %s", index, oop_recorder->metadata_count(), method->name()->as_C_string());
   } else {
     assert(java_lang_String::is_instance(obj),
-        err_msg("unexpected metadata reference (%s) for constant " JLONG_FORMAT " (" PTR64_FORMAT ")", obj->klass()->name()->as_C_string(), prim, prim));
+        "unexpected metadata reference (%s) for constant " JLONG_FORMAT " (" PTR64_FORMAT ")", obj->klass()->name()->as_C_string(), prim, prim);
   }
 }
 
@@ -499,7 +499,7 @@ JVMCIEnv::CodeInstallResult CodeInstaller::install(JVMCICompiler* compiler, Hand
 
   if (cb != NULL) {
     // Make sure the pre-calculated constants section size was correct.
-    guarantee((cb->code_begin() - cb->content_begin()) >= _constants_size, err_msg("%d < %d", (int)(cb->code_begin() - cb->content_begin()), _constants_size));
+    guarantee((cb->code_begin() - cb->content_begin()) >= _constants_size, "%d < %d", (int)(cb->code_begin() - cb->content_begin()), _constants_size);
   }
   return result;
 }
@@ -604,7 +604,7 @@ JVMCIEnv::CodeInstallResult CodeInstaller::initialize_buffer(CodeBuffer& buffer)
   for (int i = 0; i < data_section_patches()->length(); i++) {
     Handle patch = data_section_patches()->obj_at(i);
     Handle reference = CompilationResult_DataPatch::reference(patch);
-    assert(reference->is_a(CompilationResult_ConstantReference::klass()), err_msg("patch in data section must be a ConstantReference"));
+    assert(reference->is_a(CompilationResult_ConstantReference::klass()), "patch in data section must be a ConstantReference");
     Handle constant = CompilationResult_ConstantReference::constant(reference);
     if (constant->is_a(HotSpotMetaspaceConstantImpl::klass())) {
       record_metadata_in_patch(constant, _oop_recorder);
@@ -968,7 +968,7 @@ void CodeInstaller::site_DataPatch(CodeBuffer& buffer, jint pc_offset, oop site)
     }
   } else if (reference->is_a(CompilationResult_DataSectionReference::klass())) {
     int data_offset = CompilationResult_DataSectionReference::offset(reference);
-    assert(0 <= data_offset && data_offset < _constants_size, err_msg("data offset 0x%X points outside data section (size 0x%X)", data_offset, _constants_size));
+    assert(0 <= data_offset && data_offset < _constants_size, "data offset 0x%X points outside data section (size 0x%X)", data_offset, _constants_size);
     pd_patch_DataSectionReference(pc_offset, data_offset);
   } else {
     fatal("unknown data patch type");

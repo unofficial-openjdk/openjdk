@@ -52,6 +52,14 @@ public class TestOptionsWithRanges {
         allOptionsAsMap.remove("CICompilerCount");
 
         /*
+         * Exclude below options as their maximum value would consume too much memory
+         * and would affect other tests that run in parallel.
+         */
+        allOptionsAsMap.remove("G1ConcRefinementThreads");
+        allOptionsAsMap.remove("G1RSetRegionEntries");
+        allOptionsAsMap.remove("G1RSetSparseRegionEntries");
+
+        /*
          * Remove parameters controlling the code cache. As these
          * parameters have implications on the physical memory
          * reserved by the VM, setting them to large values may hang

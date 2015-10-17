@@ -57,8 +57,6 @@
 
 #define BIND(label) bind(label); BLOCK_COMMENT(#label ":")
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 #ifdef ASSERT
 bool AbstractAssembler::pd_check_instruction_mark() { return true; }
 #endif
@@ -418,7 +416,7 @@ void MacroAssembler::debug32(int rdi, int rsi, int rbp, int rsp, int rbx, int rd
     ::tty->print_cr("=============== DEBUG MESSAGE: %s ================\n", msg);
   }
   // Don't assert holding the ttyLock
-    assert(false, err_msg("DEBUG MESSAGE: %s", msg));
+    assert(false, "DEBUG MESSAGE: %s", msg);
   ThreadStateTransition::transition(thread, _thread_in_vm, saved_state);
 }
 
@@ -884,7 +882,7 @@ void MacroAssembler::debug64(char* msg, int64_t pc, int64_t regs[]) {
     ttyLocker ttyl;
     ::tty->print_cr("=============== DEBUG MESSAGE: %s ================\n",
                     msg);
-    assert(false, err_msg("DEBUG MESSAGE: %s", msg));
+    assert(false, "DEBUG MESSAGE: %s", msg);
   }
 }
 
