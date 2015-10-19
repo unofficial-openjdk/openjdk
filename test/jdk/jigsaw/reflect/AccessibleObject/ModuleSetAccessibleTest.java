@@ -215,4 +215,31 @@ public class ModuleSetAccessibleTest {
 
     }
 
+
+    /**
+     * Test that the Class constructor cannot be make accessible.
+     */
+    public void testJavaLangClass() throws Exception {
+
+        // non-public constructor
+        Constructor<?> ctor
+            = Class.class.getDeclaredConstructor(ClassLoader.class, Class.class);
+        AccessibleObject[] ctors = { ctor };
+
+        try {
+            ctor.setAccessible(true);
+            assertTrue(false);
+        } catch (SecurityException expected) { }
+
+        try {
+            AccessibleObject.setAccessible(ctors, true);
+            assertTrue(false);
+        } catch (SecurityException expected) { }
+
+        // should succeed
+        ctor.setAccessible(false);
+        AccessibleObject.setAccessible(ctors, false);
+
+    }
+
 }

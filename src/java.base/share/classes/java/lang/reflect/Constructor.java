@@ -165,11 +165,6 @@ public final class Constructor<T> extends Executable {
         AccessibleObject.checkPermission();
         if (flag) {
             checkCanSetAccessible(Reflection.getCallerClass());
-            if (clazz == Class.class) {
-                // can we change this to InaccessibleObjectException?
-                throw new SecurityException("Cannot make a java.lang.Class"
-                                            + " constructor accessible");
-            }
         }
         setAccessible0(flag);
     }
@@ -177,6 +172,11 @@ public final class Constructor<T> extends Executable {
     @Override
     void checkCanSetAccessible(Class<?> caller) {
         checkCanSetAccessible(caller, clazz);
+        if (clazz == Class.class) {
+            // can we change this to InaccessibleObjectException?
+            throw new SecurityException("Cannot make a java.lang.Class"
+                                        + " constructor accessible");
+        }
     }
 
     @Override
