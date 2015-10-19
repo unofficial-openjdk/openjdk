@@ -1325,6 +1325,28 @@ bool Arguments::add_property(const char* prop) {
   return true;
 }
 
+// sets or adds a module name to the jdk.launcher.addmods property
+bool Arguments::append_to_addmods_property(const char* module_name) {
+  const char* key = "jdk.launcher.addmods";
+  const char* old_value = Arguments::get_property(key);
+  size_t buf_len = strlen(key) + strlen(module_name) + 2;
+  if (old_value != NULL) {
+    buf_len += strlen(old_value) + 1;
+  }
+  char* new_value = AllocateHeap(buf_len, mtInternal);
+  if (new_value == NULL) {
+    return false;
+  }
+  if (old_value == NULL) {
+    jio_snprintf(new_value, buf_len, "%s=%s", key, module_name);
+  } else {
+    jio_snprintf(new_value, buf_len, "%s=%s,%s", key, old_value, module_name);
+  }
+  bool added = add_property(new_value);
+  FreeHeap(new_value);
+  return added;
+}
+
 #if INCLUDE_CDS
 void Arguments::check_unsupported_dumping_properties() {
   assert(DumpSharedSpaces, "this function is only used with -Xshare:dump");
@@ -2863,9 +2885,14 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         "Instrumentation agents are not supported in this VM\n");
       return JNI_ERR;
 #else
-      if(tail != NULL) {
+      if (tail != NULL) {
         char *options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(tail) + 1, mtInternal), tail);
         add_init_agent("instrument", options, false);
+        // java agents need module java.instrument. Also -addmods ALL-SYSTEM because
+        // the java agent is in the unmamed module of the application class loader
+        if (!Arguments::append_to_addmods_property("java.instrument,ALL-SYSTEM")) {
+          return JNI_ENOMEM;
+        }
       }
 #endif // !INCLUDE_JVMTI
     // -Xnoclassgc
@@ -3134,6 +3161,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 #if INCLUDE_MANAGEMENT
         if (FLAG_SET_CMDLINE(bool, ManagementServer, true) != Flag::SUCCESS) {
           return JNI_EINVAL;
+        }
+        // management agent in module java.management
+        if (!Arguments::append_to_addmods_property("java.management")) {
+          return JNI_ENOMEM;
         }
 #else
         jio_fprintf(defaultStream::output_stream(),
