@@ -71,6 +71,9 @@ buildtools-langtools:
 interim-langtools:
 	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterim.gmk)
 
+interim-rmic:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
+
 interim-cldrconverter:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
 
@@ -78,7 +81,7 @@ buildtools-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk java-tools)
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
-    interim-cldrconverter buildtools-jdk
+    interim-rmic interim-cldrconverter buildtools-jdk
 
 ################################################################################
 # Special targets for certain modules
@@ -437,7 +440,9 @@ else
 
   $(GENDATA_TARGETS): interim-langtools buildtools-jdk
 
-  $(RMIC_TARGETS): interim-langtools
+  interim-rmic: interim-langtools
+
+  $(RMIC_TARGETS): interim-langtools interim-rmic
 
   $(JAVA_TARGETS): interim-langtools
 
@@ -568,7 +573,8 @@ endif
 ################################################################################
 # Virtual targets without recipes
 
-buildtools: buildtools-langtools interim-langtools buildtools-jdk
+buildtools: buildtools-langtools interim-langtools interim-rmic \
+    buildtools-jdk
 
 gensrc: $(GENSRC_TARGETS)
 
