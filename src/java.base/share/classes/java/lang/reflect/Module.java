@@ -107,18 +107,15 @@ public final class Module {
         this.loader = loader;
         this.descriptor = descriptor;
 
-        Set<String> packages = descriptor.packages();
-        this.packages = packages;
-
         // define module to VM
 
+        Set<String> packages = descriptor.packages();
         int n = packages.size();
         String[] array = new String[n];
         int i = 0;
         for (String pn : packages) {
             array[i++] = pn.replace('.', '/');
         }
-
         Version version = descriptor.version().orElse(null);
         String vs = Objects.toString(version, "");
         String loc = Objects.toString(uri, null);
@@ -153,7 +150,6 @@ public final class Module {
         this.name = descriptor.name();
         this.loader = loader;
         this.descriptor = descriptor;
-        this.packages = descriptor.packages();
     }
 
 
@@ -589,9 +585,9 @@ public final class Module {
         if (!isNamed())
             return;
 
-        if (!packages.contains(pn)) {
-            throw new IllegalArgumentException("exported package " + pn +
-                " not in contents");
+        if (!containsPackage(pn)) {
+            throw new IllegalArgumentException("package " + pn
+                                               + " not in contents");
         }
 
         synchronized (this) {
@@ -732,9 +728,19 @@ public final class Module {
 
     // -- packages --
 
-    // The set of packages in the module if this is a named module.
+    // Additional packages that are added to the module at run-time.
     // The field is volatile as it may be replaced at run-time
-    private volatile Set<String> packages;
+    private volatile Set<String> extraPackages;
+
+    private boolean containsPackage(String pn) {
+        if (descriptor.packages().contains(pn))
+            return true;
+        Set<String> extraPackages = this.extraPackages;
+        if (extraPackages != null && extraPackages.contains(pn))
+            return true;
+        return false;
+    }
+
 
     /**
      * Returns an array of the package names of the packages in this module.
@@ -757,7 +763,17 @@ public final class Module {
      */
     public String[] getPackages() {
         if (isNamed()) {
-            return packages.toArray(new String[0]);
+
+            Set<String> packages = descriptor.packages();
+            Set<String> extraPackages = this.extraPackages;
+            if (extraPackages == null) {
+                return packages.toArray(new String[0]);
+            } else {
+                return Stream.concat(packages.stream(),
+                                     extraPackages.stream())
+                        .toArray(String[]::new);
+            }
+
         } else {
             // unnamed module
             Stream<Package> packages;
@@ -802,11 +818,24 @@ public final class Module {
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
         synchronized (this) {
-            // copy set
-            Set<String> pns = new HashSet<>(this.packages);
-            if (!pns.add(pn)) {
-                // already has this package
+
+            if (descriptor.packages().contains(pn)) {
+                // already in module
                 return;
+            }
+
+            Set<String> extraPackages = this.extraPackages;
+            if (extraPackages != null) {
+                if (extraPackages.contains(pn)) {
+                    // already added
+                    return;
+                }
+
+                // copy the set
+                extraPackages = new HashSet<>(extraPackages);
+                extraPackages.add(pn);
+            } else {
+                extraPackages = Collections.singleton(pn);
             }
 
             // update VM first, just in case it fails
@@ -814,7 +843,7 @@ public final class Module {
                 addPackage0(this, pn.replace('.', '/'));
 
             // replace with new set
-            this.packages = pns; // volatile write
+            this.extraPackages = extraPackages; // volatile write
         }
     }
 
