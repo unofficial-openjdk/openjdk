@@ -48,10 +48,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.BuiltinClassLoader;
-import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
-import sun.misc.JavaLangReflectModuleAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangReflectModuleAccess;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ServicesCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;

@@ -56,8 +56,8 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.spi.ResourceBundleProvider;
-import sun.misc.JavaUtilResourceBundleAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaUtilResourceBundleAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.util.locale.provider.ResourceBundleProviderSupport;
 
 

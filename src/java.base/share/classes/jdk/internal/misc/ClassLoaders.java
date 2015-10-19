@@ -38,9 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.Manifest;
 
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangAccess;
 import sun.misc.URLClassPath;
-import sun.misc.SharedSecrets;
-import sun.misc.JavaLangAccess;
 
 
 /**

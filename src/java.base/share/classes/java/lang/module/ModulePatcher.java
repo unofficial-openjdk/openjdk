@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import sun.misc.JavaLangAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * Provides support for patching modules in the boot layer with -Xpatch.

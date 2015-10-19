@@ -1155,8 +1155,8 @@ public class ModuleDescriptor
          * module is an automatic module. If isAutomatic becomes part of the
          * API then this setup can go away.
          */
-        sun.misc.SharedSecrets
-            .setJavaLangModuleAccess(new sun.misc.JavaLangModuleAccess() {
+        jdk.internal.misc.SharedSecrets
+            .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
                 @Override
                 public boolean isAutomatic(ModuleDescriptor descriptor) {
                     return descriptor.isAutomatic();

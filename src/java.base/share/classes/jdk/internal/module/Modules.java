@@ -32,8 +32,8 @@ import java.util.Set;
 
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.ClassLoaders;
-import sun.misc.JavaLangReflectModuleAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangReflectModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 
 
 /**

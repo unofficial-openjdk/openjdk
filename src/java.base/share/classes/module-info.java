@@ -154,6 +154,13 @@ module java.base {
         jdk.jartool,
         jdk.jlink,
         jdk.scripting.nashorn;
+    exports jdk.internal.misc to
+        java.corba,
+        java.desktop,
+        java.logging,
+        java.management,
+        java.naming,
+        java.sql;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;
