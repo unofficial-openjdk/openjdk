@@ -55,7 +55,7 @@ public class KrbAsReq extends KrbKdcReq {
     private boolean PA_ENC_TIMESTAMP_REQUIRED = false;
     private boolean pa_exists = false;
     private int pa_etype = 0;
-    private byte[] pa_salt = null;
+    private String pa_salt = null;
     private byte[] pa_s2kparams = null;
 
     // default is address-less tickets
@@ -87,7 +87,7 @@ public class KrbAsReq extends KrbKdcReq {
      * with pre-authentication values
      */
     KrbAsReq(PrincipalName principal, EncryptionKey[] keys,
-        boolean pa_exists, int etype, byte[] salt, byte[] s2kparams)
+        boolean pa_exists, int etype, String salt, byte[] s2kparams)
         throws KrbException, IOException {
         this(keys, // for pre-authentication
              pa_exists, etype, salt, s2kparams, // pre-auth values
@@ -111,7 +111,7 @@ public class KrbAsReq extends KrbKdcReq {
      }
 
     // update with pre-auth info
-    public void updatePA(int etype, byte[] salt, byte[] params, PrincipalName name) {
+    public void updatePA(int etype, String salt, byte[] params, PrincipalName name) {
         // set the pre-auth values
         pa_exists = true;
         pa_etype = etype;
@@ -119,9 +119,8 @@ public class KrbAsReq extends KrbKdcReq {
         pa_s2kparams = params;
 
         // update salt in PrincipalName
-        if (salt != null && salt.length > 0) {
-            String newSalt = new String(salt);
-            name.setSalt(newSalt);
+        if (salt != null && salt.length() > 0) {
+            name.setSalt(salt);
             if (DEBUG) {
                 System.out.println("Updated salt from pre-auth = " + name.getSalt());
             }
@@ -160,7 +159,7 @@ public class KrbAsReq extends KrbKdcReq {
                     char[] password,
                     boolean pa_exists,
                     int etype,
-                    byte[] salt,
+                    String salt,
                     byte[] s2kparams,
                     KDCOptions options,
                     PrincipalName cname,
@@ -245,7 +244,7 @@ public class KrbAsReq extends KrbKdcReq {
                     EncryptionKey[] keys,
                     boolean pa_exists,
                     int etype,
-                    byte[] salt,
+                    String salt,
                     byte[] s2kparams,
                     KDCOptions options,
                     PrincipalName cname,
