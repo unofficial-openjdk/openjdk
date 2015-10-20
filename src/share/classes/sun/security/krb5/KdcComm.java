@@ -24,13 +24,13 @@
  */
 
 /*
+ *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
 
 package sun.security.krb5;
 
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.Locale;
@@ -46,8 +46,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import sun.security.krb5.internal.KRBError;
 
-public abstract class KrbKdcReq {
+/**
+ * KDC-REQ/KDC-REP communication. No more base class for KrbAsReq and
+ * KrbTgsReq. This class is now communication only.
+ */
+public final class KdcComm {
 
     // The following settings can be configured in [libdefaults]
     // section of krb5.conf, which are global for all realms. Each of
@@ -159,20 +164,23 @@ public abstract class KrbKdcReq {
         KdcAccessibility.reset();
     }
 
-    protected byte[] obuf;
-    protected byte[] ibuf;
-
     /**
-     * Sends the provided data to the KDC of the specified realm.
-     * Returns the response from the KDC.
-     * Default realm/KDC is used if realm is null.
-     * @param realm the realm of the KDC where data is to be sent.
-     * @returns the kdc to which the AS request was sent to
-     * @exception InterruptedIOException if timeout expires
-     * @exception KrbException
+     * The instance fields
      */
+    private String realm;
 
-    public String send(String realm)
+    public KdcComm(String realm) throws KrbException {
+        if (realm == null) {
+           realm = Config.getInstance().getDefaultRealm();
+            if (realm == null) {
+                throw new KrbException(Krb5.KRB_ERR_GENERIC,
+                                       "Cannot find default realm");
+            }
+        }
+        this.realm = realm;
+    }
+
+    public byte[] send(byte[] obuf)
         throws IOException, KrbException {
         int udpPrefLimit = getRealmSpecificValue(
                 realm, "udp_preference_limit", defaultUdpPrefLimit);
@@ -180,10 +188,10 @@ public abstract class KrbKdcReq {
         boolean useTCP = (udpPrefLimit > 0 &&
              (obuf != null && obuf.length > udpPrefLimit));
 
-        return (send(realm, useTCP));
+        return send(obuf, useTCP);
     }
 
-    public String send(String realm, boolean useTCP)
+    private byte[] send(byte[] obuf, boolean useTCP)
         throws IOException, KrbException {
 
         if (obuf == null)
@@ -204,10 +212,21 @@ public abstract class KrbKdcReq {
             throw new KrbException("Cannot get kdc for realm " + realm);
         }
         String tempKdc = null; // may include the port number also
+        byte[] ibuf = null;
         for (String tmp: KdcAccessibility.list(kdcList)) {
             tempKdc = tmp;
             try {
-                send(realm,tempKdc,useTCP);
+                ibuf = send(obuf,tempKdc,useTCP);
+                KRBError ke = null;
+                try {
+                    ke = new KRBError(ibuf);
+                } catch (Exception e) {
+                    // OK
+                }
+                if (ke != null && ke.getErrorCode() ==
+                        Krb5.KRB_ERR_RESPONSE_TOO_BIG) {
+                    ibuf = send(obuf, tempKdc, true);
+                }
                 KdcAccessibility.removeBad(tempKdc);
                 break;
             } catch (Exception e) {
@@ -231,16 +250,16 @@ public abstract class KrbKdcReq {
                 throw new IOException("Cannot get a KDC reply");
             }
         }
-        return tempKdc;
+        return ibuf;
     }
 
     // send the AS Request to the specified KDC
 
-    public void send(String realm, String tempKdc, boolean useTCP)
+    private byte[] send(byte[] obuf, String tempKdc, boolean useTCP)
         throws IOException, KrbException {
 
         if (obuf == null)
-            return;
+            return null;
 
         int port = Krb5.KDC_INET_DEFAULT_PORT;
         int retries = getRealmSpecificValue(
@@ -305,11 +324,12 @@ public abstract class KrbKdcReq {
         KdcCommunication kdcCommunication =
             new KdcCommunication(kdc, port, useTCP, timeout, retries, obuf);
         try {
-            ibuf = AccessController.doPrivileged(kdcCommunication);
+            byte[] ibuf = AccessController.doPrivileged(kdcCommunication);
             if (DEBUG) {
                 System.out.println(">>> KrbKdcReq send: #bytes read="
                         + (ibuf != null ? ibuf.length : 0));
             }
+            return ibuf;
         } catch (PrivilegedActionException e) {
             Exception wrappedException = e.getException();
             if (wrappedException instanceof IOException) {
@@ -317,10 +337,6 @@ public abstract class KrbKdcReq {
             } else {
                 throw (KrbException) wrappedException;
             }
-        }
-        if (DEBUG) {
-            System.out.println(">>> KrbKdcReq send: #bytes read="
-                               + (ibuf != null ? ibuf.length : 0));
         }
     }
 
