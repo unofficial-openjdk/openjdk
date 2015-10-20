@@ -36,10 +36,9 @@ import java.security.CodeSigner;
 import java.security.cert.Certificate;
 import java.security.AccessController;
 import java.security.CodeSource;
-import sun.misc.IOUtils;
+import jdk.internal.misc.SharedSecrets;
 import sun.security.action.GetPropertyAction;
 import sun.security.util.ManifestEntryVerifier;
-import sun.misc.SharedSecrets;
 import sun.security.util.SignatureFileVerifier;
 
 /**
@@ -438,7 +437,12 @@ class JarFile extends ZipFile {
      */
     private byte[] getBytes(ZipEntry ze) throws IOException {
         try (InputStream is = super.getInputStream(ze)) {
-            return IOUtils.readFully(is, (int)ze.getSize(), true);
+            int len = (int)ze.getSize();
+            byte[] b = is.readAllBytes();
+            if (len != -1 && b.length != len)
+                throw new EOFException("Expected:" + len + ", read:" + b.length);
+
+            return b;
         }
     }
 
