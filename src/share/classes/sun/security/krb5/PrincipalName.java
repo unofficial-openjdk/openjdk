@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public class PrincipalName
     private Realm nameRealm;  // optional; a null realm means use default
     // Note: the nameRealm is not included in the default ASN.1 encoding
 
-    // salt for principal
+    // cached salt, might be changed by KDC info, not used in clone
     private String salt = null;
 
     protected PrincipalName() {
@@ -124,18 +124,19 @@ public class PrincipalName
     }
 
     public Object clone() {
-        PrincipalName pName = new PrincipalName();
-        pName.nameType = nameType;
-        if (nameStrings != null) {
-            pName.nameStrings =
-                new String[nameStrings.length];
-                System.arraycopy(nameStrings,0,pName.nameStrings,0,
-                                nameStrings.length);
+        try {
+            PrincipalName pName = (PrincipalName) super.clone();
+            // Re-assign mutable fields
+            if (nameStrings != null) {
+                pName.nameStrings = nameStrings.clone();
+            }
+            if (nameRealm != null) {
+                pName.nameRealm = (Realm)nameRealm.clone();
+            }
+            return pName;
+        } catch (CloneNotSupportedException ex) {
+            throw new AssertionError("Should never happen");
         }
-        if (nameRealm != null) {
-            pName.nameRealm = (Realm)nameRealm.clone();
-        }
-        return pName;
     }
 
     /*
