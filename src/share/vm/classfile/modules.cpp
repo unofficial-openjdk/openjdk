@@ -81,7 +81,7 @@ static const char* get_module_version(jstring version) {
     module_version = (char *)Modules::default_version();
   } else {
     module_version = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(version));
-    if (module_version == NULL || strlen(module_version) == 0) {
+    if (module_version == NULL) {
       module_version = (char *)Modules::default_version();
     }
   }
