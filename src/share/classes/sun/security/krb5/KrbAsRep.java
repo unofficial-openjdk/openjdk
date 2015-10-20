@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,7 +143,7 @@ class KrbAsRep extends KrbKdcRep {
             throws KrbException, Asn1Exception, IOException {
         byte[] enc_as_rep_bytes = rep.encPart.decrypt(dkey,
             KeyUsage.KU_ENC_AS_REP_PART);
-        byte[] enc_as_rep_part = rep.encPart.reset(enc_as_rep_bytes, true);
+        byte[] enc_as_rep_part = rep.encPart.reset(enc_as_rep_bytes);
 
         DerValue encoding = new DerValue(enc_as_rep_part);
         EncASRepPart enc_part = new EncASRepPart(encoding);

@@ -276,14 +276,14 @@ public class KrbApReq {
 
         byte[] bytes = apReqMessg.ticket.encPart.decrypt(dkey,
             KeyUsage.KU_TICKET);
-        byte[] temp = apReqMessg.ticket.encPart.reset(bytes, true);
+        byte[] temp = apReqMessg.ticket.encPart.reset(bytes);
         EncTicketPart enc_ticketPart = new EncTicketPart(temp);
 
         checkPermittedEType(enc_ticketPart.key.getEType());
 
         byte[] bytes2 = apReqMessg.authenticator.decrypt(enc_ticketPart.key,
             KeyUsage.KU_AP_REQ_AUTHENTICATOR);
-        byte[] temp2 = apReqMessg.authenticator.reset(bytes2, true);
+        byte[] temp2 = apReqMessg.authenticator.reset(bytes2);
         authenticator = new Authenticator(temp2);
         ctime = authenticator.ctime;
         cusec = authenticator.cusec;
