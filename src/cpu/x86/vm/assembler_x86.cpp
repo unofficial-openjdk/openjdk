@@ -770,6 +770,7 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     case 0x55: // andnps
     case 0x56: // orps
     case 0x57: // xorps
+    case 0x59: //mulpd
     case 0x6E: // movd
     case 0x7E: // movd
     case 0xAE: // ldmxcsr, stmxcsr, fxrstor, fxsave, clflush
@@ -877,21 +878,35 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     // Check second byte
     NOT_LP64(assert((0xC0 & *ip) == 0xC0, "shouldn't have LDS and LES instructions"));
 
+    int vex_opcode;
     // First byte
     if ((0xFF & *inst) == VEX_3bytes) {
+      vex_opcode = VEX_OPCODE_MASK & *ip;
       ip++; // third byte
       is_64bit = ((VEX_W & *ip) == VEX_W);
+    } else {
+      vex_opcode = VEX_OPCODE_0F;
     }
     ip++; // opcode
     // To find the end of instruction (which == end_pc_operand).
-    switch (0xFF & *ip) {
-    case 0x61: // pcmpestri r, r/a, #8
-    case 0x70: // pshufd r, r/a, #8
-    case 0x73: // psrldq r, #8
-      tail_size = 1;  // the imm8
-      break;
-    default:
-      break;
+    switch (vex_opcode) {
+      case VEX_OPCODE_0F:
+        switch (0xFF & *ip) {
+        case 0x70: // pshufd r, r/a, #8
+        case 0x71: // ps[rl|ra|ll]w r, #8
+        case 0x72: // ps[rl|ra|ll]d r, #8
+        case 0x73: // ps[rl|ra|ll]q r, #8
+        case 0xC2: // cmp[ps|pd|ss|sd] r, r, r/a, #8
+        case 0xC4: // pinsrw r, r, r/a, #8
+        case 0xC5: // pextrw r/a, r, #8
+        case 0xC6: // shufp[s|d] r, r, r/a, #8
+          tail_size = 1;  // the imm8
+          break;
+        }
+        break;
+      case VEX_OPCODE_0F_3A:
+        tail_size = 1;
+        break;
     }
     ip++; // skip opcode
     debug_only(has_disp32 = true); // has both kinds of operands!
@@ -2478,7 +2493,7 @@ void Assembler::movsbl(Register dst, Address src) { // movsxb
 
 void Assembler::movsbl(Register dst, Register src) { // movsxb
   NOT_LP64(assert(src->has_byte_register(), "must have byte register"));
-  int encode = prefix_and_encode(dst->encoding(), src->encoding(), true);
+  int encode = prefix_and_encode(dst->encoding(), false, src->encoding(), true);
   emit_int8(0x0F);
   emit_int8((unsigned char)0xBE);
   emit_int8((unsigned char)(0xC0 | encode));
@@ -2595,7 +2610,7 @@ void Assembler::movzbl(Register dst, Address src) { // movzxb
 
 void Assembler::movzbl(Register dst, Register src) { // movzxb
   NOT_LP64(assert(src->has_byte_register(), "must have byte register"));
-  int encode = prefix_and_encode(dst->encoding(), src->encoding(), true);
+  int encode = prefix_and_encode(dst->encoding(), false, src->encoding(), true);
   emit_int8(0x0F);
   emit_int8((unsigned char)0xB6);
   emit_int8(0xC0 | encode);
@@ -3030,6 +3045,15 @@ void Assembler::pextrq(Register dst, XMMRegister src, int imm8) {
   emit_int8(imm8);
 }
 
+void Assembler::pextrw(Register dst, XMMRegister src, int imm8) {
+  assert(VM_Version::supports_sse2(), "");
+  int encode = simd_prefix_and_encode(as_XMMRegister(dst->encoding()), xnoreg, src, VEX_SIMD_66, /* no_mask_reg */ true,
+                                      VEX_OPCODE_0F, /* rex_w */ false, AVX_128bit, /* legacy_mode */ _legacy_mode_bw);
+  emit_int8((unsigned char)0xC5);
+  emit_int8((unsigned char)(0xC0 | encode));
+  emit_int8(imm8);
+}
+
 void Assembler::pinsrd(XMMRegister dst, Register src, int imm8) {
   assert(VM_Version::supports_sse4_1(), "");
   int encode = simd_prefix_and_encode(dst, dst, as_XMMRegister(src->encoding()), VEX_SIMD_66, /* no_mask_reg */ true,
@@ -3044,6 +3068,15 @@ void Assembler::pinsrq(XMMRegister dst, Register src, int imm8) {
   int encode = simd_prefix_and_encode(dst, dst, as_XMMRegister(src->encoding()), VEX_SIMD_66, /* no_mask_reg */ true,
                                       VEX_OPCODE_0F_3A, /* rex_w */ true, AVX_128bit, /* legacy_mode */ _legacy_mode_dq);
   emit_int8(0x22);
+  emit_int8((unsigned char)(0xC0 | encode));
+  emit_int8(imm8);
+}
+
+void Assembler::pinsrw(XMMRegister dst, Register src, int imm8) {
+  assert(VM_Version::supports_sse2(), "");
+  int encode = simd_prefix_and_encode(dst, dst, as_XMMRegister(src->encoding()), VEX_SIMD_66, /* no_mask_reg */ true,
+                                      VEX_OPCODE_0F, /* rex_w */ false, AVX_128bit, /* legacy_mode */ _legacy_mode_bw);
+  emit_int8((unsigned char)0xC4);
   emit_int8((unsigned char)(0xC0 | encode));
   emit_int8(imm8);
 }
@@ -4063,6 +4096,16 @@ void Assembler::mulpd(XMMRegister dst, XMMRegister src) {
   }
 }
 
+void Assembler::mulpd(XMMRegister dst, Address src) {
+  _instruction_uses_vl = true;
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  if (VM_Version::supports_evex()) {
+    emit_simd_arith_q(0x59, dst, src, VEX_SIMD_66);
+  } else {
+    emit_simd_arith(0x59, dst, src, VEX_SIMD_66);
+  }
+}
+
 void Assembler::mulps(XMMRegister dst, XMMRegister src) {
   _instruction_uses_vl = true;
   NOT_LP64(assert(VM_Version::supports_sse2(), ""));
@@ -4249,6 +4292,26 @@ void Assembler::vandps(XMMRegister dst, XMMRegister nds, Address src, int vector
     _input_size_in_bits = EVEX_32bit;
   }
   emit_vex_arith(0x54, dst, nds, src, VEX_SIMD_NONE, vector_len, /* no_mask_reg */ false, /* legacy_mode */ _legacy_mode_dq);
+}
+
+void Assembler::unpckhpd(XMMRegister dst, XMMRegister src) {
+  _instruction_uses_vl = true;
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  if (VM_Version::supports_evex()) {
+    emit_simd_arith_q(0x15, dst, src, VEX_SIMD_66);
+  } else {
+    emit_simd_arith(0x15, dst, src, VEX_SIMD_66);
+  }
+}
+
+void Assembler::unpcklpd(XMMRegister dst, XMMRegister src) {
+  _instruction_uses_vl = true;
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  if (VM_Version::supports_evex()) {
+    emit_simd_arith_q(0x14, dst, src, VEX_SIMD_66);
+  } else {
+    emit_simd_arith(0x14, dst, src, VEX_SIMD_66);
+  }
 }
 
 void Assembler::xorpd(XMMRegister dst, XMMRegister src) {
@@ -4871,8 +4934,9 @@ void Assembler::vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int 
 }
 
 
-// AND packed integers
+// logical operations packed integers
 void Assembler::pand(XMMRegister dst, XMMRegister src) {
+  _instruction_uses_vl = true;
   NOT_LP64(assert(VM_Version::supports_sse2(), ""));
   emit_simd_arith(0xDB, dst, src, VEX_SIMD_66);
 }
@@ -4891,6 +4955,17 @@ void Assembler::vpand(XMMRegister dst, XMMRegister nds, Address src, int vector_
     _input_size_in_bits = EVEX_32bit;
   }
   emit_vex_arith(0xDB, dst, nds, src, VEX_SIMD_66, vector_len);
+}
+
+void Assembler::pandn(XMMRegister dst, XMMRegister src) {
+  _instruction_uses_vl = true;
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  if (VM_Version::supports_evex()) {
+    emit_simd_arith_q(0xDF, dst, src, VEX_SIMD_66);
+  }
+  else {
+    emit_simd_arith(0xDF, dst, src, VEX_SIMD_66);
+  }
 }
 
 void Assembler::por(XMMRegister dst, XMMRegister src) {
@@ -6449,12 +6524,12 @@ int Assembler::prefixq_and_encode(int reg_enc) {
   return reg_enc;
 }
 
-int Assembler::prefix_and_encode(int dst_enc, int src_enc, bool byteinst) {
+int Assembler::prefix_and_encode(int dst_enc, bool dst_is_byte, int src_enc, bool src_is_byte) {
   if (dst_enc < 8) {
     if (src_enc >= 8) {
       prefix(REX_B);
       src_enc -= 8;
-    } else if (byteinst && src_enc >= 4) {
+    } else if ((src_is_byte && src_enc >= 4) || (dst_is_byte && dst_enc >= 4)) {
       prefix(REX);
     }
   } else {
