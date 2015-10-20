@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 
 import com.sun.security.auth.module.Krb5LoginModule;
+import java.security.Key;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
@@ -38,6 +39,8 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
+import com.sun.security.jgss.ExtendedGSSContext;
+import com.sun.security.jgss.InquireType;
 
 /**
  * Context of a JGSS subject, encapsulating Subject and GSSContext.
@@ -302,6 +305,17 @@ public class Context {
                 for (Object k : map.keySet()) {
                     System.out.println("        " + k + ": " + map.get(k));
                 }
+            }
+        }
+        if (x != null && x instanceof ExtendedGSSContext) {
+            if (x.isEstablished()) {
+                ExtendedGSSContext ex = (ExtendedGSSContext)x;
+                Key k = (Key)ex.inquireSecContext(
+                        InquireType.KRB5_GET_SESSION_KEY);
+                if (k == null) {
+                    throw new Exception("Session key cannot be null");
+                }
+                System.out.println("Session key is: " + k);
             }
         }
     }
