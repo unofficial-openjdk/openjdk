@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import sun.security.util.Debug;
 import sun.security.util.SecurityConstants;
-import sun.misc.JavaSecurityAccess;
-import sun.misc.SharedSecrets;
 
 
 /**
@@ -102,54 +100,6 @@ public final class AccessControlContext {
     private static boolean debugInit = false;
     private static Debug debug = null;
 
-    static {
-        // Set up JavaSecurityAccess in SharedSecrets
-        SharedSecrets.setJavaSecurityAccess(
-            new JavaSecurityAccess() {
-                public <T> T doIntersectionPrivilege(
-                    PrivilegedAction<T> action,
-                    final AccessControlContext stack,
-                    final AccessControlContext context)
-                {
-                    if (action == null) {
-                        throw new NullPointerException();
-                    }
-                    return AccessController.doPrivileged(
-                        action,
-                        new AccessControlContext(
-                            stack.getContext(), context).optimize()
-                    );
-                }
-
-                public <T> T doIntersectionPrivilege(
-                    PrivilegedAction<T> action,
-                    AccessControlContext context)
-                {
-                    return doIntersectionPrivilege(action,
-                        AccessController.getContext(), context);
-                }
-
-                public <T> T doPrivileged(PrivilegedAction<T> action,
-                                          AccessControlContext context,
-                                          Permission... perms)
-                {
-                    return AccessController.doPrivileged(action, context,
-                                                         perms);
-                }
-
-                public <T> T doPrivileged(PrivilegedExceptionAction<T> action,
-                                          AccessControlContext context,
-                                          Permission... perms)
-                throws PrivilegedActionException
-                {
-                    return AccessController.doPrivileged(action, context,
-                                                         perms);
-                }
-
-            }
-       );
-    }
-
     static Debug getDebug()
     {
         if (debugInit)
@@ -219,9 +169,24 @@ public final class AccessControlContext {
     public AccessControlContext(AccessControlContext acc,
                                 DomainCombiner combiner) {
 
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
+        this(acc, combiner, false);
+    }
+
+    /**
+     * package private to allow calls from ProtectionDomain without performing
+     * the security check for {@linkplain SecurityConstants.CREATE_ACC_PERMISSION}
+     * permission
+     */
+    AccessControlContext(AccessControlContext acc,
+                        DomainCombiner combiner,
+                        boolean preauthorized) {
+        if (!preauthorized) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
+                this.isAuthorized = true;
+            }
+        } else {
             this.isAuthorized = true;
         }
 
