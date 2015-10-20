@@ -67,7 +67,12 @@ public class Config {
     private static final int BASE16_1 = 16;
     private static final int BASE16_2 = 16 * 16;
     private static final int BASE16_3 = 16 * 16 * 16;
-    private String defaultRealm;   // default kdc realm.
+
+    /**
+     * Specified by system properties. Must be both null or non-null.
+     */
+    private final String defaultRealm;
+    private final String defaultKDC;
 
     // used for native interface
     private static native String getWindowsDirectory();
@@ -78,9 +83,8 @@ public class Config {
      * singleton) is returned.
      *
      * @exception KrbException if error occurs when constructing a Config
-     * instance. Possible causes would be configuration file not
-     * found, either of java.security.krb5.realm or java.security.krb5.kdc
-     * not specified, error reading configuration file.
+     * instance. Possible causes would be either of java.security.krb5.realm or
+     * java.security.krb5.kdc not specified, error reading configuration file.
      */
     public static synchronized Config getInstance() throws KrbException {
         if (singleton == null) {
@@ -95,9 +99,8 @@ public class Config {
      * the java.security.krb5.* system properties again.
      *
      * @exception KrbException if error occurs when constructing a Config
-     * instance. Possible causes would be configuration file not
-     * found, either of java.security.krb5.realm or java.security.krb5.kdc
-     * not specified, error reading configuration file.
+     * instance. Possible causes would be either of java.security.krb5.realm or
+     * java.security.krb5.kdc not specified, error reading configuration file.
      */
 
     public static synchronized void refresh() throws KrbException {
@@ -112,28 +115,31 @@ public class Config {
      */
     private Config() throws KrbException {
         /*
-         * If these two system properties are being specified by the user,
-         * we ignore configuration file. If either one system property is
-         * specified, we throw exception. If neither of them are specified,
-         * we load the information from configuration file.
+         * If either one system property is specified, we throw exception.
          */
-        String kdchost =
+        String tmp =
             java.security.AccessController.doPrivileged(
                 new sun.security.action.GetPropertyAction
                     ("java.security.krb5.kdc"));
+        if (tmp != null) {
+            // The user can specify a list of kdc hosts separated by ":"
+            defaultKDC = tmp.replace(':', ' ');
+        } else {
+            defaultKDC = null;
+        }
         defaultRealm =
             java.security.AccessController.doPrivileged(
                 new sun.security.action.GetPropertyAction
                     ("java.security.krb5.realm"));
-        if ((kdchost == null && defaultRealm != null) ||
-            (defaultRealm == null && kdchost != null)) {
+        if ((defaultKDC == null && defaultRealm != null) ||
+            (defaultRealm == null && defaultKDC != null)) {
             throw new KrbException
                 ("System property java.security.krb5.kdc and " +
                  "java.security.krb5.realm both must be set or " +
                  "neither must be set.");
         }
 
-        // Read the Kerberos configuration file
+        // Always read the Kerberos configuration file
         try {
             Vector<String> configFile;
             configFile = loadConfigFile();
@@ -145,28 +151,6 @@ public class Config {
 	    ke.initCause(ioe);
 	    throw(ke);
 	}
-
-        if (kdchost != null) {
-            /*
-             * If configuration information is only specified by
-             * properties java.security.krb5.kdc and
-             * java.security.krb5.realm, we put both in the hashtable
-             * under [libdefaults].
-             */
-            if (stanzaTable == null) {
-                stanzaTable = new Hashtable<String,Object> ();
-            }
-            Hashtable<String,String> kdcs =
-                    (Hashtable<String,String>)stanzaTable.get("libdefaults");
-            if (kdcs == null) {
-                kdcs = new Hashtable<String,String> ();
-                stanzaTable.put("libdefaults", kdcs);
-            }
-            kdcs.put("default_realm", defaultRealm);
-            // The user can specify a list of kdc hosts separated by ":"
-            kdchost = kdchost.replace(':', ' ');
-            kdcs.put("kdc", kdchost);
-        }
     }
 
     /**
@@ -297,19 +281,6 @@ public class Config {
         String result = null;
         Hashtable subTable;
 
-        /*
-         * In the situation when kdc is specified by
-         * java.security.krb5.kdc, we get the kdc from [libdefaults] in
-         * hashtable.
-         */
-        if (name.equalsIgnoreCase("kdc") &&
-            (section.equalsIgnoreCase(getDefault("default_realm", "libdefaults"))) &&
-            (java.security.AccessController.doPrivileged(
-                new sun.security.action.
-                GetPropertyAction("java.security.krb5.kdc")) != null)) {
-            result = getDefault("kdc", "libdefaults");
-            return result;
-        }
         if (stanzaTable != null) {
             for (Enumeration e = stanzaTable.keys(); e.hasMoreElements(); ) {
                 stanzaName = (String)e.nextElement();
@@ -1014,13 +985,13 @@ public class Config {
     /**
      * Resets the default kdc realm.
      * We do not need to synchronize these methods since assignments are atomic
+     *
+     * This method was useless. Kept here in case some class still calls it.
      */
     public void resetDefaultRealm(String realm) {
-        defaultRealm = realm;
         if (DEBUG) {
-            System.out.println(">>> Config reset default kdc " + defaultRealm);
+            System.out.println(">>> Config try resetting default kdc " + realm);
         }
-
     }
 
     /**
@@ -1046,6 +1017,9 @@ public class Config {
      * @return the default realm, always non null
      */
     public String getDefaultRealm() throws KrbException {
+        if (defaultRealm != null) {
+            return defaultRealm;
+        }
         Exception cause = null;
         String realm = getDefault("default_realm", "libdefaults");
         if (realm == null) {
@@ -1082,6 +1056,9 @@ public class Config {
         if (realm == null) {
             realm = getDefaultRealm();
         }
+        if (realm.equalsIgnoreCase(defaultRealm)) {
+            return defaultKDC;
+        }
         Exception cause = null;
         String kdcs = getDefault("kdc", realm);
         if (kdcs == null) {
@@ -1103,6 +1080,9 @@ public class Config {
             });
         }
         if (kdcs == null) {
+            if (defaultKDC != null) {
+                return defaultKDC;
+            }
             KrbException ke = new KrbException("Cannot locate KDC");
             if (cause != null) {
                 ke.initCause(cause);
