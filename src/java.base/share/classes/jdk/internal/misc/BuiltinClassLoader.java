@@ -599,8 +599,8 @@ public class BuiltinClassLoader
         String cn = c.getName();
         int pos = cn.lastIndexOf('.');
         if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package in named module "
-                                    + m.getName());
+            throw new InternalError("unnamed package of class " + cn +
+                " defined in named module " + m.getName());
         }
         String pn = (pos != -1) ? cn.substring(0, pos) : "";
 
