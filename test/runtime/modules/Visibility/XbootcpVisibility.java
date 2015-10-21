@@ -25,6 +25,7 @@
  * @test
  * @summary Ensure that a package whose module has not been defined to the boot loader
  *          is correctly located with -Xbootclasspath/a
+ * @requires !(os.family == "windows")
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management
