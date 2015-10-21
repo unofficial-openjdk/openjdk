@@ -597,7 +597,7 @@ define SetupJavaCompilationBody
 	        $$($1_FLAGS) \
 	        $$($1_HEADERS_ARG) \
 	        -d $$($1_BIN)) && \
-	$(MV) $$($1_COMPILE_TARGETS).tmp $$($1_COMPILE_TARGETS))
+	$(MV) $$($1_COMPILE_TARGETS).tmp $$($1_COMPILE_TARGETS)
         # Create a pubapi file that only changes when the pubapi changes. Dependent
         # compilations can use this file to only get recompiled when pubapi has changed.
         # Grep returns 1 if no matching lines are found. Do not fail for this.
