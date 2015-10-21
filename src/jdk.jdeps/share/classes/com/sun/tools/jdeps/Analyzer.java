@@ -64,7 +64,7 @@ public class Analyzer {
     protected final Filter filter;
     protected final Map<Archive, ArchiveDeps> results = new HashMap<>();
     protected final Map<Location, Archive> map = new HashMap<>();
-    private static final Archive NOT_FOUND
+    static final Archive NOT_FOUND
         = new Archive(JdepsTask.getMessage("artifact.not.found"));
 
     /**
@@ -119,6 +119,12 @@ public class Analyzer {
         return result.dependencies().stream()
                      .map(Dep::target)
                      .collect(Collectors.toSet());
+    }
+    public Set<Archive> archiveDependences(Archive source) {
+        ArchiveDeps result = results.get(source);
+        return result.dependencies().stream()
+                .map(Dep::targetArchive)
+                .collect(Collectors.toSet());
     }
 
     public interface Visitor {
