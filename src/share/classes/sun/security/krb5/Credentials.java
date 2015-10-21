@@ -32,9 +32,7 @@ package sun.security.krb5;
 
 import sun.security.krb5.internal.*;
 import sun.security.krb5.internal.ccache.CredentialsCache;
-import sun.security.krb5.internal.ktab.*;
 import sun.security.krb5.internal.crypto.EType;
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.net.InetAddress;
@@ -401,59 +399,6 @@ public class Credentials {
         }
         return result;
     }
-
-
-    /**
-     * Gets service credential from key table. The credential is used to
-     * decrypt the received client message
-     * and authenticate the client by verifying the client's credential.
-     *
-     * @param serviceName the name of service, using format component@realm
-     * @param keyTabFile the file of key table.
-     * @return a <code>KrbCreds</code> object.
-     */
-    public static Credentials getServiceCreds(String serviceName,
-                                              File keyTabFile) {
-        EncryptionKey k = null;
-        PrincipalName service = null;
-        Credentials result = null;
-        try {
-            service = new PrincipalName(serviceName);
-            if (service.getRealm() == null) {
-                String realm = Config.getInstance().getDefaultRealm();
-                if (realm == null) {
-                    return null;
-                } else {
-                    service.setRealm(realm);
-                }
-            }
-        } catch (RealmException e) {
-            if (DEBUG) {
-                e.printStackTrace();
-            }
-            return null;
-        } catch (KrbException e) {
-            if (DEBUG) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-        KeyTab kt;
-        if (keyTabFile == null) {
-            kt = KeyTab.getInstance();
-        } else {
-            kt = KeyTab.getInstance(keyTabFile);
-        }
-        if ((kt != null) && (kt.findServiceEntry(service))) {
-            k = kt.readServiceKey(service);
-            result = new Credentials(null, service, null, null, null,
-                                     null, null, null, null, null);
-            result.serviceKey = k;
-        }
-        return result;
-    }
-
-
 
     /**
      * Acquires credentials for a specified service using initial credential.

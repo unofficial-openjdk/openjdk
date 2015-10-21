@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,33 +228,6 @@ public class KeyTab implements KeyTabConstants {
     }
 
     /**
-     * Reads the service key from the keytab file.
-     * @param service the PrincipalName of the requested service.
-     * @return the last service key in the keytab
-     */
-    public EncryptionKey readServiceKey(PrincipalName service) {
-        KeyTabEntry entry = null;
-        if (entries != null) {
-            // Find latest entry for this service that has an etype
-            // that has been configured for use
-            for (int i = entries.size()-1; i >= 0; i--) {
-                entry = entries.elementAt(i);
-                if (entry.service.match(service)) {
-                    if (EType.isSupported(entry.keyType)) {
-                        return new EncryptionKey(entry.keyblock,
-                                             entry.keyType,
-                                             new Integer(entry.keyVersion));
-                    } else if (DEBUG) {
-                        System.out.println("Found unsupported keytype (" +
-                            entry.keyType + ") for " + service);
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
      * Reads all keys for a service from the keytab file that have
      * etypes that have been configured for use.
      * @param service the PrincipalName of the requested service
@@ -297,7 +270,7 @@ public class KeyTab implements KeyTabConstants {
             System.out.println("Ordering keys wrt default_tkt_enctypes list");
         }
         int[] etypes = EType.getDefaults("default_tkt_enctypes");
-        if (etypes == null || etypes == EType.getBuiltInDefaults()) {
+        if (etypes == null) {
             // Either no supported types specified in default_tkt_enctypes
             // or no default_tkt_enctypes entry at all. For both cases,
             // just return supported keys in the order retrieved
