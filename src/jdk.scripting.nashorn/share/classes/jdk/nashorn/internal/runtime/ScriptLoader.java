@@ -50,16 +50,22 @@ final class ScriptLoader extends NashornLoader {
     ScriptLoader(final ClassLoader parent, final Context context) {
         super(parent);
         this.context = context;
-        scriptModule = defineModule("nashorn.scripts", this);
-        addModuleExports(nashornModule, OBJECTS_PKG, scriptModule);
-        addModuleExports(nashornModule, RUNTIME_PKG, scriptModule);
-        addModuleExports(nashornModule, RUNTIME_ARRAYS_PKG, scriptModule);
-        addModuleExports(nashornModule, RUNTIME_LINKER_PKG, scriptModule);
-        addModuleExports(nashornModule, SCRIPTS_PKG, scriptModule);
+
+        // new scripts module, it's specific exports and read-edges
+        scriptModule = defineModule("jdk.scripting.nashorn.scripts", this);
         addModuleExports(scriptModule, SCRIPTS_PKG, nashornModule);
         addReadsModule(scriptModule, nashornModule);
-        addReadsModule(nashornModule, scriptModule);
         addReadsModule(scriptModule, Object.class.getModule());
+
+        // specific exports from nashorn to new scripts module
+        nashornModule.addExports(OBJECTS_PKG, scriptModule);
+        nashornModule.addExports(RUNTIME_PKG, scriptModule);
+        nashornModule.addExports(RUNTIME_ARRAYS_PKG, scriptModule);
+        nashornModule.addExports(RUNTIME_LINKER_PKG, scriptModule);
+        nashornModule.addExports(SCRIPTS_PKG, scriptModule);
+
+        // nashorn needs to read scripts module methods,fields
+        nashornModule.addReads(scriptModule);
     }
 
     @Override
