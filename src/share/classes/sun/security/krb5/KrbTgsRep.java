@@ -81,12 +81,11 @@ public class KrbTgsRep extends KrbKdcRep {
         byte[] enc_tgs_rep_part = rep.encPart.reset(enc_tgs_rep_bytes);
         ref = new DerValue(enc_tgs_rep_part);
         EncTGSRepPart enc_part = new EncTGSRepPart(ref);
-        rep.ticket.sname.setRealm(rep.ticket.realm);
         rep.encKDCRepPart = enc_part;
 
-        check(req, rep);
+        check(false, req, rep);
 
-        creds = new Credentials(rep.ticket,
+        this.creds = new Credentials(rep.ticket,
                                 req.reqBody.cname,
                                 rep.ticket.sname,
                                 enc_part.key,
@@ -98,7 +97,6 @@ public class KrbTgsRep extends KrbKdcRep {
                                 enc_part.caddr
                                 );
         this.rep = rep;
-        this.creds = creds;
         this.secondTicket = tgsReq.getSecondTicket();
     }
 

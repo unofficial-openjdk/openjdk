@@ -96,9 +96,6 @@ public final class KrbAsReqBuilder {
     // Called by other constructors
     private KrbAsReqBuilder(PrincipalName cname)
             throws KrbException {
-        if (cname.getRealm() == null) {
-            cname.setRealm(Config.getInstance().getDefaultRealm());
-        }
         this.cname = cname;
         state = State.INIT;
     }

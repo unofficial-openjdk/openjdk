@@ -35,9 +35,7 @@ import sun.security.krb5.internal.*;
 public class Credentials {
 
     PrincipalName cname;
-    Realm crealm;
     PrincipalName sname;
-    Realm srealm;
     EncryptionKey key;
     KerberosTime authtime;
     KerberosTime starttime;//optional
@@ -66,15 +64,7 @@ public class Credentials {
             Ticket new_ticket,
             Ticket new_secondTicket) {
         cname = (PrincipalName) new_cname.clone();
-        if (new_cname.getRealm() != null) {
-            crealm = (Realm) new_cname.getRealm().clone();
-        }
-
         sname = (PrincipalName) new_sname.clone();
-        if (new_sname.getRealm() != null) {
-            srealm = (Realm) new_sname.getRealm().clone();
-        }
-
         key = (EncryptionKey) new_key.clone();
 
         authtime = (KerberosTime) new_authtime.clone();
@@ -109,7 +99,6 @@ public class Credentials {
         {
             return;
         }
-        crealm = (Realm) kdcRep.crealm.clone();
         cname = (PrincipalName) kdcRep.cname.clone();
         ticket = (Ticket) kdcRep.ticket.clone();
         key = (EncryptionKey) kdcRep.encKDCRepPart.key.clone();
@@ -122,7 +111,6 @@ public class Credentials {
         if (kdcRep.encKDCRepPart.renewTill != null) {
             renewTill = (KerberosTime) kdcRep.encKDCRepPart.renewTill.clone();
         }
-        srealm = (Realm) kdcRep.encKDCRepPart.srealm.clone();
         sname = (PrincipalName) kdcRep.encKDCRepPart.sname.clone();
         caddr = (HostAddresses) kdcRep.encKDCRepPart.caddr.clone();
         secondTicket = (Ticket) new_secondTicket.clone();
@@ -137,17 +125,7 @@ public class Credentials {
 
     public Credentials(KDCRep kdcRep, Ticket new_ticket) {
         sname = (PrincipalName) kdcRep.encKDCRepPart.sname.clone();
-        srealm = (Realm) kdcRep.encKDCRepPart.srealm.clone();
-        try {
-            sname.setRealm(srealm);
-        } catch (RealmException e) {
-        }
         cname = (PrincipalName) kdcRep.cname.clone();
-        crealm = (Realm) kdcRep.crealm.clone();
-        try {
-            cname.setRealm(crealm);
-        } catch (RealmException e) {
-        }
         key = (EncryptionKey) kdcRep.encKDCRepPart.key.clone();
         authtime = (KerberosTime) kdcRep.encKDCRepPart.authtime.clone();
         if (kdcRep.encKDCRepPart.starttime != null) {
@@ -201,9 +179,6 @@ public class Credentials {
     }
 
     public PrincipalName getServicePrincipal() throws RealmException {
-        if (sname.getRealm() == null) {
-            sname.setRealm(srealm);
-        }
         return sname;
     }
 
