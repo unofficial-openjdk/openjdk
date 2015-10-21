@@ -161,6 +161,7 @@ public class ModuleInfoBuilder {
                 if (jfm.packages().contains("")) {
                     System.err.format("ERROR: %s contains unnamed package.  module-info.java not generated%n",
                                 jfm.getPathName());
+                    continue;
                 }
 
                 String mn = jfm.getName();
