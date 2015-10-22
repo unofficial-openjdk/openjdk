@@ -236,6 +236,16 @@ class JdepsTask {
                 task.options.filterSamePackage = false;
             }
         },
+        new Option(false, "-ct", "-compile-time") {
+            void process(JdepsTask task, String opt, String arg) {
+                task.options.compileTimeView = true;
+            }
+        },
+        new Option(false, "-include-system-modules") {
+            void process(JdepsTask task, String opt, String arg) {
+                task.options.includeSystemModules = true;
+            }
+        },
         new Option(false, "-jdkinternals") {
             void process(JdepsTask task, String opt, String arg) {
                 task.options.findJDKInternals = true;
@@ -251,24 +261,13 @@ class JdepsTask {
                 if (!Files.isDirectory(task.options.mpath)) {
                     throw new BadArgs("err.invalid.path", arg);
                 }
-                if (task.options.includePattern == null) {
-                    task.options.includePattern = Pattern.compile(".*");
-                }
+                task.options.compileTimeView = true;
             }
         },
         new Option(false, "-q", "-quiet") {
             void process(JdepsTask task, String opt, String arg) {
                     task.options.nowarning = true;
                 }
-        },
-
-        new HiddenOption(false, "-verify:access") {
-            void process(JdepsTask task, String opt, String arg) {
-                 task.options.verifyAccess = true;
-                 task.options.verbose = VERBOSE;
-                 task.options.filterSameArchive = false;
-                 task.options.filterSamePackage = false;
-            }
         },
 
         new Option(false, "-version") {
@@ -350,7 +349,7 @@ class JdepsTask {
                 showHelp();
                 return EXIT_CMDERR;
             }
-            if ((options.findJDKInternals || options.verifyAccess) &&
+            if ((options.findJDKInternals) &&
                    (options.regex != null || options.packageNames.size() > 0 || options.showSummary)) {
                 showHelp();
                 return EXIT_CMDERR;
@@ -377,15 +376,14 @@ class JdepsTask {
     }
 
     // source locations for reporting
-    private List<Archive> sourceLocations = new ArrayList<>();
+    private List<Archive> sourceLocations;
 
     private boolean run() throws IOException {
-        DependencyFinder dependencyFinder = new DependencyFinder(options.includePattern);
+        DependencyFinder dependencyFinder =
+            new DependencyFinder(options.includePattern, options.compileTimeView, options.includeSystemModules);
         buildArchive(dependencyFinder);
 
-        if (options.verifyAccess) {
-            return verifyModuleAccess(dependencyFinder);
-        } else if (options.genModuleInfo != null) {
+        if (options.genModuleInfo != null) {
             return genModuleInfo(dependencyFinder);
         } else {
             return analyzeDeps(dependencyFinder);
@@ -395,8 +393,8 @@ class JdepsTask {
         for (String s : classes) {
             Path p = Paths.get(s);
             if (Files.exists(p)) {
-                Archive archive = dependencyFinder.addArchive(p);
-                sourceLocations.add(archive);
+                // add to the initial archive list
+                dependencyFinder.addArchive(p);
             } else {
                 if (isValidClassName(s)) {
                     dependencyFinder.addRoot(s);
@@ -407,26 +405,19 @@ class JdepsTask {
         }
 
         for (Path p : getClassPaths(options.classpath)) {
-            if (!Files.exists(p)) continue;
-            Archive archive = dependencyFinder.addClassPathArchive(p);
-            if (options.includePattern != null) {
-                // add classpath to the initial archive list
-                dependencyFinder.addArchive(archive);
+            if (Files.exists(p)) {
+                dependencyFinder.addClassPathArchive(p);
             }
         }
-        // add system modules first and then follow with modulepath
-        for (Module m : ModulePath.getSystemModules()) {
-            dependencyFinder.addModuleArchive(m);
-        }
+
         if (options.mpath != null) {
             for (Module m : ModulePath.getModules(options.mpath)) {
-                dependencyFinder.addArchive(m);
                 dependencyFinder.addModuleArchive(m);
             }
         }
 
         // add all classpath archives to the source locations for reporting
-        sourceLocations.addAll(dependencyFinder.classPathArchives());
+        sourceLocations = dependencyFinder.getArchives();
     }
 
     private boolean analyzeDeps(DependencyFinder dependencyFinder) throws IOException {
@@ -451,7 +442,7 @@ class JdepsTask {
         findDependencies(dependencyFinder, options.apiOnly);
 
         // analyze the dependencies
-        analyzer.run(sourceLocations);
+        analyzer.run(sourceLocations, options.compileTimeView);
 
         // output result
         final JdepsWriter writer;
@@ -464,7 +455,15 @@ class JdepsTask {
             writer = new SimpleWriter(log, options.verbose,
                                       options.showProfile, options.showModule);
         }
-        writer.generateOutput(sourceLocations, analyzer);
+
+        // For compile view, show all initial archives and its transitive dependencies
+        // Otherwise, show all archives whose classes are referenced.
+        // If -include option or -jdkinternals is specified, all initial archives
+        // and archives specified on the classpath are analyzed and reported.
+        List<Archive> archives = this.options.compileTimeView
+                                        ? analyzer.transitiveClosure(dependencyFinder.initialArchives())
+                                        : sourceLocations;
+        writer.generateOutput(archives, analyzer);
 
         if (options.findJDKInternals && !options.nowarning) {
             showReplacements(analyzer);
@@ -494,31 +493,6 @@ class JdepsTask {
                 warning("warn.skipped.entry", name, a.getPathName());
             }
         }
-    }
-
-    private boolean verifyModuleAccess(DependencyFinder dependencyFinder) throws IOException {
-        // two passes
-        // 1. check API dependences where the types of dependences must be re-exported
-        // 2. check all dependences where types must be accessible
-
-        // pass 1
-        findDependencies(dependencyFinder, true /* api only */);
-        Analyzer analyzer = Analyzer.getExportedAPIsAnalyzer();
-        boolean pass1 = analyzer.run(sourceLocations);
-        if (!pass1) {
-            System.out.println("ERROR: Failed API access verification");
-        }
-        // pass 2
-        findDependencies(dependencyFinder, false);
-        analyzer = Analyzer.getModuleAccessAnalyzer();
-        boolean pass2 = analyzer.run(sourceLocations);
-        if (!pass2) {
-            System.out.println("ERROR: Failed module access verification");
-        }
-        if (pass1 & pass2) {
-            System.out.println("Access verification succeeded.");
-        }
-        return pass1 & pass2;
     }
 
     private boolean genModuleInfo(DependencyFinder dependencyFinder) throws IOException {
@@ -653,9 +627,9 @@ class JdepsTask {
         Set<String> packageNames = new HashSet<>();
         Pattern regex;             // apply to the dependences
         Pattern includePattern;   // apply to classes
-        // module boundary access check
-        boolean verifyAccess;
         boolean showRequiresPublic = true;
+        boolean compileTimeView = false;
+        boolean includeSystemModules = false;
         Path mpath;
     }
     private static class ResourceBundleHelper {

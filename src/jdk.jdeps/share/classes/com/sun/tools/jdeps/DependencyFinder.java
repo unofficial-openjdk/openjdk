@@ -35,6 +35,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -101,23 +102,40 @@ public class DependencyFinder {
 
     private final Pattern includePattern;
     private final List<String> roots = new ArrayList<>();
-    private final List<Archive> classpaths = new ArrayList<>();
     private final List<Archive> initialArchives = new ArrayList<>();
+    private final List<Archive> classpaths = new ArrayList<>();
+    private final List<Module> systemModules;
+    private final boolean compileTimeView;
+    private final boolean includeSystemModules;
 
-    DependencyFinder(Pattern includePattern) {
+    DependencyFinder(Pattern includePattern,
+                     boolean compileTimeView,
+                     boolean includeSystemModules) {
         this.includePattern = includePattern;
+        this.systemModules = ModulePath.getSystemModules();
+        this.compileTimeView = compileTimeView;
+        this.includeSystemModules = includeSystemModules;
     }
 
+    /*
+     * Adds a class name to the root set
+     */
     void addRoot(String cn) {
         roots.add(cn);
     }
 
+    /*
+     * Adds an initial archive of the given path
+     */
     Archive addArchive(Path path) {
         Archive archive = Archive.getInstance(path);
         addArchive(archive);
         return archive;
     }
 
+    /*
+     * Adds an initial archive
+     */
     void addArchive(Archive archive) {
         Objects.requireNonNull(archive);
         initialArchives.add(archive);
@@ -139,11 +157,18 @@ public class DependencyFinder {
         return cpArchive;
     }
 
+    /**
+     * Add an archive specified in the classpath if it's not listed
+     * in the initial archive list.
+     */
     void addClassPathArchive(Archive archive) {
         Objects.requireNonNull(archive);
         classpaths.add(archive);
     }
 
+    /**
+     * Add an archive specified in the modulepath.
+     */
     void addModuleArchive(Module m) {
         Objects.requireNonNull(m);
         classpaths.add(m);
@@ -153,8 +178,11 @@ public class DependencyFinder {
         return initialArchives;
     }
 
-    List<Archive> classPathArchives() {
-        return classpaths;
+    List<Archive> getArchives() {
+        List<Archive> archives = new ArrayList<>(initialArchives);
+        archives.addAll(classpaths);
+        archives.addAll(systemModules);
+        return Collections.unmodifiableList(archives);
     }
 
     /**
@@ -170,7 +198,24 @@ public class DependencyFinder {
                 apiOnly ? Dependencies.getAPIFinder(AccessFlags.ACC_PROTECTED)
                         : Dependencies.getClassDependencyFinder();
 
-        Deque<String> roots = new LinkedList<>(this.roots);
+        int depth = compileTimeView ? 1 :
+                (maxDepth > 0 ? maxDepth : Integer.MAX_VALUE);
+
+        List<Archive> archives = new ArrayList<>(initialArchives);
+        if (includePattern != null || compileTimeView) {
+            // start with all archives
+            archives.addAll(classpaths);
+        }
+
+        if (compileTimeView && includeSystemModules) {
+            archives.addAll(systemModules);
+        }
+
+        // We should probably avoid analyzing JDK modules.  JDK classes are not analyzed.
+        // Instead, module dependences will be shown
+        // if (compileTimeView) {
+        //    archives.addAll(systemModules);
+        // }
 
         // Work queue of names of classfiles to be searched.
         // Entries will be unique, and for classes that do not yet have
@@ -179,7 +224,7 @@ public class DependencyFinder {
         Set<String> doneClasses = new HashSet<>();
 
         // get the immediate dependencies of the input files
-        for (Archive a : initialArchives) {
+        for (Archive a : archives) {
             for (ClassFile cf : a.reader().getClassFiles()) {
                 String classFileName;
                 try {
@@ -214,9 +259,8 @@ public class DependencyFinder {
 
         // add Archive for looking up classes from the classpath
         // for transitive dependency analysis
-        Deque<String> unresolved = roots;
-        int depth = maxDepth > 0 ? maxDepth : Integer.MAX_VALUE;
 
+        Deque<String> unresolved = new LinkedList<>(this.roots);
         do {
             String name;
             while ((name = unresolved.poll()) != null) {
@@ -224,7 +268,7 @@ public class DependencyFinder {
                     continue;
                 }
                 ClassFile cf = null;
-                for (Archive a : classpaths) {
+                for (Archive a : getArchives()) {
                     cf = a.reader().getClassFile(name);
 
                     if (cf != null) {
@@ -238,13 +282,14 @@ public class DependencyFinder {
                             // if name is a fully-qualified class name specified
                             // from command-line, this class might already be parsed
                             doneClasses.add(classFileName);
-
                             for (Dependency d : finder.findDependencies(cf)) {
                                 if (depth == 0) {
                                     // ignore the dependency
                                     a.addClass(d.getOrigin());
                                     break;
-                                } else if (dependencyFilter.accepts(d)) {
+                                } else if (dependencyFilter.accepts(d) &&
+                                              // skip analyze transitive dependency on JDK class if needed
+                                              (includeSystemModules || !isSystemModule(a))) {
                                     a.addClass(d.getOrigin(), d.getTarget());
                                     String cn = d.getTarget().getName();
                                     if (!doneClasses.contains(cn) && !deque.contains(cn)) {
@@ -266,6 +311,13 @@ public class DependencyFinder {
             unresolved = deque;
             deque = new LinkedList<>();
         } while (!unresolved.isEmpty() && depth-- > 0);
+    }
+
+    private boolean isSystemModule(Archive archive) {
+        if (Module.class.isInstance(archive)) {
+            return systemModules.contains((Module) archive);
+        }
+        return false;
     }
 
     /**

@@ -83,7 +83,7 @@ public class ModuleInfoBuilder {
                 }
             });
 
-            pass1.run(archives);
+            pass1.run(archives, false);
 
             for (Archive archive : archives) {
                 if (!Module.class.isInstance(archive) &&
@@ -95,7 +95,7 @@ public class ModuleInfoBuilder {
 
         // pass 2: analyze all class dependences
         findDependencies(false);
-        analyzer.run(archives);
+        analyzer.run(archives, false);
 
         // check if any missing dependency
         boolean missingDeps = false;
