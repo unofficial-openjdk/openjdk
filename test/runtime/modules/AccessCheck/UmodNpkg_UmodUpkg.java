@@ -28,11 +28,14 @@
  * @summary class p3.c3 defined in an unnamed module tries to access c4 defined in an unnamed package
  *          and an unnamed module.
  *          Access allowed since any class in an unnamed module can read an unnamed module.
+ * @compile myloaders/MySameClassLoader.java
  * @compile c4.java
  * @compile p3/c3.jcod
  * @build UmodNpkg_UmodUpkg
  * @run main/othervm -Xbootclasspath/a:. UmodNpkg_UmodUpkg
  */
+
+import myloaders.MySameClassLoader;
 
 public class UmodNpkg_UmodUpkg {
 

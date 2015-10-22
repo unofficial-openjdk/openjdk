@@ -27,11 +27,14 @@
  * @test
  * @summary Test public type c5 defined in an unnamed package and unnamed module can
  *          access public type p6.c6 defined in an unnamed module.
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java
  * @build UmodUpkgDiffCL_UmodNpkg
  * @run main/othervm -Xbootclasspath/a:. UmodUpkgDiffCL_UmodNpkg
  */
+
+import myloaders.MyDiffClassLoader;
 
 public class UmodUpkgDiffCL_UmodNpkg {
 

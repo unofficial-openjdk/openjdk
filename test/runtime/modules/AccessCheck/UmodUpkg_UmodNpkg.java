@@ -27,11 +27,14 @@
  * @test
  * @summary Test public type c5 defined in an unnamed package and unnamed module can
  *          access public type p6.c6 defined in an unnamed module.
+ * @compile myloaders/MySameClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java
  * @build UmodUpkg_UmodNpkg
  * @run main/othervm -Xbootclasspath/a:. UmodUpkg_UmodNpkg
  */
+
+import myloaders.MySameClassLoader;
 
 public class UmodUpkg_UmodNpkg {
 

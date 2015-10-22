@@ -20,27 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package myloaders;
 
 import java.io.*;
 import java.lang.module.ModuleReference;
 
-// Declare a MyDiffClassLoader class to be used to map modules to.
-// This class loader will also be used to load classes within modules.
-public class MyDiffClassLoader
-    extends ClassLoader
+// Declare a MySameClassLoader class to be used to map modules to the same
+// class loader.  This class loader will also be used to load classes
+// within modules.
+public class MySameClassLoader extends ClassLoader
 {
-    public static MyDiffClassLoader loader1 = new MyDiffClassLoader();
-    public static MyDiffClassLoader loader2 = new MyDiffClassLoader();
+    public static MySameClassLoader loader1 = new MySameClassLoader();
 
     public Class loadClass(String name) throws ClassNotFoundException {
-        if (!name.equals("p1.c1") && !name.equals("p2.c2") && !name.equals("p3.c3")
-                && !name.equals("c4") && !name.equals("c5") && !name.equals("p6.c6")) {
+        // override all classloaders
+        if (!name.equals("p1.c1") &&
+            !name.equals("p1.c1ReadEdge") &&
+            !name.equals("p1.c1Loose") &&
+            !name.equals("p2.c2") &&
+            !name.equals("p3.c3") &&
+            !name.equals("p3.c3ReadEdge") &&
+            !name.equals("p3.c3Loose") &&
+            !name.equals("c4") &&
+            !name.equals("c5") &&
+            !name.equals("p6.c6")) {
             return super.loadClass(name);
         }
-        if ((name.equals("p2.c2") || name.equals("c4") || name.equals("p6.c6")) && this == MyDiffClassLoader.loader1) {
-            return MyDiffClassLoader.loader2.loadClass(name);
-        }
-
         byte[] data = getClassData(name);
         return defineClass(name, data, 0, data.length);
     }

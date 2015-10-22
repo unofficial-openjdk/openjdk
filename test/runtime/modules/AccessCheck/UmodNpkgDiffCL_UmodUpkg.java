@@ -28,11 +28,14 @@
  * @summary class p3.c3 defined in a named package in an unnamed module tries to access c4
  *          defined in an unnamed package in an unnamed module.  Access allowed since
  *          any class in an unnamed module can read an unnamed module.
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile c4.java
  * @compile p3/c3.jcod
  * @build UmodNpkgDiffCL_UmodUpkg
  * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_UmodUpkg
  */
+
+import myloaders.MyDiffClassLoader;
 
 public class UmodNpkgDiffCL_UmodUpkg {
 

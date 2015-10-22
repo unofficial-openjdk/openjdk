@@ -25,12 +25,14 @@
 
 /*
  * @test
- * @ignore
  * @summary class p3.c3 defined in module m1 tries to access c4 defined in an unnamed package
  *          and an unnamed module.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile c4.java
  * @compile p3/c3.jcod
+ * @compile p3/c3ReadEdgeDiffLoader.jcod
+ * @compile p3/c3Loose.jcod
  * @build NmodNpkgDiffCL_UmodUpkg
  * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_UmodUpkg
  */
@@ -44,6 +46,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MyDiffClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> packages p3
@@ -159,18 +162,12 @@ public class NmodNpkgDiffCL_UmodUpkg {
      assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p3.c3
-     Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3");
+     // now use the same loader to load class p3.c3ReadEdgeDiffLoader
+     Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3ReadEdgeDiffLoader");
 
-     // Establish readability between module m1 and the
-     // unnamed module of class loader MyDiffClassLoader.loader2.
-     // MyDiffClassLoader.loader2 is used to load class c4.
-     Module unnamed_module = MyDiffClassLoader.loader2.getUnnamedModule();
-     Module m1 = p3_c3_class.getModule();
-     m1.addReads(unnamed_module);
-
-     // Attempt access
      try {
+        // Read edge between m1 and the unnamed module that loads c4 is established in
+        // C3ReadEdgeDiffLoader's ctor before attempting access.
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
          throw new RuntimeException("Test Failed, module m1 has established readability to " +
@@ -217,15 +214,12 @@ public class NmodNpkgDiffCL_UmodUpkg {
      assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p3.c3
-     Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3");
+     // now use the same loader to load class p3.c3Loose
+     Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3Loose");
 
-     // Transition module "m1" to be a loose module
-     Module m1 = p3_c3_class.getModule();
-     m1.addReads(null);
-
-     // Attempt access
      try {
+        // Module m1 transitioned to a loose module before attempting access
+        // to c4 in c3Loose's ctor.
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
          throw new RuntimeException("Test Failed, loose module m1 should be able to access " +
@@ -235,8 +229,8 @@ public class NmodNpkgDiffCL_UmodUpkg {
 
  public static void main(String args[]) throws Throwable {
    NmodNpkgDiffCL_UmodUpkg test = new NmodNpkgDiffCL_UmodUpkg();
-   test.test_strictModuleLayer(); // access denied
+   test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
-   test.test_looseModuleLayer(); // access allowed
+   test.test_looseModuleLayer();                 // access allowed
  }
 }
