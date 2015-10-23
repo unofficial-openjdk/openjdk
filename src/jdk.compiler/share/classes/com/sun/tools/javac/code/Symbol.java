@@ -869,7 +869,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public ClassSymbol module_info;
 
-        public PackageSymbol rootPackage;
         public PackageSymbol unnamedPackage;
         public Set<PackageSymbol> visiblePackages;
 

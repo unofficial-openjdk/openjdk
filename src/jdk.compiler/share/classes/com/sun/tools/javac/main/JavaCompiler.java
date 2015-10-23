@@ -451,7 +451,7 @@ public class JavaCompiler {
         if (platformProvider != null)
             closeables = closeables.prepend(platformProvider);
 
-        silentFail = new Symbol(ABSENT_TYP, 0, names.empty, Type.noType, syms.noModule.rootPackage) {
+        silentFail = new Symbol(ABSENT_TYP, 0, names.empty, Type.noType, syms.rootPackage) {
             @DefinedBy(Api.LANGUAGE_MODEL)
             public <R, P> R accept(ElementVisitor<R, P> v, P p) {
                 return v.visitUnknown(this, p);

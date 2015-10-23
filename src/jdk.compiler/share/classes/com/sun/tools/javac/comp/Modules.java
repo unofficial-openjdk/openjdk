@@ -688,7 +688,7 @@ public class Modules extends JCTree.Visitor {
         initAddExports();
 
         msym.visiblePackages = new LinkedHashSet<>();
-        msym.visiblePackages.add(msym.rootPackage);
+        msym.visiblePackages.add(syms.rootPackage);
 
         for (ModuleSymbol rm : readable) {
             if (rm == syms.unnamedModule)

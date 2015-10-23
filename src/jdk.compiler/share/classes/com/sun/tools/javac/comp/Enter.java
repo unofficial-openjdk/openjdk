@@ -304,7 +304,7 @@ public class Enter extends JCTree.Visitor {
         boolean isPkgInfo = tree.sourcefile.isNameCompatible("package-info",
                                                              JavaFileObject.Kind.SOURCE);
         if (TreeInfo.isModuleInfo(tree)) {
-            tree.packge = tree.modle.rootPackage;
+            tree.packge = syms.rootPackage;
             Env<AttrContext> topEnv = topLevelEnv(tree);
             classEnter(tree.defs, topEnv);
             tree.modle.usesProvidesCompleter = modules.getUsesProvidesCompleter();

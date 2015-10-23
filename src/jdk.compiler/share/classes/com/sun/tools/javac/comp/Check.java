@@ -2628,7 +2628,7 @@ public class Check {
     }
 
     private boolean isEffectivelyNonPublic(Symbol sym) {
-        if (sym.packge() == sym.packge().modle.rootPackage) {
+        if (sym.packge() == syms.rootPackage) {
             return false;
         }
 

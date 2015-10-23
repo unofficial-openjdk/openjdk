@@ -125,7 +125,7 @@ public class Symtab {
 
     /** A symbol for the root package.
      */
-    private final PackageSymbol rootPackage;
+    public final PackageSymbol rootPackage;
 
     /** A symbol that stands for a missing symbol.
      */
@@ -707,20 +707,15 @@ public class Symtab {
     }
 
     private void addRootPackageFor(ModuleSymbol module) {
-        Completer completer = sym -> initialCompleter.complete(sym);
-        PackageSymbol moduleRootPackage = new PackageSymbol(names.empty, null);
-        moduleRootPackage.modle = module;
-        moduleRootPackage.completer = completer;
-        doEnterPackage(module, moduleRootPackage);
-        module.rootPackage = moduleRootPackage;
-        PackageSymbol unnamedPackage = new PackageSymbol(names.empty, moduleRootPackage) {
+        doEnterPackage(module, rootPackage);
+        PackageSymbol unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
                 @Override
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
                 }
             };
         unnamedPackage.modle = module;
-        unnamedPackage.completer = completer;
+        unnamedPackage.completer = sym -> initialCompleter.complete(sym);
         module.unnamedPackage = unnamedPackage;
     }
 

@@ -176,7 +176,7 @@ public class StarImportTest {
             Name name = names.fromString("p" + (++nextPackageSerial));
             int count = rgen.nextInt(MAX_SETUP_PACKAGE_COUNT);
             log("setup: creating package " + name + " with " + count + " entries");
-            PackageSymbol p = new PackageSymbol(name, symtab.unnamedModule.rootPackage);
+            PackageSymbol p = new PackageSymbol(name, symtab.rootPackage);
             p.members_field = WriteableScope.create(p);
             for (int i = 0; i < count; i++) {
                 String outer = name + "c" + i;
@@ -217,7 +217,7 @@ public class StarImportTest {
          */
         void createStarImportScope() throws Exception {
             log ("createStarImportScope");
-            PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.unnamedModule.rootPackage);
+            PackageSymbol pkg = new PackageSymbol(names.fromString("pkg"), symtab.rootPackage);
 
             starImportScope = new StarImportScope(pkg);
             starImportModel = new Model();
