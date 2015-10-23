@@ -134,7 +134,7 @@ public class MakeTypeTest extends JavacTestingAbstractProcessor {
         }.scan(path, null);
 
         unseenTypeKinds.removeAll(Arrays.asList(TypeKind.NONE, TypeKind.NULL, TypeKind.ERROR,
-                TypeKind.PACKAGE, TypeKind.EXECUTABLE, TypeKind.OTHER));
+                TypeKind.PACKAGE, TypeKind.EXECUTABLE, TypeKind.OTHER, TypeKind.MODULE));
 
         if (!unseenTypeKinds.isEmpty())
             throw new IllegalStateException("Unhandled types=" + unseenTypeKinds);

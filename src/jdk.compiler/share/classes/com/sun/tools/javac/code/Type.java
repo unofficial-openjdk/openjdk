@@ -1560,8 +1560,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
 
         @Override
         public TypeKind getKind() {
-            throw new UnsupportedOperationException();
-//            return TypeKind.MODULE;
+            return TypeKind.MODULE;
         }
 
         @Override

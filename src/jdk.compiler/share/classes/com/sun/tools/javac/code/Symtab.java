@@ -704,6 +704,7 @@ public class Symtab {
 
     private void doEnterPackage(ModuleSymbol msym, PackageSymbol pack) {
         packages.computeIfAbsent(pack.fullname, n -> new HashMap<>()).put(msym, pack);
+        msym.enclosedPackages = msym.enclosedPackages.prepend(pack);
     }
 
     private void addRootPackageFor(ModuleSymbol module) {

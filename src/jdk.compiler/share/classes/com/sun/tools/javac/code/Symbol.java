@@ -28,6 +28,7 @@ package com.sun.tools.javac.code;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -871,6 +872,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public PackageSymbol unnamedPackage;
         public Set<PackageSymbol> visiblePackages;
+        public List<Symbol> enclosedPackages = List.nil();
 
         public Completer usesProvidesCompleter = Completer.NULL_COMPLETER;
 
@@ -944,7 +946,17 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @Override
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-            return v.visitUnknown(this, p); // for now
+            return v.visitModule(this, p);
+        }
+
+        @Override
+        public List<Symbol> getEnclosedElements() {
+            List<Symbol> list = List.nil();
+            for (Symbol sym : enclosedPackages) {
+                if (sym.members().anyMatch(m -> m.kind == TYP))
+                    list = list.prepend(sym);
+            }
+            return list;
         }
 
         public void reset() {
