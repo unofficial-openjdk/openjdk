@@ -117,7 +117,7 @@ public final class Module {
             array[i++] = pn.replace('.', '/');
         }
         Version version = descriptor.version().orElse(null);
-        String vs = Objects.toString(version, "");
+        String vs = Objects.toString(version, null);
         String loc = Objects.toString(uri, null);
 
         defineModule0(this, vs, loc, array);
