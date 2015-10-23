@@ -320,8 +320,18 @@ public class Resolve {
                     env.toplevel.packge == c.packge();
                 break;
             default: // error recovery
+                isAccessible = true;
+                break;
             case PUBLIC:
                 isAccessible = true;
+                if (allowModules && checkModuleAccess) {
+                    ModuleSymbol currModule = env.toplevel.modle;
+                    PackageSymbol p = c.packge();
+                    isAccessible =
+                        (currModule == p.modle) || currModule.visiblePackages.contains(p);
+                } else {
+                    isAccessible = true;
+                }
                 break;
             case PROTECTED:
                 isAccessible =

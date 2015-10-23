@@ -139,4 +139,36 @@ public class EdgeCases extends ModuleTestBase {
         }
     }
 
+    @Test
+    void testModuleImplicitModuleBoundaries(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeJavaFiles(src_m1,
+                          "module m1 { exports api1; }",
+                          "package api1; public class Api1 { public void call() { } }");
+        Path src_m2 = src.resolve("m2");
+        tb.writeJavaFiles(src_m2,
+                          "module m2 { requires m1; exports api2; }",
+                          "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
+        Path src_m3 = src.resolve("m3");
+        tb.writeJavaFiles(src_m3,
+                          "module m3 { requires m2; }",
+                          "package test; public class Test { { api2.Api2.get().call(); api2.Api2.get().toString(); } }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics",
+                         "-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("Test.java:1:52: compiler.err.not.def.access.class.intf.cant.access: call(), api1.Api1") ||
+            !log.contains("Test.java:1:76: compiler.err.not.def.access.class.intf.cant.access: toString(), java.lang.Object"))
+            throw new Exception("expected output not found");
+    }
+
 }
