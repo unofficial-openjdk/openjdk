@@ -35,14 +35,21 @@
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 
 public class EdgeCases extends ModuleTestBase {
@@ -91,6 +98,44 @@ public class EdgeCases extends ModuleTestBase {
             ModuleSymbol msym = (ModuleSymbol) task.getElements().getModuleElement("m1");
 
             msym.outermostClass();
+        }
+    }
+
+    @Test
+    void testParseEnterAnalyze(Path base) throws Exception {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
+            Path moduleSrc = base.resolve("module-src");
+            Path m1 = moduleSrc.resolve("m1");
+
+            tb.writeJavaFiles(m1, "module m1 { }",
+                                  "package p;",
+                                  "package p; class T { }");
+
+            Path classes = base.resolve("classes");
+            Iterable<? extends JavaFileObject> files = fm.getJavaFileObjects(findJavaFiles(moduleSrc));
+            List<String> options = Arrays.asList("-d", classes.toString(), "-Xpkginfo:always");
+            JavacTaskImpl task = (JavacTaskImpl) compiler.getTask(null, fm, null, options, null, files);
+
+            Iterable<? extends CompilationUnitTree> parsed = task.parse();
+            Iterable<? extends Element> entered = task.enter(parsed);
+            Iterable<? extends Element> analyzed = task.analyze(entered);
+            Iterable<? extends JavaFileObject> generatedFiles = task.generate(analyzed);
+
+            Set<String> generated = new HashSet<>();
+
+            for (JavaFileObject jfo : generatedFiles) {
+                generated.add(jfo.getName());
+            }
+
+            Set<String> expected = new HashSet<>(
+                    Arrays.asList("testParseEnterAnalyze/classes/p/package-info.class",
+                                  "testParseEnterAnalyze/classes/module-info.class",
+                                  "testParseEnterAnalyze/classes/p/T.class")
+            );
+
+            if (!Objects.equals(expected, generated))
+                throw new AssertionError("Incorrect generated files: " + generated);
         }
     }
 

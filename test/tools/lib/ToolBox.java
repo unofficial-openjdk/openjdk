@@ -1967,6 +1967,8 @@ public class ToolBox {
             if (matcher.find()) {
                 String className = matcher.group(1) + ".java";
                 return (packageName == null) ? className : packageName + "/" + className;
+            } else if (packageName != null) {
+                return packageName + "/package-info.java";
             } else {
                 throw new Error("Could not extract the java class " +
                         "name from the provided source");
