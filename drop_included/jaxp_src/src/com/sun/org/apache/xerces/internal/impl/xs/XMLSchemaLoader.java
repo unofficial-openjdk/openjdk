@@ -65,6 +65,8 @@ import com.sun.org.apache.xerces.internal.xs.LSInputList;
 import com.sun.org.apache.xerces.internal.xs.StringList;
 import com.sun.org.apache.xerces.internal.xs.XSLoader;
 import com.sun.org.apache.xerces.internal.xs.XSModel;
+import java.util.HashMap;
+import java.util.Map;
 import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.DOMError;
 import org.w3c.dom.DOMErrorHandler;
@@ -236,7 +238,7 @@ XSLoader, DOMConfiguration {
     private CMBuilder fCMBuilder;
     private XSDDescription fXSDDescription = new XSDDescription();
     
-    private Hashtable fJAXPCache;
+    private Map fJAXPCache;
     private Locale fLocale = Locale.getDefault();
     
     // XSLoader attributes
@@ -323,8 +325,10 @@ XSLoader, DOMConfiguration {
         }
         fCMBuilder = builder;
         fSchemaHandler = new XSDHandler(fGrammarBucket);
-        fDeclPool = new XSDeclarationPool();
-        fJAXPCache = new Hashtable();
+        if (fDeclPool != null) {
+            fDeclPool.reset();
+        }
+        fJAXPCache = new HashMap();
         
         fSettingsChanged = true;
     }
@@ -522,7 +526,7 @@ XSLoader, DOMConfiguration {
         desc.setBaseSystemId(source.getBaseSystemId());
         desc.setLiteralSystemId( source.getSystemId());
         // none of the other fields make sense for preparsing
-        Hashtable locationPairs = new Hashtable();
+        Map locationPairs = new HashMap();
         // Process external schema location properties.
         // We don't call tokenizeSchemaLocationStr here, because we also want
         // to check whether the values are valid URI.
@@ -554,7 +558,7 @@ XSLoader, DOMConfiguration {
      */
     SchemaGrammar loadSchema(XSDDescription desc,
             XMLInputSource source,
-            Hashtable locationPairs) throws IOException, XNIException {
+            Map locationPairs) throws IOException, XNIException {
         
         // this should only be done once per invocation of this object;
         // unless application alters JAXPSource in the mean time.
@@ -578,7 +582,7 @@ XSLoader, DOMConfiguration {
      * @return
      * @throws IOException
      */
-    public static XMLInputSource resolveDocument(XSDDescription desc, Hashtable locationPairs,
+    public static XMLInputSource resolveDocument(XSDDescription desc, Map locationPairs,
             XMLEntityResolver entityResolver) throws IOException {
         String loc = null;
         // we consider the schema location properties for import
@@ -609,7 +613,7 @@ XSLoader, DOMConfiguration {
     
     // add external schema locations to the location pairs
     public static void processExternalHints(String sl, String nsl,
-            Hashtable locations,
+            Map locations,
             XMLErrorReporter er) {
         if (sl != null) {
             try {
@@ -660,9 +664,9 @@ XSLoader, DOMConfiguration {
     // otherwise, true is returned.  In either case, locations
     // is augmented to include as many tokens as possible.
     // @param schemaStr     The schemaLocation string to tokenize
-    // @param locations     Hashtable mapping namespaces to LocationArray objects holding lists of locaitons
+    // @param locations     HashMap mapping namespaces to LocationArray objects holding lists of locaitons
     // @return true if no problems; false if string could not be tokenized
-    public static boolean tokenizeSchemaLocationStr(String schemaStr, Hashtable locations) {
+    public static boolean tokenizeSchemaLocationStr(String schemaStr, Map locations) {
         if (schemaStr!= null) {
             StringTokenizer t = new StringTokenizer(schemaStr, " \n\t\r");
             String namespace, location;
@@ -681,7 +685,7 @@ XSLoader, DOMConfiguration {
             }
         }
         return true;
-    } // tokenizeSchemaLocation(String, Hashtable):  boolean
+    } // tokenizeSchemaLocation(String, HashMap):  boolean
     
     /**
      * Translate the various JAXP SchemaSource property types to XNI
@@ -693,7 +697,7 @@ XSLoader, DOMConfiguration {
      * Note: all JAXP schema files will be checked for full-schema validity if the feature was set up
      * 
      */
-    private void processJAXPSchemaSource(Hashtable locationPairs) throws IOException {
+    private void processJAXPSchemaSource(Map locationPairs) throws IOException {
         fJAXPProcessed = true;
         if (fJAXPSource == null) {
             return;
@@ -966,7 +970,12 @@ XSLoader, DOMConfiguration {
         }
         
         if (!psvi) {
-            fDeclPool.reset();
+            if (fDeclPool != null) {
+                fDeclPool.reset();
+            }
+            else {
+                fDeclPool = new XSDeclarationPool();
+            }
             fCMBuilder.setDeclPool(fDeclPool);
             fSchemaHandler.setDeclPool(fDeclPool);
         } else {

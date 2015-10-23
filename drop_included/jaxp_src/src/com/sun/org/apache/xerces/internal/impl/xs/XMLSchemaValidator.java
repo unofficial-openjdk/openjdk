@@ -78,8 +78,6 @@ import com.sun.org.apache.xerces.internal.xs.ShortList;
 import com.sun.org.apache.xerces.internal.xs.XSConstants;
 import com.sun.org.apache.xerces.internal.xs.XSObjectList;
 import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
 import com.sun.org.apache.xerces.internal.parsers.XMLParser;
 
 /**

@@ -200,8 +200,6 @@ public class XSDHandler {
     
     //
     //protected data that can be accessable by any traverser
-    // stores <notation> decl
-    protected Hashtable fNotationRegistry = new Hashtable();
     
     protected XSDeclarationPool fDeclPool = null;
    
@@ -220,48 +218,41 @@ public class XSDHandler {
     // By asking the node for its ownerDocument and looking in
     // XSDocumentInfoRegistry we can easily get the corresponding
     // XSDocumentInfo object.
-    private Hashtable fUnparsedAttributeRegistry = new Hashtable();
-    private Hashtable fUnparsedAttributeGroupRegistry = new Hashtable();
-    private Hashtable fUnparsedElementRegistry = new Hashtable();
-    private Hashtable fUnparsedGroupRegistry = new Hashtable();
-    private Hashtable fUnparsedIdentityConstraintRegistry = new Hashtable();
-    private Hashtable fUnparsedNotationRegistry = new Hashtable();
-    private Hashtable fUnparsedTypeRegistry = new Hashtable();
-    // Compensation for the above hashtables to locate XSDocumentInfo, 
+    private boolean registryEmpty = true;
+    private Map<String, Element> fUnparsedAttributeRegistry = new HashMap();
+    private Map<String, Element> fUnparsedAttributeGroupRegistry =  new HashMap();
+    private Map<String, Element> fUnparsedElementRegistry =  new HashMap();
+    private Map<String, Element> fUnparsedGroupRegistry =  new HashMap();
+    private Map<String, Element> fUnparsedIdentityConstraintRegistry =  new HashMap();
+    private Map<String, Element> fUnparsedNotationRegistry =  new HashMap();
+    private Map<String, Element> fUnparsedTypeRegistry =  new HashMap();
+    // Compensation for the above map to locate XSDocumentInfo, 
     // Since we may take Schema Element directly, so can not get the
-    // corresponding XSDocumentInfo object just using above hashtables.
-    private Hashtable fUnparsedAttributeRegistrySub = new Hashtable();
-    private Hashtable fUnparsedAttributeGroupRegistrySub = new Hashtable();
-    private Hashtable fUnparsedElementRegistrySub = new Hashtable();
-    private Hashtable fUnparsedGroupRegistrySub = new Hashtable();
-    private Hashtable fUnparsedIdentityConstraintRegistrySub = new Hashtable();
-    private Hashtable fUnparsedNotationRegistrySub = new Hashtable();
-    private Hashtable fUnparsedTypeRegistrySub = new Hashtable();
+    // corresponding XSDocumentInfo object just using above maps.
+    private Map<String, XSDocumentInfo> fUnparsedAttributeRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedAttributeGroupRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedElementRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedGroupRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedIdentityConstraintRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedNotationRegistrySub =  new HashMap();
+    private Map<String, XSDocumentInfo> fUnparsedTypeRegistrySub =  new HashMap();
     
-    // this is keyed with a documentNode (or the schemaRoot nodes
-    // contained in the XSDocumentInfo objects) and its value is the
-    // XSDocumentInfo object corresponding to that document.
-    // Basically, the function of this registry is to be a link
-    // between the nodes we fetch from calls to the fUnparsed*
-    // arrays and the XSDocumentInfos they live in.
-    private Hashtable fXSDocumentInfoRegistry = new Hashtable();
-    
-    // this hashtable is keyed on by XSDocumentInfo objects.  Its values
+    // this map is keyed on by XSDocumentInfo objects.  Its values
     // are Vectors containing the XSDocumentInfo objects <include>d,
     // <import>ed or <redefine>d by the key XSDocumentInfo.
-    private Hashtable fDependencyMap = new Hashtable();
+    private Map<XSDocumentInfo, Vector> fDependencyMap = new HashMap();
     
-    // this hashtable is keyed on by a target namespace.  Its values
+    // this map is keyed on by a target namespace.  Its values
     // are Vectors containing namespaces imported by schema documents
     // with the key target namespace.
     // if an imprted schema has absent namespace, the value "null" is stored.
-    private Hashtable fImportMap = new Hashtable();
+    private Map<String, Vector> fImportMap = new HashMap();
     // all namespaces that imports other namespaces
     // if the importing schema has absent namespace, empty string is stored.
     // (because the key of a hashtable can't be null.)
     private Vector fAllTNSs = new Vector();
     // stores instance document mappings between namespaces and schema hints
-    private Hashtable fLocationPairs = null;
+    private Map fLocationPairs = null;
     
     //this hashtable is keyded on by DOM node objects. 
     //The table stores the hidden nodes
@@ -291,33 +282,33 @@ public class XSDHandler {
     // schema document.  This combination is used so that the user's
     // EntityResolver can provide a consistent way of identifying a
     // schema document that is included in multiple other schemas.
-    private Hashtable fTraversed = new Hashtable();
+    private Map fTraversed = new HashMap();
     
-    // this hashtable contains a mapping from Schema Element to its systemId
+    // this map contains a mapping from Schema Element to its systemId
     // this is useful to resolve a uri relative to the referring document
-    private Hashtable fDoc2SystemId = new Hashtable();
+    private Map fDoc2SystemId = new HashMap();
     
     // the primary XSDocumentInfo we were called to parse
     private XSDocumentInfo fRoot = null;
     
-    // This hashtable's job is to act as a link between the Schema Element and its
+    // This map's job is to act as a link between the Schema Element and its
     // XSDocumentInfo object.
-    private Hashtable fDoc2XSDocumentMap = new Hashtable();
+    private Map fDoc2XSDocumentMap = new HashMap();
     
     // map between <redefine> elements and the XSDocumentInfo
     // objects that correspond to the documents being redefined.
-    private Hashtable fRedefine2XSDMap = new Hashtable();
+    private Map fRedefine2XSDMap = null;
     
     // map between <redefine> elements and the namespace support
-    private Hashtable fRedefine2NSSupport = new Hashtable();
+    private Map fRedefine2NSSupport = null;
     
     // these objects store a mapping between the names of redefining
     // groups/attributeGroups and the groups/AttributeGroups which
     // they redefine by restriction (implicitly).  It is up to the
     // Group and AttributeGroup traversers to check these restrictions for
     // validity.
-    private Hashtable fRedefinedRestrictedAttributeGroupRegistry = new Hashtable();
-    private Hashtable fRedefinedRestrictedGroupRegistry = new Hashtable();
+    private Map fRedefinedRestrictedAttributeGroupRegistry = new HashMap();
+    private Map fRedefinedRestrictedGroupRegistry = new HashMap();
     
     // a variable storing whether the last schema document
     // processed (by getSchema) was a duplicate.
@@ -428,7 +419,7 @@ public class XSDHandler {
      * @throws IOException
      */
     public SchemaGrammar parseSchema(XMLInputSource is, XSDDescription desc,
-            Hashtable locationPairs)
+            Map locationPairs)
     throws IOException {
         fLocationPairs = locationPairs;
         fSchemaParser.resetNodePool();   
@@ -929,6 +920,7 @@ public class XSDHandler {
                 schemaHint = (String)includeAttrs[XSAttributeChecker.ATTIDX_SCHEMALOCATION];
                 // store the namespace decls of the redefine element
                 if (localName.equals(SchemaSymbols.ELT_REDEFINE)) {
+                    if (fRedefine2NSSupport == null) fRedefine2NSSupport = new HashMap();
                     fRedefine2NSSupport.put(child, new SchemaNamespaceSupport(currSchemaInfo.fNamespaceSupport));
                 }
                 
@@ -1018,6 +1010,7 @@ public class XSDHandler {
                     newSchemaInfo != null) {
                 // must record which schema we're redefining so that we can
                 // rename the right things later!
+                if (fRedefine2XSDMap == null) fRedefine2XSDMap = new HashMap();
                 fRedefine2XSDMap.put(child, newSchemaInfo);
             }
             if (newSchemaRoot != null) {
@@ -1052,7 +1045,7 @@ public class XSDHandler {
     // that implicit redefinitions of groups and attributeGroups can be handled).
     protected void buildGlobalNameRegistries() {
         
-
+        registryEmpty = false;
         // Starting with fRoot, we examine each child of the schema
         // element.  Skipping all imports and includes, we record the names
         // of all other global components (and children of <redefine>).  We
@@ -1228,7 +1221,7 @@ public class XSDHandler {
                 // includes and imports will not show up here!
                 if (DOMUtil.getLocalName(globalComp).equals(SchemaSymbols.ELT_REDEFINE)) {
                     // use the namespace decls for the redefine, instead of for the parent <schema>
-                    currSchemaDoc.backupNSSupport((SchemaNamespaceSupport)fRedefine2NSSupport.get(globalComp));
+                    currSchemaDoc.backupNSSupport((fRedefine2NSSupport!=null)?(SchemaNamespaceSupport)fRedefine2NSSupport.get(globalComp):null);
                     for (Element redefinedComp = DOMUtil.getFirstVisibleChildElement(globalComp, fHiddenNodes);
                     redefinedComp != null;
                     redefinedComp = DOMUtil.getNextVisibleSiblingElement(redefinedComp, fHiddenNodes)) {
@@ -1448,32 +1441,32 @@ public class XSDHandler {
             declToTraverse.uri+","+declToTraverse.localpart;
         switch (declType) {
         case ATTRIBUTE_TYPE :
-            decl = (Element)fUnparsedAttributeRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedAttributeRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedAttributeRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedAttributeRegistrySub, declKey);
             break;
         case ATTRIBUTEGROUP_TYPE :
-            decl = (Element)fUnparsedAttributeGroupRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedAttributeGroupRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedAttributeGroupRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedAttributeGroupRegistrySub, declKey);
             break;
         case ELEMENT_TYPE :
-            decl = (Element)fUnparsedElementRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedElementRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedElementRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedElementRegistrySub, declKey);
             break;
         case GROUP_TYPE :
-            decl = (Element)fUnparsedGroupRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedGroupRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedGroupRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedGroupRegistrySub, declKey);
             break;
         case IDENTITYCONSTRAINT_TYPE :
-            decl = (Element)fUnparsedIdentityConstraintRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedIdentityConstraintRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedIdentityConstraintRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedIdentityConstraintRegistrySub, declKey);
             break;
         case NOTATION_TYPE :
-            decl = (Element)fUnparsedNotationRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedNotationRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedNotationRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedNotationRegistrySub, declKey);
             break;
         case TYPEDECL_TYPE :
-            decl = (Element)fUnparsedTypeRegistry.get(declKey);
-            declDoc = (XSDocumentInfo)fUnparsedTypeRegistrySub.get(declKey);
+            decl = getElementFromMap(fUnparsedTypeRegistry, declKey);
+            declDoc = getDocInfoFromMap(fUnparsedTypeRegistrySub, declKey);
             break;
         default:
             reportSchemaError("Internal-Error", new Object [] {"XSDHandler asked to locate component of type " + declType + "; it does not recognize this type!"}, elmNode);
@@ -1514,7 +1507,7 @@ public class XSDHandler {
         // if the parent is <redefine> use the namespace delcs for it.
         Element parent = DOMUtil.getParent(decl);
         if (DOMUtil.getLocalName(parent).equals(SchemaSymbols.ELT_REDEFINE))
-            nsSupport = (SchemaNamespaceSupport)fRedefine2NSSupport.get(parent);
+            nsSupport = (fRedefine2NSSupport!=null)?(SchemaNamespaceSupport)fRedefine2NSSupport.get(parent):null;
         // back up the current SchemaNamespaceSupport, because we need to provide
         // a fresh one to the traverseGlobal methods.
         schemaWithDecl.backupNSSupport(nsSupport);
@@ -1621,11 +1614,11 @@ public class XSDHandler {
     
     // an accessor method.  Just makes sure callers
     // who want the Identity constraint registry vaguely know what they're about.
-    protected Hashtable getIDRegistry() {
+    protected Map getIDRegistry() {
         return fUnparsedIdentityConstraintRegistry;
     }
     // an accessor method.  
-    protected Hashtable getIDRegistry_sub() {
+    protected Map getIDRegistry_sub() {
         return fUnparsedIdentityConstraintRegistrySub;
     }
     
@@ -1886,6 +1879,7 @@ public class XSDHandler {
     // before traversing a schema's parse tree, need to reset all traversers and
     // clear all registries
     void prepareForTraverse() {
+        if (!registryEmpty) {
         fUnparsedAttributeRegistry.clear();
         fUnparsedAttributeGroupRegistry.clear();
         fUnparsedElementRegistry.clear();
@@ -1901,12 +1895,12 @@ public class XSDHandler {
         fUnparsedIdentityConstraintRegistrySub.clear();
         fUnparsedNotationRegistrySub.clear();
         fUnparsedTypeRegistrySub.clear();
+        }
         
-        fXSDocumentInfoRegistry.clear();
         fDependencyMap.clear();
         fDoc2XSDocumentMap.clear();
-        fRedefine2XSDMap.clear();
-        fRedefine2NSSupport.clear();
+        if (fRedefine2XSDMap != null) fRedefine2XSDMap.clear();
+        if (fRedefine2NSSupport != null) fRedefine2NSSupport.clear();
         fAllTNSs.removeAllElements();
         fImportMap.clear();
         fRoot = null;
@@ -2151,7 +2145,7 @@ public class XSDHandler {
      * or because we've found the thing we're redefining.
      */
     void checkForDuplicateNames(String qName,
-    		Hashtable registry, Hashtable registry_sub, Element currComp,
+    		Map<String,Element> registry, Map<String,XSDocumentInfo> registry_sub, Element currComp,
 			XSDocumentInfo currSchema) {
         Object objElem = null;
         // REVISIT:  when we add derivation checking, we'll have to make
@@ -2172,7 +2166,7 @@ public class XSDHandler {
             // (the parent of the colliding element is a redefine)
             boolean collidedWithRedefine = true;
             if ((DOMUtil.getLocalName((elemParent = DOMUtil.getParent(collidingElem))).equals(SchemaSymbols.ELT_REDEFINE))) {
-                redefinedSchema = (XSDocumentInfo)(fRedefine2XSDMap.get(elemParent));
+                redefinedSchema = (fRedefine2XSDMap != null)?(XSDocumentInfo) (fRedefine2XSDMap.get(elemParent)): null;
                 // case where we're a redefining element.
             }
             else if ((DOMUtil.getLocalName(DOMUtil.getParent(currComp)).equals(SchemaSymbols.ELT_REDEFINE))) {
@@ -2223,7 +2217,7 @@ public class XSDHandler {
                 reportSchemaError("sch-props-correct.2", new Object []{qName}, currComp);
             }
         }
-    } // checkForDuplicateNames(String, Hashtable, Element, XSDocumentInfo):void
+    } // checkForDuplicateNames(String, Map, Element, XSDocumentInfo):void
     
     // the purpose of this method is to take the component of the
     // specified type and rename references to itself so that they
@@ -2540,7 +2534,22 @@ public class XSDHandler {
         }
         return false;
     }
-    
+
+    private Element getElementFromMap(Map<String, Element> registry, String declKey) {
+        if (registry == null) return null;
+        return registry.get(declKey);
+    }
+
+    private XSDocumentInfo getDocInfoFromMap(Map<String, XSDocumentInfo> registry, String declKey) {
+        if (registry == null) return null;
+        return registry.get(declKey);
+    }
+
+    private Object getFromMap(Map registry, String key) {
+        if (registry == null) return null;
+        return registry.get(key);
+    }
+
     void reportSchemaFatalError(String key, Object[] args, Element ele) {
         reportSchemaErr(key, args, ele, XMLErrorReporter.SEVERITY_FATAL_ERROR);
     }

@@ -20,11 +20,6 @@
 
 package com.sun.org.apache.xerces.internal.impl.xs.traversers;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.StringTokenizer;
-import java.util.Vector;
-
 import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
 import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
 import com.sun.org.apache.xerces.internal.impl.xs.SchemaGrammar;
@@ -41,6 +36,12 @@ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.QName;
 import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 
@@ -144,9 +145,9 @@ public class XSAttributeChecker {
 
     // used to store the map from element name to attribute list
     // for 14 global elements
-    private static final Hashtable fEleAttrsMapG = new Hashtable(29);
+    private static final Map fEleAttrsMapG = new HashMap(29);
     // for 39 local elememnts
-    private static final Hashtable fEleAttrsMapL = new Hashtable(79);
+    private static final Map fEleAttrsMapL = new HashMap(79);
 
     // used to initialize fEleAttrsMap
     // step 1: all possible data types
@@ -967,7 +968,7 @@ public class XSAttributeChecker {
     protected SymbolTable fSymbolTable = null;
 
     // used to store the mapping from processed element to attributes
-    protected Hashtable fNonSchemaAttrs = new Hashtable();
+    protected Map<String, Vector<String>> fNonSchemaAttrs = new HashMap();
 
     // temprory vector, used to hold the namespace list
     protected Vector fNamespaceList = new Vector();
@@ -1033,7 +1034,7 @@ public class XSAttributeChecker {
             reportSchemaError("s4s-elt-schema-ns", new Object[] {elName}, element);
         }
 
-        Hashtable eleAttrsMap = fEleAttrsMapG;
+        Map eleAttrsMap = fEleAttrsMapG;
         String lookupName = elName;
 
         // REVISIT: only local element and attribute are different from others.
@@ -1633,11 +1634,10 @@ public class XSAttributeChecker {
     // REVISIT: pass the proper element node to reportSchemaError
     public void checkNonSchemaAttributes(XSGrammarBucket grammarBucket) {
         // for all attributes
-        Enumeration keys = fNonSchemaAttrs.keys();
         XSAttributeDecl attrDecl;
-        while (keys.hasMoreElements()) {
+        for (Map.Entry<String, Vector<String>> entry : fNonSchemaAttrs.entrySet()) {
             // get name, uri, localpart
-            String attrRName = (String)keys.nextElement();
+            String attrRName = entry.getKey();
             String attrURI = attrRName.substring(0,attrRName.indexOf(','));
             String attrLocal = attrRName.substring(attrRName.indexOf(',')+1);
             // find associated grammar
@@ -1653,7 +1653,7 @@ public class XSAttributeChecker {
                 continue;
 
             // get all values appeared with this attribute name
-            Vector values = (Vector)fNonSchemaAttrs.get(attrRName);
+            Vector values = entry.getValue();
             String elName, attrVal;
             String attrName = (String)values.elementAt(0);
             // for each of the values
@@ -1881,9 +1881,9 @@ class SmallContainer extends Container {
 }
 
 class LargeContainer extends Container {
-    Hashtable items;
+    Map items;
     LargeContainer(int size) {
-        items = new Hashtable(size*2+1);
+        items = new HashMap(size*2+1);
         values = new OneAttr[size];
     }
     void put(String key, OneAttr value) {

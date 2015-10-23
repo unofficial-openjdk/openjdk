@@ -20,8 +20,9 @@
 
 package com.sun.org.apache.xerces.internal.impl.xs;
 
-import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -38,7 +39,7 @@ public class XSGrammarBucket {
     /**
      * Hashtable that maps between Namespace and a Grammar
      */
-    Hashtable fGrammarRegistry = new Hashtable();
+    Map<String, SchemaGrammar> fGrammarRegistry = new HashMap();
     SchemaGrammar fNoNSGrammar = null;
 
     /**
@@ -145,10 +146,11 @@ public class XSGrammarBucket {
         int count = fGrammarRegistry.size() + (fNoNSGrammar==null ? 0 : 1);
         SchemaGrammar[] grammars = new SchemaGrammar[count];
         // get grammars with target namespace
-        Enumeration schemas = fGrammarRegistry.elements();
         int i = 0;
-        while (schemas.hasMoreElements())
-            grammars[i++] = (SchemaGrammar)schemas.nextElement();
+        for(Map.Entry<String, SchemaGrammar> entry : fGrammarRegistry.entrySet()){
+            grammars[i++] = entry.getValue();
+        }
+
         // add the grammar without target namespace, if any
         if (fNoNSGrammar != null)
             grammars[count-1] = fNoNSGrammar;
