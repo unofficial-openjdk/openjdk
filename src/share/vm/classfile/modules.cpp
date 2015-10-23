@@ -76,16 +76,10 @@ static char* get_module_name(oop module, TRAPS) {
 }
 
 static const char* get_module_version(jstring version) {
-  char* module_version;
   if (version == NULL) {
-    module_version = (char *)Modules::default_version();
-  } else {
-    module_version = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(version));
-    if (module_version == NULL) {
-      module_version = (char *)Modules::default_version();
-    }
+    return NULL;
   }
-  return module_version;
+  return java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(version));
 }
 
 static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
@@ -278,7 +272,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
 
   if (TraceModules) {
     tty->print_cr("In define_module(): Start defining module %s, version: %s]",
-      module_name, module_version);
+      module_name, module_version != NULL ? module_version : "NULL");
   }
 
   objArrayOop packages_oop = objArrayOop(JNIHandles::resolve(packages));
@@ -348,7 +342,12 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
   bool dupl_modules = false;
 
   // Create symbol* entry for module version.
-  TempNewSymbol version_symbol = SymbolTable::new_symbol(module_version, CHECK);
+  TempNewSymbol version_symbol;
+  if (module_version != NULL) {
+    version_symbol = SymbolTable::new_symbol(module_version, CHECK);
+  } else {
+    version_symbol = NULL;
+  }
 
   // Create symbol* entry for module location.
   const char* module_location = NULL;
@@ -399,7 +398,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
       } else {
         if (TraceModules) {
           tty->print("In define_module(): creation of module: %s, version: %s, location: %s, ",
-            module_name, module_version,
+            module_name, module_version != NULL ? module_version : "NULL",
             module_location != NULL ? module_location : "NULL");
           loader_data->print_value();
           tty->print_cr(", package #: %d]", pkg_list->length());

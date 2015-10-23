@@ -1562,8 +1562,10 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
   if (module->is_named()) {
     module_name = module->name()->as_C_string();
     buf_len += (int)strlen(module_name);
-    module_version = module->version()->as_C_string();
-    buf_len += (int)strlen(module_version);
+    if (module->version() != NULL) {
+      module_version = module->version()->as_C_string();
+      buf_len += (int)strlen(module_version);
+    }
   }
 
   // Allocate temporary buffer with extra space for formatting and line number
@@ -1574,7 +1576,11 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
 
   // Print module information
   if (module_name != NULL) {
-    sprintf(buf + (int)strlen(buf), "%s@%s/", module_name, module_version);
+    if (module_version != NULL) {
+      sprintf(buf + (int)strlen(buf), "%s@%s/", module_name, module_version);
+    } else {
+      sprintf(buf + (int)strlen(buf), "%s/", module_name);
+    }
   }
 
   if (!version_matches(method, version)) {
@@ -1982,7 +1988,12 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   if (module->is_named()) {
     oop module_name = StringTable::intern(module->name()->as_utf8(), CHECK_0);
     java_lang_StackTraceElement::set_moduleName(element(), module_name);
-    oop module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+    oop module_version;
+    if (module->version() != NULL) {
+      module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+    } else {
+      module_version = NULL;
+    }
     java_lang_StackTraceElement::set_moduleVersion(element(), module_version);
   }
 
