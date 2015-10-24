@@ -44,7 +44,7 @@ import java.util.TreeSet;
 /**
  * Base class for module tests.
  */
-class ModuleTestBase {
+public class ModuleTestBase {
     protected ToolBox tb;
     protected PrintStream out;
     private int errors;
