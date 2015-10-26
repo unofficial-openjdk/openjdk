@@ -29,7 +29,7 @@ import com.sun.source.tree.LambdaExpressionTree.BodyKind;
 import com.sun.source.tree.NewClassTree;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Type.TypeMapping;
-import com.sun.tools.javac.comp.ArgumentAttr.CachePolicy;
+import com.sun.tools.javac.comp.ArgumentAttr.LocalCacheContext;
 import com.sun.tools.javac.comp.Resolve.ResolveError;
 import com.sun.tools.javac.resources.CompilerProperties.Fragments;
 import com.sun.tools.javac.tree.*;
@@ -472,6 +472,7 @@ public class DeferredAttr extends JCTree.Visitor {
                 if (csym == null) return;
                 typeEnvs.remove(csym);
                 chk.compiled.remove(csym.flatname);
+                chk.clearLocalClassNameIndexes(csym);
                 syms.classes.remove(csym.flatname);
                 super.visitClassDef(tree);
             }
@@ -777,14 +778,14 @@ public class DeferredAttr extends JCTree.Visitor {
 
             boolean canLambdaBodyCompleteNormally(JCLambda tree) {
                 List<JCVariableDecl> oldParams = tree.params;
-                CachePolicy prevPolicy = argumentAttr.withCachePolicy(CachePolicy.NO_CACHE);
+                LocalCacheContext localCacheContext = argumentAttr.withLocalCacheContext();
                 try {
                     tree.params = tree.params.stream()
                             .map(vd -> make.VarDef(vd.mods, vd.name, make.Erroneous(), null))
                             .collect(List.collector());
                     return attribSpeculativeLambda(tree, env, attr.unknownExprInfo).canCompleteNormally;
                 } finally {
-                    argumentAttr.withCachePolicy(prevPolicy);
+                    localCacheContext.leave();
                     tree.params = oldParams;
                 }
             }
