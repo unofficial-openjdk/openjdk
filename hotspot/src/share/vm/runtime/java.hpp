@@ -103,6 +103,14 @@ class JDK_Version VALUE_OBJ_CLASS_SPEC {
     return JDK_Version(m);
   }
 
+  static JDK_Version undefined() {
+    return JDK_Version(0);
+  }
+
+  bool is_undefined() const {
+    return _major == 0;
+  }
+
   uint8_t major_version() const          { return _major; }
   uint8_t minor_version() const          { return _minor; }
   uint8_t security_version() const       { return _security; }
