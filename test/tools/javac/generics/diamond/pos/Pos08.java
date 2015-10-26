@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,33 @@
  * questions.
  */
 
-package m;
+/*
+ * @test
+ * @bug 8133135
+ *
+ * @summary Compiler internall error (NPE) on anonymous class defined by qualified instance creation expression with diamond
+ * @author sadayapalam
+ * @compile Pos08.java
+ *
+ */
+
+class Pos08 {
+
+    static class List<T> {
+    }
+
+    static class FooOuter {
+        class Foo<T> {
+            public Foo(){}
+        }
+    }
+
+    public static <T> List<T> m(List<T> list, T item) {
+        return list;
+    }
 
 
-class Gee extends g.G {
-    public sun.security.x509.X509CertInfo cert;
-    public com.sun.tools.classfile.ClassFile cf;     // @jdk.Exported(false)
-    public com.sun.source.tree.BinaryTree tree;      // @jdk.Exported
-    public com.sun.management.ThreadMXBean mxbean;   // @jdk.Exported on package-info
+    public static void run() {
+        m(new List<FooOuter.Foo<String>>(), new FooOuter().new Foo<>(){ });
+    }
 }

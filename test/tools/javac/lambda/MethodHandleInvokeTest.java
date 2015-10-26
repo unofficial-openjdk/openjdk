@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,29 @@
  * questions.
  */
 
-package m;
+/*
+ * @test
+ * @bug 8130506
+ * @summary javac AssertionError when invoking MethodHandle.invoke with lambda paramterer
+ * @run main MethodHandleInvokeTest
+ */
 
+import java.lang.invoke.MethodHandle;
 
-class Gee extends g.G {
-    public sun.security.x509.X509CertInfo cert;
-    public com.sun.tools.classfile.ClassFile cf;     // @jdk.Exported(false)
-    public com.sun.source.tree.BinaryTree tree;      // @jdk.Exported
-    public com.sun.management.ThreadMXBean mxbean;   // @jdk.Exported on package-info
+public class MethodHandleInvokeTest {
+
+    private static interface Obj2Obj {
+        Object run(Object obj) throws Throwable;
+    }
+
+    private static void m(Obj2Obj param) {
+    }
+
+    public static void main(String[] args) {
+        m((obj) -> {
+            MethodHandle mhandle = null;
+            mhandle.invoke(obj);
+            return null;
+        });
+    }
 }

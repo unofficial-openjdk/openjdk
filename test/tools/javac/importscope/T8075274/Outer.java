@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,23 @@
  * questions.
  */
 
-package m;
+/**
+ * @test
+ * @bug 8075274
+ * @summary Ensuring order of imports or inputs does not affect compilability of the sources
+ * @compile C.java D.java Outer.java
+ * @compile C.java Outer.java D.java
+ * @compile D.java C.java Outer.java
+ * @compile D.java Outer.java C.java
+ * @compile Outer.java D.java C.java
+ * @compile Outer.java C.java D.java
+ */
+package P;
 
+import static P.Outer.Nested.*;
+import static P.Q.C.*;
 
-class Gee extends g.G {
-    public sun.security.x509.X509CertInfo cert;
-    public com.sun.tools.classfile.ClassFile cf;     // @jdk.Exported(false)
-    public com.sun.source.tree.BinaryTree tree;      // @jdk.Exported
-    public com.sun.management.ThreadMXBean mxbean;   // @jdk.Exported on package-info
+public class Outer {
+  public static class Nested implements I {
+  }
 }
