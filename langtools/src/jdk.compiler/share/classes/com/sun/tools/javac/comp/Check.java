@@ -409,6 +409,9 @@ public class Check {
  * Class name generation
  **************************************************************************/
 
+
+    private Map<Pair<Name, Name>, Integer> localClassNameIndexes = new HashMap<>();
+
     /** Return name of local class.
      *  This is of the form   {@code <enclClass> $ n <classname> }
      *  where
@@ -416,17 +419,28 @@ public class Check {
      *    classname is the simple name of the local class
      */
     Name localClassName(ClassSymbol c) {
-        for (int i=1; ; i++) {
-            Name flatname = names.
-                fromString("" + c.owner.enclClass().flatname +
-                           syntheticNameChar + i +
-                           c.name);
-            if (compiled.get(flatname) == null) return flatname;
+        Name enclFlatname = c.owner.enclClass().flatname;
+        String enclFlatnameStr = enclFlatname.toString();
+        Pair<Name, Name> key = new Pair<>(enclFlatname, c.name);
+        Integer index = localClassNameIndexes.get(key);
+        for (int i = (index == null) ? 1 : index; ; i++) {
+            Name flatname = names.fromString(enclFlatnameStr
+                    + syntheticNameChar + i + c.name);
+            if (compiled.get(flatname) == null) {
+                localClassNameIndexes.put(key, i + 1);
+                return flatname;
+            }
         }
+    }
+
+    void clearLocalClassNameIndexes(ClassSymbol c) {
+        localClassNameIndexes.remove(new Pair<>(
+                c.owner.enclClass().flatname, c.name));
     }
 
     public void newRound() {
         compiled.clear();
+        localClassNameIndexes.clear();
     }
 
 /* *************************************************************************
@@ -808,7 +822,7 @@ public class Check {
      */
     List<Type> checkDiamondDenotable(ClassType t) {
         ListBuffer<Type> buf = new ListBuffer<>();
-        for (Type arg : t.getTypeArguments()) {
+        for (Type arg : t.allparams()) {
             if (!diamondTypeChecker.visit(arg, null)) {
                 buf.append(arg);
             }
@@ -831,7 +845,7 @@ public class Check {
                 if (t.isCompound()) {
                     return false;
                 }
-                for (Type targ : t.getTypeArguments()) {
+                for (Type targ : t.allparams()) {
                     if (!visit(targ, s)) {
                         return false;
                     }
@@ -842,13 +856,16 @@ public class Check {
             @Override
             public Boolean visitTypeVar(TypeVar t, Void s) {
                 /* Any type variable mentioned in the inferred type must have been declared as a type parameter
-                  (i.e cannot have been produced by capture conversion (5.1.10) or by inference (18.4)
+                  (i.e cannot have been produced by inference (18.4))
                 */
                 return t.tsym.owner.type.getTypeArguments().contains(t);
             }
 
             @Override
             public Boolean visitCapturedType(CapturedType t, Void s) {
+                /* Any type variable mentioned in the inferred type must have been declared as a type parameter
+                  (i.e cannot have been produced by capture conversion (5.1.10))
+                */
                 return false;
             }
 
