@@ -1316,17 +1316,14 @@ class Krb5Context implements GSSContextSpi {
             this.key = key;
         }
 
-        @Override
         public String getAlgorithm() {
             return Integer.toString(key.getEType());
         }
 
-        @Override
         public String getFormat() {
             return "RAW";
         }
 
-        @Override
         public byte[] getEncoded() {
             return key.getBytes().clone();
         }

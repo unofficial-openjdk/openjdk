@@ -1025,7 +1025,6 @@ public class Config {
         if (realm == null) {
             realm = java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction<String>() {
-                @Override
                 public String run() {
                     String osname = System.getProperty("os.name");
                     if (osname.startsWith("Windows")) {
@@ -1064,7 +1063,6 @@ public class Config {
         if (kdcs == null) {
             kdcs = java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction<String>() {
-                @Override
                 public String run() {
                     String osname = System.getProperty("os.name");
                     if (osname.startsWith("Windows")) {

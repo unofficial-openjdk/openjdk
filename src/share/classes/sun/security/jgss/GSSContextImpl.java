@@ -632,7 +632,6 @@ class GSSContextImpl implements ExtendedGSSContext {
 
     // ExtendedGSSContext methods:
 
-    @Override
     public Object inquireSecContext(InquireType type) throws GSSException {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -644,13 +643,11 @@ class GSSContextImpl implements ExtendedGSSContext {
         return mechCtxt.inquireSecContext(type);
     }
 
-    @Override
     public void requestDelegPolicy(boolean state) throws GSSException {
         if (mechCtxt == null && initiator)
             reqDelegPolicyState = state;
     }
 
-    @Override
     public boolean getDelegPolicyState() {
         if (mechCtxt != null)
             return mechCtxt.getDelegPolicyState();
