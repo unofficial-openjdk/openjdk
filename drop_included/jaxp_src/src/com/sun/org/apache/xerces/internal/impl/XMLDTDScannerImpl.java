@@ -382,7 +382,6 @@ implements XMLDTDScanner, XMLComponent, XMLEntityHandler {
      * @return true if DTD is skipped, false otherwise.
      * @throws java.io.IOException if i/o error occurs
      */
-    @Override
     public boolean skipDTD(boolean supportDTD) throws IOException {
         if (!supportDTD) {
             fStringBuffer.clear();
