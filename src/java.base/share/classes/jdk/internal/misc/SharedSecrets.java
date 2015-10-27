@@ -25,6 +25,7 @@
 
 package jdk.internal.misc;
 
+import java.lang.module.ModuleDescriptor;
 import java.util.jar.JarFile;
 import java.io.Console;
 import java.io.FileDescriptor;
@@ -88,6 +89,9 @@ public class SharedSecrets {
     }
 
     public static JavaLangModuleAccess getJavaLangModuleAccess() {
+        if (javaLangModuleAccess == null) {
+            unsafe.ensureClassInitialized(ModuleDescriptor.class);
+        }
         return javaLangModuleAccess;
     }
 

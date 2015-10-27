@@ -351,6 +351,9 @@ public final class AsmPools {
 
         for (Entry<String, ResourcePool> entry : resPools.entrySet()) {
             ModuleDescriptor descriptor = descriptors.get(entry.getKey());
+            if (descriptor == null) {
+                throw new IOException("module-info not found for " + entry.getKey());
+            }
             AsmModulePool p = new AsmPoolImpl(entry.getValue(),
                     entry.getKey(), this, descriptor);
             pools.put(entry.getKey(), p);

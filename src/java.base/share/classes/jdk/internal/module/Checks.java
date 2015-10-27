@@ -23,10 +23,10 @@
  * questions.
  */
 
-package java.lang.module;
+package jdk.internal.module;
 
 
-final class Checks {
+public final class Checks {
 
     private Checks() { }
 
@@ -40,7 +40,7 @@ final class Checks {
     /**
      * Returns {@code true} if the given identifier is a legal Java identifier.
      */
-    static boolean isJavaIdentifier(String id) {
+    public static boolean isJavaIdentifier(String id) {
         int n = id.length();
         if (n == 0)
             return false;
@@ -62,7 +62,7 @@ final class Checks {
     /**
      * Checks if a given identifier is a legal Java identifier.
      */
-    static String requireJavaIdentifier(String what, String id) {
+    public static String requireJavaIdentifier(String what, String id) {
         if (id == null)
             throw new IllegalArgumentException("Null " + what);
         int n = id.length();
@@ -85,19 +85,19 @@ final class Checks {
         return id;
     }
 
-    static String requireModuleName(String id) {
+    public static String requireModuleName(String id) {
         return requireJavaIdentifier("module name", id);
     }
 
-    static String requirePackageName(String id) {
+    public static String requirePackageName(String id) {
         return requireJavaIdentifier("package name", id);
     }
 
-    static String requireServiceTypeName(String id) {
+    public static String requireServiceTypeName(String id) {
         return requireJavaIdentifier("service type name", id);
     }
 
-    static String requireServiceProviderName(String id) {
+    public static String requireServiceProviderName(String id) {
         return requireJavaIdentifier("service provider name", id);
     }
 

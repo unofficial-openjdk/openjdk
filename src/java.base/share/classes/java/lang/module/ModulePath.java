@@ -55,6 +55,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.internal.module.Checks;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.Hasher.HashSupplier;
 import jdk.internal.module.Hasher;

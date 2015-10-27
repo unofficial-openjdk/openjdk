@@ -26,7 +26,10 @@
 package jdk.internal.misc;
 
 import java.lang.module.ModuleDescriptor;
+import java.util.Map;
+import java.util.Set;
 
+import static java.lang.module.ModuleDescriptor.*;
 
 /**
  * Provides access to non-public methods in java.lang.module.
@@ -40,4 +43,46 @@ public interface JavaLangModuleAccess {
      */
     boolean isAutomatic(ModuleDescriptor descriptor);
 
+    /**
+     * Returns {@code ModuleDescriptor.Requires} of the given modifier
+     * and module name.
+     */
+    Requires newRequires(Set<Requires.Modifier> ms, String mn);
+
+    /**
+     * Returns an unqualified {@code ModuleDescriptor.Exports}
+     * of the given package name.
+     */
+    Exports newExports(String source);
+
+    /**
+     * Returns a qualified {@code ModuleDescriptor.Exports}
+     * of the given package name and targets.
+     */
+    Exports newExports(String source, Set<String> targets);
+
+    /**
+     * Returns a {@code ModuleDescriptor.Provides}
+     * of the given service name and providers.
+     */
+    Provides newProvides(String service, Set<String> providers);
+
+    /**
+     * Returns a {@code ModuleDescriptor.Version} of the given version.
+     */
+    Version newVersion(String v);
+
+    /**
+     * Returns a new {@code ModuleDescriptor} instance.
+     */
+    ModuleDescriptor newModuleDescriptor(String name,
+                                         boolean automatic,
+                                         Set<Requires> requires,
+                                         Set<String> uses,
+                                         Set<Exports> exports,
+                                         Map<String, Provides> provides,
+                                         Version version,
+                                         String mainClass,
+                                         Set<String> conceals,
+                                         Set<String> packages);
 }
