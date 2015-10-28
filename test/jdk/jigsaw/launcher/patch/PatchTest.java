@@ -24,6 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build PatchTest CompilerUtils jdk.testlibrary.*
  * @run testng PatchTest
  * @summary Basic test for -Xpatch

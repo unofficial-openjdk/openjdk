@@ -42,6 +42,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build ProxyTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng ProxyLayerTest
  * @summary Test proxies to implement interfaces in a layer

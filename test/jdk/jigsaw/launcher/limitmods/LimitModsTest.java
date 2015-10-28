@@ -24,6 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build LimitModsTest CompilerUtils jdk.testlibrary.*
  * @run testng LimitModsTest
  * @summary Basic tests for java -limitmods

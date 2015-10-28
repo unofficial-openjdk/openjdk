@@ -83,6 +83,7 @@ import tests.JImageGenerator;
  *          java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          java.base/jdk.internal.org.objectweb.asm.util
+ *          jdk.compiler
  * @build tests.*
  * @run main JLinkOptimTest
  */

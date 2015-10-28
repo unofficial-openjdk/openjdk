@@ -26,6 +26,7 @@
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jartool/sun.tools.jar
  *          jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build BasicTest CompilerUtils jdk.testlibrary.*
  * @run testng BasicTest
  * @summary Basic test of starting an application as a module

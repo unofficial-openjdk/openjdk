@@ -25,6 +25,7 @@
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build AddModsTest CompilerUtils jdk.testlibrary.*
  * @run testng AddModsTest
  * @summary Basic test for java -addmods

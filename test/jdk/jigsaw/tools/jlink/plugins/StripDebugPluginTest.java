@@ -34,6 +34,7 @@
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jdeps/com.sun.tools.classfile
+ *          jdk.compiler
  * @run main StripDebugPluginTest
  */
 

@@ -23,8 +23,9 @@
 
 /*
  * @test
- * @modules jdk.jlink/jdk.tools.jmod
  * @library /jdk/jigsaw/lib /lib/testlibrary
+ * @modules jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build jdk.testlibrary.FileUtils CompilerUtils
  * @run testng JmodTest
  * @summary Basic test for jmod

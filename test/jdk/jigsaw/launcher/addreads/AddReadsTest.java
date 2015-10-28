@@ -24,6 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build AddReadsTest CompilerUtils jdk.testlibrary.*
  * @run testng AddReadsTest
  * @summary Basic tests for java -XaddReads

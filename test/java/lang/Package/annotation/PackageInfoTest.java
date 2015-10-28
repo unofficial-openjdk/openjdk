@@ -25,6 +25,12 @@
  * @test
  * @summary Basic test of package-info in named module and duplicate
  *          package-info in unnamed module
+ * @modules java.compiler
+ *          java.desktop
+ *          java.management
+ *          jdk.attach
+ *          jdk.jdi
+ *          jdk.xml.dom
  * @compile package-info.java PackageInfoTest.java
  * @run testng p.PackageInfoTest
  */

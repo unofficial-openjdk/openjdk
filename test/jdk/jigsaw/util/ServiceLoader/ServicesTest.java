@@ -40,6 +40,8 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules java.scripting
+            jdk.compiler
  * @build ServicesTest CompilerUtils jdk.testlibrary.*
  * @run testng ServicesTest
  * @summary Tests ServiceLoader to locate service providers on the module path

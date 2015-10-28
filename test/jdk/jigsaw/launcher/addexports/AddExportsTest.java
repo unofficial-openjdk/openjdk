@@ -24,6 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build AddExportsTest CompilerUtils jdk.testlibrary.*
  * @run testng AddExportsTest
  * @summary Basic tests for java -XaddExports

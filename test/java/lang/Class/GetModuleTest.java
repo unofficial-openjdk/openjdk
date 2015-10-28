@@ -25,6 +25,7 @@
  * @test
  * @summary Exercise Class#getModule
  * @modules java.base/jdk.internal.org.objectweb.asm
+            java.desktop
  * @run testng GetModuleTest
  */
 

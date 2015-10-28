@@ -23,8 +23,9 @@
 
 /*
  * @test
- * @modules jdk.jlink/jdk.tools.jmod
  * @library /lib/testlibrary /jdk/jigsaw/lib
+ * @modules jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build jdk.testlibrary.FileUtils CompilerUtils
  * @run testng JmodNegativeTest
  * @summary Negative tests for jmod

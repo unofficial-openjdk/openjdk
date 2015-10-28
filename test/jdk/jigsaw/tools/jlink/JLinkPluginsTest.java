@@ -42,6 +42,7 @@ import tests.Helper;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
+ *          jdk.compiler
  * @build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JLinkPluginsTest
  */
