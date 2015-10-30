@@ -22,6 +22,7 @@
 #
 
 # @test
+# @bug 8044767 8139067
 # @summary Test case for having resource bundles in a local named module
 #          with no ResourceBundleProviders.
 
@@ -64,10 +65,13 @@ $JAVAC -g -d mods -modulesourcepath $TESTSRC/src \
 rm -f extra.jar
 mkdir -p classes
 $JAR -cf extra.jar -C $TESTSRC/src/extra jdk/test/resources
-$JAR -tvf extra.jar
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de &&
-   # properties files on the class path should be picked up.
-   $JAVA -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja zh-tw en vi
+STATUS=0
 
-exit $?
+echo 'jdk.test.Main should load bundles local to named module "test".'
+$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de || STATUS=1
+
+echo "jdk.test.Main should NOT load bundles from the jar file specified by the class-path."
+$JAVA -cp extra.jar -mp mods -m test/jdk.test.Main vi && STATUS=1
+
+exit $STATUS

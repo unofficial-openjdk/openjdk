@@ -22,7 +22,10 @@
 #
 
 # @test
-# @summary Basic test for ResourceBundle with modules
+# @bug 8044767
+# @summary Basic test for ResourceBundle with modules; named module "test"
+#          contains resource bundles for root and en, and separate named modules
+#          "eubundles" and "asiabundles" contain other resource bundles.
 
 set -e
 

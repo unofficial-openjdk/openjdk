@@ -22,6 +22,7 @@
 #
 
 # @test
+# @bug 8044767 8139067
 # @summary Basic test case for ResourceBundle with modules;
 #          ResourceBundle.getBundle caller is in module named "test",
 #          resource bundles are grouped in main (module "mainbundles"),
@@ -76,12 +77,13 @@ mkdir -p classes
 $JAVAC -d classes $TESTSRC/src/extra/jdk/test/resources/eu/*.java
 $JAR -cf extra.jar -C classes jdk/test/resources/eu \
                    -C $TESTSRC/src/extra jdk/test/resources/asia
-$JAR -tvf extra.jar
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de ja-jp &&
-    # properties files on the class path should be picked up.
-    $JAVA -cp extra.jar -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de vi &&
-    # classes on the class path shouldn't.
-    ! $JAVA -cp extra.jar -mp mods -m test/jdk.test.Main es
+STATUS=0
 
-exit $?
+echo "jdk.test.Main should load bundles using ResourceBundleProviders."
+$JAVA -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de ja-jp || STATUS=1
+
+echo "jdk.test.Main should NOT load bundles from the jar file specified by the class-path."
+$JAVA -cp extra.jar -mp mods -m test/jdk.test.Main es vi && STATUS=1
+
+exit $STATUS
