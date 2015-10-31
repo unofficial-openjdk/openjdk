@@ -74,6 +74,7 @@ static char     *listModules = NULL;
 static const char *_program_name;
 static const char *_launcher_name;
 static jboolean _is_java_args = JNI_FALSE;
+static jboolean _have_classpath = JNI_FALSE;
 static const char *_fVersion;
 static const char *_dVersion;
 static jboolean _wc_enabled = JNI_FALSE;
@@ -278,6 +279,12 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         TranslateApplicationArgs(jargc, jargv, &argc, &argv);
         if (!AddApplicationOptions(appclassc, appclassv)) {
             return(1);
+        }
+    } else {
+        /* Set default CLASSPATH */
+        char* cpath = getenv("CLASSPATH");
+        if (cpath != NULL) {
+            SetClassPath(cpath);
         }
     }
 
@@ -857,6 +864,7 @@ SetClassPath(const char *s)
     AddOption(def, NULL);
     if (s != orig)
         JLI_MemFree((char *) s);
+    _have_classpath = JNI_TRUE;
 }
 
 static void
@@ -1280,6 +1288,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (RemovableOption(arg)) {
             ; /* Do not pass option to vm. */
         } else {
+            /* java.class.path set on the command line */
+            if (JLI_StrCCmp(arg, "-Djava.class.path=") == 0) {
+                _have_classpath = JNI_TRUE;
+            }
             AddOption(arg, NULL);
         }
     }
@@ -1294,13 +1306,11 @@ ParseArguments(int *pargc, char ***pargv,
             *pret = 1;
         }
     } else if (mode == LM_UNKNOWN) {
-        /* default to LM_CLASS if -jar and -cp option are
+        /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */
-        char* cpath = getenv("CLASSPATH");
-        if (cpath == NULL) {
-            cpath = ".";
+        if (!_have_classpath) {
+            SetClassPath(".");
         }
-        SetClassPath(cpath);
         mode = LM_CLASS;
     }
 
