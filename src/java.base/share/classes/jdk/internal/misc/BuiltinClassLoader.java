@@ -96,7 +96,8 @@ public class BuiltinClassLoader
 {
 
     static {
-        ClassLoader.registerAsParallelCapable();
+        if (!ClassLoader.registerAsParallelCapable())
+            throw new InternalError();
     }
 
     // parent ClassLoader

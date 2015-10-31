@@ -133,6 +133,11 @@ public class ClassLoaders {
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
+        static {
+            if (!ClassLoader.registerAsParallelCapable())
+                throw new InternalError();
+        }
+
         ExtClassLoader(BootClassLoader parent, List<Path> patchDirs) {
             super(parent, patchDirs, null);
         }
@@ -143,6 +148,11 @@ public class ClassLoaders {
      * customizations to be compatible with long standing behavior.
      */
     private static class AppClassLoader extends BuiltinClassLoader {
+        static {
+            if (!ClassLoader.registerAsParallelCapable())
+                throw new InternalError();
+        }
+
         final URLClassPath ucp;
 
         AppClassLoader(ExtClassLoader parent, List<Path> patchDirs, URLClassPath ucp) {
