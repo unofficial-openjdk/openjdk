@@ -1202,8 +1202,7 @@ ParseArguments(int *pargc, char ***pargv,
                 SetAddExportsProp(value);
                 haveAddExports = JNI_TRUE;
             }
-        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0 ||
-                   JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+        } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
             static jboolean havePatchDirs = JNI_FALSE;
             if (havePatchDirs) {
                 JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
