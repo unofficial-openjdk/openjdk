@@ -107,9 +107,7 @@ public abstract class AbstractResourceBundleProvider implements ResourceBundlePr
      *
      * @implNote
      * The default implementation of this method will find the resource bundle
-     * local to the module of this provider. If this provider supports .properties
-     * resource bundle, it will also find .properties resource bundle from
-     * the unnamed module of the module's class loader of this provider.
+     * local to the module of this provider.
      *
      * @param baseName the base bundle name of the resource bundle, a fully
      *                 qualified class name.
