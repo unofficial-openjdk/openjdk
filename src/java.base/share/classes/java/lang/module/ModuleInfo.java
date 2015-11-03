@@ -186,7 +186,7 @@ final class ModuleInfo {
 
         int methods_count = in.readUnsignedShort();
         if (methods_count > 0)
-            throw invalidModuleDescriptor("Bad #fields");
+            throw invalidModuleDescriptor("Bad #methods");
 
         int attributes_count = in.readUnsignedShort();
 
