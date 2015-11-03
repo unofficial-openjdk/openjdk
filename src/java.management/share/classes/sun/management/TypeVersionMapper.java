@@ -1,7 +1,26 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package sun.management;
 
@@ -20,8 +39,8 @@ import javax.management.openmbean.TabularType;
 import static sun.management.Util.toStringArray;
 
 /**
- *
- * @author Jaroslav Bachorik
+ * Provides simplistic support for versioning of {@linkplain CompositeType} instances
+ * based on the latest version and filtering out certain items.
  */
 final class TypeVersionMapper {
     private static final class Singleton {
@@ -57,6 +76,14 @@ final class TypeVersionMapper {
         filter.put(V6, ThreadInfoCompositeData::isV6Attribute);
     }
 
+    /**
+     * Retrieves the specified version of a {@linkplain CompositeType} instance.
+     * @param type The current (latest) version of {@linkplain CompositeType}
+     * @param version The version identifier (eg. {@linkplain TypeVersionMapper#V5})
+     * @return Returns the {@linkplain CompositeType} corresponding to the requested
+     *         version.
+     * @throws OpenDataException
+     */
     CompositeType getVersionedCompositeType(CompositeType type, String version)
     throws OpenDataException {
         Predicate<String> filter = getFilter(type.getTypeName(), version);
