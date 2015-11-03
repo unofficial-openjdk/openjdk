@@ -156,6 +156,174 @@ public class ConfigurationTest {
 
 
     /**
+     * Basic test of "requires public" with layers.
+     *
+     * The test consists of two configurations cf1 and cf2. In configuration
+     * cf1 then m1 requires public m2. In configuration cf2 then m3 requires
+     * m1.
+     */
+    public void testRequiresPublicWithLayers1() {
+
+        // configuration1/layer1: m1 and m2, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf1 = Configuration.resolve(finder1, boot(), empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+
+        // configuration2: m3, m3 requires m1
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
+                .build();
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
+
+        Configuration cf2
+            = Configuration.resolve(finder2, layer1, empty(), "m3");
+
+        assertTrue(cf2.descriptors().size() == 1);
+        assertTrue(cf2.descriptors().contains(descriptor3));
+
+        assertTrue(cf2.reads(descriptor3).size() == 2);
+        assertTrue(cf2.reads(descriptor3).contains(descriptor1));
+        assertTrue(cf2.reads(descriptor3).contains(descriptor2));
+    }
+
+
+    /**
+     * Basic test of "requires public" with layers
+     *
+     * The test consists of two configurations cf1 and cf2. In configuration
+     * cf1 then m1 requires public m2. In configuration cf2 then m3 requires
+     * public m1 and m4 requires m3.
+     */
+    public void testRequiresPublicWithLayers2() {
+
+        // configuration2/layer1: m1 and m2@1, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf1 = Configuration.resolve(finder1, boot(), empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+
+        // configuration2: m3 and m4, m4 requires m3, m3 requires public m1
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires(Modifier.PUBLIC, "m1")
+                .build();
+
+        ModuleDescriptor descriptor4
+            = new ModuleDescriptor.Builder("m4")
+                .requires("m3")
+                .build();
+
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
+
+        Configuration cf2
+            = Configuration.resolve(finder2, layer1, empty(),  "m3", "m4");
+
+        assertTrue(cf2.descriptors().size() == 2);
+        assertTrue(cf2.descriptors().contains(descriptor3));
+        assertTrue(cf2.descriptors().contains(descriptor4));
+
+        assertTrue(cf2.reads(descriptor3).size() == 2);
+        assertTrue(cf2.reads(descriptor3).contains(descriptor1));
+        assertTrue(cf2.reads(descriptor3).contains(descriptor2));
+
+        assertTrue(cf2.reads(descriptor4).size() == 3);
+        assertTrue(cf2.reads(descriptor4).contains(descriptor1));
+        assertTrue(cf2.reads(descriptor4).contains(descriptor2));
+        assertTrue(cf2.reads(descriptor4).contains(descriptor3));
+    }
+
+
+    /**
+     * Basic test of "requires public" with layers
+     *
+     * The test consists of two configurations cf1 and cf2. In configuration
+     * cf1 then m1 requires public m2. Configuration cf2 has m2@2 and m3 where
+     * m3 requires m1. The presence of a m2 in the second configuration is to
+     * ensure that m3 reads the correct version of m2.
+     */
+    public void testRequiresPublicWithLayers3() {
+
+        // configuration2/layer1: m1 and m2@1, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .version("1")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf1 = Configuration.resolve(finder1, boot(), empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+
+        // configuration2: m3 and m2@2, m3 requires m1
+
+        ModuleDescriptor descriptor2_v2
+            = new ModuleDescriptor.Builder("m2")
+                .version("2")
+                .build();
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
+                .build();
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2_v2, descriptor3);
+
+        Configuration cf2 = Configuration.resolve(finder2, layer1, empty(), "m2", "m3");
+
+        assertTrue(cf2.descriptors().size() == 2);
+        assertTrue(cf2.descriptors().contains(descriptor2_v2));
+        assertTrue(cf2.descriptors().contains(descriptor3));
+
+        assertTrue(cf2.reads(descriptor2_v2).isEmpty());
+
+        assertTrue(cf2.reads(descriptor3).size() == 2);
+        assertTrue(cf2.reads(descriptor3).contains(descriptor1));
+        assertTrue(cf2.reads(descriptor3).contains(descriptor2));
+    }
+
+
+    /**
      * Basic test of binding services
      */
     public void testBasicBinding() {

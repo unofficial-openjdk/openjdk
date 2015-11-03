@@ -503,14 +503,13 @@ final class Resolver {
         while (l != null) {
             Configuration cf = l.configuration().orElse(null);
             if (cf != null) {
-                for (ModuleDescriptor descriptor: cf.descriptors()) {
+                for (ModuleDescriptor descriptor : cf.descriptors()) {
                     Set<ModuleDescriptor> requiresPublic = new HashSet<>();
                     g2.put(descriptor, requiresPublic);
-                    for (Requires d: descriptor.requires()) {
-                        String dn = d.name();
-                        if (nameToDescriptor.get(dn) == null
-                            && d.modifiers().contains(Requires.Modifier.PUBLIC))
-                        {
+
+                    for (Requires d : descriptor.requires()) {
+                        if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
+                            String dn = d.name();
                             ModuleReference mref = findInLayer(l, dn);
                             if (mref == null)
                                 throw new InternalError(dn + " not found");
