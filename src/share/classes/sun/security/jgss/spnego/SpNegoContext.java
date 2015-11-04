@@ -404,13 +404,14 @@ public class SpNegoContext implements GSSContextSpi {
                     // pull out the mechanism token
                     byte[] accept_token = targToken.getResponseToken();
                     if (accept_token == null) {
-                        // return wth failure
-                        throw new GSSException(errorCode, -1,
-                                        "mechansim token from server is null");
+                        if (!isMechContextEstablished()) {
+                            // return with failure
+                            throw new GSSException(errorCode, -1,
+                                    "mechanism token from server is null");
+                        }
+                    } else {
+                        mechToken = GSS_initSecContext(accept_token);
                     }
-
-                    mechToken = GSS_initSecContext(accept_token);
-
                     // verify MIC
                     if (!GSSUtil.useMSInterop()) {
                         byte[] micToken = targToken.getMechListMIC();
@@ -419,7 +420,6 @@ public class SpNegoContext implements GSSContextSpi {
                                 "verification of MIC on MechList Failed!");
                         }
                     }
-
                     if (isMechContextEstablished()) {
                         state = STATE_DONE;
                         retVal = mechToken;

@@ -284,7 +284,8 @@ class GSSContextImpl implements ExtendedGSSContext {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(100);
         acceptSecContext(new ByteArrayInputStream(inTok, offset, len),
                          bos);
-        return bos.toByteArray();
+        byte[] out = bos.toByteArray();
+        return (out.length == 0) ? null : out;
     }
 
     public void acceptSecContext(InputStream inStream,
