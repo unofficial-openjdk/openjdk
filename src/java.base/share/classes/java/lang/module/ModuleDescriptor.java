@@ -1027,6 +1027,8 @@ public class ModuleDescriptor
 
     @Override
     public boolean equals(Object ob) {
+        if (ob == this)
+            return true;
         if (!(ob instanceof ModuleDescriptor))
             return false;
         ModuleDescriptor that = (ModuleDescriptor)ob;

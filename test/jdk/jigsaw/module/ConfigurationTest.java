@@ -164,7 +164,7 @@ public class ConfigurationTest {
      */
     public void testRequiresPublicWithLayers1() {
 
-        // configuration1/layer1: m1 and m2, m1 requires public m2
+        // cf1: m1 and m2, m1 requires public m2
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -183,7 +183,7 @@ public class ConfigurationTest {
         Layer layer1 = Layer.create(cf1, mn -> cl1);
 
 
-        // configuration2: m3, m3 requires m1
+        // cf2: m3, m3 requires m1
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
@@ -213,7 +213,7 @@ public class ConfigurationTest {
      */
     public void testRequiresPublicWithLayers2() {
 
-        // configuration2/layer1: m1 and m2@1, m1 requires public m2
+        // cf1: m1 and m2, m1 requires public m2
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -232,7 +232,7 @@ public class ConfigurationTest {
         Layer layer1 = Layer.create(cf1, mn -> cl1);
 
 
-        // configuration2: m3 and m4, m4 requires m3, m3 requires public m1
+        // cf2: m3 and m4, m4 requires m3, m3 requires public m1
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
@@ -275,7 +275,7 @@ public class ConfigurationTest {
      */
     public void testRequiresPublicWithLayers3() {
 
-        // configuration2/layer1: m1 and m2@1, m1 requires public m2
+        // cf1: m1 and m2@1, m1 requires public m2
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -295,7 +295,7 @@ public class ConfigurationTest {
         Layer layer1 = Layer.create(cf1, mn -> cl1);
 
 
-        // configuration2: m3 and m2@2, m3 requires m1
+        // cf2: m3 and m2@2, m3 requires m1
 
         ModuleDescriptor descriptor2_v2
             = new ModuleDescriptor.Builder("m2")

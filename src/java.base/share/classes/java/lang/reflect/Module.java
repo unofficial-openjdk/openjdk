@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
@@ -891,12 +892,32 @@ public final class Module {
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ModuleDescriptor other: cf.reads(descriptor)) {
+            for (ModuleDescriptor other : cf.reads(descriptor)) {
+                Module m2 = null;
+
+                // Search the configuration and parent layers for the module
+                // descriptor. This is temporary until Configuration defines
+                // an API to return the layer + name of the source rather than
+                // the module descriptor.
                 String dn = other.name();
-                Module m2 = modules.get(dn);
-                Layer parent = cf.layer();
-                if (m2 == null && parent != null)
-                    m2 = parent.findModule(other.name()).orElse(null);
+                Module candidate = modules.get(dn);
+                if (candidate != null && other.equals(candidate.getDescriptor())) {
+                    m2 = candidate;
+                } else {
+                    Layer parent = cf.layer();
+                    while (parent != null) {
+                        Optional<Module> om = parent.findModule(dn);
+                        if (om.isPresent()) {
+                            candidate = om.get();
+                            if (other.equals(candidate.getDescriptor())) {
+                                m2 = candidate;
+                                break;
+                            }
+                        }
+                        parent = parent.parent().orElse(null);
+                    }
+                }
+
                 if (m2 == null) {
                     throw new InternalError(descriptor.name() +
                             " reads unknown module: " + other.name());
