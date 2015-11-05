@@ -248,11 +248,10 @@ ModuleEntry* ModuleEntryTable::lookup_only(Symbol* name) {
     // Return this table's unnamed module
     return unnamed_module();
   }
-  for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry* m = bucket(i); m != NULL; m = m->next()) {
-      if (m->name()->fast_compare(name) == 0) {
-        return m;
-      }
+  int index = index_for(name);
+  for (ModuleEntry* m = bucket(index); m != NULL; m = m->next()) {
+    if (m->name()->fast_compare(name) == 0) {
+      return m;
     }
   }
   return NULL;
