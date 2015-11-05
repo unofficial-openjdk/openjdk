@@ -28,6 +28,7 @@ package javax.tools;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import javax.tools.JavaFileObject.Kind;
 
@@ -164,8 +165,16 @@ public class ForwardingJavaFileManager<M extends JavaFileManager> implements Jav
         fileManager.close();
     }
 
+    public Location getModuleLocation(Location location, String moduleName) throws IOException {
+        return fileManager.getModuleLocation(location, moduleName);
+    }
+
     public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
         return fileManager.getModuleLocation(location, fo, pkgName);
+    }
+
+    public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws  IOException {
+        return fileManager.getServiceLoader(location, service);
     }
 
     public String inferModuleName(Location location) throws IOException {
