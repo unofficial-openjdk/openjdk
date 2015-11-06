@@ -1476,7 +1476,7 @@ Node* LibraryCallKit::round_double_node(Node* n) {
 // public static double Math.log10(double)
 bool LibraryCallKit::inline_math(vmIntrinsics::ID id) {
   Node* arg = round_double_node(argument(0));
-  Node* n;
+  Node* n = NULL;
   switch (id) {
   case vmIntrinsics::_dabs:   n = new AbsDNode(                arg);  break;
   case vmIntrinsics::_dsqrt:  n = new SqrtDNode(C, control(),  arg);  break;
@@ -2221,7 +2221,7 @@ inline Node* LibraryCallKit::make_unsafe_address(Node* base, Node* offset) {
 // inline long       Long.reverseBytes(long)
 bool LibraryCallKit::inline_number_methods(vmIntrinsics::ID id) {
   Node* arg = argument(0);
-  Node* n;
+  Node* n = NULL;
   switch (id) {
   case vmIntrinsics::_numberOfLeadingZeros_i:   n = new CountLeadingZerosINode( arg);  break;
   case vmIntrinsics::_numberOfLeadingZeros_l:   n = new CountLeadingZerosLNode( arg);  break;
@@ -2761,7 +2761,7 @@ bool LibraryCallKit::inline_unsafe_load_store(BasicType type, LoadStoreKind kind
 
   // For now, we handle only those cases that actually exist: ints,
   // longs, and Object. Adding others should be straightforward.
-  Node* load_store;
+  Node* load_store = NULL;
   switch(type) {
   case T_INT:
     if (kind == LS_xadd) {
@@ -2892,9 +2892,9 @@ bool LibraryCallKit::inline_unsafe_load_store(BasicType type, LoadStoreKind kind
 }
 
 //----------------------------inline_unsafe_ordered_store----------------------
-// public native void sun.misc.Unsafe.putOrderedObject(Object o, long offset, Object x);
-// public native void sun.misc.Unsafe.putOrderedInt(Object o, long offset, int x);
-// public native void sun.misc.Unsafe.putOrderedLong(Object o, long offset, long x);
+// public native void Unsafe.putOrderedObject(Object o, long offset, Object x);
+// public native void Unsafe.putOrderedInt(Object o, long offset, int x);
+// public native void Unsafe.putOrderedLong(Object o, long offset, long x);
 bool LibraryCallKit::inline_unsafe_ordered_store(BasicType type) {
   // This is another variant of inline_unsafe_access, differing in
   // that it always issues store-store ("release") barrier and ensures
@@ -2988,7 +2988,7 @@ bool LibraryCallKit::klass_needs_init_guard(Node* kls) {
 }
 
 //----------------------------inline_unsafe_allocate---------------------------
-// public native Object sun.misc.Unsafe.allocateInstance(Class<?> cls);
+// public native Object Unsafe.allocateInstance(Class<?> cls);
 bool LibraryCallKit::inline_unsafe_allocate() {
   if (callee()->is_static())  return false;  // caller must have the capability!
 
@@ -3767,7 +3767,7 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
   Node* end               = is_copyOfRange? argument(2): argument(1);
   Node* array_type_mirror = is_copyOfRange? argument(3): argument(2);
 
-  Node* newcopy;
+  Node* newcopy = NULL;
 
   // Set the original stack and the reexecute bit for the interpreter to reexecute
   // the bytecode that invokes Arrays.copyOf if deoptimization happens.
@@ -4202,7 +4202,7 @@ bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
 
 bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
   Node* arg = argument(0);
-  Node* result;
+  Node* result = NULL;
 
   switch (id) {
   case vmIntrinsics::_floatToRawIntBits:    result = new MoveF2INode(arg);  break;
@@ -4301,7 +4301,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
 }
 
 //----------------------inline_unsafe_copyMemory-------------------------
-// public native void sun.misc.Unsafe.copyMemory(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes);
+// public native void Unsafe.copyMemory(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes);
 bool LibraryCallKit::inline_unsafe_copyMemory() {
   if (callee()->is_static())  return false;  // caller must have the capability!
   null_check_receiver();  // null-check receiver
@@ -5826,7 +5826,7 @@ Node * LibraryCallKit::load_field_from_object(Node * fromObj, const char * field
 
 //------------------------------inline_aescrypt_Block-----------------------
 bool LibraryCallKit::inline_aescrypt_Block(vmIntrinsics::ID id) {
-  address stubAddr;
+  address stubAddr = NULL;
   const char *stubName;
   assert(UseAES, "need AES instruction support");
 
@@ -5892,8 +5892,8 @@ bool LibraryCallKit::inline_aescrypt_Block(vmIntrinsics::ID id) {
 
 //------------------------------inline_cipherBlockChaining_AESCrypt-----------------------
 bool LibraryCallKit::inline_cipherBlockChaining_AESCrypt(vmIntrinsics::ID id) {
-  address stubAddr;
-  const char *stubName;
+  address stubAddr = NULL;
+  const char *stubName = NULL;
 
   assert(UseAES, "need AES instruction support");
 
