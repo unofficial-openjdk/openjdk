@@ -32,11 +32,11 @@ import static org.testng.Assert.*;
 
 /**
  * @test
- * @library ../../lib /lib/testlibrary
+ * @library /jdk/jigsaw/lib /lib/testlibrary
  * @modules jdk.compiler
  * @build ResourcesTest CompilerUtils jdk.testlibrary.*
  * @run testng ResourcesTest
- * @summary Driver for basic test of resource encapsulation
+ * @summary Driver for basic test of Class getResource and getResourceAsStream
  */
 
 @Test
