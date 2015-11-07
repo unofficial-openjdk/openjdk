@@ -358,6 +358,27 @@ public class BuiltinClassLoader
     }
 
     /**
+     * Finds the class with the specified binary name in a given module.
+     * This method returns {@code null} if the class cannot be found.
+     */
+    @Override
+    protected Class<?> findClass(String mn, String cn) {
+        ModuleReference mref = nameToModule.get(mn);
+        if (mref == null)
+            return null;   // not defined to this class loader
+
+        // find the candidate module for this class
+        LoadedModule loadedModule = findModule(cn);
+        if (loadedModule == null || !loadedModule.name().equals(mn)) {
+            return null;   // module name does not match
+        }
+
+        // attempt to load class in module defined to this loader
+        assert loadedModule.loader() == this;
+        return findClassInModuleOrNull(loadedModule, cn);
+    }
+
+    /**
      * Loads the class with the specified binary name.
      */
     @Override

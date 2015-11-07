@@ -454,12 +454,58 @@ public abstract class ClassLoader {
 
     /**
      * Loads the class with the specified <a href="#name">binary name</a>
-     * defined in this class loader.
+     * in a module defined to this class loader.  This method returns {@code null}
+     * if the class could not be found.
      *
-     * @param name The <a href="#name">binary name</a> of the class
-     * @return The resulting {@code Class} object or {@code null}
+     * @apiNote This method does not delegate to the parent class loader.
+     *
+     * @implNote
+     * The default implementation of this method searches for classes in the
+     * following order:
+     *
+     * <ol>
+     *   <li>Invoke {@link #findLoadedClass(String)} to check if the class
+     *   has already been loaded.</li>
+     *   <li>Invoke the {@link #findClass(String, String)} method to find the
+     *   class in the given module.</li>
+     * </ol>
+     *
+     * @param  modul
+     *         The module
+     * @param  name
+     *         The <a href="#name">binary name</a> of the class
+     *
+     * @return The resulting {@code Class} object in a module defined by
+     *         this class loader, or {@code null} if the class could not be found.
      */
-    Class<?> loadLocalClassOrNull(String name) {
+    final Class<?> loadLocalClass(Module module, String name) {
+        synchronized (getClassLoadingLock(name)) {
+            // First, check if the class has already been loaded
+            Class<?> c = findLoadedClass(name);
+            if (c != null && c.getModule() != module) {
+                c = null;
+            }
+            if (c == null) {
+                c = findClass(module.getName(), name);
+            }
+            return c;
+        }
+    }
+
+    /**
+     * Loads the class with the specified <a href="#name">binary name</a>
+     * defined by this class loader.  This method returns {@code null}
+     * if the class could not be found.
+     *
+     * @apiNote This method does not delegate to the parent class loader.
+     *
+     * @param  name
+     *         The <a href="#name">binary name</a> of the class
+     *
+     * @return The resulting {@code Class} object in a module defined by
+     *         this class loader, or {@code null} if the class could not be found.
+     */
+    final Class<?> loadLocalClass(String name) {
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             Class<?> c = findLoadedClass(name);
@@ -567,6 +613,32 @@ public abstract class ClassLoader {
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         throw new ClassNotFoundException(name);
     }
+
+    /**
+     * Finds the class with the specified <a href="#name">binary name</a>
+     * in a module defined to this class loader.
+     * Class loader implementations that support the loading from modules
+     * should override this method.
+     *
+     * @apiNote This method returns {@code null} rather than throwing
+     *          {@code ClassNotFoundException} if the class could not be found
+     *
+     * @implNote The default implementation returns {@code null}.
+     *
+     * @param  moduleName
+     *         The module name
+     * @param  name
+     *         The <a href="#name">binary name</a> of the class
+     *
+     * @return The resulting {@code Class} object, or {@code null}
+     *         if the class could not be found.
+     *
+     * @since 1.9
+     */
+    protected Class<?> findClass(String moduleName, String name) {
+        return null;
+    }
+
 
     /**
      * Converts an array of bytes into an instance of class <tt>Class</tt>.

@@ -384,62 +384,74 @@ public final class Class<T> implements java.io.Serializable,
 
 
     /**
-     * Returns the {@code Class} object associated with the class or
-     * interface with the given name defined in the given module.
-     * Given the fully qualified name for a class or interface (in the same
-     * format returned by {@code getName}) this method attempts to
-     * locate, load, and link the class or interface and it does not invoke
-     * the class initializer.
+     * Returns the {@code Class} of the specified  <a href="ClassLoader.html#name">
+     * binary name</a> defined in the specified module.
+     * <p>
+     * This method attempts to locate, load, and link the class or interface
+     * and it does not invoke the class initializer.  If the class is not
+     * found, this method returns {@code null}.
      *
-     * <p> Note that this method does not check whether the requested class
+     * <p> If the class loader of the specified module defines other modules
+     * and the specified name is a class defined in a different module,
+     * this method returns {@code null} after the class is loaded.
+     *
+     * <p> This method does not check whether the requested class
      * is accessible to its caller.
      *
-     * @apiNote This is an experimental API.  This method returns {@code null} on
-     * failure rather than throw a {@link ClassNotFoundException}, as is done by
-     * the existing {@link #forName(String)} method.
-     * The security check is a stack-based permission check rather than a
-     * caller-sensitive check as in the 3-arg Class.forName method. The 3-arg
-     * method needs to be re-examined to see if its permission check should be
-     * changed.
+     * @apiNote
+     * This method returns {@code null} on failure rather than
+     * throwing a {@link ClassNotFoundException}, as is done by
+     * the {@link #forName(String, boolean, ClassLoader)} method.
+     * The security check is a stack-based permission check if the caller
+     * loads a class in another module.
      *
-     * @param  module   Named module
-     * @param  name     Fully-qualified class name
+     * @param  module   A module
+     * @param  name     The <a href="ClassLoader.html#name">binary name</a>
+     *                  of the class
      * @return {@code Class} object of the given name defined in the given module;
      *         {@code null} if not found.
      *
+     * @throws NullPointerException if the given module or name is {@code null}
+     *
      * @throws LinkageError if the linkage fails
-     * @throws SecurityException if there is a security manager
-     * and it denies the {@code RuntimePermission("getClassLoader")}
-     * permission.
+     *
+     * @throws SecurityException if there is a security manager,
+     *         the caller requests to load a class in another module,
+     *         it denies the {@code RuntimePermission("getClassLoader")} permission.
      *
      * @since 1.9
      */
+    @CallerSensitive
     public static Class<?> forName(Module module, String name) {
         Objects.requireNonNull(module);
         Objects.requireNonNull(name);
 
-        if (!module.isNamed()) {
-            throw new IllegalArgumentException(module.toString() + " is not a named module");
-        }
-
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+        Class<?> caller = Reflection.getCallerClass();
+        if (caller == null || caller.getModule() != module) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+            }
         }
 
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader cl = AccessController.doPrivileged(pa);
-
-        Class<?> c = null;
-        if (cl == null) {
-            c = BootLoader.loadClassOrNull(name);
-        } else {
-            c = cl.loadLocalClassOrNull(name);
+        if (module.isNamed() && cl != null) {
+            return cl.loadLocalClass(module, name);
         }
+
+        final Class<?> c;
+        if (cl != null) {
+            c = cl.loadLocalClass(name);
+        } else {
+            c = BootLoader.loadClassOrNull(name);
+        }
+
         if (c != null && c.getModule() == module) {
             return c;
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**

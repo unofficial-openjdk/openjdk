@@ -377,7 +377,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
         if (packageInfo == null) {
             // find package-info.class defined by loader
             String cn = pkgName + ".package-info";
-            Class<?> c = loader != null ? loader.loadLocalClassOrNull(cn)
+            Class<?> c = loader != null ? loader.loadLocalClass(cn)
                                         : BootLoader.loadClassOrNull(cn);
             if (c != null) {
                 packageInfo = c;

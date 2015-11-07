@@ -236,24 +236,27 @@ public final class ModuleClassLoader
 
     // -- finding/loading classes
 
-    private Class<?> findClassOrNull(String cn) {
+    @Override
+    protected Class<?> findClass(String cn) throws ClassNotFoundException {
         // find the candidate module for this class
         ModuleReference mref = findModule(cn);
-        if (mref != null) {
-            return findClassInModuleOrNull(mref, cn);
-        }
-        return null;
-    }
-
-    @Override
-    protected Class<?> findClass(String cn)throws ClassNotFoundException {
-        Class<?> c = findClassOrNull(cn);
-
+        Class<?> c = mref != null ? findClassInModuleOrNull(mref, cn) : null;
         // not found
         if (c == null)
             throw new ClassNotFoundException(cn);
 
         return c;
+    }
+
+    @Override
+    protected Class<?> findClass(String moduleName, String cn) {
+        // find the candidate module for this class
+        ModuleReference mref = findModule(cn);
+        if (mref != null && mref.descriptor().name().equals(moduleName)) {
+            return findClassInModuleOrNull(mref, cn);
+        }
+
+        return null;
     }
 
     /**
