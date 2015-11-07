@@ -29,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Arrays;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.File;
 import java.lang.module.ModuleDescriptor;
 import jdk.testlibrary.ProcessTools;
 import jdk.testlibrary.OutputAnalyzer;
+import jdk.internal.module.ModuleInfoWriter;
 
 /**
  * @test
@@ -380,12 +382,20 @@ public class JaasModularClientTest extends JigsawSecurityUtils {
         if (moduleDescriptor != null) {
             System.out.println(String.format(
                     "Creating Modular jar file '%s'", jarFile));
-            JarUtils.createModularjar(jarFile, compilePath, moduleDescriptor);
         } else {
             System.out.println(String.format(
                     "Creating regular jar file '%s'", jarFile));
-            JarUtils.createJarFile(jarFile, compilePath);
         }
+        JarUtils.createJarFile(jarFile, compilePath);
+        if (moduleDescriptor != null) {
+            Path dir = Files.createTempDirectory("tmp");
+            Path mi = dir.resolve("module-info.class");
+            try (OutputStream out = Files.newOutputStream(mi)) {
+                ModuleInfoWriter.write(moduleDescriptor, out);
+            }
+            JarUtils.updateJarFile(jarFile, dir);
+        }
+
     }
 
     //Construct class path argument value.
