@@ -60,6 +60,6 @@ public class InstalledModuleDescriptorProvider extends OnOffResourcePluginProvid
 
     @Override
     public boolean isEnabledByDefault() {
-        return false;
+        return true;
     }
 }

@@ -243,6 +243,8 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
 
         class ModuleDescriptorBuilder {
+            static final String REQUIRES_MODIFIER_CLASSNAME =
+                    "java/lang/module/ModuleDescriptor$Requires$Modifier";
             static final String REQUIRES_MODIFIER_TYPE =
                 "Ljava/lang/module/ModuleDescriptor$Requires$Modifier;";
             static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
@@ -386,7 +388,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              */
             void requires(ModuleDescriptor.Requires.Modifier mod, String name) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_TYPE, mod.name(),
+                mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, mod.name(),
                                   REQUIRES_MODIFIER_TYPE);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
@@ -404,7 +406,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, MODS_VAR);
                 String signature = "(";
                 for (ModuleDescriptor.Requires.Modifier m : mods) {
-                    mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_TYPE, m.name(),
+                    mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, m.name(),
                                       REQUIRES_MODIFIER_TYPE);
                     signature += "Ljava/util/Enum;";
                 }
