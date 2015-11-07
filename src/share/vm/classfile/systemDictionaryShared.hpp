@@ -42,6 +42,20 @@ public:
     oop class_loader = loader_data->class_loader();
     return (class_loader == NULL);
   }
+  static bool is_shared_class_visible_for_classloader(
+                                      Symbol* class_name,
+                                      instanceKlassHandle ik,
+                                      Handle class_loader,
+                                      TRAPS) {
+    debug_only( {
+      int index = ik->shared_classpath_index();
+      SharedClassPathEntry* ent =
+            (SharedClassPathEntry*)FileMapInfo::shared_classpath(index);
+      assert(ent->is_jrt(), "must from the bootmodules.jimage");
+      assert(class_loader.is_null(), "Unsupported classloader");
+    } );
+    return true;
+  }
 };
 
 #endif // SHARE_VM_CLASSFILE_SYSTEMDICTIONARYSHARED_HPP

@@ -627,10 +627,6 @@ protected:
   static void check_loader_lock_contention(Handle loader_lock, TRAPS);
   static bool is_parallelCapable(Handle class_loader);
   static bool is_parallelDefine(Handle class_loader);
-  static bool is_shared_class_visible(Symbol* class_name,
-                                      instanceKlassHandle ik,
-                                      Handle class_loader,
-                                      TRAPS);
 
 public:
   static instanceKlassHandle load_shared_class(Symbol* class_name,
