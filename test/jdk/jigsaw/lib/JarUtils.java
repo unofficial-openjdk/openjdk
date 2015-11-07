@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
+import java.lang.module.ModuleDescriptor;
 
 /**
  * This class consists exclusively of static utility methods that are useful
@@ -108,4 +109,50 @@ public final class JarUtils {
     public static void createJarFile(Path jarfile, Path dir) throws IOException {
         createJarFile(jarfile, dir, Paths.get("."));
     }
+
+
+    /**
+     * Generates a modular jar with module descriptor.
+     */
+    public static void createModularjar(Path jarfile, Path dir,
+            ModuleDescriptor moduleDescriptor, Path... file)
+            throws IOException {
+
+        Path parent = jarfile.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
+        List<Path> entries = new ArrayList<>();
+        for (Path entry : file) {
+            Files.find(dir.resolve(entry), Integer.MAX_VALUE,
+                    (p, attrs) -> attrs.isRegularFile())
+                    .map(e -> dir.relativize(e))
+                    .forEach(entries::add);
+        }
+        try (JarOutputStream jos = new JarOutputStream(
+                Files.newOutputStream(jarfile))) {
+            JarEntry je = new JarEntry("module-info.class");
+            jos.putNextEntry(je);
+            jdk.internal.module.ModuleInfoWriter.write(moduleDescriptor, jos);
+            jos.closeEntry();
+
+            for (Path entry : entries) {
+                Path normalized = entry.normalize();
+                String name = normalized
+                        .subpath(0, normalized.getNameCount())
+                        .toString()
+                        .replace(File.separatorChar, '/');
+
+                jos.putNextEntry(new JarEntry(name));
+                Files.copy(dir.resolve(entry), jos);
+            }
+        }
+    }
+
+    public static void createModularjar(Path jarfile, Path dir,
+            ModuleDescriptor moduleDescriptor) throws IOException {
+        createModularjar(jarfile, dir, moduleDescriptor, Paths.get("."));
+    }
+
 }
