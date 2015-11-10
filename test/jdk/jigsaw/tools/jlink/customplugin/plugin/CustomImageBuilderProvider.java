@@ -24,6 +24,7 @@
 package plugin;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ public class CustomImageBuilderProvider implements ImageBuilderProvider {
 
     @Override
     public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
+        Files.createDirectories(imageOutDir);
         return new CustomImageBuilder(config, imageOutDir);
     }
 

@@ -105,6 +105,7 @@ public class CustomImageBuilderTest {
         result.assertSuccess();
         String message = result.getMessage();
         if (!message.contains("Image Builder Name: custom-image-builder\n"
+                + "Image Builder Description: custom-image-builder-description\n"
                 + "Functional state: Functional.\n"
                 + " --custom-image-option-1 custom-image-option-description")) {
             System.err.println(result.getMessage());

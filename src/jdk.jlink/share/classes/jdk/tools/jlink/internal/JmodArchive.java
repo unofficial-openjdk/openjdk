@@ -72,7 +72,8 @@ public class JmodArchive extends JarArchive {
 
     private static String getSection(String entryName) {
         int i = entryName.indexOf('/');
-        String section = null;
+        // Unnamed section.
+        String section = "";
         if (i > 0) {
             section = entryName.substring(0, entryName.indexOf('/'));
         }

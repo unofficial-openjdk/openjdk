@@ -75,9 +75,9 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
     @Override
     public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
             throws IOException {
-        if (Files.list(imageOutDir).findFirst().isPresent()) {
+        if (Files.exists(imageOutDir)) {
             throw new IOException(PluginsResourceBundle.
-                    getMessage("err.dir.not.empty", imageOutDir));
+                    getMessage("err.dir.already.exits", imageOutDir));
         }
         return new DefaultImageBuilder(config, imageOutDir);
     }

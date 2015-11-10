@@ -698,6 +698,8 @@ public final class TaskHelper {
                     if (prov.isExposed()) {
                         log.println("\n" + bundleHelper.getMessage("main.image.builder.name")
                                 + ": " + prov.getName());
+                        log.println(bundleHelper.getMessage("main.image.builder.description")
+                                + ": " + prov.getDescription());
                         log.println(bundleHelper.getMessage("main.plugin.state")
                                 + ": " + prov.getFunctionalStateDescription(prov.isFunctional()));
                         logBuilderOptions(prov.getOptions());

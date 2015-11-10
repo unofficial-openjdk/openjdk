@@ -112,7 +112,7 @@ public class JLinkNegativeTest {
                 .output(image)
                 .addMods("leaf1")
                 .limitMods("leaf1")
-                .call().assertFailure("Error: not empty: .*failure3.image(\n|\r|.)*");
+                .call().assertFailure("Error: directory already exists: .*failure3.image(\n|\r|.)*");
     }
 
     public void testOutputIsFile() throws IOException {
@@ -122,7 +122,8 @@ public class JLinkNegativeTest {
         JImageGenerator.getJLinkTask()
                 .modulePath(helper.defaultModulePath())
                 .output(image)
-                .call().assertFailure("Error: file already exists: .*failure4.image(\n|\r|.)*");
+                .addMods("leaf1")
+                .call().assertFailure("Error: directory already exists: .*failure4.image(\n|\r|.)*");
     }
 
     public void testModuleNotFound() {
@@ -257,7 +258,7 @@ public class JLinkNegativeTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testSectionsAreFiles() throws IOException {
         String moduleName = "module";
         Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
@@ -265,8 +266,18 @@ public class JLinkNegativeTest {
                 new InMemoryFile("/native", new byte[0]),
                 new InMemoryFile("/conf", new byte[0]),
                 new InMemoryFile("/bin", new byte[0]));
-        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-        helper.checkImage(image, moduleName, null, null);
+        try {
+            Result result = helper.generateDefaultImage(moduleName);
+            if (result.getExitCode() != 4) {
+                throw new AssertionError("Crash expected");
+            }
+            if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: ")) {
+                System.err.println(result.getMessage());
+                throw new AssertionError("InternalError expected");
+            }
+        } finally {
+            deleteDirectory(jmod);
+        }
     }
 
     public void testDuplicateModule1() throws IOException {

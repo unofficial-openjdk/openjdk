@@ -292,7 +292,6 @@ public class JlinkTask {
     {
         Objects.requireNonNull(config);
         Objects.requireNonNull(config.getOutput());
-        createOutputDirectory(config.getOutput());
         plugins = plugins == null ? new PluginsConfiguration() : plugins;
 
         if (config.getModulepaths().isEmpty()) {
@@ -365,7 +364,6 @@ public class JlinkTask {
         if (options.output == null) {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
-        createOutputDirectory(options.output);
         ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
         try {
             options.addMods = checkAddMods(options.addMods);
@@ -389,16 +387,6 @@ public class JlinkTask {
 
         //Ask the stack to proceed
         stack.operate(imageProvider);
-    }
-
-
-    private static void createOutputDirectory(Path output)
-        throws IOException, BadArgs
-    {
-        if (Files.exists(output) && !Files.isDirectory(output)) {
-            throw taskHelper.newBadArgs("err.file.already.exists", output).showUsage(true);
-        }
-        Files.createDirectories(output);
     }
 
     private static Set<String> checkAddMods(Set<String> addMods) {
