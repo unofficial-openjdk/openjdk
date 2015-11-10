@@ -126,46 +126,52 @@ public final class ImageFileCreator {
             Set<Archive> archives,
             ImagePluginStack pluginSupport)
             throws IOException {
-        Map<String, List<Entry>> entriesForModule
-                = archives.stream().collect(Collectors.toMap(
-                                Archive::moduleName,
-                                a -> {
-                                    try(Stream<Entry> entries = a.entries()) {
-                                        return entries.collect(Collectors.toList());
-                                    }
-                                }));
-        ByteOrder order = ByteOrder.nativeOrder();
-        Pools pools = createPools(archives, entriesForModule, order);
-        try (OutputStream fos = Files.newOutputStream(jimageFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
-                DataOutputStream out = new DataOutputStream(bos)) {
-            BasicImageWriter writer = new BasicImageWriter(order);
-            generateJImage(pools.resources, writer, pluginSupport, out);
-        }
-        //Close all archives
-        for(Archive a : archives) {
-            a.close();
+        try {
+            Map<String, List<Entry>> entriesForModule
+                    = archives.stream().collect(Collectors.toMap(
+                                    Archive::moduleName,
+                                    a -> {
+                                        try (Stream<Entry> entries = a.entries()) {
+                                            return entries.collect(Collectors.toList());
+                                        }
+                                    }));
+            ByteOrder order = ByteOrder.nativeOrder();
+            Pools pools = createPools(archives, entriesForModule, order);
+            try (OutputStream fos = Files.newOutputStream(jimageFile);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+                    DataOutputStream out = new DataOutputStream(bos)) {
+                BasicImageWriter writer = new BasicImageWriter(order);
+                generateJImage(pools.resources, writer, pluginSupport, out);
+            }
+        } finally {
+            //Close all archives
+            for (Archive a : archives) {
+                a.close();
+            }
         }
     }
 
     private void writeImage(Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
-        Pools pools = createPools(archives,
-                entriesForModule, byteOrder);
-        BasicImageWriter writer = new BasicImageWriter(byteOrder);
-        ResourcePool result = generateJImage(pools.resources,
-                writer, plugins, plugins.getJImageFileOutputStream());
-
-        //Handle files.
         try {
-            plugins.storeFiles(pools.files, result, writer);
-        } catch (Exception ex) {
-            throw new IOException(ex);
-        }
-        //Close all archives
-        for(Archive a : archives) {
-            a.close();
+            Pools pools = createPools(archives,
+                    entriesForModule, byteOrder);
+            BasicImageWriter writer = new BasicImageWriter(byteOrder);
+            ResourcePool result = generateJImage(pools.resources,
+                    writer, plugins, plugins.getJImageFileOutputStream());
+
+            //Handle files.
+            try {
+                plugins.storeFiles(pools.files, result, writer);
+            } catch (Exception ex) {
+                throw new IOException(ex);
+            }
+        } finally {
+            //Close all archives
+            for (Archive a : archives) {
+                a.close();
+            }
         }
     }
 
