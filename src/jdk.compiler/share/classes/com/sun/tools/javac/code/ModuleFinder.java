@@ -370,7 +370,7 @@ public class ModuleFinder {
                 msym.requires = requires.toList();
                 msym.uses = List.nil();
                 msym.directives = directives.toList();
-                msym.flags_field |= Flags.AUTOMATIC_MODULE;
+                msym.flags_field |= Flags.AUTOMATIC_MODULE | Flags.ACYCLIC;
             } catch (IOException ex) {
                 throw new IllegalStateException(ex);
             }

@@ -55,7 +55,8 @@ public abstract class Directive implements ModuleElement.Directive {
     public enum RequiresFlag {
         PUBLIC(0x0020),
         SYNTHETIC(0x1000),
-        MANDATED(0x8000);
+        MANDATED(0x8000),
+        EXTRA(0x10000);
 
         // overkill? move to ClassWriter?
         public static int value(Set<RequiresFlag> s) {

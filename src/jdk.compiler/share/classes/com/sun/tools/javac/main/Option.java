@@ -550,6 +550,19 @@ public enum Option {
         }
     },
 
+    XADDREADS("-XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XADDREADS);
+            if (prev != null) {
+                helper.error("err.option.too.many", XADDREADS.text);
+            }
+            String p = option.substring(option.indexOf(':') + 1);
+            helper.put(XADDREADS.text, p);
+            return false;
+        }
+    },
+
     XMODULE("-Xmodule:", "opt.arg.module", "opt.module", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
