@@ -344,12 +344,13 @@ public class KrbApReq {
                                 authenticator.cname,
                                 apReqMessg.ticket.sname,
                                 enc_ticketPart.key,
-                                null,
+                                enc_ticketPart.flags,
                                 enc_ticketPart.authtime,
                                 enc_ticketPart.starttime,
                                 enc_ticketPart.endtime,
                                 enc_ticketPart.renewTill,
-                                enc_ticketPart.caddr);
+                                enc_ticketPart.caddr,
+                                enc_ticketPart.authorizationData);
         if (DEBUG) {
             System.out.println(">>> KrbApReq: authenticate succeed.");
         }
