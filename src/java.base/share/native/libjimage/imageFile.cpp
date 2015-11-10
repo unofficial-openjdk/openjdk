@@ -577,7 +577,7 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
         // If not memory mapped read in bytes.
         if (!MemoryMapImage) {
             // Allocate buffer for compression.
-            compressed_data = new u1[(u4)compressed_size];
+            compressed_data = new u1[compressed_size];
             // Read bytes from offset beyond the image index.
             bool is_read = read_at(compressed_data, compressed_size, _index_size + offset);
             assert(is_read && "error reading from image or short read");
@@ -587,8 +587,8 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
         // Get image string table.
         const ImageStrings strings = get_strings();
         // Decompress resource.
-        ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, (u4)uncompressed_size,
-                        &strings);
+        ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, uncompressed_size,
+                        &strings, _endian);
         // If not memory mapped then release temporary buffer.
         if (!MemoryMapImage) {
                 delete compressed_data;

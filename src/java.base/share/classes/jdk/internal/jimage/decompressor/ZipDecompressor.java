@@ -25,8 +25,6 @@
 package jdk.internal.jimage.decompressor;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 /**
@@ -61,7 +59,7 @@ final class ZipDecompressor implements ResourceDecompressor {
 
     @Override
     public byte[] decompress(StringsProvider reader, byte[] content, int offset,
-            int originalSize) throws Exception {
+            long originalSize) throws Exception {
         byte[] decompressed = decompress(content, offset);
         return decompressed;
     }
