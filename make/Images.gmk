@@ -64,8 +64,8 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   MAIN_MODULES += jdk.deploy.osx
 endif
 
-JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
-JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES)
+JRE_MODULES := $(filter-out $(MODULES_FILTER), $(MAIN_MODULES) $(PROVIDER_MODULES))
+JDK_MODULES := $(filter-out $(MODULES_FILTER), $(JRE_MODULES) $(TOOLS_MODULES))
 
 # Param 1 - Name of module
 define ReadImportMetaData
