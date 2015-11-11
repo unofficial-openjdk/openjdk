@@ -132,10 +132,15 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
         __ fabs();
         break;
     case Interpreter::java_lang_math_log:
-        __ flog();
-        // Store to stack to convert 80bit precision back to 64bits
-        __ push_fTOS();
-        __ pop_fTOS();
+        __ subptr(rsp, 2 * wordSize);
+        __ fstp_d(Address(rsp, 0));
+        if (VM_Version::supports_sse2()) {
+          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::dlog())));
+        }
+        else {
+          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dlog)));
+        }
+        __ addptr(rsp, 2 * wordSize);
         break;
     case Interpreter::java_lang_math_log10:
         __ flog10();
@@ -151,11 +156,15 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
       __ pop_fTOS();
       break;
     case Interpreter::java_lang_math_exp:
-      __ exp_with_fallback(0);
-      // Store to stack to convert 80bit precision back to 64bits
-      __ push_fTOS();
-      __ pop_fTOS();
-      break;
+      __ subptr(rsp, 2*wordSize);
+      __ fstp_d(Address(rsp, 0));
+      if (VM_Version::supports_sse2()) {
+        __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::dexp())));
+      } else {
+        __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dexp)));
+      }
+      __ addptr(rsp, 2*wordSize);
+    break;
     default                              :
         ShouldNotReachHere();
   }
