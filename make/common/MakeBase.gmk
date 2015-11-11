@@ -613,10 +613,10 @@ endif
 
 # Defines the sub directory structure to store variable value file in
 DependOnVariableDirName = \
-    $(strip $(subst $(SRC_ROOT)/,,\
-        $(if $(filter /%, $(firstword $(MAKEFILE_LIST))), \
+    $(strip $(addsuffix $(if $(MODULE),/$(MODULE)), \
+        $(subst $(SRC_ROOT)/,, $(if $(filter /%, $(firstword $(MAKEFILE_LIST))), \
           $(firstword $(MAKEFILE_LIST)), \
-          $(CURDIR)/$(firstword $(MAKEFILE_LIST)))))
+          $(CURDIR)/$(firstword $(MAKEFILE_LIST))))))
 
 # Defines the name of the file to store variable value in. Generates a name
 # unless parameter 2 is given.
@@ -670,10 +670,10 @@ LogFailures = \
 # Param 1 - module name
 ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
   FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
+      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
 else
   FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
+      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)
 endif
 
 ################################################################################

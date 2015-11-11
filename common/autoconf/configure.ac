@@ -137,6 +137,7 @@ JDKOPT_SETUP_JDK_VERSION_NUMBERS
 ###############################################################################
 
 BOOTJDK_SETUP_BOOT_JDK
+BOOTJDK_SETUP_BUILD_JDK
 
 ###############################################################################
 #
@@ -147,6 +148,8 @@ BOOTJDK_SETUP_BOOT_JDK
 SRCDIRS_SETUP_TOPDIRS
 SRCDIRS_SETUP_ALTERNATIVE_TOPDIRS
 SRCDIRS_SETUP_OUTPUT_DIRS
+
+SRCDIRS_SETUP_IMPORT_MODULES
 
 ###############################################################################
 #
@@ -190,6 +193,7 @@ FLAGS_SETUP_COMPILER_FLAGS_FOR_LIBS
 FLAGS_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION
 FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK
 FLAGS_SETUP_COMPILER_FLAGS_MISC
+FLAGS_SETUP_BUILD_COMPILER_FLAGS
 
 # Setup debug symbols (need objcopy from the toolchain for that)
 JDKOPT_SETUP_DEBUG_SYMBOLS

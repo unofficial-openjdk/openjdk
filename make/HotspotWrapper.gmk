@@ -25,7 +25,8 @@
 
 # Include the legacy hotspot-spec.gmk (which in turns includes spec.gmk)
 BASE_SPEC:=$(SPEC)
-include $(dir $(SPEC))hotspot-spec.gmk
+HOTSPOT_SPEC := $(dir $(SPEC))hotspot-spec.gmk
+include $(HOTSPOT_SPEC)
 include MakeBase.gmk
 
 # Inclusion of this pseudo-target will cause make to execute this file
