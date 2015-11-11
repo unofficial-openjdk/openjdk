@@ -51,7 +51,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
           -framework CoreServices \
           -framework Security \
           $(JDKLIB_LIBS), \
-      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libosxsecurity, \
+      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libosxsecurity, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   $(BUILD_LIBOSXSECURITY): $(BUILD_LIBJAVA)

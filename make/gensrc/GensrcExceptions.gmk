@@ -25,7 +25,7 @@
 
 GENSRC_EXCEPTIONS :=
 
-GENSRC_EXCEPTIONS_DST := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/java/nio
+GENSRC_EXCEPTIONS_DST := $(GENSRC_OUTPUTDIR)/java.base/java/nio
 
 GENSRC_EXCEPTIONS_SRC := $(JDK_TOPDIR)/src/java.base/share/classes/java/nio
 GENSRC_EXCEPTIONS_CMD := $(JDK_TOPDIR)/make/scripts/genExceptions.sh

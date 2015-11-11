@@ -28,6 +28,8 @@ include GensrcCommon.gmk
 # Hook to include the corresponding custom file, if present.
 $(eval $(call IncludeCustomExtension, jdk, gensrc/Gensrc-java.management.gmk))
 
+TARGETS += $(GENSRC_JAVA_MANAGEMENT)
+
 ################################################################################
 
 include GensrcProperties.gmk

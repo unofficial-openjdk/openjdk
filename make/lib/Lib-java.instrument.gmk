@@ -35,7 +35,7 @@ LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/java.instrument/share/native/libinstrumen
     #
 LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
     $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
-    -I$(SUPPORT_OUTPUTDIR)/headers/java.instrument \
+    -I$(HEADERS_OUTPUTDIR)/java.instrument \
     -I$(JDK_TOPDIR)/src/java.base/share/native/libjli \
     -I$(JDK_TOPDIR)/src/java.base/share/native/libjava \
     #
@@ -65,8 +65,8 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBINSTRUMENT, \
         -L$(call FindLibDirForModule, java.base)/jli, \
     LDFLAGS_solaris := $(call SET_SHARED_LIBRARY_ORIGIN,/jli) \
         -L$(call FindLibDirForModule, java.base)/jli, \
-    LDFLAGS_macosx := -Xlinker -all_load $(SUPPORT_OUTPUTDIR)/native/java.base/libjli_static.a, \
-    LDFLAGS_aix := -L$(SUPPORT_OUTPUTDIR)/native/java.base, \
+    LDFLAGS_macosx := -Xlinker -all_load $(NATIVE_OUTPUTDIR)/java.base/libjli_static.a, \
+    LDFLAGS_aix := -L$(NATIVE_OUTPUTDIR)/java.base, \
     LDFLAGS_windows := -export:Agent_OnAttach, \
     LIBS_unix := -ljava $(LIBZ), \
     LIBS_linux := -ljli $(LIBDL), \
@@ -81,11 +81,11 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBINSTRUMENT, \
         -D "JDK_FNAME=instrument.dll" \
         -D "JDK_INTERNAL_NAME=instrument" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libinstrument, \
+    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libinstrument, \
     DEBUG_SYMBOLS := true))
 
 ifneq (, $(findstring $(OPENJDK_TARGET_OS), macosx windows aix))
-  $(BUILD_LIBINSTRUMENT): $(SUPPORT_OUTPUTDIR)/native/java.base/$(LIBRARY_PREFIX)jli_static$(STATIC_LIBRARY_SUFFIX)
+  $(BUILD_LIBINSTRUMENT): $(NATIVE_OUTPUTDIR)/java.base/$(LIBRARY_PREFIX)jli_static$(STATIC_LIBRARY_SUFFIX)
 else
   $(BUILD_LIBINSTRUMENT): $(call FindLib, java.base, jli, /jli)
 endif

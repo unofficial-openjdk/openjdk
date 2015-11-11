@@ -32,32 +32,33 @@ include LauncherCommon.gmk
 # overwritten.
 $(eval $(call SetupLauncher,java, \
     -DEXPAND_CLASSPATH_WILDCARDS -DENABLE_ARG_FILES,,,user32.lib comctl32.lib, \
-    $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/jli_static.lib, $(JAVA_RC_FLAGS), \
-    $(JAVA_VERSION_INFO_RESOURCE), $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/java_objs,true))
+    $(NATIVE_OUTPUTDIR)/$(MODULE)/jli_static.lib, $(JAVA_RC_FLAGS), \
+    $(JAVA_VERSION_INFO_RESOURCE), $(NATIVE_OUTPUTDIR)/$(MODULE)/java_objs,true))
 
-$(SUPPORT_OUTPUTDIR)/modules_cmds/java.base/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
+$(MODULES_CMDS_OUTPUTDIR)/java.base/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(CP) $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/java_objs$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX) $@
+	$(CP) $(NATIVE_OUTPUTDIR)/$(MODULE)/java_objs$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX) $@
 
-TARGETS += $(SUPPORT_OUTPUTDIR)/modules_cmds/java.base/java$(EXE_SUFFIX)
+TARGETS += $(MODULES_CMDS_OUTPUTDIR)/java.base/java$(EXE_SUFFIX)
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,javaw, \
       -DJAVAW -DEXPAND_CLASSPATH_WILDCARDS -DENABLE_ARG_FILES,,,user32.lib comctl32.lib, \
-      $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/jli_static.lib, $(JAVA_RC_FLAGS), \
+      $(NATIVE_OUTPUTDIR)/$(MODULE)/jli_static.lib, $(JAVA_RC_FLAGS), \
       $(JAVA_VERSION_INFO_RESOURCE),,true))
 endif
 
 $(eval $(call SetupLauncher,keytool, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "java.base/sun.security.tools.keytool.Main"$(COMMA) }'))
 
 ################################################################################
 
 BUILD_JEXEC :=
 BUILD_JEXEC_SRC :=
 BUILD_JEXEC_INC :=
-BUILD_JEXEC_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
+BUILD_JEXEC_DST_DIR := $(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
 
 #
 # UNHANDLED:
@@ -90,7 +91,7 @@ ifeq ($(BUILD_JEXEC), 1)
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
-    BUILD_JEXEC_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base
+    BUILD_JEXEC_DST_DIR := $(MODULES_LIBS_OUTPUTDIR)/java.base
     BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/java.base/share/native/libjli
   endif
 endif
@@ -110,7 +111,7 @@ ifneq ($(BUILD_JEXEC_SRC), )
       CFLAGS_solaris := -KPIC, \
       LDFLAGS := $(LDFLAGS_JDKEXE) \
           $(call SET_SHARED_LIBRARY_NAME,$(LIBRARY_PREFIX)$(SHARED_LIBRARY_SUFFIX)), \
-      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/jexec_obj, \
+      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/jexec_obj, \
       OUTPUT_DIR := $(BUILD_JEXEC_DST_DIR), \
       DEBUG_SYMBOLS := true, \
       PROGRAM := jexec))
@@ -123,8 +124,8 @@ endif
 BUILD_JSPAWNHELPER :=
 BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/java.base/unix/native/jspawnhelper
 JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/src/java.base/unix/native/libjava
-BUILD_JSPAWNHELPER_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
-LINK_JSPAWNHELPER_OBJECTS := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjava/childproc.o
+BUILD_JSPAWNHELPER_DST_DIR := $(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
+LINK_JSPAWNHELPER_OBJECTS := $(NATIVE_OUTPUTDIR)/$(MODULE)/libjava/childproc.o
 BUILD_JSPAWNHELPER_LDFLAGS :=
 
 ifneq ($(findstring $(OPENJDK_TARGET_OS), macosx solaris aix), )
@@ -132,7 +133,7 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), macosx solaris aix), )
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  BUILD_JSPAWNHELPER_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base
+  BUILD_JSPAWNHELPER_DST_DIR := $(MODULES_LIBS_OUTPUTDIR)/java.base
 endif
 
 ifeq ($(OPENJDK_TARGET_CPU_BITS), 64)
@@ -147,7 +148,7 @@ ifeq ($(BUILD_JSPAWNHELPER), 1)
       CFLAGS := $(CFLAGS_JDKEXE) $(JSPAWNHELPER_CFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKEXE) $(BUILD_JSPAWNHELPER_LDFLAGS), \
       LIBS := $(LINK_JSPAWNHELPER_OBJECTS), \
-      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/jspawnhelper, \
+      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/jspawnhelper, \
       OUTPUT_DIR := $(BUILD_JSPAWNHELPER_DST_DIR), \
       PROGRAM := jspawnhelper))
 

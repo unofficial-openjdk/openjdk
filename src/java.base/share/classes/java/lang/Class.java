@@ -25,6 +25,7 @@
 
 package java.lang;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -33,15 +34,19 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Field;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Proxy;
 import java.lang.ref.SoftReference;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamField;
+import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -55,8 +60,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
-import sun.misc.Unsafe;
+import jdk.internal.misc.BootLoader;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.BuiltinClassLoader;
+import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -68,8 +75,6 @@ import sun.reflect.generics.repository.MethodRepository;
 import sun.reflect.generics.repository.ConstructorRepository;
 import sun.reflect.generics.scope.ClassScope;
 import sun.security.util.SecurityConstants;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Proxy;
 import sun.reflect.annotation.*;
 import sun.reflect.misc.ReflectUtil;
 
@@ -377,6 +382,78 @@ public final class Class<T> implements java.io.Serializable,
                                             Class<?> caller)
         throws ClassNotFoundException;
 
+
+    /**
+     * Returns the {@code Class} of the specified  <a href="ClassLoader.html#name">
+     * binary name</a> defined in the specified module.
+     * <p>
+     * This method attempts to locate, load, and link the class or interface
+     * and it does not invoke the class initializer.  If the class is not
+     * found, this method returns {@code null}.
+     *
+     * <p> If the class loader of the specified module defines other modules
+     * and the specified name is a class defined in a different module,
+     * this method returns {@code null} after the class is loaded.
+     *
+     * <p> This method does not check whether the requested class
+     * is accessible to its caller.
+     *
+     * @apiNote
+     * This method returns {@code null} on failure rather than
+     * throwing a {@link ClassNotFoundException}, as is done by
+     * the {@link #forName(String, boolean, ClassLoader)} method.
+     * The security check is a stack-based permission check if the caller
+     * loads a class in another module.
+     *
+     * @param  module   A module
+     * @param  name     The <a href="ClassLoader.html#name">binary name</a>
+     *                  of the class
+     * @return {@code Class} object of the given name defined in the given module;
+     *         {@code null} if not found.
+     *
+     * @throws NullPointerException if the given module or name is {@code null}
+     *
+     * @throws LinkageError if the linkage fails
+     *
+     * @throws SecurityException if there is a security manager,
+     *         the caller requests to load a class in another module,
+     *         it denies the {@code RuntimePermission("getClassLoader")} permission.
+     *
+     * @since 1.9
+     */
+    @CallerSensitive
+    public static Class<?> forName(Module module, String name) {
+        Objects.requireNonNull(module);
+        Objects.requireNonNull(name);
+
+        Class<?> caller = Reflection.getCallerClass();
+        if (caller == null || caller.getModule() != module) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+            }
+        }
+
+        PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+        ClassLoader cl = AccessController.doPrivileged(pa);
+        if (module.isNamed() && cl != null) {
+            return cl.loadLocalClass(module, name);
+        }
+
+        final Class<?> c;
+        if (cl != null) {
+            c = cl.loadLocalClass(name);
+        } else {
+            c = BootLoader.loadClassOrNull(name);
+        }
+
+        if (c != null && c.getModule() == module) {
+            return c;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Creates a new instance of the class represented by this {@code Class}
      * object.  The class is instantiated as if by a {@code new}
@@ -452,13 +529,11 @@ public final class Class<T> implements java.io.Serializable,
         }
         Constructor<T> tmpConstructor = cachedConstructor;
         // Security check (same as in java.lang.reflect.Constructor)
-        int modifiers = tmpConstructor.getModifiers();
-        if (!Reflection.quickCheckMemberAccess(this, modifiers)) {
-            Class<?> caller = Reflection.getCallerClass();
-            if (newInstanceCallerCache != caller) {
-                Reflection.ensureMemberAccess(caller, this, null, modifiers);
-                newInstanceCallerCache = caller;
-            }
+        Class<?> caller = Reflection.getCallerClass();
+        if (newInstanceCallerCache != caller) {
+            int modifiers = tmpConstructor.getModifiers();
+            Reflection.ensureMemberAccess(caller, this, null, modifiers);
+            newInstanceCallerCache = caller;
         }
         // Run constructor
         try {
@@ -716,6 +791,48 @@ public final class Class<T> implements java.io.Serializable,
     // Package-private to allow ClassLoader access
     ClassLoader getClassLoader0() { return classLoader; }
 
+    /**
+     * Returns the module that this class or interface is a member of.
+     *
+     * If this class is not in a named module then the {@link
+     * ClassLoader#getUnnamedModule() unnamed} {@code Module} of the class
+     * loader for this class is returned.
+     *
+     * If this object represents an array type then this method returns the
+     * {@code Module} for the element type. If this object represents a
+     * primitive type or void, then the {@code Module} object for the
+     * {@code java.base} module is returned.
+     *
+     * @return the module that this class or interface is a member of
+     *
+     * @since 1.9
+     */
+    public Module getModule() {
+        Module module = this.module;
+        if (module != null)
+            return module;
+
+        // called early in the startup before patching
+        if (Object.class.module == null)
+            return null;
+
+        if (isArray())
+            module = componentType.getModule();
+        else if (isPrimitive())
+            module = Object.class.getModule();
+        else if (classLoader == null)
+            module = BootLoader.getUnnamedModule();
+        else
+            module = classLoader.getUnnamedModule();
+
+        // cache it
+        this.module = module;
+
+        return module;
+    }
+
+    private transient Module module;  // set by VM or lazily by getModule
+
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField
     // will throw NoSuchFieldException
@@ -807,22 +924,19 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Gets the package for this class.  The class loader of this class is used
-     * to find the package.  If the class was loaded by the bootstrap class
-     * loader the set of packages loaded from CLASSPATH is searched to find the
-     * package of the class. Null is returned if no package object was created
-     * by the class loader of this class.
+     * Gets the package of this class.
      *
-     * <p> Packages have attributes for versions and specifications only if the
-     * information was defined in the manifests that accompany the classes, and
-     * if the class loader created the package instance with the attributes
-     * from the manifest.
+     * <p>If this class represents an array type, a primitive type or void,
+     * this method returns {@code null}.
      *
-     * @return the package of the class, or null if no package
-     *         information is available from the archive or codebase.
+     * @return the package of this class.
      */
     public Package getPackage() {
-        return Package.getPackage(this);
+        if (isPrimitive() || isArray()) {
+            return null;
+        }
+        ClassLoader cl = getClassLoader0();
+        return cl != null ? cl.definePackage(this) : BootLoader.definePackage(this);
     }
 
 
@@ -2212,15 +2326,19 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Finds a resource with a given name.  The rules for searching resources
+     * Finds a resource with a given name. If this class is in a named {@link
+     * Module Module}, and the caller of this method is in the same module,
+     * then this method will attempt to find the resource in that module.
+     * Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader.  If this object was loaded by
      * the bootstrap class loader, the method delegates to {@link
      * ClassLoader#getSystemResourceAsStream}.
      *
-     * <p> Before delegation, an absolute resource name is constructed from the
-     * given resource name using this algorithm:
+     * <p> Before finding a resource in the caller's module or delegation to a
+     * class loader, an absolute resource name is constructed from the given
+     * resource name using this algorithm:
      *
      * <ul>
      *
@@ -2241,26 +2359,60 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return      A {@link java.io.InputStream} object or {@code null} if
-     *              no resource with this name is found
+     * @return  A {@link java.io.InputStream} object or {@code null} if
+     *          no resource with this name is found
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
-     public InputStream getResourceAsStream(String name) {
+    @CallerSensitive
+    public InputStream getResourceAsStream(String name) {
         name = resolveName(name);
-        ClassLoader cl = getClassLoader0();
-        if (cl==null) {
-            // A system class.
-            return ClassLoader.getSystemResourceAsStream(name);
+
+        // if this Class and the caller are in the same named module
+        // then attempt to get an input stream to the resource in the
+        // module
+        Module module = getModule();
+        if (module.isNamed()) {
+            Class<?> caller = Reflection.getCallerClass();
+            if (caller != null && caller.getModule() == module) {
+                ClassLoader cl = getClassLoader0();
+                String mn = module.getName();
+                try {
+
+                    // special-case built-in class loaders to avoid the
+                    // need for a URL connection
+                    if (cl == null) {
+                        return BootLoader.findResourceAsStream(mn, name);
+                    } else if (cl instanceof BuiltinClassLoader) {
+                        return ((BuiltinClassLoader) cl).findResourceAsStream(mn, name);
+                    } else {
+                        URL url = cl.findResource(mn, name);
+                        return (url != null) ? url.openStream() : null;
+                    }
+
+                } catch (IOException | SecurityException e) {
+                    return null;
+                }
+            }
         }
-        return cl.getResourceAsStream(name);
+
+        // this Caller and caller not in the same named module
+        ClassLoader cl = getClassLoader0();
+        if (cl == null) {
+            return ClassLoader.getSystemResourceAsStream(name);
+        } else {
+            return cl.getResourceAsStream(name);
+        }
     }
 
     /**
-     * Finds a resource with a given name.  The rules for searching resources
+     * Finds a resource with a given name. If this class is in a named {@link
+     * Module Module}, and the caller of this method is in the same module,
+     * then this method will attempt to find the resource in that module.
+     * Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
-     * delegates to this object's class loader.  If this object was loaded by
+     * delegates to this object's class loader. If this object was loaded by
      * the bootstrap class loader, the method delegates to {@link
      * ClassLoader#getSystemResource}.
      *
@@ -2286,21 +2438,42 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return      A  {@link java.net.URL} object or {@code null} if no
-     *              resource with this name is found
+     * @return A {@link java.net.URL} object; {@code null} if no
+     *         resource with this name is found or the resource cannot
+     *         be located by a URL.
      * @since  1.1
      */
-    public java.net.URL getResource(String name) {
+    @CallerSensitive
+    public URL getResource(String name) {
         name = resolveName(name);
-        ClassLoader cl = getClassLoader0();
-        if (cl==null) {
-            // A system class.
-            return ClassLoader.getSystemResource(name);
+
+        // if this Class and the caller are in the same named module
+        // then attempt to get URL to the resource in the module
+        Module module = getModule();
+        if (module.isNamed()) {
+            Class<?> caller = Reflection.getCallerClass();
+            if (caller != null && caller.getModule() == module) {
+                String mn = getModule().getName();
+                ClassLoader cl = getClassLoader0();
+                try {
+                    if (cl == null) {
+                        return BootLoader.findResource(mn, name);
+                    } else {
+                        return cl.findResource(mn, name);
+                    }
+                } catch (IOException ioe) {
+                    return null;
+                }
+            }
         }
-        return cl.getResource(name);
+
+        ClassLoader cl = getClassLoader0();
+        if (cl == null) {
+            return ClassLoader.getSystemResource(name);
+        } else {
+            return cl.getResource(name);
+        }
     }
-
-
 
     /** protection domain returned when the internal domain is null */
     private static java.security.ProtectionDomain allPermDomain;
@@ -2844,15 +3017,15 @@ public final class Class<T> implements java.io.Serializable,
         private void remove(int i) {
             if (methods[i] != null && methods[i].isDefault())
                 defaults--;
-            methods[i] = null;
-        }
+                    methods[i] = null;
+                }
 
         private boolean matchesNameAndDescriptor(Method m1, Method m2) {
             return m1.getReturnType() == m2.getReturnType() &&
                    m1.getName() == m2.getName() && // name is guaranteed to be interned
                    arrayContentsEq(m1.getParameterTypes(),
                            m2.getParameterTypes());
-        }
+            }
 
         void compactAndTrim() {
             int newPos = 0;

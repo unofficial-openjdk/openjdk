@@ -67,25 +67,20 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
     }
 
     public CLDRLocaleProviderAdapter() {
-        LocaleDataMetaInfo nbmi = null;
-
+        LocaleDataMetaInfo mi = null;
         try {
-            nbmi = AccessController.doPrivileged(new PrivilegedExceptionAction<LocaleDataMetaInfo>() {
-                @Override
-                public LocaleDataMetaInfo run() {
-                    for (LocaleDataMetaInfo ldmi : ServiceLoader.loadInstalled(LocaleDataMetaInfo.class)) {
-                        if (ldmi.getType() == LocaleProviderAdapter.Type.CLDR) {
-                            return ldmi;
-                        }
+            mi = AccessController.doPrivileged((PrivilegedExceptionAction<LocaleDataMetaInfo>) () -> {
+                for (LocaleDataMetaInfo ldmi : ServiceLoader.loadInstalled(LocaleDataMetaInfo.class)) {
+                    if (ldmi.getType() == LocaleProviderAdapter.Type.CLDR) {
+                        return ldmi;
                     }
-                    return null;
                 }
+                return null;
             });
         }  catch (Exception e) {
             // Catch any exception, and continue as if only CLDR's base locales exist.
         }
-
-        nonBaseMetaInfo = nbmi;
+        this.nonBaseMetaInfo = mi;
     }
 
     /**
@@ -109,40 +104,29 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
 
     @Override
     public Locale[] getAvailableLocales() {
-        Set<String> all = createLanguageTagSet("AvailableLocales");
-        Locale[] locs = new Locale[all.size()];
-        int index = 0;
-        for (String tag : all) {
-            locs[index++] = Locale.forLanguageTag(tag);
-        }
-        return locs;
+        return createLanguageTagSet("AvailableLocales")
+                   .stream().map(tag -> Locale.forLanguageTag(tag))
+                            .toArray(Locale[]::new);
     }
 
     @Override
     protected Set<String> createLanguageTagSet(String category) {
+        Set<String> tagset = new HashSet<>();
         // Directly call Base tags, as we know it's in the base module.
-        String supportedLocaleString = baseMetaInfo.availableLanguageTags(category);
-        String nonBaseTags = null;
-
+        addTags(baseMetaInfo.availableLanguageTags(category), tagset);
         if (nonBaseMetaInfo != null) {
-            nonBaseTags = nonBaseMetaInfo.availableLanguageTags(category);
+            addTags(nonBaseMetaInfo.availableLanguageTags(category), tagset);
         }
-        if (nonBaseTags != null) {
-            if (supportedLocaleString != null) {
-                supportedLocaleString += " " + nonBaseTags;
-            } else {
-                supportedLocaleString = nonBaseTags;
+        return tagset.isEmpty() ? Collections.emptySet() : tagset;
+    }
+
+    private static void addTags(String tags, Set<String> tagset) {
+        if (tags != null) {
+            StringTokenizer tokens = new StringTokenizer(tags);
+            while (tokens.hasMoreTokens()) {
+                tagset.add(tokens.nextToken());
             }
         }
-        if (supportedLocaleString == null) {
-            return Collections.emptySet();
-        }
-        Set<String> tagset = new HashSet<>();
-        StringTokenizer tokens = new StringTokenizer(supportedLocaleString);
-        while (tokens.hasMoreTokens()) {
-            tagset.add(tokens.nextToken());
-        }
-        return tagset;
     }
 
     // Implementation of ResourceBundleBasedAdapter
@@ -154,16 +138,18 @@ public class CLDRLocaleProviderAdapter extends JRELocaleProviderAdapter {
 
     private List<Locale> applyParentLocales(String baseName, List<Locale> candidates) {
         // check irregular parents
-        for (int i = 0; i < candidates.size(); i++) {
+        int size = candidates.size();
+        for (int i = 0; i < size; i++) {
             Locale l = candidates.get(i);
-            if (!l.equals(Locale.ROOT)) {
-                Locale p = getParentLocale(l);
-                if (p != null &&
-                    !candidates.get(i+1).equals(p)) {
-                    List<Locale> applied = candidates.subList(0, i+1);
-                    applied.addAll(applyParentLocales(baseName, super.getCandidateLocales(baseName, p)));
-                    return applied;
-                }
+            if (l.equals(Locale.ROOT)) {
+                continue;
+            }
+            Locale p = parentLocalesMap.get(l);
+            if (Objects.nonNull(p) &&
+                !candidates.get(i+1).equals(p)) {
+                List<Locale> applied = candidates.subList(0, i+1);
+                applied.addAll(applyParentLocales(baseName, super.getCandidateLocales(baseName, p)));
+                return applied;
             }
         }
 

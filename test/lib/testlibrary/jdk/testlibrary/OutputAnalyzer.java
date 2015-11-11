@@ -26,6 +26,7 @@ package jdk.testlibrary;
 import static jdk.testlibrary.Asserts.*;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -93,13 +94,14 @@ public final class OutputAnalyzer {
      * @throws RuntimeException
      *             If the string was not found
      */
-    public void shouldContain(String expectedString) {
+    public OutputAnalyzer shouldContain(String expectedString) {
         if (!getStdout().contains(expectedString)
                 && !getStderr().contains(expectedString)) {
             reportDiagnosticSummary();
             throw new RuntimeException("'" + expectedString
                     + "' missing from stdout/stderr \n");
         }
+        return this;
     }
 
     /**
@@ -143,7 +145,7 @@ public final class OutputAnalyzer {
      * @throws RuntimeException
      *             If the string was found
      */
-    public void shouldNotContain(String notExpectedString) {
+    public OutputAnalyzer shouldNotContain(String notExpectedString) {
         if (getStdout().contains(notExpectedString)) {
             reportDiagnosticSummary();
             throw new RuntimeException("'" + notExpectedString
@@ -154,6 +156,7 @@ public final class OutputAnalyzer {
             throw new RuntimeException("'" + notExpectedString
                     + "' found in stderr \n");
         }
+        return this;
     }
 
     /**
@@ -402,6 +405,28 @@ public final class OutputAnalyzer {
     public int getExitValue() {
         return output == null ? exitValue : output.getExitValue();
     }
+
+
+    /**
+     * Print the stdout buffer to the given {@code PrintStream}.
+     *
+     * @return this OutputAnalyzer
+     */
+    public OutputAnalyzer outputTo(PrintStream out) {
+        out.println(getStdout());
+        return this;
+    }
+
+    /**
+     * Print the stderr buffer to the given {@code PrintStream}.
+     *
+     * @return this OutputAnalyzer
+     */
+    public OutputAnalyzer errorTo(PrintStream out) {
+        out.println(getStderr());
+        return this;
+    }
+
 
     /**
      * Get the contents of the output buffer (stdout and stderr) as list of strings.

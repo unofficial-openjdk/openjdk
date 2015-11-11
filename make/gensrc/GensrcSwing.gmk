@@ -27,18 +27,18 @@
 # Generate java files for javax.swing.plaf package
 #
 NIMBUS_PACKAGE = javax.swing.plaf
-NIMBUS_GENSRC_DIR = $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/javax/swing/plaf/nimbus
+NIMBUS_GENSRC_DIR = $(GENSRC_OUTPUTDIR)/java.desktop/javax/swing/plaf/nimbus
 NIMBUS_SKIN_FILE = $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/skin.laf
 
-$(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS_JDK)
+$(GENSRC_OUTPUTDIR)/java.desktop/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(@D)
 	$(ECHO) "Generating Nimbus source files"
 	$(TOOL_GENERATENIMBUS) $(LOG_INFO) \
-	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop \
+	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(GENSRC_OUTPUTDIR)/java.desktop \
 	    -packagePrefix $(NIMBUS_PACKAGE).nimbus -lafName Nimbus
 	$(ECHO) $(LOG_INFO) "Finished generating Nimbus source files"
 	$(TOUCH) $@
 
-GENSRC_SWING_NIMBUS := $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/_the.generated_nimbus
+GENSRC_SWING_NIMBUS := $(GENSRC_OUTPUTDIR)/java.desktop/_the.generated_nimbus
 
 GENSRC_JAVA_DESKTOP += $(GENSRC_SWING_NIMBUS)

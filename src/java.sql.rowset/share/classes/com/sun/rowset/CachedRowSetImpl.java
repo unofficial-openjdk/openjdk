@@ -25,6 +25,7 @@
 
 package com.sun.rowset;
 
+import java.lang.reflect.Module;
 import java.sql.*;
 import javax.sql.*;
 import java.io.*;
@@ -2961,7 +2962,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 // create new instance of the class
                 SQLData obj = null;
                 try {
-                    obj = (SQLData) ReflectUtil.newInstance(c);
+                    ReflectUtil.checkPackageAccess(c);
+                    ensureReadable(c.getModule());
+                    obj = (SQLData) c.newInstance();
                 } catch(Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
                 }
@@ -2975,6 +2978,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             }
         }
         return value;
+    }
+
+    private static void ensureReadable(Module targetModule) {
+        CachedRowSetImpl.class.getModule().addReads(targetModule);
     }
 
     /**
@@ -5708,7 +5715,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 // create new instance of the class
                 SQLData obj = null;
                 try {
-                    obj = (SQLData) ReflectUtil.newInstance(c);
+                    ReflectUtil.checkPackageAccess(c);
+                    ensureReadable(c.getModule());
+                    obj = (SQLData) c.newInstance();
                 } catch(Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);
                 }

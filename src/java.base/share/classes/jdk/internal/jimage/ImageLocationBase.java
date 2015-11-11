@@ -26,15 +26,15 @@
 package jdk.internal.jimage;
 
 public class ImageLocationBase {
-    static final int ATTRIBUTE_END = 0;
-    static final int ATTRIBUTE_MODULE = 1;
-    static final int ATTRIBUTE_PARENT = 2;
-    static final int ATTRIBUTE_BASE = 3;
-    static final int ATTRIBUTE_EXTENSION = 4;
-    static final int ATTRIBUTE_OFFSET = 5;
-    static final int ATTRIBUTE_COMPRESSED = 6;
-    static final int ATTRIBUTE_UNCOMPRESSED = 7;
-    static final int ATTRIBUTE_COUNT = 8;
+    public static final int ATTRIBUTE_END = 0;
+    public static final int ATTRIBUTE_MODULE = 1;
+    public static final int ATTRIBUTE_PARENT = 2;
+    public static final int ATTRIBUTE_BASE = 3;
+    public static final int ATTRIBUTE_EXTENSION = 4;
+    public static final int ATTRIBUTE_OFFSET = 5;
+    public static final int ATTRIBUTE_COMPRESSED = 6;
+    public static final int ATTRIBUTE_UNCOMPRESSED = 7;
+    public static final int ATTRIBUTE_COUNT = 8;
 
     protected final long[] attributes;
 
@@ -45,7 +45,7 @@ public class ImageLocationBase {
         this.strings = strings;
     }
 
-    ImageStrings getStrings() {
+    protected ImageStrings getStrings() {
         return strings;
     }
 
@@ -57,11 +57,11 @@ public class ImageLocationBase {
         return data >>> 3;
     }
 
-    static long[] decompress(byte[] bytes) {
+    protected static long[] decompress(byte[] bytes) {
         return decompress(bytes, 0);
     }
 
-    static long[] decompress(byte[] bytes, int offset) {
+    protected static long[] decompress(byte[] bytes, int offset) {
         long[] attributes = new long[ATTRIBUTE_COUNT];
 
         if (bytes != null) {
@@ -90,7 +90,7 @@ public class ImageLocationBase {
         return attributes;
     }
 
-    static byte[] compress(long[] attributes) {
+    public static byte[] compress(long[] attributes) {
         ImageStream stream = new ImageStream(16);
 
         for (int kind = ATTRIBUTE_END + 1; kind < ATTRIBUTE_COUNT; kind++) {
@@ -133,7 +133,7 @@ public class ImageLocationBase {
         return getAttributeUTF8String(kind).toString();
     }
 
-    UTF8String getModule() {
+    public UTF8String getModule() {
         return getAttributeUTF8String(ATTRIBUTE_MODULE);
     }
 
@@ -141,11 +141,11 @@ public class ImageLocationBase {
         return getModule().toString();
     }
 
-    int getModuleOffset() {
+    public int getModuleOffset() {
         return (int)getAttribute(ATTRIBUTE_MODULE);
     }
 
-    UTF8String getBase() {
+    public UTF8String getBase() {
         return getAttributeUTF8String(ATTRIBUTE_BASE);
     }
 
@@ -153,11 +153,11 @@ public class ImageLocationBase {
         return  getBase().toString();
     }
 
-    int getBaseOffset() {
+    public int getBaseOffset() {
         return (int)getAttribute(ATTRIBUTE_BASE);
     }
 
-    UTF8String getParent() {
+    public UTF8String getParent() {
         return getAttributeUTF8String(ATTRIBUTE_PARENT);
     }
 
@@ -165,11 +165,11 @@ public class ImageLocationBase {
         return getParent().toString();
     }
 
-    int getParentOffset() {
+    public int getParentOffset() {
         return (int)getAttribute(ATTRIBUTE_PARENT);
     }
 
-    UTF8String getExtension() {
+    public UTF8String getExtension() {
         return getAttributeUTF8String(ATTRIBUTE_EXTENSION);
     }
 
@@ -177,15 +177,15 @@ public class ImageLocationBase {
         return getExtension().toString();
     }
 
-    int getExtensionOffset() {
+    public int getExtensionOffset() {
         return (int)getAttribute(ATTRIBUTE_EXTENSION);
     }
 
-    UTF8String getFullName() {
+    public UTF8String getFullName() {
         return getFullName(false);
     }
 
-    UTF8String getFullName(boolean modulesPrefix) {
+    public UTF8String getFullName(boolean modulesPrefix) {
         // Note: Consider a UTF8StringBuilder.
         UTF8String fullName = UTF8String.EMPTY_STRING;
 
@@ -214,7 +214,7 @@ public class ImageLocationBase {
         return fullName;
     }
 
-    UTF8String buildName(boolean includeModule, boolean includeParent,
+    protected UTF8String buildName(boolean includeModule, boolean includeParent,
             boolean includeName) {
         // Note: Consider a UTF8StringBuilder.
         UTF8String name = UTF8String.EMPTY_STRING;
@@ -246,7 +246,7 @@ public class ImageLocationBase {
         return name;
     }
 
-    String getFullNameString() {
+    public String getFullNameString() {
         return getFullName().toString();
     }
 

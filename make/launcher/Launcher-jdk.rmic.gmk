@@ -27,5 +27,6 @@ include LauncherCommon.gmk
 
 $(eval $(call SetupLauncher,rmic, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
+        "-m"$(COMMA) "jdk.rmic/sun.rmi.rmic.Main"$(COMMA) }'))
 

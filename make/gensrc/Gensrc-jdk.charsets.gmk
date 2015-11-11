@@ -31,7 +31,7 @@ include GensrcCommon.gmk
 #
 CHARSET_DATA_DIR := $(JDK_TOPDIR)/make/data/charsetmapping
 
-CHARSET_GENSRC_JAVA_DIR_CS := $(SUPPORT_OUTPUTDIR)/gensrc/jdk.charsets/sun/nio/cs/ext
+CHARSET_GENSRC_JAVA_DIR_CS := $(GENSRC_OUTPUTDIR)/jdk.charsets/sun/nio/cs/ext
 CHARSET_DONE_CS := $(CHARSET_GENSRC_JAVA_DIR_CS)/_the.charsetmapping
 CHARSET_COPYRIGHT_HEADER := $(JDK_TOPDIR)/make/src/classes/build/tools/charsetmapping
 CHARSET_TEMPLATES := \

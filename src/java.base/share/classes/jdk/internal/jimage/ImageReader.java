@@ -52,8 +52,6 @@ public class ImageReader extends BasicImageReader {
     // Iniitalized lazily, see {@link #imageFileAttributes()}.
     private BasicFileAttributes imageFileAttributes;
 
-    private final ImageModuleData moduleData;
-
     // directory management implementation
     private final Map<UTF8String, Node> nodes;
     private volatile Directory rootDir;
@@ -63,7 +61,6 @@ public class ImageReader extends BasicImageReader {
 
     ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
-        this.moduleData = new ImageModuleData(this);
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -92,38 +89,7 @@ public class ImageReader extends BasicImageReader {
     public ImageLocation findLocation(UTF8String name) {
         ImageLocation location = super.findLocation(name);
 
-        // NOTE: This should be removed when module system is up in full.
-        if (location == null) {
-            int index = name.lastIndexOf('/');
-
-            if (index != -1) {
-                UTF8String packageName = name.substring(0, index);
-                UTF8String moduleName = moduleData.packageToModule(packageName);
-
-                if (moduleName != null) {
-                    UTF8String fullName = UTF8String.SLASH_STRING.concat(moduleName,
-                            UTF8String.SLASH_STRING, name);
-                    location = super.findLocation(fullName);
-                }
-            } else {
-                // No package, try all modules.
-                for (String mod : moduleData.allModuleNames()) {
-                    location = super.findLocation("/" + mod + "/" + name);
-                    if (location != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
         return location;
-    }
-
-    /**
-     * Return the module name that contains the given package name.
-     */
-    public String getModule(String packageName) {
-        return moduleData.packageToModule(packageName);
     }
 
     // jimage file does not store directory structure. We build nodes
@@ -287,11 +253,11 @@ public class ImageReader extends BasicImageReader {
         }
 
         static Directory create(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
-            Directory dir = new Directory(parent, name, fileAttrs);
+            Directory d = new Directory(parent, name, fileAttrs);
             if (parent != null) {
-                parent.addChild(dir);
+                parent.addChild(d);
             }
-            return dir;
+            return d;
         }
 
         @Override
@@ -329,21 +295,22 @@ public class ImageReader extends BasicImageReader {
             this(parent, loc.getFullName(true), loc, fileAttrs);
         }
 
-        private Resource(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
+        private Resource(Directory parent, UTF8String name, ImageLocation loc,
+                BasicFileAttributes fileAttrs) {
             super(name, fileAttrs);
             this.loc = loc;
-         }
+        }
 
         static Resource create(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource resource = new Resource(parent, loc, fileAttrs);
-            parent.addChild(resource);
-            return resource;
+            Resource rs = new Resource(parent, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
         }
 
         static Resource create(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource resource = new Resource(parent, name, loc, fileAttrs);
-            parent.addChild(resource);
-            return resource;
+            Resource rs = new Resource(parent, name, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
         }
 
         @Override
@@ -392,9 +359,9 @@ public class ImageReader extends BasicImageReader {
         }
 
         static LinkNode create(Directory parent, UTF8String name, Node link) {
-            LinkNode linkNode = new LinkNode(parent, name, link);
-            parent.addChild(linkNode);
-            return linkNode;
+            LinkNode ln = new LinkNode(parent, name, link);
+            parent.addChild(ln);
+            return ln;
         }
 
         @Override
@@ -473,7 +440,11 @@ public class ImageReader extends BasicImageReader {
                 }
             } else { // Asking for a resource? /modules/java.base/java/lang/Object.class
                 if (isModules) {
-                    n = handleResource(strName, loc);
+                    n = handleResource(strName);
+                } else {
+                    // Possibly ask for /packages/java.lang/java.base
+                    // although /packages/java.base not created
+                    n = handleModuleLink(strName);
                 }
             }
             return n;
@@ -491,6 +462,33 @@ public class ImageReader extends BasicImageReader {
             }
         }
 
+        private void visitPackageLocation(ImageLocation loc) {
+            // Retrieve package name
+            String pkgName = getBaseExt(loc);
+            // Content is array of offsets in Strings table
+            byte[] stringsOffsets = getResource(loc);
+            ByteBuffer buffer = ByteBuffer.wrap(stringsOffsets);
+            buffer.order(getByteOrder());
+            IntBuffer intBuffer = buffer.asIntBuffer();
+            // For each module, create a link node.
+            for (int i = 0; i < stringsOffsets.length / SIZE_OF_OFFSET; i++) {
+                // skip empty state, useless.
+                intBuffer.get(i);
+                i++;
+                int offset = intBuffer.get(i);
+                String moduleName = getString(offset);
+                Node targetNode = findNode(MODULES_STRING + "/" + moduleName);
+                if (targetNode != null) {
+                    UTF8String pkgDirName = packagesDir.getName().
+                            concat(SLASH_STRING, new UTF8String(pkgName));
+                    Directory pkgDir = (Directory) nodes.get(pkgDirName);
+                    newLinkNode(pkgDir,
+                            pkgDir.getName().concat(SLASH_STRING,
+                                    new UTF8String(moduleName)), targetNode);
+                }
+            }
+        }
+
         private Node handlePackages(String name, ImageLocation loc) {
             long size = loc.getUncompressedSize();
             Node n = null;
@@ -502,13 +500,11 @@ public class ImageReader extends BasicImageReader {
                 packagesDir.setCompleted(true);
                 n = packagesDir;
             } else {
-                if (size != 0) { // children are links to module
+                if (size != 0) { // children are offsets to module in StringsTable
                     String pkgName = getBaseExt(loc);
                     Directory pkgDir = newDirectory(packagesDir,
                             packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName)));
-                    visitLocation(loc, (childloc) -> {
-                        findNode(childloc.getFullName());
-                    });
+                    visitPackageLocation(loc);
                     pkgDir.setCompleted(true);
                     n = pkgDir;
                 } else { // Link to module
@@ -525,6 +521,38 @@ public class ImageReader extends BasicImageReader {
                 }
             }
             return n;
+        }
+
+        // Asking for /packages/package/module although
+        // /packages/<pkg>/ not yet created, need to create it
+        // prior to return the link to module node.
+        private Node handleModuleLink(String name) {
+            // eg: unresolved /packages/package/module
+            // Build /packages/package node
+            Node ret = null;
+            String radical = PACKAGES_STRING + "/";
+            String path = name;
+            if (path.startsWith(radical)) {
+                int start = radical.length();
+                path = path.substring(start);
+                int pkgEnd = path.indexOf("/");
+                if (pkgEnd != -1) {
+                    String pkg = path.substring(0, pkgEnd);
+                    String pkgPath = radical + pkg;
+                    Node n = findNode(pkgPath);
+                    UTF8String utf8Name = new UTF8String(name);
+                    // If not found means that this is a symbolic link such as:
+                    // /packages/java.util/java.base/java/util/Vector.class
+                    // and will be done by a retry of the filesystem
+                    for (Node child : n.getChildren()) {
+                        if (child.name.equals(utf8Name)) {
+                            ret = child;
+                            break;
+                        }
+                    }
+                }
+            }
+            return ret;
         }
 
         private Node handleModulesSubTree(String name, ImageLocation loc) {
@@ -544,7 +572,7 @@ public class ImageReader extends BasicImageReader {
             return n;
         }
 
-        private Node handleResource(String name, ImageLocation loc) {
+        private Node handleResource(String name) {
             Node n = null;
             String locationPath = name.substring((MODULES_STRING).length());
             ImageLocation resourceLoc = findLocation(locationPath);

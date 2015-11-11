@@ -40,7 +40,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
     SRC := $(call FindSrcDirsForLib, jdk.attach, attach), \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) \
-        -I$(SUPPORT_OUTPUTDIR)/headers/jdk.attach \
+        -I$(HEADERS_OUTPUTDIR)/jdk.attach \
         $(LIBJAVA_HEADER_FLAGS) $(LIBATTACH_CFLAGS), \
     CFLAGS_windows := /Gy, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libattach/mapfile-$(OPENJDK_TARGET_OS), \
@@ -55,7 +55,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
     LIBS := $(JDKLIB_LIBS), \
     LIBS_solaris := -ldoor, \
     LIBS_windows := $(WIN_JAVA_LIB) advapi32.lib psapi.lib, \
-    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libattach, \
+    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libattach, \
     DEBUG_SYMBOLS := true))
 
 $(BUILD_LIBATTACH): $(call FindLib, java.base, java)

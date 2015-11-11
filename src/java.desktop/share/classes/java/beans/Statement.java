@@ -263,6 +263,7 @@ public class Statement {
             if (m == null) {
                 m = getMethod(Class.class, methodName, argClasses);
             }
+            this.getClass().getModule().addReads(((Class<?>)target).getModule());
         }
         else {
             /*
@@ -285,6 +286,7 @@ public class Statement {
                 }
             }
             m = getMethod(target.getClass(), methodName, argClasses);
+            this.getClass().getModule().addReads(target.getClass().getModule());
         }
         if (m != null) {
             try {

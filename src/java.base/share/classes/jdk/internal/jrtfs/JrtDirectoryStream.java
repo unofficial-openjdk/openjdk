@@ -22,7 +22,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package jdk.internal.jrtfs;
 
 import java.nio.file.DirectoryStream;
@@ -34,8 +33,12 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.io.IOException;
 
+/**
+ * DirectoryStream implementation for jrt file system implementations.
+ */
 final class JrtDirectoryStream implements DirectoryStream<Path> {
-    private final JrtFileSystem jrtfs;
+
+    private final AbstractJrtFileSystem jrtfs;
     private final byte[] path;
     // prefix to be used for children of this directory
     // so that child path are reported relatively (if needed)
@@ -44,15 +47,15 @@ final class JrtDirectoryStream implements DirectoryStream<Path> {
     private volatile boolean isClosed;
     private volatile Iterator<Path> itr;
 
-    JrtDirectoryStream(JrtPath jrtPath,
-                       DirectoryStream.Filter<? super java.nio.file.Path> filter)
-        throws IOException
-    {
+    JrtDirectoryStream(AbstractJrtPath jrtPath,
+            DirectoryStream.Filter<? super java.nio.file.Path> filter)
+            throws IOException {
         this.jrtfs = jrtPath.getFileSystem();
         this.path = jrtPath.getResolvedPath();
         // sanity check
-        if (!jrtfs.isDirectory(path, true))
+        if (!jrtfs.isDirectory(path, true)) {
             throw new NotDirectoryException(jrtPath.toString());
+        }
 
         // absolute path and does not have funky chars in front like /./java.base
         if (jrtPath.isAbsolute() && (path.length == jrtPath.getPathLength())) {
@@ -69,10 +72,12 @@ final class JrtDirectoryStream implements DirectoryStream<Path> {
 
     @Override
     public synchronized Iterator<Path> iterator() {
-        if (isClosed)
+        if (isClosed) {
             throw new ClosedDirectoryStreamException();
-        if (itr != null)
+        }
+        if (itr != null) {
             throw new IllegalStateException("Iterator has already been returned");
+        }
 
         try {
             itr = jrtfs.iteratorOf(path, childPrefix);
