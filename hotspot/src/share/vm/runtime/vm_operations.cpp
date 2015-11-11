@@ -28,7 +28,6 @@
 #include "code/codeCache.hpp"
 #include "code/codeCacheExtensions.hpp"
 #include "compiler/compileBroker.hpp"
-#include "compiler/compilerOracle.hpp"
 #include "gc/shared/isGCActiveMark.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/resourceArea.hpp"
@@ -41,8 +40,6 @@
 #include "runtime/vm_operations.hpp"
 #include "services/threadService.hpp"
 #include "trace/tracing.hpp"
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 #define VM_OP_NAME_INITIALIZE(name) #name,
 
@@ -79,14 +76,14 @@ const char* VM_Operation::mode_to_string(Mode mode) {
 }
 // Called by fatal error handler.
 void VM_Operation::print_on_error(outputStream* st) const {
-  st->print("VM_Operation (" PTR_FORMAT "): ", this);
+  st->print("VM_Operation (" PTR_FORMAT "): ", p2i(this));
   st->print("%s", name());
 
   const char* mode = mode_to_string(evaluation_mode());
   st->print(", mode: %s", mode);
 
   if (calling_thread()) {
-    st->print(", requested by thread " PTR_FORMAT, calling_thread());
+    st->print(", requested by thread " PTR_FORMAT, p2i(calling_thread()));
   }
 }
 
@@ -117,14 +114,16 @@ void VM_MarkActiveNMethods::doit() {
   NMethodSweeper::mark_active_nmethods();
 }
 
-VM_DeoptimizeFrame::VM_DeoptimizeFrame(JavaThread* thread, intptr_t* id) {
+VM_DeoptimizeFrame::VM_DeoptimizeFrame(JavaThread* thread, intptr_t* id, int reason) {
   _thread = thread;
   _id     = id;
+  _reason = reason;
 }
 
 
 void VM_DeoptimizeFrame::doit() {
-  Deoptimization::deoptimize_frame_internal(_thread, _id);
+  assert(_reason > Deoptimization::Reason_none && _reason < Deoptimization::Reason_LIMIT, "invalid deopt reason");
+  Deoptimization::deoptimize_frame_internal(_thread, _id, (Deoptimization::DeoptReason)_reason);
 }
 
 

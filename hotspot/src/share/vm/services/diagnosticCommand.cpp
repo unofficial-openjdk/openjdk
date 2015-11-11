@@ -25,6 +25,8 @@
 #include "precompiled.hpp"
 #include "classfile/classLoaderStats.hpp"
 #include "classfile/compactHashtable.hpp"
+#include "compiler/compileBroker.hpp"
+#include "compiler/directivesParser.hpp"
 #include "gc/shared/vmGCOperations.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/globals.hpp"
@@ -38,8 +40,6 @@
 #include "services/writeableFlags.hpp"
 #include "utilities/macros.hpp"
 #include "oops/objArrayOop.inline.hpp"
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 void DCmdRegistrant::register_dcmds(){
   // Registration of the diagnostic commands
@@ -78,6 +78,11 @@ void DCmdRegistrant::register_dcmds(){
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CodeListDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CodeCacheDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<TouchedMethodsDCmd>(full_export, true, false));
+
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesPrintDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesAddDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesRemoveDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesClearDCmd>(full_export, true, false));
 
   // Enhanced JMX Agent Support
   // These commands won't be exported via the DiagnosticCommandMBean until an
@@ -695,12 +700,17 @@ void JMXStartRemoteDCmd::execute(DCmdSource source, TRAPS) {
     // command line with -D or by managmenent.properties
     // file.
 #define PUT_OPTION(a) \
-    if ( (a).is_set() ){ \
-        options.print(\
-               ( *((a).type()) == 'I' ) ? "%scom.sun.management.%s=%d" : "%scom.sun.management.%s=%s",\
-                comma, (a).name(), (a).value()); \
-        comma[0] = ','; \
-    }
+    do { \
+        if ( (a).is_set() ){ \
+            if ( *((a).type()) == 'I' ) { \
+                options.print("%scom.sun.management.%s=" JLONG_FORMAT, comma, (a).name(), (jlong)((a).value())); \
+            } else { \
+                options.print("%scom.sun.management.%s=%s", comma, (a).name(), (char*)((a).value())); \
+            } \
+            comma[0] = ','; \
+        }\
+    } while(0);
+
 
     PUT_OPTION(_config_file);
     PUT_OPTION(_jmxremote_port);
@@ -834,6 +844,38 @@ void CodeCacheDCmd::execute(DCmdSource source, TRAPS) {
   VMThread::execute(&printCodeCacheOp);
 }
 
+void CompilerDirectivesPrintDCmd::execute(DCmdSource source, TRAPS) {
+  DirectivesStack::print(output());
+}
+
+CompilerDirectivesAddDCmd::CompilerDirectivesAddDCmd(outputStream* output, bool heap) :
+                           DCmdWithParser(output, heap),
+  _filename("filename","Name of the directives file", "STRING",true) {
+  _dcmdparser.add_dcmd_argument(&_filename);
+}
+
+void CompilerDirectivesAddDCmd::execute(DCmdSource source, TRAPS) {
+  DirectivesParser::parse_from_file(_filename.value(), output());
+}
+
+int CompilerDirectivesAddDCmd::num_arguments() {
+  ResourceMark rm;
+  CompilerDirectivesAddDCmd* dcmd = new CompilerDirectivesAddDCmd(NULL, false);
+  if (dcmd != NULL) {
+    DCmdMark mark(dcmd);
+    return dcmd->_dcmdparser.num_arguments();
+  } else {
+    return 0;
+  }
+}
+
+void CompilerDirectivesRemoveDCmd::execute(DCmdSource source, TRAPS) {
+  DirectivesStack::pop();
+}
+
+void CompilerDirectivesClearDCmd::execute(DCmdSource source, TRAPS) {
+  DirectivesStack::clear();
+}
 #if INCLUDE_SERVICES
 ClassHierarchyDCmd::ClassHierarchyDCmd(outputStream* output, bool heap) :
                                        DCmdWithParser(output, heap),

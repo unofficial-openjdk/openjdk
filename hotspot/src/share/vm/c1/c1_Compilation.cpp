@@ -34,6 +34,7 @@
 #include "c1/c1_ValueStack.hpp"
 #include "code/debugInfoRec.hpp"
 #include "compiler/compileLog.hpp"
+#include "compiler/compilerDirectives.hpp"
 #include "runtime/sharedRuntime.hpp"
 
 typedef enum {
@@ -325,7 +326,8 @@ bool Compilation::setup_code_buffer(CodeBuffer* code, int call_stub_estimate) {
                                         locs_buffer_size / sizeof(relocInfo));
   code->initialize_consts_size(Compilation::desired_max_constant_size());
   // Call stubs + two deopt handlers (regular and MH) + exception handler
-  int stub_size = (call_stub_estimate * LIR_Assembler::call_stub_size) +
+  int call_stub_size = LIR_Assembler::call_stub_size;
+  int stub_size = (call_stub_estimate * call_stub_size) +
                    LIR_Assembler::exception_handler_size +
                    (2 * LIR_Assembler::deopt_handler_size);
   if (stub_size >= code->insts_capacity()) return false;
@@ -417,9 +419,9 @@ void Compilation::install_code(int frame_size) {
     exception_handler_table(),
     implicit_exception_table(),
     compiler(),
-    _env->comp_level(),
     has_unsafe_access(),
-    SharedRuntime::is_wide_vector(max_vector_size())
+    SharedRuntime::is_wide_vector(max_vector_size()),
+    directive()
   );
 }
 
@@ -444,7 +446,7 @@ void Compilation::compile_method() {
     dependency_recorder()->assert_evol_method(method());
   }
 
-  if (method()->break_at_execute()) {
+  if (directive()->BreakAtCompileOption) {
     BREAKPOINT;
   }
 
@@ -533,9 +535,10 @@ void Compilation::generate_exception_handler_table() {
 
 
 Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* method,
-                         int osr_bci, BufferBlob* buffer_blob)
+                         int osr_bci, BufferBlob* buffer_blob, DirectiveSet* directive)
 : _compiler(compiler)
 , _env(env)
+, _directive(directive)
 , _log(env->log())
 , _method(method)
 , _osr_bci(osr_bci)
@@ -585,7 +588,6 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
 Compilation::~Compilation() {
   _env->set_compiler_data(NULL);
 }
-
 
 void Compilation::add_exception_handlers_for_pco(int pco, XHandlers* exception_handlers) {
 #ifndef PRODUCT

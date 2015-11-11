@@ -317,7 +317,7 @@ static inline bool not_a_node(const Node* n) {
 // Use breadth-first pass that records state in a Unique_Node_List,
 // recursive traversal is slower.
 void Compile::identify_useful_nodes(Unique_Node_List &useful) {
-  int estimated_worklist_size = unique();
+  int estimated_worklist_size = live_nodes();
   useful.map( estimated_worklist_size, NULL );  // preallocate space
 
   // Initialize worklist
@@ -464,7 +464,7 @@ CompileWrapper::CompileWrapper(Compile* compile) : _compile(compile) {
   Type::Initialize(compile);
   _compile->set_scratch_buffer_blob(NULL);
   _compile->begin_method();
-  _compile->clone_map().set_debug(_compile->has_method() && _compile->method_has_option(_compile->clone_map().debug_option_name));
+  _compile->clone_map().set_debug(_compile->has_method() && _compile->directive()->CloneMapDebugOption);
 }
 CompileWrapper::~CompileWrapper() {
   _compile->end_method();
@@ -496,7 +496,7 @@ void Compile::print_compile_messages() {
     tty->print_cr("** Bailout: Recompile without boxing elimination       **");
     tty->print_cr("*********************************************************");
   }
-  if (env()->break_at_compile()) {
+  if (C->directive()->BreakAtCompileOption) {
     // Open the debugger when compiling this method.
     tty->print("### Breaking when compiling: ");
     method()->print_short_name();
@@ -596,7 +596,7 @@ uint Compile::scratch_emit_size(const Node* n) {
   n->emit(buf, this->regalloc());
 
   // Emitting into the scratch buffer should not fail
-  assert (!failing(), err_msg_res("Must not have pending failure. Reason is: %s", failure_reason()));
+  assert (!failing(), "Must not have pending failure. Reason is: %s", failure_reason());
 
   if (is_branch) // Restore label.
     n->as_MachBranch()->label_set(saveL, save_bnum);
@@ -617,9 +617,10 @@ debug_only( int Compile::_debug_idx = 100000; )
 
 
 Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr_bci,
-                  bool subsume_loads, bool do_escape_analysis, bool eliminate_boxing )
+                  bool subsume_loads, bool do_escape_analysis, bool eliminate_boxing, DirectiveSet* directive)
                 : Phase(Compiler),
                   _env(ci_env),
+                  _directive(directive),
                   _log(ci_env->log()),
                   _compile_id(ci_env->compile_id()),
                   _save_argument_registers(false),
@@ -649,7 +650,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _dead_node_list(comp_arena()),
                   _dead_node_count(0),
 #ifndef PRODUCT
-                  _trace_opto_output(TraceOptoOutput || method()->has_option("TraceOptoOutput")),
+                  _trace_opto_output(directive->TraceOptoOutputOption),
                   _in_dump_cnt(0),
                   _printer(IdealGraphPrinter::printer()),
 #endif
@@ -673,7 +674,11 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _interpreter_frame_size(0),
                   _max_node_limit(MaxNodeLimit) {
   C = this;
-
+#ifndef PRODUCT
+  if (_printer != NULL) {
+    _printer->set_compile(this);
+  }
+#endif
   CompileWrapper cw(this);
 
   if (CITimeVerbose) {
@@ -687,9 +692,9 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   TraceTime t2(NULL, &_t_methodCompilation, CITime, false);
 
 #ifndef PRODUCT
-  bool print_opto_assembly = PrintOptoAssembly || _method->has_option("PrintOptoAssembly");
+  bool print_opto_assembly = directive->PrintOptoAssemblyOption;
   if (!print_opto_assembly) {
-    bool print_assembly = (PrintAssembly || _method->should_print_assembly());
+    bool print_assembly = directive->PrintAssemblyOption;
     if (print_assembly && !Disassembler::can_decode()) {
       tty->print_cr("PrintAssembly request changed to PrintOptoAssembly");
       print_opto_assembly = true;
@@ -698,12 +703,12 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   set_print_assembly(print_opto_assembly);
   set_parsed_irreducible_loop(false);
 
-  if (method()->has_option("ReplayInline")) {
+  if (directive->ReplayInlineOption) {
     _replay_inline_data = ciReplay::load_inline_data(method(), entry_bci(), ci_env->comp_level());
   }
 #endif
-  set_print_inlining(PrintInlining || method()->has_option("PrintInlining") NOT_PRODUCT( || PrintOptoInlining));
-  set_print_intrinsics(PrintIntrinsics || method()->has_option("PrintIntrinsics"));
+  set_print_inlining(directive->PrintInliningOption NOT_PRODUCT( || PrintOptoInlining));
+  set_print_intrinsics(directive->PrintIntrinsicsOption);
   set_has_irreducible_loop(true); // conservative until build_loop_tree() reset it
 
   if (ProfileTraps RTM_OPT_ONLY( || UseRTMLocking )) {
@@ -837,8 +842,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   // Drain the list.
   Finish_Warm();
 #ifndef PRODUCT
-  if (_printer && _printer->should_print(_method)) {
-    _printer->print_inlining(this);
+  if (_printer && _printer->should_print(1)) {
+    _printer->print_inlining();
   }
 #endif
 
@@ -871,10 +876,10 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   NOT_PRODUCT( verify_barriers(); )
 
   // Dump compilation data to replay it.
-  if (method()->has_option("DumpReplay")) {
+  if (directive->DumpReplayOption) {
     env()->dump_replay_data(_compile_id);
   }
-  if (method()->has_option("DumpInline") && (ilt() != NULL)) {
+  if (directive->DumpInlineOption && (ilt() != NULL)) {
     env()->dump_inline_data(_compile_id);
   }
 
@@ -918,9 +923,9 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            frame_size_in_words(), _oop_map_set,
                            &_handler_table, &_inc_table,
                            compiler,
-                           env()->comp_level(),
                            has_unsafe_access(),
                            SharedRuntime::is_wide_vector(max_vector_size()),
+                           _directive,
                            rtm_state()
                            );
 
@@ -938,9 +943,11 @@ Compile::Compile( ciEnv* ci_env,
                   int is_fancy_jump,
                   bool pass_tls,
                   bool save_arg_registers,
-                  bool return_pc )
+                  bool return_pc,
+                  DirectiveSet* directive)
   : Phase(Compiler),
     _env(ci_env),
+    _directive(directive),
     _log(ci_env->log()),
     _compile_id(0),
     _save_argument_registers(save_arg_registers),
@@ -1090,7 +1097,7 @@ void Compile::Init(int aliaslevel) {
   Copy::zero_to_bytes(_trap_hist, sizeof(_trap_hist));
   set_decompile_count(0);
 
-  set_do_freq_based_layout(BlockLayoutByFrequency || method_has_option("BlockLayoutByFrequency"));
+  set_do_freq_based_layout(_directive->BlockLayoutByFrequencyOption);
   set_num_loop_opts(LoopOptsCount);
   set_do_inlining(Inline);
   set_max_inline_size(MaxInlineSize);
@@ -1101,24 +1108,22 @@ void Compile::Init(int aliaslevel) {
 
   set_do_vector_loop(false);
 
-  bool do_vector = false;
   if (AllowVectorizeOnDemand) {
-    if (has_method() && (method()->has_option("Vectorize") || method()->has_option("VectorizeDebug"))) {
+    if (has_method() && (_directive->VectorizeOption || _directive->VectorizeDebugOption)) {
       set_do_vector_loop(true);
+      NOT_PRODUCT(if (do_vector_loop() && Verbose) {tty->print("Compile::Init: do vectorized loops (SIMD like) for method %s\n",  method()->name()->as_quoted_ascii());})
     } else if (has_method() && method()->name() != 0 &&
                method()->intrinsic_id() == vmIntrinsics::_forEachRemaining) {
       set_do_vector_loop(true);
     }
-#ifndef PRODUCT
-    if (do_vector_loop() && Verbose) {
-      tty->print("Compile::Init: do vectorized loops (SIMD like) for method %s\n",  method()->name()->as_quoted_ascii());
-    }
-#endif
   }
+  set_use_cmove(UseCMoveUnconditionally /* || do_vector_loop()*/); //TODO: consider do_vector_loop() mandate use_cmove unconditionally
+  NOT_PRODUCT(if (use_cmove() && Verbose && has_method()) {tty->print("Compile::Init: use CMove without profitability tests for method %s\n",  method()->name()->as_quoted_ascii());})
 
   set_age_code(has_method() && method()->profile_aging());
   set_rtm_state(NoRTM); // No RTM lock eliding by default
-  method_has_option_value("MaxNodeLimit", _max_node_limit);
+  _max_node_limit = _directive->MaxNodeLimitOption;
+
 #if INCLUDE_RTM_OPT
   if (UseRTMLocking && has_method() && (method()->method_data_or_null() != NULL)) {
     int rtm_state = method()->method_data()->rtm_state();
@@ -1189,7 +1194,7 @@ void Compile::init_start(StartNode* s) {
  * the ideal graph.
  */
 StartNode* Compile::start() const {
-  assert (!failing(), err_msg_res("Must not have pending failure. Reason is: %s", failure_reason()));
+  assert (!failing(), "Must not have pending failure. Reason is: %s", failure_reason());
   for (DUIterator_Fast imax, i = root()->fast_outs(imax); i < imax; i++) {
     Node* start = root()->fast_out(i);
     if (start->is_Start()) {
@@ -2091,7 +2096,7 @@ void Compile::Optimize() {
   TracePhase tp("optimizer", &timers[_t_optimizer]);
 
 #ifndef PRODUCT
-  if (env()->break_at_compile()) {
+  if (_directive->BreakAtCompileOption) {
     BREAKPOINT;
   }
 
@@ -2254,6 +2259,8 @@ void Compile::Optimize() {
       if (failing())  return;
     }
   }
+  // Ensure that major progress is now clear
+  C->clear_major_progress();
 
   {
     // Verify that all previous optimizations produced a valid graph
@@ -2336,7 +2343,7 @@ void Compile::Code_Gen() {
     debug_only( cfg.verify(); )
   }
 
-  PhaseChaitin regalloc(unique(), cfg, matcher);
+  PhaseChaitin regalloc(unique(), cfg, matcher, false);
   _regalloc = &regalloc;
   {
     TracePhase tp("regalloc", &timers[_t_registerAllocation]);
@@ -3314,7 +3321,7 @@ bool Compile::final_graph_reshaping() {
   Final_Reshape_Counts frc;
 
   // Visit everybody reachable!
-  // Allocate stack of size C->unique()/2 to avoid frequent realloc
+  // Allocate stack of size C->live_nodes()/2 to avoid frequent realloc
   Node_Stack nstack(live_nodes() >> 1);
   final_graph_reshaping_walk(nstack, root(), frc);
 
@@ -3796,7 +3803,7 @@ void Compile::ConstantTable::emit(CodeBuffer& cb) {
     }
     assert(constant_addr, "consts section too small");
     assert((constant_addr - _masm.code()->consts()->start()) == con.offset(),
-            err_msg_res("must be: %d == %d", (int) (constant_addr - _masm.code()->consts()->start()), (int)(con.offset())));
+            "must be: %d == %d", (int) (constant_addr - _masm.code()->consts()->start()), (int)(con.offset()));
   }
 }
 
@@ -3842,7 +3849,7 @@ Compile::Constant Compile::ConstantTable::add(MachConstantNode* n, MachOper* ope
   case T_OBJECT:
   case T_ADDRESS: value.l = (jobject) oper->constant(); break;
   case T_METADATA: return add((Metadata*)oper->constant()); break;
-  default: guarantee(false, err_msg_res("unhandled type: %s", type2name(type)));
+  default: guarantee(false, "unhandled type: %s", type2name(type));
   }
   return add(n, type, value);
 }
@@ -3864,7 +3871,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
   if (Compile::current()->in_scratch_emit_size())  return;
 
   assert(labels.is_nonempty(), "must be");
-  assert((uint) labels.length() == n->outcnt(), err_msg_res("must be equal: %d == %d", labels.length(), n->outcnt()));
+  assert((uint) labels.length() == n->outcnt(), "must be equal: %d == %d", labels.length(), n->outcnt());
 
   // Since MachConstantNode::constant_offset() also contains
   // table_base_offset() we need to subtract the table_base_offset()
@@ -3876,7 +3883,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
 
   for (uint i = 0; i < n->outcnt(); i++) {
     address* constant_addr = &jump_table_base[i];
-    assert(*constant_addr == (((address) n) + i), err_msg_res("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, p2i(*constant_addr), p2i(((address) n) + i)));
+    assert(*constant_addr == (((address) n) + i), "all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, p2i(*constant_addr), p2i(((address) n) + i));
     *constant_addr = cb.consts()->target(*labels.at(i), (address) constant_addr);
     cb.consts()->relocate((address) constant_addr, relocInfo::internal_word_type);
   }
@@ -4135,7 +4142,7 @@ int Compile::cmp_expensive_nodes(Node* n1, Node* n2) {
   if (n1->Opcode() < n2->Opcode())      return -1;
   else if (n1->Opcode() > n2->Opcode()) return 1;
 
-  assert(n1->req() == n2->req(), err_msg_res("can't compare %s nodes: n1->req() = %d, n2->req() = %d", NodeClassNames[n1->Opcode()], n1->req(), n2->req()));
+  assert(n1->req() == n2->req(), "can't compare %s nodes: n1->req() = %d, n2->req() = %d", NodeClassNames[n1->Opcode()], n1->req(), n2->req());
   for (uint i = 1; i < n1->req(); i++) {
     if (n1->in(i) < n2->in(i))      return -1;
     else if (n1->in(i) > n2->in(i)) return 1;
@@ -4355,7 +4362,6 @@ bool Compile::randomized_select(int count) {
   return (os::random() & RANDOMIZED_DOMAIN_MASK) < (RANDOMIZED_DOMAIN / count);
 }
 
-const char*   CloneMap::debug_option_name = "CloneMapDebug";
 CloneMap&     Compile::clone_map()                 { return _clone_map; }
 void          Compile::set_clone_map(Dict* d)      { _clone_map._dict = d; }
 

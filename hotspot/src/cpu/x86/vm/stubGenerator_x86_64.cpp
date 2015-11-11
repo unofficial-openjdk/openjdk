@@ -2974,19 +2974,6 @@ class StubGenerator: public StubCodeGenerator {
 
   void generate_math_stubs() {
     {
-      StubCodeMark mark(this, "StubRoutines", "log");
-      StubRoutines::_intrinsic_log = (double (*)(double)) __ pc();
-
-      __ subq(rsp, 8);
-      __ movdbl(Address(rsp, 0), xmm0);
-      __ fld_d(Address(rsp, 0));
-      __ flog();
-      __ fstp_d(Address(rsp, 0));
-      __ movdbl(xmm0, Address(rsp, 0));
-      __ addq(rsp, 8);
-      __ ret(0);
-    }
-    {
       StubCodeMark mark(this, "StubRoutines", "log10");
       StubRoutines::_intrinsic_log10 = (double (*)(double)) __ pc();
 
@@ -3033,19 +3020,6 @@ class StubGenerator: public StubCodeGenerator {
       __ movdbl(Address(rsp, 0), xmm0);
       __ fld_d(Address(rsp, 0));
       __ trigfunc('t');
-      __ fstp_d(Address(rsp, 0));
-      __ movdbl(xmm0, Address(rsp, 0));
-      __ addq(rsp, 8);
-      __ ret(0);
-    }
-    {
-      StubCodeMark mark(this, "StubRoutines", "exp");
-      StubRoutines::_intrinsic_exp = (double (*)(double)) __ pc();
-
-      __ subq(rsp, 8);
-      __ movdbl(Address(rsp, 0), xmm0);
-      __ fld_d(Address(rsp, 0));
-      __ exp_with_fallback(0);
       __ fstp_d(Address(rsp, 0));
       __ movdbl(xmm0, Address(rsp, 0));
       __ addq(rsp, 8);
@@ -3958,6 +3932,64 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  /**
+  *  Arguments:
+  *
+  * Inputs:
+  *   c_rarg0   - int crc
+  *   c_rarg1   - byte* buf
+  *   c_rarg2   - long length
+  *   c_rarg3   - table_start - optional (present only when doing a library_calll,
+  *              not used by x86 algorithm)
+  *
+  * Ouput:
+  *       rax   - int crc result
+  */
+  address generate_updateBytesCRC32C(bool is_pclmulqdq_supported) {
+      assert(UseCRC32CIntrinsics, "need SSE4_2");
+      __ align(CodeEntryAlignment);
+      StubCodeMark mark(this, "StubRoutines", "updateBytesCRC32C");
+      address start = __ pc();
+      //reg.arg        int#0        int#1        int#2        int#3        int#4        int#5        float regs
+      //Windows        RCX          RDX          R8           R9           none         none         XMM0..XMM3
+      //Lin / Sol      RDI          RSI          RDX          RCX          R8           R9           XMM0..XMM7
+      const Register crc = c_rarg0;  // crc
+      const Register buf = c_rarg1;  // source java byte array address
+      const Register len = c_rarg2;  // length
+      const Register a = rax;
+      const Register j = r9;
+      const Register k = r10;
+      const Register l = r11;
+#ifdef _WIN64
+      const Register y = rdi;
+      const Register z = rsi;
+#else
+      const Register y = rcx;
+      const Register z = r8;
+#endif
+      assert_different_registers(crc, buf, len, a, j, k, l, y, z);
+
+      BLOCK_COMMENT("Entry:");
+      __ enter(); // required for proper stackwalking of RuntimeStub frame
+#ifdef _WIN64
+      __ push(y);
+      __ push(z);
+#endif
+      __ crc32c_ipl_alg2_alt2(crc, buf, len,
+                              a, j, k,
+                              l, y, z,
+                              c_farg0, c_farg1, c_farg2,
+                              is_pclmulqdq_supported);
+      __ movl(rax, crc);
+#ifdef _WIN64
+      __ pop(z);
+      __ pop(y);
+#endif
+      __ leave(); // required for proper stackwalking of RuntimeStub frame
+      __ ret(0);
+
+      return start;
+  }
 
   /**
    *  Arguments:
@@ -4120,6 +4152,87 @@ class StubGenerator: public StubCodeGenerator {
     __ ret(0);
 
     return start;
+  }
+
+  address generate_libmExp() {
+    address start = __ pc();
+
+    const XMMRegister x0  = xmm0;
+    const XMMRegister x1  = xmm1;
+    const XMMRegister x2  = xmm2;
+    const XMMRegister x3  = xmm3;
+
+    const XMMRegister x4  = xmm4;
+    const XMMRegister x5  = xmm5;
+    const XMMRegister x6  = xmm6;
+    const XMMRegister x7  = xmm7;
+
+    const Register tmp   = r11;
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+
+#ifdef _WIN64
+    // save the xmm registers which must be preserved 6-7
+    __ subptr(rsp, 4 * wordSize);
+    __ movdqu(Address(rsp, 0), xmm6);
+    __ movdqu(Address(rsp, 2 * wordSize), xmm7);
+#endif
+      __ fast_exp(x0, x1, x2, x3, x4, x5, x6, x7, rax, rcx, rdx, tmp);
+
+#ifdef _WIN64
+    // restore xmm regs belonging to calling function
+      __ movdqu(xmm6, Address(rsp, 0));
+      __ movdqu(xmm7, Address(rsp, 2 * wordSize));
+      __ addptr(rsp, 4 * wordSize);
+#endif
+
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
+
+  }
+
+  address generate_libmLog() {
+    address start = __ pc();
+
+    const XMMRegister x0 = xmm0;
+    const XMMRegister x1 = xmm1;
+    const XMMRegister x2 = xmm2;
+    const XMMRegister x3 = xmm3;
+
+    const XMMRegister x4 = xmm4;
+    const XMMRegister x5 = xmm5;
+    const XMMRegister x6 = xmm6;
+    const XMMRegister x7 = xmm7;
+
+    const Register tmp1 = r11;
+    const Register tmp2 = r8;
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+
+#ifdef _WIN64
+    // save the xmm registers which must be preserved 6-7
+    __ subptr(rsp, 4 * wordSize);
+    __ movdqu(Address(rsp, 0), xmm6);
+    __ movdqu(Address(rsp, 2 * wordSize), xmm7);
+#endif
+    __ fast_log(x0, x1, x2, x3, x4, x5, x6, x7, rax, rcx, rdx, tmp1, tmp2);
+
+#ifdef _WIN64
+    // restore xmm regs belonging to calling function
+    __ movdqu(xmm6, Address(rsp, 0));
+    __ movdqu(xmm7, Address(rsp, 2 * wordSize));
+    __ addptr(rsp, 4 * wordSize);
+#endif
+
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
+
   }
 
 
@@ -4301,6 +4414,17 @@ class StubGenerator: public StubCodeGenerator {
       // set table address before stub generation which use it
       StubRoutines::_crc_table_adr = (address)StubRoutines::x86::_crc_table;
       StubRoutines::_updateBytesCRC32 = generate_updateBytesCRC32();
+    }
+
+    if (UseCRC32CIntrinsics) {
+      bool supports_clmul = VM_Version::supports_clmul();
+      StubRoutines::x86::generate_CRC32C_table(supports_clmul);
+      StubRoutines::_crc32c_table_addr = (address)StubRoutines::x86::_crc32c_table;
+      StubRoutines::_updateBytesCRC32C = generate_updateBytesCRC32C(supports_clmul);
+    }
+    if (VM_Version::supports_sse2()) {
+      StubRoutines::_dexp = generate_libmExp();
+      StubRoutines::_dlog = generate_libmLog();
     }
   }
 

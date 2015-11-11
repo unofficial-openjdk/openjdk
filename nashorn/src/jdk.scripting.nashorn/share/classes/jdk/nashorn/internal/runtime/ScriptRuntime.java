@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -380,8 +381,8 @@ public final class ScriptRuntime {
 
     /**
      * Call a function given self and args. If the number of the arguments is known in advance, you can likely achieve
-     * better performance by {@link Bootstrap#createDynamicInvoker(String, Class, Class...) creating a dynamic invoker}
-     * for operation {@code "dyn:call"}, then using its {@link MethodHandle#invokeExact(Object...)} method instead.
+     * better performance by creating a dynamic invoker using {@link Bootstrap#createDynamicCallInvoker(Class, Class...)}
+     * then using its {@link MethodHandle#invokeExact(Object...)} method instead.
      *
      * @param target ScriptFunction object.
      * @param self   Receiver in call.
@@ -1049,5 +1050,21 @@ public final class ScriptRuntime {
         assert sp != null;
         context.getLogger(ApplySpecialization.class).info("Overwrote special name '" + name +"' - invalidating switchpoint");
         SwitchPoint.invalidateAll(new SwitchPoint[] { sp });
+    }
+
+    /**
+     * ES6 12.2.9.3 Runtime Semantics: GetTemplateObject(templateLiteral).
+     *
+     * @param rawStrings array of template raw values
+     * @param cookedStrings array of template values
+     * @return template object
+     */
+    public static ScriptObject GET_TEMPLATE_OBJECT(final Object rawStrings, final Object cookedStrings) {
+        final ScriptObject template = (ScriptObject)cookedStrings;
+        final ScriptObject rawObj = (ScriptObject)rawStrings;
+        assert rawObj.getArray().length() == template.getArray().length();
+        template.addOwnProperty("raw", Property.NOT_WRITABLE | Property.NOT_ENUMERABLE | Property.NOT_CONFIGURABLE, rawObj.freeze());
+        template.freeze();
+        return template;
     }
 }
