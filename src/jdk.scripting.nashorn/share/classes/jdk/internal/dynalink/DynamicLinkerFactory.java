@@ -383,8 +383,9 @@ public final class DynamicLinkerFactory {
         addClasses(knownLinkerClasses, prioritizedLinkers);
         addClasses(knownLinkerClasses, fallbackLinkers);
 
-        final List<GuardingDynamicLinker> discovered = discoverAutoLoadLinkers();
-
+        // FIXME: disabled auto-disconvery to avoid module world issue for service loader
+        // final List<GuardingDynamicLinker> discovered = discoverAutoLoadLinkers();
+        final List<GuardingDynamicLinker> discovered = new ArrayList<>();
         // Now, concatenate ...
         final List<GuardingDynamicLinker> linkers =
                 new ArrayList<>(prioritizedLinkers.size() + discovered.size()

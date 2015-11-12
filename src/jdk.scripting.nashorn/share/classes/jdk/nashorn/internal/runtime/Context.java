@@ -36,6 +36,7 @@ import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import static jdk.nashorn.internal.runtime.Source.sourceFor;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
@@ -527,7 +528,7 @@ public final class Context {
     private static final StructureLoader sharedLoader;
 
     /*package-private*/ @SuppressWarnings("static-method")
-    ClassLoader getSharedLoader() {
+    StructureLoader getSharedLoader() {
         return sharedLoader;
     }
 
@@ -879,8 +880,8 @@ public final class Context {
                         @Override
                         public Source run() {
                             try {
-                                final URL resURL = Context.class.getResource(resource);
-                                return resURL != null ? sourceFor(srcStr, resURL) : null;
+                                final InputStream resStream = Context.class.getResourceAsStream(resource);
+                                return resStream != null ? sourceFor(srcStr, Source.readFully(resStream)) : null;
                             } catch (final IOException exp) {
                                 return null;
                             }
