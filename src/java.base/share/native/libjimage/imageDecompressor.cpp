@@ -145,11 +145,11 @@ void ImageDecompressor::decompress_resource(u1* compressed, u1* uncompressed,
         u1* compressed_resource_base = compressed_resource;
         _header._magic = getU4(compressed_resource, endian);
         compressed_resource += 4;
-        _header._size = getU4(compressed_resource, endian);
+        _header._size = getU8(compressed_resource, endian);
         compressed_resource += 8;
         _header._uncompressed_size = getU8(compressed_resource, endian);
         compressed_resource += 8;
-        _header._decompressor_name_offset = getU8(compressed_resource, endian);
+        _header._decompressor_name_offset = getU4(compressed_resource, endian);
         compressed_resource += 4;
         _header._decompressor_config_offset = getU4(compressed_resource, endian);
         compressed_resource += 4;
