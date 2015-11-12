@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,9 +192,9 @@ public class HtmlConstants {
     public static final HtmlTag PACKAGE_HEADING = HtmlTag.H2;
 
     /**
-     * Html tag for the profile name heading.
+     * Html tag for the module name heading.
      */
-    public static final HtmlTag PROFILE_HEADING = HtmlTag.H2;
+    public static final HtmlTag MODULE_HEADING = HtmlTag.H2;
 
     /**
      * Html tag for the member summary heading.

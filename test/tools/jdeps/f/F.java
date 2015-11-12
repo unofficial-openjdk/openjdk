@@ -26,6 +26,6 @@ package f;
 public class F {
     public F() {
         // jdk internal API
-        sun.misc.Unsafe.getUnsafe();
+        sun.net.ProgressMonitor.getDefault();
     }
 }

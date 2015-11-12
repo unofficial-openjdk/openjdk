@@ -25,7 +25,12 @@
 package com.sun.tools.jdeps;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Build the profile information.
@@ -93,14 +98,20 @@ enum Profile {
     }
 
     private final static Set<Module> JDK = new HashSet<>();
-    static void initProfiles(List<Archive> modules) {
+    private static ModulePath systemModulePath;
+    static synchronized void ensureInitialized(ModulePath mpath) {
+        if (systemModulePath != null) {
+            return;
+        }
+        systemModulePath = mpath;
+
         // add all modules into  JDK
-        modules.forEach(m -> JDK.add((Module)m));
+        JDK.addAll(systemModulePath.getModules());
 
         for (Profile p : Profile.values()) {
             for (String mn : p.mnames) {
                 // this includes platform-dependent module that may not exist
-                Module m = PlatformClassPath.findModule(mn);
+                Module m = systemModulePath.findModule(mn);
                 if (m != null) {
                     p.addModule(m);
                 }
@@ -111,7 +122,7 @@ enum Profile {
     private void addModule(Module m) {
         modules.add(m);
         for (String n : m.requires().keySet()) {
-            Module d = PlatformClassPath.findModule(n);
+            Module d = systemModulePath.findModule(n);
             if (d == null) {
                 throw new InternalError("module " + n + " required by " +
                         m.name() + " doesn't exist");
@@ -122,7 +133,7 @@ enum Profile {
     // for debugging
     public static void main(String[] args) throws IOException {
         // find platform modules
-        PlatformClassPath.getModules(null);
+        ModulePath.getSystemModules();
         if (Profile.getProfileCount() == 0) {
             System.err.println("No profile is present in this JDK");
         }
