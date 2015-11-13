@@ -49,5 +49,5 @@ public interface ResourceDecompressor {
      * @throws Exception
      */
     public byte[] decompress(StringsProvider strings, byte[] content, int offset,
-            long originalSize) throws Exception;
+            int originalSize) throws Exception;
 }
