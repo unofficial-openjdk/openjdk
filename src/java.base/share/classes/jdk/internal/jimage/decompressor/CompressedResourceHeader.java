@@ -37,16 +37,16 @@ import jdk.internal.jimage.decompressor.ResourceDecompressor.StringsProvider;
  */
 public final class CompressedResourceHeader {
 
-    private static final int SIZE = 29;
+    private static final int SIZE = 21;
     public static final int MAGIC = 0xCAFEFAFA;
-    private final long uncompressedSize;
-    private final long compressedSize;
+    private final int uncompressedSize;
+    private final int compressedSize;
     private final int decompressorNameOffset;
     private final int contentOffset;
     private final boolean isTerminal;
 
-    public CompressedResourceHeader(long compressedSize,
-            long uncompressedSize, int decompressorNameOffset, int contentOffset,
+    public CompressedResourceHeader(int compressedSize,
+            int uncompressedSize, int decompressorNameOffset, int contentOffset,
             boolean isTerminal) {
         this.compressedSize = compressedSize;
         this.uncompressedSize = uncompressedSize;
@@ -75,11 +75,11 @@ public final class CompressedResourceHeader {
         return provider.getString(contentOffset);
     }
 
-    public long getUncompressedSize() {
+    public int getUncompressedSize() {
         return uncompressedSize;
     }
 
-    public long getResourceSize() {
+    public int getResourceSize() {
         return compressedSize;
     }
 
@@ -88,8 +88,8 @@ public final class CompressedResourceHeader {
         ByteBuffer buffer = ByteBuffer.allocate(SIZE);
         buffer.order(order);
         buffer.putInt(MAGIC);
-        buffer.putLong(compressedSize);
-        buffer.putLong(uncompressedSize);
+        buffer.putInt(compressedSize);
+        buffer.putInt(uncompressedSize);
         buffer.putInt(decompressorNameOffset);
         buffer.putInt(contentOffset);
         buffer.put(isTerminal ? (byte)1 : (byte)0);
@@ -113,8 +113,8 @@ public final class CompressedResourceHeader {
         if(magic != MAGIC) {
             return null;
         }
-        long size = buffer.getLong();
-        long uncompressedSize = buffer.getLong();
+        int size = buffer.getInt();
+        int uncompressedSize = buffer.getInt();
         int decompressorNameOffset = buffer.getInt();
         int contentIndex = buffer.getInt();
         byte isTerminal = buffer.get();

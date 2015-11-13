@@ -224,7 +224,7 @@ public class StringSharingDecompressor implements ResourceDecompressor {
 
     @Override
     public byte[] decompress(StringsProvider reader, byte[] content,
-            int offset, long originalSize) throws Exception {
+            int offset, int originalSize) throws Exception {
         return normalize(reader, content, offset);
     }
 }
