@@ -161,10 +161,13 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
   if test "x$VAR_CPU" = xppc64 ; then
     INCLUDE_SA=false
   fi
+  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
+    INCLUDE_SA=false
+  fi
   AC_SUBST(INCLUDE_SA)
 
   if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
-    MACOSX_UNIVERSAL="true"
+    MACOSX_UNIVERSAL="false"
   fi
 
   AC_SUBST(MACOSX_UNIVERSAL)
@@ -527,6 +530,12 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_VERSION_NUMBERS],
     JDK_VERSION="${JDK_MAJOR_VERSION}.${JDK_MINOR_VERSION}.${JDK_MICRO_VERSION}"
   fi
   AC_SUBST(JDK_VERSION)
+
+  # The cooked update version used to encode trailing letters in the update
+  # version into a trailing number. That is no longer needed, but need to
+  # keep the format in 8u for compatibility.
+  COOKED_JDK_UPDATE_VERSION="${JDK_UPDATE_VERSION}0"
+  AC_SUBST(COOKED_JDK_UPDATE_VERSION)
 
   COOKED_BUILD_NUMBER=`$ECHO $JDK_BUILD_NUMBER | $SED -e 's/^b//' -e 's/^0//'`
   AC_SUBST(COOKED_BUILD_NUMBER)
