@@ -364,6 +364,7 @@ static SpecialFlag const special_jvm_flags[] = {
   { "LazyBootClassLoader",           JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
   { "StarvationMonitorInterval",     JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
   { "PreInflateSpin",                JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
+  { "JNIDetachReleasesMonitors",     JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   { "dep > obs",                    JDK_Version::jdk(9), JDK_Version::jdk(8), JDK_Version::undefined() },
@@ -817,9 +818,15 @@ static bool set_numeric_flag(const char* name, char* value, Flag::Flags origin) 
   int int_v;
   intx intx_v;
   bool is_neg = false;
+  Flag* result = Flag::find_flag(name, strlen(name));
+
+  if (result == NULL) {
+    return false;
+  }
+
   // Check the sign first since atomull() parses only unsigned values.
   if (*value == '-') {
-    if ((CommandLineFlags::intxAt(name, &intx_v) != Flag::SUCCESS) && (CommandLineFlags::intAt(name, &int_v) != Flag::SUCCESS)) {
+    if (!result->is_intx() && !result->is_int()) {
       return false;
     }
     value++;
@@ -828,37 +835,33 @@ static bool set_numeric_flag(const char* name, char* value, Flag::Flags origin) 
   if (!atomull(value, &v)) {
     return false;
   }
-  int_v = (int) v;
-  if (is_neg) {
-    int_v = -int_v;
+  if (result->is_int()) {
+    int_v = (int) v;
+    if (is_neg) {
+      int_v = -int_v;
+    }
+    return CommandLineFlags::intAtPut(result, &int_v, origin) == Flag::SUCCESS;
+  } else if (result->is_uint()) {
+    uint uint_v = (uint) v;
+    return CommandLineFlags::uintAtPut(result, &uint_v, origin) == Flag::SUCCESS;
+  } else if (result->is_intx()) {
+    intx_v = (intx) v;
+    if (is_neg) {
+      intx_v = -intx_v;
+    }
+    return CommandLineFlags::intxAtPut(result, &intx_v, origin) == Flag::SUCCESS;
+  } else if (result->is_uintx()) {
+    uintx uintx_v = (uintx) v;
+    return CommandLineFlags::uintxAtPut(result, &uintx_v, origin) == Flag::SUCCESS;
+  } else if (result->is_uint64_t()) {
+    uint64_t uint64_t_v = (uint64_t) v;
+    return CommandLineFlags::uint64_tAtPut(result, &uint64_t_v, origin) == Flag::SUCCESS;
+  } else if (result->is_size_t()) {
+    size_t size_t_v = (size_t) v;
+    return CommandLineFlags::size_tAtPut(result, &size_t_v, origin) == Flag::SUCCESS;
+  } else {
+    return false;
   }
-  if (CommandLineFlags::intAtPut(name, &int_v, origin) == Flag::SUCCESS) {
-    return true;
-  }
-  uint uint_v = (uint) v;
-  if (!is_neg && CommandLineFlags::uintAtPut(name, &uint_v, origin) == Flag::SUCCESS) {
-    return true;
-  }
-  intx_v = (intx) v;
-  if (is_neg) {
-    intx_v = -intx_v;
-  }
-  if (CommandLineFlags::intxAtPut(name, &intx_v, origin) == Flag::SUCCESS) {
-    return true;
-  }
-  uintx uintx_v = (uintx) v;
-  if (!is_neg && (CommandLineFlags::uintxAtPut(name, &uintx_v, origin) == Flag::SUCCESS)) {
-    return true;
-  }
-  uint64_t uint64_t_v = (uint64_t) v;
-  if (!is_neg && (CommandLineFlags::uint64_tAtPut(name, &uint64_t_v, origin) == Flag::SUCCESS)) {
-    return true;
-  }
-  size_t size_t_v = (size_t) v;
-  if (!is_neg && (CommandLineFlags::size_tAtPut(name, &size_t_v, origin) == Flag::SUCCESS)) {
-    return true;
-  }
-  return false;
 }
 
 static bool set_string_flag(const char* name, const char* value, Flag::Flags origin) {
@@ -1120,7 +1123,7 @@ bool Arguments::process_argument(const char* arg,
                                  Flag::Flags origin) {
   JDK_Version since = JDK_Version();
 
-  if (parse_argument(arg, origin) || ignore_unrecognized) {
+  if (parse_argument(arg, origin)) {
     return true;
   }
 
@@ -1156,7 +1159,7 @@ bool Arguments::process_argument(const char* arg,
   Flag* found_flag = Flag::find_flag((const char*)argname, arg_len, true, true);
   if (found_flag != NULL) {
     char locked_message_buf[BUFLEN];
-    found_flag->get_locked_message(locked_message_buf, BUFLEN);
+    Flag::MsgType msg_type = found_flag->get_locked_message(locked_message_buf, BUFLEN);
     if (strlen(locked_message_buf) == 0) {
       if (found_flag->is_bool() && !has_plus_minus) {
         jio_fprintf(defaultStream::error_stream(),
@@ -1169,9 +1172,19 @@ bool Arguments::process_argument(const char* arg,
           "Improperly specified VM option '%s'\n", argname);
       }
     } else {
+#ifdef PRODUCT
+      bool mismatched = ((msg_type == Flag::NOTPRODUCT_FLAG_BUT_PRODUCT_BUILD) ||
+                         (msg_type == Flag::DEVELOPER_FLAG_BUT_PRODUCT_BUILD));
+      if (ignore_unrecognized && mismatched) {
+        return true;
+      }
+#endif
       jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
     }
   } else {
+    if (ignore_unrecognized) {
+      return true;
+    }
     jio_fprintf(defaultStream::error_stream(),
                 "Unrecognized VM option '%s'\n", argname);
     Flag* fuzzy_matched = Flag::fuzzy_match((const char*)argname, arg_len, true);
@@ -2467,16 +2480,6 @@ bool Arguments::check_vm_args_consistency() {
               "(due to current incompatibility with FLSVerifyAllHeapReferences)");
       VerifyBeforeExit = false; // Disable verification at shutdown
     }
-  }
-
-  // Note: only executed in non-PRODUCT mode
-  if (!UseAsyncConcMarkSweepGC &&
-      (ExplicitGCInvokesConcurrent ||
-       ExplicitGCInvokesConcurrentAndUnloadsClasses)) {
-    jio_fprintf(defaultStream::error_stream(),
-                "error: +ExplicitGCInvokesConcurrent[AndUnloadsClasses] conflicts"
-                " with -UseAsyncConcMarkSweepGC");
-    status = false;
   }
 
   if (PrintNMTStatistics) {
@@ -3833,6 +3836,7 @@ jint Arguments::parse_options_buffer(const char* name, char* buffer, const size_
 
     JavaVMOption option;
     option.optionString = opt_hd;
+    option.extraInfo = NULL;
 
     options->append(option);                // Fill in option
 

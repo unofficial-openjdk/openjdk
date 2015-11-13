@@ -27,7 +27,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 /*
  * @test ClearMethodStateTest
  * @bug 8006683 8007288 8022832
- * @library /testlibrary /../../test/lib /
+ * @library /testlibrary /test/lib /
  * @modules java.management
  * @build ClearMethodStateTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

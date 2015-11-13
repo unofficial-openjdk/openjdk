@@ -1005,7 +1005,7 @@ public:
 // "Acquire" - no following ref can move before (but earlier refs can
 // follow, like an early Load stalled in cache).  Requires multi-cpu
 // visibility.  Inserted independ of any load, as required
-// for intrinsic sun.misc.Unsafe.loadFence().
+// for intrinsic Unsafe.loadFence().
 class LoadFenceNode: public MemBarNode {
 public:
   LoadFenceNode(Compile* C, int alias_idx, Node* precedent)
@@ -1026,7 +1026,7 @@ public:
 // "Release" - no earlier ref can move after (but later refs can move
 // up, like a speculative pipelined cache-hitting Load).  Requires
 // multi-cpu visibility.  Inserted independent of any store, as required
-// for intrinsic sun.misc.Unsafe.storeFence().
+// for intrinsic Unsafe.storeFence().
 class StoreFenceNode: public MemBarNode {
 public:
   StoreFenceNode(Compile* C, int alias_idx, Node* precedent)

@@ -27,7 +27,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 /*
  * @test
  * @bug 8130832
- * @library /testlibrary /../../test/lib / /compiler/testlibrary
+ * @library /testlibrary /test/lib /compiler/whitebox /compiler/testlibrary /
  * @build IntrinsicAvailableTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

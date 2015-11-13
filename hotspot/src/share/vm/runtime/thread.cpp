@@ -1868,13 +1868,10 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
   // Optionally release any monitors for regular JavaThread exits. This
   // is provided as a work around for any bugs in monitor enter-exit
   // matching. This can be expensive so it is not enabled by default.
-  // ObjectMonitor::Knob_ExitRelease is a superset of the
-  // JNIDetachReleasesMonitors option.
   //
   // ensure_join() ignores IllegalThreadStateExceptions, and so does
   // ObjectSynchronizer::release_monitors_owned_by_thread().
-  if ((exit_type == jni_detach && JNIDetachReleasesMonitors) ||
-      ObjectMonitor::Knob_ExitRelease) {
+  if (exit_type == jni_detach || ObjectMonitor::Knob_ExitRelease) {
     // Sanity check even though JNI DetachCurrentThread() would have
     // returned JNI_ERR if there was a Java frame. JavaThread exit
     // should be done executing Java code by the time we get here.
@@ -1941,7 +1938,7 @@ void JavaThread::initialize_queues() {
   assert(!SafepointSynchronize::is_at_safepoint(),
          "we should not be at a safepoint");
 
-  ObjPtrQueue& satb_queue = satb_mark_queue();
+  SATBMarkQueue& satb_queue = satb_mark_queue();
   SATBMarkQueueSet& satb_queue_set = satb_mark_queue_set();
   // The SATB queue should have been constructed with its active
   // field set to false.
@@ -2101,7 +2098,7 @@ void JavaThread::check_and_handle_async_exceptions(bool check_unsafe_error) {
           frame f = last_frame();
           tty->print(" (pc: " INTPTR_FORMAT " sp: " INTPTR_FORMAT " )", p2i(f.pc()), p2i(f.sp()));
         }
-        tty->print_cr(" of type: %s", InstanceKlass::cast(_pending_async_exception->klass())->external_name());
+        tty->print_cr(" of type: %s", _pending_async_exception->klass()->external_name());
       }
       _pending_async_exception = NULL;
       clear_has_async_exception();
@@ -2219,10 +2216,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
 
       if (TraceExceptions) {
         ResourceMark rm;
-        tty->print_cr("Pending Async. exception installed of type: %s", InstanceKlass::cast(_pending_async_exception->klass())->external_name());
+        tty->print_cr("Pending Async. exception installed of type: %s", _pending_async_exception->klass()->external_name());
       }
       // for AbortVMOnException flag
-      Exceptions::debug_check_abort(InstanceKlass::cast(_pending_async_exception->klass())->external_name());
+      Exceptions::debug_check_abort(_pending_async_exception->klass()->external_name());
     }
   }
 

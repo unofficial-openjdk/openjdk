@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ private:
   bool  _jvmti_can_post_on_exceptions;
 
   // Implementation methods for loading and constant pool access.
-  static KlassHandle get_klass_by_name_impl(KlassHandle accessing_klass,
+  static KlassHandle get_klass_by_name_impl(KlassHandle& accessing_klass,
                                   const constantPoolHandle& cpool,
                                   Symbol* klass_name,
                                   bool require_local);
