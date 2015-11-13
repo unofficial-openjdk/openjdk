@@ -267,4 +267,39 @@ public class AddReadsTest extends ModuleTestBase {
 
         return jar;
     }
+
+    @Test
+    void testX(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeJavaFiles(src_m1,
+                          "module m1 { provides java.lang.Runnable with impl.Impl; }",
+                          "package impl; public class Impl implements Runnable { public void run() { } }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        tb.new JavacTask()
+                .options("-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+
+        Path unnamedSrc = base.resolve("unnamed-src");
+        Path unnamedClasses = base.resolve("unnamed-classes");
+
+        Files.createDirectories(unnamedClasses);
+
+        tb.writeJavaFiles(unnamedSrc,
+                          "package impl; public class Impl { }");
+
+        tb.new JavacTask()
+          .options("-XaddReads:m1=ALL-UNNAMED",
+                   "-Xmodule:m1",
+                   "-modulepath", classes.toString())
+          .outdir(unnamedClasses)
+          .files(findJavaFiles(unnamedSrc))
+          .run()
+          .writeAll();
+    }
 }

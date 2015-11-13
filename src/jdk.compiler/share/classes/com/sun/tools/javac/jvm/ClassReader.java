@@ -2547,7 +2547,7 @@ public class ClassReader {
             if (c == currentModule.module_info) {
                 if (interimUses.nonEmpty() || interimProvides.nonEmpty()) {
                     Assert.check(currentModule.isCompleted());
-                    currentModule.completer =
+                    currentModule.usesProvidesCompleter =
                             new UsesProvidesCompleter(currentModule, interimUses, interimProvides);
                 } else {
                     currentModule.uses = List.nil();
