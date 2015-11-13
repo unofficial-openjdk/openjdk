@@ -161,7 +161,8 @@ module java.base {
         java.logging,
         java.management,
         java.naming,
-        java.sql;
+        java.sql,
+        jdk.scripting.nashorn;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;
