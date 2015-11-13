@@ -523,6 +523,28 @@ MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SR
 # Add imported modules to the moduleclasspath
 MODULECLASSPATH := $(subst $(SPACE),$(PATH_SEP), $(IMPORT_MODULES_CLASSES))
 
+ifneq ($(findstring $(MODULE), jdk.vm.ci jdk.jfr), )
+  ## WORKAROUND jdk.vm.ci source structure issue
+  HOTSPOT_JVMCI_SRC := $(subst $(MODULE),*,$(HOTSPOT_TOPDIR)/src/jdk.vm.ci/share/classes)
+  JVMCI_SUBDIRS := \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.amd64/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.code/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.common/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.compiler/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot.amd64/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot.sparc/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspotvmconfig/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.inittimer/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.meta/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.options/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.runtime/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.service/src \
+   $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.sparc/src
+
+  MODULESOURCEPATH += $(subst $(SPACE),$(PATH_SEP), $(JVMCI_SUBDIRS))
+endif
+
 # Make sure the generated source base dirs exist. Not all modules have generated
 # source in all of these directories and because of timing, all of them might not
 # exist at the time this makefile gets called. Javac will complain if there are
