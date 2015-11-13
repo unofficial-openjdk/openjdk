@@ -30,7 +30,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 /*
  * @test GetNMethodTest
  * @bug 8038240
- * @library /testlibrary /../../test/lib /
+ * @library /testlibrary /test/lib /
  * @modules java.management
  * @build GetNMethodTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

@@ -25,7 +25,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 
 /**
  * @test TieredLevelsTest
- * @library /testlibrary /../../test/lib /
+ * @library /testlibrary /test/lib /compiler/whitebox /
  * @modules java.management
  * @build TieredLevelsTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

@@ -111,7 +111,7 @@ class AbstractCompiler : public CHeapObj<mtCompiler> {
   // Missing feature tests
   virtual bool supports_native()                 { return true; }
   virtual bool supports_osr   ()                 { return true; }
-  virtual bool can_compile_method(methodHandle method)  { return true; }
+  virtual bool can_compile_method(const methodHandle& method)  { return true; }
 
   // Determine if the current compiler provides an intrinsic
   // for method 'method'. An intrinsic is available if:
@@ -138,7 +138,7 @@ class AbstractCompiler : public CHeapObj<mtCompiler> {
   // GraphBuilder::GraphBuilder() in src/share/vm/c1/c1_GraphBuilder.cpp
   // for more details.
 
-  virtual bool is_intrinsic_available(methodHandle method, DirectiveSet* directive) {
+  virtual bool is_intrinsic_available(const methodHandle& method, DirectiveSet* directive) {
     return is_intrinsic_supported(method) &&
            !directive->is_intrinsic_disabled(method) &&
            !vmIntrinsics::is_disabled_by_flags(method);
@@ -152,7 +152,7 @@ class AbstractCompiler : public CHeapObj<mtCompiler> {
   // by default no intrinsics are supported by a compiler except
   // the ones listed in the method. Overriding methods should conform
   // to this behavior.
-  virtual bool is_intrinsic_supported(methodHandle method) {
+  virtual bool is_intrinsic_supported(const methodHandle& method) {
     return false;
   }
 

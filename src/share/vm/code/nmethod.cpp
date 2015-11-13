@@ -558,7 +558,7 @@ void nmethod::init_defaults() {
 #endif
 }
 
-nmethod* nmethod::new_native_nmethod(methodHandle method,
+nmethod* nmethod::new_native_nmethod(const methodHandle& method,
   int compile_id,
   CodeBuffer *code_buffer,
   int vep_offset,
@@ -593,7 +593,7 @@ nmethod* nmethod::new_native_nmethod(methodHandle method,
   return nm;
 }
 
-nmethod* nmethod::new_nmethod(methodHandle method,
+nmethod* nmethod::new_nmethod(const methodHandle& method,
   int compile_id,
   int entry_bci,
   CodeOffsets* offsets,
@@ -674,10 +674,6 @@ nmethod* nmethod::new_nmethod(methodHandle method,
   return nm;
 }
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4355) //  warning C4355: 'this' : used in base member initializer list
-#endif
 // For native wrappers
 nmethod::nmethod(
   Method* method,
@@ -766,10 +762,6 @@ nmethod::nmethod(
     }
   }
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 void* nmethod::operator new(size_t size, int nmethod_size, int comp_level) throw () {
   return CodeCache::allocate(nmethod_size, CodeCache::get_code_blob_type(comp_level));
@@ -1608,7 +1600,11 @@ void nmethod::flush_dependencies(BoolObjectClosure* is_alive) {
         // During GC the is_alive closure is non-NULL, and is used to
         // determine liveness of dependees that need to be updated.
         if (is_alive == NULL || klass->is_loader_alive(is_alive)) {
-          InstanceKlass::cast(klass)->remove_dependent_nmethod(this);
+          // The GC defers deletion of this entry, since there might be multiple threads
+          // iterating over the _dependencies graph. Other call paths are single-threaded
+          // and may delete it immediately.
+          bool delete_immediately = is_alive == NULL;
+          InstanceKlass::cast(klass)->remove_dependent_nmethod(this, delete_immediately);
         }
       }
     }
@@ -2274,8 +2270,8 @@ void nmethod::oops_do_marking_epilogue() {
     assert(cur != NULL, "not NULL-terminated");
     nmethod* next = cur->_oops_do_mark_link;
     cur->_oops_do_mark_link = NULL;
-    cur->verify_oop_relocations();
-    if (TraceScavenge) { cur->print_on(tty, "oops_do, unmark"); }
+    DEBUG_ONLY(cur->verify_oop_relocations());
+    NOT_PRODUCT(if (TraceScavenge)  cur->print_on(tty, "oops_do, unmark"));
     cur = next;
   }
   void* required = _oops_do_mark_nmethods;
@@ -2972,7 +2968,7 @@ void nmethod::print_dependencies() {
     deps.print_dependency();
     Klass* ctxk = deps.context_type();
     if (ctxk != NULL) {
-      if (ctxk->oop_is_instance() && ((InstanceKlass*)ctxk)->is_dependent_nmethod(this)) {
+      if (ctxk->is_instance_klass() && InstanceKlass::cast(ctxk)->is_dependent_nmethod(this)) {
         tty->print_cr("   [nmethod<=klass]%s", ctxk->external_name());
       }
     }

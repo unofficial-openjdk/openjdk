@@ -27,7 +27,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 
 /**
  * @test ConstantGettersTransitionsTest
- * @library /testlibrary /../../test/lib /
+ * @library /testlibrary /test/lib /compiler/whitebox /
  * @modules java.base/sun.misc
  *          java.management
  * @build TransitionsTestExecutor ConstantGettersTransitionsTest

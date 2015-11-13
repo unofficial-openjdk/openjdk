@@ -563,7 +563,7 @@ JNI_ENTRY(jclass, jni_GetSuperclass(JNIEnv *env, jclass sub))
   // return mirror for superclass
   Klass* super = k->java_super();
   // super2 is the value computed by the compiler's getSuperClass intrinsic:
-  debug_only(Klass* super2 = ( k->oop_is_array()
+  debug_only(Klass* super2 = ( k->is_array_klass()
                                  ? SystemDictionary::Object_klass()
                                  : k->super() ) );
   assert(super == super2,
@@ -1344,14 +1344,14 @@ static jmethodID get_method_id(JNIEnv *env, jclass clazz, const char *name_str,
   if (name == vmSymbols::object_initializer_name() ||
       name == vmSymbols::class_initializer_name()) {
     // Never search superclasses for constructors
-    if (klass->oop_is_instance()) {
+    if (klass->is_instance_klass()) {
       m = InstanceKlass::cast(klass())->find_method(name, signature);
     } else {
       m = NULL;
     }
   } else {
     m = klass->lookup_method(name, signature);
-    if (m == NULL &&  klass->oop_is_instance()) {
+    if (m == NULL &&  klass->is_instance_klass()) {
       m = InstanceKlass::cast(klass())->lookup_method_in_ordered_interfaces(name, signature);
     }
   }
@@ -2038,7 +2038,7 @@ JNI_ENTRY(jfieldID, jni_GetFieldID(JNIEnv *env, jclass clazz,
   k()->initialize(CHECK_NULL);
 
   fieldDescriptor fd;
-  if (!k()->oop_is_instance() ||
+  if (!k()->is_instance_klass() ||
       !InstanceKlass::cast(k())->find_field(fieldname, signame, false, &fd)) {
     THROW_MSG_0(vmSymbols::java_lang_NoSuchFieldError(), (char*) name);
   }
@@ -2292,7 +2292,7 @@ JNI_ENTRY(jfieldID, jni_GetStaticFieldID(JNIEnv *env, jclass clazz,
   k()->initialize(CHECK_NULL);
 
   fieldDescriptor fd;
-  if (!k()->oop_is_instance() ||
+  if (!k()->is_instance_klass() ||
       !InstanceKlass::cast(k())->find_field(fieldname, signame, true, &fd)) {
     THROW_MSG_0(vmSymbols::java_lang_NoSuchFieldError(), (char*) name);
   }
@@ -3051,7 +3051,7 @@ JNI_ENTRY(jint, jni_UnregisterNatives(JNIEnv *env, jclass clazz))
  HOTSPOT_JNI_UNREGISTERNATIVES_ENTRY(env, clazz);
   Klass* k   = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(clazz));
   //%note jni_2
-  if (k->oop_is_instance()) {
+  if (k->is_instance_klass()) {
     for (int index = 0; index < InstanceKlass::cast(k)->methods()->length(); index++) {
       Method* m = InstanceKlass::cast(k)->methods()->at(index);
       if (m->is_native()) {
@@ -3878,6 +3878,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
   unit_test_function_call
 
 // Forward declaration
+void TestNmethodBucket_test();
 void test_semaphore();
 void TestOS_test();
 void TestReservedSpace_test();
@@ -3892,7 +3893,9 @@ void TestKlass_test();
 void TestBitMap_test();
 void TestAsUtf8();
 void Test_linked_list();
+void TestResourcehash_test();
 void TestChunkedList_test();
+void Test_log_length();
 #if INCLUDE_ALL_GCS
 void TestOldFreeSpaceCalculation_test();
 void TestG1BiasedArray_test();
@@ -3901,11 +3904,13 @@ void TestCodeCacheRemSet_test();
 void FreeRegionList_test();
 void test_memset_with_concurrent_readers() NOT_DEBUG_RETURN;
 void TestPredictions_test();
+void WorkerDataArray_test();
 #endif
 
 void execute_internal_vm_tests() {
   if (ExecuteInternalVMTests) {
     tty->print_cr("Running internal VM tests");
+    run_unit_test(TestNmethodBucket_test());
     run_unit_test(test_semaphore());
     run_unit_test(TestOS_test());
     run_unit_test(TestReservedSpace_test());
@@ -3927,10 +3932,12 @@ void execute_internal_vm_tests() {
     run_unit_test(TestKlass_test());
     run_unit_test(TestBitMap_test());
     run_unit_test(TestAsUtf8());
+    run_unit_test(TestResourcehash_test());
     run_unit_test(ObjectMonitor::sanity_checks());
     run_unit_test(Test_linked_list());
     run_unit_test(TestChunkedList_test());
     run_unit_test(JSONTest::test());
+    run_unit_test(Test_log_length());
     run_unit_test(DirectivesParser::test());
 #if INCLUDE_VM_STRUCTS
     run_unit_test(VMStructs::test());
@@ -3946,6 +3953,7 @@ void execute_internal_vm_tests() {
     }
     run_unit_test(test_memset_with_concurrent_readers());
     run_unit_test(TestPredictions_test());
+    run_unit_test(WorkerDataArray_test());
 #endif
     tty->print_cr("All internal VM tests passed");
   }
@@ -4086,6 +4094,10 @@ static jint JNI_CreateJavaVM_inner(JavaVM **vm, void **penv, void *args) {
     // control both compiler and architectural-based reordering.
     OrderAccess::release_store(&vm_created, 0);
   }
+
+  // Flush stdout and stderr before exit.
+  fflush(stdout);
+  fflush(stderr);
 
   return result;
 
