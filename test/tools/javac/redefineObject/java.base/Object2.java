@@ -1,10 +1,6 @@
 /*
- * @test /nodynamiccopyright/
- * @bug 4091755
- * @summary java.lang.Object can't be redefined without crashing javac
- * @author gafter
- *
- * @compile/fail/ref=Object2.out -XDrawDiagnostics  Object2.java
+ * /nodynamiccopyright/
+ * See ../Object2-test.java
  */
 
 package java.lang;
