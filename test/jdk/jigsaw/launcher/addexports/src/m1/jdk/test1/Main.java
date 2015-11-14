@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+/**
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,15 @@
  * questions.
  */
 
-module test {
-}
+package jdk.test1;
 
+import java.lang.reflect.Field;
+import sun.misc.Unsafe;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+        theUnsafe.setAccessible(true);
+        Unsafe unsafe = (Unsafe) theUnsafe.get(null);
+    }
+}

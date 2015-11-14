@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,6 +21,12 @@
  * questions.
  */
 
-module one.more {
-    exports one.more;
+package jdk.test2;
+
+import javax.transaction.internal.Helper;
+
+public class Main {
+    public static void main(String[] args) {
+        Helper h = new Helper();
+    }
 }

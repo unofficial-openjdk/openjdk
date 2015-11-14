@@ -48,56 +48,57 @@ public class AddExportsTest {
 
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
-    private static final Path UPGRMODS_DIR = Paths.get("upgrmods");
+    private static final Path UPGRADE_MODS_DIRS = Paths.get("upgrademods");
 
-    // the module name of the test module
-    private static final String TEST_MODULE = "test";
-    private static final String TEST_MODULE_ADD = "testAdd";
-    private static final String TEST_MODULE_UPGRADE = "testUpgrade";
+    // test module m1 that uses Unsafe
+    private static final String TEST1_MODULE = "m1";
+    private static final String TEST1_MAIN_CLASS = "jdk.test1.Main";
 
-    // the module main class
-    private static final String MAIN_CLASS = "jdk.test.UsesUnsafe";
-    private static final String MAIN_CLASS_ADD = "jdk.test.UsesInternalClass";
-    private static final String MAIN_CLASS_UPGRADE = "jdk.test.UsesInternalTransaction";
+    // test module m2 uses java.transaction internals
+    private static final String TEST2_MODULE = "m2";
+    private static final String TEST2_MAIN_CLASS = "jdk.test2.Main";
+
+    // test module m3 uses m4 internals
+    private static final String TEST3_MODULE = "m3";
+    private static final String TEST3_MAIN_CLASS = "jdk.test3.Main";
+    private static final String TEST4_MODULE = "m4";
 
 
     @BeforeTest
-    public void compileTestModule() throws Exception {
+    public void compileTestModules() throws Exception {
 
-        // javac -d mods/$TESTMODULE src/$TESTMODULE/**
-        boolean compiled
-            = CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE),
-                                    MODS_DIR.resolve(TEST_MODULE),
-                                    "-XaddExports:java.base/sun.misc=test");
-        assertTrue(compiled, "test module did not compile");
+        // javac -d mods/m1 src/m1/**
+        boolean compiled = CompilerUtils.compile(
+                SRC_DIR.resolve(TEST1_MODULE),
+                MODS_DIR.resolve(TEST1_MODULE),
+                "-XaddExports:java.base/sun.misc=m1");
+        assertTrue(compiled, "module " + TEST1_MODULE + " did not compile");
 
-        // javac -d upgrmods/$ADDMODULE src/$ADDMODULE/**
-        compiled
-            = CompilerUtils.compile(SRC_DIR.resolve("one.more"),
-                                    MODS_DIR.resolve("one.more"));
-        assertTrue(compiled, "added module did not compile");
+        // javac -d upgrademods/java.transaction src/java.transaction/**
+        compiled = CompilerUtils.compile(
+                SRC_DIR.resolve("java.transaction"),
+                UPGRADE_MODS_DIRS.resolve("java.transaction"));
+        assertTrue(compiled, "module java.transaction did not compile");
 
-        // javac -d mods/$TESTADD src/$TESTADD/**
-        compiled
-            = CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE_ADD),
-                                    MODS_DIR.resolve(TEST_MODULE_ADD),
-                                    "-mp", MODS_DIR.toString(),
-                                    "-XaddExports:one.more/one.internal=testAdd");
-        assertTrue(compiled, "test add module did not compile");
+        // javac -upgrademodulepath upgrademods -d mods/m2 src/m2/**
+        compiled = CompilerUtils.compile(
+                SRC_DIR.resolve(TEST2_MODULE),
+                MODS_DIR.resolve(TEST2_MODULE),
+                "-upgrademodulepath", UPGRADE_MODS_DIRS.toString(),
+                "-XaddExports:java.transaction/javax.transaction.internal=m2");
+        assertTrue(compiled, "module " + TEST2_MODULE + " did not compile");
 
-        // javac -d upgrmods/$UPGRMODULE src/$UPGRMODULE/**
-        compiled
-            = CompilerUtils.compile(SRC_DIR.resolve("java.transaction"),
-                                    UPGRMODS_DIR.resolve("java.transaction"));
-        assertTrue(compiled, "upgraded module did not compile");
+        // javac -d mods/m3 src/m3/**
+        compiled = CompilerUtils.compile(
+                SRC_DIR.resolve(TEST3_MODULE),
+                MODS_DIR.resolve(TEST3_MODULE));
+        assertTrue(compiled, "module " + TEST3_MODULE + " did not compile");
 
-        // javac -d mods/$TESTUPGRADE src/$TESTUPGRADE/**
-        compiled
-            = CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE_UPGRADE),
-                                    MODS_DIR.resolve(TEST_MODULE_UPGRADE),
-                                    "-upgrademodulepath", UPGRMODS_DIR.toString(),
-                                    "-XaddExports:java.transaction/javax.transaction.internal=testUpgrade");
-        assertTrue(compiled, "test upgrade module did not compile");
+        // javac -d mods/m4 src/m4/**
+        compiled = CompilerUtils.compile(
+                SRC_DIR.resolve(TEST4_MODULE),
+                MODS_DIR.resolve(TEST4_MODULE));
+        assertTrue(compiled, "module " + TEST4_MODULE + " did not compile");
     }
 
     /**
@@ -124,11 +125,11 @@ public class AddExportsTest {
         // java -XaddExports:java.base/sun.misc=ALL-UNNAMED \
         //      -cp mods/$TESTMODULE jdk.test.UsesUnsafe
 
-        String classpath = MODS_DIR.resolve(TEST_MODULE).toString();
+        String classpath = MODS_DIR.resolve(TEST1_MODULE).toString();
         int exitValue
             = executeTestJava("-XaddExports:java.base/sun.misc=ALL-UNNAMED",
                               "-cp", classpath,
-                              MAIN_CLASS)
+                              TEST1_MAIN_CLASS)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
@@ -145,9 +146,9 @@ public class AddExportsTest {
         //  java -XaddExports:java.base/sun.misc=test \
         //       -mp mods -m $TESTMODULE/$MAIN_CLASS
 
-        String mid = TEST_MODULE + "/" + MAIN_CLASS;
+        String mid = TEST1_MODULE + "/" + TEST1_MAIN_CLASS;
         int exitValue =
-            executeTestJava("-XaddExports:java.base/sun.misc=" + TEST_MODULE,
+            executeTestJava("-XaddExports:java.base/sun.misc=" + TEST1_MODULE,
                             "-mp", MODS_DIR.toString(),
                             "-m", mid)
                 .outputTo(System.out)
@@ -156,48 +157,49 @@ public class AddExportsTest {
 
         assertTrue(exitValue == 0);
     }
+
 
     /**
-     * Run added modules with -XaddExports
+     * Test -XaddExports with upgraded module
      */
-    public void testAdddedModule() throws Exception {
+    public void testWithUpgradedModule() throws Exception {
 
-        // java -XaddExports:one.more/one.internal=testAdd
-        // -mp mods -addmods one.more -m testAdd/jdk.test.UsesInternalClas
-
-        String mid = TEST_MODULE_ADD + "/" + MAIN_CLASS_ADD;
-        int exitValue =
-            executeTestJava("-XaddExports:one.more/one.internal=testAdd",
-                            "-mp", MODS_DIR.toString(),
-                            "-addmods", "one.more",
-                            "-m", mid)
+        // java -XaddExports:java.transaction/javax.transaction.internal=m2
+        //      -upgrademodulepath upgrademods -mp mods -m ...
+        String mid = TEST2_MODULE + "/" + TEST2_MAIN_CLASS;
+        int exitValue = executeTestJava(
+                "-XaddExports:java.transaction/javax.transaction.internal=m2",
+                "-upgrademodulepath", UPGRADE_MODS_DIRS.toString(),
+                "-mp", MODS_DIR.toString(),
+                "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
     }
+
 
     /**
-     * Run upgraded modules with -XaddExports
+     * Test -XaddExports with module that is added to the set of root modules
+     * with -addmods.
      */
-    public void testUpgradedModule() throws Exception {
+    public void testWithAddMods() throws Exception {
 
-        // java -upgrademodulepath upgrmods -mp mods
-        // -m testUpgrade/jdk.test.UsesInternalTransaction
-
-        String mid = TEST_MODULE_UPGRADE + "/" + MAIN_CLASS_UPGRADE;
-        int exitValue =
-            executeTestJava("-XaddExports:java.transaction/javax.transaction.internal=testUpgrade",
-                            "-upgrademodulepath", UPGRMODS_DIR.toString(),
-                            "-mp", MODS_DIR.toString(),
-                            "-m", mid)
+        // java -XaddExports:m4/jdk.test4=m3 -mp mods -m ...
+        String mid = TEST3_MODULE + "/" + TEST3_MAIN_CLASS;
+        int exitValue = executeTestJava(
+                "-XaddExports:m4/jdk.test4=m3",
+                "-mp", MODS_DIR.toString(),
+                "-addmods", TEST4_MODULE,
+                "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
     }
+
 
     /**
      * -XaddExports can only be specified once

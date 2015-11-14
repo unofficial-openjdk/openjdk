@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,15 +21,7 @@
  * questions.
  */
 
-package jdk.test;
+package javax.transaction.internal;
 
-import java.lang.reflect.Field;
-import sun.misc.Unsafe;
-
-public class UsesUnsafe {
-    public static void main(String[] args) throws Exception {
-        Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-        theUnsafe.setAccessible(true);
-        Unsafe unsafe = (Unsafe) theUnsafe.get(null);
-    }
+public class Helper {
 }

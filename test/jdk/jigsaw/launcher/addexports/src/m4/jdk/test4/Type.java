@@ -21,7 +21,9 @@
  * questions.
  */
 
-package one.more;
+package jdk.test4;
 
-public class OneMoreClass {
+public class Type {
+    public Type() { }
 }
+

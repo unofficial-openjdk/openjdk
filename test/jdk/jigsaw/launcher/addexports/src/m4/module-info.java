@@ -21,7 +21,5 @@
  * questions.
  */
 
-package javax.transaction.internal;
-
-public class InternalTransaction {
+module m4 {
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,12 @@
  * questions.
  */
 
-package jdk.test;
+package jdk.test3;
 
-import javax.transaction.internal.InternalTransaction;
-
-public class UsesInternalTransaction {
+public class Main {
     public static void main(String[] args) throws Exception {
-        InternalTransaction ic = new InternalTransaction();
+        Class<?> c = Class.forName("jdk.test4.Type");
+        Main.class.getModule().addReads(c.getModule());
+        Object o = c.newInstance();
     }
 }
