@@ -147,6 +147,7 @@ ALL_SOURCE_DIRS := $(wildcard \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
       $(JDK_TOPDIR)/src/*/share/classes \
+      $(HOTSPOT_TOPDIR)/src/*/share/classes \
       $(LANGTOOLS_TOPDIR)/src/*/share/classes \
       $(NASHORN_TOPDIR)/src/*/share/classes \
       $(CORBA_TOPDIR)/src/*/share/classes \
@@ -163,6 +164,7 @@ ALL_MODULE_SOURCE_DIRS := \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
       $(JDK_TOPDIR)/src/*/share/classes \
+      $(HOTSPOT_TOPDIR)/src/*/share/classes \
       $(LANGTOOLS_TOPDIR)/src/*/share/classes \
       $(NASHORN_TOPDIR)/src/*/share/classes \
       $(CORBA_TOPDIR)/src/*/share/classes \
