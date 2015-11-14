@@ -27,7 +27,7 @@ default: all
 
 include $(SPEC)
 include MakeBase.gmk
-include JavaCompilation.gmk
+include JarArchive.gmk
 include SetupJavaCompilers.gmk
 include TextFileProcessing.gmk
 
@@ -60,10 +60,11 @@ $(eval $(call SetupCopyFiles,COPY_JIMAGE_SERVICE_PROVIDER, \
     DEST := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
     FILES := META-INF/services/java.nio.file.spi.FileSystemProvider))
 
-$(eval $(call SetupArchive,BUILD_JRTFS_JAR, \
+$(eval $(call SetupJarArchive,BUILD_JRTFS_JAR, \
     DEPENDENCIES := $(BUILD_JRTFS) $(COPY_JIMAGE_SERVICE_PROVIDER), \
     SRCS := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
     JAR := $(SUPPORT_OUTPUTDIR)/jrt-fs.jar, \
-    MANIFEST := $(SUPPORT_OUTPUTDIR)/java-main-manifest.mf))
+    MANIFEST := $(SUPPORT_OUTPUTDIR)/java-main-manifest.mf, \
+))
 
 all: $(BUILD_JRTFS_JAR)
