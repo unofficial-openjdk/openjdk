@@ -32,6 +32,7 @@ ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupBuildLauncher, appletviewer, \
       MAIN_MODULE := java.desktop, \
       MAIN_CLASS  := sun.applet.Main, \
+      JAVA_ARGS := -addmods ALL-SYSTEM, \
       LIBS_unix := $(X_LIBS), \
   ))
 endif
