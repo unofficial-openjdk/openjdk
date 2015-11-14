@@ -14,11 +14,8 @@ com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            
 ##### javac ####################################################################
 
 tools/javac/6330997/T6330997.java                                               0 generic-all   NPE in Resolve
-tools/javac/Object1.java                                                        0 generic-all   need -Xmodule to be able to redefine java.lang.Object
-tools/javac/Object2.java                                                        0 generic-all   need -Xmodule to be able to redefine java.lang.Object
 tools/javac/Paths/Diagnostics.sh                                                0 generic-all   needs rewrite
 tools/javac/Paths/MineField.sh                                                  0 generic-all   needs rewrite
-tools/javac/T4093617/T4093617.java                                              0 generic-all   need -Xmodule to be able to redefine java.lang.Object
 tools/javac/T8003967/DetectMutableStaticFields.java                             0 generic-all   uses URI to determine location of class files
 tools/javac/api/6418694/T6418694.java                                           0 generic-all   need to update for new StandardLocations
 tools/javac/api/T6397104.java                                                   0 generic-all   need to update for new StandardLocations
@@ -28,7 +25,6 @@ tools/javac/api/TestSearchPaths.java                                            
 tools/javac/diags/CheckExamples.java                                            0 generic-all   need to update resource files
 tools/javac/file/BootClassPathPrepend.java                                      0 generic-all   currently verifies -Xbcp/p; rewrite for -Xpatch?
 tools/javac/file/ExplodedImage.java                                             0 generic-all   "Did not load java.util.List from correct place"
-tools/javac/generics/diamond/neg/T8078473_2.java                                0 generic-all   need -Xmodule to be able to define class in java.util.stream
 tools/javac/importscope/dependencies/DependenciesTest.java                      0 generic-all   NPE in test's internal scanner
 tools/javac/options/xprefer/XPreferTest.java                                    0 generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
 tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java          0 generic-all   ?? need more investigation 
@@ -54,9 +50,4 @@ tools/javac/api/taskListeners/CompileEvent.java                                 
 
 tools/javah/T7185778.java                                                       0 generic-all   Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
 
-
-##### jdeps ####################################################################
-
-tools/jdeps/Basic.java                                                          0 generic-all   needs -Xmodule to modify contents in existing package
-tools/jdeps/DotFileTest.java                                                    0 generic-all   needs -Xmodule to modify contents in existing package
 
