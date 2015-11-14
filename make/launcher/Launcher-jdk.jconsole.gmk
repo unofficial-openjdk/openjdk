@@ -25,9 +25,10 @@
 
 include LauncherCommon.gmk
 
-BUILD_LAUNCHER_jconsole_CFLAGS_windows := -DJAVAW
-BUILD_LAUNCHER_jconsole_LIBS_windows := user32.lib
-
-$(eval $(call SetupLauncher,jconsole, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "-J-Djconsole.showOutputViewer"$(COMMA) \
-        "-m"$(COMMA) "jdk.jconsole/sun.tools.jconsole.JConsole"$(COMMA) }'))
+$(eval $(call SetupBuildLauncher, jconsole, \
+    MAIN_MODULE := jdk.jconsole, \
+    MAIN_CLASS  := sun.tools.jconsole.JConsole, \
+    JAVA_ARGS := -Djconsole.showOutputViewer, \
+    CFLAGS_windows := -DJAVAW, \
+    LIBS_windows := user32.lib, \
+))
