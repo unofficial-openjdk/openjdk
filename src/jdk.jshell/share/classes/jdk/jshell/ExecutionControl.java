@@ -250,8 +250,7 @@ class ExecutionControl {
         String connect = "com.sun.jdi.CommandLineLaunch:";
         String cmdLine = "jdk.internal.jshell.remote.RemoteAgent";
         String classPath = System.getProperty("java.class.path");
-        String bootclassPath = System.getProperty("sun.boot.class.path");
-        String javaArgs = "-classpath " + classPath + " -Xbootclasspath:" + bootclassPath;
+        String javaArgs = "-classpath " + classPath;
 
         String connectSpec = connect + "main=" + cmdLine + " " + port + ",options=" + javaArgs + ",";
         boolean launchImmediately = true;
