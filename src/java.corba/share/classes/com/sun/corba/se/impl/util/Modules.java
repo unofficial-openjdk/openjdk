@@ -26,14 +26,9 @@
 package com.sun.corba.se.impl.util;
 
 import org.omg.CORBA.ORB;
-import java.lang.reflect.Method;
 
 /**
- * Utility class to aid calling java.lang.reflect.Module.addReads/canRead.
- *
- * @implNote The implementation uses core reflection because of
- * bootstrapping issues in the build where the interim corba
- * build is compiled with the boot JDK.
+ * Utility class to aid calling java.lang.reflect.Module.addReads/canRead
  */
 
 public class Modules {
@@ -43,28 +38,10 @@ public class Modules {
      * Ensures that module java.corba that read the module of the given class.
      */
     public static void ensureReadable(Class<?> targetClass) {
-        try {
-            Method getModuleMethod = Class.class.getMethod("getModule");
-            Object thisModule = getModuleMethod.invoke(ORB.class);
-            Object targetModule = getModuleMethod.invoke(targetClass);
-            Class<?> moduleClass = getModuleMethod.getReturnType();
-            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
-            addReadsMethod.invoke(thisModule, targetModule);
-        } catch (Exception e) {
-            throw new InternalError(e);
-        }
+        ORB.class.getModule().addReads(targetClass.getModule());
     }
 
     public static boolean canRead(Class<?> targetClass) {
-        try {
-            Method getModuleMethod = Class.class.getMethod("getModule");
-            Object thisModule = getModuleMethod.invoke(ORB.class);
-            Object targetModule = getModuleMethod.invoke(targetClass);
-            Class<?> moduleClass = getModuleMethod.getReturnType();
-            Method canReadMethod = moduleClass.getMethod("canRead", moduleClass);
-            return (boolean) canReadMethod.invoke(thisModule, targetModule);
-        } catch (Exception e) {
-            throw new InternalError(e);
-        }
+        return ORB.class.getModule().canRead(targetClass.getModule());
     }
 }
