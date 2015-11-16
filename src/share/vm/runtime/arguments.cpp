@@ -208,6 +208,9 @@ void Arguments::init_system_properties() {
   _sun_boot_library_path = new SystemProperty("sun.boot.library.path", NULL,  true);
   _java_library_path = new SystemProperty("java.library.path", NULL,  true);
   _java_home =  new SystemProperty("java.home", NULL,  true);
+  // Do not add sun.boot.class.path to the PropertyList because its JDK value
+  // should be NULL in JDK-9.  But, keep it internally because its value is used
+  // by the JVM.
   _sun_boot_class_path = new SystemProperty("sun.boot.class.path", NULL,  true);
 
   // jdk.boot.class.path.append will only get set if -XX+bootclass/a: is specified.
@@ -221,8 +224,6 @@ void Arguments::init_system_properties() {
   PropertyList_add(&_system_properties, _java_library_path);
   PropertyList_add(&_system_properties, _java_home);
   PropertyList_add(&_system_properties, _java_class_path);
-  // Delete the next line to set property sun.boot.class.path to NULL.
-  PropertyList_add(&_system_properties, _sun_boot_class_path);
 
   PropertyList_add(&_system_properties, _jdk_boot_class_path_append);
 

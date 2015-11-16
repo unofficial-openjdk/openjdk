@@ -2374,8 +2374,8 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       }
 
       // A package should have been successfully created
-      assert(_package_entry != NULL, err_msg("Package entry for class %s not found, loader %s",
-                                             name->as_C_string(), loader->loader_name()));
+      assert(_package_entry != NULL, "Package entry for class %s not found, loader %s",
+             name->as_C_string(), loader->loader_name());
     }
 
     if (TracePackages) {

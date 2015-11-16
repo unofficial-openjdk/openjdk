@@ -26,6 +26,7 @@
 #ifndef SHARE_VM_CLASSFILE_SYSTEMDICTIONARYSHARED_HPP
 #define SHARE_VM_CLASSFILE_SYSTEMDICTIONARYSHARED_HPP
 
+#include "classfile/sharedClassUtil.hpp"
 #include "classfile/systemDictionary.hpp"
 
 class SystemDictionaryShared: public SystemDictionary {
