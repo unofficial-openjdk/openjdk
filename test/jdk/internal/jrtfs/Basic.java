@@ -28,6 +28,7 @@
  */
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.DataInputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.InvalidPathException;
@@ -582,5 +583,44 @@ public class Basic {
             ipe = e;
         }
         assertTrue(ipe != null);
+    }
+
+    @DataProvider(name="packagesLinkedDirs")
+    private Object[][] packagesLinkedDirs() {
+        return new Object[][] {
+            { "/packages/java.lang/java.base/java/lang/ref"             },
+            { "/./packages/java.lang/java.base/java/lang/ref"           },
+            { "packages/java.lang/java.base/java/lang/ref"              },
+            { "/packages/../packages/java.lang/java.base/java/lang/ref" },
+            { "/packages/java.lang/java.base/java/util/zip"             },
+            { "/./packages/java.lang/java.base/java/util/zip"           },
+            { "packages/java.lang/java.base/java/util/zip"              },
+            { "/packages/../packages/java.lang/java.base/java/util/zip" },
+            { "/packages/com.oracle/java.xml.ws/com"                    },
+            { "/./packages/com.oracle/java.xml.ws/com"                  },
+            { "packages/com.oracle/java.xml.ws/com"                     },
+            { "/packages/../packages/com.oracle/java.xml.ws/com"        }
+        };
+    }
+
+    // @bug 8141521: jrt file system's DirectoryStream reports child paths
+    // with wrong paths for directories under /packages
+    @Test(dataProvider = "packagesLinkedDirs")
+    public void dirStreamPackagesDirTest(String dirName) throws IOException {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        Path path = fs.getPath(dirName);
+
+        int childCount = 0, dirPrefixOkayCount = 0;
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path)) {
+            for (Path child : dirStream) {
+                childCount++;
+                if (child.toString().startsWith(dirName)) {
+                    dirPrefixOkayCount++;
+                }
+            }
+        }
+
+        assertTrue(childCount != 0);
+        assertEquals(dirPrefixOkayCount, childCount);
     }
 }

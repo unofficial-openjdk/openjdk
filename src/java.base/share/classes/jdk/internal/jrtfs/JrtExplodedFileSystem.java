@@ -293,26 +293,26 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
     }
 
     @Override
-    boolean isSameFile(AbstractJrtPath p1, AbstractJrtPath p2) throws IOException {
-        Node n1 = checkNode(p1.getName());
-        Node n2 = checkNode(p2.getName());
+    boolean isSameFile(AbstractJrtPath jrtPath1, AbstractJrtPath jrtPath2) throws IOException {
+        Node n1 = checkNode(jrtPath1);
+        Node n2 = checkNode(jrtPath2);
         return n1 == n2;
     }
 
     @Override
     boolean isLink(AbstractJrtPath jrtPath) throws IOException {
-        return checkNode(jrtPath.getName()).isLink();
+        return checkNode(jrtPath).isLink();
     }
 
     @Override
     AbstractJrtPath resolveLink(AbstractJrtPath jrtPath) throws IOException {
-        String name = checkNode(jrtPath.getName()).resolveLink().getName();
+        String name = checkNode(jrtPath).resolveLink().getName();
         return toJrtExplodedPath(name);
     }
 
     @Override
-    AbstractJrtFileAttributes getFileAttributes(byte[] path, LinkOption... options) throws IOException {
-        Node node = checkNode(path);
+    AbstractJrtFileAttributes getFileAttributes(AbstractJrtPath jrtPath, LinkOption... options) throws IOException {
+        Node node = checkNode(jrtPath);
         if (node.isLink() && followLinks(options)) {
             node = node.resolveLink(true);
         }
@@ -320,9 +320,9 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
     }
 
     @Override
-    boolean exists(byte[] path) throws IOException {
+    boolean exists(AbstractJrtPath jrtPath) throws IOException {
         try {
-            checkNode(path);
+            checkNode(jrtPath);
             return true;
         } catch (NoSuchFileException nsfe) {
             return false;
@@ -330,29 +330,37 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
     }
 
     @Override
-    boolean isDirectory(byte[] path, boolean resolveLinks) throws IOException {
-        Node node = checkNode(path);
+    boolean isDirectory(AbstractJrtPath jrtPath, boolean resolveLinks) throws IOException {
+        Node node = checkNode(jrtPath);
         return resolveLinks && node.isLink()
                 ? node.resolveLink(true).isDirectory()
                 : node.isDirectory();
     }
 
     @Override
-    Iterator<Path> iteratorOf(byte[] path, String childPrefix) throws IOException {
-        Node node = checkNode(path).resolveLink(true);
+    Iterator<Path> iteratorOf(AbstractJrtPath dir) throws IOException {
+        Node node = checkNode(dir).resolveLink(true);
         if (!node.isDirectory()) {
-            throw new NotDirectoryException(getString(path));
+            throw new NotDirectoryException(getString(dir.getName()));
         }
 
-        Function<Node, Path> f = childPrefix == null
-                ? child -> toJrtExplodedPath(child.getName())
-                : child -> toJrtExplodedPath(childPrefix + child.getName().substring(1));
-        return node.getChildren().stream().map(f).collect(toList()).iterator();
+        Function<Node, Path> nodeToPath =
+            child -> dir.resolve(
+                toJrtExplodedPath(child.getName()).
+                getFileName());
+
+        return node.getChildren().stream().
+                   map(nodeToPath).collect(toList()).
+                   iterator();
     }
 
     @Override
-    byte[] getFileContent(byte[] path) throws IOException {
-        return checkNode(path).getContent();
+    byte[] getFileContent(AbstractJrtPath jrtPath) throws IOException {
+        return checkNode(jrtPath).getContent();
+    }
+
+    private Node checkNode(AbstractJrtPath jrtPath) throws IOException {
+        return checkNode(jrtPath.getResolvedPath());
     }
 
     private Node checkNode(byte[] path) throws IOException {
