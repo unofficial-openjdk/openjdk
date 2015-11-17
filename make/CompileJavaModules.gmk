@@ -573,7 +573,8 @@ TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
 # Only the javac compilation actually depends on other modules so limit
 # dependency declaration to that by using the *_COMPILE_TARGET variable.
 $($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
-    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules/$d))
+    $(call SetupJavaCompilationCompileTarget, $d, \
+        $(if $($d_BIN), $($d_BIN), $(JDK_OUTPUTDIR)/modules/$d)))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW

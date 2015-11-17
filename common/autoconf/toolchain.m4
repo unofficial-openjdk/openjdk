@@ -710,12 +710,12 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     BASIC_FIXUP_EXECUTABLE(BUILD_NM)
     BASIC_PATH_PROGS(BUILD_AR, ar)
     BASIC_FIXUP_EXECUTABLE(BUILD_AR)
-    PATH="$OLDPATH"
-    BUILD_SYSROOT_CFLAGS=""
     # Assume the C compiler is the assembler
     BUILD_AS="$BUILD_CC -c"
     # Just like for the target compiler, use the compiler as linker
     BUILD_LD="$BUILD_CC"
+
+    PATH="$OLDPATH"
   else
     # If we are not cross compiling, use the normal target compilers for
     # building the build platform executables.

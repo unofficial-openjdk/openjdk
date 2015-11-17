@@ -75,7 +75,7 @@ ifneq ($(wildcard $(MODULES_LIBS_OUTPUTDIR)/$(MODULE)), )
   # Make sure symbolic links are copied and not stripped.
   COPY_LIBS_SRC := \
       $(filter-out $(STRIP_LIBS_SRC), \
-      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE) -type f -o -type l))
+      $(shell $(FIND) $(MODULES_LIBS_OUTPUTDIR)/$(MODULE) -type f -o -type l))
 endif
 
 $(eval $(call SetupCopyFiles,STRIP_MODULES_CMDS, \
