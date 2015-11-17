@@ -26,11 +26,9 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, schemagen, \
-    MAIN_MODULE := jdk.xml.bind, \
-    MAIN_CLASS  := com.sun.tools.internal.jxc.SchemaGenerator, \
+    MAIN_CLASS := com.sun.tools.internal.jxc.SchemaGenerator, \
 ))
 
 $(eval $(call SetupBuildLauncher, xjc, \
-    MAIN_MODULE := jdk.xml.bind, \
-    MAIN_CLASS  := com.sun.tools.internal.xjc.Driver, \
+    MAIN_CLASS := com.sun.tools.internal.xjc.Driver, \
 ))

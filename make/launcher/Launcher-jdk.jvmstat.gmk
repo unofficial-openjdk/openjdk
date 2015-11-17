@@ -26,6 +26,5 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jstatd, \
-    MAIN_MODULE := jdk.jvmstat, \
-    MAIN_CLASS  := sun.tools.jstatd.Jstatd, \
+    MAIN_CLASS := sun.tools.jstatd.Jstatd, \
 ))

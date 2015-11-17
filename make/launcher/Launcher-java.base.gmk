@@ -68,8 +68,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 endif
 
 $(eval $(call SetupBuildLauncher, keytool, \
-    MAIN_MODULE := java.base, \
-    MAIN_CLASS  := sun.security.tools.keytool.Main, \
+    MAIN_CLASS := sun.security.tools.keytool.Main, \
 ))
 
 ################################################################################

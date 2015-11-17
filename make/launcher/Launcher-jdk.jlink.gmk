@@ -26,22 +26,19 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jimage,\
-    MAIN_MODULE := jdk.jlink, \
-    MAIN_CLASS  := jdk.tools.jimage.Main, \
+    MAIN_CLASS := jdk.tools.jimage.Main, \
     CFLAGS := -DENABLE_ARG_FILES, \
 ))
 
 $(eval $(call SetupBuildLauncher, jlink,\
-    MAIN_MODULE := jdk.jlink, \
-    MAIN_CLASS  := jdk.tools.jlink.Main, \
+    MAIN_CLASS := jdk.tools.jlink.Main, \
     CFLAGS := -DENABLE_ARG_FILES \
         -DEXPAND_CLASSPATH_WILDCARDS \
         -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \
 ))
 
 $(eval $(call SetupBuildLauncher, jmod,\
-    MAIN_MODULE := jdk.jlink, \
-    MAIN_CLASS  := jdk.tools.jmod.Main, \
+    MAIN_CLASS := jdk.tools.jmod.Main, \
     CFLAGS := -DENABLE_ARG_FILES \
         -DEXPAND_CLASSPATH_WILDCARDS \
         -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \

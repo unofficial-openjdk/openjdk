@@ -258,10 +258,10 @@ public final class UTF8String implements CharSequence {
 
     @Override
     public String toString() {
-        ByteBuffer buffer = ByteBuffer.allocate(bytes.length+2);
+        ByteBuffer buffer = ByteBuffer.allocate(count+2);
         buffer.order(ByteOrder.BIG_ENDIAN);
-        buffer.putShort((short)bytes.length);
-        buffer.put(bytes);
+        buffer.putShort((short)count);
+        buffer.put(bytes, offset, count);
         ByteArrayInputStream stream = new ByteArrayInputStream(buffer.array());
         DataInputStream in = new DataInputStream(stream);
         try {

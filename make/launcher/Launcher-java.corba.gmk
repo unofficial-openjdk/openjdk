@@ -26,13 +26,11 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, idlj, \
-    MAIN_MODULE := java.corba, \
-    MAIN_CLASS  := com.sun.tools.corba.se.idl.toJavaPortable.Compile, \
+    MAIN_CLASS := com.sun.tools.corba.se.idl.toJavaPortable.Compile, \
 ))
 
 $(eval $(call SetupBuildLauncher, orbd, \
-    MAIN_MODULE := java.corba, \
-    MAIN_CLASS  := com.sun.corba.se.impl.activation.ORBD, \
+    MAIN_CLASS := com.sun.corba.se.impl.activation.ORBD, \
     JAVA_ARGS := \
         -Dcom.sun.CORBA.activation.DbDir=./orb.db \
         -Dcom.sun.CORBA.activation.Port=1049 \
@@ -40,13 +38,11 @@ $(eval $(call SetupBuildLauncher, orbd, \
 ))
 
 $(eval $(call SetupBuildLauncher, servertool, \
-    MAIN_MODULE := java.corba, \
-    MAIN_CLASS  := com.sun.corba.se.impl.activation.ServerTool, \
+    MAIN_CLASS := com.sun.corba.se.impl.activation.ServerTool, \
 ))
 
 $(eval $(call SetupBuildLauncher, tnameserv, \
-    MAIN_MODULE := java.corba, \
-    MAIN_CLASS  := com.sun.corba.se.impl.naming.cosnaming.TransientNameServer, \
+    MAIN_CLASS := com.sun.corba.se.impl.naming.cosnaming.TransientNameServer, \
     JAVA_ARGS := \
         -Dcom.sun.CORBA.activation.DbDir=./orb.db \
         -Djava.util.logging.LoggingPermission=contol \

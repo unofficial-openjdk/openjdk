@@ -27,17 +27,14 @@ include LauncherCommon.gmk
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupBuildLauncher, kinit, \
-      MAIN_MODULE := java.security.jgss, \
-      MAIN_CLASS  := sun.security.krb5.internal.tools.Kinit, \
+      MAIN_CLASS := sun.security.krb5.internal.tools.Kinit, \
   ))
 
   $(eval $(call SetupBuildLauncher, klist, \
-      MAIN_MODULE := java.security.jgss, \
-      MAIN_CLASS  := sun.security.krb5.internal.tools.Klist, \
+      MAIN_CLASS := sun.security.krb5.internal.tools.Klist, \
   ))
 
   $(eval $(call SetupBuildLauncher, ktab, \
-      MAIN_MODULE := java.security.jgss, \
-      MAIN_CLASS  := sun.security.krb5.internal.tools.Ktab, \
+      MAIN_CLASS := sun.security.krb5.internal.tools.Ktab, \
   ))
 endif

@@ -26,22 +26,19 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, javac, \
-    MAIN_MODULE := jdk.compiler, \
-    MAIN_CLASS  := com.sun.tools.javac.Main, \
+   MAIN_CLASS := com.sun.tools.javac.Main, \
     CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS \
         -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \
 ))
 
 $(eval $(call SetupBuildLauncher, javah, \
-    MAIN_MODULE := jdk.compiler, \
-    MAIN_CLASS  := com.sun.tools.javah.Main, \
+    MAIN_CLASS := com.sun.tools.javah.Main, \
     CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS \
         -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \
 ))
 
 $(eval $(call SetupBuildLauncher, serialver, \
-    MAIN_MODULE := jdk.compiler, \
-    MAIN_CLASS  := sun.tools.serialver.SerialVer, \
+    MAIN_CLASS := sun.tools.serialver.SerialVer, \
     CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS, \
 ))
 
@@ -49,8 +46,7 @@ ifeq ($(ENABLE_SJAVAC), yes)
   # Build sjavac directly to the exploded image so that it does not get included
   # into any real images
   $(eval $(call SetupBuildLauncher, sjavac, \
-      MAIN_MODULE := jdk.compiler, \
-      MAIN_CLASS  := com.sun.tools.sjavac.Main, \
+      MAIN_CLASS := com.sun.tools.sjavac.Main, \
       CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS \
           -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \
       OUTPUT_DIR := $(JDK_OUTPUTDIR)/bin, \
