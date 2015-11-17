@@ -26,11 +26,9 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, rmid, \
-    MAIN_MODULE := java.rmi, \
-    MAIN_CLASS  := sun.rmi.server.Activation, \
+    MAIN_CLASS := sun.rmi.server.Activation, \
 ))
 
 $(eval $(call SetupBuildLauncher, rmiregistry, \
-    MAIN_MODULE := java.rmi, \
-    MAIN_CLASS  := sun.rmi.registry.RegistryImpl, \
+    MAIN_CLASS := sun.rmi.registry.RegistryImpl, \
 ))

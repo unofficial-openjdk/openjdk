@@ -33,7 +33,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       #
   LIBLE_CPPFLAGS := \
       $(addprefix -I, $(LIBLE_SRC)) \
-      -I$(SUPPORT_OUTPUTDIR)/headers/jdk.internal.le \
+      -I$(HEADERS_OUTPUTDIR)/jdk.internal.le \
       #
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBLE, \

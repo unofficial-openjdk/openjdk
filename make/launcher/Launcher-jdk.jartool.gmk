@@ -26,11 +26,9 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jar, \
-    MAIN_MODULE := jdk.jartool, \
-    MAIN_CLASS  := sun.tools.jar.Main, \
+    MAIN_CLASS := sun.tools.jar.Main, \
 ))
 
 $(eval $(call SetupBuildLauncher, jarsigner, \
-    MAIN_MODULE := jdk.jartool, \
-    MAIN_CLASS  := sun.security.tools.jarsigner.Main, \
+    MAIN_CLASS := sun.security.tools.jarsigner.Main, \
 ))

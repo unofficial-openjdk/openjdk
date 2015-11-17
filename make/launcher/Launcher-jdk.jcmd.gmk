@@ -26,8 +26,7 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jinfo, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jinfo.JInfo, \
+    MAIN_CLASS := sun.tools.jinfo.JInfo, \
     JAVA_ARGS := \
         -Dsun.jvm.hotspot.debugger.useProcDebugger \
         -Dsun.jvm.hotspot.debugger.useWindbgDebugger, \
@@ -36,8 +35,7 @@ $(eval $(call SetupBuildLauncher, jinfo, \
 ))
 
 $(eval $(call SetupBuildLauncher, jmap, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jmap.JMap, \
+    MAIN_CLASS := sun.tools.jmap.JMap, \
     JAVA_ARGS := \
         -Dsun.jvm.hotspot.debugger.useProcDebugger \
         -Dsun.jvm.hotspot.debugger.useWindbgDebugger, \
@@ -46,13 +44,11 @@ $(eval $(call SetupBuildLauncher, jmap, \
 ))
 
 $(eval $(call SetupBuildLauncher, jps, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jps.Jps, \
+    MAIN_CLASS := sun.tools.jps.Jps, \
 ))
 
 $(eval $(call SetupBuildLauncher, jstack, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jstack.JStack, \
+    MAIN_CLASS := sun.tools.jstack.JStack, \
     JAVA_ARGS := \
         -Dsun.jvm.hotspot.debugger.useProcDebugger \
         -Dsun.jvm.hotspot.debugger.useWindbgDebugger, \
@@ -61,11 +57,9 @@ $(eval $(call SetupBuildLauncher, jstack, \
 ))
 
 $(eval $(call SetupBuildLauncher, jstat, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jstat.Jstat, \
+    MAIN_CLASS := sun.tools.jstat.Jstat, \
 ))
 
 $(eval $(call SetupBuildLauncher, jcmd, \
-    MAIN_MODULE := jdk.jcmd, \
-    MAIN_CLASS  := sun.tools.jcmd.JCmd, \
+    MAIN_CLASS := sun.tools.jcmd.JCmd, \
 ))

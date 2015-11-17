@@ -26,6 +26,5 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jrunscript, \
-    MAIN_MODULE := java.scripting, \
-    MAIN_CLASS  := com.sun.tools.script.shell.Main, \
+    MAIN_CLASS := com.sun.tools.script.shell.Main, \
 ))

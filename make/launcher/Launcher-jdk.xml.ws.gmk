@@ -26,11 +26,9 @@
 include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, wsgen, \
-    MAIN_MODULE := jdk.xml.ws, \
-    MAIN_CLASS  := com.sun.tools.internal.ws.WsGen, \
+    MAIN_CLASS := com.sun.tools.internal.ws.WsGen, \
 ))
 
 $(eval $(call SetupBuildLauncher, wsimport, \
-    MAIN_MODULE := jdk.xml.ws, \
-    MAIN_CLASS  := com.sun.tools.internal.ws.WsImport, \
+    MAIN_CLASS := com.sun.tools.internal.ws.WsImport, \
 ))

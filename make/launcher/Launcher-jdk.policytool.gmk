@@ -27,8 +27,7 @@ include LauncherCommon.gmk
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupBuildLauncher, policytool, \
-      MAIN_MODULE := jdk.policytool, \
-      MAIN_CLASS  := sun.security.tools.policytool.PolicyTool, \
+      MAIN_CLASS := sun.security.tools.policytool.PolicyTool, \
       LIBS_unix := $(X_LIBS), \
   ))
 endif
