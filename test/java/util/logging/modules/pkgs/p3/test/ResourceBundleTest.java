@@ -153,16 +153,10 @@ public class ResourceBundleTest {
         // property resource bundle in another named module m1.
         failToLoadResourceBundle("mylogger.k", "p1.resource.p",
                 true, NAMED_NEGATIVE_PROPERTYBUNDLE_MSG);
-        /*
-         * new issue : 8137316
-         * Expected MissingResourceException is not thrown when Logger.getLogger
-         * wrapped in a named module is accessed from an unnamed module
-         * after 8137316 is fixed, should uncomment below lines of code.
-         */
         // in named module m2, try to create a logger with
         // property resource bundle in an unnamed module.
-//        failToLoadResourceBundle("mylogger.l", "p3.resource.p",
-//        true, NAMED_NEGATIVE_PROPERTYBUNDLE_MSG);
+        failToLoadResourceBundle("mylogger.l", "p3.resource.p",
+                true, NAMED_NEGATIVE_PROPERTYBUNDLE_MSG);
     }
 
     static void failToLoadResourceBundle(String loggerName, String rbName,
