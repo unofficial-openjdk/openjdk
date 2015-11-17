@@ -25,7 +25,7 @@
 
 module jdk.scripting.nashorn.shell {
     requires java.desktop;
-    requires jdk.compiler;
+    requires java.compiler;
     requires jdk.scripting.nashorn;
     requires jdk.internal.le;
 }
