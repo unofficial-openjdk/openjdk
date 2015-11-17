@@ -24,5 +24,23 @@
  */
 
 module jdk.vm.ci {
+    uses jdk.vm.ci.options.OptionDescriptors;
+    uses jdk.vm.ci.compiler.CompilerFactory;
+    uses jdk.vm.ci.compiler.StartupEventListener;
+    uses jdk.vm.ci.hotspot.HotSpotVMEventListener;
+    uses jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory;
+
+    provides jdk.vm.ci.options.OptionDescriptors with jdk.vm.ci.compiler.Compiler_OptionDescriptors;
+    provides jdk.vm.ci.options.OptionDescriptors with
+        jdk.vm.ci.hotspot.HotSpotConstantReflectionProvider_OptionDescriptors;
+    provides jdk.vm.ci.options.OptionDescriptors with
+        jdk.vm.ci.hotspot.HotSpotResolvedJavaFieldImpl_OptionDescriptors;
+    provides jdk.vm.ci.options.OptionDescriptors with
+        jdk.vm.ci.hotspot.HotSpotResolvedJavaMethodImpl_OptionDescriptors;
+
+    provides jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory with
+        jdk.vm.ci.hotspot.amd64.AMD64HotSpotJVMCIBackendFactory;
+    provides jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory with
+        jdk.vm.ci.hotspot.sparc.SPARCHotSpotJVMCIBackendFactory;
 }
 
