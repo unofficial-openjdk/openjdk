@@ -299,7 +299,8 @@ public class JlinkTask {
         }
         Path[] arr = new Path[config.getModulepaths().size()];
         arr = config.getModulepaths().toArray(arr);
-        ModuleFinder finder = newModuleFinder(arr, config.getLimitmods());
+        ModuleFinder finder
+            = newModuleFinder(arr, config.getLimitmods(), config.getModules());
 
         Path[] pluginsPath = new Path[config.getPluginpaths().size()];
         pluginsPath = config.getPluginpaths().toArray(pluginsPath);
@@ -364,7 +365,8 @@ public class JlinkTask {
         if (options.output == null) {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
-        ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
+        ModuleFinder finder
+            = newModuleFinder(options.modulePath, options.limitMods, options.addMods);
         try {
             options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
@@ -396,7 +398,10 @@ public class JlinkTask {
         return addMods;
     }
 
-    private static ModuleFinder newModuleFinder(Path[] paths, Set<String> limitMods) {
+    private static ModuleFinder newModuleFinder(Path[] paths,
+                                                Set<String> limitMods,
+                                                Set<String> addMods)
+    {
         ModuleFinder finder = ModuleFinder.of(paths);
 
         // jmods are located at link-time
@@ -405,7 +410,7 @@ public class JlinkTask {
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {
-            finder = limitFinder(finder, limitMods);
+            finder = limitFinder(finder, limitMods, addMods);
         }
         return finder;
     }
@@ -431,16 +436,18 @@ public class JlinkTask {
 
 
     /**
-     * Returns a ModuleFinder that locates modules via the given ModuleFinder
-     * but limits what can be found to the given modules and their transitive
-     * dependences.
+     * Returns a ModuleFinder that limits observability to the given root
+     * modules, their transitive dependences, plus a set of other modules.
      */
-    private static ModuleFinder limitFinder(ModuleFinder finder, Set<String> mods) {
-        Configuration cf
-            = Configuration.resolve(finder,
+    private static ModuleFinder limitFinder(ModuleFinder finder,
+                                            Set<String> roots,
+                                            Set<String> otherMods)
+    {
+        // resolve all root modules
+        Configuration cf = Configuration.resolve(finder,
                 Layer.empty(),
                 ModuleFinder.empty(),
-                mods);
+                roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -449,7 +456,20 @@ public class JlinkTask {
             map.put(name, finder.find(name).get());
         });
 
+        // set of modules that are observable
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
+
+        // add the other modules
+        for (String mod : otherMods) {
+            Optional<ModuleReference> omref = finder.find(mod);
+            if (omref.isPresent()) {
+                ModuleReference mref = omref.get();
+                map.putIfAbsent(mod, mref);
+                mrefs.add(mref);
+            } else {
+                // no need to fail
+            }
+        }
 
         return new ModuleFinder() {
             @Override

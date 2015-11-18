@@ -24,7 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @modules jdk.compiler
+ * @modules java.desktop java.compact1 jdk.compiler
  * @build LimitModsTest CompilerUtils jdk.testlibrary.*
  * @run testng LimitModsTest
  * @summary Basic tests for java -limitmods
@@ -48,10 +48,8 @@ public class LimitModsTest {
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
 
-    // the module name of the test module
+    // the module name / main class of the test module
     private static final String TEST_MODULE = "test";
-
-    // the module main class
     private static final String MAIN_CLASS = "jdk.test.UseAWT";
 
 
@@ -61,10 +59,76 @@ public class LimitModsTest {
         // javac -d mods/$TESTMODULE src/$TESTMODULE/**
         boolean compiled
             = CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE),
-                                    MODS_DIR.resolve(TEST_MODULE));
+                MODS_DIR.resolve(TEST_MODULE));
 
         assertTrue(compiled, "test module did not compile");
     }
+
+
+    /**
+     * Basic test of -limitmods to limit which platform modules are observable.
+     */
+    public void testLimitingPlatformModules() throws Exception {
+        int exitValue;
+
+        // java -limitmods java.base -listmods
+        exitValue = executeTestJava("-limitmods", "java.base", "-listmods")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .shouldContain("java.base")
+            .shouldNotContain("java.logging")
+            .shouldNotContain("java.xml")
+            .getExitValue();
+
+        assertTrue(exitValue == 0);
+
+
+        // java -limitmods java.compact1 -listmods
+        exitValue = executeTestJava("-limitmods", "java.compact1", "-listmods")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .shouldContain("java.base")
+            .shouldContain("java.logging")
+            .shouldContain("java.compact1")
+            .shouldNotContain("java.xml")
+            .getExitValue();
+
+        assertTrue(exitValue == 0);
+    }
+
+
+    /**
+     * Test -limitmods with -addmods
+     */
+    public void testWithAddMods() throws Exception {
+        int exitValue;
+
+        // java -limitmods java.base -addmods java.logging -listmods
+        exitValue = executeTestJava("-limitmods", "java.base",
+                                    "-addmods", "java.logging",
+                                    "-listmods")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .shouldContain("java.base")
+            .shouldContain("java.logging")
+            .shouldNotContain("java.xml")
+            .getExitValue();
+
+        assertTrue(exitValue == 0);
+
+
+        // java -limitmods java.base -addmods java.sql -listmods
+        // This should fail because java.sql has dependences beyond java.base
+        exitValue = executeTestJava("-limitmods", "java.base",
+                                    "-addmods", "java.sql",
+                                    "-listmods")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .getExitValue();
+
+        assertTrue(exitValue != 0);
+    }
+
 
     /**
      * Run class path application with -limitmods
@@ -97,18 +161,29 @@ public class LimitModsTest {
         assertTrue(exitValue2 == 0);
     }
 
+
     /**
      * Run named module with -limitmods
      */
     public void testNamedModule() throws Exception {
+
         String modulepath = MODS_DIR.toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
         // java -limitmods java.base -mp mods -m $TESTMODULE/$MAINCLASS
-        int exitValue
-            = executeTestJava("-limitmods", "java.base",
-                              "-mp", modulepath,
-                              "-m", mid)
+        int exitValue = executeTestJava("-limitmods", "java.base",
+                                        "-mp", modulepath,
+                                        "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
+
+        // java -limitmods java.desktop -mp mods -m $TESTMODULE/$MAINCLASS
+        exitValue = executeTestJava("-limitmods", "java.desktop",
+                                    "-mp", modulepath,
+                                    "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();

@@ -126,22 +126,6 @@ public final class ModuleBootstrap {
             }
         }
 
-        // -limitmods
-        boolean limitmods = false;
-        propValue = System.getProperty("jdk.launcher.limitmods");
-        if (propValue != null) {
-            Set<String> mods = new HashSet<>();
-            for (String mod: propValue.split(",")) {
-                mods.add(mod);
-            }
-            if (mainModule != null)
-                mods.add(mainModule);
-            if (addModules != null)
-                mods.addAll(addModules);
-            finder = limitFinder(finder, mods);
-            limitmods = true;
-        }
-
         // The root modules to resolve
         Set<String> roots = new HashSet<>();
 
@@ -152,6 +136,20 @@ public final class ModuleBootstrap {
         // If -addmods is specified then those modules need to be resolved
         if (addModules != null)
             roots.addAll(addModules);
+
+
+        // -limitmods
+        boolean limitmods = false;
+        propValue = System.getProperty("jdk.launcher.limitmods");
+        if (propValue != null) {
+            Set<String> mods = new HashSet<>();
+            for (String mod: propValue.split(",")) {
+                mods.add(mod);
+            }
+            finder = limitFinder(finder, mods, roots);
+            limitmods = true;
+        }
+
 
         // If there is no initial module specified then assume that the
         // initial module is the unnamed module of the application class
@@ -244,17 +242,18 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Returns a ModuleFinder that locates modules via the given
-     * ModuleFinder but limits what can be found to the given
-     * modules and their transitive dependences.
+     * Returns a ModuleFinder that limits observability to the given root
+     * modules, their transitive dependences, plus a set of other modules.
      */
     private static ModuleFinder limitFinder(ModuleFinder finder,
-                                            Set<String> mods)
+                                            Set<String> roots,
+                                            Set<String> otherMods)
     {
+        // resolve all root modules
         Configuration cf = Configuration.resolve(finder,
                 Layer.empty(),
                 ModuleFinder.empty(),
-                mods);
+                roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -263,7 +262,20 @@ public final class ModuleBootstrap {
             map.put(name, finder.find(name).get());
         });
 
+        // set of modules that are observable
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
+
+        // add the other modules
+        for (String mod : otherMods) {
+            Optional<ModuleReference> omref = finder.find(mod);
+            if (omref.isPresent()) {
+                ModuleReference mref = omref.get();
+                map.putIfAbsent(mod, mref);
+                mrefs.add(mref);
+            } else {
+                // no need to fail
+            }
+        }
 
         return new ModuleFinder() {
             @Override

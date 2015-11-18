@@ -83,47 +83,6 @@ public class AddModsTest {
 
 
     /**
-     * Basic test of -addmods, using the output of -listmods to check that the
-     * module is resolved.
-     */
-    public void testAddOneModule() throws Exception {
-
-        int exitValue
-            = executeTestJava("-limitmods", "java.base",
-                              "-addmods", "java.sql",
-                              "-listmods")
-                .outputTo(System.out)
-                .errorTo(System.out)
-                .shouldContain("java.sql")
-                .shouldNotContain("java.corba")
-                .getExitValue();
-
-        assertTrue(exitValue == 0);
-    }
-
-
-    /**
-     * Basic test of -addmods, using the output of -listmods to check that the
-     * module is resolved.
-     */
-    public void testAddTwoModules() throws Exception {
-
-        int exitValue
-            = executeTestJava("-limitmods", "java.base",
-                              "-addmods", "java.sql,java.naming",
-                              "-listmods")
-                .outputTo(System.out)
-                .errorTo(System.out)
-                .shouldContain("java.sql")
-                .shouldContain("java.naming")
-                .shouldNotContain("java.corba")
-                .getExitValue();
-
-        assertTrue(exitValue == 0);
-    }
-
-
-    /**
      * Basic test of -addmods ALL-SYSTEM, using the output of -listmods to
      * check that the a sample of the system modules are resolved
      */
