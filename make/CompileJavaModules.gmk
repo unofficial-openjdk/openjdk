@@ -572,7 +572,7 @@ TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
 # use the macro to find the correct target file to depend on.
 # Only the javac compilation actually depends on other modules so limit
 # dependency declaration to that by using the *_COMPILE_TARGET variable.
-$($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
+$($(MODULE)_COMPILE_TARGET): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
     $(call SetupJavaCompilationCompileTarget, $d, \
         $(if $($d_BIN), $($d_BIN), $(JDK_OUTPUTDIR)/modules/$d)))
 
@@ -611,7 +611,7 @@ ifneq ($(wildcard $(IMPORT_MODULES_CLASSES)/$(MODULE)), )
 
   # Add this dependency to avoid a race between compiling module-info.java and
   # importing the classes.
-  $($(MODULE)_COMPILE_TARGETS): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
+  $($(MODULE)_COMPILE_TARGET): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
 endif
 
 ################################################################################
