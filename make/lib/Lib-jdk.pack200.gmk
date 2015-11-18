@@ -36,17 +36,17 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CXXFLAGS_JDKLIB) \
         -DNO_ZLIB -DUNPACK_JNI -DFULL \
-        -I$(HEADERS_OUTPUTDIR)/java.base \
+        -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
         -I$(JDK_TOPDIR)/src/jdk.pack200/share/native/common-unpack \
         $(LIBJAVA_HEADER_FLAGS), \
     CFLAGS_release := -DPRODUCT, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libunpack/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_windows := -map:$(NATIVE_OUTPUTDIR)/$(MODULE)/unpack.map -debug, \
+    LDFLAGS_windows := -map:$(SUPPORT_OUTPUTDIR)/native/$(MODULE)/unpack.map -debug, \
     LIBS_unix := -ljvm $(LIBCXX) -ljava -lc, \
     LIBS_windows := jvm.lib $(WIN_JAVA_LIB), \
-    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libunpack, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libunpack, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=unpack.dll" \

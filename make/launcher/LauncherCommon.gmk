@@ -87,7 +87,7 @@ define SetupBuildLauncherBody
   endif
 
   ifeq ($$($1_OUTPUT_DIR), )
-    $1_OUTPUT_DIR := $(MODULES_CMDS_OUTPUTDIR)/$(MODULE)
+    $1_OUTPUT_DIR := $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE)
   endif
 
   ifeq ($$($1_OPTIMIZATION), )
@@ -128,14 +128,14 @@ define SetupBuildLauncherBody
     endif
 
     $1_CFLAGS += -DPACKAGE_PATH='"$(PACKAGE_PATH)"'
-    $1_LDFLAGS += -Wl,-all_load $(NATIVE_OUTPUTDIR)/java.base/libjli_static.a \
+    $1_LDFLAGS += -Wl,-all_load $(SUPPORT_OUTPUTDIR)/native/java.base/libjli_static.a \
         -sectcreate __TEXT __info_plist $(MACOSX_PLIST_DIR)/$$($1_PLIST_FILE)
     $1_LIBS += -framework Cocoa -framework Security \
         -framework ApplicationServices
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), aix)
-    $1_LDFLAGS += -L$(NATIVE_OUTPUTDIR)/java.base
+    $1_LDFLAGS += -L$(SUPPORT_OUTPUTDIR)/native/java.base
     $1_LIBS += -ljli_static
   endif
 
@@ -145,10 +145,10 @@ define SetupBuildLauncherBody
 
   ifeq ($$($1_WINDOWS_STATIC_LINK), true)
     $1_CFLAGS += $(filter-out -MD, $(CFLAGS_JDKEXE))
-    $1_WINDOWS_JLI_LIB := $(NATIVE_OUTPUTDIR)/java.base/jli_static.lib
+    $1_WINDOWS_JLI_LIB := $(SUPPORT_OUTPUTDIR)/native/java.base/jli_static.lib
   else
     $1_CFLAGS += $(CFLAGS_JDKEXE)
-    $1_WINDOWS_JLI_LIB := $(NATIVE_OUTPUTDIR)/java.base/libjli/jli.lib
+    $1_WINDOWS_JLI_LIB := $(SUPPORT_OUTPUTDIR)/native/java.base/libjli/jli.lib
   endif
 
   # The linker on older SuSE distros (e.g. on SLES 10) complains with:
@@ -188,20 +188,20 @@ define SetupBuildLauncherBody
           $$($1_LDFLAGS), \
       LDFLAGS_linux := \
           $(call SET_SHARED_LIBRARY_NAME,$(LIBRARY_PREFIX)$(SHARED_LIBRARY_SUFFIX)) \
-          -L$(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli, \
+          -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli, \
       LDFLAGS_macosx := $(call SET_SHARED_LIBRARY_NAME,$1), \
       LDFLAGS_solaris := $$($1_LDFLAGS_solaris) \
           $(call SET_SHARED_LIBRARY_NAME,$(LIBRARY_PREFIX)$(SHARED_LIBRARY_SUFFIX)) \
-          -L$(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli, \
+          -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)/jli, \
       MAPFILE := $$($1_MAPFILE), \
       LIBS := $(JDKEXE_LIBS) $$($1_LIBS), \
       LIBS_unix := $$($1_LIBS_unix), \
       LIBS_linux := -lpthread -ljli $(LIBDL) -lc, \
       LIBS_solaris := -ljli -lthread $(LIBDL) -lc, \
       LIBS_windows := $$($1_WINDOWS_JLI_LIB) \
-          $(NATIVE_OUTPUTDIR)/java.base/libjava/java.lib advapi32.lib \
+          $(SUPPORT_OUTPUTDIR)/native/java.base/libjava/java.lib advapi32.lib \
           $$($1_LIBS_windows), \
-      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/$1_objs, \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/$1_objs, \
       OUTPUT_DIR := $$($1_OUTPUT_DIR), \
       PROGRAM := $1, \
       DEBUG_SYMBOLS := true, \
@@ -220,11 +220,11 @@ define SetupBuildLauncherBody
   TARGETS += $$($1)
 
   ifneq (,$(filter $(OPENJDK_TARGET_OS), macosx aix))
-    $$(BUILD_LAUNCHER_$1): $(NATIVE_OUTPUTDIR)/java.base/libjli_static.a
+    $$(BUILD_LAUNCHER_$1): $(SUPPORT_OUTPUTDIR)/native/java.base/libjli_static.a
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
-    $$(BUILD_LAUNCHER_$1): $(NATIVE_OUTPUTDIR)/java.base/libjava/java.lib \
+    $$(BUILD_LAUNCHER_$1): $(SUPPORT_OUTPUTDIR)/native/java.base/libjava/java.lib \
         $$($1_WINDOWS_JLI_LIB)
   endif
 endef

@@ -55,7 +55,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
         -D "JDK_FNAME=dt_socket.dll" \
         -D "JDK_INTERNAL_NAME=dt_socket" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libdt_socket, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libdt_socket, \
     DEBUG_SYMBOLS := true))
 
 $(BUILD_LIBDT_SOCKET): $(call FindLib, java.base, java)
@@ -80,7 +80,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) -DJDWP_LOGGING \
         $(LIBJDWP_CPPFLAGS) \
-        -I$(HEADERS_OUTPUTDIR)/jdk.jdwp.agent, \
+        -I$(SUPPORT_OUTPUTDIR)/headers/jdk.jdwp.agent, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjdwp/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -94,7 +94,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
         -D "JDK_FNAME=jdwp.dll" \
         -D "JDK_INTERNAL_NAME=jdwp" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libjdwp, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjdwp, \
     DEBUG_SYMBOLS := true))
 
 $(BUILD_LIBJDWP): $(call FindLib, java.base, java)

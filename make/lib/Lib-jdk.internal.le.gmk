@@ -33,7 +33,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       #
   LIBLE_CPPFLAGS := \
       $(addprefix -I, $(LIBLE_SRC)) \
-      -I$(HEADERS_OUTPUTDIR)/jdk.internal.le \
+      -I$(SUPPORT_OUTPUTDIR)/headers/jdk.internal.le \
       #
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBLE, \
@@ -50,7 +50,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
           -D "JDK_FNAME=le.dll" \
           -D "JDK_INTERNAL_NAME=le" \
           -D "JDK_FTYPE=0x2L", \
-      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/lible, \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/lible, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   TARGETS += $(BUILD_LIBLE)

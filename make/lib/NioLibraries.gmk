@@ -36,7 +36,7 @@ BUILD_LIBNIO_SRC := \
 
 BUILD_LIBNIO_CFLAGS := \
     $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
-    -I$(HEADERS_OUTPUTDIR)/java.base \
+    -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
     $(LIBJAVA_HEADER_FLAGS) \
     $(addprefix -I, $(BUILD_LIBNET_SRC))
 
@@ -80,14 +80,14 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO, \
     LIBS_macosx := \
         -framework CoreFoundation -framework CoreServices, \
     LIBS_windows := jvm.lib ws2_32.lib $(WIN_JAVA_LIB) \
-        $(NATIVE_OUTPUTDIR)/$(MODULE)/libnet/net.lib \
+        $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnet/net.lib \
         advapi32.lib, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=nio.dll" \
         -D "JDK_INTERNAL_NAME=nio" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libnio, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnio, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
 TARGETS += $(BUILD_LIBNIO)

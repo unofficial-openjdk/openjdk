@@ -32,7 +32,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   LIBOSXSECURITY_DIRS := $(JDK_TOPDIR)/src/java.base/macosx/native/libosxsecurity
   LIBOSXSECURITY_CFLAGS := -I$(LIBOSXSECURITY_DIRS) \
       $(LIBJAVA_HEADER_FLAGS) \
-      -I$(HEADERS_OUTPUTDIR)/java.base \
+      -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSXSECURITY, \
       LIBRARY := osxsecurity, \
@@ -43,7 +43,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
           $(LIBOSXSECURITY_CFLAGS), \
       DISABLED_WARNINGS_clang := deprecated-declarations, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
-          -L$(MODULES_LIBS_OUTPUTDIR)/java.base \
+          -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base \
           $(call SET_SHARED_LIBRARY_ORIGIN) \
           -fobjc-link-runtime, \
       LIBS := \
@@ -51,7 +51,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
           -framework CoreServices \
           -framework Security \
           $(JDKLIB_LIBS), \
-      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libosxsecurity, \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libosxsecurity, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   $(BUILD_LIBOSXSECURITY): $(BUILD_LIBJAVA)
