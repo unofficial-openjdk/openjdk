@@ -142,7 +142,7 @@ $(FULL_COMPANY_NAME) in the US and other countries.
 # to $(PATH_SEP) being interpreted as an end of
 # command (newline or shell ; character)
 ALL_SOURCE_DIRS := $(wildcard \
-      $(GENSRC_OUTPUTDIR)/j* \
+      $(SUPPORT_OUTPUTDIR)/gensrc/j* \
       $(if $(IMPORT_MODULES_SRC), $(IMPORT_MODULES_SRC)/*) \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
       $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
@@ -697,7 +697,7 @@ ALL_OTHER_TARGETS += jdwpdocs
 JDWP_DOCDIR = $(PLATFORM_DOCSDIR)/jpda/jdwp
 
 jdwpdocs: $(JDWP_DOCDIR)/jdwp-protocol.html
-$(JDWP_DOCDIR)/jdwp-protocol.html : $(GENSRC_OUTPUTDIR)/jdk.jdi/jdwp-protocol.html
+$(JDWP_DOCDIR)/jdwp-protocol.html : $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/jdwp-protocol.html
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(CP) $< $@

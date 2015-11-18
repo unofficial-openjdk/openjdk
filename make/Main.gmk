@@ -337,20 +337,22 @@ ALL_TARGETS += docs-javadoc docs-jvmtidoc
 
 ifeq ($(CREATE_BUILDJDK), true)
   # This target is only called by the recursive call below.
-  create-buildjdk-helper: jdk.jlink-launchers java.base-copy
+  create-buildjdk-compile-hotspot-helper: hotspot
+  create-buildjdk-compile-modules-helper: jdk.jlink-launchers java.base-copy
 endif
 
 create-buildjdk-copy:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateBuildJdkCopy.gmk)
 
-create-buildjdk-compile:
+create-buildjdk-compile-hotspot create-buildjdk-compile-modules:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Main.gmk \
-	    create-buildjdk-helper \
+	    $@-helper \
 	    SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
 	    HOTSPOT_SPEC=$(dir $(SPEC))buildjdk-spec.gmk \
 	    CREATING_BUILDJDK=true)
 
-ALL_TARGETS += create-buildjdk-copy create-buildjdk-compile
+ALL_TARGETS += create-buildjdk-copy create-buildjdk-compile-hotspot \
+    create-buildjdk-compile-modules
 
 ################################################################################
 # Build tests
@@ -561,7 +563,7 @@ else
 
   create-buildjdk-copy: jdk.jlink-java java.base-gendata
 
-  create-buildjdk-compile: create-buildjdk-copy
+  create-buildjdk-compile-modules: create-buildjdk-copy create-buildjdk-compile-hotspot
 
   test-make: clean-test-make
 
@@ -624,7 +626,8 @@ samples: samples-jdk
 # The "exploded image" is a locally runnable JDK in $(BUILD_OUTPUT)/jdk.
 exploded-image: $(ALL_MODULES)
 
-create-buildjdk: create-buildjdk-compile create-buildjdk-copy
+create-buildjdk: create-buildjdk-compile-modules create-buildjdk-copy \
+    create-buildjdk-compile-hotspot
 
 mac-bundles: mac-bundles-jdk
 

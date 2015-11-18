@@ -492,7 +492,7 @@ ifeq ($(GCOV_ENABLED), true)
   $(eval $(call SetupCopyFiles,COPY_JDK_GCOV_GCNO, \
       SRC := $(OUTPUT_ROOT), \
       DEST := $(SYMBOLS_IMAGE_DIR)/gcov, \
-      FILES := $(shell $(FIND) $(NATIVE_OUTPUTDIR) $(GCOV_FIND_EXPR))))
+      FILES := $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/native $(GCOV_FIND_EXPR))))
 
   SYMBOLS_TARGETS += $(COPY_JDK_GCOV_GCNO)
 

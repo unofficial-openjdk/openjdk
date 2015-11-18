@@ -670,10 +670,10 @@ LogFailures = \
 # Param 1 - module name
 ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
   FindLibDirForModule = \
-      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
+      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
 else
   FindLibDirForModule = \
-      $(MODULES_LIBS_OUTPUTDIR)/$(strip $1)
+      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
 endif
 
 ################################################################################

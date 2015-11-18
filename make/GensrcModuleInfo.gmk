@@ -113,7 +113,7 @@ ifneq ($(MOD_FILES), )
     $(eval ARGS += -$(command) $(package)/$(to_module)))
 
   ifneq ($(ARGS), )
-    $(GENSRC_OUTPUTDIR)/$(MODULE)/module-info.java: \
+    $(SUPPORT_OUTPUTDIR)/gensrc/$(MODULE)/module-info.java: \
         $(firstword $(call FindAllModuleInfos, $(MODULE))) \
         $(BUILD_TOOLS_JDK) \
         $(call DependOnVariable, ARGS)
@@ -122,7 +122,7 @@ ifneq ($(MOD_FILES), )
 		$(TOOL_GENMODULEINFOSOURCE) $(ARGS) -o $@.tmp $<
 		$(MV) $@.tmp $@
 
-    TARGETS += $(GENSRC_OUTPUTDIR)/$(MODULE)/module-info.java
+    TARGETS += $(SUPPORT_OUTPUTDIR)/gensrc/$(MODULE)/module-info.java
   endif
 
 # This doesn't work because javac only accepts one single exports line per
@@ -133,7 +133,7 @@ ifneq ($(MOD_FILES), )
 #  ifneq ($(MODIFICATIONS), )
 #    $(eval $(call SetupTextFileProcessing, PROCESS_MODULE_INFO, \
 #        SOURCE_FILES := $(firstword $(call FindAllModuleInfos, $(MODULE))), \
-#        OUTPUT_FILE := $(GENSRC_OUTPUTDIR)/$(MODULE)/module-info.java, \
+#        OUTPUT_FILE := $(SUPPORT_OUTPUTDIR)/gensrc/$(MODULE)/module-info.java, \
 #        REPLACEMENTS := } => $(MODIFICATIONS) }, \
 #    ))
 
@@ -144,8 +144,8 @@ endif
 # If no modifications are found for this module, remove any module-info.java
 # created by a previous build since that is no longer valid.
 ifeq ($(MODIFICATIONS), )
-  ifneq ($(wildcard $(GENSRC_OUTPUTDIR)/$(MODULE)/module-info.java), )
-    $(shell $(RM) $(GENSRC_OUTPUTDIR)/$(MODULE)/module-info.java)
+  ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/gensrc/$(MODULE)/module-info.java), )
+    $(shell $(RM) $(SUPPORT_OUTPUTDIR)/gensrc/$(MODULE)/module-info.java)
   endif
 endif
 

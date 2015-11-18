@@ -483,8 +483,8 @@ jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 # source before static source and platform specific source before shared.
 #
 GENERATED_SRC_DIRS += \
-    $(GENSRC_OUTPUTDIR) \
-    $(GENSRC_OUTPUTDIR)_no_docs \
+    $(SUPPORT_OUTPUTDIR)/gensrc \
+    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
     #
 
 TOP_SRC_DIRS += \
@@ -557,7 +557,7 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
     SRC := $(wildcard $(MODULE_SRC_DIRS)), \
     INCLUDES := $(JDK_USER_DEFINED_FILTER),\
     BIN := $(if $($(MODULE)_BIN), $($(MODULE)_BIN), $(JDK_OUTPUTDIR)/modules), \
-    HEADERS := $(HEADERS_OUTPUTDIR), \
+    HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
