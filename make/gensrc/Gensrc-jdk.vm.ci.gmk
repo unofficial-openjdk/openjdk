@@ -30,7 +30,7 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
-GENSRC_DIR := $(GENSRC_OUTPUTDIR)/jdk.vm.ci
+GENSRC_DIR := $(SUPPORT_OUTPUTDIR)/gensrc/jdk.vm.ci
 SRC_DIR := $(HOTSPOT_TOPDIR)/src/jdk.vm.ci/share/classes
 
 ################################################################################
