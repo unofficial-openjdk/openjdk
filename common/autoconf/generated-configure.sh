@@ -3852,8 +3852,6 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
-
-
 #
 # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4655,7 +4653,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1447847507
+DATE_WHEN_GENERATED=1447851335
 
 ###############################################################################
 #
@@ -47482,17 +47480,6 @@ $as_echo "$supports" >&6; }
       ;;
   esac
 
-
-
-
-
-  if test "x$COMPILE_TYPE" = "xcross"; then
-    BUILD_SYSROOT_CFLAGS=""
-    BUILD_SYSROOT_LDFLAGS=""
-  else
-    BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
-    BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
-  fi
 
 
 
