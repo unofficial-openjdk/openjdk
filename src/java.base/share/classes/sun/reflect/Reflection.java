@@ -239,13 +239,11 @@ public class Reflection {
     }
 
     private static String packageName(Class<?> c) {
-        if (c.isArray()) {
-            return packageName(c.getComponentType());
+        String pn = c.getPackageName();
+        if (pn != null) {
+            return pn;
         } else {
-            String name = c.getName();
-            int dot = name.lastIndexOf('.');
-            if (dot == -1) return "";
-            return name.substring(0, dot);
+            throw new InternalError("Should not get here: " + c);
         }
     }
 
@@ -430,12 +428,7 @@ public class Reflection {
                 public Boolean run() {
                     String s;
                     s = System.getProperty("sun.reflect.debugModuleAccessChecks");
-                    if (s != null && !s.equalsIgnoreCase("false"))
-                        return true;
-
-                    // legacy property name, it cannot be used to disable checks
-                    s = System.getProperty("sun.reflect.enableModuleChecks");
-                    return "debug".equals(s);
+                    return (s != null && !s.equalsIgnoreCase("false"));
                 }
             };
             printStackWhenAccessFails = AccessController.doPrivileged(pa);

@@ -941,6 +941,46 @@ public final class Class<T> implements java.io.Serializable,
 
 
     /**
+     * Returns the fully qualified package name.
+     *
+     * If this class is a top level class, then this method returns the fully
+     * qualified name of the package that the class is a member of, or the
+     * empty string if the class is in an unnamed package.
+     *
+     * If this class is a member class, then this method is equivalent to
+     * invoking {@code getPackageName()} on the {@link #getEnclosingClass
+     * enclosing class}.
+     *
+     * If this class is a {@link #isLocalClass local class} or an {@link
+     * #isAnonymousClass() anonymous class}, then this method is equivalent to
+     * invoking {@code getPackageName()} on the {@link #getDeclaringClass
+     * declaring class} of the {@link #getEnclosingMethod enclosing method} or
+     * {@link #getEnclosingConstructor enclosing constructor}.
+     *
+     * This method returns {@code null} if this class represents an array type,
+     * a primitive type or void.
+     *
+     * @return the fully qualified package name
+     *
+     * @since 1.9
+     * @jls 6.7  Fully Qualified Names
+     */
+    public String getPackageName() {
+        String pn = this.packageName;
+        if (pn == null && !isArray() && !isPrimitive()) {
+            String cn = getName();
+            int dot = cn.lastIndexOf('.');
+            pn = (dot != -1) ? cn.substring(0, dot) : "";  // intern?
+            this.packageName = pn;
+        }
+        return pn;
+    }
+
+    // cached package name, this will eventually move to a helper type with module
+    private String packageName;
+
+
+    /**
      * Returns the interfaces directly implemented by the class or interface
      * represented by this object.
      *
