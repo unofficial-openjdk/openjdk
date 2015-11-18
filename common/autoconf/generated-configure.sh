@@ -4653,7 +4653,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1447851335
+DATE_WHEN_GENERATED=1447863188
 
 ###############################################################################
 #
@@ -47115,7 +47115,7 @@ $as_echo "$supports" >&6; }
 
     # When building a buildjdk, it's always only the server variant
     OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
-        -L\$(MODULES_LIBS_OUTPUTDIR)/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+        -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
   fi
 
   OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${LDFLAGS_JDKLIB}"
