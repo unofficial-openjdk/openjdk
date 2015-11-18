@@ -70,7 +70,7 @@ $(eval $(call SetupJarArchive, CREATE_CTSYM, \
 # Copy ct.sym to the modules libs dir
 $(eval $(call SetupCopyFiles, COPY_TO_LIBS, \
     FILES := $(SUPPORT_OUTPUTDIR)/symbols/ct.sym, \
-    DEST := $(MODULES_LIBS_OUTPUTDIR)/jdk.compiler, \
+    DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.compiler, \
 ))
 
 TARGETS += $(CREATE_CTSYM) $(COPY_TO_LIBS)
