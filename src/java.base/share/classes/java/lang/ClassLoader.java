@@ -470,7 +470,7 @@ public abstract class ClassLoader {
      *   class in the given module.</li>
      * </ol>
      *
-     * @param  modul
+     * @param  module
      *         The module
      * @param  name
      *         The <a href="#name">binary name</a> of the class
@@ -482,13 +482,14 @@ public abstract class ClassLoader {
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             Class<?> c = findLoadedClass(name);
-            if (c != null && c.getModule() != module) {
-                c = null;
-            }
             if (c == null) {
                 c = findClass(module.getName(), name);
             }
-            return c;
+            if (c != null && c.getModule() == module) {
+                return c;
+            } else {
+                return null;
+            }
         }
     }
 
