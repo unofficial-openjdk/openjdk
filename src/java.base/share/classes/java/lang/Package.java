@@ -321,7 +321,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     @SuppressWarnings("deprecation")
     public static Package getPackage(String name) {
         ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
-        return l != null ? l.getPackage(name) : BootLoader.getPackage(name);
+        return l != null ? l.getPackage(name) : BootLoader.getDefinedPackage(name);
     }
 
     /**

@@ -1905,7 +1905,7 @@ public abstract class ClassLoader {
             if (parent != null) {
                 pkg = parent.getPackage(name);
             } else {
-                pkg = BootLoader.getPackage(name);
+                pkg = BootLoader.getDefinedPackage(name);
             }
         }
         return pkg;

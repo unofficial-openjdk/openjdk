@@ -126,7 +126,7 @@ public class BootLoader {
      * Returns the Package of the given name defined to the boot loader or null
      * if the package has not been defined.
      */
-    public static Package getPackage(String pn) {
+    public static Package getDefinedPackage(String pn) {
         String location = getSystemPackageLocation(pn.replace('.', '/').concat("/"));
         if (location == null) {
             return null;
