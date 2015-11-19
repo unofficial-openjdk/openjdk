@@ -66,9 +66,6 @@ sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 # 8078484
 sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 
-# 8132672
-java/rmi/transport/dgcDeadLock/DGCDeadLock.java			generic-all
-
 ############################################################################
 
 # jdk_other
