@@ -200,6 +200,8 @@ public class JRTIndex {
             if (Files.exists(dir)) {
                 try (DirectoryStream<Path> modules = Files.newDirectoryStream(dir)) {
                     for (Path module: modules) {
+                        if (Files.isSymbolicLink(module))
+                            module = Files.readSymbolicLink(module);
                         Path p = rd.getFile(module);
                         if (!Files.exists(p))
                             continue;
