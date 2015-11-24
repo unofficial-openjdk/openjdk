@@ -66,7 +66,6 @@ JAVA_MANIFEST := $(JDK_TOPDIR)/src/java.base/windows/native/launcher/java.manife
 #     current module
 # MAIN_CLASS   The Java main class to launch
 # JAVA_ARGS   Processed into a -DJAVA_ARGS C flag
-# APP_CLASSPATH   Processed into a -DAPP_CLASSPATH C flag
 # CFLAGS   Additional CFLAGS
 # CFLAGS_windows   Additional CFLAGS_windows
 # LIBS_unix   Additional LIBS_unix
@@ -109,14 +108,6 @@ define SetupBuildLauncherBody
     $1_CFLAGS += -DJAVA_ARGS=$$($1_JAVA_ARGS_STR)
   endif
 
-  ifneq ($$($1_APP_CLASSPATH), )
-    $1_APP_CLASSPATH_STR := '{ $$(strip $$(foreach a, \
-        $$($1_APP_CLASSPATH), "$$a"$(COMMA) )) }'
-    # Remove the trailing comma
-    $1_APP_CLASSPATH_STR := $$(strip $$(subst $$(COMMA) }', }', \
-        $$($1_APP_CLASSPATH_STR)))
-    $1_CFLAGS += -DAPP_CLASSPATH=$$($1_APP_CLASSPATH_STR)
-  endif
 
   $1_LIBS :=
   ifeq ($(OPENJDK_TARGET_OS), macosx)
