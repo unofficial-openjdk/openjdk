@@ -22,6 +22,11 @@
  */
 
 import java.io.File;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Layer;
+import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -37,7 +42,7 @@ import static org.testng.Assert.*;
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.compiler
- * @build ProxyClassAccessTest CompilerUtils jdk.testlibrary.*
+ * @build ProxyClassAccessTest q.NP CompilerUtils jdk.testlibrary.*
  * @run testng ProxyClassAccessTest
  * @summary Driver for testing proxy class doesn't have access to
  *          types referenced by proxy interfaces
@@ -78,4 +83,36 @@ public class ProxyClassAccessTest {
 
         assertTrue(exitValue == 0);
     }
+
+    /**
+     * Test unnamed module has no access to other proxy interface
+     */
+    @Test
+    public void testNoReadAccess() throws Exception {
+        ModuleFinder finder = ModuleFinder.of(MODS_DIR);
+        Configuration cf = Configuration
+                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+
+        ClassLoader loader = new ModuleClassLoader(cf);
+        Layer layer = Layer.create(cf, mn -> loader);
+        Class<?>[] interfaces = new Class<?>[] {
+                Class.forName("p.one.I", false, loader),
+                Class.forName("q.NP", false, loader)     // non-public interface in unnamed module
+        };
+        checkIAE(loader, interfaces);
+    }
+
+    private void checkIAE(ClassLoader loader, Class<?>[] interfaces) {
+        try {
+            Proxy.getProxyClass(loader, interfaces);
+            throw new RuntimeException("Expected IllegalArgumentException thrown");
+        } catch (IllegalArgumentException e) {}
+
+        try {
+            Proxy.newProxyInstance(loader, interfaces,
+                (proxy, m, params) -> { throw new RuntimeException(m.toString()); });
+            throw new RuntimeException("Expected IllegalArgumentException thrown");
+        } catch (IllegalArgumentException e) {}
+    }
+
 }

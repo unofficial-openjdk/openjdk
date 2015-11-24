@@ -404,12 +404,6 @@ public class Proxy implements java.io.Serializable {
         }
     }
 
-    private static String packageName(Class<?> c) {
-        String cn = c.getName();
-        int last = cn.lastIndexOf(".");
-        return (last != -1) ? cn.substring(0, last) : "";
-    }
-
     /*
      * a key used for proxy class with 0 implemented interfaces
      */
@@ -567,7 +561,7 @@ public class Proxy implements java.io.Serializable {
                 int flags = intf.getModifiers();
                 if (!Modifier.isPublic(flags)) {
                     accessFlags = Modifier.FINAL;  // non-public, final
-                    String pkg = packageName(intf);
+                    String pkg = intf.getPackageName();
                     if (proxyPkg == null) {
                         proxyPkg = pkg;
                     } else if (!pkg.equals(proxyPkg)) {
@@ -652,7 +646,7 @@ public class Proxy implements java.io.Serializable {
 
 
         private static boolean isExportedType(Class<?> c) {
-            String pn = packageName(c);
+            String pn = c.getPackageName();
             return Modifier.isPublic(c.getModifiers()) && c.getModule().isExported(pn);
         }
 
@@ -745,7 +739,10 @@ public class Proxy implements java.io.Serializable {
          * @throws IllegalArgumentException if it violates the restrictions specified
          *         in {@link Proxy#newProxyInstance}
          */
-        static void validateProxyInterfaces(ClassLoader loader, List<Class<?>> interfaces, Set<Class<?>> refTypes) {
+        static void validateProxyInterfaces(ClassLoader loader,
+                                            List<Class<?>> interfaces,
+                                            Set<Class<?>> refTypes)
+        {
             Map<Class<?>, Boolean> interfaceSet = new IdentityHashMap<>(interfaces.size());
             for (Class<?> intf : interfaces) {
                 /*
@@ -816,7 +813,7 @@ public class Proxy implements java.io.Serializable {
                 Module m = intf.getModule();
                 if (Modifier.isPublic(intf.getModifiers())) {
                     // module-private types
-                    if (!m.isExported(packageName(intf))) {
+                    if (!m.isExported(intf.getPackageName())) {
                         modulePrivateTypes.put(intf, m);
                     }
                 } else {
@@ -839,7 +836,7 @@ public class Proxy implements java.io.Serializable {
                 // and both have the same package p (so no need to check class loader)
                 if (packagePrivateTypes.size() > 1 &&
                         (packagePrivateTypes.keySet().stream()  // more than one package
-                                 .map(Proxy::packageName).distinct().count() > 1 ||
+                                 .map(Class::getPackageName).distinct().count() > 1 ||
                          packagePrivateTypes.values().stream()  // or more than one module
                                  .distinct().count() > 1)) {
                     throw new IllegalArgumentException(
@@ -847,18 +844,28 @@ public class Proxy implements java.io.Serializable {
                 }
 
                 // all package-private types are in the same module (named or unnamed)
+                Module target = null;
                 for (Module m : packagePrivateTypes.values()) {
-                    if (getLoader(m) == loader) {
-                        // return the module of the package-private interface if
-                        // loader is the module's class loader
-                        return m;
-                    } else {
+                    if (getLoader(m) != loader) {
                         // the specified loader is not the same class loader of the non-public interface
                         throw new IllegalArgumentException(
                                 "non-public interface is not defined by the given loader");
                     }
-
+                    target = m;
                 }
+
+                // validate if the target module can access all other interfaces
+                for (Class<?> intf : interfaces) {
+                    Module m = intf.getModule();
+                    if (m == target) continue;
+
+                    if (!target.canRead(m) || !m.isExported(intf.getPackageName(), target)) {
+                        throw new IllegalArgumentException(target + " can't access " + intf.getName());
+                    }
+                }
+
+                // return the module of the package-private interface
+                return target;
             }
 
             // all proxy interfaces are public and at least one in a non-exported package
@@ -898,7 +905,7 @@ public class Proxy implements java.io.Serializable {
             if (!target.canRead(m)) {
                 Modules.addReads(target, m);
             }
-            String pn = packageName(c);
+            String pn = c.getPackageName();
             if (!m.isExported(pn, target)) {
                 Modules.addExports(m, pn, target);
             }
@@ -977,10 +984,11 @@ public class Proxy implements java.io.Serializable {
      * must be visible by name through the specified class loader.
      *
      * <li>All non-public interfaces must be in the same package
-     * and module and defined by the specified class loader;
-     * otherwise, it would not be possible for the proxy class to
-     * implement all of the interfaces, regardless of what package it is
-     * defined in.
+     * and module, defined by the specified class loader and
+     * the module of the non-public interfaces can access all of
+     * the interface types; otherwise, it would not be possible for
+     * the proxy class to implement all of the interfaces,
+     * regardless of what package it is defined in.
      *
      * <li>For any set of member methods of the specified interfaces
      * that have the same signature:

@@ -80,7 +80,8 @@ public class ProxyLayerTest {
     public void testProxyInUnnamed() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules)
+                .bind();
 
         ClassLoader loader = new ModuleClassLoader(cf);
         Layer layer = Layer.create(cf, mn -> loader);
@@ -102,6 +103,7 @@ public class ProxyLayerTest {
         assertFalse(pkg.isSealed());
         assertEquals(proxyClass.getModule().getLayer(), null);
     }
+
     /**
      * Test proxy implementing interfaces in a Layer and defined in a
      * dynamic module
@@ -128,6 +130,41 @@ public class ProxyLayerTest {
         assertTrue(proxyClass.getModule().isNamed());
         assertFalse(pkg.isSealed());   // not sealed since no module location
         assertEquals(proxyClass.getModule().getLayer(), null);
+    }
+
+    /**
+     * Test proxy implementing interfaces that the target module has no access
+     */
+    @Test
+    public void testNoReadAccess() throws Exception {
+        ModuleFinder finder = ModuleFinder.of(MODS_DIR);
+        Configuration cf = Configuration
+                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+
+        ClassLoader loader = new ModuleClassLoader(cf);
+        Layer layer = Layer.create(cf, mn -> loader);
+
+        assertTrue(layer.findModule("m1").isPresent());
+        assertTrue(layer.findModule("m2").isPresent());
+        assertTrue(layer.findModule("m3").isPresent());
+
+        Class<?>[] interfaces = new Class<?>[] {
+                Class.forName("p.one.I", false, loader),
+                Class.forName("p.two.B", false, loader)   // non-public interface but exported package
+        };
+        checkIAE(loader, interfaces);
+    }
+
+    private void checkIAE(ClassLoader loader, Class<?>[] interfaces) {
+        try {
+            Proxy.getProxyClass(loader, interfaces);
+            throw new RuntimeException("Expected IllegalArgumentException thrown");
+        } catch (IllegalArgumentException e) {}
+
+        try {
+            Proxy.newProxyInstance(loader, interfaces, handler);
+            throw new RuntimeException("Expected IllegalArgumentException thrown");
+        } catch (IllegalArgumentException e) {}
     }
 
     private final static InvocationHandler handler =
