@@ -22,25 +22,45 @@
  *
  */
 
-/**
- * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
- */
+#include "precompiled.hpp"
+#include "classfile/classListParser.hpp"
+#include "runtime/os.hpp"
+#include "runtime/java.hpp"
 
-public class TestCastIINoLoopLimitCheck {
-
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
-    }
-
-    static public void main(String[] args) {
-        m(0, 0, null);
-    }
+ClassListParser::ClassListParser(const char* file) {
+  _classlist_file = file;
+  _file = fopen(file, "r");
+  if (_file == NULL) {
+    char errmsg[JVM_MAXPATHLEN];
+    os::lasterror(errmsg, JVM_MAXPATHLEN);
+    vm_exit_during_initialization("Loading classlist failed", errmsg);
+  }
 }
+
+ClassListParser::~ClassListParser() {
+  if (_file) {
+    fclose(_file);
+  }
+}
+
+bool ClassListParser::parse_one_line() {
+  for (;;) {
+    if (fgets(_line, sizeof(_line), _file) == NULL) {
+      return false;
+    }
+    int line_len = (int)strlen(_line);
+    if (line_len > _max_allowed_line_len) {
+      tty->print_cr("input line too long (must be no longer than %d chars)", _max_allowed_line_len);
+      vm_exit_during_initialization("Loading classlist failed");
+    }
+    if (*_line == '#') { // comment
+      continue;
+    }
+    break;
+  }
+
+  // Remove trailing \r\n
+  _line[strcspn(_line, "\r\n")] = 0;
+  return true;
+}
+

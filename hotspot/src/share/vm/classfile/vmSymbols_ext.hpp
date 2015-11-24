@@ -22,25 +22,10 @@
  *
  */
 
-/**
- * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
- */
+#ifndef SHARE_VM_CLASSFILE_VMSYMBOLS_EXT_HPP
+#define SHARE_VM_CLASSFILE_VMSYMBOLS_EXT_HPP
 
-public class TestCastIINoLoopLimitCheck {
+#define VM_SYMBOLS_DO_EXT(template, do_alias)
 
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
-    }
+#endif // SHARE_VM_CLASSFILE_VMSYMBOLS_EXT_HPP
 
-    static public void main(String[] args) {
-        m(0, 0, null);
-    }
-}

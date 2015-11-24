@@ -22,25 +22,15 @@
  *
  */
 
-/**
- * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
- */
+#include "precompiled.hpp"
+#include "classfile/classListParser.hpp"
+#include "classfile/classLoaderExt.hpp"
+#include "classfile/symbolTable.hpp"
+#include "classfile/systemDictionary.hpp"
 
-public class TestCastIINoLoopLimitCheck {
 
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
-    }
-
-    static public void main(String[] args) {
-        m(0, 0, null);
-    }
+Klass* ClassLoaderExt::load_one_class(ClassListParser* parser, TRAPS) {
+  TempNewSymbol class_name_symbol = SymbolTable::new_symbol(parser->current_class_name(), THREAD);
+  guarantee(!HAS_PENDING_EXCEPTION, "Exception creating a symbol.");
+  return SystemDictionary::resolve_or_null(class_name_symbol, THREAD);
 }
