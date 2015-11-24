@@ -25,6 +25,7 @@
 
 module java.xml {
     exports javax.xml;
+    exports javax.xml.catalog;
     exports javax.xml.datatype;
     exports javax.xml.namespace;
     exports javax.xml.parsers;
