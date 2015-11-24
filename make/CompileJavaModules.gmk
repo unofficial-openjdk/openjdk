@@ -551,7 +551,7 @@ endif
 # missing directories in the moduleclasspath.
 $(call MakeDir, $(GENERATED_SRC_DIRS))
 
-$(eval $(call SetupJavaCompilation,$(MODULE), \
+$(eval $(call SetupJavaCompilation, $(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
     SRC := $(wildcard $(MODULE_SRC_DIRS)), \
