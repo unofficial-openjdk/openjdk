@@ -636,7 +636,7 @@ mac-bundles: mac-bundles-jdk
 
 # This target builds the product images, e.g. the JRE and JDK image
 # (and possibly other, more specific versions)
-product-images: jimages demos samples zip-security
+product-images: jimages demos samples zip-security exploded-image
 
 # When cross compiling and building a partial BUILDJDK for the build host,
 # the summary generation cannot be run.
