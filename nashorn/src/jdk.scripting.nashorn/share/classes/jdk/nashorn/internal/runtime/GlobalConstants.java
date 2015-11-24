@@ -67,7 +67,7 @@ import jdk.nashorn.internal.runtime.logging.Logger;
  *
  * Thus everything registered as a global constant gets an extra chance. Set once,
  * reregister the switchpoint. Set twice or more - don't try again forever, or we'd
- * just end up relinking our way into megamorphisism.
+ * just end up relinking our way into megamorphism.
  *
  * Also it has to be noted that this kind of linking creates a coupling between a Global
  * and the call sites in compiled code belonging to the Context. For this reason, the
@@ -105,7 +105,7 @@ public final class GlobalConstants implements Loggable {
      * Access map for this global - associates a symbol name with an Access object, with getter
      * and invalidation information
      */
-    private final Map<String, Access> map = new HashMap<>();
+    private final Map<Object, Access> map = new HashMap<>();
 
     private final AtomicBoolean invalidatedForever = new AtomicBoolean(false);
 
@@ -301,7 +301,7 @@ public final class GlobalConstants implements Loggable {
      * that might be linked as MethodHandle.constant and force relink
      * @param name name of property
      */
-    void delete(final String name) {
+    void delete(final Object name) {
         if (!invalidatedForever.get()) {
             synchronized (this) {
                 final Access acc = map.get(name);
@@ -357,7 +357,7 @@ public final class GlobalConstants implements Loggable {
             return null;
         }
 
-        final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        final String name = NashornCallSiteDescriptor.getOperand(desc);
 
         synchronized (this) {
             final Access acc  = getOrCreateSwitchPoint(name);
@@ -432,7 +432,7 @@ public final class GlobalConstants implements Loggable {
         final boolean  isOptimistic = NashornCallSiteDescriptor.isOptimistic(desc);
         final int      programPoint = isOptimistic ? getProgramPoint(desc) : INVALID_PROGRAM_POINT;
         final Class<?> retType      = desc.getMethodType().returnType();
-        final String   name         = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        final String   name         = NashornCallSiteDescriptor.getOperand(desc);
 
         synchronized (this) {
             final Access acc = getOrCreateSwitchPoint(name);

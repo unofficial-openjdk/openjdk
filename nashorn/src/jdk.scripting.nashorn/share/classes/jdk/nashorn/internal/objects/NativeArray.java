@@ -145,15 +145,6 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
     }
 
     @Override
-    protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final String operator) {
-        final GuardedInvocation inv = getArray().findFastGetMethod(getArray().getClass(), desc, request, operator);
-        if (inv != null) {
-            return inv;
-        }
-        return super.findGetMethod(desc, request, operator);
-    }
-
-    @Override
     protected GuardedInvocation findGetIndexMethod(final CallSiteDescriptor desc, final LinkRequest request) {
         final GuardedInvocation inv = getArray().findFastGetIndexMethod(getArray().getClass(), desc, request);
         if (inv != null) {
@@ -187,7 +178,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             new Callable<MethodHandle>() {
                 @Override
                 public MethodHandle call() {
-                    return Bootstrap.createDynamicInvoker("dyn:call", rtype, Object.class, Object.class, Object.class,
+                    return Bootstrap.createDynamicCallInvoker(rtype, Object.class, Object.class, Object.class,
                         long.class, Object.class);
                 }
             });
@@ -218,7 +209,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
                 new Callable<MethodHandle>() {
                     @Override
                     public MethodHandle call() {
-                        return Bootstrap.createDynamicInvoker("dyn:call", Object.class, Object.class,
+                        return Bootstrap.createDynamicCallInvoker(Object.class, Object.class,
                              Undefined.class, Object.class, Object.class, long.class, Object.class);
                     }
                 });
@@ -229,7 +220,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
                 new Callable<MethodHandle>() {
                     @Override
                     public MethodHandle call() {
-                        return Bootstrap.createDynamicInvoker("dyn:call", double.class,
+                        return Bootstrap.createDynamicCallInvoker(double.class,
                             ScriptFunction.class, Object.class, Object.class, Object.class);
                     }
                 });
@@ -337,7 +328,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * ECMA 15.4.5.1 [[DefineOwnProperty]] ( P, Desc, Throw )
      */
     @Override
-    public boolean defineOwnProperty(final String key, final Object propertyDesc, final boolean reject) {
+    public boolean defineOwnProperty(final Object key, final Object propertyDesc, final boolean reject) {
         final PropertyDescriptor desc = toPropertyDescriptor(Global.instance(), propertyDesc);
 
         // never be undefined as "length" is always defined and can't be deleted for arrays
@@ -378,7 +369,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             // Step 4d
             if (!succeeded) {
                 if (reject) {
-                    throw typeError("cant.redefine.property", key, ScriptRuntime.safeToString(this));
+                    throw typeError("cant.redefine.property", key.toString(), ScriptRuntime.safeToString(this));
                 }
                 return false;
             }

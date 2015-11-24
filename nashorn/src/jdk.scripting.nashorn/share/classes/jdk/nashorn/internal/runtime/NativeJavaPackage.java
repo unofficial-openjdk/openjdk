@@ -36,11 +36,12 @@ import jdk.internal.dynalink.beans.BeansLinker;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
-import jdk.internal.dynalink.support.Guards;
+import jdk.internal.dynalink.linker.support.Guards;
 import jdk.nashorn.internal.lookup.MethodHandleFactory;
 import jdk.nashorn.internal.lookup.MethodHandleFunctionality;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Function;
+import jdk.nashorn.internal.runtime.linker.NashornCallSiteDescriptor;
 
 /**
  * An object that exposes Java packages and classes as its properties. Packages are exposed as objects that have further
@@ -200,14 +201,17 @@ public final class NativeJavaPackage extends ScriptObject {
      */
     @Override
     public GuardedInvocation noSuchProperty(final CallSiteDescriptor desc, final LinkRequest request) {
-        final String propertyName = desc.getNameToken(2);
+        final String propertyName = NashornCallSiteDescriptor.getOperand(desc);
         createProperty(propertyName);
         return super.lookup(desc, request);
     }
 
     @Override
-    protected Object invokeNoSuchProperty(final String key, final int programPoint) {
-        final Object retval = createProperty(key);
+    protected Object invokeNoSuchProperty(final Object key, final boolean isScope, final int programPoint) {
+        if (!(key instanceof String)) {
+            return super.invokeNoSuchProperty(key, isScope, programPoint);
+        }
+        final Object retval = createProperty((String) key);
         if (isValid(programPoint)) {
             throw new UnwarrantedOptimismException(retval, programPoint);
         }

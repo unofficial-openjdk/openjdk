@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -380,8 +381,8 @@ public final class ScriptRuntime {
 
     /**
      * Call a function given self and args. If the number of the arguments is known in advance, you can likely achieve
-     * better performance by {@link Bootstrap#createDynamicInvoker(String, Class, Class...) creating a dynamic invoker}
-     * for operation {@code "dyn:call"}, then using its {@link MethodHandle#invokeExact(Object...)} method instead.
+     * better performance by creating a dynamic invoker using {@link Bootstrap#createDynamicCallInvoker(Class, Class...)}
+     * then using its {@link MethodHandle#invokeExact(Object...)} method instead.
      *
      * @param target ScriptFunction object.
      * @param self   Receiver in call.
@@ -835,11 +836,11 @@ public final class ScriptRuntime {
         } else if (yType == JSType.BOOLEAN) {
             // Can reverse order as y is primitive
             return equalBooleanToAny(y, x);
-        } else if (isNumberOrStringAndObject(xType, yType)) {
-            return equalNumberOrStringToObject(x, y);
-        } else if (isNumberOrStringAndObject(yType, xType)) {
+        } else if (isPrimitiveAndObject(xType, yType)) {
+            return equalWrappedPrimitiveToObject(x, y);
+        } else if (isPrimitiveAndObject(yType, xType)) {
             // Can reverse order as y is primitive
-            return equalNumberOrStringToObject(y, x);
+            return equalWrappedPrimitiveToObject(y, x);
         }
 
         return false;
@@ -853,8 +854,8 @@ public final class ScriptRuntime {
         return xType == JSType.NUMBER && yType == JSType.STRING;
     }
 
-    private static boolean isNumberOrStringAndObject(final JSType xType, final JSType yType) {
-        return (xType == JSType.NUMBER || xType == JSType.STRING) && yType == JSType.OBJECT;
+    private static boolean isPrimitiveAndObject(final JSType xType, final JSType yType) {
+        return (xType == JSType.NUMBER || xType == JSType.STRING || xType == JSType.SYMBOL) && yType == JSType.OBJECT;
     }
 
     private static boolean equalNumberToString(final Object num, final Object str) {
@@ -868,7 +869,7 @@ public final class ScriptRuntime {
         return equals(JSType.toNumber((Boolean)bool), any);
     }
 
-    private static boolean equalNumberOrStringToObject(final Object numOrStr, final Object any) {
+    private static boolean equalWrappedPrimitiveToObject(final Object numOrStr, final Object any) {
         return equals(numOrStr, JSType.toPrimitive(any));
     }
 
@@ -1049,5 +1050,21 @@ public final class ScriptRuntime {
         assert sp != null;
         context.getLogger(ApplySpecialization.class).info("Overwrote special name '" + name +"' - invalidating switchpoint");
         SwitchPoint.invalidateAll(new SwitchPoint[] { sp });
+    }
+
+    /**
+     * ES6 12.2.9.3 Runtime Semantics: GetTemplateObject(templateLiteral).
+     *
+     * @param rawStrings array of template raw values
+     * @param cookedStrings array of template values
+     * @return template object
+     */
+    public static ScriptObject GET_TEMPLATE_OBJECT(final Object rawStrings, final Object cookedStrings) {
+        final ScriptObject template = (ScriptObject)cookedStrings;
+        final ScriptObject rawObj = (ScriptObject)rawStrings;
+        assert rawObj.getArray().length() == template.getArray().length();
+        template.addOwnProperty("raw", Property.NOT_WRITABLE | Property.NOT_ENUMERABLE | Property.NOT_CONFIGURABLE, rawObj.freeze());
+        template.freeze();
+        return template;
     }
 }

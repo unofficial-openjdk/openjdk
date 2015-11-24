@@ -25,6 +25,7 @@
 
 package jdk.nashorn.internal.runtime;
 
+import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
 import static jdk.nashorn.internal.codegen.CompilerConstants.CONSTANTS;
 import static jdk.nashorn.internal.codegen.CompilerConstants.CREATE_PROGRAM_FUNCTION;
 import static jdk.nashorn.internal.codegen.CompilerConstants.SOURCE;
@@ -61,17 +62,23 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import jdk.internal.dynalink.DynamicLinker;
 import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 import jdk.nashorn.api.scripting.ClassFilter;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.internal.WeakValueCache;
 import jdk.nashorn.internal.codegen.Compiler;
 import jdk.nashorn.internal.codegen.Compiler.CompilationPhases;
 import jdk.nashorn.internal.codegen.ObjectClassGenerator;
@@ -82,11 +89,13 @@ import jdk.nashorn.internal.lookup.MethodHandleFactory;
 import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.parser.Parser;
 import jdk.nashorn.internal.runtime.events.RuntimeEvent;
+import jdk.nashorn.internal.runtime.linker.Bootstrap;
 import jdk.nashorn.internal.runtime.logging.DebugLogger;
 import jdk.nashorn.internal.runtime.logging.Loggable;
 import jdk.nashorn.internal.runtime.logging.Logger;
 import jdk.nashorn.internal.runtime.options.LoggingOption.LoggerInfo;
 import jdk.nashorn.internal.runtime.options.Options;
+import jdk.internal.misc.Unsafe;
 
 /**
  * This class manages the global state of execution. Context is immutable.
@@ -128,8 +137,11 @@ public final class Context {
     private static final String LOAD_FX = "fx:";
     private static final String LOAD_NASHORN = "nashorn:";
 
-    private static MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-    private static MethodType CREATE_PROGRAM_FUNCTION_TYPE = MethodType.methodType(ScriptFunction.class, ScriptObject.class);
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    private static final MethodType CREATE_PROGRAM_FUNCTION_TYPE = MethodType.methodType(ScriptFunction.class, ScriptObject.class);
+
+    private static final LongAdder NAMED_INSTALLED_SCRIPT_COUNT = new LongAdder();
+    private static final LongAdder ANONYMOUS_INSTALLED_SCRIPT_COUNT = new LongAdder();
 
     /**
      * Should scripts use only object slots for fields, or dual long/object slots? The default
@@ -153,7 +165,7 @@ public final class Context {
      * Currently we are conservative and associate the name of a builtin class with all
      * its properties, so it's enough to invalidate a property to break all assumptions
      * about a prototype. This can be changed to a more fine grained approach, but no one
-     * ever needs this, given the very rare occurance of swapping out only parts of
+     * ever needs this, given the very rare occurrence of swapping out only parts of
      * a builtin v.s. the entire builtin object
      */
     private final Map<String, SwitchPoint> builtinSwitchPoints = new HashMap<>();
@@ -163,43 +175,30 @@ public final class Context {
         DebuggerSupport.FORCELOAD = true;
     }
 
+    static long getNamedInstalledScriptCount() {
+        return NAMED_INSTALLED_SCRIPT_COUNT.sum();
+    }
+
+    static long getAnonymousInstalledScriptCount() {
+        return ANONYMOUS_INSTALLED_SCRIPT_COUNT.sum();
+    }
+
     /**
      * ContextCodeInstaller that has the privilege of installing classes in the Context.
      * Can only be instantiated from inside the context and is opaque to other classes
      */
-    public static class ContextCodeInstaller implements CodeInstaller<ScriptEnvironment> {
-        private final Context      context;
-        private final ScriptLoader loader;
-        private final CodeSource   codeSource;
-        private int usageCount = 0;
-        private int bytesDefined = 0;
+    private abstract static class ContextCodeInstaller implements CodeInstaller {
+        final Context context;
+        final CodeSource codeSource;
 
-        // We reuse this installer for 10 compilations or 200000 defined bytes. Usually the first condition
-        // will occur much earlier, the second is a safety measure for very large scripts/functions.
-        private final static int MAX_USAGES = 10;
-        private final static int MAX_BYTES_DEFINED = 200_000;
-
-        private ContextCodeInstaller(final Context context, final ScriptLoader loader, final CodeSource codeSource) {
-            this.context    = context;
-            this.loader     = loader;
+        ContextCodeInstaller(final Context context, final CodeSource codeSource) {
+            this.context = context;
             this.codeSource = codeSource;
         }
 
-        /**
-         * Return the script environment for this installer
-         * @return ScriptEnvironment
-         */
         @Override
-        public ScriptEnvironment getOwner() {
-            return context.env;
-        }
-
-        @Override
-        public Class<?> install(final String className, final byte[] bytecode) {
-            usageCount++;
-            bytesDefined += bytecode.length;
-            final String   binaryName = Compiler.binaryName(className);
-            return loader.installClass(binaryName, bytecode, codeSource);
+        public Context getContext() {
+            return context;
         }
 
         @Override
@@ -254,21 +253,109 @@ public final class Context {
         }
 
         @Override
-        public CodeInstaller<ScriptEnvironment> withNewLoader() {
-            // Reuse this installer if we're within our limits.
-            if (usageCount < MAX_USAGES && bytesDefined < MAX_BYTES_DEFINED) {
-                return this;
-            }
-            return new ContextCodeInstaller(context, context.createNewLoader(), codeSource);
-        }
-
-        @Override
-        public boolean isCompatibleWith(final CodeInstaller<ScriptEnvironment> other) {
+        public boolean isCompatibleWith(final CodeInstaller other) {
             if (other instanceof ContextCodeInstaller) {
                 final ContextCodeInstaller cci = (ContextCodeInstaller)other;
                 return cci.context == context && cci.codeSource == codeSource;
             }
             return false;
+        }
+    }
+
+    private static class NamedContextCodeInstaller extends ContextCodeInstaller {
+        private final ScriptLoader loader;
+        private int usageCount = 0;
+        private int bytesDefined = 0;
+
+        // We reuse this installer for 10 compilations or 200000 defined bytes. Usually the first condition
+        // will occur much earlier, the second is a safety measure for very large scripts/functions.
+        private final static int MAX_USAGES = 10;
+        private final static int MAX_BYTES_DEFINED = 200_000;
+
+        private NamedContextCodeInstaller(final Context context, final CodeSource codeSource, final ScriptLoader loader) {
+            super(context, codeSource);
+            this.loader = loader;
+        }
+
+        @Override
+        public Class<?> install(final String className, final byte[] bytecode) {
+            usageCount++;
+            bytesDefined += bytecode.length;
+            NAMED_INSTALLED_SCRIPT_COUNT.increment();
+            return loader.installClass(Compiler.binaryName(className), bytecode, codeSource);
+        }
+
+        @Override
+        public CodeInstaller getOnDemandCompilationInstaller() {
+            // Reuse this installer if we're within our limits.
+            if (usageCount < MAX_USAGES && bytesDefined < MAX_BYTES_DEFINED) {
+                return this;
+            }
+            return new NamedContextCodeInstaller(context, codeSource, context.createNewLoader());
+        }
+
+        @Override
+        public CodeInstaller getMultiClassCodeInstaller() {
+            // This installer is perfectly suitable for installing multiple classes that reference each other
+            // as it produces classes with resolvable names, all defined in a single class loader.
+            return this;
+        }
+    }
+
+    private final WeakValueCache<CodeSource, Class<?>> anonymousHostClasses = new WeakValueCache<>();
+
+    private static final class AnonymousContextCodeInstaller extends ContextCodeInstaller {
+        private static final Unsafe UNSAFE = getUnsafe();
+        private static final String ANONYMOUS_HOST_CLASS_NAME = Compiler.SCRIPTS_PACKAGE.replace('/', '.') + ".AnonymousHost";
+        private static final byte[] ANONYMOUS_HOST_CLASS_BYTES = getAnonymousHostClassBytes();
+
+        private final Class<?> hostClass;
+
+        private AnonymousContextCodeInstaller(final Context context, final CodeSource codeSource, final Class<?> hostClass) {
+            super(context, codeSource);
+            this.hostClass = hostClass;
+        }
+
+        @Override
+        public Class<?> install(final String className, final byte[] bytecode) {
+            ANONYMOUS_INSTALLED_SCRIPT_COUNT.increment();
+            return UNSAFE.defineAnonymousClass(hostClass, bytecode, null);
+        }
+
+        @Override
+        public CodeInstaller getOnDemandCompilationInstaller() {
+            // This code loader can be indefinitely reused for on-demand recompilations for the same code source.
+            return this;
+        }
+
+        @Override
+        public CodeInstaller getMultiClassCodeInstaller() {
+            // This code loader can not be used to install multiple classes that reference each other, as they
+            // would have no resolvable names. Therefore, in such situation we must revert to an installer that
+            // produces named classes.
+            return new NamedContextCodeInstaller(context, codeSource, context.createNewLoader());
+        }
+
+        private static final byte[] getAnonymousHostClassBytes() {
+            final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+            cw.visit(V1_7, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT, ANONYMOUS_HOST_CLASS_NAME.replace('.', '/'), null, "java/lang/Object", null);
+            cw.visitEnd();
+            return cw.toByteArray();
+        }
+
+        private static Unsafe getUnsafe() {
+            return AccessController.doPrivileged(new PrivilegedAction<Unsafe>() {
+                @Override
+                public Unsafe run() {
+                    try {
+                        final Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+                        theUnsafeField.setAccessible(true);
+                        return (Unsafe)theUnsafeField.get(null);
+                    } catch (final ReflectiveOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
         }
     }
 
@@ -381,13 +468,13 @@ public final class Context {
     final boolean _strict;
 
     /** class loader to resolve classes from script. */
-    private final ClassLoader  appLoader;
-
-    /** Class loader to load classes from -classpath option, if set. */
-    private final ClassLoader  classPathLoader;
+    private final ClassLoader appLoader;
 
     /** Class loader to load classes compiled from scripts. */
     private final ScriptLoader scriptLoader;
+
+    /** Dynamic linker for linking call sites in script code loaded by this context */
+    private final DynamicLinker dynamicLinker;
 
     /** Current error manager. */
     private final ErrorManager errors;
@@ -400,6 +487,7 @@ public final class Context {
 
     private static final ClassLoader myLoader = Context.class.getClassLoader();
     private static final StructureLoader sharedLoader;
+    private static final ConcurrentMap<String, Class<?>> structureClasses = new ConcurrentHashMap<>();
 
     /*package-private*/ @SuppressWarnings("static-method")
     ClassLoader getSharedLoader() {
@@ -499,7 +587,6 @@ public final class Context {
         this.classFilter = classFilter;
         this.env       = new ScriptEnvironment(options, out, err);
         this._strict   = env._strict;
-        this.appLoader = appLoader;
         if (env._loader_per_compile) {
             this.scriptLoader = null;
             this.uniqueScriptId = null;
@@ -509,18 +596,19 @@ public final class Context {
         }
         this.errors    = errors;
 
-        // if user passed -classpath option, make a class loader with that and set it as
-        // thread context class loader so that script can access classes from that path.
+        // if user passed -classpath option, make a URLClassLoader with that and
+        // the app loader as the parent.
         final String classPath = options.getString("classpath");
         if (!env._compile_only && classPath != null && !classPath.isEmpty()) {
             // make sure that caller can create a class loader.
             if (sm != null) {
-                sm.checkPermission(new RuntimePermission("createClassLoader"));
+                sm.checkCreateClassLoader();
             }
-            this.classPathLoader = NashornLoader.createClassLoader(classPath);
+            this.appLoader = NashornLoader.createClassLoader(classPath, appLoader);
         } else {
-            this.classPathLoader = null;
+            this.appLoader = appLoader;
         }
+        this.dynamicLinker = Bootstrap.createDynamicLinker(this.appLoader, env._unstable_relink_threshold);
 
         final int cacheSize = env._class_cache_size;
         if (cacheSize > 0) {
@@ -650,7 +738,7 @@ public final class Context {
      * @return reusable compiled script across many global scopes.
      */
     public MultiGlobalCompiledScript compileScript(final Source source) {
-        final Class<?> clazz = compile(source, this.errors, this._strict);
+        final Class<?> clazz = compile(source, this.errors, this._strict, false);
         final MethodHandle createProgramFunctionHandle = getCreateProgramFunctionHandle(clazz);
 
         return new MultiGlobalCompiledScript() {
@@ -704,7 +792,7 @@ public final class Context {
 
         Class<?> clazz = null;
         try {
-            clazz = compile(source, new ThrowErrorManager(), strictFlag);
+            clazz = compile(source, new ThrowErrorManager(), strictFlag, true);
         } catch (final ParserException e) {
             e.throwAsEcmaException(global);
             return null;
@@ -931,7 +1019,23 @@ public final class Context {
         if (System.getSecurityManager() != null && !StructureLoader.isStructureClass(fullName)) {
             throw new ClassNotFoundException(fullName);
         }
-        return (Class<? extends ScriptObject>)Class.forName(fullName, true, sharedLoader);
+        return (Class<? extends ScriptObject>)structureClasses.computeIfAbsent(fullName, (name) -> {
+            try {
+                return Class.forName(name, true, sharedLoader);
+            } catch (final ClassNotFoundException e) {
+                throw new AssertionError(e);
+            }
+        });
+    }
+
+    /**
+     * Is {@code className} the name of a structure class?
+     *
+     * @param className a class name
+     * @return true if className is a structure class name
+     */
+    public static boolean isStructureClass(final String className) {
+        return StructureLoader.isStructureClass(className);
     }
 
     /**
@@ -1038,15 +1142,6 @@ public final class Context {
             checkPackageAccess(sm, fullName);
         }
 
-        // try the script -classpath loader, if that is set
-        if (classPathLoader != null) {
-            try {
-                return Class.forName(fullName, true, classPathLoader);
-            } catch (final ClassNotFoundException ignored) {
-                // ignore, continue search
-            }
-        }
-
         // Try finding using the "app" loader.
         return Class.forName(fullName, true, appLoader);
     }
@@ -1129,17 +1224,16 @@ public final class Context {
      *
      * @param global the global
      * @param engine the associated ScriptEngine instance, can be null
-     * @param ctxt the initial ScriptContext, can be null
      * @return the initialized global scope object.
      */
-    public Global initGlobal(final Global global, final ScriptEngine engine, final ScriptContext ctxt) {
+    public Global initGlobal(final Global global, final ScriptEngine engine) {
         // Need only minimal global object, if we are just compiling.
         if (!env._compile_only) {
             final Global oldGlobal = Context.getGlobal();
             try {
                 Context.setGlobal(global);
                 // initialize global scope with builtin global objects
-                global.initBuiltinObjects(engine, ctxt);
+                global.initBuiltinObjects(engine);
             } finally {
                 Context.setGlobal(oldGlobal);
             }
@@ -1155,7 +1249,7 @@ public final class Context {
      * @return the initialized global scope object.
      */
     public Global initGlobal(final Global global) {
-        return initGlobal(global, null, null);
+        return initGlobal(global, null);
     }
 
     /**
@@ -1164,6 +1258,26 @@ public final class Context {
      */
     static Context getContextTrusted() {
         return getContext(getGlobal());
+    }
+
+    /**
+     * Gets the Nashorn dynamic linker for the specified class. If the class is
+     * a script class, the dynamic linker associated with its context is
+     * returned. Otherwise the dynamic linker associated with the current
+     * context is returned.
+     * @param clazz the class for which we want to retrieve a dynamic linker.
+     * @return the Nashorn dynamic linker for the specified class.
+     */
+    public static DynamicLinker getDynamicLinker(final Class<?> clazz) {
+        return fromClass(clazz).dynamicLinker;
+    }
+
+    /**
+     * Gets the Nashorn dynamic linker associated with the current context.
+     * @return the Nashorn dynamic linker for the current context.
+     */
+    public static DynamicLinker getDynamicLinker() {
+        return getContextTrusted().dynamicLinker;
     }
 
     static Context getContextTrustedOrNull() {
@@ -1196,15 +1310,10 @@ public final class Context {
     }
 
     private URL getResourceURL(final String resName) {
-        // try the classPathLoader if we have and then
-        // try the appLoader if non-null.
-        if (classPathLoader != null) {
-            return classPathLoader.getResource(resName);
-        } else if (appLoader != null) {
+        if (appLoader != null) {
             return appLoader.getResource(resName);
         }
-
-        return null;
+        return ClassLoader.getSystemResource(resName);
     }
 
     private Object evaluateSource(final Source source, final ScriptObject scope, final ScriptObject thiz) {
@@ -1245,10 +1354,10 @@ public final class Context {
     }
 
     private ScriptFunction compileScript(final Source source, final ScriptObject scope, final ErrorManager errMan) {
-        return getProgramFunction(compile(source, errMan, this._strict), scope);
+        return getProgramFunction(compile(source, errMan, this._strict, false), scope);
     }
 
-    private synchronized Class<?> compile(final Source source, final ErrorManager errMan, final boolean strict) {
+    private synchronized Class<?> compile(final Source source, final ErrorManager errMan, final boolean strict, final boolean isEval) {
         // start with no errors, no warnings.
         errMan.reset();
 
@@ -1298,16 +1407,27 @@ public final class Context {
         }
 
         final URL          url    = source.getURL();
-        final ScriptLoader loader = env._loader_per_compile ? createNewLoader() : scriptLoader;
         final CodeSource   cs     = new CodeSource(url, (CodeSigner[])null);
-        final CodeInstaller<ScriptEnvironment> installer = new ContextCodeInstaller(this, loader, cs);
+        final CodeInstaller installer;
+        if (!env.useAnonymousClasses(isEval) || env._persistent_cache || !env._lazy_compilation) {
+            // Persistent code cache and eager compilation preclude use of VM anonymous classes
+            final ScriptLoader loader = env._loader_per_compile ? createNewLoader() : scriptLoader;
+            installer = new NamedContextCodeInstaller(this, cs, loader);
+        } else {
+            installer = new AnonymousContextCodeInstaller(this, cs,
+                    anonymousHostClasses.getOrCreate(cs, (key) ->
+                            createNewLoader().installClass(
+                                    // NOTE: we're defining these constants in AnonymousContextCodeInstaller so they are not
+                                    // initialized if we don't use AnonymousContextCodeInstaller. As this method is only ever
+                                    // invoked from AnonymousContextCodeInstaller, this is okay.
+                                    AnonymousContextCodeInstaller.ANONYMOUS_HOST_CLASS_NAME,
+                                    AnonymousContextCodeInstaller.ANONYMOUS_HOST_CLASS_BYTES, cs)));
+        }
 
         if (storedScript == null) {
             final CompilationPhases phases = Compiler.CompilationPhases.COMPILE_ALL;
 
-            final Compiler compiler = new Compiler(
-                    this,
-                    env,
+            final Compiler compiler = Compiler.forInitialCompilation(
                     installer,
                     source,
                     errMan,
@@ -1481,7 +1601,7 @@ public final class Context {
      * @param level            log level
      * @param mh               method handle
      * @param paramStart       first parameter to print
-     * @param printReturnValue should we print the return vaulue?
+     * @param printReturnValue should we print the return value?
      * @param text             debug printout to add
      *
      * @return instrumented method handle, or null if logger not enabled
@@ -1537,5 +1657,4 @@ public final class Context {
     public SwitchPoint getBuiltinSwitchPoint(final String name) {
         return builtinSwitchPoints.get(name);
     }
-
 }

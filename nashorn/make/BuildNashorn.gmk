@@ -28,10 +28,11 @@ default: all
 
 -include $(SPEC)
 include MakeBase.gmk
+include JarArchive.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
-JDK_CLASSES := $(subst $(SPACE),$(PATH_SEP),$(strip $(addprefix $(JDK_OUTPUTDIR)/modules/, \
+JDK_CLASSES := $(call PathList, $(strip $(addprefix $(JDK_OUTPUTDIR)/modules/, \
       java.base java.logging java.scripting)))
 
 NASHORN_JAR := $(IMAGES_OUTPUTDIR)/nashorn.jar
@@ -48,7 +49,7 @@ endif
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -g -source 8 -target 8 -bootclasspath "$(JDK_CLASSES)", \
+    FLAGS := -g -source 8 -target 8 -bootclasspath $(JDK_CLASSES), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
@@ -86,7 +87,8 @@ $(NASGEN_RUN_FILE): $(BUILD_NASGEN)
 	$(RM) -rf $(@D)/jdk $(@D)/netscape
 	$(CP) -R -p $(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn/classes/* $(@D)/
 	$(FIXPATH) $(JAVA) \
-	    -Xbootclasspath/p:"$(BUILDTOOLS_OUTPUTDIR)/nasgen_classes$(PATH_SEP)$(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn/classes" \
+	    -Xbootclasspath/p:$(call PathList, $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
+            $(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn/classes) \
 	    jdk.nashorn.internal.tools.nasgen.Main $(@D) jdk.nashorn.internal.objects $(@D)
 	$(TOUCH) $@
 
@@ -107,7 +109,7 @@ $(VERSION_FILE): $(VERSION_SRC)
 MANIFEST_ATTRIBUTES := Name: jdk/nashorn/\nImplementation-Title: Oracle Nashorn\nImplementation-Version: $(NASHORN_FULL_VERSION)
 
 # Create nashorn.jar from the final classes dir
-$(eval $(call SetupArchive,BUILD_NASHORN_JAR, \
+$(eval $(call SetupJarArchive, BUILD_NASHORN_JAR, \
     DEPENDENCIES := $(NASGEN_RUN_FILE) \
         $(VERSION_FILE), \
     SRCS := $(NASHORN_CLASSES_DIR), \
@@ -115,7 +117,8 @@ $(eval $(call SetupArchive,BUILD_NASHORN_JAR, \
     MANIFEST := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes/META-INF/MANIFEST.MF, \
     EXTRA_MANIFEST_ATTR := $(MANIFEST_ATTRIBUTES), \
     SKIP_METAINF := true, \
-    JAR := $(NASHORN_JAR)))
+    JAR := $(NASHORN_JAR), \
+))
 
 compile: $(NASHORN_RUN_FILE) $(VERSION_FILE)
 all: $(NASHORN_JAR)

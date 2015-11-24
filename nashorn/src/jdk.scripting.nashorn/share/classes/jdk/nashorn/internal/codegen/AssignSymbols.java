@@ -65,17 +65,14 @@ import jdk.nashorn.internal.ir.CatchNode;
 import jdk.nashorn.internal.ir.Expression;
 import jdk.nashorn.internal.ir.ForNode;
 import jdk.nashorn.internal.ir.FunctionNode;
-import jdk.nashorn.internal.ir.FunctionNode.CompilationState;
 import jdk.nashorn.internal.ir.IdentNode;
 import jdk.nashorn.internal.ir.IndexNode;
-import jdk.nashorn.internal.ir.LexicalContext;
 import jdk.nashorn.internal.ir.LexicalContextNode;
 import jdk.nashorn.internal.ir.LiteralNode;
-import jdk.nashorn.internal.ir.LiteralNode.ArrayLiteralNode;
-import jdk.nashorn.internal.ir.LiteralNode.ArrayLiteralNode.ArrayUnit;
 import jdk.nashorn.internal.ir.Node;
 import jdk.nashorn.internal.ir.RuntimeNode;
 import jdk.nashorn.internal.ir.RuntimeNode.Request;
+import jdk.nashorn.internal.ir.Splittable;
 import jdk.nashorn.internal.ir.Statement;
 import jdk.nashorn.internal.ir.SwitchNode;
 import jdk.nashorn.internal.ir.Symbol;
@@ -83,7 +80,7 @@ import jdk.nashorn.internal.ir.TryNode;
 import jdk.nashorn.internal.ir.UnaryNode;
 import jdk.nashorn.internal.ir.VarNode;
 import jdk.nashorn.internal.ir.WithNode;
-import jdk.nashorn.internal.ir.visitor.NodeVisitor;
+import jdk.nashorn.internal.ir.visitor.SimpleNodeVisitor;
 import jdk.nashorn.internal.parser.TokenType;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.ECMAErrors;
@@ -104,7 +101,7 @@ import jdk.nashorn.internal.runtime.logging.Logger;
  * visitor.
  */
 @Logger(name="symbols")
-final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggable {
+final class AssignSymbols extends SimpleNodeVisitor implements Loggable {
     private final DebugLogger log;
     private final boolean     debug;
 
@@ -152,7 +149,6 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
     private final boolean isOnDemand;
 
     public AssignSymbols(final Compiler compiler) {
-        super(new LexicalContext());
         this.compiler = compiler;
         this.log   = initLogger(compiler.getContext());
         this.debug = log.isEnabled();
@@ -189,7 +185,7 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
      */
     private void acceptDeclarations(final FunctionNode functionNode, final Block body) {
         // This visitor will assign symbol to all declared variables.
-        body.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+        body.accept(new SimpleNodeVisitor() {
             @Override
             protected boolean enterDefault(final Node node) {
                 // Don't bother visiting expressions; var is a statement, it can't be inside an expression.
@@ -244,7 +240,7 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
 
     /**
      * Creates a synthetic initializer for a variable (a var statement that doesn't occur in the source code). Typically
-     * used to create assignmnent of {@code :callee} to the function name symbol in self-referential function
+     * used to create assignment of {@code :callee} to the function name symbol in self-referential function
      * expressions as well as for assignment of {@code :arguments} to {@code arguments}.
      *
      * @param name the ident node identifying the variable to initialize
@@ -828,7 +824,7 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
                        lc.applyTopFlags(functionNode))))
                        .setThisProperties(lc, thisProperties.pop().size()));
         }
-        return finalizedFunction.setState(lc, CompilationState.SYMBOLS_ASSIGNED);
+        return finalizedFunction;
     }
 
     @Override
@@ -985,7 +981,7 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
         boolean previousWasBlock = false;
         for (final Iterator<LexicalContextNode> it = lc.getAllNodes(); it.hasNext();) {
             final LexicalContextNode node = it.next();
-            if (node instanceof FunctionNode || isSplitArray(node)) {
+            if (node instanceof FunctionNode || isSplitLiteral(node)) {
                 // We reached the function boundary or a splitting boundary without seeing a definition for the symbol.
                 // It needs to be in scope.
                 return true;
@@ -1011,12 +1007,8 @@ final class AssignSymbols extends NodeVisitor<LexicalContext> implements Loggabl
         throw new AssertionError();
     }
 
-    private static boolean isSplitArray(final LexicalContextNode expr) {
-        if(!(expr instanceof ArrayLiteralNode)) {
-            return false;
-        }
-        final List<ArrayUnit> units = ((ArrayLiteralNode)expr).getUnits();
-        return !(units == null || units.isEmpty());
+    private static boolean isSplitLiteral(final LexicalContextNode expr) {
+        return expr instanceof Splittable && ((Splittable) expr).getSplitRanges() != null;
     }
 
     private void throwUnprotectedSwitchError(final VarNode varNode) {

@@ -33,6 +33,7 @@ import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Array;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import jdk.internal.dynalink.CallSiteDescriptor;
+import jdk.internal.dynalink.StandardOperation;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.nashorn.internal.lookup.MethodHandleFactory.LookupException;
@@ -60,6 +62,7 @@ import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
 import jdk.nashorn.internal.runtime.arrays.ArrayIndex;
+import jdk.nashorn.internal.runtime.linker.NashornCallSiteDescriptor;
 import jdk.nashorn.internal.runtime.linker.NashornGuards;
 import jdk.nashorn.internal.runtime.linker.PrimitiveLookup;
 
@@ -104,20 +107,6 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
         return getStringValue();
     }
 
-    @Override
-    public boolean equals(final Object other) {
-        if (other instanceof NativeString) {
-            return getStringValue().equals(((NativeString) other).getStringValue());
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return getStringValue().hashCode();
-    }
-
     private String getStringValue() {
         return value instanceof String ? (String) value : value.toString();
     }
@@ -138,15 +127,15 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
 
     // This is to support length as method call as well.
     @Override
-    protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final String operator) {
-        final String name = desc.getNameToken(2);
+    protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final StandardOperation operation) {
+        final String name = NashornCallSiteDescriptor.getOperand(desc);
 
         // if str.length(), then let the bean linker handle it
-        if ("length".equals(name) && "getMethod".equals(operator)) {
+        if ("length".equals(name) && operation == StandardOperation.GET_METHOD) {
             return null;
         }
 
-        return super.findGetMethod(desc, request, operator);
+        return super.findGetMethod(desc, request, operation);
     }
 
     // This is to provide array-like access to string characters without creating a NativeString wrapper.
@@ -380,7 +369,7 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     }
 
     @Override
-    public Object getOwnPropertyDescriptor(final String key) {
+    public Object getOwnPropertyDescriptor(final Object key) {
         final int index = ArrayIndex.getArrayIndex(key);
         if (index >= 0 && index < value.length()) {
             final Global global = Global.instance();
@@ -398,7 +387,12 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * @return Array of keys.
      */
     @Override
-    protected String[] getOwnKeys(final boolean all, final Set<String> nonEnumerable) {
+    @SuppressWarnings("unchecked")
+    protected <T> T[] getOwnKeys(final Class<T> type, final boolean all, final Set<T> nonEnumerable) {
+        if (type != String.class) {
+            return super.getOwnKeys(type, all, nonEnumerable);
+        }
+
         final List<Object> keys = new ArrayList<>();
 
         // add string index keys
@@ -407,8 +401,8 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
         }
 
         // add super class properties
-        keys.addAll(Arrays.asList(super.getOwnKeys(all, nonEnumerable)));
-        return keys.toArray(new String[keys.size()]);
+        keys.addAll(Arrays.asList(super.getOwnKeys(type, all, nonEnumerable)));
+        return keys.toArray((T[]) Array.newInstance(type, keys.size()));
     }
 
     /**

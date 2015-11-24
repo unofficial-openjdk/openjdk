@@ -26,7 +26,6 @@
 package jdk.nashorn.internal.runtime;
 
 import java.lang.invoke.MethodHandle;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.parser.JSONParser;
@@ -46,7 +45,7 @@ public final class JSONFunctions {
                 new Callable<MethodHandle>() {
                     @Override
                     public MethodHandle call() {
-                        return Bootstrap.createDynamicInvoker("dyn:call", Object.class,
+                        return Bootstrap.createDynamicCallInvoker(Object.class,
                             ScriptFunction.class, ScriptObject.class, String.class, Object.class);
                     }
                 });

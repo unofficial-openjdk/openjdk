@@ -27,6 +27,7 @@ package jdk.nashorn.api.scripting.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.nio.IntBuffer;
@@ -34,9 +35,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import jdk.nashorn.api.scripting.AbstractJSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.testng.annotations.Test;
 
 /**
@@ -44,6 +47,9 @@ import org.testng.annotations.Test;
  *
  * JDK-8024615: Refactor ScriptObjectMirror and JSObject to support external
  * JSObject implementations.
+ *
+ * @test
+ * @run testng jdk.nashorn.api.scripting.test.PluggableJSObjectTest
  */
 @SuppressWarnings("javadoc")
 public class PluggableJSObjectTest {
@@ -285,5 +291,24 @@ public class PluggableJSObjectTest {
             exp.printStackTrace();
             fail(exp.getMessage());
         }
+    }
+
+    // @bug 8137258: JSObjectLinker and BrowserJSObjectLinker should not expose internal JS objects
+    @Test
+    public void hidingInternalObjectsForJSObjectTest() throws Exception {
+        final ScriptEngineManager engineManager = new ScriptEngineManager();
+        final ScriptEngine e = engineManager.getEngineByName("nashorn");
+
+        final String code = "function func(obj) { obj.foo = [5, 5]; obj.bar = {} }";
+        e.eval(code);
+
+        // call the exposed function but pass user defined JSObject impl as argument
+        ((Invocable)e).invokeFunction("func", new AbstractJSObject() {
+            @Override
+            public void setMember(final String name, final Object value) {
+                // make sure that wrapped objects are passed (and not internal impl. objects)
+                assertTrue(value.getClass() == ScriptObjectMirror.class);
+            }
+        });
     }
 }

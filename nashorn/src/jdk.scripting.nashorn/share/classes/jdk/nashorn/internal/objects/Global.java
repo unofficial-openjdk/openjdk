@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import jdk.internal.dynalink.CallSiteDescriptor;
+import jdk.internal.dynalink.StandardOperation;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.nashorn.api.scripting.ClassFilter;
@@ -74,6 +75,7 @@ import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
 import jdk.nashorn.internal.runtime.ScriptingFunctions;
 import jdk.nashorn.internal.runtime.Specialization;
+import jdk.nashorn.internal.runtime.Symbol;
 import jdk.nashorn.internal.runtime.arrays.ArrayData;
 import jdk.nashorn.internal.runtime.linker.Bootstrap;
 import jdk.nashorn.internal.runtime.linker.InvokeByName;
@@ -93,8 +95,8 @@ public final class Global extends Scope {
     // (__FILE__, __DIR__, __LINE__)
     private static final Object LAZY_SENTINEL = new Object();
 
-    private final InvokeByName TO_STRING = new InvokeByName("toString", ScriptObject.class);
-    private final InvokeByName VALUE_OF  = new InvokeByName("valueOf",  ScriptObject.class);
+    private InvokeByName TO_STRING;
+    private InvokeByName VALUE_OF;
 
     /**
      * Optimistic builtin names that require switchpoint invalidation
@@ -219,6 +221,10 @@ public final class Global extends Scope {
     /** ECMA 15.1.4.6 - Number constructor */
     @Property(name = "Number", attributes = Attribute.NOT_ENUMERABLE)
     public volatile Object number;
+
+    /** ECMA 2016 19.4.1 - Symbol constructor */
+    @Property(name = "Symbol", attributes = Attribute.NOT_ENUMERABLE)
+    public volatile Object symbol;
 
     /**
      * Getter for ECMA 15.1.4.7 Date property
@@ -900,6 +906,7 @@ public final class Global extends Scope {
     private ScriptFunction builtinUint32Array;
     private ScriptFunction builtinFloat32Array;
     private ScriptFunction builtinFloat64Array;
+    private ScriptFunction builtinSymbol;
 
     /*
      * ECMA section 13.2.3 The [[ThrowTypeError]] Function Object
@@ -928,8 +935,6 @@ public final class Global extends Scope {
     private ThreadLocal<ScriptContext> scontext;
     // current ScriptEngine associated - can be null.
     private ScriptEngine engine;
-    // initial ScriptContext - can be null
-    private volatile ScriptContext initscontext;
 
     // ES6 global lexical scope.
     private final LexicalScope lexicalScope;
@@ -957,7 +962,7 @@ public final class Global extends Scope {
 
     private ScriptContext currentContext() {
         final ScriptContext sc = scontext != null? scontext.get() : null;
-        return sc == null? initscontext : sc;
+        return (sc != null)? sc : (engine != null? engine.getContext() : null);
     }
 
     @Override
@@ -1067,16 +1072,17 @@ public final class Global extends Scope {
      * of the global scope object.
      *
      * @param eng ScriptEngine to initialize
-     * @param ctxt ScriptContext to initialize
      */
-    public void initBuiltinObjects(final ScriptEngine eng, final ScriptContext ctxt) {
+    public void initBuiltinObjects(final ScriptEngine eng) {
         if (this.builtinObject != null) {
             // already initialized, just return
             return;
         }
 
+        TO_STRING = new InvokeByName("toString", ScriptObject.class);
+        VALUE_OF  = new InvokeByName("valueOf",  ScriptObject.class);
+
         this.engine = eng;
-        this.initscontext = ctxt;
         if (this.engine != null) {
             this.scontext = new ThreadLocal<>();
         }
@@ -1106,6 +1112,8 @@ public final class Global extends Scope {
             return new NativeArray(ArrayData.allocate((int[]) obj), this);
         } else if (obj instanceof ArrayData) {
             return new NativeArray((ArrayData) obj, this);
+        } else if (obj instanceof Symbol) {
+            return new NativeSymbol((Symbol) obj, this);
         } else {
             // FIXME: more special cases? Map? List?
             return obj;
@@ -1360,18 +1368,27 @@ public final class Global extends Scope {
         return desc;
     }
 
-    private static <T> T getLazilyCreatedValue(final Object key, final Callable<T> creator, final Map<Object, T> map) {
+    private <T> T getLazilyCreatedValue(final Object key, final Callable<T> creator, final Map<Object, T> map) {
         final T obj = map.get(key);
         if (obj != null) {
             return obj;
         }
 
+        final Global oldGlobal = Context.getGlobal();
+        final boolean differentGlobal = oldGlobal != this;
         try {
+            if (differentGlobal) {
+                Context.setGlobal(this);
+            }
             final T newObj = creator.call();
             final T existingObj = map.putIfAbsent(key, newObj);
             return existingObj != null ? existingObj : newObj;
         } catch (final Exception exp) {
             throw new RuntimeException(exp);
+        } finally {
+            if (differentGlobal) {
+                Context.setGlobal(oldGlobal);
+            }
         }
     }
 
@@ -1577,17 +1594,25 @@ public final class Global extends Scope {
 
     /**
      * Get the builtin Object prototype.
-     * @return the object prototype.
+     * @return the Object prototype.
      */
     public ScriptObject getObjectPrototype() {
         return ScriptFunction.getPrototype(builtinObject);
     }
 
-    ScriptObject getFunctionPrototype() {
+    /**
+     * Get the builtin Function prototype.
+     * @return the Function prototype.
+     */
+    public ScriptObject getFunctionPrototype() {
         return ScriptFunction.getPrototype(builtinFunction);
     }
 
-    ScriptObject getArrayPrototype() {
+    /**
+     * Get the builtin Array prototype.
+     * @return the Array prototype
+     */
+    public ScriptObject getArrayPrototype() {
         return ScriptFunction.getPrototype(builtinArray);
     }
 
@@ -1645,6 +1670,10 @@ public final class Global extends Scope {
 
     ScriptObject getJSAdapterPrototype() {
         return ScriptFunction.getPrototype(getBuiltinJSAdapter());
+    }
+
+    ScriptObject getSymbolPrototype() {
+        return ScriptFunction.getPrototype(builtinSymbol);
     }
 
     private synchronized ScriptFunction getBuiltinArrayBuffer() {
@@ -1768,7 +1797,12 @@ public final class Global extends Scope {
         return ScriptFunction.getPrototype(getBuiltinFloat64Array());
     }
 
-    ScriptFunction getTypeErrorThrower() {
+    /**
+     * Return the function that throws TypeError unconditionally. Used as "poison" methods for certain Function properties.
+     *
+     * @return the TypeError throwing function
+     */
+    public ScriptFunction getTypeErrorThrower() {
         return typeErrorThrower;
     }
 
@@ -2109,11 +2143,11 @@ public final class Global extends Scope {
                 // ES6 15.1.8 steps 6. and 7.
                 final jdk.nashorn.internal.runtime.Property globalProperty = ownMap.findProperty(property.getKey());
                 if (globalProperty != null && !globalProperty.isConfigurable() && property.isLexicalBinding()) {
-                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey());
+                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey().toString());
                 }
                 final jdk.nashorn.internal.runtime.Property lexicalProperty = lexicalMap.findProperty(property.getKey());
                 if (lexicalProperty != null && !property.isConfigurable()) {
-                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey());
+                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey().toString());
                 }
             }
         }
@@ -2143,21 +2177,21 @@ public final class Global extends Scope {
     }
 
     @Override
-    public GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final String operator) {
-        final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+    public GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final StandardOperation operation) {
+        final String name = NashornCallSiteDescriptor.getOperand(desc);
         final boolean isScope = NashornCallSiteDescriptor.isScope(desc);
 
         if (lexicalScope != null && isScope && !NashornCallSiteDescriptor.isApplyToCall(desc)) {
             if (lexicalScope.hasOwnProperty(name)) {
-                return lexicalScope.findGetMethod(desc, request, operator);
+                return lexicalScope.findGetMethod(desc, request, operation);
             }
         }
 
-        final GuardedInvocation invocation =  super.findGetMethod(desc, request, operator);
+        final GuardedInvocation invocation =  super.findGetMethod(desc, request, operation);
 
         // We want to avoid adding our generic lexical scope switchpoint to global constant invocations,
         // because those are invalidated per-key in the addBoundProperties method above.
-        // We therefor check if the invocation does already have a switchpoint and the property is non-inherited,
+        // We therefore check if the invocation does already have a switchpoint and the property is non-inherited,
         // assuming this only applies to global constants. If other non-inherited properties will
         // start using switchpoints some time in the future we'll have to revisit this.
         if (isScope && context.getEnv()._es6 && (invocation.getSwitchPoints() == null || !hasOwnProperty(name))) {
@@ -2168,7 +2202,7 @@ public final class Global extends Scope {
     }
 
     @Override
-    protected FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
+    protected FindProperty findProperty(final Object key, final boolean deep, final ScriptObject start) {
         if (lexicalScope != null && start != this && start.isScope()) {
             final FindProperty find = lexicalScope.findProperty(key, false);
             if (find != null) {
@@ -2183,7 +2217,7 @@ public final class Global extends Scope {
         final boolean isScope = NashornCallSiteDescriptor.isScope(desc);
 
         if (lexicalScope != null && isScope) {
-            final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+            final String name = NashornCallSiteDescriptor.getOperand(desc);
             if (lexicalScope.hasOwnProperty(name)) {
                 return lexicalScope.findSetMethod(desc, request);
             }
@@ -2202,10 +2236,10 @@ public final class Global extends Scope {
      * Adds jjs shell interactive mode builtin functions to global scope.
      */
     public void addShellBuiltins() {
-        Object value = ScriptFunctionImpl.makeFunction("input", ShellFunctions.INPUT);
+        Object value = ScriptFunction.createBuiltin("input", ShellFunctions.INPUT);
         addOwnProperty("input", Attribute.NOT_ENUMERABLE, value);
 
-        value = ScriptFunctionImpl.makeFunction("evalinput", ShellFunctions.EVALINPUT);
+        value = ScriptFunction.createBuiltin("evalinput", ShellFunctions.EVALINPUT);
         addOwnProperty("evalinput", Attribute.NOT_ENUMERABLE, value);
     }
 
@@ -2251,35 +2285,35 @@ public final class Global extends Scope {
         this.setInitialProto(getObjectPrototype());
 
         // initialize global function properties
-        this.eval = this.builtinEval = ScriptFunctionImpl.makeFunction("eval", EVAL);
+        this.eval = this.builtinEval = ScriptFunction.createBuiltin("eval", EVAL);
 
-        this.parseInt = ScriptFunctionImpl.makeFunction("parseInt",   GlobalFunctions.PARSEINT,
+        this.parseInt = ScriptFunction.createBuiltin("parseInt",   GlobalFunctions.PARSEINT,
                     new Specialization[] {
                     new Specialization(GlobalFunctions.PARSEINT_Z),
                     new Specialization(GlobalFunctions.PARSEINT_I),
                     new Specialization(GlobalFunctions.PARSEINT_J),
                     new Specialization(GlobalFunctions.PARSEINT_OI),
                     new Specialization(GlobalFunctions.PARSEINT_O) });
-        this.parseFloat = ScriptFunctionImpl.makeFunction("parseFloat", GlobalFunctions.PARSEFLOAT);
-        this.isNaN = ScriptFunctionImpl.makeFunction("isNaN",   GlobalFunctions.IS_NAN,
+        this.parseFloat = ScriptFunction.createBuiltin("parseFloat", GlobalFunctions.PARSEFLOAT);
+        this.isNaN = ScriptFunction.createBuiltin("isNaN",   GlobalFunctions.IS_NAN,
                    new Specialization[] {
                         new Specialization(GlobalFunctions.IS_NAN_I),
                         new Specialization(GlobalFunctions.IS_NAN_J),
                         new Specialization(GlobalFunctions.IS_NAN_D) });
-        this.parseFloat         = ScriptFunctionImpl.makeFunction("parseFloat", GlobalFunctions.PARSEFLOAT);
-        this.isNaN              = ScriptFunctionImpl.makeFunction("isNaN",      GlobalFunctions.IS_NAN);
-        this.isFinite           = ScriptFunctionImpl.makeFunction("isFinite",   GlobalFunctions.IS_FINITE);
-        this.encodeURI          = ScriptFunctionImpl.makeFunction("encodeURI",  GlobalFunctions.ENCODE_URI);
-        this.encodeURIComponent = ScriptFunctionImpl.makeFunction("encodeURIComponent", GlobalFunctions.ENCODE_URICOMPONENT);
-        this.decodeURI          = ScriptFunctionImpl.makeFunction("decodeURI",  GlobalFunctions.DECODE_URI);
-        this.decodeURIComponent = ScriptFunctionImpl.makeFunction("decodeURIComponent", GlobalFunctions.DECODE_URICOMPONENT);
-        this.escape             = ScriptFunctionImpl.makeFunction("escape",     GlobalFunctions.ESCAPE);
-        this.unescape           = ScriptFunctionImpl.makeFunction("unescape",   GlobalFunctions.UNESCAPE);
-        this.print              = ScriptFunctionImpl.makeFunction("print",      env._print_no_newline ? PRINT : PRINTLN);
-        this.load               = ScriptFunctionImpl.makeFunction("load",       LOAD);
-        this.loadWithNewGlobal  = ScriptFunctionImpl.makeFunction("loadWithNewGlobal", LOAD_WITH_NEW_GLOBAL);
-        this.exit               = ScriptFunctionImpl.makeFunction("exit",       EXIT);
-        this.quit               = ScriptFunctionImpl.makeFunction("quit",       EXIT);
+        this.parseFloat         = ScriptFunction.createBuiltin("parseFloat", GlobalFunctions.PARSEFLOAT);
+        this.isNaN              = ScriptFunction.createBuiltin("isNaN",      GlobalFunctions.IS_NAN);
+        this.isFinite           = ScriptFunction.createBuiltin("isFinite",   GlobalFunctions.IS_FINITE);
+        this.encodeURI          = ScriptFunction.createBuiltin("encodeURI",  GlobalFunctions.ENCODE_URI);
+        this.encodeURIComponent = ScriptFunction.createBuiltin("encodeURIComponent", GlobalFunctions.ENCODE_URICOMPONENT);
+        this.decodeURI          = ScriptFunction.createBuiltin("decodeURI",  GlobalFunctions.DECODE_URI);
+        this.decodeURIComponent = ScriptFunction.createBuiltin("decodeURIComponent", GlobalFunctions.DECODE_URICOMPONENT);
+        this.escape             = ScriptFunction.createBuiltin("escape",     GlobalFunctions.ESCAPE);
+        this.unescape           = ScriptFunction.createBuiltin("unescape",   GlobalFunctions.UNESCAPE);
+        this.print              = ScriptFunction.createBuiltin("print",      env._print_no_newline ? PRINT : PRINTLN);
+        this.load               = ScriptFunction.createBuiltin("load",       LOAD);
+        this.loadWithNewGlobal  = ScriptFunction.createBuiltin("loadWithNewGlobal", LOAD_WITH_NEW_GLOBAL);
+        this.exit               = ScriptFunction.createBuiltin("exit",       EXIT);
+        this.quit               = ScriptFunction.createBuiltin("quit",       EXIT);
 
         // built-in constructors
         this.builtinArray     = initConstructorAndSwitchPoint("Array", ScriptFunction.class);
@@ -2287,6 +2321,14 @@ public final class Global extends Scope {
         this.builtinNumber    = initConstructorAndSwitchPoint("Number", ScriptFunction.class);
         this.builtinString    = initConstructorAndSwitchPoint("String", ScriptFunction.class);
         this.builtinMath      = initConstructorAndSwitchPoint("Math", ScriptObject.class);
+
+        if (env._es6) {
+            this.builtinSymbol = initConstructorAndSwitchPoint("Symbol", ScriptFunction.class);
+        } else {
+            // We need to manually delete nasgen-generated properties we don't want
+            this.delete("Symbol", false);
+            this.builtinObject.delete("getOwnPropertySymbols", false);
+        }
 
         // initialize String.prototype.length to 0
         // add String.prototype.length
@@ -2359,7 +2401,7 @@ public final class Global extends Scope {
             // default file name
             addOwnProperty(ScriptEngine.FILENAME, Attribute.NOT_ENUMERABLE, null);
             // __noSuchProperty__ hook for ScriptContext search of missing variables
-            final ScriptFunction noSuchProp = ScriptFunctionImpl.makeStrictFunction(NO_SUCH_PROPERTY_NAME, NO_SUCH_PROPERTY);
+            final ScriptFunction noSuchProp = ScriptFunction.createStrictBuiltin(NO_SUCH_PROPERTY_NAME, NO_SUCH_PROPERTY);
             addOwnProperty(NO_SUCH_PROPERTY_NAME, Attribute.NOT_ENUMERABLE, noSuchProp);
         }
     }
@@ -2370,17 +2412,17 @@ public final class Global extends Scope {
         final ScriptObject errorProto = getErrorPrototype();
 
         // Nashorn specific accessors on Error.prototype - stack, lineNumber, columnNumber and fileName
-        final ScriptFunction getStack = ScriptFunctionImpl.makeFunction("getStack", NativeError.GET_STACK);
-        final ScriptFunction setStack = ScriptFunctionImpl.makeFunction("setStack", NativeError.SET_STACK);
+        final ScriptFunction getStack = ScriptFunction.createBuiltin("getStack", NativeError.GET_STACK);
+        final ScriptFunction setStack = ScriptFunction.createBuiltin("setStack", NativeError.SET_STACK);
         errorProto.addOwnProperty("stack", Attribute.NOT_ENUMERABLE, getStack, setStack);
-        final ScriptFunction getLineNumber = ScriptFunctionImpl.makeFunction("getLineNumber", NativeError.GET_LINENUMBER);
-        final ScriptFunction setLineNumber = ScriptFunctionImpl.makeFunction("setLineNumber", NativeError.SET_LINENUMBER);
+        final ScriptFunction getLineNumber = ScriptFunction.createBuiltin("getLineNumber", NativeError.GET_LINENUMBER);
+        final ScriptFunction setLineNumber = ScriptFunction.createBuiltin("setLineNumber", NativeError.SET_LINENUMBER);
         errorProto.addOwnProperty("lineNumber", Attribute.NOT_ENUMERABLE, getLineNumber, setLineNumber);
-        final ScriptFunction getColumnNumber = ScriptFunctionImpl.makeFunction("getColumnNumber", NativeError.GET_COLUMNNUMBER);
-        final ScriptFunction setColumnNumber = ScriptFunctionImpl.makeFunction("setColumnNumber", NativeError.SET_COLUMNNUMBER);
+        final ScriptFunction getColumnNumber = ScriptFunction.createBuiltin("getColumnNumber", NativeError.GET_COLUMNNUMBER);
+        final ScriptFunction setColumnNumber = ScriptFunction.createBuiltin("setColumnNumber", NativeError.SET_COLUMNNUMBER);
         errorProto.addOwnProperty("columnNumber", Attribute.NOT_ENUMERABLE, getColumnNumber, setColumnNumber);
-        final ScriptFunction getFileName = ScriptFunctionImpl.makeFunction("getFileName", NativeError.GET_FILENAME);
-        final ScriptFunction setFileName = ScriptFunctionImpl.makeFunction("setFileName", NativeError.SET_FILENAME);
+        final ScriptFunction getFileName = ScriptFunction.createBuiltin("getFileName", NativeError.GET_FILENAME);
+        final ScriptFunction setFileName = ScriptFunction.createBuiltin("setFileName", NativeError.SET_FILENAME);
         errorProto.addOwnProperty("fileName", Attribute.NOT_ENUMERABLE, getFileName, setFileName);
 
         // ECMA 15.11.4.2 Error.prototype.name
@@ -2420,14 +2462,14 @@ public final class Global extends Scope {
 
     private void initScripting(final ScriptEnvironment scriptEnv) {
         ScriptObject value;
-        value = ScriptFunctionImpl.makeFunction("readLine", ScriptingFunctions.READLINE);
+        value = ScriptFunction.createBuiltin("readLine", ScriptingFunctions.READLINE);
         addOwnProperty("readLine", Attribute.NOT_ENUMERABLE, value);
 
-        value = ScriptFunctionImpl.makeFunction("readFully", ScriptingFunctions.READFULLY);
+        value = ScriptFunction.createBuiltin("readFully", ScriptingFunctions.READFULLY);
         addOwnProperty("readFully", Attribute.NOT_ENUMERABLE, value);
 
         final String execName = ScriptingFunctions.EXEC_NAME;
-        value = ScriptFunctionImpl.makeFunction(execName, ScriptingFunctions.EXEC);
+        value = ScriptFunction.createBuiltin(execName, ScriptingFunctions.EXEC);
         value.addOwnProperty(ScriptingFunctions.THROW_ON_ERROR_NAME, Attribute.NOT_ENUMERABLE, false);
 
         addOwnProperty(execName, Attribute.NOT_ENUMERABLE, value);
@@ -2496,6 +2538,7 @@ public final class Global extends Scope {
         this.string            = this.builtinString;
         this.syntaxError       = this.builtinSyntaxError;
         this.typeError         = this.builtinTypeError;
+        this.symbol            = this.builtinSymbol;
     }
 
     private void initDebug() {
@@ -2610,7 +2653,7 @@ public final class Global extends Scope {
         this.builtinFunction = initConstructor("Function", ScriptFunction.class);
 
         // create global anonymous function
-        final ScriptFunction anon = ScriptFunctionImpl.newAnonymousFunction();
+        final ScriptFunction anon = ScriptFunction.createAnonymous();
         // need to copy over members of Function.prototype to anon function
         anon.addBoundProperties(getFunctionPrototype());
 
@@ -2622,10 +2665,7 @@ public final class Global extends Scope {
         anon.deleteOwnProperty(anon.getMap().findProperty("prototype"));
 
         // use "getter" so that [[ThrowTypeError]] function's arity is 0 - as specified in step 10 of section 13.2.3
-        this.typeErrorThrower = new ScriptFunctionImpl("TypeErrorThrower", Lookup.TYPE_ERROR_THROWER_GETTER, null, null, 0);
-        typeErrorThrower.setPrototype(UNDEFINED);
-        // Non-constructor built-in functions do not have "prototype" property
-        typeErrorThrower.deleteOwnProperty(typeErrorThrower.getMap().findProperty("prototype"));
+        this.typeErrorThrower = ScriptFunction.createBuiltin("TypeErrorThrower", Lookup.TYPE_ERROR_THROWER_GETTER);
         typeErrorThrower.preventExtensions();
 
         // now initialize Object
@@ -2636,8 +2676,8 @@ public final class Global extends Scope {
 
         // ES6 draft compliant __proto__ property of Object.prototype
         // accessors on Object.prototype for "__proto__"
-        final ScriptFunction getProto = ScriptFunctionImpl.makeFunction("getProto", NativeObject.GET__PROTO__);
-        final ScriptFunction setProto = ScriptFunctionImpl.makeFunction("setProto", NativeObject.SET__PROTO__);
+        final ScriptFunction getProto = ScriptFunction.createBuiltin("getProto", NativeObject.GET__PROTO__);
+        final ScriptFunction setProto = ScriptFunction.createBuiltin("setProto", NativeObject.SET__PROTO__);
         ObjectPrototype.addOwnProperty("__proto__", Attribute.NOT_ENUMERABLE, getProto, setProto);
 
         // Function valued properties of Function.prototype were not properly
@@ -2723,8 +2763,8 @@ public final class Global extends Scope {
         }
 
         @Override
-        protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final String operator) {
-            return filterInvocation(super.findGetMethod(desc, request, operator));
+        protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final StandardOperation operation) {
+            return filterInvocation(super.findGetMethod(desc, request, operation));
         }
 
         @Override

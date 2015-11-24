@@ -28,6 +28,7 @@ package jdk.nashorn.internal.runtime;
 import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.ECMAErrors.referenceError;
 import static jdk.nashorn.internal.runtime.JSType.getAccessorTypeIndex;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.SwitchPoint;
 import jdk.internal.dynalink.CallSiteDescriptor;
@@ -69,7 +70,7 @@ final class SetMethodCreator {
     }
 
     private String getName() {
-        return desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        return NashornCallSiteDescriptor.getOperand(desc);
     }
 
     private PropertyMap getMap() {
@@ -186,10 +187,7 @@ final class SetMethodCreator {
 
     private SetMethod createNewPropertySetter(final SwitchPoint builtinSwitchPoint) {
         final SetMethod sm = map.getFreeFieldSlot() > -1 ? createNewFieldSetter(builtinSwitchPoint) : createNewSpillPropertySetter(builtinSwitchPoint);
-        final PropertyListeners listeners = map.getListeners();
-        if (listeners != null) {
-            listeners.propertyAdded(sm.property);
-        }
+        map.propertyAdded(sm.property, true);
         return sm;
     }
 
@@ -199,12 +197,12 @@ final class SetMethodCreator {
         final PropertyMap oldMap   = getMap();
         final PropertyMap newMap   = getNewMap(property);
         final boolean     isStrict = NashornCallSiteDescriptor.isStrict(desc);
-        final String      name     = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        final String      name     = NashornCallSiteDescriptor.getOperand(desc);
 
         //fast type specific setter
         final MethodHandle fastSetter = property.getSetter(type, newMap); //0 sobj, 1 value, slot folded for spill property already
 
-        //slow setter, that calls ScriptObject.set with appropraite type and key name
+        //slow setter, that calls ScriptObject.set with appropriate type and key name
         MethodHandle slowSetter = ScriptObject.SET_SLOW[getAccessorTypeIndex(type)];
         slowSetter = MH.insertArguments(slowSetter, 3, NashornCallSiteDescriptor.getFlags(desc));
         slowSetter = MH.insertArguments(slowSetter, 1, name);

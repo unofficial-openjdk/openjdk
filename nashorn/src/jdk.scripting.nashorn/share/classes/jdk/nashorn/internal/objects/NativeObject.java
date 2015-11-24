@@ -39,13 +39,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import jdk.internal.dynalink.CallSiteDescriptor;
+import jdk.internal.dynalink.NamedOperation;
+import jdk.internal.dynalink.Operation;
+import jdk.internal.dynalink.StandardOperation;
 import jdk.internal.dynalink.beans.BeansLinker;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.GuardingDynamicLinker;
 import jdk.internal.dynalink.linker.LinkRequest;
-import jdk.internal.dynalink.support.CallSiteDescriptorFactory;
-import jdk.internal.dynalink.support.LinkRequestImpl;
+import jdk.internal.dynalink.linker.support.SimpleLinkRequest;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.lookup.Lookup;
 import jdk.nashorn.internal.objects.annotations.Attribute;
@@ -64,6 +67,7 @@ import jdk.nashorn.internal.runtime.arrays.ArrayData;
 import jdk.nashorn.internal.runtime.linker.Bootstrap;
 import jdk.nashorn.internal.runtime.linker.InvokeByName;
 import jdk.nashorn.internal.runtime.linker.NashornBeansLinker;
+import jdk.nashorn.internal.runtime.linker.NashornCallSiteDescriptor;
 
 /**
  * ECMA 15.2 Object objects
@@ -248,6 +252,23 @@ public final class NativeObject {
     }
 
     /**
+     * ECMA 2 19.1.2.8 Object.getOwnPropertySymbols ( O )
+     *
+     * @param self self reference
+     * @param obj  object to query for property names
+     * @return array of property names
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static ScriptObject getOwnPropertySymbols(final Object self, final Object obj) {
+        if (obj instanceof ScriptObject) {
+            return new NativeArray(((ScriptObject)obj).getOwnSymbols(true));
+        } else {
+            // TODO: we don't support this on ScriptObjectMirror objects yet
+            throw notAnObject(obj);
+        }
+    }
+
+    /**
      * ECMA 15.2.3.5 Object.create ( O [, Properties] )
      *
      * @param self  self reference
@@ -284,7 +305,7 @@ public final class NativeObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static ScriptObject defineProperty(final Object self, final Object obj, final Object prop, final Object attr) {
         final ScriptObject sobj = Global.checkObject(obj);
-        sobj.defineOwnProperty(JSType.toString(prop), attr, true);
+        sobj.defineOwnProperty(JSType.toPropertyKey(prop), attr, true);
         return sobj;
     }
 
@@ -461,6 +482,7 @@ public final class NativeObject {
             case BOOLEAN:
             case NUMBER:
             case STRING:
+            case SYMBOL:
                 return Global.toObject(value);
             case OBJECT:
                 return value;
@@ -694,10 +716,7 @@ public final class NativeObject {
             // make accessor properties using dynamic invoker getters and setters
             final AccessorProperty[] props = new AccessorProperty[keys.length];
             for (int idx = 0; idx < keys.length; idx++) {
-                final String name = keys[idx];
-                final MethodHandle getter = Bootstrap.createDynamicInvoker("dyn:getMethod|getProp|getElem:" + name, MIRROR_GETTER_TYPE);
-                final MethodHandle setter = Bootstrap.createDynamicInvoker("dyn:setProp|setElem:" + name, MIRROR_SETTER_TYPE);
-                props[idx] = AccessorProperty.create(name, 0, getter, setter);
+                props[idx] = createAccessorProperty(keys[idx]);
             }
 
             targetObj.addBoundProperties(source, props);
@@ -716,6 +735,12 @@ public final class NativeObject {
         return target;
     }
 
+    private static AccessorProperty createAccessorProperty(final String name) {
+        final MethodHandle getter = Bootstrap.createDynamicInvoker(name, NashornCallSiteDescriptor.GET_METHOD_PROPERTY, MIRROR_GETTER_TYPE);
+        final MethodHandle setter = Bootstrap.createDynamicInvoker(name, NashornCallSiteDescriptor.SET_PROPERTY, MIRROR_SETTER_TYPE);
+        return AccessorProperty.create(name, 0, getter, setter);
+    }
+
     /**
      * Binds the source mirror object's properties to the target object. Binding
      * properties allows two-way read/write for the properties of the source object.
@@ -732,9 +757,7 @@ public final class NativeObject {
         final AccessorProperty[] props = new AccessorProperty[keys.size()];
         int idx = 0;
         for (final String name : keys) {
-            final MethodHandle getter = Bootstrap.createDynamicInvoker("dyn:getMethod|getProp|getElem:" + name, MIRROR_GETTER_TYPE);
-            final MethodHandle setter = Bootstrap.createDynamicInvoker("dyn:setProp|setElem:" + name, MIRROR_SETTER_TYPE);
-            props[idx] = AccessorProperty.create(name, 0, getter, setter);
+            props[idx] = createAccessorProperty(name);
             idx++;
         }
 
@@ -759,7 +782,7 @@ public final class NativeObject {
         for(final String methodName: methodNames) {
             final MethodHandle method;
             try {
-                method = getBeanOperation(linker, "dyn:getMethod:" + methodName, getterType, source);
+                method = getBeanOperation(linker, StandardOperation.GET_METHOD, methodName, getterType, source);
             } catch(final IllegalAccessError e) {
                 // Presumably, this was a caller sensitive method. Ignore it and carry on.
                 continue;
@@ -771,7 +794,7 @@ public final class NativeObject {
             MethodHandle getter;
             if(readablePropertyNames.contains(propertyName)) {
                 try {
-                    getter = getBeanOperation(linker, "dyn:getProp:" + propertyName, getterType, source);
+                    getter = getBeanOperation(linker, StandardOperation.GET_PROPERTY, propertyName, getterType, source);
                 } catch(final IllegalAccessError e) {
                     // Presumably, this was a caller sensitive method. Ignore it and carry on.
                     getter = Lookup.EMPTY_GETTER;
@@ -783,7 +806,7 @@ public final class NativeObject {
             MethodHandle setter;
             if(isWritable) {
                 try {
-                    setter = getBeanOperation(linker, "dyn:setProp:" + propertyName, setterType, source);
+                    setter = getBeanOperation(linker, StandardOperation.SET_PROPERTY, propertyName, setterType, source);
                 } catch(final IllegalAccessError e) {
                     // Presumably, this was a caller sensitive method. Ignore it and carry on.
                     setter = Lookup.EMPTY_SETTER;
@@ -801,7 +824,7 @@ public final class NativeObject {
 
     private static MethodHandle getBoundBeanMethodGetter(final Object source, final MethodHandle methodGetter) {
         try {
-            // NOTE: we're relying on the fact that "dyn:getMethod:..." return value is constant for any given method
+            // NOTE: we're relying on the fact that StandardOperation.GET_METHOD return value is constant for any given method
             // name and object linked with BeansLinker. (Actually, an even stronger assumption is true: return value is
             // constant for any given method name and object's class.)
             return MethodHandles.dropArguments(MethodHandles.constant(Object.class,
@@ -813,11 +836,11 @@ public final class NativeObject {
         }
     }
 
-    private static MethodHandle getBeanOperation(final GuardingDynamicLinker linker, final String operation,
-            final MethodType methodType, final Object source) {
+    private static MethodHandle getBeanOperation(final GuardingDynamicLinker linker, final StandardOperation operation,
+            final String name, final MethodType methodType, final Object source) {
         final GuardedInvocation inv;
         try {
-            inv = NashornBeansLinker.getGuardedInvocation(linker, createLinkRequest(operation, methodType, source), Bootstrap.getLinkerServices());
+            inv = NashornBeansLinker.getGuardedInvocation(linker, createLinkRequest(new NamedOperation(operation, name), methodType, source), Bootstrap.getLinkerServices());
             assert passesGuard(source, inv.getGuard());
         } catch(RuntimeException|Error e) {
             throw e;
@@ -833,9 +856,9 @@ public final class NativeObject {
         return guard == null || (boolean)guard.invoke(obj);
     }
 
-    private static LinkRequest createLinkRequest(final String operation, final MethodType methodType, final Object source) {
-        return new LinkRequestImpl(CallSiteDescriptorFactory.create(MethodHandles.publicLookup(), operation,
-                methodType), null, 0, false, source);
+    private static LinkRequest createLinkRequest(final Operation operation, final MethodType methodType, final Object source) {
+        return new SimpleLinkRequest(new CallSiteDescriptor(MethodHandles.publicLookup(), operation,
+                methodType), false, source);
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {

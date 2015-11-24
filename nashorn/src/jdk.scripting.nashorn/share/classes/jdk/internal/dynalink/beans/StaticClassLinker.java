@@ -88,18 +88,19 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Set;
 import jdk.internal.dynalink.CallSiteDescriptor;
+import jdk.internal.dynalink.NamedOperation;
+import jdk.internal.dynalink.StandardOperation;
 import jdk.internal.dynalink.beans.GuardedInvocationComponent.ValidationType;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.internal.dynalink.linker.LinkerServices;
 import jdk.internal.dynalink.linker.TypeBasedGuardingDynamicLinker;
-import jdk.internal.dynalink.support.Lookup;
+import jdk.internal.dynalink.linker.support.Lookup;
 
 /**
  * Provides a linker for the {@link StaticClass} objects.
- * @author Attila Szegedi
  */
 class StaticClassLinker implements TypeBasedGuardingDynamicLinker {
     private static final ClassValue<SingleClassStaticsLinker> linkers = new ClassValue<SingleClassStaticsLinker>() {
@@ -151,8 +152,7 @@ class StaticClassLinker implements TypeBasedGuardingDynamicLinker {
                 return gi;
             }
             final CallSiteDescriptor desc = request.getCallSiteDescriptor();
-            final String op = desc.getNameToken(CallSiteDescriptor.OPERATOR);
-            if("new" == op && constructor != null) {
+            if(NamedOperation.getBaseOperation(desc.getOperation()) == StandardOperation.NEW && constructor != null) {
                 final MethodHandle ctorInvocation = constructor.getInvocation(desc, linkerServices);
                 if(ctorInvocation != null) {
                     return new GuardedInvocation(ctorInvocation, getClassGuard(desc.getMethodType()));
@@ -171,15 +171,15 @@ class StaticClassLinker implements TypeBasedGuardingDynamicLinker {
         return linkers.get(clazz).getConstructorMethod(signature);
     }
 
-    static Collection<String> getReadableStaticPropertyNames(final Class<?> clazz) {
+    static Set<String> getReadableStaticPropertyNames(final Class<?> clazz) {
         return linkers.get(clazz).getReadablePropertyNames();
     }
 
-    static Collection<String> getWritableStaticPropertyNames(final Class<?> clazz) {
+    static Set<String> getWritableStaticPropertyNames(final Class<?> clazz) {
         return linkers.get(clazz).getWritablePropertyNames();
     }
 
-    static Collection<String> getStaticMethodNames(final Class<?> clazz) {
+    static Set<String> getStaticMethodNames(final Class<?> clazz) {
         return linkers.get(clazz).getMethodNames();
     }
 

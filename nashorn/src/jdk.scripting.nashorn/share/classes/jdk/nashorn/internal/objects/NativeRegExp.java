@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Constructor;
 import jdk.nashorn.internal.objects.annotations.Function;
@@ -728,7 +727,7 @@ public final class NativeRegExp extends ScriptObject {
          *
          * $$ -> $
          * $& -> the matched substring
-         * $` -> the portion of string that preceeds matched substring
+         * $` -> the portion of string that precedes matched substring
          * $' -> the portion of string that follows the matched substring
          * $n -> the nth capture, where n is [1-9] and $n is NOT followed by a decimal digit
          * $nn -> the nnth capture, where nn is a two digit decimal number [01-99].
@@ -808,7 +807,7 @@ public final class NativeRegExp extends ScriptObject {
                 new Callable<MethodHandle>() {
                     @Override
                     public MethodHandle call() {
-                        return Bootstrap.createDynamicInvoker("dyn:call", String.class, ScriptFunction.class, Object.class, Object[].class);
+                        return Bootstrap.createDynamicCallInvoker(String.class, ScriptFunction.class, Object.class, Object[].class);
                     }
                 });
     }
