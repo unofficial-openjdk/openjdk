@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -347,7 +347,7 @@ public final class Packet
      * <p>
      * Transports may choose to ignore certain headers that interfere with
      * its correct operation, such as
-     * <tt>Content-Type</tt> and <tt>Content-Length</tt>.
+     * {@code Content-Type} and {@code Content-Length}.
      */
     public static final String OUTBOUND_TRANSPORT_HEADERS = "com.sun.xml.internal.ws.api.message.packet.outbound.transport.headers";
 
@@ -588,7 +588,7 @@ public final class Packet
      *
      * <p>
      * For outgoing messages, the transport may sends out this value.
-     * If this field is null, the transport may choose to send <tt>""</tt>
+     * If this field is null, the transport may choose to send {@code ""}
      * (quoted empty string.)
      *
      * For incoming messages, the transport will set this field.
@@ -1513,5 +1513,13 @@ public final class Packet
 
     public void setFastInfosetDisabled(boolean b) {
         isFastInfosetDisabled = b;
+    }
+
+    private com.sun.xml.internal.ws.api.message.saaj.SAAJFactory saajFactory;
+    public  com.sun.xml.internal.ws.api.message.saaj.SAAJFactory getSAAJFactory() {
+        return saajFactory;
+    }
+    public void setSAAJFactory(com.sun.xml.internal.ws.api.message.saaj.SAAJFactory saajFactory) {
+        this.saajFactory = saajFactory;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,14 +51,14 @@ public interface ElementPropertyInfo<T,C> extends PropertyInfo<T,C> {
      * However, in a general case an element property can be heterogeneous,
      * meaning you can put different types in it, each with a different tag name
      * (and a few other settings.)
-     * <pre>
+     * <pre><code>
      * // list can contain String or Integer.
-     * &#64;XmlElements({
-     *   &#64;XmlElement(name="a",type=String.class),
-     *   &#64;XmlElement(name="b",type=Integer.class),
+     * {@literal @}XmlElements({
+     *   {@literal @}XmlElement(name="a",type=String.class),
+     *   {@literal @}XmlElement(name="b",type=Integer.class),
      * })
-     * List&lt;Object> abc;
-     * </pre>
+     * {@literal List<Object>} abc;
+     * </code></pre>
      * <p>
      * In this case this method returns a list of two {@link TypeRef}s.
      *
@@ -107,7 +107,7 @@ public interface ElementPropertyInfo<T,C> extends PropertyInfo<T,C> {
      * If {@link #isCollection()}==false, this property is always false.
      *
      * <p>
-     * When this flag is true, <tt>getTypes().size()==1</tt> always holds.
+     * When this flag is true, {@code getTypes().size()==1} always holds.
      */
     boolean isValueList();
 

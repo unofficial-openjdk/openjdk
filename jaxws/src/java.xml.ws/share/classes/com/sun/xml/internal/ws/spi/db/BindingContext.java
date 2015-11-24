@@ -250,14 +250,13 @@ public interface BindingContext {
      * and {@link Marshaller#setProperty(String, Object)}
      * to enable the c14n marshalling support in the {@link JAXBContext}.
      *
-     * @see C14nSupport_ArchitectureDocument
      * @since 2.0 EA2
      */
     public static final String CANONICALIZATION_SUPPORT = "com.sun.xml.internal.bind.c14n";
 
     /**
      * The property that you can specify to {@link JAXBContext#newInstance}
-     * to allow unmarshaller to honor <tt>xsi:nil</tt> anywhere, even if they are
+     * to allow unmarshaller to honor {@code xsi:nil} anywhere, even if they are
      * not specifically allowed by the schema.
      *
      * @since 2.1.3

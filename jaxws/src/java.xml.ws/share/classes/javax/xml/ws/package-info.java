@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package com.sun.tools.internal.xjc.api.util;
-
-
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
-
 /**
- * Message resources
+ * This package contains the core JAX-WS APIs.
  */
-enum Messages {
-    TOOLS_JAR_NOT_FOUND,     // 1 arg
-    ;
-
-    private static final ResourceBundle rb = ResourceBundle.getBundle(Messages.class.getName());
-
-    public String toString() {
-        return format();
-    }
-
-    public String format( Object... args ) {
-        return MessageFormat.format( rb.getString(name()), args );
-    }
-}
+package javax.xml.ws;

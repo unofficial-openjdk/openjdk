@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2001, Thai Open Source Software Center Ltd
+/*
+ * Copyright (c) 2005, 2010, Thai Open Source Software Center Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,29 +31,43 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.relaxng.datatype;
+
+package com.sun.xml.internal.org.relaxng.datatype;
 
 /**
- * Factory class for the DatatypeLibrary class.
- *
- * <p>
- * The datatype library should provide the implementation of
- * this interface if it wants to be found by the schema processors.
- * The implementor also have to place a file in your jar file.
- * See the reference datatype library implementation for detail.
+ * Signals Datatype related exceptions.
  *
  * @author <a href="mailto:jjc@jclark.com">James Clark</a>
  * @author <a href="mailto:kohsuke.kawaguchi@sun.com">Kohsuke KAWAGUCHI</a>
  */
-public interface DatatypeLibraryFactory
-{
+public class DatatypeException extends Exception {
+
+        public DatatypeException( int index, String msg ) {
+                super(msg);
+                this.index = index;
+        }
+        public DatatypeException( String msg ) {
+                this(UNKNOWN,msg);
+        }
         /**
-         * Creates a new instance of a DatatypeLibrary that supports
-         * the specified namespace URI.
-         *
-         * @return
-         *              <code>null</code> if the specified namespace URI is not
-         *              supported.
+         * A constructor for those datatype libraries which don't support any
+         * diagnostic information at all.
          */
-        DatatypeLibrary createDatatypeLibrary( String namespaceURI );
+        public DatatypeException() {
+                this(UNKNOWN,null);
+        }
+
+
+        private final int index;
+
+        public static final int UNKNOWN = -1;
+
+        /**
+         * Gets the index of the content where the error occured.
+         * UNKNOWN can be returned to indicate that no index information
+         * is available.
+         */
+        public int getIndex() {
+                return index;
+        }
 }
