@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.    See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -19,28 +19,28 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/**
+/*
  * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
+ * @bug 8143157
+ * @summary vmoperation=debug should have logging output
+ * @library /testlibrary
+ * @compile VMOperationTestMain.java
+ * @modules java.base/sun.misc
+ *          java.management
+ * @run main VMOperationTest
  */
 
-public class TestCastIINoLoopLimitCheck {
+import jdk.test.lib.*;
 
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
-    }
-
-    static public void main(String[] args) {
-        m(0, 0, null);
+public class VMOperationTest {
+    public static void main(String[] args) throws Exception {
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+            "-Xlog:vmoperation=debug", "-Xmx64m", "-Xms64m", "VMOperationTestMain");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldContain("VM_Operation (");
+        output.shouldHaveExitValue(0);
     }
 }
+
