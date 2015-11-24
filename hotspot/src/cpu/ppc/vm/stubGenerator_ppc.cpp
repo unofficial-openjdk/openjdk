@@ -656,7 +656,7 @@ class StubGenerator: public StubCodeGenerator {
           __ bind(filtered);
         }
         break;
-      case BarrierSet::CardTableModRef:
+      case BarrierSet::CardTableForRS:
       case BarrierSet::CardTableExtension:
       case BarrierSet::ModRef:
         break;
@@ -697,7 +697,7 @@ class StubGenerator: public StubCodeGenerator {
           }
         }
         break;
-      case BarrierSet::CardTableModRef:
+      case BarrierSet::CardTableForRS:
       case BarrierSet::CardTableExtension:
         {
           Label Lskip_loop, Lstore_loop;
@@ -841,7 +841,7 @@ class StubGenerator: public StubCodeGenerator {
   // Only called by MacroAssembler::verify_oop
   static void verify_oop_helper(const char* message, oop o) {
     if (!o->is_oop_or_null()) {
-      fatal(message);
+      fatal("%s", message);
     }
     ++ StubRoutines::_verify_oop_count;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,11 @@
 #include "code/dependencies.hpp"
 #include "code/exceptionHandlerTable.hpp"
 #include "compiler/oopMap.hpp"
+#include "compiler/compilerDirectives.hpp"
 #include "runtime/thread.hpp"
 
 class CompileTask;
+class DirectiveSet;
 
 // ciEnv
 //
@@ -118,34 +120,34 @@ private:
                              bool require_local);
 
   // Constant pool access.
-  ciKlass*   get_klass_by_index(constantPoolHandle cpool,
+  ciKlass*   get_klass_by_index(const constantPoolHandle& cpool,
                                 int klass_index,
                                 bool& is_accessible,
                                 ciInstanceKlass* loading_klass);
-  ciConstant get_constant_by_index(constantPoolHandle cpool,
+  ciConstant get_constant_by_index(const constantPoolHandle& cpool,
                                    int pool_index, int cache_index,
                                    ciInstanceKlass* accessor);
   ciField*   get_field_by_index(ciInstanceKlass* loading_klass,
                                 int field_index);
-  ciMethod*  get_method_by_index(constantPoolHandle cpool,
+  ciMethod*  get_method_by_index(const constantPoolHandle& cpool,
                                  int method_index, Bytecodes::Code bc,
                                  ciInstanceKlass* loading_klass);
 
   // Implementation methods for loading and constant pool access.
   ciKlass* get_klass_by_name_impl(ciKlass* accessing_klass,
-                                  constantPoolHandle cpool,
+                                  const constantPoolHandle& cpool,
                                   ciSymbol* klass_name,
                                   bool require_local);
-  ciKlass*   get_klass_by_index_impl(constantPoolHandle cpool,
+  ciKlass*   get_klass_by_index_impl(const constantPoolHandle& cpool,
                                      int klass_index,
                                      bool& is_accessible,
                                      ciInstanceKlass* loading_klass);
-  ciConstant get_constant_by_index_impl(constantPoolHandle cpool,
+  ciConstant get_constant_by_index_impl(const constantPoolHandle& cpool,
                                         int pool_index, int cache_index,
                                         ciInstanceKlass* loading_klass);
   ciField*   get_field_by_index_impl(ciInstanceKlass* loading_klass,
                                      int field_index);
-  ciMethod*  get_method_by_index_impl(constantPoolHandle cpool,
+  ciMethod*  get_method_by_index_impl(const constantPoolHandle& cpool,
                                       int method_index, Bytecodes::Code bc,
                                       ciInstanceKlass* loading_klass);
 
@@ -352,6 +354,7 @@ public:
   // The compiler task which has created this env.
   // May be useful to find out compile_id, comp_level, etc.
   CompileTask* task() { return _task; }
+
   // Handy forwards to the task:
   int comp_level();   // task()->comp_level()
   uint compile_id();  // task()->compile_id()
@@ -367,9 +370,9 @@ public:
                        ExceptionHandlerTable*    handler_table,
                        ImplicitExceptionTable*   inc_table,
                        AbstractCompiler*         compiler,
-                       int                       comp_level,
                        bool                      has_unsafe_access,
                        bool                      has_wide_vectors,
+                       DirectiveSet*             directives,
                        RTMState                  rtm_state = NoRTM);
 
 

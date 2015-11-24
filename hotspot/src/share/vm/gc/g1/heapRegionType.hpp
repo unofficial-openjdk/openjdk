@@ -28,14 +28,14 @@
 #include "memory/allocation.hpp"
 
 #define hrt_assert_is_valid(tag) \
-  assert(is_valid((tag)), err_msg("invalid HR type: %u", (uint) (tag)))
+  assert(is_valid((tag)), "invalid HR type: %u", (uint) (tag))
 
 class HeapRegionType VALUE_OBJ_CLASS_SPEC {
 private:
   // We encode the value of the heap region type so the generation can be
   // determined quickly. The tag is split into two parts:
   //
-  //   major type (young, humongous)                         : top N-1 bits
+  //   major type (young, old, humongous, archive)           : top N-1 bits
   //   minor type (eden / survivor, starts / cont hum, etc.) : bottom 1 bit
   //
   // If there's need to increase the number of minor types in the
@@ -97,8 +97,7 @@ private:
     hrt_assert_is_valid(tag);
     hrt_assert_is_valid(before);
     hrt_assert_is_valid(_tag);
-    assert(_tag == before,
-           err_msg("HR tag: %u, expected: %u new tag; %u", _tag, before, tag));
+    assert(_tag == before, "HR tag: %u, expected: %u new tag; %u", _tag, before, tag);
     _tag = tag;
   }
 

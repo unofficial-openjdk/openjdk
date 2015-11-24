@@ -36,7 +36,7 @@
 #include "oops/typeArrayKlass.inline.hpp"
 #include "utilities/debug.hpp"
 
-inline void MetadataAwareOopClosure::do_class_loader_data(ClassLoaderData* cld) {
+inline void MetadataAwareOopClosure::do_cld_nv(ClassLoaderData* cld) {
   assert(_klass_closure._oop_closure == this, "Must be");
 
   bool claim = true;  // Must claim the class loader data before processing.
@@ -45,10 +45,8 @@ inline void MetadataAwareOopClosure::do_class_loader_data(ClassLoaderData* cld) 
 
 inline void MetadataAwareOopClosure::do_klass_nv(Klass* k) {
   ClassLoaderData* cld = k->class_loader_data();
-  do_class_loader_data(cld);
+  do_cld_nv(cld);
 }
-
-inline void MetadataAwareOopClosure::do_klass(Klass* k)       { do_klass_nv(k); }
 
 #ifdef ASSERT
 // This verification is applied to all visited oops.
@@ -60,7 +58,7 @@ void ExtendedOopClosure::verify(T* p) {
     if (!oopDesc::is_null(heap_oop)) {
       oop o = oopDesc::decode_heap_oop_not_null(heap_oop);
       assert(Universe::heap()->is_in_closed_subset(o),
-             err_msg("should be in closed *p " PTR_FORMAT " " PTR_FORMAT, p2i(p), p2i(o)));
+             "should be in closed *p " PTR_FORMAT " " PTR_FORMAT, p2i(p), p2i(o));
     }
   }
 }
@@ -76,6 +74,10 @@ inline void Devirtualizer<true>::do_oop(OopClosureType* closure, T* p) {
 template <class OopClosureType>
 inline void Devirtualizer<true>::do_klass(OopClosureType* closure, Klass* k) {
   closure->do_klass_nv(k);
+}
+template <class OopClosureType>
+void Devirtualizer<true>::do_cld(OopClosureType* closure, ClassLoaderData* cld) {
+  closure->do_cld_nv(cld);
 }
 template <class OopClosureType>
 inline bool Devirtualizer<true>::do_metadata(OopClosureType* closure) {
@@ -94,6 +96,10 @@ void Devirtualizer<false>::do_oop(OopClosureType* closure, T* p) {
 template <class OopClosureType>
 void Devirtualizer<false>::do_klass(OopClosureType* closure, Klass* k) {
   closure->do_klass(k);
+}
+template <class OopClosureType>
+void Devirtualizer<false>::do_cld(OopClosureType* closure, ClassLoaderData* cld) {
+  closure->do_cld(cld);
 }
 template <class OopClosureType>
 bool Devirtualizer<false>::do_metadata(OopClosureType* closure) {

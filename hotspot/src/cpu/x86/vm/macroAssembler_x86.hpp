@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@
 #include "utilities/macros.hpp"
 #include "runtime/rtmLocking.hpp"
 
-
 // MacroAssembler extends Assembler by frequently used macros.
 //
 // Instructions for which a 'better' code sequence exists depending
@@ -55,6 +54,8 @@ class MacroAssembler: public Assembler {
 #else
   #define VIRTUAL virtual
 #endif
+
+#define COMMA ,
 
   VIRTUAL void call_VM_leaf_base(
     address entry_point,               // the entry point
@@ -907,14 +908,19 @@ class MacroAssembler: public Assembler {
   // all corner cases and may result in NaN and require fallback to a
   // runtime call.
   void fast_pow();
-  void fast_exp();
+  void fast_exp(XMMRegister xmm0, XMMRegister xmm1, XMMRegister xmm2, XMMRegister xmm3,
+                XMMRegister xmm4, XMMRegister xmm5, XMMRegister xmm6, XMMRegister xmm7,
+                Register rax, Register rcx, Register rdx, Register tmp);
+
+  void fast_log(XMMRegister xmm0, XMMRegister xmm1, XMMRegister xmm2, XMMRegister xmm3,
+                XMMRegister xmm4, XMMRegister xmm5, XMMRegister xmm6, XMMRegister xmm7,
+                Register rax, Register rcx, Register rdx, Register tmp1 LP64_ONLY(COMMA Register tmp2));
+
   void increase_precision();
   void restore_precision();
 
-  // computes exp(x). Fallback to runtime call included.
-  void exp_with_fallback(int num_fpu_regs_in_use) { pow_or_exp(true, num_fpu_regs_in_use); }
   // computes pow(x,y). Fallback to runtime call included.
-  void pow_with_fallback(int num_fpu_regs_in_use) { pow_or_exp(false, num_fpu_regs_in_use); }
+  void pow_with_fallback(int num_fpu_regs_in_use) { pow_or_exp(num_fpu_regs_in_use); }
 
 private:
 
@@ -925,7 +931,7 @@ private:
   void pow_exp_core_encoding();
 
   // computes pow(x,y) or exp(x). Fallback to runtime call included.
-  void pow_or_exp(bool is_exp, int num_fpu_regs_in_use);
+  void pow_or_exp(int num_fpu_regs_in_use);
 
   // these are private because users should be doing movflt/movdbl
 
@@ -970,6 +976,10 @@ public:
   void movsd(Address dst, XMMRegister src)     { Assembler::movsd(dst, src); }
   void movsd(XMMRegister dst, Address src)     { Assembler::movsd(dst, src); }
   void movsd(XMMRegister dst, AddressLiteral src);
+
+  void mulpd(XMMRegister dst, XMMRegister src)    { Assembler::mulpd(dst, src); }
+  void mulpd(XMMRegister dst, Address src)        { Assembler::mulpd(dst, src); }
+  void mulpd(XMMRegister dst, AddressLiteral src);
 
   void mulsd(XMMRegister dst, XMMRegister src)    { Assembler::mulsd(dst, src); }
   void mulsd(XMMRegister dst, Address src)        { Assembler::mulsd(dst, src); }
@@ -1068,6 +1078,9 @@ public:
   void vsubss(XMMRegister dst, XMMRegister nds, XMMRegister src) { Assembler::vsubss(dst, nds, src); }
   void vsubss(XMMRegister dst, XMMRegister nds, Address src)     { Assembler::vsubss(dst, nds, src); }
   void vsubss(XMMRegister dst, XMMRegister nds, AddressLiteral src);
+
+  void vnegatess(XMMRegister dst, XMMRegister nds, AddressLiteral src);
+  void vnegatesd(XMMRegister dst, XMMRegister nds, AddressLiteral src);
 
   // AVX Vector instructions
 
@@ -1198,32 +1211,50 @@ public:
   // clear memory of size 'cnt' qwords, starting at 'base'.
   void clear_mem(Register base, Register cnt, Register rtmp);
 
+#ifdef COMPILER2
+  void string_indexof_char(Register str1, Register cnt1, Register ch, Register result,
+                           XMMRegister vec1, XMMRegister vec2, XMMRegister vec3, Register tmp);
+
   // IndexOf strings.
   // Small strings are loaded through stack if they cross page boundary.
   void string_indexof(Register str1, Register str2,
                       Register cnt1, Register cnt2,
                       int int_cnt2,  Register result,
-                      XMMRegister vec, Register tmp);
+                      XMMRegister vec, Register tmp,
+                      int ae);
 
   // IndexOf for constant substrings with size >= 8 elements
   // which don't need to be loaded through stack.
   void string_indexofC8(Register str1, Register str2,
                       Register cnt1, Register cnt2,
                       int int_cnt2,  Register result,
-                      XMMRegister vec, Register tmp);
+                      XMMRegister vec, Register tmp,
+                      int ae);
 
     // Smallest code: we don't need to load through stack,
     // check string tail.
 
+  // helper function for string_compare
+  void load_next_elements(Register elem1, Register elem2, Register str1, Register str2,
+                          Address::ScaleFactor scale, Address::ScaleFactor scale1,
+                          Address::ScaleFactor scale2, Register index, int ae);
   // Compare strings.
   void string_compare(Register str1, Register str2,
                       Register cnt1, Register cnt2, Register result,
-                      XMMRegister vec1);
+                      XMMRegister vec1, int ae);
 
-  // Compare char[] arrays.
-  void char_arrays_equals(bool is_array_equ, Register ary1, Register ary2,
-                          Register limit, Register result, Register chr,
-                          XMMRegister vec1, XMMRegister vec2);
+  // Search for Non-ASCII character (Negative byte value) in a byte array,
+  // return true if it has any and false otherwise.
+  void has_negatives(Register ary1, Register len,
+                     Register result, Register tmp1,
+                     XMMRegister vec1, XMMRegister vec2);
+
+  // Compare char[] or byte[] arrays.
+  void arrays_equals(bool is_array_equ, Register ary1, Register ary2,
+                     Register limit, Register result, Register chr,
+                     XMMRegister vec1, XMMRegister vec2, bool is_char);
+
+#endif
 
   // Fill primitive arrays
   void generate_fill(BasicType t, bool aligned,
@@ -1275,15 +1306,57 @@ public:
                Register raxReg);
 #endif
 
-  // CRC32 code for java.util.zip.CRC32::updateBytes() instrinsic.
+  // CRC32 code for java.util.zip.CRC32::updateBytes() intrinsic.
   void update_byte_crc32(Register crc, Register val, Register table);
   void kernel_crc32(Register crc, Register buf, Register len, Register table, Register tmp);
+  // CRC32C code for java.util.zip.CRC32C::updateBytes() intrinsic
+  // Note on a naming convention:
+  // Prefix w = register only used on a Westmere+ architecture
+  // Prefix n = register only used on a Nehalem architecture
+#ifdef _LP64
+  void crc32c_ipl_alg4(Register in_out, uint32_t n,
+                       Register tmp1, Register tmp2, Register tmp3);
+#else
+  void crc32c_ipl_alg4(Register in_out, uint32_t n,
+                       Register tmp1, Register tmp2, Register tmp3,
+                       XMMRegister xtmp1, XMMRegister xtmp2);
+#endif
+  void crc32c_pclmulqdq(XMMRegister w_xtmp1,
+                        Register in_out,
+                        uint32_t const_or_pre_comp_const_index, bool is_pclmulqdq_supported,
+                        XMMRegister w_xtmp2,
+                        Register tmp1,
+                        Register n_tmp2, Register n_tmp3);
+  void crc32c_rec_alt2(uint32_t const_or_pre_comp_const_index_u1, uint32_t const_or_pre_comp_const_index_u2, bool is_pclmulqdq_supported, Register in_out, Register in1, Register in2,
+                       XMMRegister w_xtmp1, XMMRegister w_xtmp2, XMMRegister w_xtmp3,
+                       Register tmp1, Register tmp2,
+                       Register n_tmp3);
+  void crc32c_proc_chunk(uint32_t size, uint32_t const_or_pre_comp_const_index_u1, uint32_t const_or_pre_comp_const_index_u2, bool is_pclmulqdq_supported,
+                         Register in_out1, Register in_out2, Register in_out3,
+                         Register tmp1, Register tmp2, Register tmp3,
+                         XMMRegister w_xtmp1, XMMRegister w_xtmp2, XMMRegister w_xtmp3,
+                         Register tmp4, Register tmp5,
+                         Register n_tmp6);
+  void crc32c_ipl_alg2_alt2(Register in_out, Register in1, Register in2,
+                            Register tmp1, Register tmp2, Register tmp3,
+                            Register tmp4, Register tmp5, Register tmp6,
+                            XMMRegister w_xtmp1, XMMRegister w_xtmp2, XMMRegister w_xtmp3,
+                            bool is_pclmulqdq_supported);
   // Fold 128-bit data chunk
   void fold_128bit_crc32(XMMRegister xcrc, XMMRegister xK, XMMRegister xtmp, Register buf, int offset);
   void fold_128bit_crc32(XMMRegister xcrc, XMMRegister xK, XMMRegister xtmp, XMMRegister xbuf);
   // Fold 8-bit data
   void fold_8bit_crc32(Register crc, Register table, Register tmp);
   void fold_8bit_crc32(XMMRegister crc, Register table, XMMRegister xtmp, Register tmp);
+
+  // Compress char[] array to byte[].
+  void char_array_compress(Register src, Register dst, Register len,
+                           XMMRegister tmp1, XMMRegister tmp2, XMMRegister tmp3,
+                           XMMRegister tmp4, Register tmp5, Register result);
+
+  // Inflate byte[] array to char[].
+  void byte_array_inflate(Register src, Register dst, Register len,
+                          XMMRegister tmp1, Register tmp2);
 
 #undef VIRTUAL
 

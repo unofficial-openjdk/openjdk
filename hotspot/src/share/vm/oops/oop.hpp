@@ -110,18 +110,12 @@ class oopDesc {
 
   // type test operations (inlined in oop.inline.hpp)
   bool is_instance()            const;
-  bool is_instanceMirror()      const;
-  bool is_instanceClassLoader() const;
-  bool is_instanceRef()         const;
   bool is_array()               const;
   bool is_objArray()            const;
   bool is_typeArray()           const;
 
   // type test operations that don't require inclusion of oop.inline.hpp.
   bool is_instance_noinline()          const;
-  bool is_instanceMirror_noinline()    const;
-  bool is_instanceClassLoader_noline() const;
-  bool is_instanceRef_noline()         const;
   bool is_array_noinline()             const;
   bool is_objArray_noinline()          const;
   bool is_typeArray_noinline()         const;
@@ -330,7 +324,6 @@ class oopDesc {
   // Garbage Collection support
 
   // Mark Sweep
-  void ms_follow_contents();
   // Adjust all pointers in this object to point at it's forwarded location and
   // return the size of this oop.  This is used by the MarkSweep collector.
   int  ms_adjust_pointers();
@@ -344,17 +337,25 @@ class oopDesc {
 
 
   // iterators, returns size of object
-#define OOP_ITERATE_DECL(OopClosureType, nv_suffix)                      \
-  int oop_iterate(OopClosureType* blk);                                  \
-  int oop_iterate(OopClosureType* blk, MemRegion mr);  // Only in mr.
+#define OOP_ITERATE_DECL(OopClosureType, nv_suffix)                     \
+  void oop_iterate(OopClosureType* blk);                                \
+  void oop_iterate(OopClosureType* blk, MemRegion mr);  // Only in mr.
 
   ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL)
   ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_DECL)
 
+#define OOP_ITERATE_SIZE_DECL(OopClosureType, nv_suffix)                    \
+  int oop_iterate_size(OopClosureType* blk);                                \
+  int oop_iterate_size(OopClosureType* blk, MemRegion mr);  // Only in mr.
+
+  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_SIZE_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_SIZE_DECL)
+
+
 #if INCLUDE_ALL_GCS
 
-#define OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix)            \
-  int oop_iterate_backwards(OopClosureType* blk);
+#define OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix)  \
+  void oop_iterate_backwards(OopClosureType* blk);
 
   ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_BACKWARDS_DECL)
   ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_BACKWARDS_DECL)

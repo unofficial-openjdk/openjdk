@@ -34,8 +34,48 @@
 #include "runtime/os.hpp"
 #include "utilities/macros.hpp"
 
+class HasAccumulatedModifiedOopsClosure : public KlassClosure {
+  bool _found;
+ public:
+  HasAccumulatedModifiedOopsClosure() : _found(false) {}
+  void do_klass(Klass* klass) {
+    if (_found) {
+      return;
+    }
+
+    if (klass->has_accumulated_modified_oops()) {
+      _found = true;
+    }
+  }
+  bool found() {
+    return _found;
+  }
+};
+
+bool KlassRemSet::mod_union_is_clear() {
+  HasAccumulatedModifiedOopsClosure closure;
+  ClassLoaderDataGraph::classes_do(&closure);
+
+  return !closure.found();
+}
+
+
+class ClearKlassModUnionClosure : public KlassClosure {
+ public:
+  void do_klass(Klass* klass) {
+    if (klass->has_accumulated_modified_oops()) {
+      klass->clear_accumulated_modified_oops();
+    }
+  }
+};
+
+void KlassRemSet::clear_mod_union() {
+  ClearKlassModUnionClosure closure;
+  ClassLoaderDataGraph::classes_do(&closure);
+}
+
 CardTableRS::CardTableRS(MemRegion whole_heap) :
-  GenRemSet(),
+  _bs(NULL),
   _cur_youngergen_card_val(youngergenP1_card)
 {
   _ct_bs = new CardTableModRefBSForCTRS(whole_heap);
@@ -80,7 +120,9 @@ jbyte CardTableRS::find_unused_youngergenP_card_value() {
         break;
       }
     }
-    if (!seen) return v;
+    if (!seen) {
+      return v;
+    }
   }
   ShouldNotReachHere();
   return 0;
@@ -276,10 +318,10 @@ void CardTableRS::younger_refs_in_space_iterate(Space* sp,
   // CMS+ParNew until related bug is fixed.
   MemRegion ur    = sp->used_region();
   assert(ur.contains(urasm) || (UseConcMarkSweepGC),
-         err_msg("Did you forget to call save_marks()? "
-                 "[" PTR_FORMAT ", " PTR_FORMAT ") is not contained in "
-                 "[" PTR_FORMAT ", " PTR_FORMAT ")",
-                 p2i(urasm.start()), p2i(urasm.end()), p2i(ur.start()), p2i(ur.end())));
+         "Did you forget to call save_marks()? "
+         "[" PTR_FORMAT ", " PTR_FORMAT ") is not contained in "
+         "[" PTR_FORMAT ", " PTR_FORMAT ")",
+         p2i(urasm.start()), p2i(urasm.end()), p2i(ur.start()), p2i(ur.end()));
   // In the case of CMS+ParNew, issue a warning
   if (!ur.contains(urasm)) {
     assert(UseConcMarkSweepGC, "Tautology: see assert above");
@@ -340,25 +382,25 @@ protected:
   template <class T> void do_oop_work(T* p) {
     HeapWord* jp = (HeapWord*)p;
     assert(jp >= _begin && jp < _end,
-           err_msg("Error: jp " PTR_FORMAT " should be within "
-                   "[_begin, _end) = [" PTR_FORMAT "," PTR_FORMAT ")",
-                   p2i(jp), p2i(_begin), p2i(_end)));
+           "Error: jp " PTR_FORMAT " should be within "
+           "[_begin, _end) = [" PTR_FORMAT "," PTR_FORMAT ")",
+           p2i(jp), p2i(_begin), p2i(_end));
     oop obj = oopDesc::load_decode_heap_oop(p);
     guarantee(obj == NULL || (HeapWord*)obj >= _boundary,
-              err_msg("pointer " PTR_FORMAT " at " PTR_FORMAT " on "
-                      "clean card crosses boundary" PTR_FORMAT,
-                      p2i((HeapWord*)obj), p2i(jp), p2i(_boundary)));
+              "pointer " PTR_FORMAT " at " PTR_FORMAT " on "
+              "clean card crosses boundary" PTR_FORMAT,
+              p2i(obj), p2i(jp), p2i(_boundary));
   }
 
 public:
   VerifyCleanCardClosure(HeapWord* b, HeapWord* begin, HeapWord* end) :
     _boundary(b), _begin(begin), _end(end) {
     assert(b <= begin,
-           err_msg("Error: boundary " PTR_FORMAT " should be at or below begin " PTR_FORMAT,
-                   p2i(b), p2i(begin)));
+           "Error: boundary " PTR_FORMAT " should be at or below begin " PTR_FORMAT,
+           p2i(b), p2i(begin));
     assert(begin <= end,
-           err_msg("Error: begin " PTR_FORMAT " should be strictly below end " PTR_FORMAT,
-                   p2i(begin), p2i(end)));
+           "Error: begin " PTR_FORMAT " should be strictly below end " PTR_FORMAT,
+           p2i(begin), p2i(end));
   }
 
   virtual void do_oop(oop* p)       { VerifyCleanCardClosure::do_oop_work(p); }
@@ -502,7 +544,7 @@ void CardTableRS::verify_space(Space* s, HeapWord* gen_boundary) {
       //
       // The main point below is that the parallel card scanning code
       // deals correctly with these stale card values. There are two main
-      // cases to consider where we have a stale "younger gen" value and a
+      // cases to consider where we have a stale "young gen" value and a
       // "derivative" case to consider, where we have a stale
       // "cur_younger_gen_and_prev_non_clean" value, as will become
       // apparent in the case analysis below.

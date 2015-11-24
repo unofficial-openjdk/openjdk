@@ -41,6 +41,10 @@
 #include "runtime/signature.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmciJavaClasses.hpp"
+#include "jvmci/jvmciRuntime.hpp"
+#endif
 
 // -----------------------------------------------------
 // Implementation of JavaCallWrapper
@@ -51,7 +55,7 @@ JavaCallWrapper::JavaCallWrapper(methodHandle callee_method, Handle receiver, Ja
 
   guarantee(thread->is_Java_thread(), "crucial check - the VM thread cannot and must not escape to Java code");
   assert(!thread->owns_locks(), "must release all locks when leaving VM");
-  guarantee(!thread->is_Compiler_thread(), "cannot make java calls from the compiler");
+  guarantee(thread->can_call_java(), "cannot make java calls from the native compiler");
   _result   = result;
 
   // Allocate handle block for Java code. This must be done before we change thread_state to _thread_in_Java_or_stub,
@@ -285,21 +289,20 @@ void JavaCalls::call_static(JavaValue* result, KlassHandle klass, Symbol* name, 
 // Implementation of JavaCalls (low level)
 
 
-void JavaCalls::call(JavaValue* result, methodHandle method, JavaCallArguments* args, TRAPS) {
+void JavaCalls::call(JavaValue* result, const methodHandle& method, JavaCallArguments* args, TRAPS) {
   // Check if we need to wrap a potential OS exception handler around thread
   // This is used for e.g. Win32 structured exception handlers
   assert(THREAD->is_Java_thread(), "only JavaThreads can make JavaCalls");
   // Need to wrap each and every time, since there might be native code down the
   // stack that has installed its own exception handlers
-  os::os_exception_wrapper(call_helper, result, &method, args, THREAD);
+  os::os_exception_wrapper(call_helper, result, method, args, THREAD);
 }
 
-void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArguments* args, TRAPS) {
+void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaCallArguments* args, TRAPS) {
   // During dumping, Java execution environment is not fully initialized. Also, Java execution
   // may cause undesirable side-effects in the class metadata.
   assert(!DumpSharedSpaces, "must not execute Java bytecodes when dumping");
 
-  methodHandle method = *m;
   JavaThread* thread = (JavaThread*)THREAD;
   assert(thread->is_Java_thread(), "must be called by a java thread");
   assert(method.not_null(), "must have a method to call");
@@ -309,19 +312,27 @@ void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArgument
 
   CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
 
-  // Verify the arguments
+#if INCLUDE_JVMCI
+  // Gets the nmethod (if any) that should be called instead of normal target
+  nmethod* alternative_target = args->alternative_target();
+  if (alternative_target == NULL) {
+#endif
+// Verify the arguments
 
   if (CheckJNICalls)  {
     args->verify(method, result->get_type(), thread);
   }
   else debug_only(args->verify(method, result->get_type(), thread));
+#if INCLUDE_JVMCI
+  }
+#else
 
   // Ignore call if method is empty
   if (method->is_empty_method()) {
     assert(result->get_type() == T_VOID, "an empty method must return a void value");
     return;
   }
-
+#endif
 
 #ifdef ASSERT
   { InstanceKlass* holder = method->method_holder();
@@ -333,7 +344,7 @@ void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArgument
 #endif
 
 
-  assert(!thread->is_Compiler_thread(), "cannot compile from the compiler");
+  assert(thread->can_call_java(), "cannot compile from the native compiler");
   if (CompilationPolicy::must_be_compiled(method)) {
     CompileBroker::compile_method(method, InvocationEntryBci,
                                   CompilationPolicy::policy()->initial_compile_level(),
@@ -376,6 +387,17 @@ void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArgument
     // Touch pages checked if the OS needs them to be touched to be mapped.
     os::bang_stack_shadow_pages();
   }
+
+#if INCLUDE_JVMCI
+  if (alternative_target != NULL) {
+    if (alternative_target->is_alive()) {
+      thread->set_jvmci_alternate_call_target(alternative_target->verified_entry_point());
+      entry_point = method->adapter()->get_i2c_entry();
+    } else {
+      THROW(vmSymbols::jdk_vm_ci_code_InvalidInstalledCodeException());
+    }
+  }
+#endif
 
   // do call
   { JavaCallWrapper link(method, receiver, result, CHECK);
@@ -523,7 +545,7 @@ class SignatureChekker : public SignatureIterator {
 };
 
 
-void JavaCallArguments::verify(methodHandle method, BasicType return_type,
+void JavaCallArguments::verify(const methodHandle& method, BasicType return_type,
   Thread *thread) {
   guarantee(method->size_of_parameters() == size_of_parameters(), "wrong no. of arguments pushed");
 

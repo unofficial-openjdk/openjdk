@@ -38,6 +38,7 @@ class G1SATBCardTableLoggingModRefBS;
 // snapshot-at-the-beginning marking.
 
 class G1SATBCardTableModRefBS: public CardTableModRefBS {
+  friend class VMStructs;
 protected:
   enum G1CardValues {
     g1_young_gen = CT_MR_BS_last_reserved << 1
@@ -122,6 +123,9 @@ public:
     jbyte val = _byte_map[card_index];
     return (val & (clean_card_mask_val() | deferred_card_val())) == deferred_card_val();
   }
+  virtual void write_ref_nmethod_pre(oop* dst, nmethod* nm);
+  virtual void write_ref_nmethod_post(oop* dst, nmethod* nm);
+
 };
 
 template<>
@@ -147,6 +151,10 @@ class G1SATBCardTableLoggingModRefBS: public G1SATBCardTableModRefBS {
  private:
   G1SATBCardTableLoggingModRefBSChangedListener _listener;
   DirtyCardQueueSet& _dcqs;
+
+ protected:
+  virtual void write_ref_field_work(void* field, oop new_val, bool release);
+
  public:
   static size_t compute_size(size_t mem_region_size_in_words) {
     size_t number_of_slots = (mem_region_size_in_words / card_size_in_words);
@@ -164,8 +172,6 @@ class G1SATBCardTableLoggingModRefBS: public G1SATBCardTableModRefBS {
   virtual void initialize(G1RegionToSpaceMapper* mapper);
 
   virtual void resize_covered_region(MemRegion new_region) { ShouldNotReachHere(); }
-
-  void write_ref_field_work(void* field, oop new_val, bool release = false);
 
   // Can be called from static contexts.
   static void write_ref_field_static(void* field, oop new_val);

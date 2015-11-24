@@ -36,8 +36,6 @@
 #include "runtime/orderAccess.inline.hpp"
 #include "utilities/macros.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 // Implementation of ConstantPoolCacheEntry
 
 void ConstantPoolCacheEntry::initialize_entry(int index) {
@@ -126,7 +124,7 @@ void ConstantPoolCacheEntry::set_parameter_size(int value) {
   // This routine is called only in corner cases where the CPCE is not yet initialized.
   // See AbstractInterpreter::deopt_continue_after_entry.
   assert(_flags == 0 || parameter_size() == 0 || parameter_size() == value,
-         err_msg("size must not change: parameter_size=%d, value=%d", parameter_size(), value));
+         "size must not change: parameter_size=%d, value=%d", parameter_size(), value);
   // Setting the parameter size by itself is only safe if the
   // current value of _flags is 0, otherwise another thread may have
   // updated it and we don't want to overwrite that value.  Don't
@@ -136,7 +134,7 @@ void ConstantPoolCacheEntry::set_parameter_size(int value) {
     Atomic::cmpxchg_ptr((value & parameter_size_mask), &_flags, 0);
   }
   guarantee(parameter_size() == value,
-            err_msg("size must not change: parameter_size=%d, value=%d", parameter_size(), value));
+            "size must not change: parameter_size=%d, value=%d", parameter_size(), value);
 }
 
 void ConstantPoolCacheEntry::set_direct_or_vtable_call(Bytecodes::Code invoke_code,
@@ -248,7 +246,7 @@ void ConstantPoolCacheEntry::set_vtable_call(Bytecodes::Code invoke_code, method
   set_direct_or_vtable_call(invoke_code, method, index);
 }
 
-void ConstantPoolCacheEntry::set_itable_call(Bytecodes::Code invoke_code, methodHandle method, int index) {
+void ConstantPoolCacheEntry::set_itable_call(Bytecodes::Code invoke_code, const methodHandle& method, int index) {
   assert(method->method_holder()->verify_itable_index(index), "");
   assert(invoke_code == Bytecodes::_invokeinterface, "");
   InstanceKlass* interf = method->method_holder();
@@ -263,15 +261,15 @@ void ConstantPoolCacheEntry::set_itable_call(Bytecodes::Code invoke_code, method
 }
 
 
-void ConstantPoolCacheEntry::set_method_handle(constantPoolHandle cpool, const CallInfo &call_info) {
+void ConstantPoolCacheEntry::set_method_handle(const constantPoolHandle& cpool, const CallInfo &call_info) {
   set_method_handle_common(cpool, Bytecodes::_invokehandle, call_info);
 }
 
-void ConstantPoolCacheEntry::set_dynamic_call(constantPoolHandle cpool, const CallInfo &call_info) {
+void ConstantPoolCacheEntry::set_dynamic_call(const constantPoolHandle& cpool, const CallInfo &call_info) {
   set_method_handle_common(cpool, Bytecodes::_invokedynamic, call_info);
 }
 
-void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
+void ConstantPoolCacheEntry::set_method_handle_common(const constantPoolHandle& cpool,
                                                       Bytecodes::Code invoke_code,
                                                       const CallInfo &call_info) {
   // NOTE: This CPCE can be the subject of data races.
@@ -310,9 +308,9 @@ void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
   if (TraceInvokeDynamic) {
     tty->print_cr("set_method_handle bc=%d appendix=" PTR_FORMAT "%s method_type=" PTR_FORMAT "%s method=" PTR_FORMAT " ",
                   invoke_code,
-                  (void *)appendix(),    (has_appendix    ? "" : " (unused)"),
-                  (void *)method_type(), (has_method_type ? "" : " (unused)"),
-                  (intptr_t)adapter());
+                  p2i(appendix()),    (has_appendix    ? "" : " (unused)"),
+                  p2i(method_type()), (has_method_type ? "" : " (unused)"),
+                  p2i(adapter()));
     adapter->print();
     if (has_appendix)  appendix()->print();
   }
@@ -363,7 +361,7 @@ void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
   }
 }
 
-Method* ConstantPoolCacheEntry::method_if_resolved(constantPoolHandle cpool) {
+Method* ConstantPoolCacheEntry::method_if_resolved(const constantPoolHandle& cpool) {
   // Decode the action of set_method and set_interface_call
   Bytecodes::Code invoke_code = bytecode_1();
   if (invoke_code != (Bytecodes::Code)0) {
@@ -396,7 +394,7 @@ Method* ConstantPoolCacheEntry::method_if_resolved(constantPoolHandle cpool) {
         int holder_index = cpool->uncached_klass_ref_index_at(constant_pool_index());
         if (cpool->tag_at(holder_index).is_klass()) {
           Klass* klass = cpool->resolved_klass_at(holder_index);
-          if (!klass->oop_is_instance())
+          if (!klass->is_instance_klass())
             klass = SystemDictionary::Object_klass();
           return InstanceKlass::cast(klass)->method_at_vtable(f2_as_index());
         }
@@ -408,7 +406,7 @@ Method* ConstantPoolCacheEntry::method_if_resolved(constantPoolHandle cpool) {
 }
 
 
-oop ConstantPoolCacheEntry::appendix_if_resolved(constantPoolHandle cpool) {
+oop ConstantPoolCacheEntry::appendix_if_resolved(const constantPoolHandle& cpool) {
   if (!has_appendix())
     return NULL;
   const int ref_index = f2_as_index() + _indy_resolved_references_appendix_offset;
@@ -417,7 +415,7 @@ oop ConstantPoolCacheEntry::appendix_if_resolved(constantPoolHandle cpool) {
 }
 
 
-oop ConstantPoolCacheEntry::method_type_if_resolved(constantPoolHandle cpool) {
+oop ConstantPoolCacheEntry::method_type_if_resolved(const constantPoolHandle& cpool) {
   if (!has_method_type())
     return NULL;
   const int ref_index = f2_as_index() + _indy_resolved_references_method_type_offset;
@@ -593,7 +591,7 @@ void ConstantPoolCache::initialize(const intArray& inverse_index_map,
       // all point to the same constant pool cache entry.
       for (int entry = 1; entry < ConstantPoolCacheEntry::_indy_resolved_references_entries; entry++) {
         const int cpci_next = invokedynamic_references_map[ref + entry];
-        assert(cpci == cpci_next, err_msg_res("%d == %d", cpci, cpci_next));
+        assert(cpci == cpci_next, "%d == %d", cpci, cpci_next);
       }
 #endif
       entry_at(cpci)->initialize_resolved_reference_index(ref);

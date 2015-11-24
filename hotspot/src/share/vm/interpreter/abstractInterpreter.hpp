@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,6 +90,8 @@ class AbstractInterpreter: AllStatic {
     java_util_zip_CRC32_update,                                 // implementation of java.util.zip.CRC32.update()
     java_util_zip_CRC32_updateBytes,                            // implementation of java.util.zip.CRC32.updateBytes()
     java_util_zip_CRC32_updateByteBuffer,                       // implementation of java.util.zip.CRC32.updateByteBuffer()
+    java_util_zip_CRC32C_updateBytes,                           // implementation of java.util.zip.CRC32C.updateBytes(crc, b[], off, end)
+    java_util_zip_CRC32C_updateDirectByteBuffer,                // implementation of java.util.zip.CRC32C.updateDirectByteBuffer(crc, address, off, end)
     java_lang_Float_intBitsToFloat,                             // implementation of java.lang.Float.intBitsToFloat()
     java_lang_Float_floatToRawIntBits,                          // implementation of java.lang.Float.floatToRawIntBits()
     java_lang_Double_longBitsToDouble,                          // implementation of java.lang.Double.longBitsToDouble()
@@ -192,7 +194,7 @@ class AbstractInterpreter: AllStatic {
                                      bool is_bottom_frame);
 
   // Runtime support
-  static bool       is_not_reached(                       methodHandle method, int bci);
+  static bool       is_not_reached(const methodHandle& method, int bci);
   // Safepoint support
   static void       notice_safepoints()                         { ShouldNotReachHere(); } // stops the thread when reaching a safepoint
   static void       ignore_safepoints()                         { ShouldNotReachHere(); } // ignores safepoints

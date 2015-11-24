@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,6 @@
 #include "runtime/vmThread.hpp"
 #include "runtime/vm_operations.hpp"
 #include "services/threadService.hpp"
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 // TODO: we need to define a naming convention for perf counters
 // to distinguish counters for:
@@ -507,8 +505,7 @@ void StackFrameInfo::print_on(outputStream* st) const {
   int len = (_locked_monitors != NULL ? _locked_monitors->length() : 0);
   for (int i = 0; i < len; i++) {
     oop o = _locked_monitors->at(i);
-    InstanceKlass* ik = InstanceKlass::cast(o->klass());
-    st->print_cr("\t- locked <" INTPTR_FORMAT "> (a %s)", (address)o, ik->external_name());
+    st->print_cr("\t- locked <" INTPTR_FORMAT "> (a %s)", p2i(o), o->klass()->external_name());
   }
 
 }
@@ -731,8 +728,7 @@ void ConcurrentLocksDump::print_locks_on(JavaThread* t, outputStream* st) {
 
   for (int i = 0; i < locks->length(); i++) {
     instanceOop obj = locks->at(i);
-    InstanceKlass* ik = InstanceKlass::cast(obj->klass());
-    st->print_cr("\t- <" INTPTR_FORMAT "> (a %s)", (address)obj, ik->external_name());
+    st->print_cr("\t- <" INTPTR_FORMAT "> (a %s)", p2i(obj), obj->klass()->external_name());
   }
   st->cr();
 }
@@ -885,11 +881,11 @@ void DeadlockCycle::print_on(outputStream* st) const {
     st->print_cr("\"%s\":", currentThread->get_thread_name());
     const char* owner_desc = ",\n  which is held by";
     if (waitingToLockMonitor != NULL) {
-      st->print("  waiting to lock monitor " INTPTR_FORMAT, waitingToLockMonitor);
+      st->print("  waiting to lock monitor " INTPTR_FORMAT, p2i(waitingToLockMonitor));
       oop obj = (oop)waitingToLockMonitor->object();
       if (obj != NULL) {
-        st->print(" (object " INTPTR_FORMAT ", a %s)", (address)obj,
-                   (InstanceKlass::cast(obj->klass()))->external_name());
+        st->print(" (object " INTPTR_FORMAT ", a %s)", p2i(obj),
+                   obj->klass()->external_name());
 
         if (!currentThread->current_pending_monitor_is_from_java()) {
           owner_desc = "\n  in JNI, which is held by";
@@ -907,13 +903,13 @@ void DeadlockCycle::print_on(outputStream* st) const {
         // if it is not findable, then the previous currentThread is
         // blocked permanently.
         st->print("%s UNKNOWN_owner_addr=" PTR_FORMAT, owner_desc,
-                  (address)waitingToLockMonitor->owner());
+                  p2i(waitingToLockMonitor->owner()));
         continue;
       }
     } else {
       st->print("  waiting for ownable synchronizer " INTPTR_FORMAT ", (a %s)",
-                (address)waitingToLockBlocker,
-                (InstanceKlass::cast(waitingToLockBlocker->klass()))->external_name());
+                p2i(waitingToLockBlocker),
+                waitingToLockBlocker->klass()->external_name());
       assert(waitingToLockBlocker->is_a(SystemDictionary::abstract_ownable_synchronizer_klass()),
              "Must be an AbstractOwnableSynchronizer");
       oop ownerObj = java_util_concurrent_locks_AbstractOwnableSynchronizer::get_owner_threadObj(waitingToLockBlocker);

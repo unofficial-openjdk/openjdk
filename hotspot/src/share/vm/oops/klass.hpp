@@ -341,7 +341,7 @@ protected:
     assert(lh < (jint)_lh_neutral_value, "must be array");
     int l2esz = (lh >> _lh_log2_element_size_shift) & _lh_log2_element_size_mask;
     assert(l2esz <= LogBitsPerLong,
-        err_msg("sanity. l2esz: 0x%x for lh: 0x%x", (uint)l2esz, (uint)lh));
+           "sanity. l2esz: 0x%x for lh: 0x%x", (uint)l2esz, (uint)lh);
     return l2esz;
   }
   static jint array_layout_helper(jint tag, int hsize, BasicType etype, int log2_esize) {
@@ -373,8 +373,8 @@ protected:
 #endif
 
   // vtables
-  virtual klassVtable* vtable() const        { return NULL; }
-  virtual int vtable_length() const          { return 0; }
+  virtual klassVtable* vtable() const = 0;
+  virtual int vtable_length() const = 0;
 
   // subclass check
   bool is_subclass_of(const Klass* k) const;
@@ -474,15 +474,14 @@ protected:
   virtual const char* signature_name() const;
 
   // type testing operations
+#ifdef ASSERT
  protected:
-  virtual bool oop_is_instance_slow()       const { return false; }
-  virtual bool oop_is_array_slow()          const { return false; }
-  virtual bool oop_is_objArray_slow()       const { return false; }
-  virtual bool oop_is_typeArray_slow()      const { return false; }
+  virtual bool is_instance_klass_slow()     const { return false; }
+  virtual bool is_array_klass_slow()        const { return false; }
+  virtual bool is_objArray_klass_slow()     const { return false; }
+  virtual bool is_typeArray_klass_slow()    const { return false; }
+#endif // ASSERT
  public:
-  virtual bool oop_is_instanceClassLoader() const { return false; }
-  virtual bool oop_is_instanceMirror()      const { return false; }
-  virtual bool oop_is_instanceRef()         const { return false; }
 
   // Fast non-virtual versions
   #ifndef ASSERT
@@ -495,18 +494,18 @@ protected:
   }
  public:
   #endif
-  inline  bool oop_is_instance()            const { return assert_same_query(
-                                                    layout_helper_is_instance(layout_helper()),
-                                                    oop_is_instance_slow()); }
-  inline  bool oop_is_array()               const { return assert_same_query(
+  inline  bool is_instance_klass()            const { return assert_same_query(
+                                                      layout_helper_is_instance(layout_helper()),
+                                                      is_instance_klass_slow()); }
+  inline  bool is_array_klass()               const { return assert_same_query(
                                                     layout_helper_is_array(layout_helper()),
-                                                    oop_is_array_slow()); }
-  inline  bool oop_is_objArray()            const { return assert_same_query(
+                                                    is_array_klass_slow()); }
+  inline  bool is_objArray_klass()            const { return assert_same_query(
                                                     layout_helper_is_objArray(layout_helper()),
-                                                    oop_is_objArray_slow()); }
-  inline  bool oop_is_typeArray()           const { return assert_same_query(
+                                                    is_objArray_klass_slow()); }
+  inline  bool is_typeArray_klass()           const { return assert_same_query(
                                                     layout_helper_is_typeArray(layout_helper()),
-                                                    oop_is_typeArray_slow()); }
+                                                    is_typeArray_klass_slow()); }
   #undef assert_same_query
 
   // Access flags
@@ -572,7 +571,6 @@ protected:
   // GC specific object visitors
   //
   // Mark Sweep
-  virtual void oop_ms_follow_contents(oop obj) = 0;
   virtual int  oop_ms_adjust_pointers(oop obj) = 0;
 #if INCLUDE_ALL_GCS
   // Parallel Scavenge
@@ -584,17 +582,17 @@ protected:
 
   // Iterators specialized to particular subtypes
   // of ExtendedOopClosure, to avoid closure virtual calls.
-#define Klass_OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)                                          \
-  virtual int oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure) = 0;                        \
-  /* Iterates "closure" over all the oops in "obj" (of type "this") within "mr". */                    \
-  virtual int oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr) = 0;
+#define Klass_OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)                                           \
+  virtual void oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure) = 0;                        \
+  /* Iterates "closure" over all the oops in "obj" (of type "this") within "mr". */                     \
+  virtual void oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr) = 0;
 
   ALL_OOP_OOP_ITERATE_CLOSURES_1(Klass_OOP_OOP_ITERATE_DECL)
   ALL_OOP_OOP_ITERATE_CLOSURES_2(Klass_OOP_OOP_ITERATE_DECL)
 
 #if INCLUDE_ALL_GCS
-#define Klass_OOP_OOP_ITERATE_DECL_BACKWARDS(OopClosureType, nv_suffix)                    \
-  virtual int oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure) = 0;
+#define Klass_OOP_OOP_ITERATE_DECL_BACKWARDS(OopClosureType, nv_suffix)                     \
+  virtual void oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure) = 0;
 
   ALL_OOP_OOP_ITERATE_CLOSURES_1(Klass_OOP_OOP_ITERATE_DECL_BACKWARDS)
   ALL_OOP_OOP_ITERATE_CLOSURES_2(Klass_OOP_OOP_ITERATE_DECL_BACKWARDS)
@@ -661,35 +659,35 @@ protected:
 // Used to generate declarations in the *Klass header files.
 
 #define OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)                                    \
-  int oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure);                        \
-  int oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr);
+  void oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure);                        \
+  void oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr);
 
 #if INCLUDE_ALL_GCS
-#define OOP_OOP_ITERATE_DECL_BACKWARDS(OopClosureType, nv_suffix)              \
-  int oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure);
+#define OOP_OOP_ITERATE_DECL_BACKWARDS(OopClosureType, nv_suffix)               \
+  void oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure);
 #endif // INCLUDE_ALL_GCS
 
 
 // Oop iteration macros for definitions.
 // Used to generate definitions in the *Klass.inline.hpp files.
 
-#define OOP_OOP_ITERATE_DEFN(KlassType, OopClosureType, nv_suffix)             \
-int KlassType::oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure) {  \
-  return oop_oop_iterate<nvs_to_bool(nv_suffix)>(obj, closure);                \
+#define OOP_OOP_ITERATE_DEFN(KlassType, OopClosureType, nv_suffix)              \
+void KlassType::oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure) {  \
+  oop_oop_iterate<nvs_to_bool(nv_suffix)>(obj, closure);                        \
 }
 
 #if INCLUDE_ALL_GCS
-#define OOP_OOP_ITERATE_DEFN_BACKWARDS(KlassType, OopClosureType, nv_suffix)             \
-int KlassType::oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure) {  \
-  return oop_oop_iterate_reverse<nvs_to_bool(nv_suffix)>(obj, closure);                  \
+#define OOP_OOP_ITERATE_DEFN_BACKWARDS(KlassType, OopClosureType, nv_suffix)              \
+void KlassType::oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure) {  \
+  oop_oop_iterate_reverse<nvs_to_bool(nv_suffix)>(obj, closure);                          \
 }
 #else
 #define OOP_OOP_ITERATE_DEFN_BACKWARDS(KlassType, OopClosureType, nv_suffix)
 #endif
 
-#define OOP_OOP_ITERATE_DEFN_BOUNDED(KlassType, OopClosureType, nv_suffix)                           \
-int KlassType::oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr) {  \
-  return oop_oop_iterate_bounded<nvs_to_bool(nv_suffix)>(obj, closure, mr);                          \
+#define OOP_OOP_ITERATE_DEFN_BOUNDED(KlassType, OopClosureType, nv_suffix)                            \
+void KlassType::oop_oop_iterate_bounded##nv_suffix(oop obj, OopClosureType* closure, MemRegion mr) {  \
+  oop_oop_iterate_bounded<nvs_to_bool(nv_suffix)>(obj, closure, mr);                                  \
 }
 
 #endif // SHARE_VM_OOPS_KLASS_HPP

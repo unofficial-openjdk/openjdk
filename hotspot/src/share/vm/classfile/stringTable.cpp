@@ -43,8 +43,6 @@
 #include "gc/g1/g1StringDedup.hpp"
 #endif
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 // the number of buckets a thread claims
 const int ClaimChunkSize = 32;
 
@@ -96,10 +94,15 @@ volatile int StringTable::_parallel_claimed_idx = 0;
 CompactHashtable<oop, char> StringTable::_shared_table;
 
 // Pick hashing algorithm
-unsigned int StringTable::hash_string(const jchar* s, int len) {
+template<typename T>
+unsigned int StringTable::hash_string(const T* s, int len) {
   return use_alternate_hashcode() ? AltHashing::murmur3_32(seed(), s, len) :
                                     java_lang_String::hash_code(s, len);
 }
+
+// Explicit instantiation for all supported types.
+template unsigned int StringTable::hash_string<jchar>(const jchar* s, int len);
+template unsigned int StringTable::hash_string<jbyte>(const jbyte* s, int len);
 
 oop StringTable::lookup_shared(jchar* name, int len) {
   // java_lang_String::hash_code() was used to compute hash values in the shared table. Don't
@@ -312,12 +315,12 @@ void StringTable::buckets_oops_do(OopClosure* f, int start_idx, int end_idx) {
   const int limit = the_table()->table_size();
 
   assert(0 <= start_idx && start_idx <= limit,
-         err_msg("start_idx (%d) is out of bounds", start_idx));
+         "start_idx (%d) is out of bounds", start_idx);
   assert(0 <= end_idx && end_idx <= limit,
-         err_msg("end_idx (%d) is out of bounds", end_idx));
+         "end_idx (%d) is out of bounds", end_idx);
   assert(start_idx <= end_idx,
-         err_msg("Index ordering: start_idx=%d, end_idx=%d",
-                 start_idx, end_idx));
+         "Index ordering: start_idx=%d, end_idx=%d",
+         start_idx, end_idx);
 
   for (int i = start_idx; i < end_idx; i += 1) {
     HashtableEntry<oop, mtSymbol>* entry = the_table()->bucket(i);
@@ -335,12 +338,12 @@ void StringTable::buckets_unlink_or_oops_do(BoolObjectClosure* is_alive, OopClos
   const int limit = the_table()->table_size();
 
   assert(0 <= start_idx && start_idx <= limit,
-         err_msg("start_idx (%d) is out of bounds", start_idx));
+         "start_idx (%d) is out of bounds", start_idx);
   assert(0 <= end_idx && end_idx <= limit,
-         err_msg("end_idx (%d) is out of bounds", end_idx));
+         "end_idx (%d) is out of bounds", end_idx);
   assert(start_idx <= end_idx,
-         err_msg("Index ordering: start_idx=%d, end_idx=%d",
-                 start_idx, end_idx));
+         "Index ordering: start_idx=%d, end_idx=%d",
+         start_idx, end_idx);
 
   for (int i = start_idx; i < end_idx; ++i) {
     HashtableEntry<oop, mtSymbol>** p = the_table()->bucket_addr(i);
@@ -411,17 +414,25 @@ void StringTable::dump(outputStream* st, bool verbose) {
       for ( ; p != NULL; p = p->next()) {
         oop s = p->literal();
         typeArrayOop value  = java_lang_String::value(s);
-        int          offset = java_lang_String::offset(s);
         int          length = java_lang_String::length(s);
+        bool      is_latin1 = java_lang_String::is_latin1(s);
 
         if (length <= 0) {
           st->print("%d: ", length);
         } else {
           ResourceMark rm(THREAD);
-          jchar* chars = (jchar*)value->char_at_addr(offset);
-          int utf8_length = UNICODE::utf8_length(chars, length);
-          char* utf8_string = NEW_RESOURCE_ARRAY(char, utf8_length + 1);
-          UNICODE::convert_to_utf8(chars, length, utf8_string);
+          int utf8_length;
+          char* utf8_string;
+
+          if (!is_latin1) {
+            jchar* chars = value->char_at_addr(0);
+            utf8_length = UNICODE::utf8_length(chars, length);
+            utf8_string = UNICODE::as_utf8(chars, length);
+          } else {
+            jbyte* bytes = value->byte_at_addr(0);
+            utf8_length = UNICODE::utf8_length(bytes, length);
+            utf8_string = UNICODE::as_utf8(bytes, length);
+          }
 
           st->print("%d: ", utf8_length);
           HashtableTextDump::put_utf8(st, utf8_string, utf8_length);
@@ -445,7 +456,7 @@ StringTable::VerifyRetTypes StringTable::compare_entries(
   if (str1 == str2) {
     tty->print_cr("ERROR: identical oop values (0x" PTR_FORMAT ") "
                   "in entry @ bucket[%d][%d] and entry @ bucket[%d][%d]",
-                  (void *)str1, bkt1, e_cnt1, bkt2, e_cnt2);
+                  p2i(str1), bkt1, e_cnt1, bkt2, e_cnt2);
     return _verify_fail_continue;
   }
 

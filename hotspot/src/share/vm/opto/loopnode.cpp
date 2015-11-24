@@ -1901,7 +1901,7 @@ void IdealLoopTree::dump_head( ) const {
     if (stride_con > 0) tty->print("+");
     tty->print("%d", stride_con);
 
-    tty->print(" (%d iters) ", (int)cl->profile_trip_cnt());
+    tty->print(" (%0.f iters) ", cl->profile_trip_cnt());
 
     if (cl->is_pre_loop ()) tty->print(" pre" );
     if (cl->is_main_loop()) tty->print(" main");
@@ -3494,7 +3494,9 @@ void PhaseIdealLoop::build_loop_late_post( Node *n ) {
     case Op_StrComp:            // Does a bunch of load-like effects
     case Op_StrEquals:
     case Op_StrIndexOf:
+    case Op_StrIndexOfChar:
     case Op_AryEq:
+    case Op_HasNegatives:
       pinned = false;
     }
     if( pinned ) {

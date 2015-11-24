@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@
 #include "c1/c1_Runtime1.hpp"
 #include "c1/c1_ValueType.hpp"
 #include "compiler/compileBroker.hpp"
-#include "compiler/compilerOracle.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
@@ -99,7 +98,7 @@ BufferBlob* Compiler::init_buffer_blob() {
   return buffer_blob;
 }
 
-bool Compiler::is_intrinsic_supported(methodHandle method) {
+bool Compiler::is_intrinsic_supported(const methodHandle& method) {
   vmIntrinsics::ID id = method->intrinsic_id();
   assert(id != vmIntrinsics::_none, "must be a VM intrinsic");
 
@@ -226,6 +225,8 @@ bool Compiler::is_intrinsic_supported(methodHandle method) {
   case vmIntrinsics::_updateByteBufferCRC32:
   case vmIntrinsics::_compareAndSwapInt:
   case vmIntrinsics::_compareAndSwapObject:
+  case vmIntrinsics::_getCharStringU:
+  case vmIntrinsics::_putCharStringU:
 #ifdef TRACE_HAVE_INTRINSICS
   case vmIntrinsics::_classID:
   case vmIntrinsics::_threadID:
@@ -239,7 +240,7 @@ bool Compiler::is_intrinsic_supported(methodHandle method) {
   return true;
 }
 
-void Compiler::compile_method(ciEnv* env, ciMethod* method, int entry_bci) {
+void Compiler::compile_method(ciEnv* env, ciMethod* method, int entry_bci, DirectiveSet* directive) {
   BufferBlob* buffer_blob = CompilerThread::current()->get_buffer_blob();
   assert(buffer_blob != NULL, "Must exist");
   // invoke compilation
@@ -248,7 +249,7 @@ void Compiler::compile_method(ciEnv* env, ciMethod* method, int entry_bci) {
     // of Compilation to occur before we release the any
     // competing compiler thread
     ResourceMark rm;
-    Compilation c(this, env, method, entry_bci, buffer_blob);
+    Compilation c(this, env, method, entry_bci, buffer_blob, directive);
   }
 }
 

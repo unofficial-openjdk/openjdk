@@ -40,10 +40,6 @@ void VM_Version::initialize() {
   PrefetchScanIntervalInBytes = prefetch_scan_interval_in_bytes();
   PrefetchFieldsAhead         = prefetch_fields_ahead();
 
-  assert(0 <= AllocatePrefetchInstr && AllocatePrefetchInstr <= 1, "invalid value");
-  if( AllocatePrefetchInstr < 0 ) AllocatePrefetchInstr = 0;
-  if( AllocatePrefetchInstr > 1 ) AllocatePrefetchInstr = 0;
-
   // Allocation prefetch settings
   intx cache_line_size = prefetch_data_size();
   if( cache_line_size > AllocatePrefetchStepSize )
@@ -59,13 +55,6 @@ void VM_Version::initialize() {
   AllocatePrefetchDistance = allocate_prefetch_distance();
   AllocatePrefetchStyle    = allocate_prefetch_style();
 
-  assert((AllocatePrefetchDistance % AllocatePrefetchStepSize) == 0 &&
-         (AllocatePrefetchDistance > 0), "invalid value");
-  if ((AllocatePrefetchDistance % AllocatePrefetchStepSize) != 0 ||
-      (AllocatePrefetchDistance <= 0)) {
-    AllocatePrefetchDistance = AllocatePrefetchStepSize;
-  }
-
   if (AllocatePrefetchStyle == 3 && !has_blk_init()) {
     warning("BIS instructions are not available on this CPU");
     FLAG_SET_DEFAULT(AllocatePrefetchStyle, 1);
@@ -73,38 +62,10 @@ void VM_Version::initialize() {
 
   guarantee(VM_Version::has_v9(), "only SPARC v9 is supported");
 
-  assert(ArraycopySrcPrefetchDistance < 4096, "invalid value");
-  if (ArraycopySrcPrefetchDistance >= 4096)
-    ArraycopySrcPrefetchDistance = 4064;
-  assert(ArraycopyDstPrefetchDistance < 4096, "invalid value");
-  if (ArraycopyDstPrefetchDistance >= 4096)
-    ArraycopyDstPrefetchDistance = 4064;
-
   UseSSE = 0; // Only on x86 and x64
 
   _supports_cx8 = has_v9();
   _supports_atomic_getset4 = true; // swap instruction
-
-  // There are Fujitsu Sparc64 CPUs which support blk_init as well so
-  // we have to take this check out of the 'is_niagara()' block below.
-  if (has_blk_init()) {
-    // When using CMS or G1, we cannot use memset() in BOT updates
-    // because the sun4v/CMT version in libc_psr uses BIS which
-    // exposes "phantom zeros" to concurrent readers. See 6948537.
-    if (FLAG_IS_DEFAULT(UseMemSetInBOT) && (UseConcMarkSweepGC || UseG1GC)) {
-      FLAG_SET_DEFAULT(UseMemSetInBOT, false);
-    }
-    // Issue a stern warning if the user has explicitly set
-    // UseMemSetInBOT (it is known to cause issues), but allow
-    // use for experimentation and debugging.
-    if (UseConcMarkSweepGC || UseG1GC) {
-      if (UseMemSetInBOT) {
-        assert(!FLAG_IS_DEFAULT(UseMemSetInBOT), "Error");
-        warning("Experimental flag -XX:+UseMemSetInBOT is known to cause instability"
-                " on sun4v; please understand that you are using at your own risk!");
-      }
-    }
-  }
 
   if (is_niagara()) {
     // Indirect branch is the same cost as direct
@@ -375,6 +336,15 @@ void VM_Version::initialize() {
   } else if (UseCRC32CIntrinsics) {
     warning("CRC32C instruction is not available on this CPU");
     FLAG_SET_DEFAULT(UseCRC32CIntrinsics, false);
+  }
+
+  if (UseVIS > 2) {
+    if (FLAG_IS_DEFAULT(UseAdler32Intrinsics)) {
+      FLAG_SET_DEFAULT(UseAdler32Intrinsics, true);
+    }
+  } else if (UseAdler32Intrinsics) {
+    warning("SPARC Adler32 intrinsics require VIS3 instruction support. Intrinsics will be disabled.");
+    FLAG_SET_DEFAULT(UseAdler32Intrinsics, false);
   }
 
   if (FLAG_IS_DEFAULT(ContendedPaddingWidth) &&

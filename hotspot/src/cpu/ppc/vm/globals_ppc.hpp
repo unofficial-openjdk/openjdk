@@ -41,6 +41,18 @@ define_pd_global(bool, ImplicitNullChecks,    true);  // Generate code for impli
 define_pd_global(bool, TrapBasedNullChecks,   true);
 define_pd_global(bool, UncommonNullCast,      true);  // Uncommon-trap NULLs passed to check cast.
 
+#define DEFAULT_STACK_YELLOW_PAGES (6)
+#define DEFAULT_STACK_RED_PAGES (1)
+#define DEFAULT_STACK_SHADOW_PAGES (6 DEBUG_ONLY(+2))
+
+#define MIN_STACK_YELLOW_PAGES (1)
+#define MIN_STACK_RED_PAGES DEFAULT_STACK_RED_PAGES
+#define MIN_STACK_SHADOW_PAGES (1)
+
+define_pd_global(intx, StackYellowPages,      DEFAULT_STACK_YELLOW_PAGES);
+define_pd_global(intx, StackRedPages,         DEFAULT_STACK_RED_PAGES);
+define_pd_global(intx, StackShadowPages,      DEFAULT_STACK_SHADOW_PAGES);
+
 // Use large code-entry alignment.
 define_pd_global(intx, CodeEntryAlignment,    128);
 define_pd_global(intx, OptoLoopAlignment,     16);
@@ -59,6 +71,9 @@ define_pd_global(bool, PreserveFramePointer,  false);
 define_pd_global(size_t, CMSYoungGenPerWorker, 16*M);  // Default max size of CMS young gen, per GC worker thread.
 
 define_pd_global(uintx, TypeProfileLevel, 111);
+
+// No performance work done here yet.
+define_pd_global(bool, CompactStrings, false);
 
 // Platform dependent flag handling: flags only defined on this platform.
 #define ARCH_FLAGS(develop, product, diagnostic, experimental, notproduct, range, constraint)  \

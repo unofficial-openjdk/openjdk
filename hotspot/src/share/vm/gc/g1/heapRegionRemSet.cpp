@@ -376,8 +376,8 @@ void FromCardCache::initialize(uint n_par_rs, uint max_num_regions) {
 
 void FromCardCache::invalidate(uint start_idx, size_t new_num_regions) {
   guarantee((size_t)start_idx + new_num_regions <= max_uintx,
-            err_msg("Trying to invalidate beyond maximum region, from %u size " SIZE_FORMAT,
-                    start_idx, new_num_regions));
+            "Trying to invalidate beyond maximum region, from %u size " SIZE_FORMAT,
+            start_idx, new_num_regions);
   for (uint i = 0; i < HeapRegionRemSet::num_par_rem_sets(); i++) {
     uint end_idx = (start_idx + (uint)new_num_regions);
     assert(end_idx <= _max_regions, "Must be within max.");
@@ -563,7 +563,7 @@ PerRegionTable* OtherRegionsTable::delete_region_table() {
   assert(_n_fine_entries == _max_fine_entries, "Precondition");
   PerRegionTable* max = NULL;
   jint max_occ = 0;
-  PerRegionTable** max_prev;
+  PerRegionTable** max_prev = NULL;
   size_t max_ind;
 
   size_t i = _fine_eviction_start;
@@ -599,6 +599,7 @@ PerRegionTable* OtherRegionsTable::delete_region_table() {
   }
 
   guarantee(max != NULL, "Since _n_fine_entries > 0");
+  guarantee(max_prev != NULL, "Since max != NULL.");
 
   // Set the corresponding coarse bit.
   size_t max_hrm_index = (size_t) max->hr()->hrm_index();
@@ -1013,7 +1014,7 @@ bool HeapRegionRemSetIterator::fine_has_next(size_t& card_index) {
 
   card_index = _cur_region_card_offset + _cur_card_in_prt;
   guarantee(_cur_card_in_prt < HeapRegion::CardsPerRegion,
-            err_msg("Card index " SIZE_FORMAT " must be within the region", _cur_card_in_prt));
+            "Card index " SIZE_FORMAT " must be within the region", _cur_card_in_prt);
   return true;
 }
 
@@ -1138,7 +1139,7 @@ void HeapRegionRemSet::print_event(outputStream* str, Event evnt) {
 
 void HeapRegionRemSet::print_recorded() {
   int cur_evnt = 0;
-  Event cur_evnt_kind;
+  Event cur_evnt_kind = Event_illegal;
   int cur_evnt_ind = 0;
   if (_n_recorded_events > 0) {
     cur_evnt_kind = _recorded_events[cur_evnt];
@@ -1182,8 +1183,8 @@ void PerRegionTable::test_fl_mem_size() {
 
   size_t min_prt_size = sizeof(void*) + dummy->bm()->size_in_words() * HeapWordSize;
   assert(dummy->mem_size() > min_prt_size,
-         err_msg("PerRegionTable memory usage is suspiciously small, only has " SIZE_FORMAT " bytes. "
-                 "Should be at least " SIZE_FORMAT " bytes.", dummy->mem_size(), min_prt_size));
+         "PerRegionTable memory usage is suspiciously small, only has " SIZE_FORMAT " bytes. "
+         "Should be at least " SIZE_FORMAT " bytes.", dummy->mem_size(), min_prt_size);
   free(dummy);
   guarantee(dummy->mem_size() == fl_mem_size(), "fl_mem_size() does not return the correct element size");
   // try to reset the state

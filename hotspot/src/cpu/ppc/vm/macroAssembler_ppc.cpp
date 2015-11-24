@@ -594,13 +594,6 @@ void MacroAssembler::bxx64_patchable(address dest, relocInfo::relocType rt, bool
            "can't identify emitted call");
   } else {
     // variant 1:
-#if defined(ABI_ELFv2)
-    nop();
-    calculate_address_from_global_toc(R12, dest, true, true, false);
-    mtctr(R12);
-    nop();
-    nop();
-#else
     mr(R0, R11);  // spill R11 -> R0.
 
     // Load the destination address into CTR,
@@ -610,7 +603,6 @@ void MacroAssembler::bxx64_patchable(address dest, relocInfo::relocType rt, bool
     mtctr(R11);
     mr(R11, R0);  // spill R11 <- R0.
     nop();
-#endif
 
     // do the call/jump
     if (link) {
@@ -2614,7 +2606,7 @@ void MacroAssembler::serialize_memory(Register thread, Register tmp1, Register t
 void MacroAssembler::card_write_barrier_post(Register Rstore_addr, Register Rnew_val, Register Rtmp) {
   CardTableModRefBS* bs =
     barrier_set_cast<CardTableModRefBS>(Universe::heap()->barrier_set());
-  assert(bs->kind() == BarrierSet::CardTableModRef ||
+  assert(bs->kind() == BarrierSet::CardTableForRS ||
          bs->kind() == BarrierSet::CardTableExtension, "wrong barrier");
 #ifdef ASSERT
   cmpdi(CCR0, Rnew_val, 0);
@@ -4292,7 +4284,7 @@ const char* stop_types[] = {
 
 static void stop_on_request(int tp, const char* msg) {
   tty->print("PPC assembly code requires stop: (%s) %s\n", stop_types[tp%/*stop_end*/4], msg);
-  guarantee(false, err_msg("PPC assembly code requires stop: %s", msg));
+  guarantee(false, "PPC assembly code requires stop: %s", msg);
 }
 
 // Call a C-function that prints output.

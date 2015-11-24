@@ -447,14 +447,16 @@ void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
       } else {
         // Unilaterally fix the first (num_pref_cards - 1) following
         // the "offset card" in the suffix block.
+        const size_t right_most_fixed_index = suff_index + num_pref_cards - 1;
         set_remainder_to_point_to_start_incl(suff_index + 1,
-          suff_index + num_pref_cards - 1, true /* reducing */);
+          right_most_fixed_index, true /* reducing */);
         // Fix the appropriate cards in the remainder of the
         // suffix block -- these are the last num_pref_cards
         // cards in each power block of the "new" range plumbed
         // from suff_addr.
         bool more = true;
         uint i = 1;
+        // Fix the first power block with  back_by > num_pref_cards.
         while (more && (i < N_powers)) {
           size_t back_by = power_to_cards_back(i);
           size_t right_index = suff_index + back_by - 1;
@@ -462,6 +464,9 @@ void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
           if (right_index >= end_index - 1) { // last iteration
             right_index = end_index - 1;
             more = false;
+          }
+          if (left_index <= right_most_fixed_index) {
+                left_index = right_most_fixed_index + 1;
           }
           if (back_by > num_pref_cards) {
             // Fill in the remainder of this "power block", if it
@@ -471,12 +476,14 @@ void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
                                      N_words + i - 1, true /* reducing */);
             } else {
               more = false; // we are done
+              assert((end_index - 1) == right_index, "Must be at the end.");
             }
             i++;
             break;
           }
           i++;
         }
+        // Fix the rest of the power blocks.
         while (more && (i < N_powers)) {
           size_t back_by = power_to_cards_back(i);
           size_t right_index = suff_index + back_by - 1;
@@ -536,11 +543,11 @@ HeapWord* BlockOffsetArrayNonContigSpace::block_start_unsafe(
     size_t n_cards_back = entry_to_cards_back(offset);
     q -= (N_words * n_cards_back);
     assert(q >= _sp->bottom(),
-           err_msg("q = " PTR_FORMAT " crossed below bottom = " PTR_FORMAT,
-                   p2i(q), p2i(_sp->bottom())));
+           "q = " PTR_FORMAT " crossed below bottom = " PTR_FORMAT,
+           p2i(q), p2i(_sp->bottom()));
     assert(q < _sp->end(),
-           err_msg("q = " PTR_FORMAT " crossed above end = " PTR_FORMAT,
-                   p2i(q), p2i(_sp->end())));
+           "q = " PTR_FORMAT " crossed above end = " PTR_FORMAT,
+           p2i(q), p2i(_sp->end()));
     index -= n_cards_back;
     offset = _array->offset_array(index);
   }
@@ -548,11 +555,11 @@ HeapWord* BlockOffsetArrayNonContigSpace::block_start_unsafe(
   index--;
   q -= offset;
   assert(q >= _sp->bottom(),
-         err_msg("q = " PTR_FORMAT " crossed below bottom = " PTR_FORMAT,
-                 p2i(q), p2i(_sp->bottom())));
+         "q = " PTR_FORMAT " crossed below bottom = " PTR_FORMAT,
+         p2i(q), p2i(_sp->bottom()));
   assert(q < _sp->end(),
-         err_msg("q = " PTR_FORMAT " crossed above end = " PTR_FORMAT,
-                 p2i(q), p2i(_sp->end())));
+         "q = " PTR_FORMAT " crossed above end = " PTR_FORMAT,
+         p2i(q), p2i(_sp->end()));
   HeapWord* n = q;
 
   while (n <= addr) {
@@ -560,17 +567,17 @@ HeapWord* BlockOffsetArrayNonContigSpace::block_start_unsafe(
     q = n;
     n += _sp->block_size(n);
     assert(n > q,
-           err_msg("Looping at n = " PTR_FORMAT " with last = " PTR_FORMAT ","
-                   " while querying blk_start(" PTR_FORMAT ")"
-                   " on _sp = [" PTR_FORMAT "," PTR_FORMAT ")",
-                   p2i(n), p2i(last), p2i(addr), p2i(_sp->bottom()), p2i(_sp->end())));
+           "Looping at n = " PTR_FORMAT " with last = " PTR_FORMAT ","
+           " while querying blk_start(" PTR_FORMAT ")"
+           " on _sp = [" PTR_FORMAT "," PTR_FORMAT ")",
+           p2i(n), p2i(last), p2i(addr), p2i(_sp->bottom()), p2i(_sp->end()));
   }
   assert(q <= addr,
-         err_msg("wrong order for current (" INTPTR_FORMAT ")" " <= arg (" INTPTR_FORMAT ")",
-                 p2i(q), p2i(addr)));
+         "wrong order for current (" INTPTR_FORMAT ")" " <= arg (" INTPTR_FORMAT ")",
+         p2i(q), p2i(addr));
   assert(addr <= n,
-         err_msg("wrong order for arg (" INTPTR_FORMAT ") <= next (" INTPTR_FORMAT ")",
-                 p2i(addr), p2i(n)));
+         "wrong order for arg (" INTPTR_FORMAT ") <= next (" INTPTR_FORMAT ")",
+         p2i(addr), p2i(n));
   return q;
 }
 

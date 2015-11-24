@@ -128,8 +128,6 @@
 
 #define LARGEPAGES_BIT (1 << 6)
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 ////////////////////////////////////////////////////////////////////////////////
 // global variables
 julong os::Bsd::_physical_memory = 0;
@@ -442,6 +440,10 @@ void os::init_system_properties_values() {
     if (pslash != NULL) {
       *pslash = '\0';            // Get rid of /{client|server|hotspot}.
     }
+#ifdef STATIC_BUILD
+    strcat(buf, "/lib");
+#endif
+
     Arguments::set_dll_dir(buf);
 
     if (pslash != NULL) {
@@ -1390,6 +1392,9 @@ bool os::dll_address_to_library_name(address addr, char* buf,
 
 #ifdef __APPLE__
 void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
+#ifdef STATIC_BUILD
+  return os::get_default_process_handle();
+#else
   void * result= ::dlopen(filename, RTLD_LAZY);
   if (result != NULL) {
     // Successful loading
@@ -1401,9 +1406,13 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   ebuf[ebuflen-1]='\0';
 
   return NULL;
+#endif // STATIC_BUILD
 }
 #else
 void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
+#ifdef STATIC_BUILD
+  return os::get_default_process_handle();
+#else
   void * result= ::dlopen(filename, RTLD_LAZY);
   if (result != NULL) {
     // Successful loading
@@ -1576,6 +1585,7 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   }
 
   return NULL;
+#endif // STATIC_BUILD
 }
 #endif // !__APPLE__
 
@@ -1977,7 +1987,7 @@ static const char* sem_init_strerror(kern_return_t value) {
 OSXSemaphore::OSXSemaphore(uint value) {
   kern_return_t ret = SEM_INIT(_semaphore, value);
 
-  guarantee(ret == KERN_SUCCESS, err_msg("Failed to create semaphore: %s", sem_init_strerror(ret)));
+  guarantee(ret == KERN_SUCCESS, "Failed to create semaphore: %s", sem_init_strerror(ret));
 }
 
 OSXSemaphore::~OSXSemaphore() {
@@ -2213,7 +2223,7 @@ void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
   if (!pd_commit_memory(addr, size, exec)) {
     // add extra info in product mode for vm_exit_out_of_memory():
     PRODUCT_ONLY(warn_fail_commit_memory(addr, size, exec, errno);)
-    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, mesg);
+    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, "%s", mesg);
   }
 }
 
@@ -3100,8 +3110,8 @@ void os::Bsd::set_signal_handler(int sig, bool set_installed) {
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
-                    "%#lx for signal %d.", (long)oldhand, sig));
+      fatal("Encountered unexpected pre-existing sigaction handler "
+            "%#lx for signal %d.", (long)oldhand, sig);
     }
   }
 
@@ -3459,8 +3469,7 @@ void os::init(void) {
 
   Bsd::set_page_size(getpagesize());
   if (Bsd::page_size() == -1) {
-    fatal(err_msg("os_bsd.cpp: os::init: sysconf failed (%s)",
-                  strerror(errno)));
+    fatal("os_bsd.cpp: os::init: sysconf failed (%s)", strerror(errno));
   }
   init_page_sizes((size_t) Bsd::page_size());
 
@@ -3748,7 +3757,7 @@ bool os::find(address addr, outputStream* st) {
 // able to use structured exception handling (thread-local exception filters)
 // on, e.g., Win32.
 void os::os_exception_wrapper(java_call_t f, JavaValue* value,
-                              methodHandle* method, JavaCallArguments* args,
+                              const methodHandle& method, JavaCallArguments* args,
                               Thread* thread) {
   f(value, method, args, thread);
 }

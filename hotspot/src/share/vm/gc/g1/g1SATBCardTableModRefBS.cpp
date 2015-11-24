@@ -27,6 +27,7 @@
 #include "gc/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc/g1/heapRegion.hpp"
 #include "gc/g1/satbQueue.hpp"
+#include "gc/shared/memset_with_concurrent_readers.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.inline.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -108,15 +109,7 @@ void G1SATBCardTableModRefBS::g1_mark_as_young(const MemRegion& mr) {
   jbyte *const first = byte_for(mr.start());
   jbyte *const last = byte_after(mr.last());
 
-  // Below we may use an explicit loop instead of memset() because on
-  // certain platforms memset() can give concurrent readers phantom zeros.
-  if (UseMemSetInBOT) {
-    memset(first, g1_young_gen, last - first);
-  } else {
-    for (jbyte* i = first; i < last; i++) {
-      *i = g1_young_gen;
-    }
-  }
+  memset_with_concurrent_readers(first, g1_young_gen, last - first);
 }
 
 #ifndef PRODUCT
@@ -207,7 +200,7 @@ G1SATBCardTableLoggingModRefBS::write_ref_field_static(void* field,
   // Otherwise, log it.
   G1SATBCardTableLoggingModRefBS* g1_bs =
     barrier_set_cast<G1SATBCardTableLoggingModRefBS>(G1CollectedHeap::heap()->barrier_set());
-  g1_bs->write_ref_field_work(field, new_val);
+  g1_bs->write_ref_field_work(field, new_val, false);
 }
 
 void
@@ -251,6 +244,55 @@ G1SATBCardTableLoggingModRefBS::invalidate(MemRegion mr, bool whole_heap) {
           }
         }
       }
+    }
+  }
+}
+
+void G1SATBCardTableModRefBS::write_ref_nmethod_post(oop* dst, nmethod* nm) {
+  oop obj = oopDesc::load_heap_oop(dst);
+  if (obj != NULL) {
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    HeapRegion* hr = g1h->heap_region_containing(obj);
+    hr->add_strong_code_root(nm);
+  }
+}
+
+class G1EnsureLastRefToRegion : public OopClosure {
+  G1CollectedHeap* _g1h;
+  HeapRegion* _hr;
+  oop* _dst;
+
+  bool _value;
+public:
+  G1EnsureLastRefToRegion(G1CollectedHeap* g1h, HeapRegion* hr, oop* dst) :
+    _g1h(g1h), _hr(hr), _dst(dst), _value(true) {}
+
+  void do_oop(oop* p) {
+    if (_value && p != _dst) {
+      oop obj = oopDesc::load_heap_oop(p);
+      if (obj != NULL) {
+        HeapRegion* hr = _g1h->heap_region_containing(obj);
+        if (hr == _hr) {
+          // Another reference to the same region.
+          _value = false;
+        }
+      }
+    }
+  }
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
+  bool value() const        { return _value;  }
+};
+
+void G1SATBCardTableModRefBS::write_ref_nmethod_pre(oop* dst, nmethod* nm) {
+  oop obj = oopDesc::load_heap_oop(dst);
+  if (obj != NULL) {
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    HeapRegion* hr = g1h->heap_region_containing(obj);
+    G1EnsureLastRefToRegion ensure_last_ref(g1h, hr, dst);
+    nm->oops_do(&ensure_last_ref);
+    if (ensure_last_ref.value()) {
+      // Last reference to this region, remove the nmethod from the rset.
+      hr->remove_strong_code_root(nm);
     }
   }
 }

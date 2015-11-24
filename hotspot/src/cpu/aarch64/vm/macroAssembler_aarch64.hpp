@@ -152,6 +152,13 @@ class MacroAssembler: public Assembler {
     strw(scratch, a);
   }
 
+  void bind(Label& L) {
+    Assembler::bind(L);
+    code()->clear_last_membar();
+  }
+
+  void membar(Membar_mask_bits order_constraint);
+
   // Frame creation and destruction shared between JITs.
   void build_frame(int framesize);
   void remove_frame(int framesize);
@@ -777,8 +784,8 @@ public:
 
   DEBUG_ONLY(void verify_heapbase(const char* msg);)
 
-  void push_CPU_state();
-  void pop_CPU_state() ;
+  void push_CPU_state(bool save_vectors = false);
+  void pop_CPU_state(bool restore_vectors = false) ;
 
   // Round up to a power of two
   void round_to(Register reg, int modulus);
@@ -908,14 +915,10 @@ public:
 
   // Arithmetics
 
-  void addptr(Address dst, int32_t src) {
-    lea(rscratch2, dst);
-    ldr(rscratch1, Address(rscratch2));
-    add(rscratch1, rscratch1, src);
-    str(rscratch1, Address(rscratch2));
-  }
-
+  void addptr(const Address &dst, int32_t src);
   void cmpptr(Register src1, Address src2);
+
+  // Various forms of CAS
 
   void cmpxchgptr(Register oldv, Register newv, Register addr, Register tmp,
                   Label &suceed, Label *fail);
@@ -936,6 +939,23 @@ public:
     else
       orr(rscratch2, rscratch2, src.as_constant());
     str(rscratch2, adr);
+  }
+
+  // A generic CAS; success or failure is in the EQ flag.
+  template <typename T1, typename T2>
+  void cmpxchg(Register addr, Register expected, Register new_val,
+               T1 load_insn,
+               void (MacroAssembler::*cmp_insn)(Register, Register),
+               T2 store_insn,
+               Register tmp = rscratch1) {
+    Label retry_load, done;
+    bind(retry_load);
+    (this->*load_insn)(tmp, addr);
+    (this->*cmp_insn)(tmp, expected);
+    br(Assembler::NE, done);
+    (this->*store_insn)(tmp, new_val, addr);
+    cbnzw(tmp, retry_load);
+    bind(done);
   }
 
   // Calls

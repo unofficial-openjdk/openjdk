@@ -71,7 +71,7 @@ void vmStructs_init();
 void vtableStubs_init();
 void InlineCacheBuffer_init();
 void compilerOracle_init();
-void compileBroker_init();
+bool compileBroker_init();
 
 // Initialization after compiler initialization
 bool universe_post_init();  // must happen after compiler_init
@@ -83,7 +83,6 @@ void stubRoutines_init2(); // note: StubRoutines need 2-phase init
 // during VM shutdown
 void perfMemory_exit();
 void ostream_exit();
-bool image_decompressor_init();
 
 void vm_init_globals() {
   check_ThreadShadow();
@@ -122,9 +121,6 @@ jint init_globals() {
   templateTable_init();
   InterfaceSupport_init();
   SharedRuntime::generate_stubs();
-  if (!image_decompressor_init()) {
-    return JNI_ERR;
-  }
   universe2_init();  // dependent on codeCache_init and stubRoutines_init1
   referenceProcessor_init();
   jni_handles_init();
@@ -135,7 +131,9 @@ jint init_globals() {
   vtableStubs_init();
   InlineCacheBuffer_init();
   compilerOracle_init();
-  compileBroker_init();
+  if (!compileBroker_init()) {
+    return JNI_EINVAL;
+  }
   VMRegImpl::set_regName();
 
   if (!universe_post_init()) {

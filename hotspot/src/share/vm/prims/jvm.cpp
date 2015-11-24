@@ -24,8 +24,6 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
-#include "classfile/imageDecompressor.hpp"
-#include "classfile/imageFile.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/stringTable.hpp"
@@ -71,7 +69,6 @@
 #include "utilities/copy.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
-#include "utilities/endian.hpp"
 #include "utilities/events.hpp"
 #include "utilities/histogram.hpp"
 #include "utilities/macros.hpp"
@@ -427,6 +424,8 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     const char* compiler_name = "HotSpot " CSIZE "Client Compiler";
 #elif defined(COMPILER2)
     const char* compiler_name = "HotSpot " CSIZE "Server Compiler";
+#elif INCLUDE_JVMCI
+    #error "INCLUDE_JVMCI should imply TIERED"
 #else
     const char* compiler_name = "";
 #endif // compilers
@@ -1023,10 +1022,10 @@ JVM_ENTRY(jobjectArray, JVM_GetClassInterfaces(JNIEnv *env, jclass cls))
   KlassHandle klass(thread, java_lang_Class::as_Klass(mirror));
   // Figure size of result array
   int size;
-  if (klass->oop_is_instance()) {
+  if (klass->is_instance_klass()) {
     size = InstanceKlass::cast(klass())->local_interfaces()->length();
   } else {
-    assert(klass->oop_is_objArray() || klass->oop_is_typeArray(), "Illegal mirror klass");
+    assert(klass->is_objArray_klass() || klass->is_typeArray_klass(), "Illegal mirror klass");
     size = 2;
   }
 
@@ -1034,7 +1033,7 @@ JVM_ENTRY(jobjectArray, JVM_GetClassInterfaces(JNIEnv *env, jclass cls))
   objArrayOop r = oopFactory::new_objArray(SystemDictionary::Class_klass(), size, CHECK_NULL);
   objArrayHandle result (THREAD, r);
   // Fill in result
-  if (klass->oop_is_instance()) {
+  if (klass->is_instance_klass()) {
     // Regular instance klass, fill in all local interfaces
     for (int index = 0; index < size; index++) {
       Klass* k = InstanceKlass::cast(klass())->local_interfaces()->at(index);
@@ -1057,7 +1056,7 @@ JVM_QUICK_ENTRY(jboolean, JVM_IsInterface(JNIEnv *env, jclass cls))
   }
   Klass* k = java_lang_Class::as_Klass(mirror);
   jboolean result = k->is_interface();
-  assert(!result || k->oop_is_instance(),
+  assert(!result || k->is_instance_klass(),
          "all interfaces are instance types");
   // The compiler intrinsic for isInterface tests the
   // Klass::_access_flags bits in the same way.
@@ -1098,7 +1097,7 @@ JVM_ENTRY(void, JVM_SetClassSigners(JNIEnv *env, jclass cls, jobjectArray signer
     // Signers are only set once, ClassLoader.java, and thus shouldn't
     // be called with an array.  Only the bootstrap loader creates arrays.
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       java_lang_Class::set_signers(k->java_mirror(), objArrayOop(JNIHandles::resolve(signers)));
     }
   }
@@ -1157,7 +1156,7 @@ static bool is_authorized(Handle context, instanceKlassHandle klass, TRAPS) {
 // Create an AccessControlContext with a protection domain with null codesource
 // and null permissions - which gives no permissions.
 oop create_dummy_access_control_context(TRAPS) {
-  InstanceKlass* pd_klass = InstanceKlass::cast(SystemDictionary::ProtectionDomain_klass());
+  InstanceKlass* pd_klass = SystemDictionary::ProtectionDomain_klass();
   Handle obj = pd_klass->allocate_instance_handle(CHECK_NULL);
   // Call constructor ProtectionDomain(null, null);
   JavaValue result(T_VOID);
@@ -1357,7 +1356,7 @@ JVM_END
 JVM_QUICK_ENTRY(jboolean, JVM_IsArrayClass(JNIEnv *env, jclass cls))
   JVMWrapper("JVM_IsArrayClass");
   Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
-  return (k != NULL) && k->oop_is_array() ? true : false;
+  return (k != NULL) && k->is_array_klass() ? true : false;
 JVM_END
 
 
@@ -1390,7 +1389,7 @@ JVM_ENTRY(jobjectArray, JVM_GetDeclaredClasses(JNIEnv *env, jclass ofClass))
   // of an InstanceKlass
 
   if (java_lang_Class::is_primitive(JNIHandles::resolve_non_null(ofClass)) ||
-      ! java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->oop_is_instance()) {
+      ! java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->is_instance_klass()) {
     oop result = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_NULL);
     return (jobjectArray)JNIHandles::make_local(env, result);
   }
@@ -1454,7 +1453,7 @@ JVM_ENTRY(jclass, JVM_GetDeclaringClass(JNIEnv *env, jclass ofClass))
 {
   // ofClass is a reference to a java_lang_Class object.
   if (java_lang_Class::is_primitive(JNIHandles::resolve_non_null(ofClass)) ||
-      ! java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->oop_is_instance()) {
+      ! java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->is_instance_klass()) {
     return NULL;
   }
 
@@ -1472,7 +1471,7 @@ JVM_ENTRY(jstring, JVM_GetSimpleBinaryName(JNIEnv *env, jclass cls))
 {
   oop mirror = JNIHandles::resolve_non_null(cls);
   if (java_lang_Class::is_primitive(mirror) ||
-      !java_lang_Class::as_Klass(mirror)->oop_is_instance()) {
+      !java_lang_Class::as_Klass(mirror)->is_instance_klass()) {
     return NULL;
   }
   instanceKlassHandle k(THREAD, InstanceKlass::cast(java_lang_Class::as_Klass(mirror)));
@@ -1497,7 +1496,7 @@ JVM_ENTRY(jstring, JVM_GetClassSignature(JNIEnv *env, jclass cls))
   // Return null for arrays and primatives
   if (!java_lang_Class::is_primitive(JNIHandles::resolve(cls))) {
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve(cls));
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       Symbol* sym = InstanceKlass::cast(k)->generic_signature();
       if (sym == NULL) return NULL;
       Handle str = java_lang_String::create_from_symbol(sym, CHECK_NULL);
@@ -1515,7 +1514,7 @@ JVM_ENTRY(jbyteArray, JVM_GetClassAnnotations(JNIEnv *env, jclass cls))
   // Return null for arrays and primitives
   if (!java_lang_Class::is_primitive(JNIHandles::resolve(cls))) {
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve(cls));
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       typeArrayOop a = Annotations::make_java_array(InstanceKlass::cast(k)->class_annotations(), CHECK_NULL);
       return (jbyteArray) JNIHandles::make_local(env, a);
     }
@@ -1585,7 +1584,7 @@ JVM_ENTRY(jbyteArray, JVM_GetClassTypeAnnotations(JNIEnv *env, jclass cls))
   // Return null for arrays and primitives
   if (!java_lang_Class::is_primitive(JNIHandles::resolve(cls))) {
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve(cls));
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       AnnotationArray* type_annotations = InstanceKlass::cast(k)->class_type_annotations();
       if (type_annotations != NULL) {
         typeArrayOop a = Annotations::make_java_array(type_annotations, CHECK_NULL);
@@ -1694,7 +1693,7 @@ JVM_ENTRY(jobjectArray, JVM_GetClassDeclaredFields(JNIEnv *env, jclass ofClass, 
 
   // Exclude primitive types and array types
   if (java_lang_Class::is_primitive(JNIHandles::resolve_non_null(ofClass)) ||
-      java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->oop_is_array()) {
+      java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->is_array_klass()) {
     // Return empty array
     oop res = oopFactory::new_objArray(SystemDictionary::reflect_Field_klass(), 0, CHECK_NULL);
     return (jobjectArray) JNIHandles::make_local(env, res);
@@ -1768,7 +1767,7 @@ static jobjectArray get_class_declared_methods_helper(
 
   // Exclude primitive types and array types
   if (java_lang_Class::is_primitive(JNIHandles::resolve_non_null(ofClass))
-      || java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->oop_is_array()) {
+      || java_lang_Class::as_Klass(JNIHandles::resolve_non_null(ofClass))->is_array_klass()) {
     // Return empty array
     oop res = oopFactory::new_objArray(klass, 0, CHECK_NULL);
     return (jobjectArray) JNIHandles::make_local(env, res);
@@ -1869,7 +1868,7 @@ JVM_ENTRY(jobject, JVM_GetClassConstantPool(JNIEnv *env, jclass cls))
   // Return null for primitives and arrays
   if (!java_lang_Class::is_primitive(JNIHandles::resolve_non_null(cls))) {
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       instanceKlassHandle k_h(THREAD, k);
       Handle jcp = sun_reflect_ConstantPool::create(CHECK_NULL);
       sun_reflect_ConstantPool::set_cp(jcp(), k_h->constants());
@@ -2137,8 +2136,8 @@ JVM_ENTRY(jboolean, JVM_DesiredAssertionStatus(JNIEnv *env, jclass unused, jclas
   if (java_lang_Class::is_primitive(r)) return false;
 
   Klass* k = java_lang_Class::as_Klass(r);
-  assert(k->oop_is_instance(), "must be an instance klass");
-  if (! k->oop_is_instance()) return false;
+  assert(k->is_instance_klass(), "must be an instance klass");
+  if (!k->is_instance_klass()) return false;
 
   ResourceMark rm(THREAD);
   const char* name = k->name()->as_C_string();
@@ -2183,12 +2182,12 @@ JVM_QUICK_ENTRY(void, JVM_GetClassCPTypes(JNIEnv *env, jclass cls, unsigned char
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
   // types will have length zero if this is not an InstanceKlass
   // (length is determined by call to JVM_GetClassCPEntriesCount)
-  if (k->oop_is_instance()) {
+  if (k->is_instance_klass()) {
     ConstantPool* cp = InstanceKlass::cast(k)->constants();
     for (int index = cp->length() - 1; index >= 0; index--) {
       constantTag tag = cp->tag_at(index);
       types[index] = (tag.is_unresolved_klass()) ? JVM_CONSTANT_Class : tag.value();
-  }
+    }
   }
 JVM_END
 
@@ -2197,9 +2196,7 @@ JVM_QUICK_ENTRY(jint, JVM_GetClassCPEntriesCount(JNIEnv *env, jclass cls))
   JVMWrapper("JVM_GetClassCPEntriesCount");
   Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
-  if (!k->oop_is_instance())
-    return 0;
-  return InstanceKlass::cast(k)->constants()->length();
+  return (!k->is_instance_klass()) ? 0 : InstanceKlass::cast(k)->constants()->length();
 JVM_END
 
 
@@ -2207,9 +2204,7 @@ JVM_QUICK_ENTRY(jint, JVM_GetClassFieldsCount(JNIEnv *env, jclass cls))
   JVMWrapper("JVM_GetClassFieldsCount");
   Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
-  if (!k->oop_is_instance())
-    return 0;
-  return InstanceKlass::cast(k)->java_fields_count();
+  return (!k->is_instance_klass()) ? 0 : InstanceKlass::cast(k)->java_fields_count();
 JVM_END
 
 
@@ -2217,9 +2212,7 @@ JVM_QUICK_ENTRY(jint, JVM_GetClassMethodsCount(JNIEnv *env, jclass cls))
   JVMWrapper("JVM_GetClassMethodsCount");
   Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
-  if (!k->oop_is_instance())
-    return 0;
-  return InstanceKlass::cast(k)->methods()->length();
+  return (!k->is_instance_klass()) ? 0 : InstanceKlass::cast(k)->methods()->length();
 JVM_END
 
 
@@ -3477,7 +3470,7 @@ jclass find_class_from_class_loader(JNIEnv* env, Symbol* name, jboolean init,
 
   KlassHandle klass_handle(THREAD, klass);
   // Check if we should initialize the class
-  if (init && klass_handle->oop_is_instance()) {
+  if (init && klass_handle->is_instance_klass()) {
     klass_handle->initialize(CHECK_NULL);
   }
   return (jclass) JNIHandles::make_local(env, klass_handle->java_mirror());
@@ -3625,7 +3618,7 @@ JVM_ENTRY(jobjectArray, JVM_GetEnclosingMethodInfo(JNIEnv *env, jclass ofClass))
     return NULL;
   }
   Klass* k = java_lang_Class::as_Klass(mirror());
-  if (!k->oop_is_instance()) {
+  if (!k->is_instance_klass()) {
     return NULL;
   }
   instanceKlassHandle ik_h(THREAD, k);
@@ -3666,246 +3659,5 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
   // consider to expose this new capability in the sun.rt.jvmCapabilities jvmstat
   // counter defined in runtimeService.cpp.
   info->is_attachable = AttachListener::is_attach_supported();
-}
-JVM_END
-
-// jdk.internal.jimage /////////////////////////////////////////////////////////
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-
-// Java entry to open an image file for sharing.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jlong,
-JVM_ImageOpen(JNIEnv *env, const char *nativePath, jboolean big_endian)) {
-  JVMWrapper("JVM_ImageOpen");
-  // Open image file for reading.
-  ImageFileReader* reader = ImageFileReader::open(nativePath, big_endian != JNI_FALSE);
-  // Return image ID as a jlong.
-  return ImageFileReader::readerToID(reader);
-}
-JVM_END
-
-// Java entry for closing a shared image file.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(void,
-JVM_ImageClose(JNIEnv *env, jlong id)) {
-  JVMWrapper("JVM_ImageClose");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // If valid reader the close.
-  if (reader != NULL) {
-    ImageFileReader::close(reader);
-  }
-}
-JVM_END
-
-// Java entry for accessing the base address of the image index.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jlong,
-JVM_ImageGetIndexAddress(JNIEnv *env, jlong id)) {
-  JVMWrapper("JVM_ImageGetIndexAddress");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // If valid reader return index base address (as jlong) else zero.
-  return  reader != NULL ? (jlong)reader->get_index_address() : 0L;
-}
-JVM_END
-
-// Java entry for accessing the base address of the image data.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jlong,
-JVM_ImageGetDataAddress(JNIEnv *env, jlong id)) {
-  JVMWrapper("JVM_ImageGetDataAddress");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // If valid reader return data base address (as jlong) else zero.
-  return MemoryMapImage && reader != NULL ? (jlong)reader->get_data_address() : 0L;
-}
-JVM_END
-
-// Java entry for reading an uncompressed resource from the image.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jboolean,
-JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
-              unsigned char* uncompressedAddress, jlong uncompressed_size)) {
-  JVMWrapper("JVM_ImageRead");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);\
-  // If not a valid reader the fail the read.
-  if (reader == NULL) return false;
-  // Get the file offset of resource data.
-  u8 file_offset = reader->get_index_size() + offset;
-  // Check validity of arguments.
-  if (offset < 0 ||
-      uncompressed_size < 0 ||
-      file_offset > reader->file_size() - uncompressed_size) {
-      return false;
-  }
-  // Read file content into buffer.
-  return (jboolean)reader->read_at((u1*)uncompressedAddress, uncompressed_size,
-                                   file_offset);
-}
-JVM_END
-
-// Java entry for reading a compressed resource from the image.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jboolean,
-JVM_ImageReadCompressed(JNIEnv *env,
-                    jlong id, jlong offset,
-                    unsigned char* compressedAddress, jlong compressed_size,
-                    unsigned char* uncompressedAddress, jlong uncompressed_size)) {
-  JVMWrapper("JVM_ImageReadCompressed");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // If not a valid reader the fail the read.
-  if (reader == NULL) return false;
-  // Get the file offset of resource data.
-  u8 file_offset = reader->get_index_size() + offset;
-  // Check validity of arguments.
-  if (offset < 0 ||
-      compressed_size < 0 ||
-      uncompressed_size < 0 ||
-      file_offset > reader->file_size() - compressed_size) {
-      return false;
-  }
-
-  // Read file content into buffer.
-  bool is_read = reader->read_at(compressedAddress, compressed_size,
-                                 file_offset);
-  // If successfully read then decompress.
-  if (is_read) {
-    const ImageStrings strings = reader->get_strings();
-    ImageDecompressor::decompress_resource(compressedAddress, uncompressedAddress,
-    uncompressed_size, &strings, true);
-  }
-  return (jboolean)is_read;
-}
-JVM_END
-
-// Java entry for retrieving UTF-8 bytes from image string table.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(const char*, JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset)) {
-  JVMWrapper("JVM_ImageGetStringBytes");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // Fail if not valid reader.
-  if (reader == NULL) return NULL;
-  // Manage image string table.
-  ImageStrings strings = reader->get_strings();
-  // Retrieve string adrress from table.
-  const char* data = strings.get(offset);
-  return data;
-}
-JVM_END
-
-// Utility function to copy location information into a jlong array.
-// WARNING: This function is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-static void image_expand_location(JNIEnv *env, jlong* rawAttributes, ImageLocation& location) {
-  // Copy attributes from location.
-  for (int kind = ImageLocation::ATTRIBUTE_END + 1;
-           kind < ImageLocation::ATTRIBUTE_COUNT;
-           kind++) {
-    rawAttributes[kind] = location.get_attribute(kind);
-  }
-}
-
-// Java entry for retrieving location attributes for attribute offset.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jlong*, JVM_ImageGetAttributes(JNIEnv *env, jlong* rawAttributes, jlong id, jint offset)) {
-  JVMWrapper("JVM_ImageGetAttributes");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // Fail if not valid reader.
-  if (reader == NULL) return NULL;
-  // Retrieve first byte address of resource's location attribute stream.
-  u1* data = reader->get_location_offset_data(offset);
-  // Fail if not valid offset.
-  if (data == NULL) return NULL;
-  // Expand stream into array.
-  ImageLocation location(data);
-  image_expand_location(env, rawAttributes, location);
-  return rawAttributes;
-}
-JVM_END
-
-// Java entry for retrieving location attributes count for attribute offset.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jsize, JVM_ImageGetAttributesCount(JNIEnv *env)) {
-  JVMWrapper("JVM_ImageGetAttributesCount");
-  return ImageLocation::ATTRIBUTE_COUNT;
-}
-JVM_END
-
-// Java entry for retrieving location attributes for named resource.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jlong*,
-JVM_ImageFindAttributes(JNIEnv *env, jlong* rawAttributes, jbyte* rawBytes, jsize size, jlong id)) {
-  JVMWrapper("JVM_ImageFindAttributes");
-  // Mark for temporary buffers.
-  ResourceMark rm;
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // Fail if not valid reader.
-  if (reader == NULL) return NULL;
-  // Convert byte array to a cstring.
-  char* path = NEW_RESOURCE_ARRAY(char, size + 1);
-  memcpy(path, rawBytes, size);
-  path[size] = '\0';
-  // Locate resource location data.
-  ImageLocation location;
-  bool found = reader->find_location(path, location);
-  // Resource not found.
-  if (!found) return NULL;
-  // Expand stream into array.
-  image_expand_location(env, rawAttributes, location);
-  return rawAttributes;
-}
-JVM_END
-
-// Java entry for retrieving all the attribute stream offsets from an image.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(jint*, JVM_ImageAttributeOffsets(JNIEnv *env, jint* rawOffsets, unsigned int length, jlong id)) {
-  JVMWrapper("JVM_ImageAttributeOffsets");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // Fail if not valid reader.
-  if (reader == NULL) return NULL;
-  // Determine endian for reader.
-  Endian* endian = reader->endian();
-  // Get base address of attribute stream offsets table.
-  u4* offsets_table = reader->offsets_table();
-  // Allocate int array result.
-  // Copy values to result (converting endian.)
-  for (u4 i = 0; i < length; i++) {
-    rawOffsets[i] = endian->get(offsets_table[i]);
-  }
-  return rawOffsets;
-}
-JVM_END
-
-// Java entry for retrieving all the attribute stream offsets length from an image.
-// WARNING: This API is experimental and temporary during JDK 9 development
-// cycle. It will not be supported in the eventual JDK 9 release.
-JVM_ENTRY(unsigned int, JVM_ImageAttributeOffsetsLength(JNIEnv *env, jlong id)) {
-  JVMWrapper("JVM_ImageAttributeOffsetsLength");
-  // Convert image ID to image reader structure.
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  // Fail if not valid reader.
-  if (reader == NULL) return 0;
-  // Get perfect hash table length.
-  u4 length = reader->table_length();
-  return (jint) length;
 }
 JVM_END

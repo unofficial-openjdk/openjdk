@@ -42,14 +42,15 @@
 #ifdef COMPILER1
 #include "c1/c1_globals.hpp"
 #endif
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci_globals.hpp"
+#endif
 #ifdef COMPILER2
 #include "opto/c2_globals.hpp"
 #endif
 #ifdef SHARK
 #include "shark/shark_globals.hpp"
 #endif
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 RUNTIME_FLAGS(MATERIALIZE_DEVELOPER_FLAG, \
               MATERIALIZE_PD_DEVELOPER_FLAG, \
@@ -93,7 +94,7 @@ static bool is_product_build() {
 
 void Flag::check_writable() {
   if (is_constant_in_binary()) {
-    fatal(err_msg("flag is constant: %s", _name));
+    fatal("flag is constant: %s", _name);
   }
 }
 
@@ -305,35 +306,36 @@ void Flag::unlock_diagnostic() {
   _flags = Flags(_flags & ~KIND_DIAGNOSTIC);
 }
 
-// Get custom message for this locked flag, or return NULL if
-// none is available.
-void Flag::get_locked_message(char* buf, int buflen) const {
+// Get custom message for this locked flag, or NULL if
+// none is available. Returns message type produced.
+Flag::MsgType Flag::get_locked_message(char* buf, int buflen) const {
   buf[0] = '\0';
   if (is_diagnostic() && !is_unlocked()) {
     jio_snprintf(buf, buflen,
                  "Error: VM option '%s' is diagnostic and must be enabled via -XX:+UnlockDiagnosticVMOptions.\n"
                  "Error: The unlock option must precede '%s'.\n",
                  _name, _name);
-    return;
+    return Flag::DIAGNOSTIC_FLAG_BUT_LOCKED;
   }
   if (is_experimental() && !is_unlocked()) {
     jio_snprintf(buf, buflen,
                  "Error: VM option '%s' is experimental and must be enabled via -XX:+UnlockExperimentalVMOptions.\n"
                  "Error: The unlock option must precede '%s'.\n",
                  _name, _name);
-    return;
+    return Flag::EXPERIMENTAL_FLAG_BUT_LOCKED;
   }
   if (is_develop() && is_product_build()) {
     jio_snprintf(buf, buflen, "Error: VM option '%s' is develop and is available only in debug version of VM.\n",
                  _name);
-    return;
+    return Flag::DEVELOPER_FLAG_BUT_PRODUCT_BUILD;
   }
   if (is_notproduct() && is_product_build()) {
     jio_snprintf(buf, buflen, "Error: VM option '%s' is notproduct and is available only in debug version of VM.\n",
                  _name);
-    return;
+    return Flag::NOTPRODUCT_FLAG_BUT_PRODUCT_BUILD;
   }
   get_locked_message_ext(buf, buflen);
+  return Flag::NONE;
 }
 
 bool Flag::is_writeable() const {
@@ -347,11 +349,6 @@ bool Flag::is_external() const {
   return is_manageable() || is_external_ext();
 }
 
-
-// Length of format string (e.g. "%.1234s") for printing ccstr below
-#define FORMAT_BUFFER_LEN 16
-
-PRAGMA_FORMAT_NONLITERAL_IGNORED_EXTERNAL
 void Flag::print_on(outputStream* st, bool withComments, bool printRanges) {
   // Don't print notproduct and develop flags in a product build.
   if (is_constant_in_binary()) {
@@ -369,11 +366,11 @@ void Flag::print_on(outputStream* st, bool withComments, bool printRanges) {
     } else if (is_uint()) {
       st->print("%-16u", get_uint());
     } else if (is_intx()) {
-      st->print("%-16ld", get_intx());
+      st->print(INTX_FORMAT_W(-16), get_intx());
     } else if (is_uintx()) {
-      st->print("%-16lu", get_uintx());
+      st->print(UINTX_FORMAT_W(-16), get_uintx());
     } else if (is_uint64_t()) {
-      st->print("%-16lu", get_uint64_t());
+      st->print(UINT64_FORMAT_W(-16), get_uint64_t());
     } else if (is_size_t()) {
       st->print(SIZE_FORMAT_W(-16), get_size_t());
     } else if (is_double()) {
@@ -383,14 +380,8 @@ void Flag::print_on(outputStream* st, bool withComments, bool printRanges) {
       if (cp != NULL) {
         const char* eol;
         while ((eol = strchr(cp, '\n')) != NULL) {
-          char format_buffer[FORMAT_BUFFER_LEN];
           size_t llen = pointer_delta(eol, cp, sizeof(char));
-          jio_snprintf(format_buffer, FORMAT_BUFFER_LEN,
-                       "%%." SIZE_FORMAT "s", llen);
-          PRAGMA_DIAG_PUSH
-          PRAGMA_FORMAT_NONLITERAL_IGNORED_INTERNAL
-          st->print(format_buffer, cp);
-          PRAGMA_DIAG_POP
+          st->print("%.*s", (int)llen, cp);
           st->cr();
           cp = eol+1;
           st->print("%5s %-35s += ", "", _name);
@@ -441,6 +432,7 @@ void Flag::print_kind(outputStream* st) {
   };
 
   Data data[] = {
+      { KIND_JVMCI, "JVMCI" },
       { KIND_C1, "C1" },
       { KIND_C2, "C2" },
       { KIND_ARCH, "ARCH" },
@@ -548,6 +540,14 @@ const char* Flag::flag_error_str(Flag::Error error) {
 #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(  type, name,        doc) { #type, XSTR(name), NAME(name), NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_DEVELOP | Flag::KIND_PLATFORM_DEPENDENT) },
 #define RUNTIME_NOTPRODUCT_FLAG_STRUCT(  type, name, value, doc) { #type, XSTR(name), NAME(name), NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_NOT_PRODUCT) },
 
+#define JVMCI_PRODUCT_FLAG_STRUCT(       type, name, value, doc) { #type, XSTR(name), &name,      NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_PRODUCT) },
+#define JVMCI_PD_PRODUCT_FLAG_STRUCT(    type, name,        doc) { #type, XSTR(name), &name,      NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_PRODUCT | Flag::KIND_PLATFORM_DEPENDENT) },
+#define JVMCI_DEVELOP_FLAG_STRUCT(       type, name, value, doc) { #type, XSTR(name), NAME(name), NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_DEVELOP) },
+#define JVMCI_PD_DEVELOP_FLAG_STRUCT(    type, name,        doc) { #type, XSTR(name), NAME(name), NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_DEVELOP | Flag::KIND_PLATFORM_DEPENDENT) },
+#define JVMCI_DIAGNOSTIC_FLAG_STRUCT(    type, name, value, doc) { #type, XSTR(name), &name,      NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_DIAGNOSTIC) },
+#define JVMCI_EXPERIMENTAL_FLAG_STRUCT(  type, name, value, doc) { #type, XSTR(name), &name,      NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_EXPERIMENTAL) },
+#define JVMCI_NOTPRODUCT_FLAG_STRUCT(    type, name, value, doc) { #type, XSTR(name), NAME(name), NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_JVMCI | Flag::KIND_NOT_PRODUCT) },
+
 #ifdef _LP64
 #define RUNTIME_LP64_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name,      NOT_PRODUCT_ARG(doc) Flag::Flags(Flag::DEFAULT | Flag::KIND_LP64_PRODUCT) },
 #else
@@ -616,6 +616,17 @@ static Flag flagTable[] = {
           IGNORE_RANGE, \
           IGNORE_CONSTRAINT)
 #endif // INCLUDE_ALL_GCS
+#if INCLUDE_JVMCI
+ JVMCI_FLAGS(JVMCI_DEVELOP_FLAG_STRUCT, \
+             JVMCI_PD_DEVELOP_FLAG_STRUCT, \
+             JVMCI_PRODUCT_FLAG_STRUCT, \
+             JVMCI_PD_PRODUCT_FLAG_STRUCT, \
+             JVMCI_DIAGNOSTIC_FLAG_STRUCT, \
+             JVMCI_EXPERIMENTAL_FLAG_STRUCT, \
+             JVMCI_NOTPRODUCT_FLAG_STRUCT, \
+             IGNORE_RANGE, \
+             IGNORE_CONSTRAINT)
+#endif // INCLUDE_JVMCI
 #ifdef COMPILER1
  C1_FLAGS(C1_DEVELOP_FLAG_STRUCT, \
           C1_PD_DEVELOP_FLAG_STRUCT, \

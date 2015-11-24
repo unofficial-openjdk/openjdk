@@ -66,6 +66,9 @@
 #include "classfile/sharedClassUtil.hpp"
 #include "classfile/systemDictionaryShared.hpp"
 #endif
+#if INCLUDE_JVMCI
+#include "jvmci/jvmciRuntime.hpp"
+#endif
 #if INCLUDE_TRACE
 #include "trace/tracing.hpp"
 #endif
@@ -85,10 +88,10 @@ const int   SystemDictionary::_primelist[_prime_array_size] = {1009,2017,4049,50
 
 oop         SystemDictionary::_system_loader_lock_obj     =  NULL;
 
-Klass*      SystemDictionary::_well_known_klasses[SystemDictionary::WKID_LIMIT]
+InstanceKlass*      SystemDictionary::_well_known_klasses[SystemDictionary::WKID_LIMIT]
                                                           =  { NULL /*, NULL...*/ };
 
-Klass*      SystemDictionary::_box_klasses[T_VOID+1]      =  { NULL /*, NULL...*/ };
+InstanceKlass*      SystemDictionary::_box_klasses[T_VOID+1]      =  { NULL /*, NULL...*/ };
 
 oop         SystemDictionary::_java_system_loader         =  NULL;
 
@@ -96,7 +99,7 @@ bool        SystemDictionary::_has_loadClassInternal      =  false;
 bool        SystemDictionary::_has_checkPackageAccess     =  false;
 
 // lazily initialized klass variables
-Klass* volatile SystemDictionary::_abstract_ownable_synchronizer_klass = NULL;
+InstanceKlass* volatile SystemDictionary::_abstract_ownable_synchronizer_klass = NULL;
 
 
 // ----------------------------------------------------------------------------
@@ -228,10 +231,10 @@ Klass* SystemDictionary::resolve_or_fail(Symbol* class_name,
 // Forwards to resolve_instance_class_or_null
 
 Klass* SystemDictionary::resolve_or_null(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS) {
-  assert(!THREAD->is_Compiler_thread(),
-         err_msg("can not load classes with compiler thread: class=%s, classloader=%s",
-                 class_name->as_C_string(),
-                 class_loader.is_null() ? "null" : class_loader->klass()->name()->as_C_string()));
+  assert(THREAD->can_call_java(),
+         "can not load classes with compiler thread: class=%s, classloader=%s",
+         class_name->as_C_string(),
+         class_loader.is_null() ? "null" : class_loader->klass()->name()->as_C_string());
   if (FieldType::is_array(class_name)) {
     return resolve_array_class_or_null(class_name, class_loader, protection_domain, THREAD);
   } else if (FieldType::is_obj(class_name)) {
@@ -354,7 +357,7 @@ Klass* SystemDictionary::resolve_super_or_fail(Symbol* child_name,
     // so we don't throw an exception here.
     // see: nsk redefclass014 & java.lang.instrument Instrument032
     if ((childk != NULL ) && (is_superclass) &&
-       ((quicksuperk = InstanceKlass::cast(childk)->super()) != NULL) &&
+       ((quicksuperk = childk->super()) != NULL) &&
 
          ((quicksuperk->name() == class_name) &&
             (quicksuperk->class_loader()  == class_loader()))) {
@@ -1254,8 +1257,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     }
 
     // notify a class loaded from shared object
-    ClassLoadingService::notify_class_loaded(InstanceKlass::cast(ik()),
-                                             true /* shared class */);
+    ClassLoadingService::notify_class_loaded(ik(), true /* shared class */);
   }
   return ik;
 }
@@ -1802,7 +1804,7 @@ void SystemDictionary::load_abstract_ownable_synchronizer_klass(TRAPS) {
     Klass* k = resolve_or_fail(vmSymbols::java_util_concurrent_locks_AbstractOwnableSynchronizer(), true, CHECK);
     // Force a fence to prevent any read before the write completes
     OrderAccess::fence();
-    _abstract_ownable_synchronizer_klass = k;
+    _abstract_ownable_synchronizer_klass = InstanceKlass::cast(k);
   }
 }
 
@@ -1843,14 +1845,16 @@ bool SystemDictionary::initialize_wk_klass(WKID id, int init_opt, TRAPS) {
   int  info = wk_init_info[id - FIRST_WKID];
   int  sid  = (info >> CEIL_LG_OPTION_LIMIT);
   Symbol* symbol = vmSymbols::symbol_at((vmSymbols::SID)sid);
-  Klass**    klassp = &_well_known_klasses[id];
+  InstanceKlass** klassp = &_well_known_klasses[id];
   bool must_load = (init_opt < SystemDictionary::Opt);
   if ((*klassp) == NULL) {
+    Klass* k;
     if (must_load) {
-      (*klassp) = resolve_or_fail(symbol, true, CHECK_0); // load required class
+      k = resolve_or_fail(symbol, true, CHECK_0); // load required class
     } else {
-      (*klassp) = resolve_or_null(symbol,       CHECK_0); // load optional klass
+      k = resolve_or_null(symbol,       CHECK_0); // load optional klass
     }
+    (*klassp) = (k == NULL) ? NULL : InstanceKlass::cast(k);
   }
   return ((*klassp) != NULL);
 }
@@ -1917,7 +1921,7 @@ void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   WKID jsr292_group_end   = WK_KLASS_ENUM_NAME(VolatileCallSite_klass);
   initialize_wk_klasses_until(jsr292_group_start, scan, CHECK);
   initialize_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  initialize_wk_klasses_until(WKID_LIMIT, scan, CHECK);
+  initialize_wk_klasses_until(NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(FIRST_JVMCI_WKID), scan, CHECK);
 
   _box_klasses[T_BOOLEAN] = WK_KLASS(Boolean_klass);
   _box_klasses[T_CHAR]    = WK_KLASS(Character_klass);
@@ -1963,7 +1967,8 @@ void SystemDictionary::check_constraints(int d_index, unsigned int d_hash,
                                          instanceKlassHandle k,
                                          Handle class_loader, bool defining,
                                          TRAPS) {
-  const char *linkage_error = NULL;
+  const char *linkage_error1 = NULL;
+  const char *linkage_error2 = NULL;
   {
     Symbol*  name  = k->name();
     ClassLoaderData *loader_data = class_loader_data(class_loader);
@@ -1978,10 +1983,10 @@ void SystemDictionary::check_constraints(int d_index, unsigned int d_hash,
       // system dictionary only holds instance classes, placeholders
       // also holds array classes
 
-      assert(check->oop_is_instance(), "noninstance in systemdictionary");
+      assert(check->is_instance_klass(), "noninstance in systemdictionary");
       if ((defining == true) || (k() != check)) {
-        linkage_error = "loader (instance of  %s): attempted  duplicate class "
-          "definition for name: \"%s\"";
+        linkage_error1 = "loader (instance of  ";
+        linkage_error2 = "): attempted  duplicate class definition for name: \"";
       } else {
         return;
       }
@@ -1992,10 +1997,10 @@ void SystemDictionary::check_constraints(int d_index, unsigned int d_hash,
     assert(ph_check == NULL || ph_check == name, "invalid symbol");
 #endif
 
-    if (linkage_error == NULL) {
+    if (linkage_error1 == NULL) {
       if (constraints()->check_or_update(k, class_loader, name) == false) {
-        linkage_error = "loader constraint violation: loader (instance of %s)"
-          " previously initiated loading for a different type with name \"%s\"";
+        linkage_error1 = "loader constraint violation: loader (instance of ";
+        linkage_error2 = ") previously initiated loading for a different type with name \"";
       }
     }
   }
@@ -2003,14 +2008,14 @@ void SystemDictionary::check_constraints(int d_index, unsigned int d_hash,
   // Throw error now if needed (cannot throw while holding
   // SystemDictionary_lock because of rank ordering)
 
-  if (linkage_error) {
+  if (linkage_error1) {
     ResourceMark rm(THREAD);
     const char* class_loader_name = loader_name(class_loader());
     char* type_name = k->name()->as_C_string();
-    size_t buflen = strlen(linkage_error) + strlen(class_loader_name) +
-      strlen(type_name);
+    size_t buflen = strlen(linkage_error1) + strlen(class_loader_name) +
+      strlen(linkage_error2) + strlen(type_name) + 2; // +2 for '"' and null byte.
     char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-    jio_snprintf(buf, buflen, linkage_error, class_loader_name, type_name);
+    jio_snprintf(buf, buflen, "%s%s%s%s\"", linkage_error1, class_loader_name, linkage_error2, type_name);
     THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
   }
 }
@@ -2152,7 +2157,7 @@ bool SystemDictionary::add_loader_constraint(Symbol* class_name,
 
 // Add entry to resolution error table to record the error when the first
 // attempt to resolve a reference to a class has failed.
-void SystemDictionary::add_resolution_error(constantPoolHandle pool, int which,
+void SystemDictionary::add_resolution_error(const constantPoolHandle& pool, int which,
                                             Symbol* error, Symbol* message) {
   unsigned int hash = resolution_errors()->compute_hash(pool, which);
   int index = resolution_errors()->hash_to_index(hash);
@@ -2168,7 +2173,7 @@ void SystemDictionary::delete_resolution_error(ConstantPool* pool) {
 }
 
 // Lookup resolution error table. Returns error if found, otherwise NULL.
-Symbol* SystemDictionary::find_resolution_error(constantPoolHandle pool, int which,
+Symbol* SystemDictionary::find_resolution_error(const constantPoolHandle& pool, int which,
                                                 Symbol** message) {
   unsigned int hash = resolution_errors()->compute_hash(pool, which);
   int index = resolution_errors()->hash_to_index(hash);
@@ -2264,7 +2269,7 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
   assert(MethodHandles::is_signature_polymorphic(iid) &&
          MethodHandles::is_signature_polymorphic_intrinsic(iid) &&
          iid != vmIntrinsics::_invokeGeneric,
-         err_msg("must be a known MH intrinsic iid=%d: %s", iid, vmIntrinsics::name_at(iid)));
+         "must be a known MH intrinsic iid=%d: %s", iid, vmIntrinsics::name_at(iid));
 
   unsigned int hash  = invoke_method_table()->compute_hash(signature, iid);
   int          index = invoke_method_table()->hash_to_index(hash);
@@ -2343,7 +2348,7 @@ methodHandle SystemDictionary::find_method_handle_invoker(Symbol* name,
                                                           Handle *method_type_result,
                                                           TRAPS) {
   methodHandle empty;
-  assert(!THREAD->is_Compiler_thread(), "");
+  assert(THREAD->can_call_java() ,"");
   Handle method_type =
     SystemDictionary::find_method_handle_type(signature, accessing_klass, CHECK_(empty));
 
@@ -2384,13 +2389,13 @@ methodHandle SystemDictionary::find_method_handle_invoker(Symbol* name,
 // Out of an abundance of caution, we do not include any other classes, not even for packages like java.util.
 static bool is_always_visible_class(oop mirror) {
   Klass* klass = java_lang_Class::as_Klass(mirror);
-  if (klass->oop_is_objArray()) {
+  if (klass->is_objArray_klass()) {
     klass = ObjArrayKlass::cast(klass)->bottom_klass(); // check element type
   }
-  if (klass->oop_is_typeArray()) {
+  if (klass->is_typeArray_klass()) {
     return true; // primitive array
   }
-  assert(klass->oop_is_instance(), klass->external_name());
+  assert(klass->is_instance_klass(), "%s", klass->external_name());
   return klass->is_public() &&
          (InstanceKlass::cast(klass)->is_same_class_package(SystemDictionary::Object_klass()) ||       // java.lang
           InstanceKlass::cast(klass)->is_same_class_package(SystemDictionary::MethodHandle_klass()));  // java.lang.invoke
@@ -2411,7 +2416,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
   if (spe != NULL && spe->method_type() != NULL) {
     assert(java_lang_invoke_MethodType::is_instance(spe->method_type()), "");
     return Handle(THREAD, spe->method_type());
-  } else if (THREAD->is_Compiler_thread()) {
+  } else if (!THREAD->can_call_java()) {
     warning("SystemDictionary::find_method_handle_type called from compiler thread");  // FIXME
     return Handle();  // do not attempt from within compiler, unless it was cached
   }
@@ -2443,7 +2448,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       mirror = ss.as_java_mirror(class_loader, protection_domain,
                                  SignatureStream::NCDFError, CHECK_(empty));
     }
-    assert(!oopDesc::is_null(mirror), ss.as_symbol(THREAD)->as_C_string());
+    assert(!oopDesc::is_null(mirror), "%s", ss.as_symbol(THREAD)->as_C_string());
     if (ss.at_return_type())
       rt = Handle(THREAD, mirror);
     else
@@ -2454,9 +2459,9 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       Klass* sel_klass = java_lang_Class::as_Klass(mirror);
       mirror = NULL;  // safety
       // Emulate ConstantPool::verify_constant_pool_resolve.
-      if (sel_klass->oop_is_objArray())
+      if (sel_klass->is_objArray_klass())
         sel_klass = ObjArrayKlass::cast(sel_klass)->bottom_klass();
-      if (sel_klass->oop_is_instance()) {
+      if (sel_klass->is_instance_klass()) {
         KlassHandle sel_kh(THREAD, sel_klass);
         LinkResolver::check_klass_accessability(accessing_klass, sel_kh, CHECK_(empty));
       }

@@ -89,7 +89,7 @@ struct Final_Reshape_Counts;
 typedef unsigned int node_idx_t;
 class NodeCloneInfo {
  private:
-  uint64_t  _idx_clone_orig;
+  uint64_t _idx_clone_orig;
  public:
 
   void set_idx(node_idx_t idx) {
@@ -98,17 +98,17 @@ class NodeCloneInfo {
   node_idx_t idx() const { return (node_idx_t)(_idx_clone_orig & 0xFFFFFFFF); }
 
   void set_gen(int generation) {
-    uint64_t  g = (uint64_t)generation << 32;
+    uint64_t g = (uint64_t)generation << 32;
     _idx_clone_orig = _idx_clone_orig & 0xFFFFFFFF | g;
   }
   int gen() const { return (int)(_idx_clone_orig >> 32); }
 
-  void set(uint64_t x) {  _idx_clone_orig = x; }
-  void set(node_idx_t x, int g) {  set_idx(x); set_gen(g); }
+  void set(uint64_t x) { _idx_clone_orig = x; }
+  void set(node_idx_t x, int g) { set_idx(x); set_gen(g); }
   uint64_t get() const { return _idx_clone_orig; }
 
   NodeCloneInfo(uint64_t idx_clone_orig) : _idx_clone_orig(idx_clone_orig) {}
-  NodeCloneInfo(node_idx_t x, int g) {set(x, g);}
+  NodeCloneInfo(node_idx_t x, int g) : _idx_clone_orig(0) { set(x, g); }
 
   void dump() const;
 };
@@ -374,6 +374,7 @@ class Compile : public Phase {
   bool                  _do_count_invocations;  // True if we generate code to count invocations
   bool                  _do_method_data_update; // True if we generate code to update MethodData*s
   bool                  _do_vector_loop;        // True if allowed to execute loop in parallel iterations
+  bool                  _use_cmove;             // True if CMove should be used without profitability analysis
   bool                  _age_code;              // True if we need to profile code age (decrement the aging counter)
   int                   _AliasLevel;            // Locally-adjusted version of AliasLevel flag.
   bool                  _print_assembly;        // True if we should dump assembly code for this compilation
@@ -391,6 +392,7 @@ class Compile : public Phase {
   // Compilation environment.
   Arena                 _comp_arena;            // Arena with lifetime equivalent to Compile
   ciEnv*                _env;                   // CI interface
+  DirectiveSet*         _directive;             // Compiler directive
   CompileLog*           _log;                   // from CompilerThread
   const char*           _failure_reason;        // for record_failure/failing pattern
   GrowableArray<CallGenerator*>* _intrinsics;   // List of intrinsics.
@@ -523,9 +525,13 @@ class Compile : public Phase {
 
   void print_inlining(ciMethod* method, int inline_level, int bci, const char* msg = NULL) {
     stringStream ss;
-    CompileTask::print_inlining(&ss, method, inline_level, bci, msg);
+    CompileTask::print_inlining_inner(&ss, method, inline_level, bci, msg);
     print_inlining_stream()->print("%s", ss.as_string());
   }
+
+#ifndef PRODUCT
+  IdealGraphPrinter* printer() { return _printer; }
+#endif
 
   void log_late_inline(CallGenerator* cg);
   void log_inline_id(CallGenerator* cg);
@@ -578,6 +584,7 @@ class Compile : public Phase {
 
   // ID for this compilation.  Useful for setting breakpoints in the debugger.
   int               compile_id() const          { return _compile_id; }
+  DirectiveSet*     directive() const           { return _directive; }
 
   // Does this compilation allow instructions to subsume loads?  User
   // instructions that subsume a load may result in an unschedulable
@@ -651,6 +658,8 @@ class Compile : public Phase {
   void          set_do_method_data_update(bool z) { _do_method_data_update = z; }
   bool              do_vector_loop() const      { return _do_vector_loop; }
   void          set_do_vector_loop(bool z)      { _do_vector_loop = z; }
+  bool              use_cmove() const           { return _use_cmove; }
+  void          set_use_cmove(bool z)           { _use_cmove = z; }
   bool              age_code() const             { return _age_code; }
   void          set_age_code(bool z)             { _age_code = z; }
   int               AliasLevel() const           { return _AliasLevel; }
@@ -671,10 +680,7 @@ class Compile : public Phase {
   bool          method_has_option(const char * option) {
     return method() != NULL && method()->has_option(option);
   }
-  template<typename T>
-  bool          method_has_option_value(const char * option, T& value) {
-    return method() != NULL && method()->has_option_value(option, value);
-  }
+
 #ifndef PRODUCT
   bool          trace_opto_output() const       { return _trace_opto_output; }
   bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
@@ -692,8 +698,8 @@ class Compile : public Phase {
 
   void begin_method() {
 #ifndef PRODUCT
-    if (_printer && _printer->should_print(_method)) {
-      _printer->begin_method(this);
+    if (_printer && _printer->should_print(1)) {
+      _printer->begin_method();
     }
 #endif
     C->_latest_stage_start_counter.stamp();
@@ -711,8 +717,8 @@ class Compile : public Phase {
 
 
 #ifndef PRODUCT
-    if (_printer && _printer->should_print(_method)) {
-      _printer->print_method(this, CompilerPhaseTypeHelper::to_string(cpt), level);
+    if (_printer && _printer->should_print(level)) {
+      _printer->print_method(CompilerPhaseTypeHelper::to_string(cpt), level);
     }
 #endif
     C->_latest_stage_start_counter.stamp();
@@ -728,7 +734,7 @@ class Compile : public Phase {
       event.commit();
     }
 #ifndef PRODUCT
-    if (_printer && _printer->should_print(_method)) {
+    if (_printer && _printer->should_print(level)) {
       _printer->end_method();
     }
 #endif
@@ -843,7 +849,7 @@ class Compile : public Phase {
                                            }
   uint          live_nodes() const         {
     int  val = _unique - _dead_node_count;
-    assert (val >= 0, err_msg_res("number of tracked dead nodes %d more than created nodes %d", _unique, _dead_node_count));
+    assert (val >= 0, "number of tracked dead nodes %d more than created nodes %d", _unique, _dead_node_count);
             return (uint) val;
                                            }
 #ifdef ASSERT
@@ -1107,7 +1113,7 @@ class Compile : public Phase {
   // continuation.
   Compile(ciEnv* ci_env, C2Compiler* compiler, ciMethod* target,
           int entry_bci, bool subsume_loads, bool do_escape_analysis,
-          bool eliminate_boxing);
+          bool eliminate_boxing, DirectiveSet* directive);
 
   // Second major entry point.  From the TypeFunc signature, generate code
   // to pass arguments from the Java calling convention to the C calling
@@ -1115,7 +1121,7 @@ class Compile : public Phase {
   Compile(ciEnv* ci_env, const TypeFunc *(*gen)(),
           address stub_function, const char *stub_name,
           int is_fancy_jump, bool pass_tls,
-          bool save_arg_registers, bool return_pc);
+          bool save_arg_registers, bool return_pc, DirectiveSet* directive);
 
   // From the TypeFunc signature, generate code to pass arguments
   // from Compiled calling convention to Interpreter's calling convention
@@ -1207,12 +1213,6 @@ class Compile : public Phase {
 
   // Compute the name of old_SP.  See <arch>.ad for frame layout.
   OptoReg::Name compute_old_SP();
-
-#ifdef ENABLE_ZAP_DEAD_LOCALS
-  static bool is_node_getting_a_safepoint(Node*);
-  void Insert_zap_nodes();
-  Node* call_zap_node(MachSafePointNode* n, int block_no);
-#endif
 
  private:
   // Phase control:

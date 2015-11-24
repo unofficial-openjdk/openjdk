@@ -195,7 +195,7 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
 
 
 LIR_Opr LIRGenerator::load_immediate(int x, BasicType type) {
-  LIR_Opr r;
+  LIR_Opr r = NULL;
   if (type == T_LONG) {
     r = LIR_OprFact::longConst(x);
   } else if (type == T_INT) {
@@ -484,7 +484,7 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
     __ cmp(lir_cond_equal, right.result(), LIR_OprFact::longConst(0));
     __ branch(lir_cond_equal, T_LONG, new DivByZeroStub(info));
 
-    address entry;
+    address entry = NULL;
     switch (x->op()) {
     case Bytecodes::_lrem:
       entry = CAST_FROM_FN_PTR(address, SharedRuntime::lrem);
@@ -808,6 +808,12 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
 
 void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
   assert(x->number_of_arguments() == 1 || (x->number_of_arguments() == 2 && x->id() == vmIntrinsics::_dpow), "wrong type");
+
+  if (x->id() == vmIntrinsics::_dexp || x->id() == vmIntrinsics::_dlog) {
+    do_LibmIntrinsic(x);
+    return;
+  }
+
   LIRItem value(x->argument_at(0), this);
 
   bool use_fpu = false;
@@ -816,9 +822,7 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
       case vmIntrinsics::_dsin:
       case vmIntrinsics::_dcos:
       case vmIntrinsics::_dtan:
-      case vmIntrinsics::_dlog:
       case vmIntrinsics::_dlog10:
-      case vmIntrinsics::_dexp:
       case vmIntrinsics::_dpow:
         use_fpu = true;
     }
@@ -868,9 +872,7 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
     case vmIntrinsics::_dsin:   __ sin  (calc_input, calc_result, tmp1, tmp2);              break;
     case vmIntrinsics::_dcos:   __ cos  (calc_input, calc_result, tmp1, tmp2);              break;
     case vmIntrinsics::_dtan:   __ tan  (calc_input, calc_result, tmp1, tmp2);              break;
-    case vmIntrinsics::_dlog:   __ log  (calc_input, calc_result, tmp1);                    break;
     case vmIntrinsics::_dlog10: __ log10(calc_input, calc_result, tmp1);                    break;
-    case vmIntrinsics::_dexp:   __ exp  (calc_input, calc_result,              tmp1, tmp2, FrameMap::rax_opr, FrameMap::rcx_opr, FrameMap::rdx_opr); break;
     case vmIntrinsics::_dpow:   __ pow  (calc_input, calc_input2, calc_result, tmp1, tmp2, FrameMap::rax_opr, FrameMap::rcx_opr, FrameMap::rdx_opr); break;
     default:                    ShouldNotReachHere();
   }
@@ -880,6 +882,52 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
   }
 }
 
+void LIRGenerator::do_LibmIntrinsic(Intrinsic* x) {
+  LIRItem value(x->argument_at(0), this);
+  value.set_destroys_register();
+
+  LIR_Opr calc_result = rlock_result(x);
+  LIR_Opr result_reg = result_register_for(x->type());
+
+  BasicTypeList signature(1);
+  signature.append(T_DOUBLE);
+  CallingConvention* cc = frame_map()->c_calling_convention(&signature);
+
+  value.load_item_force(cc->at(0));
+
+#ifndef _LP64
+  LIR_Opr tmp = FrameMap::fpu0_double_opr;
+  result_reg = tmp;
+  switch(x->id()) {
+    case vmIntrinsics::_dexp:
+      if (VM_Version::supports_sse2()) {
+        __ call_runtime_leaf(StubRoutines::dexp(), getThreadTemp(), result_reg, cc->args());
+      } else {
+        __ call_runtime_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::dexp), getThreadTemp(), result_reg, cc->args());
+      }
+      break;
+    case vmIntrinsics::_dlog:
+      if (VM_Version::supports_sse2()) {
+        __ call_runtime_leaf(StubRoutines::dlog(), getThreadTemp(), result_reg, cc->args());
+      }
+      else {
+        __ call_runtime_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::dlog), getThreadTemp(), result_reg, cc->args());
+      }
+      break;
+    default:  ShouldNotReachHere();
+  }
+#else
+  switch (x->id()) {
+    case vmIntrinsics::_dexp:
+      __ call_runtime_leaf(StubRoutines::dexp(), getThreadTemp(), result_reg, cc->args());
+      break;
+    case vmIntrinsics::_dlog:
+      __ call_runtime_leaf(StubRoutines::dlog(), getThreadTemp(), result_reg, cc->args());
+      break;
+  }
+#endif
+  __ move(result_reg, calc_result);
+}
 
 void LIRGenerator::do_ArrayCopy(Intrinsic* x) {
   assert(x->number_of_arguments() == 5, "wrong type");
@@ -1024,7 +1072,7 @@ LIR_Opr fixed_register_for(BasicType type) {
 
 void LIRGenerator::do_Convert(Convert* x) {
   // flags that vary for the different operations and different SSE-settings
-  bool fixed_input, fixed_result, round_result, needs_stub;
+  bool fixed_input = false, fixed_result = false, round_result = false, needs_stub = false;
 
   switch (x->op()) {
     case Bytecodes::_i2l: // fall through

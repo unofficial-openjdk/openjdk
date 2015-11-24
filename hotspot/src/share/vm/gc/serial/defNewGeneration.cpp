@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "gc/serial/defNewGeneration.inline.hpp"
+#include "gc/shared/cardTableRS.hpp"
 #include "gc/shared/collectorCounters.hpp"
 #include "gc/shared/gcHeapSummary.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
@@ -33,7 +34,6 @@
 #include "gc/shared/gcTraceTime.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/genOopClosures.inline.hpp"
-#include "gc/shared/genRemSet.hpp"
 #include "gc/shared/generationSpec.hpp"
 #include "gc/shared/referencePolicy.hpp"
 #include "gc/shared/space.inline.hpp"
@@ -69,8 +69,7 @@ bool DefNewGeneration::IsAliveClosure::do_object_b(oop p) {
 
 DefNewGeneration::KeepAliveClosure::
 KeepAliveClosure(ScanWeakRefClosure* cl) : _cl(cl) {
-  GenRemSet* rs = GenCollectedHeap::heap()->rem_set();
-  _rs = (CardTableRS*)rs;
+  _rs = GenCollectedHeap::heap()->rem_set();
 }
 
 void DefNewGeneration::KeepAliveClosure::do_oop(oop* p)       { DefNewGeneration::KeepAliveClosure::do_oop_work(p); }
@@ -106,14 +105,14 @@ FastEvacuateFollowersClosure(GenCollectedHeap* gch,
   _gch(gch), _scan_cur_or_nonheap(cur), _scan_older(older)
 {
   assert(_gch->young_gen()->kind() == Generation::DefNew, "Generation should be DefNew");
-  _gen = (DefNewGeneration*)_gch->young_gen();
+  _young_gen = (DefNewGeneration*)_gch->young_gen();
 }
 
 void DefNewGeneration::FastEvacuateFollowersClosure::do_void() {
   do {
     _gch->oop_since_save_marks_iterate(GenCollectedHeap::YoungGen, _scan_cur_or_nonheap, _scan_older);
   } while (!_gch->no_allocs_since_save_marks());
-  guarantee(_gen->promo_failure_scan_is_complete(), "Failed to finish scan");
+  guarantee(_young_gen->promo_failure_scan_is_complete(), "Failed to finish scan");
 }
 
 ScanClosure::ScanClosure(DefNewGeneration* g, bool gc_barrier) :
@@ -200,8 +199,9 @@ DefNewGeneration::DefNewGeneration(ReservedSpace rs,
   _from_space = new ContiguousSpace();
   _to_space   = new ContiguousSpace();
 
-  if (_eden_space == NULL || _from_space == NULL || _to_space == NULL)
+  if (_eden_space == NULL || _from_space == NULL || _to_space == NULL) {
     vm_exit_during_initialization("Could not allocate a new gen space");
+  }
 
   // Compute the maximum eden and survivor space sizes. These sizes
   // are computed assuming the entire reserved space is committed.
@@ -212,7 +212,7 @@ DefNewGeneration::DefNewGeneration(ReservedSpace rs,
   _max_eden_size = size - (2*_max_survivor_size);
 
   // allocate the performance counters
-  GenCollectorPolicy* gcp = (GenCollectorPolicy*)gch->collector_policy();
+  GenCollectorPolicy* gcp = gch->gen_policy();
 
   // Generation counters -- generation 0, 3 subspaces
   _gen_counters = new GenerationCounters("new", 0, 3,
@@ -383,7 +383,7 @@ void DefNewGeneration::compute_new_size() {
 
   size_t old_size = gch->old_gen()->capacity();
   size_t new_size_before = _virtual_space.committed_size();
-  size_t min_new_size = spec()->init_size();
+  size_t min_new_size = initial_size();
   size_t max_new_size = reserved().byte_size();
   assert(min_new_size <= new_size_before &&
          new_size_before <= max_new_size,
@@ -582,7 +582,7 @@ void DefNewGeneration::collect(bool   full,
 
   init_assuming_no_promotion_failure();
 
-  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL, gc_tracer.gc_id());
+  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL);
   // Capture heap used before collection (for printing).
   size_t gch_prev_used = gch->used();
 
@@ -645,8 +645,9 @@ void DefNewGeneration::collect(bool   full,
   rp->setup_policy(clear_all_soft_refs);
   const ReferenceProcessorStats& stats =
   rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
-                                    NULL, _gc_timer, gc_tracer.gc_id());
+                                    NULL, _gc_timer);
   gc_tracer.report_gc_reference_stats(stats);
+  gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
   if (!_promotion_failed) {
     // Swap the survivor spaces.
@@ -655,7 +656,7 @@ void DefNewGeneration::collect(bool   full,
     if (ZapUnusedHeapArea) {
       // This is now done here because of the piece-meal mangling which
       // can check for valid mangling at intermediate points in the
-      // collection(s).  When a minor collection fails to collect
+      // collection(s).  When a young collection fails to collect
       // sufficient space resizing of the young generation can occur
       // an redistribute the spaces in the young generation.  Mangle
       // here so that unzapped regions don't get distributed to
@@ -711,7 +712,6 @@ void DefNewGeneration::collect(bool   full,
   update_time_of_last_gc(now);
 
   gch->trace_heap_after_gc(&gc_tracer);
-  gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
   _gc_timer->register_gc_end();
 

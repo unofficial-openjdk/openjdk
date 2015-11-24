@@ -35,7 +35,6 @@
 #include "ci/ciUtilities.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "compiler/abstractCompiler.hpp"
-#include "compiler/compilerOracle.hpp"
 #include "compiler/methodLiveness.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -576,13 +575,13 @@ void ciCallProfile::add_receiver(ciKlass* receiver, int receiver_count) {
 
 void ciMethod::assert_virtual_call_type_ok(int bci) {
   assert(java_code_at_bci(bci) == Bytecodes::_invokevirtual ||
-         java_code_at_bci(bci) == Bytecodes::_invokeinterface, err_msg("unexpected bytecode %s", Bytecodes::name(java_code_at_bci(bci))));
+         java_code_at_bci(bci) == Bytecodes::_invokeinterface, "unexpected bytecode %s", Bytecodes::name(java_code_at_bci(bci)));
 }
 
 void ciMethod::assert_call_type_ok(int bci) {
   assert(java_code_at_bci(bci) == Bytecodes::_invokestatic ||
          java_code_at_bci(bci) == Bytecodes::_invokespecial ||
-         java_code_at_bci(bci) == Bytecodes::_invokedynamic, err_msg("unexpected bytecode %s", Bytecodes::name(java_code_at_bci(bci))));
+         java_code_at_bci(bci) == Bytecodes::_invokedynamic, "unexpected bytecode %s", Bytecodes::name(java_code_at_bci(bci)));
 }
 
 /**
@@ -745,7 +744,7 @@ ciMethod* ciMethod::find_monomorphic_target(ciInstanceKlass* caller,
 #ifndef PRODUCT
   if (TraceDependencies && target() != NULL && target() != root_m->get_Method()) {
     tty->print("found a non-root unique target method");
-    tty->print_cr("  context = %s", InstanceKlass::cast(actual_recv->get_Klass())->external_name());
+    tty->print_cr("  context = %s", actual_recv->get_Klass()->external_name());
     tty->print("  method  = ");
     target->print_short_name(tty);
     tty->cr();
@@ -791,7 +790,7 @@ ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver, boo
    methodHandle m;
    // Only do exact lookup if receiver klass has been linked.  Otherwise,
    // the vtable has not been setup, and the LinkResolver will fail.
-   if (h_recv->oop_is_array()
+   if (h_recv->is_array_klass()
         ||
        InstanceKlass::cast(h_recv())->is_linked() && !exact_receiver->is_interface()) {
      if (holder()->is_interface()) {
@@ -1044,63 +1043,6 @@ MethodCounters* ciMethod::ensure_method_counters() {
 }
 
 // ------------------------------------------------------------------
-// ciMethod::should_exclude
-//
-// Should this method be excluded from compilation?
-bool ciMethod::should_exclude() {
-  check_is_loaded();
-  VM_ENTRY_MARK;
-  methodHandle mh(THREAD, get_Method());
-  bool ignore;
-  return CompilerOracle::should_exclude(mh, ignore);
-}
-
-// ------------------------------------------------------------------
-// ciMethod::should_inline
-//
-// Should this method be inlined during compilation?
-bool ciMethod::should_inline() {
-  check_is_loaded();
-  VM_ENTRY_MARK;
-  methodHandle mh(THREAD, get_Method());
-  return CompilerOracle::should_inline(mh);
-}
-
-// ------------------------------------------------------------------
-// ciMethod::should_not_inline
-//
-// Should this method be disallowed from inlining during compilation?
-bool ciMethod::should_not_inline() {
-  check_is_loaded();
-  VM_ENTRY_MARK;
-  methodHandle mh(THREAD, get_Method());
-  return CompilerOracle::should_not_inline(mh);
-}
-
-// ------------------------------------------------------------------
-// ciMethod::should_print_assembly
-//
-// Should the compiler print the generated code for this method?
-bool ciMethod::should_print_assembly() {
-  check_is_loaded();
-  VM_ENTRY_MARK;
-  methodHandle mh(THREAD, get_Method());
-  return CompilerOracle::should_print(mh);
-}
-
-// ------------------------------------------------------------------
-// ciMethod::break_at_execute
-//
-// Should the compiler insert a breakpoint into the generated code
-// method?
-bool ciMethod::break_at_execute() {
-  check_is_loaded();
-  VM_ENTRY_MARK;
-  methodHandle mh(THREAD, get_Method());
-  return CompilerOracle::should_break_at(mh);
-}
-
-// ------------------------------------------------------------------
 // ciMethod::has_option
 //
 bool ciMethod::has_option(const char* option) {
@@ -1113,20 +1055,12 @@ bool ciMethod::has_option(const char* option) {
 // ------------------------------------------------------------------
 // ciMethod::has_option_value
 //
-template<typename T>
-bool ciMethod::has_option_value(const char* option, T& value) {
+bool ciMethod::has_option_value(const char* option, double& value) {
   check_is_loaded();
   VM_ENTRY_MARK;
   methodHandle mh(THREAD, get_Method());
   return CompilerOracle::has_option_value(mh, option, value);
 }
-// Explicit instantiation for all OptionTypes supported.
-template bool ciMethod::has_option_value<intx>(const char* option, intx& value);
-template bool ciMethod::has_option_value<uintx>(const char* option, uintx& value);
-template bool ciMethod::has_option_value<bool>(const char* option, bool& value);
-template bool ciMethod::has_option_value<ccstr>(const char* option, ccstr& value);
-template bool ciMethod::has_option_value<double>(const char* option, double& value);
-
 // ------------------------------------------------------------------
 // ciMethod::can_be_compiled
 //

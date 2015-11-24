@@ -108,7 +108,7 @@ Node *Parse::fetch_interpreter_state(int index,
 
   // Very similar to LoadNode::make, except we handle un-aligned longs and
   // doubles on Sparc.  Intel can handle them just fine directly.
-  Node *l;
+  Node *l = NULL;
   switch (bt) {                // Signature is flattened
   case T_INT:     l = new LoadINode(ctl, mem, adr, TypeRawPtr::BOTTOM, TypeInt::INT,        MemNode::unordered); break;
   case T_FLOAT:   l = new LoadFNode(ctl, mem, adr, TypeRawPtr::BOTTOM, Type::FLOAT,         MemNode::unordered); break;
@@ -1476,13 +1476,13 @@ void Parse::do_one_block() {
     int pre_bc_sp = sp();
     int inputs, depth;
     bool have_se = !stopped() && compute_stack_effects(inputs, depth);
-    assert(!have_se || pre_bc_sp >= inputs, err_msg_res("have enough stack to execute this BC: pre_bc_sp=%d, inputs=%d", pre_bc_sp, inputs));
+    assert(!have_se || pre_bc_sp >= inputs, "have enough stack to execute this BC: pre_bc_sp=%d, inputs=%d", pre_bc_sp, inputs);
 #endif //ASSERT
 
     do_one_bytecode();
 
     assert(!have_se || stopped() || failing() || (sp() - pre_bc_sp) == depth,
-           err_msg_res("incorrect depth prediction: sp=%d, pre_bc_sp=%d, depth=%d", sp(), pre_bc_sp, depth));
+           "incorrect depth prediction: sp=%d, pre_bc_sp=%d, depth=%d", sp(), pre_bc_sp, depth);
 
     do_exceptions();
 
@@ -1903,7 +1903,7 @@ PhiNode *Parse::ensure_phi(int idx, bool nocreate) {
   // Now use a Phi here for merging
   assert(!nocreate, "Cannot build a phi for a block already parsed.");
   const JVMState* jvms = map->jvms();
-  const Type* t;
+  const Type* t = NULL;
   if (jvms->is_loc(idx)) {
     t = block()->local_type_at(idx - jvms->locoff());
   } else if (jvms->is_stk(idx)) {

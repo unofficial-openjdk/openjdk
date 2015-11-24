@@ -90,6 +90,7 @@ Monitor* CompileThread_lock           = NULL;
 Monitor* Compilation_lock             = NULL;
 Mutex*   CompileTaskAlloc_lock        = NULL;
 Mutex*   CompileStatistics_lock       = NULL;
+Mutex*   DirectivesStack_lock         = NULL;
 Mutex*   MultiArray_lock              = NULL;
 Monitor* Terminator_lock              = NULL;
 Monitor* BeforeExit_lock              = NULL;
@@ -100,7 +101,6 @@ Mutex*   ProfilePrint_lock            = NULL;
 Mutex*   ExceptionCache_lock          = NULL;
 Monitor* ObjAllocPost_lock            = NULL;
 Mutex*   OsrList_lock                 = NULL;
-Mutex*   ImageFileReaderTable_lock    = NULL;
 
 #ifndef PRODUCT
 Mutex*   FullGCALot_lock              = NULL;
@@ -128,6 +128,7 @@ Monitor* GCTaskManager_lock           = NULL;
 Mutex*   Management_lock              = NULL;
 Monitor* Service_lock                 = NULL;
 Monitor* PeriodicTask_lock            = NULL;
+Mutex*   LogConfiguration_lock        = NULL;
 
 #ifdef INCLUDE_TRACE
 Mutex*   JfrStacktrace_lock           = NULL;
@@ -156,7 +157,7 @@ void assert_locked_or_safepoint(const Monitor * lock) {
   // see if invoker of VM operation owns it
   VM_Operation* op = VMThread::vm_operation();
   if (op != NULL && op->calling_thread() == lock->owner()) return;
-  fatal(err_msg("must own lock %s", lock->name()));
+  fatal("must own lock %s", lock->name());
 }
 
 // a stronger assertion than the above
@@ -164,7 +165,7 @@ void assert_lock_strong(const Monitor * lock) {
   if (IgnoreLockingAssertions) return;
   assert(lock != NULL, "Need non-NULL lock");
   if (lock->owned_by_self()) return;
-  fatal(err_msg("must own lock %s", lock->name()));
+  fatal("must own lock %s", lock->name());
 }
 #endif
 
@@ -228,7 +229,6 @@ void mutex_init() {
   def(ProfilePrint_lock            , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // serial profile printing
   def(ExceptionCache_lock          , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // serial profile printing
   def(OsrList_lock                 , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);
-  def(ImageFileReaderTable_lock    , Mutex  , nonleaf,     false, Monitor::_safepoint_check_always);     // synchronize image readers open/close
   def(Debug1_lock                  , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);
 #ifndef PRODUCT
   def(FullGCALot_lock              , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // a lock to make FullGCALot MT safe
@@ -265,6 +265,7 @@ void mutex_init() {
   def(CompiledIC_lock              , Mutex  , nonleaf+2,   false, Monitor::_safepoint_check_always);     // locks VtableStubs_lock, InlineCacheBuffer_lock
   def(CompileTaskAlloc_lock        , Mutex  , nonleaf+2,   true,  Monitor::_safepoint_check_always);
   def(CompileStatistics_lock       , Mutex  , nonleaf+2,   false, Monitor::_safepoint_check_always);
+  def(DirectivesStack_lock         , Mutex  , special,     true,  Monitor::_safepoint_check_never);
   def(MultiArray_lock              , Mutex  , nonleaf+2,   false, Monitor::_safepoint_check_always);     // locks SymbolTable_lock
 
   def(JvmtiThreadState_lock        , Mutex  , nonleaf+2,   false, Monitor::_safepoint_check_always);     // Used by JvmtiThreadState/JvmtiEventController
@@ -284,6 +285,7 @@ void mutex_init() {
   if (WhiteBoxAPI) {
     def(Compilation_lock           , Monitor, leaf,        false, Monitor::_safepoint_check_never);
   }
+  def(LogConfiguration_lock        , Mutex,   nonleaf,     false, Monitor::_safepoint_check_always);
 
 #ifdef INCLUDE_TRACE
   def(JfrMsg_lock                  , Monitor, leaf,        true,  Monitor::_safepoint_check_always);

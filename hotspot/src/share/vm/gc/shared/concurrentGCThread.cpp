@@ -33,10 +33,6 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/os.hpp"
 
-// CopyrightVersion 1.2
-
-int  ConcurrentGCThread::_CGC_flag            = CGC_nil;
-
 ConcurrentGCThread::ConcurrentGCThread() :
   _should_terminate(false), _has_terminated(false) {
 };
@@ -70,6 +66,7 @@ void ConcurrentGCThread::wait_for_universe_init() {
 }
 
 void ConcurrentGCThread::terminate() {
+  assert(_should_terminate, "Should only be called on terminate request.");
   // Signal that it is terminated
   {
     MutexLockerEx mu(Terminator_lock,

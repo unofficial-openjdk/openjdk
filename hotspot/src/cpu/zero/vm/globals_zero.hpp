@@ -45,9 +45,17 @@ define_pd_global(intx,  OptoLoopAlignment,    16);
 define_pd_global(intx,  InlineFrequencyCount, 100);
 define_pd_global(intx,  InlineSmallCode,      1000 );
 
-define_pd_global(intx,  StackYellowPages,     2);
-define_pd_global(intx,  StackRedPages,        1);
-define_pd_global(intx,  StackShadowPages,     5 LP64_ONLY(+1) DEBUG_ONLY(+3));
+#define DEFAULT_STACK_YELLOW_PAGES (2)
+#define DEFAULT_STACK_RED_PAGES (1)
+#define DEFAULT_STACK_SHADOW_PAGES (5 LP64_ONLY(+1) DEBUG_ONLY(+3))
+
+#define MIN_STACK_YELLOW_PAGES DEFAULT_STACK_YELLOW_PAGES
+#define MIN_STACK_RED_PAGES DEFAULT_STACK_RED_PAGES
+#define MIN_STACK_SHADOW_PAGES DEFAULT_STACK_SHADOW_PAGES
+
+define_pd_global(intx,  StackYellowPages,     DEFAULT_STACK_YELLOW_PAGES);
+define_pd_global(intx,  StackRedPages,        DEFAULT_STACK_RED_PAGES);
+define_pd_global(intx,  StackShadowPages,     DEFAULT_STACK_SHADOW_PAGES);
 
 define_pd_global(bool,  RewriteBytecodes,     true);
 define_pd_global(bool,  RewriteFrequentPairs, true);
@@ -60,6 +68,9 @@ define_pd_global(size_t, CMSYoungGenPerWorker, 16*M);  // default max size of CM
 define_pd_global(uintx, TypeProfileLevel, 0);
 
 define_pd_global(bool, PreserveFramePointer, false);
+
+// No performance work done here yet.
+define_pd_global(bool, CompactStrings, false);
 
 #define ARCH_FLAGS(develop, product, diagnostic, experimental, notproduct, range, constraint)  \
                                                                             \

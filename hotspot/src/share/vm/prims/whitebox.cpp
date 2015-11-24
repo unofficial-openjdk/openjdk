@@ -27,9 +27,9 @@
 #include <new>
 
 #include "classfile/classLoaderData.hpp"
-#include "classfile/imageFile.hpp"
 #include "classfile/stringTable.hpp"
 #include "code/codeCache.hpp"
+#include "compiler/methodMatcher.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceShared.hpp"
@@ -56,6 +56,7 @@
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/parallel/parallelScavengeHeap.inline.hpp"
+#include "gc/parallel/adjoiningGenerations.hpp"
 #endif // INCLUDE_ALL_GCS
 #if INCLUDE_NMT
 #include "services/mallocSiteTable.hpp"
@@ -63,8 +64,6 @@
 #include "utilities/nativeCallStack.hpp"
 #endif // INCLUDE_NMT
 
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 #define SIZE_T_MAX_VALUE ((size_t) -1)
 
@@ -200,8 +199,8 @@ WB_ENTRY(void, WB_ReadFromNoaccessArea(JNIEnv* env, jobject o))
                   "\tUniverse::narrow_oop_base() is " PTR_FORMAT "\n"
                   "\tUniverse::narrow_oop_use_implicit_null_checks() is %d",
                   UseCompressedOops,
-                  rhs.base(),
-                  Universe::narrow_oop_base(),
+                  p2i(rhs.base()),
+                  p2i(Universe::narrow_oop_base()),
                   Universe::narrow_oop_use_implicit_null_checks());
     return;
   }
@@ -297,6 +296,11 @@ WB_ENTRY(jlong, WB_GetObjectSize(JNIEnv* env, jobject o, jobject obj))
   return p->size() * HeapWordSize;
 WB_END
 
+WB_ENTRY(jlong, WB_GetHeapSpaceAlignment(JNIEnv* env, jobject o))
+  size_t alignment = Universe::heap()->collector_policy()->space_alignment();
+  return (jlong)alignment;
+WB_END
+
 #if INCLUDE_ALL_GCS
 WB_ENTRY(jboolean, WB_G1IsHumongous(JNIEnv* env, jobject o, jobject obj))
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
@@ -333,6 +337,17 @@ WB_END
 
 WB_ENTRY(jint, WB_G1RegionSize(JNIEnv* env, jobject o))
   return (jint)HeapRegion::GrainBytes;
+WB_END
+
+WB_ENTRY(jlong, WB_PSVirtualSpaceAlignment(JNIEnv* env, jobject o))
+  ParallelScavengeHeap* ps = ParallelScavengeHeap::heap();
+  size_t alignment = ps->gens()->virtual_spaces()->alignment();
+  return (jlong)alignment;
+WB_END
+
+WB_ENTRY(jlong, WB_PSHeapGenerationAlignment(JNIEnv* env, jobject o))
+  size_t alignment = ParallelScavengeHeap::heap()->generation_alignment();
+  return (jlong)alignment;
 WB_END
 
 WB_ENTRY(jobject, WB_G1AuxiliaryMemoryUsage(JNIEnv* env))
@@ -536,14 +551,20 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
   method_id = reflected_method_to_jmid(thread, env, method);
   CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
   methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(method_id));
+
+  DirectiveSet* directive;
   if (compilation_context != NULL) {
     compilation_context_id = reflected_method_to_jmid(thread, env, compilation_context);
     CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
     methodHandle cch(THREAD, Method::checked_resolve_jmethod_id(compilation_context_id));
-    return CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, cch);
+    directive = DirectivesStack::getMatchingDirective(cch, CompileBroker::compiler((int)compLevel));
   } else {
-    return CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, NULL);
+    // Calling with NULL matches default directive
+    directive = DirectivesStack::getDefaultDirective(CompileBroker::compiler((int)compLevel));
   }
+  bool result = CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, directive);
+  DirectivesStack::release(directive);
+  return result;
 WB_END
 
 WB_ENTRY(jint, WB_GetMethodCompilationLevel(JNIEnv* env, jobject o, jobject method, jboolean is_osr))
@@ -607,6 +628,73 @@ WB_ENTRY(jboolean, WB_EnqueueMethodForCompilation(JNIEnv* env, jobject o, jobjec
   nmethod* nm = CompileBroker::compile_method(mh, bci, comp_level, mh, mh->invocation_count(), "WhiteBox", THREAD);
   MutexLockerEx mu(Compile_lock);
   return (mh->queued_for_compilation() || nm != NULL);
+WB_END
+
+WB_ENTRY(jboolean, WB_ShouldPrintAssembly(JNIEnv* env, jobject o, jobject method))
+  jmethodID jmid = reflected_method_to_jmid(thread, env, method);
+  CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
+
+  methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(jmid));
+  DirectiveSet* directive = DirectivesStack::getMatchingDirective(mh, CompileBroker::compiler(CompLevel_simple));
+  bool result = directive->PrintAssemblyOption;
+  DirectivesStack::release(directive);
+
+  return result;
+WB_END
+
+WB_ENTRY(jint, WB_MatchesInline(JNIEnv* env, jobject o, jobject method, jstring pattern))
+  jmethodID jmid = reflected_method_to_jmid(thread, env, method);
+  CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
+
+  methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(jmid));
+
+  ResourceMark rm;
+  const char* error_msg = NULL;
+  char* method_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pattern));
+  InlineMatcher* m = InlineMatcher::parse_inline_pattern(method_str, error_msg);
+
+  if (m == NULL) {
+    assert(error_msg != NULL, "Always have an error message");
+    tty->print_cr("Got error: %s", error_msg);
+    return -1; // Pattern failed
+  }
+
+  // Pattern works - now check if it matches
+  int result;
+  if (m->match(mh, InlineMatcher::force_inline)) {
+    result = 2; // Force inline match
+  } else if (m->match(mh, InlineMatcher::dont_inline)) {
+    result = 1; // Dont inline match
+  } else {
+    result = 0; // No match
+  }
+  delete m;
+  return result;
+WB_END
+
+WB_ENTRY(jint, WB_MatchesMethod(JNIEnv* env, jobject o, jobject method, jstring pattern))
+  jmethodID jmid = reflected_method_to_jmid(thread, env, method);
+  CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
+
+  methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(jmid));
+
+  ResourceMark rm;
+  char* method_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pattern));
+
+  const char* error_msg = NULL;
+
+  BasicMatcher* m = BasicMatcher::parse_method_pattern(method_str, error_msg);
+  if (m == NULL) {
+    assert(error_msg != NULL, "Must have error_msg");
+    tty->print_cr("Got error: %s", error_msg);
+    return -1;
+  }
+
+  // Pattern works - now check if it matches
+  int result = m->matches(mh);
+  delete m;
+  assert(result == 0 || result == 1, "Result out of range");
+  return result;
 WB_END
 
 class AlwaysFalseClosure : public BoolObjectClosure {
@@ -940,17 +1028,19 @@ struct CodeBlobStub {
   CodeBlobStub(const CodeBlob* blob) :
       name(os::strdup(blob->name())),
       size(blob->size()),
-      blob_type(WhiteBox::get_blob_type(blob)) { }
+      blob_type(WhiteBox::get_blob_type(blob)),
+      address((jlong) blob) { }
   ~CodeBlobStub() { os::free((void*) name); }
   const char* const name;
-  const int         size;
-  const int         blob_type;
+  const jint        size;
+  const jint        blob_type;
+  const jlong       address;
 };
 
 static jobjectArray codeBlob2objectArray(JavaThread* thread, JNIEnv* env, CodeBlobStub* cb) {
   jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
   CHECK_JNI_EXCEPTION_(env, NULL);
-  jobjectArray result = env->NewObjectArray(3, clazz, NULL);
+  jobjectArray result = env->NewObjectArray(4, clazz, NULL);
 
   jstring name = env->NewStringUTF(cb->name);
   CHECK_JNI_EXCEPTION_(env, NULL);
@@ -963,6 +1053,10 @@ static jobjectArray codeBlob2objectArray(JavaThread* thread, JNIEnv* env, CodeBl
   obj = integerBox(thread, env, cb->blob_type);
   CHECK_JNI_EXCEPTION_(env, NULL);
   env->SetObjectArrayElement(result, 2, obj);
+
+  obj = longBox(thread, env, cb->address);
+  CHECK_JNI_EXCEPTION_(env, NULL);
+  env->SetObjectArrayElement(result, 3, obj);
 
   return result;
 }
@@ -982,7 +1076,7 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
   ThreadToNativeFromVM ttn(thread);
   jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
   CHECK_JNI_EXCEPTION_(env, NULL);
-  result = env->NewObjectArray(4, clazz, NULL);
+  result = env->NewObjectArray(5, clazz, NULL);
   if (result == NULL) {
     return result;
   }
@@ -1003,6 +1097,10 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
   jobject id = integerBox(thread, env, code->compile_id());
   CHECK_JNI_EXCEPTION_(env, NULL);
   env->SetObjectArrayElement(result, 3, id);
+
+  jobject entry_point = longBox(thread, env, (jlong) code->entry_point());
+  CHECK_JNI_EXCEPTION_(env, NULL);
+  env->SetObjectArrayElement(result, 4, entry_point);
 
   return result;
 WB_END
@@ -1025,11 +1123,18 @@ CodeBlob* WhiteBox::allocate_code_blob(int size, int blob_type) {
 }
 
 WB_ENTRY(jlong, WB_AllocateCodeBlob(JNIEnv* env, jobject o, jint size, jint blob_type))
-    return (jlong) WhiteBox::allocate_code_blob(size, blob_type);
+  if (size < 0) {
+    THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(),
+      err_msg("WB_AllocateCodeBlob: size is negative: " INT32_FORMAT, size));
+  }
+  return (jlong) WhiteBox::allocate_code_blob(size, blob_type);
 WB_END
 
 WB_ENTRY(void, WB_FreeCodeBlob(JNIEnv* env, jobject o, jlong addr))
-    BufferBlob::free((BufferBlob*) addr);
+  if (addr == 0) {
+    return;
+  }
+  BufferBlob::free((BufferBlob*) addr);
 WB_END
 
 WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_type))
@@ -1074,9 +1179,20 @@ WB_ENTRY(jint, WB_GetCompilationActivityMode(JNIEnv* env, jobject o))
 WB_END
 
 WB_ENTRY(jobjectArray, WB_GetCodeBlob(JNIEnv* env, jobject o, jlong addr))
-    ThreadToNativeFromVM ttn(thread);
-    CodeBlobStub stub((CodeBlob*) addr);
-    return codeBlob2objectArray(thread, env, &stub);
+  if (addr == 0) {
+    THROW_MSG_NULL(vmSymbols::java_lang_NullPointerException(),
+      "WB_GetCodeBlob: addr is null");
+  }
+  ThreadToNativeFromVM ttn(thread);
+  CodeBlobStub stub((CodeBlob*) addr);
+  return codeBlob2objectArray(thread, env, &stub);
+WB_END
+
+WB_ENTRY(jlong, WB_GetMethodData(JNIEnv* env, jobject wv, jobject method))
+  jmethodID jmid = reflected_method_to_jmid(thread, env, method);
+  CHECK_JNI_EXCEPTION_(env, 0);
+  methodHandle mh(thread, Method::checked_resolve_jmethod_id(jmid));
+  return (jlong) mh->method_data();
 WB_END
 
 WB_ENTRY(jlong, WB_GetThreadStackSize(JNIEnv* env, jobject o))
@@ -1087,6 +1203,7 @@ WB_ENTRY(jlong, WB_GetThreadRemainingStackSize(JNIEnv* env, jobject o))
   JavaThread* t = JavaThread::current();
   return (jlong) t->stack_available(os::current_stack_pointer()) - (jlong) StackShadowPages * os::vm_page_size();
 WB_END
+
 
 int WhiteBox::array_bytes_to_length(size_t bytes) {
   return Array<u1>::bytes_to_length(bytes);
@@ -1144,131 +1261,7 @@ WB_ENTRY(jlong, WB_MetaspaceCapacityUntilGC(JNIEnv* env, jobject wb))
   return (jlong) MetaspaceGC::capacity_until_GC();
 WB_END
 
-WB_ENTRY(jboolean, WB_ReadImageFile(JNIEnv* env, jobject wb, jstring imagefile))
-  const char* filename = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(imagefile));
-  return ImageFileReader::open(filename) != NULL;
-WB_END
 
-WB_ENTRY(jlong, WB_imageOpenImage(JNIEnv *env, jobject wb, jstring path, jboolean big_endian))
-  ThreadToNativeFromVM ttn(thread);
-  const char *nativePath = env->GetStringUTFChars(path, NULL);
-  jlong ret = JVM_ImageOpen(env, nativePath, big_endian);
-
-  env->ReleaseStringUTFChars(path, nativePath);
-  return ret;
-WB_END
-
-WB_ENTRY(void, WB_imageCloseImage(JNIEnv *env, jobject wb, jlong id))
-  ThreadToNativeFromVM ttn(thread);
-  JVM_ImageClose(env, id);
-WB_END
-
-WB_ENTRY(jlong, WB_imageGetIndexAddress(JNIEnv *env, jobject wb, jlong id))
-  ThreadToNativeFromVM ttn(thread);
-  return JVM_ImageGetIndexAddress(env, id);
-WB_END
-
-WB_ENTRY(jlong, WB_imageGetDataAddress(JNIEnv *env, jobject wb, jlong id))
-  ThreadToNativeFromVM ttn(thread);
-  return JVM_ImageGetDataAddress(env, id);
-WB_END
-
-WB_ENTRY(jboolean, WB_imageRead(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject uncompressedBuffer, jlong uncompressed_size))
-  ThreadToNativeFromVM ttn(thread);
-  if (uncompressedBuffer == NULL) {
-    return JNI_FALSE;
-  }
-  unsigned char* uncompressedAddress =
-          (unsigned char*) env->GetDirectBufferAddress(uncompressedBuffer);
-  return JVM_ImageRead(env, id, offset, uncompressedAddress, uncompressed_size);
-WB_END
-
-WB_ENTRY(jboolean, WB_imageReadCompressed(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject compressedBuffer, jlong compressed_size, jobject uncompressedBuffer, jlong uncompressed_size))
-  ThreadToNativeFromVM ttn(thread);
-  if (uncompressedBuffer == NULL || compressedBuffer == NULL) {
-    return false;
-  }
-  // Get address of read direct buffer.
-  unsigned char* compressedAddress =
-        (unsigned char*) env->GetDirectBufferAddress(compressedBuffer);
-  // Get address of decompression direct buffer.
-  unsigned char* uncompressedAddress =
-        (unsigned char*) env->GetDirectBufferAddress(uncompressedBuffer);
-  return JVM_ImageReadCompressed(env, id, offset, compressedAddress, compressed_size, uncompressedAddress, uncompressed_size);
-WB_END
-
-WB_ENTRY(jbyteArray, WB_imageGetStringBytes(JNIEnv *env, jobject wb, jlong id, jlong offset))
-  ThreadToNativeFromVM ttn(thread);
-  const char* data = JVM_ImageGetStringBytes(env, id, offset);
-  // Determine String length.
-  size_t size = strlen(data);
-  // Allocate byte array.
-  jbyteArray byteArray = env->NewByteArray((jsize) size);
-  // Get array base address.
-  jbyte* rawBytes = env->GetByteArrayElements(byteArray, NULL);
-  // Copy bytes from image string table.
-  memcpy(rawBytes, data, size);
-  // Release byte array base address.
-  env->ReleaseByteArrayElements(byteArray, rawBytes, 0);
-  return byteArray;
-WB_END
-
-WB_ENTRY(jlong, WB_imageGetStringsSize(JNIEnv *env, jobject wb, jlong id))
-  ImageFileReader* reader = ImageFileReader::idToReader(id);
-  return reader? reader->strings_size() : 0L;
-WB_END
-
-WB_ENTRY(jlongArray, WB_imageGetAttributes(JNIEnv *env, jobject wb, jlong id, jint offset))
-  ThreadToNativeFromVM ttn(thread);
-  // Allocate a jlong large enough for all location attributes.
-  jlongArray attributes = env->NewLongArray(JVM_ImageGetAttributesCount(env));
-  // Get base address for jlong array.
-  jlong* rawAttributes = env->GetLongArrayElements(attributes, NULL);
-  jlong* ret = JVM_ImageGetAttributes(env, rawAttributes, id, offset);
-  // Release jlong array base address.
-  env->ReleaseLongArrayElements(attributes, rawAttributes, 0);
-    return ret == NULL ? NULL : attributes;
-WB_END
-
-WB_ENTRY(jlongArray, WB_imageFindAttributes(JNIEnv *env, jobject wb, jlong id, jbyteArray utf8))
-  ThreadToNativeFromVM ttn(thread);
-  // Allocate a jlong large enough for all location attributes.
-  jlongArray attributes = env->NewLongArray(JVM_ImageGetAttributesCount(env));
-  // Get base address for jlong array.
-  jlong* rawAttributes = env->GetLongArrayElements(attributes, NULL);
-  jsize size = env->GetArrayLength(utf8);
-  jbyte* rawBytes = env->GetByteArrayElements(utf8, NULL);
-  jlong* ret = JVM_ImageFindAttributes(env, rawAttributes, rawBytes, size, id);
-  env->ReleaseByteArrayElements(utf8, rawBytes, 0);
-  env->ReleaseLongArrayElements(attributes, rawAttributes, 0);
-  return ret == NULL ? NULL : attributes;
-WB_END
-
-WB_ENTRY(jintArray, WB_imageAttributeOffsets(JNIEnv *env, jobject wb, jlong id))
-  ThreadToNativeFromVM ttn(thread);
-  unsigned int length = JVM_ImageAttributeOffsetsLength(env, id);
-  if (length == 0) {
-    return NULL;
-  }
-  jintArray offsets = env->NewIntArray(length);
-  // Get base address of result.
-  jint* rawOffsets = env->GetIntArrayElements(offsets, NULL);
-  jint* ret = JVM_ImageAttributeOffsets(env, rawOffsets, length, id);
-  // Release result base address.
-  env->ReleaseIntArrayElements(offsets, rawOffsets, 0);
-  return ret == NULL ? NULL : offsets;
-WB_END
-
-WB_ENTRY(jint, WB_imageGetIntAtAddress(JNIEnv *env, jobject wb, jlong address, jint offset, jboolean big_endian))
-  unsigned char* arr = (unsigned char*) address + offset;
-  jint uraw;
-  if (big_endian) {
-     uraw = arr[0] << 24 | arr[1]<<16 | (arr[2]<<8) | arr[3];
-  } else {
-      uraw = arr[0] | arr[1]<<8 | (arr[2]<<16) | arr[3]<<24;
-  }
-  return uraw;
-WB_END
 
 WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))
   Monitor::SafepointCheckRequired sfpt_check_required = mutexSafepointValue ?
@@ -1286,6 +1279,11 @@ WB_END
 WB_ENTRY(void, WB_ForceSafepoint(JNIEnv* env, jobject wb))
   VM_ForceSafepoint force_safepoint_op;
   VMThread::execute(&force_safepoint_op);
+WB_END
+
+WB_ENTRY(jlong, WB_GetConstantPool(JNIEnv* env, jobject wb, jclass klass))
+  instanceKlassHandle ikh(java_lang_Class::as_Klass(JNIHandles::resolve(klass)));
+  return (jlong) ikh->constants();
 WB_END
 
 template <typename T>
@@ -1457,6 +1455,7 @@ static JNINativeMethod methods[] = {
   {CC"getVMPageSize",                    CC"()I",                   (void*)&WB_GetVMPageSize     },
   {CC"getVMAllocationGranularity",       CC"()J",                   (void*)&WB_GetVMAllocationGranularity },
   {CC"getVMLargePageSize",               CC"()J",                   (void*)&WB_GetVMLargePageSize},
+  {CC"getHeapSpaceAlignment",            CC"()J",                   (void*)&WB_GetHeapSpaceAlignment},
   {CC"isClassAlive0",                    CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
   {CC"parseCommandLine0",
       CC"(Ljava/lang/String;C[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",
@@ -1481,6 +1480,8 @@ static JNINativeMethod methods[] = {
   {CC"g1StartConcMarkCycle",       CC"()Z",           (void*)&WB_G1StartMarkCycle  },
   {CC"g1AuxiliaryMemoryUsage", CC"()Ljava/lang/management/MemoryUsage;",
                                                       (void*)&WB_G1AuxiliaryMemoryUsage  },
+  {CC"psVirtualSpaceAlignment",CC"()J",               (void*)&WB_PSVirtualSpaceAlignment},
+  {CC"psHeapGenerationAlignment",CC"()J",             (void*)&WB_PSHeapGenerationAlignment},
 #endif // INCLUDE_ALL_GCS
 #if INCLUDE_NMT
   {CC"NMTMalloc",           CC"(J)J",                 (void*)&WB_NMTMalloc          },
@@ -1524,6 +1525,16 @@ static JNINativeMethod methods[] = {
       CC"(Ljava/lang/reflect/Executable;)V",          (void*)&WB_ClearMethodState},
   {CC"lockCompilation",    CC"()V",                   (void*)&WB_LockCompilation},
   {CC"unlockCompilation",  CC"()V",                   (void*)&WB_UnlockCompilation},
+  {CC"matchesMethod",
+      CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)I",
+                                                      (void*)&WB_MatchesMethod},
+  {CC"matchesInline",
+      CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)I",
+                                                      (void*)&WB_MatchesInline},
+  {CC"shouldPrintAssembly",
+        CC"(Ljava/lang/reflect/Executable;)Z",
+                                                        (void*)&WB_ShouldPrintAssembly},
+
   {CC"isConstantVMFlag",   CC"(Ljava/lang/String;)Z", (void*)&WB_IsConstantVMFlag},
   {CC"isLockedVMFlag",     CC"(Ljava/lang/String;)Z", (void*)&WB_IsLockedVMFlag},
   {CC"setBooleanVMFlag",   CC"(Ljava/lang/String;Z)V",(void*)&WB_SetBooleanVMFlag},
@@ -1573,27 +1584,15 @@ static JNINativeMethod methods[] = {
   {CC"getCodeHeapEntries", CC"(I)[Ljava/lang/Object;",(void*)&WB_GetCodeHeapEntries },
   {CC"getCompilationActivityMode",
                            CC"()I",                   (void*)&WB_GetCompilationActivityMode},
+  {CC"getMethodData0",     CC"(Ljava/lang/reflect/Executable;)J",
+                                                      (void*)&WB_GetMethodData      },
   {CC"getCodeBlob",        CC"(J)[Ljava/lang/Object;",(void*)&WB_GetCodeBlob        },
   {CC"getThreadStackSize", CC"()J",                   (void*)&WB_GetThreadStackSize },
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
-  {CC"readImageFile",      CC"(Ljava/lang/String;)Z", (void*)&WB_ReadImageFile },
-  {CC"imageOpenImage",     CC"(Ljava/lang/String;Z)J",(void*)&WB_imageOpenImage },
-  {CC"imageCloseImage",    CC"(J)V",                  (void*)&WB_imageCloseImage },
-  {CC"imageGetIndexAddress",CC"(J)J",                 (void*)&WB_imageGetIndexAddress},
-  {CC"imageGetDataAddress",CC"(J)J",                  (void*)&WB_imageGetDataAddress},
-  {CC"imageRead",          CC"(JJLjava/nio/ByteBuffer;J)Z",
-                                                      (void*)&WB_imageRead    },
-  {CC"imageReadCompressed",CC"(JJLjava/nio/ByteBuffer;JLjava/nio/ByteBuffer;J)Z",
-                                                      (void*)&WB_imageReadCompressed},
-  {CC"imageGetStringBytes",CC"(JI)[B",                (void*)&WB_imageGetStringBytes},
-  {CC"imageGetStringsSize",CC"(J)J",                  (void*)&WB_imageGetStringsSize},
-  {CC"imageGetAttributes", CC"(JI)[J",                (void*)&WB_imageGetAttributes},
-  {CC"imageFindAttributes",CC"(J[B)[J",               (void*)&WB_imageFindAttributes},
-  {CC"imageAttributeOffsets",CC"(J)[I",               (void*)&WB_imageAttributeOffsets},
-  {CC"imageGetIntAtAddress",CC"(JIZ)I",                (void*)&WB_imageGetIntAtAddress},
   {CC"assertMatchingSafepointCalls", CC"(ZZ)V",       (void*)&WB_AssertMatchingSafepointCalls },
   {CC"isMonitorInflated0", CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
   {CC"forceSafepoint",     CC"()V",                   (void*)&WB_ForceSafepoint     },
+  {CC"getConstantPool0",   CC"(Ljava/lang/Class;)J",  (void*)&WB_GetConstantPool    },
   {CC"getMethodBooleanOption",
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/Boolean;",
                                                       (void*)&WB_GetMethodBooleaneOption},

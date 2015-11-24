@@ -29,7 +29,7 @@
  *          java.management
  *          jdk.attach
  *          jdk.management/sun.tools.attach
- * @run main/othervm/timeout=600 TestOptionsWithRanges
+ * @run main/othervm/timeout=780 TestOptionsWithRanges
  */
 
 import java.util.ArrayList;
@@ -50,6 +50,46 @@ public class TestOptionsWithRanges {
          * Remove CICompilerCount from testing because currently it can hang system
          */
         allOptionsAsMap.remove("CICompilerCount");
+
+        /*
+         * JDK-8136766
+         * Temporarily remove ThreadStackSize from testing because Windows can set it to 0
+         * (for default OS size) but other platforms insist it must be greater than 0
+        */
+        allOptionsAsMap.remove("ThreadStackSize");
+
+        /*
+         * Exclude MallocMaxTestWords as it is expected to exit VM at small values (>=0)
+         */
+        allOptionsAsMap.remove("MallocMaxTestWords");
+
+        /*
+         * Exclude below options as their maximum value would consume too much memory
+         * and would affect other tests that run in parallel.
+         */
+        allOptionsAsMap.remove("G1ConcRefinementThreads");
+        allOptionsAsMap.remove("G1RSetRegionEntries");
+        allOptionsAsMap.remove("G1RSetSparseRegionEntries");
+        allOptionsAsMap.remove("G1UpdateBufferSize");
+        allOptionsAsMap.remove("InitialBootClassLoaderMetaspaceSize");
+
+        /*
+         * Remove parameters controlling the code cache. As these
+         * parameters have implications on the physical memory
+         * reserved by the VM, setting them to large values may hang
+         * the system and/or may cause concurrently executed tests to
+         * fail. These parameters are rigorously checked when the code
+         * cache is initialized (see
+         * hotspot/src/shared/vm/code/codeCache.cpp), therefore
+         * omitting testing for them does not pose a problem.
+         */
+        allOptionsAsMap.remove("InitialCodeCacheSize");
+        allOptionsAsMap.remove("CodeCacheMinimumUseSpace");
+        allOptionsAsMap.remove("ReservedCodeCacheSize");
+        allOptionsAsMap.remove("NonProfiledCodeHeapSize");
+        allOptionsAsMap.remove("ProfiledCodeHeapSize");
+        allOptionsAsMap.remove("NonNMethodCodeHeapSize");
+        allOptionsAsMap.remove("CodeCacheExpansionSize");
 
         allOptions = new ArrayList<>(allOptionsAsMap.values());
 

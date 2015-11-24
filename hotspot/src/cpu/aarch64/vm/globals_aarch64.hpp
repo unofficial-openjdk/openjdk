@@ -55,10 +55,17 @@ define_pd_global(intx, CodeEntryAlignment,       16);
 define_pd_global(intx, OptoLoopAlignment,        16);
 define_pd_global(intx, InlineFrequencyCount,     100);
 
-define_pd_global(intx, StackYellowPages, 2);
-define_pd_global(intx, StackRedPages, 1);
+#define DEFAULT_STACK_YELLOW_PAGES (2)
+#define DEFAULT_STACK_RED_PAGES (1)
+#define DEFAULT_STACK_SHADOW_PAGES (4 DEBUG_ONLY(+5))
 
-define_pd_global(intx, StackShadowPages, 4 DEBUG_ONLY(+5));
+#define MIN_STACK_YELLOW_PAGES 1
+#define MIN_STACK_RED_PAGES    1
+#define MIN_STACK_SHADOW_PAGES 1
+
+define_pd_global(intx, StackYellowPages, DEFAULT_STACK_YELLOW_PAGES);
+define_pd_global(intx, StackRedPages, DEFAULT_STACK_RED_PAGES);
+define_pd_global(intx, StackShadowPages, DEFAULT_STACK_SHADOW_PAGES);
 
 define_pd_global(bool, RewriteBytecodes,     true);
 define_pd_global(bool, RewriteFrequentPairs, true);
@@ -71,6 +78,9 @@ define_pd_global(bool, PreserveFramePointer, false);
 define_pd_global(uintx, CMSYoungGenPerWorker, 64*M);  // default max size of CMS young gen, per GC worker thread
 
 define_pd_global(uintx, TypeProfileLevel, 111);
+
+// No performance work done here yet.
+define_pd_global(bool, CompactStrings, false);
 
 // avoid biased locking while we are bootstrapping the aarch64 build
 define_pd_global(bool, UseBiasedLocking, false);

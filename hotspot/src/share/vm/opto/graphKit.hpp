@@ -136,7 +136,7 @@ class GraphKit : public Phase {
                                         _bci = jvms->bci();
                                         _method = jvms->has_method() ? jvms->method() : NULL; }
   void set_map(SafePointNode* m)      { _map = m; debug_only(verify_map()); }
-  void set_sp(int sp)                 { assert(sp >= 0, err_msg_res("sp must be non-negative: %d", sp)); _sp = sp; }
+  void set_sp(int sp)                 { assert(sp >= 0, "sp must be non-negative: %d", sp); _sp = sp; }
   void clean_stack(int from_sp); // clear garbage beyond from_sp to top
 
   void inc_sp(int i)                  { set_sp(sp() + i); }
@@ -354,12 +354,12 @@ class GraphKit : public Phase {
   }
   Node* zero_check_int(Node* value) {
     assert(value->bottom_type()->basic_type() == T_INT,
-        err_msg_res("wrong type: %s", type2name(value->bottom_type()->basic_type())));
+           "wrong type: %s", type2name(value->bottom_type()->basic_type()));
     return null_check_common(value, T_INT);
   }
   Node* zero_check_long(Node* value) {
     assert(value->bottom_type()->basic_type() == T_LONG,
-        err_msg_res("wrong type: %s", type2name(value->bottom_type()->basic_type())));
+           "wrong type: %s", type2name(value->bottom_type()->basic_type()));
     return null_check_common(value, T_LONG);
   }
   // Throw an uncommon trap if a given value is __not__ null.
@@ -864,12 +864,14 @@ class GraphKit : public Phase {
                   bool deoptimize_on_exception = false);
 
   // java.lang.String helpers
-  Node* load_String_offset(Node* ctrl, Node* str);
   Node* load_String_length(Node* ctrl, Node* str);
   Node* load_String_value(Node* ctrl, Node* str);
-  void store_String_offset(Node* ctrl, Node* str, Node* value);
-  void store_String_length(Node* ctrl, Node* str, Node* value);
+  Node* load_String_coder(Node* ctrl, Node* str);
   void store_String_value(Node* ctrl, Node* str, Node* value);
+  void store_String_coder(Node* ctrl, Node* str, Node* value);
+  Node* compress_string(Node* src, Node* dst, Node* count);
+  void inflate_string(Node* src, Node* dst, Node* count);
+  void inflate_string_slow(Node* src, Node* dst, Node* start, Node* count);
 
   // Handy for making control flow
   IfNode* create_and_map_if(Node* ctrl, Node* tst, float prob, float cnt) {

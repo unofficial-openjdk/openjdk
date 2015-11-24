@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ class ObjArrayKlass : public ArrayKlass {
   bool can_be_primary_super_slow() const;
   GrowableArray<Klass*>* compute_secondary_supers(int num_extra_slots);
   bool compute_is_subtype_of(Klass* k);
-  bool oop_is_objArray_slow()  const  { return true; }
+  DEBUG_ONLY(bool is_objArray_klass_slow()  const  { return true; })
   int oop_size(oop obj) const;
 
   // Allocation
@@ -91,8 +91,8 @@ class ObjArrayKlass : public ArrayKlass {
  public:
   // Casting from Klass*
   static ObjArrayKlass* cast(Klass* k) {
-    assert(k->oop_is_objArray(), "cast to ObjArrayKlass");
-    return (ObjArrayKlass*) k;
+    assert(k->is_objArray_klass(), "cast to ObjArrayKlass");
+    return static_cast<ObjArrayKlass*>(k);
   }
 
   // Sizing
@@ -105,7 +105,6 @@ class ObjArrayKlass : public ArrayKlass {
   // GC specific object visitors
   //
   // Mark Sweep
-  void oop_ms_follow_contents(oop obj);
   int  oop_ms_adjust_pointers(oop obj);
 #if INCLUDE_ALL_GCS
   // Parallel Scavenge
@@ -125,15 +124,15 @@ class ObjArrayKlass : public ArrayKlass {
 
   // Iterate over oop elements and metadata.
   template <bool nv, typename OopClosureType>
-  inline int oop_oop_iterate(oop obj, OopClosureType* closure);
+  inline void oop_oop_iterate(oop obj, OopClosureType* closure);
 
   // Iterate over oop elements within mr, and metadata.
   template <bool nv, typename OopClosureType>
-  inline int oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
+  inline void oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
 
   // Iterate over oop elements with indices within [start, end), and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate_range(oop obj, OopClosureType* closure, int start, int end);
+  inline void oop_oop_iterate_range(oop obj, OopClosureType* closure, int start, int end);
 
   // Iterate over oop elements within [start, end), and metadata.
   // Specialized for [T = oop] or [T = narrowOop].

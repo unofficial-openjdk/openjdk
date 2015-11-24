@@ -60,6 +60,12 @@ else
   # prints the numbers (e.g. "2.95", "3.2.1")
   CC_VER_MAJOR := $(shell $(CC) -dumpversion | sed 's/egcs-//' | cut -d'.' -f1)
   CC_VER_MINOR := $(shell $(CC) -dumpversion | sed 's/egcs-//' | cut -d'.' -f2)
+  CC_VER_MICRO := $(shell $(CC) -dumpversion | sed 's/egcs-//' | cut -d'.' -f3)
+  # Workaround Ubuntu bug where -dumpversion doesn't print a micro version
+  # https://bugs.launchpad.net/ubuntu/+source/gcc-4.8/+bug/1360404
+  ifeq ($(CC_VER_MICRO),)
+    CC_VER_MICRO := "0"
+  endif
 endif
 
 ifeq ($(USE_CLANG), true)
@@ -213,12 +219,18 @@ ifeq ($(USE_CLANG),)
   # Since GCC 4.3, -Wconversion has changed its meanings to warn these implicit
   # conversions which might affect the values. Only enable it in earlier versions.
   ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 3 \) \))" "0"
+    # GCC < 4.3
     WARNING_FLAGS += -Wconversion
   endif  
   ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 8 \) \))" "1"
+    # GCC >= 4.8
     # This flag is only known since GCC 4.3. Gcc 4.8 contains a fix so that with templates no
     # warnings are issued: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=11856
     WARNING_FLAGS += -Wtype-limits
+    # GCC < 4.8 don't accept this flag for C++.
+    WARNING_FLAGS += -Wno-format-zero-length
+    # GCC 4.8 reports less false positives than the older compilers.
+    WARNING_FLAGS += -Wuninitialized
   endif
 endif
 
@@ -260,6 +272,10 @@ ifeq ($(USE_CLANG), true)
     OPT_CFLAGS/loopTransform.o += $(OPT_CFLAGS/NOOPT)
   endif
 else
+  # Do not allow GCC 4.1.1
+  ifeq ($(shell expr $(CC_VER_MAJOR) = 4 \& $(CC_VER_MINOR) = 1 \& $(CC_VER_MICRO) = 1), 1)
+    $(error "GCC $(CC_VER_MAJOR).$(CC_VER_MINOR).$(CC_VER_MICRO) not supported because of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=27724")
+  endif
   # 6835796. Problem in GCC 4.3.0 with mulnode.o optimized compilation.
   ifeq ($(shell expr $(CC_VER_MAJOR) = 4 \& $(CC_VER_MINOR) = 3), 1)
     OPT_CFLAGS/mulnode.o += $(OPT_CFLAGS/NOOPT)

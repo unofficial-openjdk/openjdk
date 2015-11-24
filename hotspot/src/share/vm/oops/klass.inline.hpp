@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
 #include "oops/markOop.hpp"
 
 inline void Klass::set_prototype_header(markOop header) {
-  assert(!header->has_bias_pattern() || oop_is_instance(), "biased locking currently only supported for Java instances");
+  assert(!header->has_bias_pattern() || is_instance_klass(), "biased locking currently only supported for Java instances");
   _prototype_header = header;
 }
 
@@ -63,7 +63,7 @@ inline Klass* Klass::decode_klass_not_null(narrowKlass v) {
   assert(!is_null(v), "narrow klass value can never be zero");
   int    shift = Universe::narrow_klass_shift();
   Klass* result = (Klass*)(void*)((uintptr_t)Universe::narrow_klass_base() + ((uintptr_t)v << shift));
-  assert(check_klass_alignment(result), err_msg("address not aligned: " INTPTR_FORMAT, p2i((void*) result)));
+  assert(check_klass_alignment(result), "address not aligned: " INTPTR_FORMAT, p2i((void*) result));
   return result;
 }
 

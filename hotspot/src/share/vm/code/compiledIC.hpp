@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,7 +214,7 @@ class CompiledIC: public ResourceObj {
   //
   // They all takes a TRAP argument, since they can cause a GC if the inline-cache buffer is full.
   //
-  void set_to_clean();
+  void set_to_clean(bool in_use = true);
   void set_to_monomorphic(CompiledICInfo& info);
   void clear_ic_stub();
 
@@ -222,7 +222,7 @@ class CompiledIC: public ResourceObj {
   // allocation in the code cache fails.
   bool set_to_megamorphic(CallInfo* call_info, Bytecodes::Code bytecode, TRAPS);
 
-  static void compute_monomorphic_entry(methodHandle method, KlassHandle receiver_klass,
+  static void compute_monomorphic_entry(const methodHandle& method, KlassHandle receiver_klass,
                                         bool is_optimized, bool static_bound, CompiledICInfo& info, TRAPS);
 
   // Location
@@ -306,7 +306,7 @@ class CompiledStaticCall: public NativeCall {
   friend CompiledStaticCall* compiledStaticCall_at(Relocation* call_site);
 
   // Code
-  static address emit_to_interp_stub(CodeBuffer &cbuf);
+  static address emit_to_interp_stub(CodeBuffer &cbuf, address mark = NULL);
   static int to_interp_stub_size();
   static int reloc_to_interp_stub();
 
@@ -324,7 +324,7 @@ class CompiledStaticCall: public NativeCall {
   void set(const StaticCallInfo& info);
 
   // Compute entry point given a method
-  static void compute_entry(methodHandle m, StaticCallInfo& info);
+  static void compute_entry(const methodHandle& m, StaticCallInfo& info);
 
   // Stub support
   address find_stub();

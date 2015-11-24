@@ -1251,7 +1251,7 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
     }
 
     default:
-      fatal(err_msg_res("unexpected type: %s", type2name(type)));
+      fatal("unexpected type: %s", type2name(type));
   }
   assert(chk != NULL, "sanity check");
   chk = _gvn.transform(chk);
@@ -1522,7 +1522,7 @@ void GraphKit::pre_barrier(bool do_load,
       g1_write_barrier_pre(do_load, obj, adr, adr_idx, val, val_type, pre_val, bt);
       break;
 
-    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableForRS:
     case BarrierSet::CardTableExtension:
     case BarrierSet::ModRef:
       break;
@@ -1539,7 +1539,7 @@ bool GraphKit::can_move_pre_barrier() const {
     case BarrierSet::G1SATBCTLogging:
       return true; // Can move it if no safepoint
 
-    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableForRS:
     case BarrierSet::CardTableExtension:
     case BarrierSet::ModRef:
       return true; // There is no pre-barrier
@@ -1565,7 +1565,7 @@ void GraphKit::post_barrier(Node* ctl,
       g1_write_barrier_post(store, obj, adr, adr_idx, val, bt, use_precise);
       break;
 
-    case BarrierSet::CardTableModRef:
+    case BarrierSet::CardTableForRS:
     case BarrierSet::CardTableExtension:
       write_barrier_post(store, obj, adr, adr_idx, val, use_precise);
       break;
@@ -1950,8 +1950,8 @@ void GraphKit::uncommon_trap(int trap_request,
     // the current bytecode.
     int inputs, ignored_depth;
     if (compute_stack_effects(inputs, ignored_depth)) {
-      assert(sp() >= inputs, err_msg_res("must have enough JVMS stack to execute %s: sp=%d, inputs=%d",
-             Bytecodes::name(java_bc()), sp(), inputs));
+      assert(sp() >= inputs, "must have enough JVMS stack to execute %s: sp=%d, inputs=%d",
+             Bytecodes::name(java_bc()), sp(), inputs);
     }
   }
 #endif
@@ -1987,7 +1987,7 @@ void GraphKit::uncommon_trap(int trap_request,
   case Deoptimization::Action_make_not_compilable:
     break;
   default:
-    fatal(err_msg_res("unknown action %d: %s", action, Deoptimization::trap_action_name(action)));
+    fatal("unknown action %d: %s", action, Deoptimization::trap_action_name(action));
     break;
 #endif
   }
@@ -2509,7 +2509,7 @@ static IfNode* gen_subtype_check_compare(Node* ctrl, Node* in1, Node* in2, BoolT
   switch(bt) {
   case T_INT: cmp = new CmpINode(in1, in2); break;
   case T_ADDRESS: cmp = new CmpPNode(in1, in2); break;
-  default: fatal(err_msg("unexpected comparison type %s", type2name(bt)));
+  default: fatal("unexpected comparison type %s", type2name(bt));
   }
   gvn->transform(cmp);
   Node* bol = gvn->transform(new BoolNode(cmp, test));
@@ -3791,7 +3791,7 @@ void GraphKit::write_barrier_post(Node* oop_store,
   Node* cast = __ CastPX(__ ctrl(), adr);
 
   // Divide by card size
-  assert(Universe::heap()->barrier_set()->kind() == BarrierSet::CardTableModRef,
+  assert(Universe::heap()->barrier_set()->is_a(BarrierSet::CardTableModRef),
          "Only one we handle so far.");
   Node* card_offset = __ URShiftX( cast, __ ConI(CardTableModRefBS::card_shift) );
 
@@ -4266,35 +4266,11 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
 #undef __
 
 
-
-Node* GraphKit::load_String_offset(Node* ctrl, Node* str) {
-  if (java_lang_String::has_offset_field()) {
-    int offset_offset = java_lang_String::offset_offset_in_bytes();
-    const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
-                                                       false, NULL, 0);
-    const TypePtr* offset_field_type = string_type->add_offset(offset_offset);
-    int offset_field_idx = C->get_alias_index(offset_field_type);
-    return make_load(ctrl,
-                     basic_plus_adr(str, str, offset_offset),
-                     TypeInt::INT, T_INT, offset_field_idx, MemNode::unordered);
-  } else {
-    return intcon(0);
-  }
-}
-
 Node* GraphKit::load_String_length(Node* ctrl, Node* str) {
-  if (java_lang_String::has_count_field()) {
-    int count_offset = java_lang_String::count_offset_in_bytes();
-    const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
-                                                       false, NULL, 0);
-    const TypePtr* count_field_type = string_type->add_offset(count_offset);
-    int count_field_idx = C->get_alias_index(count_field_type);
-    return make_load(ctrl,
-                     basic_plus_adr(str, str, count_offset),
-                     TypeInt::INT, T_INT, count_field_idx, MemNode::unordered);
-  } else {
-    return load_array_length(load_String_value(ctrl, str));
-  }
+  Node* len = load_array_length(load_String_value(ctrl, str));
+  Node* coder = load_String_coder(ctrl, str);
+  // Divide length by 2 if coder is UTF16
+  return _gvn.transform(new RShiftINode(len, coder));
 }
 
 Node* GraphKit::load_String_value(Node* ctrl, Node* str) {
@@ -4302,9 +4278,9 @@ Node* GraphKit::load_String_value(Node* ctrl, Node* str) {
   const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
                                                      false, NULL, 0);
   const TypePtr* value_field_type = string_type->add_offset(value_offset);
-  const TypeAryPtr*  value_type = TypeAryPtr::make(TypePtr::NotNull,
-                                                   TypeAry::make(TypeInt::CHAR,TypeInt::POS),
-                                                   ciTypeArrayKlass::make(T_CHAR), true, 0);
+  const TypeAryPtr* value_type = TypeAryPtr::make(TypePtr::NotNull,
+                                                  TypeAry::make(TypeInt::BYTE, TypeInt::POS),
+                                                  ciTypeArrayKlass::make(T_BYTE), true, 0);
   int value_field_idx = C->get_alias_index(value_field_type);
   Node* load = make_load(ctrl, basic_plus_adr(str, str, value_offset),
                          value_type, T_OBJECT, value_field_idx, MemNode::unordered);
@@ -4315,14 +4291,21 @@ Node* GraphKit::load_String_value(Node* ctrl, Node* str) {
   return load;
 }
 
-void GraphKit::store_String_offset(Node* ctrl, Node* str, Node* value) {
-  int offset_offset = java_lang_String::offset_offset_in_bytes();
-  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
-                                                     false, NULL, 0);
-  const TypePtr* offset_field_type = string_type->add_offset(offset_offset);
-  int offset_field_idx = C->get_alias_index(offset_field_type);
-  store_to_memory(ctrl, basic_plus_adr(str, offset_offset),
-                  value, T_INT, offset_field_idx, MemNode::unordered);
+Node* GraphKit::load_String_coder(Node* ctrl, Node* str) {
+  if (java_lang_String::has_coder_field()) {
+    if (!CompactStrings) {
+      return intcon(java_lang_String::CODER_UTF16);
+    }
+    int coder_offset = java_lang_String::coder_offset_in_bytes();
+    const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                       false, NULL, 0);
+    const TypePtr* coder_field_type = string_type->add_offset(coder_offset);
+    int coder_field_idx = C->get_alias_index(coder_field_type);
+    return make_load(ctrl, basic_plus_adr(str, str, coder_offset),
+                     TypeInt::BYTE, T_BYTE, coder_field_idx, MemNode::unordered);
+  } else {
+    return intcon(0); // false
+  }
 }
 
 void GraphKit::store_String_value(Node* ctrl, Node* str, Node* value) {
@@ -4330,19 +4313,76 @@ void GraphKit::store_String_value(Node* ctrl, Node* str, Node* value) {
   const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
                                                      false, NULL, 0);
   const TypePtr* value_field_type = string_type->add_offset(value_offset);
-
   store_oop_to_object(ctrl, str,  basic_plus_adr(str, value_offset), value_field_type,
-      value, TypeAryPtr::CHARS, T_OBJECT, MemNode::unordered);
+      value, TypeAryPtr::BYTES, T_OBJECT, MemNode::unordered);
 }
 
-void GraphKit::store_String_length(Node* ctrl, Node* str, Node* value) {
-  int count_offset = java_lang_String::count_offset_in_bytes();
+void GraphKit::store_String_coder(Node* ctrl, Node* str, Node* value) {
+  int coder_offset = java_lang_String::coder_offset_in_bytes();
   const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
                                                      false, NULL, 0);
-  const TypePtr* count_field_type = string_type->add_offset(count_offset);
-  int count_field_idx = C->get_alias_index(count_field_type);
-  store_to_memory(ctrl, basic_plus_adr(str, count_offset),
-                  value, T_INT, count_field_idx, MemNode::unordered);
+  const TypePtr* coder_field_type = string_type->add_offset(coder_offset);
+  int coder_field_idx = C->get_alias_index(coder_field_type);
+  store_to_memory(ctrl, basic_plus_adr(str, coder_offset),
+                  value, T_BYTE, coder_field_idx, MemNode::unordered);
+}
+
+Node* GraphKit::compress_string(Node* src, Node* dst, Node* count) {
+  assert(Matcher::match_rule_supported(Op_StrCompressedCopy), "Intrinsic not supported");
+  uint idx = C->get_alias_index(TypeAryPtr::BYTES);
+  StrCompressedCopyNode* str = new StrCompressedCopyNode(control(), memory(idx), src, dst, count);
+  Node* res_mem = _gvn.transform(new SCMemProjNode(str));
+  set_memory(res_mem, idx);
+  return str;
+}
+
+void GraphKit::inflate_string(Node* src, Node* dst, Node* count) {
+  assert(Matcher::match_rule_supported(Op_StrInflatedCopy), "Intrinsic not supported");
+  uint idx = C->get_alias_index(TypeAryPtr::BYTES);
+  StrInflatedCopyNode* str = new StrInflatedCopyNode(control(), memory(idx), src, dst, count);
+  set_memory(_gvn.transform(str), idx);
+}
+
+void GraphKit::inflate_string_slow(Node* src, Node* dst, Node* start, Node* count) {
+  /**
+   * int i_char = start;
+   * for (int i_byte = 0; i_byte < count; i_byte++) {
+   *   dst[i_char++] = (char)(src[i_byte] & 0xff);
+   * }
+   */
+  add_predicate();
+  RegionNode* head = new RegionNode(3);
+  head->init_req(1, control());
+  gvn().set_type(head, Type::CONTROL);
+  record_for_igvn(head);
+
+  Node* i_byte = new PhiNode(head, TypeInt::INT);
+  i_byte->init_req(1, intcon(0));
+  gvn().set_type(i_byte, TypeInt::INT);
+  record_for_igvn(i_byte);
+
+  Node* i_char = new PhiNode(head, TypeInt::INT);
+  i_char->init_req(1, start);
+  gvn().set_type(i_char, TypeInt::INT);
+  record_for_igvn(i_char);
+
+  Node* mem = PhiNode::make(head, memory(TypeAryPtr::BYTES), Type::MEMORY, TypeAryPtr::BYTES);
+  gvn().set_type(mem, Type::MEMORY);
+  record_for_igvn(mem);
+  set_control(head);
+  set_memory(mem, TypeAryPtr::BYTES);
+  Node* ch = load_array_element(control(), src, i_byte, TypeAryPtr::BYTES);
+  Node* st = store_to_memory(control(), array_element_address(dst, i_char, T_BYTE),
+                             AndI(ch, intcon(0xff)), T_CHAR, TypeAryPtr::BYTES, MemNode::unordered);
+
+  IfNode* iff = create_and_map_if(head, Bool(CmpI(i_byte, count), BoolTest::lt), PROB_FAIR, COUNT_UNKNOWN);
+  head->init_req(2, IfTrue(iff));
+  mem->init_req(2, st);
+  i_byte->init_req(2, AddI(i_byte, intcon(1)));
+  i_char->init_req(2, AddI(i_char, intcon(2)));
+
+  set_control(IfFalse(iff));
+  set_memory(st, TypeAryPtr::BYTES);
 }
 
 Node* GraphKit::cast_array_to_stable(Node* ary, const TypeAryPtr* ary_type) {

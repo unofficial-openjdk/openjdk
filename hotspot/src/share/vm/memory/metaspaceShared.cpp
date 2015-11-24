@@ -44,8 +44,6 @@
 #include "runtime/vm_operations.hpp"
 #include "utilities/hashtable.inline.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 int MetaspaceShared::_max_alignment = 0;
 
 ReservedSpace* MetaspaceShared::_shared_rs = NULL;
@@ -92,7 +90,7 @@ void MetaspaceShared::serialize(SerializeClosure* soc) {
 static GrowableArray<Klass*>* _global_klass_objects;
 static void collect_classes(Klass* k) {
   _global_klass_objects->append_if_missing(k);
-  if (k->oop_is_instance()) {
+  if (k->is_instance_klass()) {
     // Add in the array classes too
     InstanceKlass* ik = InstanceKlass::cast(k);
     ik->array_klasses_do(collect_classes);
@@ -128,7 +126,7 @@ static void rewrite_nofast_bytecode(Method* method) {
 static void rewrite_nofast_bytecodes_and_calculate_fingerprints() {
   for (int i = 0; i < _global_klass_objects->length(); i++) {
     Klass* k = _global_klass_objects->at(i);
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(k);
       for (int i = 0; i < ik->methods()->length(); i++) {
         Method* m = ik->methods()->at(i);
@@ -201,9 +199,9 @@ static void patch_klass_vtables(void** vtbl_list, void* new_vtable_start) {
   int n = _global_klass_objects->length();
   for (int i = 0; i < n; i++) {
     Klass* obj = _global_klass_objects->at(i);
-    // Note oop_is_instance() is a virtual call.  After patching vtables
+    // Note is_instance_klass() is a virtual call in debug.  After patching vtables
     // all virtual calls on the dummy vtables will restore the original!
-    if (obj->oop_is_instance()) {
+    if (obj->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(obj);
       *(void**)ik = find_matching_vtbl_ptr(vtbl_list, new_vtable_start, ik);
       ConstantPool* cp = ik->constants();
@@ -484,12 +482,12 @@ void VM_PopulateDumpSharedSpace::doit() {
     int num_type_array = 0, num_obj_array = 0, num_inst = 0;
     for (int i = 0; i < _global_klass_objects->length(); i++) {
       Klass* k = _global_klass_objects->at(i);
-      if (k->oop_is_instance()) {
+      if (k->is_instance_klass()) {
         num_inst ++;
-      } else if (k->oop_is_objArray()) {
+      } else if (k->is_objArray_klass()) {
         num_obj_array ++;
       } else {
-        assert(k->oop_is_typeArray(), "sanity");
+        assert(k->is_typeArray_klass(), "sanity");
         num_type_array ++;
       }
     }
@@ -542,7 +540,7 @@ void VM_PopulateDumpSharedSpace::doit() {
 
   NOT_PRODUCT(SystemDictionary::verify();)
 
-  // Copy the the symbol table, string table, and the system dictionary to the shared
+  // Copy the symbol table, string table, and the system dictionary to the shared
   // space in usable form.  Copy the hashtable
   // buckets first [read-write], then copy the linked lists of entries
   // [read-only].
@@ -578,7 +576,7 @@ void VM_PopulateDumpSharedSpace::doit() {
 
   // Print shared spaces all the time
 // To make fmt_space be a syntactic constant (for format warnings), use #define.
-#define fmt_space "%s space: %9d [ %4.1f%% of total] out of %9d bytes [%4.1f%% used] at " INTPTR_FORMAT
+#define fmt_space "%s space: " SIZE_FORMAT_W(9) " [ %4.1f%% of total] out of " SIZE_FORMAT_W(9) " bytes [%4.1f%% used] at " INTPTR_FORMAT
   Metaspace* ro_space = _loader_data->ro_metaspace();
   Metaspace* rw_space = _loader_data->rw_metaspace();
 
@@ -611,12 +609,12 @@ void VM_PopulateDumpSharedSpace::doit() {
   const double mc_u_perc = mc_bytes / double(mc_alloced) * 100.0;
   const double total_u_perc = total_bytes / double(total_alloced) * 100.0;
 
-  tty->print_cr(fmt_space, "ro", ro_bytes, ro_t_perc, ro_alloced, ro_u_perc, ro_space->bottom());
-  tty->print_cr(fmt_space, "rw", rw_bytes, rw_t_perc, rw_alloced, rw_u_perc, rw_space->bottom());
-  tty->print_cr(fmt_space, "md", md_bytes, md_t_perc, md_alloced, md_u_perc, md_low);
-  tty->print_cr(fmt_space, "mc", mc_bytes, mc_t_perc, mc_alloced, mc_u_perc, mc_low);
-  tty->print_cr(fmt_space, "st", ss_bytes, ss_t_perc, ss_bytes, 100.0, ss_low);
-  tty->print_cr("total   : %9d [100.0%% of total] out of %9d bytes [%4.1f%% used]",
+  tty->print_cr(fmt_space, "ro", ro_bytes, ro_t_perc, ro_alloced, ro_u_perc, p2i(ro_space->bottom()));
+  tty->print_cr(fmt_space, "rw", rw_bytes, rw_t_perc, rw_alloced, rw_u_perc, p2i(rw_space->bottom()));
+  tty->print_cr(fmt_space, "md", md_bytes, md_t_perc, md_alloced, md_u_perc, p2i(md_low));
+  tty->print_cr(fmt_space, "mc", mc_bytes, mc_t_perc, mc_alloced, mc_u_perc, p2i(mc_low));
+  tty->print_cr(fmt_space, "st", ss_bytes, ss_t_perc, ss_bytes,   100.0,     p2i(ss_low));
+  tty->print_cr("total   : " SIZE_FORMAT_W(9) " [100.0%% of total] out of " SIZE_FORMAT_W(9) " bytes [%4.1f%% used]",
                  total_bytes, total_alloced, total_u_perc);
 
   // Update the vtable pointers in all of the Klass objects in the
@@ -681,8 +679,8 @@ void VM_PopulateDumpSharedSpace::doit() {
 
 void MetaspaceShared::link_one_shared_class(Klass* obj, TRAPS) {
   Klass* k = obj;
-  if (k->oop_is_instance()) {
-    InstanceKlass* ik = (InstanceKlass*) k;
+  if (k->is_instance_klass()) {
+    InstanceKlass* ik = InstanceKlass::cast(k);
     // Link the class to cause the bytecodes to be rewritten and the
     // cpcache to be created. Class verification is done according
     // to -Xverify setting.
@@ -692,7 +690,7 @@ void MetaspaceShared::link_one_shared_class(Klass* obj, TRAPS) {
 }
 
 void MetaspaceShared::check_one_shared_class(Klass* k) {
-  if (k->oop_is_instance() && InstanceKlass::cast(k)->check_sharing_error_state()) {
+  if (k->is_instance_klass() && InstanceKlass::cast(k)->check_sharing_error_state()) {
     _check_classes_made_progress = true;
   }
 }
@@ -738,9 +736,9 @@ void MetaspaceShared::preload_and_dump(TRAPS) {
   TraceTime timer("Dump Shared Spaces", TraceStartupTime);
   ResourceMark rm;
 
-  tty->print_cr("Allocated shared space: %d bytes at " PTR_FORMAT,
+  tty->print_cr("Allocated shared space: " SIZE_FORMAT " bytes at " PTR_FORMAT,
                 MetaspaceShared::shared_rs()->size(),
-                MetaspaceShared::shared_rs()->base());
+                p2i(MetaspaceShared::shared_rs()->base()));
 
   // Preload classes to be shared.
   // Should use some os:: method rather than fopen() here. aB.

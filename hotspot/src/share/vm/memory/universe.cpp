@@ -35,7 +35,6 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
-#include "gc/shared/genRemSet.hpp"
 #include "gc/shared/generation.hpp"
 #include "gc/shared/space.hpp"
 #include "interpreter/interpreter.hpp"
@@ -142,6 +141,10 @@ debug_only(int Universe::_fullgc_alot_dummy_next      = 0;)
 
 // Heap
 int             Universe::_verify_count = 0;
+
+// Oop verification (see MacroAssembler::verify_oop)
+uintptr_t       Universe::_verify_oop_mask = 0;
+uintptr_t       Universe::_verify_oop_bits = (uintptr_t) -1;
 
 int             Universe::_base_vtable_size = 0;
 bool            Universe::_bootstrapping = false;
@@ -406,7 +409,7 @@ void Universe::genesis(TRAPS) {
     int i = 0;
     while (i < size) {
         // Allocate dummy in old generation
-      oop dummy = InstanceKlass::cast(SystemDictionary::Object_klass())->allocate_instance(CHECK);
+      oop dummy = SystemDictionary::Object_klass()->allocate_instance(CHECK);
       dummy_array->obj_at_put(i++, dummy);
     }
     {
@@ -481,8 +484,8 @@ void Universe::initialize_basic_type_mirrors(TRAPS) {
     _mirrors[T_LONG]    = _long_mirror;
     _mirrors[T_SHORT]   = _short_mirror;
     _mirrors[T_VOID]    = _void_mirror;
-  //_mirrors[T_OBJECT]  = InstanceKlass::cast(_object_klass)->java_mirror();
-  //_mirrors[T_ARRAY]   = InstanceKlass::cast(_object_klass)->java_mirror();
+  //_mirrors[T_OBJECT]  = _object_klass->java_mirror();
+  //_mirrors[T_ARRAY]   = _object_klass->java_mirror();
 }
 
 void Universe::fixup_mirrors(TRAPS) {
@@ -542,9 +545,8 @@ void Universe::reinitialize_vtable_of(KlassHandle k_h, TRAPS) {
   Klass* ko = k_h();
   klassVtable* vt = ko->vtable();
   if (vt) vt->initialize_vtable(false, CHECK);
-  if (ko->oop_is_instance()) {
-    InstanceKlass* ik = (InstanceKlass*)ko;
-    for (KlassHandle s_h(THREAD, ik->subklass());
+  if (ko->is_instance_klass()) {
+    for (KlassHandle s_h(THREAD, ko->subklass());
          s_h() != NULL;
          s_h = KlassHandle(THREAD, s_h()->next_sibling())) {
       reinitialize_vtable_of(s_h, CHECK);
@@ -812,8 +814,8 @@ void Universe::print_compressed_oops_mode(outputStream* st) {
 ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
 
   assert(alignment <= Arguments::conservative_max_heap_alignment(),
-      err_msg("actual alignment " SIZE_FORMAT " must be within maximum heap alignment " SIZE_FORMAT,
-          alignment, Arguments::conservative_max_heap_alignment()));
+         "actual alignment " SIZE_FORMAT " must be within maximum heap alignment " SIZE_FORMAT,
+         alignment, Arguments::conservative_max_heap_alignment());
 
   size_t total_reserved = align_size_up(heap_size, alignment);
   assert(!UseCompressedOops || (total_reserved <= (OopEncodingHeapMax - os::vm_page_size())),
@@ -995,8 +997,8 @@ bool universe_post_init() {
   // Setup static method for registering finalizers
   // The finalizer klass must be linked before looking up the method, in
   // case it needs to get rewritten.
-  InstanceKlass::cast(SystemDictionary::Finalizer_klass())->link_class(CHECK_false);
-  Method* m = InstanceKlass::cast(SystemDictionary::Finalizer_klass())->find_method(
+  SystemDictionary::Finalizer_klass()->link_class(CHECK_false);
+  Method* m = SystemDictionary::Finalizer_klass()->find_method(
                                   vmSymbols::register_method_name(),
                                   vmSymbols::register_method_signature());
   if (m == NULL || !m->is_static()) {
@@ -1006,8 +1008,8 @@ bool universe_post_init() {
   Universe::_finalizer_register_cache->init(
     SystemDictionary::Finalizer_klass(), m);
 
-  InstanceKlass::cast(SystemDictionary::misc_Unsafe_klass())->link_class(CHECK_false);
-  m = InstanceKlass::cast(SystemDictionary::misc_Unsafe_klass())->find_method(
+  SystemDictionary::internal_Unsafe_klass()->link_class(CHECK_false);
+  m = SystemDictionary::internal_Unsafe_klass()->find_method(
                                   vmSymbols::throwIllegalAccessError_name(),
                                   vmSymbols::void_method_signature());
   if (m != NULL && !m->is_static()) {
@@ -1017,11 +1019,11 @@ bool universe_post_init() {
     return false; // initialization failed (cannot throw exception yet)
   }
   Universe::_throw_illegal_access_error_cache->init(
-    SystemDictionary::misc_Unsafe_klass(), m);
+    SystemDictionary::internal_Unsafe_klass(), m);
 
   // Setup method for registering loaded classes in class loader vector
-  InstanceKlass::cast(SystemDictionary::ClassLoader_klass())->link_class(CHECK_false);
-  m = InstanceKlass::cast(SystemDictionary::ClassLoader_klass())->find_method(vmSymbols::addClass_name(), vmSymbols::class_void_signature());
+  SystemDictionary::ClassLoader_klass()->link_class(CHECK_false);
+  m = SystemDictionary::ClassLoader_klass()->find_method(vmSymbols::addClass_name(), vmSymbols::class_void_signature());
   if (m == NULL || m->is_static()) {
     tty->print_cr("Unable to link/verify ClassLoader.addClass method");
     return false; // initialization failed (cannot throw exception yet)
@@ -1030,8 +1032,8 @@ bool universe_post_init() {
     SystemDictionary::ClassLoader_klass(), m);
 
   // Setup method for checking protection domain
-  InstanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->link_class(CHECK_false);
-  m = InstanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->
+  SystemDictionary::ProtectionDomain_klass()->link_class(CHECK_false);
+  m = SystemDictionary::ProtectionDomain_klass()->
             find_method(vmSymbols::impliesCreateAccessControlContext_name(),
                         vmSymbols::void_boolean_signature());
   // Allow NULL which should only happen with bootstrapping.
@@ -1171,17 +1173,9 @@ void Universe::verify(VerifyOption option, const char* prefix, bool silent) {
   _verify_in_progress = false;
 }
 
-// Oop verification (see MacroAssembler::verify_oop)
-
-static uintptr_t _verify_oop_data[2]   = {0, (uintptr_t)-1};
-static uintptr_t _verify_klass_data[2] = {0, (uintptr_t)-1};
-
 
 #ifndef PRODUCT
-
-static void calculate_verify_data(uintptr_t verify_data[2],
-                                  HeapWord* low_boundary,
-                                  HeapWord* high_boundary) {
+void Universe::calculate_verify_data(HeapWord* low_boundary, HeapWord* high_boundary) {
   assert(low_boundary < high_boundary, "bad interval");
 
   // decide which low-order bits we require to be clear:
@@ -1206,28 +1200,25 @@ static void calculate_verify_data(uintptr_t verify_data[2],
   // require address alignment, too:
   mask |= (alignSize - 1);
 
-  if (!(verify_data[0] == 0 && verify_data[1] == (uintptr_t)-1)) {
-    assert(verify_data[0] == mask && verify_data[1] == bits, "mask stability");
+  if (!(_verify_oop_mask == 0 && _verify_oop_bits == (uintptr_t)-1)) {
+    assert(_verify_oop_mask == mask && _verify_oop_bits == bits, "mask stability");
   }
-  verify_data[0] = mask;
-  verify_data[1] = bits;
+  _verify_oop_mask = mask;
+  _verify_oop_bits = bits;
 }
 
 // Oop verification (see MacroAssembler::verify_oop)
 
 uintptr_t Universe::verify_oop_mask() {
   MemRegion m = heap()->reserved_region();
-  calculate_verify_data(_verify_oop_data,
-                        m.start(),
-                        m.end());
-  return _verify_oop_data[0];
+  calculate_verify_data(m.start(), m.end());
+  return _verify_oop_mask;
 }
 
-
-
 uintptr_t Universe::verify_oop_bits() {
-  verify_oop_mask();
-  return _verify_oop_data[1];
+  MemRegion m = heap()->reserved_region();
+  calculate_verify_data(m.start(), m.end());
+  return _verify_oop_bits;
 }
 
 uintptr_t Universe::verify_mark_mask() {

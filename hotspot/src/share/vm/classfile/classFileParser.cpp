@@ -315,18 +315,20 @@ inline Symbol* check_symbol_at(constantPoolHandle cp, int index) {
     return NULL;
 }
 
+#ifdef ASSERT
 PRAGMA_DIAG_PUSH
 PRAGMA_FORMAT_NONLITERAL_IGNORED
 void ClassFileParser::report_assert_property_failure(const char* msg, TRAPS) {
   ResourceMark rm(THREAD);
-  fatal(err_msg(msg, _class_name->as_C_string()));
+  fatal(msg, _class_name->as_C_string());
 }
 
 void ClassFileParser::report_assert_property_failure(const char* msg, int index, TRAPS) {
   ResourceMark rm(THREAD);
-  fatal(err_msg(msg, index, _class_name->as_C_string()));
+  fatal(msg, index, _class_name->as_C_string());
 }
 PRAGMA_DIAG_POP
+#endif
 
 constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
   ClassFileStream* cfs = stream();
@@ -492,8 +494,7 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
           break;
         }
       default:
-        fatal(err_msg("bad constant pool tag value %u",
-                      cp->tag_at(index).value()));
+        fatal("bad constant pool tag value %u", cp->tag_at(index).value());
         ShouldNotReachHere();
         break;
     } // end of switch
@@ -647,7 +648,7 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
 }
 
 
-void ClassFileParser::patch_constant_pool(constantPoolHandle cp, int index, Handle patch, TRAPS) {
+void ClassFileParser::patch_constant_pool(const constantPoolHandle& cp, int index, Handle patch, TRAPS) {
   BasicType patch_type = T_VOID;
 
   switch (cp->tag_at(index).value()) {
@@ -823,7 +824,7 @@ Array<Klass*>* ClassFileParser::parse_interfaces(int length,
       debug_only(No_Safepoint_Verifier nsv;)
       for (index = 0; index < length; index++) {
         Klass* k = _local_interfaces->at(index);
-        Symbol* name = InstanceKlass::cast(k)->name();
+        Symbol* name = k->name();
         // If no duplicates, add (name, NULL) in hashtable interface_names.
         if (!put_after_lookup(name, NULL, interface_names)) {
           dup = true;
@@ -1755,6 +1756,12 @@ ClassFileParser::AnnotationCollector::annotation_index(ClassLoaderData* loader_d
     if (_location != _in_method)  break;  // only allow for methods
     if (!privileged)              break;  // only allow in privileged code
     return _method_HotSpotIntrinsicCandidate;
+#if INCLUDE_JVMCI
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_vm_ci_hotspot_Stable_signature):
+    if (_location != _in_field)   break;  // only allow for fields
+    if (!privileged)              break;  // only allow in privileged code
+    return _field_Stable;
+#endif
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_Stable_signature):
     if (_location != _in_field)   break;  // only allow for fields
     if (!privileged)              break;  // only allow in privileged code
@@ -1989,9 +1996,17 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
       flags = JVM_ACC_STATIC;
     } else if ((flags & JVM_ACC_STATIC) == JVM_ACC_STATIC) {
       flags &= JVM_ACC_STATIC | JVM_ACC_STRICT;
+    } else {
+      // As of major_version 51, a method named <clinit> without ACC_STATIC is
+      // just another method. So, do a normal method modifer check.
+      verify_legal_method_modifiers(flags, is_interface, name, CHECK_(nullHandle));
     }
   } else {
     verify_legal_method_modifiers(flags, is_interface, name, CHECK_(nullHandle));
+  }
+
+  if (name == vmSymbols::object_initializer_name() && is_interface) {
+    classfile_parse_error("Interface cannot have a method named <init>, class file %s", CHECK_(nullHandle));
   }
 
   int args_size = -1;  // only used when _need_verify is true
@@ -3162,8 +3177,9 @@ instanceKlassHandle ClassFileParser::parse_super_class(int super_class_index,
     bool is_array = false;
     if (_cp->tag_at(super_class_index).is_klass()) {
       super_klass = instanceKlassHandle(THREAD, _cp->resolved_klass_at(super_class_index));
-      if (_need_verify)
-        is_array = super_klass->oop_is_array();
+      if (_need_verify) {
+        is_array = super_klass->is_array_klass();
+      }
     } else if (_need_verify) {
       is_array = (_cp->klass_name_at(super_class_index)->byte_at(0) == JVM_SIGNATURE_ARRAY);
     }
@@ -3198,19 +3214,19 @@ void ClassFileParser::layout_fields(Handle class_loader,
 
   // Field size and offset computation
   int nonstatic_field_size = _super_klass() == NULL ? 0 : _super_klass()->nonstatic_field_size();
-  int next_static_oop_offset;
-  int next_static_double_offset;
-  int next_static_word_offset;
-  int next_static_short_offset;
-  int next_static_byte_offset;
-  int next_nonstatic_oop_offset;
-  int next_nonstatic_double_offset;
-  int next_nonstatic_word_offset;
-  int next_nonstatic_short_offset;
-  int next_nonstatic_byte_offset;
-  int first_nonstatic_oop_offset;
-  int next_nonstatic_field_offset;
-  int next_nonstatic_padded_offset;
+  int next_static_oop_offset = 0;
+  int next_static_double_offset = 0;
+  int next_static_word_offset = 0;
+  int next_static_short_offset = 0;
+  int next_static_byte_offset = 0;
+  int next_nonstatic_oop_offset = 0;
+  int next_nonstatic_double_offset = 0;
+  int next_nonstatic_word_offset = 0;
+  int next_nonstatic_short_offset = 0;
+  int next_nonstatic_byte_offset = 0;
+  int first_nonstatic_oop_offset = 0;
+  int next_nonstatic_field_offset = 0;
+  int next_nonstatic_padded_offset = 0;
 
   // Count the contended fields by type.
   //
@@ -3363,14 +3379,14 @@ void ClassFileParser::layout_fields(Handle class_loader,
     ShouldNotReachHere();
   }
 
-  int nonstatic_oop_space_count   = 0;
-  int nonstatic_word_space_count  = 0;
-  int nonstatic_short_space_count = 0;
-  int nonstatic_byte_space_count  = 0;
-  int nonstatic_oop_space_offset;
-  int nonstatic_word_space_offset;
-  int nonstatic_short_space_offset;
-  int nonstatic_byte_space_offset;
+  int nonstatic_oop_space_count    = 0;
+  int nonstatic_word_space_count   = 0;
+  int nonstatic_short_space_count  = 0;
+  int nonstatic_byte_space_count   = 0;
+  int nonstatic_oop_space_offset   = 0;
+  int nonstatic_word_space_offset  = 0;
+  int nonstatic_short_space_offset = 0;
+  int nonstatic_byte_space_offset  = 0;
 
   // Try to squeeze some of the fields into the gaps due to
   // long/double alignment.
@@ -3442,7 +3458,7 @@ void ClassFileParser::layout_fields(Handle class_loader,
     // contended instance fields are handled below
     if (fs.is_contended() && !fs.access_flags().is_static()) continue;
 
-    int real_offset;
+    int real_offset = 0;
     FieldAllocationType atype = (FieldAllocationType) fs.allocation_type();
 
     // pack the rest of the fields
@@ -3576,7 +3592,7 @@ void ClassFileParser::layout_fields(Handle class_loader,
         // handle statics below
         if (fs.access_flags().is_static()) continue;
 
-        int real_offset;
+        int real_offset = 0;
         FieldAllocationType atype = (FieldAllocationType) fs.allocation_type();
 
         switch (atype) {
@@ -4098,7 +4114,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     this_klass->set_should_verify_class(verify);
     jint lh = Klass::instance_layout_helper(info.instance_size, false);
     this_klass->set_layout_helper(lh);
-    assert(this_klass->oop_is_instance(), "layout is correct");
+    assert(this_klass->is_instance_klass(), "layout is correct");
     assert(this_klass->size_helper() == info.instance_size, "correct size_helper");
     // Not yet: supers are done below to support the new subtype-checking fields
     //this_klass->set_super(super_klass());
@@ -4302,13 +4318,13 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
         if (caller != NULL) {
           tty->print("[Loaded %s by instance of %s]\n",
                      this_klass->external_name(),
-                     InstanceKlass::cast(caller)->external_name());
+                     caller->external_name());
         } else {
           tty->print("[Loaded %s]\n", this_klass->external_name());
         }
       } else {
         tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
-                   InstanceKlass::cast(class_loader->klass())->external_name());
+                   class_loader->klass()->external_name());
       }
     }
 
@@ -4317,7 +4333,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       // print out the superclass.
       const char * from = this_klass()->external_name();
       if (this_klass->java_super() != NULL) {
-        tty->print("RESOLVE %s %s (super)\n", from, InstanceKlass::cast(this_klass->java_super())->external_name());
+        tty->print("RESOLVE %s %s (super)\n", from, this_klass->java_super()->external_name());
       }
       // print out each of the interface classes referred to by this class.
       Array<Klass*>* local_interfaces = this_klass->local_interfaces();
@@ -4325,8 +4341,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
         int length = local_interfaces->length();
         for (int i = 0; i < length; i++) {
           Klass* k = local_interfaces->at(i);
-          InstanceKlass* to_class = InstanceKlass::cast(k);
-          const char * to = to_class->external_name();
+          const char * to = k->external_name();
           tty->print("RESOLVE %s %s (interface)\n", from, to);
         }
       }
@@ -4398,7 +4413,7 @@ ClassFileParser::~ClassFileParser() {
 
 void ClassFileParser::print_field_layout(Symbol* name,
                                          Array<u2>* fields,
-                                         constantPoolHandle cp,
+                                         const constantPoolHandle& cp,
                                          int instance_size,
                                          int instance_fields_start,
                                          int instance_fields_end,
@@ -4674,7 +4689,7 @@ void ClassFileParser::check_super_class_access(instanceKlassHandle this_klass, T
       vmSymbols::java_lang_IllegalAccessError(),
       "class %s cannot access its superclass %s",
       this_klass->external_name(),
-      InstanceKlass::cast(super)->external_name()
+      super->external_name()
     );
     return;
   }
@@ -4694,7 +4709,7 @@ void ClassFileParser::check_super_interface_access(instanceKlassHandle this_klas
         vmSymbols::java_lang_IllegalAccessError(),
         "class %s cannot access its superinterface %s",
         this_klass->external_name(),
-        InstanceKlass::cast(k)->external_name()
+        k->external_name()
       );
       return;
     }

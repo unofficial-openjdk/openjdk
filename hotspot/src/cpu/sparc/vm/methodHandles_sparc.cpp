@@ -56,7 +56,7 @@ void MethodHandles::load_klass_from_Class(MacroAssembler* _masm, Register klass_
 
 #ifdef ASSERT
 static int check_nonzero(const char* xname, int x) {
-  assert(x != 0, err_msg("%s should be nonzero", xname));
+  assert(x != 0, "%s should be nonzero", xname);
   return x;
 }
 #define NONZERO(x) check_nonzero(#x, x)
@@ -69,7 +69,7 @@ void MethodHandles::verify_klass(MacroAssembler* _masm,
                                  Register obj_reg, SystemDictionary::WKID klass_id,
                                  Register temp_reg, Register temp2_reg,
                                  const char* error_message) {
-  Klass** klass_addr = SystemDictionary::well_known_klass_addr(klass_id);
+  InstanceKlass** klass_addr = SystemDictionary::well_known_klass_addr(klass_id);
   KlassHandle klass = SystemDictionary::well_known_klass(klass_id);
   bool did_save = false;
   if (temp_reg == noreg || temp2_reg == noreg) {
@@ -229,9 +229,11 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
   address entry_point = __ pc();
 
   if (VerifyMethodHandles) {
+    assert(Method::intrinsic_id_size_in_bytes() == 2, "assuming Method::_intrinsic_id is u2");
+
     Label L;
     BLOCK_COMMENT("verify_intrinsic_id {");
-    __ ldub(Address(G5_method, Method::intrinsic_id_offset_in_bytes()), O1_scratch);
+    __ lduh(Address(G5_method, Method::intrinsic_id_offset_in_bytes()), O1_scratch);
     __ cmp_and_br_short(O1_scratch, (int) iid, Assembler::equal, Assembler::pt, L);
     if (iid == vmIntrinsics::_linkToVirtual ||
         iid == vmIntrinsics::_linkToSpecial) {
@@ -451,7 +453,7 @@ void MethodHandles::generate_method_handle_dispatch(MacroAssembler* _masm,
     }
 
     default:
-      fatal(err_msg_res("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid)));
+      fatal("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid));
       break;
     }
 

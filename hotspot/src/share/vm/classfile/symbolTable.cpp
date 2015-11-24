@@ -37,8 +37,6 @@
 #include "runtime/mutexLocker.hpp"
 #include "utilities/hashtable.inline.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 // --------------------------------------------------------------------------
 // the number of buckets a thread claims
 const int ClaimChunkSize = 32;
@@ -246,7 +244,7 @@ Symbol* SymbolTable::lookup(int index, const char* name,
 unsigned int SymbolTable::hash_symbol(const char* s, int len) {
   return use_alternate_hashcode() ?
            AltHashing::murmur3_32(seed(), (const jbyte*)s, len) :
-           java_lang_String::hash_code(s, len);
+           java_lang_String::hash_code((const jbyte*)s, len);
 }
 
 
@@ -373,7 +371,7 @@ Symbol* SymbolTable::lookup_only_unicode(const jchar* name, int utf16_length,
   }
 }
 
-void SymbolTable::add(ClassLoaderData* loader_data, constantPoolHandle cp,
+void SymbolTable::add(ClassLoaderData* loader_data, const constantPoolHandle& cp,
                       int names_count,
                       const char** names, int* lengths, int* cp_indices,
                       unsigned int* hashValues, TRAPS) {
@@ -454,7 +452,7 @@ Symbol* SymbolTable::basic_add(int index_arg, u1 *name, int len,
 
 // This version of basic_add adds symbols in batch from the constant pool
 // parsing.
-bool SymbolTable::basic_add(ClassLoaderData* loader_data, constantPoolHandle cp,
+bool SymbolTable::basic_add(ClassLoaderData* loader_data, const constantPoolHandle& cp,
                             int names_count,
                             const char** names, int* lengths,
                             int* cp_indices, unsigned int* hashValues,
@@ -623,8 +621,8 @@ void SymbolTable::print_histogram() {
           ((float)_symbols_removed/(float)_symbols_counted)* 100);
   }
   tty->print_cr("  Reference counts         %7d", Symbol::_total_count);
-  tty->print_cr("  Symbol arena used        %7dK", arena()->used()/1024);
-  tty->print_cr("  Symbol arena size        %7dK", arena()->size_in_bytes()/1024);
+  tty->print_cr("  Symbol arena used        " SIZE_FORMAT_W(7) "K", arena()->used()/1024);
+  tty->print_cr("  Symbol arena size        " SIZE_FORMAT_W(7) "K", arena()->size_in_bytes()/1024);
   tty->print_cr("  Total symbol length      %7d", total_length);
   tty->print_cr("  Maximum symbol length    %7d", max_length);
   tty->print_cr("  Average symbol length    %7.2f", ((float) total_length / (float) total_count));
@@ -645,7 +643,7 @@ void SymbolTable::print() {
     HashtableEntry<Symbol*, mtSymbol>* entry = the_table()->bucket(i);
     if (entry != NULL) {
       while (entry != NULL) {
-        tty->print(PTR_FORMAT " ", entry->literal());
+        tty->print(PTR_FORMAT " ", p2i(entry->literal()));
         entry->literal()->print();
         tty->print(" %d", entry->literal()->refcount());
         p = entry->next_addr();

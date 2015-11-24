@@ -50,7 +50,6 @@
 #define O_BINARY 0     // otherwise do nothing.
 #endif
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 extern address JVM_FunctionAtStart();
 extern address JVM_FunctionAtEnd();
 
@@ -169,6 +168,7 @@ void FileMapInfo::FileMapHeader::populate(FileMapInfo* mapinfo, size_t alignment
   _version = _current_version;
   _alignment = alignment;
   _obj_alignment = ObjectAlignmentInBytes;
+  _compact_strings = CompactStrings;
   _narrow_oop_mode = Universe::narrow_oop_mode();
   _narrow_oop_shift = Universe::narrow_oop_shift();
   _max_heap_size = MaxHeapSize;
@@ -443,8 +443,8 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
   if (_file_open) {
     guarantee(si->_file_offset == _file_offset, "file offset mismatch.");
     if (PrintSharedSpaces) {
-      tty->print_cr("Shared file region %d: 0x%6x bytes, addr " INTPTR_FORMAT
-                    " file offset 0x%6x", region, size, base, _file_offset);
+      tty->print_cr("Shared file region %d: " SIZE_FORMAT_HEX_W(6) " bytes, addr " INTPTR_FORMAT
+                    " file offset " SIZE_FORMAT_HEX_W(6), region, size, p2i(base), _file_offset);
     }
   } else {
     si->_file_offset = _file_offset;
@@ -602,7 +602,8 @@ ReservedSpace FileMapInfo::reserve_shared_memory() {
   // other reserved memory (like the code cache).
   ReservedSpace rs(size, os::vm_allocation_granularity(), false, requested_addr);
   if (!rs.is_reserved()) {
-    fail_continue("Unable to reserve shared space at required address " INTPTR_FORMAT, requested_addr);
+    fail_continue("Unable to reserve shared space at required address "
+                  INTPTR_FORMAT, p2i(requested_addr));
     return rs;
   }
   // the reserved virtual memory is for mapping class data sharing archive
@@ -659,7 +660,7 @@ bool FileMapInfo::map_string_regions() {
         tty->print_cr("Shared string data from the CDS archive is being ignored. "
                      "The current CompressedOops/CompressedClassPointers encoding differs from "
                      "that archived due to heap size change. The archive was dumped using max heap "
-                     "size %dM.", max_heap_size()/M);
+                     "size " UINTX_FORMAT "M.", max_heap_size()/M);
       }
     } else {
       string_ranges = new MemRegion[MetaspaceShared::max_strings];
@@ -707,12 +708,16 @@ bool FileMapInfo::map_string_regions() {
                                     addr, string_ranges[i].byte_size(), si->_read_only,
                                     si->_allow_exec);
         if (base == NULL || base != addr) {
+          // dealloc the string regions from java heap
+          dealloc_string_regions();
           fail_continue("Unable to map shared string space at required address.");
           return false;
         }
       }
 
       if (!verify_string_regions()) {
+        // dealloc the string regions from java heap
+        dealloc_string_regions();
         fail_continue("Shared string regions are corrupt");
         return false;
       }
@@ -745,12 +750,14 @@ bool FileMapInfo::verify_string_regions() {
 }
 
 void FileMapInfo::fixup_string_regions() {
+#if INCLUDE_ALL_GCS
   // If any string regions were found, call the fill routine to make them parseable.
   // Note that string_ranges may be non-NULL even if no ranges were found.
   if (num_ranges != 0) {
     assert(string_ranges != NULL, "Null string_ranges array with non-zero count");
     G1CollectedHeap::heap()->fill_archive_regions(string_ranges, num_ranges);
   }
+#endif
 }
 
 bool FileMapInfo::verify_region_checksum(int i) {
@@ -793,20 +800,14 @@ void FileMapInfo::unmap_region(int i) {
   }
 }
 
-void FileMapInfo::unmap_string_regions() {
-  for (int i = MetaspaceShared::first_string;
-           i < MetaspaceShared::first_string + MetaspaceShared::max_strings; i++) {
-    struct FileMapInfo::FileMapHeader::space_info* si = &_header->_space[i];
-    size_t used = si->_used;
-    if (used > 0) {
-      size_t size = align_size_up(used, os::vm_allocation_granularity());
-      char* addr = (char*)((void*)oopDesc::decode_heap_oop_not_null(
-                                             (narrowOop)si->_addr._offset));
-      if (!os::unmap_memory(addr, size)) {
-        fail_stop("Unable to unmap shared space.");
-      }
-    }
+// dealloc the archived string region from java heap
+void FileMapInfo::dealloc_string_regions() {
+#if INCLUDE_ALL_GCS
+  if (num_ranges > 0) {
+    assert(string_ranges != NULL, "Null string_ranges array with non-zero count");
+    G1CollectedHeap::heap()->dealloc_archive_regions(string_ranges, num_ranges);
   }
+#endif
 }
 
 void FileMapInfo::assert_mark(bool check) {
@@ -896,8 +897,15 @@ bool FileMapInfo::FileMapHeader::validate() {
   }
   if (_obj_alignment != ObjectAlignmentInBytes) {
     FileMapInfo::fail_continue("The shared archive file's ObjectAlignmentInBytes of %d"
-                  " does not equal the current ObjectAlignmentInBytes of %d.",
+                  " does not equal the current ObjectAlignmentInBytes of " INTX_FORMAT ".",
                   _obj_alignment, ObjectAlignmentInBytes);
+    return false;
+  }
+  if (_compact_strings != CompactStrings) {
+    FileMapInfo::fail_continue("The shared archive file's CompactStrings setting (%s)"
+                  " does not equal the current CompactStrings setting (%s).",
+                  _compact_strings ? "enabled" : "disabled",
+                  CompactStrings   ? "enabled" : "disabled");
     return false;
   }
 
@@ -951,7 +959,7 @@ void FileMapInfo::print_shared_spaces() {
     char *base = _header->region_addr(i);
     gclog_or_tty->print("  %s " INTPTR_FORMAT "-" INTPTR_FORMAT,
                         shared_region_name[i],
-                        base, base + si->_used);
+                        p2i(base), p2i(base + si->_used));
   }
 }
 
@@ -967,7 +975,9 @@ void FileMapInfo::stop_sharing_and_unmap(const char* msg) {
         map_info->_header->_space[i]._addr._base = NULL;
       }
     }
-    map_info->unmap_string_regions();
+    // Dealloc the string regions only without unmapping. The string regions are part
+    // of the java heap. Unmapping of the heap regions are managed by GC.
+    map_info->dealloc_string_regions();
   } else if (DumpSharedSpaces) {
     fail_stop("%s", msg);
   }

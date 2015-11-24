@@ -95,6 +95,7 @@ public:
     size_t _alignment;                // how shared archive should be aligned
     int    _obj_alignment;            // value of ObjectAlignmentInBytes
     int    _narrow_oop_shift;         // compressed oop encoding shift
+    bool   _compact_strings;          // value of CompactStrings
     uintx  _max_heap_size;            // java max heap size during dumping
     Universe::NARROW_OOP_MODE _narrow_oop_mode; // compressed oop encoding mode
     int     _narrow_klass_shift;      // save narrow klass base and shift
@@ -208,7 +209,7 @@ public:
   bool  verify_string_regions();
   void  fixup_string_regions();
   void  unmap_region(int i);
-  void  unmap_string_regions();
+  void  dealloc_string_regions();
   bool  verify_region_checksum(int i);
   void  close();
   bool  is_open() { return _file_open; }

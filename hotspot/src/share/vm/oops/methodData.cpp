@@ -38,8 +38,6 @@
 #include "runtime/orderAccess.inline.hpp"
 #include "utilities/copy.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 // ==================================================================
 // DataLayout
 //
@@ -110,7 +108,7 @@ char* ProfileData::print_data_on_helper(const MethodData* md) const {
       return ss.as_string();
       break;
     default:
-      fatal(err_msg("unexpected tag %d", dp->tag()));
+      fatal("unexpected tag %d", dp->tag());
     }
   }
   return NULL;
@@ -413,13 +411,39 @@ void ReceiverTypeData::clean_weak_klass_links(BoolObjectClosure* is_alive_cl) {
   }
 }
 
+#if INCLUDE_JVMCI
+void VirtualCallData::clean_weak_klass_links(BoolObjectClosure* is_alive_cl) {
+  ReceiverTypeData::clean_weak_klass_links(is_alive_cl);
+  for (uint row = 0; row < method_row_limit(); row++) {
+    Method* p = method(row);
+    if (p != NULL && !p->method_holder()->is_loader_alive(is_alive_cl)) {
+      clear_method_row(row);
+    }
+  }
+}
+
+void VirtualCallData::clean_weak_method_links() {
+  ReceiverTypeData::clean_weak_method_links();
+  for (uint row = 0; row < method_row_limit(); row++) {
+    Method* p = method(row);
+    if (p != NULL && !p->on_stack()) {
+      clear_method_row(row);
+    }
+  }
+}
+#endif // INCLUDE_JVMCI
+
 void ReceiverTypeData::print_receiver_data_on(outputStream* st) const {
   uint row;
   int entries = 0;
   for (row = 0; row < row_limit(); row++) {
     if (receiver(row) != NULL)  entries++;
   }
+#if INCLUDE_JVMCI
+  st->print_cr("count(%u) nonprofiled_count(%u) entries(%u)", count(), nonprofiled_count(), entries);
+#else
   st->print_cr("count(%u) entries(%u)", count(), entries);
+#endif
   int total = count();
   for (row = 0; row < row_limit(); row++) {
     if (receiver(row) != NULL) {
@@ -438,9 +462,36 @@ void ReceiverTypeData::print_data_on(outputStream* st, const char* extra) const 
   print_shared(st, "ReceiverTypeData", extra);
   print_receiver_data_on(st);
 }
+
+#if INCLUDE_JVMCI
+void VirtualCallData::print_method_data_on(outputStream* st) const {
+  uint row;
+  int entries = 0;
+  for (row = 0; row < method_row_limit(); row++) {
+    if (method(row) != NULL) entries++;
+  }
+  tab(st);
+  st->print_cr("method_entries(%u)", entries);
+  int total = count();
+  for (row = 0; row < method_row_limit(); row++) {
+    if (method(row) != NULL) {
+      total += method_count(row);
+    }
+  }
+  for (row = 0; row < method_row_limit(); row++) {
+    if (method(row) != NULL) {
+      tab(st);
+      method(row)->print_value_on(st);
+      st->print_cr("(%u %4.2f)", method_count(row), (float) method_count(row) / (float) total);
+    }
+  }
+}
+#endif // INCLUDE_JVMCI
+
 void VirtualCallData::print_data_on(outputStream* st, const char* extra) const {
   print_shared(st, "VirtualCallData", extra);
   print_receiver_data_on(st);
+  print_method_data_on(st);
 }
 
 // ==================================================================
@@ -657,7 +708,7 @@ void SpeculativeTrapData::print_data_on(outputStream* st, const char* extra) con
 // A MethodData* holds information which has been collected about
 // a method.
 
-MethodData* MethodData::allocate(ClassLoaderData* loader_data, methodHandle method, TRAPS) {
+MethodData* MethodData::allocate(ClassLoaderData* loader_data, const methodHandle& method, TRAPS) {
   int size = MethodData::compute_allocation_size_in_words(method);
 
   return new (loader_data, size, false, MetaspaceObj::MethodDataType, THREAD)
@@ -665,7 +716,7 @@ MethodData* MethodData::allocate(ClassLoaderData* loader_data, methodHandle meth
 }
 
 int MethodData::bytecode_cell_count(Bytecodes::Code code) {
-#if defined(COMPILER1) && !defined(COMPILER2)
+#if defined(COMPILER1) && !(defined(COMPILER2) || INCLUDE_JVMCI)
   return no_profile_data;
 #else
   switch (code) {
@@ -797,6 +848,26 @@ bool MethodData::is_speculative_trap_bytecode(Bytecodes::Code code) {
 }
 
 int MethodData::compute_extra_data_count(int data_size, int empty_bc_count, bool needs_speculative_traps) {
+#if INCLUDE_JVMCI
+  if (ProfileTraps) {
+    // Assume that up to 30% of the possibly trapping BCIs with no MDP will need to allocate one.
+    int extra_data_count = MIN2(empty_bc_count, MAX2(4, (empty_bc_count * 30) / 100));
+
+    // Make sure we have a minimum number of extra data slots to
+    // allocate SpeculativeTrapData entries. We would want to have one
+    // entry per compilation that inlines this method and for which
+    // some type speculation assumption fails. So the room we need for
+    // the SpeculativeTrapData entries doesn't directly depend on the
+    // size of the method. Because it's hard to estimate, we reserve
+    // space for an arbitrary number of entries.
+    int spec_data_count = (needs_speculative_traps ? SpecTrapLimitExtraEntries : 0) *
+      (SpeculativeTrapData::static_cell_count() + DataLayout::header_size_in_cells());
+
+    return MAX2(extra_data_count, spec_data_count);
+  } else {
+    return 0;
+  }
+#else // INCLUDE_JVMCI
   if (ProfileTraps) {
     // Assume that up to 3% of BCIs with no MDP will need to allocate one.
     int extra_data_count = (uint)(empty_bc_count * 3) / 128 + 1;
@@ -822,11 +893,12 @@ int MethodData::compute_extra_data_count(int data_size, int empty_bc_count, bool
   } else {
     return 0;
   }
+#endif // INCLUDE_JVMCI
 }
 
 // Compute the size of the MethodData* necessary to store
 // profiling information about a given method.  Size is in bytes.
-int MethodData::compute_allocation_size_in_bytes(methodHandle method) {
+int MethodData::compute_allocation_size_in_bytes(const methodHandle& method) {
   int data_size = 0;
   BytecodeStream stream(method);
   Bytecodes::Code c;
@@ -835,7 +907,7 @@ int MethodData::compute_allocation_size_in_bytes(methodHandle method) {
   while ((c = stream.next()) >= 0) {
     int size_in_bytes = compute_data_size(&stream);
     data_size += size_in_bytes;
-    if (size_in_bytes == 0)  empty_bc_count += 1;
+    if (size_in_bytes == 0 JVMCI_ONLY(&& Bytecodes::can_trap(c)))  empty_bc_count += 1;
     needs_speculative_traps = needs_speculative_traps || is_speculative_trap_bytecode(c);
   }
   int object_size = in_bytes(data_offset()) + data_size;
@@ -859,7 +931,7 @@ int MethodData::compute_allocation_size_in_bytes(methodHandle method) {
 
 // Compute the size of the MethodData* necessary to store
 // profiling information about a given method.  Size is in words
-int MethodData::compute_allocation_size_in_words(methodHandle method) {
+int MethodData::compute_allocation_size_in_words(const methodHandle& method) {
   int byte_size = compute_allocation_size_in_bytes(method);
   int word_size = align_size_up(byte_size, BytesPerWord) / BytesPerWord;
   return align_object_size(word_size);
@@ -869,7 +941,7 @@ int MethodData::compute_allocation_size_in_words(methodHandle method) {
 // the segment in bytes.
 int MethodData::initialize_data(BytecodeStream* stream,
                                        int data_index) {
-#if defined(COMPILER1) && !defined(COMPILER2)
+#if defined(COMPILER1) && !(defined(COMPILER2) || INCLUDE_JVMCI)
   return 0;
 #else
   int cell_count = -1;
@@ -1030,7 +1102,9 @@ ProfileData* DataLayout::data_in() {
     return new VirtualCallTypeData(this);
   case DataLayout::parameters_type_data_tag:
     return new ParametersTypeData(this);
-  };
+  case DataLayout::speculative_trap_data_tag:
+    return new SpeculativeTrapData(this);
+  }
 }
 
 // Iteration over data.
@@ -1057,13 +1131,17 @@ void MethodData::post_initialize(BytecodeStream* stream) {
 }
 
 // Initialize the MethodData* corresponding to a given method.
-MethodData::MethodData(methodHandle method, int size, TRAPS)
+MethodData::MethodData(const methodHandle& method, int size, TRAPS)
   : _extra_data_lock(Monitor::leaf, "MDO extra data lock"),
     _parameters_type_data_di(parameters_uninitialized) {
-  No_Safepoint_Verifier no_safepoint;  // init function atomic wrt GC
-  ResourceMark rm;
   // Set the method back-pointer.
   _method = method();
+  initialize();
+}
+
+void MethodData::initialize() {
+  No_Safepoint_Verifier no_safepoint;  // init function atomic wrt GC
+  ResourceMark rm;
 
   init();
   set_creation_mileage(mileage_of(method()));
@@ -1073,13 +1151,13 @@ MethodData::MethodData(methodHandle method, int size, TRAPS)
   int data_size = 0;
   int empty_bc_count = 0;  // number of bytecodes lacking data
   _data[0] = 0;  // apparently not set below.
-  BytecodeStream stream(method);
+  BytecodeStream stream(method());
   Bytecodes::Code c;
   bool needs_speculative_traps = false;
   while ((c = stream.next()) >= 0) {
     int size_in_bytes = initialize_data(&stream, data_size);
     data_size += size_in_bytes;
-    if (size_in_bytes == 0)  empty_bc_count += 1;
+    if (size_in_bytes == 0 JVMCI_ONLY(&& Bytecodes::can_trap(c)))  empty_bc_count += 1;
     needs_speculative_traps = needs_speculative_traps || is_speculative_trap_bytecode(c);
   }
   _data_size = data_size;
@@ -1097,7 +1175,7 @@ MethodData::MethodData(methodHandle method, int size, TRAPS)
   // the code for traps cells works.
   DataLayout *dp = data_layout_at(data_size + extra_size);
 
-  int arg_size = method->size_of_parameters();
+  int arg_size = method()->size_of_parameters();
   dp->initialize(DataLayout::arg_info_data_tag, 0, arg_size+1);
 
   int arg_data_size = DataLayout::compute_size_in_bytes(arg_size+1);
@@ -1126,6 +1204,7 @@ MethodData::MethodData(methodHandle method, int size, TRAPS)
 
   post_initialize(&stream);
 
+  assert(object_size == compute_allocation_size_in_bytes(methodHandle(_method)), "MethodData: computed size != initialized size");
   set_size(object_size);
 }
 
@@ -1145,6 +1224,10 @@ void MethodData::init() {
   _num_loops = 0;
   _num_blocks = 0;
   _would_profile = unknown;
+
+#if INCLUDE_JVMCI
+  _jvmci_ir_size = 0;
+#endif
 
 #if INCLUDE_RTM_OPT
   _rtm_state = NoRTM; // No RTM lock eliding by default
@@ -1239,7 +1322,7 @@ DataLayout* MethodData::next_extra(DataLayout* dp) {
     nb_cells = SpeculativeTrapData::static_cell_count();
     break;
   default:
-    fatal(err_msg("unexpected tag %d", dp->tag()));
+    fatal("unexpected tag %d", dp->tag());
   }
   return (DataLayout*)((address)dp + DataLayout::compute_size_in_bytes(nb_cells));
 }
@@ -1279,7 +1362,7 @@ ProfileData* MethodData::bci_to_extra_data_helper(int bci, Method* m, DataLayout
       }
       break;
     default:
-      fatal(err_msg("unexpected tag %d", dp->tag()));
+      fatal("unexpected tag %d", dp->tag());
     }
   }
   return NULL;
@@ -1400,7 +1483,7 @@ void MethodData::print_data_on(outputStream* st) const {
       dp = end; // ArgInfoData is at the end of extra data section.
       break;
     default:
-      fatal(err_msg("unexpected tag %d", dp->tag()));
+      fatal("unexpected tag %d", dp->tag());
     }
     st->print("%d", dp_to_di(data->dp()));
     st->fill_to(6);
@@ -1432,7 +1515,7 @@ void MethodData::verify_data_on(outputStream* st) {
   // not yet implemented.
 }
 
-bool MethodData::profile_jsr292(methodHandle m, int bci) {
+bool MethodData::profile_jsr292(const methodHandle& m, int bci) {
   if (m->is_compiled_lambda_form()) {
     return true;
   }
@@ -1457,7 +1540,7 @@ bool MethodData::profile_all_arguments() {
   return profile_arguments_flag() == type_profile_all;
 }
 
-bool MethodData::profile_arguments_for_invoke(methodHandle m, int bci) {
+bool MethodData::profile_arguments_for_invoke(const methodHandle& m, int bci) {
   if (!profile_arguments()) {
     return false;
   }
@@ -1486,7 +1569,7 @@ bool MethodData::profile_all_return() {
   return profile_return_flag() == type_profile_all;
 }
 
-bool MethodData::profile_return_for_invoke(methodHandle m, int bci) {
+bool MethodData::profile_return_for_invoke(const methodHandle& m, int bci) {
   if (!profile_return()) {
     return false;
   }
@@ -1515,7 +1598,7 @@ bool MethodData::profile_all_parameters() {
   return profile_parameters_flag() == type_profile_all;
 }
 
-bool MethodData::profile_parameters_for_method(methodHandle m) {
+bool MethodData::profile_parameters_for_method(const methodHandle& m) {
   if (!profile_parameters()) {
     return false;
   }
@@ -1612,7 +1695,7 @@ void MethodData::clean_extra_data(CleanExtraDataClosure* cl) {
       clean_extra_data_helper(dp, shift, true);
       return;
     default:
-      fatal(err_msg("unexpected tag %d", dp->tag()));
+      fatal("unexpected tag %d", dp->tag());
     }
   }
 }
@@ -1638,7 +1721,7 @@ void MethodData::verify_extra_data_clean(CleanExtraDataClosure* cl) {
     case DataLayout::arg_info_data_tag:
       return;
     default:
-      fatal(err_msg("unexpected tag %d", dp->tag()));
+      fatal("unexpected tag %d", dp->tag());
     }
   }
 #endif

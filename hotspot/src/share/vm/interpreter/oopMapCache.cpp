@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,6 @@
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/signature.hpp"
-
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 class OopMapCacheEntry: private InterpreterOopMap {
   friend class InterpreterOopMap;
@@ -213,31 +211,6 @@ void InterpreterOopMap::iterate_oop(OffsetClosure* oop_closure) const {
   }
 }
 
-
-#ifdef ENABLE_ZAP_DEAD_LOCALS
-
-void InterpreterOopMap::iterate_all(OffsetClosure* oop_closure, OffsetClosure* value_closure, OffsetClosure* dead_closure) {
-  int n = number_of_entries();
-  int word_index = 0;
-  uintptr_t value = 0;
-  uintptr_t mask = 0;
-  // iterate over entries
-  for (int i = 0; i < n; i++, mask <<= bits_per_entry) {
-    // get current word
-    if (mask == 0) {
-      value = bit_mask()[word_index++];
-      mask = 1;
-    }
-    // test for dead values  & oops, and for live values
-         if ((value & (mask << dead_bit_number)) != 0)  dead_closure->offset_do(i); // call this for all dead values or oops
-    else if ((value & (mask <<  oop_bit_number)) != 0)   oop_closure->offset_do(i); // call this for all live oops
-    else                                               value_closure->offset_do(i); // call this for all live values
-  }
-}
-
-#endif
-
-
 void InterpreterOopMap::print() const {
   int n = number_of_entries();
   tty->print("oop map for ");
@@ -297,12 +270,6 @@ bool OopMapCacheEntry::verify_mask(CellTypeState* vars, CellTypeState* stack, in
     bool v2 = vars[i].is_reference()  ? true : false;
     assert(v1 == v2, "locals oop mask generation error");
     if (TraceOopMapGeneration && Verbose) tty->print("%d", v1 ? 1 : 0);
-#ifdef ENABLE_ZAP_DEAD_LOCALS
-    bool v3 = is_dead(i)              ? true : false;
-    bool v4 = !vars[i].is_live()      ? true : false;
-    assert(v3 == v4, "locals live mask generation error");
-    assert(!(v1 && v3), "dead value marked as oop");
-#endif
   }
 
   if (TraceOopMapGeneration && Verbose) { tty->cr(); tty->print("Stack (%d): ", stack_top); }
@@ -311,12 +278,6 @@ bool OopMapCacheEntry::verify_mask(CellTypeState* vars, CellTypeState* stack, in
     bool v2 = stack[j].is_reference() ? true : false;
     assert(v1 == v2, "stack oop mask generation error");
     if (TraceOopMapGeneration && Verbose) tty->print("%d", v1 ? 1 : 0);
-#ifdef ENABLE_ZAP_DEAD_LOCALS
-    bool v3 = is_dead(max_locals + j) ? true : false;
-    bool v4 = !stack[j].is_live()     ? true : false;
-    assert(v3 == v4, "stack live mask generation error");
-    assert(!(v1 && v3), "dead value marked as oop");
-#endif
   }
   if (TraceOopMapGeneration && Verbose) tty->cr();
   return true;
@@ -465,7 +426,7 @@ void InterpreterOopMap::resource_copy(OopMapCacheEntry* from) {
   }
 }
 
-inline unsigned int OopMapCache::hash_value_for(methodHandle method, int bci) const {
+inline unsigned int OopMapCache::hash_value_for(const methodHandle& method, int bci) const {
   // We use method->code_size() rather than method->identity_hash() below since
   // the mark may not be present if a pointer to the method is already reversed.
   return   ((unsigned int) bci)
@@ -516,7 +477,7 @@ void OopMapCache::flush_obsolete_entries() {
     }
 }
 
-void OopMapCache::lookup(methodHandle method,
+void OopMapCache::lookup(const methodHandle& method,
                          int bci,
                          InterpreterOopMap* entry_for) const {
   MutexLocker x(&_mut);
@@ -597,7 +558,7 @@ void OopMapCache::lookup(methodHandle method,
   return;
 }
 
-void OopMapCache::compute_one_oop_map(methodHandle method, int bci, InterpreterOopMap* entry) {
+void OopMapCache::compute_one_oop_map(const methodHandle& method, int bci, InterpreterOopMap* entry) {
   // Due to the invariants above it's tricky to allocate a temporary OopMapCacheEntry on the stack
   OopMapCacheEntry* tmp = NEW_C_HEAP_ARRAY(OopMapCacheEntry, 1, mtClass);
   tmp->initialize();
