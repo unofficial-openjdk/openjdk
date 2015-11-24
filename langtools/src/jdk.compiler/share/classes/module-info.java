@@ -34,11 +34,14 @@ module jdk.compiler {
     exports com.sun.tools.doclint to
         jdk.javadoc;
     exports com.sun.tools.javac.api to
-        jdk.javadoc;
+        jdk.javadoc,
+        jdk.jshell;
     exports com.sun.tools.javac.code to
-        jdk.javadoc;
+        jdk.javadoc,
+        jdk.jshell;
     exports com.sun.tools.javac.comp to
-        jdk.javadoc;
+        jdk.javadoc,
+        jdk.jshell;
     exports com.sun.tools.javac.file to
         jdk.jdeps,
         jdk.javadoc;
@@ -46,19 +49,26 @@ module jdk.compiler {
         jdk.javadoc;
     exports com.sun.tools.javac.main to
         jdk.javadoc;
+    exports com.sun.tools.javac.parser to
+        jdk.jshell;
     exports com.sun.tools.javac.platform to
         jdk.javadoc;
     exports com.sun.tools.javac.sym to
         jdk.javadoc;
     exports com.sun.tools.javac.tree to
-        jdk.javadoc;
+        jdk.javadoc,
+        jdk.jshell;
     exports com.sun.tools.javac.util to
         jdk.jdeps,
-        jdk.javadoc;
+        jdk.javadoc,
+        jdk.jshell;
 
+    uses javax.annotation.processing.Processor;
     uses com.sun.source.util.Plugin;
     uses com.sun.tools.javac.platform.PlatformProvider;
-    provides com.sun.tools.javac.platform.PlatformProvider with com.sun.tools.javac.platform.JDKPlatformProvider;
+
+    provides com.sun.tools.javac.platform.PlatformProvider
+        with com.sun.tools.javac.platform.JDKPlatformProvider;
 
     provides javax.tools.JavaCompiler
         with com.sun.tools.javac.api.JavacTool;

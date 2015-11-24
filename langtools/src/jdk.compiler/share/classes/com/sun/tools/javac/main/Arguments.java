@@ -506,7 +506,7 @@ public class Arguments {
                 option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
                 Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
                 Option.SYSTEMMODULEPATH, Option.MODULEPATH,
-                Option.XOVERRIDE);
+                Option.XOVERRIDE, Option.XPATCH);
 
         JavaFileManager fm = getFileManager();
 
@@ -518,6 +518,11 @@ public class Arguments {
             if (options.isSet(Option.XMODULE)) {
                 log.error("xmodule.no.module.sourcepath");
             }
+        }
+
+        if (fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH) &&
+            fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH)) {
+            log.error("processorpath.no.procesormodulepath");
         }
 
         if (obsoleteOptionFound)

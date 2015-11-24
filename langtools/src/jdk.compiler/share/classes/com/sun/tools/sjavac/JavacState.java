@@ -31,7 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.Writer;
 import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
@@ -131,12 +131,12 @@ public class JavacState {
     private CompileJavaPackages compileJavaPackages = new CompileJavaPackages();
 
     // Where to send stdout and stderr.
-    private PrintStream out, err;
+    private Writer out, err;
 
     // Command line options.
     private Options options;
 
-    JavacState(Options op, boolean removeJavacState, PrintStream o, PrintStream e) {
+    JavacState(Options op, boolean removeJavacState, Writer o, Writer e) {
         options = op;
         out = o;
         err = e;
@@ -311,7 +311,7 @@ public class JavacState {
     /**
      * Load a javac_state file.
      */
-    public static JavacState load(Options options, PrintStream out, PrintStream err) {
+    public static JavacState load(Options options, Writer out, Writer err) {
         JavacState db = new JavacState(options, false, out, err);
         Module  lastModule = null;
         Package lastPackage = null;
@@ -527,7 +527,7 @@ public class JavacState {
      * Compare the javac_state recorded public apis of packages on the classpath
      * with the actual public apis on the classpath.
      */
-    public void taintPackagesDependingOnChangedClasspathPackages() {
+    public void taintPackagesDependingOnChangedClasspathPackages() throws IOException {
 
         // 1. Collect fully qualified names of all interesting classpath dependencies
         Set<String> fqDependencies = new HashSet<>();
@@ -549,6 +549,7 @@ public class JavacState {
         for (String cpDep : fqDependencies) {
             onDiskPubApi.put(cpDep, pubApiExtractor.getPubApi(cpDep));
         }
+        pubApiExtractor.close();
 
         // 3. Compare them with the public APIs as of last compilation (loaded from javac_state)
         nextPkg:

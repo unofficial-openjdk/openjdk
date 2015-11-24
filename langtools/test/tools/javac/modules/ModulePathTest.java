@@ -248,6 +248,6 @@ public class ModulePathTest extends ModuleTestBase {
     }
 
     private void jmod(Path dir, Path jmod) throws Exception {
-        jdk.tools.jmod.Main.run(new String[]{"create", "--class-path", dir.toString(), jmod.toString()}, System.out);
+        jdk.tools.jmod.Main.run(new String[]{"--create", "--class-path", dir.toString(), jmod.toString()}, System.out);
     }
 }

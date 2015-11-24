@@ -34,18 +34,28 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.ModuleElement.ProvidesDirective;
 import javax.lang.model.element.ModuleElement.UsesDirective;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.ElementScanner9;
 
 public class AnnotationProcessing extends ModuleTestBase {
 
@@ -67,7 +77,9 @@ public class AnnotationProcessing extends ModuleTestBase {
                           "package impl; public class Impl { }");
 
         String log = tb.new JavacTask()
-                .options("-modulesourcepath", moduleSrc.toString(), "-processor", AP.class.getName())
+                .options("-modulesourcepath", moduleSrc.toString(),
+                         "-processor", AP.class.getName(),
+                         "-AexpectedEnclosedElements=m1=>impl")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -97,7 +109,9 @@ public class AnnotationProcessing extends ModuleTestBase {
                           "package impl2; public class Impl2 { }");
 
         String log = tb.new JavacTask()
-                .options("-modulesourcepath", moduleSrc.toString(), "-processor", AP.class.getName())
+                .options("-modulesourcepath", moduleSrc.toString(),
+                         "-processor", AP.class.getName(),
+                         "-AexpectedEnclosedElements=m1=>impl1,m2=>impl2")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -109,10 +123,64 @@ public class AnnotationProcessing extends ModuleTestBase {
     }
 
     @SupportedAnnotationTypes("*")
+    @SupportedOptions("expectedEnclosedElements")
     public static final class AP extends AbstractProcessor {
+
+        private Map<String, List<String>> module2ExpectedEnclosedElements;
 
         @Override
         public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            if (module2ExpectedEnclosedElements == null) {
+                module2ExpectedEnclosedElements = new HashMap<>();
+
+                String expectedEnclosedElements =
+                        processingEnv.getOptions().get("expectedEnclosedElements");
+
+                for (String moduleDef : expectedEnclosedElements.split(",")) {
+                    String[] module2Packages = moduleDef.split("=>");
+
+                    module2ExpectedEnclosedElements.put(module2Packages[0],
+                                                        Arrays.asList(module2Packages[1].split(":")));
+                }
+            }
+
+            //verify ModuleType and ModuleSymbol behavior:
+            for (Element root : roundEnv.getRootElements()) {
+                ModuleElement module = processingEnv.getElementUtils().getModuleOf(root);
+
+                assertEquals(TypeKind.MODULE, module.asType().getKind());
+
+                boolean[] seenModule = new boolean[1];
+
+                module.accept(new ElementScanner9<Void, Void>() {
+                    @Override
+                    public Void visitModule(ModuleElement e, Void p) {
+                        seenModule[0] = true;
+                        return null;
+                    }
+                    @Override
+                    public Void scan(Element e, Void p) {
+                        throw new AssertionError("Shouldn't get here.");
+                    }
+                }, null);
+
+                assertEquals(true, seenModule[0]);
+
+                List<String> actualElements =
+                        module.getEnclosedElements()
+                              .stream()
+                              .map(s -> (PackageElement) s)
+                              .map(p -> p.getQualifiedName().toString())
+                              .collect(Collectors.toList());
+
+                assertEquals(module2ExpectedEnclosedElements.remove(module.getQualifiedName().toString()),
+                             actualElements);
+            }
+
+            if (roundEnv.processingOver()) {
+                assertEquals(true, module2ExpectedEnclosedElements.isEmpty());
+            }
+
             return false;
         }
 

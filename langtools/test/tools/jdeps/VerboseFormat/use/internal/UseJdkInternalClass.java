@@ -22,9 +22,9 @@
  */
 package use.internal;
 
-import sun.net.ProgressMonitor;
+import sun.security.x509.X509CertInfo;
 
 public class UseJdkInternalClass {
-    static ProgressMonitor monitor = ProgressMonitor.getDefault();
+    static X509CertInfo cert = new X509CertInfo();
 
 }

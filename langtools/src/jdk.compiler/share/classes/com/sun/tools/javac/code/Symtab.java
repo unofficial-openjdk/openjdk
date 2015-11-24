@@ -25,17 +25,14 @@
 
 package com.sun.tools.javac.code;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.lang.model.element.ElementVisitor;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
@@ -125,7 +122,7 @@ public class Symtab {
 
     /** A symbol for the root package.
      */
-    private final PackageSymbol rootPackage;
+    public final PackageSymbol rootPackage;
 
     /** A symbol that stands for a missing symbol.
      */
@@ -448,9 +445,14 @@ public class Symtab {
         Source source = Source.instance(context);
         Options options = Options.instance(context);
         boolean noModules = options.isSet("noModules");
-        java_base = source.allowModules() && !noModules //moved up here to avoid bootstraping issues related to DocEnv
-                ? enterModule(names.java_base)
-                : noModule;
+        if (source.allowModules() && !noModules) {
+            java_base = enterModule(names.java_base);
+            //avoid completing java.base during the Symtab initialization
+            java_base.completer = Completer.NULL_COMPLETER;
+            java_base.visiblePackages = Collections.emptySet();
+        } else {
+            java_base = noModule;
+        }
 
         // Get the initial completer for ModuleSymbols from Modules
         moduleCompleter = Modules.instance(context).getCompleter();
@@ -557,6 +559,10 @@ public class Symtab {
                            List.<Type>nil(), methodClass),
             arrayClass);
         arrayClass.members().enter(arrayCloneMethod);
+
+        if (java_base != noModule)
+            java_base.completer = sym -> moduleCompleter.complete(sym); //bootstrap issues
+
     }
 
     /** Define a new class given its name and owner.
@@ -601,24 +607,50 @@ public class Symtab {
             return msym.unnamedPackage;
         }
 
-        if (msym != noModule && msym != java_base) { //avoid completing java_base too early
-            msym.complete();
+        if (msym == noModule) {
+            return enterPackage(msym, flatName);
+        }
 
-            for (PackageSymbol pack : msym.visiblePackages) {
-                if (pack.fullname == flatName) {
-                    return pack;
-                }
+        msym.complete();
+
+        for (PackageSymbol pack : msym.visiblePackages) {
+            if (pack.fullname == flatName) {
+                return pack;
+            }
+        }
+
+        PackageSymbol pack = getPackage(msym, flatName);
+
+        if (pack != null && pack.exists())
+            return pack;
+
+        boolean dependsOnUnnamed = msym.requires != null &&
+                                   msym.requires.stream()
+                                                .map(rd -> rd.module)
+                                                .anyMatch(mod -> mod == unnamedModule);
+
+        if (dependsOnUnnamed) {
+            //msyms depends on the unnamed module, for which we generally don't know
+            //the list of packages it "exports" ahead of time. So try to lookup the package in the
+            //current module, and in the unnamed module and see if it exists in one of them
+            PackageSymbol unnamedPack = getPackage(unnamedModule, flatName);
+
+            if (unnamedPack != null && unnamedPack.exists())
+                return unnamedPack;
+
+            pack = enterPackage(msym, flatName);
+            pack.complete();
+            if (pack.exists())
+                return pack;
+
+            unnamedPack = enterPackage(unnamedModule, flatName);
+            unnamedPack.complete();
+            if (unnamedPack.exists()) {
+                msym.visiblePackages.add(unnamedPack);
+                return unnamedPack;
             }
 
-            if ((msym.flags() & AUTOMATIC_MODULE) != 0) {
-                //automatic modules depend on the unname module, for which we generally don't know
-                //the list of packages it "exports" ahead of time. So try to lookup the package in the
-                //unnamed module, and use it if it exists:
-                PackageSymbol pack = enterPackage(unnamedModule, flatName);
-                pack.complete();
-                if (pack.exists())
-                    return pack;
-            }
+            return pack;
         }
 
         return enterPackage(msym, flatName);
@@ -704,23 +736,19 @@ public class Symtab {
 
     private void doEnterPackage(ModuleSymbol msym, PackageSymbol pack) {
         packages.computeIfAbsent(pack.fullname, n -> new HashMap<>()).put(msym, pack);
+        msym.enclosedPackages = msym.enclosedPackages.prepend(pack);
     }
 
     private void addRootPackageFor(ModuleSymbol module) {
-        Completer completer = sym -> initialCompleter.complete(sym);
-        PackageSymbol moduleRootPackage = new PackageSymbol(names.empty, null);
-        moduleRootPackage.modle = module;
-        moduleRootPackage.completer = completer;
-        doEnterPackage(module, moduleRootPackage);
-        module.rootPackage = moduleRootPackage;
-        PackageSymbol unnamedPackage = new PackageSymbol(names.empty, moduleRootPackage) {
+        doEnterPackage(module, rootPackage);
+        PackageSymbol unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
                 @Override
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
                 }
             };
         unnamedPackage.modle = module;
-        unnamedPackage.completer = completer;
+        unnamedPackage.completer = sym -> initialCompleter.complete(sym);
         module.unnamedPackage = unnamedPackage;
     }
 

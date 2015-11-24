@@ -63,6 +63,11 @@ public enum StandardLocation implements Location {
     ANNOTATION_PROCESSOR_PATH,
 
     /**
+     * Location to search for modules containing annotation processors.
+     */
+    ANNOTATION_PROCESSOR_MODULE_PATH,
+
+    /**
      * Location to search for platform classes.  Sometimes called
      * the boot class path.
      */
@@ -132,6 +137,19 @@ public enum StandardLocation implements Location {
             case CLASS_OUTPUT:
             case SOURCE_OUTPUT:
             case NATIVE_HEADER_OUTPUT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public boolean isModuleLocation() {
+        switch (this) {
+            case ANNOTATION_PROCESSOR_MODULE_PATH:
+            case UPGRADE_MODULE_PATH:
+            case SYSTEM_MODULE_PATH:
+            case MODULE_PATH:
                 return true;
             default:
                 return false;

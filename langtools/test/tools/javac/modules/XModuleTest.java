@@ -231,4 +231,68 @@ public class XModuleTest extends ModuleTestBase {
             throw new Exception("expected output not found: " + log);
     }
 
+    @Test
+    void testWithModulePath(Path base) throws Exception {
+        Path module = base.resolve("modules");
+        new ModuleBuilder("m1")
+                .classes("package pkg1; public interface E { }")
+                .build(module);
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "package p; interface A extends pkg1.E { }");
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-modulepath", module.toString(),
+                        "-Xmodule:m1")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+
+        //checks module bounds still exist
+        new ModuleBuilder("m2")
+                .classes("package pkg2; public interface D { }")
+                .build(module);
+
+        Path src2 = base.resolve("src2");
+        tb.writeJavaFiles(src2, "package p; interface A extends pkg2.D { }");
+
+        List<String> log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-XDrawDiagnostics",
+                        "-modulepath", module.toString(),
+                        "-Xmodule:m1")
+                .files(findJavaFiles(src2))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList("A.java:1:36: compiler.err.doesnt.exist: pkg2",
+                "1 error");
+
+        if (!expected.equals(log))
+            throw new Exception("expected output not found: " + log);
+    }
+
+    @Test
+    void testWithUpgradeModulePath(Path base) throws Exception {
+        Path module = base.resolve("modules");
+        new ModuleBuilder("m1")
+                .classes("package pkg1; public interface E { }")
+                .build(module);
+
+        Path upgrade = base.resolve("upgrade");
+        new ModuleBuilder("m1")
+                .classes("package pkg1; public interface D { }")
+                .build(upgrade);
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "package p; interface A extends pkg1.D { }");
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-modulepath", module.toString(),
+                        "-upgrademodulepath", upgrade.toString(),
+                        "-Xmodule:m1")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
 }

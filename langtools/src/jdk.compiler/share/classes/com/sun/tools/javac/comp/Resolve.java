@@ -299,6 +299,13 @@ public class Resolve {
     }
 
     public boolean isAccessible(Env<AttrContext> env, TypeSymbol c, boolean checkInner) {
+
+        /* 15.9.5.1: Note that it is possible for the signature of the anonymous constructor
+           to refer to an inaccessible type
+        */
+        if (env.enclMethod != null && (env.enclMethod.mods.flags & ANONCONSTR) != 0)
+            return true;
+
         boolean isAccessible = false;
         switch ((short)(c.flags() & AccessFlags)) {
             case PRIVATE:
@@ -310,17 +317,21 @@ public class Resolve {
                 isAccessible =
                     env.toplevel.packge == c.owner // fast special case
                     ||
-                    env.toplevel.packge == c.packge()
-                    ||
-                    // Hack: this case is added since synthesized default constructors
-                    // of anonymous classes should be allowed to access
-                    // classes which would be inaccessible otherwise.
-                    env.enclMethod != null &&
-                    (env.enclMethod.mods.flags & ANONCONSTR) != 0;
+                    env.toplevel.packge == c.packge();
                 break;
             default: // error recovery
+                isAccessible = true;
+                break;
             case PUBLIC:
                 isAccessible = true;
+                if (allowModules && checkModuleAccess) {
+                    ModuleSymbol currModule = env.toplevel.modle;
+                    PackageSymbol p = c.packge();
+                    isAccessible =
+                        (currModule == p.modle) || currModule.visiblePackages.contains(p);
+                } else {
+                    isAccessible = true;
+                }
                 break;
             case PROTECTED:
                 isAccessible =
@@ -370,6 +381,13 @@ public class Resolve {
     }
     public boolean isAccessible(Env<AttrContext> env, Type site, Symbol sym, boolean checkInner) {
         if (sym.name == names.init && sym.owner != site.tsym) return false;
+
+        /* 15.9.5.1: Note that it is possible for the signature of the anonymous constructor
+           to refer to an inaccessible type
+        */
+        if (env.enclMethod != null && (env.enclMethod.mods.flags & ANONCONSTR) != 0)
+            return true;
+
         switch ((short)(sym.flags() & AccessFlags)) {
         case PRIVATE:
             return
@@ -597,7 +615,8 @@ public class Resolve {
         MethodResolutionContext prevContext = currentResolutionContext;
         try {
             currentResolutionContext = new MethodResolutionContext();
-            currentResolutionContext.attrMode = DeferredAttr.AttrMode.CHECK;
+            currentResolutionContext.attrMode = (resultInfo.pt == Infer.anyPoly) ?
+                    AttrMode.SPECULATIVE : DeferredAttr.AttrMode.CHECK;
             if (env.tree.hasTag(JCTree.Tag.REFERENCE)) {
                 //method/constructor references need special check class
                 //to handle inference variables in 'argtypes' (might happen
@@ -1041,6 +1060,11 @@ public class Resolve {
         protected ResultInfo dup(CheckContext newContext) {
             return new MethodResultInfo(pt, newContext);
         }
+
+        @Override
+        protected ResultInfo dup(Type newPt, CheckContext newContext) {
+            return new MethodResultInfo(newPt, newContext);
+        }
     }
 
     /**
@@ -1101,10 +1125,9 @@ public class Resolve {
                         unrelatedFunctionalInterfaces(found, req) &&
                         (actual != null && actual.getTag() == DEFERRED)) {
                     DeferredType dt = (DeferredType) actual;
-                    DeferredType.SpeculativeCache.Entry e =
-                            dt.speculativeCache.get(deferredAttrContext.msym, deferredAttrContext.phase);
-                    if (e != null && e.speculativeTree != deferredAttr.stuckTree) {
-                        return functionalInterfaceMostSpecific(found, req, e.speculativeTree);
+                    JCTree speculativeTree = dt.speculativeTree(deferredAttrContext);
+                    if (speculativeTree != deferredAttr.stuckTree) {
+                        return functionalInterfaceMostSpecific(found, req, speculativeTree);
                     }
                 }
                 return compatibleBySubtyping(found, req);
@@ -1156,8 +1179,8 @@ public class Resolve {
 
                 @Override
                 public void visitConditional(JCConditional tree) {
-                    scan(tree.truepart);
-                    scan(tree.falsepart);
+                    scan(asExpr(tree.truepart));
+                    scan(asExpr(tree.falsepart));
                 }
 
                 @Override
@@ -1186,6 +1209,11 @@ public class Resolve {
                             result &= compatibleBySubtyping(ret_t, ret_s);
                         }
                     }
+                }
+
+                @Override
+                public void visitParens(JCParens tree) {
+                    scan(asExpr(tree.expr));
                 }
 
                 @Override
@@ -1223,7 +1251,7 @@ public class Resolve {
 
                 private List<JCExpression> lambdaResults(JCLambda lambda) {
                     if (lambda.getBodyKind() == JCTree.JCLambda.BodyKind.EXPRESSION) {
-                        return List.of((JCExpression) lambda.body);
+                        return List.of(asExpr((JCExpression) lambda.body));
                     } else {
                         final ListBuffer<JCExpression> buffer = new ListBuffer<>();
                         DeferredAttr.LambdaReturnScanner lambdaScanner =
@@ -1231,13 +1259,23 @@ public class Resolve {
                                     @Override
                                     public void visitReturn(JCReturn tree) {
                                         if (tree.expr != null) {
-                                            buffer.append(tree.expr);
+                                            buffer.append(asExpr(tree.expr));
                                         }
                                     }
                                 };
                         lambdaScanner.scan(lambda.body);
                         return buffer.toList();
                     }
+                }
+
+                private JCExpression asExpr(JCExpression expr) {
+                    if (expr.type.hasTag(DEFERRED)) {
+                        JCTree speculativeTree = ((DeferredType)expr.type).speculativeTree(deferredAttrContext);
+                        if (speculativeTree != deferredAttr.stuckTree) {
+                            expr = (JCExpression)speculativeTree;
+                        }
+                    }
+                    return expr;
                 }
             }
 
@@ -1445,6 +1483,7 @@ public class Resolve {
         }
         Assert.check(!sym.kind.isResolutionError());
         try {
+            types.noWarnings.clear();
             Type mt = rawInstantiate(env, site, sym, null, argtypes, typeargtypes,
                                allowBoxing, useVarargs, types.noWarnings);
             currentResolutionContext.addApplicableCandidate(sym, mt);
@@ -2425,7 +2464,9 @@ public class Resolve {
                 return spMethod;
             }
         };
-        polymorphicSignatureScope.enter(msym);
+        if (!mtype.isErroneous()) { // Cache only if kosher.
+            polymorphicSignatureScope.enter(msym);
+        }
         return msym;
     }
 
@@ -3204,8 +3245,7 @@ public class Resolve {
                 findDiamond(env, site, argtypes, typeargtypes, phase.isBoxingRequired(), phase.isVarargsRequired()) :
                 findMethod(env, site, name, argtypes, typeargtypes,
                         phase.isBoxingRequired(), phase.isVarargsRequired());
-            return site.getEnclosingType().hasTag(CLASS) && !hasEnclosingInstance(env, site) ?
-                        new BadConstructorReferenceError(sym) : sym;
+            return enclosingInstanceMissing(env, site) ? new BadConstructorReferenceError(sym) : sym;
         }
 
         @Override
@@ -3338,9 +3378,12 @@ public class Resolve {
         }
     }
 
-    boolean hasEnclosingInstance(Env<AttrContext> env, Type type) {
-        Symbol encl = resolveSelfContainingInternal(env, type.tsym, false);
-        return encl != null && !encl.kind.isResolutionError();
+    boolean enclosingInstanceMissing(Env<AttrContext> env, Type type) {
+        if (type.hasTag(CLASS) && type.getEnclosingType().hasTag(CLASS)) {
+            Symbol encl = resolveSelfContainingInternal(env, type.tsym, false);
+            return encl == null || encl.kind.isResolutionError();
+        }
+        return false;
     }
 
     private Symbol resolveSelfContainingInternal(Env<AttrContext> env,

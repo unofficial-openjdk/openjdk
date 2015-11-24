@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,6 +69,11 @@ import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import com.sun.tools.javac.util.ModuleWrappers.Configuration;
+import com.sun.tools.javac.util.ModuleWrappers.Layer;
+import com.sun.tools.javac.util.ModuleWrappers.ModuleClassLoader;
+import com.sun.tools.javac.util.ModuleWrappers.ModuleFinder;
+import com.sun.tools.javac.util.ModuleWrappers.ServiceLoaderHelper;
 
 import static javax.tools.StandardLocation.*;
 
@@ -940,7 +946,23 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         nullCheck(location);
         nullCheck(moduleName);
         return locations.getModuleLocation(location, moduleName);
+    }
 
+    @Override @DefinedBy(Api.COMPILER)
+    public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws IOException {
+        nullCheck(location);
+        nullCheck(service);
+        if (location.isModuleLocation()) {
+            Collection<Path> paths = locations.getLocation(location);
+            ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
+            Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+            cf = cf.bind();
+            ModuleClassLoader cl = new ModuleClassLoader(cf);
+            Layer layer = Layer.create(cf, cl);
+            return ServiceLoaderHelper.load(layer, service);
+        } else {
+            return ServiceLoader.load(service, getClassLoader(location));
+        }
     }
 
     @Override @DefinedBy(Api.COMPILER)

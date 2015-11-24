@@ -983,7 +983,11 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = c.modle;
 
         int alenIdx = writeAttr(names.Module);
-        List<RequiresDirective> requires = m.requires;
+        ListBuffer<RequiresDirective> requires = new ListBuffer<>();
+        for (RequiresDirective r: m.requires) {
+            if (!r.flags.contains(RequiresFlag.EXTRA))
+                requires.add(r);
+        }
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
             databuf.appendChar(pool.put(r.module.name));
@@ -1164,8 +1168,10 @@ public class ClassWriter extends ClassFile {
             endAttr(alenIdx);
             acount++;
         }
-        if (options.isSet(PARAMETERS))
-            acount += writeMethodParametersAttr(m);
+        if (options.isSet(PARAMETERS)) {
+            if (!m.isLambdaMethod()) // Per JDK-8138729, do not emit parameters table for lambda bodies.
+                acount += writeMethodParametersAttr(m);
+        }
         acount += writeMemberAttrs(m);
         acount += writeParameterAttrs(m);
         endAttrs(acountIdx, acount);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -135,22 +135,22 @@
         <path>
             <pathelement path="${langtools.modules}" />
         </path>
-        <map from="${basedir}/" to="${build.dir}/" />
-        <mapper type="glob" from="*" to="*/gensrc"/>
+        <map from="${basedir}/" to="${build.dir}/gensrc/" />
+        <mapper type="glob" from="*" to="*"/>
     </pathconvert>
     <pathconvert property="langtools.boot.classes">
         <path>
             <pathelement path="${langtools.modules}" />
         </path>
-        <map from="${basedir}/" to="${boot.build.dir}/" />
-        <mapper type="glob" from="*" to="*/classes"/>
+        <map from="${basedir}/" to="${boot.build.dir}/classes/" />
+        <mapper type="glob" from="*" to="*"/>
     </pathconvert>
     <pathconvert property="langtools.classes">
         <path>
             <pathelement path="${langtools.modules}" />
         </path>
-        <map from="${basedir}/" to="${build.dir}/" />
-        <mapper type="glob" from="*" to="*/classes"/>
+        <map from="${basedir}/" to="${build.dir}/classes/" />
+        <mapper type="glob" from="*" to="*"/>
     </pathconvert>
 
     <!--
@@ -172,6 +172,7 @@
         <build-tool name="javap"/>
         <build-tool name="javah"/>
         <build-tool name="sjavac"/>
+        <build-tool name="jshell"/>
     </target>
 
     <target name="build-all-classes" depends="-def-build-all-module-classes,build-bootstrap-javac-classes">
@@ -320,7 +321,9 @@
                debuglevel="${javac.debuglevel}">
             <compilerarg value="-implicit:none"/>
             <compilerarg value="-Xprefer:source"/>
-            <compilerarg value="-J-Xbootclasspath/p:${build.bootstrap.dir}/classes"/>
+            <compilerarg value="-J-Xbootclasspath/p:${langtools.boot.classes}"/>
+            <compilerarg value="-systemmodulepath"/>
+            <compilerarg value="${target.java.home}"/>
             <compilerarg line="${javac.extra.opts}"/>
             <compilerarg line="-Xdoclint:all/protected,-missing"/>
             <src>
@@ -417,10 +420,14 @@
         <copy todir=".idea" >
             <fileset dir="make/intellij" excludes="**/src/**"/>
         </copy>
-        <condition property="jtreg.idea.home" value="${jtreg.home}" else = "[jtreg.home]">
+        <condition property="idea.jtreg.home" value="${jtreg.home}" else = "[jtreg.home]">
             <isset property="jtreg.home"/>
         </condition>
-        <replace file=".idea/ant.xml" token="@@@" value="${jtreg.idea.home}"/>
+        <condition property="idea.target.jdk" value="${target.java.home}" else = "$JDKPath$">
+            <isset property="target.java.home"/>
+        </condition>
+        <replace file=".idea/ant.xml" token="@IDEA_JTREG_HOME@" value="${idea.jtreg.home}"/>
+        <replace file=".idea/ant.xml" token="@IDEA_TARGET_JDK@" value="${idea.target.jdk}"/>
         <replace file=".idea/workspace.xml" token="@FILE_SEP@" value="${file.separator}"/>
         <replace file=".idea/workspace.xml" token="@PATH_SEP@" value="${path.separator}"/>
         <mkdir dir=".idea/classes"/>
@@ -464,6 +471,9 @@
                 <build-module-jar module.name="jdk.compiler" compilation.kind="@{compilation.kind}" />
                 <build-module-jar module.name="jdk.javadoc" compilation.kind="@{compilation.kind}" />
                 <build-module-jar module.name="jdk.jdeps" compilation.kind="@{compilation.kind}" />
+                <build-module-jar module.name="jdk.internal.le" compilation.kind="@{compilation.kind}" />
+                <build-module-jar module.name="jdk.jdi" compilation.kind="@{compilation.kind}" />
+                <build-module-jar module.name="jdk.jshell" compilation.kind="@{compilation.kind}" />
             </sequential>
         </macrodef>
     </target>
@@ -475,23 +485,13 @@
             <attribute name="dependencies" default="${@{compilation.kind}@{module.name}.dependencies}"/>
             <attribute name="build.dir" default="${@{compilation.kind}build.dir}"/>
             <attribute name="lib.dir" default="${@{compilation.kind}dist.lib.dir}"/>
-            <attribute name="classes.dir" default="@{build.dir}/@{module.name}/classes"/>
+            <attribute name="classes.dir" default="@{build.dir}/classes/@{module.name}"/>
             <sequential>
-                <mkdir dir="@{lib.dir}"/>
-                <local name="jarclasspath" />
-                <pathconvert property="jarclasspath">
-                    <path>
-                        <pathelement path="@{dependencies}" />
-                    </path>
-                    <map from="${basedir}/" to="" />
-                    <mapper type="glob" from="*" to="*.jar"/>
-                </pathconvert>
-                <jar destfile="@{lib.dir}/@{module.name}.jar"
-                     basedir="@{classes.dir}">
-                    <manifest>
-                        <attribute name="Class-Path" value="@{jarclasspath}"/>
-                    </manifest>
-                </jar>
+                <!-- -Xoverride requires expanded modules; jars wouldn't work -->
+                <mkdir dir="@{lib.dir}/@{module.name}"/>
+                <copy todir="@{lib.dir}/@{module.name}">
+                    <fileset dir="@{build.dir}/classes/@{module.name}"/>
+                </copy>
             </sequential>
         </macrodef>
     </target>
@@ -502,11 +502,12 @@
             <attribute name="compilation.kind" default=""/>
             <attribute name="bin.dir" default="${@{compilation.kind}dist.bin.dir}"/>
             <attribute name="java" default="${launcher.java}"/>
+            <attribute name="main.class" default="${tool.@{name}.main.class}"/>
             <sequential>
                 <mkdir dir="@{bin.dir}"/>
                 <copy file="${make.dir}/launcher.sh-template" tofile="@{bin.dir}/@{name}">
                     <filterset begintoken="#" endtoken="#">
-                        <filter token="PROGRAM" value="@{name}"/>
+                        <filter token="PROGRAM" value="@{main.class}"/>
                         <filter token="TARGET_JAVA" value="@{java}"/>
                         <filter token="PS" value="${path.separator}"/>
                     </filterset>
@@ -529,11 +530,17 @@
                                       compilation.kind="@{compilation.kind}" />
                 <build-module-classes module.name="jdk.jdeps"
                                       compilation.kind="@{compilation.kind}" />
+                <copy-module-classes  module.name="jdk.internal.le"
+                                      compilation.kind="@{compilation.kind}" />
+                <copy-module-classes  module.name="jdk.jdi"
+                                      compilation.kind="@{compilation.kind}" />
+                <build-module-classes module.name="jdk.jshell"
+                                      compilation.kind="@{compilation.kind}" />
             </sequential>
         </macrodef>
     </target>
 
-    <target name="-def-build-module-classes" depends="-def-pcompile,-def-pparse">
+    <target name="-def-build-module-classes" depends="-def-pcompile,-def-pparse,-def-cdumper">
         <macrodef name="build-module-classes">
             <attribute name="module.name"/>
             <attribute name="compilation.kind" default=""/>
@@ -544,9 +551,9 @@
             <attribute name="javac.extra.opts" default="${@{compilation.kind}javac.extra.opts}"/>
             <attribute name="build.dir" default="${@{compilation.kind}build.dir}"/>
             <attribute name="excludes" default="${exclude.files} **/package-info.java"/>
-            <attribute name="classes.dir" default="@{build.dir}/@{module.name}/classes"/>
-            <attribute name="gensrc.dir" default="@{build.dir}/@{module.name}/gensrc"/>
-            <attribute name="depcache.dir" default="@{build.dir}/@{module.name}/depcache"/>
+            <attribute name="classes.dir" default="@{build.dir}/classes/@{module.name}"/>
+            <attribute name="gensrc.dir" default="@{build.dir}/gensrc/@{module.name}"/>
+            <attribute name="depcache.dir" default="@{build.dir}/depcache/@{module.name}"/>
             <attribute name="java.home" default="${boot.java.home}"/>
             <attribute name="source" default="${@{compilation.kind}javac.source}"/>
             <attribute name="target" default="${@{compilation.kind}javac.target}"/>
@@ -565,11 +572,19 @@
                     <path>
                         <pathelement path="@{dependencies}" />
                     </path>
-                    <map from="${basedir}/" to="@{build.dir}/" />
-                    <mapper type="glob" from="*" to="*/classes"/>
+                    <map from="${basedir}/" to="@{build.dir}/classes/" />
+                    <mapper type="glob" from="*" to="*"/>
                 </pathconvert>
                 <local name="bootclasspath.prepend"/>
                 <condition property="bootclasspath.prepend" value="" else="${langtools.boot.classes}">
+                    <equals arg1="@{compilation.kind}" arg2="boot."/>
+                </condition>
+                <local name="override.or.prepend"/>
+                <condition property="override.or.prepend" value="-Xbootclasspath/p:${classpath}" else="-Xoverride:@{build.dir}/classes">
+                    <equals arg1="@{compilation.kind}" arg2="boot."/>
+                </condition>
+                <local name="sys.path"/>
+                <condition property="sys.path" value="" else="-systemmodulepath ${target.java.home}">
                     <equals arg1="@{compilation.kind}" arg2="boot."/>
                 </condition>
                 <mkdir dir="@{classes.dir}"/>
@@ -622,9 +637,10 @@
                        debug="${javac.debug}"
                        debuglevel="${javac.debuglevel}">
                     <compilerarg value="-implicit:none"/>
+                    <compilerarg line="${sys.path}"/>
                     <compilerarg value="-Xprefer:source"/>
                     <compilerarg value="-J-Xbootclasspath/p:${bootclasspath.prepend}"/>
-                    <compilerarg value="-Xbootclasspath/p:${classpath}"/>
+                    <compilerarg value="${override.or.prepend}"/>
                     <compilerarg line="@{javac.extra.opts}"/>
                     <compilerarg line="@{javac.lint.opts}"/>
                     <compilerarg line="@{plugin.options}"/>
@@ -644,6 +660,18 @@
                         <exclude name="**/package.html"/>
                     </fileset>
                 </copy>
+            </sequential>
+        </macrodef>
+        <macrodef name="copy-module-classes">
+            <attribute name="module.name"/>
+            <attribute name="compilation.kind" default=""/>
+            <attribute name="build.dir" default="${@{compilation.kind}build.dir}"/>
+            <attribute name="classes.dir" default="@{build.dir}/@{module.name}/classes"/>
+            <attribute name="java.home" default="${boot.java.home}"/>
+            <sequential>
+                <property name="classes.origin.dir" location="${target.java.home}/../../jdk/modules/@{module.name}"/>
+                <mkdir dir="@{classes.dir}"/>
+                <dumpclasses moduleName="@{module.name}" destDir="@{classes.dir}" />
             </sequential>
         </macrodef>
     </target>
@@ -668,6 +696,25 @@
         <taskdef name="pparse"
                  classname="anttasks.PropertiesParserTask"
                  classpath="${build.toolclasses.dir}/"/>
+    </target>
+
+    <target name="-def-cdumper">
+        <mkdir dir="${build.toolclasses.dir}"/>
+        <javac fork="true"
+               source="${boot.javac.source}"
+               target="${boot.javac.target}"
+               executable="${boot.java.home}/bin/javac"
+               srcdir="${make.tools.dir}"
+               includes="anttasks/DumpClass*"
+               destdir="${build.toolclasses.dir}/"
+               classpath="${ant.core.lib}"
+               bootclasspath="${boot.java.home}/jre/lib/rt.jar"
+               includeantruntime="false">
+            <compilerarg line="${javac.lint.opts}"/>
+        </javac>
+        <taskdef name="dumpclasses"
+                 classname="anttasks.DumpClassesTask"
+                 classpath="${build.toolclasses.dir}/:${target.java.home}/jrt-fs.jar"/>
     </target>
 
     <target name="-do-depend" if="do.depend">
@@ -759,7 +806,7 @@
             <attribute name="tests"/>
             <attribute name="langtools.classes" default="${langtools.classes}"/>
             <attribute name="jdk" default="${target.java.home}"/>
-            <attribute name="samevm" default="true"/>
+            <attribute name="agentvm" default="true"/>
             <attribute name="verbose" default="${default.jtreg.verbose}"/>
             <attribute name="options" default="${other.jtreg.options}"/>
             <attribute name="keywords" default="-keywords:!ignore"/>
@@ -771,15 +818,27 @@
                 <property name="coverage.classpath" value=""/>            <!-- default -->
                 <property name="default.jtreg.verbose" value="summary"/>  <!-- default -->
                 <property name="other.jtreg.options" value=""/>           <!-- default -->
+                <property name="jtreg.classfiles.to.modules" value="@{agentvm}" />
+                <!-- XXX: only one -Xoverride parameter allowed by VM, copy the langtools classes into a place
+                     where jtreg expects it:-->
+                <antcall target="-copy-classfiles-to-jtreg-modules" inheritAll="true" inheritRefs="true">
+                    <param name="target.dir" location="${build.jtreg.dir}/@{name}/work/modules" />
+                </antcall>
+                <local name="extra.jtreg.options" />
+                <condition property="extra.jtreg.options" value="" else="-Xoverride:@{build.dir}/classes">
+                    <equals arg1="@{compilation.kind}" arg2="boot."/>
+                </condition>
                 <jtreg
                     dir="${test.dir}"
                     workDir="${build.jtreg.dir}/@{name}/work"
                     reportDir="${build.jtreg.dir}/@{name}/report"
                     jdk="@{jdk}"
-                    samevm="@{samevm}" verbose="@{verbose}"
+                    agentvm="@{agentvm}" verbose="@{verbose}"
                     failonerror="false" resultproperty="jtreg.@{name}.result"
-                    javacoptions="-g"
-                    vmoptions="${coverage.options} -Xbootclasspath/p:${coverage.classpath}${path.separator}@{langtools.classes} @{jpda.jvmargs} @{extra.jvmargs}">
+                    javacoptions="-g ${extra.jtreg.options}"
+                    vmoptions="${coverage.options} @{extra.jvmargs}">
+                    <arg line="-exclude:${basedir}/test/ProblemList.jake.txt"/>
+                    <arg value="-debug:@{jpda.jvmargs}"/>
                     <arg line="@{keywords}"/>
                     <arg line="@{options}"/>
                     <arg line="@{tests}"/>
@@ -793,6 +852,12 @@
             </sequential>
         </macrodef>
         <property name="jtreg.defined" value="true"/>
+    </target>
+
+    <target name="-copy-classfiles-to-jtreg-modules" if="jtreg.classfiles.to.modules" >
+        <copy todir="${target.dir}">
+            <fileset dir="${build.dir}/classes/" />
+        </copy>
     </target>
 
     <target name="-def-checkstyle" unless="checkstyle.defined" depends="-check-checkstyle.home">

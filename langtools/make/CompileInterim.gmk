@@ -44,7 +44,7 @@ define SetupInterimModule
       SETUP := BOOT_JAVAC, \
       DISABLE_SJAVAC := true, \
       SRC := $(LANGTOOLS_TOPDIR)/src/$(strip $1)/share/classes \
-          $$(wildcard $(GENSRC_OUTPUTDIR)/$(strip $1)), \
+          $$(wildcard $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
       EXCLUDES := sun jdk, \
       EXCLUDE_FILES := module-info.java, \
       COPY := .gif .xml .css .js javax.tools.JavaCompilerTool, \

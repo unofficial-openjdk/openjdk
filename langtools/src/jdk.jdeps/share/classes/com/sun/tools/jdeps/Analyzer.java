@@ -25,13 +25,18 @@
 package com.sun.tools.jdeps;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,7 +69,7 @@ public class Analyzer {
     protected final Filter filter;
     protected final Map<Archive, ArchiveDeps> results = new HashMap<>();
     protected final Map<Location, Archive> map = new HashMap<>();
-    private static final Archive NOT_FOUND
+    static final Archive NOT_FOUND
         = new Archive(JdepsTask.getMessage("artifact.not.found"));
 
     /**
@@ -81,14 +86,28 @@ public class Analyzer {
     /**
      * Performs the dependency analysis on the given archives.
      */
-    public boolean run(List<Archive> archives) {
+    public boolean run(List<Archive> archives, boolean showModuleRequires) {
         // build a map from Location to Archive
         buildLocationArchiveMap(archives);
 
+        Map<String, Module> moduleMap = archives.stream()
+                .filter(a -> Module.class.isInstance(a))
+                .map(a -> (Module)a)
+                .collect(Collectors.toMap(Module::getName, Function.identity()));
         // traverse and analyze all dependencies
         for (Archive archive : archives) {
             ArchiveDeps deps = new ArchiveDeps(archive, type);
             archive.visitDependences(deps);
+
+            // If it's a module, add its requires
+            // ## TODO: should add requires for runtime view by default
+            // update the tests
+            if (showModuleRequires && Module.class.isInstance(archive)) {
+                for (String req : ((Module)archive).requires().keySet()) {
+                    Module m = moduleMap.get(req);
+                    deps.requires().add(m);
+                }
+            }
             results.put(archive, deps);
         }
         return true;
@@ -115,10 +134,36 @@ public class Analyzer {
     }
 
     public Set<String> dependences(Archive source) {
+        if (!results.containsKey(source)) {
+            return Collections.emptySet();
+        }
         ArchiveDeps result = results.get(source);
         return result.dependencies().stream()
                      .map(Dep::target)
                      .collect(Collectors.toSet());
+    }
+    public Set<Archive> archiveDependences(Archive source) {
+        if (!results.containsKey(source)) {
+            return Collections.emptySet();
+        }
+        ArchiveDeps result = results.get(source);
+        return result.requires();
+    }
+
+    public List<Archive> transitiveClosure(List<Archive> archives) {
+        List<Archive> transitiveDeps = new ArrayList<>(archives);
+        Deque<Archive> deque = new LinkedList<>();
+        archives.stream()
+                .map(this::archiveDependences)
+                .forEach(deque::addAll);
+        Archive source;
+        while ((source = deque.poll()) != null) {
+            if (transitiveDeps.contains(source))
+                continue;
+            transitiveDeps.add(source);
+            deque.addAll(archiveDependences(source));
+        }
+        return transitiveDeps;
     }
 
     public interface Visitor {

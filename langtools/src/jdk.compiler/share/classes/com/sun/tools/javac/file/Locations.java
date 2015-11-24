@@ -1386,6 +1386,7 @@ public class Locations {
             new ClassPathLocationHandler(),
             new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCEPATH),
             new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSORPATH),
+            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH, Option.PROCESSORMODULEPATH),
             new OutputLocationHandler(StandardLocation.CLASS_OUTPUT, Option.D),
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
@@ -1409,6 +1410,7 @@ public class Locations {
     boolean handleOption(Option option, String value) {
         switch (option) {
             case XOVERRIDE:
+            case XPATCH:
                 moduleOverrideSearchPath = new SearchPath().addFiles(value);
                 return true;
             default:

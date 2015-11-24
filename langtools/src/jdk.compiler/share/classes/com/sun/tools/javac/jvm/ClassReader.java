@@ -2544,13 +2544,15 @@ public class ClassReader {
                 c.setAnnotationTypeMetadata(AnnotationTypeMetadata.notAnAnnotationType());
             }
 
-            if (interimUses.nonEmpty() || interimProvides.nonEmpty()) {
-                Assert.check(currentModule.isCompleted());
-                currentModule.completer =
-                        new UsesProvidesCompleter(currentModule, interimUses, interimProvides);
-            } else {
-                currentModule.uses = List.nil();
-                currentModule.provides = List.nil();
+            if (c == currentModule.module_info) {
+                if (interimUses.nonEmpty() || interimProvides.nonEmpty()) {
+                    Assert.check(currentModule.isCompleted());
+                    currentModule.usesProvidesCompleter =
+                            new UsesProvidesCompleter(currentModule, interimUses, interimProvides);
+                } else {
+                    currentModule.uses = List.nil();
+                    currentModule.provides = List.nil();
+                }
             }
         } catch (IOException ex) {
             throw badClassFile("unable.to.access.file", ex.getMessage());

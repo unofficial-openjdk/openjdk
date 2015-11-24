@@ -152,4 +152,75 @@ public class AutomaticModules extends ModuleTestBase {
                 .getOutput(ToolBox.OutputKind.DIRECT);
     }
 
+    @Test
+    void testModuleInfoFromClassFileDependsOnAutomatic(Path base) throws Exception {
+        Path automaticSrc = base.resolve("automaticSrc");
+        tb.writeJavaFiles(automaticSrc, "package api; public class Api {}");
+        Path automaticClasses = base.resolve("automaticClasses");
+        tb.createDirectories(automaticClasses);
+
+        String automaticLog = tb.new JavacTask()
+                                .outdir(automaticClasses)
+                                .files(findJavaFiles(automaticSrc))
+                                .run()
+                                .writeAll()
+                                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!automaticLog.isEmpty())
+            throw new Exception("expected output not found: " + automaticLog);
+
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        Path automaticJar = modulePath.resolve("automatic-1.0.jar");
+
+        tb.new JarTask(automaticJar)
+          .baseDir(automaticClasses)
+          .files("api/Api.class")
+          .run();
+
+        Path depSrc = base.resolve("depSrc");
+        Path depClasses = base.resolve("depClasses");
+
+        Files.createDirectories(depSrc);
+        Files.createDirectories(depClasses);
+
+        tb.writeJavaFiles(depSrc,
+                          "module m1 { requires public automatic; }",
+                          "package dep; public class Dep { api.Api api; }");
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString())
+                .outdir(depClasses)
+                .files(findJavaFiles(depSrc))
+                .run()
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        Path moduleJar = modulePath.resolve("m1.jar");
+
+        tb.new JarTask(moduleJar)
+          .baseDir(depClasses)
+          .files("module-info.class", "dep/Dep.class")
+          .run();
+
+        Path testSrc = base.resolve("testSrc");
+        Path testClasses = base.resolve("testClasses");
+
+        Files.createDirectories(testSrc);
+        Files.createDirectories(testClasses);
+
+        tb.writeJavaFiles(testSrc,
+                          "module m2 { requires automatic; }",
+                          "package test; public class Test { }");
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString())
+                .outdir(testClasses)
+                .files(findJavaFiles(testSrc))
+                .run()
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+    }
 }

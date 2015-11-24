@@ -1495,10 +1495,10 @@ public class Types {
                     }
                 }
 
-                if (t.isIntersection() || s.isIntersection()) {
-                    return !t.isIntersection() ?
-                            visitIntersectionType((IntersectionClassType)s, t, true) :
-                            visitIntersectionType((IntersectionClassType)t, s, false);
+                if (t.isCompound() || s.isCompound()) {
+                    return !t.isCompound() ?
+                            visitCompoundType((ClassType)s, t, true) :
+                            visitCompoundType(t, s, false);
                 }
 
                 if (s.hasTag(CLASS) || s.hasTag(ARRAY)) {
@@ -1576,9 +1576,9 @@ public class Types {
                 return false;
             }
 
-            boolean visitIntersectionType(IntersectionClassType ict, Type s, boolean reverse) {
+            boolean visitCompoundType(ClassType ct, Type s, boolean reverse) {
                 Warner warn = noWarnings;
-                for (Type c : ict.getComponents()) {
+                for (Type c : directSupertypes(ct)) {
                     warn.clear();
                     if (reverse ? !isCastable(s, c, warn) : !isCastable(c, s, warn))
                         return false;
@@ -2399,14 +2399,9 @@ public class Types {
                         ? interfaces(type)
                         : interfaces(type).prepend(sup);
                 } else {
-                    return visitIntersectionType((IntersectionClassType) type);
+                    return ((IntersectionClassType)type).getExplicitComponents();
                 }
             }
-
-            private List<Type> visitIntersectionType(final IntersectionClassType it) {
-                return it.getExplicitComponents();
-            }
-
         };
 
     public boolean isDirectSuperInterface(TypeSymbol isym, TypeSymbol origin) {
@@ -3152,10 +3147,20 @@ public class Types {
                 throw new IllegalArgumentException("Not a method type: " + t);
             }
             public Type visitMethodType(MethodType t, Type newReturn) {
-                return new MethodType(t.argtypes, newReturn, t.thrown, t.tsym);
+                return new MethodType(t.argtypes, newReturn, t.thrown, t.tsym) {
+                    @Override
+                    public Type baseType() {
+                        return t;
+                    }
+                };
             }
             public Type visitForAll(ForAll t, Type newReturn) {
-                return new ForAll(t.tvars, t.qtype.accept(this, newReturn));
+                return new ForAll(t.tvars, t.qtype.accept(this, newReturn)) {
+                    @Override
+                    public Type baseType() {
+                        return t;
+                    }
+                };
             }
         };
 
@@ -3771,11 +3776,24 @@ public class Types {
      * Compute a hash code on a type.
      */
     public int hashCode(Type t) {
-        return hashCode.visit(t);
+        return hashCode(t, false);
+    }
+
+    public int hashCode(Type t, boolean strict) {
+        return strict ?
+                hashCodeStrictVisitor.visit(t) :
+                hashCodeVisitor.visit(t);
     }
     // where
-        private static final UnaryVisitor<Integer> hashCode = new UnaryVisitor<Integer>() {
+        private static final HashCodeVisitor hashCodeVisitor = new HashCodeVisitor();
+        private static final HashCodeVisitor hashCodeStrictVisitor = new HashCodeVisitor() {
+            @Override
+            public Integer visitTypeVar(TypeVar t, Void ignored) {
+                return System.identityHashCode(t);
+            }
+        };
 
+        private static class HashCodeVisitor extends UnaryVisitor<Integer> {
             public Integer visitType(Type t, Void ignored) {
                 return t.getTag().ordinal();
             }
@@ -3831,7 +3849,7 @@ public class Types {
             public Integer visitErrorType(ErrorType t, Void ignored) {
                 return 0;
             }
-        };
+        }
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Return-Type-Substitutable">
@@ -4129,7 +4147,7 @@ public class Types {
 
     private boolean giveWarning(Type from, Type to) {
         List<Type> bounds = to.isCompound() ?
-                ((IntersectionClassType)to).getComponents() : List.of(to);
+                directSupertypes(to) : List.of(to);
         for (Type b : bounds) {
             Type subFrom = asSub(from, b.tsym);
             if (b.isParameterized() &&

@@ -197,7 +197,14 @@ public enum Option {
 
     SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
 
-    XOVERRIDE("-Xoverride:", "opt.arg.path", "opt.Xoverride", EXTENDED, FILEMANAGER),
+    XPATCH("-Xpatch:", "opt.arg.path", "opt.Xpatch", EXTENDED, FILEMANAGER),
+
+    XOVERRIDE("-Xoverride:", "opt.arg.path", "opt.Xoverride", EXTENDED, FILEMANAGER){
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return super.process(helper, "-Xpatch:", arg);
+        }
+    },
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
@@ -244,6 +251,8 @@ public enum Option {
     PROCESSOR("-processor", "opt.arg.class.list", "opt.processor", STANDARD, BASIC),
 
     PROCESSORPATH("-processorpath", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER),
+
+    PROCESSORMODULEPATH("-processormodulepath", "opt.arg.path", "opt.processormodulepath", STANDARD, FILEMANAGER),
 
     PARAMETERS("-parameters","opt.parameters", STANDARD, BASIC),
 
@@ -537,6 +546,19 @@ public enum Option {
             }
             String p = option.substring(option.indexOf(':') + 1);
             helper.put(XADDEXPORTS.text, p);
+            return false;
+        }
+    },
+
+    XADDREADS("-XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XADDREADS);
+            if (prev != null) {
+                helper.error("err.option.too.many", XADDREADS.text);
+            }
+            String p = option.substring(option.indexOf(':') + 1);
+            helper.put(XADDREADS.text, p);
             return false;
         }
     },
