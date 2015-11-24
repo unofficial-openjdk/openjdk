@@ -25,7 +25,7 @@
 
 package java.lang.invoke;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import sun.invoke.util.VerifyAccess;
@@ -445,9 +445,9 @@ class DirectMethodHandle extends MethodHandle {
 
     /** This subclass handles static field references. */
     static class StaticAccessor extends DirectMethodHandle {
-        final private Class<?> fieldType;
-        final private Object   staticBase;
-        final private long     staticOffset;
+        private final Class<?> fieldType;
+        private final Object   staticBase;
+        private final long     staticOffset;
 
         private StaticAccessor(MethodType mtype, LambdaForm form, MemberName member,
                                Object staticBase, long staticOffset) {

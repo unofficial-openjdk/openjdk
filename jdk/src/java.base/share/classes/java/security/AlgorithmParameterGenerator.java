@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,8 +70,8 @@ import java.security.spec.AlgorithmParameterSpec;
  * following standard {@code AlgorithmParameterGenerator} algorithms and
  * keysizes in parentheses:
  * <ul>
- * <li>{@code DiffieHellman} (1024)</li>
- * <li>{@code DSA} (1024)</li>
+ * <li>{@code DiffieHellman} (1024, 2048, 4096)</li>
+ * <li>{@code DSA} (1024, 2048)</li>
  * </ul>
  * These algorithms are described in the <a href=
  * "{@docRoot}/../technotes/guides/security/StandardNames.html#AlgorithmParameterGenerator">
@@ -137,6 +137,13 @@ public class AlgorithmParameterGenerator {
      *
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
+     *
+     * @implNote
+     * The JDK Reference Implementation additionally uses the
+     * {@code jdk.security.provider.preferred} property to determine
+     * the preferred provider order for the specified algorithm. This
+     * may be different than the order of providers returned by
+     * {@link Security#getProviders() Security.getProviders()}.
      *
      * @param algorithm the name of the algorithm this
      * parameter generator is associated with.

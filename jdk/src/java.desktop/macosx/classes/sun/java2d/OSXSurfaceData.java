@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,8 @@ import java.lang.annotation.Native;
  * This is the SurfaceData for a CGContextRef.
  */
 public abstract class OSXSurfaceData extends BufImgSurfaceData {
-    final static float UPPER_BND = Float.MAX_VALUE / 2.0f;
-    final static float LOWER_BND = -UPPER_BND;
+    static final float UPPER_BND = Float.MAX_VALUE / 2.0f;
+    static final float LOWER_BND = -UPPER_BND;
 
     protected static CRenderer sQuartzPipe = null;
     protected static CTextPipe sCocoaTextPipe = null;
@@ -125,9 +125,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         return fConfig;
     }
 
-    @SuppressWarnings("deprecation")
     protected void setBounds(int x, int y, int w, int h) {
-        fBounds.reshape(x, y, w, y + h);
+        fBounds.setBounds(x, y, w, y + h);
     }
 
     // START compositing support API

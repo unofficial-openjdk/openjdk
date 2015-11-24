@@ -43,6 +43,8 @@ import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.JavaLangAccess;;
+import jdk.internal.misc.SharedSecrets;;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -81,7 +83,7 @@ public final class System {
      * corresponds to keyboard input or another input source specified by
      * the host environment or user.
      */
-    public final static InputStream in = null;
+    public static final InputStream in = null;
 
     /**
      * The "standard" output stream. This stream is already
@@ -108,7 +110,7 @@ public final class System {
      * @see     java.io.PrintStream#println(java.lang.Object)
      * @see     java.io.PrintStream#println(java.lang.String)
      */
-    public final static PrintStream out = null;
+    public static final PrintStream out = null;
 
     /**
      * The "standard" error output stream. This stream is already
@@ -122,7 +124,7 @@ public final class System {
      * variable <code>out</code>, has been redirected to a file or other
      * destination that is typically not continuously monitored.
      */
-    public final static PrintStream err = null;
+    public static final PrintStream err = null;
 
     /* The security manager for the system.
      */
@@ -212,7 +214,7 @@ public final class System {
      public static Console console() {
          if (cons == null) {
              synchronized (System.class) {
-                 cons = sun.misc.SharedSecrets.getJavaIOAccess().console();
+                 cons = SharedSecrets.getJavaIOAccess().console();
              }
          }
          return cons;
@@ -1216,7 +1218,7 @@ public final class System {
 
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
-        sun.misc.SharedSecrets.setJavaLangAccess(new sun.misc.JavaLangAccess(){
+        SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
             public sun.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,9 @@
 #import "CDataTransferer.h"
 #include "sun_lwawt_macosx_CDataTransferer.h"
 
-#import <AppKit/AppKit.h>
-#import <JavaNativeFoundation/JavaNativeFoundation.h>
 #import "jni_util.h"
 
-#include "ThreadUtilities.h"
+#import <JavaNativeFoundation/JavaNativeFoundation.h>
 
 
 // ***** NOTE ***** This dictionary corresponds to the static array predefinedClipboardNames
@@ -58,6 +56,8 @@ NSMutableDictionary *getMappingTable() {
                               forKey:[NSNumber numberWithLong:sun_lwawt_macosx_CDataTransferer_CF_PNG]];
         [sStandardMappings setObject:(NSString*)kUTTypeJPEG
                               forKey:[NSNumber numberWithLong:sun_lwawt_macosx_CDataTransferer_CF_JPEG]];
+        [sStandardMappings setObject:NSPICTPboardType
+                              forKey:[NSNumber numberWithLong:sun_lwawt_macosx_CDataTransferer_CF_XPICT]];
     }
     return sStandardMappings;
 }

@@ -25,7 +25,7 @@
 
 package sun.swing;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
 import java.awt.*;
 import javax.swing.*;
@@ -95,6 +95,14 @@ public final class SwingAccessor {
     public interface PopupFactoryAccessor {
         Popup getHeavyWeightPopup(PopupFactory factory, Component owner, Component contents,
                                   int ownerX, int ownerY);
+    }
+
+    /*
+     * An accessor for the KeyStroke class
+     */
+    public interface KeyStrokeAccessor {
+
+        KeyStroke create();
     }
 
     /**
@@ -184,5 +192,27 @@ public final class SwingAccessor {
      */
     public static void setPopupFactoryAccessor(PopupFactoryAccessor popupFactoryAccessor) {
         SwingAccessor.popupFactoryAccessor = popupFactoryAccessor;
+    }
+
+    /**
+     * The KeyStroke class accessor object.
+     */
+    private static KeyStrokeAccessor keyStrokeAccessor;
+
+    /**
+     * Retrieve the accessor object for the KeyStroke class.
+     */
+    public static KeyStrokeAccessor getKeyStrokeAccessor() {
+        if (keyStrokeAccessor == null) {
+            unsafe.ensureClassInitialized(KeyStroke.class);
+        }
+        return keyStrokeAccessor;
+    }
+
+    /*
+     * Set the accessor object for the KeyStroke class.
+     */
+    public static void setKeyStrokeAccessor(KeyStrokeAccessor accessor) {
+        SwingAccessor.keyStrokeAccessor = accessor;
     }
 }

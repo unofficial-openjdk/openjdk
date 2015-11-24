@@ -34,6 +34,7 @@
 /*
  * @test
  * @bug 6445158
+ * @key intermittent
  * @summary Basic tests for Phaser
  * @author Chris Hegarty
  */
@@ -97,7 +98,8 @@ public class Basic {
             equal(phase, atTheStartingGate.arrive());
             int awaitPhase = atTheStartingGate.awaitAdvanceInterruptibly
                 (phase, 30, SECONDS);
-            if (expectNextPhase) check(awaitPhase == (phase + 1));
+            if (expectNextPhase) check(awaitPhase == phase + 1);
+            else check(awaitPhase == phase || awaitPhase == phase + 1);
 
             pass();
         } catch (Throwable t) {
@@ -111,7 +113,7 @@ public class Basic {
     // Convenience methods for creating threads that call arrive,
     // awaitAdvance, arriveAndAwaitAdvance, awaitAdvanceInterruptibly
     //----------------------------------------------------------------
-    private static abstract class Arriver extends Thread {
+    private abstract static class Arriver extends Thread {
         static AtomicInteger count = new AtomicInteger(1);
 
         Arriver() {
@@ -131,7 +133,7 @@ public class Basic {
         public int phase() { return this.phase; }
     }
 
-    private static abstract class Awaiter extends Arriver {
+    private abstract static class Awaiter extends Arriver {
         Awaiter() { super("Awaiter"); }
         Awaiter(String name) { super(name); }
     }
@@ -249,13 +251,11 @@ public class Basic {
             Phaser phaser = new Phaser(3);
             Iterator<Arriver> arrivers = arriverIterator(phaser);
             int phase = phaser.getPhase();
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 10; i++) {
                 check(phaser.getPhase() == phase);
                 Awaiter a1 = awaiter(phaser, 30, SECONDS); a1.start();
                 Arriver a2 = arrivers.next(); a2.start();
                 toTheStartingGate();
-                // allow a1 to block in awaitAdvanceInterruptibly
-                Thread.sleep(2000);
                 a1.interrupt();
                 a1.join();
                 phaser.arriveAndAwaitAdvance();
@@ -273,7 +273,7 @@ public class Basic {
         // Phaser is terminated while threads are waiting
         //----------------------------------------------------------------
         try {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 10; i++) {
                 Phaser phaser = new Phaser(3);
                 Iterator<Awaiter> awaiters = awaiterIterator(phaser);
                 Arriver a1 = awaiters.next(); a1.start();

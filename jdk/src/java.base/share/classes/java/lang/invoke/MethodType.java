@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1058,6 +1058,23 @@ class MethodType implements java.io.Serializable {
     public static MethodType fromMethodDescriptorString(String descriptor, ClassLoader loader)
         throws IllegalArgumentException, TypeNotPresentException
     {
+        return fromDescriptor(descriptor,
+                              (loader == null) ? ClassLoader.getSystemClassLoader() : loader);
+    }
+
+    /**
+     * Same as {@link #fromMethodDescriptorString(String, ClassLoader)}, but
+     * {@code null} ClassLoader means the bootstrap loader is used here.
+     * <p>
+     * IMPORTANT: This method is preferable for JDK internal use as it more
+     * correctly interprets {@code null} ClassLoader than
+     * {@link #fromMethodDescriptorString(String, ClassLoader)}.
+     * Use of this method also avoids early initialization issues when system
+     * ClassLoader is not initialized yet.
+     */
+    static MethodType fromDescriptor(String descriptor, ClassLoader loader)
+        throws IllegalArgumentException, TypeNotPresentException
+    {
         if (!descriptor.startsWith("(") ||  // also generates NPE if needed
             descriptor.indexOf(')') < 0 ||
             descriptor.indexOf('.') >= 0)
@@ -1170,20 +1187,23 @@ s.writeObject(this.parameterArray());
         // store them into the implementation-specific final fields.
         checkRtype(rtype);
         checkPtypes(ptypes);
-        UNSAFE.putObject(this, rtypeOffset, rtype);
-        UNSAFE.putObject(this, ptypesOffset, ptypes);
+        UNSAFE.putObject(this, OffsetHolder.rtypeOffset, rtype);
+        UNSAFE.putObject(this, OffsetHolder.ptypesOffset, ptypes);
     }
 
-    // Support for resetting final fields while deserializing
-    private static final long rtypeOffset, ptypesOffset;
-    static {
-        try {
-            rtypeOffset = UNSAFE.objectFieldOffset
-                (MethodType.class.getDeclaredField("rtype"));
-            ptypesOffset = UNSAFE.objectFieldOffset
-                (MethodType.class.getDeclaredField("ptypes"));
-        } catch (Exception ex) {
-            throw new Error(ex);
+    // Support for resetting final fields while deserializing. Implement Holder
+    // pattern to make the rarely needed offset calculation lazy.
+    private static class OffsetHolder {
+        private static final long rtypeOffset, ptypesOffset;
+        static {
+            try {
+                rtypeOffset = UNSAFE.objectFieldOffset
+                    (MethodType.class.getDeclaredField("rtype"));
+                ptypesOffset = UNSAFE.objectFieldOffset
+                    (MethodType.class.getDeclaredField("ptypes"));
+            } catch (Exception ex) {
+                throw new Error(ex);
+            }
         }
     }
 

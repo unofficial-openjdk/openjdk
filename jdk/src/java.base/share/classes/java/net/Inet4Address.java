@@ -84,7 +84,7 @@ import java.io.ObjectStreamException;
 
 public final
 class Inet4Address extends InetAddress {
-    final static int INADDRSZ = 4;
+    static final int INADDRSZ = 4;
 
     /** use serialVersionUID from InetAddress, but Inet4Address instance
      *  is always replaced by an InetAddress instance before being
@@ -117,11 +117,13 @@ class Inet4Address extends InetAddress {
                 holder().address = address;
             }
         }
+        holder().originalHostName = hostName;
     }
     Inet4Address(String hostName, int address) {
         holder().hostName = hostName;
         holder().family = IPv4;
         holder().address = address;
+        holder().originalHostName = hostName;
     }
 
     /**

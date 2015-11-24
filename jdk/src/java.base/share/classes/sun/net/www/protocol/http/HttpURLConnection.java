@@ -65,6 +65,8 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.StringJoiner;
+import jdk.internal.misc.JavaNetHttpCookieAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.net.*;
 import sun.net.www.*;
 import sun.net.www.http.HttpClient;
@@ -106,11 +108,11 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     static final boolean validateServer;
 
     private StreamingOutputStream strOutputStream;
-    private final static String RETRY_MSG1 =
+    private static final String RETRY_MSG1 =
         "cannot retry due to proxy authentication, in streaming mode";
-    private final static String RETRY_MSG2 =
+    private static final String RETRY_MSG2 =
         "cannot retry due to server authentication, in streaming mode";
-    private final static String RETRY_MSG3 =
+    private static final String RETRY_MSG3 =
         "cannot retry due to redirection, in streaming mode";
 
     /*
@@ -485,7 +487,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     private void checkMessageHeader(String key, String value) {
         char LF = '\n';
         int index = key.indexOf(LF);
-        if (index != -1) {
+        int index1 = key.indexOf(':');
+        if (index != -1 || index1 != -1) {
             throw new IllegalArgumentException(
                 "Illegal character(s) in message header field: " + key);
         }
@@ -2857,8 +2860,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     }
 
     // constant strings represent set-cookie header names
-    private final static String SET_COOKIE = "set-cookie";
-    private final static String SET_COOKIE2 = "set-cookie2";
+    private static final String SET_COOKIE = "set-cookie";
+    private static final String SET_COOKIE2 = "set-cookie2";
 
     /**
      * Returns a filtered version of the given headers value.
@@ -2878,8 +2881,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
             if (cookieHandler == null || value.length() == 0)
                 return value;
 
-            sun.misc.JavaNetHttpCookieAccess access =
-                    sun.misc.SharedSecrets.getJavaNetHttpCookieAccess();
+            JavaNetHttpCookieAccess access =
+                    SharedSecrets.getJavaNetHttpCookieAccess();
             StringJoiner retValue = new StringJoiner(",");  // RFC 2965, comma separated
             List<HttpCookie> cookies = access.parse(value);
             for (HttpCookie cookie : cookies) {

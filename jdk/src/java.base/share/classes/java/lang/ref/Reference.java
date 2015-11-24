@@ -26,10 +26,10 @@
 package java.lang.ref;
 
 import sun.misc.Cleaner;
-import sun.misc.JavaLangRefAccess;
-import sun.misc.ManagedLocalsThread;
-import sun.misc.SharedSecrets;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.JavaLangRefAccess;
+import jdk.internal.misc.SharedSecrets;
+import sun.misc.ManagedLocalsThread;
 
 /**
  * Abstract base class for reference objects.  This class defines the
@@ -107,7 +107,7 @@ public abstract class Reference<T> {
      *     pending:   next element in the pending list (or null if last)
      *   otherwise:   NULL
      */
-    transient private Reference<T> discovered;  /* used by VM */
+    private transient Reference<T> discovered;  /* used by VM */
 
 
     /* Object used to synchronize with the garbage collector.  The collector
@@ -115,7 +115,7 @@ public abstract class Reference<T> {
      * therefore critical that any code holding this lock complete as quickly
      * as possible, allocate no new objects, and avoid calling user code.
      */
-    static private class Lock { }
+    private static class Lock { }
     private static Lock lock = new Lock();
 
 

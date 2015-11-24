@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,8 +207,10 @@ class TwoStacksPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 
     protected native void disconnect0(int family);
 
+    native int dataAvailable();
+
     /**
      * Perform class load-time initializations.
      */
-    private native static void init();
+    private static native void init();
 }

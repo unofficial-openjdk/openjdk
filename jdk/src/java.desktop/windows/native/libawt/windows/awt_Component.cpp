@@ -1382,7 +1382,7 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case WM_AWT_RELEASEDC:
       {
             HDC hDC = (HDC)wParam;
-            MoveDCToPassiveList(hDC);
+            MoveDCToPassiveList(hDC, GetHWnd());
             ReleaseDCList(GetHWnd(), passiveDCList);
             mr = mrConsume;
             break;
@@ -4058,14 +4058,19 @@ HWND AwtComponent::GetProxyFocusOwner()
     return (HWND)NULL;
 }
 
-/* Call DefWindowProc for the focus proxy, if any */
+/* Redirects message to the focus proxy, if any */
 void AwtComponent::CallProxyDefWindowProc(UINT message, WPARAM wParam,
     LPARAM lParam, LRESULT &retVal, MsgRouting &mr)
 {
     if (mr != mrConsume)  {
         HWND proxy = GetProxyFocusOwner();
         if (proxy != NULL && ::IsWindowEnabled(proxy)) {
-            retVal = ComCtl32Util::GetInstance().DefWindowProc(NULL, proxy, message, wParam, lParam);
+            if (proxy != GetHWnd()) {
+                retVal = ::SendMessage(proxy, message, wParam, lParam);
+            } else {
+                retVal = ComCtl32Util::GetInstance().DefWindowProc(NULL,
+                                                proxy, message, wParam, lParam);
+            }
             mr = mrConsume;
         }
     }
@@ -7160,8 +7165,8 @@ void DCList::AddDCItem(DCItem *newItem)
 }
 
 /**
- * Given a DC, remove it from the DC list and return
- * TRUE if it exists on the current list.  Otherwise
+ * Given a DC and window handle, remove the DC from the DC list
+ * and return TRUE if it exists on the current list.  Otherwise
  * return FALSE.
  * A DC may not exist on the list because it has already
  * been released elsewhere (for example, the window
@@ -7169,14 +7174,14 @@ void DCList::AddDCItem(DCItem *newItem)
  * thread may also want to release a DC when it notices that
  * its DC is obsolete for the current window).
  */
-DCItem *DCList::RemoveDC(HDC hDC)
+DCItem *DCList::RemoveDC(HDC hDC, HWND hWnd)
 {
     listLock.Enter();
     DCItem **prevPtrPtr = &head;
     DCItem *listPtr = head;
     while (listPtr) {
         DCItem *nextPtr = listPtr->next;
-        if (listPtr->hDC == hDC) {
+        if (listPtr->hDC == hDC && listPtr->hWnd == hWnd) {
             *prevPtrPtr = nextPtr;
             break;
         }
@@ -7230,9 +7235,9 @@ void DCList::RealizePalettes(int screen)
     listLock.Leave();
 }
 
-void MoveDCToPassiveList(HDC hDC) {
+void MoveDCToPassiveList(HDC hDC, HWND hWnd) {
     DCItem *removedDC;
-    if ((removedDC = activeDCList.RemoveDC(hDC)) != NULL) {
+    if ((removedDC = activeDCList.RemoveDC(hDC, hWnd)) != NULL) {
         passiveDCList.AddDCItem(removedDC);
     }
 }

@@ -123,25 +123,29 @@ import java.util.Locale;
  * <ul>
  * <li> "CLDR": A provider based on Unicode Consortium's
  * <a href="http://cldr.unicode.org/">CLDR Project</a>.
- * <li> "JRE": represents the locale sensitive services that is compatible
- * with the prior JDK releases (same with JDK8's "JRE").
+ * <li> "COMPAT": represents the locale sensitive services that is compatible
+ * with the prior JDK releases up to JDK8 (same as JDK8's "JRE").
  * <li> "SPI": represents the locale sensitive services implementing the subclasses of
  * this {@code LocaleServiceProvider} class.
  * <li> "HOST": A provider that reflects the user's custom settings in the
  * underlying operating system. This provider may not be available, depending
  * on the Java Runtime Environment implementation.
+ * <li> "JRE": represents a synonym to "COMPAT". This name
+ * is deprecated and will be removed in the future release of JDK.
  * </ul>
  * <p>
  * For example, if the following is specified in the property:
  * <pre>
- * java.locale.providers=SPI,CLDR,JRE
+ * java.locale.providers=SPI,CLDR,COMPAT
  * </pre>
  * the locale sensitive services in the SPI providers are looked up first. If the
  * desired locale sensitive service is not available, then the runtime looks for CLDR,
- * JRE in that order.
+ * COMPAT in that order.
  * <p>
- * The default order for looking up the preferred locale providers is "CLDR,JRE,SPI",
- * so specifying "CLDR,JRE,SPI" is identical to the default behavior.
+ * The default order for looking up the preferred locale providers is "CLDR,COMPAT",
+ * so specifying "CLDR,COMPAT" is identical to the default behavior. Applications which
+ * require implementations of the locale sensitive services must explicitly specify
+ * "SPI" in order for the Java runtime to load them from the classpath.
  *
  * @since        1.6
  */

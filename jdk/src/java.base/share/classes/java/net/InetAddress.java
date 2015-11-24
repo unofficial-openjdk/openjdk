@@ -29,6 +29,7 @@ import java.util.NavigableSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.security.AccessController;
 import java.io.ObjectStreamException;
@@ -43,6 +44,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 
+import jdk.internal.misc.JavaNetInetAddressAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.security.action.*;
 import sun.net.InetAddressCachePolicy;
 import sun.net.util.IPAddressUtil;
@@ -215,11 +218,11 @@ class InetAddress implements java.io.Serializable {
          * DNS forging.
          *
          * Oracle JSSE provider is using this original hostname, via
-         * sun.misc.JavaNetAccess, for SSL/TLS endpoint identification.
+         * jdk.internal.misc.JavaNetAccess, for SSL/TLS endpoint identification.
          *
          * Note: May define a new public method in the future if necessary.
          */
-        private String originalHostName;
+        String originalHostName;
 
         InetAddressHolder() {}
 
@@ -297,8 +300,8 @@ class InetAddress implements java.io.Serializable {
                     return null;
                 }
             });
-        sun.misc.SharedSecrets.setJavaNetInetAddressAccess(
-                new sun.misc.JavaNetInetAddressAccess() {
+        SharedSecrets.setJavaNetInetAddressAccess(
+                new JavaNetInetAddressAccess() {
                     public String getOriginalHostName(InetAddress ia) {
                         return ia.holder.getOriginalHostName();
                     }
@@ -731,7 +734,7 @@ class InetAddress implements java.io.Serializable {
      */
     public String toString() {
         String hostName = holder().getHostName();
-        return ((hostName != null) ? hostName : "")
+        return Objects.toString(hostName, "")
             + "/" + getHostAddress();
     }
 
@@ -1491,11 +1494,11 @@ class InetAddress implements java.io.Serializable {
     }
 
     private static final long FIELDS_OFFSET;
-    private static final sun.misc.Unsafe UNSAFE;
+    private static final jdk.internal.misc.Unsafe UNSAFE;
 
     static {
         try {
-            sun.misc.Unsafe unsafe = sun.misc.Unsafe.getUnsafe();
+            jdk.internal.misc.Unsafe unsafe = jdk.internal.misc.Unsafe.getUnsafe();
             FIELDS_OFFSET = unsafe.objectFieldOffset(
                 InetAddress.class.getDeclaredField("holder")
             );

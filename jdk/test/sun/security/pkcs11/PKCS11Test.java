@@ -33,6 +33,8 @@ import java.security.spec.ECParameterSpec;
 
 public abstract class PKCS11Test {
 
+    static final String PKCS11 = "PKCS11";
+
     // directory of the test source
     static final String BASE = System.getProperty("test.src", ".");
 
@@ -537,6 +539,7 @@ public abstract class PKCS11Test {
         osMap.put("Linux-amd64-64", new String[]{
             "/usr/lib/x86_64-linux-gnu/", "/usr/lib/x86_64-linux-gnu/nss/",
             "/usr/lib64/"});
+        osMap.put("Linux-ppc64-64", new String[]{"/usr/lib64/"});
         osMap.put("Windows-x86-32", new String[]{
             PKCS11_BASE + "/nss/lib/windows-i586/".replace('/', SEP)});
         osMap.put("Windows-amd64-64", new String[]{
@@ -643,5 +646,13 @@ public abstract class PKCS11Test {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    static byte[] generateData(int length) {
+        byte data[] = new byte[length];
+        for (int i=0; i<data.length; i++) {
+            data[i] = (byte) (i % 256);
+        }
+        return data;
     }
 }

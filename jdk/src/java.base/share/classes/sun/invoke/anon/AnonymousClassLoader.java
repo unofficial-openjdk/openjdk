@@ -25,10 +25,10 @@
 
 package sun.invoke.anon;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import sun.misc.IOUtils;
 
 /**
  * Anonymous class loader.  Will load any valid classfile, producing
@@ -78,7 +78,7 @@ public class AnonymousClassLoader {
         this.hostClass = hostClass;
     }
 
-    public static AnonymousClassLoader make(sun.misc.Unsafe unsafe, Class<?> hostClass) {
+    public static AnonymousClassLoader make(jdk.internal.misc.Unsafe unsafe, Class<?> hostClass) {
         if (unsafe == null)  throw new NullPointerException();
         return new AnonymousClassLoader(hostClass);
     }
@@ -189,13 +189,13 @@ public class AnonymousClassLoader {
     private static int fakeNameCounter = 99999;
 
     // ignore two warnings on this line:
-    private static sun.misc.Unsafe unsafe = sun.misc.Unsafe.getUnsafe();
+    private static jdk.internal.misc.Unsafe unsafe = jdk.internal.misc.Unsafe.getUnsafe();
     // preceding line requires that this class be on the boot class path
 
-    static private final Method defineAnonymousClass;
+    private static final Method defineAnonymousClass;
     static {
         Method dac = null;
-        Class<? extends sun.misc.Unsafe> unsafeClass = unsafe.getClass();
+        Class<? extends jdk.internal.misc.Unsafe> unsafeClass = unsafe.getClass();
         try {
             dac = unsafeClass.getMethod("defineAnonymousClass",
                                         Class.class,
@@ -225,6 +225,10 @@ public class AnonymousClassLoader {
         if (contentLength < 0)
             throw new IOException("invalid content length "+contentLength);
 
-        return IOUtils.readFully(connection.getInputStream(), contentLength, true);
+        byte[] b = connection.getInputStream().readAllBytes();
+        if (b.length != contentLength)
+            throw new EOFException("Expected:" + contentLength + ", read:" + b.length);
+
+        return b;
     }
 }

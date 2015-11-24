@@ -537,8 +537,9 @@ public class Collections {
      * Copies all of the elements from one list into another.  After the
      * operation, the index of each copied element in the destination list
      * will be identical to its index in the source list.  The destination
-     * list must be at least as long as the source list.  If it is longer, the
-     * remaining elements in the destination list are unaffected. <p>
+     * list's size must be greater than or equal to the source list's size.
+     * If it is greater, the remaining elements in the destination list are
+     * unaffected. <p>
      *
      * This method runs in linear time.
      *
@@ -2089,7 +2090,8 @@ public class Collections {
      * through the returned set.<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * set when iterating over it:
+     * collection when traversing it via {@link Iterator}, {@link Spliterator}
+     * or {@link Stream}:
      * <pre>
      *  Set s = Collections.synchronizedSet(new HashSet());
      *      ...
@@ -2148,8 +2150,9 @@ public class Collections {
      * through the returned sorted set (or its views).<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * sorted set when iterating over it or any of its {@code subSet},
-     * {@code headSet}, or {@code tailSet} views.
+     * sorted set when traversing it or any of its {@code subSet},
+     * {@code headSet}, or {@code tailSet} views via {@link Iterator},
+     * {@link Spliterator} or {@link Stream}:
      * <pre>
      *  SortedSet s = Collections.synchronizedSortedSet(new TreeSet());
      *      ...
@@ -2239,8 +2242,9 @@ public class Collections {
      * accomplished through the returned navigable set (or its views).<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * navigable set when iterating over it or any of its {@code subSet},
-     * {@code headSet}, or {@code tailSet} views.
+     * navigable set when traversing it, or any of its {@code subSet},
+     * {@code headSet}, or {@code tailSet} views, via {@link Iterator},
+     * {@link Spliterator} or {@link Stream}:
      * <pre>
      *  NavigableSet s = Collections.synchronizedNavigableSet(new TreeSet());
      *      ...
@@ -2354,7 +2358,8 @@ public class Collections {
      * through the returned list.<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * list when iterating over it:
+     * list when traversing it via {@link Iterator}, {@link Spliterator}
+     * or {@link Stream}:
      * <pre>
      *  List list = Collections.synchronizedList(new ArrayList());
      *      ...
@@ -2522,7 +2527,8 @@ public class Collections {
      * through the returned map.<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * map when iterating over any of its collection views:
+     * map when traversing any of its collection views via {@link Iterator},
+     * {@link Spliterator} or {@link Stream}:
      * <pre>
      *  Map m = Collections.synchronizedMap(new HashMap());
      *      ...
@@ -2699,9 +2705,10 @@ public class Collections {
      * through the returned sorted map (or its views).<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * sorted map when iterating over any of its collection views, or the
+     * sorted map when traversing any of its collection views, or the
      * collections views of any of its {@code subMap}, {@code headMap} or
-     * {@code tailMap} views.
+     * {@code tailMap} views, via {@link Iterator}, {@link Spliterator} or
+     * {@link Stream}:
      * <pre>
      *  SortedMap m = Collections.synchronizedSortedMap(new TreeMap());
      *      ...
@@ -2796,9 +2803,10 @@ public class Collections {
      * accomplished through the returned navigable map (or its views).<p>
      *
      * It is imperative that the user manually synchronize on the returned
-     * navigable map when iterating over any of its collection views, or the
+     * navigable map when traversing any of its collection views, or the
      * collections views of any of its {@code subMap}, {@code headMap} or
-     * {@code tailMap} views.
+     * {@code tailMap} views, via {@link Iterator}, {@link Spliterator} or
+     * {@link Stream}:
      * <pre>
      *  NavigableMap m = Collections.synchronizedNavigableMap(new TreeMap());
      *      ...

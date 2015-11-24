@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,9 +109,9 @@ import sun.security.util.Debug;
  * following standard {@code KeyPairGenerator} algorithms and keysizes in
  * parentheses:
  * <ul>
- * <li>{@code DiffieHellman} (1024)</li>
- * <li>{@code DSA} (1024)</li>
- * <li>{@code RSA} (1024, 2048)</li>
+ * <li>{@code DiffieHellman} (1024, 2048, 4096)</li>
+ * <li>{@code DSA} (1024, 2048)</li>
+ * <li>{@code RSA} (1024, 2048, 4096)</li>
  * </ul>
  * These algorithms are described in the <a href=
  * "{@docRoot}/../technotes/guides/security/StandardNames.html#KeyPairGenerator">
@@ -194,6 +194,13 @@ public abstract class KeyPairGenerator extends KeyPairGeneratorSpi {
      *
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
+     *
+     * @implNote
+     * The JDK Reference Implementation additionally uses the
+     * {@code jdk.security.provider.preferred} property to determine
+     * the preferred provider order for the specified algorithm. This
+     * may be different than the order of providers returned by
+     * {@link Security#getProviders() Security.getProviders()}.
      *
      * @param algorithm the standard string name of the algorithm.
      * See the KeyPairGenerator section in the <a href=
@@ -547,9 +554,9 @@ public abstract class KeyPairGenerator extends KeyPairGeneratorSpi {
 
         private Iterator<Service> serviceIterator;
 
-        private final static int I_NONE   = 1;
-        private final static int I_SIZE   = 2;
-        private final static int I_PARAMS = 3;
+        private static final int I_NONE   = 1;
+        private static final int I_SIZE   = 2;
+        private static final int I_PARAMS = 3;
 
         private int initType;
         private int initKeySize;

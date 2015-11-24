@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import static java.io.ObjectStreamClass.processQueue;
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 import sun.reflect.misc.ReflectUtil;
 
 /**
@@ -1079,7 +1079,7 @@ public class ObjectInputStream
     /**
      * Provide access to the persistent fields read from the input stream.
      */
-    public static abstract class GetField {
+    public abstract static class GetField {
 
         /**
          * Get the ObjectStreamClass that describes the fields in the stream.
@@ -3383,10 +3383,11 @@ public class ObjectInputStream
          * Registers a dependency (in exception status) of one handle on
          * another.  The dependent handle must be "open" (i.e., assigned, but
          * not finished yet).  No action is taken if either dependent or target
-         * handle is NULL_HANDLE.
+         * handle is NULL_HANDLE. Additionally, no action is taken if the
+         * dependent and target are the same.
          */
         void markDependency(int dependent, int target) {
-            if (dependent == NULL_HANDLE || target == NULL_HANDLE) {
+            if (dependent == target || dependent == NULL_HANDLE || target == NULL_HANDLE) {
                 return;
             }
             switch (status[dependent]) {

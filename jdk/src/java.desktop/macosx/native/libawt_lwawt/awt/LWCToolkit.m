@@ -28,15 +28,10 @@
 #import <objc/runtime.h>
 #import <Cocoa/Cocoa.h>
 #import <Security/AuthSession.h>
-#import <JavaNativeFoundation/JavaNativeFoundation.h>
-#import <JavaRuntimeSupport/JavaRuntimeSupport.h>
 
 #include "jni_util.h"
-#import "CMenuBar.h"
-#import "InitIDs.h"
 #import "LWCToolkit.h"
 #import "ThreadUtilities.h"
-#import "AWT_debug.h"
 #import "CSystemColors.h"
 #import  "NSApplicationAWT.h"
 #import "PropertiesUtilities.h"
@@ -45,6 +40,8 @@
 #import "sun_lwawt_macosx_LWCToolkit.h"
 
 #import "sizecalc.h"
+
+#import <JavaRuntimeSupport/JavaRuntimeSupport.h>
 
 int gNumberOfButtons;
 jint* gButtonDownMasks;
@@ -529,7 +526,7 @@ JNF_COCOA_ENTER(env);
             // Processing all events excluding NSApplicationDefined which need to be processed
             // on the main loop only (those events are intended for disposing resources)
             NSEvent *event;
-            if ((event = [NSApp nextEventMatchingMask:(NSAnyEventMask & ~NSApplicationDefined)
+            if ((event = [NSApp nextEventMatchingMask:(NSAnyEventMask & ~NSApplicationDefinedMask)
                                            untilDate:nil
                                               inMode:NSDefaultRunLoopMode
                                              dequeue:YES]) != nil) {
@@ -743,7 +740,7 @@ Java_sun_lwawt_macosx_LWCToolkit_initAppkit
     JNF_COCOA_EXIT(env)
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+JNIEXPORT jint JNICALL DEF_JNI_OnLoad(JavaVM *vm, void *reserved) {
     OSXAPP_SetJavaVM(vm);
 
     // We need to let Foundation know that this is a multithreaded application, if it isn't already.

@@ -28,10 +28,10 @@ package sun.reflect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
-/** Base class for sun.misc.Unsafe-based FieldAccessors for final or
-    volatile static fields.  */
+/** Base class for jdk.internal.misc.Unsafe-based FieldAccessors for final or
+    static volatile fields.  */
 
 abstract class UnsafeQualifiedStaticFieldAccessorImpl
     extends UnsafeStaticFieldAccessorImpl

@@ -41,7 +41,7 @@ import sun.awt.SunToolkit;
 import sun.awt.dnd.SunDropTargetContextPeer;
 import sun.awt.dnd.SunDropTargetEvent;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
 /**
  * The XDropTargetContextPeer is the class responsible for handling
@@ -238,7 +238,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
     static final class XDropTargetProtocolListenerImpl
         implements XDropTargetProtocolListener {
 
-        private final static XDropTargetProtocolListener theInstance =
+        private static final XDropTargetProtocolListener theInstance =
             new XDropTargetProtocolListenerImpl();
 
         private XDropTargetProtocolListenerImpl() {}

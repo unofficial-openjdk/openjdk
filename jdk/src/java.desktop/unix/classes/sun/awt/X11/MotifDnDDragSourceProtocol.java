@@ -33,7 +33,7 @@ import java.awt.dnd.InvalidDnDOperationException;
 
 import java.util.Map;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
 /**
  * XDragSourceProtocol implementation for Motif DnD protocol.
@@ -96,7 +96,7 @@ class MotifDnDDragSourceProtocol extends XDragSourceProtocol
     /**
      * Processes the specified client message event.
      *
-     * @returns true if the event was successfully processed.
+     * @return true if the event was successfully processed.
      */
     public boolean processClientMessage(XClientMessageEvent xclient) {
         if (xclient.get_message_type() !=

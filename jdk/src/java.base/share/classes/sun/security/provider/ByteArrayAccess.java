@@ -30,7 +30,7 @@ import static java.lang.Long.reverseBytes;
 
 import java.nio.ByteOrder;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
 /**
  * Optimized methods for converting between byte[] and int[]/long[], both for
@@ -71,7 +71,7 @@ final class ByteArrayAccess {
     // implemented using a software trap and therefore very slow)
     private static final boolean bigEndian;
 
-    private final static int byteArrayOfs = unsafe.arrayBaseOffset(byte[].class);
+    private static final int byteArrayOfs = unsafe.arrayBaseOffset(byte[].class);
 
     static {
         boolean scaleOK = ((unsafe.arrayIndexScale(byte[].class) == 1)

@@ -22,12 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package javax.swing;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.*;
+import java.beans.JavaBean;
+import java.beans.BeanProperty;
+import java.beans.ConstructorProperties;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.*;
 import javax.swing.event.*;
@@ -35,10 +38,10 @@ import javax.swing.plaf.*;
 import javax.swing.tree.*;
 import javax.swing.text.Position;
 import javax.accessibility.*;
+
 import sun.swing.SwingUtilities2;
 import sun.swing.SwingUtilities2.Section;
 import static sun.swing.SwingUtilities2.Section.*;
-
 
 /**
  * <a name="jtree_description"></a>
@@ -134,15 +137,14 @@ import static sun.swing.SwingUtilities2.Section.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *</p>
- * @beaninfo
- *   attribute: isContainer false
- * description: A component that displays a set of hierarchical data as an outline.
  *
  * @author Rob Davis
  * @author Ray Ryan
  * @author Scott Violet
  * @since 1.2
  */
+@JavaBean(defaultProperty = "UI", description = "A component that displays a set of hierarchical data as an outline.")
+@SwingContainer(false)
 @SuppressWarnings("serial")
 public class JTree extends JComponent implements Scrollable, Accessible
 {
@@ -155,12 +157,12 @@ public class JTree extends JComponent implements Scrollable, Accessible
     /**
      * The model that defines the tree displayed by this object.
      */
-    transient protected TreeModel        treeModel;
+    protected transient TreeModel        treeModel;
 
     /**
      * Models the set of selected nodes in this tree.
      */
-    transient protected TreeSelectionModel selectionModel;
+    protected transient TreeSelectionModel selectionModel;
 
     /**
      * True if the root node is displayed, false if its children are
@@ -172,7 +174,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * The cell used to draw nodes. If <code>null</code>, the UI uses a default
      * <code>cellRenderer</code>.
      */
-    transient protected TreeCellRenderer  cellRenderer;
+    protected transient TreeCellRenderer  cellRenderer;
 
     /**
      * Height to use for each display row. If this is &lt;= 0 the renderer
@@ -189,7 +191,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * information must be determined by visiting all the parent
      * paths and seeing if they are visible.
      */
-    transient private Hashtable<TreePath, Boolean> expandedState;
+    private transient Hashtable<TreePath, Boolean> expandedState;
 
 
     /**
@@ -227,7 +229,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * Editor for the entries.  Default is <code>null</code>
      * (tree is not editable).
      */
-    transient protected TreeCellEditor          cellEditor;
+    protected transient TreeCellEditor          cellEditor;
 
     /**
      * Is the tree editable? Default is false.
@@ -277,13 +279,13 @@ public class JTree extends JComponent implements Scrollable, Accessible
     /**
      * Updates the <code>expandedState</code>.
      */
-    transient protected TreeModelListener       treeModelListener;
+    protected transient TreeModelListener       treeModelListener;
 
     /**
      * Used when <code>setExpandedState</code> is invoked,
      * will be a <code>Stack</code> of <code>Stack</code>s.
      */
-    transient private Stack<Stack<TreePath>> expandedStack;
+    private transient Stack<Stack<TreePath>> expandedStack;
 
     /**
      * Lead selection path, may not be <code>null</code>.
@@ -459,40 +461,40 @@ public class JTree extends JComponent implements Scrollable, Accessible
     // Bound property names
     //
     /** Bound property name for <code>cellRenderer</code>. */
-    public final static String        CELL_RENDERER_PROPERTY = "cellRenderer";
+    public static final String        CELL_RENDERER_PROPERTY = "cellRenderer";
     /** Bound property name for <code>treeModel</code>. */
-    public final static String        TREE_MODEL_PROPERTY = "model";
+    public static final String        TREE_MODEL_PROPERTY = "model";
     /** Bound property name for <code>rootVisible</code>. */
-    public final static String        ROOT_VISIBLE_PROPERTY = "rootVisible";
+    public static final String        ROOT_VISIBLE_PROPERTY = "rootVisible";
     /** Bound property name for <code>showsRootHandles</code>. */
-    public final static String        SHOWS_ROOT_HANDLES_PROPERTY = "showsRootHandles";
+    public static final String        SHOWS_ROOT_HANDLES_PROPERTY = "showsRootHandles";
     /** Bound property name for <code>rowHeight</code>. */
-    public final static String        ROW_HEIGHT_PROPERTY = "rowHeight";
+    public static final String        ROW_HEIGHT_PROPERTY = "rowHeight";
     /** Bound property name for <code>cellEditor</code>. */
-    public final static String        CELL_EDITOR_PROPERTY = "cellEditor";
+    public static final String        CELL_EDITOR_PROPERTY = "cellEditor";
     /** Bound property name for <code>editable</code>. */
-    public final static String        EDITABLE_PROPERTY = "editable";
+    public static final String        EDITABLE_PROPERTY = "editable";
     /** Bound property name for <code>largeModel</code>. */
-    public final static String        LARGE_MODEL_PROPERTY = "largeModel";
+    public static final String        LARGE_MODEL_PROPERTY = "largeModel";
     /** Bound property name for selectionModel. */
-    public final static String        SELECTION_MODEL_PROPERTY = "selectionModel";
+    public static final String        SELECTION_MODEL_PROPERTY = "selectionModel";
     /** Bound property name for <code>visibleRowCount</code>. */
-    public final static String        VISIBLE_ROW_COUNT_PROPERTY = "visibleRowCount";
+    public static final String        VISIBLE_ROW_COUNT_PROPERTY = "visibleRowCount";
     /** Bound property name for <code>messagesStopCellEditing</code>. */
-    public final static String        INVOKES_STOP_CELL_EDITING_PROPERTY = "invokesStopCellEditing";
+    public static final String        INVOKES_STOP_CELL_EDITING_PROPERTY = "invokesStopCellEditing";
     /** Bound property name for <code>scrollsOnExpand</code>. */
-    public final static String        SCROLLS_ON_EXPAND_PROPERTY = "scrollsOnExpand";
+    public static final String        SCROLLS_ON_EXPAND_PROPERTY = "scrollsOnExpand";
     /** Bound property name for <code>toggleClickCount</code>. */
-    public final static String        TOGGLE_CLICK_COUNT_PROPERTY = "toggleClickCount";
+    public static final String        TOGGLE_CLICK_COUNT_PROPERTY = "toggleClickCount";
     /** Bound property name for <code>leadSelectionPath</code>.
      * @since 1.3 */
-    public final static String        LEAD_SELECTION_PATH_PROPERTY = "leadSelectionPath";
+    public static final String        LEAD_SELECTION_PATH_PROPERTY = "leadSelectionPath";
     /** Bound property name for anchor selection path.
      * @since 1.3 */
-    public final static String        ANCHOR_SELECTION_PATH_PROPERTY = "anchorSelectionPath";
+    public static final String        ANCHOR_SELECTION_PATH_PROPERTY = "anchorSelectionPath";
     /** Bound property name for expands selected paths property
      * @since 1.3 */
-    public final static String        EXPANDS_SELECTED_PATHS_PROPERTY = "expandsSelectedPaths";
+    public static final String        EXPANDS_SELECTED_PATHS_PROPERTY = "expandsSelectedPaths";
 
 
     /**
@@ -687,12 +689,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param ui  the <code>TreeUI</code> L&amp;F object
      * @see UIDefaults#getUI
-     * @beaninfo
-     *        bound: true
-     *       hidden: true
-     *    attribute: visualUpdate true
-     *  description: The UI object that implements the Component's LookAndFeel.
      */
+    @BeanProperty(hidden = true, visualUpdate = true, description
+            = "The UI object that implements the Component's LookAndFeel.")
     public void setUI(TreeUI ui) {
         if (this.ui != ui) {
             settingUI = true;
@@ -728,6 +727,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @see JComponent#getUIClassID
      * @see UIDefaults#getUI
      */
+    @BeanProperty(bound = false)
     public String getUIClassID() {
         return uiClassID;
     }
@@ -750,11 +750,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
      *
      * @param x  the <code>TreeCellRenderer</code> that is to render each cell
-     * @beaninfo
-     *        bound: true
-     *  description: The TreeCellRenderer that will be used to draw
-     *               each cell.
      */
+    @BeanProperty(description
+            = "The TreeCellRenderer that will be used to draw each cell.")
     public void setCellRenderer(TreeCellRenderer x) {
         TreeCellRenderer oldValue = cellRenderer;
 
@@ -771,10 +769,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
       *
       * @param flag  a boolean value, true if the tree is editable
-      * @beaninfo
-      *        bound: true
-      *  description: Whether the tree is editable.
       */
+    @BeanProperty(description
+            = "Whether the tree is editable.")
     public void setEditable(boolean flag) {
         boolean                 oldValue = this.editable;
 
@@ -806,11 +803,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
      *
      * @param cellEditor the <code>TreeCellEditor</code> to use
-     * @beaninfo
-     *        bound: true
-     *  description: The cell editor. A null value implies the tree
-     *               cannot be edited.
      */
+    @BeanProperty(description
+            = "The cell editor. A null value implies the tree cannot be edited.")
     public void setCellEditor(TreeCellEditor cellEditor) {
         TreeCellEditor        oldEditor = this.cellEditor;
 
@@ -844,10 +839,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
      *
      * @param newModel the <code>TreeModel</code> that is to provide the data
-     * @beaninfo
-     *        bound: true
-     *  description: The TreeModel that will provide the data.
      */
+    @BeanProperty(description
+            = "The TreeModel that will provide the data.")
     public void setModel(TreeModel newModel) {
         clearSelection();
 
@@ -903,11 +897,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param rootVisible true if the root node of the tree is to be displayed
      * @see #rootVisible
-     * @beaninfo
-     *        bound: true
-     *  description: Whether or not the root node
-     *               from the TreeModel is visible.
      */
+    @BeanProperty(description
+            = "Whether or not the root node from the TreeModel is visible.")
     public void setRootVisible(boolean rootVisible) {
         boolean                oldValue = this.rootVisible;
 
@@ -932,11 +924,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *                 otherwise, <code>false</code>
      * @see #showsRootHandles
      * @see #getShowsRootHandles
-     * @beaninfo
-     *        bound: true
-     *  description: Whether the node handles are to be
-     *               displayed.
      */
+    @BeanProperty(description
+            = "Whether the node handles are to be displayed.")
     public void setShowsRootHandles(boolean newValue) {
         boolean                oldValue = showsRootHandles;
         TreeModel              model = getModel();
@@ -970,10 +960,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
      *
      * @param rowHeight the height of each cell, in pixels
-     * @beaninfo
-     *        bound: true
-     *  description: The height of each cell.
      */
+    @BeanProperty(description
+            = "The height of each cell.")
     public void setRowHeight(int rowHeight)
     {
         int                oldValue = this.rowHeight;
@@ -1001,6 +990,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return true if the height of each row is a fixed size
      */
+    @BeanProperty(bound = false)
     public boolean isFixedRowHeight()
     {
         return (rowHeight > 0);
@@ -1015,11 +1005,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param newValue true to suggest a large model to the UI
      * @see #largeModel
-     * @beaninfo
-     *        bound: true
-     *  description: Whether the UI should use a
-     *               large model.
      */
+    @BeanProperty(description
+            = "Whether the UI should use a large model.")
     public void setLargeModel(boolean newValue) {
         boolean                oldValue = largeModel;
 
@@ -1048,12 +1036,10 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @param newValue true means that <code>stopCellEditing</code> is invoked
      *        when editing is interrupted, and data is saved; false means that
      *        <code>cancelCellEditing</code> is invoked, and changes are lost
-     * @beaninfo
-     *        bound: true
-     *  description: Determines what happens when editing is interrupted,
-     *               selecting another node in the tree, a change in the
-     *               tree's data, or some other means.
      */
+    @BeanProperty(description
+            = "Determines what happens when editing is interrupted, selecting another node in the tree, "
+            + "a change in the tree's data, or some other means.")
     public void setInvokesStopCellEditing(boolean newValue) {
         boolean                  oldValue = invokesStopCellEditing;
 
@@ -1090,11 +1076,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @param newValue <code>false</code> to disable scrolling on expansion;
      *                 <code>true</code> to enable it
      * @see #getScrollsOnExpand
-     *
-     * @beaninfo
-     *        bound: true
-     *  description: Indicates if a node descendant should be scrolled when expanded.
      */
+    @BeanProperty(description
+            = "Indicates if a node descendant should be scrolled when expanded.")
     public void setScrollsOnExpand(boolean newValue) {
         boolean           oldValue = scrollsOnExpand;
 
@@ -1121,10 +1105,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param clickCount the number of mouse clicks to get a node expanded or closed
      * @since 1.3
-     * @beaninfo
-     *        bound: true
-     *  description: Number of clicks before a node will expand/collapse.
      */
+    @BeanProperty(description
+            = "Number of clicks before a node will expand/collapse.")
     public void setToggleClickCount(int clickCount) {
         int         oldCount = toggleClickCount;
 
@@ -1160,11 +1143,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @param newValue the new value for <code>expandsSelectedPaths</code>
      *
      * @since 1.3
-     * @beaninfo
-     *        bound: true
-     *  description: Indicates whether changes to the selection should make
-     *               the parent of the path visible.
      */
+    @BeanProperty(description
+            = "Indicates whether changes to the selection should make the parent of the path visible.")
     public void setExpandsSelectedPaths(boolean newValue) {
         boolean         oldValue = expandsSelectedPaths;
 
@@ -1212,11 +1193,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @see #setTransferHandler
      * @see TransferHandler
      * @since 1.4
-     *
-     * @beaninfo
-     *  description: determines whether automatic drag handling is enabled
-     *        bound: false
      */
+    @BeanProperty(bound = false, description
+            = "determines whether automatic drag handling is enabled")
     public void setDragEnabled(boolean b) {
         checkDragEnabled(b);
         dragEnabled = b;
@@ -1505,6 +1484,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @see TransferHandler#canImport(TransferHandler.TransferSupport)
      * @since 1.6
      */
+    @BeanProperty(bound = false)
     public final DropLocation getDropLocation() {
         return dropLocation;
     }
@@ -1635,6 +1615,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return the number of viewable nodes
      */
+    @BeanProperty(bound = false)
     public int getRowCount() {
         TreeUI            tree = getUI();
 
@@ -1677,10 +1658,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param newPath  the new lead path
      * @since 1.3
-     * @beaninfo
-     *        bound: true
-     *  description: Lead selection path
      */
+    @BeanProperty(description
+            = "Lead selection path")
     public void setLeadSelectionPath(TreePath newPath) {
         TreePath          oldValue = leadPath;
 
@@ -1705,10 +1685,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @param newPath  the new anchor path
      * @since 1.3
-     * @beaninfo
-     *        bound: true
-     *  description: Anchor selection path
      */
+    @BeanProperty(description
+            = "Anchor selection path")
     public void setAnchorSelectionPath(TreePath newPath) {
         TreePath          oldValue = anchorPath;
 
@@ -1828,6 +1807,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *         <code>null</code> if nothing is selected
      * @see TreePath#getLastPathComponent
      */
+    @BeanProperty(bound = false)
     public Object getLastSelectedPathComponent() {
         TreePath     selPath = getSelectionModel().getSelectionPath();
 
@@ -1894,6 +1874,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return the number of nodes selected
      */
+    @BeanProperty(bound = false)
     public int getSelectionCount() {
         return selectionModel.getSelectionCount();
     }
@@ -1904,6 +1885,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return the smallest selected row
      */
+    @BeanProperty(bound = false)
     public int getMinSelectionRow() {
         return getSelectionModel().getMinSelectionRow();
     }
@@ -1914,6 +1896,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return the largest selected row
      */
+    @BeanProperty(bound = false)
     public int getMaxSelectionRow() {
         return getSelectionModel().getMaxSelectionRow();
     }
@@ -1925,6 +1908,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *          where 0 is the first row in the display; or -1
      *          if <code>leadPath</code> is <code>null</code>
      */
+    @BeanProperty(bound = false)
     public int getLeadSelectionRow() {
         TreePath leadPath = getLeadSelectionPath();
 
@@ -2198,6 +2182,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *          <code>null</code> if <code>row &lt; 0</code>
      *          or <code>row &gt;= getRowCount()</code>
      */
+    @BeanProperty(bound = false)
     public TreePath getPathForRow(int row) {
         TreeUI                  tree = getUI();
 
@@ -2368,6 +2353,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @return true if the user is currently editing a node
      * @see #getSelectionPath
      */
+    @BeanProperty(bound = false)
     public boolean isEditing() {
         TreeUI                  tree = getUI();
 
@@ -2430,6 +2416,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return  the <code>TreePath</code> for the node being edited
      */
+    @BeanProperty(bound = false)
     public TreePath getEditingPath() {
         TreeUI                  tree = getUI();
 
@@ -2457,10 +2444,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @param selectionModel the <code>TreeSelectionModel</code> to use,
      *          or <code>null</code> to disable selections
      * @see TreeSelectionModel
-     * @beaninfo
-     *        bound: true
-     *  description: The tree's selection model.
      */
+    @BeanProperty(description
+            = "The tree's selection model.")
     public void setSelectionModel(TreeSelectionModel selectionModel) {
         if(selectionModel == null)
             selectionModel = EmptySelectionModel.sharedInstance();
@@ -2700,6 +2686,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return true if the selection is currently empty
      */
+    @BeanProperty(bound = false)
     public boolean isSelectionEmpty() {
         return getSelectionModel().isSelectionEmpty();
     }
@@ -2738,6 +2725,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *         array if no listeners have been added
      * @since 1.4
      */
+    @BeanProperty(bound = false)
     public TreeExpansionListener[] getTreeExpansionListeners() {
         return listenerList.getListeners(TreeExpansionListener.class);
     }
@@ -2770,6 +2758,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *         array if no listeners have been added
      * @since 1.4
      */
+    @BeanProperty(bound = false)
     public TreeWillExpandListener[] getTreeWillExpandListeners() {
         return listenerList.getListeners(TreeWillExpandListener.class);
     }
@@ -2929,6 +2918,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *         array if no listeners have been added
      * @since 1.4
      */
+    @BeanProperty(bound = false)
     public TreeSelectionListener[] getTreeSelectionListeners() {
         return listenerList.getListeners(TreeSelectionListener.class);
     }
@@ -2980,10 +2970,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * This is a bound property.
      *
      * @param newCount the number of rows to display
-     * @beaninfo
-     *        bound: true
-     *  description: The number of rows that are to be displayed.
      */
+    @BeanProperty(description
+            = "The number of rows that are to be displayed.")
     public void setVisibleRowCount(int newCount) {
         int                 oldCount = visibleRowCount;
 
@@ -3322,7 +3311,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
          *
          * @return single instance of {@code EmptySelectionModel}
          */
-        static public EmptySelectionModel sharedInstance() {
+        public static EmptySelectionModel sharedInstance() {
             return sharedInstance;
         }
 
@@ -3459,6 +3448,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      *
      * @return a <code>Dimension</code> object containing the preferred size
      */
+    @BeanProperty(bound = false)
     public Dimension getPreferredScrollableViewportSize() {
         int                 width = getPreferredSize().width;
         int                 visRows = getVisibleRowCount();
@@ -3565,6 +3555,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @return whether the tree should track the width of the viewport
      * @see Scrollable#getScrollableTracksViewportWidth
      */
+    @BeanProperty(bound = false)
     public boolean getScrollableTracksViewportWidth() {
         Container parent = SwingUtilities.getUnwrappedParent(this);
         if (parent instanceof JViewport) {
@@ -3582,6 +3573,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @return whether the tree should track the height of the viewport
      * @see Scrollable#getScrollableTracksViewportHeight
      */
+    @BeanProperty(bound = false)
     public boolean getScrollableTracksViewportHeight() {
         Container parent = SwingUtilities.getUnwrappedParent(this);
         if (parent instanceof JViewport) {
@@ -4160,6 +4152,7 @@ public class JTree extends JComponent implements Scrollable, Accessible
      * @return an AccessibleJTree that serves as the
      *         AccessibleContext of this JTree
      */
+    @BeanProperty(bound = false)
     public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
             accessibleContext = new AccessibleJTree();

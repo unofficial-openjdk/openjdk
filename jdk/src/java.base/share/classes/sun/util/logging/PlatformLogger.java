@@ -39,8 +39,8 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import sun.misc.JavaLangAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * Platform logger provides an API for the JRE components to log
@@ -408,7 +408,7 @@ public class PlatformLogger {
     /**
      * Abstract base class for logging support, defining the API and common field.
      */
-    private static abstract class LoggerProxy {
+    private abstract static class LoggerProxy {
         final String name;
 
         protected LoggerProxy(String name) {

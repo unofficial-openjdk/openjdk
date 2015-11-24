@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,12 @@
  * questions.
  */
 
-#import <JavaNativeFoundation/JavaNativeFoundation.h>
-
-#import "jni_util.h"
-#import "LWCToolkit.h"
 #import "AWT_debug.h"
 
+#import "jni_util.h"
+#import "ThreadUtilities.h"
+
+#import <JavaNativeFoundation/JavaNativeFoundation.h>
 
 #define MAX_DISPLAYS 64
 
@@ -115,17 +115,20 @@ static void displaycb_handle
 {
     if (flags == kCGDisplayBeginConfigurationFlag) return;
 
-    JNFPerformEnvBlock(JNFThreadDetachImmediately, ^(JNIEnv *env) {
-        JNFWeakJObjectWrapper *wrapper = (JNFWeakJObjectWrapper *)userInfo;
+    [ThreadUtilities performOnMainThreadWaiting:NO block:^() {
 
-        jobject graphicsEnv = [wrapper jObjectWithEnv:env];
-        if (graphicsEnv == NULL) return; // ref already GC'd
-        static JNF_CLASS_CACHE(jc_CGraphicsEnvironment, "sun/awt/CGraphicsEnvironment");
-        static JNF_MEMBER_CACHE(jm_displayReconfiguration, jc_CGraphicsEnvironment, "_displayReconfiguration", "(IZ)V");
-        JNFCallVoidMethod(env, graphicsEnv, jm_displayReconfiguration,
-                            (jint) display, 
-                            (jboolean) flags & kCGDisplayRemoveFlag);
-    });
+        JNFPerformEnvBlock(JNFThreadDetachImmediately, ^(JNIEnv *env) {
+            JNFWeakJObjectWrapper *wrapper = (JNFWeakJObjectWrapper *)userInfo;
+
+            jobject graphicsEnv = [wrapper jObjectWithEnv:env];
+            if (graphicsEnv == NULL) return; // ref already GC'd
+            static JNF_CLASS_CACHE(jc_CGraphicsEnvironment, "sun/awt/CGraphicsEnvironment");
+            static JNF_MEMBER_CACHE(jm_displayReconfiguration,
+                    jc_CGraphicsEnvironment, "_displayReconfiguration","(IZ)V");
+            JNFCallVoidMethod(env, graphicsEnv, jm_displayReconfiguration,
+                    (jint) display, (jboolean) flags & kCGDisplayRemoveFlag);
+        });
+    }];
 }
 
 /*

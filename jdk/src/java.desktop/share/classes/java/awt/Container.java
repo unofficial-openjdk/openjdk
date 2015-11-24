@@ -2975,7 +2975,7 @@ public class Container extends Component {
         }
     }
 
-    final static class WakingRunnable implements Runnable {
+    static final class WakingRunnable implements Runnable {
         public void run() {
         }
     }
@@ -3131,8 +3131,6 @@ public class Container extends Component {
      *         or if any keystroke already maps to another focus traversal
      *         operation for this Container
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusTraversalKeys(int id,
                                       Set<? extends AWTKeyStroke> keystrokes)
@@ -3347,8 +3345,6 @@ public class Container extends Component {
      * @see #setFocusCycleRoot
      * @see #isFocusCycleRoot
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusTraversalPolicy(FocusTraversalPolicy policy) {
         FocusTraversalPolicy oldPolicy;
@@ -3427,8 +3423,6 @@ public class Container extends Component {
      * @see ContainerOrderFocusTraversalPolicy
      * @see #setFocusTraversalPolicyProvider
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusCycleRoot(boolean focusCycleRoot) {
         boolean oldFocusCycleRoot;
@@ -3472,8 +3466,6 @@ public class Container extends Component {
      * @see #getFocusTraversalPolicy
      * @see #isFocusTraversalPolicyProvider
      * @since 1.5
-     * @beaninfo
-     *        bound: true
      */
     public final void setFocusTraversalPolicyProvider(boolean provider) {
         boolean oldProvider;
@@ -3499,8 +3491,6 @@ public class Container extends Component {
      * @return <code>true</code> if this container provides focus traversal
      *         policy, <code>false</code> otherwise
      * @since 1.5
-     * @beaninfo
-     *        bound: true
      */
     public final boolean isFocusTraversalPolicyProvider() {
         return focusTraversalPolicyProvider;
@@ -3843,7 +3833,7 @@ public class Container extends Component {
          * Number of PropertyChangeListener objects registered. It's used
          * to add/remove ContainerListener to track target Container's state.
          */
-        private volatile transient int propertyListenersCount = 0;
+        private transient volatile int propertyListenersCount = 0;
 
         /**
          * The handler to fire {@code PropertyChange}

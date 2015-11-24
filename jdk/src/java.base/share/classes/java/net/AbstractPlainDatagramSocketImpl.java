@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
     /**
      * flag set if the native connect() call not to be used
      */
-    private final static boolean connectDisabled = os.contains("OS X");
+    private static final boolean connectDisabled = os.contains("OS X");
 
     /**
      * Load net library into runtime.
@@ -68,7 +68,6 @@ abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
                     return null;
                 }
             });
-        init();
     }
 
     /**
@@ -364,6 +363,5 @@ abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
         return connectDisabled;
     }
 
-    native int dataAvailable();
-    private static native void init();
+    abstract int dataAvailable();
 }

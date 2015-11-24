@@ -61,7 +61,7 @@ public class KeyManagerFactory {
      *          {@code ssl.KeyManagerFactory.algorithm} security property, or an
      *          implementation-specific default if no such property exists.
      */
-    public final static String getDefaultAlgorithm() {
+    public static final String getDefaultAlgorithm() {
         String type;
         type = AccessController.doPrivileged(new PrivilegedAction<>() {
             @Override
@@ -115,6 +115,13 @@ public class KeyManagerFactory {
      *
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
+     *
+     * @implNote
+     * The JDK Reference Implementation additionally uses the
+     * {@code jdk.security.provider.preferred} property to determine
+     * the preferred provider order for the specified algorithm. This
+     * may be different than the order of providers returned by
+     * {@link Security#getProviders() Security.getProviders()}.
      *
      * @param algorithm the standard name of the requested algorithm.
      *          See the <a href=

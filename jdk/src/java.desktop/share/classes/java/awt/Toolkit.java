@@ -448,7 +448,7 @@ public abstract class Toolkit {
      *
      * @param s the error message
      * @param e the original exception
-     * @throw the new AWTError including the cause (the original exception)
+     * @throws the new AWTError including the cause (the original exception)
      */
     private static void newAWTError(Throwable e, String s) {
         AWTError newAWTError = new AWTError(s);
@@ -1722,7 +1722,7 @@ public abstract class Toolkit {
      * Extracts a "pure" AWTEventListener from a AWTEventListenerProxy,
      * if the listener is proxied.
      */
-    static private AWTEventListener deProxyAWTEventListener(AWTEventListener l)
+    private static AWTEventListener deProxyAWTEventListener(AWTEventListener l)
     {
         AWTEventListener localL = l;
 
@@ -2007,7 +2007,7 @@ public abstract class Toolkit {
         }
     }
 
-    static private class ToolkitEventMulticaster extends AWTEventMulticaster
+    private static class ToolkitEventMulticaster extends AWTEventMulticaster
         implements AWTEventListener {
         // Implementation cloned from AWTEventMulticaster.
 

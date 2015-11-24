@@ -556,8 +556,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
              * for both client property and UIDefaults.
              * Also need to set up listeners for changes in these settings.
              */
-            Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(true);
-            table.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+            SwingUtilities2.putAATextInfo(true, table);
             this.aaSettings =
                 new FontDesktopProperty(SunToolkit.DESKTOPFONTHINTS);
         }
@@ -835,12 +834,12 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "InternalFrame.closeIcon",
                 WindowsIconFactory.createFrameCloseIcon(),
             "InternalFrame.icon",
-               (LazyValue) t -> new Object[]{
+                (LazyValue) t -> new WindowsInternalFrameTitlePane.ScalableIconUIResource(new Object[]{
                     // The constructor takes one arg: an array of UIDefaults.LazyValue
                     // representing the icons
                         SwingUtilities2.makeIcon(getClass(), BasicLookAndFeel.class, "icons/JavaCup16.png"),
                         SwingUtilities2.makeIcon(getClass(), WindowsLookAndFeel.class, "icons/JavaCup32.png")
-                },
+                }),
             // Internal Frame Auditory Cue Mappings
             "InternalFrame.closeSound", "win.sound.close",
             "InternalFrame.maximizeSound", "win.sound.maximize",
@@ -1570,6 +1569,11 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 && OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_VISTA) >= 0;
     }
 
+    static boolean isOnWindows7() {
+        return OSInfo.getOSType() == OSInfo.OSType.WINDOWS
+                && OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_7) >= 0;
+    }
+
     private void initVistaComponentDefaults(UIDefaults table) {
         if (! isOnVista()) {
             return;
@@ -1639,28 +1643,30 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         }
         table.putDefaults(menuDefaults);
 
-        /* no margins */
-        InsetsUIResource insets = new InsetsUIResource(0, 0, 0, 0);
-        for (int i = 0, j = 0; i < menuClasses.length; i++) {
-            String key = menuClasses[i] + ".margin";
-            Object oldValue = table.get(key);
-            menuDefaults[j++] = key;
-            menuDefaults[j++] = new XPValue(insets, oldValue);
-        }
-        table.putDefaults(menuDefaults);
+        /*For Windows7 margin and checkIconOffset should be greater than 0 */
+        if (!isOnWindows7()) {
+            /* no margins */
+            InsetsUIResource insets = new InsetsUIResource(0, 0, 0, 0);
+            for (int i = 0, j = 0; i < menuClasses.length; i++) {
+                String key = menuClasses[i] + ".margin";
+                Object oldValue = table.get(key);
+                menuDefaults[j++] = key;
+                menuDefaults[j++] = new XPValue(insets, oldValue);
+            }
+            table.putDefaults(menuDefaults);
 
-        /* set checkIcon offset */
-        Integer checkIconOffsetInteger =
-            Integer.valueOf(0);
-        for (int i = 0, j = 0; i < menuClasses.length; i++) {
-            String key = menuClasses[i] + ".checkIconOffset";
-            Object oldValue = table.get(key);
-            menuDefaults[j++] = key;
-            menuDefaults[j++] =
-                new XPValue(checkIconOffsetInteger, oldValue);
+            /* set checkIcon offset */
+            Integer checkIconOffsetInteger =
+                Integer.valueOf(0);
+            for (int i = 0, j = 0; i < menuClasses.length; i++) {
+                String key = menuClasses[i] + ".checkIconOffset";
+                Object oldValue = table.get(key);
+                menuDefaults[j++] = key;
+                menuDefaults[j++] =
+                    new XPValue(checkIconOffsetInteger, oldValue);
+            }
+            table.putDefaults(menuDefaults);
         }
-        table.putDefaults(menuDefaults);
-
         /* set width of the gap after check icon */
         Integer afterCheckIconGap = WindowsPopupMenuUI.getSpanBeforeGutter()
                 + WindowsPopupMenuUI.getGutterWidth()
@@ -2272,7 +2278,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         protected Object classicValue, xpValue;
 
         // A constant that lets you specify null when using XP styles.
-        private final static Object NULL_VALUE = new Object();
+        private static final Object NULL_VALUE = new Object();
 
         XPValue(Object xpValue, Object classicValue) {
             this.xpValue = xpValue;
@@ -2402,9 +2408,8 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         }
 
         protected void updateUI() {
-            Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(true);
             UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-            defaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+            SwingUtilities2.putAATextInfo(true, defaults);
             super.updateUI();
         }
     }

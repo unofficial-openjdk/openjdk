@@ -50,7 +50,7 @@ class MethodHandleNatives {
     static native int getMembers(Class<?> defc, String matchName, String matchSig,
             int matchFlags, Class<?> caller, int skip, MemberName[] results);
 
-    /// Field layout queries parallel to sun.misc.Unsafe:
+    /// Field layout queries parallel to jdk.internal.misc.Unsafe:
     static native long objectFieldOffset(MemberName self);  // e.g., returns vmindex
     static native long staticFieldOffset(MemberName self);  // e.g., returns vmindex
     static native Object staticFieldBase(MemberName self);  // e.g., returns clazz
@@ -383,7 +383,7 @@ class MethodHandleNatives {
         if (type instanceof MethodType)
             return (MethodType) type;
         else
-            return MethodType.fromMethodDescriptorString((String)type, callerClass.getClassLoader());
+            return MethodType.fromDescriptor((String)type, callerClass.getClassLoader());
     }
     // Tracing logic:
     static MemberName linkMethodTracing(Class<?> callerClass, int refKind,
@@ -440,7 +440,7 @@ class MethodHandleNatives {
      * Use best possible cause for err.initCause(), substituting the
      * cause for err itself if the cause has the same (or better) type.
      */
-    static private Error initCauseFrom(Error err, Exception ex) {
+    private static Error initCauseFrom(Error err, Exception ex) {
         Throwable th = ex.getCause();
         if (err.getClass().isInstance(th))
            return (Error) th;
