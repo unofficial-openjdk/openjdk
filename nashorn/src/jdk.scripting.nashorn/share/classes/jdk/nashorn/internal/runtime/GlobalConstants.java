@@ -67,7 +67,7 @@ import jdk.nashorn.internal.runtime.logging.Logger;
  *
  * Thus everything registered as a global constant gets an extra chance. Set once,
  * reregister the switchpoint. Set twice or more - don't try again forever, or we'd
- * just end up relinking our way into megamorphisism.
+ * just end up relinking our way into megamorphism.
  *
  * Also it has to be noted that this kind of linking creates a coupling between a Global
  * and the call sites in compiled code belonging to the Context. For this reason, the
@@ -357,7 +357,7 @@ public final class GlobalConstants implements Loggable {
             return null;
         }
 
-        final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        final String name = NashornCallSiteDescriptor.getOperand(desc);
 
         synchronized (this) {
             final Access acc  = getOrCreateSwitchPoint(name);
@@ -432,7 +432,7 @@ public final class GlobalConstants implements Loggable {
         final boolean  isOptimistic = NashornCallSiteDescriptor.isOptimistic(desc);
         final int      programPoint = isOptimistic ? getProgramPoint(desc) : INVALID_PROGRAM_POINT;
         final Class<?> retType      = desc.getMethodType().returnType();
-        final String   name         = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
+        final String   name         = NashornCallSiteDescriptor.getOperand(desc);
 
         synchronized (this) {
             final Access acc = getOrCreateSwitchPoint(name);

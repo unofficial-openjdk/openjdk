@@ -87,15 +87,15 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.Permissions;
 import java.security.PrivilegedAction;
-import java.security.ProtectionDomain;
+import jdk.internal.dynalink.internal.AccessControlContextFactory;
 
 /**
  * A utility class to check whether a given class is in a package with restricted access e.g. "sun.*" etc.
  */
 class CheckRestrictedPackage {
-    private static final AccessControlContext NO_PERMISSIONS_CONTEXT = createNoPermissionsContext();
+    private static final AccessControlContext NO_PERMISSIONS_CONTEXT =
+            AccessControlContextFactory.createAccessControlContext();
 
     /**
      * Returns true if the class is either not public, or it resides in a package with restricted access.
@@ -137,9 +137,5 @@ class CheckRestrictedPackage {
             return true;
         }
         return false;
-    }
-
-    private static AccessControlContext createNoPermissionsContext() {
-        return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, new Permissions()) });
     }
 }

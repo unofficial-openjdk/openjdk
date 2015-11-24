@@ -93,7 +93,6 @@ import jdk.nashorn.internal.ir.Expression;
 import jdk.nashorn.internal.ir.ExpressionStatement;
 import jdk.nashorn.internal.ir.ForNode;
 import jdk.nashorn.internal.ir.FunctionNode;
-import jdk.nashorn.internal.ir.FunctionNode.CompilationState;
 import jdk.nashorn.internal.ir.GetSplitState;
 import jdk.nashorn.internal.ir.IdentNode;
 import jdk.nashorn.internal.ir.IfNode;
@@ -106,7 +105,6 @@ import jdk.nashorn.internal.ir.LexicalContext;
 import jdk.nashorn.internal.ir.LexicalContextNode;
 import jdk.nashorn.internal.ir.LiteralNode;
 import jdk.nashorn.internal.ir.LiteralNode.ArrayLiteralNode;
-import jdk.nashorn.internal.ir.LiteralNode.ArrayLiteralNode.ArrayUnit;
 import jdk.nashorn.internal.ir.LiteralNode.PrimitiveLiteralNode;
 import jdk.nashorn.internal.ir.LocalVariableConversion;
 import jdk.nashorn.internal.ir.LoopNode;
@@ -119,6 +117,7 @@ import jdk.nashorn.internal.ir.RuntimeNode;
 import jdk.nashorn.internal.ir.RuntimeNode.Request;
 import jdk.nashorn.internal.ir.SetSplitState;
 import jdk.nashorn.internal.ir.SplitReturn;
+import jdk.nashorn.internal.ir.Splittable;
 import jdk.nashorn.internal.ir.Statement;
 import jdk.nashorn.internal.ir.SwitchNode;
 import jdk.nashorn.internal.ir.Symbol;
@@ -130,9 +129,8 @@ import jdk.nashorn.internal.ir.VarNode;
 import jdk.nashorn.internal.ir.WhileNode;
 import jdk.nashorn.internal.ir.WithNode;
 import jdk.nashorn.internal.ir.visitor.NodeOperatorVisitor;
-import jdk.nashorn.internal.ir.visitor.NodeVisitor;
+import jdk.nashorn.internal.ir.visitor.SimpleNodeVisitor;
 import jdk.nashorn.internal.objects.Global;
-import jdk.nashorn.internal.objects.ScriptFunctionImpl;
 import jdk.nashorn.internal.parser.Lexer.RegexToken;
 import jdk.nashorn.internal.parser.TokenType;
 import jdk.nashorn.internal.runtime.Context;
@@ -195,9 +193,9 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
     private static final Call ENSURE_NUMBER = CompilerConstants.staticCallNoLookup(OptimisticReturnFilters.class,
             "ensureNumber", double.class, Object.class, int.class);
 
-    private static final Call CREATE_FUNCTION_OBJECT = CompilerConstants.staticCallNoLookup(ScriptFunctionImpl.class,
+    private static final Call CREATE_FUNCTION_OBJECT = CompilerConstants.staticCallNoLookup(ScriptFunction.class,
             "create", ScriptFunction.class, Object[].class, int.class, ScriptObject.class);
-    private static final Call CREATE_FUNCTION_OBJECT_NO_SCOPE = CompilerConstants.staticCallNoLookup(ScriptFunctionImpl.class,
+    private static final Call CREATE_FUNCTION_OBJECT_NO_SCOPE = CompilerConstants.staticCallNoLookup(ScriptFunction.class,
             "create", ScriptFunction.class, Object[].class, int.class);
 
     private static final Call TO_NUMBER_FOR_EQ = CompilerConstants.staticCallNoLookup(JSType.class,
@@ -244,7 +242,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
     private final DebugLogger log;
 
     /** From what size should we use spill instead of fields for JavaScript objects? */
-    private static final int OBJECT_SPILL_THRESHOLD = Options.getIntProperty("nashorn.spill.threshold", 256);
+    static final int OBJECT_SPILL_THRESHOLD = Options.getIntProperty("nashorn.spill.threshold", 256);
 
     private final Set<String> emittedMethods = new HashSet<>();
 
@@ -685,9 +683,9 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             // (in)equality operators need the specialized JSType.toNumberFor[Strict]Equals. E.g. in the code snippet
             // "i < obj.size" (where i is primitive and obj.size is statically an object), ".size" will thus be allowed
             // to compile as:
-            //   invokedynamic dyn:getProp|getElem|getMethod:size(Object;)D
+            //   invokedynamic GET_PROPERTY:size(Object;)D
             // instead of the more costly:
-            //   invokedynamic dyn:getProp|getElem|getMethod:size(Object;)Object
+            //   invokedynamic GET_PROPERTY:size(Object;)Object
             //   invokestatic JSType.toNumber(Object)D
             // Note also that even if this is allowed, we're only using it on operands that are non-optimistic, as
             // otherwise the logic for determining effective optimistic-ness would turn an optimistic double return
@@ -1435,8 +1433,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         final Block currentBlock = lc.getCurrentBlock();
         final CodeGeneratorLexicalContext codegenLexicalContext = lc;
 
-        function.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
-
+        function.accept(new SimpleNodeVisitor() {
             private MethodEmitter sharedScopeCall(final IdentNode identNode, final int flags) {
                 final Symbol symbol = identNode.getSymbol();
                 final boolean isFastScope = isFastScope(symbol);
@@ -1495,13 +1492,13 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                     int argsCount;
                     @Override
                     void loadStack() {
-                        /**
+                        /*
                          * We want to load 'eval' to check if it is indeed global builtin eval.
-                         * If this eval call is inside a 'with' statement, dyn:getMethod|getProp|getElem
+                         * If this eval call is inside a 'with' statement, GET_METHOD_PROPERTY
                          * would be generated if ident is a "isFunction". But, that would result in a
                          * bound function from WithObject. We don't want that as bound function as that
                          * won't be detected as builtin eval. So, we make ident as "not a function" which
-                         * results in "dyn:getProp|getElem|getMethod" being generated and so WithObject
+                         * results in GET_PROPERTY being generated and so WithObject
                          * would return unbounded eval function.
                          *
                          * Example:
@@ -1528,7 +1525,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                         method._goto(invoke_direct_eval);
 
                         method.label(is_not_eval);
-                        // load this time but with dyn:getMethod|getProp|getElem
+                        // load this time but with GET_METHOD_PROPERTY
                         loadExpressionAsObject(ident); // Type.OBJECT as foo() makes no sense if foo == 3
                         // This is some scope 'eval' or global eval replaced by user
                         // but not the built-in ECMAScript 'eval' function call
@@ -1636,7 +1633,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
 
                     @Override
                     void consumeStack() {
-                        dynamicCall(2 + argsCount, getCallSiteFlags(), origCallee.getName());
+                        dynamicCall(2 + argsCount, getCallSiteFlags(), null);
                     }
                 }.emit();
                 return false;
@@ -2143,7 +2140,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                 markOptimistic = false;
             }
 
-            FunctionNode newFunctionNode = functionNode.setState(lc, CompilationState.BYTECODE_GENERATED);
+            FunctionNode newFunctionNode = functionNode;
             if (markOptimistic) {
                 newFunctionNode = newFunctionNode.setFlag(lc, FunctionNode.IS_DEOPTIMIZABLE);
             }
@@ -2236,73 +2233,33 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
      *
      * @param arrayLiteralNode the array of contents
      * @param arrayType        the type of the array, e.g. ARRAY_NUMBER or ARRAY_OBJECT
-     *
-     * @return the method generator that was used
      */
-    private MethodEmitter loadArray(final ArrayLiteralNode arrayLiteralNode, final ArrayType arrayType) {
+    private void loadArray(final ArrayLiteralNode arrayLiteralNode, final ArrayType arrayType) {
         assert arrayType == Type.INT_ARRAY || arrayType == Type.LONG_ARRAY || arrayType == Type.NUMBER_ARRAY || arrayType == Type.OBJECT_ARRAY;
 
-        final Expression[]    nodes    = arrayLiteralNode.getValue();
-        final Object          presets  = arrayLiteralNode.getPresets();
-        final int[]           postsets = arrayLiteralNode.getPostsets();
-        final Class<?>        type     = arrayType.getTypeClass();
-        final List<ArrayUnit> units    = arrayLiteralNode.getUnits();
+        final Expression[]     nodes    = arrayLiteralNode.getValue();
+        final Object           presets  = arrayLiteralNode.getPresets();
+        final int[]            postsets = arrayLiteralNode.getPostsets();
+        final List<Splittable.SplitRange> ranges   = arrayLiteralNode.getSplitRanges();
 
         loadConstant(presets);
 
         final Type elementType = arrayType.getElementType();
 
-        if (units != null) {
-            final MethodEmitter savedMethod     = method;
-            final FunctionNode  currentFunction = lc.getCurrentFunction();
+        if (ranges != null) {
 
-            for (final ArrayUnit arrayUnit : units) {
-                unit = lc.pushCompileUnit(arrayUnit.getCompileUnit());
-
-                final String className = unit.getUnitClassName();
-                assert unit != null;
-                final String name      = currentFunction.uniqueName(SPLIT_PREFIX.symbolName());
-                final String signature = methodDescriptor(type, ScriptFunction.class, Object.class, ScriptObject.class, type);
-
-                pushMethodEmitter(unit.getClassEmitter().method(EnumSet.of(Flag.PUBLIC, Flag.STATIC), name, signature));
-
-                method.setFunctionNode(currentFunction);
-                method.begin();
-
-                defineCommonSplitMethodParameters();
-                defineSplitMethodParameter(CompilerConstants.SPLIT_ARRAY_ARG.slot(), arrayType);
-
-                // NOTE: when this is no longer needed, SplitIntoFunctions will no longer have to add IS_SPLIT
-                // to synthetic functions, and FunctionNode.needsCallee() will no longer need to test for isSplit().
-                final int arraySlot = fixScopeSlot(currentFunction, 3);
-
-                lc.enterSplitNode();
-
-                for (int i = arrayUnit.getLo(); i < arrayUnit.getHi(); i++) {
-                    method.load(arrayType, arraySlot);
-                    storeElement(nodes, elementType, postsets[i]);
+            loadSplitLiteral(new SplitLiteralCreator() {
+                @Override
+                public void populateRange(final MethodEmitter method, final Type type, final int slot, final int start, final int end) {
+                    for (int i = start; i < end; i++) {
+                        method.load(type, slot);
+                        storeElement(nodes, elementType, postsets[i]);
+                    }
+                    method.load(type, slot);
                 }
+            }, ranges, arrayType);
 
-                method.load(arrayType, arraySlot);
-                method._return();
-                lc.exitSplitNode();
-                method.end();
-                lc.releaseSlots();
-                popMethodEmitter();
-
-                assert method == savedMethod;
-                method.loadCompilerConstant(CALLEE);
-                method.swap();
-                method.loadCompilerConstant(THIS);
-                method.swap();
-                method.loadCompilerConstant(SCOPE);
-                method.swap();
-                method.invokestatic(className, name, signature);
-
-                unit = lc.popCompileUnit(unit);
-            }
-
-            return method;
+            return;
         }
 
         if(postsets.length > 0) {
@@ -2314,7 +2271,6 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             }
             method.load(arrayType, arraySlot);
         }
-        return method;
     }
 
     private void storeElement(final Expression[] nodes, final Type elementType, final int index) {
@@ -2504,7 +2460,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
 
             @Override
             public Boolean get() {
-                value.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+                value.accept(new SimpleNodeVisitor() {
                     @Override
                     public boolean enterFunctionNode(final FunctionNode functionNode) {
                         return false;
@@ -2539,6 +2495,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         final List<MapTuple<Expression>> tuples = new ArrayList<>();
         final List<PropertyNode> gettersSetters = new ArrayList<>();
         final int ccp = getCurrentContinuationEntryPoint();
+        final List<Splittable.SplitRange> ranges = objectNode.getSplitRanges();
 
         Expression protoNode = null;
         boolean restOfProperty = false;
@@ -2585,7 +2542,13 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                     loadExpressionAsType(node, type);
                 }};
         }
-        oc.makeObject(method);
+
+        if (ranges != null) {
+            oc.createObject(method);
+            loadSplitLiteral(oc, ranges, Type.typeFor(oc.getAllocatorClass()));
+        } else {
+            oc.makeObject(method);
+        }
 
         //if this is a rest of method and our continuation point was found as one of the values
         //in the properties above, we need to reset the map to oc.getMap() in the continuation
@@ -2835,7 +2798,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             boolean contains;
             @Override
             public Boolean get() {
-                rootExpr.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+                rootExpr.accept(new SimpleNodeVisitor() {
                     @Override
                     public boolean enterFunctionNode(final FunctionNode functionNode) {
                         return false;
@@ -2899,6 +2862,54 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
     private void defineSplitMethodParameter(final int slot, final Type type) {
         method.defineBlockLocalVariable(slot, slot + type.getSlots());
         method.onLocalStore(type, slot);
+    }
+
+    private void loadSplitLiteral(final SplitLiteralCreator creator, final List<Splittable.SplitRange> ranges, final Type literalType) {
+        assert ranges != null;
+
+        // final Type literalType = Type.typeFor(literalClass);
+        final MethodEmitter savedMethod     = method;
+        final FunctionNode  currentFunction = lc.getCurrentFunction();
+
+        for (final Splittable.SplitRange splitRange : ranges) {
+            unit = lc.pushCompileUnit(splitRange.getCompileUnit());
+
+            assert unit != null;
+            final String className = unit.getUnitClassName();
+            final String name      = currentFunction.uniqueName(SPLIT_PREFIX.symbolName());
+            final Class<?> clazz   = literalType.getTypeClass();
+            final String signature = methodDescriptor(clazz, ScriptFunction.class, Object.class, ScriptObject.class, clazz);
+
+            pushMethodEmitter(unit.getClassEmitter().method(EnumSet.of(Flag.PUBLIC, Flag.STATIC), name, signature));
+
+            method.setFunctionNode(currentFunction);
+            method.begin();
+
+            defineCommonSplitMethodParameters();
+            defineSplitMethodParameter(CompilerConstants.SPLIT_ARRAY_ARG.slot(), literalType);
+
+            // NOTE: when this is no longer needed, SplitIntoFunctions will no longer have to add IS_SPLIT
+            // to synthetic functions, and FunctionNode.needsCallee() will no longer need to test for isSplit().
+            final int literalSlot = fixScopeSlot(currentFunction, 3);
+
+            lc.enterSplitNode();
+
+            creator.populateRange(method, literalType, literalSlot, splitRange.getLow(), splitRange.getHigh());
+
+            method._return();
+            lc.exitSplitNode();
+            method.end();
+            lc.releaseSlots();
+            popMethodEmitter();
+
+            assert method == savedMethod;
+            method.loadCompilerConstant(CALLEE).swap();
+            method.loadCompilerConstant(THIS).swap();
+            method.loadCompilerConstant(SCOPE).swap();
+            method.invokestatic(className, name, signature);
+
+            unit = lc.popCompileUnit(unit);
+        }
     }
 
     private int fixScopeSlot(final FunctionNode functionNode, final int extraSlot) {
@@ -4330,12 +4341,12 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         }
 
         private void prologue() {
-            /**
+            /*
              * This loads the parts of the target, e.g base and index. they are kept
              * on the stack throughout the store and used at the end to execute it
              */
 
-            target.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+            target.accept(new SimpleNodeVisitor() {
                 @Override
                 public boolean enterIdentNode(final IdentNode node) {
                     if (node.getSymbol().isScope()) {
@@ -4434,7 +4445,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
              * need to do a conversion on non-equivalent types exists, but is
              * very rare. See for example test/script/basic/access-specializer.js
              */
-            target.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+            target.accept(new SimpleNodeVisitor() {
                 @Override
                 protected boolean enterDefault(final Node node) {
                     throw new AssertionError("Unexpected node " + node + " in store epilogue");
@@ -4798,7 +4809,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
          * conversion has no side effects.
          * @param name the name of the property being get
          * @param flags call site flags
-         * @param isMethod whether we're preferrably retrieving a function
+         * @param isMethod whether we're preferably retrieving a function
          * @return the current method emitter
          */
         MethodEmitter dynamicGet(final String name, final int flags, final boolean isMethod, final boolean isIndex) {
@@ -5230,7 +5241,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         private Type returnValueType;
         // If we are in the middle of an object literal initialization, we need to update the map
         private PropertyMap objectLiteralMap;
-        // Object literal stack depth for object literal - not necessarly top if property is a tree
+        // Object literal stack depth for object literal - not necessarily top if property is a tree
         private int objectLiteralStackDepth = -1;
         // The line number at the continuation point
         private int lineNumber;
@@ -5395,7 +5406,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                 method.load(lvarTypes.get(slot), slot);
                 method.convert(stackTypes[i]);
                 // stack: s0=object literal being initialized
-                // change map of s0 so that the property we are initilizing when we failed
+                // change map of s0 so that the property we are initializing when we failed
                 // is now ci.returnValueType
                 if (i == objectLiteralStackDepth) {
                     method.dup();
@@ -5462,5 +5473,22 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             popScopes(scopePopCount);
             method.uncheckedGoto(targetCatchLabel);
         }
+    }
+
+    /**
+     * Interface implemented by object creators that support splitting over multiple methods.
+     */
+    interface SplitLiteralCreator {
+        /**
+         * Generate code to populate a range of the literal object. A reference to the object
+         * should be left on the stack when the method terminates.
+         *
+         * @param method the method emitter
+         * @param type the type of the literal object
+         * @param slot the local slot containing the literal object
+         * @param start the start index (inclusive)
+         * @param end the end index (exclusive)
+         */
+        void populateRange(MethodEmitter method, Type type, int slot, int start, int end);
     }
 }

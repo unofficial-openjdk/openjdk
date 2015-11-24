@@ -94,15 +94,11 @@ final class JavaAdapterClassLoader {
     }
 
     private static void addExports(final Module from, final String pkg, final Module to) {
-        // FIXME: jtreg tests need to add @module which results in blanket export
-        // and this specific export fails because of such blanket export!
-        try {
-            if (to == null) {
-                Modules.addExportsToAll(from, pkg);
-            } else {
-                Modules.addExports(from, pkg, to);
-            }
-        } catch (final IllegalArgumentException ignore) {}
+        if (to == null) {
+            Modules.addExportsToAll(from, pkg);
+        } else {
+            Modules.addExports(from, pkg, to);
+        }
     }
 
     // Note that the adapter class is created in the protection domain of the class/interface being
@@ -115,18 +111,25 @@ final class JavaAdapterClassLoader {
     private ClassLoader createClassLoader(final ClassLoader parentLoader, final ProtectionDomain protectionDomain) {
         return new SecureClassLoader(parentLoader) {
             private final ClassLoader myLoader = getClass().getClassLoader();
-            private final Module adapterModule = Modules.defineModule(this, "nashorn.javaadapters", adapterPkgs);
+
+            // new adapter module
+            private final Module adapterModule = Modules.defineModule(this, "jdk.scripting.nashorn.javaadapters", adapterPkgs);
 
             {
+                // new adapter module exports and read-edges
+                addExports(adapterModule, JavaAdapterBytecodeGenerator.ADAPTER_PACKAGE, null);
                 Modules.addReads(adapterModule, nashornModule);
                 Modules.addReads(adapterModule, Object.class.getModule());
-                Modules.addReads(nashornModule, adapterModule);
-                addExports(nashornModule, "jdk.nashorn.internal.runtime", adapterModule);
-                addExports(nashornModule, "jdk.nashorn.internal.runtime.linker", adapterModule);
-                addExports(adapterModule, JavaAdapterBytecodeGenerator.ADAPTER_PACKAGE, null);
                 for (Module mod : accessedModules) {
                     Modules.addReads(adapterModule, mod);
                 }
+
+                // specific exports from nashorn to the new adapter module
+                nashornModule.addExports("jdk.nashorn.internal.runtime", adapterModule);
+                nashornModule.addExports("jdk.nashorn.internal.runtime.linker", adapterModule);
+
+                // nashorn should be be able to read methods of classes loaded in adapter module
+                nashornModule.addReads(adapterModule);
             }
 
             @Override

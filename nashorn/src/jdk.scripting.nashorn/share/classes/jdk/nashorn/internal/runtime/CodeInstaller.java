@@ -38,15 +38,14 @@ import jdk.nashorn.internal.codegen.ClassEmitter;
  * The compiler still retains most of the state around code emission
  * and management internally, so this is to avoid passing around any
  * logic that isn't directly related to installing a class
- * @param <T> owner class type for this code installer
  *
  */
-public interface CodeInstaller<T> {
+public interface CodeInstaller {
     /**
-     * Return the owner for the CodeInstaller, e.g. a {@link Context}
-     * @return owner
+     * Return the {@link Context} associated with this code installer.
+     * @return the context.
      */
-    public T getOwner();
+    public Context getContext();
 
     /**
      * Install a class.
@@ -102,19 +101,27 @@ public interface CodeInstaller<T> {
     public StoredScript loadScript(Source source, String functionKey);
 
     /**
-     * Returns a new code installer that shares most of the functionality of this code installer, but uses a
-     * new, independent class loader.
-     * @return a new code installer with a new independent class loader.
+     * Returns a code installer {@code #isCompatibleWith(CodeInstaller) compatible with} this installer, but
+     * is suitable for on-demand compilations. Can return itself if it is itself suitable.
+     * @return a compatible code installer suitable for on-demand compilations.
      */
-    public CodeInstaller<T> withNewLoader();
+    public CodeInstaller getOnDemandCompilationInstaller();
+
+    /**
+     * Returns a code installer {@code #isCompatibleWith(CodeInstaller) compatible with} this installer, but
+     * is suitable for installation of multiple classes that reference each other by name. Should be used when
+     * a compilation job produces multiple compilation units. Can return itself if it is itself suitable.
+     * @return a compatible code installer suitable for installation of multiple classes.
+     */
+    public CodeInstaller getMultiClassCodeInstaller();
 
     /**
      * Returns true if this code installer is compatible with the other code installer. Compatibility is expected to be
      * an equivalence relation, and installers are supposed to be compatible with those they create using
-     * {@link #withNewLoader()}.
+     * {@link #getOnDemandCompilationInstaller()}.
      * @param other the other code installer tested for compatibility with this code installer.
      * @return true if this code installer is compatible with the other code installer.
      */
-    public boolean isCompatibleWith(CodeInstaller<T> other);
+    public boolean isCompatibleWith(CodeInstaller other);
 
 }
