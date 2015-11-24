@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  *          are found within the same archive. For each testcase, compare the
  *          result obtained from jdeps with the expected result.
  * @modules jdk.jdeps/com.sun.tools.jdeps
- *          java.base/sun.net
+ *          java.base/sun.security.x509
  * @build use.indirect.DontUseJdkInternal2
  * @build use.indirect.UseJdkInternalIndirectly
  * @build use.indirect2.DontUseJdkInternal3
@@ -189,12 +189,12 @@ public class JdepsDependencyClosure {
             {"use.internal.UseJdkInternalClass", "use.internal.UseJdkInternalClass2"}
         };
         String[][] dependencies = new String[][] {
-            {"sun.net.ProgressMonitor"}
+            {"sun.security.x509.X509CertInfo"}
         };
         String[][] archive = new String[][] {
             {arcName, arcPath, "JDK internal API (java.base)", "java.base"},
         };
-        return TestCaseData.make("sun.net.ProgressMonitor", arcPath, classes,
+        return TestCaseData.make("sun.security.x509.X509CertInfo", arcPath, classes,
                 dependencies, archive, false);
     }
 
@@ -227,7 +227,7 @@ public class JdepsDependencyClosure {
             {"use.indirect.UseJdkInternalIndirectly"}
         };
         final String[][] dependencies = new String[][] {
-            {"sun.net.ProgressMonitor"},
+            {"sun.security.x509.X509CertInfo"},
             {"use.internal.UseJdkInternalClass"},
             {"use.internal.UseClassWithJdkInternal"}
         };
@@ -236,7 +236,7 @@ public class JdepsDependencyClosure {
             {arcName, arcPath, arcName, arcPath},
             {arcName, arcPath, arcName, arcPath}
         };
-        return TestCaseData.make("sun.net.ProgressMonitor", arcPath, classes, dependencies,
+        return TestCaseData.make("sun.security.x509.X509CertInfo", arcPath, classes, dependencies,
                 archives, true);
     }
 
