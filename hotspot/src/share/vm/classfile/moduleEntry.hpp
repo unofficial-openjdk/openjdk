@@ -44,12 +44,13 @@ class ModuleClosure;
 //   - pointer to the java.lang.reflect.Module for this module.
 //   - ClassLoaderData*, class loader of this module.
 //   - a growable array containg other module entries that this module can read.
-//   - a flag indicating if any of the packages defined within this module have qualified
-//     exports.
+//   - a flag indicating if this module can read all unnamed modules.
 //
 class ModuleEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   jobject _jlrM;                       // java.lang.reflect.Module
+  jobject _pd;                         // java.security.ProtectionDomain, cached
+                                       // for shared classes from this module
   ClassLoaderData* _loader;
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   Symbol* _version;                    // module version number
@@ -61,6 +62,7 @@ public:
   void init() {
     _jlrM = NULL;
     _loader = NULL;
+    _pd = NULL;
     _reads = NULL;
     _version = NULL;
     _location = NULL;
@@ -72,6 +74,15 @@ public:
 
   jobject            jlrM_module() const            { return _jlrM; }
   void               set_jlrM_module(jobject j)     { _jlrM = j; }
+
+  // The shared ProtectionDomain reference is set once the VM loads a shared class
+  // originated from the current Module. The referenced ProtectionDomain object is
+  // created by the ClassLoader when loading a class (shared or non-shared) from the
+  // Module for the first time. This ProtectionDomain object is used for all
+  // classes from the Module loaded by the same ClassLoader.
+  Handle             shared_protection_domain();
+  void               set_shared_protection_domain(ClassLoaderData *loader_data,
+                                                  Handle pd);
 
   ClassLoaderData*   loader() const                 { return _loader; }
   void               set_loader(ClassLoaderData* l) { _loader = l; }
@@ -156,9 +167,6 @@ public:
   ModuleEntryTable(int table_size);
   ~ModuleEntryTable();
 
-  ModuleEntry* unnamed_module() { return _unnamed_module; }
-  void set_unnamed_module(ModuleEntry* m) { _unnamed_module = m; }
-
   int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
 
   // Create module in loader's module entry table, if already exists then
@@ -175,25 +183,27 @@ public:
   ModuleEntry* bucket(int i) {
     return (ModuleEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
   }
-
   ModuleEntry** bucket_addr(int i) {
     return (ModuleEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
   }
-
-  static ModuleEntryTable* create_module_entry_table(ClassLoaderData* loader_data);
-
-  // Special handling for java.base
-  static ModuleEntry* javabase_module()                   { return _javabase_module; }
-  static void set_javabase_module(ModuleEntry* java_base) { _javabase_module = java_base; }
-  static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
-                                                                    (_javabase_module->jlrM_module() != NULL)); }
-  static void patch_javabase_entries(Handle jlrM_module, TRAPS);
 
   static unsigned int compute_hash(Symbol* name) { return ((name == NULL) ? 0 : (unsigned int)(name->identity_hash())); }
   int index_for(Symbol* name) const              { return hash_to_index(compute_hash(name)); }
 
   // purge dead weak references out of reads list
   void purge_all_module_reads();
+
+  // Special handling for unnamed module, one per class loader's ModuleEntryTable
+  void create_unnamed_module(ClassLoaderData* loader_data);
+  ModuleEntry* unnamed_module() { return _unnamed_module; }
+
+  // Special handling for java.base
+  static ModuleEntry* javabase_module()                   { return _javabase_module; }
+  static void set_javabase_module(ModuleEntry* java_base) { _javabase_module = java_base; }
+  static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
+                                                                    (_javabase_module->jlrM_module() != NULL)); }
+  static void finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location);
+  static void patch_javabase_entries(Handle jlrM_handle, TRAPS);
 
   void print() PRODUCT_RETURN;
   void verify();

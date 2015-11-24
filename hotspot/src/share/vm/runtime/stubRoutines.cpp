@@ -136,9 +136,11 @@ address StubRoutines::_sha512_implCompress   = NULL;
 address StubRoutines::_sha512_implCompressMB = NULL;
 
 address StubRoutines::_updateBytesCRC32 = NULL;
-address StubRoutines::_crc_table_adr = NULL;
+address StubRoutines::_crc_table_adr =    NULL;
 
+address StubRoutines::_crc32c_table_addr = NULL;
 address StubRoutines::_updateBytesCRC32C = NULL;
+address StubRoutines::_updateBytesAdler32 = NULL;
 
 address StubRoutines::_multiplyToLen = NULL;
 address StubRoutines::_squareToLen = NULL;
@@ -146,9 +148,10 @@ address StubRoutines::_mulAdd = NULL;
 address StubRoutines::_montgomeryMultiply = NULL;
 address StubRoutines::_montgomerySquare = NULL;
 
-double (* StubRoutines::_intrinsic_log   )(double) = NULL;
+address StubRoutines::_dexp = NULL;
+address StubRoutines::_dlog = NULL;
+
 double (* StubRoutines::_intrinsic_log10 )(double) = NULL;
-double (* StubRoutines::_intrinsic_exp   )(double) = NULL;
 double (* StubRoutines::_intrinsic_pow   )(double, double) = NULL;
 double (* StubRoutines::_intrinsic_sin   )(double) = NULL;
 double (* StubRoutines::_intrinsic_cos   )(double) = NULL;

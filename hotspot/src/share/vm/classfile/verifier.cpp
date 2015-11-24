@@ -1579,7 +1579,7 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
             return;
           }
           // Make sure "this" has been initialized if current method is an
-          // <init>
+          // <init>.
           if (_method->name() == vmSymbols::object_initializer_name() &&
               current_frame.flag_this_uninit()) {
             verify_error(ErrorContext::bad_code(bci),

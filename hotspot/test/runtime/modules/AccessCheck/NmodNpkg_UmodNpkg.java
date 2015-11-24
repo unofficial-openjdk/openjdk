@@ -25,11 +25,13 @@
 
 /*
  * @test
- * @ignore
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in unnamed module.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MySameClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
+ * @compile p1/c1ReadEdge.java
+ * @compile p1/c1Loose.java
  * @build NmodNpkg_UmodNpkg
  * @run main/othervm -Xbootclasspath/a:. NmodNpkg_UmodNpkg
  */
@@ -44,6 +46,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MySameClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> packages p1
@@ -110,8 +113,8 @@ public class NmodNpkg_UmodNpkg {
      // Attempt access
      try {
          p1_c1_class.newInstance();
-         throw new RuntimeException("Test Failed, strict module m1 should not be able to access " +
-                                    "public type p2.c2 defined in unnamed module");
+         throw new RuntimeException("Test Failed, strict module m1, type p1.c1, should not be able " +
+                                    "to access public type p2.c2 defined in unnamed module");
      } catch (IllegalAccessError e) {
      }
  }
@@ -153,23 +156,18 @@ public class NmodNpkg_UmodNpkg {
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p1.c1
-     Class p1_c1_class = loader.loadClass("p1.c1");
+     // now use the same loader to load class p1.c1ReadEdge
+     Class p1_c1_class = loader.loadClass("p1.c1ReadEdge");
 
-     // Establish readability between module m1 and the
-     // unnamed module of loader.
-     Module unnamed_module = loader.getUnnamedModule();
-     Module m1 = p1_c1_class.getModule();
-     m1.addReads(unnamed_module);
-
-     // Attempt access
      try {
-        p1_c1_class.newInstance();
+       // Read edge between m1 and the unnamed module that loads p2.c2 is established in
+       // c1ReadEdge's ctor before attempting access.
+       p1_c1_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, module m1 has established readability to " +
-                                    "p2/c2 loader's unnamed module, access should be allowed: " + e.getMessage());
+         throw new RuntimeException("Test Failed, strict module m1, type p1.c1ReadEdge, should be able to acccess public type " +
+                                    "p2.c2 defined in unnamed module: " + e.getMessage());
      }
- }
+}
 
  // Module m1 is a loose module and thus can read all unnamed modules.
  public void test_looseModuleLayer() throws Throwable {
@@ -207,26 +205,23 @@ public class NmodNpkg_UmodNpkg {
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p1.c1
-     Class p1_c1_class = loader.loadClass("p1.c1");
+     // now use the same loader to load class p1.c1Loose
+     Class p1_c1_class = loader.loadClass("p1.c1Loose");
 
-     // Transition module "m1" to be a loose module
-     Module m1 = p1_c1_class.getModule();
-     m1.addReads(null);
-
-     // Attempt access
      try {
-        p1_c1_class.newInstance();
+       // Module m1 is transitioned to a loose module before attempting access
+       // to p2.c2 in c1Loose's ctor.
+       p1_c1_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, loose module m1 should be able to acccess public type " +
+         throw new RuntimeException("Test Failed, strict module m1, type p1.c1Loose, should be able to acccess public type " +
                                     "p2.c2 defined in unnamed module: " + e.getMessage());
      }
  }
 
  public static void main(String args[]) throws Throwable {
    NmodNpkg_UmodNpkg test = new NmodNpkg_UmodNpkg();
-   test.test_strictModuleLayer(); // access denied
+   test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
-   test.test_looseModuleLayer(); // access allowed
+   test.test_looseModuleLayer();                 // access allowed
  }
 }

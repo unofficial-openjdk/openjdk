@@ -29,6 +29,7 @@
  *          Access is denied since even though unnamed module can read all modules, p2
  *          in module m2 is not exported at all.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p1/c1.java
  * @build UmodNpkgDiffCL_PkgNotExp
  * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_PkgNotExp
@@ -43,6 +44,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MyDiffClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> no packages

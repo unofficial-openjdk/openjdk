@@ -71,9 +71,14 @@ class ConcurrentG1Refine: public CHeapObj<mtGC> {
   // Reset the threshold step value based of the current zone boundaries.
   void reset_threshold_step();
 
+  ConcurrentG1Refine(G1CollectedHeap* g1h);
+
  public:
-  ConcurrentG1Refine(G1CollectedHeap* g1h, CardTableEntryClosure* refine_closure);
   ~ConcurrentG1Refine();
+
+  // Returns ConcurrentG1Refine instance if succeeded to create/initialize ConcurrentG1Refine and ConcurrentG1RefineThread.
+  // Otherwise, returns NULL with error code.
+  static ConcurrentG1Refine* create(G1CollectedHeap* g1h, CardTableEntryClosure* refine_closure, jint* ecode);
 
   void init(G1RegionToSpaceMapper* card_counts_storage);
   void stop();
@@ -107,6 +112,8 @@ class ConcurrentG1Refine: public CHeapObj<mtGC> {
   int thread_threshold_step() const { return _thread_threshold_step; }
 
   G1HotCardCache* hot_card_cache() { return &_hot_card_cache; }
+
+  static bool hot_card_cache_enabled() { return G1HotCardCache::default_use_cache(); }
 };
 
 #endif // SHARE_VM_GC_G1_CONCURRENTG1REFINE_HPP

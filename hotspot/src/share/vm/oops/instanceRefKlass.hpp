@@ -51,23 +51,15 @@ class InstanceRefKlass: public InstanceKlass {
 
   // Constructor
   InstanceRefKlass(int vtable_len, int itable_len, int static_field_size, int nonstatic_oop_map_size, ReferenceType rt, AccessFlags access_flags, bool is_anonymous)
-    : InstanceKlass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_size, rt, access_flags, is_anonymous) {}
+    : InstanceKlass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_size,
+                    InstanceKlass::_misc_kind_reference, rt, access_flags, is_anonymous) {}
 
  public:
   InstanceRefKlass() { assert(DumpSharedSpaces || UseSharedSpaces, "only for CDS"); }
-  // Type testing
-  bool oop_is_instanceRef() const             { return true; }
-
-  // Casting from Klass*
-  static InstanceRefKlass* cast(Klass* k) {
-    assert(k->oop_is_instanceRef(), "cast to InstanceRefKlass");
-    return (InstanceRefKlass*) k;
-  }
 
   // GC specific object visitors
   //
   // Mark Sweep
-  void oop_ms_follow_contents(oop obj);
   int  oop_ms_adjust_pointers(oop obj);
 #if INCLUDE_ALL_GCS
   // Parallel Scavenge
@@ -88,19 +80,19 @@ class InstanceRefKlass: public InstanceKlass {
 private:
   // Iterate over all oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate(oop obj, OopClosureType* closure);
+  inline void oop_oop_iterate(oop obj, OopClosureType* closure);
 
   // Reverse iteration
 #if INCLUDE_ALL_GCS
   // Iterate over all oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate_reverse(oop obj, OopClosureType* closure);
+  inline void oop_oop_iterate_reverse(oop obj, OopClosureType* closure);
 #endif // INCLUDE_ALL_GCS
 
   // Bounded range iteration
   // Iterate over all oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
+  inline void oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
 
   // Reference processing part of the iterators.
 

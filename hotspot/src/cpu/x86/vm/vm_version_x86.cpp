@@ -367,16 +367,12 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     __ movl(rcx, VM_Version::ymm_test_value());
     __ movdl(xmm0, rcx);
     __ movl(rcx, 0xffff);
-#ifdef _LP64
-    __ kmovql(k1, rcx);
-#else
-    __ kmovdl(k1, rcx);
-#endif
+    __ kmovwl(k1, rcx);
     __ evpbroadcastd(xmm0, xmm0, Assembler::AVX_512bit);
-    __ evmovdqu(xmm7, xmm0, Assembler::AVX_512bit);
+    __ evmovdqul(xmm7, xmm0, Assembler::AVX_512bit);
 #ifdef _LP64
-    __ evmovdqu(xmm8, xmm0, Assembler::AVX_512bit);
-    __ evmovdqu(xmm31, xmm0, Assembler::AVX_512bit);
+    __ evmovdqul(xmm8, xmm0, Assembler::AVX_512bit);
+    __ evmovdqul(xmm31, xmm0, Assembler::AVX_512bit);
 #endif
     VM_Version::clean_cpuFeatures();
     __ jmp(save_restore_except);
@@ -427,11 +423,11 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     UseAVX = 3;
     UseSSE = 2;
     __ lea(rsi, Address(rbp, in_bytes(VM_Version::zmm_save_offset())));
-    __ evmovdqu(Address(rsi, 0), xmm0, Assembler::AVX_512bit);
-    __ evmovdqu(Address(rsi, 64), xmm7, Assembler::AVX_512bit);
+    __ evmovdqul(Address(rsi, 0), xmm0, Assembler::AVX_512bit);
+    __ evmovdqul(Address(rsi, 64), xmm7, Assembler::AVX_512bit);
 #ifdef _LP64
-    __ evmovdqu(Address(rsi, 128), xmm8, Assembler::AVX_512bit);
-    __ evmovdqu(Address(rsi, 192), xmm31, Assembler::AVX_512bit);
+    __ evmovdqul(Address(rsi, 128), xmm8, Assembler::AVX_512bit);
+    __ evmovdqul(Address(rsi, 192), xmm31, Assembler::AVX_512bit);
 #endif
     VM_Version::clean_cpuFeatures();
     UseAVX = saved_useavx;
@@ -665,6 +661,18 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UseCRC32Intrinsics, false);
   }
 
+  if (supports_sse4_2()) {
+    if (FLAG_IS_DEFAULT(UseCRC32CIntrinsics)) {
+      UseCRC32CIntrinsics = true;
+    }
+  }
+  else if (UseCRC32CIntrinsics) {
+    if (!FLAG_IS_DEFAULT(UseCRC32CIntrinsics)) {
+      warning("CRC32C intrinsics are not available on this CPU");
+    }
+    FLAG_SET_DEFAULT(UseCRC32CIntrinsics, false);
+  }
+
   // The AES intrinsic stubs require AES instruction support (of course)
   // but also require sse3 mode for instructions it use.
   if (UseAES && (UseSSE > 2)) {
@@ -708,10 +716,9 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
   }
 
-  if (UseCRC32CIntrinsics) {
-    if (!FLAG_IS_DEFAULT(UseCRC32CIntrinsics))
-      warning("CRC32C intrinsics are not available on this CPU");
-    FLAG_SET_DEFAULT(UseCRC32CIntrinsics, false);
+  if (UseAdler32Intrinsics) {
+    warning("Adler32Intrinsics not available on this CPU.");
+    FLAG_SET_DEFAULT(UseAdler32Intrinsics, false);
   }
 
   // Adjust RTM (Restricted Transactional Memory) flags
@@ -780,6 +787,8 @@ void VM_Version::get_processor_features() {
       FLAG_SET_DEFAULT(UseFPUForSpilling, false);
     }
   }
+#endif
+#if defined(COMPILER2) || INCLUDE_JVMCI
   if (MaxVectorSize > 0) {
     if (!is_power_of_2(MaxVectorSize)) {
       warning("MaxVectorSize must be a power of 2");
@@ -796,7 +805,7 @@ void VM_Version::get_processor_features() {
       // Vectors (in XMM) are only supported with SSE2+
       FLAG_SET_DEFAULT(MaxVectorSize, 0);
     }
-#ifdef ASSERT
+#if defined(COMPILER2) && defined(ASSERT)
     if (supports_avx() && PrintMiscellaneous && Verbose && TraceNewVectors) {
       tty->print_cr("State of YMM registers after signal handle:");
       int nreg = 2 LP64_ONLY(+2);
@@ -809,9 +818,11 @@ void VM_Version::get_processor_features() {
         tty->cr();
       }
     }
-#endif
+#endif // COMPILER2 && ASSERT
   }
+#endif // COMPILER2 || INCLUDE_JVMCI
 
+#ifdef COMPILER2
 #ifdef _LP64
   if (FLAG_IS_DEFAULT(UseMultiplyToLenIntrinsic)) {
     UseMultiplyToLenIntrinsic = true;
@@ -1081,11 +1092,6 @@ void VM_Version::get_processor_features() {
   }
 #endif // COMPILER2
 
-  assert(0 <= AllocatePrefetchInstr && AllocatePrefetchInstr <= 3, "invalid value");
-
-  // set valid Prefetch instruction
-  if( AllocatePrefetchInstr < 0 ) AllocatePrefetchInstr = 0;
-  if( AllocatePrefetchInstr > 3 ) AllocatePrefetchInstr = 3;
   if( AllocatePrefetchInstr == 3 && !supports_3dnow_prefetch() ) AllocatePrefetchInstr=0;
   if( !supports_sse() && supports_3dnow_prefetch() ) AllocatePrefetchInstr = 3;
 
@@ -1124,7 +1130,6 @@ void VM_Version::get_processor_features() {
     }
 #endif
   }
-  assert(AllocatePrefetchDistance % AllocatePrefetchStepSize == 0, "invalid value");
 
 #ifdef _LP64
   // Prefetch settings

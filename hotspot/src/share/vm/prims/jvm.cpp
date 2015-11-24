@@ -428,6 +428,8 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     const char* compiler_name = "HotSpot " CSIZE "Client Compiler";
 #elif defined(COMPILER2)
     const char* compiler_name = "HotSpot " CSIZE "Server Compiler";
+#elif INCLUDE_JVMCI
+    #error "INCLUDE_JVMCI should imply TIERED"
 #else
     const char* compiler_name = "";
 #endif // compilers
@@ -993,6 +995,11 @@ JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, j
                                  jobjectArray packages))
   JVMWrapper("JVM_DefineModule");
   Modules::define_module(env, module, version, location, packages);
+JVM_END
+
+JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
+  JVMWrapper("JVM_SetBootLoaderUnnamedModule");
+  Modules::set_bootloader_unnamed_module(env, module);
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))

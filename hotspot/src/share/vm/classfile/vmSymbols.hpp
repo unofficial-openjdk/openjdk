@@ -28,6 +28,7 @@
 #include "oops/symbol.hpp"
 #include "memory/iterator.hpp"
 #include "trace/traceMacros.hpp"
+#include "jvmci/vmSymbols_jvmci.hpp"
 
 // The class vmSymbols is a name space for fast lookup of
 // symbols commonly used in the VM.
@@ -43,7 +44,6 @@
 #define VM_INTRINSIC_IGNORE(id, class, name, sig, flags) /*ignored*/
 #define VM_SYMBOL_IGNORE(id, name)                       /*ignored*/
 #define VM_ALIAS_IGNORE(id, id2)                         /*ignored*/
-
 
 // Mapping function names to values. New entries should be added below.
 
@@ -212,7 +212,11 @@
   template(java_lang_StackTraceElement,               "java/lang/StackTraceElement")              \
                                                                                                   \
   /* Concurrency support */                                                                       \
-  template(java_util_concurrent_locks_AbstractOwnableSynchronizer,   "java/util/concurrent/locks/AbstractOwnableSynchronizer") \
+  template(java_util_concurrent_locks_AbstractOwnableSynchronizer,           "java/util/concurrent/locks/AbstractOwnableSynchronizer") \
+  template(java_util_concurrent_atomic_AtomicIntegerFieldUpdater_Impl,       "java/util/concurrent/atomic/AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl") \
+  template(java_util_concurrent_atomic_AtomicLongFieldUpdater_CASUpdater,    "java/util/concurrent/atomic/AtomicLongFieldUpdater$CASUpdater") \
+  template(java_util_concurrent_atomic_AtomicLongFieldUpdater_LockedUpdater, "java/util/concurrent/atomic/AtomicLongFieldUpdater$LockedUpdater") \
+  template(java_util_concurrent_atomic_AtomicReferenceFieldUpdater_Impl,     "java/util/concurrent/atomic/AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl") \
   template(sun_misc_Contended_signature,              "Lsun/misc/Contended;")                     \
                                                                                                   \
   /* class symbols needed by intrinsics */                                                        \
@@ -310,6 +314,9 @@
   template(DEFAULT_CONTEXT_name,                      "DEFAULT_CONTEXT")                          \
   NOT_LP64(  do_alias(intptr_signature,               int_signature)  )                           \
   LP64_ONLY( do_alias(intptr_signature,               long_signature) )                           \
+                                                                                                                                      \
+  /* Support for JVMCI */                                                                                                             \
+  JVMCI_VM_SYMBOLS_DO(template, do_alias)                                                         \
                                                                                                   \
   /* common method and field names */                                                             \
   template(object_initializer_name,                   "<init>")                                   \
@@ -391,6 +398,7 @@
   template(bitCount_name,                             "bitCount")                                 \
   template(profile_name,                              "profile")                                  \
   template(equals_name,                               "equals")                                   \
+  template(length_name,                               "length")                                   \
   template(target_name,                               "target")                                   \
   template(toString_name,                             "toString")                                 \
   template(values_name,                               "values")                                   \
@@ -445,6 +453,7 @@
   template(void_long_signature,                       "()J")                                      \
   template(void_float_signature,                      "()F")                                      \
   template(void_double_signature,                     "()D")                                      \
+  template(bool_void_signature,                       "(Z)V")                                     \
   template(int_void_signature,                        "(I)V")                                     \
   template(int_int_signature,                         "(I)I")                                     \
   template(char_char_signature,                       "(C)C")                                     \
@@ -546,6 +555,9 @@
                                                                                                                   \
   /* used to identify class loaders handling parallel class loading */                                            \
   template(parallelCapable_name,                      "parallelLockMap")                                          \
+                                                                                                                  \
+  /* used to return a class loader's unnamed module */                                                            \
+  template(unnamedModule_name,                        "unnamedModule")                                            \
                                                                                                                   \
   /* JVM monitoring and management support */                                                                     \
   template(java_lang_StackTraceElement_array,          "[Ljava/lang/StackTraceElement;")                          \
@@ -944,6 +956,12 @@
    do_name(     updateBytes_C_name,                               "updateBytes")                                        \
   do_intrinsic(_updateDirectByteBufferCRC32C, java_util_zip_CRC32C, updateDirectByteBuffer_C_name, updateByteBuffer_signature, F_S) \
    do_name(    updateDirectByteBuffer_C_name,                     "updateDirectByteBuffer")                             \
+                                                                                                                        \
+   /* support for java.util.zip.Adler32 */                                                                              \
+  do_class(java_util_zip_Adler32,        "java/util/zip/Adler32")                                                       \
+  do_intrinsic(_updateBytesAdler32,       java_util_zip_Adler32,  updateBytes_C_name,  updateBytes_signature,  F_SN)    \
+  do_intrinsic(_updateByteBufferAdler32,  java_util_zip_Adler32,  updateByteBuffer_A_name,  updateByteBuffer_signature,  F_SN) \
+   do_name(     updateByteBuffer_A_name,                          "updateByteBuffer")                                   \
                                                                                                                         \
   /* support for sun.misc.Unsafe */                                                                                     \
   do_class(sun_misc_Unsafe,               "sun/misc/Unsafe")                                                            \
@@ -1409,7 +1427,7 @@ public:
 
   // Returns true if a compiler intrinsic is disabled by command-line flags
   // and false otherwise.
-  static bool is_disabled_by_flags(methodHandle method, methodHandle compilation_context);
+  static bool is_disabled_by_flags(methodHandle method);
 };
 
 #endif // SHARE_VM_CLASSFILE_VMSYMBOLS_HPP

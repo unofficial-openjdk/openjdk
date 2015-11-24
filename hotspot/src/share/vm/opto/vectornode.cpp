@@ -86,12 +86,30 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MulD:
     assert(bt == T_DOUBLE, "must be");
     return Op_MulVD;
+  case Op_CMoveD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_CMoveVD;
   case Op_DivF:
     assert(bt == T_FLOAT, "must be");
     return Op_DivVF;
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_AbsF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_AbsVF;
+  case Op_AbsD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_AbsVD;
+  case Op_NegF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_NegVF;
+  case Op_NegD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_NegVD;
+  case Op_SqrtD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_SqrtVD;
   case Op_LShiftI:
     switch (bt) {
     case T_BOOLEAN:
@@ -170,7 +188,7 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
       (vlen > 1) && is_power_of_2(vlen) &&
       Matcher::vector_size_supported(bt, vlen)) {
     int vopc = VectorNode::opcode(opc, bt);
-    return vopc > 0 && Matcher::match_rule_supported(vopc);
+    return vopc > 0 && Matcher::match_rule_supported(vopc) && (vopc != Op_CMoveD || vlen == 4);
   }
   return false;
 }
@@ -252,7 +270,7 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   const TypeVect* vt = TypeVect::make(bt, vlen);
   int vopc = VectorNode::opcode(opc, bt);
   // This method should not be called for unimplemented vectors.
-  guarantee(vopc > 0, err_msg_res("Vector for '%s' is not implemented", NodeClassNames[opc]));
+  guarantee(vopc > 0, "Vector for '%s' is not implemented", NodeClassNames[opc]);
   switch (vopc) {
   case Op_AddVB: return new AddVBNode(n1, n2, vt);
   case Op_AddVS: return new AddVSNode(n1, n2, vt);
@@ -277,6 +295,15 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_DivVF: return new DivVFNode(n1, n2, vt);
   case Op_DivVD: return new DivVDNode(n1, n2, vt);
 
+  case Op_AbsVF: return new AbsVFNode(n1, vt);
+  case Op_AbsVD: return new AbsVDNode(n1, vt);
+
+  case Op_NegVF: return new NegVFNode(n1, vt);
+  case Op_NegVD: return new NegVDNode(n1, vt);
+
+  // Currently only supports double precision sqrt
+  case Op_SqrtVD: return new SqrtVDNode(n1, vt);
+
   case Op_LShiftVB: return new LShiftVBNode(n1, n2, vt);
   case Op_LShiftVS: return new LShiftVSNode(n1, n2, vt);
   case Op_LShiftVI: return new LShiftVINode(n1, n2, vt);
@@ -296,7 +323,7 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
   }
-  fatal(err_msg_res("Missed vector creation for '%s'", NodeClassNames[vopc]));
+  fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
   return NULL;
 
 }
@@ -322,7 +349,7 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
   case T_DOUBLE:
     return new ReplicateDNode(s, vt);
   }
-  fatal(err_msg_res("Type '%s' is not supported for vectors", type2name(bt)));
+  fatal("Type '%s' is not supported for vectors", type2name(bt));
   return NULL;
 }
 
@@ -340,7 +367,7 @@ VectorNode* VectorNode::shift_count(Node* shift, Node* cnt, uint vlen, BasicType
   case Op_URShiftL:
     return new RShiftCntVNode(cnt, vt);
   }
-  fatal(err_msg_res("Missed vector creation for '%s'", NodeClassNames[shift->Opcode()]));
+  fatal("Missed vector creation for '%s'", NodeClassNames[shift->Opcode()]);
   return NULL;
 }
 
@@ -363,7 +390,7 @@ PackNode* PackNode::make(Node* s, uint vlen, BasicType bt) {
   case T_DOUBLE:
     return new PackDNode(s, vt);
   }
-  fatal(err_msg_res("Type '%s' is not supported for vectors", type2name(bt)));
+  fatal("Type '%s' is not supported for vectors", type2name(bt));
   return NULL;
 }
 
@@ -399,7 +426,7 @@ PackNode* PackNode::binary_tree_pack(int lo, int hi) {
     case T_DOUBLE:
       return new Pack2DNode(n1, n2, TypeVect::make(T_DOUBLE, 2));
     }
-    fatal(err_msg_res("Type '%s' is not supported for vectors", type2name(bt)));
+    fatal("Type '%s' is not supported for vectors", type2name(bt));
   }
   return NULL;
 }
@@ -442,7 +469,7 @@ Node* ExtractNode::make(Node* v, uint position, BasicType bt) {
   case T_DOUBLE:
     return new ExtractDNode(v, pos);
   }
-  fatal(err_msg_res("Type '%s' is not supported for vectors", type2name(bt)));
+  fatal("Type '%s' is not supported for vectors", type2name(bt));
   return NULL;
 }
 
@@ -494,7 +521,7 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   int vopc = opcode(opc, bt);
 
   // This method should not be called for unimplemented vectors.
-  guarantee(vopc != opc, err_msg_res("Vector for '%s' is not implemented", NodeClassNames[opc]));
+  guarantee(vopc != opc, "Vector for '%s' is not implemented", NodeClassNames[opc]);
 
   switch (vopc) {
   case Op_AddReductionVI: return new AddReductionVINode(ctrl, n1, n2);
@@ -506,7 +533,7 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   case Op_MulReductionVF: return new MulReductionVFNode(ctrl, n1, n2);
   case Op_MulReductionVD: return new MulReductionVDNode(ctrl, n1, n2);
   }
-  fatal(err_msg_res("Missed vector creation for '%s'", NodeClassNames[vopc]));
+  fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
   return NULL;
 }
 

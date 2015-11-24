@@ -2440,7 +2440,6 @@ void LIR_Assembler::intrinsic_op(LIR_Code code, LIR_Opr value, LIR_Opr unused, L
   } else if (value->is_double_fpu()) {
     assert(value->fpu_regnrLo() == 0 && dest->fpu_regnrLo() == 0, "both must be on TOS");
     switch(code) {
-      case lir_log   : __ flog() ; break;
       case lir_log10 : __ flog10() ; break;
       case lir_abs   : __ fabs() ; break;
       case lir_sqrt  : __ fsqrt(); break;
@@ -2456,9 +2455,6 @@ void LIR_Assembler::intrinsic_op(LIR_Code code, LIR_Opr value, LIR_Opr unused, L
       case lir_tan :
         // Should consider not saving rbx, if not necessary
         __ trigfunc('t', op->as_Op2()->fpu_stack_size());
-        break;
-      case lir_exp :
-        __ exp_with_fallback(op->as_Op2()->fpu_stack_size());
         break;
       case lir_pow :
         __ pow_with_fallback(op->as_Op2()->fpu_stack_size());
@@ -2684,7 +2680,7 @@ void LIR_Assembler::comp_op(LIR_Condition condition, LIR_Opr opr1, LIR_Opr opr2,
 #endif // _LP64
         }
       } else {
-        fatal(err_msg("unexpected type: %s", basictype_to_str(c->type())));
+        fatal("unexpected type: %s", basictype_to_str(c->type()));
       }
       // cpu register - address
     } else if (opr2->is_address()) {
@@ -3798,16 +3794,24 @@ void LIR_Assembler::negate(LIR_Opr left, LIR_Opr dest) {
     if (left->as_xmm_float_reg() != dest->as_xmm_float_reg()) {
       __ movflt(dest->as_xmm_float_reg(), left->as_xmm_float_reg());
     }
-    __ xorps(dest->as_xmm_float_reg(),
-             ExternalAddress((address)float_signflip_pool));
-
+    if (UseAVX > 1) {
+      __ vnegatess(dest->as_xmm_float_reg(), dest->as_xmm_float_reg(),
+                   ExternalAddress((address)float_signflip_pool));
+    } else {
+      __ xorps(dest->as_xmm_float_reg(),
+               ExternalAddress((address)float_signflip_pool));
+    }
   } else if (dest->is_double_xmm()) {
     if (left->as_xmm_double_reg() != dest->as_xmm_double_reg()) {
       __ movdbl(dest->as_xmm_double_reg(), left->as_xmm_double_reg());
     }
-    __ xorpd(dest->as_xmm_double_reg(),
-             ExternalAddress((address)double_signflip_pool));
-
+    if (UseAVX > 1) {
+      __ vnegatesd(dest->as_xmm_double_reg(), dest->as_xmm_double_reg(),
+                   ExternalAddress((address)double_signflip_pool));
+    } else {
+      __ xorpd(dest->as_xmm_double_reg(),
+               ExternalAddress((address)double_signflip_pool));
+    }
   } else if (left->is_single_fpu() || left->is_double_fpu()) {
     assert(left->fpu() == 0, "arg must be on TOS");
     assert(dest->fpu() == 0, "dest must be TOS");

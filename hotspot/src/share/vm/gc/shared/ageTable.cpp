@@ -28,7 +28,6 @@
 #include "gc/shared/collectorPolicy.hpp"
 #include "gc/shared/gcPolicyCounters.hpp"
 #include "memory/resourceArea.hpp"
-#include "runtime/atomic.inline.hpp"
 #include "utilities/copy.hpp"
 
 /* Copyright (c) 1992, 2015, Oracle and/or its affiliates, and Stanford University.
@@ -73,19 +72,13 @@ void ageTable::merge(ageTable* subTable) {
   }
 }
 
-void ageTable::merge_par(ageTable* subTable) {
-  for (int i = 0; i < table_size; i++) {
-    Atomic::add_ptr(subTable->sizes[i], &sizes[i]);
-  }
-}
-
 uint ageTable::compute_tenuring_threshold(size_t survivor_capacity, GCPolicyCounters* gc_counters) {
   size_t desired_survivor_size = (size_t)((((double) survivor_capacity)*TargetSurvivorRatio)/100);
   uint result;
 
   if (AlwaysTenure || NeverTenure) {
     assert(MaxTenuringThreshold == 0 || MaxTenuringThreshold == markOopDesc::max_age + 1,
-        err_msg("MaxTenuringThreshold should be 0 or markOopDesc::max_age + 1, but is " UINTX_FORMAT, MaxTenuringThreshold));
+           "MaxTenuringThreshold should be 0 or markOopDesc::max_age + 1, but is " UINTX_FORMAT, MaxTenuringThreshold);
     result = MaxTenuringThreshold;
   } else {
     size_t total = 0;

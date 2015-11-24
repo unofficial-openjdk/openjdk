@@ -28,6 +28,7 @@
  * @summary class c5 in an unnamed module can read module m2, but package p6 in module m2 is not exported.
  *          Access denied since even though unnamed module can read all modules, p6 in module m2 is not exported at all.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java
  * @build UmodUpkgDiffCL_PkgNotExp
@@ -43,6 +44,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MyDiffClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> no packages

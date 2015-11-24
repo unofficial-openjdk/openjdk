@@ -963,6 +963,7 @@ void ConnectionGraph::process_call_arguments(CallNode *call) {
                   strcmp(call->as_CallLeaf()->_name, "g1_wb_post") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "updateBytesCRC32") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "updateBytesCRC32C") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "updateBytesAdler32") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "aescrypt_encryptBlock") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "aescrypt_decryptBlock") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "cipherBlockChaining_encryptAESCrypt") == 0 ||
@@ -981,7 +982,7 @@ void ConnectionGraph::process_call_arguments(CallNode *call) {
                   strcmp(call->as_CallLeaf()->_name, "montgomery_square") == 0)
                  ))) {
             call->dump();
-            fatal(err_msg_res("EA unexpected CallLeaf %s", call->as_CallLeaf()->_name));
+            fatal("EA unexpected CallLeaf %s", call->as_CallLeaf()->_name);
           }
 #endif
           // Always process arraycopy's destination object since
@@ -1200,8 +1201,8 @@ bool ConnectionGraph::complete_connection_graph(
       C->log()->text("%s", timeout ? "time" : "iterations");
       C->log()->end_elem(" limit'");
     }
-    assert(ExitEscapeAnalysisOnTimeout, err_msg_res("infinite EA connection graph build (%f sec, %d iterations) with %d nodes and worklist size %d",
-           time.seconds(), iterations, nodes_size(), ptnodes_worklist.length()));
+    assert(ExitEscapeAnalysisOnTimeout, "infinite EA connection graph build (%f sec, %d iterations) with %d nodes and worklist size %d",
+           time.seconds(), iterations, nodes_size(), ptnodes_worklist.length());
     // Possible infinite build_connection_graph loop,
     // bailout (no changes to ideal graph were made).
     return false;
@@ -3241,7 +3242,7 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist,
     // Note 2: MergeMem may already contains instance memory slices added
     // during find_inst_mem() call when memory nodes were processed above.
     igvn->hash_delete(nmm);
-    uint nslices = nmm->req();
+    uint nslices = MIN2(nmm->req(), new_index_start);
     for (uint i = Compile::AliasIdxRaw+1; i < nslices; i++) {
       Node* mem = nmm->in(i);
       Node* cur = NULL;

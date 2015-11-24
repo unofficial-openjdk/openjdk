@@ -133,7 +133,7 @@ class LibraryCallKit : public GraphKit {
 
  private:
   void fatal_unexpected_iid(vmIntrinsics::ID iid) {
-    fatal(err_msg_res("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid)));
+    fatal("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid));
   }
 
   void  set_result(Node* n) { assert(_result == NULL, "only set once"); _result = n; }
@@ -222,7 +222,6 @@ class LibraryCallKit : public GraphKit {
   bool inline_math_negateExactL();
   bool inline_math_subtractExactI(bool is_decrement);
   bool inline_math_subtractExactL(bool is_decrement);
-  bool inline_exp();
   bool inline_pow();
   Node* finish_pow_exp(Node* result, Node* x, Node* y, const TypeFunc* call_type, address funcAddr, const char* funcName);
   bool inline_min_max(vmIntrinsics::ID id);
@@ -296,6 +295,8 @@ class LibraryCallKit : public GraphKit {
   Node* get_table_from_crc32c_class(ciInstanceKlass *crc32c_class);
   bool inline_updateBytesCRC32C();
   bool inline_updateDirectByteBufferCRC32C();
+  bool inline_updateBytesAdler32();
+  bool inline_updateByteBufferAdler32();
   bool inline_multiplyToLen();
   bool inline_squareToLen();
   bool inline_mulAdd();
@@ -325,9 +326,10 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     // methods access VM-internal data.
     VM_ENTRY_MARK;
     methodHandle mh(THREAD, m->get_Method());
-    methodHandle ct(THREAD, method()->get_Method());
     is_available = compiler->is_intrinsic_supported(mh, is_virtual) &&
-                   !vmIntrinsics::is_disabled_by_flags(mh, ct);
+                   !C->directive()->is_intrinsic_disabled(mh) &&
+                   !vmIntrinsics::is_disabled_by_flags(mh);
+
   }
 
   if (is_available) {
@@ -698,6 +700,11 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_updateBytesCRC32C();
   case vmIntrinsics::_updateDirectByteBufferCRC32C:
     return inline_updateDirectByteBufferCRC32C();
+
+  case vmIntrinsics::_updateBytesAdler32:
+    return inline_updateBytesAdler32();
+  case vmIntrinsics::_updateByteBufferAdler32:
+    return inline_updateByteBufferAdler32();
 
   case vmIntrinsics::_profileBoolean:
     return inline_profileBoolean();
@@ -1362,7 +1369,6 @@ bool LibraryCallKit::inline_math(vmIntrinsics::ID id) {
   switch (id) {
   case vmIntrinsics::_dabs:   n = new AbsDNode(                arg);  break;
   case vmIntrinsics::_dsqrt:  n = new SqrtDNode(C, control(),  arg);  break;
-  case vmIntrinsics::_dlog:   n = new LogDNode(C, control(),   arg);  break;
   case vmIntrinsics::_dlog10: n = new Log10DNode(C, control(), arg);  break;
   default:  fatal_unexpected_iid(id);  break;
   }
@@ -1526,20 +1532,6 @@ Node* LibraryCallKit::finish_pow_exp(Node* result, Node* x, Node* y, const TypeF
       return result;
     }
   }
-}
-
-//------------------------------inline_exp-------------------------------------
-// Inline exp instructions, if possible.  The Intel hardware only misses
-// really odd corner cases (+/- Infinity).  Just uncommon-trap them.
-bool LibraryCallKit::inline_exp() {
-  Node* arg = round_double_node(argument(0));
-  Node* n   = _gvn.transform(new ExpDNode(C, control(), arg));
-
-  n = finish_pow_exp(n, arg, NULL, OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dexp), "EXP");
-  set_result(n);
-
-  C->set_has_split_ifs(true); // Has chance for split-if optimization
-  return true;
 }
 
 //------------------------------inline_pow-------------------------------------
@@ -1760,7 +1752,9 @@ bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
   case vmIntrinsics::_dtan:   return Matcher::has_match_rule(Op_TanD)   ? inline_trig(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), FN_PTR(SharedRuntime::dtan),   "TAN");
 
-  case vmIntrinsics::_dlog:   return Matcher::has_match_rule(Op_LogD)   ? inline_math(id) :
+  case vmIntrinsics::_dlog:
+    return StubRoutines::dlog() != NULL ?
+    runtime_math(OptoRuntime::Math_D_D_Type(), StubRoutines::dlog(), "dlog") :
     runtime_math(OptoRuntime::Math_D_D_Type(), FN_PTR(SharedRuntime::dlog),   "LOG");
   case vmIntrinsics::_dlog10: return Matcher::has_match_rule(Op_Log10D) ? inline_math(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), FN_PTR(SharedRuntime::dlog10), "LOG10");
@@ -1769,8 +1763,10 @@ bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
   case vmIntrinsics::_dsqrt:  return Matcher::match_rule_supported(Op_SqrtD) ? inline_math(id) : false;
   case vmIntrinsics::_dabs:   return Matcher::has_match_rule(Op_AbsD)   ? inline_math(id) : false;
 
-  case vmIntrinsics::_dexp:   return Matcher::has_match_rule(Op_ExpD)   ? inline_exp()    :
-    runtime_math(OptoRuntime::Math_D_D_Type(),  FN_PTR(SharedRuntime::dexp),  "EXP");
+  case vmIntrinsics::_dexp:
+    return StubRoutines::dexp() != NULL ?
+      runtime_math(OptoRuntime::Math_D_D_Type(), StubRoutines::dexp(),  "dexp") :
+      runtime_math(OptoRuntime::Math_D_D_Type(), FN_PTR(SharedRuntime::dexp),  "EXP");
   case vmIntrinsics::_dpow:   return Matcher::has_match_rule(Op_PowD)   ? inline_pow()    :
     runtime_math(OptoRuntime::Math_DD_D_Type(), FN_PTR(SharedRuntime::dpow),  "POW");
 #undef FN_PTR
@@ -2459,7 +2455,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
         p = ConvX2UL(p);
         break;
       default:
-        fatal(err_msg_res("unexpected type %d: %s", type, type2name(type)));
+        fatal("unexpected type %d: %s", type, type2name(type));
         break;
       }
     }
@@ -2748,7 +2744,7 @@ bool LibraryCallKit::inline_unsafe_load_store(BasicType type, LoadStoreKind kind
     }
     break;
   default:
-    fatal(err_msg_res("unexpected type %d: %s", type, type2name(type)));
+    fatal("unexpected type %d: %s", type, type2name(type));
     break;
   }
 
@@ -3800,7 +3796,7 @@ Node* LibraryCallKit::generate_virtual_guard(Node* obj_klass,
   ciMethod* method = callee();
   int vtable_index = method->vtable_index();
   assert(vtable_index >= 0 || vtable_index == Method::nonvirtual_vtable_index,
-         err_msg_res("bad index %d", vtable_index));
+         "bad index %d", vtable_index);
   // Get the Method* out of the appropriate vtable entry.
   int entry_offset  = (InstanceKlass::vtable_start_offset() +
                      vtable_index*vtableEntry::size()) * wordSize +
@@ -3852,7 +3848,7 @@ LibraryCallKit::generate_method_call(vmIntrinsics::ID method_id, bool is_virtual
       // No need to use the linkResolver to get it.
        vtable_index = method->vtable_index();
        assert(vtable_index >= 0 || vtable_index == Method::nonvirtual_vtable_index,
-              err_msg_res("bad index %d", vtable_index));
+              "bad index %d", vtable_index);
     }
     slow_call = new CallDynamicJavaNode(tf,
                           SharedRuntime::get_resolve_virtual_call_stub(),
@@ -5547,6 +5543,87 @@ bool LibraryCallKit::inline_updateDirectByteBufferCRC32C() {
   return true;
 }
 
+//------------------------------inline_updateBytesAdler32----------------------
+//
+// Calculate Adler32 checksum for byte[] array.
+// int java.util.zip.Adler32.updateBytes(int crc, byte[] buf, int off, int len)
+//
+bool LibraryCallKit::inline_updateBytesAdler32() {
+  assert(UseAdler32Intrinsics, "Adler32 Instrinsic support need"); // check if we actually need to check this flag or check a different one
+  assert(callee()->signature()->size() == 4, "updateBytes has 4 parameters");
+  assert(callee()->holder()->is_loaded(), "Adler32 class must be loaded");
+  // no receiver since it is static method
+  Node* crc     = argument(0); // type: int
+  Node* src     = argument(1); // type: oop
+  Node* offset  = argument(2); // type: int
+  Node* length  = argument(3); // type: int
+
+  const Type* src_type = src->Value(&_gvn);
+  const TypeAryPtr* top_src = src_type->isa_aryptr();
+  if (top_src  == NULL || top_src->klass()  == NULL) {
+    // failed array check
+    return false;
+  }
+
+  // Figure out the size and type of the elements we will be copying.
+  BasicType src_elem = src_type->isa_aryptr()->klass()->as_array_klass()->element_type()->basic_type();
+  if (src_elem != T_BYTE) {
+    return false;
+  }
+
+  // 'src_start' points to src array + scaled offset
+  Node* src_start = array_element_address(src, offset, src_elem);
+
+  // We assume that range check is done by caller.
+  // TODO: generate range check (offset+length < src.length) in debug VM.
+
+  // Call the stub.
+  address stubAddr = StubRoutines::updateBytesAdler32();
+  const char *stubName = "updateBytesAdler32";
+
+  Node* call = make_runtime_call(RC_LEAF, OptoRuntime::updateBytesAdler32_Type(),
+                                 stubAddr, stubName, TypePtr::BOTTOM,
+                                 crc, src_start, length);
+  Node* result = _gvn.transform(new ProjNode(call, TypeFunc::Parms));
+  set_result(result);
+  return true;
+}
+
+//------------------------------inline_updateByteBufferAdler32---------------
+//
+// Calculate Adler32 checksum for DirectByteBuffer.
+// int java.util.zip.Adler32.updateByteBuffer(int crc, long buf, int off, int len)
+//
+bool LibraryCallKit::inline_updateByteBufferAdler32() {
+  assert(UseAdler32Intrinsics, "Adler32 Instrinsic support need"); // check if we actually need to check this flag or check a different one
+  assert(callee()->signature()->size() == 5, "updateByteBuffer has 4 parameters and one is long");
+  assert(callee()->holder()->is_loaded(), "Adler32 class must be loaded");
+  // no receiver since it is static method
+  Node* crc     = argument(0); // type: int
+  Node* src     = argument(1); // type: long
+  Node* offset  = argument(3); // type: int
+  Node* length  = argument(4); // type: int
+
+  src = ConvL2X(src);  // adjust Java long to machine word
+  Node* base = _gvn.transform(new CastX2PNode(src));
+  offset = ConvI2X(offset);
+
+  // 'src_start' points to src array + scaled offset
+  Node* src_start = basic_plus_adr(top(), base, offset);
+
+  // Call the stub.
+  address stubAddr = StubRoutines::updateBytesAdler32();
+  const char *stubName = "updateBytesAdler32";
+
+  Node* call = make_runtime_call(RC_LEAF, OptoRuntime::updateBytesAdler32_Type(),
+                                 stubAddr, stubName, TypePtr::BOTTOM,
+                                 crc, src_start, length);
+
+  Node* result = _gvn.transform(new ProjNode(call, TypeFunc::Parms));
+  set_result(result);
+  return true;
+}
+
 //----------------------------inline_reference_get----------------------------
 // public T java.lang.ref.Reference.get();
 bool LibraryCallKit::inline_reference_get() {
@@ -6043,7 +6120,7 @@ bool LibraryCallKit::inline_digestBase_implCompressMB(int predicate) {
     }
     break;
   default:
-    fatal(err_msg_res("unknown SHA intrinsic predicate: %d", predicate));
+    fatal("unknown SHA intrinsic predicate: %d", predicate);
   }
   if (klass_SHA_name != NULL) {
     // get DigestBase klass to lookup for SHA klass
@@ -6148,7 +6225,7 @@ Node* LibraryCallKit::inline_digestBase_implCompressMB_predicate(int predicate) 
     }
     break;
   default:
-    fatal(err_msg_res("unknown SHA intrinsic predicate: %d", predicate));
+    fatal("unknown SHA intrinsic predicate: %d", predicate);
   }
 
   ciKlass* klass_SHA = NULL;

@@ -23,31 +23,42 @@
 
 package jdk.test.lib;
 
+import java.io.File;
 import static jdk.test.lib.Asserts.assertTrue;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import sun.misc.Unsafe;
 
 /**
  * Common library for various test helper functions.
  */
 public final class Utils {
+
+    /**
+     * Returns the value of 'test.class.path' system property.
+     */
+    public static final String TEST_CLASS_PATH = System.getProperty("test.class.path", ".");
 
     /**
      * Returns the sequence used by operating system to separate lines.
@@ -63,6 +74,11 @@ public final class Utils {
      * Returns the value of 'test.java.opts' system property.
      */
     public static final String JAVA_OPTIONS = System.getProperty("test.java.opts", "").trim();
+
+    /**
+     * Returns the value of 'test.src' system property.
+     */
+    public static final String TEST_SRC = System.getProperty("test.src", ".").trim();
 
     private static Unsafe unsafe = null;
 
@@ -374,6 +390,45 @@ public final class Utils {
     }
 
     /**
+     * Returns random element of non empty collection
+     *
+     * @param <T> a type of collection element
+     * @param collection collection of elements
+     * @return random element of collection
+     * @throws IllegalArgumentException if collection is empty
+     */
+    public static <T> T getRandomElement(Collection<T> collection)
+            throws IllegalArgumentException {
+        if (collection.isEmpty()) {
+            throw new IllegalArgumentException("Empty collection");
+        }
+        Random random = getRandomInstance();
+        int elementIndex = 1 + random.nextInt(collection.size() - 1);
+        Iterator<T> iterator = collection.iterator();
+        while (--elementIndex != 0) {
+            iterator.next();
+        }
+        return iterator.next();
+    }
+
+    /**
+     * Returns random element of non empty array
+     *
+     * @param <T> a type of array element
+     * @param array array of elements
+     * @return random element of array
+     * @throws IllegalArgumentException if array is empty
+     */
+    public static <T> T getRandomElement(T[] array)
+            throws IllegalArgumentException {
+        if (array == null || array.length == 0) {
+            throw new IllegalArgumentException("Empty or null array");
+        }
+        Random random = getRandomInstance();
+        return array[random.nextInt(array.length)];
+    }
+
+    /**
      * Wait for condition to be true
      *
      * @param condition, a condition to wait for
@@ -428,4 +483,116 @@ public final class Utils {
     public static long adjustTimeout(long tOut) {
         return Math.round(tOut * Utils.TIMEOUT_FACTOR);
     }
+
+    /**
+     * Ensures a requested class is loaded
+     * @param aClass class to load
+     */
+    public static void ensureClassIsLoaded(Class<?> aClass) {
+        if (aClass == null) {
+            throw new Error("Requested null class");
+        }
+        try {
+            Class.forName(aClass.getName(), /* initialize = */ true,
+                    ClassLoader.getSystemClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new Error("Class not found", e);
+        }
+    }
+    /**
+     * @param parent a class loader to be the parent for the returned one
+     * @return an UrlClassLoader with urls made of the 'test.class.path' jtreg
+     *         property and with the given parent
+     */
+    public static URLClassLoader getTestClassPathURLClassLoader(ClassLoader parent) {
+        URL[] urls = Arrays.stream(TEST_CLASS_PATH.split(File.pathSeparator))
+                .map(Paths::get)
+                .map(Path::toUri)
+                .map(x -> {
+                    try {
+                        return x.toURL();
+                    } catch (MalformedURLException ex) {
+                        throw new Error("Test issue. JTREG property"
+                                + " 'test.class.path'"
+                                + " is not defined correctly", ex);
+                    }
+                }).toArray(URL[]::new);
+        return new URLClassLoader(urls, parent);
+    }
+
+    /**
+     * Runs runnable and checks that it throws expected exception. If exceptionException is null it means
+     * that we expect no exception to be thrown.
+     * @param runnable what we run
+     * @param expectedException expected exception
+     */
+    public static void runAndCheckException(Runnable runnable, Class<? extends Throwable> expectedException) {
+        runAndCheckException(runnable, t -> {
+            if (t == null) {
+                if (expectedException != null) {
+                    throw new AssertionError("Didn't get expected exception " + expectedException.getSimpleName());
+                }
+            } else {
+                String message = "Got unexpected exception " + t.getClass().getSimpleName();
+                if (expectedException == null) {
+                    throw new AssertionError(message, t);
+                } else if (!expectedException.isAssignableFrom(t.getClass())) {
+                    message += " instead of " + expectedException.getSimpleName();
+                    throw new AssertionError(message, t);
+                }
+            }
+        });
+    }
+
+    /**
+     * Runs runnable and makes some checks to ensure that it throws expected exception.
+     * @param runnable what we run
+     * @param checkException a consumer which checks that we got expected exception and raises a new exception otherwise
+     */
+    public static void runAndCheckException(Runnable runnable, Consumer<Throwable> checkException) {
+        try {
+            runnable.run();
+            checkException.accept(null);
+        } catch (Throwable t) {
+            checkException.accept(t);
+        }
+    }
+
+    /**
+     * Converts to VM type signature
+     *
+     * @param type Java type to convert
+     * @return string representation of VM type
+     */
+    public static String toJVMTypeSignature(Class<?> type) {
+        if (type.isPrimitive()) {
+            if (type == boolean.class) {
+                return "Z";
+            } else if (type == byte.class) {
+                return "B";
+            } else if (type == char.class) {
+                return "C";
+            } else if (type == double.class) {
+                return "D";
+            } else if (type == float.class) {
+                return "F";
+            } else if (type == int.class) {
+                return "I";
+            } else if (type == long.class) {
+                return "J";
+            } else if (type == short.class) {
+                return "S";
+            } else if (type == void.class) {
+                return "V";
+            } else {
+                throw new Error("Unsupported type: " + type);
+            }
+        }
+        String result = type.getName().replaceAll("\\.", "/");
+        if (!type.isArray()) {
+            return "L" + result + ";";
+        }
+        return result;
+    }
 }
+

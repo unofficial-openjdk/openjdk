@@ -52,8 +52,6 @@
   #define NOINLINE
 #endif
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
-
 // The "core" versions of monitor enter and exit reside in this file.
 // The interpreter and compilers contain specialized transliterated
 // variants of the enter-exit fast-path operations.  See i486.ad fast_lock(),
@@ -189,9 +187,7 @@ bool ObjectSynchronizer::quick_notify(oopDesc * obj, Thread * self, bool all) {
         mon->INotify(self);
         ++tally;
       } while (mon->first_waiter() != NULL && all);
-      if (ObjectMonitor::_sync_Notifications != NULL) {
-        ObjectMonitor::_sync_Notifications->inc(tally);
-      }
+      OM_PERFDATA_OP(Notifications, inc(tally));
     }
     return true;
   }
@@ -1362,7 +1358,7 @@ ObjectMonitor * NOINLINE ObjectSynchronizer::inflate(Thread * Self,
       }
 
       // We've successfully installed INFLATING (0) into the mark-word.
-      // This is the only case where 0 will appear in a mark-work.
+      // This is the only case where 0 will appear in a mark-word.
       // Only the singular thread that successfully swings the mark-word
       // to 0 can perform (or more precisely, complete) inflation.
       //
@@ -1413,13 +1409,13 @@ ObjectMonitor * NOINLINE ObjectSynchronizer::inflate(Thread * Self,
 
       // Hopefully the performance counters are allocated on distinct cache lines
       // to avoid false sharing on MP systems ...
-      if (ObjectMonitor::_sync_Inflations != NULL) ObjectMonitor::_sync_Inflations->inc();
+      OM_PERFDATA_OP(Inflations, inc());
       TEVENT(Inflate: overwrite stacklock);
       if (TraceMonitorInflation) {
         if (object->is_instance()) {
           ResourceMark rm;
           tty->print_cr("Inflating object " INTPTR_FORMAT " , mark " INTPTR_FORMAT " , type %s",
-                        (void *) object, (intptr_t) object->mark(),
+                        p2i(object), p2i(object->mark()),
                         object->klass()->external_name());
         }
       }
@@ -1461,13 +1457,13 @@ ObjectMonitor * NOINLINE ObjectSynchronizer::inflate(Thread * Self,
 
     // Hopefully the performance counters are allocated on distinct
     // cache lines to avoid false sharing on MP systems ...
-    if (ObjectMonitor::_sync_Inflations != NULL) ObjectMonitor::_sync_Inflations->inc();
+    OM_PERFDATA_OP(Inflations, inc());
     TEVENT(Inflate: overwrite neutral);
     if (TraceMonitorInflation) {
       if (object->is_instance()) {
         ResourceMark rm;
         tty->print_cr("Inflating object " INTPTR_FORMAT " , mark " INTPTR_FORMAT " , type %s",
-                      (void *) object, (intptr_t) object->mark(),
+                      p2i(object), p2i(object->mark()),
                       object->klass()->external_name());
       }
     }
@@ -1531,7 +1527,7 @@ bool ObjectSynchronizer::deflate_monitor(ObjectMonitor* mid, oop obj,
       if (obj->is_instance()) {
         ResourceMark rm;
         tty->print_cr("Deflating object " INTPTR_FORMAT " , mark " INTPTR_FORMAT " , type %s",
-                      (void *) obj, (intptr_t) obj->mark(), obj->klass()->external_name());
+                      p2i(obj), p2i(obj->mark()), obj->klass()->external_name());
       }
     }
 
@@ -1678,8 +1674,8 @@ void ObjectSynchronizer::deflate_idle_monitors() {
   }
   Thread::muxRelease(&gListLock);
 
-  if (ObjectMonitor::_sync_Deflations != NULL) ObjectMonitor::_sync_Deflations->inc(nScavenged);
-  if (ObjectMonitor::_sync_MonExtant  != NULL) ObjectMonitor::_sync_MonExtant ->set_value(nInCirculation);
+  OM_PERFDATA_OP(Deflations, inc(nScavenged));
+  OM_PERFDATA_OP(MonExtant, set_value(nInCirculation));
 
   // TODO: Add objectMonitor leak detection.
   // Audit/inventory the objectMonitors -- make sure they're all accounted for.
@@ -1704,9 +1700,9 @@ class ReleaseJavaMonitorsClosure: public MonitorClosure {
         Handle obj((oop) mid->object());
         tty->print("INFO: unexpected locked object:");
         javaVFrame::print_locked_object_class_name(tty, obj, "locked");
-        fatal(err_msg("exiting JavaThread=" INTPTR_FORMAT
-                      " unexpectedly owns ObjectMonitor=" INTPTR_FORMAT,
-                      THREAD, mid));
+        fatal("exiting JavaThread=" INTPTR_FORMAT
+              " unexpectedly owns ObjectMonitor=" INTPTR_FORMAT,
+              p2i(THREAD), p2i(mid));
       }
       (void)mid->complete_exit(CHECK);
     }

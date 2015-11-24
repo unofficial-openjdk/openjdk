@@ -32,12 +32,11 @@
  * @library /testlibrary /../../test/lib
  * @modules java.base/sun.misc
  *          java.management
- * @ignore - 8133180
- * @build SharedStringsWb SharedStrings BasicJarBuilder
+ *          jdk.jartool/sun.tools.jar
+ * @build SharedStringsWb SharedStrings BasicJarBuilder sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  * @run main SharedStrings
  */
-
 import jdk.test.lib.*;
 
 public class SharedStrings {

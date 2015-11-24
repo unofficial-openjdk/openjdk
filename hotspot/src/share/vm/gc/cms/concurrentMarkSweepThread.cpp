@@ -26,6 +26,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "gc/cms/concurrentMarkSweepGeneration.inline.hpp"
 #include "gc/cms/concurrentMarkSweepThread.hpp"
+#include "gc/shared/gcId.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
@@ -39,23 +40,17 @@
 
 // ======= Concurrent Mark Sweep Thread ========
 
-// The CMS thread is created when Concurrent Mark Sweep is used in the
-// older of two generations in a generational memory system.
+ConcurrentMarkSweepThread* ConcurrentMarkSweepThread::_cmst = NULL;
+CMSCollector* ConcurrentMarkSweepThread::_collector         = NULL;
+bool ConcurrentMarkSweepThread::_should_terminate           = false;
+int  ConcurrentMarkSweepThread::_CMS_flag                   = CMS_nil;
 
-ConcurrentMarkSweepThread*
-     ConcurrentMarkSweepThread::_cmst     = NULL;
-CMSCollector* ConcurrentMarkSweepThread::_collector = NULL;
-bool ConcurrentMarkSweepThread::_should_terminate = false;
-int  ConcurrentMarkSweepThread::_CMS_flag         = CMS_nil;
+volatile jint ConcurrentMarkSweepThread::_pending_yields    = 0;
 
-volatile jint ConcurrentMarkSweepThread::_pending_yields      = 0;
-
-SurrogateLockerThread*
-     ConcurrentMarkSweepThread::_slt = NULL;
+SurrogateLockerThread* ConcurrentMarkSweepThread::_slt      = NULL;
 SurrogateLockerThread::SLT_msg_type
      ConcurrentMarkSweepThread::_sltBuffer = SurrogateLockerThread::empty;
-Monitor*
-     ConcurrentMarkSweepThread::_sltMonitor = NULL;
+Monitor* ConcurrentMarkSweepThread::_sltMonitor             = NULL;
 
 ConcurrentMarkSweepThread::ConcurrentMarkSweepThread(CMSCollector* collector)
   : ConcurrentGCThread() {
@@ -130,6 +125,7 @@ void ConcurrentMarkSweepThread::run() {
   while (!_should_terminate) {
     sleepBeforeNextCycle();
     if (_should_terminate) break;
+    GCIdMark gc_id_mark;
     GCCause::Cause cause = _collector->_full_gc_requested ?
       _collector->_full_gc_cause : GCCause::_cms_concurrent_mark;
     _collector->collect_in_background(cause);

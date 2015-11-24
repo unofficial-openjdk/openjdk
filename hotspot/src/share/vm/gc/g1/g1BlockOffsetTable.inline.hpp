@@ -27,6 +27,7 @@
 
 #include "gc/g1/g1BlockOffsetTable.hpp"
 #include "gc/g1/heapRegion.hpp"
+#include "gc/shared/memset_with_concurrent_readers.hpp"
 #include "gc/shared/space.hpp"
 
 inline HeapWord* G1BlockOffsetTable::block_start(const void* addr) {
@@ -68,15 +69,7 @@ void G1BlockOffsetSharedArray::set_offset_array(size_t left, size_t right, u_cha
   check_index(right, "right index out of range");
   assert(left <= right, "indexes out of order");
   size_t num_cards = right - left + 1;
-  if (UseMemSetInBOT) {
-    memset(&_offset_array[left], offset, num_cards);
-  } else {
-    size_t i = left;
-    const size_t end = i + num_cards;
-    for (; i < end; i++) {
-      _offset_array[i] = offset;
-    }
-  }
+  memset_with_concurrent_readers(&_offset_array[left], offset, num_cards);
 }
 
 // Variant of index_for that does not check the index for validity.
@@ -88,8 +81,8 @@ inline size_t G1BlockOffsetSharedArray::index_for(const void* p) const {
   char* pc = (char*)p;
   assert(pc >= (char*)_reserved.start() &&
          pc <  (char*)_reserved.end(),
-         err_msg("p (" PTR_FORMAT ") not in reserved [" PTR_FORMAT ", " PTR_FORMAT ")",
-                 p2i(p), p2i(_reserved.start()), p2i(_reserved.end())));
+         "p (" PTR_FORMAT ") not in reserved [" PTR_FORMAT ", " PTR_FORMAT ")",
+         p2i(p), p2i(_reserved.start()), p2i(_reserved.end()));
   size_t result = index_for_raw(p);
   check_index(result, "bad index from address");
   return result;
@@ -100,10 +93,9 @@ G1BlockOffsetSharedArray::address_for_index(size_t index) const {
   check_index(index, "index out of range");
   HeapWord* result = address_for_index_raw(index);
   assert(result >= _reserved.start() && result < _reserved.end(),
-         err_msg("bad address from index result " PTR_FORMAT
-                 " _reserved.start() " PTR_FORMAT " _reserved.end() "
-                 PTR_FORMAT,
-                 p2i(result), p2i(_reserved.start()), p2i(_reserved.end())));
+         "bad address from index result " PTR_FORMAT
+         " _reserved.start() " PTR_FORMAT " _reserved.end() " PTR_FORMAT,
+         p2i(result), p2i(_reserved.start()), p2i(_reserved.end()));
   return result;
 }
 

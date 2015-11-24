@@ -29,11 +29,14 @@
  *          defined in an unnamed module. Access allowed since unnamed module
  *          can read unnamed module even when class p1.c1 is loaded by
  *          a different loader than p2.c2.
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build UmodNpkgDiffCL_UmodNpkg
  * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_UmodNpkg
  */
+
+import myloaders.MyDiffClassLoader;
 
 // class p1.c1 defined in an unnamed module tries to access p2.c2 defined in
 // in an unnamed module.

@@ -193,7 +193,7 @@ class ClassLoader: AllStatic {
   // First entry in linked list of ClassPathEntry instances.
   // This consists of entries made up by:
   //   - boot loader modules
-  //     [-Xoverride]; exploded build | bootmodules.jimage;
+  //     [-Xpatch]; exploded build | bootmodules.jimage;
   //   - boot loader append path
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_entry;
@@ -206,8 +206,6 @@ class ClassLoader: AllStatic {
   //   - the boot loader's append path
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_append_entry;
-
-  static ClassPathEntry* _last_append_entry;
 
   // Hash table used to keep track of loaded packages
   static PackageHashtable* _package_hash_table;
@@ -223,6 +221,7 @@ class ClassLoader: AllStatic {
   static GrowableArray<char*>* _ext_modules_array;
 
   // Info used by CDS
+  CDS_ONLY(static ClassPathEntry* _last_append_entry;)
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
   // Hash function
@@ -373,6 +372,8 @@ class ClassLoader: AllStatic {
   static void* get_shared_paths_misc_info();
   static bool  check_shared_paths_misc_info(void* info, int size);
   static void  exit_with_path_failure(const char* error, const char* message);
+
+  static bool class_in_append_entries(const char* file_name, TRAPS);
 #endif
 
   static void  trace_class_path(const char* msg, const char* name = NULL);
@@ -407,6 +408,8 @@ class ClassLoader: AllStatic {
   static void prepend_to_list(const char* apath);
 
   static bool string_ends_with(const char* str, const char* str_to_find);
+
+  static bool is_jrt(const char* name) { return string_ends_with(name, BOOT_IMAGE_NAME); }
 
   static void initialize_module_loader_map(JImageFile* jimage);
 

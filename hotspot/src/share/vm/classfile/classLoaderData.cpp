@@ -369,6 +369,8 @@ PackageEntryTable* ClassLoaderData::packages() {
     if (_packages != NULL) {
       return _packages;
     }
+    // Ensure _packages is stable, since it is examined without a lock
+    OrderAccess::storestore();
     _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
   }
   return _packages;
@@ -378,12 +380,23 @@ ModuleEntryTable* ClassLoaderData::modules() {
   // Lazily create the module entry table at first request.
   if (_modules == NULL) {
     MutexLocker m1(Module_lock);
-    MutexLockerEx m2(metaspace_lock(), Mutex::_no_safepoint_check_flag);
     // Check again if _modules has been allocated while we were getting this lock.
     if (_modules != NULL) {
       return _modules;
     }
-    _modules = ModuleEntryTable::create_module_entry_table(this);
+
+    ModuleEntryTable* temp_table = new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
+    // Each loader has one unnamed module entry. Create it before
+    // any classes, loaded by this loader, are defined in case
+    // they end up being defined in loader's unnamed module.
+    temp_table->create_unnamed_module(this);
+
+    {
+      MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+      // Ensure _modules is stable, since it is examined without a lock
+      OrderAccess::storestore();
+      _modules = temp_table;
+    }
   }
   return _modules;
 }
@@ -497,6 +510,10 @@ jobject ClassLoaderData::add_handle(Handle h) {
     set_handles(JNIHandleBlock::allocate_block());
   }
   return handles()->allocate_handle(h());
+}
+
+void ClassLoaderData::remove_handle(jobject h) {
+  _handles->release_handle(h);
 }
 
 // Add this metadata pointer to be freed when it's safe.  This is only during
@@ -1022,7 +1039,7 @@ Klass* ClassLoaderDataGraphKlassIteratorAtomic::next_klass() {
   }
 
   // Nothing more for the iterator to hand out.
-  assert(head == NULL, err_msg("head is " PTR_FORMAT ", expected not null:", p2i(head)));
+  assert(head == NULL, "head is " PTR_FORMAT ", expected not null:", p2i(head));
   return NULL;
 }
 

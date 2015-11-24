@@ -38,6 +38,22 @@
 
 ModuleEntry* ModuleEntryTable::_javabase_module = NULL;
 
+// Returns the shared ProtectionDomain
+Handle ModuleEntry::shared_protection_domain() {
+  return Handle(JNIHandles::resolve(_pd));
+}
+
+// Set the shared ProtectionDomain atomically
+void ModuleEntry::set_shared_protection_domain(ClassLoaderData *loader_data,
+                                               Handle pd_h) {
+  // Create a JNI handle for the shared ProtectionDomain and save it atomically.
+  // If someone beats us setting the _pd cache, the created JNI handle is destroyed.
+  jobject obj = loader_data->add_handle(pd_h);
+  if (Atomic::cmpxchg_ptr(obj, &_pd, NULL) != NULL) {
+    loader_data->remove_handle(obj);
+  }
+}
+
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this module's reads list");
@@ -121,8 +137,8 @@ ModuleEntryTable::~ModuleEntryTable() {
 
       if (TraceModules) {
         ResourceMark rm;
-        tty->print_cr("[deleting module: %s]", to_remove->name() != NULL ?
-          to_remove->name()->as_C_string() : UNNAMED_MODULE);
+        tty->print_cr("[ModuleEntryTable: deleting module: %s]", to_remove->name() != NULL ?
+                      to_remove->name()->as_C_string() : UNNAMED_MODULE);
       }
 
       // Clean out the C heap allocated reads list first before freeing the entry
@@ -147,20 +163,28 @@ ModuleEntryTable::~ModuleEntryTable() {
   free_buckets();
 }
 
-ModuleEntryTable* ModuleEntryTable::create_module_entry_table(ClassLoaderData* loader_data) {
+void ModuleEntryTable::create_unnamed_module(ClassLoaderData* loader_data) {
   assert_locked_or_safepoint(Module_lock);
-  JavaThread *THREAD = JavaThread::current();
-  ModuleEntryTable* module_table =
-    new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
 
-  if (module_table != NULL) {
-    // Create ModuleEntry for unnamed module. Module entry tables have exactly
-    // one unnamed module. Add it to bucket 0, no name to hash on.
-    ModuleEntry* module_entry = module_table->new_entry(0, Handle(NULL), NULL, NULL, NULL, loader_data);
-    module_table->add_entry(0, module_entry);
-    module_table->set_unnamed_module(module_entry);
+  // Each ModuleEntryTable has exactly one unnamed module
+  if (loader_data->is_the_null_class_loader_data()) {
+    // For the boot loader, the java.lang.reflect.Module for the unnamed module
+    // is not known until a call to JVM_SetBootLoaderUnnamedModule is made. At
+    // this point initially create the ModuleEntry for the unnamed module.
+    _unnamed_module = new_entry(0, Handle(NULL), NULL, NULL, NULL, loader_data);
+  } else {
+    // For all other class loaders the java.lang.reflect.Module for their
+    // corresponding unnamed module can be found in the java.lang.ClassLoader object.
+    oop module = java_lang_ClassLoader::unnamedModule(loader_data->class_loader());
+    _unnamed_module = new_entry(0, Handle(module), NULL, NULL, NULL, loader_data);
+
+    // Store pointer to the ModuleEntry in the unnamed module's java.lang.reflect.Module
+    // object.
+    java_lang_reflect_Module::set_module_entry(module, _unnamed_module);
   }
-  return module_table;
+
+  // Add to bucket 0, no name to hash on
+  add_entry(0, _unnamed_module);
 }
 
 ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, Symbol* name,
@@ -210,8 +234,8 @@ void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {
 
 ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(Handle jlrM_handle,
                                                            Symbol* module_name,
-                                                           Symbol *module_version,
-                                                           Symbol *module_location,
+                                                           Symbol* module_version,
+                                                           Symbol* module_location,
                                                            ClassLoaderData* loader_data) {
   assert(module_name != NULL, "ModuleEntryTable locked_create_entry_or_null should never be called for unnamed module.");
   assert_locked_or_safepoint(Module_lock);
@@ -232,11 +256,10 @@ ModuleEntry* ModuleEntryTable::lookup_only(Symbol* name) {
     // Return this table's unnamed module
     return unnamed_module();
   }
-  for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry* m = bucket(i); m != NULL; m = m->next()) {
-      if (m->name()->fast_compare(name) == 0) {
-        return m;
-      }
+  int index = index_for(name);
+  for (ModuleEntry* m = bucket(index); m != NULL; m = m->next()) {
+    if (m->name()->fast_compare(name) == 0) {
+      return m;
     }
   }
   return NULL;
@@ -255,18 +278,31 @@ void ModuleEntryTable::purge_all_module_reads() {
   }
 }
 
+void ModuleEntryTable::finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location) {
+  assert_locked_or_safepoint(Module_lock);
+  ClassLoaderData* boot_loader_data = ClassLoaderData::the_null_class_loader_data();
+  ModuleEntryTable* module_table = boot_loader_data->modules();
+
+  assert(module_table != NULL, "boot loader's ModuleEntryTable not defined");
+
+  if (jlrM_module.is_null()) {
+    fatal("Unable to finalize module definition for java.base");
+  }
+
+  // Set java.lang.reflect.Module, version and location for java.base
+  ModuleEntry* jb_module = javabase_module();
+  assert(jb_module != NULL, "java.base ModuleEntry not defined");
+  jb_module->set_jlrM_module(boot_loader_data->add_handle(jlrM_module));
+  jb_module->set_version(version);
+  jb_module->set_location(location);
+  // Store pointer to the ModuleEntry for java.base in the java.lang.reflect.Module object.
+  java_lang_reflect_Module::set_module_entry(jlrM_module(), jb_module);
+}
+
 void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
   if (jlrM_handle.is_null()) {
-    fatal("Cannot create java.lang.reflect.Module object for java.base");
+    fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
-
-  if (TraceModules) {
-    tty->print_cr("[MET::patch_javabase_entries, j.l.r.Module for java.base created]");
-  }
-
-  // Set jlrM_handle for java.base module in module entry table.
-  assert(javabase_module() != NULL, "java.base ModuleEntry not defined");
-  javabase_module()->set_jlrM_module(ClassLoaderData::the_null_class_loader_data()->add_handle(jlrM_handle));
 
   // Do the fixups for classes that have already been created.
   GrowableArray <Klass*>* list = java_lang_Class::fixup_jlrM_list();
@@ -277,16 +313,10 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
     EXCEPTION_MARK;
     KlassHandle kh(THREAD, k);
     java_lang_Class::fixup_jlrM(kh, jlrM_handle, CATCH);
-    if (TraceModules) {
-      tty->print_cr("[MET::patch_javabase_entries, patching class %s]", k->external_name());
-    }
   }
+
   delete java_lang_Class::fixup_jlrM_list();
   java_lang_Class::set_fixup_jlrM_list(NULL);
-
-  if (TraceModules) {
-    tty->print_cr("[MET::patch_javabase_entries, patching complete, fixup array deleted]");
-  }
 }
 
 #ifndef PRODUCT

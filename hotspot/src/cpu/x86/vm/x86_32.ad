@@ -580,7 +580,11 @@ void MachPrologNode::format(PhaseRegAlloc* ra_, outputStream* st) const {
     st->print("MOV    [ESP + #%d], EBP\t# Save EBP",framesize);
     if (PreserveFramePointer) {
       st->print("\n\t");
-      st->print("MOV    EBP, [ESP + #%d]\t# Save the caller's SP into EBP", (framesize + wordSize));
+      st->print("MOV    EBP, ESP\t# Save the caller's SP into EBP");
+      if (framesize > 0) {
+        st->print("\n\t");
+        st->print("ADD    EBP, #%d", framesize);
+      }
     }
   }
 
@@ -1004,10 +1008,10 @@ static int vec_stack_to_stack_helper(CodeBuffer *cbuf, bool do_size, int src_off
       __ vmovdqu(Address(rsp, dst_offset), xmm0);
       __ vmovdqu(xmm0, Address(rsp, -32));
     case Op_VecZ:
-      __ evmovdqu(Address(rsp, -64), xmm0, 2);
-      __ evmovdqu(xmm0, Address(rsp, src_offset), 2);
-      __ evmovdqu(Address(rsp, dst_offset), xmm0, 2);
-      __ evmovdqu(xmm0, Address(rsp, -64), 2);
+      __ evmovdqul(Address(rsp, -64), xmm0, 2);
+      __ evmovdqul(xmm0, Address(rsp, src_offset), 2);
+      __ evmovdqul(Address(rsp, dst_offset), xmm0, 2);
+      __ evmovdqul(xmm0, Address(rsp, -64), 2);
       break;
     default:
       ShouldNotReachHere();
@@ -9911,35 +9915,6 @@ instruct powD_reg(regD dst, regD src0, regD src1, eAXRegI rax, eDXRegI rdx, eCXR
   ins_pipe( pipe_slow );
 %}
 
-
-instruct expDPR_reg(regDPR1 dpr1, eAXRegI rax, eDXRegI rdx, eCXRegI rcx, eFlagsReg cr) %{
-  predicate (UseSSE<=1);
-  match(Set dpr1 (ExpD dpr1));
-  effect(KILL rax, KILL rcx, KILL rdx, KILL cr);
-  format %{ "fast_exp $dpr1 -> $dpr1  // KILL $rax, $rcx, $rdx" %}
-  ins_encode %{
-    __ fast_exp();
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct expD_reg(regD dst, regD src, eAXRegI rax, eDXRegI rdx, eCXRegI rcx, eFlagsReg cr) %{
-  predicate (UseSSE>=2);
-  match(Set dst (ExpD src));
-  effect(KILL rax, KILL rcx, KILL rdx, KILL cr);
-  format %{ "fast_exp $dst -> $src  // KILL $rax, $rcx, $rdx" %}
-  ins_encode %{
-    __ subptr(rsp, 8);
-    __ movdbl(Address(rsp, 0), $src$$XMMRegister);
-    __ fld_d(Address(rsp, 0));
-    __ fast_exp();
-    __ fstp_d(Address(rsp, 0));
-    __ movdbl($dst$$XMMRegister, Address(rsp, 0));
-    __ addptr(rsp, 8);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct log10DPR_reg(regDPR1 dst, regDPR1 src) %{
   predicate (UseSSE<=1);
   // The source Double operand on FPU stack
@@ -9972,41 +9947,6 @@ instruct log10D_reg(regD dst, regD src, eFlagsReg cr) %{
               Opcode(0xD9), Opcode(0xF1),   // fyl2x
               Push_ResultD(dst));
 
-  ins_pipe( pipe_slow );
-%}
-
-instruct logDPR_reg(regDPR1 dst, regDPR1 src) %{
-  predicate (UseSSE<=1);
-  // The source Double operand on FPU stack
-  match(Set dst (LogD src));
-  // fldln2       ; push log_e(2) on the FPU stack; full 80-bit number
-  // fxch         ; swap ST(0) with ST(1)
-  // fyl2x        ; compute log_e(2) * log_2(x)
-  format %{ "FLDLN2 \t\t\t#Log_e\n\t"
-            "FXCH   \n\t"
-            "FYL2X  \t\t\t# Q=Log_e*Log_2(x)"
-         %}
-  ins_encode( Opcode(0xD9), Opcode(0xED),   // fldln2
-              Opcode(0xD9), Opcode(0xC9),   // fxch
-              Opcode(0xD9), Opcode(0xF1));  // fyl2x
-
-  ins_pipe( pipe_slow );
-%}
-
-instruct logD_reg(regD dst, regD src, eFlagsReg cr) %{
-  predicate (UseSSE>=2);
-  effect(KILL cr);
-  // The source and result Double operands in XMM registers
-  match(Set dst (LogD src));
-  // fldln2       ; push log_e(2) on the FPU stack; full 80-bit number
-  // fyl2x        ; compute log_e(2) * log_2(x)
-  format %{ "FLDLN2 \t\t\t#Log_e\n\t"
-            "FYL2X  \t\t\t# Q=Log_e*Log_2(x)"
-         %}
-  ins_encode( Opcode(0xD9), Opcode(0xED),   // fldln2
-              Push_SrcD(src),
-              Opcode(0xD9), Opcode(0xF1),   // fyl2x
-              Push_ResultD(dst));
   ins_pipe( pipe_slow );
 %}
 

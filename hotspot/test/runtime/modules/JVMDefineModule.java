@@ -96,9 +96,9 @@ public class JVMDefineModule {
         m = ModuleHelper.ModuleObject("java.base", cl, new String[] { "mypackage3" });
         try {
             ModuleHelper.DefineModule(m, "9.0", "mymodule/here", new String[] { "mypackage3" });
-            throw new RuntimeException("Failed to get expected IAE for java.base");
+            throw new RuntimeException("Failed to get expected IAE for java.base, not defined with boot class loader");
         } catch(IllegalArgumentException e) {
-            if (!e.getMessage().contains("Module java.base is already defined")) {
+            if (!e.getMessage().contains("Class loader must be the boot class loader")) {
               throw new RuntimeException("Failed to get expected IAE message for java.base: " + e.getMessage());
             }
         }

@@ -484,13 +484,6 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
 
     // Establish readability, check if module_from is allowed to read module_to.
     if (!module_from->can_read(module_to)) {
-      if (TraceAccessControlErrors) {
-        ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
-          module_from->name()->as_C_string(), current_class->external_name(),
-          module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE,
-          new_class->external_name());
-      }
       return MODULE_NOT_READABLE;
     }
 
@@ -512,14 +505,6 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     //      or
     //      module_to exports T unqualifiedly to all modules (checked above).
     if (!package_to->is_qexported_to(module_from)) {
-      if (TraceAccessControlErrors) {
-        ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
-          module_from->is_named() ? module_from->name()->as_C_string() : UNNAMED_MODULE,
-          current_class->external_name(),
-          module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE,
-          new_class->external_name());
-      }
       return TYPE_NOT_EXPORTED;
     }
     return ACCESS_OK;

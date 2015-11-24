@@ -3363,11 +3363,9 @@ const char* GraphBuilder::check_can_parse(ciMethod* callee) const {
   return NULL;
 }
 
-
 // negative filter: should callee NOT be inlined?  returns NULL, ok to inline, or rejection msg
 const char* GraphBuilder::should_not_inline(ciMethod* callee) const {
-  if ( callee->should_exclude())       return "excluded by CompilerOracle";
-  if ( callee->should_not_inline())    return "disallowed by CompilerOracle";
+  if ( compilation()->directive()->should_not_inline(callee)) return "disallowed by CompileCommand";
   if ( callee->dont_inline())          return "don't inline by annotation";
   return NULL;
 }
@@ -3496,8 +3494,7 @@ bool GraphBuilder::try_inline_intrinsics(ciMethod* callee) {
   {
     VM_ENTRY_MARK;
     methodHandle mh(THREAD, callee->get_Method());
-    methodHandle ct(THREAD, method()->get_Method());
-    is_available = _compilation->compiler()->is_intrinsic_available(mh, ct);
+    is_available = _compilation->compiler()->is_intrinsic_available(mh, _compilation->directive());
   }
 
   if (!is_available) {
@@ -3692,13 +3689,14 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, Bytecode
   }
 
   // now perform tests that are based on flag settings
-  if (callee->force_inline() || callee->should_inline()) {
+  bool inlinee_by_directive = compilation()->directive()->should_inline(callee);
+  if (callee->force_inline() || inlinee_by_directive) {
     if (inline_level() > MaxForceInlineLevel                    ) INLINE_BAILOUT("MaxForceInlineLevel");
     if (recursive_inline_level(callee) > MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
 
     const char* msg = "";
     if (callee->force_inline())  msg = "force inline by annotation";
-    if (callee->should_inline()) msg = "force inline by CompileOracle";
+    if (inlinee_by_directive)    msg = "force inline by CompileCommand";
     print_inlining(callee, msg);
   } else {
     // use heuristic controls on inlining
@@ -4020,7 +4018,7 @@ bool GraphBuilder::try_method_handle_inline(ciMethod* callee) {
     break;
 
   default:
-    fatal(err_msg("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid)));
+    fatal("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid));
     break;
   }
   set_state(state_before);
@@ -4209,10 +4207,11 @@ void GraphBuilder::print_inlining(ciMethod* callee, const char* msg, bool succes
     event.commit();
   }
 #endif // INCLUDE_TRACE
-  if (!PrintInlining && !compilation()->method()->has_option("PrintInlining")) {
+
+  if (!compilation()->directive()->PrintInliningOption) {
     return;
   }
-  CompileTask::print_inlining(callee, scope()->level(), bci(), msg);
+  CompileTask::print_inlining_tty(callee, scope()->level(), bci(), msg);
   if (success && CIPrintMethodCodes) {
     callee->print_codes();
   }

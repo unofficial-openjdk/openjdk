@@ -39,6 +39,7 @@
 #include "gc/g1/hSpaceCounters.hpp"
 #include "gc/g1/heapRegionManager.hpp"
 #include "gc/g1/heapRegionSet.hpp"
+#include "gc/g1/youngList.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/plab.hpp"
@@ -56,6 +57,7 @@ class HRRSCleanupTask;
 class GenerationSpec;
 class OopsInHeapRegionClosure;
 class G1ParScanThreadState;
+class G1ParScanThreadStateSet;
 class G1KlassScanClosure;
 class G1ParScanThreadState;
 class ObjectClosure;
@@ -63,7 +65,6 @@ class SpaceClosure;
 class CompactibleSpaceClosure;
 class Space;
 class G1CollectorPolicy;
-class GenRemSet;
 class G1RemSet;
 class HeapRegionRemSetIterator;
 class ConcurrentMark;
@@ -86,79 +87,6 @@ typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
 
 typedef int RegionIdx_t;   // needs to hold [ 0..max_regions() )
 typedef int CardIdx_t;     // needs to hold [ 0..CardsPerRegion )
-
-class YoungList : public CHeapObj<mtGC> {
-private:
-  G1CollectedHeap* _g1h;
-
-  HeapRegion* _head;
-
-  HeapRegion* _survivor_head;
-  HeapRegion* _survivor_tail;
-
-  HeapRegion* _curr;
-
-  uint        _length;
-  uint        _survivor_length;
-
-  size_t      _last_sampled_rs_lengths;
-  size_t      _sampled_rs_lengths;
-
-  void         empty_list(HeapRegion* list);
-
-public:
-  YoungList(G1CollectedHeap* g1h);
-
-  void         push_region(HeapRegion* hr);
-  void         add_survivor_region(HeapRegion* hr);
-
-  void         empty_list();
-  bool         is_empty() { return _length == 0; }
-  uint         length() { return _length; }
-  uint         eden_length() { return length() - survivor_length(); }
-  uint         survivor_length() { return _survivor_length; }
-
-  // Currently we do not keep track of the used byte sum for the
-  // young list and the survivors and it'd be quite a lot of work to
-  // do so. When we'll eventually replace the young list with
-  // instances of HeapRegionLinkedList we'll get that for free. So,
-  // we'll report the more accurate information then.
-  size_t       eden_used_bytes() {
-    assert(length() >= survivor_length(), "invariant");
-    return (size_t) eden_length() * HeapRegion::GrainBytes;
-  }
-  size_t       survivor_used_bytes() {
-    return (size_t) survivor_length() * HeapRegion::GrainBytes;
-  }
-
-  void rs_length_sampling_init();
-  bool rs_length_sampling_more();
-  void rs_length_sampling_next();
-
-  void reset_sampled_info() {
-    _last_sampled_rs_lengths =   0;
-  }
-  size_t sampled_rs_lengths() { return _last_sampled_rs_lengths; }
-
-  // for development purposes
-  void reset_auxilary_lists();
-  void clear() { _head = NULL; _length = 0; }
-
-  void clear_survivors() {
-    _survivor_head    = NULL;
-    _survivor_tail    = NULL;
-    _survivor_length  = 0;
-  }
-
-  HeapRegion* first_region() { return _head; }
-  HeapRegion* first_survivor_region() { return _survivor_head; }
-  HeapRegion* last_survivor_region() { return _survivor_tail; }
-
-  // debugging
-  bool          check_list_well_formed();
-  bool          check_list_empty(bool check_sample = true);
-  void          print();
-};
 
 // The G1 STW is alive closure.
 // An instance is embedded into the G1CH and used as the
@@ -192,6 +120,7 @@ class G1CollectedHeap : public CollectedHeap {
 
   // Closures used in implementation.
   friend class G1ParScanThreadState;
+  friend class G1ParScanThreadStateSet;
   friend class G1ParTask;
   friend class G1PLABAllocator;
   friend class G1PrepareCompactClosure;
@@ -309,13 +238,7 @@ private:
 
   volatile unsigned _gc_time_stamp;
 
-  size_t* _surviving_young_words;
-
   G1HRPrinter _hr_printer;
-
-  void setup_surviving_young_words();
-  void update_surviving_young_words(size_t* surv_young_words);
-  void cleanup_surviving_young_words();
 
   // It decides whether an explicit GC should start a concurrent cycle
   // instead of doing a STW GC. Currently, a concurrent cycle is
@@ -372,17 +295,17 @@ private:
   // These are macros so that, if the assert fires, we get the correct
   // line number, file, etc.
 
-#define heap_locking_asserts_err_msg(_extra_message_)                         \
-  err_msg("%s : Heap_lock locked: %s, at safepoint: %s, is VM thread: %s",    \
-          (_extra_message_),                                                  \
-          BOOL_TO_STR(Heap_lock->owned_by_self()),                            \
-          BOOL_TO_STR(SafepointSynchronize::is_at_safepoint()),               \
-          BOOL_TO_STR(Thread::current()->is_VM_thread()))
+#define heap_locking_asserts_params(_extra_message_)                          \
+  "%s : Heap_lock locked: %s, at safepoint: %s, is VM thread: %s",            \
+  (_extra_message_),                                                          \
+  BOOL_TO_STR(Heap_lock->owned_by_self()),                                    \
+  BOOL_TO_STR(SafepointSynchronize::is_at_safepoint()),                       \
+  BOOL_TO_STR(Thread::current()->is_VM_thread())
 
 #define assert_heap_locked()                                                  \
   do {                                                                        \
     assert(Heap_lock->owned_by_self(),                                        \
-           heap_locking_asserts_err_msg("should be holding the Heap_lock"));  \
+           heap_locking_asserts_params("should be holding the Heap_lock"));   \
   } while (0)
 
 #define assert_heap_locked_or_at_safepoint(_should_be_vm_thread_)             \
@@ -390,7 +313,7 @@ private:
     assert(Heap_lock->owned_by_self() ||                                      \
            (SafepointSynchronize::is_at_safepoint() &&                        \
              ((_should_be_vm_thread_) == Thread::current()->is_VM_thread())), \
-           heap_locking_asserts_err_msg("should be holding the Heap_lock or " \
+           heap_locking_asserts_params("should be holding the Heap_lock or "  \
                                         "should be at a safepoint"));         \
   } while (0)
 
@@ -398,21 +321,21 @@ private:
   do {                                                                        \
     assert(Heap_lock->owned_by_self() &&                                      \
                                     !SafepointSynchronize::is_at_safepoint(), \
-          heap_locking_asserts_err_msg("should be holding the Heap_lock and " \
+          heap_locking_asserts_params("should be holding the Heap_lock and "  \
                                        "should not be at a safepoint"));      \
   } while (0)
 
 #define assert_heap_not_locked()                                              \
   do {                                                                        \
     assert(!Heap_lock->owned_by_self(),                                       \
-        heap_locking_asserts_err_msg("should not be holding the Heap_lock")); \
+        heap_locking_asserts_params("should not be holding the Heap_lock"));  \
   } while (0)
 
 #define assert_heap_not_locked_and_not_at_safepoint()                         \
   do {                                                                        \
     assert(!Heap_lock->owned_by_self() &&                                     \
                                     !SafepointSynchronize::is_at_safepoint(), \
-      heap_locking_asserts_err_msg("should not be holding the Heap_lock and " \
+      heap_locking_asserts_params("should not be holding the Heap_lock and "  \
                                    "should not be at a safepoint"));          \
   } while (0)
 
@@ -420,13 +343,13 @@ private:
   do {                                                                        \
     assert(SafepointSynchronize::is_at_safepoint() &&                         \
               ((_should_be_vm_thread_) == Thread::current()->is_VM_thread()), \
-           heap_locking_asserts_err_msg("should be at a safepoint"));         \
+           heap_locking_asserts_params("should be at a safepoint"));          \
   } while (0)
 
 #define assert_not_at_safepoint()                                             \
   do {                                                                        \
     assert(!SafepointSynchronize::is_at_safepoint(),                          \
-           heap_locking_asserts_err_msg("should not be at a safepoint"));     \
+           heap_locking_asserts_params("should not be at a safepoint"));      \
   } while (0)
 
 protected:
@@ -575,7 +498,16 @@ protected:
   HeapWord* satisfy_failed_allocation(size_t word_size,
                                       AllocationContext_t context,
                                       bool* succeeded);
+private:
+  // Helper method for satisfy_failed_allocation()
+  HeapWord* satisfy_failed_allocation_helper(size_t word_size,
+                                             AllocationContext_t context,
+                                             bool do_gc,
+                                             bool clear_all_soft_refs,
+                                             bool expect_null_mutator_alloc_region,
+                                             bool* gc_succeeded);
 
+protected:
   // Attempting to expand the heap sufficiently
   // to support an allocation of the given "word_size".  If
   // successful, perform the allocation and return the address of the
@@ -584,11 +516,11 @@ protected:
 
   // Process any reference objects discovered during
   // an incremental evacuation pause.
-  void process_discovered_references(G1ParScanThreadState** per_thread_states);
+  void process_discovered_references(G1ParScanThreadStateSet* per_thread_states);
 
   // Enqueue any remaining discovered references
   // after processing.
-  void enqueue_discovered_references(G1ParScanThreadState** per_thread_states);
+  void enqueue_discovered_references(G1ParScanThreadStateSet* per_thread_states);
 
 public:
   WorkGang* workers() const { return _workers; }
@@ -683,9 +615,6 @@ public:
   // Allocates a new heap region instance.
   HeapRegion* new_heap_region(uint hrs_index, MemRegion mr);
 
-  // Allocates a new per thread par scan state for the given thread id.
-  G1ParScanThreadState* new_par_scan_state(uint worker_id);
-
   // Allocate the highest free region in the reserved heap. This will commit
   // regions as necessary.
   HeapRegion* alloc_highest_free_region();
@@ -757,6 +686,12 @@ public:
   // alloc_archive_regions, and after class loading has occurred.
   void fill_archive_regions(MemRegion* range, size_t count);
 
+  // For each of the specified MemRegions, uncommit the containing G1 regions
+  // which had been allocated by alloc_archive_regions. This should be called
+  // rather than fill_archive_regions at JVM init time if the archive file
+  // mapping failed, with the same non-overlapping and sorted MemRegion array.
+  void dealloc_archive_regions(MemRegion* range, size_t count);
+
 protected:
 
   // Shrink the garbage-first heap by at most the given size (in bytes!).
@@ -793,7 +728,7 @@ protected:
   bool do_collection_pause_at_safepoint(double target_pause_time_ms);
 
   // Actually do the work of evacuating the collection set.
-  void evacuate_collection_set(EvacuationInfo& evacuation_info);
+  void evacuate_collection_set(EvacuationInfo& evacuation_info, G1ParScanThreadStateSet* per_thread_states);
 
   // Print the header for the per-thread termination statistics.
   static void print_termination_stats_hdr(outputStream* const st);
@@ -827,7 +762,7 @@ protected:
 
   // After a collection pause, make the regions in the CS into free
   // regions.
-  void free_collection_set(HeapRegion* cs_head, EvacuationInfo& evacuation_info);
+  void free_collection_set(HeapRegion* cs_head, EvacuationInfo& evacuation_info, const size_t* surviving_young_words);
 
   // Abandon the current collection set without recording policy
   // statistics or updating free lists.
@@ -1046,12 +981,13 @@ public:
     return CollectedHeap::G1CollectedHeap;
   }
 
+  const G1CollectorState* collector_state() const { return &_collector_state; }
   G1CollectorState* collector_state() { return &_collector_state; }
 
   // The current policy object for the collector.
   G1CollectorPolicy* g1_policy() const { return _g1_policy; }
 
-  virtual CollectorPolicy* collector_policy() const { return (CollectorPolicy*) g1_policy(); }
+  virtual CollectorPolicy* collector_policy() const;
 
   // Adaptive size policy.  No such thing for g1.
   virtual AdaptiveSizePolicy* size_policy() { return NULL; }
@@ -1074,9 +1010,11 @@ public:
   // continues humongous regions too.
   void reset_gc_time_stamps(HeapRegion* hr);
 
-  void iterate_dirty_card_closure(CardTableEntryClosure* cl,
-                                  DirtyCardQueue* into_cset_dcq,
-                                  bool concurrent, uint worker_i);
+  // Apply the given closure on all cards in the Hot Card Cache, emptying it.
+  void iterate_hcc_closure(CardTableEntryClosure* cl, uint worker_i);
+
+  // Apply the given closure on all cards in the Dirty Card Queue Set, emptying it.
+  void iterate_dirty_card_closure(CardTableEntryClosure* cl, uint worker_i);
 
   // The shared block offset table array.
   G1BlockOffsetSharedArray* bot_shared() const { return _bot_shared; }
@@ -1604,7 +1542,6 @@ public:
 
 public:
   size_t pending_card_num();
-  size_t cards_scanned();
 
 protected:
   size_t _max_heap_capacity;

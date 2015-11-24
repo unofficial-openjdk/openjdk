@@ -280,13 +280,16 @@ bool CompiledIC::is_call_to_compiled() const {
   bool is_monomorphic = (cb != NULL && cb->is_nmethod());
   // Check that the cached_value is a klass for non-optimized monomorphic calls
   // This assertion is invalid for compiler1: a call that does not look optimized (no static stub) can be used
-  // for calling directly to vep without using the inline cache (i.e., cached_value == NULL)
+  // for calling directly to vep without using the inline cache (i.e., cached_value == NULL).
+  // For JVMCI this occurs because CHA is only used to improve inlining so call sites which could be optimized
+  // virtuals because there are no currently loaded subclasses of a type are left as virtual call sites.
 #ifdef ASSERT
   CodeBlob* caller = CodeCache::find_blob_unsafe(instruction_address());
-  bool is_c1_method = caller->is_compiled_by_c1();
-  assert( is_c1_method ||
+  bool is_c1_or_jvmci_method = caller->is_compiled_by_c1() || caller->is_compiled_by_jvmci();
+  assert( is_c1_or_jvmci_method ||
          !is_monomorphic ||
          is_optimized() ||
+         !caller->is_alive() ||
          (cached_metadata() != NULL && cached_metadata()->is_klass()), "sanity check");
 #endif // ASSERT
   return is_monomorphic;
@@ -321,7 +324,7 @@ bool CompiledIC::is_call_to_interpreted() const {
 }
 
 
-void CompiledIC::set_to_clean() {
+void CompiledIC::set_to_clean(bool in_use) {
   assert(SafepointSynchronize::is_at_safepoint() || CompiledIC_lock->is_locked() , "MT-unsafe call");
   if (TraceInlineCacheClearing || TraceICs) {
     tty->print_cr("IC@" INTPTR_FORMAT ": set to clean", p2i(instruction_address()));
@@ -337,7 +340,7 @@ void CompiledIC::set_to_clean() {
 
   // A zombie transition will always be safe, since the metadata has already been set to NULL, so
   // we only need to patch the destination
-  bool safe_transition = is_optimized() || SafepointSynchronize::is_at_safepoint();
+  bool safe_transition = !in_use || is_optimized() || SafepointSynchronize::is_at_safepoint();
 
   if (safe_transition) {
     // Kill any leftover stub we might have too

@@ -33,6 +33,7 @@
 #include "runtime/reflectionUtils.hpp"
 #include "utilities/hashtable.hpp"
 #include "utilities/hashtable.inline.hpp"
+#include "jvmci/systemDictionary_jvmci.hpp"
 
 
 // The system dictionary stores all loaded classes and maps:
@@ -194,6 +195,10 @@ class Ticks;
   do_klass(Short_klass,                                 java_lang_Short,                           Pre                 ) \
   do_klass(Integer_klass,                               java_lang_Integer,                         Pre                 ) \
   do_klass(Long_klass,                                  java_lang_Long,                            Pre                 ) \
+                                                                                                                         \
+  /* JVMCI classes. These are loaded on-demand. */                                                                       \
+  JVMCI_WK_KLASSES_DO(do_klass) \
+
   /*end*/
 
 
@@ -211,6 +216,11 @@ class SystemDictionary : AllStatic {
 
     WKID_LIMIT,
 
+#if INCLUDE_JVMCI
+    FIRST_JVMCI_WKID = WK_KLASS_ENUM_NAME(HotSpotCompiledCode_klass),
+    LAST_JVMCI_WKID  = WK_KLASS_ENUM_NAME(Value_klass),
+#endif
+
     FIRST_WKID = NO_WKID + 1
   };
 
@@ -221,6 +231,9 @@ class SystemDictionary : AllStatic {
     // Options after this point will use resolve_or_null instead.
 
     Opt,                        // preload tried; NULL if not present
+#if INCLUDE_JVMCI
+    Jvmci,                      // preload tried; error if not present, use only with JVMCI
+#endif
     OPTION_LIMIT,
     CEIL_LG_OPTION_LIMIT = 2    // OPTION_LIMIT <= (1<<CEIL_LG_OPTION_LIMIT)
   };
@@ -399,6 +412,8 @@ public:
 
   static Klass* check_klass_Pre(       Klass* k) { return check_klass(k); }
   static Klass* check_klass_Opt(       Klass* k) { return k; }
+
+  JVMCI_ONLY(static Klass* check_klass_Jvmci(Klass* k) { return k; })
 
   static bool initialize_wk_klass(WKID id, int init_opt, TRAPS);
   static void initialize_wk_klasses_until(WKID limit_id, WKID &start_id, TRAPS);
@@ -627,10 +642,6 @@ protected:
   static void check_loader_lock_contention(Handle loader_lock, TRAPS);
   static bool is_parallelCapable(Handle class_loader);
   static bool is_parallelDefine(Handle class_loader);
-  static bool is_shared_class_visible(Symbol* class_name,
-                                      instanceKlassHandle ik,
-                                      Handle class_loader,
-                                      TRAPS);
 
 public:
   static instanceKlassHandle load_shared_class(Symbol* class_name,

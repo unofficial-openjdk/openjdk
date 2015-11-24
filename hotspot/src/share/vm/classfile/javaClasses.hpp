@@ -157,7 +157,12 @@ class java_lang_String : AllStatic {
     if (count_offset > 0) {
       return java_string->int_field(count_offset);
     } else {
-      return ((typeArrayOop)java_string->obj_field(value_offset))->length();
+      typeArrayOop value_array = ((typeArrayOop)java_string->obj_field(value_offset));
+      if (value_array == NULL) {
+        return 0;
+      } else {
+        return value_array->length();
+      }
     }
   }
   static int utf8_length(oop java_string);
@@ -1308,6 +1313,7 @@ class java_lang_ClassLoader : AllStatic {
   static bool offsets_computed;
   static int parent_offset;
   static int parallelCapable_offset;
+  static int unnamedModule_offset;
 
  public:
   static void compute_offsets();
@@ -1331,6 +1337,8 @@ class java_lang_ClassLoader : AllStatic {
     return klass->is_subclass_of(SystemDictionary::ClassLoader_klass());
   }
   static bool is_instance(oop obj);
+
+  static oop unnamedModule(oop loader);
 
   // Debugging
   friend class JavaClasses;

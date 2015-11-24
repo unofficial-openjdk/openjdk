@@ -71,8 +71,7 @@ class Method : public Metadata {
 #ifdef CC_INTERP
   int               _result_index;               // C++ interpreter needs for converting results to/from stack
 #endif
-  u2                _method_size;                // size of this object
-  u1                _intrinsic_id;               // vmSymbols::intrinsic_id (0 == _none)
+  u2                _intrinsic_id;               // vmSymbols::intrinsic_id (0 == _none)
 
   // Flags
   enum Flags {
@@ -106,7 +105,7 @@ class Method : public Metadata {
   volatile address           _from_interpreted_entry; // Cache of _code ? _adapter->i2c_entry() : _i2i_entry
 
   // Constructor
-  Method(ConstMethod* xconst, AccessFlags access_flags, int size);
+  Method(ConstMethod* xconst, AccessFlags access_flags);
  public:
 
   static Method* allocate(ClassLoaderData* loader_data,
@@ -241,12 +240,8 @@ class Method : public Metadata {
   // code size
   int code_size() const                  { return constMethod()->code_size(); }
 
-  // method size
-  int method_size() const                        { return _method_size; }
-  void set_method_size(int size) {
-    assert(0 <= size && size < (1 << 16), "invalid method size");
-    _method_size = size;
-  }
+  // method size in words
+  int method_size() const                { return sizeof(Method)/wordSize + is_native() ? 2 : 0; }
 
   // constant pool for Klass* holding this method
   ConstantPool* constants() const              { return constMethod()->constants(); }
@@ -653,7 +648,7 @@ class Method : public Metadata {
   // for code generation
   static int method_data_offset_in_bytes()       { return offset_of(Method, _method_data); }
   static int intrinsic_id_offset_in_bytes()      { return offset_of(Method, _intrinsic_id); }
-  static int intrinsic_id_size_in_bytes()        { return sizeof(u1); }
+  static int intrinsic_id_size_in_bytes()        { return sizeof(u2); }
 
   // Static methods that are used to implement member methods where an exposed this pointer
   // is needed due to possible GCs
@@ -685,8 +680,10 @@ class Method : public Metadata {
                                                    TRAPS);
   static Klass* check_non_bcp_klass(Klass* klass);
 
-  // How many extra stack entries for invokedynamic when it's enabled
-  static const int extra_stack_entries_for_jsr292 = 1;
+  enum {
+    // How many extra stack entries for invokedynamic
+    extra_stack_entries_for_jsr292 = 1
+  };
 
   // this operates only on invoke methods:
   // presize interpreter frames for extra interpreter stack entries, if needed
@@ -777,7 +774,7 @@ class Method : public Metadata {
 
   // Support for inlining of intrinsic methods
   vmIntrinsics::ID intrinsic_id() const          { return (vmIntrinsics::ID) _intrinsic_id;           }
-  void     set_intrinsic_id(vmIntrinsics::ID id) {                           _intrinsic_id = (u1) id; }
+  void     set_intrinsic_id(vmIntrinsics::ID id) {                           _intrinsic_id = (u2) id; }
 
   // Helper routines for intrinsic_id() and vmIntrinsics::method().
   void init_intrinsic_id();     // updates from _none if a match

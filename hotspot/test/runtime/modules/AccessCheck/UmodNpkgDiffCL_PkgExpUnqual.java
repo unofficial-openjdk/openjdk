@@ -29,6 +29,7 @@
  *          Access allowed, an unnamed module can read all modules and p2 in module m2
  *          which is exported unqualifiedly.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build UmodNpkgDiffCL_PkgExpUnqual
@@ -44,6 +45,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MyDiffClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> no packages

@@ -48,7 +48,7 @@ public class BootstrapRedefine {
                                         InMemoryJavaCompiler.compile("java.lang.Object", source),
                                         "mods/java.base");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:mods", "-version");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods", "-version");
         new OutputAnalyzer(pb.start())
             .shouldContain("Incompatible definition of java.lang.Object")
             .shouldHaveExitValue(1);

@@ -702,7 +702,7 @@ void FreeListSpace_DCTOC::walk_mem_region_with_cl_par(MemRegion mr,             
         !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(       \
                     oop(bottom)) &&                                             \
         !_collector->CMSCollector::is_dead_obj(oop(bottom))) {                  \
-      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);                        \
+      size_t word_sz = oop(bottom)->oop_iterate_size(cl, mr);                   \
       bottom += _cfls->adjustObjectSize(word_sz);                               \
     } else {                                                                    \
       bottom += _cfls->CompactibleFreeListSpace::block_size(bottom);            \
@@ -729,7 +729,7 @@ void FreeListSpace_DCTOC::walk_mem_region_with_cl_nopar(MemRegion mr,           
         !_cfls->CompactibleFreeListSpace::obj_allocated_since_save_marks(       \
                     oop(bottom)) &&                                             \
         !_collector->CMSCollector::is_dead_obj(oop(bottom))) {                  \
-      size_t word_sz = oop(bottom)->oop_iterate(cl, mr);                        \
+      size_t word_sz = oop(bottom)->oop_iterate_size(cl, mr);                   \
       bottom += _cfls->adjustObjectSize(word_sz);                               \
     } else {                                                                    \
       bottom += _cfls->CompactibleFreeListSpace::block_size_nopar(bottom);      \
@@ -1959,9 +1959,9 @@ void CompactibleFreeListSpace::save_marks() {
   MemRegion ur    = used_region();
   MemRegion urasm = used_region_at_save_marks();
   assert(ur.contains(urasm),
-         err_msg(" Error at save_marks(): [" PTR_FORMAT "," PTR_FORMAT ")"
-                 " should contain [" PTR_FORMAT "," PTR_FORMAT ")",
-                 p2i(ur.start()), p2i(ur.end()), p2i(urasm.start()), p2i(urasm.end())));
+         " Error at save_marks(): [" PTR_FORMAT "," PTR_FORMAT ")"
+         " should contain [" PTR_FORMAT "," PTR_FORMAT ")",
+         p2i(ur.start()), p2i(ur.end()), p2i(urasm.start()), p2i(urasm.end()));
 #endif
   // inform allocator that promotions should be tracked.
   assert(_promoInfo.noPromotions(), "_promoInfo inconsistency");
@@ -2875,9 +2875,9 @@ FreeChunk* CompactibleFreeListSpace::get_n_way_chunk_to_split(size_t word_sz, si
     smallSplitBirth(rem);
   }
   assert(n * word_sz == fc->size(),
-    err_msg("Chunk size " SIZE_FORMAT " is not exactly splittable by "
-    SIZE_FORMAT " sized chunks of size " SIZE_FORMAT,
-    fc->size(), n, word_sz));
+         "Chunk size " SIZE_FORMAT " is not exactly splittable by "
+         SIZE_FORMAT " sized chunks of size " SIZE_FORMAT,
+         fc->size(), n, word_sz);
   return fc;
 }
 
@@ -2989,7 +2989,7 @@ initialize_sequential_subtasks_for_marking(int n_threads,
   assert(task_size > CardTableModRefBS::card_size_in_words &&
          (task_size %  CardTableModRefBS::card_size_in_words == 0),
          "Otherwise arithmetic below would be incorrect");
-  MemRegion span = _gen->reserved();
+  MemRegion span = _old_gen->reserved();
   if (low != NULL) {
     if (span.contains(low)) {
       // Align low down to  a card boundary so that

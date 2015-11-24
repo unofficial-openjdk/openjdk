@@ -722,7 +722,7 @@ class StubGenerator: public StubCodeGenerator {
            __ popa();
          }
         break;
-      case BarrierSet::CardTableModRef:
+      case BarrierSet::CardTableForRS:
       case BarrierSet::CardTableExtension:
       case BarrierSet::ModRef:
         break;
@@ -754,7 +754,7 @@ class StubGenerator: public StubCodeGenerator {
         }
         break;
 
-      case BarrierSet::CardTableModRef:
+      case BarrierSet::CardTableForRS:
       case BarrierSet::CardTableExtension:
         {
           CardTableModRefBS* ct = barrier_set_cast<CardTableModRefBS>(bs);
@@ -795,6 +795,12 @@ class StubGenerator: public StubCodeGenerator {
   void xmm_copy_forward(Register from, Register to_from, Register qword_count) {
     assert( UseSSE >= 2, "supported cpu only" );
     Label L_copy_64_bytes_loop, L_copy_64_bytes, L_copy_8_bytes, L_exit;
+    if (UseAVX > 2) {
+      __ push(rbx);
+      __ movl(rbx, 0xffff);
+      __ kmovdl(k1, rbx);
+      __ pop(rbx);
+    }
     // Copy 64-byte chunks
     __ jmpb(L_copy_64_bytes);
     __ align(OptoLoopAlignment);
@@ -802,8 +808,8 @@ class StubGenerator: public StubCodeGenerator {
 
     if (UseUnalignedLoadStores) {
       if (UseAVX > 2) {
-        __ evmovdqu(xmm0, Address(from, 0), Assembler::AVX_512bit);
-        __ evmovdqu(Address(from, to_from, Address::times_1, 0), xmm0, Assembler::AVX_512bit);
+        __ evmovdqul(xmm0, Address(from, 0), Assembler::AVX_512bit);
+        __ evmovdqul(Address(from, to_from, Address::times_1, 0), xmm0, Assembler::AVX_512bit);
       } else if (UseAVX == 2) {
         __ vmovdqu(xmm0, Address(from,  0));
         __ vmovdqu(Address(from, to_from, Address::times_1,  0), xmm0);
@@ -2089,14 +2095,6 @@ class StubGenerator: public StubCodeGenerator {
 
   void generate_math_stubs() {
     {
-      StubCodeMark mark(this, "StubRoutines", "log");
-      StubRoutines::_intrinsic_log = (double (*)(double)) __ pc();
-
-      __ fld_d(Address(rsp, 4));
-      __ flog();
-      __ ret(0);
-    }
-    {
       StubCodeMark mark(this, "StubRoutines", "log10");
       StubRoutines::_intrinsic_log10 = (double (*)(double)) __ pc();
 
@@ -2126,14 +2124,6 @@ class StubGenerator: public StubCodeGenerator {
 
       __ fld_d(Address(rsp, 4));
       __ trigfunc('t');
-      __ ret(0);
-    }
-    {
-      StubCodeMark mark(this, "StubRoutines", "exp");
-      StubRoutines::_intrinsic_exp = (double (*)(double)) __ pc();
-
-      __ fld_d(Address(rsp, 4));
-      __ exp_with_fallback(0);
       __ ret(0);
     }
     {
@@ -2217,6 +2207,15 @@ class StubGenerator: public StubCodeGenerator {
     const XMMRegister xmm_temp4  = xmm5;
 
     __ enter();   // required for proper stackwalking of RuntimeStub frame
+
+    // For EVEX with VL and BW, provide a standard mask, VL = 128 will guide the merge
+    // context for the registers used, where all instructions below are using 128-bit mode
+    // On EVEX without VL and BW, these instructions will all be AVX.
+    if (VM_Version::supports_avx512vlbw()) {
+      __ movl(rdx, 0xffff);
+      __ kmovdl(k1, rdx);
+    }
+
     __ movptr(from, from_param);
     __ movptr(key, key_param);
 
@@ -2315,6 +2314,15 @@ class StubGenerator: public StubCodeGenerator {
     const XMMRegister xmm_temp4  = xmm5;
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
+
+    // For EVEX with VL and BW, provide a standard mask, VL = 128 will guide the merge
+    // context for the registers used, where all instructions below are using 128-bit mode
+    // On EVEX without VL and BW, these instructions will all be AVX.
+    if (VM_Version::supports_avx512vlbw()) {
+      __ movl(rdx, 0xffff);
+      __ kmovdl(k1, rdx);
+    }
+
     __ movptr(from, from_param);
     __ movptr(key, key_param);
 
@@ -2440,6 +2448,14 @@ class StubGenerator: public StubCodeGenerator {
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     handleSOERegisters(true /*saving*/);
+
+    // For EVEX with VL and BW, provide a standard mask, VL = 128 will guide the merge
+    // context for the registers used, where all instructions below are using 128-bit mode
+    // On EVEX without VL and BW, these instructions will all be AVX.
+    if (VM_Version::supports_avx512vlbw()) {
+      __ movl(rdx, 0xffff);
+      __ kmovdl(k1, rdx);
+    }
 
     // load registers from incoming parameters
     const Address  from_param(rbp, 8+0);
@@ -2601,6 +2617,14 @@ class StubGenerator: public StubCodeGenerator {
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     handleSOERegisters(true /*saving*/);
+
+    // For EVEX with VL and BW, provide a standard mask, VL = 128 will guide the merge
+    // context for the registers used, where all instructions below are using 128-bit mode
+    // On EVEX without VL and BW, these instructions will all be AVX.
+    if (VM_Version::supports_avx512vlbw()) {
+      __ movl(rdx, 0xffff);
+      __ kmovdl(k1, rdx);
+    }
 
     // load registers from incoming parameters
     const Address  from_param(rbp, 8+0);
@@ -2782,6 +2806,14 @@ class StubGenerator: public StubCodeGenerator {
     __ enter();
     handleSOERegisters(true);  // Save registers
 
+    // For EVEX with VL and BW, provide a standard mask, VL = 128 will guide the merge
+    // context for the registers used, where all instructions below are using 128-bit mode
+    // On EVEX without VL and BW, these instructions will all be AVX.
+    if (VM_Version::supports_avx512vlbw()) {
+      __ movl(rdx, 0xffff);
+      __ kmovdl(k1, rdx);
+    }
+
     __ movptr(state, state_param);
     __ movptr(subkeyH, subkeyH_param);
     __ movptr(data, data_param);
@@ -2942,6 +2974,115 @@ class StubGenerator: public StubCodeGenerator {
 
     return start;
   }
+
+  /**
+  *  Arguments:
+  *
+  * Inputs:
+  *   rsp(4)   - int crc
+  *   rsp(8)   - byte* buf
+  *   rsp(12)  - int length
+  *   rsp(16)  - table_start - optional (present only when doing a library_calll,
+  *              not used by x86 algorithm)
+  *
+  * Ouput:
+  *       rax  - int crc result
+  */
+  address generate_updateBytesCRC32C(bool is_pclmulqdq_supported) {
+    assert(UseCRC32CIntrinsics, "need SSE4_2");
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", "updateBytesCRC32C");
+    address start = __ pc();
+    const Register crc = rax;  // crc
+    const Register buf = rcx;  // source java byte array address
+    const Register len = rdx;  // length
+    const Register d = rbx;
+    const Register g = rsi;
+    const Register h = rdi;
+    const Register empty = 0; // will never be used, in order not
+                              // to change a signature for crc32c_IPL_Alg2_Alt2
+                              // between 64/32 I'm just keeping it here
+    assert_different_registers(crc, buf, len, d, g, h);
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+    Address crc_arg(rsp, 4 + 4 + 0); // ESP+4 +
+                                     // we need to add additional 4 because __ enter
+                                     // have just pushed ebp on a stack
+    Address buf_arg(rsp, 4 + 4 + 4);
+    Address len_arg(rsp, 4 + 4 + 8);
+      // Load up:
+      __ movl(crc, crc_arg);
+      __ movl(buf, buf_arg);
+      __ movl(len, len_arg);
+      __ push(d);
+      __ push(g);
+      __ push(h);
+      __ crc32c_ipl_alg2_alt2(crc, buf, len,
+                              d, g, h,
+                              empty, empty, empty,
+                              xmm0, xmm1, xmm2,
+                              is_pclmulqdq_supported);
+      __ pop(h);
+      __ pop(g);
+      __ pop(d);
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
+  }
+
+ address generate_libmExp() {
+    address start = __ pc();
+
+    const XMMRegister x0  = xmm0;
+    const XMMRegister x1  = xmm1;
+    const XMMRegister x2  = xmm2;
+    const XMMRegister x3  = xmm3;
+
+    const XMMRegister x4  = xmm4;
+    const XMMRegister x5  = xmm5;
+    const XMMRegister x6  = xmm6;
+    const XMMRegister x7  = xmm7;
+
+    const Register tmp   = rbx;
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+    __ fast_exp(x0, x1, x2, x3, x4, x5, x6, x7, rax, rcx, rdx, tmp);
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
+
+  }
+
+ address generate_libmLog() {
+   address start = __ pc();
+
+   const XMMRegister x0 = xmm0;
+   const XMMRegister x1 = xmm1;
+   const XMMRegister x2 = xmm2;
+   const XMMRegister x3 = xmm3;
+
+   const XMMRegister x4 = xmm4;
+   const XMMRegister x5 = xmm5;
+   const XMMRegister x6 = xmm6;
+   const XMMRegister x7 = xmm7;
+
+   const Register tmp = rbx;
+
+   BLOCK_COMMENT("Entry:");
+   __ enter(); // required for proper stackwalking of RuntimeStub frame
+   __ fast_log(x0, x1, x2, x3, x4, x5, x6, x7, rax, rcx, rdx, tmp);
+   __ leave(); // required for proper stackwalking of RuntimeStub frame
+   __ ret(0);
+
+   return start;
+
+ }
+
+
 
   // Safefetch stubs.
   void generate_safefetch(const char* name, int size, address* entry,
@@ -3155,6 +3296,17 @@ class StubGenerator: public StubCodeGenerator {
       // set table address before stub generation which use it
       StubRoutines::_crc_table_adr = (address)StubRoutines::x86::_crc_table;
       StubRoutines::_updateBytesCRC32 = generate_updateBytesCRC32();
+    }
+
+    if (UseCRC32CIntrinsics) {
+      bool supports_clmul = VM_Version::supports_clmul();
+      StubRoutines::x86::generate_CRC32C_table(supports_clmul);
+      StubRoutines::_crc32c_table_addr = (address)StubRoutines::x86::_crc32c_table;
+      StubRoutines::_updateBytesCRC32C = generate_updateBytesCRC32C(supports_clmul);
+    }
+    if (VM_Version::supports_sse2()) {
+      StubRoutines::_dexp = generate_libmExp();
+      StubRoutines::_dlog = generate_libmLog();
     }
   }
 

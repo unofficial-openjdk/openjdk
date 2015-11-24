@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,7 +50,7 @@ void MethodHandles::load_klass_from_Class(MacroAssembler* _masm, Register klass_
 
 #ifdef ASSERT
 static int check_nonzero(const char* xname, int x) {
-  assert(x != 0, err_msg("%s should be nonzero", xname));
+  assert(x != 0, "%s should be nonzero", xname);
   return x;
 }
 #define NONZERO(x) check_nonzero(#x, x)
@@ -188,9 +188,11 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
   address entry_point = __ pc();
 
   if (VerifyMethodHandles) {
+    assert(Method::intrinsic_id_size_in_bytes() == 2, "assuming Method::_intrinsic_id is u2");
+
     Label L;
     BLOCK_COMMENT("verify_intrinsic_id {");
-    __ ldrb(rscratch1, Address(rmethod, Method::intrinsic_id_offset_in_bytes()));
+    __ ldrh(rscratch1, Address(rmethod, Method::intrinsic_id_offset_in_bytes()));
     __ cmp(rscratch1, (int) iid);
     __ br(Assembler::EQ, L);
     if (iid == vmIntrinsics::_linkToVirtual ||
@@ -405,7 +407,7 @@ void MethodHandles::generate_method_handle_dispatch(MacroAssembler* _masm,
     }
 
     default:
-      fatal(err_msg_res("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid)));
+      fatal("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid));
       break;
     }
 

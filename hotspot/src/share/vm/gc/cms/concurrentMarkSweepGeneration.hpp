@@ -296,8 +296,8 @@ class ChunkArray: public CHeapObj<mtGC> {
 
   size_t end() {
     assert(_index <= capacity(),
-           err_msg("_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT "): out of bounds",
-                   _index, _capacity));
+           "_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT "): out of bounds",
+           _index, _capacity);
     return _index;
   }  // exclusive
 
@@ -322,9 +322,9 @@ class ChunkArray: public CHeapObj<mtGC> {
     } else {
       ++_overflows;
       assert(_index == _capacity,
-             err_msg("_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT
-                     "): out of bounds at overflow#" SIZE_FORMAT,
-                     _index, _capacity, _overflows));
+             "_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT
+             "): out of bounds at overflow#" SIZE_FORMAT,
+             _index, _capacity, _overflows);
     }
   }
 };
@@ -723,7 +723,7 @@ class CMSCollector: public CHeapObj<mtGC> {
 
  private:
   // Support for parallelizing young gen rescan in CMS remark phase
-  ParNewGeneration* _young_gen;  // the younger gen
+  ParNewGeneration* _young_gen;
 
   HeapWord** _top_addr;    // ... Top of Eden
   HeapWord** _end_addr;    // ... End of Eden
@@ -772,9 +772,9 @@ class CMSCollector: public CHeapObj<mtGC> {
  private:
 
   // Concurrent precleaning work
-  size_t preclean_mod_union_table(ConcurrentMarkSweepGeneration* gen,
+  size_t preclean_mod_union_table(ConcurrentMarkSweepGeneration* old_gen,
                                   ScanMarkedObjectsAgainCarefullyClosure* cl);
-  size_t preclean_card_table(ConcurrentMarkSweepGeneration* gen,
+  size_t preclean_card_table(ConcurrentMarkSweepGeneration* old_gen,
                              ScanMarkedObjectsAgainCarefullyClosure* cl);
   // Does precleaning work, returning a quantity indicative of
   // the amount of "useful work" done.
@@ -797,10 +797,12 @@ class CMSCollector: public CHeapObj<mtGC> {
   void refProcessingWork();
 
   // Concurrent sweeping work
-  void sweepWork(ConcurrentMarkSweepGeneration* gen);
+  void sweepWork(ConcurrentMarkSweepGeneration* old_gen);
 
-  // (Concurrent) resetting of support data structures
-  void reset(bool concurrent);
+  // Concurrent resetting of support data structures
+  void reset_concurrent();
+  // Resetting of support data structures from a STW full GC
+  void reset_stw();
 
   // Clear _expansion_cause fields of constituent generations
   void clear_expansion_cause();
@@ -1120,10 +1122,8 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   MemRegion used_region_at_save_marks() const;
 
   // Does a "full" (forced) collection invoked on this generation collect
-  // all younger generations as well? Note that the second conjunct is a
-  // hack to allow the collection of the younger gen first if the flag is
-  // set.
-  virtual bool full_collects_younger_generations() const {
+  // the young generation as well?
+  virtual bool full_collects_young_generation() const {
     return !ScavengeBeforeFullGC;
   }
 
@@ -1153,9 +1153,8 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
 
   virtual bool promotion_attempt_is_safe(size_t promotion_in_bytes) const;
 
-  // Inform this (non-young) generation that a promotion failure was
-  // encountered during a collection of a younger generation that
-  // promotes into this generation.
+  // Inform this (old) generation that a promotion failure was
+  // encountered during a collection of the young generation.
   virtual void promotion_failure_occurred();
 
   bool should_collect(bool full, size_t size, bool tlab);

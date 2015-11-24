@@ -140,13 +140,15 @@ ClassPathEntry* ClassLoader::_first_entry = NULL;
 ClassPathEntry* ClassLoader::_last_entry  = NULL;
 int             ClassLoader::_num_entries = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
-ClassPathEntry* ClassLoader::_last_append_entry = NULL;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 bool              ClassLoader::_has_bootmodules_jimage = false;
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
 GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
 
 #if INCLUDE_CDS
+// The _last_append_entry is only set when DumpSharedSpaces is true and there are
+// append path entries.
+ClassPathEntry* ClassLoader::_last_append_entry = NULL;
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
 // helper routines
@@ -445,7 +447,7 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 #endif
 
 bool ClassPathImageEntry::is_jrt() {
-  return ClassLoader::string_ends_with(name(), BOOT_IMAGE_NAME);
+  return ClassLoader::is_jrt(name());
 }
 
 #if INCLUDE_CDS
@@ -576,15 +578,15 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
     }
   }
 
+#if INCLUDE_CDS
+  // Mark the last entry corresponding to the -Xbootclasspath/a
   if (DumpSharedSpaces) {
-    // Mark the last entry corresponding to the -Xbootclasspath/a
     if (_first_append_entry != NULL && bootstrap_search) {
-      _last_append_entry = _first_append_entry;
-      while (_last_append_entry->next() != NULL) {
-        _last_append_entry = _last_append_entry->next();
-      }
+      assert(_last_append_entry == NULL, "The _last_append_entry is already set");
+      _last_append_entry = _last_entry;
     }
   }
+#endif
 }
 
 ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const struct stat* st,
@@ -1205,6 +1207,19 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
   return result();
 }
 
+#if INCLUDE_CDS
+bool ClassLoader::class_in_append_entries(const char* file_name, TRAPS) {
+  ClassPathEntry* tmp_e = _first_append_entry;
+  while ((tmp_e != NULL) && (tmp_e != _last_append_entry->next())) {
+    ClassFileStream* stream = tmp_e->open_stream(file_name, CHECK_false);
+    if (stream != NULL) {
+      return true;
+    }
+    tmp_e = tmp_e->next();
+  }
+  return false;
+}
+#endif
 
 instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_append_only, TRAPS) {
   ResourceMark rm(THREAD);
@@ -1220,28 +1235,43 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
   const char* file_name = st.as_string();
   ClassLoaderExt::Context context(class_name, file_name, THREAD);
 
+  instanceKlassHandle h;
+
+  PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
+                             ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
+                             PerfClassTraceTime::CLASS_LOAD);
+#if INCLUDE_CDS
+  // Don't archive any class that exists in the append path entries.
+  if (DumpSharedSpaces && class_in_append_entries(file_name, THREAD)) {
+    tty->print_cr("Preload Warning: skipping class from -Xbootclasspath/a %s",
+                  class_name);
+    return h; // NULL
+  }
+#endif
+
   // Lookup stream for parsing .class file
   ClassFileStream* stream = NULL;
   int classpath_index = 0;
-  ClassPathEntry* e = (!search_append_only ? _first_entry : _first_append_entry);
-  ClassPathEntry* last_e = (!search_append_only ? _first_append_entry : NULL);
-  instanceKlassHandle h;
+
+  // If DumpSharedSpaces is true, boot loader visibility boundaries are set
+  // to be _first_entry to the end (all path entries).
+  //
+  // If search_append_only is true, boot loader visibility boundaries are
+  // set to be _fist_append_entry to the end. This includes:
+  //   [-Xbootclasspath/a]; [jvmti appended entries]
+  //
+  // If both DumpSharedSpaces and search_append_only are false, boot loader
+  // visibility boundaries are set to be _first_entry to the entry before
+  // the _first_append_entry.  This would include:
+  //   [-Xpatch:<dirs>];  [exploded build | bootmodules.jimage]
+  //
+  // DumpSharedSpaces and search_append_only are mutually exclusive and cannot
+  // be true at the same time.
+  ClassPathEntry* e = (search_append_only ? _first_append_entry : _first_entry);
+  ClassPathEntry* last_e =
+      (search_append_only || DumpSharedSpaces ? NULL : _first_append_entry);
+
   {
-    PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
-                               ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
-                               PerfClassTraceTime::CLASS_LOAD);
-    if (DumpSharedSpaces) {
-      ClassPathEntry* tmp_e = _first_append_entry;
-      while ((tmp_e != NULL) && (tmp_e != _last_append_entry->next())) {
-        stream = tmp_e->open_stream(file_name, CHECK_NULL);
-        if (stream != NULL) {
-           tty->print_cr("Preload Warning: skipping class from -Xbootclasspath/a %s", class_name);
-           //...close the stream ...
-           return h; // NULL
-        }
-        tmp_e = tmp_e->next();
-      }
-    }
     if (search_append_only) {
       // For the boot loader append path search, must calculate
       // the starting classpath_index prior to attempting to
@@ -1254,7 +1284,7 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
     }
 
     // Attempt to load the classfile from either:
-    //   - [-Xoverride:dir]; exploded build | bootmodules.jimage
+    //   - [-Xpatch:dir]; exploded build | bootmodules.jimage
     //     or
     //   - [-Xbootclasspath/a]; [jvmti appended entries]
     while ((e != NULL) && (e != last_e)) {
@@ -1515,27 +1545,18 @@ void ClassLoader::create_javabase() {
     vm_exit_during_initialization("No ModuleEntryTable for the boot class loader");
   }
 
-  TempNewSymbol version_symbol = SymbolTable::new_symbol(Modules::default_version(), THREAD);
-  assert(version_symbol != NULL, "Symbol creation failed");
-  TempNewSymbol location_symbol = SymbolTable::new_symbol("jrt:/java.base", THREAD);
-  assert(location_symbol != NULL, "Symbol creation failed");
   {
     MutexLocker ml(Module_lock, THREAD);
-    ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(Handle(NULL), vmSymbols::java_base(), version_symbol,
-                                                                           location_symbol, null_cld);
+    ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(Handle(NULL), vmSymbols::java_base(), NULL, NULL, null_cld);
     if (jb_module == NULL) {
       vm_exit_during_initialization("Unable to create ModuleEntry for java.base");
     }
     ModuleEntryTable::set_javabase_module(jb_module);
   }
 
-  if (TraceModules) {
-    tty->print_cr("[Module entry for java.base created]");
-  }
-
   // When looking for the jimage file, only
   // search the boot loader's module path which
-  // can consist of [-Xoverride]; exploded build | bootmodules.jimage
+  // can consist of [-Xpatch]; exploded build | bootmodules.jimage
   // Do not search the boot loader's append path.
   ClassPathEntry* e = _first_entry;
   ClassPathEntry* last_e = _first_append_entry;

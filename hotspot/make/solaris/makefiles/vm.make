@@ -197,7 +197,7 @@ Src_Dirs/COMPILER1 := $(CORE_PATHS) $(COMPILER1_PATHS)
 Src_Dirs/COMPILER2 := $(CORE_PATHS) $(COMPILER2_PATHS)
 Src_Dirs/TIERED    := $(CORE_PATHS) $(COMPILER1_PATHS) $(COMPILER2_PATHS)
 Src_Dirs/ZERO      := $(CORE_PATHS)
-Src_Dirs/SHARK     := $(CORE_PATHS)
+Src_Dirs/SHARK     := $(CORE_PATHS) $(SHARK_PATHS)
 Src_Dirs := $(Src_Dirs/$(TYPE))
 
 COMPILER2_SPECIFIC_FILES := opto libadt bcEscapeAnalyzer.cpp c2_\* runtime_\*
@@ -206,7 +206,7 @@ SHARK_SPECIFIC_FILES     := shark
 ZERO_SPECIFIC_FILES      := zero
 
 # Always exclude these.
-Src_Files_EXCLUDE := dtrace jsig.c jvmtiEnvRecommended.cpp jvmtiEnvStub.cpp
+Src_Files_EXCLUDE += dtrace jsig.c jvmtiEnvRecommended.cpp jvmtiEnvStub.cpp
 
 # Exclude per type.
 Src_Files_EXCLUDE/CORE      := $(COMPILER1_SPECIFIC_FILES) $(COMPILER2_SPECIFIC_FILES) $(ZERO_SPECIFIC_FILES) $(SHARK_SPECIFIC_FILES) ciTypeFlow.cpp
@@ -241,13 +241,19 @@ JVM_OBJ_FILES = $(Obj_Files) $(DTRACE_OBJS)
 
 vm_version.o: $(filter-out vm_version.o,$(JVM_OBJ_FILES))
 
-mapfile : $(MAPFILE) $(MAPFILE_DTRACE_OPT) vm.def mapfile_ext
+MAPFILE_SHARE  := $(GAMMADIR)/make/share/makefiles/mapfile-vers
+
+MAPFILE_EXT_SRC := $(HS_ALT_MAKE)/share/makefiles/mapfile-ext
+ifneq ("$(wildcard $(MAPFILE_EXT_SRC))","")
+MAPFILE_EXT     := $(MAPFILE_EXT_SRC)
+endif
+
+mapfile : $(MAPFILE) $(MAPFILE_SHARE) vm.def $(MAPFILE_EXT)
 	rm -f $@
 	cat $(MAPFILE) $(MAPFILE_DTRACE_OPT) \
 	    | $(NAWK) '{                                         \
 	              if ($$0 ~ "INSERT VTABLE SYMBOLS HERE") {  \
-	                  system ("cat mapfile_ext");            \
-	                  system ("cat vm.def");                 \
+	                  system ("cat ${MAPFILE_SHARE} $(MAPFILE_EXT) vm.def"); \
 	              } else {                                   \
 	                  print $$0;                             \
 	              }                                          \
@@ -260,12 +266,6 @@ mapfile_extended : mapfile $(MAPFILE_DTRACE_OPT)
 vm.def: $(Obj_Files)
 	sh $(GAMMADIR)/make/solaris/makefiles/build_vm_def.sh *.o > $@
 
-mapfile_ext:
-	rm -f $@
-	touch $@
-	if [ -f $(HS_ALT_MAKE)/solaris/makefiles/mapfile-ext ]; then \
-	  cat $(HS_ALT_MAKE)/solaris/makefiles/mapfile-ext > $@; \
-	fi
 
 ifeq ($(LINK_INTO),AOUT)
   LIBJVM.o                 =

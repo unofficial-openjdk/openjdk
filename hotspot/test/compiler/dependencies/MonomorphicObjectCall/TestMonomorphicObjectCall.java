@@ -67,7 +67,7 @@ public class TestMonomorphicObjectCall {
         // Execute test with modified version of java.lang.Object
         // in -Xbootclasspath.
         String[] vmOpts = new String[] {
-                "-Xoverride:mods",
+                "-Xpatch:mods",
                 "-Xcomp",
                 "-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:-VerifyDependencies",

@@ -60,7 +60,7 @@ class SystemProperty: public CHeapObj<mtInternal> {
   char* value() const                       { return _value; }
   SystemProperty* next() const              { return _next; }
   void set_next(SystemProperty* next)       { _next = next; }
-  bool set_value(char *value) {
+  bool set_value(const char *value) {
     if (writeable()) {
       if (_value != NULL) {
         FreeHeap(_value);
@@ -317,9 +317,11 @@ class Arguments : AllStatic {
   // mark the boot loader's append path observability boundary.
   static int _bootclassloader_append_index;
 
-  // -Xoverride flag
-  static const char* _override_dir;
-  static void set_override_dir(const char* dir) { _override_dir = dir; }
+  // -Xpatch flag
+  static char** _patch_dirs;
+  static int _patch_dirs_count;
+  static void set_patch_dirs(char** dirs) { _patch_dirs = dirs; }
+  static void set_patch_dirs_count(int count) { _patch_dirs_count = count; }
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -371,18 +373,37 @@ class Arguments : AllStatic {
   // System properties
   static bool add_property(const char* prop);
 
+  // Miscellaneous system property setter
+  static bool append_to_addmods_property(const char* module_name);
+
   // Aggressive optimization flags.
-  static void set_aggressive_opts_flags();
+  static jint set_aggressive_opts_flags();
+
+  static jint set_aggressive_heap_flags();
 
   // Argument parsing
   static void do_pd_flag_adjustments();
   static bool parse_argument(const char* arg, Flag::Flags origin);
   static bool process_argument(const char* arg, jboolean ignore_unrecognized, Flag::Flags origin);
   static void process_java_launcher_argument(const char*, void*);
-  static void process_java_compiler_argument(char* arg);
+  static void process_java_compiler_argument(const char* arg);
   static jint parse_options_environment_variable(const char* name, ScopedVMInitArgs* vm_args);
   static jint parse_java_tool_options_environment_variable(ScopedVMInitArgs* vm_args);
   static jint parse_java_options_environment_variable(ScopedVMInitArgs* vm_args);
+  static jint parse_vm_options_file(const char* file_name, ScopedVMInitArgs* vm_args);
+  static jint parse_options_buffer(const char* name, char* buffer, const size_t buf_len, ScopedVMInitArgs* vm_args);
+  static jint insert_vm_options_file(const JavaVMInitArgs* args,
+                                     char** flags_file,
+                                     char** vm_options_file,
+                                     const int vm_options_file_pos,
+                                     ScopedVMInitArgs* vm_options_file_args,
+                                     ScopedVMInitArgs* args_out);
+  static jint match_special_option_and_act(const JavaVMInitArgs* args,
+                                           char** flags_file,
+                                           char** vm_options_file,
+                                           ScopedVMInitArgs* vm_options_file_args,
+                                           ScopedVMInitArgs* args_out);
+
   static jint parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
                                  const JavaVMInitArgs *java_options_args,
                                  const JavaVMInitArgs *cmd_line_args);
@@ -423,11 +444,24 @@ class Arguments : AllStatic {
     short* methodsNum, short* methodsMax, char*** methods, bool** allClasses
   );
 
-  // Returns true if the string s is in the list of flags that have recently
-  // been made obsolete.  If we detect one of these flags on the command
-  // line, instead of failing we print a warning message and ignore the
-  // flag.  This gives the user a release or so to stop using the flag.
-  static bool is_newly_obsolete(const char* s, JDK_Version* buffer);
+  // Returns true if the flag is obsolete (and not yet expired).
+  // In this case the 'version' buffer is filled in with
+  // the version number when the flag became obsolete.
+  static bool is_obsolete_flag(const char* flag_name, JDK_Version* version);
+
+  // Returns 1 if the flag is deprecated (and not yet obsolete or expired).
+  //     In this case the 'version' buffer is filled in with the version number when
+  //     the flag became deprecated.
+  // Returns -1 if the flag is expired or obsolete.
+  // Returns 0 otherwise.
+  static int is_deprecated_flag(const char* flag_name, JDK_Version* version);
+
+  // Return the real name for the flag passed on the command line (either an alias name or "flag_name").
+  static const char* real_flag_name(const char *flag_name);
+
+  // Return the "real" name for option arg if arg is an alias, and print a warning if arg is deprecated.
+  // Return NULL if the arg has expired.
+  static const char* handle_aliases_and_deprecation(const char* arg, bool warn);
 
   static short  CompileOnlyClassesNum;
   static short  CompileOnlyClassesMax;
@@ -474,7 +508,6 @@ class Arguments : AllStatic {
 
   // Check for consistency in the selection of the garbage collector.
   static bool check_gc_consistency();        // Check user-selected gc
-  static void check_deprecated_gc_flags();
   // Check consistency or otherwise of VM argument settings
   static bool check_vm_args_consistency();
   // Used by os_solaris
@@ -536,8 +569,9 @@ class Arguments : AllStatic {
     _bootclassloader_append_index = value;
   }
 
-  // -Xoverride
-  static const char* override_dir()         { return _override_dir; }
+  // -Xpatch
+  static char** patch_dirs()             { return _patch_dirs; }
+  static int patch_dirs_count()          { return _patch_dirs_count; }
 
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
@@ -580,23 +614,23 @@ class Arguments : AllStatic {
   // Property List manipulation
   static void PropertyList_add(SystemProperty *element);
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
-  static void PropertyList_add(SystemProperty** plist, const char* k, char* v);
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v) {
+  static void PropertyList_add(SystemProperty** plist, const char* k, const char* v);
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v) {
     PropertyList_unique_add(plist, k, v, false);
   }
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v, jboolean append);
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v, jboolean append);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
 
   // Miscellaneous System property value getter and setters.
-  static void set_dll_dir(char *value) { _sun_boot_library_path->set_value(value); }
-  static void set_java_home(char *value) { _java_home->set_value(value); }
-  static void set_library_path(char *value) { _java_library_path->set_value(value); }
+  static void set_dll_dir(const char *value) { _sun_boot_library_path->set_value(value); }
+  static void set_java_home(const char *value) { _java_home->set_value(value); }
+  static void set_library_path(const char *value) { _java_library_path->set_value(value); }
   static void set_ext_dirs(char *value)     { _ext_dirs = os::strdup_check_oom(value); }
   static void set_jdkbootclasspath_append();
-  static void set_sysclasspath(char *value) {
+  static void set_sysclasspath(const char *value) {
     _sun_boot_class_path->set_value(value);
     set_jdkbootclasspath_append();
   }
@@ -620,6 +654,8 @@ class Arguments : AllStatic {
 
   // Utility: copies src into buf, replacing "%%" with "%" and "%p" with pid.
   static bool copy_expand_pid(const char* src, size_t srclen, char* buf, size_t buflen);
+
+  static void check_unsupported_dumping_properties() NOT_CDS_RETURN;
 };
 
 bool Arguments::gc_selected() {

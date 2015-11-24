@@ -27,7 +27,7 @@ import java.io.File;
  * @test
  * @build BootClassPathAppendProp
  * @run main/othervm -Xbootclasspath/a:/usr/lib -showversion -Xbootclasspath/a:/i/dont/exist BootClassPathAppendProp set
- * @run main/othervm -Xoverride:/not/here -Xbootclasspath/a:/i/may/exist BootClassPathAppendProp override
+ * @run main/othervm -Xpatch:/not/here -Xbootclasspath/a:/i/may/exist BootClassPathAppendProp override
  * @run main/othervm BootClassPathAppendProp empty
  */
 

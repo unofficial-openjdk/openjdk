@@ -31,7 +31,6 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/debugInfo.hpp"
 #include "code/pcDesc.hpp"
-#include "compiler/compilerOracle.hpp"
 #include "interpreter/interpreter.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -56,7 +55,9 @@
 #include "runtime/vframe.hpp"
 #include "utilities/preserveException.hpp"
 
-PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
+#if INCLUDE_JVMCI
+#include "jvmci/jvmciJavaClasses.hpp"
+#endif
 
 #define INJECTED_FIELD_COMPUTE_OFFSET(klass, name, signature, may_be_java)    \
   klass::_##name##_offset = JavaClasses::compute_injected_offset(JavaClasses::klass##_##name##_enum);
@@ -1563,8 +1564,10 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
   if (module->is_named()) {
     module_name = module->name()->as_C_string();
     buf_len += (int)strlen(module_name);
-    module_version = module->version()->as_C_string();
-    buf_len += (int)strlen(module_version);
+    if (module->version() != NULL) {
+      module_version = module->version()->as_C_string();
+      buf_len += (int)strlen(module_version);
+    }
   }
 
   // Allocate temporary buffer with extra space for formatting and line number
@@ -1575,7 +1578,11 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
 
   // Print module information
   if (module_name != NULL) {
-    sprintf(buf + (int)strlen(buf), "%s@%s/", module_name, module_version);
+    if (module_version != NULL) {
+      sprintf(buf + (int)strlen(buf), "%s@%s/", module_name, module_version);
+    } else {
+      sprintf(buf + (int)strlen(buf), "%s/", module_name);
+    }
   }
 
   if (!version_matches(method, version)) {
@@ -1632,7 +1639,7 @@ void java_lang_Throwable::print_stack_trace(oop throwable, outputStream* st) {
   while (h_throwable.not_null()) {
     objArrayHandle result (THREAD, objArrayOop(backtrace(h_throwable())));
     if (result.is_null()) {
-      st->print_cr("%s", no_stack_trace_message());
+      st->print_raw_cr(no_stack_trace_message());
       return;
     }
 
@@ -1983,7 +1990,12 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   if (module->is_named()) {
     oop module_name = StringTable::intern(module->name()->as_utf8(), CHECK_0);
     java_lang_StackTraceElement::set_moduleName(element(), module_name);
-    oop module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+    oop module_version;
+    if (module->version() != NULL) {
+      module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+    } else {
+      module_version = NULL;
+    }
     java_lang_StackTraceElement::set_moduleVersion(element(), module_version);
   }
 
@@ -3220,6 +3232,7 @@ oop java_security_AccessControlContext::create(objArrayHandle context, bool isPr
 bool java_lang_ClassLoader::offsets_computed = false;
 int  java_lang_ClassLoader::_loader_data_offset = -1;
 int  java_lang_ClassLoader::parallelCapable_offset = -1;
+int  java_lang_ClassLoader::unnamedModule_offset = -1;
 
 ClassLoaderData** java_lang_ClassLoader::loader_data_addr(oop loader) {
     assert(loader != NULL && loader->is_oop(), "loader must be oop");
@@ -3238,6 +3251,9 @@ void java_lang_ClassLoader::compute_offsets() {
   Klass* k1 = SystemDictionary::ClassLoader_klass();
   compute_optional_offset(parallelCapable_offset,
     k1, vmSymbols::parallelCapable_name(), vmSymbols::concurrenthashmap_signature());
+
+  compute_offset(unnamedModule_offset,
+    k1, vmSymbols::unnamedModule_name(), vmSymbols::module_signature());
 
   CLASSLOADER_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
 }
@@ -3306,6 +3322,10 @@ oop java_lang_ClassLoader::non_reflection_class_loader(oop loader) {
   return loader;
 }
 
+oop java_lang_ClassLoader::unnamedModule(oop loader) {
+  assert(is_instance(loader), "loader must be oop");
+  return loader->obj_field(unnamedModule_offset);
+}
 
 // Support for java_lang_System
 int java_lang_System::in_offset_in_bytes() {
@@ -3725,7 +3745,7 @@ void JavaClasses::check_offsets() {
 
   // java.lang.ClassLoader
 
-  CHECK_OFFSET("java/lang/ClassLoader", java_lang_ClassLoader, parent,      "Ljava/lang/ClassLoader;");
+  CHECK_OFFSET("java/lang/ClassLoader", java_lang_ClassLoader, parent,        "Ljava/lang/ClassLoader;");
 
   // java.lang.System
 

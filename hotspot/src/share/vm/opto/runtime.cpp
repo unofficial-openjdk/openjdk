@@ -33,7 +33,6 @@
 #include "code/scopeDesc.hpp"
 #include "code/vtableStubs.hpp"
 #include "compiler/compileBroker.hpp"
-#include "compiler/compilerOracle.hpp"
 #include "compiler/oopMap.hpp"
 #include "gc/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc/g1/heapRegion.hpp"
@@ -103,11 +102,6 @@ address OptoRuntime::_rethrow_Java                                = NULL;
 address OptoRuntime::_slow_arraycopy_Java                         = NULL;
 address OptoRuntime::_register_finalizer_Java                     = NULL;
 
-# ifdef ENABLE_ZAP_DEAD_LOCALS
-address OptoRuntime::_zap_dead_Java_locals_Java                   = NULL;
-address OptoRuntime::_zap_dead_native_locals_Java                 = NULL;
-# endif
-
 ExceptionBlob* OptoRuntime::_exception_blob;
 
 // This should be called in an assertion at the start of OptoRuntime routines
@@ -153,10 +147,6 @@ bool OptoRuntime::generate(ciEnv* env) {
   gen(env, _slow_arraycopy_Java            , slow_arraycopy_Type          , SharedRuntime::slow_arraycopy_C ,    0 , false, false, false);
   gen(env, _register_finalizer_Java        , register_finalizer_Type      , register_finalizer              ,    0 , false, false, false);
 
-# ifdef ENABLE_ZAP_DEAD_LOCALS
-  gen(env, _zap_dead_Java_locals_Java      , zap_dead_locals_Type         , zap_dead_Java_locals_C          ,    0 , false, true , false );
-  gen(env, _zap_dead_native_locals_Java    , zap_dead_locals_Type         , zap_dead_native_locals_C        ,    0 , false, true , false );
-# endif
   return true;
 }
 
@@ -169,9 +159,13 @@ address OptoRuntime::generate_stub( ciEnv* env,
                                     const char *name, int is_fancy_jump,
                                     bool pass_tls,
                                     bool save_argument_registers,
-                                    bool return_pc ) {
+                                    bool return_pc) {
+
+  // Matching the default directive, we currently have no method to match.
+  DirectiveSet* directive = DirectivesStack::getDefaultDirective(CompileBroker::compiler(CompLevel_full_optimization));
   ResourceMark rm;
-  Compile C( env, gen, C_function, name, is_fancy_jump, pass_tls, save_argument_registers, return_pc );
+  Compile C( env, gen, C_function, name, is_fancy_jump, pass_tls, save_argument_registers, return_pc, directive);
+  DirectivesStack::release(directive);
   return  C.stub_entry_point();
 }
 
@@ -605,23 +599,6 @@ const TypeFunc *OptoRuntime::uncommon_trap_Type() {
   return TypeFunc::make(domain, range);
 }
 
-# ifdef ENABLE_ZAP_DEAD_LOCALS
-// Type used for stub generation for zap_dead_locals.
-// No inputs or outputs
-const TypeFunc *OptoRuntime::zap_dead_locals_Type() {
-  // create input type (domain)
-  const Type **fields = TypeTuple::fields(0);
-  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms,fields);
-
-  // create result type (range)
-  fields = TypeTuple::fields(0);
-  const TypeTuple *range = TypeTuple::make(TypeFunc::Parms,fields);
-
-  return TypeFunc::make(domain,range);
-}
-# endif
-
-
 //-----------------------------------------------------------------------------
 // Monitor Handling
 const TypeFunc *OptoRuntime::complete_monitor_enter_Type() {
@@ -911,6 +888,28 @@ const TypeFunc* OptoRuntime::updateBytesCRC32C_Type() {
   fields[argp++] = TypePtr::NOTNULL;    // buf
   fields[argp++] = TypeInt::INT;        // len
   fields[argp++] = TypePtr::NOTNULL;    // table
+  assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = TypeInt::INT; // crc result
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms+1, fields);
+  return TypeFunc::make(domain, range);
+}
+
+/**
+*  int updateBytesAdler32(int adler, bytes* b, int off, int len)
+*/
+const TypeFunc* OptoRuntime::updateBytesAdler32_Type() {
+  // create input type (domain)
+  int num_args      = 3;
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypeInt::INT;        // crc
+  fields[argp++] = TypePtr::NOTNULL;    // src + offset
+  fields[argp++] = TypeInt::INT;        // len
   assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
   const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
 
@@ -1240,7 +1239,7 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
   }
 
   // for AbortVMOnException flag
-  NOT_PRODUCT(Exceptions::debug_check_abort(exception));
+  Exceptions::debug_check_abort(exception);
 
 #ifdef ASSERT
   if (!(exception->is_a(SystemDictionary::Throwable_klass()))) {
@@ -1627,67 +1626,3 @@ static void trace_exception(oop exception_oop, address exception_pc, const char*
 
 #endif  // PRODUCT
 
-
-# ifdef ENABLE_ZAP_DEAD_LOCALS
-// Called from call sites in compiled code with oop maps (actually safepoints)
-// Zaps dead locals in first java frame.
-// Is entry because may need to lock to generate oop maps
-// Currently, only used for compiler frames, but someday may be used
-// for interpreter frames, too.
-
-int OptoRuntime::ZapDeadCompiledLocals_count = 0;
-
-// avoid pointers to member funcs with these helpers
-static bool is_java_frame(  frame* f) { return f->is_java_frame();   }
-static bool is_native_frame(frame* f) { return f->is_native_frame(); }
-
-
-void OptoRuntime::zap_dead_java_or_native_locals(JavaThread* thread,
-                                                bool (*is_this_the_right_frame_to_zap)(frame*)) {
-  assert(JavaThread::current() == thread, "is this needed?");
-
-  if ( !ZapDeadCompiledLocals )  return;
-
-  bool skip = false;
-
-       if ( ZapDeadCompiledLocalsFirst  ==  0  ) ; // nothing special
-  else if ( ZapDeadCompiledLocalsFirst  >  ZapDeadCompiledLocals_count )  skip = true;
-  else if ( ZapDeadCompiledLocalsFirst  == ZapDeadCompiledLocals_count )
-    warning("starting zapping after skipping");
-
-       if ( ZapDeadCompiledLocalsLast  ==  -1  ) ; // nothing special
-  else if ( ZapDeadCompiledLocalsLast  <   ZapDeadCompiledLocals_count )  skip = true;
-  else if ( ZapDeadCompiledLocalsLast  ==  ZapDeadCompiledLocals_count )
-    warning("about to zap last zap");
-
-  ++ZapDeadCompiledLocals_count; // counts skipped zaps, too
-
-  if ( skip )  return;
-
-  // find java frame and zap it
-
-  for (StackFrameStream sfs(thread);  !sfs.is_done();  sfs.next()) {
-    if (is_this_the_right_frame_to_zap(sfs.current()) ) {
-      sfs.current()->zap_dead_locals(thread, sfs.register_map());
-      return;
-    }
-  }
-  warning("no frame found to zap in zap_dead_Java_locals_C");
-}
-
-JRT_LEAF(void, OptoRuntime::zap_dead_Java_locals_C(JavaThread* thread))
-  zap_dead_java_or_native_locals(thread, is_java_frame);
-JRT_END
-
-// The following does not work because for one thing, the
-// thread state is wrong; it expects java, but it is native.
-// Also, the invariants in a native stub are different and
-// I'm not sure it is safe to have a MachCalRuntimeDirectNode
-// in there.
-// So for now, we do not zap in native stubs.
-
-JRT_LEAF(void, OptoRuntime::zap_dead_native_locals_C(JavaThread* thread))
-  zap_dead_java_or_native_locals(thread, is_native_frame);
-JRT_END
-
-# endif

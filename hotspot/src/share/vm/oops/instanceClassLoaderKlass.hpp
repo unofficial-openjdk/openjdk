@@ -41,17 +41,15 @@ class InstanceClassLoaderKlass: public InstanceKlass {
 
   // Constructor
   InstanceClassLoaderKlass(int vtable_len, int itable_len, int static_field_size, int nonstatic_oop_map_size, ReferenceType rt, AccessFlags access_flags, bool is_anonymous)
-    : InstanceKlass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_size, rt, access_flags, is_anonymous) {}
+    : InstanceKlass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_size,
+                    InstanceKlass::_misc_kind_class_loader, rt, access_flags, is_anonymous) {}
 
 public:
-  virtual bool oop_is_instanceClassLoader() const { return true; }
-
   InstanceClassLoaderKlass() { assert(DumpSharedSpaces || UseSharedSpaces, "only for CDS"); }
 
   // GC specific object visitors
   //
   // Mark Sweep
-  void oop_ms_follow_contents(oop obj);
   int  oop_ms_adjust_pointers(oop obj);
 #if INCLUDE_ALL_GCS
   // Parallel Scavenge
@@ -71,19 +69,19 @@ public:
   // Forward iteration
   // Iterate over the oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate(oop obj, OopClosureType* closure);
+  inline void oop_oop_iterate(oop obj, OopClosureType* closure);
 
 #if INCLUDE_ALL_GCS
   // Reverse iteration
   // Iterate over the oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate_reverse(oop obj, OopClosureType* closure);
+  inline void oop_oop_iterate_reverse(oop obj, OopClosureType* closure);
 #endif
 
   // Bounded range iteration
   // Iterate over the oop fields and metadata.
   template <bool nv, class OopClosureType>
-  inline int oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
+  inline void oop_oop_iterate_bounded(oop obj, OopClosureType* closure, MemRegion mr);
 
  public:
 

@@ -25,11 +25,13 @@
 
 /*
  * @test
- * @ignore
  * @summary class p3.c3 defined in module m1 tries tries to access c4 defined in unnamed module.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MySameClassLoader.java
  * @compile c4.java
  * @compile p3/c3.jcod
+ * @compile p3/c3ReadEdge.jcod
+ * @compile p3/c3Loose.jcod
  * @build NmodNpkg_UmodUPkg
  * @run main/othervm -Xbootclasspath/a:. NmodNpkg_UmodUPkg
  */
@@ -44,6 +46,7 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MySameClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> packages p3
@@ -110,7 +113,7 @@ public class NmodNpkg_UmodUPkg {
      // Attempt access
      try {
          p3_c3_class.newInstance();
-         throw new RuntimeException("Test Failed, strict module m1 should not be able to access " +
+         throw new RuntimeException("Test Failed, strict module m1, type p3.c3, should not be able to access " +
                                     "public type c4 defined in unnamed module");
      } catch (IllegalAccessError e) {
      }
@@ -153,20 +156,15 @@ public class NmodNpkg_UmodUPkg {
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p3.c3
-     Class p3_c3_class = loader.loadClass("p3.c3");
+     // now use the same loader to load class p3.c3ReadEdge
+     Class p3_c3_class = loader.loadClass("p3.c3ReadEdge");
 
-     // Establish readability between module m1 and the
-     // unnamed module of loader.
-     Module unnamed_module = loader.getUnnamedModule();
-     Module m1 = p3_c3_class.getModule();
-     m1.addReads(unnamed_module);
-
-     // Attempt access
      try {
+        // Read edge between m1 and the unnamed module that loads c4 is established in
+        // c3ReadEdge's ctor before attempting access.
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, module m1 has established readability to " +
+         throw new RuntimeException("Test Failed, module m1, type p3.c3ReadEdge, has established readability to " +
                                     "c4 loader's unnamed module, access should be allowed: " + e.getMessage());
      }
  }
@@ -207,26 +205,23 @@ public class NmodNpkg_UmodUPkg {
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p3.c3
-     Class p3_c3_class = loader.loadClass("p3.c3");
+     // now use the same loader to load class p3.c3Loose
+     Class p3_c3_class = loader.loadClass("p3.c3Loose");
 
-     // Transition module "m1" to be a loose module
-     Module m1 = p3_c3_class.getModule();
-     m1.addReads(null);
-
-     // Attempt access
      try {
+        // Module m1 is transitioned to a loose module before attempting access
+        // to c4 in c3Loose's ctor.
         p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, loose module m1 should be able to acccess public type " +
+         throw new RuntimeException("Test Failed, loose module m1, type p3.c3Loose, should be able to acccess public type " +
                                     "c4 defined in unnamed module: " + e.getMessage());
      }
  }
 
  public static void main(String args[]) throws Throwable {
    NmodNpkg_UmodUPkg test = new NmodNpkg_UmodUPkg();
-   test.test_strictModuleLayer(); // access denied
+   test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
-   test.test_looseModuleLayer(); // access allowed
+   test.test_looseModuleLayer();                 // access allowed
  }
 }

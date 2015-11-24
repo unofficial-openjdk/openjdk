@@ -75,7 +75,6 @@ G1RemSet::G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
     _ct_bs(ct_bs), _g1p(_g1->g1_policy()),
     _cg1r(g1->concurrent_g1_refine()),
     _cset_rs_update_cl(NULL),
-    _cards_scanned(NULL), _total_cards_scanned(0),
     _prev_period_summary()
 {
   _cset_rs_update_cl = NEW_C_HEAP_ARRAY(G1ParPushHeapRSClosure*, n_workers(), mtGC);
@@ -227,13 +226,14 @@ public:
   size_t cards_looked_up() { return _cards;}
 };
 
-void G1RemSet::scanRS(G1ParPushHeapRSClosure* oc,
-                      CodeBlobClosure* code_root_cl,
-                      uint worker_i) {
+size_t G1RemSet::scanRS(G1ParPushHeapRSClosure* oc,
+                        CodeBlobClosure* heap_region_codeblobs,
+                        uint worker_i) {
   double rs_time_start = os::elapsedTime();
+
   HeapRegion *startRegion = _g1->start_cset_region_for_worker(worker_i);
 
-  ScanRSClosure scanRScl(oc, code_root_cl, worker_i);
+  ScanRSClosure scanRScl(oc, heap_region_codeblobs, worker_i);
 
   _g1->collection_set_iterate_from(startRegion, &scanRScl);
   scanRScl.set_try_claimed();
@@ -242,11 +242,10 @@ void G1RemSet::scanRS(G1ParPushHeapRSClosure* oc,
   double scan_rs_time_sec = (os::elapsedTime() - rs_time_start)
                             - scanRScl.strong_code_root_scan_time_sec();
 
-  assert(_cards_scanned != NULL, "invariant");
-  _cards_scanned[worker_i] = scanRScl.cards_done();
-
   _g1p->phase_times()->record_time_secs(G1GCPhaseTimes::ScanRS, worker_i, scan_rs_time_sec);
   _g1p->phase_times()->record_time_secs(G1GCPhaseTimes::CodeRoots, worker_i, scanRScl.strong_code_root_scan_time_sec());
+
+  return scanRScl.cards_done();
 }
 
 // Closure used for updating RSets and recording references that
@@ -261,6 +260,7 @@ public:
                                               DirtyCardQueue* into_cset_dcq) :
     _g1rs(g1h->g1_rem_set()), _into_cset_dcq(into_cset_dcq)
   {}
+
   bool do_card_ptr(jbyte* card_ptr, uint worker_i) {
     // The only time we care about recording cards that
     // contain references that point into the collection set
@@ -283,20 +283,25 @@ public:
 };
 
 void G1RemSet::updateRS(DirtyCardQueue* into_cset_dcq, uint worker_i) {
-  G1GCParPhaseTimesTracker x(_g1p->phase_times(), G1GCPhaseTimes::UpdateRS, worker_i);
-  // Apply the given closure to all remaining log entries.
   RefineRecordRefsIntoCSCardTableEntryClosure into_cset_update_rs_cl(_g1, into_cset_dcq);
 
-  _g1->iterate_dirty_card_closure(&into_cset_update_rs_cl, into_cset_dcq, false, worker_i);
+  G1GCParPhaseTimesTracker x(_g1p->phase_times(), G1GCPhaseTimes::UpdateRS, worker_i);
+  {
+    // Apply the closure to the entries of the hot card cache.
+    G1GCParPhaseTimesTracker y(_g1p->phase_times(), G1GCPhaseTimes::ScanHCC, worker_i);
+    _g1->iterate_hcc_closure(&into_cset_update_rs_cl, worker_i);
+  }
+  // Apply the closure to all remaining log entries.
+  _g1->iterate_dirty_card_closure(&into_cset_update_rs_cl, worker_i);
 }
 
 void G1RemSet::cleanupHRRS() {
   HeapRegionRemSet::cleanup();
 }
 
-void G1RemSet::oops_into_collection_set_do(G1ParPushHeapRSClosure* oc,
-                                           CodeBlobClosure* code_root_cl,
-                                           uint worker_i) {
+size_t G1RemSet::oops_into_collection_set_do(G1ParPushHeapRSClosure* oc,
+                                             CodeBlobClosure* heap_region_codeblobs,
+                                             uint worker_i) {
 #if CARD_REPEAT_HISTO
   ct_freq_update_histo_and_reset();
 #endif
@@ -318,10 +323,11 @@ void G1RemSet::oops_into_collection_set_do(G1ParPushHeapRSClosure* oc,
   DirtyCardQueue into_cset_dcq(&_g1->into_cset_dirty_card_queue_set());
 
   updateRS(&into_cset_dcq, worker_i);
-  scanRS(oc, code_root_cl, worker_i);
+  size_t cards_scanned = scanRS(oc, heap_region_codeblobs, worker_i);
 
   // We now clear the cached values of _cset_rs_update_cl for this worker
   _cset_rs_update_cl[worker_i] = NULL;
+  return cards_scanned;
 }
 
 void G1RemSet::prepare_for_oops_into_collection_set_do() {
@@ -329,23 +335,9 @@ void G1RemSet::prepare_for_oops_into_collection_set_do() {
   _g1->set_refine_cte_cl_concurrency(false);
   DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   dcqs.concatenate_logs();
-
-  guarantee( _cards_scanned == NULL, "invariant" );
-  _cards_scanned = NEW_C_HEAP_ARRAY(size_t, n_workers(), mtGC);
-  for (uint i = 0; i < n_workers(); ++i) {
-    _cards_scanned[i] = 0;
-  }
-  _total_cards_scanned = 0;
 }
 
 void G1RemSet::cleanup_after_oops_into_collection_set_do() {
-  guarantee( _cards_scanned != NULL, "invariant" );
-  _total_cards_scanned = 0;
-  for (uint i = 0; i < n_workers(); ++i) {
-    _total_cards_scanned += _cards_scanned[i];
-  }
-  FREE_C_HEAP_ARRAY(size_t, _cards_scanned);
-  _cards_scanned = NULL;
   // Cleanup after copy
   _g1->set_refine_cte_cl_concurrency(true);
   // Set all cards back to clean.
@@ -424,11 +416,11 @@ G1UpdateRSOrPushRefOopClosure(G1CollectedHeap* g1h,
 bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
                            bool check_for_refs_into_cset) {
   assert(_g1->is_in_exact(_ct_bs->addr_for(card_ptr)),
-         err_msg("Card at " PTR_FORMAT " index " SIZE_FORMAT " representing heap at " PTR_FORMAT " (%u) must be in committed heap",
-                 p2i(card_ptr),
-                 _ct_bs->index_for(_ct_bs->addr_for(card_ptr)),
-                 p2i(_ct_bs->addr_for(card_ptr)),
-                 _g1->addr_to_region(_ct_bs->addr_for(card_ptr))));
+         "Card at " PTR_FORMAT " index " SIZE_FORMAT " representing heap at " PTR_FORMAT " (%u) must be in committed heap",
+         p2i(card_ptr),
+         _ct_bs->index_for(_ct_bs->addr_for(card_ptr)),
+         p2i(_ct_bs->addr_for(card_ptr)),
+         _g1->addr_to_region(_ct_bs->addr_for(card_ptr)));
 
   // If the card is no longer dirty, nothing to do.
   if (*card_ptr != CardTableModRefBS::dirty_card_val()) {

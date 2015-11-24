@@ -28,6 +28,7 @@
  * @summary Test that if package p2 in module m2 is exported to module m3,
  *          then class p1.c1 in an unnamed module can not read p2.c2 in module m2.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MySameClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build UmodNpkg_PkgExpQualOther
@@ -43,6 +44,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MySameClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> no packages

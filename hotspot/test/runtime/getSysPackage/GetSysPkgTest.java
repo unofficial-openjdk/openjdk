@@ -109,6 +109,9 @@ public class GetSysPkgTest {
         getPkg("java/lang/", "jrt:/java.base");
         getPkg("java/lang", null);              // Need trailing '/'
         getPkg("javax/script/", null);          // Package not defined
+
+        // Make sure a class in the package is referenced.
+        Class newClass = Class.forName("sun.invoke.util.Wrapper");
         getPkg("sun/invoke/util/", "jrt:/java.base");
         getPkg("java/nio/charset/", "jrt:/java.base");
 

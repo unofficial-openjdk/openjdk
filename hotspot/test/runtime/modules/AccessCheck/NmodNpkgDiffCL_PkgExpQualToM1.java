@@ -28,6 +28,7 @@
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in m2.
  *          Access allowed since m1 can read m2 and package p2 is exported to m1.
  * @library /testlibrary /../../test/lib
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build NmodNpkgDiffCL_PkgExpQualToM1
@@ -43,6 +44,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import myloaders.MyDiffClassLoader;
 
 //
 // ClassLoader1 --> defines m1 --> packages p1
