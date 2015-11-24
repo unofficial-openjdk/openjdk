@@ -2492,9 +2492,6 @@ public:
   develop(bool, TraceModules, false,                                        \
           "Trace module creation and lifetime")                             \
                                                                             \
-  develop(bool, TracePackages, false,                                       \
-          "Trace package creation and lifetime")                            \
-                                                                            \
   product(size_t, InitialBootClassLoaderMetaspaceSize,                      \
           NOT_LP64(2200*K) LP64_ONLY(4*M),                                  \
           "Initial size of the boot class loader data metaspace")           \

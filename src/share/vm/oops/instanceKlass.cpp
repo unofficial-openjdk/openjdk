@@ -2378,7 +2378,7 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
              name->as_C_string(), loader->loader_name());
     }
 
-    if (TracePackages) {
+    if (TraceModules) {
       ResourceMark rm;
       ModuleEntry* m = _package_entry->module();
       tty->print_cr("[Setting package: class: %s, package: %s, loader: %s, module: %s]",
@@ -2388,11 +2388,12 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
                     (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
     }
   } else {
-    if (TracePackages) {
+    if (TraceModules) {
       ResourceMark rm;
-      tty->print_cr("[Setting package: class: %s, package: unnamed, loader: %s, module: unnamed]",
+      tty->print_cr("[Setting package: class: %s, package: unnamed, loader: %s, module: %s]",
                     external_name(),
-                    (loader != NULL) ? loader->loader_name() : "NULL");
+                    (loader != NULL) ? loader->loader_name() : "NULL",
+                    UNNAMED_MODULE);
     }
   }
 }

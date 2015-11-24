@@ -35,24 +35,32 @@ class Modules : AllStatic {
 public:
   // define_module defines a module containing the specified packages. It binds the
   // module to its class loader by creating the ModuleEntry record in the
-  // ClassLoader's ModuleEntry table, creates PackageEntry records in the class
-  // loader's PackageEntry table, and, if successful, creates and returns a
-  // java.lang.reflect.Module object.  As in JVM_DefineClass the jstring format
-  // for all package names must use "/" and not "."
+  // ClassLoader's ModuleEntry table, and creates PackageEntry records in the class
+  // loader's PackageEntry table.  As in JVM_DefineClass the jstring format for all
+  // package names must use "/" and not "."
   //
   //  IllegalArgumentExceptions are thrown for the following :
-  // * Class loader already has a module with that name
-  // * Class loader has already defined types for any of the module's packages
-  // * Module_name is 'java.base'
+  // * Module's Class loader is not a subclass of java.lang.ClassLoader
+  // * Module's Class loader already has a module with that name
+  // * Module's Class loader has already defined types for any of the module's packages
   // * Module_name is syntactically bad
   // * Packages contains an illegal package name
   // * Packages contains a duplicate package name
   // * A package already exists in another module for this class loader
-  // * Class loader is not a subclass of java.lang.ClassLoader
   // * Module is an unnamed module
   //  NullPointerExceptions are thrown if module is null.
   static void define_module(JNIEnv *env, jobject module, jstring version,
                              jstring location, jobjectArray packages);
+
+  // Provides the java.lang.reflect.Module for the unnamed module defined
+  // to the boot loader.
+  //
+  //  IllegalArgumentExceptions are thrown for the following :
+  //  * Module has a name
+  //  * Module is not a subclass of java.lang.reflect.Module
+  //  * Module's class loader is not the boot loader
+  //  NullPointerExceptions are thrown if module is null.
+  static void set_bootloader_unnamed_module(JNIEnv *env, jobject module);
 
   // This either does a qualified export of package in module from_module to module
   // to_module or, if to_module is null, does an unqualified export of package.
@@ -130,9 +138,6 @@ public:
 
   // Return TRUE iff package is defined by loader
   static bool is_package_defined(Symbol* package_name, Handle h_loader, TRAPS);
-
-  static const char* default_version() { return "9.0"; }
-
 };
 
 #endif // SHARE_VM_CLASSFILE_MODULES_HPP

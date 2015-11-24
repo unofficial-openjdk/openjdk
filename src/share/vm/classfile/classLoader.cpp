@@ -1545,22 +1545,13 @@ void ClassLoader::create_javabase() {
     vm_exit_during_initialization("No ModuleEntryTable for the boot class loader");
   }
 
-  TempNewSymbol version_symbol = SymbolTable::new_symbol(Modules::default_version(), THREAD);
-  assert(version_symbol != NULL, "Symbol creation failed");
-  TempNewSymbol location_symbol = SymbolTable::new_symbol("jrt:/java.base", THREAD);
-  assert(location_symbol != NULL, "Symbol creation failed");
   {
     MutexLocker ml(Module_lock, THREAD);
-    ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(Handle(NULL), vmSymbols::java_base(), version_symbol,
-                                                                           location_symbol, null_cld);
+    ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(Handle(NULL), vmSymbols::java_base(), NULL, NULL, null_cld);
     if (jb_module == NULL) {
       vm_exit_during_initialization("Unable to create ModuleEntry for java.base");
     }
     ModuleEntryTable::set_javabase_module(jb_module);
-  }
-
-  if (TraceModules) {
-    tty->print_cr("[Module entry for java.base created]");
   }
 
   // When looking for the jimage file, only

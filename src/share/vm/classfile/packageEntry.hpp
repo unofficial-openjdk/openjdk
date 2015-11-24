@@ -33,11 +33,11 @@
 // A PackageEntry basically represents a Java package.  It contains:
 //   - Symbol* containing the package's name.
 //   - ModuleEntry* for this package's containing module.
-//     NULL if the package was defined within the unnamed module.
-//   - a growable array containing other module entries that this
-//     package is exported to.
 //   - a flag indicating if package is exported, either qualifiedly or
 //     unqualifiedly.
+//   - a flag indicating if this package is exported to all unnamed modules.
+//   - a growable array containing other module entries that this
+//     package is exported to.
 //
 // Packages that are:
 //   - not exported:        _qualified_exports = NULL  && _is_exported is false

@@ -997,6 +997,11 @@ JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, j
   Modules::define_module(env, module, version, location, packages);
 JVM_END
 
+JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
+  JVMWrapper("JVM_SetBootLoaderUnnamedModule");
+  Modules::set_bootloader_unnamed_module(env, module);
+JVM_END
+
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
   Modules::add_module_exports_qualified(env, from_module, package, to_module);

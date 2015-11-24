@@ -28,16 +28,6 @@ SUNWprivate_1.1 {
         global:
                 JVM_handle_linux_signal;
 
-                # Modules
-                JVM_DefineModule;
-                JVM_AddReadsModule;
-                JVM_AddModuleExports;
-                JVM_AddModuleExportsToAllUnnamed;
-                JVM_AddModuleExportsToAll;
-                JVM_CanReadModule;
-                JVM_IsExportedToModule;
-                JVM_AddModulePackage;
-
                 # debug JVM
                 JVM_AccessVMBooleanFlag;
                 JVM_AccessVMIntFlag;

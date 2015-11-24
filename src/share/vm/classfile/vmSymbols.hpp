@@ -556,6 +556,9 @@
   /* used to identify class loaders handling parallel class loading */                                            \
   template(parallelCapable_name,                      "parallelLockMap")                                          \
                                                                                                                   \
+  /* used to return a class loader's unnamed module */                                                            \
+  template(unnamedModule_name,                        "unnamedModule")                                            \
+                                                                                                                  \
   /* JVM monitoring and management support */                                                                     \
   template(java_lang_StackTraceElement_array,          "[Ljava/lang/StackTraceElement;")                          \
   template(java_lang_management_ThreadState,           "java/lang/management/ThreadState")                        \

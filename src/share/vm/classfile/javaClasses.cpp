@@ -3232,6 +3232,7 @@ oop java_security_AccessControlContext::create(objArrayHandle context, bool isPr
 bool java_lang_ClassLoader::offsets_computed = false;
 int  java_lang_ClassLoader::_loader_data_offset = -1;
 int  java_lang_ClassLoader::parallelCapable_offset = -1;
+int  java_lang_ClassLoader::unnamedModule_offset = -1;
 
 ClassLoaderData** java_lang_ClassLoader::loader_data_addr(oop loader) {
     assert(loader != NULL && loader->is_oop(), "loader must be oop");
@@ -3250,6 +3251,9 @@ void java_lang_ClassLoader::compute_offsets() {
   Klass* k1 = SystemDictionary::ClassLoader_klass();
   compute_optional_offset(parallelCapable_offset,
     k1, vmSymbols::parallelCapable_name(), vmSymbols::concurrenthashmap_signature());
+
+  compute_offset(unnamedModule_offset,
+    k1, vmSymbols::unnamedModule_name(), vmSymbols::module_signature());
 
   CLASSLOADER_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
 }
@@ -3318,6 +3322,10 @@ oop java_lang_ClassLoader::non_reflection_class_loader(oop loader) {
   return loader;
 }
 
+oop java_lang_ClassLoader::unnamedModule(oop loader) {
+  assert(is_instance(loader), "loader must be oop");
+  return loader->obj_field(unnamedModule_offset);
+}
 
 // Support for java_lang_System
 int java_lang_System::in_offset_in_bytes() {
@@ -3737,7 +3745,7 @@ void JavaClasses::check_offsets() {
 
   // java.lang.ClassLoader
 
-  CHECK_OFFSET("java/lang/ClassLoader", java_lang_ClassLoader, parent,      "Ljava/lang/ClassLoader;");
+  CHECK_OFFSET("java/lang/ClassLoader", java_lang_ClassLoader, parent,        "Ljava/lang/ClassLoader;");
 
   // java.lang.System
 

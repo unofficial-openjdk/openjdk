@@ -398,6 +398,9 @@ JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
                  jobjectArray packages);
 
 JNIEXPORT void JNICALL
+JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module);
+
+JNIEXPORT void JNICALL
 JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
 JNIEXPORT void JNICALL
