@@ -73,6 +73,37 @@ $(ESCAPE_DOLLAR_DIR)/_escape_dollar: $(DEPS)
 TEST_TARGETS += $(ESCAPE_DOLLAR_DIR)/_escape_dollar
 
 ################################################################################
+# Test containing and not-containing
+
+CONT_LIST := foo bar baz foobar foobaz
+
+# Param 1 - string to look for
+# Param 2 - expected result
+define TestContaining
+  value := $$(call containing, $1, $(CONT_LIST))
+  ifneq ($$(value), $2)
+    $$(info (call containing, $1, $(CONT_LIST)))
+    $$(error result >$$(value)<, expected >$2<)
+  endif
+endef
+
+$(eval $(call TestContaining,bar,bar foobar))
+$(eval $(call TestContaining,foo bar,foo bar foobar foobaz))
+
+# Param 1 - string to look for
+# Param 2 - expected result
+define TestNotContaining
+  value := $$(call not-containing, $1, $(CONT_LIST))
+  ifneq ($$(value), $2)
+    $$(info (call not-containing, $1, $(CONT_LIST)))
+    $$(error result >$$(value)<, expected >$2<)
+  endif
+endef
+
+$(eval $(call TestNotContaining,bar,foo baz foobaz))
+$(eval $(call TestNotContaining,foo bar,baz))
+
+################################################################################
 # Test Equals
 
 EQUALS_VALUE1 := value1$(SPACE)
@@ -176,29 +207,30 @@ test-vardep:
 	test ! -e $(VARDEP_FLAG_FILE)
 	$(MAKE) -f $(THIS_FILE) VARDEP_TEST_VAR=" value3  foo" $(VARDEP_TARGET_FILE)
 	test ! -e $(VARDEP_FLAG_FILE)
+        #
+        # Test including some problematic characters
+	$(MAKE) -f $(THIS_FILE) VARDEP_TEST_VAR='value4 \$$$$ORIGIN' $(VARDEP_TARGET_FILE)
+	$(RM) $(VARDEP_FLAG_FILE)
+	$(MAKE) -f $(THIS_FILE) VARDEP_TEST_VAR='value4 \$$$$ORIGIN' $(VARDEP_TARGET_FILE)
+	test ! -e $(VARDEP_FLAG_FILE)
 
 # Test specifying a specific value file to store variable in
 VARDEP_VALUE_FILE := $(VARDEP_DIR)/value-file
 VARDEP_TEST_VAR2 := value3
 
 VARDEP_RETURN_VALUE := $(call DependOnVariable, VARDEP_TEST_VAR2, $(VARDEP_VALUE_FILE))
-ifneq ($(VARDEP_VALUE_FILE), $(VARDEP_RETURN_VALUE))
-  $(error Expected: $(VARDEP_VALUE_FILE) - DependOnVariable: $(VARDEP_RETURN_VALUE))
-endif
-VARDEP_FILE_CONTENTS := $(shell $(CAT) $(VARDEP_VALUE_FILE))
-ifneq ($(VARDEP_TEST_VAR2), $(VARDEP_FILE_CONTENTS))
-  $(error Expected: $(VARDEP_TEST_VAR2) - DependOnVariable file contained: \
-      $(VARDEP_FILE_CONTENTS))
-endif
+$(eval $(call assert-equals, $(VARDEP_RETURN_VALUE), $(VARDEP_VALUE_FILE), \
+    Wrong filename returned))
+-include $(VARDEP_VALUE_FILE)
+$(eval $(call assert-equals, $(VARDEP_TEST_VAR2_old), $(VARDEP_TEST_VAR2), \
+    Wrong contents in vardeps file))
 
 # Test with a variable value containing some problematic characters
-VARDEP_TEST_VAR3 := foo '""' "''" bar
+VARDEP_TEST_VAR3 := foo '""' "''" bar \$$ORIGIN
 VARDEP_VALUE_FILE := $(call DependOnVariable, VARDEP_TEST_VAR3)
-VARDEP_FILE_CONTENTS := $(shell $(CAT) $(VARDEP_VALUE_FILE))
-ifneq ($(VARDEP_TEST_VAR3), $(VARDEP_FILE_CONTENTS))
-  $(error Expected: >$(VARDEP_TEST_VAR3)< - DependOnVariable file contained: \
-      >$(VARDEP_FILE_CONTENTS)<)
-endif
+-include $(VARDEP_VALUE_FILE)
+$(eval $(call assert-equals, $(VARDEP_TEST_VAR3_old), $(VARDEP_TEST_VAR3), \
+    Wrong contents in vardep file))
 
 TEST_TARGETS += test-vardep
 

@@ -36,7 +36,9 @@ $(eval $(call IncludeCustomExtension, , common/Modules.gmk))
 # Module list macros
 
 # Use append so that the custom extension may add to this variable
+
 ALL_TOP_SRC_DIRS += \
+    $(HOTSPOT_TOPDIR)/src \
     $(JDK_TOPDIR)/src \
     $(LANGTOOLS_TOPDIR)/src \
     $(CORBA_TOPDIR)/src \

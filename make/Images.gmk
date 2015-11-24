@@ -40,17 +40,18 @@ $(eval $(call IncludeCustomExtension, , Images-pre.gmk))
 
 MAIN_MODULES += java.se java.smartcardio jdk.httpserver jdk.sctp \
                jdk.security.auth jdk.security.jgss jdk.pack200 jdk.xml.dom \
-               jdk.accessibility jdk.internal.le jdk.scripting.nashorn.shell
+               jdk.accessibility jdk.internal.le jdk.scripting.nashorn.shell \
+               jdk.vm.ci jdk.management
 
 # providers
 PROVIDER_MODULES += jdk.charsets jdk.crypto.ec jdk.crypto.pkcs11 jdk.jvmstat jdk.localedata \
                jdk.naming.dns jdk.naming.rmi jdk.scripting.nashorn jdk.zipfs
 
 # tools
-TOOLS_MODULES += jdk.attach jdk.compiler jdk.javadoc jdk.jcmd jdk.jconsole jdk.jdeps \
-               jdk.javadoc jdk.jcmd jdk.jconsole jdk.hotspot.agent jdk.jdwp.agent \
-               jdk.jartool jdk.jlink jdk.policytool jdk.rmic jdk.xml.bind jdk.xml.ws \
-               jdk.internal.opt
+TOOLS_MODULES += jdk.attach jdk.compiler \
+               jdk.javadoc jdk.jcmd jdk.jconsole jdk.hotspot.agent jdk.jartool \
+               jdk.jdeps jdk.jdi jdk.jdwp.agent jdk.jlink jdk.jshell \
+               jdk.policytool jdk.rmic jdk.xml.bind jdk.xml.ws jdk.internal.opt
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   PROVIDER_MODULES += jdk.crypto.mscapi
@@ -64,8 +65,8 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   MAIN_MODULES += jdk.deploy.osx
 endif
 
-JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
-JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES)
+JRE_MODULES := $(filter-out $(MODULES_FILTER), $(MAIN_MODULES) $(PROVIDER_MODULES))
+JDK_MODULES := $(filter-out $(MODULES_FILTER), $(JRE_MODULES) $(TOOLS_MODULES))
 
 # Param 1 - Name of module
 define ReadImportMetaData
@@ -148,7 +149,7 @@ COMPACT_EXTRA_MODULES := jdk.localedata jdk.crypto.pkcs11 jdk.crypto.ec
 $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact1 jimage
 	$(RM) -r $(JRE_COMPACT1_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
-	$(JLINK_TOOL) --limitmods $(call SubstComma, java.compact1 $(COMPACT_EXTRA_MODULES)) \
+	$(JLINK_TOOL) --addmods $(call SubstComma, java.compact1 $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT1_IMAGE_DIR) \
 	    > $(JRE_COMPACT1_SORTED_MODULES)
 	$(TOUCH) $@
@@ -156,7 +157,7 @@ $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR) $(JRE_COMPACT2_SORTED_MODULES)
-	$(JLINK_TOOL) --limitmods $(call SubstComma, $(JDK_COMPACT2_MODULES) $(COMPACT_EXTRA_MODULES)) \
+	$(JLINK_TOOL) --addmods $(call SubstComma, $(JDK_COMPACT2_MODULES) $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR) \
 	    > $(JRE_COMPACT2_SORTED_MODULES)
 	$(TOUCH) $@
@@ -164,7 +165,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 $(JRE_COMPACT3_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact3 jimage
 	$(RM) -r $(JRE_COMPACT3_IMAGE_DIR) $(JRE_COMPACT3_SORTED_MODULES)
-	$(JLINK_TOOL) --limitmods $(call SubstComma, $(JDK_COMPACT3_MODULES) $(COMPACT_EXTRA_MODULES)) \
+	$(JLINK_TOOL) --addmods $(call SubstComma, $(JDK_COMPACT3_MODULES) $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT3_IMAGE_DIR) \
 	    > $(JRE_COMPACT3_SORTED_MODULES)
 	$(TOUCH) $@
@@ -437,7 +438,7 @@ JDK_TARGETS += $(JDK_IMAGE_DIR)/src.zip
 # directories will always trigger the rule for recompile since
 # _the.list_of_packages files are touched.
 ifneq ($(findstring images, $(MAKECMDGOALS)), )
-  $(JDK_IMAGE_DIR)/demo/%: $(SUPPORT_OUTPUTDIR)/demo/image/%
+  $(JDK_IMAGE_DIR)/demo/%: $(SUPPORT_OUTPUTDIR)/demos/image/%
 	if [ ! -d "$@" ]; then \
 	  $(ECHO) $(LOG_INFO) Copying '$(patsubst $(OUTPUT_ROOT)/%,%,$@)'; \
 	  $(MKDIR) -p $(@D); \
@@ -445,9 +446,9 @@ ifneq ($(findstring images, $(MAKECMDGOALS)), )
 	fi
 
   # Find all files including directories
-  JDK_DEMO_TARGETS := $(if $(wildcard $(SUPPORT_OUTPUTDIR)/demo/image), \
-      $(patsubst $(SUPPORT_OUTPUTDIR)/demo/image/%, $(JDK_IMAGE_DIR)/demo/%, \
-      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/demo/image \
+  JDK_DEMO_TARGETS := $(if $(wildcard $(SUPPORT_OUTPUTDIR)/demos/image), \
+      $(patsubst $(SUPPORT_OUTPUTDIR)/demos/image/%, $(JDK_IMAGE_DIR)/demo/%, \
+      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/demos/image \
           ! \( -name "_the*" -o -name "javac_state" \) )))
 
   JDK_TARGETS += $(JDK_DEMO_TARGETS)
@@ -491,7 +492,7 @@ ifeq ($(GCOV_ENABLED), true)
   $(eval $(call SetupCopyFiles,COPY_JDK_GCOV_GCNO, \
       SRC := $(OUTPUT_ROOT), \
       DEST := $(SYMBOLS_IMAGE_DIR)/gcov, \
-      FILES := $(shell $(FIND) $(NATIVE_OUTPUTDIR) $(GCOV_FIND_EXPR))))
+      FILES := $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/native $(GCOV_FIND_EXPR))))
 
   SYMBOLS_TARGETS += $(COPY_JDK_GCOV_GCNO)
 

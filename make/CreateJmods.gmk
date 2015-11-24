@@ -36,11 +36,11 @@ endif
 ################################################################################
 
 LIBS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
-    $(MODULES_LIBS_OUTPUTDIR)-stripped $(IMPORT_MODULES_LIBS))))
+    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped $(IMPORT_MODULES_LIBS))))
 CMDS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
-    $(MODULES_CMDS_OUTPUTDIR)-stripped $(IMPORT_MODULES_CMDS))))
+    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped $(IMPORT_MODULES_CMDS))))
 CONF_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
-    $(MODULES_CONF_OUTPUTDIR) $(IMPORT_MODULES_CONF))))
+    $(SUPPORT_OUTPUTDIR)/modules_conf $(IMPORT_MODULES_CONF))))
 CLASSES_DIR := $(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE))
 
 $(eval $(call FillCacheFind, \
@@ -73,8 +73,9 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(ECHO) Creating $(notdir $@)
 	$(MKDIR) -p $(@D)
 	$(RM) $@.tmp
-	$(JMOD) create --module-version 9.0 \
+	$(JMOD) --create --module-version 9.0 \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependencies '.*' \
+            --exclude '**_the.*' \
 	    $(JMOD_FLAGS) $@.tmp
 	$(MV) $@.tmp $@
 

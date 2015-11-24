@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
 import java.security.BasicPermission;
 import java.util.Objects;
 
@@ -84,6 +83,7 @@ public class WhiteBox {
   public native int  getVMPageSize();
   public native long getVMAllocationGranularity();
   public native long getVMLargePageSize();
+  public native long getHeapSpaceAlignment();
 
   private native boolean isObjectInOldGen0(Object o);
   public         boolean isObjectInOldGen(Object o) {
@@ -111,6 +111,12 @@ public class WhiteBox {
   }
 
   public native void forceSafepoint();
+
+  private native long getConstantPool0(Class<?> aClass);
+  public         long getConstantPool(Class<?> aClass) {
+    Objects.requireNonNull(aClass);
+    return getConstantPool0(aClass);
+  }
 
   // JVMTI
   private native void addToBootstrapClassLoaderSearch0(String segment);
@@ -143,6 +149,10 @@ public class WhiteBox {
     return parseCommandLine0(commandline, delim, args);
   }
 
+  // Parallel GC
+  public native long psVirtualSpaceAlignment();
+  public native long psHeapGenerationAlignment();
+
   // NMT
   public native long NMTMalloc(long size);
   public native void NMTFree(long mem);
@@ -155,6 +165,9 @@ public class WhiteBox {
   public native int NMTGetHashSize();
 
   // Compiler
+  public native int     matchesMethod(Executable method, String pattern);
+  public native int     matchesInline(Executable method, String pattern);
+  public native boolean shouldPrintAssembly(Executable method);
   public native int     deoptimizeFrames(boolean makeNotEntrant);
   public native void    deoptimizeAll();
   public        boolean isMethodCompiled(Executable method) {
@@ -284,6 +297,11 @@ public class WhiteBox {
   public native void    forceNMethodSweep();
   public native Object[] getCodeHeapEntries(int type);
   public native int     getCompilationActivityMode();
+  private native long getMethodData0(Executable method);
+  public         long getMethodData(Executable method) {
+    Objects.requireNonNull(method);
+    return getMethodData0(method);
+  }
   public native Object[] getCodeBlob(long addr);
 
   // Intered strings
@@ -402,6 +420,6 @@ public class WhiteBox {
 
   // Sharing
   public native boolean isShared(Object o);
-  public native boolean isSharedClass(Class c);
+  public native boolean isSharedClass(Class<?> c);
   public native boolean areSharedStringsIgnored();
 }

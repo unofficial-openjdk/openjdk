@@ -528,6 +528,8 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_CORE],
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     # The corresponding ar tool is lib.exe (used to create static libraries)
     AC_CHECK_PROG([AR], [lib],[lib],,,)
+  elif test "x$TOOLCHAIN_TYPE" = xgcc; then
+    BASIC_CHECK_TOOLS(AR, ar gcc-ar)
   else
     BASIC_CHECK_TOOLS(AR, ar)
   fi
@@ -573,7 +575,11 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
     # FIXME: we should unify this with the solaris case above.
     BASIC_CHECK_TOOLS(STRIP, strip)
     BASIC_FIXUP_EXECUTABLE(STRIP)
-    BASIC_CHECK_TOOLS(NM, nm)
+    if test "x$TOOLCHAIN_TYPE" = xgcc; then
+      BASIC_CHECK_TOOLS(NM, nm gcc-nm)
+    else
+      BASIC_CHECK_TOOLS(NM, nm)
+    fi
     BASIC_FIXUP_EXECUTABLE(NM)
     GNM="$NM"
     AC_SUBST(GNM)
@@ -586,6 +592,43 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
     # Only call fixup if objcopy was found.
     if test -n "$OBJCOPY"; then
       BASIC_FIXUP_EXECUTABLE(OBJCOPY)
+      if test "x$OPENJDK_BUILD_OS" = xsolaris; then
+        # objcopy prior to 2.21.1 on solaris is broken and is not usable.
+        # Rewrite objcopy version output to VALID_VERSION or BAD_VERSION.
+        # - version number is last blank separate word on first line
+        # - version number formats that have been seen:
+        #   - <major>.<minor>
+        #   - <major>.<minor>.<micro>
+        OBJCOPY_VERSION=`$OBJCOPY --version | $HEAD -n 1`
+        # The outer [ ] is to prevent m4 from eating the [] in the sed expression.
+        [ OBJCOPY_VERSION_CHECK=`$ECHO $OBJCOPY_VERSION | $SED -n \
+              -e 's/.* //' \
+              -e '/^[01]\./b bad' \
+              -e '/^2\./{' \
+              -e '  s/^2\.//' \
+              -e '  /^[0-9]$/b bad' \
+              -e '  /^[0-9]\./b bad' \
+              -e '  /^1[0-9]$/b bad' \
+              -e '  /^1[0-9]\./b bad' \
+              -e '  /^20\./b bad' \
+              -e '  /^21\.0$/b bad' \
+              -e '  /^21\.0\./b bad' \
+              -e '}' \
+              -e ':good' \
+              -e 's/.*/VALID_VERSION/p' \
+              -e 'q' \
+              -e ':bad' \
+              -e 's/.*/BAD_VERSION/p' \
+              -e 'q'` ]
+        if test "x$OBJCOPY_VERSION_CHECK" = xBAD_VERSION; then
+          OBJCOPY=
+          AC_MSG_WARN([Ignoring found objcopy since it is broken (prior to 2.21.1). No debug symbols will be generated.])
+          AC_MSG_NOTICE([objcopy reports version $OBJCOPY_VERSION])
+          AC_MSG_NOTICE([Note: patch 149063-01 or newer contains the correct Solaris 10 SPARC version])
+          AC_MSG_NOTICE([Note: patch 149064-01 or newer contains the correct Solaris 10 X86 version])
+          AC_MSG_NOTICE([Note: Solaris 11 Update 1 contains the correct version])
+        fi
+      fi
     fi
   fi
 
@@ -610,21 +653,75 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     # path, otherwise we might pick up cross-compilers which don't use standard
     # naming.
 
+    OLDPATH="$PATH"
+
+    AC_ARG_WITH(build-devkit, [AS_HELP_STRING([--with-build-devkit],
+        [Devkit to use for the build platform toolchain])])
+    if test "x$with_build_devkit" = "xyes"; then
+      AC_MSG_ERROR([--with-build-devkit must have a value])
+    elif test -n "$with_build_devkit"; then
+      if test ! -d "$with_build_devkit"; then
+        AC_MSG_ERROR([--with-build-devkit points to non existing dir: $with_build_devkit])
+      else
+        BASIC_FIXUP_PATH([with_build_devkit])
+        BUILD_DEVKIT_ROOT="$with_build_devkit"
+        # Check for a meta data info file in the root of the devkit
+        if test -f "$BUILD_DEVKIT_ROOT/devkit.info"; then
+          # Process devkit.info so that existing devkit variables are not
+          # modified by this
+          $SED -e "s/^DEVKIT_/BUILD_DEVKIT_/g" \
+              -e "s/\$DEVKIT_ROOT/\$BUILD_DEVKIT_ROOT/g" \
+              -e "s/\$host/\$build/g" \
+              $BUILD_DEVKIT_ROOT/devkit.info \
+              > $CONFIGURESUPPORT_OUTPUTDIR/build-devkit.info
+          . $CONFIGURESUPPORT_OUTPUTDIR/build-devkit.info
+          # This potentially sets the following:
+          # A descriptive name of the devkit
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_NAME])
+          # Corresponds to --with-extra-path
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_EXTRA_PATH])
+          # Corresponds to --with-toolchain-path
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_TOOLCHAIN_PATH])
+          # Corresponds to --with-sysroot
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_SYSROOT])
+          # Skip the Window specific parts
+        fi
+
+        AC_MSG_CHECKING([for build platform devkit])
+        if test "x$BUILD_DEVKIT_NAME" != x; then
+          AC_MSG_RESULT([$BUILD_DEVKIT_NAME in $BUILD_DEVKIT_ROOT])
+        else
+          AC_MSG_RESULT([$BUILD_DEVKIT_ROOT])
+        fi
+
+        BUILD_SYSROOT="$BUILD_DEVKIT_SYSROOT"
+        FLAGS_SETUP_SYSROOT_FLAGS([BUILD_])
+
+         # Fallback default of just /bin if DEVKIT_PATH is not defined
+        if test "x$BUILD_DEVKIT_TOOLCHAIN_PATH" = x; then
+          BUILD_DEVKIT_TOOLCHAIN_PATH="$BUILD_DEVKIT_ROOT/bin"
+        fi
+        PATH="$BUILD_DEVKIT_TOOLCHAIN_PATH:$BUILD_DEVKIT_EXTRA_PATH"
+      fi
+    fi
+
     # FIXME: we should list the discovered compilers as an exclude pattern!
     # If we do that, we can do this detection before POST_DETECTION, and still
     # find the build compilers in the tools dir, if needed.
-    BASIC_PATH_PROGS(BUILD_CC, [cl cc gcc])
+    BASIC_REQUIRE_PROGS(BUILD_CC, [cl cc gcc])
     BASIC_FIXUP_EXECUTABLE(BUILD_CC)
-    BASIC_PATH_PROGS(BUILD_CXX, [cl CC g++])
+    BASIC_REQUIRE_PROGS(BUILD_CXX, [cl CC g++])
     BASIC_FIXUP_EXECUTABLE(BUILD_CXX)
-    BASIC_PATH_PROGS(BUILD_NM, nm)
+    BASIC_PATH_PROGS(BUILD_NM, nm gcc-nm)
     BASIC_FIXUP_EXECUTABLE(BUILD_NM)
-    BASIC_PATH_PROGS(BUILD_AR, ar)
+    BASIC_PATH_PROGS(BUILD_AR, ar gcc-ar)
     BASIC_FIXUP_EXECUTABLE(BUILD_AR)
     # Assume the C compiler is the assembler
     BUILD_AS="$BUILD_CC -c"
     # Just like for the target compiler, use the compiler as linker
     BUILD_LD="$BUILD_CC"
+
+    PATH="$OLDPATH"
   else
     # If we are not cross compiling, use the normal target compilers for
     # building the build platform executables.
@@ -633,6 +730,8 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     BUILD_LD="$LD"
     BUILD_NM="$NM"
     BUILD_AS="$AS"
+    BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
+    BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
     BUILD_AR="$AR"
   fi
 
@@ -641,6 +740,8 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
   AC_SUBST(BUILD_LD)
   AC_SUBST(BUILD_NM)
   AC_SUBST(BUILD_AS)
+  AC_SUBST(BUILD_SYSROOT_CFLAGS)
+  AC_SUBST(BUILD_SYSROOT_LDFLAGS)
   AC_SUBST(BUILD_AR)
 ])
 

@@ -22,7 +22,7 @@
 # questions.
 #
 
-# This script is processed by configure before it's usable. It is run from 
+# This script is processed by configure before it's usable. It is run from
 # the root of the build directory.
 
 
@@ -50,8 +50,6 @@ else
     DIS_CMD="$OBJDUMP -d"
     STAT_PRINT_SIZE="-c %s"
 fi
-
-UNARCHIVE="$UNZIP -q"
 
 COMPARE_EXCEPTIONS_INCLUDE="$SRC_ROOT/common/bin/compare_exceptions.sh.incl"
 if [ ! -e "$COMPARE_EXCEPTIONS_INCLUDE" ]; then
@@ -88,33 +86,26 @@ diff_text() {
         TMP=$(LC_ALL=C $DIFF $OTHER_FILE $THIS_FILE | \
             $GREP '^[<>]' | \
             $SED -e '/[<>] \* from.*\.idl/d' \
-                 -e '/[<>] \*.*[0-9]\{4\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}-b[0-9]\{2\}.*/d' \
+                 -e '/[<>] .*[0-9]\{4\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}-b[0-9]\{2\}.*/d' \
                  -e '/[<>] \*.*[0-9]\{4\} [0-9][0-9]*:[0-9]\{2\}:[0-9]\{2\}.*/d' \
                  -e '/\/\/ Generated from input file.*/d' \
                  -e '/\/\/ This file was generated AUTOMATICALLY from a template file.*/d' \
                  -e '/\/\/ java GenerateCharacter.*/d')
     fi
     # Ignore date strings in class files.
-    # On Macosx the system sources for generated java classes produce different output on 
-    # consequtive invocations seemingly randomly.
-    # For example a method parameter randomly named "thePoint" or "aPoint". Ignore this.
     # Anonymous lambda classes get randomly assigned counters in their names.
     if test "x$SUFFIX" = "xclass"; then
         # To improve performance when large diffs are found, do a rough filtering of classes
         # elibeble for these exceptions
         if $GREP -R -e '[0-9]\{4\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}-b[0-9]\{2\}' \
-	        -e '[0-9]\{2\}/[0-9]\{2\}/[0-9]\{4\}' \
-	        -e thePoint -e aPoint -e setItemsPtr \
+                -e '[0-9]\{2\}/[0-9]\{2\}/[0-9]\{4\}' \
                 -e 'lambda\$[a-zA-Z0-9]*\$[0-9]' ${THIS_FILE} > /dev/null; then
             $JAVAP -c -constants -l -p "${OTHER_FILE}" >  ${OTHER_FILE}.javap
             $JAVAP -c -constants -l -p "${THIS_FILE}" > ${THIS_FILE}.javap
             TMP=$($DIFF ${OTHER_FILE}.javap ${THIS_FILE}.javap | \
                 $GREP '^[<>]' | \
                 $SED -e '/[<>].*[0-9]\{4\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}-b[0-9]\{2\}.*/d' \
-		     -e '/[0-9]\{2\}\/[0-9]\{2\}\/[0-9]\{4\}/d' \
- 	             -e '/[<>].*Point   Lcom\/apple\/jobjc\/foundation\/NSPoint;/d' \
-	             -e '/[<>].*public com\.apple\.jobjc\.Pointer<com\.apple\.jobjc\..*itemsPtr();/d' \
-	             -e '/[<>].*public void setItemsPtr(com\.apple\.jobjc\.Pointer<com\.apple\.jobjc\..*);/d' \
+                     -e '/[0-9]\{2\}\/[0-9]\{2\}\/[0-9]\{4\}/d' \
                      -e '/[<>].*lambda\$[a-zA-Z0-9]*\$[0-9]*/d')
         fi
     fi
@@ -124,10 +115,10 @@ diff_text() {
 # Disable this exception since we aren't changing the properties cleaning method yet.
 #        $CAT $OTHER_FILE | $SED -e 's/\([^\\]\):/\1\\:/g' -e  's/\([^\\]\)=/\1\\=/g' -e 's/#.*/#/g' \
 #            | $SED -f "$SRC_ROOT/common/makefiles/support/unicode2x.sed" \
-#  	    | $SED -e '/^#/d' -e '/^$/d' \
+#            | $SED -e '/^#/d' -e '/^$/d' \
 #            -e :a -e '/\\$/N; s/\\\n//; ta' \
-#  	    -e 's/^[ \t]*//;s/[ \t]*$//' \
-#	    -e 's/\\=/=/' | LC_ALL=C $SORT > $OTHER_FILE.cleaned
+#            -e 's/^[ \t]*//;s/[ \t]*$//' \
+#            -e 's/\\=/=/' | LC_ALL=C $SORT > $OTHER_FILE.cleaned
         # Filter out date string differences.
         TMP=$(LC_ALL=C $DIFF $OTHER_FILE.cleaned $THIS_FILE | \
             $GREP '^[<>]' | \
@@ -166,7 +157,7 @@ compare_dirs() {
     (cd $THIS_DIR && $FIND . -type d | $SORT > $WORK_DIR/dirs_this)
 
     $DIFF $WORK_DIR/dirs_other $WORK_DIR/dirs_this > $WORK_DIR/dirs_diff
-    
+
     echo -n Directory structure...
     if [ -s $WORK_DIR/dirs_diff ]; then
         echo Differences found.
@@ -200,7 +191,7 @@ compare_files() {
 
     (cd $OTHER_DIR && $FIND . ! -type d | $SORT > $WORK_DIR/files_other)
     (cd $THIS_DIR && $FIND . ! -type d | $SORT > $WORK_DIR/files_this)
-    
+
     $DIFF $WORK_DIR/files_other $WORK_DIR/files_this > $WORK_DIR/files_diff
 
     echo -n File names...
@@ -244,11 +235,11 @@ compare_permissions() {
         TP=`ls -l ${THIS_DIR}/$f | awk '{printf("%.10s\n", $1);}'`
         if [ "$OP" != "$TP" ]
         then
-	    if [ -z "$found" ]; then echo ; found="yes"; fi
+            if [ -z "$found" ]; then echo ; found="yes"; fi
             $PRINTF "\tother: ${OP} this: ${TP}\t$f\n"
         fi
     done
-    if [ -z "$found" ]; then 
+    if [ -z "$found" ]; then
         echo "Identical!"
     else
         REGRESSIONS=true
@@ -277,18 +268,18 @@ compare_file_types() {
         then
             if [ "`echo $OF | $GREP -c 'Zip archive data'`" -gt 0 ] \
                 && [ "`echo $TF | $GREP -c 'Zip archive data'`" -gt 0 ]
-	    then
+            then
                 # the way we produce zip-files make it so that directories are stored in
                 # old file but not in new (only files with full-path) this makes file
                 # report them as different
                 continue
             else
-	    if [ -z "$found" ]; then echo ; found="yes"; fi
-	    $PRINTF "\tother: ${OF}\n\tthis : ${TF}\n"
-        fi
+                if [ -z "$found" ]; then echo ; found="yes"; fi
+                $PRINTF "\tother: ${OF}\n\tthis : ${TF}\n"
+            fi
         fi
     done
-    if [ -z "$found" ]; then 
+    if [ -z "$found" ]; then
         echo "Identical!"
     else
         REGRESSIONS=true
@@ -313,7 +304,7 @@ compare_general_files() {
         ! -name "jspawnhelper" \
         | $GREP -v "./bin/"  | $SORT | $FILTER)
 
-    echo General files...
+    echo Other files with binary differences...
     for f in $GENERAL_FILES
     do
         if [ -e $OTHER_DIR/$f ]; then
@@ -398,7 +389,7 @@ compare_zip_file() {
     fi
     # Not quite identical, the might still contain the same data.
     # Unpack the jar/zip files in temp dirs
-    
+
     THIS_UNZIPDIR=$WORK_DIR/$ZIP_FILE.this
     OTHER_UNZIPDIR=$WORK_DIR/$ZIP_FILE.other
     $RM -rf $THIS_UNZIPDIR $OTHER_UNZIPDIR
@@ -474,9 +465,9 @@ compare_zip_file() {
 
     $RM -f $WORK_DIR/$ZIP_FILE.diffs
     for file in $DIFFING_FILES; do
-	if [[ "$ACCEPTED_JARZIP_CONTENTS $EXCEPTIONS" != *"$file"* ]]; then
+        if [[ "$ACCEPTED_JARZIP_CONTENTS $EXCEPTIONS" != *"$file"* ]]; then
             diff_text $OTHER_UNZIPDIR/$file $THIS_UNZIPDIR/$file >> $WORK_DIR/$ZIP_FILE.diffs
-	fi
+        fi
     done
 
     if [ -s "$WORK_DIR/$ZIP_FILE.diffs" ]; then
@@ -590,7 +581,7 @@ compare_bin_file() {
     ORIG_THIS_FILE="$THIS_FILE"
     ORIG_OTHER_FILE="$OTHER_FILE"
 
-    if [[ "$STRIP_BEFORE_COMPARE" = *"$BIN_FILE"* ]]; then
+    if [ "$STRIP_ALL" = "true" ] || [[ "$STRIP_BEFORE_COMPARE" = *"$BIN_FILE"* ]]; then
         THIS_STRIPPED_FILE=$FILE_WORK_DIR/this/$NAME
         OTHER_STRIPPED_FILE=$FILE_WORK_DIR/other/$NAME
         $MKDIR -p $FILE_WORK_DIR/this $FILE_WORK_DIR/other
@@ -603,51 +594,51 @@ compare_bin_file() {
     fi
 
     if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
-	unset _NT_SYMBOL_PATH
-	# On windows we need to unzip the debug symbols, if present
-	OTHER_FILE_BASE=${OTHER_FILE/.dll/}
-	OTHER_FILE_BASE=${OTHER_FILE_BASE/.exe/}
+        unset _NT_SYMBOL_PATH
+        # On windows we need to unzip the debug symbols, if present
+        OTHER_FILE_BASE=${OTHER_FILE/.dll/}
+        OTHER_FILE_BASE=${OTHER_FILE_BASE/.exe/}
         OTHER_FILE_BASE=${OTHER_FILE_BASE/.cpl/}
-	DIZ_NAME=$(basename $OTHER_FILE_BASE).diz
+        DIZ_NAME=$(basename $OTHER_FILE_BASE).diz
         # java.exe and java.dll diz files will have the same name. Have to
-	# make sure java.exe gets the right one. This is only needed for 
-	# OTHER since in the new build, all pdb files are left around.
-	if [ "$NAME" = "java.exe" ] && [ -f "$OTHER/tmp/java/java/obj64/java.diz" ]; then
-	    OTHER_DIZ_FILE="$OTHER/tmp/java/java/obj64/java.diz"
-	elif [ -f "${OTHER_FILE_BASE}.diz" ]; then
-	    OTHER_DIZ_FILE=${OTHER_FILE_BASE}.diz
-	else
+        # make sure java.exe gets the right one. This is only needed for
+        # OTHER since in the new build, all pdb files are left around.
+        if [ "$NAME" = "java.exe" ] && [ -f "$OTHER/tmp/java/java/obj64/java.diz" ]; then
+            OTHER_DIZ_FILE="$OTHER/tmp/java/java/obj64/java.diz"
+        elif [ -f "${OTHER_FILE_BASE}.diz" ]; then
+            OTHER_DIZ_FILE=${OTHER_FILE_BASE}.diz
+        else
             # Some files, jli.dll, appears twice in the image but only one of
-	    # thme has a diz file next to it.
-	    OTHER_DIZ_FILE="$($FIND $OTHER_DIR -name $DIZ_NAME | $SED 1q)"
-	    if [ ! -f "$OTHER_DIZ_FILE" ]; then
-		# As a last resort, look for diz file in the whole build output
-		# dir.
-		OTHER_DIZ_FILE="$($FIND $OTHER -name $DIZ_NAME | $SED 1q)"
-	    fi
-	fi
-	if [ -n "$OTHER_DIZ_FILE" ]; then
-	    $MKDIR -p $FILE_WORK_DIR/other
-	    (cd $FILE_WORK_DIR/other ; $UNARCHIVE -o $OTHER_DIZ_FILE)
-	    export _NT_SYMBOL_PATH="$FILE_WORK_DIR/other"
-	fi
-	THIS_FILE_BASE=${THIS_FILE/.dll/}
-	THIS_FILE_BASE=${THIS_FILE_BASE/.exe/}
-	if [ -f "${THIS_FILE/.dll/}.diz" ]; then
-	    THIS_DIZ_FILE=${THIS_FILE/.dll/}.diz
-	else
-	    THIS_DIZ_FILE="$($FIND $THIS_DIR -name $DIZ_NAME | $SED 1q)"
-	    if [ ! -f "$THIS_DIZ_FILE" ]; then
-		# As a last resort, look for diz file in the whole build output
-		# dir.
-		THIS_DIZ_FILE="$($FIND $THIS -name $DIZ_NAME | $SED 1q)"
-	    fi
-	fi
-	if [ -n "$THIS_DIZ_FILE" ]; then
-	    $MKDIR -p $FILE_WORK_DIR/this
-	    (cd $FILE_WORK_DIR/this ; $UNARCHIVE -o $THIS_DIZ_FILE)
-	    export _NT_SYMBOL_PATH="$_NT_SYMBOL_PATH;$FILE_WORK_DIR/this"
-	fi
+            # thme has a diz file next to it.
+            OTHER_DIZ_FILE="$($FIND $OTHER_DIR -name $DIZ_NAME | $SED 1q)"
+            if [ ! -f "$OTHER_DIZ_FILE" ]; then
+                # As a last resort, look for diz file in the whole build output
+                # dir.
+                OTHER_DIZ_FILE="$($FIND $OTHER -name $DIZ_NAME | $SED 1q)"
+            fi
+        fi
+        if [ -n "$OTHER_DIZ_FILE" ]; then
+            $MKDIR -p $FILE_WORK_DIR/other
+            (cd $FILE_WORK_DIR/other ; $UNARCHIVE -o $OTHER_DIZ_FILE)
+            export _NT_SYMBOL_PATH="$FILE_WORK_DIR/other"
+        fi
+        THIS_FILE_BASE=${THIS_FILE/.dll/}
+        THIS_FILE_BASE=${THIS_FILE_BASE/.exe/}
+        if [ -f "${THIS_FILE/.dll/}.diz" ]; then
+            THIS_DIZ_FILE=${THIS_FILE/.dll/}.diz
+        else
+            THIS_DIZ_FILE="$($FIND $THIS_DIR -name $DIZ_NAME | $SED 1q)"
+            if [ ! -f "$THIS_DIZ_FILE" ]; then
+                # As a last resort, look for diz file in the whole build output
+                # dir.
+                THIS_DIZ_FILE="$($FIND $THIS -name $DIZ_NAME | $SED 1q)"
+            fi
+        fi
+        if [ -n "$THIS_DIZ_FILE" ]; then
+            $MKDIR -p $FILE_WORK_DIR/this
+            (cd $FILE_WORK_DIR/this ; $UNARCHIVE -o $THIS_DIZ_FILE)
+            export _NT_SYMBOL_PATH="$_NT_SYMBOL_PATH;$FILE_WORK_DIR/this"
+        fi
     fi
 
     if [ -z "$SKIP_BIN_DIFF" ]; then
@@ -685,19 +676,19 @@ compare_bin_file() {
         DIFF_SIZE_REL=$($EXPR $THIS_SIZE \* 100 / $OTHER_SIZE)
         SIZE_MSG=$($PRINTF "%3d%% %4d" $DIFF_SIZE_REL $DIFF_SIZE_NUM)
         if [[ "$ACCEPTED_SMALL_SIZE_DIFF" = *"$BIN_FILE"* ]] && [ "$DIFF_SIZE_REL" -gt 98 ] \
-	    && [ "$DIFF_SIZE_REL" -lt 102 ]; then
+            && [ "$DIFF_SIZE_REL" -lt 102 ]; then
             SIZE_MSG="($SIZE_MSG)"
             DIFF_SIZE=
         elif [ "$OPENJDK_TARGET_OS" = "windows" ] \
-	    && [[ "$ACCEPTED_SMALL_SIZE_DIFF" = *"$BIN_FILE"* ]] \
-	    && [ "$DIFF_SIZE_NUM" = 512 ]; then
-	    # On windows, size of binaries increase in 512 increments.
+            && [[ "$ACCEPTED_SMALL_SIZE_DIFF" = *"$BIN_FILE"* ]] \
+            && [ "$DIFF_SIZE_NUM" = 512 ]; then
+            # On windows, size of binaries increase in 512 increments.
             SIZE_MSG="($SIZE_MSG)"
             DIFF_SIZE=
         elif [ "$OPENJDK_TARGET_OS" = "windows" ] \
-	    && [[ "$ACCEPTED_SMALL_SIZE_DIFF" = *"$BIN_FILE"* ]] \
-	    && [ "$DIFF_SIZE_NUM" = -512 ]; then
-	    # On windows, size of binaries increase in 512 increments.
+            && [[ "$ACCEPTED_SMALL_SIZE_DIFF" = *"$BIN_FILE"* ]] \
+            && [ "$DIFF_SIZE_NUM" = -512 ]; then
+            # On windows, size of binaries increase in 512 increments.
             SIZE_MSG="($SIZE_MSG)"
             DIFF_SIZE=
         else
@@ -722,7 +713,7 @@ compare_bin_file() {
         fi
     fi
 
-    if [[ "$SORT_SYMBOLS" = *"$BIN_FILE"* ]]; then
+    if [ "$SORT_ALL_SYMBOLS" = "true" ] || [[ "$SORT_SYMBOLS" = *"$BIN_FILE"* ]]; then
         SYM_SORT_CMD="sort"
     else
         SYM_SORT_CMD="cat"
@@ -732,18 +723,18 @@ compare_bin_file() {
     if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
         # The output from dumpbin on windows differs depending on if the debug symbol
         # files are still around at the location the binary is pointing too. Need
-	# to filter out that extra information.
-	$DUMPBIN -exports $OTHER_FILE | $GREP  -E '^ +[0-9A-F]+ +[0-9A-F]+ [0-9A-F]+' | sed 's/ = .*//g' | cut -c27- | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.other
-	$DUMPBIN -exports $THIS_FILE  | $GREP  -E '^ +[0-9A-F]+ +[0-9A-F]+ [0-9A-F]+' | sed 's/ = .*//g' | cut -c27- | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
+        # to filter out that extra information.
+        $DUMPBIN -exports $OTHER_FILE | $GREP  -E '^ +[0-9A-F]+ +[0-9A-F]+ [0-9A-F]+' | sed 's/ = .*//g' | cut -c27- | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.other
+        $DUMPBIN -exports $THIS_FILE  | $GREP  -E '^ +[0-9A-F]+ +[0-9A-F]+ [0-9A-F]+' | sed 's/ = .*//g' | cut -c27- | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
     elif [ "$OPENJDK_TARGET_OS" = "solaris" ]; then
         # Some symbols get seemingly random 15 character prefixes. Filter them out.
         $NM -a $ORIG_OTHER_FILE 2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SED 's/^\([a-zA-Z] [\.\$]\)[a-zA-Z0-9_\$]\{15,15\}\./\1./g' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.other
-	$NM -a $ORIG_THIS_FILE  2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SED 's/^\([a-zA-Z] [\.\$]\)[a-zA-Z0-9_\$]\{15,15\}\./\1./g' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
+        $NM -a $ORIG_THIS_FILE  2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SED 's/^\([a-zA-Z] [\.\$]\)[a-zA-Z0-9_\$]\{15,15\}\./\1./g' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
     else
-	$NM -a $ORIG_OTHER_FILE 2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.other
-	$NM -a $ORIG_THIS_FILE  2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
+        $NM -a $ORIG_OTHER_FILE 2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.other
+        $NM -a $ORIG_THIS_FILE  2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
     fi
-    
+
     LC_ALL=C $DIFF $WORK_FILE_BASE.symbols.other $WORK_FILE_BASE.symbols.this > $WORK_FILE_BASE.symbols.diff
     if [ -s $WORK_FILE_BASE.symbols.diff ]; then
         SYM_MSG=" diff  "
@@ -756,7 +747,7 @@ compare_bin_file() {
                 SYM_MSG=" $SYM_MSG "
             fi
         else
-            SYM_MSG="($SYM_MSG)"            
+            SYM_MSG="($SYM_MSG)"
             DIFF_SYM=
         fi
     else
@@ -769,72 +760,75 @@ compare_bin_file() {
 
     # Check dependencies
     if [ -n "$LDD_CMD" ]; then
-	(cd $FILE_WORK_DIR && $CP $OTHER_FILE . && $LDD_CMD $NAME 2>/dev/null | $AWK '{ print $1;}' | $SORT | $TEE $WORK_FILE_BASE.deps.other | $UNIQ > $WORK_FILE_BASE.deps.other.uniq)
-	(cd $FILE_WORK_DIR && $CP $THIS_FILE . && $LDD_CMD $NAME 2</dev/null | $AWK '{ print $1;}' | $SORT | $TEE $WORK_FILE_BASE.deps.this | $UNIQ > $WORK_FILE_BASE.deps.this.uniq)
-	(cd $FILE_WORK_DIR && $RM -f $NAME)
-	
-	LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other $WORK_FILE_BASE.deps.this > $WORK_FILE_BASE.deps.diff
-	LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other.uniq $WORK_FILE_BASE.deps.this.uniq > $WORK_FILE_BASE.deps.diff.uniq
-	
-	if [ -s $WORK_FILE_BASE.deps.diff ]; then
+        (cd $FILE_WORK_DIR && $CP $OTHER_FILE . && $LDD_CMD $NAME 2>/dev/null | $AWK '{ print $1;}' | $SORT | $TEE $WORK_FILE_BASE.deps.other | $UNIQ > $WORK_FILE_BASE.deps.other.uniq)
+        (cd $FILE_WORK_DIR && $CP $THIS_FILE . && $LDD_CMD $NAME 2</dev/null | $AWK '{ print $1;}' | $SORT | $TEE $WORK_FILE_BASE.deps.this | $UNIQ > $WORK_FILE_BASE.deps.this.uniq)
+        (cd $FILE_WORK_DIR && $RM -f $NAME)
+
+        LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other $WORK_FILE_BASE.deps.this > $WORK_FILE_BASE.deps.diff
+        LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other.uniq $WORK_FILE_BASE.deps.this.uniq > $WORK_FILE_BASE.deps.diff.uniq
+
+        if [ -s $WORK_FILE_BASE.deps.diff ]; then
             if [ -s $WORK_FILE_BASE.deps.diff.uniq ]; then
-		DEP_MSG=" diff  "
+                DEP_MSG=" diff  "
             else
-		DEP_MSG=" redun "
+                DEP_MSG=" redun "
             fi
             if [[ "$ACCEPTED_DEP_DIFF" != *"$BIN_FILE"* ]]; then
-		DIFF_DEP=true
-		if [[ "$KNOWN_DEP_DIFF" != *"$BIN_FILE"* ]]; then
+                DIFF_DEP=true
+                if [[ "$KNOWN_DEP_DIFF" != *"$BIN_FILE"* ]]; then
                     DEP_MSG="*$DEP_MSG*"
                     REGRESSIONS=true
-		else
+                else
                     DEP_MSG=" $DEP_MSG "
-		fi
+                fi
             else
-		DEP_MSG="($DEP_MSG)"
-		DIFF_DEP=
+                DEP_MSG="($DEP_MSG)"
+                DIFF_DEP=
             fi
-	else
-	    DEP_MSG="         "
-	    DIFF_DEP=
+        else
+            DEP_MSG="         "
+            DIFF_DEP=
             if [[ "$KNOWN_DEP_DIFF $ACCEPTED_DEP_DIFF" = *"$BIN_FILE"* ]]; then
                 DEP_MSG="     !      "
             fi
-	fi
+        fi
     else
-	DEP_MSG="    -    "
+        DEP_MSG="    -    "
     fi
-    
+
     # Compare fulldump output
     if [ -n "$FULLDUMP_CMD" ] && [ -z "$SKIP_FULLDUMP_DIFF" ]; then
         if [ -z "$FULLDUMP_DIFF_FILTER" ]; then
             FULLDUMP_DIFF_FILTER="$CAT"
         fi
-        $FULLDUMP_CMD $OTHER_FILE | eval "$FULLDUMP_DIFF_FILTER" > $WORK_FILE_BASE.fulldump.other 2>&1
-        $FULLDUMP_CMD $THIS_FILE  | eval "$FULLDUMP_DIFF_FILTER" > $WORK_FILE_BASE.fulldump.this  2>&1
+        $FULLDUMP_CMD $OTHER_FILE | eval "$FULLDUMP_DIFF_FILTER" \
+            > $WORK_FILE_BASE.fulldump.other 2>&1
+        $FULLDUMP_CMD $THIS_FILE  | eval "$FULLDUMP_DIFF_FILTER" \
+            > $WORK_FILE_BASE.fulldump.this  2>&1
 
-        LC_ALL=C $DIFF $WORK_FILE_BASE.fulldump.other $WORK_FILE_BASE.fulldump.this > $WORK_FILE_BASE.fulldump.diff
-        
+        LC_ALL=C $DIFF $WORK_FILE_BASE.fulldump.other $WORK_FILE_BASE.fulldump.this \
+            > $WORK_FILE_BASE.fulldump.diff
+
         if [ -s $WORK_FILE_BASE.fulldump.diff ]; then
-            ELF_DIFF_SIZE=$(ls -n $WORK_FILE_BASE.fulldump.diff | awk '{print $5}')
-            ELF_MSG=$($PRINTF "%8d" $ELF_DIFF_SIZE)
-            if [[ "$ACCEPTED_ELF_DIFF" != *"$BIN_FILE"* ]]; then
-                DIFF_ELF=true
-                if [[ "$KNOWN_ELF_DIFF" != *"$BIN_FILE"* ]]; then
-                    ELF_MSG="*$ELF_MSG*"
+            FULLDUMP_DIFF_SIZE=$(ls -n $WORK_FILE_BASE.fulldump.diff | awk '{print $5}')
+            FULLDUMP_MSG=$($PRINTF "%8d" $FULLDUMP_DIFF_SIZE)
+            if [[ "$ACCEPTED_FULLDUMP_DIFF" != *"$BIN_FILE"* ]]; then
+                DIFF_FULLDUMP=true
+                if [[ "$KNOWN_FULLDUMP_DIFF" != *"$BIN_FILE"* ]]; then
+                    FULLDUMP_MSG="*$FULLDUMP_MSG*"
                     REGRESSIONS=true
                 else
-                    ELF_MSG=" $ELF_MSG "
+                    FULLDUMP_MSG=" $FULLDUMP_MSG "
                 fi
             else
-                ELF_MSG="($ELF_MSG)"
-                DIFF_ELF=
+                FULLDUMP_MSG="($FULLDUMP_MSG)"
+                DIFF_FULLDUMP=
             fi
         else
-            ELF_MSG="          "
-            DIFF_ELF=
-            if [[ "$KNOWN_DEP_DIFF $ACCEPTED_DEP_DIFF" = *"$BIN_FILE"* ]]; then
-                ELF_MSG="    !    "
+            FULLDUMP_MSG="          "
+            DIFF_FULLDUMP=
+            if [[ "$KNOWN_FULLDUMP_DIFF $ACCEPTED_FULLDUMP_DIFF" = *"$BIN_FILE"* ]]; then
+                FULLDUMP_MSG="    !    "
             fi
         fi
     fi
@@ -844,14 +838,14 @@ compare_bin_file() {
         # By default we filter out differences that include references to symbols.
         # To get a raw diff with the complete disassembly, set
         # DIS_DIFF_FILTER="$CAT"
-	if [ -z "$DIS_DIFF_FILTER" ]; then
-            DIS_DIFF_FILTER="$GREP -v ' # .* <.*>$'"
-	fi
+        if [ -z "$DIS_DIFF_FILTER" ]; then
+            DIS_DIFF_FILTER="$GREP -v ' # .* <.*>$' | $SED -r -e 's/(\b|x)([0-9a-fA-F]+)(\b|:|>)/X/g'"
+        fi
         $DIS_CMD $OTHER_FILE | $GREP -v $NAME | eval "$DIS_DIFF_FILTER" > $WORK_FILE_BASE.dis.other 2>&1
         $DIS_CMD $THIS_FILE  | $GREP -v $NAME | eval "$DIS_DIFF_FILTER" > $WORK_FILE_BASE.dis.this  2>&1
-        
+
         LC_ALL=C $DIFF $WORK_FILE_BASE.dis.other $WORK_FILE_BASE.dis.this > $WORK_FILE_BASE.dis.diff
-        
+
         if [ -s $WORK_FILE_BASE.dis.diff ]; then
             DIS_DIFF_SIZE=$(ls -n $WORK_FILE_BASE.dis.diff | awk '{print $5}')
             DIS_MSG=$($PRINTF "%8d" $DIS_DIFF_SIZE)
@@ -877,12 +871,12 @@ compare_bin_file() {
     fi
 
 
-    if [ -n "$DIFF_BIN$DIFF_SIZE$DIFF_SYM$DIFF_DEP$DIFF_ELF$DIFF_DIS" ] || [ -n "$VERBOSE" ]; then
+    if [ -n "$DIFF_BIN$DIFF_SIZE$DIFF_SYM$DIFF_DEP$DIFF_FULLDUMP$DIFF_DIS" ] || [ -n "$VERBOSE" ]; then
         if [ -n "$BIN_MSG" ]; then echo -n "$BIN_MSG:"; fi
         if [ -n "$SIZE_MSG" ]; then echo -n "$SIZE_MSG:"; fi
         if [ -n "$SYM_MSG" ]; then echo -n "$SYM_MSG:"; fi
         if [ -n "$DEP_MSG" ]; then echo -n "$DEP_MSG:"; fi
-        if [ -n "$ELF_MSG" ]; then echo -n "$ELF_MSG:"; fi
+        if [ -n "$FULLDUMP_MSG" ]; then echo -n "$FULLDUMP_MSG:"; fi
         if [ -n "$DIS_MSG" ]; then echo -n "$DIS_MSG:"; fi
         echo " $BIN_FILE"
         if [ "$SHOW_DIFFS" = "true" ]; then
@@ -991,11 +985,11 @@ COMPARE_ROOT=/tmp/cimages.$USER
 $MKDIR -p $COMPARE_ROOT
 if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
     if [ "$(uname -o)" = "Cygwin" ]; then
-	COMPARE_ROOT=$(cygpath -msa $COMPARE_ROOT)
+        COMPARE_ROOT=$(cygpath -msa $COMPARE_ROOT)
     fi
 fi
 
-THIS="$( cd "$( dirname "$0" )" > /dev/null && pwd )"
+THIS="$SCRIPT_DIR"
 echo "$THIS"
 THIS_SCRIPT="$0"
 
@@ -1014,6 +1008,9 @@ if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ] || [ "$1" = "/h" ] || [ "$1
     echo "-v                  Verbose output, does not hide known differences"
     echo "-vv                 More verbose output, shows diff output of all comparisons"
     echo "-o [OTHER]          Compare with build in other directory. Will default to the old build directory"
+    echo ""
+    echo "--sort-symbols      Sort all symbols before comparing"
+    echo "--strip             Strip all binaries before comparing"
     echo ""
     echo "[FILTER]            List filenames in the image to compare, works for jars, zips, libs and execs"
     echo "Example:"
@@ -1107,6 +1104,12 @@ while [ -n "$1" ]; do
             shift
             shift
             ;;
+        --sort-symbols)
+            SORT_ALL_SYMBOLS=true
+            ;;
+        --strip)
+            STRIP_ALL=true
+            ;;
         *)
             CMP_NAMES=false
             CMP_PERMS=false
@@ -1115,7 +1118,7 @@ while [ -n "$1" ]; do
             CMP_JARS=true
             CMP_LIBS=true
             CMP_EXECS=true
-            
+
             if [ -z "$FILTER" ]; then
                 FILTER="$GREP"
             fi
@@ -1201,8 +1204,8 @@ if [ "$SKIP_DEFAULT" != "true" ]; then
         OTHER_JRE="$OTHER/images/jre"
         echo "Selecting jdk images for compare"
     else
-	echo "No common images found."
-	exit 1
+        echo "No common images found."
+        exit 1
     fi
     echo "  $THIS_JDK"
     echo "  $OTHER_JDK"
@@ -1223,7 +1226,7 @@ if [ "$SKIP_DEFAULT" != "true" ]; then
             OTHER_JDK_BUNDLE="$OTHER/images/jdk-bundle"
             OTHER_JRE_BUNDLE="$OTHER/images/jre-bundle"
 	fi
-        echo "Also comparing macosx bundles"
+        echo "Also comparing jdk macosx bundles"
         echo "  $THIS_JDK_BUNDLE"
         echo "  $OTHER_JDK_BUNDLE"
     fi
@@ -1283,7 +1286,7 @@ if [ "$SKIP_DEFAULT" != "true" ]; then
     if [ -d "$THIS/docs" ] && [ -d "$OTHER/docs" ]; then
         THIS_DOCS="$THIS/docs"
         OTHER_DOCS="$OTHER/docs"
-	echo "Also comparing docs"
+        echo "Also comparing docs"
     else
         echo "WARNING! Docs haven't been built and won't be compared."
     fi
@@ -1368,7 +1371,7 @@ if [ "$CMP_TYPES" = "true" ]; then
     if [ -n "$THIS_DEPLOY_APPLET_PLUGIN_DIR" ] && [ -n "$OTHER_DEPLOY_APPLET_PLUGIN_DIR" ]; then
         echo -n "JavaAppletPlugin "
         compare_file_types $THIS_DEPLOY_APPLET_PLUGIN_DIR $OTHER_DEPLOY_APPLET_PLUGIN_DIR $COMPARE_ROOT/plugin
-fi
+    fi
 fi
 
 if [ "$CMP_GENERAL" = "true" ]; then
@@ -1394,7 +1397,7 @@ if [ "$CMP_GENERAL" = "true" ]; then
     if [ -n "$THIS_DEPLOY_APPLET_PLUGIN_DIR" ] && [ -n "$OTHER_DEPLOY_APPLET_PLUGIN_DIR" ]; then
         echo -n "JavaAppletPlugin "
         compare_general_files $THIS_DEPLOY_APPLET_PLUGIN_DIR $OTHER_DEPLOY_APPLET_PLUGIN_DIR $COMPARE_ROOT/plugin
-fi
+    fi
 fi
 
 if [ "$CMP_ZIPS" = "true" ]; then
@@ -1424,7 +1427,7 @@ if [ "$CMP_ZIPS" = "true" ]; then
     fi
     if [ -n "$THIS_DEPLOY_BUNDLE_DIR" ] && [ -n "$OTHER_DEPLOY_BUNDLE_DIR" ]; then
         compare_all_zip_files $THIS_DEPLOY_BUNDLE_DIR $OTHER_DEPLOY_BUNDLE_DIR $COMPARE_ROOT/deploy-bundle
-fi
+    fi
     if [ -n "$THIS_DEPLOY_APPLET_PLUGIN_DIR" ] && [ -n "$OTHER_DEPLOY_APPLET_PLUGIN_DIR" ]; then
         compare_all_zip_files $THIS_DEPLOY_APPLET_PLUGIN_DIR $OTHER_DEPLOY_APPLET_PLUGIN_DIR $COMPARE_ROOT/plugin
     fi
@@ -1457,7 +1460,7 @@ if [ "$CMP_LIBS" = "true" ]; then
     if [ -n "$THIS_DEPLOY_APPLET_PLUGIN_DIR" ] && [ -n "$OTHER_DEPLOY_APPLET_PLUGIN_DIR" ]; then
         echo -n "JavaAppletPlugin "
         compare_all_libs $THIS_DEPLOY_APPLET_PLUGIN_DIR $OTHER_DEPLOY_APPLET_PLUGIN_DIR $COMPARE_ROOT/plugin
-fi
+    fi
 fi
 
 if [ "$CMP_EXECS" = "true" ]; then

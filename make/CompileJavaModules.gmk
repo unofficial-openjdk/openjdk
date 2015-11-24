@@ -281,14 +281,6 @@ java.sql.rowset_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
-# Exclude building of IIOP transport for RMI Connector
-
-ifeq ($(RMICONNECTOR_IIOP), false)
-  java.management_EXCLUDES += com/sun/jmx/remote/protocol/iiop
-endif
-
-################################################################################
-
 java.rmi_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
 java.rmi_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
@@ -452,6 +444,18 @@ jdk.jvmstat_COPY := aliasmap
 
 ################################################################################
 
+jdk.vm.ci_EXCLUDE_FILES += \
+    jdk/vm/ci/options/processor/OptionProcessor.java \
+    jdk/vm/ci/service/processor/ServiceProviderProcessor.java \
+    #
+
+jdk.vm.ci_EXCLUDES += \
+    META-INF/jvmci.options \
+    META-INF/jvmci.providers \
+    #
+
+################################################################################
+
 jdk.xml.bind_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 jdk.xml.bind_CLEAN := .properties
 jdk.xml.bind_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
@@ -479,11 +483,12 @@ jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 # source before static source and platform specific source before shared.
 #
 GENERATED_SRC_DIRS += \
-    $(GENSRC_OUTPUTDIR) \
-    $(GENSRC_OUTPUTDIR)_no_docs \
+    $(SUPPORT_OUTPUTDIR)/gensrc \
+    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
     #
 
 TOP_SRC_DIRS += \
+    $(HOTSPOT_TOPDIR)/src \
     $(CORBA_TOPDIR)/src \
     $(JDK_TOPDIR)/src \
     $(LANGTOOLS_TOPDIR)/src \
@@ -518,19 +523,41 @@ MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SR
 # Add imported modules to the moduleclasspath
 MODULECLASSPATH := $(subst $(SPACE),$(PATH_SEP), $(IMPORT_MODULES_CLASSES))
 
+ifneq ($(findstring $(MODULE), jdk.vm.ci jdk.jfr), )
+  ## WORKAROUND jdk.vm.ci source structure issue
+  HOTSPOT_JVMCI_SRC := $(subst $(MODULE),*,$(HOTSPOT_TOPDIR)/src/jdk.vm.ci/share/classes)
+  JVMCI_MODULESOURCEPATH := $(MODULESOURCEPATH) \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.amd64/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.code/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.common/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.compiler/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot.amd64/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspot.sparc/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.hotspotvmconfig/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.inittimer/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.meta/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.options/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.runtime/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.service/src \
+    $(HOTSPOT_JVMCI_SRC)/jdk.vm.ci.sparc/src
+
+  MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP), $(JVMCI_MODULESOURCEPATH))
+endif
+
 # Make sure the generated source base dirs exist. Not all modules have generated
 # source in all of these directories and because of timing, all of them might not
 # exist at the time this makefile gets called. Javac will complain if there are
 # missing directories in the moduleclasspath.
 $(call MakeDir, $(GENERATED_SRC_DIRS))
 
-$(eval $(call SetupJavaCompilation,$(MODULE), \
+$(eval $(call SetupJavaCompilation, $(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
     SRC := $(wildcard $(MODULE_SRC_DIRS)), \
     INCLUDES := $(JDK_USER_DEFINED_FILTER),\
     BIN := $(if $($(MODULE)_BIN), $($(MODULE)_BIN), $(JDK_OUTPUTDIR)/modules), \
-    HEADERS := $(HEADERS_OUTPUTDIR), \
+    HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
@@ -545,8 +572,9 @@ TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
 # use the macro to find the correct target file to depend on.
 # Only the javac compilation actually depends on other modules so limit
 # dependency declaration to that by using the *_COMPILE_TARGET variable.
-$($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
-    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules/$d))
+$($(MODULE)_COMPILE_TARGET): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
+    $(call SetupJavaCompilationCompileTarget, $d, \
+        $(if $($d_BIN), $($d_BIN), $(JDK_OUTPUTDIR)/modules/$d)))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW
@@ -583,7 +611,7 @@ ifneq ($(wildcard $(IMPORT_MODULES_CLASSES)/$(MODULE)), )
 
   # Add this dependency to avoid a race between compiling module-info.java and
   # importing the classes.
-  $($(MODULE)_COMPILE_TARGETS): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
+  $($(MODULE)_COMPILE_TARGET): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
 endif
 
 ################################################################################

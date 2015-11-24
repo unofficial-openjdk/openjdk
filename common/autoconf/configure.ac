@@ -39,7 +39,6 @@ m4_include([build-aux/pkg.m4])
 # Include these first...
 m4_include([basics.m4])
 m4_include([basics_windows.m4])
-m4_include([builddeps.m4])
 # ... then the rest
 m4_include([boot-jdk.m4])
 m4_include([build-performance.m4])
@@ -121,12 +120,6 @@ PKG_PROG_PKG_CONFIG
 # After basic tools have been setup, we can check build os specific details.
 PLATFORM_SETUP_OPENJDK_BUILD_OS_VERSION
 
-# Setup builddeps, for automatic downloading of tools we need.
-# This is needed before we can call BDEPS_CHECK_MODULE, which is done in
-# boot-jdk setup, but we need to have basic tools setup first.
-BDEPS_CONFIGURE_BUILDDEPS
-BDEPS_SCAN_FOR_BUILDDEPS
-
 ###############################################################################
 #
 # Determine OpenJDK variants, options and version numbers.
@@ -168,6 +161,11 @@ SRCDIRS_SETUP_IMPORT_MODULES
 # First determine the toolchain type (compiler family)
 TOOLCHAIN_DETERMINE_TOOLCHAIN_TYPE
 
+# User supplied flags should be used when configure detects compilers
+FLAGS_SETUP_USER_SUPPLIED_FLAGS
+# The sysroot cflags are needed for configure to be able to run the compilers
+FLAGS_SETUP_SYSROOT_FLAGS
+
 # Then detect the actual binaries needed
 TOOLCHAIN_PRE_DETECTION
 TOOLCHAIN_DETECT_TOOLCHAIN_CORE
@@ -195,7 +193,6 @@ FLAGS_SETUP_COMPILER_FLAGS_FOR_LIBS
 FLAGS_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION
 FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK
 FLAGS_SETUP_COMPILER_FLAGS_MISC
-FLAGS_SETUP_BUILD_COMPILER_FLAGS
 
 # Setup debug symbols (need objcopy from the toolchain for that)
 JDKOPT_SETUP_DEBUG_SYMBOLS
@@ -210,14 +207,8 @@ JDKOPT_SETUP_CODE_COVERAGE
 # After we have toolchain, we can compile fixpath. It's needed by the lib checks.
 BASIC_COMPILE_FIXPATH
 
-LIB_SETUP_INIT
-LIB_SETUP_X11
-LIB_SETUP_CUPS
-LIB_SETUP_FREETYPE
-LIB_SETUP_ALSA
-LIB_SETUP_MISC_LIBS
-LIB_SETUP_STATIC_LINK_LIBSTDCPP
-LIB_SETUP_ON_WINDOWS
+LIB_DETERMINE_DEPENDENCIES
+LIB_SETUP_LIBRARIES
 
 ###############################################################################
 #

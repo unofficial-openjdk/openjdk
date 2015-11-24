@@ -39,7 +39,9 @@ JAVAC_WARNINGS := -Xlint:all -Werror
 $(eval $(call SetupJavaCompiler,BOOT_JAVAC, \
     JAVAC := $(JAVAC), \
     FLAGS := $(BOOT_JDK_SOURCETARGET) -XDignore.symbol.file=true -g \
-        -Xlint:all$(COMMA)-deprecation$(COMMA)-options -Werror))
+        -Xlint:all$(COMMA)-deprecation$(COMMA)-options -Werror, \
+    DISABLE_SJAVAC := true, \
+))
 
 # Any java code executed during a JDK build to build other parts of the JDK must be
 # executed by the bootstrap JDK (probably with -Xbootclasspath/p: ) and for this

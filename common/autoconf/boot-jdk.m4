@@ -73,25 +73,25 @@ AC_DEFUN([BOOTJDK_DO_CHECK],
           AC_MSG_NOTICE([(This might be an JRE instead of an JDK)])
           BOOT_JDK_FOUND=no
         else
-            # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-            BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
-            # Extra M4 quote needed to protect [] in grep expression.
-            [FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`]
-            if test "x$FOUND_CORRECT_VERSION" = x; then
-              AC_MSG_NOTICE([Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring])
-              AC_MSG_NOTICE([(Your Boot JDK must be version 8 or 9)])
-              BOOT_JDK_FOUND=no
-            else
-              # We're done! :-)
-              BOOT_JDK_FOUND=yes
-              BASIC_FIXUP_PATH(BOOT_JDK)
-              AC_MSG_CHECKING([for Boot JDK])
-              AC_MSG_RESULT([$BOOT_JDK])
-              AC_MSG_CHECKING([Boot JDK version])
-              BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $TR '\n\r' '  '`
-              AC_MSG_RESULT([$BOOT_JDK_VERSION])
-            fi # end check jdk version
+          # Extra M4 quote needed to protect [] in grep expression.
+          [FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`]
+          if test "x$FOUND_CORRECT_VERSION" = x; then
+            AC_MSG_NOTICE([Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring])
+            AC_MSG_NOTICE([(Your Boot JDK must be version 8 or 9)])
+            BOOT_JDK_FOUND=no
+          else
+            # We're done! :-)
+            BOOT_JDK_FOUND=yes
+            BASIC_FIXUP_PATH(BOOT_JDK)
+            AC_MSG_CHECKING([for Boot JDK])
+            AC_MSG_RESULT([$BOOT_JDK])
+            AC_MSG_CHECKING([Boot JDK version])
+            BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $TR '\n\r' '  '`
+            AC_MSG_RESULT([$BOOT_JDK_VERSION])
+          fi # end check jdk version
         fi # end check javac
       fi # end check java
     fi # end check boot jdk found
@@ -106,12 +106,6 @@ AC_DEFUN([BOOTJDK_CHECK_ARGUMENTS],
     BOOT_JDK_FOUND=maybe
     AC_MSG_NOTICE([Found potential Boot JDK using configure arguments])
   fi
-])
-
-# Test: Is bootjdk available from builddeps?
-AC_DEFUN([BOOTJDK_CHECK_BUILDDEPS],
-[
-  BDEPS_CHECK_MODULE(BOOT_JDK, bootjdk, xxx, [BOOT_JDK_FOUND=maybe], [BOOT_JDK_FOUND=no])
 ])
 
 # Test: Is $JAVA_HOME set?
@@ -276,9 +270,6 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK],
     AC_MSG_ERROR([The path given by --with-boot-jdk does not contain a valid Boot JDK])
   fi
 
-  # Test: Is bootjdk available from builddeps?
-  BOOTJDK_DO_CHECK([BOOTJDK_CHECK_BUILDDEPS])
-
   # Test: On MacOS X, can we find a boot jdk using /usr/libexec/java_home?
   BOOTJDK_DO_CHECK([BOOTJDK_CHECK_MACOSX_JAVA_LOCATOR])
 
@@ -314,7 +305,7 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK],
   BOOT_JDK_SOURCETARGET="-source 8 -target 8"
   AC_SUBST(BOOT_JDK_SOURCETARGET)
 
-  ADD_JVM_ARG_IF_OK([-Xoverride:], dummy, [$JAVA])
+  ADD_JVM_ARG_IF_OK([-Xpatch:], dummy, [$JAVA])
   AC_MSG_CHECKING([if Boot JDK supports modules])
   if test "x$JVM_ARG_OK" = "xtrue"; then
     AC_MSG_RESULT([yes])
@@ -326,6 +317,16 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK],
   AC_SUBST(BOOT_JDK_MODULAR)
 
   AC_SUBST(JAVAC_FLAGS)
+
+  # Check if the boot jdk is 32 or 64 bit
+  if "$JAVA" -d64 -version > /dev/null 2>&1; then
+    BOOT_JDK_BITS="64"
+  else
+    BOOT_JDK_BITS="32"
+  fi
+  AC_MSG_CHECKING([if Boot JDK is 32 or 64 bits])
+  AC_MSG_RESULT([$BOOT_JDK_BITS])
+  AC_SUBST(BOOT_JDK_BITS)
 ])
 
 AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
@@ -362,7 +363,7 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
   # Maximum amount of heap memory.
   # Maximum stack size.
   JVM_MAX_HEAP=`expr $MEMORY_SIZE / 2`
-  if test "x$BUILD_NUM_BITS" = x32; then
+  if test "x$BOOT_JDK_BITS" = "x32"; then
     if test "$JVM_MAX_HEAP" -gt "1100"; then
       JVM_MAX_HEAP=1100
     elif test "$JVM_MAX_HEAP" -lt "512"; then
@@ -370,10 +371,7 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
     fi
     STACK_SIZE=768
   else
-    # Running Javac on a JVM on a 64-bit machine, takes more space since 64-bit
-    # pointers are used. Apparently, we need to increase the heap and stack
-    # space for the jvm. More specifically, when running javac to build huge
-    # jdk batch
+    # Running a 64 bit JVM allows for and requires a bigger heap
     if test "$JVM_MAX_HEAP" -gt "1600"; then
       JVM_MAX_HEAP=1600
     elif test "$JVM_MAX_HEAP" -lt "512"; then
