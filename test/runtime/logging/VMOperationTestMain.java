@@ -19,28 +19,25 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/**
- * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
- */
+import java.lang.ref.WeakReference;
 
-public class TestCastIINoLoopLimitCheck {
+public class VMOperationTestMain {
+    public static byte[] garbage;
+    public static volatile WeakReference<Object> weakref;
 
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
+    public static void createweakref() {
+        Object o = new Object();
+        weakref = new WeakReference<>(o);
     }
 
-    static public void main(String[] args) {
-        m(0, 0, null);
+    // Loop until a GC runs.
+    public static void main(String[] args) throws Exception {
+        createweakref();
+        while (weakref.get() != null) {
+            garbage = new byte[8192];
+            System.gc();
+        }
     }
 }
