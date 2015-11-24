@@ -35,6 +35,31 @@ ifeq (,$(_MAKEBASE_GMK))
 endif
 
 ################################################################################
+# Create exported symbols file for static libraries
+################################################################################
+
+# get the exported symbols from mapfiles and if there
+# is no mapfile, get them from the archive
+define GetSymbols
+  $(RM) $$(@D)/$$(basename $$(@F)).symbols; \
+  if [ ! -z $$($1_MAPFILE) -a -e $$($1_MAPFILE) ]; then \
+    $(ECHO) "Getting symbols from mapfile $$($1_MAPFILE)"; \
+    $(AWK) '/global:/','/local:/' $$($1_MAPFILE) | \
+        $(SED) -e 's/#.*//;s/global://;s/local://;s/\;//;s/^[ 	]*/_/;/^_$$$$/d' | \
+        $(EGREP) -v "JNI_OnLoad|JNI_OnUnload|Agent_OnLoad|Agent_OnUnload|Agent_OnAttach" > \
+        $$(@D)/$$(basename $$(@F)).symbols || true; \
+    $(NM) $$($1_TARGET) | $(GREP)  " T " | \
+        $(EGREP) "JNI_OnLoad|JNI_OnUnload|Agent_OnLoad|Agent_OnUnload|Agent_OnAttach" | \
+        $(CUT) -d ' ' -f 3 >>  $$(@D)/$$(basename $$(@F)).symbols || true;\
+  else \
+    $(ECHO) "Getting symbols from nm"; \
+    $(NM) -m $$($1_TARGET) | $(GREP)  "__TEXT" | \
+        $(EGREP) -v "non-external|private extern|__TEXT,__eh_frame" | \
+        $(SED) -e  's/.* //' > $$(@D)/$$(basename $$(@F)).symbols; \
+  fi
+endef
+
+################################################################################
 # Define a native toolchain configuration that can be used by
 # SetupNativeCompilation calls
 #
@@ -49,6 +74,7 @@ endif
 #   AS - Assembler
 #   MT - Windows MT tool
 #   RC - Windows RC tool
+#   STRIP - The tool to use for stripping debug symbols
 #   SYSROOT_CFLAGS - Compiler flags for using the specific sysroot
 #   SYSROOT_LDFLAGS - Linker flags for using the specific sysroot
 DefineNativeToolchain = $(NamedParamsMacroTemplate)
@@ -64,6 +90,7 @@ define DefineNativeToolchainBody
     $$(call SetIfEmpty, $1_AS, $$($$($1_EXTENDS)_AS))
     $$(call SetIfEmpty, $1_MT, $$($$($1_EXTENDS)_MT))
     $$(call SetIfEmpty, $1_RC, $$($$($1_EXTENDS)_RC))
+    $$(call SetIfEmpty, $1_STRIP, $$($$($1_EXTENDS)_STRIP))
     $$(call SetIfEmpty, $1_SYSROOT_CFLAGS, $$($$($1_EXTENDS)_SYSROOT_CFLAGS))
     $$(call SetIfEmpty, $1_SYSROOT_LDFLAGS, $$($$($1_EXTENDS)_SYSROOT_LDFLAGS))
   endif
@@ -78,6 +105,7 @@ $(eval $(call DefineNativeToolchain, TOOLCHAIN_DEFAULT, \
     AS := $(AS), \
     MT := $(MT), \
     RC := $(RC), \
+    STRIP := $(STRIP), \
     SYSROOT_CFLAGS := $(SYSROOT_CFLAGS), \
     SYSROOT_LDFLAGS := $(SYSROOT_LDFLAGS), \
 ))
@@ -102,7 +130,7 @@ $(eval $(call DefineNativeToolchain, TOOLCHAIN_BUILD, \
 ################################################################################
 
 # Extensions of files handled by this macro.
-NATIVE_SOURCE_EXTENSIONS := %.s %.c %.cpp %.m %.mm
+NATIVE_SOURCE_EXTENSIONS := %.s %.c %.cpp %.cc %.m %.mm
 
 # Replaces native source extensions with the object file extension in a string.
 # Param 1: the string containing source file names with extensions
@@ -167,7 +195,7 @@ define add_native_source
     $1_$2_FLAGS=$8 -DTHIS_FILE='"$$(<F)"'
     $1_$2_COMP=$(AS)
     $1_$2_DEP_FLAG:=
-  else ifneq (,$$(filter %.cpp,$2)$$(filter %.mm,$2))
+  else ifneq (,$$(filter %.cpp,$2)$$(filter %.cc,$2)$$(filter %.mm,$2))
     # Compile as a C++ or Objective-C++ file
     $1_$2_FLAGS=$(CFLAGS_CCACHE) $6 $$($1_$(notdir $2)_CXXFLAGS) -DTHIS_FILE='"$$(<F)"' -c
     $1_$2_COMP=$7
@@ -204,30 +232,32 @@ define add_native_source
           ifeq ($(TOOLCHAIN_TYPE)$$(filter %.s,$2), solstudio)
             # The Solaris studio compiler doesn't output the full path to the object file in the
             # generated deps files. Fixing it with sed. If compiling assembly, don't try this.
-	    $(call LogFailures, $$($1_$2_OBJ).log, $1_$$(notdir $2), \
+	    $(call LogFailures, $$($1_$2_OBJ).log, $$($1_SAFE_NAME)_$$(notdir $2), \
 	        $$($1_$2_COMP) $$($1_$2_FLAGS) $$($1_$2_DEP_FLAG) $$($1_$2_DEP).tmp $(CC_OUT_OPTION)$$($1_$2_OBJ) $2)
 	    $(SED) 's|^$$(@F):|$$@:|' $$($1_$2_DEP).tmp > $$($1_$2_DEP)
           else
-	    $(call LogFailures, $$($1_$2_OBJ).log, $1_$$(notdir $2), \
+	    $(call LogFailures, $$($1_$2_OBJ).log, $$($1_SAFE_NAME)_$$(notdir $2), \
 	        $$($1_$2_COMP) $$($1_$2_FLAGS) $$($1_$2_DEP_FLAG) $$($1_$2_DEP) $(CC_OUT_OPTION)$$($1_$2_OBJ) $2)
+          endif
+          # Create a dependency target file from the dependency file.
+          # Solution suggested by http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
+          ifneq ($$($1_$2_DEP),)
+	    $(SED) $(DEPENDENCY_TARGET_SED_PATTERN) $$($1_$2_DEP) > $$($1_$2_DEP_TARGETS)
           endif
         else
           # The Visual Studio compiler lacks a feature for generating make dependencies, but by
           # setting -showIncludes, all included files are printed. These are filtered out and
           # parsed into make dependences.
-	  ($(call LogFailures, $$($1_$2_OBJ).log, $1_$$(notdir $2), \
+          # Keep as much as possible on one execution line for best performance on Windows
+	  ($(call LogFailures, $$($1_$2_OBJ).log, $$($1_SAFE_NAME)_$$(notdir $2), \
 	      $$($1_$2_COMP) $$($1_$2_FLAGS) -showIncludes $$($1_$2_DEBUG_OUT_FLAGS) \
 	          $(CC_OUT_OPTION)$$($1_$2_OBJ) $2) ; echo $$$$? > $$($1_$2_DEP).exitvalue) \
 	      | $(TEE) $$($1_$2_DEP).raw | $(GREP) -v -e "^Note: including file:" \
 	          -e "^$(notdir $2)$$$$" || test "$$$$?" = "1" ; \
-	      exit `cat $$($1_$2_DEP).exitvalue`
-	  $(RM) $$($1_$2_DEP).exitvalue
-	  ($(ECHO) $$@: \\ \
-	  && $(SED) $(WINDOWS_SHOWINCLUDE_SED_PATTERN) $$($1_$2_DEP).raw) | $(SORT) -u > $$($1_$2_DEP)
-        endif
-        # Create a dependency target file from the dependency file.
-        # Solution suggested by http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
-        ifneq ($$($1_$2_DEP),)
+	      exit `cat $$($1_$2_DEP).exitvalue` ; \
+	  $(RM) $$($1_$2_DEP).exitvalue ; \\
+	  ($(ECHO) $$@: \\ ; \
+	  $(SED) $(WINDOWS_SHOWINCLUDE_SED_PATTERN) $$($1_$2_DEP).raw) | $(SORT) -u > $$($1_$2_DEP) ; \
 	  $(SED) $(DEPENDENCY_TARGET_SED_PATTERN) $$($1_$2_DEP) > $$($1_$2_DEP_TARGETS)
         endif
   endif
@@ -245,8 +275,7 @@ endef
 #   CFLAGS the compiler flags to be used, used both for C and C++.
 #   CXXFLAGS the compiler flags to be used for c++, if set overrides CFLAGS.
 #   LDFLAGS the linker flags to be used, used both for C and C++.
-#   LDFLAGS_SUFFIX the linker flags to be added last on the commandline
-#       typically the libraries linked to.
+#   LIBS the libraries to link to
 #   ARFLAGS the archiver flags to be used
 #   OBJECT_DIR the directory where we store the object files
 #   LIBRARY the resulting library file
@@ -265,8 +294,19 @@ endef
 #   LD the linker to use, default is $(LD)
 #   OPTIMIZATION sets optimization level to NONE, LOW, HIGH, HIGHEST
 #   DISABLED_WARNINGS_<toolchain> Disable the given warnings for the specified toolchain
+#   STRIP_SYMBOLS Set to true to strip the final binary if the toolchain allows for it
+#   STRIPFLAGS Optionally change the flags given to the strip command
 SetupNativeCompilation = $(NamedParamsMacroTemplate)
 define SetupNativeCompilationBody
+
+  # If we're doing a static build and producing a library
+  # force it to be a static library and remove the -l libraries
+  ifeq ($(STATIC_BUILD), true)
+    ifneq ($$($1_LIBRARY),)
+      $1_STATIC_LIBRARY := $$($1_LIBRARY)
+      $1_LIBRARY :=
+    endif
+  endif
 
   ifneq (,$$($1_BIN))
     $$(error BIN has been replaced with OBJECT_DIR)
@@ -353,6 +393,7 @@ define SetupNativeCompilationBody
     $1_TARGET:=$$($1_OUTPUT_DIR)/$$($1_BASENAME)
     $1_NOSUFFIX:=$$($1_PROGRAM)
   endif
+  $1_SAFE_NAME := $$(strip $$(subst /,_, $1))
 
   ifeq (,$$($1_TARGET))
     $$(error Neither PROGRAM, LIBRARY nor STATIC_LIBRARY has been specified for SetupNativeCompilation)
@@ -367,6 +408,7 @@ define SetupNativeCompilationBody
   $$(call SetIfEmpty, $1_AS, $$($$($1_TOOLCHAIN)_AS))
   $$(call SetIfEmpty, $1_MT, $$($$($1_TOOLCHAIN)_MT))
   $$(call SetIfEmpty, $1_RC, $$($$($1_TOOLCHAIN)_RC))
+  $$(call SetIfEmpty, $1_STRIP, $$($$($1_TOOLCHAIN)_STRIP))
   $$(call SetIfEmpty, $1_SYSROOT_CFLAGS, $$($$($1_TOOLCHAIN)_SYSROOT_CFLAGS))
   $$(call SetIfEmpty, $1_SYSROOT_LDFLAGS, $$($$($1_TOOLCHAIN)_SYSROOT_LDFLAGS))
 
@@ -413,6 +455,10 @@ define SetupNativeCompilationBody
   endif
 
   $1_SRCS += $$($1_EXTRA_FILES)
+
+  ifeq (,$$($1_SRCS))
+    $$(error No sources found for $1 when looking inside the dirs $$($1_SRC))
+  endif
 
   # Calculate the expected output from compiling the sources (sort to remove duplicates. Also provides
   # a reproducable order on the input files to the linker).
@@ -483,6 +529,12 @@ define SetupNativeCompilationBody
     $1_EXTRA_CXXFLAGS += $$(CXX_FLAG_REORDER)
   endif
 
+  # Pass the library name for static JNI library naming
+  ifneq ($$($1_STATIC_LIBRARY),)
+    $1_EXTRA_CFLAGS += -DLIBRARY_NAME=$$($1_STATIC_LIBRARY)
+    $1_EXTRA_CXXFLAGS += -DLIBRARY_NAME=$$($1_STATIC_LIBRARY)
+  endif
+
   # Pick up disabled warnings, if possible on this platform.
   ifneq ($(DISABLE_WARNING_PREFIX),)
     $1_EXTRA_CFLAGS += $$(addprefix $(DISABLE_WARNING_PREFIX), $$($1_DISABLED_WARNINGS_$(TOOLCHAIN_TYPE)))
@@ -549,8 +601,8 @@ define SetupNativeCompilationBody
         else
 	  $(ECHO) $$(strip 'Updating $$($1_BASENAME)' \
 	      $$(if $$(filter-out %.vardeps, $$?), \
-	        'from $$(words $$(filter-out %.vardeps, $$?)) file(s)') \
-	      $$(if $$(filter %.vardeps, $$?), 'due to makefile changes'))
+	        'due to $$(words $$(filter-out %.vardeps, $$?)) file(s)', \
+	      $$(if $$(filter %.vardeps, $$?), 'due to makefile changes')))
         endif
 	$(TOUCH) $$@
 
@@ -597,9 +649,9 @@ define SetupNativeCompilationBody
   endif
 
   # Pickup extra OPENJDK_TARGET_OS_TYPE and/or OPENJDK_TARGET_OS dependent variables
-  # for LDFLAGS and LDFLAGS_SUFFIX
+  # for LDFLAGS and LIBS
   $1_EXTRA_LDFLAGS:=$$($1_LDFLAGS_$(OPENJDK_TARGET_OS_TYPE)) $$($1_LDFLAGS_$(OPENJDK_TARGET_OS))
-  $1_EXTRA_LDFLAGS_SUFFIX:=$$($1_LDFLAGS_SUFFIX_$(OPENJDK_TARGET_OS_TYPE)) $$($1_LDFLAGS_SUFFIX_$(OPENJDK_TARGET_OS))
+  $1_EXTRA_LIBS:=$$($1_LIBS_$(OPENJDK_TARGET_OS_TYPE)) $$($1_LIBS_$(OPENJDK_TARGET_OS))
   ifneq (,$$($1_REAL_MAPFILE))
     $1_EXTRA_LDFLAGS += $(call SET_SHARED_LIBRARY_MAPFILE,$$($1_REAL_MAPFILE))
   endif
@@ -623,29 +675,12 @@ define SetupNativeCompilationBody
                 "-map:$$($1_OBJECT_DIR)/$$($1_NOSUFFIX).map"
             $1_DEBUGINFO_FILES := $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).pdb \
                 $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).map
+            # No separate command is needed for debuginfo on windows, instead
+            # touch target to make sure it has a later time stamp than the debug
+            # symbol files to avoid unnecessary relinking on rebuild.
+            $1_CREATE_DEBUGINFO_CMDS := $(TOUCH) $$($1_TARGET)
 
-          else ifeq ($(OPENJDK_TARGET_OS), solaris)
-            $1_DEBUGINFO_FILES := $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).debuginfo
-            # Setup the command line creating debuginfo files, to be run after linking.
-            # It cannot be run separately since it updates the original target file
-            #
-            # gobjcopy crashes on "empty" section headers with the SHF_ALLOC flag set.
-            # Use $(FIX_EMPTY_SEC_HDR_FLAGS) to clear the SHF_ALLOC flag (if set) from
-            # empty section headers until a fixed $(OBJCOPY) is available.
-            # An empty section header has sh_addr == 0 and sh_size == 0.
-            # This problem has only been seen on Solaris X64, but we call this tool
-            # on all Solaris builds just in case.
-            #
-            # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
-            # Use $(ADD_GNU_DEBUGLINK) until a fixed $(OBJCOPY) is available.
-            $1_CREATE_DEBUGINFO_CMDS := \
-                $(FIX_EMPTY_SEC_HDR_FLAGS) $(LOG_INFO) $$($1_TARGET) $$(NEWLINE) \
-                $(OBJCOPY) --only-keep-debug $$($1_TARGET) $$($1_DEBUGINFO_FILES) $$(NEWLINE) \
-                $(CD) $$($1_OUTPUT_DIR) && \
-                    $(ADD_GNU_DEBUGLINK) $(LOG_INFO) $$($1_DEBUGINFO_FILES) $$($1_TARGET)
-            $1_DEBUGINFO_EXTRA_DEPS := $(FIX_EMPTY_SEC_HDR_FLAGS) $(ADD_GNU_DEBUGLINK)
-
-          else ifeq ($(OPENJDK_TARGET_OS), linux)
+          else ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
             $1_DEBUGINFO_FILES := $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).debuginfo
             # Setup the command line creating debuginfo files, to be run after linking.
             # It cannot be run separately since it updates the original target file
@@ -653,7 +688,6 @@ define SetupNativeCompilationBody
                 $(OBJCOPY) --only-keep-debug $$($1_TARGET) $$($1_DEBUGINFO_FILES) $$(NEWLINE) \
                 $(CD) $$($1_OUTPUT_DIR) && \
                     $(OBJCOPY) --add-gnu-debuglink=$$($1_DEBUGINFO_FILES) $$($1_TARGET)
-
           endif # No MacOS X support
 
           # This dependency dance ensures that debug info files get rebuilt
@@ -679,6 +713,14 @@ define SetupNativeCompilationBody
     endif # $1_DEBUG_SYMBOLS
   endif # !STATIC_LIBRARY
 
+  ifeq ($$($1_STRIP_SYMBOLS), true)
+    ifneq ($$($1_STRIP), )
+      # Default to using the global STRIPFLAGS. Allow for overriding with an empty value
+      $1_STRIPFLAGS ?= $(STRIPFLAGS)
+      $1_STRIP_CMD := $$($1_STRIP) $$($1_STRIPFLAGS) $$($1_TARGET)
+    endif
+  endif
+
   ifneq (,$$($1_LIBRARY))
     # Generating a dynamic library.
     $1_EXTRA_LDFLAGS += $$(call SET_SHARED_LIBRARY_NAME,$$($1_BASENAME))
@@ -686,22 +728,24 @@ define SetupNativeCompilationBody
       $1_EXTRA_LDFLAGS += "-implib:$$($1_OBJECT_DIR)/$$($1_LIBRARY).lib"
     endif
 
-    $1_EXTRA_LDFLAGS_SUFFIX += $(GLOBAL_LDFLAGS_SUFFIX)
+    $1_EXTRA_LIBS += $(GLOBAL_LIBS)
 
     $1_VARDEPS := $$($1_LD) $$($1_SYSROOT_LDFLAGS) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) \
-        $$($1_LDFLAGS_SUFFIX) $$($1_EXTRA_LDFLAGS_SUFFIX) $$($1_CREATE_DEBUGINFO_CMDS)
+        $$($1_LIBS) $$($1_EXTRA_LIBS) $$($1_CREATE_DEBUGINFO_CMDS) \
+        $$($1_STRIP_CMD)
     $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
         $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).vardeps)
 
     $$($1_TARGET): $$($1_EXPECTED_OBJS) $$($1_RES) $$($1_REAL_MAPFILE) \
-        $$($1_DEBUGINFO_EXTRA_DEPS) $$($1_VARDEPS_FILE)
-		$(ECHO) $(LOG_INFO) "Linking $$($1_BASENAME)"
-		$(call LogFailures, $$($1_OBJECT_DIR)/$1_link.log, $1_link, \
+        $$($1_VARDEPS_FILE)
+		$(ECHO) $(LOG_INFO) "Linking $$($1_BASENAME)" ; \
+		$(call LogFailures, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link.log, $$($1_SAFE_NAME)_link, \
 		    $$($1_LD) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) $$($1_SYSROOT_LDFLAGS) \
 		    $(LD_OUT_OPTION)$$@ \
 		    $$($1_EXPECTED_OBJS) $$($1_RES) \
-		    $$($1_LDFLAGS_SUFFIX) $$($1_EXTRA_LDFLAGS_SUFFIX))
+		    $$($1_LIBS) $$($1_EXTRA_LIBS)) ; \
 		$$($1_CREATE_DEBUGINFO_CMDS)
+		$$($1_STRIP_CMD)
                 # Touch target to make sure it has a later time stamp than the debug
                 # symbol files to avoid unnecessary relinking on rebuild.
                 ifeq ($(OPENJDK_TARGET_OS), windows)
@@ -711,37 +755,41 @@ define SetupNativeCompilationBody
   endif
 
   ifneq (,$$($1_STATIC_LIBRARY))
-    $1_VARDEPS := $$($1_AR) $$($1_ARFLAGS) $$($1_LDFLAGS_SUFFIX) \
-        $$($1_EXTRA_LDFLAGS_SUFFIX)
+    $1_VARDEPS := $$($1_AR) $$($1_ARFLAGS) $$($1_LIBS) \
+        $$($1_EXTRA_LIBS)
     $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
         $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).vardeps)
 
     # Generating a static library, ie object file archive.
     $$($1_TARGET): $$($1_EXPECTED_OBJS) $$($1_RES) $$($1_VARDEPS_FILE)
 	$(ECHO) $(LOG_INFO) "Archiving $$($1_STATIC_LIBRARY)"
-	$(call LogFailures, $$($1_OBJECT_DIR)/$1_link.log, $1_link, \
+	$(call LogFailures, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link.log, $$($1_SAFE_NAME)_link, \
 	    $$($1_AR) $$($1_ARFLAGS) $(AR_OUT_OPTION)$$($1_TARGET) $$($1_EXPECTED_OBJS) \
-	        $$($1_RES) $$($1_LDFLAGS_SUFFIX) $$($1_EXTRA_LDFLAGS_SUFFIX))
+	        $$($1_RES))
+        ifeq ($(STATIC_BUILD), true)
+	  $(GetSymbols)
+        endif
   endif
 
   ifneq (,$$($1_PROGRAM))
     # A executable binary has been specified, setup the target for it.
-    $1_EXTRA_LDFLAGS_SUFFIX += $(GLOBAL_LDFLAGS_SUFFIX)
+    $1_EXTRA_LIBS += $(GLOBAL_LIBS)
 
     $1_VARDEPS := $$($1_LD) $$($1_SYSROOT_LDFLAGS) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) \
-        $$($1_LDFLAGS_SUFFIX) $$($1_EXTRA_LDFLAGS_SUFFIX) $$($1_MT) \
-        $$($1_CODESIGN) $$($1_CREATE_DEBUGINFO_CMDS) $$($1_MANIFEST_VERSION)
+        $$($1_LIBS) $$($1_EXTRA_LIBS) $$($1_MT) \
+        $$($1_CODESIGN) $$($1_CREATE_DEBUGINFO_CMDS) $$($1_MANIFEST_VERSION) \
+        $$($1_STRIP_CMD)
     $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
         $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).vardeps)
 
     $$($1_TARGET): $$($1_EXPECTED_OBJS) $$($1_RES) $$($1_MANIFEST) \
-        $$($1_DEBUGINFO_EXTRA_DEPS) $$($1_VARDEPS_FILE)
-		$(ECHO) $(LOG_INFO) "Linking executable $$($1_BASENAME)"
-		$(call LogFailures, $$($1_OBJECT_DIR)/$1_link.log, $1_link, \
+        $$($1_VARDEPS_FILE)
+		$(ECHO) $(LOG_INFO) "Linking executable $$($1_BASENAME)" ; \
+		$(call LogFailures, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link.log, $$($1_SAFE_NAME)_link, \
 		    $$($1_LD) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) $$($1_SYSROOT_LDFLAGS) \
 		        $(EXE_OUT_OPTION)$$($1_TARGET) \
 		        $$($1_EXPECTED_OBJS) $$($1_RES) \
-		        $$($1_LDFLAGS_SUFFIX) $$($1_EXTRA_LDFLAGS_SUFFIX))
+		        $$($1_LIBS) $$($1_EXTRA_LIBS))
                 ifeq ($(OPENJDK_TARGET_OS), windows)
                   ifneq ($$($1_MANIFEST), )
 		    $$($1_MT) -nologo -manifest $$($1_MANIFEST) -identity:"$$($1_PROGRAM).exe, version=$$($1_MANIFEST_VERSION)" -outputresource:$$@;#1
@@ -755,6 +803,7 @@ define SetupNativeCompilationBody
                   endif
                 endif
 		$$($1_CREATE_DEBUGINFO_CMDS)
+		$$($1_STRIP_CMD)
                 # Touch target to make sure it has a later time stamp than the debug
                 # symbol files to avoid unnecessary relinking on rebuild.
                 ifeq ($(OPENJDK_TARGET_OS), windows)

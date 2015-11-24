@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -455,19 +455,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
 
   ###############################################################################
   #
-  # --enable-rmiconnector-iiop
-  #
-  AC_ARG_ENABLE(rmiconnector-iiop, [AS_HELP_STRING([--enable-rmiconnector-iiop],
-      [enable the JMX RMIConnector iiop transport  @<:@disabled@:>@])])
-  if test "x$enable_rmiconnector_iiop" = "xyes"; then
-    RMICONNECTOR_IIOP=true
-  else
-    RMICONNECTOR_IIOP=false
-  fi
-  AC_SUBST(RMICONNECTOR_IIOP)
-
-  ###############################################################################
-  #
   # Compress jars
   #
   COMPRESS_JARS=false
@@ -678,3 +665,37 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
 
   AC_SUBST(GCOV_ENABLED)
 ])
+
+################################################################################
+#
+# Static build support.  When enabled will generate static 
+# libraries instead of shared libraries for all JDK libs.
+#
+AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
+[
+  AC_ARG_ENABLE([static-build], [AS_HELP_STRING([--enable-static-build],
+    [enable static library build @<:@disabled@:>@])])
+  STATIC_BUILD=false
+  if test "x$enable_static_build" = "xyes"; then
+    AC_MSG_CHECKING([if static build is enabled])
+    AC_MSG_RESULT([yes])
+    if test "x$OPENJDK_TARGET_OS" != "xmacosx"; then
+      AC_MSG_ERROR([--enable-static-build is only supported for macosx builds])
+    fi
+    STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
+    LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $STATIC_BUILD_CFLAGS"
+    LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $STATIC_BUILD_CFLAGS"
+    CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+    CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+    STATIC_BUILD=true
+  elif test "x$enable_static_build" = "xno"; then
+    AC_MSG_CHECKING([if static build is enabled])
+    AC_MSG_RESULT([no])
+  elif test "x$enable_static_build" != "x"; then
+    AC_MSG_ERROR([--enable-static-build can only be assigned "yes" or "no"])
+  fi
+
+  AC_SUBST(STATIC_BUILD)
+])
+
+

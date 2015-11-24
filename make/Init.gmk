@@ -50,7 +50,8 @@ ifeq ($(HAS_SPEC),)
   include $(topdir)/make/Help.gmk
 
   # Targets provided by Init.gmk.
-  ALL_INIT_TARGETS := print-modules print-targets reconfigure
+  ALL_INIT_TARGETS := print-modules print-targets print-configuration \
+      reconfigure pre-compare-build post-compare-build
 
   # CALLED_TARGETS is the list of targets that the user provided,
   # or "default" if unspecified.
@@ -136,7 +137,9 @@ ifeq ($(HAS_SPEC),)
 
     # The spec files depend on the autoconf source code. This check makes sure
     # the configuration is up to date after changes to configure.
-    $(SPECS): $(wildcard $(topdir)/common/autoconf/*)
+    CUSTOM_CONFIG_DIR ?= $(topdir)/closed/autoconf
+
+    $(SPECS): $(wildcard $(topdir)/common/autoconf/*) $(wildcard $(CUSTOM_CONFIG_DIR)/*)
         ifeq ($(CONF_CHECK), fail)
 	  @echo "Error: The configuration is not up to date for '$(lastword $(subst /, , $(dir $@)))'."
 	  $(call PrintConfCheckFailed)
@@ -163,25 +166,39 @@ ifeq ($(HAS_SPEC),)
 	      $(COMMAND_LINE_VARIABLES) $(MAKECMDGOALS))')
         endif
 
+    MAKE_INIT_WITH_SPEC_ARGUMENTS := ACTUAL_TOPDIR=$(topdir) \
+        USER_MAKE_VARS="$(USER_MAKE_VARS)" MAKE_LOG_FLAGS=$(MAKE_LOG_FLAGS) \
+        LOG_LEVEL=$(LOG_LEVEL) LOG_NOFILE=$(LOG_NOFILE) \
+        INIT_TARGETS="$(INIT_TARGETS)" \
+        SEQUENTIAL_TARGETS="$(SEQUENTIAL_TARGETS)" \
+        PARALLEL_TARGETS="$(PARALLEL_TARGETS)"
+
     # Now the init and main targets will be called, once for each SPEC. The
     # recipe will be run once for every target specified, but we only want to
     # execute the recipe a single time, hence the TARGET_DONE with a dummy
     # command if true.
+    # The COMPARE_BUILD part implements special support for makefile development.
     $(ALL_INIT_TARGETS) $(ALL_MAIN_TARGETS): make-info
 	@$(if $(TARGET_DONE), \
 	  true \
 	, \
+	  ( cd $(topdir) && \
 	  $(foreach spec, $(SPECS), \
-	    ( cd $(topdir) && \
 	    $(MAKE) $(MFLAGS) $(MAKE_LOG_FLAGS) -r -R -j 1 -f $(topdir)/make/Init.gmk \
-	        SPEC=$(spec) HAS_SPEC=true ACTUAL_TOPDIR=$(topdir) \
-	        USER_MAKE_VARS="$(USER_MAKE_VARS)" MAKE_LOG_FLAGS=$(MAKE_LOG_FLAGS) \
-	        LOG_LEVEL=$(LOG_LEVEL) LOG_NOFILE=$(LOG_NOFILE) \
-	        INIT_TARGETS="$(INIT_TARGETS)" \
-	        SEQUENTIAL_TARGETS="$(SEQUENTIAL_TARGETS)" \
-	        PARALLEL_TARGETS="$(PARALLEL_TARGETS)"  \
-	        main ) && \
-	  ) true \
+	        SPEC=$(spec) HAS_SPEC=true $(MAKE_INIT_WITH_SPEC_ARGUMENTS) \
+	        main && \
+	    $(if $(and $(COMPARE_BUILD), $(PARALLEL_TARGETS)), \
+	        $(MAKE) $(MFLAGS) $(MAKE_LOG_FLAGS) -r -R -f $(topdir)/make/Init.gmk \
+	            SPEC=$(spec) HAS_SPEC=true ACTUAL_TOPDIR=$(topdir) \
+	            COMPARE_BUILD="$(COMPARE_BUILD)" pre-compare-build && \
+	        $(MAKE) $(MFLAGS) $(MAKE_LOG_FLAGS) -r -R -j 1 -f $(topdir)/make/Init.gmk \
+	            SPEC=$(spec) HAS_SPEC=true $(MAKE_INIT_WITH_SPEC_ARGUMENTS) \
+	            COMPARE_BUILD="$(COMPARE_BUILD)" main && \
+	        $(MAKE) $(MFLAGS) $(MAKE_LOG_FLAGS) -r -R -f $(topdir)/make/Init.gmk \
+	            SPEC=$(spec) HAS_SPEC=true ACTUAL_TOPDIR=$(topdir) \
+	            COMPARE_BUILD="$(COMPARE_BUILD)" post-compare-build && \
+	    ) \
+	  ) true ) \
 	  $(eval TARGET_DONE=true) \
 	)
 
@@ -204,6 +221,9 @@ else # HAS_SPEC=true
 
   # Verify that the spec file we included seems okay.
   $(eval $(call CheckSpecSanity))
+
+  # Parse COMPARE_BUILD (for makefile development)
+  $(eval $(call ParseCompareBuild))
 
   ifeq ($(LOG_NOFILE), true)
     # Disable log wrapper if LOG=[level,]nofile was given
@@ -228,6 +248,9 @@ else # HAS_SPEC=true
 	    $(MAKE) $(MAKE_ARGS) -j 1 -f make/Main.gmk $(USER_MAKE_VARS) \
 	    NO_RECIPES=true print-targets )
 
+  print-configuration:
+	  $(ECHO) $(CONFIGURE_COMMAND_LINE)
+
   reconfigure:
         ifneq ($(CONFIGURE_COMMAND_LINE), )
 	  $(ECHO) "Re-running configure using arguments '$(CONFIGURE_COMMAND_LINE)'"
@@ -241,7 +264,7 @@ else # HAS_SPEC=true
   # The main target, for delegating into Main.gmk
   ##############################################################################
 
-  MAIN_TARGETS := $(SEQUENTIAL_TARGETS) $(PARALLEL_TARGETS)
+  MAIN_TARGETS := $(SEQUENTIAL_TARGETS) $(PARALLEL_TARGETS) $(COMPARE_BUILD_MAKE)
   TARGET_DESCRIPTION := target$(if $(word 2, $(MAIN_TARGETS)),s) \
       '$(strip $(MAIN_TARGETS))' in configuration '$(CONF_NAME)'
 
@@ -266,9 +289,9 @@ else # HAS_SPEC=true
 	    $(call StartGlobalTimer)
 	    $(call PrepareSmartJavac)
 	    ( cd $(TOPDIR) && \
-	        $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) $(OUTPUT_SYNC_FLAG) \
+	        $(BUILD_LOG_WRAPPER) $(NICE) $(MAKE) $(MAKE_ARGS) $(OUTPUT_SYNC_FLAG) \
 	            -j $(JOBS) -f make/Main.gmk $(USER_MAKE_VARS) \
-	            $(PARALLEL_TARGETS) || \
+	            $(PARALLEL_TARGETS) $(COMPARE_BUILD_MAKE) || \
 	        ( exitcode=$$? && $(BUILD_LOG_WRAPPER) \
 	        $(PRINTF) "\nERROR: Build failed for $(TARGET_DESCRIPTION) (exit code $$exitcode) \n" && \
 	        cd $(TOPDIR) && $(MAKE) $(MAKE_ARGS) -j 1 -f make/Init.gmk \
@@ -282,24 +305,20 @@ else # HAS_SPEC=true
         endif
 
     on-failure:
-        ifneq ($(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*), )
-	  $(PRINTF) "=== Output from failing command(s) repeated here ===\n"
-	  $(foreach logfile, $(sort $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*)), \
-	      $(PRINTF) "* For target $(notdir $(basename $(logfile))):\n" $(NEWLINE) \
-	      $(CAT) $(logfile) | $(GREP) -v -e "^Note: including file:" $(NEWLINE) \
-	  )
-	  $(PRINTF) "=== End of repeated output ===\n"
-        endif
-	if $(GREP) -q "recipe for target .* failed" $(BUILD_LOG) 2> /dev/null; then  \
-	  $(PRINTF) "=== Make failure sequence repeated here ===\n" ; \
-	  $(GREP) "recipe for target .* failed" $(BUILD_LOG) ; \
-	  $(PRINTF) "=== End of repeated output ===\n" ; \
-	  $(PRINTF) "Hint: Try searching the build log for the name of the first failed target.\n" ; \
-	else \
-	  $(PRINTF) "No indication of failed target found.\n" ; \
-	  $(PRINTF) "Hint: Try searching the build log for '] Error'.\n" ; \
-	fi
+	$(call PrintFailureReports)
+	$(call PrintBuildLogFailures)
 	$(PRINTF) "Hint: If caused by a warning, try configure --disable-warnings-as-errors.\n\n"
+        ifneq ($(COMPARE_BUILD), )
+	  $(call CleanupCompareBuild)
+        endif
+
+    # Support targets for COMPARE_BUILD, used for makefile development
+    pre-compare-build:
+	$(call PrepareCompareBuild)
+
+    post-compare-build:
+	$(call CleanupCompareBuild)
+	$(call CompareBuildDoComparison)
 
   .PHONY: print-targets print-modules reconfigure main on-failure
 endif

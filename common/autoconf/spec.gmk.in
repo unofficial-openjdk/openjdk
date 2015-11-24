@@ -30,30 +30,16 @@
 #   (called @OPENJDK_BUILD_AUTOCONF_NAME@ by autoconf)
 # using 'configure @CONFIGURE_COMMAND_LINE@'
 
-# When calling macros, the spaces between arguments are
-# often semantically important! Sometimes we need to subst
-# spaces and commas, therefore we need the following macros.
-X:=
-SPACE:=$(X) $(X)
-COMMA:=,
-DOLLAR:=$$
-HASH:=\#
-LEFT_PAREN:=(
-RIGHT_PAREN:=)
-SQUOTE:='
-#'
-DQUOTE:="
-#"
-define NEWLINE
-
-
-endef
-
 # The command line given to configure.
 CONFIGURE_COMMAND_LINE:=@CONFIGURE_COMMAND_LINE@
 
 # A self-referential reference to this file.
 SPEC:=@SPEC@
+
+# SPACE is defined in MakeBase.gmk, but it is also used in := rules here for some
+# toolchains, and is needed if MakeBase.gmk is not included before this file.
+X:=
+SPACE:=$(X) $(X)
 
 # What make to use for main processing, after bootstrapping top-level Makefile.
 MAKE := @MAKE@
@@ -110,7 +96,7 @@ REQUIRED_OS_NAME:=@REQUIRED_OS_NAME@
 REQUIRED_OS_VERSION:=@REQUIRED_OS_VERSION@
 
 @SET_OPENJDK@
-LIBM:=-lm
+LIBM:=@LIBM@
 LIBDL:=@LIBDL@
 
 # colon or semicolon
@@ -126,10 +112,6 @@ endif
 
 SYSROOT_CFLAGS := @SYSROOT_CFLAGS@
 SYSROOT_LDFLAGS := @SYSROOT_LDFLAGS@
-
-# Paths to the source code
-ADD_SRC_ROOT:=@ADD_SRC_ROOT@
-OVERRIDE_SRC_ROOT:=@OVERRIDE_SRC_ROOT@
 
 # The top-level directory of the forest (SRC_ROOT is a traditional alias)
 TOPDIR:=@TOPDIR@
@@ -259,6 +241,7 @@ MEMORY_SIZE:=@MEMORY_SIZE@
 # Enable sjavac support = use a javac server,
 # multi core javac compilation and dependency tracking.
 ENABLE_SJAVAC:=@ENABLE_SJAVAC@
+ENABLE_JAVAC_SERVER:=@ENABLE_JAVAC_SERVER@
 # Store sjavac server synchronization files here, and
 # the sjavac server log files.
 SJAVAC_SERVER_DIR=$(MAKESUPPORT_OUTPUTDIR)/javacservers
@@ -280,9 +263,6 @@ CACERTS_FILE=@CACERTS_FILE@
 
 # Enable unlimited crypto policy
 UNLIMITED_CRYPTO=@UNLIMITED_CRYPTO@
-
-# Enable RMIConnector IIOP transport
-RMICONNECTOR_IIOP=@RMICONNECTOR_IIOP@
 
 GCOV_ENABLED=@GCOV_ENABLED@
 
@@ -356,11 +336,11 @@ USING_BROKEN_SUSE_LD:=@USING_BROKEN_SUSE_LD@
 
 # LDFLAGS used to link the jdk native libraries (C-code)
 LDFLAGS_JDKLIB:=@LDFLAGS_JDKLIB@
-LDFLAGS_JDKLIB_SUFFIX:=@LDFLAGS_JDKLIB_SUFFIX@
+JDKLIB_LIBS:=@JDKLIB_LIBS@
 
 # LDFLAGS used to link the jdk native launchers (C-code)
 LDFLAGS_JDKEXE:=@LDFLAGS_JDKEXE@
-LDFLAGS_JDKEXE_SUFFIX:=@LDFLAGS_JDKEXE_SUFFIX@
+JDKEXE_LIBS:=@JDKEXE_LIBS@
 
 # LDFLAGS specific to C++ linking.
 LDFLAGS_CXX_JDK:=@LDFLAGS_CXX_JDK@
@@ -376,14 +356,14 @@ CXXFLAGS_TESTLIB:=@CXXFLAGS_TESTLIB@
 CFLAGS_TESTEXE:=@CFLAGS_TESTEXE@
 CXXFLAGS_TESTEXE:=@CXXFLAGS_TESTEXE@
 LDFLAGS_TESTLIB:=@LDFLAGS_TESTLIB@
-LDFLAGS_TESTLIB_SUFFIX:=@LDFLAGS_TESTLIB_SUFFIX@
 LDFLAGS_TESTEXE:=@LDFLAGS_TESTEXE@
-LDFLAGS_TESTEXE_SUFFIX:=@LDFLAGS_TESTEXE_SUFFIX@
 
 # BUILD_CC/BUILD_LD is a compiler/linker that generates code that is runnable on the
 # build platform.
 BUILD_CC:=@FIXPATH@ @BUILD_CC@
 BUILD_LD:=@FIXPATH@ @BUILD_LD@
+BUILD_SYSROOT_CFLAGS:=@BUILD_SYSROOT_CFLAGS@
+BUILD_SYSROOT_LDFLAGS:=@BUILD_SYSROOT_LDFLAGS@
 
 AS:=@FIXPATH@ @AS@
 
@@ -437,8 +417,9 @@ SHARED_LIBRARY_SUFFIX:=@SHARED_LIBRARY_SUFFIX@
 STATIC_LIBRARY_SUFFIX:=@STATIC_LIBRARY_SUFFIX@
 EXE_SUFFIX:=@EXE_SUFFIX@
 OBJ_SUFFIX:=@OBJ_SUFFIX@
+STATIC_BUILD:=@STATIC_BUILD@
 
-POST_STRIP_CMD:=@POST_STRIP_CMD@
+STRIPFLAGS:=@STRIPFLAGS@
 
 JAVA_FLAGS:=@JAVA_FLAGS@
 JAVA_FLAGS_BIG:=@JAVA_FLAGS_BIG@
@@ -478,9 +459,6 @@ INTERIM_LANGTOOLS_ARGS = "-Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR)" -cp $(INTE
 NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javac.Main
 NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javadoc.Main
 
-# The interim corba jar is needed for running rmic
-INTERIM_CORBA_JAR = $(BUILDTOOLS_OUTPUTDIR)/interim_corba.jar
-
 # Base flags for RC
 # Guarding this against resetting value. Legacy make files include spec multiple
 # times.
@@ -517,9 +495,12 @@ LN:=@LN@
 MKDIR:=@MKDIR@
 MV:=@MV@
 NAWK:=@NAWK@
+NICE:=@NICE@
+PATCH:=@PATCH@
 PRINTF:=@PRINTF@
 PWD:=@THEPWDCMD@
 RM:=@RM@
+RMDIR:=@RMDIR@
 SED:=@SED@
 SH:=@SH@
 SORT:=@SORT@
@@ -563,34 +544,6 @@ USE_EXTERNAL_LIBZ:=@USE_EXTERNAL_LIBZ@
 LIBZIP_CAN_USE_MMAP:=@LIBZIP_CAN_USE_MMAP@
 MSVCR_DLL:=@MSVCR_DLL@
 MSVCP_DLL:=@MSVCP_DLL@
-
-
-# ADD_SRCS takes a single argument with source roots
-# and appends any corresponding source roots found
-# below --with-add-source-root and below
-# --with-override-source-root. It is the responsibility
-# of the next macro to get rid of superfluous files.
-ADD_SRCS=$1
-ifneq (,$(ADD_SRC_ROOT))
-  # Append wildcard rule to pickup any matching source roots found below ADD_SRC_ROOT
-  ADD_SRCS+=$(wildcard $(subst $(SRC_ROOT),$(ADD_SRC_ROOT),$1))
-endif
-ifneq (,$(OVERRIDE_SRC_ROOT))
-  # Append wildcard rule to pickup any matching source roots found below OVERRIDE_SRC_ROOT
-  ADD_SRCS+=$(wildcard $(subst $(SRC_ROOT),$(OVERRIDE_SRC_ROOT),$1))
-endif
-
-# OVR_SRCS creates a filter expression to filter out sources in
-# the original source directory that lie inside directories below
-# --with-override-source-root.
-# Use := here since we want to scan for these files here. To avoid recomputation later.
-# We cannot do the scan in configure, since that would force us to rerun configure when
-# we add overridden sources.
-ifneq (,$(OVERRIDE_SRC_ROOT))
-  OVR_SRCS:=$(addsuffix %,$(subst $(OVERRIDE_SRC_ROOT),$(SRC_ROOT),$(sort $(dir $(shell $(FIND) $(OVERRIDE_SRC_ROOT) -type f)))))
-else
-  OVR_SRCS:=
-endif
 
 ####################################################
 #

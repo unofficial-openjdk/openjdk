@@ -26,12 +26,10 @@ package sun.hotspot;
 
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Executable;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
 import java.security.BasicPermission;
 import java.util.Objects;
 
@@ -85,6 +83,7 @@ public class WhiteBox {
   public native int  getVMPageSize();
   public native long getVMAllocationGranularity();
   public native long getVMLargePageSize();
+  public native long getHeapSpaceAlignment();
 
   private native boolean isObjectInOldGen0(Object o);
   public         boolean isObjectInOldGen(Object o) {
@@ -112,6 +111,12 @@ public class WhiteBox {
   }
 
   public native void forceSafepoint();
+
+  private native long getConstantPool0(Class<?> aClass);
+  public         long getConstantPool(Class<?> aClass) {
+    Objects.requireNonNull(aClass);
+    return getConstantPool0(aClass);
+  }
 
   // JVMTI
   private native void addToBootstrapClassLoaderSearch0(String segment);
@@ -144,6 +149,10 @@ public class WhiteBox {
     return parseCommandLine0(commandline, delim, args);
   }
 
+  // Parallel GC
+  public native long psVirtualSpaceAlignment();
+  public native long psHeapGenerationAlignment();
+
   // NMT
   public native long NMTMalloc(long size);
   public native void NMTFree(long mem);
@@ -156,6 +165,9 @@ public class WhiteBox {
   public native int NMTGetHashSize();
 
   // Compiler
+  public native int     matchesMethod(Executable method, String pattern);
+  public native int     matchesInline(Executable method, String pattern);
+  public native boolean shouldPrintAssembly(Executable method);
   public native int     deoptimizeFrames(boolean makeNotEntrant);
   public native void    deoptimizeAll();
   public        boolean isMethodCompiled(Executable method) {
@@ -285,6 +297,11 @@ public class WhiteBox {
   public native void    forceNMethodSweep();
   public native Object[] getCodeHeapEntries(int type);
   public native int     getCompilationActivityMode();
+  private native long getMethodData0(Executable method);
+  public         long getMethodData(Executable method) {
+    Objects.requireNonNull(method);
+    return getMethodData0(method);
+  }
   public native Object[] getCodeBlob(long addr);
 
   // Intered strings
@@ -385,23 +402,6 @@ public class WhiteBox {
                               .findAny()
                               .orElse(null);
   }
-
-  public native boolean readImageFile(String imagePath);
-  public native long imageOpenImage(String imagePath, boolean bigEndian);
-  public native void imageCloseImage(long id);
-  public native long imageGetIndexAddress(long id);
-  public native long imageGetDataAddress(long id);
-  public native boolean imageReadCompressed(long id, long offset,
-    ByteBuffer compressedBuffer, long compressedSize,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native boolean imageRead(long id, long offset,
-    ByteBuffer uncompressedBuffer, long uncompressedSize);
-  public native byte[] imageGetStringBytes(long id, int offset);
-  public native long imageGetStringsSize(long id);
-  public native long[] imageGetAttributes(long id, int offset);
-  public native long[] imageFindAttributes(long id, byte[] path);
-  public native int[] imageAttributeOffsets(long id);
-  public native int imageGetIntAtAddress(long address, int offset, boolean big_endian);
 
   // Safepoint Checking
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);

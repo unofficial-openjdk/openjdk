@@ -223,10 +223,24 @@
       <to>jdk.dev</to>
     </export>
     <export>
+      <name>jdk.internal.misc</name>
+      <to>java.corba</to>
+      <to>java.desktop</to>
+      <to>java.logging</to>
+      <to>java.management</to>
+      <to>java.naming</to>
+      <to>java.security.jgss</to>
+      <to>java.sql</to>
+      <to>java.xml</to>
+      <to>jdk.management.resource</to>
+      <to>jdk.scripting.nashorn</to>
+    </export>
+    <export>
       <name>jdk.internal.org.objectweb.asm</name>
       <to>java.instrument</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
+      <to>jdk.vm.ci</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm.commons</name>
@@ -265,7 +279,6 @@
       <to>java.rmi</to>
       <to>java.security.jgss</to>
       <to>java.security.sasl</to>
-      <to>java.sql</to>
       <to>java.xml</to>
       <to>java.xml.ws</to>
       <to>jdk.charsets</to>
@@ -277,9 +290,11 @@
       <to>jdk.jvmstat</to>
       <to>jdk.management.resource</to>
       <to>jdk.pack200</to>
+      <to>jdk.scripting.nashorn</to>
       <to>jdk.security.auth</to>
       <to>jdk.security.jgss</to>
       <to>jdk.snmp</to>
+      <to>jdk.vm.ci</to>
       <to>java.instrument</to>
     </export>
     <export>
@@ -775,6 +790,19 @@
     <export>
       <name>sun.awt</name>
       <to>jdk.accessibility</to>
+    </export>
+  </module>
+  <module>
+    <name>jdk.jshell</name>
+    <depend>java.base</depend>
+    <depend re-exports="true">java.compiler</depend>
+    <depend>jdk.compiler</depend>
+    <depend>java.desktop</depend>
+    <depend>java.prefs</depend>
+    <depend>jdk.jdi</depend>
+    <depend>jdk.internal.le</depend>
+    <export>
+      <name>jdk.jshell</name>
     </export>
   </module>
   <module>
@@ -1537,14 +1565,17 @@
     </export>
     <export>
       <name>com.sun.tools.javac.api</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
       <name>com.sun.tools.javac.code</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
       <name>com.sun.tools.javac.comp</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
@@ -1554,15 +1585,21 @@
     </export>
     <export>
       <name>com.sun.tools.javac.jvm</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
       <name>com.sun.tools.javac.main</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
       <name>com.sun.tools.javac.nio</name>
       <to>jdk.javadoc</to>
+    </export>
+    <export>
+      <name>com.sun.tools.javac.parser</name>
+      <to>jdk.jshell</to>
     </export>
     <export>
       <name>com.sun.tools.javac.platform</name>
@@ -1574,10 +1611,12 @@
     </export>
     <export>
       <name>com.sun.tools.javac.tree</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
     </export>
     <export>
       <name>com.sun.tools.javac.util</name>
+      <to>jdk.jshell</to>
       <to>jdk.javadoc</to>
       <to>jdk.jdeps</to>
     </export>
@@ -1638,22 +1677,27 @@
     <depend>java.base</depend>
     <export>
       <name>jdk.internal.jline</name>
+      <to>jdk.jshell</to>
       <to>jdk.scripting.nashorn.shell</to>
     </export>
     <export>
       <name>jdk.internal.jline.console</name>
+      <to>jdk.jshell</to>
       <to>jdk.scripting.nashorn.shell</to>
     </export>
     <export>
       <name>jdk.internal.jline.console.completer</name>
+      <to>jdk.jshell</to>
       <to>jdk.scripting.nashorn.shell</to>
     </export>
     <export>
       <name>jdk.internal.jline.console.history</name>
+      <to>jdk.jshell</to>
       <to>jdk.scripting.nashorn.shell</to>
     </export>
     <export>
       <name>jdk.internal.jline.internal</name>
+      <to>jdk.jshell</to>
       <to>jdk.scripting.nashorn.shell</to>
     </export>
   </module>
@@ -1859,6 +1903,18 @@
     <depend>java.security.sasl</depend>
     <export>
       <name>com.sun.security.jgss</name>
+    </export>
+  </module>
+  <module>
+    <name>jdk.vm.ci</name>
+    <depend>java.base</depend>
+    <export>
+      <name>jdk.vm.ci.hotspot</name>
+      <to>jdk.jfr</to>
+    </export>
+    <export>
+      <name>jdk.vm.ci.hotspot.events</name>
+      <to>jdk.jfr</to>
     </export>
   </module>
   <module>

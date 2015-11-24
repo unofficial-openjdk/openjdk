@@ -283,12 +283,13 @@ AC_DEFUN([BASIC_CHECK_LEFTOVER_OVERRIDDEN],
 # use that value, otherwise search for the tool using the supplied code snippet.
 # $1: variable to set
 # $2: code snippet to call to look for the tool
+# $3: code snippet to call if variable was used to find tool
 AC_DEFUN([BASIC_SETUP_TOOL],
 [
   # Publish this variable in the help.
   AC_ARG_VAR($1, [Override default value for $1])
 
-  if test "x[$]$1" = x; then
+  if [[ -z "${$1+x}" ]]; then
     # The variable is not set by user, try to locate tool using the code snippet
     $2
   else
@@ -312,27 +313,35 @@ AC_DEFUN([BASIC_SETUP_TOOL],
       # for unknown variables in the end.
       CONFIGURE_OVERRIDDEN_VARIABLES="$try_remove_var"
 
-      # Check if the provided tool contains a complete path.
-      tool_specified="[$]$1"
-      tool_basename="${tool_specified##*/}"
-      if test "x$tool_basename" = "x$tool_specified"; then
-        # A command without a complete path is provided, search $PATH.
-        AC_MSG_NOTICE([Will search for user supplied tool $1=$tool_basename])
-        AC_PATH_PROG($1, $tool_basename)
-        if test "x[$]$1" = x; then
-          AC_MSG_ERROR([User supplied tool $tool_basename could not be found])
-        fi
-      else
-        # Otherwise we believe it is a complete path. Use it as it is.
-        AC_MSG_NOTICE([Will use user supplied tool $1=$tool_specified])
+      # Check if we try to supply an empty value
+      if test "x[$]$1" = x; then
+        AC_MSG_NOTICE([Setting user supplied tool $1= (no value)])
         AC_MSG_CHECKING([for $1])
-        if test ! -x "$tool_specified"; then
-          AC_MSG_RESULT([not found])
-          AC_MSG_ERROR([User supplied tool $1=$tool_specified does not exist or is not executable])
+        AC_MSG_RESULT([disabled])
+      else
+        # Check if the provided tool contains a complete path.
+        tool_specified="[$]$1"
+        tool_basename="${tool_specified##*/}"
+        if test "x$tool_basename" = "x$tool_specified"; then
+          # A command without a complete path is provided, search $PATH.
+          AC_MSG_NOTICE([Will search for user supplied tool $1=$tool_basename])
+          AC_PATH_PROG($1, $tool_basename)
+          if test "x[$]$1" = x; then
+            AC_MSG_ERROR([User supplied tool $tool_basename could not be found])
+          fi
+        else
+          # Otherwise we believe it is a complete path. Use it as it is.
+          AC_MSG_NOTICE([Will use user supplied tool $1=$tool_specified])
+          AC_MSG_CHECKING([for $1])
+          if test ! -x "$tool_specified"; then
+            AC_MSG_RESULT([not found])
+            AC_MSG_ERROR([User supplied tool $1=$tool_specified does not exist or is not executable])
+          fi
+          AC_MSG_RESULT([$tool_specified])
         fi
-        AC_MSG_RESULT([$tool_specified])
       fi
     fi
+    $3
   fi
 ])
 
@@ -376,9 +385,7 @@ AC_DEFUN_ONCE([BASIC_SETUP_FUNDAMENTAL_TOOLS],
 [
   # Start with tools that do not need have cross compilation support
   # and can be expected to be found in the default PATH. These tools are
-  # used by configure. Nor are these tools expected to be found in the
-  # devkit from the builddeps server either, since they are
-  # needed to download the devkit.
+  # used by configure.
 
   # First are all the simple required tools.
   BASIC_REQUIRE_PROGS(BASENAME, basename)
@@ -405,6 +412,7 @@ AC_DEFUN_ONCE([BASIC_SETUP_FUNDAMENTAL_TOOLS],
   BASIC_REQUIRE_PROGS(NAWK, [nawk gawk awk])
   BASIC_REQUIRE_PROGS(PRINTF, printf)
   BASIC_REQUIRE_PROGS(RM, rm)
+  BASIC_REQUIRE_PROGS(RMDIR, rmdir)
   BASIC_REQUIRE_PROGS(SH, sh)
   BASIC_REQUIRE_PROGS(SORT, sort)
   BASIC_REQUIRE_PROGS(TAIL, tail)
@@ -437,6 +445,7 @@ AC_DEFUN_ONCE([BASIC_SETUP_FUNDAMENTAL_TOOLS],
   BASIC_PATH_PROGS(READLINK, [greadlink readlink])
   BASIC_PATH_PROGS(DF, df)
   BASIC_PATH_PROGS(CPIO, [cpio bsdcpio])
+  BASIC_PATH_PROGS(NICE, nice)
 ])
 
 # Setup basic configuration paths, and platform-specific stuff related to PATHs.
@@ -444,6 +453,15 @@ AC_DEFUN_ONCE([BASIC_SETUP_PATHS],
 [
   # Save the current directory this script was started from
   CURDIR="$PWD"
+
+  # We might need to rewrite ORIGINAL_PATH, if it includes "#", to quote them
+  # for make. We couldn't do this when we retrieved ORIGINAL_PATH, since SED
+  # was not available at that time.
+  REWRITTEN_PATH=`$ECHO "$ORIGINAL_PATH" | $SED -e 's/#/\\\\#/g'`
+  if test "x$REWRITTEN_PATH" != "x$ORIGINAL_PATH"; then
+    ORIGINAL_PATH="$REWRITTEN_PATH"
+    AC_MSG_NOTICE([Rewriting ORIGINAL_PATH to $REWRITTEN_PATH])
+  fi
 
   if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
     PATH_SEP=";"
@@ -832,17 +850,8 @@ AC_DEFUN([BASIC_CHECK_MAKE_OUTPUT_SYNC],
 # Goes looking for a usable version of GNU make.
 AC_DEFUN([BASIC_CHECK_GNU_MAKE],
 [
-  # We need to find a recent version of GNU make. Especially on Solaris, this can be tricky.
-  if test "x$MAKE" != x; then
-    # User has supplied a make, test it.
-    if test ! -f "$MAKE"; then
-      AC_MSG_ERROR([The specified make (by MAKE=$MAKE) is not found.])
-    fi
-    BASIC_CHECK_MAKE_VERSION("$MAKE", [user supplied MAKE=$MAKE])
-    if test "x$FOUND_MAKE" = x; then
-      AC_MSG_ERROR([The specified make (by MAKE=$MAKE) is not GNU make $MAKE_REQUIRED_VERSION or newer.])
-    fi
-  else
+  BASIC_SETUP_TOOL([MAKE],
+  [
     # Try our hardest to locate a correct version of GNU make
     AC_PATH_PROGS(CHECK_GMAKE, gmake)
     BASIC_CHECK_MAKE_VERSION("$CHECK_GMAKE", [gmake in PATH])
@@ -870,7 +879,13 @@ AC_DEFUN([BASIC_CHECK_GNU_MAKE],
     if test "x$FOUND_MAKE" = x; then
       AC_MSG_ERROR([Cannot find GNU make $MAKE_REQUIRED_VERSION or newer! Please put it in the path, or add e.g. MAKE=/opt/gmake3.81/make as argument to configure.])
     fi
-  fi
+  ],[
+    # If MAKE was set by user, verify the version
+    BASIC_CHECK_MAKE_VERSION("$MAKE", [user supplied MAKE=$MAKE])
+    if test "x$FOUND_MAKE" = x; then
+      AC_MSG_ERROR([The specified make (by MAKE=$MAKE) is not GNU make $MAKE_REQUIRED_VERSION or newer.])
+    fi
+  ])
 
   MAKE=$FOUND_MAKE
   AC_SUBST(MAKE)
@@ -935,6 +950,7 @@ AC_DEFUN_ONCE([BASIC_SETUP_COMPLEX_TOOLS],
   BASIC_PATH_PROGS(HG, hg)
   BASIC_PATH_PROGS(STAT, stat)
   BASIC_PATH_PROGS(TIME, time)
+  BASIC_PATH_PROGS(PATCH, [gpatch patch])
   # Check if it's GNU time
   IS_GNU_TIME=`$TIME --version 2>&1 | $GREP 'GNU time'`
   if test "x$IS_GNU_TIME" != x; then

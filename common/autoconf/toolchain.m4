@@ -72,8 +72,19 @@ AC_DEFUN([TOOLCHAIN_SETUP_FILENAME_PATTERNS],
     OBJ_SUFFIX='.o'
     EXE_SUFFIX=''
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
-      SHARED_LIBRARY='lib[$]1.dylib'
-      SHARED_LIBRARY_SUFFIX='.dylib'
+      # For full static builds, we're overloading the SHARED_LIBRARY
+      # variables in order to limit the amount of changes required.
+      # It would be better to remove SHARED and just use LIBRARY and
+      # LIBRARY_SUFFIX for libraries that can be built either 
+      # shared or static and use STATIC_* for libraries that are 
+      # always built statically.
+      if test "x$STATIC_BUILD" = xtrue; then
+        SHARED_LIBRARY='lib[$]1.a'
+        SHARED_LIBRARY_SUFFIX='.a'
+      else
+        SHARED_LIBRARY='lib[$]1.dylib'
+        SHARED_LIBRARY_SUFFIX='.dylib'
+      fi
     fi
   fi
 
@@ -586,6 +597,43 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
     # Only call fixup if objcopy was found.
     if test -n "$OBJCOPY"; then
       BASIC_FIXUP_EXECUTABLE(OBJCOPY)
+      if test "x$OPENJDK_BUILD_OS" = xsolaris; then
+        # objcopy prior to 2.21.1 on solaris is broken and is not usable.
+        # Rewrite objcopy version output to VALID_VERSION or BAD_VERSION.
+        # - version number is last blank separate word on first line
+        # - version number formats that have been seen:
+        #   - <major>.<minor>
+        #   - <major>.<minor>.<micro>
+        OBJCOPY_VERSION=`$OBJCOPY --version | $HEAD -n 1`
+        # The outer [ ] is to prevent m4 from eating the [] in the sed expression.
+        [ OBJCOPY_VERSION_CHECK=`$ECHO $OBJCOPY_VERSION | $SED -n \
+              -e 's/.* //' \
+              -e '/^[01]\./b bad' \
+              -e '/^2\./{' \
+              -e '  s/^2\.//' \
+              -e '  /^[0-9]$/b bad' \
+              -e '  /^[0-9]\./b bad' \
+              -e '  /^1[0-9]$/b bad' \
+              -e '  /^1[0-9]\./b bad' \
+              -e '  /^20\./b bad' \
+              -e '  /^21\.0$/b bad' \
+              -e '  /^21\.0\./b bad' \
+              -e '}' \
+              -e ':good' \
+              -e 's/.*/VALID_VERSION/p' \
+              -e 'q' \
+              -e ':bad' \
+              -e 's/.*/BAD_VERSION/p' \
+              -e 'q'` ]
+        if test "x$OBJCOPY_VERSION_CHECK" = xBAD_VERSION; then
+          OBJCOPY=
+          AC_MSG_WARN([Ignoring found objcopy since it is broken (prior to 2.21.1). No debug symbols will be generated.])
+          AC_MSG_NOTICE([objcopy reports version $OBJCOPY_VERSION])
+          AC_MSG_NOTICE([Note: patch 149063-01 or newer contains the correct Solaris 10 SPARC version])
+          AC_MSG_NOTICE([Note: patch 149064-01 or newer contains the correct Solaris 10 X86 version])
+          AC_MSG_NOTICE([Note: Solaris 11 Update 1 contains the correct version])
+        fi
+      fi
     fi
   fi
 
@@ -610,26 +658,83 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     # path, otherwise we might pick up cross-compilers which don't use standard
     # naming.
 
+    OLDPATH="$PATH"
+
+    AC_ARG_WITH(build-devkit, [AS_HELP_STRING([--with-build-devkit],
+        [Devkit to use for the build platform toolchain])])
+    if test "x$with_build_devkit" = "xyes"; then
+      AC_MSG_ERROR([--with-build-devkit must have a value])
+    elif test -n "$with_build_devkit"; then
+      if test ! -d "$with_build_devkit"; then
+        AC_MSG_ERROR([--with-build-devkit points to non existing dir: $with_build_devkit])
+      else
+        BASIC_FIXUP_PATH([with_build_devkit])
+        BUILD_DEVKIT_ROOT="$with_build_devkit"
+        # Check for a meta data info file in the root of the devkit
+        if test -f "$BUILD_DEVKIT_ROOT/devkit.info"; then
+          # Process devkit.info so that existing devkit variables are not
+          # modified by this
+          $SED -e "s/^DEVKIT_/BUILD_DEVKIT_/g" \
+              -e "s/\$DEVKIT_ROOT/\$BUILD_DEVKIT_ROOT/g" \
+              -e "s/\$host/\$build/g" \
+              $BUILD_DEVKIT_ROOT/devkit.info \
+              > $CONFIGURESUPPORT_OUTPUTDIR/build-devkit.info
+          . $CONFIGURESUPPORT_OUTPUTDIR/build-devkit.info
+          # This potentially sets the following:
+          # A descriptive name of the devkit
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_NAME])
+          # Corresponds to --with-extra-path
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_EXTRA_PATH])
+          # Corresponds to --with-toolchain-path
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_TOOLCHAIN_PATH])
+          # Corresponds to --with-sysroot
+          BASIC_EVAL_DEVKIT_VARIABLE([BUILD_DEVKIT_SYSROOT])
+          # Skip the Window specific parts
+        fi
+
+        AC_MSG_CHECKING([for build platform devkit])
+        if test "x$BUILD_DEVKIT_NAME" != x; then
+          AC_MSG_RESULT([$BUILD_DEVKIT_NAME in $BUILD_DEVKIT_ROOT])
+        else
+          AC_MSG_RESULT([$BUILD_DEVKIT_ROOT])
+        fi
+
+        BUILD_SYSROOT="$BUILD_DEVKIT_SYSROOT"
+        FLAGS_SETUP_SYSROOT_FLAGS([BUILD_])
+
+         # Fallback default of just /bin if DEVKIT_PATH is not defined
+        if test "x$BUILD_DEVKIT_TOOLCHAIN_PATH" = x; then
+          BUILD_DEVKIT_TOOLCHAIN_PATH="$BUILD_DEVKIT_ROOT/bin"
+        fi
+        PATH="$BUILD_DEVKIT_TOOLCHAIN_PATH:$BUILD_DEVKIT_EXTRA_PATH"
+      fi
+    fi
+
     # FIXME: we should list the discovered compilers as an exclude pattern!
     # If we do that, we can do this detection before POST_DETECTION, and still
     # find the build compilers in the tools dir, if needed.
-    BASIC_PATH_PROGS(BUILD_CC, [cl cc gcc])
+    BASIC_REQUIRE_PROGS(BUILD_CC, [cl cc gcc])
     BASIC_FIXUP_EXECUTABLE(BUILD_CC)
-    BASIC_PATH_PROGS(BUILD_CXX, [cl CC g++])
+    BASIC_REQUIRE_PROGS(BUILD_CXX, [cl CC g++])
     BASIC_FIXUP_EXECUTABLE(BUILD_CXX)
-    BASIC_PATH_PROGS(BUILD_LD, ld)
-    BASIC_FIXUP_EXECUTABLE(BUILD_LD)
+    BUILD_LD="$BUILD_CC"
+
+    PATH="$OLDPATH"
   else
     # If we are not cross compiling, use the normal target compilers for
     # building the build platform executables.
     BUILD_CC="$CC"
     BUILD_CXX="$CXX"
     BUILD_LD="$LD"
+    BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
+    BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
   fi
 
   AC_SUBST(BUILD_CC)
   AC_SUBST(BUILD_CXX)
   AC_SUBST(BUILD_LD)
+  AC_SUBST(BUILD_SYSROOT_CFLAGS)
+  AC_SUBST(BUILD_SYSROOT_LDFLAGS)
 ])
 
 # Setup legacy variables that are still needed as alternative ways to refer to
