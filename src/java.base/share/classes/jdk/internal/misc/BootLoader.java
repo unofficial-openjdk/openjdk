@@ -44,8 +44,12 @@ public class BootLoader {
     private BootLoader() { }
 
     // The unnamed module for the boot loader
-    private static final Module UNNAMED_MODULE
-        = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
+    private static final Module UNNAMED_MODULE;
+    static {
+        UNNAMED_MODULE
+            = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
+        setBootLoaderUnnamedModule0(UNNAMED_MODULE);
+    }
 
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
@@ -147,4 +151,5 @@ public class BootLoader {
 
     private static native String getSystemPackageLocation(String name);
     private static native String[] getSystemPackageNames();
+    private static native void setBootLoaderUnnamedModule0(Module module);
 }
