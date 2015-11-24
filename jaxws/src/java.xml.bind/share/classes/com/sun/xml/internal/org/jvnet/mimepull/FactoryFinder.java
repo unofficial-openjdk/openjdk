@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.sun.xml.internal.bind.v2.Modules;
@@ -72,11 +73,7 @@ class FactoryFinder {
         String factoryClassName;
         BufferedReader rd = null;
         try {
-            try {
-                rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            } catch (java.io.UnsupportedEncodingException e) {
-                rd = new BufferedReader(new InputStreamReader(is));
-            }
+            rd = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             try {
                 factoryClassName = rd.readLine();
             } catch (IOException x) {

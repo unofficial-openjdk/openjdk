@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2001, Thai Open Source Software Center Ltd
+/*
+ * Copyright (c) 2005, 2010, Thai Open Source Software Center Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,45 +31,30 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.relaxng.datatype.helpers;
 
-import org.relaxng.datatype.*;
+package com.sun.xml.internal.org.relaxng.datatype;
 
 /**
- * Dummy implementation of {@link DatatypeBuilder}.
- *
- * This implementation can be used for Datatypes which have no parameters.
- * Any attempt to add parameters will be rejected.
+ * Factory class for the DatatypeLibrary class.
  *
  * <p>
- * Typical usage would be:
- * <PRE><XMP>
- * class MyDatatypeLibrary implements DatatypeLibrary {
- *     ....
- *     DatatypeBuilder createDatatypeBuilder( String typeName ) {
- *         return new ParameterleessDatatypeBuilder(createDatatype(typeName));
- *     }
- *     ....
- * }
- * </XMP></PRE>
+ * The datatype library should provide the implementation of
+ * this interface if it wants to be found by the schema processors.
+ * The implementor also have to place a file in your jar file.
+ * See the reference datatype library implementation for detail.
  *
+ * @author <a href="mailto:jjc@jclark.com">James Clark</a>
  * @author <a href="mailto:kohsuke.kawaguchi@sun.com">Kohsuke KAWAGUCHI</a>
  */
-public final class ParameterlessDatatypeBuilder implements DatatypeBuilder {
-
-        /** This type object is returned for the derive method. */
-        private final Datatype baseType;
-
-        public ParameterlessDatatypeBuilder( Datatype baseType ) {
-                this.baseType = baseType;
-        }
-
-        public void addParameter( String name, String strValue, ValidationContext context )
-                        throws DatatypeException {
-                throw new DatatypeException();
-        }
-
-        public Datatype createDatatype() throws DatatypeException {
-                return baseType;
-        }
+public interface DatatypeLibraryFactory
+{
+        /**
+         * Creates a new instance of a DatatypeLibrary that supports
+         * the specified namespace URI.
+         *
+         * @return
+         *              <code>null</code> if the specified namespace URI is not
+         *              supported.
+         */
+        DatatypeLibrary createDatatypeLibrary( String namespaceURI );
 }

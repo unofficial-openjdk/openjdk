@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,6 +66,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.xml.sax.ErrorHandler;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.LocatorImpl;
 
@@ -150,9 +151,9 @@ public final class UnmarshallingContext extends Coordinator
      *
      * <p>
      * This flag is unused when {@link #assoc}==null.
-     * If it's non-null, then <tt>true</tt> indicates
+     * If it's non-null, then {@code true} indicates
      * that we are doing in-place associative unmarshalling.
-     * If <tt>false</tt>, then we are doing associative unmarshalling
+     * If {@code false}, then we are doing associative unmarshalling
      * without object reuse.
      */
     private boolean isInplaceMode;

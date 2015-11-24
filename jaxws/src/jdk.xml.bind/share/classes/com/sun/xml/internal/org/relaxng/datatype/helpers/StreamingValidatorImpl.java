@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2001, Thai Open Source Software Center Ltd
+/*
+ * Copyright (c) 2005, 2010, Thai Open Source Software Center Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,10 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.relaxng.datatype.helpers;
 
-import org.relaxng.datatype.*;
+package com.sun.xml.internal.org.relaxng.datatype.helpers;
+
+import com.sun.xml.internal.org.relaxng.datatype.*;
 
 /**
  * Dummy implementation of {@link DatatypeStreamingValidator}.

@@ -420,7 +420,7 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     /**
-     * This hook is used by {@link RuntimeClassInfoImpl} to look for {@link XmlLocation}.
+     * This hook is used by {@link RuntimeClassInfoImpl} to look for {@link com.sun.xml.internal.bind.annotation.XmlLocation}.
      */
     protected void checkFieldXmlLocation(F f) {
     }
@@ -1008,7 +1008,11 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     private void collectGetterSetters(C c, Map<String,M> getters, Map<String,M> setters) {
-        Modules.ensureReadable(ClassInfoImpl.class, (Class) c);
+        // at runtime, we work with instances of java.lang.Class
+        // whereas at tool time with javax.lang.model.element.TypeElement
+        if (c instanceof Class<?>) {
+            Modules.ensureReadable(ClassInfoImpl.class, (Class<?>) c);
+        }
         // take super classes into account if they have @XmlTransient.
         // always visit them first so that
         //   1) order is right
@@ -1247,7 +1251,7 @@ public class ClassInfoImpl<T,C,F,M> extends TypeInfoImpl<T,C,F,M>
     }
 
     /**
-     * Called after all the {@link TypeInfo}s are collected into the {@link #owner}.
+     * Called after all the {@link com.sun.xml.internal.bind.v2.model.core.TypeInfo}s are collected into the {@link #owner}.
      */
     @Override
     /*package*/ void link() {

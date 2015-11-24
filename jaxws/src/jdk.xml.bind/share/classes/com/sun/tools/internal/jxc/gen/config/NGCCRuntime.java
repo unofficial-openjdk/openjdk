@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ import org.xml.sax.SAXParseException;
  *  <li>manage mapping between namespace URIs and prefixes.
  *
  *  <li>TODO: provide support for interleaving.
+ * </ol>
  * <p><b>
  *     Auto-generated, do not edit.
  * </b></p>
@@ -70,7 +71,7 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
      * or the reset method is called. You can't replace the root
      * handler while parsing is in progress.
      * <p>
-     * Usually a generated class that corresponds to the &lt;start>
+     * Usually a generated class that corresponds to the {@code <start>}
      * pattern will be used as the root handler, but any NGCCHandler
      * can be a root handler.
      *
@@ -165,28 +166,28 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
      * Whitespace handling is a tricky business. Consider the following
      * schema fragment:
      *
-     * <xmp>
+     * <pre>{@code
      * <element name="foo">
      *   <choice>
      *     <element name="bar"><empty/></element>
      *     <text/>
      *   </choice>
      * </element>
-     * </xmp>
+     * }</pre>
      *
      * Assume we hit the following instance:
-     * <xmp>
+     * <pre>{@code
      * <foo> <bar/></foo>
-     * </xmp>
+     * }</pre>
      *
      * Then this first space needs to be ignored (for otherwise, we will
      * end up treating this space as the match to &lt;text/> and won't
      * be able to process &lt;bar>.)
      *
      * Now assume the following instance:
-     * <xmp>
+     * <pre>{@code
      * <foo/>
-     * </xmp>
+     * }</pre>
      *
      * This time, we need to treat this empty string as a text, for
      * otherwise we won't be able to accept this instance.
@@ -242,7 +243,7 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
             redirectionDepth++;
         } else {
             processPendingText(true);
-    //        System.out.println("startElement:"+localname+"->"+_attrStack.size());
+            //        System.out.println("startElement:"+localname+"->"+_attrStack.size());
             currentHandler.enterElement(uri, localname, qname, atts);
         }
     }
@@ -263,7 +264,7 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
      * consumes the enterElement event.
      */
     public void onEnterElementConsumed(
-        String uri, String localName, String qname,Attributes atts) throws SAXException {
+            String uri, String localName, String qname,Attributes atts) throws SAXException {
         attStack.push(currentAtts=new AttributesImpl(atts));
         nsEffectiveStack.push( new Integer(nsEffectivePtr) );
         nsEffectivePtr = namespaces.size();
@@ -394,25 +395,25 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
 //
 
     public void sendEnterAttribute( int threadId,
-        String uri, String local, String qname) throws SAXException {
+                                    String uri, String local, String qname) throws SAXException {
 
         currentHandler.enterAttribute(uri,local,qname);
     }
 
     public void sendEnterElement( int threadId,
-        String uri, String local, String qname, Attributes atts) throws SAXException {
+                                  String uri, String local, String qname, Attributes atts) throws SAXException {
 
         currentHandler.enterElement(uri,local,qname,atts);
     }
 
     public void sendLeaveAttribute( int threadId,
-        String uri, String local, String qname) throws SAXException {
+                                    String uri, String local, String qname) throws SAXException {
 
         currentHandler.leaveAttribute(uri,local,qname);
     }
 
     public void sendLeaveElement( int threadId,
-        String uri, String local, String qname) throws SAXException {
+                                  String uri, String local, String qname) throws SAXException {
 
         currentHandler.leaveElement(uri,local,qname);
     }
@@ -450,7 +451,7 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
      *      simulate the startElement event for the new ContentHandler.
      */
     public void redirectSubtree( ContentHandler child,
-        String uri, String local, String qname ) throws SAXException {
+                                 String uri, String local, String qname ) throws SAXException {
 
         redirect = child;
         redirect.setDocumentLocator(locator);
@@ -461,8 +462,8 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
         // modified to report active bindings only.
         for( int i=0; i<namespaces.size(); i+=2 )
             redirect.startPrefixMapping(
-                (String)namespaces.get(i),
-                (String)namespaces.get(i+1)
+                    (String)namespaces.get(i),
+                    (String)namespaces.get(i+1)
             );
 
         redirect.startElement(uri,local,qname,currentAtts);
@@ -483,16 +484,16 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
      * the top of the effective bindings. Because of the
      * timing difference between the startPrefixMapping method
      * and the execution of the corresponding actions,
-     * this value can be different from <code>namespaces.size()</code>.
+     * this value can be different from {@code namespaces.size()}.
      * <p>
      * For example, consider the following schema:
-     * <pre><xmp>
+     * <pre>{@code
      *  <oneOrMore>
      *   <element name="foo"><empty/></element>
      *  </oneOrMore>
      *  code fragment X
      *  <element name="bob"/>
-     * </xmp></pre>
+     * }</pre>
      * Code fragment X is executed after we see a startElement event,
      * but at this time the namespaces variable already include new
      * namespace bindings declared on "bob".
@@ -517,21 +518,21 @@ public class NGCCRuntime implements ContentHandler, NGCCEventSource {
     }
 
 
-// error reporting
+    // error reporting
     protected void unexpectedX(String token) throws SAXException {
         throw new SAXParseException(MessageFormat.format(
-            "Unexpected {0} appears at line {1} column {2}",
-            new Object[]{
-                token,
-                new Integer(getLocator().getLineNumber()),
-                new Integer(getLocator().getColumnNumber()) }),
-            getLocator());
+                "Unexpected {0} appears at line {1} column {2}",
+                new Object[]{
+                        token,
+                        new Integer(getLocator().getLineNumber()),
+                        new Integer(getLocator().getColumnNumber()) }),
+                getLocator());
     }
 
 
 
 
-//
+    //
 //
 // trace functions
 //

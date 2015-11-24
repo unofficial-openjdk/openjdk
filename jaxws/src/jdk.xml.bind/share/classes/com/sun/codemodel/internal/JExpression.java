@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ package com.sun.codemodel.internal;
  * which returns a complicated expression (by often taking other {@link JExpression}s
  * as parameters.
  * For example, you can build "5+2" by
- * <tt>JExpr.lit(5).add(JExpr.lit(2))</tt>
+ * {@code JExpr.lit(5).add(JExpr.lit(2))}
  */
 public interface JExpression extends JGenerable {
     /**
@@ -97,12 +97,12 @@ public interface JExpression extends JGenerable {
     JExpression shl(JExpression right);
 
     /**
-     * Returns "[this]>>[right]"
+     * Returns "{@code [this]>>[right]}"
      */
     JExpression shr(JExpression right);
 
     /**
-     * Returns "[this]>>>[right]"
+     * Returns "{@code [this]>>>[right]}"
      */
     JExpression shrz(JExpression right);
 
