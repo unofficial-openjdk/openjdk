@@ -22,25 +22,35 @@
  *
  */
 
-/**
- * @test
- * @bug 8073184
- * @summary CastII that guards counted loops confuses range check elimination with LoopLimitCheck off
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-LoopLimitCheck -XX:CompileOnly=TestCastIINoLoopLimitCheck.m -Xcomp  TestCastIINoLoopLimitCheck
- *
- */
+#ifndef SHARE_VM_MEMORY_CLASSLISTPARSER_HPP
+#define SHARE_VM_MEMORY_CLASSLISTPARSER_HPP
 
-public class TestCastIINoLoopLimitCheck {
+#include "utilities/exceptions.hpp"
+#include "utilities/globalDefinitions.hpp"
 
-    static void m(int i, int index, char[] buf) {
-        while (i >= 65536) {
-            i = i / 100;
-            buf [--index] = 0;
-            buf [--index] = 1;
-        }
-    }
+class ClassListParser : public StackObj {
+  enum {
+    // Max number of bytes allowed per line in the classlist.
+    // Theoretically Java class names could be 65535 bytes in length. In reality,
+    // 4K bytes is more than enough.
+    _max_allowed_line_len = 4096,
+    _line_buf_extra       = 10, // for detecting input too long
+    _line_buf_size        = _max_allowed_line_len + _line_buf_extra
+  };
 
-    static public void main(String[] args) {
-        m(0, 0, null);
-    }
-}
+  const char* _classlist_file;
+  FILE* _file;
+  char  _line[_line_buf_size];  // The buffer that holds the current line.
+
+public:
+  ClassListParser(const char* file);
+  ~ClassListParser();
+  bool parse_one_line();
+
+  const char* current_class_name() {
+    return _line;
+  }
+};
+
+
+#endif // SHARE_VM_MEMORY_CLASSLISTPARSER_HPP
