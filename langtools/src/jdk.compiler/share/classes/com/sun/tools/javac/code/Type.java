@@ -142,6 +142,10 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         return false;
     }
 
+    public boolean isIntegral() {
+        return false;
+    }
+
     public boolean isPrimitive() {
         return false;
     }
@@ -579,11 +583,13 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         return false;
     }
 
+    /**
+     * A compound type is a special class type whose supertypes are used to store a list
+     * of component types. There are two kinds of compound types: (i) intersection types
+     * {@see IntersectionClassType} and (ii) union types {@see UnionClassType}.
+     */
     public boolean isCompound() {
-        // Compound types can't have a (non-terminal) completer.  Calling
-        // flags() will complete the symbol causing the compiler to load
-        // classes unnecessarily.  This led to regression 6180021.
-        return tsym.isCompleted() && (tsym.flags() & COMPOUND) != 0;
+        return false;
     }
 
     public boolean isIntersection() {
@@ -694,6 +700,20 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         @Override
         public boolean isNumeric() {
             return tag != BOOLEAN;
+        }
+
+        @Override
+        public boolean isIntegral() {
+            switch (tag) {
+                case CHAR:
+                case BYTE:
+                case SHORT:
+                case INT:
+                case LONG:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         @Override
@@ -1182,6 +1202,11 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
             return true;
         }
 
+        @Override
+        public boolean isCompound() {
+            return getLub().isCompound();
+        }
+
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public TypeKind getKind() {
             return TypeKind.UNION;
@@ -1222,6 +1247,11 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         @DefinedBy(Api.LANGUAGE_MODEL)
         public java.util.List<? extends TypeMirror> getBounds() {
             return Collections.unmodifiableList(getExplicitComponents());
+        }
+
+        @Override
+        public boolean isCompound() {
+            return true;
         }
 
         public List<Type> getComponents() {
