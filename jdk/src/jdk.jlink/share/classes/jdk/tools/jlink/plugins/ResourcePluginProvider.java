@@ -38,6 +38,6 @@ public abstract class ResourcePluginProvider extends PluginProvider {
     }
 
     @Override
-    public abstract ResourcePlugin[] newPlugins(Map<Object, Object> config)
+    public abstract ResourcePlugin[] newPlugins(Map<String, Object> config)
             throws IOException;
 }

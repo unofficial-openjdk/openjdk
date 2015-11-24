@@ -148,7 +148,7 @@ main(int argc, char **argv)
         margv = args->elements;
     }
 #endif /* WIN32 */
-    if (const_appclasspath == NULL) {
+    if (const_appclasspath[0] == NULL) {
         appclassc = 0;
     } else {
         appclassc = sizeof(const_appclasspath) / sizeof(char *);

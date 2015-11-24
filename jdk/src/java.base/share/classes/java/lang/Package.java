@@ -29,7 +29,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.net.URL;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import jdk.internal.misc.BootLoader;
 import sun.reflect.CallerSensitive;
@@ -37,58 +36,75 @@ import sun.reflect.Reflection;
 
 
 /**
- * {@code Package} objects contain version information
- * about the implementation and specification of a Java package.
- * This versioning information is retrieved and made available
- * by the {@link ClassLoader} instance that
- * loaded the class(es).  Typically, it is stored in the manifest that is
- * distributed with the classes.
+ * Represents metadata about a run-time package associated with a class loader.
+ * Metadata includes annotations, versioning, and sealing.
+ * <p>
+ * Annotations for the run-time package are read from {@code package-info.class}
+ * at the same code source as classes in the run-time package.
+ * <p>
+ * The set of classes that make up the run-time package may implement a
+ * particular specification. The specification title, version, and vendor
+ * (indicating the owner/maintainer of the specification) can be provided
+ * when the {@code Package} is defined. An application can ask if the
+ * {@code Package} is compatible with a particular specification version
+ * by using the {@link #isCompatibleWith Package.isCompatibleWith(String)}
+ * method. In addition, information about the actual classes that make up the
+ * run-time package can be provided when the Package is defined.
+ * This information consists of an implementation title, version, and vendor
+ * (indicating the supplier of the classes).
+ * <p>
+ * A {@code Package} may be explicitly defined with
+ * the {@link ClassLoader#definePackage(String, String, String, String,
+ * String, String, String, URL)} method.
+ * The caller supplies the specification and implementation titles, versions, and
+ * vendors. The caller also indicates whether the package is
+ * {@linkplain java.util.jar.Attributes.Name#SEALED sealed}.
+ * If a {@code Package} is not explicitly defined for a run-time package when
+ * a class in that run-time package is defined, then a {@code Package} is
+ * automatically defined by the class's defining class loader, as follows.
+ * <p>
+ * A {@code Package} automatically defined for classes in a named module has
+ * the following properties:
+ * <ul>
+ * <li>The name of the package is derived from the {@linkplain Class#getName() binary names}
+ *     of the classes. Since classes in a named module must be in a named package,
+ *     the derived name is never empty.</li>
+ * <li>The package is sealed with the {@linkplain java.lang.module.ModuleReference#location()
+ *     module location} as the code source, if known.</li>
+ * <li>The specification and implementation titles, versions, and vendors
+ *     are unspecified.</li>
+ * <li>Any annotations on the package are read from {@code package-info.class}
+ *     as specified above.</li>
+ * </ul>
+ * <p>
+ * A {@code Package} automatically defined for classes in an unnamed module
+ * has the following properties:
+ * <ul>
+ * <li>The name of the package is either {@code ""} (for classes in an unnamed package)
+ *     or derived from the {@linkplain Class#getName() binary names} of the classes
+ *     (for classes in a named package).</li>
+ * <li>The package is not sealed.</li>
+ * <li>The specification and implementation titles, versions, and vendors
+ *     are unspecified.</li>
+ * <li>Any annotations on the package are read from {@code package-info.class}
+ *     as specified above.</li>
+ * </ul>
  *
- * <p>The set of classes that make up the package may implement a
- * particular specification and if so the specification title, version number,
- * and vendor strings identify that specification.
- * An application can ask if the package is
- * compatible with a particular version, see the {@link
- * #isCompatibleWith isCompatibleWith}
- * method for details.
+ * <p>
+ * A {@code Package} can be obtained with the {@link Package#getPackage
+ * Package.getPackage(String)} and {@link ClassLoader#getDefinedPackage
+ * ClassLoader.getDefinedPackage(String)} methods.
+ * Every {@code Package} defined by a class loader can be obtained
+ * with the {@link Package#getPackages Package.getPackages()} and
+ * {@link ClassLoader#getDefinedPackages} methods.
  *
- * <p>Specification version numbers use a syntax that consists of nonnegative
- * decimal integers separated by periods ".", for example "2.0" or
- * "1.2.3.4.5.6.7".  This allows an extensible number to be used to represent
- * major, minor, micro, etc. versions.  The version specification is described
- * by the following formal grammar:
- * <blockquote>
- * <dl>
- * <dt><i>SpecificationVersion:</i>
- * <dd><i>Digits RefinedVersion<sub>opt</sub></i>
-
- * <dt><i>RefinedVersion:</i>
- * <dd>{@code .} <i>Digits</i>
- * <dd>{@code .} <i>Digits RefinedVersion</i>
+ * @jvms 5.3 Run-time package
+ * @see <a href="../../../technotes/guides/jar/jar.html#versioning">
+ * The JAR File Specification: Package Versioning</a>
+ * @see <a href="../../../technotes/guides/jar/jar.html#sealing">
+ * The JAR File Specification: Package Sealing</a>
+ * @see ClassLoader#definePackage(String, String, String, String, String, String, String, URL)
  *
- * <dt><i>Digits:</i>
- * <dd><i>Digit</i>
- * <dd><i>Digits</i>
- *
- * <dt><i>Digit:</i>
- * <dd>any character for which {@link Character#isDigit} returns {@code true},
- * e.g. 0, 1, 2, ...
- * </dl>
- * </blockquote>
- *
- * <p>The implementation title, version, and vendor strings identify an
- * implementation and are made available conveniently to enable accurate
- * reporting of the packages involved when a problem occurs. The contents
- * all three implementation strings are vendor specific. The
- * implementation version strings have no specified syntax and should
- * only be compared for equality with desired version identifiers.
- *
- * <p>Within each {@code ClassLoader} instance all classes from the same
- * java package have the same Package object.  The static methods allow a package
- * to be found by name or the set of all packages known to the current class
- * loader to be found.
- *
- * @see ClassLoader#definePackage
  * @since 1.2
  */
 public class Package implements java.lang.reflect.AnnotatedElement {
@@ -106,7 +122,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
 
     /**
      * Return the title of the specification that this package implements.
-     * @return the specification title, null is returned if it is not known.
+     * @return the specification title, {@code null} is returned if it is not known.
      */
     public String getSpecificationTitle() {
         return specTitle;
@@ -115,11 +131,37 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     /**
      * Returns the version number of the specification
      * that this package implements.
-     * This version string must be a sequence of nonnegative decimal
+     * This version string must be a sequence of non-negative decimal
      * integers separated by "."'s and may have leading zeros.
      * When version strings are compared the most significant
      * numbers are compared.
-     * @return the specification version, null is returned if it is not known.
+     *
+     *
+     * <p>Specification version numbers use a syntax that consists of non-negative
+     * decimal integers separated by periods ".", for example "2.0" or
+     * "1.2.3.4.5.6.7".  This allows an extensible number to be used to represent
+     * major, minor, micro, etc. versions.  The version specification is described
+     * by the following formal grammar:
+     * <blockquote>
+     * <dl>
+     * <dt><i>SpecificationVersion:</i>
+     * <dd><i>Digits RefinedVersion<sub>opt</sub></i>
+
+     * <dt><i>RefinedVersion:</i>
+     * <dd>{@code .} <i>Digits</i>
+     * <dd>{@code .} <i>Digits RefinedVersion</i>
+     *
+     * <dt><i>Digits:</i>
+     * <dd><i>Digit</i>
+     * <dd><i>Digits</i>
+     *
+     * <dt><i>Digit:</i>
+     * <dd>any character for which {@link Character#isDigit} returns {@code true},
+     * e.g. 0, 1, 2, ...
+     * </dl>
+     * </blockquote>
+     *
+     * @return the specification version, {@code null} is returned if it is not known.
      */
     public String getSpecificationVersion() {
         return specVersion;
@@ -129,7 +171,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * Return the name of the organization, vendor,
      * or company that owns and maintains the specification
      * of the classes that implement this package.
-     * @return the specification vendor, null is returned if it is not known.
+     * @return the specification vendor, {@code null} is returned if it is not known.
      */
     public String getSpecificationVendor() {
         return specVendor;
@@ -137,7 +179,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
 
     /**
      * Return the title of this package.
-     * @return the title of the implementation, null is returned if it is not known.
+     * @return the title of the implementation, {@code null} is returned if it is not known.
      */
     public String getImplementationTitle() {
         return implTitle;
@@ -150,16 +192,17 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * runtime. It may be compared for equality with other
      * package version strings used for this implementation
      * by this vendor for this package.
-     * @return the version of the implementation, null is returned if it is not known.
+     * @return the version of the implementation, {@code null} is returned if it is not known.
      */
     public String getImplementationVersion() {
         return implVersion;
     }
 
     /**
-     * Returns the name of the organization,
-     * vendor or company that provided this implementation.
-     * @return the vendor that implemented this package..
+     * Returns the vendor that implemented this package, {@code null}
+     * is returned if it is not known.
+     * @return the vendor that implemented this package, {@code null}
+     * is returned if it is not known.
      */
     public String getImplementationVendor() {
         return implVendor;
@@ -176,10 +219,10 @@ public class Package implements java.lang.reflect.AnnotatedElement {
 
     /**
      * Returns true if this package is sealed with respect to the specified
-     * code source url.
+     * code source {@code url}.
      *
-     * @param url the code source url
-     * @return true if this package is sealed with respect to url
+     * @param url the code source URL
+     * @return true if this package is sealed with respect to the given {@code url}
      */
     public boolean isSealed(URL url) {
         return url.equals(sealBase);
@@ -204,8 +247,8 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return true if this package's version number is greater
      *          than or equal to the desired version number
      *
-     * @exception NumberFormatException if the desired or current version
-     *          is not of the correct dotted form.
+     * @exception NumberFormatException if the current version is not known or
+     *          the desired or current version is not of the correct dotted form.
      */
     public boolean isCompatibleWith(String desired)
         throws NumberFormatException
@@ -243,48 +286,62 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     }
 
     /**
-     * Find a package by name in the caller's {@code ClassLoader} instance.
-     * The caller's {@code ClassLoader} instance is used to find the package
-     * instance corresponding to the named package. If the caller's
-     * {@code ClassLoader} instance is the bootstrap {@code ClassLoader},
-     * only packages corresponding to classes loaded by the bootstrap
-     * {@code ClassLoader} will be searched to find the named package.
+     * Finds a package by name in the caller's class loader and its
+     * ancestors.
+     * <p>
+     * If the caller's class loader defines a {@code Package} of the given name,
+     * the {@code Package} is returned. Otherwise, the ancestors of the
+     * caller's class loader are searched recursively (parent by parent)
+     * for a {@code Package} of the given name.
+     * <p>
+     * Calling this method is equivalent to calling {@link ClassLoader#getPackage}
+     * on a {@code ClassLoader} instance which is the caller's class loader.
      *
-     * <p>Packages have attributes for versions and specifications only if the class
-     * loader created the package instance with the appropriate attributes. Typically,
-     * those attributes are defined in the manifests that accompany the classes.
+     * @param name A package name, such as "{@code java.lang}".
+     * @return The {@code Package} of the given name defined by the caller's
+     *         class loader or its ancestors, or {@code null} if not found.
      *
-     * @param name a package name, for example, java.lang.
-     * @return the package of the requested name. It may be {@code null} if no package
-     *          information is available from the archive or codebase.
+     * @deprecated
+     * If multiple class loaders delegate to each other and define classes
+     * with the same package name, and one such loader relies on the lookup
+     * behavior of {@code getPackage} to return a {@code Package} from
+     * a parent loader, then the properties exposed by the {@code Package}
+     * may not be as expected in the rest of the program.
+     * For example, the {@code Package} will only expose annotations from the
+     * {@code package-info.class} file defined by the parent loader, even if
+     * annotations exist in a {@code package-info.class} file defined by
+     * a child loader.  A more robust approach is to use the
+     * {@link ClassLoader#getDefinedPackage} method which returns
+     * a {@code Package} for the specified class loader.
+     *
+     * @see ClassLoader#getDefinedPackage
      */
     @CallerSensitive
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public static Package getPackage(String name) {
         ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
-        if (l != null) {
-            return l.findPackageFromAncestors(name);
-        } else {
-            return BootLoader.getPackage(name);
-        }
+        return l != null ? l.getPackage(name) : BootLoader.getDefinedPackage(name);
     }
 
     /**
-     * Get all the packages currently known for the caller's {@code ClassLoader}
-     * instance.  Those packages correspond to classes loaded via or visible by
-     * name to that {@code ClassLoader} instance.  If the caller's
-     * {@code ClassLoader} instance is the bootstrap {@code ClassLoader},
-     * only packages corresponding to classes loaded by the bootstrap
-     * {@code ClassLoader} instance will be returned.
+     * Returns all of the {@code Package}s defined by the caller's class loader
+     * and its ancestors.  The returned array may contain more than one
+     * {@code Package} object of the same package name, each defined by
+     * a different class loader in the class loader hierarchy.
+     * <p>
+     * Calling this method is equivalent to calling {@link ClassLoader#getPackages}
+     * on a {@code ClassLoader} instance which is the caller's class loader.
      *
-     * @return a new array of packages known to the caller's {@code ClassLoader}
-     * instance.  An zero length array is returned if none are known.
+     * @return  The array of {@code Package} objects defined by this
+     *          class loader and its ancestors
+     *
+     * @see ClassLoader#getDefinedPackages
      */
     @CallerSensitive
     public static Package[] getPackages() {
         ClassLoader cl = ClassLoader.getClassLoader(Reflection.getCallerClass());
-        Stream<Package> pkgs = cl != null ? cl.packagesFromAncestors()
-                                          : BootLoader.packages();
-        return pkgs.toArray(Package[]::new);
+        return cl != null ? cl.getPackages() : BootLoader.packages().toArray(Package[]::new);
     }
 
     /**
@@ -320,7 +377,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
         if (packageInfo == null) {
             // find package-info.class defined by loader
             String cn = pkgName + ".package-info";
-            Class<?> c = loader != null ? loader.loadLocalClassOrNull(cn)
+            Class<?> c = loader != null ? loader.loadLocalClass(cn)
                                         : BootLoader.loadClassOrNull(cn);
             if (c != null) {
                 packageInfo = c;
@@ -411,6 +468,8 @@ public class Package implements java.lang.reflect.AnnotatedElement {
             String impltitle, String implversion, String implvendor,
             URL sealbase, ClassLoader loader)
     {
+        Objects.requireNonNull(name);
+
         this.pkgName = name;
         this.implTitle = impltitle;
         this.implVersion = implversion;
@@ -445,6 +504,6 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     private final String implVersion;
     private final String implVendor;
     private final URL sealBase;
-    private transient final ClassLoader loader;
+    private final transient ClassLoader loader;
     private transient Class<?> packageInfo;
 }

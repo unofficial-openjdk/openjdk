@@ -123,10 +123,10 @@ public final class LWCToolkit extends LWToolkit {
     /*
      * System colors with default initial values, overwritten by toolkit if system values differ and are available.
      */
-    private final static int NUM_APPLE_COLORS = 3;
-    public final static int KEYBOARD_FOCUS_COLOR = 0;
-    public final static int INACTIVE_SELECTION_BACKGROUND_COLOR = 1;
-    public final static int INACTIVE_SELECTION_FOREGROUND_COLOR = 2;
+    private static final int NUM_APPLE_COLORS = 3;
+    public static final int KEYBOARD_FOCUS_COLOR = 0;
+    public static final int INACTIVE_SELECTION_BACKGROUND_COLOR = 1;
+    public static final int INACTIVE_SELECTION_FOREGROUND_COLOR = 2;
     private static int[] appleColors = {
         0xFF808080, // keyboardFocusColor = Color.gray;
         0xFFC0C0C0, // secondarySelectedControlColor
@@ -376,7 +376,7 @@ public final class LWCToolkit extends LWToolkit {
         desktopProperties.put("DnD.Autoscroll.interval", new Integer(50));
         desktopProperties.put("DnD.Autoscroll.cursorHysteresis", new Integer(5));
 
-        desktopProperties.put("DnD.isDragImageSupported", new Boolean(true));
+        desktopProperties.put("DnD.isDragImageSupported", Boolean.TRUE);
 
         // Register DnD cursors
         desktopProperties.put("DnD.Cursor.CopyDrop", new NamedCursor("DnD.Cursor.CopyDrop"));
@@ -677,7 +677,7 @@ public final class LWCToolkit extends LWToolkit {
      * @param r a {@code Runnable} to execute
      * @param delay a delay in milliseconds
      */
-    native static void performOnMainThreadAfterDelay(Runnable r, long delay);
+    static native void performOnMainThreadAfterDelay(Runnable r, long delay);
 
 // DnD support
 

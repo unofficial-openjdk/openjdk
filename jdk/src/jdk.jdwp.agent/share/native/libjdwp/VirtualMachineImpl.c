@@ -823,7 +823,6 @@ static jboolean
 classPaths(PacketInputStream *in, PacketOutputStream *out)
 {
     char *ud;
-    char *bp;
     char *cp;
 
     ud = gdata->property_user_dir;
@@ -834,13 +833,9 @@ classPaths(PacketInputStream *in, PacketOutputStream *out)
     if ( cp == NULL ) {
         cp = "";
     }
-    bp = gdata->property_sun_boot_class_path;
-    if ( bp == NULL ) {
-        bp = "";
-    }
     (void)outStream_writeString(out, ud);
     writePaths(out, cp);
-    writePaths(out, bp);
+    (void)outStream_writeInt(out, 0); // no bootclasspath
     return JNI_TRUE;
 }
 

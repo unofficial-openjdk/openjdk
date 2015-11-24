@@ -25,7 +25,8 @@
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jartool/sun.tools.jar
- * @build ContainerTest CompilerUtils jdk.testlibrary.ProcessTools
+ *          jdk.compiler
+ * @build ContainerTest CompilerUtils jdk.testlibrary.*
  * @run testng ContainerTest
  * @summary Starts a simple container that uses dynamic configurations
  *          and launches two applications in the same VM
@@ -73,7 +74,7 @@ public class ContainerTest {
         String jar = mlib.resolve(CONTAINER_MODULE + "@1.0.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "--main-class=" + CONTAINER_MAIN_CLASS,
             "-C", classes, "."
         };

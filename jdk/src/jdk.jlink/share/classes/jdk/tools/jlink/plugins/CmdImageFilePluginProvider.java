@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * An ImageFile Plugin provider that creates command line oriented plugins.
  */
-public abstract class CmdImageFilePluginProvider extends CmdPluginProvider {
+public abstract class CmdImageFilePluginProvider extends ImageFilePluginProvider
+        implements CmdPluginProvider<ImageFilePlugin> {
 
     protected CmdImageFilePluginProvider(String name, String description) {
         super(name, description);
@@ -39,4 +40,10 @@ public abstract class CmdImageFilePluginProvider extends CmdPluginProvider {
     @Override
     public abstract ImageFilePlugin[] newPlugins(String[] arguments,
             Map<String, String> otherOptions) throws IOException;
+
+    // Must be implemented, an abstract method can't be implemented with a default method
+    @Override
+    public ImageFilePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
+        return CmdPluginProvider.super.newPlugins(conf);
+    }
 }

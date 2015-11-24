@@ -26,7 +26,9 @@ package jdk.tools.jlink.internal.plugins.optim;
 
 import java.util.Iterator;
 import java.util.Set;
+import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
@@ -36,22 +38,29 @@ import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
  */
 public class Utils {
 
-    public static boolean canThrowCheckedException(MethodNode m, TryCatchBlockNode bn) throws Exception {
+    public static boolean canThrowCheckedException(ReflectionOptimizer.TypeResolver cch,
+            ClassNode classNode, MethodNode m, TryCatchBlockNode bn) throws Exception {
         int istart = m.instructions.indexOf(bn.start);
         int iend = m.instructions.indexOf(bn.end);
         for (int i = istart; i < iend - 1; i++) {
             AbstractInsnNode instr = m.instructions.get(i);
             if (instr instanceof MethodInsnNode) {
                 MethodInsnNode meth = (MethodInsnNode) instr;
-                Class<?> clz = Class.forName(meth.owner.replaceAll("/", "."));
-                for (java.lang.reflect.Method method : clz.getDeclaredMethods()) {
-                    if (method.getName().equals(meth.name)) {
-                        for (Class<?> e : method.getExceptionTypes()) {
-                            if (e.getName().equals(bn.type.replaceAll("/", "."))) {
-                                return true;
+                ClassReader reader = cch.resolve(classNode, m, meth.owner);
+                if (reader != null) {
+                    ClassNode cn = new ClassNode();
+                    reader.accept(cn, ClassReader.EXPAND_FRAMES);
+                    for (MethodNode method : cn.methods) {
+                        if (method.name.equals(meth.name)) {
+                            for (String e : method.exceptions) {
+                                if (e.equals(bn.type)) {
+                                    return true;
+                                }
                             }
                         }
                     }
+                } else {
+                    return true;
                 }
             }
         }

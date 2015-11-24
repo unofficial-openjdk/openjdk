@@ -33,15 +33,18 @@ import java.io.IOException;
 import java.lang.reflect.Layer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -88,10 +91,15 @@ public class PluginsNegativeTest {
         }
     }
 
+    private static Jlink.StackedPluginConfiguration createConfig(String name, int index) {
+        return new Jlink.StackedPluginConfiguration(name, index, true, Collections.emptyMap());
+    }
+
     private void testEmptyOutputResource() throws Exception {
-        Properties properties = new Properties();
-        properties.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "plugin");
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(properties);
+        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("plugin", 0));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
+                Collections.emptyList(), null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         inResources.addResource(new ResourcePool.Resource("/aaa/bbb/A", ByteBuffer.allocate(10)));
         try {
@@ -112,9 +120,10 @@ public class PluginsNegativeTest {
     }
 
     private void testEmptyInputResource() throws Exception {
-        Properties properties = new Properties();
-        properties.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "plugin");
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(properties);
+        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("plugin", 0));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
+                Collections.emptyList(), null));
         ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
         ResourcePoolImpl outResources = (ResourcePoolImpl) stack.visitResources(inResources, new StringTable() {
             @Override

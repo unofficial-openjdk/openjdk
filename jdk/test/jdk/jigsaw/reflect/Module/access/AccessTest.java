@@ -35,7 +35,8 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../../lib /lib/testlibrary
- * @build AccessTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @modules java.compiler
+ * @build AccessTest CompilerUtils jdk.testlibrary.*
  * @run testng AccessTest
  * @summary Driver for test that checks access to public members in exported
  *          and non-exported packages.

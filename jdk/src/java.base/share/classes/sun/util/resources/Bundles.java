@@ -56,8 +56,8 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.spi.ResourceBundleProvider;
-import sun.misc.JavaUtilResourceBundleAccess;
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.JavaUtilResourceBundleAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.util.locale.provider.ResourceBundleProviderSupport;
 
 
@@ -131,6 +131,18 @@ public abstract class Bundles {
             return bundle;
         }
 
+        // Get the providers for loading the "leaf" bundle (i.e., bundle for
+        // targetLocale). If no providers are required for the bundle,
+        // none of its parents will require providers.
+        Class<? extends ResourceBundleProvider> type
+                = strategy.getResourceBundleProviderType(baseName, targetLocale);
+        if (type != null) {
+            @SuppressWarnings("unchecked")
+            ServiceLoader<ResourceBundleProvider> providers
+                = (ServiceLoader<ResourceBundleProvider>) ServiceLoader.loadInstalled(type);
+            cacheKey.setProviders(providers);
+        }
+
         List<Locale> candidateLocales = strategy.getCandidateLocales(baseName, targetLocale);
         bundle = findBundleOf(cacheKey, strategy, baseName, candidateLocales, 0);
         if (bundle == null) {
@@ -172,8 +184,19 @@ public abstract class Bundles {
             }
         }
 
-        ServiceLoader<ResourceBundleProvider> providers;
-        providers = strategy.getResourceBundleProvders(baseName, targetLocale);
+        // Determine if providers should be used for loading the bundle.
+        // An assumption here is that if the leaf bundle of a look-up path is
+        // in java.base, all bundles of the path are in java.base.
+        // (e.g., en_US of path en_US -> en -> root is in java.base and the rest
+        // are in java.base as well)
+        // This assumption isn't valid for general bundle loading.
+        ServiceLoader<ResourceBundleProvider> providers = cacheKey.getProviders();
+        if (providers != null) {
+            if (strategy.getResourceBundleProviderType(baseName, targetLocale) == null) {
+                providers = null;
+            }
+        }
+
         CacheKey constKey = (CacheKey) cacheKey.clone();
         try {
             if (providers != null) {
@@ -337,11 +360,11 @@ public abstract class Bundles {
         public String toBundleName(String baseName, Locale locale);
 
         /**
-         * Returns a ServiceLoader for service providers for the given baseName
+         * Returns the service provider type for the given baseName
          * and locale, or null if no service providers should be used.
          */
-        public ServiceLoader<ResourceBundleProvider> getResourceBundleProvders(String baseName,
-                                                                               Locale locale);
+        public Class<? extends ResourceBundleProvider> getResourceBundleProviderType(String baseName,
+                                                                                     Locale locale);
     }
 
     /**
@@ -390,6 +413,10 @@ public abstract class Bundles {
         // of this instance.
         private int hashCodeCache;
 
+        // The service loader to load bundles or null if no service loader
+        // is required.
+        private ServiceLoader<ResourceBundleProvider> providers;
+
         CacheKey(String baseName, Locale locale) {
             this.name = baseName;
             this.locale = locale;
@@ -418,6 +445,14 @@ public abstract class Bundles {
                 calculateHashCode();
             }
             return this;
+        }
+
+        ServiceLoader<ResourceBundleProvider> getProviders() {
+            return providers;
+        }
+
+        void setProviders(ServiceLoader<ResourceBundleProvider> providers) {
+            this.providers = providers;
         }
 
         @Override
@@ -454,6 +489,8 @@ public abstract class Bundles {
                 CacheKey clone = (CacheKey) super.clone();
                 // Clear the reference to a Throwable
                 clone.cause = null;
+                // Clear the reference to a ServiceLoader
+                clone.providers = null;
                 return clone;
             } catch (CloneNotSupportedException e) {
                 //this should never happen

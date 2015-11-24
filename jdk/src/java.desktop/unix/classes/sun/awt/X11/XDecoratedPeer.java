@@ -792,8 +792,8 @@ abstract class XDecoratedPeer extends XWindowPeer {
         XToolkit.awtLock();
         try {
             updateSizeHints(rec.x, rec.y, rec.width, rec.height);
-            XlibWrapper.XResizeWindow(XToolkit.getDisplay(), getShell(), rec.width, rec.height);
-            XlibWrapper.XMoveWindow(XToolkit.getDisplay(), getShell(), rec.x, rec.y);
+            XlibWrapper.XMoveResizeWindow(XToolkit.getDisplay(), getShell(),
+                            rec.x, rec.y, rec.width, rec.height);
         }
         finally {
             XToolkit.awtUnlock();
@@ -904,7 +904,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
         return getSize().height;
     }
 
-    final public WindowDimensions getDimensions() {
+    public final WindowDimensions getDimensions() {
         return dimensions;
     }
 

@@ -33,11 +33,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
-import sun.misc.SharedSecrets;
-import sun.misc.JavaLangAccess;
 
 
 /**
@@ -68,20 +69,20 @@ public class ClassLoaders {
 
         // we have a class path if -cp is specified or -m is not specified
         URLClassPath ucp = null;
-        String mainMid = System.getProperty("java.module.main");
+        String mainMid = System.getProperty("jdk.module.main");
         String defaultClassPath = (mainMid == null) ? "." : null;
         String cp = System.getProperty("java.class.path", defaultClassPath);
         if (cp != null && cp.length() > 0)
             ucp = toURLClassPath(cp);
 
-        // is -Xoverride specified?
-        s = System.getProperty("jdk.launcher.override");
-        Path overrideDir = (s != null) ? Paths.get(s) : null;
+        // is -Xpatch specified?
+        s = System.getProperty("jdk.launcher.patchdirs");
+        List<Path> patchDirs = toPathList(s);
 
         // create the class loaders
-        BOOT_LOADER = new BootClassLoader(overrideDir, bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, overrideDir);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, overrideDir, ucp);
+        BOOT_LOADER = new BootClassLoader(patchDirs, bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, patchDirs);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, patchDirs, ucp);
     }
 
     /**
@@ -117,9 +118,8 @@ public class ClassLoaders {
     private static class BootClassLoader extends BuiltinClassLoader {
         private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
 
-        BootClassLoader(Path overrideDir, URLClassPath bcp) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(null, overrideDir, bcp, 32, 640);
+        BootClassLoader(List<Path> patchDirs, URLClassPath bcp) {
+            super(null, patchDirs, bcp);
         }
 
         @Override
@@ -133,9 +133,13 @@ public class ClassLoaders {
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
-        ExtClassLoader(BootClassLoader parent, Path overrideDir) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(parent, overrideDir, null, 24, 1024);
+        static {
+            if (!ClassLoader.registerAsParallelCapable())
+                throw new InternalError();
+        }
+
+        ExtClassLoader(BootClassLoader parent, List<Path> patchDirs) {
+            super(parent, patchDirs, null);
         }
     }
 
@@ -144,11 +148,15 @@ public class ClassLoaders {
      * customizations to be compatible with long standing behavior.
      */
     private static class AppClassLoader extends BuiltinClassLoader {
+        static {
+            if (!ClassLoader.registerAsParallelCapable())
+                throw new InternalError();
+        }
+
         final URLClassPath ucp;
 
-        AppClassLoader(ExtClassLoader parent, Path overrideDir, URLClassPath ucp) {
-            // FIXME: Use ModuleLoaderMap to get module/package counts
-            super(parent, overrideDir, ucp, 32, 512);
+        AppClassLoader(ExtClassLoader parent, List<Path> patchDirs, URLClassPath ucp) {
+            super(parent, patchDirs, ucp);
             this.ucp = ucp;
         }
 
@@ -221,6 +229,26 @@ public class ClassLoaders {
             } catch (InvalidPathException | IOException ignore) {
                 // malformed path string or class path element does not exist
             }
+        }
+    }
+
+    /**
+     * Parses the given string as a sequence of directories, returning a list
+     * of Path objects to represent each directory.
+     */
+    private static List<Path> toPathList(String s) {
+        if (s == null) {
+            return Collections.emptyList();
+        } else {
+            String[] dirs = s.split(File.pathSeparator);
+
+            // too early in startup to use Stream.of(dirs)
+            List<Path> result = new ArrayList<>();
+            for (String dir : dirs) {
+                if (dir.length() > 0)
+                    result.add(Paths.get(dir));
+            }
+            return result;
         }
     }
 

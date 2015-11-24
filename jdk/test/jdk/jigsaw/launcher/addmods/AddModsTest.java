@@ -25,7 +25,8 @@
  * @test
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jlink/jdk.tools.jmod
- * @build AddModsTest CompilerUtils jdk.testlibrary.ProcessTools
+ *          jdk.compiler
+ * @build AddModsTest CompilerUtils jdk.testlibrary.*
  * @run testng AddModsTest
  * @summary Basic test for java -addmods
  */
@@ -80,6 +81,25 @@ public class AddModsTest {
         assertTrue(compiled, "app did not compile");
     }
 
+
+    /**
+     * Basic test of -addmods ALL-SYSTEM, using the output of -listmods to
+     * check that the a sample of the system modules are resolved
+     */
+    public void testAddSystemModules() throws Exception {
+
+        executeTestJava("-addmods", "ALL-SYSTEM",
+                        "-listmods",
+                        "-m", "java.base")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .shouldContain("java.sql")
+            .shouldContain("java.corba");
+
+        // no exit value to check as -m java.base will likely fail
+    }
+
+
     /**
      * Run application on class path that makes use of module on the
      * application module path. Uses -addmods.
@@ -133,7 +153,7 @@ public class AddModsTest {
             = executeTestJava("-mp", MODS_DIR.toString(),
                               "-addmods", LIB_MODULE + ",DoesNotExist",
                               "-cp", CLASSES_DIR.toString(),
-                MAIN_CLASS)
+                              MAIN_CLASS)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();

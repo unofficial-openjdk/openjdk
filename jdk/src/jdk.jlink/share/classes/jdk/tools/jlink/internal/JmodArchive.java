@@ -27,7 +27,8 @@ package jdk.tools.jlink.internal;
 
 import jdk.tools.jlink.internal.JarArchive;
 import java.nio.file.Path;
-import jdk.internal.jimage.Archive.Entry.EntryType;
+import java.util.Objects;
+import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
@@ -44,7 +45,7 @@ public class JmodArchive extends JarArchive {
 
     public JmodArchive(String mn, Path jmod) {
         super(mn, jmod);
-        String filename = jmod.getFileName().toString();
+        String filename = Objects.requireNonNull(jmod.getFileName()).toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
     }
@@ -71,7 +72,8 @@ public class JmodArchive extends JarArchive {
 
     private static String getSection(String entryName) {
         int i = entryName.indexOf('/');
-        String section = null;
+        // Unnamed section.
+        String section = "";
         if (i > 0) {
             section = entryName.substring(0, entryName.indexOf('/'));
         }

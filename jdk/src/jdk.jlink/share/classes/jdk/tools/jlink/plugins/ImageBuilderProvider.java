@@ -26,7 +26,9 @@ package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
  * Implement this interface and make your class available to the ServiceLoader
@@ -56,7 +58,25 @@ public interface ImageBuilderProvider {
      * @return The builder.
      * @throws java.io.IOException
      */
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir)
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
+            throws IOException;
+
+    /**
+     * Image builder provider can execute the image located in the passed dir
+     *
+     * @param root The image directory.
+     * @return An ExecutableImage if runnable, otherwise null.
+     */
+    public ExecutableImage canExecute(Path root);
+
+    /**
+     * Ask the provider to store some options in the image launcher(s).
+     *
+     * @param image
+     * @param arguments The arguments to add to the launcher.
+     * @throws java.io.IOException
+     */
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments)
             throws IOException;
 
     /**
@@ -64,7 +84,7 @@ public interface ImageBuilderProvider {
      *
      * @return The option name / description mapping
      */
-    public abstract Map<String, String> getOptions();
+    public Map<String, String> getOptions();
 
     /**
      * Check if an option expects an argument.
@@ -72,5 +92,35 @@ public interface ImageBuilderProvider {
      * @param option
      * @return true if an argument is expected. False otherwise.
      */
-    public abstract boolean hasArgument(String option);
+    public boolean hasArgument(String option);
+
+    /**
+     * An exposed provider wants to be advertised (e.g.: displayed in help).
+     *
+     * @return True, the provider is exposed, false the provider is hidden.
+     */
+    public default boolean isExposed() {
+        return true;
+    }
+
+    /**
+     * Check if the provider can properly operate in the current context.
+     *
+     * @return true, the provider can operate
+     */
+    public default boolean isFunctional() {
+        return true;
+    }
+
+    /**
+     * Return a message indicating the status of the provider.
+     *
+     * @param functional
+     * @return A status description.
+     */
+    public default String getFunctionalStateDescription(boolean functional) {
+        return functional
+                ? PluginsResourceBundle.getMessage("main.status.ok")
+                : PluginsResourceBundle.getMessage("main.status.not.ok");
+    }
 }

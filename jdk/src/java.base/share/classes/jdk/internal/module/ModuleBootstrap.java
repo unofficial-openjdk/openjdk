@@ -63,6 +63,13 @@ public final class ModuleBootstrap {
 
     private static final String JAVA_BASE = "java.base";
 
+    // the token for "all unnamed modules"
+    private static final String ALL_UNNAMED = "ALL-UNNAMED";
+
+    // the token for "all system modules"
+    private static final String ALL_SYSTEM = "ALL-SYSTEM";
+
+
     /**
      * Initialize the module system, returning the boot Layer.
      *
@@ -89,10 +96,10 @@ public final class ModuleBootstrap {
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("java.upgrade.module.path");
+            = createModulePathFinder("jdk.upgrade.module.path");
 
         // -modulepath option specified to the launcher
-        ModuleFinder appModulePath = createModulePathFinder("java.module.path");
+        ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
         // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
         ModuleFinder finder = systemModulePath;
@@ -101,25 +108,35 @@ public final class ModuleBootstrap {
         if (appModulePath != null)
             finder = ModuleFinder.concat(finder, appModulePath);
 
-
         // launcher -m option to specify the initial module
-        String mainModule = null;
-        String propValue = System.getProperty("java.module.main");
-        if (propValue != null) {
-            int i = propValue.indexOf('/');
-            String s = (i == -1) ? propValue : propValue.substring(0, i);
-            mainModule = s;
-        }
+        String mainModule = System.getProperty("jdk.module.main");
 
         // additional module(s) specified by -addmods
-        Set<String> additionalMods = null;
-        propValue = System.getProperty("jdk.launcher.addmods");
+        boolean addAllSystemModules = false;
+        Set<String> addModules = null;
+        String propValue = System.getProperty("jdk.launcher.addmods");
         if (propValue != null) {
-            additionalMods = new HashSet<>();
+            addModules = new HashSet<>();
             for (String mod: propValue.split(",")) {
-                additionalMods.add(mod);
+                if (mod.equals(ALL_SYSTEM)) {
+                    addAllSystemModules = true;
+                } else {
+                    addModules.add(mod);
+                }
             }
         }
+
+        // The root modules to resolve
+        Set<String> roots = new HashSet<>();
+
+        // main/initial module
+        if (mainModule != null)
+            roots.add(mainModule);
+
+        // If -addmods is specified then those modules need to be resolved
+        if (addModules != null)
+            roots.addAll(addModules);
+
 
         // -limitmods
         boolean limitmods = false;
@@ -129,28 +146,19 @@ public final class ModuleBootstrap {
             for (String mod: propValue.split(",")) {
                 mods.add(mod);
             }
-            if (mainModule != null)
-                mods.add(mainModule);
-            finder = limitFinder(finder, mods);
+            finder = limitFinder(finder, mods, roots);
             limitmods = true;
         }
 
-        // The root modules to resolve
-        Set<String> roots = new HashSet<>();
-        if (mainModule != null) {
 
-            // main/initial module
-            roots.add(mainModule);
-
-        } else {
-
-            // If there is no initial module specified then assume that the
-            // initial module is the unnamed module of the application class
-            // loader. By convention, and for compatibility, this is
-            // implemented by putting the names of all modules on the system
-            // module path into the set of modules to resolve. If the
-            // -limitmods option is specified then it may be a subset of the
-            // system module path.
+        // If there is no initial module specified then assume that the
+        // initial module is the unnamed module of the application class
+        // loader. By convention, and for compatibility, this is
+        // implemented by putting the names of all modules on the system
+        // module path into the set of modules to resolve. If the
+        // -limitmods option is specified then it may be a subset of the
+        // system module path.
+        if (mainModule == null || addAllSystemModules) {
             Set<ModuleReference> mrefs = systemModulePath.findAll();
             if (limitmods) {
                 ModuleFinder f = finder;
@@ -163,10 +171,6 @@ public final class ModuleBootstrap {
                 roots.add(mref.descriptor().name());
             }
         }
-
-        // If -addmods is specified then these module names must be resolved
-        if (additionalMods != null)
-            roots.addAll(additionalMods);
 
         long t1 = System.nanoTime();
 
@@ -217,6 +221,11 @@ public final class ModuleBootstrap {
             }
         }
 
+        // if -XaddReads is specified then may need to add more read edges
+        propValue= System.getProperty("jdk.launcher.addreads");
+        if (propValue != null)
+            addMoreReads(bootLayer, propValue);
+
         // if -XaddExports is specified then process the value to export
         // additional API packages
         propValue= System.getProperty("jdk.launcher.addexports");
@@ -233,17 +242,18 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Returns a ModuleFinder that locates modules via the given
-     * ModuleFinder but limits what can be found to the given
-     * modules and their transitive dependences.
+     * Returns a ModuleFinder that limits observability to the given root
+     * modules, their transitive dependences, plus a set of other modules.
      */
     private static ModuleFinder limitFinder(ModuleFinder finder,
-                                            Set<String> mods)
+                                            Set<String> roots,
+                                            Set<String> otherMods)
     {
+        // resolve all root modules
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.empty(),
-                                                 ModuleFinder.empty(),
-                                                 mods);
+                Layer.empty(),
+                ModuleFinder.empty(),
+                roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -252,7 +262,20 @@ public final class ModuleBootstrap {
             map.put(name, finder.find(name).get());
         });
 
+        // set of modules that are observable
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
+
+        // add the other modules
+        for (String mod : otherMods) {
+            Optional<ModuleReference> omref = finder.find(mod);
+            if (omref.isPresent()) {
+                ModuleReference mref = omref.get();
+                map.putIfAbsent(mod, mref);
+                mrefs.add(mref);
+            } else {
+                // no need to fail
+            }
+        }
 
         return new ModuleFinder() {
             @Override
@@ -285,12 +308,49 @@ public final class ModuleBootstrap {
         }
     }
 
+
+    /**
+     * The value of -XaddReads is a sequence of $MODULE=$SOURCE where $SOURCE
+     * is the source module name or the token "ALL-UNNAMED".
+     */
+    private static void addMoreReads(Layer bootLayer, String moreReads) {
+        for (String expr : moreReads.split(",")) {
+            if (expr.length() > 0) {
+
+                String[] s = expr.split("=");
+                if (s.length == 1)
+                    fail("Missing source module: " + expr);
+                if (s.length != 2)
+                    fail("Unable to parse: " + expr);
+
+                String mn = s[0];
+                String sm = s[1];
+
+                Optional<Module> om = bootLayer.findModule(mn);
+                if (!om.isPresent())
+                    fail("Unknown module: " + mn);
+
+                Module source;
+                if (ALL_UNNAMED.equals(sm)) {
+                    source = null;  // loose
+                } else {
+                    Optional<Module> osource = bootLayer.findModule(sm);
+                    if (!osource.isPresent())
+                        fail("Unknown module: " + sm);
+                    source = osource.get();
+                }
+
+                Modules.addReads(om.get(), source);
+            }
+        }
+    }
+
     /**
      * The value of -XaddExports is a sequence of $MODULE/$PACKAGE=$TARGET
      * where $TARGET is a module name or the token "ALL-UNNAMED".
      */
     private static void addMoreExports(Layer bootLayer, String moreExports) {
-        for (String expr: moreExports.split(",")) {
+        for (String expr : moreExports.split(",")) {
             if (expr.length() > 0) {
 
                 String[] s = expr.split("=");
@@ -318,7 +378,7 @@ public final class ModuleBootstrap {
                 boolean allUnnamed = false;
                 String tn = s[1];
                 Module target = null;
-                if ("ALL-UNNAMED".equals(tn)) {
+                if (ALL_UNNAMED.equals(tn)) {
                     allUnnamed = true;
                 } else {
                     om = bootLayer.findModule(tn);

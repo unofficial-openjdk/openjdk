@@ -33,6 +33,7 @@
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
+ *          jdk.compiler
  * @build tests.*
  * @run testng/othervm CustomImageBuilderTest
  */
@@ -69,7 +70,6 @@ public class CustomImageBuilderTest {
     private static Path pluginModulePath;
     private static Path customPluginJmod;
     private static Path classes;
-    private static final Path configFile = Paths.get("builder.cfg").toAbsolutePath();
     private static final List<String> options =
             Arrays.asList("custom-image-option-1", "custom-image-option-2");
 
@@ -89,13 +89,12 @@ public class CustomImageBuilderTest {
                 .jmod(helper.getJmodDir().resolve(moduleName + ".jmod"))
                 .create().assertSuccess();
         pluginModulePath = customPluginJmod.getParent();
-        Files.write(configFile, "jdk.jlink.image.builder=custom-image-builder\n".getBytes());
     }
 
     private JLinkTask getJLinkTask() {
         return JImageGenerator.getJLinkTask()
-                .option("--plugins-configuration")
-                .option(configFile.toString());
+                .option("--image-builder")
+                .option("custom-image-builder");
     }
 
     public void testHelp() {
@@ -105,8 +104,10 @@ public class CustomImageBuilderTest {
                 .call();
         result.assertSuccess();
         String message = result.getMessage();
-        if (!message.contains("Image Builder Name: custom-image-builder\n" +
-                " --custom-image-option-1 custom-image-option-description")) {
+        if (!message.contains("Image Builder Name: custom-image-builder\n"
+                + "Image Builder Description: custom-image-builder-description\n"
+                + "Functional state: Functional.\n"
+                + " --custom-image-option-1 custom-image-option-description")) {
             System.err.println(result.getMessage());
             throw new AssertionError("Custom image builder not found");
         }

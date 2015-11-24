@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,19 +43,18 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(call FindSrcDirsForLib, jdk.security.auth, jaas), \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) -I$(HEADERS_OUTPUTDIR)/jdk.security.auth, \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(SUPPORT_OUTPUTDIR)/headers/jdk.security.auth, \
     MAPFILE := $(LIBJAAS_MAPFILE), \
-    LDFLAGS := $(filter-out -ljava, $(LDFLAGS_JDKLIB)) \
+    LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_windows := netapi32.lib user32.lib mpr.lib advapi32.lib, \
-    LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX), \
-    LDFLAGS_SUFFIX_solaris := -lc, \
+    LIBS_solaris := -lc, \
+    LIBS_windows := netapi32.lib user32.lib mpr.lib advapi32.lib $(JDKLIB_LIBS), \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=$(LIBJAAS_NAME).dll" \
         -D "JDK_INTERNAL_NAME=$(LIBJAAS_NAME)" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libjaas, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjaas, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
 $(BUILD_LIBJAAS): $(call FindLib, java.base, java)

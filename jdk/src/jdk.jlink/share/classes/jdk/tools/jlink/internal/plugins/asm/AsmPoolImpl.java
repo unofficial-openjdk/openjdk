@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,20 +61,6 @@ import jdk.tools.jlink.plugins.ResourcePool;
  * (.properties, binary files, ...).</p>
  */
 final class AsmPoolImpl implements AsmModulePool {
-
-    private final class ResourceWrapper extends ResourceFile {
-
-        private final Resource res;
-
-        private ResourceWrapper(Resource res) {
-            super(toJavaBinaryResourceName(res.getPath()), res.getContent());
-            this.res = res;
-        }
-
-        private Resource getWrappedResource() {
-            return res;
-        }
-    }
 
     /**
      * Contains the transformed classes. When the jimage file is generated,
@@ -248,7 +235,8 @@ final class AsmPoolImpl implements AsmModulePool {
 
         @Override
         public ResourceFile getResourceFile(Resource res) {
-            return new ResourceWrapper(res);
+            return new ResourceFile(toJavaBinaryResourceName(res.getPath()),
+                    res.getContent());
         }
     }
 
@@ -430,7 +418,8 @@ final class AsmPoolImpl implements AsmModulePool {
 
     @Override
     public ResourceFile getResourceFile(Resource res) {
-        return new ResourceWrapper(res);
+        return new ResourceFile(toJavaBinaryResourceName(res.getPath()),
+                res.getContent());
     }
 
     @Override
@@ -547,7 +536,9 @@ final class AsmPoolImpl implements AsmModulePool {
             throws IOException {
         Objects.requireNonNull(visitor);
         for (Resource resource : getResourceFiles()) {
-            ResourceFile resFile = new ResourceWrapper(resource);
+            ResourceFile resFile
+                    = new ResourceFile(toJavaBinaryResourceName(resource.getPath()),
+                            resource.getContent());
             ResourceFile res = visitor.visit(resFile);
             if (res != null) {
                 getTransformedResourceFiles().addResourceFile(res);
@@ -610,10 +601,6 @@ final class AsmPoolImpl implements AsmModulePool {
         AsmPools.sort(outputResources, output, sorter);
     }
 
-    private static void addResources(String name, Map<String, Resource> map) {
-
-    }
-
     /**
      * Associate a package to this module, useful when adding new classes in new
      * packages. WARNING: In order to properly handle new package and/or new
@@ -633,6 +620,22 @@ final class AsmPoolImpl implements AsmModulePool {
             throw new IOException(mod + " module already contains package " + pkg);
         }
         newPackageMapping.put(pkg, moduleName);
+    }
+
+    @Override
+    public Set<String> getAllPackages() {
+        ModuleDescriptor desc = getDescriptor();
+        Set<String> packages = new HashSet<>();
+        for (String p : desc.conceals()) {
+            packages.add(p.replaceAll("\\.", "/"));
+        }
+        for (String p : newPackageMapping.keySet()) {
+            packages.add(p.replaceAll("\\.", "/"));
+        }
+        for (Exports ex : desc.exports()) {
+            packages.add(ex.source().replaceAll("\\.", "/"));
+        }
+        return packages;
     }
 
     private static ClassReader newClassReader(byte[] bytes) throws IOException {

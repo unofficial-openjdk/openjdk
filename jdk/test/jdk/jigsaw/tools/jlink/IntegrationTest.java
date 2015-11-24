@@ -44,6 +44,9 @@ import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PostProcessingPlugin;
+import jdk.tools.jlink.plugins.PostProcessingPluginProvider;
+import jdk.tools.jlink.plugins.ProcessingManager;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -59,16 +62,57 @@ import tests.JImageGenerator;
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
+ *          jdk.compiler
  * @build tests.*
  * @run main IntegrationTest
  */
 public class IntegrationTest {
 
     static {
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider());
+        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "0"));
+        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "1"));
+        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "2"));
+        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "3"));
+        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "4"));
+        ImagePluginProviderRepository.registerPluginProvider(new MyPostProcessorProvider());
     }
 
     private static final List<Integer> ordered = new ArrayList<>();
+
+    public static class MyPostProcessorProvider extends PostProcessingPluginProvider {
+
+        public class MyPostProcessor implements PostProcessingPlugin {
+
+            @Override
+            public List<String> process(ProcessingManager manager) throws Exception {
+                Files.createFile(manager.getImage().getHome().resolve("toto.txt"));
+                return null;
+            }
+
+            @Override
+            public String getName() {
+                return NAME;
+            }
+
+        }
+
+        public static final String NAME = "mypostprocessor";
+
+        public MyPostProcessorProvider() {
+            super(NAME, "");
+        }
+
+        @Override
+        public PostProcessingPlugin[] newPlugins(Map<String, Object> config) throws IOException {
+            return new PostProcessingPlugin[]{new MyPostProcessor()};
+        }
+
+        @Override
+        public String getCategory() {
+            return PROCESSOR;
+        }
+
+    }
 
     public static class MyProvider extends ImageFilePluginProvider {
         public class MyPlugin1 implements ImageFilePlugin {
@@ -97,18 +141,18 @@ public class IntegrationTest {
         static final String NAME = "myprovider";
         static final String INDEX = "INDEX";
 
-        public MyProvider() {
-            super(NAME, "");
+        public MyProvider(String name) {
+            super(name, "");
         }
 
         @Override
-        public ImageFilePlugin[] newPlugins(Map<Object, Object> config) throws IOException {
+        public ImageFilePlugin[] newPlugins(Map<String, Object> config) throws IOException {
             return new ImageFilePlugin[]{new MyPlugin1((Integer) config.get(INDEX))};
         }
 
         @Override
         public String getCategory() {
-            return PluginProvider.PACKAGER;
+            return PluginProvider.TRANSFORMER;
         }
     }
 
@@ -193,10 +237,11 @@ public class IntegrationTest {
                 modulePaths, mods, limits, null);
 
         List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
+        List<Jlink.StackedPluginConfiguration> post = new ArrayList<>();
 
         //Strip debug
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
             StackedPluginConfiguration strip
                     = new StackedPluginConfiguration("strip-java-debug", 0, false, config1);
@@ -204,20 +249,27 @@ public class IntegrationTest {
         }
         // compress
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
             config1.put("compress-resources-level", "0");
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration("compress-resources", 0, false, config1);
             lst.add(compress);
         }
+        // Post processor
+        {
+            Map<String, Object> config1 = new HashMap<>();
+            StackedPluginConfiguration postprocessor
+                    = new StackedPluginConfiguration(MyPostProcessorProvider.NAME, 0, false, config1);
+            post.add(postprocessor);
+        }
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         config1.put("genbom", "true");
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, post, imgBuilder);
 
         jlink.build(config, plugins);
 
@@ -236,6 +288,10 @@ public class IntegrationTest {
         File release = new File(output.toString(), "release");
         if (!release.exists()) {
             throw new AssertionError("release not generated");
+        }
+
+        if (!Files.exists(output.resolve("toto.txt"))) {
+            throw new AssertionError("Post processing not called");
         }
 
     }
@@ -258,46 +314,46 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 2);
             StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
+                    = new StackedPluginConfiguration(MyProvider.NAME + "0", 0, false, config1);
             lst.add(compress);
         }
 
         // packager 2
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 0);
             StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 0, true, config1);
+                    = new StackedPluginConfiguration(MyProvider.NAME + "1", 0, true, config1);
             lst.add(compress);
         }
 
         // packager 3
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 1);
             StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 1, true, config1);
+                    = new StackedPluginConfiguration(MyProvider.NAME + "2", 1, true, config1);
             lst.add(compress);
         }
 
         // packager 4
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 3);
             StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 1, false, config1);
+                    = new StackedPluginConfiguration(MyProvider.NAME + "3", 1, false, config1);
             lst.add(compress);
         }
 
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, Collections.emptyList(), imgBuilder);
 
         jlink.build(config, plugins);
 
@@ -330,7 +386,7 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 2);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
@@ -339,7 +395,7 @@ public class IntegrationTest {
 
         // packager 2
         {
-            Map<Object, Object> config1 = new HashMap<>();
+            Map<String, Object> config1 = new HashMap<>();
             config1.put(MyProvider.INDEX, 0);
             StackedPluginConfiguration compress
                     = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
@@ -347,11 +403,11 @@ public class IntegrationTest {
         }
 
         // Image builder
-        Map<Object, Object> config1 = new HashMap<>();
+        Map<String, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, Collections.emptyList(), imgBuilder);
         boolean failed = false;
         try {
             jlink.build(config, plugins);

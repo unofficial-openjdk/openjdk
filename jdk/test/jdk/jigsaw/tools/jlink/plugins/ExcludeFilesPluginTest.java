@@ -34,6 +34,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImageFilePoolImpl;
@@ -68,8 +70,8 @@ public class ExcludeFilesPluginTest {
     }
 
     public void checkFiles(String s, String sample, String module, boolean exclude) throws Exception {
-        Properties prop = new Properties();
-        prop.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
+        Map<String, Object> prop = new HashMap<>();
+        prop.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeFilesProvider fprovider = new ExcludeFilesProvider();
         ImageFilePlugin fplug = (ImageFilePlugin) fprovider.newPlugins(prop)[0];
         ImageFilePool files = new ImageFilePoolImpl();

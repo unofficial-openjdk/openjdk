@@ -91,7 +91,7 @@ class GNUStyleOptions {
                     tool.xflag = true;
                 }
             },
-            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor") {
+            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor", "-p") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
                     if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.xflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
@@ -100,7 +100,7 @@ class GNUStyleOptions {
             },
 
             // Additional options
-            new Option(true, OptionType.ANY, "--archive", "-f") {
+            new Option(true, OptionType.ANY, "--file", "-f") {
                 void process(Main jartool, String opt, String arg) {
                     jartool.fname = arg;
                 }

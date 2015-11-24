@@ -69,7 +69,7 @@ public class ReflectionOptimizer {
 
     public interface TypeResolver {
 
-        public ClassReader resolve(String type);
+        public ClassReader resolve(ClassNode cn, MethodNode m, String type);
     }
 
     public static Data replaceWithClassConstant(ClassNode cn, MethodNode m,
@@ -109,7 +109,7 @@ public class ReflectionOptimizer {
                             }
                         }
                         if (type == null) {
-                            if (cch.resolve(unaryClassName) != null) {
+                            if (cch.resolve(cn, m, unaryClassName) != null) {
                                 type = Type.getObjectType(binaryName);
                             }
                         }
@@ -132,13 +132,13 @@ public class ReflectionOptimizer {
         }
         if (!replacement.isEmpty()) {
             String[] types = {"java/lang/ClassNotFoundException"};
-            data.removedInstructions += deleteExceptionHandlers(data, cn, m, types);
+            data.removedInstructions += deleteExceptionHandlers(cch, data, cn, m, types);
 
         }
         return data;
     }
 
-    private static int deleteExceptionHandlers(Data data,
+    private static int deleteExceptionHandlers(TypeResolver cch, Data data,
             ClassNode cn, MethodNode m, String[] exTypes)
             throws Exception {
         int instructionsRemoved = 0;
@@ -156,7 +156,7 @@ public class ReflectionOptimizer {
                     continue;
                 }
                 // Check that the handler is still required
-                if (!Utils.canThrowCheckedException(m, bn)) {
+                if (!Utils.canThrowCheckedException(cch, cn, m, bn)) {
                     // try to suppress it.
                     int block = m.instructions.indexOf(bn.handler);
                     ControlFlow.Block blockHandler = f.getBlock(block);

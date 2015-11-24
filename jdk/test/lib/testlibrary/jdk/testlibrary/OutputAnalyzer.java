@@ -94,13 +94,14 @@ public final class OutputAnalyzer {
      * @throws RuntimeException
      *             If the string was not found
      */
-    public void shouldContain(String expectedString) {
+    public OutputAnalyzer shouldContain(String expectedString) {
         if (!getStdout().contains(expectedString)
                 && !getStderr().contains(expectedString)) {
             reportDiagnosticSummary();
             throw new RuntimeException("'" + expectedString
                     + "' missing from stdout/stderr \n");
         }
+        return this;
     }
 
     /**
@@ -144,7 +145,7 @@ public final class OutputAnalyzer {
      * @throws RuntimeException
      *             If the string was found
      */
-    public void shouldNotContain(String notExpectedString) {
+    public OutputAnalyzer shouldNotContain(String notExpectedString) {
         if (getStdout().contains(notExpectedString)) {
             reportDiagnosticSummary();
             throw new RuntimeException("'" + notExpectedString
@@ -155,6 +156,7 @@ public final class OutputAnalyzer {
             throw new RuntimeException("'" + notExpectedString
                     + "' found in stderr \n");
         }
+        return this;
     }
 
     /**

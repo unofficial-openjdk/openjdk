@@ -42,7 +42,7 @@ import jdk.tools.jlink.plugins.ResourcePlugin;
 public class OptionsTest {
     public static void main(String[] args) throws IOException {
         OptionsProvider prov = new OptionsProvider();
-        Properties props = new Properties();
+        Map<String, Object> props = new HashMap<>();
         for (String c : OptionsProvider.OPTIONS) {
             props.put(c, c);
         }

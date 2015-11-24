@@ -40,6 +40,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import static java.lang.reflect.Layer.boot;
+
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -163,6 +165,9 @@ public class LayerTest {
         assertEquals(m1.getName(), "m1");
         assertEquals(m2.getName(), "m2");
         assertEquals(m3.getName(), "m3");
+        assertTrue(m1.getDescriptor() == descriptor1);
+        assertTrue(m2.getDescriptor() == descriptor2);
+        assertTrue(m3.getDescriptor() == descriptor3);
         assertTrue(m1.getLayer() == layer);
         assertTrue(m2.getLayer() == layer);
         assertTrue(m3.getLayer() == layer);
@@ -205,9 +210,9 @@ public class LayerTest {
             = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.boot(),
-                                                 ModuleFinder.empty(),
-                                                 "m1");
+                Layer.boot(),
+                ModuleFinder.empty(),
+                "m1");
 
         ClassLoader loader = new ClassLoader() { };
 
@@ -231,6 +236,8 @@ public class LayerTest {
         Module m2 = layer.findModule("m2").get();
         assertEquals(m1.getName(), "m1");
         assertEquals(m2.getName(), "m2");
+        assertTrue(m1.getDescriptor() == descriptor1);
+        assertTrue(m2.getDescriptor() == descriptor2);
         assertTrue(m1.getLayer() == layer);
         assertTrue(m2.getLayer() == layer);
         assertTrue(modules.contains(m1));
@@ -364,6 +371,249 @@ public class LayerTest {
         Layer layer = Layer.create(cf, mn -> loader);
         assertTrue(layer.modules().size() == 1);
    }
+
+
+    /**
+     * Test layers with implied readability.
+     *
+     * The test consists of two configurations/layers. In configuration cf1
+     * then m1 requires public m2, this becomes layer1. In configuration
+     * cf2 then m3 requires m1, this becomes layer2.
+     */
+    public void testLayerWithRequiresPublic1() {
+
+        // cf1: m1 and m2, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf1
+            = Configuration.resolve(finder1, boot(), ModuleFinder.empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+        // cf2: m3, m3 requires m1
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
+                .build();
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
+
+        Configuration cf2
+            = Configuration.resolve(finder2, layer1, ModuleFinder.empty(), "m3");
+
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = Layer.create(cf2, mn -> cl2);
+
+        assertTrue(layer1.parent().get() == Layer.boot());
+        assertTrue(layer2.parent().get() == layer1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2 = layer1.findModule("m2").get();
+        Module m3 = layer2.findModule("m3").get();
+
+        assertTrue(m1.getLayer() == layer1);
+        assertTrue(m2.getLayer() == layer1);
+        assertTrue(m3.getLayer() == layer2);
+
+        assertTrue(m1.getClassLoader() == cl1);
+        assertTrue(m2.getClassLoader() == cl1);
+        assertTrue(m3.getClassLoader() == cl2);
+
+        assertTrue(m1.canRead(m1));
+        assertTrue(m1.canRead(m2));
+        assertFalse(m1.canRead(m3));
+
+        assertFalse(m2.canRead(m1));
+        assertTrue(m2.canRead(m2));
+        assertFalse(m2.canRead(m3));
+
+        assertTrue(m3.canRead(m1));
+        assertTrue(m3.canRead(m2));
+        assertTrue(m3.canRead(m3));
+    }
+
+
+    /**
+     * Test layers with implied readability.
+     *
+     * The test consists of two configurations cf1 and cf2. In configuration
+     * cf1 then m1 requires public m2, this becomes layer1. In configuration
+     * cf2 then m3 requires public m1 and m4 requires m3, this becomes layer2.
+     */
+    public void testLayerWithRequiresPublic2() {
+
+        // cf1: m1 and m2@1, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf1
+            = Configuration.resolve(finder1, boot(), ModuleFinder.empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+
+        // cf2: m3 and m4, m4 requires m3, m3 requires public m1
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m1")
+                .build();
+
+        ModuleDescriptor descriptor4
+            = new ModuleDescriptor.Builder("m4")
+                .requires("m3")
+                .build();
+
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
+
+        Configuration cf2
+            = Configuration.resolve(finder2, layer1, ModuleFinder.empty(),  "m3", "m4");
+
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = Layer.create(cf2, mn -> cl2);
+
+        assertTrue(layer1.parent().get() == Layer.boot());
+        assertTrue(layer2.parent().get() == layer1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2 = layer1.findModule("m2").get();
+        Module m3 = layer2.findModule("m3").get();
+        Module m4 = layer2.findModule("m4").get();
+
+        assertTrue(m1.getLayer() == layer1);
+        assertTrue(m2.getLayer() == layer1);
+        assertTrue(m3.getLayer() == layer2);
+        assertTrue(m4.getLayer() == layer2);
+
+        assertTrue(m1.canRead(m1));
+        assertTrue(m1.canRead(m2));
+        assertFalse(m1.canRead(m3));
+        assertFalse(m1.canRead(m4));
+
+        assertFalse(m2.canRead(m1));
+        assertTrue(m2.canRead(m2));
+        assertFalse(m2.canRead(m3));
+        assertFalse(m2.canRead(m4));
+
+        assertTrue(m3.canRead(m1));
+        assertTrue(m3.canRead(m2));
+        assertTrue(m3.canRead(m3));
+        assertFalse(m3.canRead(m4));
+
+        assertTrue(m4.canRead(m1));
+        assertTrue(m4.canRead(m2));
+        assertTrue(m4.canRead(m3));
+        assertTrue(m4.canRead(m4));
+    }
+
+
+    /**
+     * Test layers with implied readability.
+     *
+     * The test consists of two configurations cf1 and cf2. In configuration
+     * cf1 then m1 requires public m2@1, this becomes layer1. Configuration cf2
+     * has m2@2 and m3 where m3 requires m1, this becomes layer2.
+     */
+    public void testLayerWithRequiresPublic3() {
+
+        // cf1: m1 and m2@1, m1 requires public m2
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m2")
+                .build();
+
+        ModuleDescriptor descriptor2_v1
+            = new ModuleDescriptor.Builder("m2")
+                .version("1")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2_v1);
+
+        Configuration cf1
+            = Configuration.resolve(finder1, boot(), ModuleFinder.empty(), "m1");
+
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.create(cf1, mn -> cl1);
+
+
+        // cf2: m3 and m2@2, m3 requires m1
+
+        ModuleDescriptor descriptor2_v2
+            = new ModuleDescriptor.Builder("m2")
+                .version("2")
+                .build();
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
+                .build();
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2_v2, descriptor3);
+
+        Configuration cf2
+            = Configuration.resolve(finder2, layer1, ModuleFinder.empty(), "m2", "m3");
+
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = Layer.create(cf2, mn -> cl2);
+
+        assertTrue(layer1.parent().get() == Layer.boot());
+        assertTrue(layer2.parent().get() == layer1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2_v1 = layer1.findModule("m2").get();
+        Module m2_v2 = layer2.findModule("m2").get();
+        Module m3 = layer2.findModule("m3").get();
+
+        assertTrue(m1.getLayer() == layer1);
+        assertTrue(m2_v1.getLayer() == layer1);
+
+        assertTrue(m2_v2.getLayer() == layer2);
+        assertTrue(m3.getLayer() == layer2);
+
+        assertTrue(m1.canRead(m1));
+        assertTrue(m1.canRead(m2_v1));
+        assertFalse(m1.canRead(m2_v2));
+        assertFalse(m1.canRead(m3));
+
+        assertFalse(m2_v1.canRead(m1));
+        assertTrue(m2_v1.canRead(m2_v1));
+        assertFalse(m2_v1.canRead(m2_v2));
+        assertFalse(m2_v1.canRead(m3));
+
+        assertFalse(m2_v2.canRead(m1));
+        assertFalse(m2_v2.canRead(m2_v1));
+        assertTrue(m2_v2.canRead(m2_v2));
+        assertFalse(m2_v2.canRead(m3));
+
+        assertTrue(m3.canRead(m1));
+        assertTrue(m3.canRead(m2_v1));
+        assertFalse(m3.canRead(m2_v2));
+        assertTrue(m3.canRead(m3));
+    }
 
 
     /**

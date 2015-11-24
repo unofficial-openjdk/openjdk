@@ -22,9 +22,11 @@
 #
 
 # @test
-# @summary Simple test case for ResourceBundle with modules;
-#          ResourceBundle.getBundle caller is in module named "test" and
-#          all resource bundles are in single module named "bundles".
+# @bug 8044767
+# @summary Simple test case for ResourceBundle with named modules;
+#          ResourceBundle.getBundle caller is in named module "test" and
+#          all resource bundles are in single named module "bundles" with
+#          service providers.
 
 
 set -e

@@ -36,7 +36,7 @@ import java.util.Properties;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import jdk.internal.jimage.BasicImageReader;
-import jdk.internal.jimage.BasicImageWriter;
+import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.internal.jimage.ImageLocation;
 
 /**

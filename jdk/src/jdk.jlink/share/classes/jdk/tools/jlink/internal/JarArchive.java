@@ -29,13 +29,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.Archive.Entry.EntryType;
+import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jar file.
@@ -80,6 +80,8 @@ public abstract class JarArchive implements Archive {
     private ZipFile zipFile;
 
     protected JarArchive(String mn, Path file) {
+        Objects.requireNonNull(mn);
+        Objects.requireNonNull(file);
         this.moduleName = mn;
         this.file = file;
     }
@@ -123,7 +125,9 @@ public abstract class JarArchive implements Archive {
 
     @Override
     public void close() throws IOException {
-        zipFile.close();
+        if (zipFile != null) {
+            zipFile.close();
+        }
     }
 
     @Override

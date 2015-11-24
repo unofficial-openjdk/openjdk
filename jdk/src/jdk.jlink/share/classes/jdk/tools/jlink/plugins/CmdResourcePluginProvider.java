@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * An Resource Plugin provider that creates command line oriented plugins.
  */
-public abstract class CmdResourcePluginProvider extends CmdPluginProvider {
+public abstract class CmdResourcePluginProvider extends ResourcePluginProvider
+        implements CmdPluginProvider<ResourcePlugin> {
 
     protected CmdResourcePluginProvider(String name, String description) {
         super(name, description);
@@ -39,4 +40,10 @@ public abstract class CmdResourcePluginProvider extends CmdPluginProvider {
     @Override
     public abstract ResourcePlugin[] newPlugins(String[] arguments,
             Map<String, String> otherOptions) throws IOException;
+
+    // Must be implemented, an abstract method can't be implemented with a default method
+    @Override
+    public ResourcePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
+        return CmdPluginProvider.super.newPlugins(conf);
+    }
 }

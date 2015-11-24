@@ -26,6 +26,7 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
+import java.util.Set;
 import jdk.internal.org.objectweb.asm.ClassReader;
 
 /**
@@ -79,4 +80,11 @@ public interface AsmModulePool extends AsmPool {
      * @return The module descriptor;
      */
     public ModuleDescriptor getDescriptor();
+
+    /**
+     * Retrieve the internal and exported packages.
+     *
+     * @return
+     */
+    public Set<String> getAllPackages();
 }

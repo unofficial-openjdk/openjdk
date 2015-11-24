@@ -28,9 +28,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
@@ -39,9 +41,9 @@ import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 public class CustomImageBuilder implements ImageBuilder {
 
     private final Path image;
-    private final Map<Object, Object> config;
+    private final Map<String, Object> config;
 
-    public CustomImageBuilder(Map<Object, Object> config, Path image) throws IOException {
+    public CustomImageBuilder(Map<String, Object> config, Path image) throws IOException {
         this.image = image;
         this.config = config;
         System.err.println(config);
@@ -54,7 +56,7 @@ public class CustomImageBuilder implements ImageBuilder {
     private void handleOption(String option) throws IOException {
         if (config.containsKey(option)) {
             String firstValue = (String) config.get(option);
-            Files.write(image.resolve(option), Objects.toString(firstValue).getBytes());
+            Files.write(image.resolve(option), Objects.toString(firstValue == null ? "" : firstValue).getBytes());
         }
     }
 
@@ -68,5 +70,16 @@ public class CustomImageBuilder implements ImageBuilder {
     @Override
     public DataOutputStream getJImageOutputStream() throws IOException {
         return new DataOutputStream(Files.newOutputStream(image.resolve("image.jimage")));
+    }
+
+    @Override
+    public ExecutableImage getExecutableImage() throws IOException {
+        return new ExecutableImage(image, Collections.emptySet(),
+                Collections.emptyList()) {
+                };
+    }
+
+    @Override
+    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
     }
 }

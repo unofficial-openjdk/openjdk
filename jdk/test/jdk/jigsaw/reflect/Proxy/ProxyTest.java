@@ -35,7 +35,8 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build ProxyTest q.U CompilerUtils jdk.testlibrary.ProcessTools
+ * @modules jdk.compiler
+ * @build ProxyTest q.U CompilerUtils jdk.testlibrary.*
  * @run testng ProxyTest
  * @summary Driver for testing proxies accessing interfaces in named modules
  */

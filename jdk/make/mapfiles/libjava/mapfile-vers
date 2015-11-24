@@ -149,15 +149,12 @@ SUNWprivate_1.1 {
 		Java_java_lang_StrictMath_exp;
 		Java_java_lang_StrictMath_log;
 		Java_java_lang_StrictMath_log10;
-		Java_java_lang_StrictMath_pow;
 		Java_java_lang_StrictMath_sin;
 		Java_java_lang_StrictMath_sqrt;
-		Java_java_lang_StrictMath_cbrt;
 		Java_java_lang_StrictMath_tan;
 		Java_java_lang_StrictMath_cosh;
 		Java_java_lang_StrictMath_sinh;
 		Java_java_lang_StrictMath_tanh;
-		Java_java_lang_StrictMath_hypot;
 		Java_java_lang_StrictMath_log1p;
 		Java_java_lang_StrictMath_expm1;
 		Java_java_lang_Object_getClass;
@@ -286,14 +283,16 @@ SUNWprivate_1.1 {
 
 		Java_jdk_internal_misc_BootLoader_getSystemPackageLocation;
 		Java_jdk_internal_misc_BootLoader_getSystemPackageNames;
+                Java_jdk_internal_misc_BootLoader_setBootLoaderUnnamedModule0;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;
 
                 # ZipFile.c needs this one
 		throwFileNotFoundException;
-                # zip_util.c needs this one
+                # zip_util.c needs these
 		getLastErrorString;
+		getErrorString;
 
 	# Outcalls from libjvm done using dlsym().
 

@@ -25,9 +25,13 @@
  * @test
  * @summary Basic test of package-info in named module and duplicate
  *          package-info in unnamed module
+ * @modules java.compiler
+ *          java.desktop
+ *          java.management
+ *          jdk.attach
+ *          jdk.jdi
+ *          jdk.xml.dom
  * @compile package-info.java PackageInfoTest.java
- *          org/w3c/dom/css/Fake.java org/w3c/dom/css/FakePackage.java
- *          org/w3c/dom/css/package-info.java
  * @run testng p.PackageInfoTest
  */
 
@@ -61,33 +65,49 @@ public class PackageInfoTest {
     @DataProvider(name = "jdkClasses")
     public Object[][] jdkClasses() {
         return new Object[][] {
-                { java.awt.Button.class,                        0 },
-                { java.lang.Object.class,                       0 },
-                { java.lang.management.ManagementFactory.class, 0 },
-                { com.sun.tools.attach.VirtualMachine.class,    1 },
-                { com.sun.jdi.Accessible.class,                 1 },
-                { org.w3c.dom.css.CSSRule.class,                0 },
+            { java.awt.Button.class,                        null },
+            { java.lang.Object.class,                       null },
+            { java.lang.management.ManagementFactory.class, null },
+            { com.sun.tools.attach.VirtualMachine.class,    jdk.Exported.class },
+            { com.sun.jdi.Accessible.class,                 jdk.Exported.class },
+            { org.w3c.dom.css.CSSRule.class,                null },
         };
     }
 
     @Test(dataProvider = "jdkClasses")
-    public void testPackageInfo(Class<?> type, int numAnnotations) {
+    public void testPackageInfo(Class<?> type, Class<? extends Annotation> annType) {
         Package pkg = type.getPackage();
         assertTrue(pkg.isSealed());
-        assertTrue(pkg.getDeclaredAnnotations().length == numAnnotations);
-        if (numAnnotations > 0) {
-            assertTrue(pkg.isAnnotationPresent(jdk.Exported.class));
-        } else {
-            assertFalse(pkg.isAnnotationPresent(jdk.Exported.class));
+        assertTrue(annType == null || pkg.getDeclaredAnnotations().length != 0);
+        if (annType != null) {
+            assertTrue(pkg.isAnnotationPresent(annType));
         }
     }
 
+    private Class<?> loadClass(String name) throws ClassNotFoundException {
+        ClassLoader loader = PackageInfoTest.class.getClassLoader();
+        Class<?> c = Class.forName(name, true, loader);
+        assertFalse(c.getModule().isNamed());
+        return c;
+    }
+
     @DataProvider(name = "classpathClasses")
-    public Object[][] cpClasses() {
+    public Object[][] cpClasses() throws IOException, ClassNotFoundException {
+        Path classes = Paths.get(System.getProperty("test.classes", "."));
+        Path src = Paths.get(System.getProperty("test.src", "."), "org/w3c/dom/css");
+
+        // compile with -Xmodule:jdk.xml.dom since it's a package in a named module
+        compile("-Xmodule:jdk.xml.dom",
+                classes,
+                src.resolve("Fake.java"),
+                src.resolve("FakePackage.java"),
+                src.resolve("package-info.java"));
+
+        // these classes will be loaded from classpath in unnamed module
         return new Object[][] {
-                { p.PackageInfoTest.class, Deprecated.class},
-                { org.w3c.dom.css.Fake.class, org.w3c.dom.css.FakePackage.class},
-        };
+                { p.PackageInfoTest.class, Deprecated.class },
+                { loadClass("org.w3c.dom.css.Fake"),
+                  loadClass("org.w3c.dom.css.FakePackage") }, };
     }
 
     @Test(dataProvider = "classpathClasses")
@@ -128,10 +148,10 @@ public class PackageInfoTest {
 
         // verify if classes are present
         Arrays.stream(otherClasses)
-                .forEach(c -> {
-                if (Files.notExists(classes.resolve(c))) {
-                    throw new RuntimeException(c + " not exist");
-                }
+              .forEach(c -> {
+                  if (Files.notExists(classes.resolve(c))) {
+                      throw new RuntimeException(c + " not exist");
+                  }
         });
 
         Class<?> c = Class.forName("p.Bar", true, loader);
@@ -160,7 +180,11 @@ public class PackageInfoTest {
         assertTrue(pkg.isAnnotationPresent(ann));
     }
 
-    private void compile(Path classOutDir, Path... files)
+    private void compile(Path destDir, Path... files) throws IOException {
+        compile(null, destDir, files);
+    }
+
+    private void compile(String option, Path destDir, Path... files)
             throws IOException
     {
         System.err.println("compile...");
@@ -170,9 +194,12 @@ public class PackageInfoTest {
                 fm.getJavaFileObjectsFromPaths(Arrays.asList(files));
 
             List<String> options = new ArrayList<>();
-            if (classOutDir != null) {
+            if (option != null) {
+                options.add(option);
+            }
+            if (destDir != null) {
                 options.add("-d");
-                options.add(classOutDir.toString());
+                options.add(destDir.toString());
             }
             options.add("-cp");
             options.add(System.getProperty("test.classes", "."));

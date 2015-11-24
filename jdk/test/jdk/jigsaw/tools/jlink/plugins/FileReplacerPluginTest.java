@@ -38,6 +38,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -103,8 +105,8 @@ public class FileReplacerPluginTest {
     }
 
     private void testReplacement(String arguments, Replacement... replacements) throws Exception {
-        Properties p = new Properties();
-        p.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
+        Map<String, Object> p = new HashMap<>();
+        p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
         FileReplacerProvider provider = new FileReplacerProvider();
         ImageFilePlugin replacerPlugin = (ImageFilePlugin) provider.newPlugins(p)[0];
         ImageFilePool input = new ImageFilePoolImpl();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
  * @bug 8003881
  * @summary tests DoPrivileged action (implemented as lambda expressions) by
  * inserting them into the BootClassPath.
+ * @modules jdk.compiler
  * @compile -XDignore.symbol.file LambdaAccessControlDoPrivilegedTest.java LUtils.java
  * @run main/othervm LambdaAccessControlDoPrivilegedTest
  */
@@ -52,8 +53,6 @@ public class LambdaAccessControlDoPrivilegedTest extends LUtils {
         scratch.clear();
         scratch.add("public class Bar {");
         scratch.add("public static void main(String... args) {");
-        scratch.add("System.out.println(\"sun.boot.class.path\" + \"=\" +");
-        scratch.add("    System.getProperty(\"sun.boot.class.path\", \"\"));");
         scratch.add("System.setSecurityManager(new SecurityManager());");
         scratch.add("DoPriv.main();");
         scratch.add("}");

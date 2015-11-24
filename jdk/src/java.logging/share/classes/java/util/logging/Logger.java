@@ -1854,46 +1854,6 @@ public class Logger {
         return useParentHandlers;
     }
 
-    private static ResourceBundle findSystemResourceBundle() {
-        // the resource bundle is in a restricted package
-        return AccessController.doPrivileged(new PrivilegedAction<ResourceBundle>() {
-            @Override
-            public ResourceBundle run() {
-                try {
-                    return ResourceBundle.getBundle(SYSTEM_LOGGER_RB_NAME,
-                                                    Logger.class.getModule());
-                } catch (MissingResourceException e) {
-                    throw new InternalError(e.toString());
-                }
-            }
-        });
-    }
-
-    private synchronized ResourceBundle findResourceBundle(String name, Module module) {
-        // Return a null bundle for a null name.
-        if (name == null) {
-            return null;
-        }
-
-        final LoggerBundle lb = loggerBundle;
-
-        // Normally we should hit on our simple one entry cache.
-        if (lb.userBundle != null &&
-                name.equals(lb.resourceBundleName)) {
-            return lb.userBundle;
-        }
-
-        if (name.equals(SYSTEM_LOGGER_RB_NAME)) {
-            return findSystemResourceBundle();
-        }
-
-        try {
-            return ResourceBundle.getBundle(name, module);
-        } catch (MissingResourceException e) {
-            return null;
-        }
-    }
-
     /**
      * Private utility method to map a resource bundle name to an
      * actual resource bundle, using a simple one-entry cache.
@@ -1907,12 +1867,24 @@ public class Logger {
      */
     private synchronized ResourceBundle findResourceBundle(String name,
                                                            boolean useCallersModule) {
-        // For all lookups, we first check the thread context class loader
-        // if it is set.  If not, we use the system classloader.  If we
-        // still haven't found it we use the callerModuleRef if it
-        // is set and useCallersModule is true.  We set
-        // callerModuleRef initially upon creating the logger with a
-        // non-null resource bundle name.
+        // When this method is called from logrb, useCallersModule==false, and
+        // the resource bundle 'name' is the argument provided to logrb.
+        // It may, or may not be, equal to lb.resourceBundleName.
+        // Otherwise, useCallersModule==true, and name is the resource bundle
+        // name that is set (or will be set) in this logger.
+        //
+        // When useCallersModule is false, or when the caller's module is
+        // null, or when the caller's module is an unnamed module, we look
+        // first in the TCCL (or the System ClassLoader if the TCCL is null)
+        // to locate the resource bundle.
+        //
+        // Otherwise, if useCallersModule is true, and the caller's module is not
+        // null, and the caller's module is named, we look in the caller's module
+        // to locate the resource bundle.
+        //
+        // Finally, if the caller's module is not null and is unnamed, and
+        // useCallersModule is true, we look in the caller's module class loader
+        // (unless we already looked there in step 1).
 
         // Return a null bundle for a null name.
         if (name == null) {
@@ -1938,44 +1910,65 @@ public class Logger {
             cl = ClassLoader.getSystemClassLoader();
         }
 
-        try {
-            catalog = ResourceBundle.getBundle(name, currentLocale, cl);
-            catalogName = name;
-            catalogLocale = currentLocale;
-            return catalog;
-        } catch (MissingResourceException ex) {
-            // We can't find the ResourceBundle in the default
-            // ClassLoader.  Drop through.
-        }
+        final Module callerModule = getCallerModule();
 
-        if (useCallersModule) {
-            // Try with the caller's module
-            Module callerModule = getCallerModule();
-
-            if (callerModule == null) {
-                return null;
-            }
-
+        // If useCallersModule is false, we are called by logrb, with a name
+        // that is provided by the user. In that case we will look in the TCCL.
+        // We also look in the TCCL if callerModule is null or unnamed.
+        if (!useCallersModule || callerModule == null || !callerModule.isNamed()) {
             try {
-                if (callerModule.isNamed()) {
-                    // Use the caller's module
-                    catalog = ResourceBundle.getBundle(name, currentLocale,
-                                                       callerModule);
+                catalog = ResourceBundle.getBundle(name, currentLocale, cl.getUnnamedModule());
+                catalogName = name;
+                catalogLocale = currentLocale;
+                return catalog;
+            } catch (MissingResourceException ex) {
+                // We can't find the ResourceBundle in the default
+                // ClassLoader.  Drop through.
+                if (useCallersModule && callerModule != null) {
+                    try {
+                        // We are called by an unnamed module: try with the
+                        // unnamed module class loader:
+                        PrivilegedAction<ClassLoader> getModuleClassLoader =
+                                () -> callerModule.getClassLoader();
+                        ClassLoader moduleCL =
+                                AccessController.doPrivileged(getModuleClassLoader);
+                        // moduleCL can be null if the logger is created by a class
+                        // appended to the bootclasspath.
+                        // If moduleCL is null we would use cl, but we already tried
+                        // that above (we first looked in the TCCL for unnamed
+                        // caller modules) - so there no point in trying again: we
+                        // won't find anything more this second time.
+                        // In this case just return null.
+                        if (moduleCL == cl || moduleCL == null) return null;
+
+                        // we already tried the TCCL and found nothing - so try
+                        // with the module's loader this time.
+                        catalog = ResourceBundle.getBundle(name, currentLocale,
+                                                           moduleCL);
+                        catalogName = name;
+                        catalogLocale = currentLocale;
+                        return catalog;
+                    } catch (MissingResourceException x) {
+                        return null; // no luck
+                    }
                 } else {
-                    // Unnamed module: use the caller's module's class loader
-                    PrivilegedAction<ClassLoader> getModuleClassLoader =
-                            () -> callerModule.getClassLoader();
-                    catalog = ResourceBundle.getBundle(name, currentLocale,
-                            AccessController.doPrivileged(getModuleClassLoader));
+                    return null;
                 }
+            }
+        } else {
+            // we should have:
+            //  useCallersModule && callerModule != null && callerModule.isNamed();
+            // Try with the caller's module
+            try {
+                // Use the caller's module
+                catalog = ResourceBundle.getBundle(name, currentLocale,
+                                                   callerModule);
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;
             } catch (MissingResourceException ex) {
                 return null; // no luck
             }
-        } else {
-            return null;
         }
     }
 

@@ -42,13 +42,15 @@ import java.security.SecureClassLoader;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import jdk.internal.misc.JavaNetAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.misc.Resource;
 import sun.misc.URLClassPath;
 import sun.net.www.ParseUtil;
@@ -390,7 +392,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      */
     private Package getAndVerifyPackage(String pkgname,
                                         Manifest man, URL url) {
-        Package pkg = getPackage(pkgname);
+        Package pkg = getDefinedPackage(pkgname);
         if (pkg != null) {
             // Package found, so check package sealing.
             if (pkg.isSealed()) {
@@ -762,9 +764,9 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
     }
 
     static {
-        sun.misc.SharedSecrets.setJavaNetAccess (
-            new sun.misc.JavaNetAccess() {
-                public URLClassPath getURLClassPath (URLClassLoader u) {
+        SharedSecrets.setJavaNetAccess(
+            new JavaNetAccess() {
+                public URLClassPath getURLClassPath(URLClassLoader u) {
                     return u.ucp;
                 }
             }

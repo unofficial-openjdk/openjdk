@@ -32,11 +32,11 @@
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.lang.reflect.*;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -55,24 +55,50 @@ public class GetPackages {
         this.fooClass = loader.loadClass("foo.Foo");
     }
 
+    /*
+     * Check package "foo" defined locally in the TestClassLoader
+     * as well as its ancestors.
+     */
     void checkPackage() throws ClassNotFoundException {
+        // Name of an unnamed package is empty string
+        assertEquals(this.getClass().getPackage().getName(), "");
+
         assertEquals(fooClass.getClassLoader(), loader);
-        Package p = loader.findPackage("foo");
+
+        Package p = loader.getDefinedPackage("foo");
         assertEquals(p.getName(), "foo");
+        assertEquals(p, loader.getPackage("foo"));
 
         if (loader.getParent() != null) {
-            Package p2 = ((TestClassLoader)loader.getParent()).findPackage("foo");
+            Package p2 = ((TestClassLoader)loader.getParent()).getDefinedPackage("foo");
             assertTrue(p != p2);
         }
+
+        long count = Arrays.stream(loader.getDefinedPackages())
+                            .map(Package::getName)
+                            .filter(pn -> pn.equals("foo"))
+                            .count();
+        assertEquals(count, 1);
     }
 
-    long numFooPackages() throws Exception {
-        // Package.getPackages is caller-sensitve.  Call through Foo class
-        // to find all Packages visible to this TestClassLoader and its ancestors
-        Method m = fooClass.getMethod("getPackages");
-        Package[] pkgs = (Package[])m.invoke(null);
-        Arrays.stream(pkgs).forEach(p -> System.out.println(p));
+    /*
+     * Check the number of package "foo" defined to this class loader and
+     * its ancestors
+     */
+    Package[] getPackagesFromLoader() {
+        return loader.packagesInClassLoaderChain();
+    }
 
+    /*
+     * Package.getPackages is caller-sensitve.  Call through Foo class
+     * to find all Packages visible to this TestClassLoader and its ancestors
+     */
+    Package[] getPackagesFromFoo() throws Exception {
+        Method m = fooClass.getMethod("getPackages");
+        return (Package[])m.invoke(null);
+    }
+
+    private static long numFooPackages(Package[] pkgs) throws Exception {
         return Arrays.stream(pkgs)
                      .filter(p -> p.getName().equals("foo"))
                      .count();
@@ -96,8 +122,11 @@ public class GetPackages {
     @Test(dataProvider = "loaders")
     public static void test(TestClassLoader loader, long expected) throws Exception {
         GetPackages test = new GetPackages(loader);
+        // check package "foo" existence
         test.checkPackage();
-        assertEquals(test.numFooPackages(), expected);
+
+        assertEquals(numFooPackages(test.getPackagesFromLoader()), expected);
+        assertEquals(numFooPackages(test.getPackagesFromFoo()), expected);
     }
 }
 
@@ -110,8 +139,12 @@ class TestClassLoader extends ClassLoader {
         super(parent);
     }
 
-    public Package findPackage(String pn) {
+    public Package getPackage(String pn) {
         return super.getPackage(pn);
+    }
+
+    public Package[] packagesInClassLoaderChain() {
+        return super.getPackages();
     }
 
     @Override

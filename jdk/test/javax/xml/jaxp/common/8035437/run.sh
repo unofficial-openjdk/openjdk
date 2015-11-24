@@ -34,12 +34,12 @@ $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
    -d compile/java.xml -Xmodule:java.xml $TESTSRC/Document.java $TESTSRC/Node.java || exit 1
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
-   -d exec/java.xml -Xoverride:compile -Xmodule:java.xml $TESTSRC/DocumentImpl.java || exit 2
+   -d exec/java.xml -Xpatch:compile -Xmodule:java.xml $TESTSRC/DocumentImpl.java || exit 2
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
    $TESTSRC/AbstractMethodErrorTest.java -d exec || exit 3
 
-$TESTJAVA/bin/java ${TESTVMOPTS} -Xoverride:exec -cp exec AbstractMethodErrorTest || exit 4
+$TESTJAVA/bin/java ${TESTVMOPTS} -Xpatch:exec -cp exec AbstractMethodErrorTest || exit 4
 
 exit 0
 

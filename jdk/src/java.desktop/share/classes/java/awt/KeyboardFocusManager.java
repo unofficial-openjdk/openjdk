@@ -216,7 +216,7 @@ public abstract class KeyboardFocusManager
         return getCurrentKeyboardFocusManager(AppContext.getAppContext());
     }
 
-    synchronized static KeyboardFocusManager
+    static synchronized KeyboardFocusManager
         getCurrentKeyboardFocusManager(AppContext appcontext)
     {
         KeyboardFocusManager manager = (KeyboardFocusManager)
@@ -528,8 +528,6 @@ public abstract class KeyboardFocusManager
      *         current KeyboardFocusManager for the calling thread's context
      *         and if the calling thread does not have "replaceKeyboardFocusManager"
      *         permission
-     * @beaninfo
-     *       bound: true
      */
     protected void setGlobalFocusOwner(Component focusOwner)
         throws SecurityException
@@ -744,8 +742,6 @@ public abstract class KeyboardFocusManager
      *         current KeyboardFocusManager for the calling thread's context
      *         and if the calling thread does not have "replaceKeyboardFocusManager"
      *         permission
-     * @beaninfo
-     *       bound: true
      */
     protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner)
         throws SecurityException
@@ -847,8 +843,6 @@ public abstract class KeyboardFocusManager
      *         current KeyboardFocusManager for the calling thread's context
      *         and if the calling thread does not have "replaceKeyboardFocusManager"
      *         permission
-     * @beaninfo
-     *       bound: true
      */
     protected void setGlobalFocusedWindow(Window focusedWindow)
         throws SecurityException
@@ -952,8 +946,6 @@ public abstract class KeyboardFocusManager
      *         current KeyboardFocusManager for the calling thread's context
      *         and if the calling thread does not have "replaceKeyboardFocusManager"
      *         permission
-     * @beaninfo
-     *       bound: true
      */
     protected void setGlobalActiveWindow(Window activeWindow)
         throws SecurityException
@@ -1008,8 +1000,6 @@ public abstract class KeyboardFocusManager
      * @see Container#setFocusTraversalPolicy
      * @see Container#getFocusTraversalPolicy
      * @throws IllegalArgumentException if defaultPolicy is null
-     * @beaninfo
-     *       bound: true
      */
     public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy
                                                defaultPolicy) {
@@ -1113,8 +1103,6 @@ public abstract class KeyboardFocusManager
      *         represents a {@code KEY_TYPED} event,
      *         or if any keystroke already maps
      *         to another default focus traversal operation
-     * @beaninfo
-     *       bound: true
      */
     public void
         setDefaultFocusTraversalKeys(int id,
@@ -1272,8 +1260,6 @@ public abstract class KeyboardFocusManager
      * @see #getGlobalCurrentFocusCycleRoot
      * @throws SecurityException if the calling thread does not have
      *         "replaceKeyboardFocusManager" permission
-     * @beaninfo
-     *       bound: true
      */
     public void setGlobalCurrentFocusCycleRoot(Container newFocusCycleRoot)
         throws SecurityException
@@ -2599,7 +2585,7 @@ public abstract class KeyboardFocusManager
      * @param comp the component to dispatch the event to
      * @param event the event to dispatch to the component
      */
-    static private Throwable dispatchAndCatchException(Throwable ex, Component comp, FocusEvent event) {
+    private static Throwable dispatchAndCatchException(Throwable ex, Component comp, FocusEvent event) {
         Throwable retEx = null;
         try {
             comp.dispatchEvent(event);
@@ -2617,7 +2603,7 @@ public abstract class KeyboardFocusManager
         return ex;
     }
 
-    static private void handleException(Throwable ex) {
+    private static void handleException(Throwable ex) {
         ex.printStackTrace();
     }
 

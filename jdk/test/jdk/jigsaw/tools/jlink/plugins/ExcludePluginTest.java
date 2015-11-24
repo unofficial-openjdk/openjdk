@@ -34,6 +34,8 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import jdk.tools.jlink.internal.ResourcePoolImpl;
@@ -74,8 +76,8 @@ public class ExcludePluginTest {
     }
 
     public void check(String s, String sample, boolean exclude) throws Exception {
-        Properties p = new Properties();
-        p.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
+        Map<String, Object> p = new HashMap<>();
+        p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeProvider provider = new ExcludeProvider();
         ResourcePlugin excludePlugin = (ResourcePlugin) provider.newPlugins(p)[0];
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());

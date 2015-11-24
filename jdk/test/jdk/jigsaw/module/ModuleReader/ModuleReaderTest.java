@@ -26,6 +26,7 @@
  * @library ../../lib
  * @modules java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build ModuleReaderTest CompilerUtils JarUtils
  * @run testng ModuleReaderTest
  * @summary Basic tests for java.lang.module.ModuleReader
@@ -37,6 +38,9 @@ import java.io.InputStream;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,10 +116,10 @@ public class ModuleReaderTest {
     public void testJMod() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
-        // jmod create --class-path mods/${TESTMODULE}  mlib/${TESTMODULE}.jmod
+        // jmod --create --class-path mods/${TESTMODULE}  mlib/${TESTMODULE}.jmod
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
-        String[] args = { "create", "--class-path", cp, jmod };
+        String[] args = { "--create", "--class-path", cp, jmod };
         jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
         assertEquals(task.run(args), 0);
 
@@ -147,6 +151,7 @@ public class ModuleReaderTest {
                         .resolve(TEST_MODULE)
                         .resolve(name.replace('/', File.separatorChar)));
 
+                testFind(reader, name, expectedBytes);
                 testOpen(reader, name, expectedBytes);
                 testRead(reader, name, expectedBytes);
             }
@@ -156,6 +161,11 @@ public class ModuleReaderTest {
             assertFalse(reader.read(NOT_A_RESOURCE).isPresent());
 
             // test nulls
+            try {
+                reader.find(null);
+                assertTrue(false);
+            } catch (NullPointerException expected) { }
+
             try {
                 reader.open(null);
                 assertTrue(false);
@@ -181,6 +191,26 @@ public class ModuleReaderTest {
             reader.read(RESOURCES[0]);
             assertTrue(false);
         } catch (IOException expected) { }
+    }
+
+    /**
+     * Test ModuleReader#find
+     */
+    void testFind(ModuleReader reader, String name, byte[] expectedBytes)
+        throws Exception
+    {
+        Optional<URI> ouri = reader.find(name);
+        assertTrue(ouri.isPresent());
+
+        URL url = ouri.get().toURL();
+        if (!url.getProtocol().equalsIgnoreCase("jmod")) {
+            URLConnection uc = url.openConnection();
+            uc.setUseCaches(false);
+            try (InputStream in = uc.getInputStream()) {
+                byte[] bytes = in.readAllBytes();
+                assertTrue(Arrays.equals(bytes, expectedBytes));
+            }
+        }
     }
 
     /**

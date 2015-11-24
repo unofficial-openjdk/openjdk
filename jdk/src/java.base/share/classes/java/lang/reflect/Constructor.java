@@ -25,6 +25,7 @@
 
 package java.lang.reflect;
 
+import jdk.internal.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstructorAccessor;
 import sun.reflect.Reflection;
@@ -164,11 +165,6 @@ public final class Constructor<T> extends Executable {
         AccessibleObject.checkPermission();
         if (flag) {
             checkCanSetAccessible(Reflection.getCallerClass());
-            if (clazz == Class.class) {
-                // can we change this to InaccessibleObjectException?
-                throw new SecurityException("Cannot make a java.lang.Class"
-                                            + " constructor accessible");
-            }
         }
         setAccessible0(flag);
     }
@@ -176,6 +172,11 @@ public final class Constructor<T> extends Executable {
     @Override
     void checkCanSetAccessible(Class<?> caller) {
         checkCanSetAccessible(caller, clazz);
+        if (clazz == Class.class) {
+            // can we change this to InaccessibleObjectException?
+            throw new SecurityException("Cannot make a java.lang.Class"
+                                        + " constructor accessible");
+        }
     }
 
     @Override
@@ -600,7 +601,7 @@ public final class Constructor<T> extends Executable {
 
         // A Constructor for an inner class
         return TypeAnnotationParser.buildAnnotatedType(getTypeAnnotationBytes0(),
-                sun.misc.SharedSecrets.getJavaLangAccess().
+                SharedSecrets.getJavaLangAccess().
                     getConstantPool(thisDeclClass),
                 this,
                 thisDeclClass,

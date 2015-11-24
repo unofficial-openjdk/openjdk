@@ -136,7 +136,8 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
         jdk.jlink,
-        jdk.scripting.nashorn;
+        jdk.scripting.nashorn,
+        jdk.vm.ci;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
@@ -153,6 +154,14 @@ module java.base {
         java.xml,
         jdk.jartool,
         jdk.jlink,
+        jdk.scripting.nashorn;
+    exports jdk.internal.misc to
+        java.corba,
+        java.desktop,
+        java.logging,
+        java.management,
+        java.naming,
+        java.sql,
         jdk.scripting.nashorn;
     exports sun.net.dns to
         java.security.jgss,

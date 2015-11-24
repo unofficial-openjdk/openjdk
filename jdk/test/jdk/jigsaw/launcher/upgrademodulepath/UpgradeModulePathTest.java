@@ -24,11 +24,13 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build UpgradeModulePathTest CompilerUtils jdk.testlibrary.ProcessTools
+ * @modules jdk.compiler
+ * @build UpgradeModulePathTest CompilerUtils jdk.testlibrary.*
  * @run testng UpgradeModulePathTest
  * @summary Basic test for java -upgrademodulepath
  */
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -38,6 +40,12 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+/**
+ * This test upgrades module java.transaction. The upgraded module has a
+ * dependency on module java.enterprise that is deployed on the application
+ * modue path.
+ */
+
 
 @Test
 public class UpgradeModulePathTest {
@@ -45,41 +53,42 @@ public class UpgradeModulePathTest {
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
-
-    // the module that is upgraded
-    private static final String UPGRADED_MODULE = "java.annotations.common";
     private static final Path UPGRADEDMODS_DIR = Paths.get("upgradedmods");
-
-    // the test module
-    private static final String TEST_MODULE = "test";
-    private static final String MAIN_CLASS = "jdk.test.Main";
 
 
     @BeforeTest
-    public void compileModules() throws Exception {
+    public void setup() throws Exception {
 
-        // javac -d upgradedmods/$UPGRADED_MODULE src/$UPGRADED_MODULE/**
+        // javac -d mods/java.enterprise src/java.enterprise/**
         boolean compiled = CompilerUtils.compile(
-            SRC_DIR.resolve(UPGRADED_MODULE),
-            UPGRADEDMODS_DIR.resolve(UPGRADED_MODULE)
-        );
-        assertTrue(compiled, UPGRADED_MODULE + " did not compile");
+                SRC_DIR.resolve("java.enterprise"),
+                MODS_DIR.resolve("java.enterprise"));
+        assertTrue(compiled);
 
-        // javac -d mods/test -upgradedmodulepath upgradedmods ...
+        // javac -d upgrademods/java.transaction -mp mods src/java.transaction/**
         compiled = CompilerUtils.compile(
-            SRC_DIR.resolve(TEST_MODULE),
-            MODS_DIR.resolve(TEST_MODULE),
-            "-upgrademodulepath", UPGRADEDMODS_DIR.toString()
-        );
-        assertTrue(compiled, UPGRADED_MODULE + " did not compile");
+                SRC_DIR.resolve("java.transaction"),
+                UPGRADEDMODS_DIR.resolve("java.transaction"),
+                "-mp", MODS_DIR.toString());
+        assertTrue(compiled);
+
+        // javac -d mods -upgrademodulepath upgrademods -mp mods src/test/**
+        compiled = CompilerUtils.compile(
+                SRC_DIR.resolve("test"),
+                MODS_DIR.resolve("test"),
+                "-upgrademodulepath", UPGRADEDMODS_DIR.toString(),
+                "-mp", MODS_DIR.toString());
+        assertTrue(compiled);
+
     }
 
     /**
-     * Run the test with an upgraded java.annotations.common module.
+     * Run the test with an upgraded java.transaction module.
      */
     public void testWithUpgradedModule() throws Exception {
 
-        String mid = TEST_MODULE + "/" + MAIN_CLASS;
+        String mid = "test/jdk.test.Main";
+
         int exitValue
             = executeTestJava(
                 "-upgrademodulepath", UPGRADEDMODS_DIR.toString(),
@@ -90,6 +99,30 @@ public class UpgradeModulePathTest {
             .getExitValue();
 
         assertTrue(exitValue == 0);
+
+    }
+
+    /**
+     * Attempt to run the test with an non-existent directory on the upgrade
+     * module path.
+     */
+    public void testWithBadUpgradeModulePath() throws Exception {
+
+        String upgrademodulepath
+            = "DoesNotExit" + File.pathSeparator + UPGRADEDMODS_DIR.toString();
+        String mid = "test/jdk.test.Main";
+
+        int exitValue
+            = executeTestJava(
+                "-upgrademodulepath", upgrademodulepath,
+                "-mp", MODS_DIR.toString(),
+                "-m", mid)
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .getExitValue();
+
+        assertTrue(exitValue != 0);
+
     }
 
 }

@@ -74,6 +74,7 @@ static char     *listModules = NULL;
 static const char *_program_name;
 static const char *_launcher_name;
 static jboolean _is_java_args = JNI_FALSE;
+static jboolean _have_classpath = JNI_FALSE;
 static const char *_fVersion;
 static const char *_dVersion;
 static jboolean _wc_enabled = JNI_FALSE;
@@ -103,8 +104,9 @@ static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
+static void SetAddReadsProp(const char *s);
 static void SetAddExportsProp(const char *s);
-static void SetOverrideProp(const char *s);
+static void SetPatchProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -277,6 +279,12 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         TranslateApplicationArgs(jargc, jargv, &argc, &argv);
         if (!AddApplicationOptions(appclassc, appclassv)) {
             return(1);
+        }
+    } else {
+        /* Set default CLASSPATH */
+        char* cpath = getenv("CLASSPATH");
+        if (cpath != NULL) {
+            SetClassPath(cpath);
         }
     }
 
@@ -856,6 +864,7 @@ SetClassPath(const char *s)
     AddOption(def, NULL);
     if (s != orig)
         JLI_MemFree((char *) s);
+    _have_classpath = JNI_TRUE;
 }
 
 static void
@@ -863,7 +872,7 @@ SetModulePath(const char *s)
 {
     char *def;
     const char *orig = s;
-    static const char format[] = "-Djava.module.path=%s";
+    static const char format[] = "-Djdk.module.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
@@ -881,7 +890,7 @@ SetUpgradeModulePath(const char *s)
 {
     char *def;
     const char *orig = s;
-    static const char format[] = "-Djava.upgrade.module.path=%s";
+    static const char format[] = "-Djdk.upgrade.module.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
@@ -897,11 +906,22 @@ SetUpgradeModulePath(const char *s)
 static void
 SetMainModule(const char *s)
 {
-    static const char format[] = "-Djava.module.main=%s";
-    char *def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
+    static const char format[] = "-Djdk.module.main=%s";
+    char* slash = JLI_StrChr(s, '/');
+    size_t s_len, def_len;
+    char *def;
+
+    /* value may be <module> or <module>/<mainclass> */
+    if (slash == NULL) {
+        s_len = JLI_StrLen(s);
+    } else {
+        s_len = (size_t) (slash - s);
+    }
+    def_len = sizeof(format)
+               - 2 /* strlen("%s") */
+               + s_len;
+    def = JLI_MemAlloc(def_len);
+    JLI_Snprintf(def, def_len, format, s);
     AddOption(def, NULL);
 }
 
@@ -922,6 +942,14 @@ SetLimitModulesProp(const char *mods) {
 }
 
 static void
+SetAddReadsProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads=%s", s);
+    AddOption(prop, NULL);
+}
+
+static void
 SetAddExportsProp(const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
@@ -930,10 +958,10 @@ SetAddExportsProp(const char *s) {
 }
 
 static void
-SetOverrideProp(const char *s) {
+SetPatchProp(const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.override=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patchdirs=%s", s);
     AddOption(prop, NULL);
 }
 
@@ -1150,9 +1178,21 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
             listModules = arg;
+        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
+            static jboolean haveAddReads = JNI_FALSE;
+            /* -XaddReads only allowed once */
+            if (haveAddReads) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddReads");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 11;
+                SetAddReadsProp(value);
+                haveAddReads = JNI_TRUE;
+            }
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
             static jboolean haveAddExports = JNI_FALSE;
-            /* Unlike other arguments, -XaddExports only allowed once */
+            /* -XaddExports only allowed once */
             if (haveAddExports) {
                 JLI_ReportErrorMessage(ARG_ERROR7, "-XaddExports");
                 *pret = 1;
@@ -1162,17 +1202,21 @@ ParseArguments(int *pargc, char ***pargv,
                 SetAddExportsProp(value);
                 haveAddExports = JNI_TRUE;
             }
-        } else if (JLI_StrCCmp(arg, "-Xoverride:") == 0) {
-            static jboolean haveOverride = JNI_FALSE;
-            /* Unlike other arguments, -Xoverride only allowed once */
-            if (haveOverride) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-Xoverride");
+        } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+            static jboolean havePatchDirs = JNI_FALSE;
+            if (havePatchDirs) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
                 *pret = 1;
                 return JNI_FALSE;
             } else {
-                char *value = arg + 11;
-                SetOverrideProp(value);
-                haveOverride = JNI_TRUE;
+                char *value;
+                if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+                    value = arg + 8;
+                } else {
+                    value = arg + 11;
+                }
+                SetPatchProp(value);
+                havePatchDirs = JNI_TRUE;
             }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
@@ -1243,6 +1287,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (RemovableOption(arg)) {
             ; /* Do not pass option to vm. */
         } else {
+            /* java.class.path set on the command line */
+            if (JLI_StrCCmp(arg, "-Djava.class.path=") == 0) {
+                _have_classpath = JNI_TRUE;
+            }
             AddOption(arg, NULL);
         }
     }
@@ -1257,13 +1305,11 @@ ParseArguments(int *pargc, char ***pargv,
             *pret = 1;
         }
     } else if (mode == LM_UNKNOWN) {
-        /* default to LM_CLASS if -jar and -cp option are
+        /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */
-        char* cpath = getenv("CLASSPATH");
-        if (cpath == NULL) {
-            cpath = ".";
+        if (!_have_classpath) {
+            SetClassPath(".");
         }
-        SetClassPath(cpath);
         mode = LM_CLASS;
     }
 

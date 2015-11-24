@@ -24,6 +24,7 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
+ * @modules jdk.compiler
  * @build RunWithAutomaticModules CompilerUtils JarUtils
  *        jdk.testlibrary.ProcessTools
  * @run testng RunWithAutomaticModules

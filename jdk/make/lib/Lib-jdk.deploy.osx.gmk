@@ -38,15 +38,15 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(LIBAPPLESCRIPTENGINE_SRC) \
-          -I$(HEADERS_OUTPUTDIR)/jdk.deploy.osx, \
+          -I$(SUPPORT_OUTPUTDIR)/headers/jdk.deploy.osx, \
       DISABLED_WARNINGS_clang := implicit-function-declaration format, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
-      LDFLAGS_SUFFIX := -framework Cocoa \
+      LIBS := -framework Cocoa \
           -framework Carbon \
           -framework JavaNativeFoundation \
-          $(LDFLAGS_JDKLIB_SUFFIX), \
-      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libAppleScriptEngine, \
+          $(JDKLIB_LIBS), \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libAppleScriptEngine, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   $(BUILD_LIBAPPLESCRIPTENGINE): $(call FindLib, java.base, java)
@@ -59,8 +59,8 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
       -I$(JDK_TOPDIR)/src/java.desktop/macosx/native/libosxapp \
       $(LIBJAVA_HEADER_FLAGS) \
-      -I$(HEADERS_OUTPUTDIR)/java.desktop \
-      -I$(HEADERS_OUTPUTDIR)/jdk.deploy.osx \
+      -I$(SUPPORT_OUTPUTDIR)/headers/java.desktop \
+      -I$(SUPPORT_OUTPUTDIR)/headers/jdk.deploy.osx \
       #
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSX, \
@@ -72,17 +72,17 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
           $(LIBOSX_CFLAGS), \
       DISABLED_WARNINGS_clang := deprecated-declarations, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
-          -L$(MODULES_LIBS_OUTPUTDIR)/java.desktop \
+          -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.desktop \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
-      LDFLAGS_SUFFIX_macosx := \
+      LIBS := \
           -losxapp \
           -framework Cocoa \
           -framework ApplicationServices \
           -framework JavaNativeFoundation \
           -framework JavaRuntimeSupport \
           -framework SystemConfiguration \
-          $(LDFLAGS_JDKLIB_SUFFIX), \
-      OBJECT_DIR := $(NATIVE_OUTPUTDIR)/$(MODULE)/libosx, \
+          $(JDKLIB_LIBS), \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libosx, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   TARGETS += $(BUILD_LIBOSX)

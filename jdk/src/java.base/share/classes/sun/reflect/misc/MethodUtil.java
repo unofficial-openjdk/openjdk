@@ -26,6 +26,7 @@
 package sun.reflect.misc;
 
 import java.lang.reflect.Module;
+import java.io.EOFException;
 import java.security.AllPermission;
 import java.security.AccessController;
 import java.security.PermissionCollection;
@@ -43,7 +44,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import sun.misc.IOUtils;
 
 
 class Trampoline {
@@ -68,19 +68,6 @@ class Trampoline {
     private static Object invoke(Method m, Object obj, Object[] params)
         throws InvocationTargetException, IllegalAccessException
     {
-        // throw exception if the method is non-exported API to help catching issue
-        Module module = m.getDeclaringClass().getModule();
-        if (module.isNamed()) {
-            String cn = m.getDeclaringClass().getName();
-            int i = cn.lastIndexOf(".");
-            assert i > 0;
-            String pn = cn.substring(0, i);
-            if (!module.isExported(pn)) {
-                throw new InternalError("MethodUtil.invoke doesn't support non-exported API: " +
-                        m.toString());
-            }
-        }
-
         ensureInvocableMethod(m);
         return m.invoke(obj, params);
     }
@@ -368,32 +355,6 @@ public final class MethodUtil extends SecureClassLoader {
         }
         return defineClass(name, b, 0, b.length, cs);
     }
-
-
-    /*
-     * Returns the contents of the specified URL as an array of bytes.
-     */
-    private static byte[] getBytes(URL url) throws IOException {
-        URLConnection uc = url.openConnection();
-        if (uc instanceof java.net.HttpURLConnection) {
-            java.net.HttpURLConnection huc = (java.net.HttpURLConnection) uc;
-            int code = huc.getResponseCode();
-            if (code >= java.net.HttpURLConnection.HTTP_BAD_REQUEST) {
-                throw new IOException("open HTTP connection failed.");
-            }
-        }
-        int len = uc.getContentLength();
-        InputStream in = new BufferedInputStream(uc.getInputStream());
-
-        byte[] b;
-        try {
-            b = IOUtils.readFully(in, len, true);
-        } finally {
-            in.close();
-        }
-        return b;
-    }
-
 
     protected PermissionCollection getPermissions(CodeSource codesource)
     {

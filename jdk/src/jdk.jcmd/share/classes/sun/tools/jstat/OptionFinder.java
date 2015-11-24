@@ -28,7 +28,6 @@ package sun.tools.jstat;
 import java.util.*;
 import java.net.*;
 import java.io.*;
-import java.util.stream.Collectors;
 
 /**
  * A class for finding a specific special option in the jstat_options file.
@@ -40,24 +39,18 @@ public class OptionFinder {
 
     private static final boolean debug = false;
 
-    final List<Parser> optionParsers;
+    List<URL> optionsSources;
 
-    private Parser newParser(InputStream in) {
-        Reader r = new BufferedReader(new InputStreamReader(in));
-        return new Parser(r);
-    }
-
-    public OptionFinder(List<InputStream> optionsSources) {
-        this.optionParsers = optionsSources.stream()
-            .map(in -> newParser(in)).collect(Collectors.toList());
+    public OptionFinder(List<URL> optionsSources) {
+        this.optionsSources = optionsSources;
     }
 
     public OptionFormat getOptionFormat(String option, boolean useTimestamp) {
-        OptionFormat of = getOptionFormat(option);
+        OptionFormat of = getOptionFormat(option, optionsSources);
         OptionFormat tof = null;
         if ((of != null) && (useTimestamp)) {
             // prepend the timestamp column as first column
-            tof = getOptionFormat("timestamp");
+            tof = getOptionFormat("timestamp", optionsSources);
             if (tof != null) {
                 ColumnFormat cf = (ColumnFormat)tof.getSubFormat(0);
                 of.insertSubFormat(0, cf);
@@ -66,16 +59,27 @@ public class OptionFinder {
         return of;
     }
 
-    protected OptionFormat getOptionFormat(String option) {
-        for (Parser parser : optionParsers) {
+    protected OptionFormat getOptionFormat(String option, List<URL> sources) {
+        OptionFormat of = null;
+        for (URL u : sources) {
             try {
-                OptionFormat of = parser.parse(option);
+                Reader r = new BufferedReader(
+                        new InputStreamReader(u.openStream()));
+                of = new Parser(r).parse(option);
                 if (of != null)
-                    return of;
-            } catch (IOException | ParserException e) {
-                if (debug) e.printStackTrace();
+                    break;
+            } catch (IOException e) {
+                if (debug) {
+                    System.err.println("Error processing " + u
+                                       + " : " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } catch (ParserException e) {
+                // Exception in parsing the options file.
+                System.err.println(u + ": " + e.getMessage());
+                System.err.println("Parsing of " + u + " aborted");
             }
         }
-        return null;
+        return of;
     }
 }

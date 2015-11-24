@@ -67,9 +67,14 @@ import jdk.tools.jlink.plugins.StringTable;
  */
 public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
 
-    private static class CompactCPHelper {
+    private static final int[] SIZES;
 
-        private class DescriptorsScanner {
+    static {
+        SIZES = StringSharingDecompressor.getSizes();
+    }
+    private static final class CompactCPHelper {
+
+        private static final class DescriptorsScanner {
 
             private final ClassFile cf;
 
@@ -214,11 +219,6 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
                 }
             }
         }
-        private final boolean preVisit;
-
-        public CompactCPHelper(boolean preVisit) {
-            this.preVisit = preVisit;
-        }
 
         public byte[] transform(Resource resource, ResourcePool out,
                 StringTable strings) throws IOException {
@@ -246,7 +246,7 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
             ByteArrayOutputStream outStream = new ByteArrayOutputStream(content.length);
             DataOutputStream out = new DataOutputStream(outStream);
             byte[] header = new byte[8]; //magic/4, minor/2, major/2
-            stream.read(header);
+            stream.readFully(header);
             out.write(header);
             int count = stream.readUnsignedShort();
             out.writeShort(count);
@@ -288,9 +288,9 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
                     }
                     default: {
                         out.write(tag);
-                        int size = StringSharingDecompressor.SIZES[tag];
+                        int size = SIZES[tag];
                         arr = new byte[size];
-                        stream.read(arr);
+                        stream.readFully(arr);
                         out.write(arr);
                     }
                 }
@@ -343,7 +343,7 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
     @Override
     public void visit(ResourcePool resources, ResourcePool result,
             StringTable strings) throws Exception {
-        CompactCPHelper visit = new CompactCPHelper(false);
+        CompactCPHelper visit = new CompactCPHelper();
         resources.visit((resource, order, str) -> {
             Resource res = resource;
             if (predicate.test(resource.getPath()) && resource.getPath().endsWith(".class")) {
@@ -363,7 +363,7 @@ public class StringSharingPlugin implements ResourcePlugin, ResourcePrevisitor {
     @Override
     public void previsit(ResourcePool resources, StringTable strings)
             throws Exception {
-        CompactCPHelper preVisit = new CompactCPHelper(true);
+        CompactCPHelper preVisit = new CompactCPHelper();
         for (Resource resource : resources.getResources()) {
             if (resource.getPath().endsWith(".class") && predicate.test(resource.getPath())) {
                 preVisit.transform(resource, null, strings);

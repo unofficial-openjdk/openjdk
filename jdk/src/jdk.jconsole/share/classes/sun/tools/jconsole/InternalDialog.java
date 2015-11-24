@@ -69,9 +69,9 @@ public class InternalDialog extends JInternalFrame {
     protected class MastheadIcon implements Icon {
         // Important: Assume image background is white!
         private ImageIcon leftIcon =
-            Utilities.getIcon(InternalDialog.class, "resources/masthead-left.png");
+            new ImageIcon(InternalDialog.class.getResource("resources/masthead-left.png"));
         private ImageIcon rightIcon =
-            Utilities.getIcon(InternalDialog.class, "resources/masthead-right.png");
+            new ImageIcon(InternalDialog.class.getResource("resources/masthead-right.png"));
 
         private Font font = Font.decode(Messages.MASTHEAD_FONT);
         private int gap = 10;

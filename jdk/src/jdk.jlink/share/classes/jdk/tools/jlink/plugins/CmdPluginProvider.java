@@ -39,17 +39,17 @@ import java.util.Map.Entry;
  * <li><code>CmdResourcePluginProvider</code></li>
  * <li><code>CmdImageFilePluginProvider</code></li>
  * </ul>
+ * @param <T>
  */
-public abstract class CmdPluginProvider extends PluginProvider {
+public interface CmdPluginProvider<T> {
 
     /**
      * This property is the main argument (if any) passed to the plugin.
      */
     public static final String TOOL_ARGUMENT_PROPERTY = "argument";
 
-    CmdPluginProvider(String name, String description) {
-        super(name, description);
-    }
+    public static final String FIRST = "FIRST";
+    public static final String LAST = "LAST";
 
     /**
      * Returns the description
@@ -73,8 +73,7 @@ public abstract class CmdPluginProvider extends PluginProvider {
      */
     public abstract Map<String, String> getAdditionalOptions();
 
-    @Override
-    public final Plugin[] newPlugins(Map<Object, Object> conf) throws IOException {
+    public default T[] newPlugins(Map<String, Object> conf) throws IOException {
         Map<String, String> config = toString(conf);
         String[] arguments = null;
         Collection<String> options = Collections.emptyList();
@@ -82,14 +81,14 @@ public abstract class CmdPluginProvider extends PluginProvider {
             options = getAdditionalOptions().keySet();
         }
         Map<String, String> otherOptions = new HashMap<>();
-        for (String a : config.keySet()) {
-            if (options.contains(a)) {
-                otherOptions.put(a, config.get(a));
+        for (Entry<String, String> a : config.entrySet()) {
+            if (options.contains(a.getKey())) {
+                otherOptions.put(a.getKey(), a.getValue());
                 continue;
             }
-            switch (a) {
+            switch (a.getKey()) {
                 case TOOL_ARGUMENT_PROPERTY: {
-                    arguments = config.get(a).
+                    arguments = a.getValue().
                             split(",");
                     for (int i = 0; i < arguments.length; i++) {
                         arguments[i] = arguments[i].trim();
@@ -109,21 +108,24 @@ public abstract class CmdPluginProvider extends PluginProvider {
      * @return An array of plugins.
      * @throws IOException
      */
-    public abstract Plugin[] newPlugins(String[] arguments,
+    public abstract T[] newPlugins(String[] arguments,
             Map<String, String> otherOptions) throws IOException;
 
-    static Map<String, String> toString(Map<Object, Object> input) {
+    static Map<String, String> toString(Map<String, Object> input) {
         Map<String, String> map = new HashMap<>();
-        for (Entry<Object, Object> entry : input.entrySet()) {
-            if (!(entry.getKey() instanceof String)
-                    || !(entry.getValue() instanceof String)) {
-                throw new RuntimeException("Config should be string for "
-                        + entry.getKey());
+        for (Entry<String, Object> entry : input.entrySet()) {
+            if (!(entry.getKey() instanceof String)) {
+                throw new RuntimeException("Option name should be a String");
             }
+            if (!(entry.getValue() instanceof String)) {
+                if (entry.getValue() != null) {
+                    throw new RuntimeException("Option value should be String for "
+                            + entry.getKey());
+                }
+            }
+            String k = entry.getKey();
             @SuppressWarnings("unchecked")
-            String k = (String) entry.getKey();
-            @SuppressWarnings("unchecked")
-            String v = (String) entry.getValue();
+            String v = entry.getValue() == null ? "" : (String) entry.getValue();
             map.put(k, v);
         }
         return map;

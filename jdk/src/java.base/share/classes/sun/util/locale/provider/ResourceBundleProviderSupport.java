@@ -109,15 +109,7 @@ public class ResourceBundleProviderSupport {
 
         PrivilegedAction<InputStream> pa = () -> {
             try {
-                InputStream in = module.getResourceAsStream(resourceName);
-                if (in == null) {
-                    // for migration, find .properties bundle from unnamed module
-                    Module unnamed = module.getClassLoader() != null
-                            ? module.getClassLoader().getUnnamedModule()
-                            : BootLoader.getUnnamedModule();
-                    return unnamed.getResourceAsStream(resourceName);
-                }
-                return in;
+                return module.getResourceAsStream(resourceName);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

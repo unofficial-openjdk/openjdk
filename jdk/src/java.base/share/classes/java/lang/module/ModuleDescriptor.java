@@ -40,11 +40,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static jdk.internal.module.Checks.*;
 import static java.util.Objects.*;
 
+import jdk.internal.module.Checks;
 import jdk.internal.module.Hasher.DependencyHashes;
-
-import static java.lang.module.Checks.*;
 
 
 /**
@@ -100,12 +101,16 @@ public class ModuleDescriptor
         private final String name;
 
         private Requires(Set<Modifier> ms, String mn) {
+            this(ms, mn, true);
+        }
+        private Requires(Set<Modifier> ms, String mn, boolean check) {
             if (ms == null || ms.isEmpty()) {
                 mods = Collections.emptySet();
             } else {
-                mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
+                mods = check ? Collections.unmodifiableSet(EnumSet.copyOf(ms))
+                             : Collections.unmodifiableSet(ms);
             }
-            this.name = requireModuleName(mn);
+            this.name = check ? requireModuleName(mn) : mn;
         }
 
         /**
@@ -149,10 +154,11 @@ public class ModuleDescriptor
          * compared.
          */
         private long modsValue() {
-            return mods.stream()
-                       .map(Modifier::ordinal)
-                       .map(n -> 1 << n)
-                       .reduce(0, (a, b) -> a + b);
+            long value = 0;
+            for (Modifier m : mods) {
+                value += 1 << m.ordinal();
+            }
+            return value;
         }
 
 
@@ -191,11 +197,17 @@ public class ModuleDescriptor
         private final Optional<Set<String>> targets;
 
         private Exports(String source, Set<String> targets) {
-            this.source = requirePackageName(source);
-            targets = Collections.unmodifiableSet(new HashSet<>(targets));
+            this(source, targets, true);
+        }
+
+        private Exports(String source, Set<String> targets, boolean check) {
+            this.source = check ? requirePackageName(source) : source;
+            targets = check ? Collections.unmodifiableSet(new HashSet<>(targets))
+                            : Collections.unmodifiableSet(targets);
             if (targets.isEmpty())
                 throw new IllegalArgumentException("Empty target set");
-            targets.stream().forEach(Checks::requireModuleName);
+            if (check)
+                targets.stream().forEach(Checks::requireModuleName);
             this.targets = Optional.of(targets);
         }
 
@@ -204,7 +216,10 @@ public class ModuleDescriptor
          * {@code source}.
          */
         private Exports(String source) {
-            this.source = requirePackageName(source);
+            this(source, true);
+        }
+        private Exports(String source, boolean check) {
+            this.source = check ? requirePackageName(source) : source;
             this.targets = Optional.empty();
         }
 
@@ -259,11 +274,17 @@ public class ModuleDescriptor
         private final Set<String> providers;
 
         private Provides(String service, Set<String> providers) {
-            this.service = requireServiceTypeName(service);
-            providers = Collections.unmodifiableSet(new HashSet<>(providers));
+            this(service, providers, true);
+        }
+
+        private Provides(String service, Set<String> providers, boolean check) {
+            this.service = check ? requireServiceTypeName(service) : service;
+            providers = check ? Collections.unmodifiableSet(new HashSet<>(providers))
+                              : Collections.unmodifiableSet(providers);
             if (providers.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
-            providers.forEach(Checks::requireServiceProviderName);
+            if (check)
+                providers.forEach(Checks::requireServiceProviderName);
             this.providers = providers;
         }
 
@@ -534,16 +555,16 @@ public class ModuleDescriptor
         assert (rqs.stream().map(Requires::name).sorted().distinct().count()
                 == rqs.size())
             : "Module " + name + " has duplicate requires";
-        this.requires = Collections.unmodifiableSet(rqs);
+        this.requires = emptyOrUnmodifiableSet(rqs);
 
         Set<Exports> exs = new HashSet<>(exports.values());
         assert (exs.stream().map(Exports::source).sorted().distinct().count()
                 == exs.size())
             : "Module " + name + " has duplicate exports";
-        this.exports = Collections.unmodifiableSet(exs);
+        this.exports = emptyOrUnmodifiableSet(exs);
 
-        this.uses = Collections.unmodifiableSet(uses);
-        this.provides = Collections.unmodifiableMap(provides);
+        this.uses = emptyOrUnmodifiableSet(uses);
+        this.provides = emptyOrUnmodifiableMap(provides);
 
         this.version = Optional.ofNullable(version);
         this.mainClass = Optional.ofNullable(mainClass);
@@ -551,11 +572,62 @@ public class ModuleDescriptor
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
             : "Module " + name + ": Package sets overlap";
-        this.conceals = Collections.unmodifiableSet(conceals);
+        this.conceals = emptyOrUnmodifiableSet(conceals);
         Set<String> pkgs = new HashSet<>(conceals);
         pkgs.addAll(exports.keySet());
-        this.packages = Collections.unmodifiableSet(pkgs);
+        this.packages = emptyOrUnmodifiableSet(pkgs);
 
+    }
+
+    /**
+     * Clones the given module descriptor with an augmented set of packages
+     */
+    ModuleDescriptor(ModuleDescriptor md, Set<String> pkgs) {
+        this.name = md.name;
+        this.automatic = md.automatic;
+
+        this.requires = md.requires;
+        this.exports = md.exports;
+        this.uses = md.uses;
+        this.provides = md.provides;
+
+        this.version = md.version;
+        this.mainClass = md.mainClass;
+        this.hashes = Optional.empty(); // need to ignore
+
+        // compute new set of concealed packages
+        Set<String> conceals = new HashSet<>(pkgs);
+        exports.stream().map(Exports::source).forEach(conceals::remove);
+
+        this.conceals = emptyOrUnmodifiableSet(conceals);
+        this.packages = emptyOrUnmodifiableSet(pkgs);
+    }
+
+    /*
+     * Used by installed modules
+     */
+    private ModuleDescriptor(String name,
+                             boolean automatic,
+                             Set<Requires> requires,
+                             Set<String> uses,
+                             Set<Exports> exports,
+                             Map<String, Provides> provides,
+                             Version version,
+                             String mainClass,
+                             Set<String> conceals,
+                             Set<String> packages) {
+        this.name = name;
+        this.automatic = automatic;
+        this.requires = Collections.unmodifiableSet(requires);
+        this.exports = Collections.unmodifiableSet(exports);
+        this.uses = Collections.unmodifiableSet(uses);
+        this.provides = Collections.unmodifiableMap(provides);
+        this.conceals = Collections.unmodifiableSet(conceals);
+        this.packages = Collections.unmodifiableSet(packages);
+
+        this.version = Optional.ofNullable(version);
+        this.mainClass = Optional.ofNullable(mainClass);
+        this.hashes = Optional.empty();
     }
 
     /**
@@ -955,6 +1027,8 @@ public class ModuleDescriptor
 
     @Override
     public boolean equals(Object ob) {
+        if (ob == this)
+            return true;
         if (!(ob instanceof ModuleDescriptor))
             return false;
         ModuleDescriptor that = (ModuleDescriptor)ob;
@@ -1108,6 +1182,21 @@ public class ModuleDescriptor
         return ModuleInfo.read(bb, null);
     }
 
+    private static <K,V> Map<K,V> emptyOrUnmodifiableMap(Map<K,V> map) {
+        if (map.isEmpty()) {
+            return Collections.emptyMap();
+        } else {
+            return Collections.unmodifiableMap(map);
+        }
+    }
+
+    private static <T> Set<T> emptyOrUnmodifiableSet(Set<T> set) {
+        if (set.isEmpty()) {
+            return Collections.emptySet();
+        } else {
+            return Collections.unmodifiableSet(set);
+        }
+    }
 
     static {
         /**
@@ -1115,11 +1204,57 @@ public class ModuleDescriptor
          * module is an automatic module. If isAutomatic becomes part of the
          * API then this setup can go away.
          */
-        sun.misc.SharedSecrets
-            .setJavaLangModuleAccess(new sun.misc.JavaLangModuleAccess() {
+        jdk.internal.misc.SharedSecrets
+            .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
                 @Override
                 public boolean isAutomatic(ModuleDescriptor descriptor) {
                     return descriptor.isAutomatic();
+                }
+                @Override
+                public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
+                    return new Requires(ms, mn, false);
+                }
+
+                @Override
+                public Exports newExports(String source, Set<String> targets) {
+                    return new Exports(source, targets, false);
+                }
+
+                @Override
+                public Exports newExports(String source) {
+                    return new Exports(source, false);
+                }
+
+                @Override
+                public Provides newProvides(String service, Set<String> providers) {
+                    return new Provides(service, providers, false);
+                }
+
+                @Override
+                public Version newVersion(String v) {
+                    return new Version(v);
+                }
+
+                @Override
+                public ModuleDescriptor newModuleDescriptor(String name,
+                                                            boolean automatic,
+                                                            Set<Requires> requires,
+                                                            Set<String> uses, Set<Exports> exports,
+                                                            Map<String, Provides> provides,
+                                                            Version version,
+                                                            String mainClass,
+                                                            Set<String> conceals,
+                                                            Set<String> packages) {
+                    return new ModuleDescriptor(name,
+                                                false,
+                                                requires,
+                                                uses,
+                                                exports,
+                                                provides,
+                                                version,
+                                                mainClass,
+                                                conceals,
+                                                packages);
                 }
             });
     }

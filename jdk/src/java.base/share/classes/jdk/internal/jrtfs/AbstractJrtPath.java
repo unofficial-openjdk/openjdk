@@ -685,7 +685,7 @@ abstract class AbstractJrtPath implements Path {
 
     final void createDirectory(FileAttribute<?>... attrs)
             throws IOException {
-        jrtfs.createDirectory(getResolvedPath(), attrs);
+        jrtfs.createDirectory(this, attrs);
     }
 
     final InputStream newInputStream(OpenOption... options) throws IOException {
@@ -696,7 +696,7 @@ abstract class AbstractJrtPath implements Path {
                 }
             }
         }
-        return jrtfs.newInputStream(getResolvedPath());
+        return jrtfs.newInputStream(this);
     }
 
     final DirectoryStream<Path> newDirectoryStream(Filter<? super Path> filter)
@@ -705,15 +705,15 @@ abstract class AbstractJrtPath implements Path {
     }
 
     final void delete() throws IOException {
-        jrtfs.deleteFile(getResolvedPath(), true);
+        jrtfs.deleteFile(this, true);
     }
 
     final void deleteIfExists() throws IOException {
-        jrtfs.deleteFile(getResolvedPath(), false);
+        jrtfs.deleteFile(this, false);
     }
 
     final AbstractJrtFileAttributes getAttributes(LinkOption... options) throws IOException {
-        AbstractJrtFileAttributes zfas = jrtfs.getFileAttributes(getResolvedPath(), options);
+        AbstractJrtFileAttributes zfas = jrtfs.getFileAttributes(this, options);
         if (zfas == null) {
             throw new NoSuchFileException(toString());
         }
@@ -741,7 +741,7 @@ abstract class AbstractJrtPath implements Path {
 
     final void setTimes(FileTime mtime, FileTime atime, FileTime ctime)
             throws IOException {
-        jrtfs.setTimes(getResolvedPath(), mtime, atime, ctime);
+        jrtfs.setTimes(this, mtime, atime, ctime);
     }
 
     final Map<String, Object> readAttributes(String attributes, LinkOption... options)
@@ -789,13 +789,13 @@ abstract class AbstractJrtPath implements Path {
     final SeekableByteChannel newByteChannel(Set<? extends OpenOption> options,
             FileAttribute<?>... attrs)
             throws IOException {
-        return jrtfs.newByteChannel(getResolvedPath(), options, attrs);
+        return jrtfs.newByteChannel(this, options, attrs);
     }
 
     final FileChannel newFileChannel(Set<? extends OpenOption> options,
             FileAttribute<?>... attrs)
             throws IOException {
-        return jrtfs.newFileChannel(getResolvedPath(), options, attrs);
+        return jrtfs.newFileChannel(this, options, attrs);
     }
 
     final void checkAccess(AccessMode... modes) throws IOException {
@@ -816,7 +816,7 @@ abstract class AbstractJrtPath implements Path {
             }
         }
 
-        BasicFileAttributes attrs = jrtfs.getFileAttributes(getResolvedPath());
+        BasicFileAttributes attrs = jrtfs.getFileAttributes(this);
         if (attrs == null && (path.length != 1 || path[0] != '/')) {
             throw new NoSuchFileException(toString());
         }
@@ -831,7 +831,7 @@ abstract class AbstractJrtPath implements Path {
 
     final boolean exists() {
         try {
-            return jrtfs.exists(getResolvedPath());
+            return jrtfs.exists(this);
         } catch (IOException x) {
         }
         return false;
@@ -839,17 +839,17 @@ abstract class AbstractJrtPath implements Path {
 
     final OutputStream newOutputStream(OpenOption... options) throws IOException {
         if (options.length == 0) {
-            return jrtfs.newOutputStream(getResolvedPath(),
+            return jrtfs.newOutputStream(this,
                     CREATE_NEW, WRITE);
         }
-        return jrtfs.newOutputStream(getResolvedPath(), options);
+        return jrtfs.newOutputStream(this, options);
     }
 
     final void move(AbstractJrtPath target, CopyOption... options)
             throws IOException {
         if (this.jrtfs == target.jrtfs) {
             jrtfs.copyFile(true,
-                    getResolvedPath(), target.getResolvedPath(),
+                    this, target,
                     options);
         } else {
             copyToTarget(target, options);
@@ -861,7 +861,7 @@ abstract class AbstractJrtPath implements Path {
             throws IOException {
         if (this.jrtfs == target.jrtfs) {
             jrtfs.copyFile(false,
-                    getResolvedPath(), target.getResolvedPath(),
+                    this, target,
                     options);
         } else {
             copyToTarget(target, options);
@@ -901,7 +901,7 @@ abstract class AbstractJrtPath implements Path {
             // create directory or file
             target.createDirectory();
         } else {
-            try (InputStream is = jrtfs.newInputStream(getResolvedPath()); OutputStream os = target.newOutputStream()) {
+            try (InputStream is = jrtfs.newInputStream(this); OutputStream os = target.newOutputStream()) {
                 byte[] buf = new byte[8192];
                 int n;
                 while ((n = is.read(buf)) != -1) {

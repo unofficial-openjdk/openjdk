@@ -33,12 +33,12 @@ include MakeBase.gmk
 # Put the libraries here. Different locations for different target OS types.
 ifneq ($(OPENJDK_TARGET_OS), windows)
   HOTSPOT_LIB_DIR := $(HOTSPOT_DIST)/lib$(OPENJDK_TARGET_CPU_LIBDIR)
-  BASE_INSTALL_LIBRARIES_HERE := $(MODULES_LIBS_OUTPUTDIR)/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
-  SA_INSTALL_LIBRARIES_HERE := $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent$(OPENJDK_TARGET_CPU_LIBDIR)
+  BASE_INSTALL_LIBRARIES_HERE := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
+  SA_INSTALL_LIBRARIES_HERE := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent$(OPENJDK_TARGET_CPU_LIBDIR)
 else
   HOTSPOT_LIB_DIR := $(HOTSPOT_DIST)/bin
-  BASE_INSTALL_LIBRARIES_HERE := $(MODULES_LIBS_OUTPUTDIR)/java.base
-  SA_INSTALL_LIBRARIES_HERE := $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent
+  BASE_INSTALL_LIBRARIES_HERE := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base
+  SA_INSTALL_LIBRARIES_HERE := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent
 endif
 
 ################################################################################
@@ -221,36 +221,36 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupCopyFiles,BASE_COPY_LIBS_BIN, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/java.base, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base, \
       DEST := $(JDK_OUTPUTDIR)/bin, \
       FILES := $(filter-out %.lib, $(BASE_TARGETS))))
 
   $(eval $(call SetupCopyFiles,BASE_COPY_LIBS_LIB, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/java.base, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base, \
       DEST := $(JDK_OUTPUTDIR)/lib, \
       FILES := $(filter %.lib, $(BASE_TARGETS))))
 
   $(eval $(call SetupCopyFiles,SA_COPY_LIBS, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent, \
       DEST := $(JDK_OUTPUTDIR)/lib, \
-      FILES := $(filter $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent/%, \
+      FILES := $(filter $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent/%, \
           $(SA_TARGETS))))
 
   $(eval $(call SetupCopyFiles,SA_COPY_LIBS, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent, \
       DEST := $(JDK_OUTPUTDIR)/bin, \
-      FILES := $(filter $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent/%, \
+      FILES := $(filter $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent/%, \
           $(SA_TARGETS))))
 else
   $(eval $(call SetupCopyFiles,BASE_COPY_LIBS, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/java.base, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base, \
       DEST := $(JDK_OUTPUTDIR)/lib, \
       FILES := $(BASE_TARGETS)))
 
   $(eval $(call SetupCopyFiles,SA_COPY_LIBS, \
-      SRC := $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent, \
+      SRC := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent, \
       DEST := $(JDK_OUTPUTDIR)/lib, \
-      FILES := $(filter $(MODULES_LIBS_OUTPUTDIR)/jdk.hotspot.agent/%, $(SA_TARGETS))))
+      FILES := $(filter $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.hotspot.agent/%, $(SA_TARGETS))))
 endif
 
 ################################################################################

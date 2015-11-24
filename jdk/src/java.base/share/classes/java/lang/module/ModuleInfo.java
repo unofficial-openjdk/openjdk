@@ -186,7 +186,7 @@ final class ModuleInfo {
 
         int methods_count = in.readUnsignedShort();
         if (methods_count > 0)
-            throw invalidModuleDescriptor("Bad #fields");
+            throw invalidModuleDescriptor("Bad #methods");
 
         int attributes_count = in.readUnsignedShort();
 
@@ -351,13 +351,11 @@ final class ModuleInfo {
         throws IOException
     {
         int package_count = in.readUnsignedShort();
-        Set<String> packages = new HashSet<>(package_count);
         for (int i=0; i<package_count; i++) {
             int index = in.readUnsignedShort();
-            String pkg = cpool.getUtf8(index).replace('/', '.');
-            packages.add(pkg);
+            String pn = cpool.getUtf8(index).replace('/', '.');
+            builder.conceals(pn);
         }
-        builder.conceals(packages);
     }
 
     /**

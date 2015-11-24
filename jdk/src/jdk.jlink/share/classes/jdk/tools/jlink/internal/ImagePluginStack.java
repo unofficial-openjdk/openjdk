@@ -29,7 +29,6 @@ import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,12 +39,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.decompressor.Decompressor;
-import jdk.internal.jimage.decompressor.ResourceDecompressor.StringsProvider;
+import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.PostProcessingPlugin;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
@@ -57,7 +56,14 @@ import jdk.tools.jlink.plugins.StringTable;
  */
 public final class ImagePluginStack {
 
-    private final class OrderedResourcePool extends ResourcePoolImpl {
+    public interface ImageProvider {
+        ExecutableImage retrieve(ImagePluginStack stack) throws IOException;
+
+        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image,
+                List<String> args) throws IOException;
+    }
+
+    private static final class OrderedResourcePool extends ResourcePoolImpl {
 
         private final List<Resource> orderedList = new ArrayList<>();
 
@@ -82,7 +88,7 @@ public final class ImagePluginStack {
         }
     }
 
-    private final class CheckOrderResourcePool extends ResourcePoolImpl {
+    private final static class CheckOrderResourcePool extends ResourcePoolImpl {
 
         private final List<Resource> orderedList;
         private int currentIndex;
@@ -109,7 +115,7 @@ public final class ImagePluginStack {
         }
     }
 
-    private final class PreVisitStrings implements StringTable {
+    private static final class PreVisitStrings implements StringTable {
 
         private int currentid = 0;
         private final Map<String, Integer> stringsUsage = new HashMap<>();
@@ -158,26 +164,26 @@ public final class ImagePluginStack {
     private final Plugin lastSorter;
     private final List<ResourcePlugin> resourcePlugins = new ArrayList<>();
     private final List<ImageFilePlugin> filePlugins = new ArrayList<>();
+    private final List<PostProcessingPlugin> postProcessingPlugins = new ArrayList<>();
     private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
 
     private final ImageBuilder imageBuilder;
 
     private final String bom;
-    private final Map<String, Path> mods;
 
     public ImagePluginStack(String bom) {
-        this(null, Collections.emptyList(), null, Collections.emptyList(), null,
-                Collections.emptyMap());
+        this(null, Collections.emptyList(), null, Collections.emptyList(),
+                Collections.emptyList(), null);
     }
 
     public ImagePluginStack(ImageBuilder imageBuilder,
             List<ResourcePlugin> resourcePlugins,
             Plugin lastSorter,
             List<ImageFilePlugin> filePlugins,
-            String bom, Map<String, Path> mods) {
+            List<PostProcessingPlugin> postprocessingPlugins,
+            String bom) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
-        Objects.requireNonNull(mods);
         this.lastSorter = lastSorter;
         for (ResourcePlugin p : resourcePlugins) {
             Objects.requireNonNull(p);
@@ -190,13 +196,40 @@ public final class ImagePluginStack {
             Objects.requireNonNull(p);
             this.filePlugins.add(p);
         }
+        for (PostProcessingPlugin p : postprocessingPlugins) {
+            Objects.requireNonNull(p);
+            this.postProcessingPlugins.add(p);
+        }
         this.imageBuilder = imageBuilder;
         this.bom = bom;
-        this.mods = mods;
+    }
+
+    public void operate(ImageProvider provider) throws Exception {
+        ExecutableImage img = provider.retrieve(this);
+        List<String> arguments;
+        // Could be autocloseable but not right behavior
+        // with InterruptedException
+        ProcessingManagerImpl manager = new ProcessingManagerImpl(img);
+        arguments = new ArrayList<>();
+        try {
+            for (PostProcessingPlugin plugin : postProcessingPlugins) {
+                List<String> lst = plugin.process(manager);
+                if (lst != null) {
+                    arguments.addAll(lst);
+                }
+            }
+        } finally {
+            manager.close();
+        }
+        provider.storeLauncherArgs(this, img, arguments);
     }
 
     public DataOutputStream getJImageFileOutputStream() throws IOException {
         return imageBuilder.getJImageOutputStream();
+    }
+
+    public ImageBuilder getImageBuilder() {
+        return imageBuilder;
     }
 
     /**
@@ -262,7 +295,7 @@ public final class ImagePluginStack {
         return current;
     }
 
-    private class RetrieverImpl implements ImageBuilder.ResourceRetriever {
+    private static final class RetrieverImpl implements ImageBuilder.ResourceRetriever {
 
         private final ResourcePool resources;
         private final BasicImageWriter writer;
@@ -325,5 +358,9 @@ public final class ImagePluginStack {
         }
         RetrieverImpl retriever = new RetrieverImpl(resources, writer);
         imageBuilder.storeFiles(current, removed, bom, retriever);
+    }
+
+    public ExecutableImage getExecutableImage() throws IOException {
+        return imageBuilder.getExecutableImage();
     }
 }

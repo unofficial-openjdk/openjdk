@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.Map;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 
 /**
@@ -59,7 +58,7 @@ public class ZipCompressProvider extends CmdResourcePluginProvider {
 
     @Override
     public String getToolOption() {
-        return null;
+        return NAME;
     }
 
     @Override

@@ -33,9 +33,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
@@ -43,8 +44,9 @@ import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
@@ -73,12 +75,12 @@ public class LastSorterTest {
     }
 
     private void checkTwoLastSorters() throws Exception {
-        Properties props = new Properties();
-        props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin6");
-        props.setProperty("sorterplugin6." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin6");
+        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("sorterplugin6", "/a", 0));
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin6");
 
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(props);
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
         ResourcePoolImpl res = fillOutResourcePool();
@@ -117,20 +119,22 @@ public class LastSorterTest {
         return res;
     }
 
+    private static StackedPluginConfiguration createConfig(String name, String arg, int index) {
+        Map<String, Object> conf = new HashMap<>();
+        conf.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
+        return new StackedPluginConfiguration(name, index, true, conf);
+    }
+
     private void checkPositiveCase() throws Exception {
-        Properties props = new Properties();
-        // plugin3 is the last one
-        props.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "sorterplugin1");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY, "sorterplugin2");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin3");
+        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("sorterplugin1", "/c", 0));
+        plugins.add(createConfig("sorterplugin2", "/b", 1));
+        plugins.add(createConfig("sorterplugin3", "/a", 2));
 
-        props.setProperty("sorterplugin1." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
-        props.setProperty("sorterplugin2." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
-        props.setProperty("sorterplugin3." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin3");
 
-        props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin3");
-
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(props);
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
         ResourcePoolImpl res = fillOutResourcePool();
@@ -149,15 +153,16 @@ public class LastSorterTest {
     }
 
     private void checkUnknownPlugin() {
-        Properties props = new Properties();
-        props.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "sorterplugin1");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY, "sorterplugin2");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin3");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY, "sorterplugin4");
+        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("sorterplugin1", "/1", 0));
+        plugins.add(createConfig("sorterplugin2", "/1", 1));
+        plugins.add(createConfig("sorterplugin3", "/1", 2));
+        plugins.add(createConfig("sorterplugin4", "/1", 3));
 
-        props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin5");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin5");
         try {
-            ImagePluginConfiguration.parseConfiguration(props);
+            ImagePluginConfiguration.parseConfiguration(config);
             throw new AssertionError("Unknown plugin should have failed.");
         } catch (Exception ex) {
             // XXX OK expected
@@ -165,21 +170,16 @@ public class LastSorterTest {
     }
 
     private void checkOrderAfterLastSorter() throws Exception {
-        // plugin4 changes the order of resources after the last sorter (plugin3), an exception should be thrown
-        Properties props = new Properties();
-        props.setProperty(ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY, "sorterplugin1");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY, "sorterplugin2");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_SORTER_PROPERTY, "sorterplugin3");
-        props.setProperty(ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY, "sorterplugin4");
+        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        plugins.add(createConfig("sorterplugin1", "/c", 0));
+        plugins.add(createConfig("sorterplugin2", "/b", 1));
+        plugins.add(createConfig("sorterplugin3", "/a", 2));
+        plugins.add(createConfig("sorterplugin4", "/d", 3));
 
-        props.setProperty("sorterplugin1." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/c");
-        props.setProperty("sorterplugin2." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/b");
-        props.setProperty("sorterplugin3." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/a");
-        props.setProperty("sorterplugin4." + CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "/d");
+        PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
+                Collections.emptyList(), null, "sorterplugin3");
 
-        props.setProperty(ImagePluginConfiguration.RESOURCES_LAST_SORTER_PROPERTY, "sorterplugin3");
-
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(props);
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
         ResourcePoolImpl res = fillOutResourcePool();

@@ -26,7 +26,8 @@
  * @library ../../lib /lib/testlibrary
  * @modules jdk.jartool/sun.tools.jar
  *          jdk.jlink/jdk.tools.jmod
- * @build BasicTest CompilerUtils jdk.testlibrary.ProcessTools
+ *          jdk.compiler
+ * @build BasicTest CompilerUtils jdk.testlibrary.*
  * @run testng BasicTest
  * @summary Basic test of starting an application as a module
  */
@@ -102,7 +103,7 @@ public class BasicTest {
         String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "--main-class=" + MAIN_CLASS,
             "-C", classes, "."
         };
@@ -133,7 +134,7 @@ public class BasicTest {
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
         String[] args = {
-            "create",
+            "--create",
             "--class-path", cp,
             "--main-class", MAIN_CLASS,
             jmod
@@ -185,6 +186,7 @@ public class BasicTest {
                               "-m", "rhubarb")
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("not found")
                 .getExitValue();
 
         assertTrue(exitValue != 0);
@@ -223,7 +225,7 @@ public class BasicTest {
         String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
-            "--archive=" + jar,
+            "--file=" + jar,
             "-C", classes, "."
         };
         boolean success
@@ -237,6 +239,7 @@ public class BasicTest {
                               "-m", TEST_MODULE)
                 .outputTo(System.out)
                 .errorTo(System.out)
+                .shouldContain("does not have a MainClass attribute")
                 .getExitValue();
 
         assertTrue(exitValue != 0);

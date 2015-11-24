@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.ServiceLoader;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
@@ -61,7 +60,7 @@ public final class ImagePluginProviderRepository {
      * @return An array of plugins.
      * @throws IOException
      */
-    public static Plugin[] newPlugins(Map<Object, Object> config, String name,
+    public static Plugin[] newPlugins(Map<String, Object> config, String name,
             Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
@@ -90,7 +89,7 @@ public final class ImagePluginProviderRepository {
             PluginProvider factory = javaProviders.next();
             if (factory.getName().equals(name)) {
                 if (provider != null) {
-                    throw new IOException("Mutliple ImageWriterProvider "
+                    throw new IOException("Multiple ImageWriterProvider "
                             + "for the name " + name);
                 }
                 provider = factory;
@@ -144,7 +143,7 @@ public final class ImagePluginProviderRepository {
         registeredProviders.remove(name);
     }
 
-    public static ImageBuilder newImageBuilder(Map<Object, Object> config, Path outputDir,
+    public static ImageBuilder newImageBuilder(Map<String, Object> config, Path outputDir,
             String name, Layer pluginsLayer) throws IOException {
         Objects.requireNonNull(config);
         Objects.requireNonNull(outputDir);
@@ -157,11 +156,14 @@ public final class ImagePluginProviderRepository {
             ImageBuilderProvider fact = providers.next();
             if (fact.getName().equals(name)) {
                 if(builder != null) {
-                     throw new IOException("Mutliple ImageBuilderProvider "
+                     throw new IOException("Multiple ImageBuilderProvider "
                             + "for the name " + name);
                 }
                 builder = fact.newBuilder(config, outputDir);
             }
+        }
+        if (builder == null) {
+            throw new IOException("Image builder not found for " + name);
         }
         return builder;
     }

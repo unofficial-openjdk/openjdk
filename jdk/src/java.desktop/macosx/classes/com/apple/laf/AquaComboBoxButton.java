@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,10 @@ import apple.laf.JRSUIConstants.*;
 
 @SuppressWarnings("serial") // Superclass is not serializable across versions
 class AquaComboBoxButton extends JButton {
-    final protected JComboBox<Object> comboBox;
-    final protected JList<?> list;
-    final protected CellRendererPane rendererPane;
-    final protected AquaComboBoxUI ui;
+    protected final JComboBox<Object> comboBox;
+    protected final JList<?> list;
+    protected final CellRendererPane rendererPane;
+    protected final AquaComboBoxUI ui;
 
     protected final AquaPainter<JRSUIState> painter = AquaPainter.create(JRSUIState.getInstance());
     boolean isPopDown;
@@ -58,6 +58,7 @@ class AquaComboBoxButton extends JButton {
         this.list = list;
 
         setModel(new DefaultButtonModel() {
+            @Override
             public void setArmed(final boolean armed) {
                 super.setArmed(isPressed() ? true : armed);
             }
@@ -66,12 +67,13 @@ class AquaComboBoxButton extends JButton {
         setEnabled(comboBox.isEnabled());
     }
 
+    @Override
     public boolean isEnabled() {
         return comboBox == null ? true : comboBox.isEnabled();
     }
 
-    @SuppressWarnings("deprecation")
-    public boolean isFocusTraversable() {
+    @Override
+    public boolean isFocusable() {
         return false;
     }
 
@@ -92,6 +94,7 @@ class AquaComboBoxButton extends JButton {
         return State.ACTIVE;
     }
 
+    @Override
     public void paintComponent(final Graphics g) {
         // Don't Paint the button as usual
         // super.paintComponent( g );

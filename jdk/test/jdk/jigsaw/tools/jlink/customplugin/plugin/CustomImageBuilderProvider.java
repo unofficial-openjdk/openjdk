@@ -24,9 +24,13 @@
 package plugin;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
@@ -55,7 +59,8 @@ public class CustomImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Map<Object, Object> config, Path imageOutDir) throws IOException {
+    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
+        Files.createDirectories(imageOutDir);
         return new CustomImageBuilder(config, imageOutDir);
     }
 
@@ -67,5 +72,15 @@ public class CustomImageBuilderProvider implements ImageBuilderProvider {
     @Override
     public boolean hasArgument(String option) {
         return option.equals(OPTION + "-1");
+    }
+
+    @Override
+    public ExecutableImage canExecute(Path root) {
+        return new ExecutableImage(root, Collections.emptySet(), Collections.emptyList()) {
+        };
+    }
+
+    @Override
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) throws IOException {
     }
 }

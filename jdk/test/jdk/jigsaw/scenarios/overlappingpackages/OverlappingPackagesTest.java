@@ -24,7 +24,8 @@
 /**
  * @test
  * @library ../../lib /lib/testlibrary
- * @build OverlappingPackagesTest CompilerUtils
+ * @modules jdk.compiler
+ * @build OverlappingPackagesTest CompilerUtils jdk.testlibrary.*
  * @run testng OverlappingPackagesTest
  * @summary Basic test to ensure that startup fails if two or more modules
  *          in the boot Layer have the same package

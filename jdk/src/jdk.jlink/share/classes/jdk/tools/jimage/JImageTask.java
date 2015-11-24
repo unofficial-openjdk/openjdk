@@ -43,13 +43,13 @@ import static jdk.internal.jimage.ImageHeader.MAGIC;
 import static jdk.internal.jimage.ImageHeader.MAJOR_VERSION;
 import static jdk.internal.jimage.ImageHeader.MINOR_VERSION;
 import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.ImageModuleData;
-import jdk.internal.jimage.ImageResourcesTree;
+import jdk.tools.jlink.internal.ImageResourcesTree;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.TaskHelper.JIMAGE_BUNDLE;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
 
@@ -76,7 +76,7 @@ class JImageTask {
         }, "--version")
     };
     private static final TaskHelper taskHelper
-            = new TaskHelper("jdk.tools.jimage.resources.jimage");
+            = new TaskHelper(JIMAGE_BUNDLE);
     private static final OptionsHelper<JImageTask> optionsHelper
             = taskHelper.newOptionsHelper(JImageTask.class, recognizedOptions);
 
@@ -201,7 +201,7 @@ class JImageTask {
         Path jimage = options.jimages.get(0).toPath();
 
         if (jimage.toFile().createNewFile()) {
-            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.getPluginsProperties());
+            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.getPluginsConfig());
             ExtractedImage img = new ExtractedImage(dirPath, pc, log, options.verbose);
             img.recreateJImage(jimage);
         } else {
@@ -248,14 +248,8 @@ class JImageTask {
             throw taskHelper.newBadArgs("err.cannot.create.dir", parent.getAbsolutePath());
         }
 
-        if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
-            ImageModuleData imageModuleData = new ImageModuleData(reader, bytes);
-            List<String> lines = imageModuleData.fromModulePackages();
-            Files.write(resource.toPath(), lines);
-        } else {
-            if (!ImageResourcesTree.isTreeInfoResource(name)) {
-                Files.write(resource.toPath(), bytes);
-            }
+        if (!ImageResourcesTree.isTreeInfoResource(name)) {
+            Files.write(resource.toPath(), bytes);
         }
     }
 

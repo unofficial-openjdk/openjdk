@@ -1,4 +1,5 @@
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -9,6 +10,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,7 +41,7 @@ import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.tools.jlink.plugins.StringTable;
 
 import tests.Helper;
-
+import tests.JImageGenerator;
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -81,142 +83,14 @@ import tests.Helper;
  *          java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          java.base/jdk.internal.org.objectweb.asm.util
+ *          jdk.compiler
  * @build tests.*
  * @run main JLinkOptimTest
  */
 public class JLinkOptimTest {
 
     private static final String EXPECTED = "expected";
-
-    public static class JLinkOptimTestTestCase {
-
-        public static Class<?> forName() {
-            try {
-                Class<?> cl = Class.forName("java.lang.String");
-                return cl;
-            } catch (ClassNotFoundException |
-                    IllegalArgumentException |
-                    ClassCastException x) {
-                throw new InternalError(x);
-            }
-        }
-
-        public static Class<?> forName0() throws ClassNotFoundException {
-            return Class.forName("java.lang.String");
-        }
-
-        public static Class<?> forName1() throws Exception {
-            Class<?> clazz = null;
-            try {
-                clazz = Class.forName("java.lang.String");
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-            return clazz;
-        }
-
-        public static void forNameException() throws Exception {
-            try {
-                Class.forName("java.lang.String");
-                throw new Exception(EXPECTED);
-            } catch (ClassNotFoundException e) {
-                return;
-            } catch (RuntimeException e) {
-                return;
-            }
-        }
-
-        public static Class<?> forName2() throws Exception {
-            Class<?> clazz = null;
-            try {
-                clazz = Class.forName("java.lang.String");
-                try {
-                    throw new Exception("das");
-                } catch (Exception ex) {
-                }
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-            return clazz;
-        }
-
-        public static Class<?> forName3() throws Exception {
-            Class<?> clazz = null;
-            try {
-                return clazz = Class.forName("java.lang.String");
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-        }
-
-        public static Class<?> forName4() throws Exception {
-            Class<?> clazz = null;
-            try {
-                clazz = Class.forName("java.lang.String");
-            } catch (ClassNotFoundException e) {
-                return null;
-            } catch (RuntimeException e) {
-                return null;
-            }
-            return clazz;
-        }
-
-        public static Class<?> forName5() {
-            Class<?> clazz = null;
-            try {
-                clazz = Class.forName("java.lang.String");
-            } catch (ClassNotFoundException e) {
-            }
-            int i;
-            try {
-                i = 0;
-            } catch (Exception e) {
-            }
-            return clazz;
-        }
-
-        public static Class<?> forName6() {
-            Class<?> clazz = null;
-            try {
-                return Class.forName("java.lang.String");
-            } catch (ClassNotFoundException e) {
-            }
-
-            try {
-                // This one is removed because no more reachable when
-                // Class.forName is removed
-                int k = 0;
-            } catch (RuntimeException e) {
-            }
-
-            int i;
-            try {
-                // This one is removed because no more reachable when
-                // Class.forName is removed
-                return Class.forName("TOTO");
-            } catch (ClassNotFoundException e) {
-            }
-            try {
-                // This one is removed because no more reachable when
-                // Class.forName is removed
-                return Class.forName("TOTO");
-            } catch (ClassNotFoundException e) {
-            }
-            try {
-                // This one is removed because no more reachable when
-                // Class.forName is removed
-                return Class.forName("TOTO");
-            } catch (ClassNotFoundException e) {
-            }
-            try {
-                // This one is removed because no more reachable when
-                // Class.forName is removed
-                return Class.forName("TOTO");
-            } catch (ClassNotFoundException e) {
-            }
-            return clazz;
-        }
-    }
+    private static Helper helper;
 
     private static class ControlFlowProvider extends CmdResourcePluginProvider {
 
@@ -303,27 +177,23 @@ public class JLinkOptimTest {
     }
 
     private static void testForName() throws Exception {
+        String moduleName = "optimplugin";
+        Path src = Paths.get(System.getProperty("test.src")).resolve(moduleName);
+        Path classes = helper.getJmodClassesDir().resolve(moduleName);
+        JImageGenerator.compile(src, classes);
 
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         Path root = fs.getPath("/modules/java.base");
         // Access module-info.class to be reused as fake module-info.class
-        List<byte[]> moduleInfos = new ArrayList<>();
         List<Resource> javabaseResources = new ArrayList<>();
         try (Stream<Path> stream = Files.walk(root)) {
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext();) {
                 Path p = iterator.next();
                 if (Files.isRegularFile(p)) {
                     try {
-                        boolean isModuleInfo = p.endsWith("module-info.class");
-                        if (isModuleInfo) {
-                            moduleInfos.add(Files.readAllBytes(p));
-                            javabaseResources.add(new Resource("/java.base/module-info.class",
-                                    ByteBuffer.wrap(Files.readAllBytes(p))));
-                        }
-                        if (p.toString().endsWith("/java.base/java/lang/String.class")) {
-                            javabaseResources.add(new Resource("/java.base/java/lang/String.class",
-                                    ByteBuffer.wrap(Files.readAllBytes(p))));
-                        }
+                        javabaseResources.add(
+                                new Resource(p.toString().substring("/modules".length()),
+                                        ByteBuffer.wrap(Files.readAllBytes(p))));
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
@@ -333,23 +203,16 @@ public class JLinkOptimTest {
 
         //forName folding
         ResourcePool pool = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        InputStream stream
-                = ControlFlowProvider.class.getClassLoader().getResourceAsStream("JLinkOptimTest$JLinkOptimTestTestCase.class");
-        byte[] content = stream.readAllBytes();
-        ByteBuffer bb = ByteBuffer.wrap(content);
+        byte[] content = Files.readAllBytes(classes.
+                resolve("optim").resolve("ForNameTestCase.class"));
+        byte[] content2 = Files.readAllBytes(classes.
+                resolve("optim").resolve("AType.class"));
+        byte[] mcontent = Files.readAllBytes(classes.resolve("module-info.class"));
 
-        InputStream stream2
-                = ControlFlowProvider.class.getClassLoader().getResourceAsStream("JLinkOptimTest$JLinkOptimTestTestCase.class");
-        ClassReader rr = new ClassReader(stream2);
-        ClassWriter flusher1 = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        rr.accept(flusher1, ClassReader.EXPAND_FRAMES);
-
-        Resource res = new ResourcePool.Resource("/module/JLinkOptimTest$JLinkOptimTestTestCase.class", bb);
-        pool.addResource(res);
-        // reuse java.nase module-info for our custom module. TThis is not used in the test path.
-        Resource res2 = new ResourcePool.Resource("/module/module-info.class",
-                ByteBuffer.wrap(moduleInfos.get(0)));
-        pool.addResource(res2);
+        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/ForNameTestCase.class", ByteBuffer.wrap(content)));
+        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/AType.class", ByteBuffer.wrap(content2)));
+        pool.addResource(new ResourcePool.Resource("/optimplugin/module-info.class",
+                ByteBuffer.wrap(mcontent)));
 
         for (Resource r : javabaseResources) {
             pool.addResource(r);
@@ -380,19 +243,30 @@ public class JLinkOptimTest {
         ClassNode optimClass = new ClassNode();
         optimReader.accept(optimClass, ClassReader.EXPAND_FRAMES);
 
-        if (!optimClass.name.equals("JLinkOptimTest$JLinkOptimTestTestCase")) {
+        if (!optimClass.name.equals("optim/ForNameTestCase")) {
             throw new Exception("Invalid class " + optimClass.name);
+        }
+        if (optimClass.methods.size() < 2) {
+            throw new Exception("Not enough methods in new class");
         }
         for (MethodNode mn : optimClass.methods) {
             if (!mn.name.contains("forName") && !mn.name.contains("<clinit>")) {
                 continue;
             }
-            checkNoForName(mn);
+            if (mn.name.startsWith("negative")) {
+                checkForName(mn);
+            } else {
+                checkNoForName(mn);
+            }
         }
-        Map<String, byte[]> classes = new HashMap<>();
-        classes.put("JLinkOptimTest$JLinkOptimTestTestCase", result.getByteArray());
-        MemClassLoader loader = new MemClassLoader(classes);
-        Class<?> loaded = loader.loadClass("JLinkOptimTest$JLinkOptimTestTestCase");
+        Map<String, byte[]> newClasses = new HashMap<>();
+        newClasses.put("optim.ForNameTestCase", result.getByteArray());
+        newClasses.put("optim.AType", content2);
+        MemClassLoader loader = new MemClassLoader(newClasses);
+        Class<?> loaded = loader.loadClass("optim.ForNameTestCase");
+        if (loaded.getDeclaredMethods().length < 2) {
+            throw new Exception("Not enough methods in new class");
+        }
         for (Method m : loaded.getDeclaredMethods()) {
             if (m.getName().contains("Exception")) {
                 try {
@@ -404,9 +278,11 @@ public class JLinkOptimTest {
                     }
                 }
             } else {
-                Class<?> clazz = (Class<?>) m.invoke(null);
-                if (clazz != String.class) {
-                    throw new Exception("Invalid class " + clazz);
+                if (!m.getName().startsWith("negative")) {
+                    Class<?> clazz = (Class<?>) m.invoke(null);
+                    if (clazz != String.class && clazz != loader.findClass("optim.AType")) {
+                        throw new Exception("Invalid class " + clazz);
+                    }
                 }
             }
         }
@@ -414,7 +290,6 @@ public class JLinkOptimTest {
 
     private static void checkNoForName(MethodNode m) throws Exception {
         Iterator<AbstractInsnNode> it = m.instructions.iterator();
-        int i = 0;
         while (it.hasNext()) {
             AbstractInsnNode n = it.next();
             if (n instanceof MethodInsnNode) {
@@ -425,7 +300,6 @@ public class JLinkOptimTest {
                     throw new Exception("forName not removed in " + m.name);
                 }
             }
-            i++;
         }
         for (TryCatchBlockNode tcb : m.tryCatchBlocks) {
             if (tcb.type.equals(ClassNotFoundException.class.getName().replaceAll("\\.", "/"))) {
@@ -434,10 +308,40 @@ public class JLinkOptimTest {
         }
     }
 
+    private static void checkForName(MethodNode m) throws Exception {
+        Iterator<AbstractInsnNode> it = m.instructions.iterator();
+        boolean found = false;
+        while (it.hasNext()) {
+            AbstractInsnNode n = it.next();
+            if (n instanceof MethodInsnNode) {
+                MethodInsnNode met = (MethodInsnNode) n;
+                if (met.name.equals("forName")
+                        && met.owner.equals("java/lang/Class")
+                        && met.desc.equals("(Ljava/lang/String;)Ljava/lang/Class;")) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            throw new Exception("forName removed but shouldn't have");
+        }
+        found = false;
+        for (TryCatchBlockNode tcb : m.tryCatchBlocks) {
+            if (tcb.type.equals(ClassNotFoundException.class.getName().replaceAll("\\.", "/"))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw new Exception("tryCatchBlocks removed but shouldn't have");
+        }
+    }
+
     static class MemClassLoader extends ClassLoader {
 
         private final Map<String, byte[]> classes;
-
+        private final Map<String, Class<?>> cache = new HashMap<>();
         MemClassLoader(Map<String, byte[]> classes) {
             super(null);
             this.classes = classes;
@@ -445,17 +349,22 @@ public class JLinkOptimTest {
 
         @Override
         public Class findClass(String name) throws ClassNotFoundException {
-            byte[] b = classes.get(name);
-            if (b == null) {
-                return super.findClass(name);
-            } else {
-                return defineClass(name, b, 0, b.length);
+            Class<?> clazz = cache.get(name);
+            if (clazz == null) {
+                byte[] b = classes.get(name);
+                if (b == null) {
+                    return super.findClass(name);
+                } else {
+                    clazz = defineClass(name, b, 0, b.length);
+                    cache.put(name, clazz);
+                }
             }
+            return clazz;
         }
     }
 
     public static void main(String[] args) throws Exception {
-        Helper helper = Helper.newHelper();
+        helper = Helper.newHelper();
         if (helper == null) {
             System.err.println("Test not run");
             return;
@@ -473,6 +382,17 @@ public class JLinkOptimTest {
             helper.checkImage(imageDir, "optim1", null, null);
         }
 
+        /*{
+         Path dir = Paths.get("dir.log");
+         Files.createDirectory(dir);
+         String[] userOptions = {"--class-optim", "all", "--class-optim-log-file", dir.toString()};
+         helper.generateDefaultImage(userOptions, "optim1")
+         .assertFailure("java.io.FileNotFoundException: dir.log (Is a directory)");
+         }*/
+        /*{
+         String[] userOptions = {"--class-optim", "UNKNOWN"};
+         helper.generateDefaultImage(userOptions, "optim1").assertFailure("Unknown optimization");
+         }*/
         {
             String[] userOptions = {"--class-optim", "forName-folding",
                 "--class-optim-log-file", "./class-optim-log.txt"};

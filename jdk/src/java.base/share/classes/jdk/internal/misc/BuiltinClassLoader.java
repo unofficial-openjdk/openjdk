@@ -27,15 +27,19 @@ package jdk.internal.misc;
 
 import java.io.File;
 import java.io.FilePermission;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
+import java.lang.reflect.Module;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -77,12 +81,14 @@ import sun.misc.VM;
  *
  * <p> The delegation model used by this ClassLoader differs to the regular
  * delegation model. When requested to load a class then this ClassLoader first
- * checks the modules defined to the ClassLoader. If not found then it delegates
- * the search to the parent class loader and if not found in the parent then it
- * searches the class path. The rational for this approach is that modules defined
- * to this ClassLoader are assumed to be in the boot Layer and so should not have
- * any overlapping packages with modules defined to the parent or the boot class
- * loader. </p>
+ * maps the class name to its package name. If there is a module defined to a
+ * BuiltinClassLoader containing this package then the class loader delegates
+ * directly to that class loader. If there isn't a module containing the
+ * package then it delegates the search to the parent class loader and if not
+ * found in the parent then it searches the class path. The main difference
+ * between this and the usual delegation model is that it allows the extension
+ * class loader to delegate to the application class loader, important with
+ * upgraded modules defined to the extension class loader.
  */
 
 public class BuiltinClassLoader
@@ -90,17 +96,19 @@ public class BuiltinClassLoader
 {
 
     static {
-        ClassLoader.registerAsParallelCapable();
+        if (!ClassLoader.registerAsParallelCapable())
+            throw new InternalError();
     }
 
     // parent ClassLoader
     private final BuiltinClassLoader parent;
 
-    // -Xoverride directory, can be null
-    private final Path overrideDir;
+    // -Xpatch directories, can be empty
+    private final List<Path> patchDirs;
 
     // the URL class path or null if there is no class path
     private final URLClassPath ucp;
+
 
     /**
      * A module defined/loaded by a built-in class loader.
@@ -111,27 +119,35 @@ public class BuiltinClassLoader
      * defining classes or packages.
      */
     private static class LoadedModule {
+        private final BuiltinClassLoader loader;
         private final ModuleReference mref;
-        private final URL url;          // May be null
+        private final URL url;          // may be null
+        private final CodeSource cs;
 
-        LoadedModule(ModuleReference mref) {
+        LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e1) {
-                }
+                } catch (MalformedURLException e) { }
             }
+            this.loader = loader;
             this.mref = mref;
             this.url = url;
+            this.cs = new CodeSource(url, (CodeSigner[]) null);
         }
 
+        BuiltinClassLoader loader() { return loader; }
         ModuleReference mref() { return mref; }
+        String name() { return mref.descriptor().name(); }
         URL location() { return url; }
+        CodeSource codeSource() { return cs; }
     }
 
-    // maps package name to a module loaded by this class loader
-    private final Map<String, LoadedModule> packageToModule;
+
+    // maps package name to loaded module for modules in the boot layer
+    private static final Map<String, LoadedModule> packageToModule
+        = new ConcurrentHashMap<>(1024);
 
     // maps a module name to a module reference
     private final Map<String, ModuleReference> nameToModule;
@@ -139,28 +155,23 @@ public class BuiltinClassLoader
     // maps a module reference to a module reader
     private final Map<ModuleReference, ModuleReader> moduleToReader;
 
+
     /**
      * Create a new instance.
-     *
-     * @param nModules an estimate on the number of modules
-     * @param nPackages an estimate for the total number of packages
      */
     BuiltinClassLoader(BuiltinClassLoader parent,
-                       Path overrideDir,
-                       URLClassPath ucp,
-                       int nModules,
-                       int nPackages)
+                       List<Path> patchDirs,
+                       URLClassPath ucp)
     {
         // ensure getParent() returns null when the parent is the boot loader
         super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
 
         this.parent = parent;
-        this.overrideDir = overrideDir;
+        this.patchDirs = patchDirs;
         this.ucp = ucp;
 
-        this.packageToModule = new ConcurrentHashMap<>(nPackages);
-        this.nameToModule = new ConcurrentHashMap<>(nModules);
-        this.moduleToReader = new ConcurrentHashMap<>(nModules);
+        this.nameToModule = new ConcurrentHashMap<>();
+        this.moduleToReader = new ConcurrentHashMap<>();
     }
 
     /**
@@ -173,38 +184,101 @@ public class BuiltinClassLoader
             throw new InternalError(mn + " already defined to this loader");
         }
 
-        LoadedModule loadedModule = new LoadedModule(mref);
+        LoadedModule loadedModule = new LoadedModule(this, mref);
         for (String pn : mref.descriptor().packages()) {
-            packageToModule.put(pn, loadedModule);
+            LoadedModule other = packageToModule.putIfAbsent(pn, loadedModule);
+            if (other != null) {
+                throw new InternalError(pn + " in modules " + mn + " and "
+                        + other.mref().descriptor().name());
+            }
         }
     }
 
+
     // -- finding resources
+
+    /**
+     * Returns a URL to a resource of the given name in a module defined to
+     * this class loader.
+     */
+    @Override
+    public URL findResource(String mn, String name) throws IOException {
+        ModuleReference mref = nameToModule.get(mn);
+        if (mref == null)
+            return null;   // not defined to this class loader
+
+        URL url;
+
+        try {
+            url = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<URL>() {
+                    @Override
+                    public URL run() throws IOException {
+
+                        // -Xpatch
+                        Resource r = findResourceInPatchDirs(mn, name);
+                        if (r != null) {
+                            return r.getURL();
+                        }
+
+                        URI u = moduleReaderFor(mref).find(name).orElse(null);
+                        if (u != null) {
+                            try {
+                                return u.toURL();
+                            } catch (MalformedURLException e) { }
+                        }
+                        return null;
+                    }
+                });
+        } catch (PrivilegedActionException pae) {
+            throw (IOException) pae.getCause();
+        }
+
+        // check access to the URL
+        return checkURL(url);
+    }
 
     /**
      * Returns an input stream to a resource of the given name in a module
      * defined to this class loader.
      */
-    @Override
-    public InputStream getResourceAsStream(String moduleName, String name)
+    public InputStream findResourceAsStream(String mn, String name)
         throws IOException
     {
-        ModuleReference mref = nameToModule.get(moduleName);
-        if (mref != null) {
+        // Need URL to resource when running with a security manager so that
+        // the right permission check is done.
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+
+            URL url = findResource(mn, name);
+            return (url != null) ? url.openStream() : null;
+
+        } else {
+
+            ModuleReference mref = nameToModule.get(mn);
+            if (mref == null)
+                return null;   // not defined to this class loader
+
             try {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(mref).open(name).orElse(null);
+
+                            // -Xpatch
+                            Resource r = findResourceInPatchDirs(mn, name);
+                            if (r != null) {
+                                return r.getInputStream();
+                            } else {
+                                return moduleReaderFor(mref).open(name).orElse(null);
+                            }
+
                         }
                     });
             } catch (PrivilegedActionException pae) {
                 throw (IOException) pae.getCause();
             }
         }
-        // module not defined to this class loader or not found
-        return null;
     }
 
     /**
@@ -244,6 +318,7 @@ public class BuiltinClassLoader
         }
     }
 
+
     // -- finding/loading classes
 
     /**
@@ -260,11 +335,19 @@ public class BuiltinClassLoader
 
         Class<?> c = null;
         if (loadedModule != null) {
-            c = findClassInModuleOrNull(loadedModule, cn);
+
+            // attempt to load class in module defined to this loader
+            if (loadedModule.loader() == this) {
+                c = findClassInModuleOrNull(loadedModule, cn);
+            }
+
         } else {
-            // check class path
-            if (ucp != null)
+
+            // search class path
+            if (ucp != null) {
                 c = findClassOnClassPathOrNull(cn);
+            }
+
         }
 
         // not found
@@ -272,6 +355,27 @@ public class BuiltinClassLoader
             throw new ClassNotFoundException(cn);
 
         return c;
+    }
+
+    /**
+     * Finds the class with the specified binary name in a given module.
+     * This method returns {@code null} if the class cannot be found.
+     */
+    @Override
+    protected Class<?> findClass(String mn, String cn) {
+        ModuleReference mref = nameToModule.get(mn);
+        if (mref == null)
+            return null;   // not defined to this class loader
+
+        // find the candidate module for this class
+        LoadedModule loadedModule = findModule(cn);
+        if (loadedModule == null || !loadedModule.name().equals(mn)) {
+            return null;   // module name does not match
+        }
+
+        // attempt to load class in module defined to this loader
+        assert loadedModule.loader() == this;
+        return findClassInModuleOrNull(loadedModule, cn);
     }
 
     /**
@@ -302,10 +406,20 @@ public class BuiltinClassLoader
                 // find the candidate module for this class
                 LoadedModule loadedModule = findModule(cn);
                 if (loadedModule != null) {
-                    if (VM.isModuleSystemInited()) {
-                        c = findClassInModuleOrNull(loadedModule, cn);
+
+                    // package is in a module
+                    BuiltinClassLoader loader = loadedModule.loader();
+                    if (loader == this) {
+                        if (VM.isModuleSystemInited()) {
+                            c = findClassInModuleOrNull(loadedModule, cn);
+                        }
+                    } else {
+                        // delegate to the other loader
+                        c = loader.loadClassOrNull(cn);
                     }
+
                 } else {
+
                     // check parent
                     if (parent != null) {
                         c = parent.loadClassOrNull(cn);
@@ -394,9 +508,20 @@ public class BuiltinClassLoader
         ModuleReader reader = moduleReaderFor(mref);
 
         try {
-            // read class file
+            ByteBuffer bb;
+            CodeSource cs;
+
+            // read class file, trying -Xpatch dirs first
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.read(rn).orElse(null);
+            Resource r = findResourceInPatchDirs(loadedModule.name(), rn);
+            if (r != null) {
+                bb = r.getByteBuffer();
+                cs = new CodeSource(r.getCodeSourceURL(), (CodeSigner[]) null);
+            } else {
+                bb = reader.read(rn).orElse(null);
+                cs = loadedModule.codeSource();
+            }
+
             if (bb == null) {
                 // class not found
                 return null;
@@ -407,17 +532,16 @@ public class BuiltinClassLoader
                 // define a package in the named module
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
-                if (getPackage(pn) == null) {
+                if (getDefinedPackage(pn) == null) {
                     definePackage(pn, loadedModule);
                 }
 
                 // define class to VM
-                URL url = loadedModule.location();
-                CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
 
             } finally {
-                reader.release(bb);
+                if (r == null)
+                    reader.release(bb);
             }
 
         } catch (IOException ioe) {
@@ -459,6 +583,7 @@ public class BuiltinClassLoader
         }
     }
 
+
     // -- packages
 
     /**
@@ -469,18 +594,59 @@ public class BuiltinClassLoader
      *
      * @param pn package name
      */
-    @Override
-    protected Package definePackage(String pn) {
-        Package pkg = getPackage(pn);
+    Package definePackage(String pn) {
+        Package pkg = getDefinedPackage(pn);
         if (pkg == null) {
             LoadedModule loadedModule = packageToModule.get(pn);
-            if (loadedModule == null) {
+            if (loadedModule == null || loadedModule.loader() != this) {
                 pkg = definePackage(pn, null, null, null, null, null, null, null);
             } else {
                 pkg = definePackage(pn, loadedModule);
             }
         }
         return pkg;
+    }
+
+    /**
+     * Define a package for the given class to this class loader, if not
+     * already defined.
+     *
+     * @param c a Class defined by this class loader
+     */
+    Package definePackage(Class<?> c) {
+        if (c.isPrimitive() || c.isArray())
+            return null;
+
+        Module m = c.getModule();
+        String cn = c.getName();
+        int pos = cn.lastIndexOf('.');
+        if (pos < 0 && m.isNamed()) {
+            throw new InternalError("unnamed package of class " + cn +
+                " defined in named module " + m.getName());
+        }
+        String pn = (pos != -1) ? cn.substring(0, pos) : "";
+
+        Package p = getDefinedPackage(pn);
+        if (p == null) {
+            URL url = null;
+
+            // The given class may be dynamically generated and
+            // its package is not in packageToModule map.
+            if (m.isNamed()) {
+                ModuleReference mref = nameToModule.get(m.getName());
+                if (mref != null) {
+                    URI uri = mref.location().orElse(null);
+                    if (uri != null) {
+                        try {
+                            url = uri.toURL();
+                        } catch (MalformedURLException e) { }
+                    }
+                }
+            }
+
+            p = definePackage(pn, null, null, null, null, null, null, url);
+        }
+        return p;
     }
 
     /**
@@ -525,7 +691,7 @@ public class BuiltinClassLoader
      * @throws SecurityException if there is a sealing violation (JAR spec)
      */
     private Package getAndVerifyPackage(String pn, Manifest man, URL url) {
-        Package pkg = getPackage(pn);
+        Package pkg = getDefinedPackage(pn);
         if (pkg != null) {
             if (pkg.isSealed()) {
                 if (!pkg.isSealed(url)) {
@@ -652,6 +818,7 @@ public class BuiltinClassLoader
         return perms;
     }
 
+
     // -- miscellaneous supporting methods
 
     /**
@@ -665,24 +832,13 @@ public class BuiltinClassLoader
      * Creates a ModuleReader for the given module.
      */
     private ModuleReader createModuleReader(ModuleReference mref) {
-        ModuleReader reader;
-
         try {
-            reader = mref.open();
+            return mref.open();
         } catch (IOException e) {
             // Return a null module reader to avoid a future class load
             // attempting to open the module again.
             return new NullModuleReader();
         }
-
-        // if -Xoverride is specified then wrap the ModuleReader so
-        // that the override directory is checked first
-        if (overrideDir != null) {
-            String mn = mref.descriptor().name();
-            reader = new OverrideModuleReader(mn, overrideDir, reader);
-        }
-
-        return reader;
     }
 
     /**
@@ -690,7 +846,7 @@ public class BuiltinClassLoader
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public Optional<InputStream> open(String name) {
+        public Optional<URI> find(String name) {
             return Optional.empty();
         }
         @Override
@@ -699,66 +855,77 @@ public class BuiltinClassLoader
         }
     };
 
-    /**
-     * A ModuleReader to prepend an override directory to another ModuleReader.
-     */
-    private static class OverrideModuleReader implements ModuleReader {
-        private final String module;
-        private final Path overrideDir;
-        private final ModuleReader reader;
 
-        OverrideModuleReader(String module, Path overrideDir, ModuleReader reader) {
-            this.module = module;
-            this.overrideDir = overrideDir;
-            this.reader = reader;
+    /**
+     * Attempts to locate a resource for a given module in the directories
+     * specified to -Xpatch.
+     */
+    private Resource findResourceInPatchDirs(String mn, String name)
+        throws IOException
+    {
+        for (Path patchDir : patchDirs) {
+            Path dir = patchDir.resolve(mn);
+
+            Path file = Paths.get(name.replace('/', File.separatorChar));
+            if (file.getRoot() == null) {
+                file = dir.resolve(file);
+            } else {
+                // drop the root component so that the resource is
+                // located relative to the module directory
+                int n = file.getNameCount();
+                if (n == 0) return null;
+                file = dir.resolve(file.subpath(0, n));
+            }
+
+            if (Files.isRegularFile(file)) {
+                return newResource(name, dir, file);
+            }
         }
 
-        /**
-         * Returns the path to a .class file if overridden with -Xoverride
-         * or {@code null} if not found.
-         */
-        private Path findOverriddenClass(String name) {
-            if (overrideDir != null && name.endsWith(".class")) {
-                String path = name.replace('/', File.separatorChar);
-                Path file = overrideDir.resolve(module).resolve(path);
-                if (Files.isRegularFile(file)) {
-                    return file;
+        return null;
+    }
+
+    /**
+     * Returns a Resource to a file on the file system.
+     */
+    private Resource newResource(String name, Path top, Path file) {
+        return new Resource() {
+            @Override
+            public String getName() {
+                return name;
+            }
+            @Override
+            public URL getURL() {
+                try {
+                    return file.toUri().toURL();
+                } catch (IOException | IOError e) {
+                    return null;
                 }
             }
-            return null;
-        }
-
-        @Override
-        public Optional<InputStream> open(String name) throws IOException {
-            Path path = findOverriddenClass(name);
-            if (path != null) {
-                return Optional.of(Files.newInputStream(path));
-            } else {
-                return reader.open(name);
+            @Override
+            public URL getCodeSourceURL() {
+                try {
+                    return top.toUri().toURL();
+                } catch (IOException | IOError e) {
+                    return null;
+                }
             }
-        }
-
-        @Override
-        public Optional<ByteBuffer> read(String name) throws IOException {
-            Path path = findOverriddenClass(name);
-            if (path != null) {
-                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
-            } else {
-                return reader.read(name);
+            @Override
+            public ByteBuffer getByteBuffer() throws IOException {
+                return ByteBuffer.wrap(Files.readAllBytes(file));
             }
-        }
-
-        @Override
-        public void release(ByteBuffer bb) {
-            if (bb.isDirect())
-                reader.release(bb);
-        }
-
-        @Override
-        public void close() throws IOException {
-            throw new InternalError("Should not get here");
-        }
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return Files.newInputStream(file);
+            }
+            @Override
+            public int getContentLength() throws IOException {
+                long size = Files.size(file);
+                return (size > Integer.MAX_VALUE) ? -1 : (int)size;
+            }
+        };
     }
+
 
     /**
      * Checks access to the given URL. We use URLClassPath for consistent

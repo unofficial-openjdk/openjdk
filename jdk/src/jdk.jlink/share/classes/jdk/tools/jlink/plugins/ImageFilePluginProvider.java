@@ -38,6 +38,6 @@ public abstract class ImageFilePluginProvider extends PluginProvider {
     }
 
     @Override
-    public abstract ImageFilePlugin[] newPlugins(Map<Object, Object> config)
+    public abstract ImageFilePlugin[] newPlugins(Map<String, Object> config)
             throws IOException;
 }

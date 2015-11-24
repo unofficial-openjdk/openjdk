@@ -60,7 +60,7 @@ import sun.awt.im.InputContext;
 import sun.awt.image.ByteArrayImageSource;
 import sun.awt.image.FileImageSource;
 import sun.awt.image.ImageRepresentation;
-import sun.awt.image.MultiResolutionImage;
+import java.awt.image.MultiResolutionImage;
 import sun.awt.image.MultiResolutionToolkitImage;
 import sun.awt.image.ToolkitImage;
 import sun.awt.image.URLImageSource;
@@ -113,7 +113,7 @@ public abstract class SunToolkit extends Toolkit
      * the 4-bytes limit for the int type. (CR 6799099)
      * One more bit is reserved for FIRST_HIGH_BIT.
      */
-    public final static int MAX_BUTTONS_SUPPORTED = 20;
+    public static final int MAX_BUTTONS_SUPPORTED = 20;
 
     /**
      * Creates and initializes EventQueue instance for the specified
@@ -124,18 +124,7 @@ public abstract class SunToolkit extends Toolkit
      * @param appContext AppContext to associate with the event queue
      */
     private static void initEQ(AppContext appContext) {
-        EventQueue eventQueue;
-
-        String eqName = System.getProperty("AWT.EventQueueClass",
-                "java.awt.EventQueue");
-
-        try {
-            eventQueue = (EventQueue)Class.forName(eqName).newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed loading " + eqName + ": " + e);
-            eventQueue = new EventQueue();
-        }
+        EventQueue eventQueue = new EventQueue();
         appContext.put(AppContext.EVENT_QUEUE_KEY, eventQueue);
 
         PostEventQueue postEventQueue = new PostEventQueue(eventQueue);
@@ -662,16 +651,20 @@ public abstract class SunToolkit extends Toolkit
 
 
     @SuppressWarnings("deprecation")
-    static final SoftCache imgCache = new SoftCache();
+    static final SoftCache fileImgCache = new SoftCache();
+
+    @SuppressWarnings("deprecation")
+    static final SoftCache urlImgCache = new SoftCache();
 
     static Image getImageFromHash(Toolkit tk, URL url) {
         checkPermissions(url);
-        synchronized (imgCache) {
-            Image img = (Image)imgCache.get(url);
+        synchronized (urlImgCache) {
+            String key = url.toString();
+            Image img = (Image)urlImgCache.get(key);
             if (img == null) {
                 try {
                     img = tk.createImage(new URLImageSource(url));
-                    imgCache.put(url, img);
+                    urlImgCache.put(key, img);
                 } catch (Exception e) {
                 }
             }
@@ -682,12 +675,12 @@ public abstract class SunToolkit extends Toolkit
     static Image getImageFromHash(Toolkit tk,
                                                String filename) {
         checkPermissions(filename);
-        synchronized (imgCache) {
-            Image img = (Image)imgCache.get(filename);
+        synchronized (fileImgCache) {
+            Image img = (Image)fileImgCache.get(filename);
             if (img == null) {
                 try {
                     img = tk.createImage(new FileImageSource(filename));
-                    imgCache.put(filename, img);
+                    fileImgCache.put(filename, img);
                 } catch (Exception e) {
                 }
             }
@@ -707,28 +700,29 @@ public abstract class SunToolkit extends Toolkit
 
     protected Image getImageWithResolutionVariant(String fileName,
             String resolutionVariantName) {
-        synchronized (imgCache) {
+        synchronized (fileImgCache) {
             Image image = getImageFromHash(this, fileName);
             if (image instanceof MultiResolutionImage) {
                 return image;
             }
             Image resolutionVariant = getImageFromHash(this, resolutionVariantName);
             image = createImageWithResolutionVariant(image, resolutionVariant);
-            imgCache.put(fileName, image);
+            fileImgCache.put(fileName, image);
             return image;
         }
     }
 
     protected Image getImageWithResolutionVariant(URL url,
             URL resolutionVariantURL) {
-        synchronized (imgCache) {
+        synchronized (urlImgCache) {
             Image image = getImageFromHash(this, url);
             if (image instanceof MultiResolutionImage) {
                 return image;
             }
             Image resolutionVariant = getImageFromHash(this, resolutionVariantURL);
             image = createImageWithResolutionVariant(image, resolutionVariant);
-            imgCache.put(url, image);
+            String key = url.toString();
+            urlImgCache.put(key, image);
             return image;
         }
     }
@@ -839,8 +833,13 @@ public abstract class SunToolkit extends Toolkit
         return null;
     }
 
-    protected static boolean imageCached(Object key) {
-        return imgCache.containsKey(key);
+    protected static boolean imageCached(String fileName) {
+        return fileImgCache.containsKey(fileName);
+    }
+
+    protected static boolean imageCached(URL url) {
+        String key = url.toString();
+        return urlImgCache.containsKey(key);
     }
 
     protected static boolean imageExists(String filename) {
@@ -1831,7 +1830,7 @@ public abstract class SunToolkit extends Toolkit
      * Returns the value of "sun.awt.disableMixing" property. Default
      * value is {@code false}.
      */
-    public synchronized static boolean getSunAwtDisableMixing() {
+    public static synchronized boolean getSunAwtDisableMixing() {
         if (sunAwtDisableMixing == null) {
             sunAwtDisableMixing = AccessController.doPrivileged(
                                       new GetBooleanAction("sun.awt.disableMixing"));

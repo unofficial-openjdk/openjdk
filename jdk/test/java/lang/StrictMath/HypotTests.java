@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,18 @@
 /*
  * @test
  * @bug 4851638
+ * @key randomness
  * @summary Tests for StrictMath.hypot
+ * @library /lib/testlibrary/
+ * @build jdk.testlibrary.RandomFactory
+ * @build Tests
+ * @build FdlibmTranslit
+ * @build HypotTests
+ * @run main HypotTests
  * @author Joseph D. Darcy
  */
+
+import jdk.testlibrary.RandomFactory;
 
 /**
  * The tests in ../Math/HypotTests.java test properties that should
@@ -42,9 +51,50 @@
 public class HypotTests {
     private HypotTests(){}
 
+    public static void main(String... args) {
+        int failures = 0;
+
+        failures += testHypot();
+        failures += testAgainstTranslit();
+
+        if (failures > 0) {
+            System.err.println("Testing hypot incurred "
+                               + failures + " failures.");
+            throw new RuntimeException();
+        }
+    }
+
+    /**
+     * The hypot implementation is commutative, {@code hypot(a, b) ==
+     * hypot(b, a)}, and independent of sign, {@code hypot(a, b) ==
+     * hypot(-a, b) == hypot(a, -b) == hypot(-a, -b)}.
+     */
     static int testHypotCase(double input1, double input2, double expected) {
-        return Tests.test("StrictMath.hypot(double)", input1, input2,
-                          StrictMath.hypot(input1, input2), expected);
+        int failures = 0;
+        failures += Tests.test("StrictMath.hypot(double)", input1, input2,
+                               StrictMath.hypot(input1, input2), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", input2, input1,
+                          StrictMath.hypot(input2, input1), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", -input1, input2,
+                               StrictMath.hypot(-input1, input2), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", input2, -input1,
+                          StrictMath.hypot(input2, -input1), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", input1, -input2,
+                               StrictMath.hypot(input1, -input2), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", -input2, input1,
+                          StrictMath.hypot(-input2, input1), expected);
+
+        failures += Tests.test("StrictMath.hypot(double)", -input1, -input2,
+                               StrictMath.hypot(-input1, -input2), expected);
+
+        failures +=  Tests.test("StrictMath.hypot(double)", -input2, -input1,
+                          StrictMath.hypot(-input2, -input1), expected);
+        return failures;
     }
 
     static int testHypot() {
@@ -611,23 +661,83 @@ public class HypotTests {
             {0x1.8p1,   0x1.8bffffffffff6p6,    0x1.8c2e88e6f44b1p6},
             {0x1.8p1,   0x1.8ffffffffffe8p6,    0x1.902e11d3b5549p6},
             {0x1.8p1,   0x1.8fffffffffffep6,    0x1.902e11d3b556p6},
+
+            // Test near decision points of the fdlibm algorithm
+            {0x1.0000000000001p501,   0x1.000000000000p501,    0x1.6a09e667f3bcdp501},
+            {0x1.0p501,               0x1.0p499,               0x1.07e0f66afed07p501},
+
+            {0x1.0p500,               0x1.0p450,               0x1.0p500},
+            {0x1.0000000000001p500,   0x1.0p450,               0x1.0000000000001p500},
+
+            {0x1.0p500,               0x1.0p440,               0x1.0p500},
+            {0x1.0000000000001p500,   0x1.0p440,               0x1.0000000000001p500},
+            {0x1.0p500,               0x1.0p439,               0x1.0p500},
+            {0x1.0000000000001p500,   0x1.0p439,               0x1.0000000000001p500},
+
+            {0x1.0p-450,              0x1.0p-500,              0x1.0p-450},
+            {0x1.0000000000001p-450,  0x1.0p-500,              0x1.0000000000001p-450},
+            {0x1.0p-450,              0x1.fffffffffffffp-499,  0x1.0p-450},
+            {0x1.0000000000001p-450,  0x1.fffffffffffffp-499,  0x1.0000000000001p-450},
+
+
+            {0x1.0p-450,              0x1.0p-500,              0x1.0p-450},
+            {0x1.0000000000001p-450,  0x1.0p-500,              0x1.0000000000001p-450},
+            {0x1.0p-450,              0x1.fffffffffffffp-499,  0x1.0p-450},
+            {0x1.0000000000001p-450,  0x1.fffffffffffffp-499,  0x1.0000000000001p-450},
+
+            {0x1.00000_ffff_0000p500,  0x1.fffffffffffffp499,  0x1.6a09f1b837ccfp500},
+            {0x1.00000_0000_0001p500,  0x1.fffffffffffffp499,  0x1.6a09e667f3bcdp500},
+            {0x1.00000_ffff_ffffp500,  0x1.fffffffffffffp499,  0x1.6a09f1b8431d3p500},
+            {0x1.00001_0000_0000p500,  0x1.fffffffffffffp499,  0x1.6a09f1b8431d5p500},
+
+
+            // 0x1.0p-1022 is MIN_NORMAL
+            {0x1.0000000000001p-1022, 0x1.0000000000001p-1022, 0x1.6a09e667f3bcep-1022},
+            {0x1.0000000000001p-1022, 0x1.0p-1022,             0x1.6a09e667f3bcdp-1022},
+            {0x1.0000000000001p-1022, 0x0.fffffffffffffp-1022, 0x1.6a09e667f3bcdp-1022},
+            {0x1.0000000000001p-1022, 0x0.0000000000001P-1022, 0x1.0000000000001p-1022},
+            {0x1.0000000000001p-1022, 0.0,                     0x1.0000000000001p-1022},
+
+            {0x1.0000000000000p-1022, 0x0.fffffffffffffp-1022, 0x1.6a09e667f3bccp-1022},
+            {0x1.0000000000000p-1021, 0x0.fffffffffffffp-1022, 0x1.1e3779b97f4a8p-1021},
+            {0x1.0000000000000p-1020, 0x0.fffffffffffffp-1022, 0x1.07e0f66afed07p-1020},
+
+            // 0x0.0000000000001P-1022 is MIN_VALUE (smallest nonzero number)
+            {0x0.0000000000001p-1022, 0x0.0000000000001p-1022, 0x0.0000000000001p-1022},
+            {0x0.0000000000002p-1022, 0x0.0000000000001p-1022, 0x0.0000000000002p-1022},
+            {0x0.0000000000003p-1022, 0x0.0000000000002p-1022, 0x0.0000000000004p-1022},
         };
 
         for (double[] testCase: testCases)
-            failures+=testHypotCase(testCase[0], testCase[1], testCase[2]);
+            failures += testHypotCase(testCase[0], testCase[1], testCase[2]);
 
         return failures;
     }
 
-    public static void main(String [] argv) {
+    // Initialize shared random number generator
+    private static java.util.Random random = RandomFactory.getRandom();
+
+    /**
+     * Test StrictMath.hypot against transliteration port of hypot.
+     */
+    private static int testAgainstTranslit() {
         int failures = 0;
+        double x = Tests.createRandomDouble(random);
+        double y = Tests.createRandomDouble(random);
 
-        failures += testHypot();
+        // Make the increment twice the ulp value in case the random
+        // value is near an exponent threshold.
+        double increment_x = 2.0 * Math.ulp(x);
+        double increment_y = 2.0 * Math.ulp(y);
 
-        if (failures > 0) {
-            System.err.println("Testing log1p incurred "
-                               + failures + " failures.");
-            throw new RuntimeException();
+        // Don't worry about x or y overflowing to infinity if their
+        // exponent is MAX_EXPONENT.
+        for (int i = 0; i < 200; i++, x += increment_x) {
+            for (int j = 0; j < 200; j++, y += increment_y) {
+                failures += testHypotCase(x, y, FdlibmTranslit.hypot(x, y));
+            }
         }
+
+        return failures;
     }
 }

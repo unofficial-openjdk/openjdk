@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.Archive.Entry;
+import jdk.tools.jlink.internal.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ResourcePool;
@@ -156,9 +156,16 @@ public class ImageFileCreatorTest {
         }
 
         {
-            // Single '/' character
+            // 2 '/' characters
             List<String> entries = new ArrayList<>();
             entries.add("//");
+            test(entries);
+        }
+
+        {
+            // 3 '/' characters
+            List<String> entries = new ArrayList<>();
+            entries.add("///");
             test(entries);
         }
 
@@ -173,6 +180,7 @@ public class ImageFileCreatorTest {
             // all together
             List<String> entries = new ArrayList<>();
             entries.add("");
+            entries.add("///");
             entries.add("//");
             entries.add("/");
             entries.add("classes/////class/");
@@ -201,10 +209,20 @@ public class ImageFileCreatorTest {
             public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
                     String bom, ImageBuilder.ResourceRetriever retriever) throws IOException {
             }
+
+            @Override
+            public ExecutableImage getExecutableImage() throws IOException {
+                return null;
+            }
+
+            @Override
+            public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
+
+            }
         };
 
         ImagePluginStack stack = new ImagePluginStack(noopBuilder, Collections.emptyList(),
-                null, Collections.emptyList(), "", Collections.emptyMap());
+                null, Collections.emptyList(), Collections.emptyList(), "");
 
         ImageFileCreator.create(archives, ByteOrder.nativeOrder(), stack);
     }

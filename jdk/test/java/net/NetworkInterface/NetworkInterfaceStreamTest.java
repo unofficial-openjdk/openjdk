@@ -25,9 +25,10 @@
  * @bug 8081678
  * @summary Tests for stream returning methods
  * @library ../../util/stream/bootlib
- * @build java.util.stream.OpTestCase
+ * @build java.base/java.util.stream.OpTestCase
  * @run testng/othervm NetworkInterfaceStreamTest
  * @run testng/othervm -Djava.net.preferIPv4Stack=true NetworkInterfaceStreamTest
+ * @key intermittent
  */
 
 import org.testng.annotations.Test;

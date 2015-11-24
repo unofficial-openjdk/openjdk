@@ -144,6 +144,16 @@ public interface ResourcePool {
             return uncompressed_size;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
         public static CompressedResource newCompressedResource(Resource original,
                 ByteBuffer compressed,
                 String plugin, String pluginConfig, StringTable strings,

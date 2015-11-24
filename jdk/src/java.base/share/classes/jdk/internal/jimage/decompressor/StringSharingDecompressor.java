@@ -59,7 +59,7 @@ public class StringSharingDecompressor implements ResourceDecompressor {
     private static final int CONSTANT_MethodType = 16;
     private static final int CONSTANT_InvokeDynamic = 18;
 
-    public static final int[] SIZES = new int[20];
+    private static final int[] SIZES = new int[20];
 
     static {
 
@@ -79,6 +79,10 @@ public class StringSharingDecompressor implements ResourceDecompressor {
         SIZES[CONSTANT_InvokeDynamic] = 4;
     }
 
+    public static int[] getSizes() {
+        return SIZES.clone();
+    }
+
     @SuppressWarnings("fallthrough")
     public static byte[] normalize(StringsProvider provider, byte[] transformed,
             int offset) throws IOException {
@@ -87,7 +91,7 @@ public class StringSharingDecompressor implements ResourceDecompressor {
         ByteArrayOutputStream outStream = new ByteArrayOutputStream(transformed.length);
         DataOutputStream out = new DataOutputStream(outStream);
         byte[] header = new byte[8]; //maginc/4, minor/2, major/2
-        stream.read(header);
+        stream.readFully(header);
         out.write(header);
         int count = stream.readUnsignedShort();
         out.writeShort(count);
@@ -124,7 +128,7 @@ public class StringSharingDecompressor implements ResourceDecompressor {
                     out.write(tag);
                     int size = SIZES[tag];
                     arr = new byte[size];
-                    stream.read(arr);
+                    stream.readFully(arr);
                     out.write(arr);
                 }
             }
@@ -220,7 +224,7 @@ public class StringSharingDecompressor implements ResourceDecompressor {
 
     @Override
     public byte[] decompress(StringsProvider reader, byte[] content,
-            int offset, int originalSize) throws Exception {
+            int offset, long originalSize) throws Exception {
         return normalize(reader, content, offset);
     }
 }

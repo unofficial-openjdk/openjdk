@@ -22,6 +22,6 @@
  */
 
 module test {
-    requires java.annotations.common;
+    requires java.transaction;
 }
 

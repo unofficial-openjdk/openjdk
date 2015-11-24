@@ -25,7 +25,7 @@
  * @bug 8081678
  * @summary Tests for stream returning methods
  * @library ../../util/stream/bootlib
- * @build java.util.stream.OpTestCase
+ * @build java.base/java.util.stream.OpTestCase
  * @run testng/othervm PermissionCollectionStreamTest
  */
 
@@ -50,9 +50,9 @@ public class PermissionCollectionStreamTest extends OpTestCase {
                 {
                         "FilePermission",
                         new Permission[]{
-                                new FilePermission("/home/foobar", "read"),
-                                new FilePermission("/home/foo", "write"),
-                                new FilePermission("/home/foobar", "read,write"),
+                                new FilePermission("/tmp/foobar", "read"),
+                                new FilePermission("/tmp/foo", "write"),
+                                new FilePermission("/tmp/foobar", "read,write"),
                         }
                 },
         };

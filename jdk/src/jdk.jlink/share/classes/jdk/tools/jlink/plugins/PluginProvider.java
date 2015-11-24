@@ -27,6 +27,7 @@ package jdk.tools.jlink.plugins;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
  * An abstract plugin provider class. A provider has a name, a description and
@@ -39,21 +40,37 @@ import java.util.Objects;
  *
  * Order of known categories are:
  * <ol>
- * <li>FILTER: Filter in/out resources.</li>
- * <li>TRANSFORMER: Transform resources (eg: refactoring, bytecode
+ * <li>FILTER: Filter in/out resources or files.</li>
+ * <li>TRANSFORMER: Transform resources or files(eg: refactoring, bytecode
  * manipulation).</li>
- * <li>SORTER: Sort resources.</li>
- * <li>COMPRESSOR: Compress resources.</li>
+ * <li>SORTER: Sort resources within the resource container.</li>
+ * <li>COMPRESSOR: Compress resource within the resouce containers.</li>
+ * <li>VERIFIER: Does some image verification.</li>
+ * <li>PROCESSOR: Does some post processing on image.</li>
  * <li>PACKAGER: Final processing</li>
  * </ol>
  */
 public abstract class PluginProvider {
+
+    /**
+     * This option is present in the configuration passed at Plugin creation
+     * time.
+     */
+    public static final String PLATFORM_NAME_OPTION = "jlink.platform";
 
     public static final String COMPRESSOR = "compressor";
     public static final String SORTER = "sorter";
     public static final String TRANSFORMER = "transformer";
     public static final String FILTER = "filter";
     public static final String PACKAGER = "packager";
+    public static final String PROCESSOR = "processor";
+    public static final String VERIFIER = "verifier";
+
+    public static enum ORDER {
+        FIRST,
+        ANY,
+        LAST
+    }
 
     private final String name;
     private final String description;
@@ -71,8 +88,47 @@ public abstract class PluginProvider {
 
     public abstract String getCategory();
 
+    /**
+     * Order of the plugin within its category. By default ANY.
+     *
+     * @return Expected order.
+     */
+    public ORDER getOrder() {
+        return ORDER.ANY;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * An exposed provider wants to be advertised (e.g.: displayed in help).
+     *
+     * @return True, the provider is exposed, false the provider is hidden.
+     */
+    public boolean isExposed() {
+        return true;
+    }
+
+    /**
+     * Check if the provider can properly operate in the current context.
+     *
+     * @return true, the provider can operate
+     */
+    public boolean isFunctional() {
+        return true;
+    }
+
+    /**
+     * Return a message indicating the status of the provider.
+     *
+     * @param functional
+     * @return A status description.
+     */
+    public String getFunctionalStateDescription(boolean functional) {
+        return functional
+                ? PluginsResourceBundle.getMessage("main.status.ok")
+                : PluginsResourceBundle.getMessage("main.status.not.ok");
     }
 
     /**
@@ -82,6 +138,6 @@ public abstract class PluginProvider {
      * @return An array of plugins.
      * @throws IOException
      */
-    public abstract Plugin[] newPlugins(Map<Object, Object> config)
+    public abstract Plugin[] newPlugins(Map<String, Object> config)
             throws IOException;
 }

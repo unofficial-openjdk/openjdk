@@ -29,14 +29,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
-import jdk.tools.jlink.plugins.DefaultImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
 
@@ -45,7 +46,7 @@ import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
  */
 public final class JvmHandler {
 
-    private class JvmComparator implements Comparator<String> {
+    private static final class JvmComparator implements Comparator<String> {
 
         @Override
         public int compare(String t, String t1) {
@@ -63,7 +64,7 @@ public final class JvmHandler {
             this.index = index;
         }
         private static int getIndex(String platform) {
-            return Jvm.valueOf(platform.toUpperCase()).index;
+            return Jvm.valueOf(platform.toUpperCase(Locale.US)).index;
         }
     }
 
@@ -112,7 +113,8 @@ public final class JvmHandler {
                     ImageFile orig = origHolder.get(0);
                     // Keep comments
                     try (BufferedReader reader
-                            = new BufferedReader(new InputStreamReader(orig.stream()))) {
+                            = new BufferedReader(new InputStreamReader(orig.stream(),
+                                            StandardCharsets.UTF_8))) {
                         reader.lines().forEach((s) -> {
                             if (s.startsWith("#")) {
                                 builder.append(s).append("\n");
@@ -136,7 +138,7 @@ public final class JvmHandler {
                                 append(remaining.get(0)).append("\n");
                     }
 
-                    byte[] content = builder.toString().getBytes();
+                    byte[] content = builder.toString().getBytes(StandardCharsets.UTF_8);
                     ImageFile rewritten = new ImageFile(orig.getModule(),
                             orig.getPath(), orig.getName(), orig.getType()) {
 

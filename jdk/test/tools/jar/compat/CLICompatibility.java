@@ -71,42 +71,30 @@ public class CLICompatibility {
         Files.copy(TEST_CLASSES.resolve(RES2), USER_DIR.resolve(RES2));
     }
 
-    static final Consumer<InputStream> ASSERT_CONTAINS_RES1 = in -> {
+    static final IOConsumer<InputStream> ASSERT_CONTAINS_RES1 = in -> {
         try (JarInputStream jin = new JarInputStream(in)) {
-            assertTrue(jarContains(jin, RES1),
-                       "Failed to find " + RES1);
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
+            assertTrue(jarContains(jin, RES1), "Failed to find " + RES1);
         }
     };
-    static final Consumer<InputStream> ASSERT_CONTAINS_RES2 = in -> {
+    static final IOConsumer<InputStream> ASSERT_CONTAINS_RES2 = in -> {
         try (JarInputStream jin = new JarInputStream(in)) {
-            assertTrue(jarContains(jin, RES2),
-                       "Failed to find " + RES2);
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
+            assertTrue(jarContains(jin, RES2), "Failed to find " + RES2);
         }
     };
-    static final Consumer<InputStream> ASSERT_CONTAINS_MAINFEST = in -> {
+    static final IOConsumer<InputStream> ASSERT_CONTAINS_MAINFEST = in -> {
         try (JarInputStream jin = new JarInputStream(in)) {
-            assertTrue(jin.getManifest() != null,
-                        "No META-INF/MANIFEST.MF");
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
+            assertTrue(jin.getManifest() != null, "No META-INF/MANIFEST.MF");
         }
     };
-    static final Consumer<InputStream> ASSERT_DOES_NOT_CONTAIN_MAINFEST = in -> {
+    static final IOConsumer<InputStream> ASSERT_DOES_NOT_CONTAIN_MAINFEST = in -> {
         try (JarInputStream jin = new JarInputStream(in)) {
-            assertTrue(jin.getManifest() == null,
-                       "Found unexpected META-INF/MANIFEST.MF");
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
+            assertTrue(jin.getManifest() == null, "Found unexpected META-INF/MANIFEST.MF");
         }
     };
 
     static final FailCheckerWithMessage FAIL_TOO_MANY_MAIN_OPS =
-            new FailCheckerWithMessage("You must specify one of -ctxui options",
-                    "{ctxui}[vfmn0Me] [jar-file] [manifest-file] [entry-point] [-C dir] files" /*Legacy*/);
+        new FailCheckerWithMessage("You must specify one of -ctxui options",
+        /* legacy */ "{ctxui}[vfmn0Me] [jar-file] [manifest-file] [entry-point] [-C dir] files");
 
     // Create
 
@@ -115,27 +103,47 @@ public class CLICompatibility {
         final FailCheckerWithMessage FAIL_CREATE_NO_ARGS = new FailCheckerWithMessage(
                 "'c' flag requires manifest or input files to be specified!");
 
-        FAIL_CREATE_NO_ARGS.accept(jarWithResult("c"));
-        FAIL_CREATE_NO_ARGS.accept(jarWithResult("-c"));
+        jar("c")
+            .assertFailure()
+            .resultChecker(FAIL_CREATE_NO_ARGS);
+
+        jar("-c")
+            .assertFailure()
+            .resultChecker(FAIL_CREATE_NO_ARGS);
+
         if (!legacyOnly)
-            FAIL_CREATE_NO_ARGS.accept(jarWithResult("--create"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("ct"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("-ct"));
+            jar("--create")
+                .assertFailure()
+                .resultChecker(FAIL_CREATE_NO_ARGS);
+
+        jar("ct")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
+        jar("-ct")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
         if (!legacyOnly)
-            FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("--create --list"));
+            jar("--create --list")
+                .assertFailure()
+                .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
     }
 
     @Test
     public void createWriteToFile() throws IOException {
-        Path path = Paths.get("createJarFile.jar");  // a jar file suitable for creating
+        Path path = Paths.get("createJarFile.jar");  // for creating
         String jn = path.toString();
-        for (String opts : new String[]{"cf " + jn, "-cf " + jn, "--create --archive=" + jn}) {
+        for (String opts : new String[]{"cf " + jn, "-cf " + jn, "--create --file=" + jn}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            PASS.accept(jarWithResult(opts, RES1));
-            ASSERT_CONTAINS_RES1.accept(Files.newInputStream(path));
-            ASSERT_CONTAINS_MAINFEST.accept(Files.newInputStream(path));
+            jar(opts, RES1)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(Files.newInputStream(path));
+                    ASSERT_CONTAINS_MAINFEST.accept(Files.newInputStream(path));
+                });
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -146,10 +154,12 @@ public class CLICompatibility {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            Result r = jarWithResult(opts, RES1);
-            PASS.accept(r);
-            ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
-            ASSERT_CONTAINS_MAINFEST.accept(r.stdoutAsStream());
+            jar(opts, RES1)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
+                    ASSERT_CONTAINS_MAINFEST.accept(r.stdoutAsStream());
+                });
         }
     }
 
@@ -159,10 +169,12 @@ public class CLICompatibility {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            Result r = jarWithResult(opts, RES1);
-            PASS.accept(r);
-            ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
-            ASSERT_DOES_NOT_CONTAIN_MAINFEST.accept(r.stdoutAsStream());
+            jar(opts, RES1)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
+                    ASSERT_DOES_NOT_CONTAIN_MAINFEST.accept(r.stdoutAsStream());
+                });
         }
     }
 
@@ -173,30 +185,50 @@ public class CLICompatibility {
         final FailCheckerWithMessage FAIL_UPDATE_NO_ARGS = new FailCheckerWithMessage(
                 "'u' flag requires manifest, 'e' flag or input files to be specified!");
 
-        FAIL_UPDATE_NO_ARGS.accept(jarWithResult("u"));
-        FAIL_UPDATE_NO_ARGS.accept(jarWithResult("-u"));
+        jar("u")
+            .assertFailure()
+            .resultChecker(FAIL_UPDATE_NO_ARGS);
+
+        jar("-u")
+            .assertFailure()
+            .resultChecker(FAIL_UPDATE_NO_ARGS);
+
         if (!legacyOnly)
-            FAIL_UPDATE_NO_ARGS.accept(jarWithResult("--update"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("ut"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("-ut"));
+            jar("--update")
+                .assertFailure()
+                .resultChecker(FAIL_UPDATE_NO_ARGS);
+
+        jar("ut")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
+        jar("-ut")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
         if (!legacyOnly)
-            FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("--update --list"));
+            jar("--update --list")
+                .assertFailure()
+                .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
     }
 
     @Test
     public void updateReadFileWriteFile() throws IOException {
-        Path path = Paths.get("updateReadWriteStdout.jar");  // a jar file suitable for updating
+        Path path = Paths.get("updateReadWriteStdout.jar");  // for updating
         String jn = path.toString();
 
-        for (String opts : new String[]{"uf " + jn, "-uf " + jn, "--update --archive=" + jn}) {
+        for (String opts : new String[]{"uf " + jn, "-uf " + jn, "--update --file=" + jn}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
             createJar(path, RES1);
-            PASS.accept(jarWithResult(opts, RES2));
-            ASSERT_CONTAINS_RES1.accept(Files.newInputStream(path));
-            ASSERT_CONTAINS_RES2.accept(Files.newInputStream(path));
-            ASSERT_CONTAINS_MAINFEST.accept(Files.newInputStream(path));
+            jar(opts, RES2)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(Files.newInputStream(path));
+                    ASSERT_CONTAINS_RES2.accept(Files.newInputStream(path));
+                    ASSERT_CONTAINS_MAINFEST.accept(Files.newInputStream(path));
+                });
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -210,11 +242,13 @@ public class CLICompatibility {
                 continue;
 
             createJar(path, RES1);
-            Result r = jarWithResultAndStdin(path.toFile(), opts, RES2);
-            PASS.accept(r);
-            ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
-            ASSERT_CONTAINS_RES2.accept(r.stdoutAsStream());
-            ASSERT_CONTAINS_MAINFEST.accept(r.stdoutAsStream());
+            jarWithStdin(path.toFile(), opts, RES2)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
+                    ASSERT_CONTAINS_RES2.accept(r.stdoutAsStream());
+                    ASSERT_CONTAINS_MAINFEST.accept(r.stdoutAsStream());
+                });
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -228,11 +262,13 @@ public class CLICompatibility {
                 continue;
 
             createJar(path, RES1);
-            Result r = jarWithResultAndStdin(path.toFile(), opts, RES2);
-            PASS.accept(r);
-            ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
-            ASSERT_CONTAINS_RES2.accept(r.stdoutAsStream());
-            ASSERT_DOES_NOT_CONTAIN_MAINFEST.accept(r.stdoutAsStream());
+            jarWithStdin(path.toFile(), opts, RES2)
+                .assertSuccess()
+                .resultChecker(r -> {
+                    ASSERT_CONTAINS_RES1.accept(r.stdoutAsStream());
+                    ASSERT_CONTAINS_RES2.accept(r.stdoutAsStream());
+                    ASSERT_DOES_NOT_CONTAIN_MAINFEST.accept(r.stdoutAsStream());
+                });
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -241,26 +277,36 @@ public class CLICompatibility {
 
     @Test
     public void listBadArgs() {
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("te"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("-te"));
+        jar("te")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
+        jar("-te")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
         if (!legacyOnly)
-            FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("--list --main-class"));
+            jar("--list --extract")
+                .assertFailure()
+                .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
     }
 
     @Test
     public void listReadFromFileWriteToStdout() throws IOException {
-        Path path = Paths.get("listReadFromFileWriteToStdout.jar");  // a jar file suitable for listing
+        Path path = Paths.get("listReadFromFileWriteToStdout.jar");  // for listing
         createJar(path, RES1);
         String jn = path.toString();
 
-        for (String opts : new String[]{"tf " + jn, "-tf " + jn, "--list --archive " + jn}) {
+        for (String opts : new String[]{"tf " + jn, "-tf " + jn, "--list --file " + jn}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            Result r = jarWithResult(opts);
-            PASS.accept(r);
-            assertTrue(r.output.contains("META-INF/MANIFEST.MF") && r.output.contains(RES1),
-                       "Failed, got [" + r.output + "]");
+            jar(opts)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("META-INF/MANIFEST.MF") && r.output.contains(RES1),
+                               "Failed, got [" + r.output + "]")
+                );
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -274,10 +320,12 @@ public class CLICompatibility {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            Result r = jarWithResultAndStdin(path.toFile(), opts);
-            PASS.accept(r);
-            assertTrue(r.output.contains("META-INF/MANIFEST.MF") && r.output.contains(RES1),
-                       "Failed, got [" + r.output + "]");
+            jarWithStdin(path.toFile(), opts)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("META-INF/MANIFEST.MF") && r.output.contains(RES1),
+                               "Failed, got [" + r.output + "]")
+                );
         }
         FileUtils.deleteFileIfExistsWithRetry(path);
     }
@@ -286,24 +334,36 @@ public class CLICompatibility {
 
     @Test
     public void extractBadArgs() {
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("xi"));
-        FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("-xi"));
+        jar("xi")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
+        jar("-xi")
+            .assertFailure()
+            .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
+
         if (!legacyOnly)
-            FAIL_TOO_MANY_MAIN_OPS.accept(jarWithResult("--extract --generate-index"));
+            jar("--extract --generate-index")
+                .assertFailure()
+                .resultChecker(FAIL_TOO_MANY_MAIN_OPS);
     }
 
     @Test
     public void extractReadFromStdin() throws IOException {
         Path path = Paths.get("extract");
-        Path jarPath = path.resolve("extractReadFromStdin.jar"); // a jar file suitable for extracting
+        Path jarPath = path.resolve("extractReadFromStdin.jar"); // for extracting
         createJar(jarPath, RES1);
 
         for (String opts : new String[]{"x" ,"-x", "--extract"}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            PASS.accept(jarWithResultAndStdinAndWorkingDir(jarPath.toFile(), path.toFile(), opts));
-            assertTrue(Files.exists(path.resolve(RES1)), "Expected to find:" + path.resolve(RES1));
+            jarWithStdinAndWorkingDir(jarPath.toFile(), path.toFile(), opts)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(Files.exists(path.resolve(RES1)),
+                               "Expected to find:" + path.resolve(RES1))
+                );
             FileUtils.deleteFileIfExistsWithRetry(path.resolve(RES1));
         }
         FileUtils.deleteFileTreeWithRetry(path);
@@ -316,12 +376,16 @@ public class CLICompatibility {
         Path jarPath = path.resolve(jn);
         createJar(jarPath, RES1);
 
-        for (String opts : new String[]{"xf "+jn ,"-xf "+jn, "--extract --archive="+jn}) {
+        for (String opts : new String[]{"xf "+jn ,"-xf "+jn, "--extract --file "+jn}) {
             if (legacyOnly && opts.startsWith("--"))
                 continue;
 
-            PASS.accept(jarWithResultAndStdinAndWorkingDir(null, path.toFile(), opts));
-            assertTrue(Files.exists(path.resolve(RES1)), "Expected to find:" + path.resolve(RES1));
+            jarWithStdinAndWorkingDir(null, path.toFile(), opts)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(Files.exists(path.resolve(RES1)),
+                               "Expected to find:" + path.resolve(RES1))
+                );
             FileUtils.deleteFileIfExistsWithRetry(path.resolve(RES1));
         }
         FileUtils.deleteFileTreeWithRetry(path);
@@ -361,12 +425,6 @@ public class CLICompatibility {
         }
     }
 
-    static final Consumer<Result> PASS = r -> {
-        //out.printf("%s%n", r.output);
-        assertTrue(r.exitValue == 0,
-                  "Expected exitValue 0, got:" + r.exitValue + ". Output: " + r.output);
-    };
-
     static class FailCheckerWithMessage implements Consumer<Result> {
         final String[] messages;
         FailCheckerWithMessage(String... m) {
@@ -375,7 +433,6 @@ public class CLICompatibility {
         @Override
         public void accept(Result r) {
             //out.printf("%s%n", r.output);
-            assertTrue(r.exitValue != 0, "Expected exitValue != 0, got:" + r.exitValue);
             boolean found = false;
             for (String m : messages) {
                 if (r.output.contains(m)) {
@@ -389,17 +446,17 @@ public class CLICompatibility {
         }
     }
 
-    static Result jarWithResult(String... args) {
-        return jarWithResultAndStdinAndWorkingDir(null, null, args);
+    static Result jar(String... args) {
+        return jarWithStdinAndWorkingDir(null, null, args);
     }
 
-    static Result jarWithResultAndStdin(File stdinSource, String... args) {
-        return jarWithResultAndStdinAndWorkingDir(stdinSource, null, args);
+    static Result jarWithStdin(File stdinSource, String... args) {
+        return jarWithStdinAndWorkingDir(stdinSource, null, args);
     }
 
-    static Result jarWithResultAndStdinAndWorkingDir(File stdinFrom,
-                                                     File workingDir,
-                                                     String... args) {
+    static Result jarWithStdinAndWorkingDir(File stdinFrom,
+                                            File workingDir,
+                                            String... args) {
         String jar = getJDKTool("jar");
         List<String> commands = new ArrayList<>();
         commands.add(jar);
@@ -478,10 +535,20 @@ public class CLICompatibility {
             this.output = output;
         }
 
-        InputStream stdoutAsStream() {
-            return new ByteArrayInputStream(stdout);
+        InputStream stdoutAsStream() { return new ByteArrayInputStream(stdout); }
+
+        Result assertSuccess() { assertTrue(exitValue == 0, output); return this; }
+        Result assertFailure() { assertTrue(exitValue != 0, output); return this; }
+
+        Result resultChecker(IOConsumer<Result> r) {
+            try {  r.accept(this); return this; }
+            catch (IOException x) { throw new UncheckedIOException(x); }
         }
+
+        Result resultChecker(FailCheckerWithMessage c) { c.accept(this); return this; }
     }
+
+    interface IOConsumer<T> { void accept(T t) throws IOException ;  }
 
     // readAllBytes implementation so the test can be run pre 1.9 ( legacyOnly )
     static byte[] readAllBytes(InputStream is) throws IOException {

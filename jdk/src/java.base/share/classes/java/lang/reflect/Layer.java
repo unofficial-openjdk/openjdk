@@ -36,7 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import sun.misc.SharedSecrets;
+import jdk.internal.misc.SharedSecrets;
 import sun.security.util.SecurityConstants;
 
 

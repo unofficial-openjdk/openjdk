@@ -39,6 +39,7 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
+import jdk.internal.module.InstalledModules;
 import sun.misc.PerfCounter;
 
 /**
@@ -59,7 +60,6 @@ class InstalledModuleFinder implements ModuleFinder {
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
     private static final PerfCounter exportsCount
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
-
     private static final String MODULE_INFO = "module-info.class";
 
     // the set of modules in the run-time image
@@ -76,24 +76,39 @@ class InstalledModuleFinder implements ModuleFinder {
         long t0 = System.nanoTime();
 
         ImageReader imageReader = ImageReaderFactory.getImageReader();
+        String[] moduleNames = null;
+        boolean fastpath = false;;
+        Map<String, ModuleDescriptor> descriptors = InstalledModules.modules();
+        if (descriptors.isEmpty()) {
+            // InstalledModules.MODULE_NAMES is generated at link time and
+            // it's intended to replace ImageModuleData when it is enabled
+            // when building jdk image.
+            ImageModuleData mdata = new ImageModuleData(imageReader);
+            moduleNames = mdata.allModuleNames().toArray(new String[0]);
+        } else {
+            moduleNames = InstalledModules.MODULE_NAMES;
+            fastpath = true;
+        }
 
-        ImageModuleData mdata = new ImageModuleData(imageReader);
-        Set<String> moduleNames = mdata.allModuleNames();
-
-        int n = moduleNames.size();
-
+        int n = moduleNames.length;
         moduleCount.add(n);
 
         Set<ModuleReference> mods = new HashSet<>(n);
         Map<String, ModuleReference> map = new HashMap<>(n);
 
         for (String mn : moduleNames) {
-            ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
-            ByteBuffer bb = imageReader.getResourceBuffer(loc);
+            ByteBuffer bb = null;
             try {
-
                 // parse the module-info.class file
-                ModuleDescriptor md = ModuleInfo.readIgnoringHashes(bb, null);
+                final ModuleDescriptor md;
+                if (fastpath) {
+                    md = descriptors.get(mn);
+                } else {
+                    ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
+                    bb = imageReader.getResourceBuffer(loc);
+                    md = ModuleInfo.readIgnoringHashes(bb, null);
+                }
+
                 if (!md.name().equals(mn))
                     throw new InternalError();
 
@@ -108,7 +123,8 @@ class InstalledModuleFinder implements ModuleFinder {
                 exportsCount.add(md.exports().size());
 
             } finally {
-                ImageReader.releaseByteBuffer(bb);
+                if (bb != null)
+                    ImageReader.releaseByteBuffer(bb);
             }
         }
 

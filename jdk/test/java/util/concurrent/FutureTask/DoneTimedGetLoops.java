@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +21,11 @@
  */
 
 /*
+ * This file is available under and governed by the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
+ * However, the following notice accompanied the original version of this
+ * file:
+ *
  * Written by Martin Buchholz with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
@@ -44,7 +48,7 @@ public class DoneTimedGetLoops {
     final long testDurationMillis;
 
     static class PublicFutureTask extends FutureTask<Boolean> {
-        final static Runnable noop = new Runnable() { public void run() {} };
+        static final Runnable noop = new Runnable() { public void run() {} };
         PublicFutureTask() { super(noop, null); }
         public void set(Boolean v) { super.set(v); }
         public void setException(Throwable t) { super.setException(t); }
@@ -81,7 +85,7 @@ public class DoneTimedGetLoops {
             protected boolean quittingTime(long i) {
                 return (i % 1024) == 0 && quittingTime();
             }
-            abstract protected void realRun() throws Exception;
+            protected abstract void realRun() throws Exception;
             public void run() {
                 try { realRun(); } catch (Throwable t) { unexpected(t); }
             }

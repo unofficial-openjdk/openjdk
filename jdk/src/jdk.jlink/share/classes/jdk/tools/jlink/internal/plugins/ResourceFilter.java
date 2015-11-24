@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -58,10 +58,11 @@ public class ResourceFilter implements Predicate<String> {
             String filePath = patterns[0];
             File f = new File(filePath);
             if (f.exists()) {
-                List<String> pats = new ArrayList<>();
-                try (FileInputStream fis = new FileInputStream(f)) {
-                    BufferedReader reader
-                            = new BufferedReader(new InputStreamReader(fis));
+                List<String> pats;
+                try (FileInputStream fis = new FileInputStream(f);
+                        InputStreamReader ins = new InputStreamReader(fis,
+                                StandardCharsets.UTF_8);
+                        BufferedReader reader = new BufferedReader(ins)) {
                     pats = reader.lines().collect(Collectors.toList());
                 }
                 patterns = new String[pats.size()];

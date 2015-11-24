@@ -35,12 +35,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
-
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
+import jdk.tools.jlink.plugins.OnOffPluginProvider;
 import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
@@ -79,8 +77,8 @@ public class OnOffProviderTest {
 
     public static void test(ProviderFactory factory) throws IOException {
         {
-            Properties config = new Properties();
-            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.OFF_ARGUMENT);
+            Map<String, Object> config = new HashMap<>();
+            config.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, OnOffPluginProvider.OFF_ARGUMENT);
             Plugin[] plugins = factory.newProvider().newPlugins(config);
             if (plugins.length != 0) {
                 throw new AssertionError("Expected empty list of plugins");
@@ -88,9 +86,9 @@ public class OnOffProviderTest {
             reset();
         }
         {
-            Properties config = new Properties();
-            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, ImagePluginConfiguration.ON_ARGUMENT);
-            config.setProperty(OPTION, VALUE);
+            Map<String, Object> config = new HashMap<>();
+            config.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, OnOffPluginProvider.ON_ARGUMENT);
+            config.put(OPTION, VALUE);
             factory.newProvider().newPlugins(config);
             if (!isNewPluginsCalled) {
                 throw new AssertionError("newPlugins() was not called");
@@ -98,9 +96,9 @@ public class OnOffProviderTest {
             reset();
         }
         {
-            Properties config = new Properties();
-            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                    ImagePluginConfiguration.ON_ARGUMENT + "," + ImagePluginConfiguration.OFF_ARGUMENT);
+            Map<String, Object> config = new HashMap<>();
+            config.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
+                    OnOffPluginProvider.ON_ARGUMENT + "," + OnOffPluginProvider.OFF_ARGUMENT);
             try {
                 factory.newProvider().newPlugins(config);
                 throw new AssertionError("IOException expected");
@@ -110,8 +108,8 @@ public class OnOffProviderTest {
             reset();
         }
         {
-            Properties config = new Properties();
-            config.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "INVALID");
+            Map<String, Object> config = new HashMap<>();
+            config.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "INVALID");
             try {
                 factory.newProvider().newPlugins(config);
                 throw new AssertionError("IOException expected");

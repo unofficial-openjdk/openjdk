@@ -34,6 +34,7 @@
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
+ *          jdk.compiler
  * @build tests.*
  * @run testng JLinkNegativeTest
  */
@@ -109,7 +110,9 @@ public class JLinkNegativeTest {
         JImageGenerator.getJLinkTask()
                 .modulePath(helper.defaultModulePath())
                 .output(image)
-                .call().assertFailure("Error: not empty: .*failure3.image\n");
+                .addMods("leaf1")
+                .limitMods("leaf1")
+                .call().assertFailure("Error: directory already exists: .*failure3.image(\n|\r|.)*");
     }
 
     public void testOutputIsFile() throws IOException {
@@ -119,7 +122,8 @@ public class JLinkNegativeTest {
         JImageGenerator.getJLinkTask()
                 .modulePath(helper.defaultModulePath())
                 .output(image)
-                .call().assertFailure("Error: file already exists: .*failure4.image(\n|\r|.)*");
+                .addMods("leaf1")
+                .call().assertFailure("Error: directory already exists: .*failure4.image(\n|\r|.)*");
     }
 
     public void testModuleNotFound() {
@@ -254,7 +258,7 @@ public class JLinkNegativeTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testSectionsAreFiles() throws IOException {
         String moduleName = "module";
         Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
@@ -262,8 +266,18 @@ public class JLinkNegativeTest {
                 new InMemoryFile("/native", new byte[0]),
                 new InMemoryFile("/conf", new byte[0]),
                 new InMemoryFile("/bin", new byte[0]));
-        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-        helper.checkImage(image, moduleName, null, null);
+        try {
+            Result result = helper.generateDefaultImage(moduleName);
+            if (result.getExitCode() != 4) {
+                throw new AssertionError("Crash expected");
+            }
+            if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: ")) {
+                System.err.println(result.getMessage());
+                throw new AssertionError("InternalError expected");
+            }
+        } finally {
+            deleteDirectory(jmod);
+        }
     }
 
     public void testDuplicateModule1() throws IOException {
@@ -349,16 +363,14 @@ public class JLinkNegativeTest {
         }
     }
 
-    @Test(enabled = false)
     public void testCustomImageBuilderNotFound() throws IOException {
-        Path configFile = Paths.get("builder.cfg");
-        Files.write(configFile, "jdk.jlink.image.builder=not-found-image-builder".getBytes());
+        String builderName = "not-found-image-builder";
         JImageGenerator.getJLinkTask()
-                .option("--plugins-configuration")
-                .option(configFile.toAbsolutePath().toString())
+                .option("--image-builder")
+                .option("not-found-image-builder")
                 .modulePath(helper.defaultModulePath())
                 .output(helper.createNewImageDir("leaf1"))
                 .addMods("leaf1")
-                .call().assertFailure("FIX_ME");
+                .call().assertFailure("Error: Image builder not found for " + builderName);
     }
 }

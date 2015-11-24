@@ -27,262 +27,38 @@ package jdk.internal.jimage;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 
 /*
  * Manage module meta data.
  *
- * NOTE: needs revision.
- * Each loader requires set of module meta data to identify which modules and
- * packages are managed by that loader.  Currently, there is one image file per
- * loader, so only one  module meta data resource per file.
- *
- * Each element in the module meta data is a native endian 4 byte integer.  Note
- * that entries with zero offsets for string table entries should be ignored (
- * padding for hash table lookup.)
- *
- * Format:
- *    Count of package to module entries
- *    Count of module to package entries
- *    Perfect Hash redirect table[Count of package to module entries]
- *    Package to module entries[Count of package to module entries]
- *        Offset to package name in string table
- *        Offset to module name in string table
- *    Perfect Hash redirect table[Count of module to package entries]
- *    Module to package entries[Count of module to package entries]
- *        Offset to module name in string table
- *        Count of packages in module
- *        Offset to first package in packages table
- *    Packages[]
- *        Offset to package name in string table
  */
-
-final public class ImageModuleData {
-    public final static String META_DATA_EXTENSION = ".jdata";
-    public final static String SEPARATOR = "\t";
-    public final static int NOT_FOUND = -1;
-    private final static int ptmCountOffset = 0;
-    private final static int mtpCountOffset = 1;
-    private final static int ptmRedirectOffset = 2;
-    private final static int dataNameOffset = 0;
-    private final static int ptmDataWidth = 2;
-    private final static int ptmDataModuleOffset = 1;
-    private final static int mtpDataWidth = 3;
-    private final static int mtpDataCountOffset = 1;
-    private final static int mtpDataOffsetOffset = 2;
-
+public final class ImageModuleData {
+    public static final String MODULES_STRING = UTF8String.MODULES_STRING.toString();
     private final BasicImageReader reader;
-    private final IntBuffer intBuffer;
-    private final int ptmRedirectLength;
-    private final int mtpRedirectLength;
-    private final int ptmDataOffset;
-    private final int mtpRedirectOffset;
-    private final int mtpDataOffset;
-    private final int mtpPackagesOffset;
-
+    private static final int SIZE_OF_OFFSET = 4;
     public ImageModuleData(BasicImageReader reader) {
-         this(reader, getBytes(reader));
-    }
-
-    public ImageModuleData(BasicImageReader reader, byte[] bytes) {
         this.reader = reader;
-
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes).order(reader.getByteOrder());
-        this.intBuffer = byteBuffer.asIntBuffer();
-
-        this.ptmRedirectLength = get(ptmCountOffset);
-        this.mtpRedirectLength = get(mtpCountOffset);
-
-        this.ptmDataOffset = ptmRedirectOffset + ptmRedirectLength;
-        this.mtpRedirectOffset = ptmDataOffset + ptmRedirectLength * ptmDataWidth;
-        this.mtpDataOffset = mtpRedirectOffset + mtpRedirectLength;
-        this.mtpPackagesOffset = mtpDataOffset + mtpRedirectLength * mtpDataWidth;
-    }
-
-    private static byte[] getBytes(BasicImageReader reader) {
-        String loaderName = reader.imagePathName();
-
-        if (loaderName.endsWith(BasicImageWriter.IMAGE_EXT)) {
-            loaderName = loaderName.substring(0, loaderName.length() -
-                    BasicImageWriter.IMAGE_EXT.length());
-        }
-
-        byte[] bytes = reader.getResource(getModuleDataName(loaderName));
-
-        if (bytes == null) {
-            throw new InternalError("module data missing");
-        }
-
-        return bytes;
-    }
-
-    public List<String> fromModulePackages() {
-        List<String> lines = new ArrayList<>();
-
-        for (int i = 0; i < mtpRedirectLength; i++) {
-            int index = mtpDataOffset + i * mtpDataWidth;
-            int offset = get(index + dataNameOffset);
-
-            if (offset != 0) {
-                StringBuilder sb = new StringBuilder();
-
-                sb.append(getString(offset));
-
-                int count = get(index + mtpDataCountOffset);
-                int base = get(index + mtpDataOffsetOffset) + mtpPackagesOffset;
-
-                for (int j = 0; j < count; j++) {
-                    sb.append(SEPARATOR);
-                    sb.append(stringAt(base + j));
-                }
-
-                lines.add(sb.toString());
-            }
-        }
-
-        return lines;
-    }
-
-    public static String getModuleDataName(String loaderName) {
-        return loaderName + META_DATA_EXTENSION;
-    }
-
-    private int get(int index) {
-        return intBuffer.get(index);
-    }
-
-    private String getString(int offset) {
-        return reader.getString(offset);
-    }
-
-    private String stringAt(int index) {
-        return reader.getString(get(index));
-    }
-
-    private UTF8String getUTF8String(int offset) {
-        return reader.getUTF8String(offset);
-    }
-
-    private UTF8String utf8StringAt(int index) {
-        return reader.getUTF8String(get(index));
-    }
-
-    private int find(UTF8String name, int baseOffset, int length, int width) {
-        if (length == 0) {
-            return NOT_FOUND;
-        }
-
-        int hashCode = name.hashCode();
-        int index = hashCode % length;
-        int value = get(baseOffset + index);
-
-        if (value > 0 ) {
-            hashCode = name.hashCode(value);
-            index = hashCode % length;
-        } else if (value < 0) {
-            index = -1 - value;
-        } else {
-            return NOT_FOUND;
-        }
-
-        index = baseOffset + length + index * width;
-
-        if (!utf8StringAt(index + dataNameOffset).equals(name)) {
-            return NOT_FOUND;
-        }
-
-        return index;
-    }
-
-    public String packageToModule(String packageName) {
-        UTF8String moduleName = packageToModule(new UTF8String(packageName));
-
-        return moduleName != null ? moduleName.toString() : null;
-    }
-
-    public UTF8String packageToModule(UTF8String packageName) {
-        int index = find(packageName, ptmRedirectOffset, ptmRedirectLength, ptmDataWidth);
-
-        if (index != NOT_FOUND) {
-            return utf8StringAt(index + ptmDataModuleOffset);
-        }
-
-        return null;
-    }
-
-    public List<String> moduleToPackages(String moduleName) {
-        int index = find(new UTF8String(moduleName), mtpRedirectOffset,
-                mtpRedirectLength, mtpDataWidth);
-
-        if (index != NOT_FOUND) {
-            int count = get(index + mtpDataCountOffset);
-            int base = get(index + mtpDataOffsetOffset) + mtpPackagesOffset;
-            List<String> packages = new ArrayList<>(count);
-
-            for (int i = 0; i < count; i++) {
-                packages.add(stringAt(base + i));
-            }
-
-            return packages;
-        }
-
-        return null;
-    }
-
-    public List<String> allPackageNames() {
-        List<String> packages = new ArrayList<>();
-
-        for (int i = 0; i < ptmRedirectLength; i++) {
-            int offset = get(ptmDataOffset + i * ptmDataWidth + dataNameOffset);
-
-            if (offset != 0) {
-                packages.add(getString(offset));
-            }
-        }
-
-        return packages;
     }
 
     public Set<String> allModuleNames() {
         Set<String> modules = new HashSet<>();
-
-        for (int i = 0; i < mtpRedirectLength; i++) {
-            int index = mtpDataOffset + i * mtpDataWidth;
-            int offset = get(index + dataNameOffset);
-
-            if (offset != 0) {
-                modules.add(getString(offset));
-            }
+        ImageLocation loc = reader.findLocation(MODULES_STRING);
+        byte[] content = reader.getResource(loc);
+        ByteBuffer buffer = ByteBuffer.wrap(content);
+        buffer.order(reader.getByteOrder());
+        IntBuffer intBuffer = buffer.asIntBuffer();
+        // Resource path are of the form "/modules/<module name>"
+        for (int i = 0; i < content.length / SIZE_OF_OFFSET; i++) {
+            int offset = intBuffer.get(i);
+            ImageLocation moduleLoc = reader.getLocation(offset);
+            String path = moduleLoc.getFullNameString();
+            int index = path.lastIndexOf("/");
+            String module = path.substring(index + 1);
+            modules.add(module);
         }
-
         return modules;
-    }
-
-    public Map<String, String> packageModuleMap() {
-        Map<String, String> map = new HashMap<>();
-
-        for (int i = 0; i < mtpRedirectLength; i++) {
-            int index = mtpDataOffset + i * mtpDataWidth;
-            int offset = get(index + dataNameOffset);
-
-            if (offset != 0) {
-                String moduleName = getString(offset);
-
-                int count = get(index + mtpDataCountOffset);
-                int base = get(index + mtpDataOffsetOffset) + mtpPackagesOffset;
-
-                for (int j = 0; j < count; j++) {
-                    map.put(stringAt(base + j), moduleName);
-                }
-            }
-        }
-
-        return map;
     }
 }

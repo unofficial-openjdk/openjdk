@@ -40,6 +40,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
+import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
@@ -56,6 +57,8 @@ import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.JavaLangAccess;;
+import jdk.internal.misc.SharedSecrets;;
 
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.Modules;
@@ -97,7 +100,7 @@ public final class System {
      * corresponds to keyboard input or another input source specified by
      * the host environment or user.
      */
-    public final static InputStream in = null;
+    public static final InputStream in = null;
 
     /**
      * The "standard" output stream. This stream is already
@@ -124,7 +127,7 @@ public final class System {
      * @see     java.io.PrintStream#println(java.lang.Object)
      * @see     java.io.PrintStream#println(java.lang.String)
      */
-    public final static PrintStream out = null;
+    public static final PrintStream out = null;
 
     /**
      * The "standard" error output stream. This stream is already
@@ -138,7 +141,7 @@ public final class System {
      * variable <code>out</code>, has been redirected to a file or other
      * destination that is typically not continuously monitored.
      */
-    public final static PrintStream err = null;
+    public static final PrintStream err = null;
 
     /* The security manager for the system.
      */
@@ -228,7 +231,7 @@ public final class System {
      public static Console console() {
          if (cons == null) {
              synchronized (System.class) {
-                 cons = sun.misc.SharedSecrets.getJavaIOAccess().console();
+                 cons = SharedSecrets.getJavaIOAccess().console();
              }
          }
          return cons;
@@ -626,6 +629,24 @@ public final class System {
      * Note that even if the security manager does not permit the
      * <code>getProperties</code> operation, it may choose to permit the
      * {@link #getProperty(String)} operation.
+     *
+     * @implNote In addition to the standard system properties, the {@code
+     * java} launcher may create the Java Virtual Machine with system
+     * properties that have the following keys:
+     * <table summary="Shows property keys and associated values">
+     * <tr><th>Key</th>
+     *     <th>Description of Associated Value</th></tr>
+     * <tr><td>{@code jdk.module.path}</td>
+     *     <td>Application module path</td></tr>
+     * <tr><td>{@code jdk.upgrade.module.path}</td>
+     *     <td>The upgrade module path</td></tr>
+     * <tr><td>{@code jdk.module.main}</td>
+     *     <td>The module name of the initial/main module</td></tr>
+     * <tr><td>{@code jdk.module.main.class}</td>
+     *     <td>The main class name of the initial module</td></tr>
+     * </table>
+     * These properties may also be set by custom launchers that use the JNI
+     * invocation API to create the Java Virtual Machine.
      *
      * @return     the system properties
      * @exception  SecurityException  if a security manager exists and its
@@ -1304,7 +1325,7 @@ public final class System {
 
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
-        sun.misc.SharedSecrets.setJavaLangAccess(new sun.misc.JavaLangAccess(){
+        SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
             public sun.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
@@ -1363,10 +1384,8 @@ public final class System {
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }
-            public InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
-                throws IOException
-            {
-                return cl.getResourceAsStream(moduleName, name);
+            public URL findResource(ClassLoader cl, String mn, String name) throws IOException {
+                return cl.findResource(mn, name);
             }
             public Stream<Package> packages(ClassLoader cl) {
                 return cl.packages();

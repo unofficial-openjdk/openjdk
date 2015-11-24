@@ -312,7 +312,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see GraphicsConfiguration
      * @see #getGraphicsConfiguration
      */
-    private transient GraphicsConfiguration graphicsConfig = null;
+    private transient volatile GraphicsConfiguration graphicsConfig;
 
     /**
      * A reference to a <code>BufferStrategy</code> object
@@ -545,24 +545,24 @@ public abstract class Component implements ImageObserver, MenuContainer,
     transient InputMethodListener inputMethodListener;
 
     /** Internal, constants for serialization */
-    final static String actionListenerK = "actionL";
-    final static String adjustmentListenerK = "adjustmentL";
-    final static String componentListenerK = "componentL";
-    final static String containerListenerK = "containerL";
-    final static String focusListenerK = "focusL";
-    final static String itemListenerK = "itemL";
-    final static String keyListenerK = "keyL";
-    final static String mouseListenerK = "mouseL";
-    final static String mouseMotionListenerK = "mouseMotionL";
-    final static String mouseWheelListenerK = "mouseWheelL";
-    final static String textListenerK = "textL";
-    final static String ownedWindowK = "ownedL";
-    final static String windowListenerK = "windowL";
-    final static String inputMethodListenerK = "inputMethodL";
-    final static String hierarchyListenerK = "hierarchyL";
-    final static String hierarchyBoundsListenerK = "hierarchyBoundsL";
-    final static String windowStateListenerK = "windowStateL";
-    final static String windowFocusListenerK = "windowFocusL";
+    static final String actionListenerK = "actionL";
+    static final String adjustmentListenerK = "adjustmentL";
+    static final String componentListenerK = "componentL";
+    static final String containerListenerK = "containerL";
+    static final String focusListenerK = "focusL";
+    static final String itemListenerK = "itemL";
+    static final String keyListenerK = "keyL";
+    static final String mouseListenerK = "mouseL";
+    static final String mouseMotionListenerK = "mouseMotionL";
+    static final String mouseWheelListenerK = "mouseWheelL";
+    static final String textListenerK = "textL";
+    static final String ownedWindowK = "ownedL";
+    static final String windowListenerK = "windowL";
+    static final String inputMethodListenerK = "inputMethodL";
+    static final String hierarchyListenerK = "hierarchyL";
+    static final String hierarchyBoundsListenerK = "hierarchyBoundsL";
+    static final String windowStateListenerK = "windowStateL";
+    static final String windowFocusListenerK = "windowFocusL";
 
     /**
      * The <code>eventMask</code> is ONLY set by subclasses via
@@ -1143,9 +1143,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @since 1.3
      */
     public GraphicsConfiguration getGraphicsConfiguration() {
-        synchronized(getTreeLock()) {
-            return getGraphicsConfiguration_NoClientCode();
-        }
+        return getGraphicsConfiguration_NoClientCode();
     }
 
     final GraphicsConfiguration getGraphicsConfiguration_NoClientCode() {
@@ -1763,8 +1761,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * is returned
      * @see #setForeground
      * @since 1.0
-     * @beaninfo
-     *       bound: true
      */
     @Transient
     public Color getForeground() {
@@ -1843,8 +1839,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      *          component will inherit the background color of its parent
      * @see #getBackground
      * @since 1.0
-     * @beaninfo
-     *       bound: true
      */
     public void setBackground(Color c) {
         Color oldColor = background;
@@ -1911,8 +1905,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getFont
      * @see #invalidate
      * @since 1.0
-     * @beaninfo
-     *       bound: true
      */
     public void setFont(Font f) {
         Font oldFont, newFont;
@@ -3628,18 +3620,17 @@ public abstract class Component implements ImageObserver, MenuContainer,
     }
 
     /**
-     * Creates an off-screen drawable image
-     *     to be used for double buffering.
-     * @param     width the specified width
-     * @param     height the specified height
-     * @return    an off-screen drawable image, which can be used for double
-     *    buffering.  The return value may be <code>null</code> if the
-     *    component is not displayable.  This will always happen if
-     *    <code>GraphicsEnvironment.isHeadless()</code> returns
-     *    <code>true</code>.
+     * Creates an off-screen drawable image to be used for double buffering.
+     *
+     * @param  width the specified width
+     * @param  height the specified height
+     * @return an off-screen drawable image, which can be used for double
+     *         buffering. The {@code null} value if the component is not
+     *         displayable or {@code GraphicsEnvironment.isHeadless()} returns
+     *         {@code true}.
      * @see #isDisplayable
      * @see GraphicsEnvironment#isHeadless
-     * @since     1.0
+     * @since 1.0
      */
     public Image createImage(int width, int height) {
         ComponentPeer peer = this.peer;
@@ -3652,19 +3643,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
     }
 
     /**
-     * Creates a volatile off-screen drawable image
-     *     to be used for double buffering.
-     * @param     width the specified width.
-     * @param     height the specified height.
-     * @return    an off-screen drawable image, which can be used for double
-     *    buffering.  The return value may be <code>null</code> if the
-     *    component is not displayable.  This will always happen if
-     *    <code>GraphicsEnvironment.isHeadless()</code> returns
-     *    <code>true</code>.
+     * Creates a volatile off-screen drawable image to be used for double
+     * buffering.
+     *
+     * @param  width the specified width
+     * @param  height the specified height
+     * @return an off-screen drawable image, which can be used for double
+     *         buffering. The {@code null} value if the component is not
+     *         displayable or {@code GraphicsEnvironment.isHeadless()} returns
+     *         {@code true}.
      * @see java.awt.image.VolatileImage
      * @see #isDisplayable
      * @see GraphicsEnvironment#isHeadless
-     * @since     1.4
+     * @since 1.4
      */
     public VolatileImage createVolatileImage(int width, int height) {
         ComponentPeer peer = this.peer;
@@ -3680,22 +3671,26 @@ public abstract class Component implements ImageObserver, MenuContainer,
     }
 
     /**
-     * Creates a volatile off-screen drawable image, with the given capabilities.
-     * The contents of this image may be lost at any time due
-     * to operating system issues, so the image must be managed
-     * via the <code>VolatileImage</code> interface.
-     * @param width the specified width.
-     * @param height the specified height.
-     * @param caps the image capabilities
-     * @exception AWTException if an image with the specified capabilities cannot
-     * be created
-     * @return a VolatileImage object, which can be used
-     * to manage surface contents loss and capabilities.
+     * Creates a volatile off-screen drawable image, with the given
+     * capabilities. The contents of this image may be lost at any time due to
+     * operating system issues, so the image must be managed via the
+     * {@code VolatileImage} interface.
+     *
+     * @param  width the specified width
+     * @param  height the specified height
+     * @param  caps the image capabilities
+     * @return a VolatileImage object, which can be used to manage surface
+     *         contents loss and capabilities. The {@code null} value if the
+     *         component is not displayable or
+     *         {@code GraphicsEnvironment.isHeadless()} returns {@code true}.
+     * @throws AWTException if an image with the specified capabilities cannot
+     *         be created
      * @see java.awt.image.VolatileImage
      * @since 1.4
      */
     public VolatileImage createVolatileImage(int width, int height,
-                                             ImageCapabilities caps) throws AWTException {
+                                             ImageCapabilities caps)
+            throws AWTException {
         // REMIND : check caps
         return createVolatileImage(width, height);
     }
@@ -6209,7 +6204,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #isCoalescingEnabled
      * @see #checkCoalescing
      */
-    transient private boolean coalescingEnabled = checkCoalescing();
+    private transient boolean coalescingEnabled = checkCoalescing();
 
     /**
      * Weak map of known coalesceEvent overriders.
@@ -7234,8 +7229,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @param focusable indicates whether this Component is focusable
      * @see #isFocusable
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusable(boolean focusable) {
         boolean oldFocusable;
@@ -7327,8 +7320,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      *         or if any keystroke already maps to another focus traversal
      *         operation for this Component
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusTraversalKeys(int id,
                                       Set<? extends AWTKeyStroke> keystrokes)
@@ -7479,8 +7470,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #setFocusTraversalKeys
      * @see #getFocusTraversalKeys
      * @since 1.4
-     * @beaninfo
-     *       bound: true
      */
     public void setFocusTraversalKeysEnabled(boolean
                                              focusTraversalKeysEnabled) {
@@ -7916,7 +7905,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
     };
 
-    synchronized static void setRequestFocusController(RequestFocusController requestController)
+    static synchronized void setRequestFocusController(RequestFocusController requestController)
     {
         if (requestController == null) {
             requestFocusController = new DummyRequestFocusController();
@@ -8707,6 +8696,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * the Swing package private method <code>compWriteObjectNotify</code>.
      */
     private void doSwingSerialization() {
+        @SuppressWarnings("deprecation")
         Package swingPackage = Package.getPackage("javax.swing");
         // For Swing serialization to correctly work Swing needs to
         // be notified before Component does it's serialization.  This
@@ -8995,8 +8985,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #invalidate
      *
      * @author Laura Werner, IBM
-     * @beaninfo
-     *       bound: true
      */
     public void setComponentOrientation(ComponentOrientation o) {
         ComponentOrientation oldValue = componentOrientation;
@@ -9173,7 +9161,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
          * to add/remove ComponentListener and FocusListener to track
          * target Component's state.
          */
-        private volatile transient int propertyListenersCount = 0;
+        private transient volatile int propertyListenersCount = 0;
 
         /**
          * A component listener to track show/hide/resize events

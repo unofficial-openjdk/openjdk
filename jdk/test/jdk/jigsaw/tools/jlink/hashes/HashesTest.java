@@ -29,6 +29,7 @@
  * @modules java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @ignore
  * @build jdk.testlibrary.ProcessTools jdk.testlibrary.OutputAnalyzer CompilerUtils
  * @run main HashesTest

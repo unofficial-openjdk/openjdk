@@ -29,6 +29,7 @@
  * @modules java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jmod
+ *          jdk.compiler
  * @build jdk.testlibrary.ProcessTools
  *        jdk.testlibrary.OutputAnalyzer
  *        JarUtils CompilerUtils
@@ -117,7 +118,7 @@ public class BasicTest {
 
     private void runJmod(String cp, String modName) {
         int rc = jdk.tools.jmod.Main.run(new String[] {
-                "create",
+                "--create",
                 "--class-path", cp,
                 "--module-version", "1.0",
                 "--main-class", "jdk.test.Test",

@@ -28,9 +28,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -43,6 +46,7 @@ import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
+import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
 
 /**
  *
@@ -50,6 +54,60 @@ import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
  * of <code>ClassOptimizer</code> and <code>MethodOptimizer</code>.
  */
 public final class OptimizationPlugin extends AsmPlugin {
+
+    /**
+     * Default resolver. A resolver that retrieve types that are in an
+     * accessible package, are public or are located in the same package as the
+     * caller.
+     */
+    private static final class DefaultTypeResolver implements TypeResolver {
+
+        private final Set<String> packages;
+        private final AsmPools pools;
+
+        DefaultTypeResolver(AsmPools pools, AsmModulePool modulePool) {
+            Objects.requireNonNull(pools);
+            Objects.requireNonNull(modulePool);
+            this.pools = pools;
+            packages = pools.getGlobalPool().getAccessiblePackages(modulePool.getModuleName());
+        }
+
+        @Override
+        public ClassReader resolve(ClassNode cn, MethodNode mn, String type) {
+            try {
+                int classIndex = cn.name.lastIndexOf("/");
+                String callerPkg = classIndex == -1 ? ""
+                        : cn.name.substring(0, classIndex);
+                int typeClassIndex = type.lastIndexOf("/");
+                String pkg = typeClassIndex == - 1 ? ""
+                        : type.substring(0, typeClassIndex);
+                ClassReader reader = null;
+                if (packages.contains(pkg) || pkg.equals(callerPkg)) {
+                    ClassReader r = pools.getGlobalPool().getClassReader(type);
+                    if (r != null) {
+                        // if not private
+                        if ((r.getAccess() & Opcodes.ACC_PRIVATE)
+                                != Opcodes.ACC_PRIVATE) {
+                            // public
+                            if (((r.getAccess() & Opcodes.ACC_PUBLIC)
+                                    == Opcodes.ACC_PUBLIC)) {
+                                reader = r;
+                            } else {
+                                if (pkg.equals(callerPkg)) {
+                                    reader = r;
+                                }
+                            }
+                        }
+                    }
+                }
+                return reader;
+            } catch (IOException ex) {
+                System.err.println("Exception resolving " + type + ". " + ex);
+                return null;
+            }
+        }
+
+    }
 
     public interface Optimizer {
 
@@ -67,7 +125,7 @@ public final class OptimizationPlugin extends AsmPlugin {
 
         boolean optimize(Consumer<String> logger, AsmPools pools,
                 AsmModulePool modulePool,
-                ClassNode cn, MethodNode m) throws Exception;
+                ClassNode cn, MethodNode m, TypeResolver resolver) throws Exception;
     }
 
     private List<Optimizer> optimizers = new ArrayList<>();
@@ -105,7 +163,7 @@ public final class OptimizationPlugin extends AsmPlugin {
         if (stream != null) {
             try {
                 content = content + "\n";
-                stream.write(content.getBytes());
+                stream.write(content.getBytes(StandardCharsets.UTF_8));
             } catch (IOException ex) {
                 System.err.println(ex);
             }
@@ -136,11 +194,11 @@ public final class OptimizationPlugin extends AsmPlugin {
     public void visit(AsmPools pools, StringTable strings) throws IOException {
         try {
             for (AsmModulePool p : pools.getModulePools()) {
-
+                DefaultTypeResolver resolver = new DefaultTypeResolver(pools, p);
                 p.visitClassReaders((reader) -> {
                     ClassWriter w = null;
                     try {
-                        w = optimize(pools, p, reader);
+                        w = optimize(pools, p, reader, resolver);
                     } catch (IOException ex) {
                         throw new RuntimeException("Problem optimizing "
                                 + reader.getClassName(), ex);
@@ -154,7 +212,7 @@ public final class OptimizationPlugin extends AsmPlugin {
     }
 
     private ClassWriter optimize(AsmPools pools, AsmModulePool modulePool,
-            ClassReader reader)
+            ClassReader reader, TypeResolver resolver)
             throws IOException {
         ClassNode cn = new ClassNode();
         ClassWriter writer = null;
@@ -181,7 +239,8 @@ public final class OptimizationPlugin extends AsmPlugin {
                             numMethods += 1;
                             try {
                                 boolean optim = moptimizer.
-                                        optimize(this::log, pools, modulePool, cn, m);
+                                        optimize(this::log, pools, modulePool, cn,
+                                                m, resolver);
                                 if (optim) {
                                     optimized = true;
                                 }

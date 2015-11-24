@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,22 +23,37 @@
 
 package jdk.test;
 
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
-import java.lang.module.Configuration;
-import javax.annotation.Resource;
-import javax.annotation.more.BigResource;
+import javax.transaction.Transaction;
+import javax.enterprise.context.Scope;
+
+/**
+ * Uses an upgraded version of module java.transaction.
+ */
 
 public class Main {
+
     public static void main(String[] args) {
-        Module m1 = Resource.class.getModule();
-        Module m2 = BigResource.class.getModule();
 
-        Configuration cf = Layer.boot().configuration().get();
-        System.out.format("%s loaded from %s%n", m1,
-                          cf.findModule(m1.getName()).get().location().get());
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        ClassLoader ecl = scl.getParent();
+        assertTrue(ecl.getParent() == null);
 
-        if (m1 != m2 || !m1.getName().equals("java.annotations.common"))
-            throw new RuntimeException("java.annotations.common not upgraded");
+        Transaction transaction = new Transaction();
+        Scope scope = transaction.getScope();
+
+        // javax.transaction.Transaction should be in module java.transaction
+        // and defined by the extension class loader
+        assertTrue(Transaction.class.getModule().getName().equals("java.transaction"));
+        assertTrue(Transaction.class.getClassLoader() == ecl);
+
+        // javax.enterprise.context.Scope should be in module java.enterprise
+        // and defined by the application class loader
+        assertTrue(Scope.class.getModule().getName().equals("java.enterprise"));
+        assertTrue(Scope.class.getClassLoader() == scl);
     }
+
+    static void assertTrue(boolean e) {
+        if (!e) throw new RuntimeException();
+    }
+
 }

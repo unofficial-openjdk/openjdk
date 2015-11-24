@@ -31,9 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import jdk.internal.jimage.Archive;
 
 /**
  * An Archive backed by a directory.
@@ -90,11 +90,12 @@ public class DirArchive implements Archive {
     }
 
     public DirArchive(Path dirPath, Consumer<String> log) {
+        Objects.requireNonNull(dirPath);
         if (!Files.isDirectory(dirPath)) {
             throw new IllegalArgumentException("Not a directory");
         }
         chop = dirPath.toString().length() + 1;
-        this.moduleName = dirPath.getFileName().toString();
+        this.moduleName = Objects.requireNonNull(dirPath.getFileName()).toString();
         this.dirPath = dirPath;
         this.log = log;
     }

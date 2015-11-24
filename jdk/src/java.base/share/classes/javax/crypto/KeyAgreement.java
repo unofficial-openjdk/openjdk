@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,6 +149,13 @@ public class KeyAgreement {
      *
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
+     *
+     * @implNote
+     * The JDK Reference Implementation additionally uses the
+     * {@code jdk.security.provider.preferred} property to determine
+     * the preferred provider order for the specified algorithm. This
+     * may be different than the order of providers returned by
+     * {@link Security#getProviders() Security.getProviders()}.
      *
      * @param algorithm the standard name of the requested key agreement
      * algorithm.
@@ -336,8 +343,8 @@ public class KeyAgreement {
         }
     }
 
-    private final static int I_NO_PARAMS = 1;
-    private final static int I_PARAMS    = 2;
+    private static final int I_NO_PARAMS = 1;
+    private static final int I_PARAMS    = 2;
 
     private void implInit(KeyAgreementSpi spi, int type, Key key,
             AlgorithmParameterSpec params, SecureRandom random)

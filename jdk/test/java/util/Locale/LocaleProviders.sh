@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 #
 # @test
 # @bug 6336885 7196799 7197573 7198834 8000245 8000615 8001440 8008577
-#      8010666 8013086 8013233 8013903 8015960 8028771
+#      8010666 8013086 8013233 8013903 8015960 8028771 8062006
 # @summary tests for "java.locale.providers" system property
 # @modules java.base/sun.util.locale
 #          java.base/sun.util.locale.provider
@@ -187,7 +187,7 @@ PARAM1=JRE
 if [ "${DEFLANG}" != "en" ] && [ "${DEFFMTLANG}" != "en" ]; then
   PARAM2=en
   PARAM3=US
-elif [ "${DEFLANG}" != "ja" ] && [ "${DEFFMTLANG}" != "ja" ]; then 
+elif [ "${DEFLANG}" != "ja" ] && [ "${DEFFMTLANG}" != "ja" ]; then
   PARAM2=ja
   PARAM3=JP
 else
@@ -205,6 +205,8 @@ PARAM2=en
 PARAM3=US
 SPICLASSES=
 runTest
+PREFLIST=SPI,COMPAT
+runTest
 
 # testing the order, variaton #1. This assumes en_GB DateFormat data are available both in JRE & CLDR
 METHODNAME=adapterTest
@@ -213,6 +215,8 @@ PARAM1=CLDR
 PARAM2=en
 PARAM3=GB
 SPICLASSES=
+runTest
+PREFLIST=CLDR,COMPAT
 runTest
 
 # testing the order, variaton #2. This assumes en_GB DateFormat data are available both in JRE & CLDR
@@ -223,6 +227,8 @@ PARAM2=en
 PARAM3=GB
 SPICLASSES=
 runTest
+PREFLIST=COMPAT,CLDR
+runTest
 
 # testing the order, variaton #3 for non-existent locale in JRE assuming "haw" is not in JRE.
 METHODNAME=adapterTest
@@ -231,6 +237,8 @@ PARAM1=CLDR
 PARAM2=haw
 PARAM3=
 SPICLASSES=
+runTest
+PREFLIST=COMPAT,CLDR
 runTest
 
 # testing the order, variaton #4 for the bug 7196799. CLDR's "zh" data should be used in "zh_CN"
@@ -280,6 +288,8 @@ PARAM2=
 PARAM3=
 SPICLASSES=${SPIDIR}
 runTest
+PREFLIST=COMPAT
+runTest
 
 # testing 8000615 fix.
 METHODNAME=tzNameTest
@@ -288,6 +298,8 @@ PARAM1=America/Los_Angeles
 PARAM2=
 PARAM3=
 SPICLASSES=${SPIDIR}
+runTest
+PREFLIST=COMPAT
 runTest
 
 # testing 8001440 fix.
@@ -319,6 +331,8 @@ PARAM2=JP
 PARAM3=
 SPICLASSES=${SPIDIR}
 runTest
+PREFLIST=COMPAT,SPI
+runTest
 
 # testing 8013903 fix. (Windows only)
 METHODNAME=bug8013903Test
@@ -328,12 +342,9 @@ PARAM2=
 PARAM3=
 SPICLASSES=
 runTest
-METHODNAME=bug8013903Test
 PREFLIST=HOST
-PARAM1=
-PARAM2=
-PARAM3=
-SPICLASSES=
+runTest
+PREFLIST=HOST,COMPAT
 runTest
 
 # testing 8027289 fix, if the platform format default is zh_CN
@@ -347,12 +358,10 @@ if [ "${DEFFMTLANG}" = "zh" ] && [ "${DEFFMTCTRY}" = "CN" ]; then
   PARAM3=
   SPICLASSES=
   runTest
-  METHODNAME=bug8027289Test
+  PREFLIST=COMPAT,HOST
+  runTest
   PREFLIST=HOST
   PARAM1=00A5
-  PARAM2=
-  PARAM3=
-  SPICLASSES=
   runTest
 fi
 

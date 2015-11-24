@@ -232,48 +232,48 @@ abstract class AbstractJrtFileSystem extends FileSystem {
     }
 
     // These methods throw read only file system exception
-    final void setTimes(byte[] path, FileTime mtime, FileTime atime, FileTime ctime)
+    final void setTimes(AbstractJrtPath jrtPath, FileTime mtime, FileTime atime, FileTime ctime)
             throws IOException {
         throw readOnly();
     }
 
-    final void createDirectory(byte[] path, FileAttribute<?>... attrs) throws IOException {
+    final void createDirectory(AbstractJrtPath jrtPath, FileAttribute<?>... attrs) throws IOException {
         throw readOnly();
     }
 
-    final void deleteFile(byte[] path, boolean failIfNotExists)
+    final void deleteFile(AbstractJrtPath jrtPath, boolean failIfNotExists)
             throws IOException {
         throw readOnly();
     }
 
-    final OutputStream newOutputStream(byte[] path, OpenOption... options)
+    final OutputStream newOutputStream(AbstractJrtPath jrtPath, OpenOption... options)
             throws IOException {
         throw readOnly();
     }
 
-    final void copyFile(boolean deletesrc, byte[] src, byte[] dst, CopyOption... options)
+    final void copyFile(boolean deletesrc, AbstractJrtPath srcPath, AbstractJrtPath dstPath, CopyOption... options)
             throws IOException {
         throw readOnly();
     }
 
-    final FileChannel newFileChannel(byte[] path,
+    final FileChannel newFileChannel(AbstractJrtPath jrtPath,
             Set<? extends OpenOption> options,
             FileAttribute<?>... attrs)
             throws IOException {
         throw new UnsupportedOperationException("newFileChannel");
     }
 
-    final InputStream newInputStream(byte[] path) throws IOException {
-        return new ByteArrayInputStream(getFileContent(path));
+    final InputStream newInputStream(AbstractJrtPath jrtPath) throws IOException {
+        return new ByteArrayInputStream(getFileContent(jrtPath));
     }
 
-    final SeekableByteChannel newByteChannel(byte[] path,
+    final SeekableByteChannel newByteChannel(AbstractJrtPath jrtPath,
             Set<? extends OpenOption> options,
             FileAttribute<?>... attrs)
             throws IOException {
         checkOptions(options);
 
-        byte[] buf = getFileContent(path);
+        byte[] buf = getFileContent(jrtPath);
         final ReadableByteChannel rbc
                 = Channels.newChannel(new ByteArrayInputStream(buf));
         final long size = buf.length;
@@ -328,8 +328,8 @@ abstract class AbstractJrtFileSystem extends FileSystem {
         };
     }
 
-    final JrtFileStore getFileStore(AbstractJrtPath path) {
-        return new JrtFileStore(path);
+    final JrtFileStore getFileStore(AbstractJrtPath jrtPath) {
+        return new JrtFileStore(jrtPath);
     }
 
     final void ensureOpen() throws IOException {
@@ -341,29 +341,26 @@ abstract class AbstractJrtFileSystem extends FileSystem {
     // abstract methods to be implemented by a particular jrt file system
     abstract AbstractJrtPath getRootPath();
 
-    abstract boolean isSameFile(AbstractJrtPath p1, AbstractJrtPath p2) throws IOException;
+    abstract boolean isSameFile(AbstractJrtPath jrtPath1, AbstractJrtPath jrtPath2) throws IOException;
 
     abstract boolean isLink(AbstractJrtPath jrtPath) throws IOException;
 
     abstract AbstractJrtPath resolveLink(AbstractJrtPath jrtPath) throws IOException;
 
-    abstract AbstractJrtFileAttributes getFileAttributes(byte[] path, LinkOption... options) throws IOException;
+    abstract AbstractJrtFileAttributes getFileAttributes(AbstractJrtPath jrtPath, LinkOption... options) throws IOException;
 
-    abstract boolean exists(byte[] path) throws IOException;
+    abstract boolean exists(AbstractJrtPath jrtPath) throws IOException;
 
-    abstract boolean isDirectory(byte[] path, boolean resolveLinks) throws IOException;
+    abstract boolean isDirectory(AbstractJrtPath jrtPath, boolean resolveLinks) throws IOException;
 
     /**
      * returns the list of child paths of the given directory "path"
      *
      * @param path name of the directory whose content is listed
-     * @param childPrefix prefix added to returned children names - may be null
-     * in which case absolute child paths are returned
      * @return iterator for child paths of the given directory path
      */
-    abstract Iterator<Path> iteratorOf(byte[] path, String childPrefix)
-            throws IOException;
+    abstract Iterator<Path> iteratorOf(AbstractJrtPath jrtPath) throws IOException;
 
     // returns the content of the file resource specified by the path
-    abstract byte[] getFileContent(byte[] path) throws IOException;
+    abstract byte[] getFileContent(AbstractJrtPath jrtPath) throws IOException;
 }

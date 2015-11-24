@@ -34,6 +34,7 @@ import static org.testng.Assert.*;
 /*
  * @test
  * @summary Basic test of java.lang.reflect.Module
+ * @modules java.desktop java.xml
  * @run testng BasicModuleTest
  */
 

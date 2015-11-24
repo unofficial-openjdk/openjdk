@@ -31,16 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
-import jdk.internal.jimage.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
-import jdk.internal.jimage.ImageModuleData;
-import jdk.internal.jimage.ImageModuleDataWriter;
+import jdk.tools.jlink.internal.Archive;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.DirArchive;
 /**
@@ -49,7 +43,6 @@ import jdk.tools.jlink.internal.DirArchive;
  */
 public final class ExtractedImage {
 
-    private Map<String, Set<String>> modulePackages = new LinkedHashMap<>();
     private Set<Archive> archives = new HashSet<>();
     private final ImagePluginStack plugins;
 
@@ -65,34 +58,18 @@ public final class ExtractedImage {
         };
         this.plugins = plugins;
         Files.walk(dirPath, 1).forEach((p) -> {
-            try {
-                if (!dirPath.equals(p)) {
-                    String name = getPathName(p);
-                    if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
-                        List<String> lines = Files.readAllLines(p);
-                        for (Entry<String, List<String>> entry
-                                : ImageModuleDataWriter.toModulePackages(lines).entrySet()) {
-                            Set<String> pkgs = new HashSet<>();
-                            pkgs.addAll(entry.getValue());
-                            modulePackages.put(entry.getKey(), pkgs);
-                        }
-                        modulePackages = Collections.unmodifiableMap(modulePackages);
-                    } else {
-                        if (Files.isDirectory(p)) {
-                            Archive a = new DirArchive(p, cons);
-                            archives.add(a);
-                        }
-                    }
+            if (!dirPath.equals(p)) {
+                if (Files.isDirectory(p)) {
+                    Archive a = new DirArchive(p, cons);
+                    archives.add(a);
                 }
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
             }
         });
         archives = Collections.unmodifiableSet(archives);
     }
 
     void recreateJImage(Path path) throws IOException {
-        ImageFileCreator.recreateJimage(path, archives, modulePackages, plugins);
+        ImageFileCreator.recreateJimage(path, archives, plugins);
     }
 
     private static String getPathName(Path path) {

@@ -26,7 +26,7 @@
  * @bug 8016846 8024341 8071479
  * @summary Unit tests stream and lambda-based methods on Pattern and Matcher
  * @library ../stream/bootlib
- * @build java.util.stream.OpTestCase
+ * @build java.base/java.util.stream.OpTestCase
  * @run testng/othervm PatternStreamTest
  */
 

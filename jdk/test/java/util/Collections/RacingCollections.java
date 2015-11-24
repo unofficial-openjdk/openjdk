@@ -38,15 +38,15 @@ public class RacingCollections {
      * Turn this up to some higher value like 1000 for stress testing:
      * java -Dmillis=1000 RacingCollections
      */
-    final static long defaultWorkTimeMillis = Long.getLong("millis", 10L);
+    static final long defaultWorkTimeMillis = Long.getLong("millis", 10L);
 
     /**
      * Whether to print debug information.
      */
-    final static boolean debug = Boolean.getBoolean("debug");
+    static final boolean debug = Boolean.getBoolean("debug");
 
-    final static Integer one = 1;
-    final static Integer two = 2;
+    static final Integer one = 1;
+    static final Integer two = 2;
 
     /**
      * A thread that mutates an object forever, alternating between
@@ -62,14 +62,16 @@ public class RacingCollections {
             this.start();
         }
 
-        @SuppressWarnings("unchecked") void clear(Object o) {
+        @SuppressWarnings("unchecked")
+        void clear(Object o) {
             if (o instanceof Collection)
                 ((Collection<?>)o).clear();
             else
                 ((Map<?,?>)o).clear();
         }
 
-        @SuppressWarnings("unchecked") void realRun() {
+        @SuppressWarnings("unchecked")
+        void realRun() {
             // Mutate elLoco wildly forever, checking occasionally for "done"
             clear(elLoco);
             if (elLoco instanceof List) {
@@ -156,7 +158,7 @@ public class RacingCollections {
             quittingTime = System.nanoTime() + workTimeMillis * 1024 * 1024;
         }
         boolean keepGoing() {
-            return (i++ % 128 != 0) || (System.nanoTime() < quittingTime);
+            return (i++ % 128 != 0) || (System.nanoTime() - quittingTime < 0);
         }
     }
 
@@ -233,6 +235,7 @@ public class RacingCollections {
     private static List<Queue<Integer>> newConcurrentQueues() {
         List<Queue<Integer>> list =
             new ArrayList<Queue<Integer>>(newConcurrentDeques());
+        list.add(new ArrayBlockingQueue<Integer>(10));
         list.add(new LinkedBlockingQueue<Integer>(10));
         list.add(new LinkedTransferQueue<Integer>());
         list.add(new ConcurrentLinkedQueue<Integer>());
@@ -340,7 +343,7 @@ public class RacingCollections {
         try {realMain(args);} catch (Throwable t) {unexpected(t);}
         System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
         if (failed > 0) throw new AssertionError("Some tests failed");}
-    private static abstract class CheckedThread extends Thread {
+    private abstract static class CheckedThread extends Thread {
         abstract void realRun() throws Throwable;
         public void run() {
             try { realRun(); } catch (Throwable t) { unexpected(t); }}}

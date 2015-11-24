@@ -39,3 +39,10 @@ Java_jdk_internal_misc_BootLoader_getSystemPackageNames(JNIEnv *env, jclass cls)
 {
     return JVM_GetSystemPackages(env);
 }
+
+JNIEXPORT void JNICALL
+Java_jdk_internal_misc_BootLoader_setBootLoaderUnnamedModule0(JNIEnv *env, jclass cls, jobject module)
+{
+    JVM_SetBootLoaderUnnamedModule(env, module);
+}
+

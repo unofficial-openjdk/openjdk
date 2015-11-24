@@ -29,7 +29,7 @@
 #include "java_lang_reflect_Module.h"
 
 JNIEXPORT void JNICALL
-Java_java_lang_reflect_Module_defineModule0(JNIEnv *env, jclass cls, jclass module,
+Java_java_lang_reflect_Module_defineModule0(JNIEnv *env, jclass cls, jobject module,
                                             jstring version, jstring location,
                                             jobjectArray packages)
 {

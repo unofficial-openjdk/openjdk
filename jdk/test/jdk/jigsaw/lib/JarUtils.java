@@ -27,10 +27,15 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -71,14 +76,7 @@ public final class JarUtils {
              JarOutputStream jos = new JarOutputStream(out))
         {
             for (Path entry : entries) {
-
-                // map the file path to a name in the JAR file
-                Path normalized = entry.normalize();
-                String name = normalized
-                        .subpath(0, normalized.getNameCount())  // drop root
-                        .toString()
-                        .replace(File.separatorChar, '/');
-
+                String name = toJarEntryName(entry);
                 jos.putNextEntry(new JarEntry(name));
                 Files.copy(dir.resolve(entry), jos);
             }
@@ -107,5 +105,77 @@ public final class JarUtils {
      */
     public static void createJarFile(Path jarfile, Path dir) throws IOException {
         createJarFile(jarfile, dir, Paths.get("."));
+    }
+
+    /**
+     * Update a JAR file.
+     *
+     * Equivalent to {@code jar uf <jarfile> -C <dir> file...}
+     *
+     * The input files are resolved against the given directory. Any input
+     * files that are directories are processed recursively.
+     */
+    public static void updateJarFile(Path jarfile, Path dir, Path... file)
+        throws IOException
+    {
+        List<Path> entries = new ArrayList<>();
+        for (Path entry : file) {
+            Files.find(dir.resolve(entry), Integer.MAX_VALUE,
+                    (p, attrs) -> attrs.isRegularFile())
+                    .map(e -> dir.relativize(e))
+                    .forEach(entries::add);
+        }
+
+        Set<String> names = entries.stream()
+                .map(JarUtils::toJarEntryName)
+                .collect(Collectors.toSet());
+
+        Path tmpfile = Files.createTempFile("jar", "jar");
+
+        try (OutputStream out = Files.newOutputStream(tmpfile);
+             JarOutputStream jos = new JarOutputStream(out))
+        {
+            // copy existing entries from the original JAR file
+            try (JarFile jf = new JarFile(jarfile.toString())) {
+                Enumeration<JarEntry> jentries = jf.entries();
+                while (jentries.hasMoreElements()) {
+                    JarEntry jentry = jentries.nextElement();
+                    if (!names.contains(jentry.getName())) {
+                        jos.putNextEntry(jentry);
+                        jf.getInputStream(jentry).transferTo(jos);
+                    }
+                }
+            }
+
+            // add the new entries
+            for (Path entry : entries) {
+                String name = toJarEntryName(entry);
+                jos.putNextEntry(new JarEntry(name));
+                Files.copy(dir.resolve(entry), jos);
+            }
+        }
+
+        // replace the original JAR file
+        Files.move(tmpfile, jarfile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    /**
+     * Update a JAR file.
+     *
+     * Equivalent to {@code jar uf <jarfile> -C <dir> .}
+     */
+    public static void updateJarFile(Path jarfile, Path dir) throws IOException {
+        updateJarFile(jarfile, dir, Paths.get("."));
+    }
+
+
+    /**
+     * Map a file path to the equivalent name in a JAR file
+     */
+    private static String toJarEntryName(Path file) {
+        Path normalized = file.normalize();
+        return normalized.subpath(0, normalized.getNameCount())  // drop root
+                .toString()
+                .replace(File.separatorChar, '/');
     }
 }

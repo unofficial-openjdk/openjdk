@@ -44,18 +44,19 @@ import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.internal.jimage.Archive;
+import jdk.tools.jlink.internal.Archive;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ModularJarArchive;
@@ -63,11 +64,13 @@ import jdk.tools.jlink.internal.JmodArchive;
 import jdk.tools.jlink.internal.DirArchive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
+import jdk.tools.jlink.plugins.ExecutableImage;
+import jdk.tools.jlink.plugins.ImageBuilderProvider;
 import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 
 
 /**
@@ -77,9 +80,9 @@ import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
  */
 public class JlinkTask {
 
-    static <T extends Throwable> void fail(Class<T> type,
-                                           String format,
-                                           Object... args) throws T {
+    private static <T extends Throwable> void fail(Class<T> type,
+            String format,
+            Object... args) throws T {
         String msg = new Formatter().format(format, args).toString();
         try {
             T t = type.getConstructor(String.class).newInstance(msg);
@@ -93,7 +96,7 @@ public class JlinkTask {
     }
 
     private static final TaskHelper taskHelper
-            = new TaskHelper("jdk.tools.jlink.resources.jlink");
+            = new TaskHelper(JLINK_BUNDLE);
 
     static Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
@@ -129,6 +132,13 @@ public class JlinkTask {
             Path path = Paths.get(arg);
             task.options.output = path;
         }, "--output"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            Path path = Paths.get(arg);
+            if (!Files.exists(path) || !Files.isDirectory(path)) {
+                throw taskHelper.newBadArgs("err.existing.image.must.exist");
+            }
+            task.options.existingImage = path;
+        }, "--post-process-path"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             if ("little".equals(arg)) {
                 task.options.endian = ByteOrder.LITTLE_ENDIAN;
@@ -176,6 +186,7 @@ public class JlinkTask {
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
+        Path existingImage;
         ByteOrder endian = ByteOrder.nativeOrder();
     }
 
@@ -197,10 +208,14 @@ public class JlinkTask {
                 optionsHelper.showPlugins(log, true);
                  return EXIT_OK;
             }
-            if (options.modulePath == null || options.modulePath.length == 0)
-                throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
-
-            createImage();
+            if (options.existingImage == null) {
+                if (options.modulePath == null || options.modulePath.length == 0) {
+                    throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
+                }
+                createImage();
+            } else {
+                postProcessOnly();
+            }
 
             return EXIT_OK;
         } catch (IOException | ResolutionException e) {
@@ -272,12 +287,11 @@ public class JlinkTask {
      * Jlink API entry point.
      */
     public static void createImage(JlinkConfiguration config,
-                                   PluginsConfiguration plugins)
-        throws Exception
+            PluginsConfiguration plugins)
+            throws Exception
     {
         Objects.requireNonNull(config);
         Objects.requireNonNull(config.getOutput());
-        createOutputDirectory(config.getOutput());
         plugins = plugins == null ? new PluginsConfiguration() : plugins;
 
         if (config.getModulepaths().isEmpty()) {
@@ -285,73 +299,109 @@ public class JlinkTask {
         }
         Path[] arr = new Path[config.getModulepaths().size()];
         arr = config.getModulepaths().toArray(arr);
-        ModuleFinder finder = newModuleFinder(arr, config.getLimitmods());
+        ModuleFinder finder
+            = newModuleFinder(arr, config.getLimitmods(), config.getModules());
 
         Path[] pluginsPath = new Path[config.getPluginpaths().size()];
         pluginsPath = config.getPluginpaths().toArray(pluginsPath);
 
-        ImageFileHelper imageHelper
-            = createImageFileHelper(config.getOutput(),
+        // First create the image provider
+        ImageProvider imageProvider
+                = createImageProvider(config.getOutput(),
                         finder,
-                        checkAddMods(config.getModules(), config.getLimitmods()),
+                        checkAddMods(config.getModules()),
                         config.getLimitmods(),
-                        TaskHelper.createPluginsLayer(pluginsPath),
                         genBOMContent(config, plugins), config.getByteOrder());
-        imageHelper.createModularImage(plugins);
+
+        // Then create the Plugin Stack
+        ImagePluginStack stack = ImagePluginConfiguration.
+                parseConfiguration(config.getOutput(), plugins,
+                        TaskHelper.createPluginsLayer(pluginsPath),
+                        genBOMContent(config, plugins));
+
+        //Ask the stack to proceed;
+        stack.operate(imageProvider);
+    }
+
+    private class PostProcessingImageHelper implements ImageProvider {
+
+        private ImageBuilderProvider provider;
+        @Override
+        public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
+            ExecutableImage img = null;
+            for (ImageBuilderProvider provider
+                    : ImagePluginProviderRepository.
+                    getImageBuilderProviders(optionsHelper.getPluginsLayer())) {
+                img = provider.canExecute(options.existingImage);
+                if (img != null) {
+                    this.provider = provider;
+                }
+            }
+            if (img == null) {
+                throw new IOException("Image in " + options.existingImage + " is not recognized");
+            }
+            return img;
+        }
+
+        @Override
+        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image,
+                List<String> args) throws IOException {
+            provider.storeLauncherOptions(image, args);
+        }
+
+    }
+
+    private void postProcessOnly() throws Exception {
+        // Create the Plugin Stack
+        ImagePluginStack stack = ImagePluginConfiguration.
+                parseConfiguration(null, taskHelper.getPluginsConfig(),
+                        optionsHelper.getPluginsLayer(),
+                        genBOMContent());
+
+        stack.operate(new PostProcessingImageHelper());
     }
 
     private void createImage() throws Exception {
         if (options.output == null) {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
+        ModuleFinder finder
+            = newModuleFinder(options.modulePath, options.limitMods, options.addMods);
         try {
-            createOutputDirectory(options.output);
-        } catch (IllegalArgumentException ex) {
-            throw taskHelper.newBadArgs("err.dir.not.empty", options.output);
-        }
-        ModuleFinder finder = newModuleFinder(options.modulePath, options.limitMods);
-        try {
-            options.addMods = checkAddMods(options.addMods, options.limitMods);
+            options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
             throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
                     .showUsage(true);
         }
-        ImageFileHelper imageHelper
-            = createImageFileHelper(options.output,
-                                    finder,
-                                    options.addMods,
-                                    options.limitMods,
-                                    optionsHelper.getPluginsLayer(),
-                                    genBOMContent(),
-                                    options.endian);
+        // First create the image provider
+        ImageProvider imageProvider
+                = createImageProvider(options.output, finder,
+                        options.addMods,
+                        options.limitMods,
+                        genBOMContent(),
+                        options.endian);
 
-        imageHelper.createModularImage(taskHelper.getPluginsProperties());
+        // Then create the Plugin Stack
+        ImagePluginStack stack = ImagePluginConfiguration.
+                parseConfiguration(options.output, taskHelper.getPluginsConfig(),
+                        optionsHelper.getPluginsLayer(),
+                        genBOMContent());
+
+        //Ask the stack to proceed
+        stack.operate(imageProvider);
     }
 
-
-    private static void createOutputDirectory(Path output)
-        throws IOException, BadArgs
-    {
-        if (Files.exists(output) && !Files.isDirectory(output)) {
-            throw taskHelper.newBadArgs("err.file.already.exists", output).showUsage(true);
-        }
-        Files.createDirectories(output);
-        if (Files.list(output).findFirst().isPresent()) {
-            throw new IllegalArgumentException(output + " already exists");
-        }
-    }
-
-    private static Set<String> checkAddMods(Set<String> addMods, Set<String> limitMods) {
+    private static Set<String> checkAddMods(Set<String> addMods) {
         if (addMods.isEmpty()) {
-            if (limitMods.isEmpty()) {
-                throw new IllegalArgumentException("empty modules and limitmodules");
-            }
-            addMods = limitMods;
+            throw new IllegalArgumentException("no modules to add");
         }
         return addMods;
     }
 
-    private static ModuleFinder newModuleFinder(Path[] paths, Set<String> limitMods) {
+    private static ModuleFinder newModuleFinder(Path[] paths,
+                                                Set<String> limitMods,
+                                                Set<String> addMods)
+    {
         ModuleFinder finder = ModuleFinder.of(paths);
 
         // jmods are located at link-time
@@ -360,48 +410,44 @@ public class JlinkTask {
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {
-            finder = limitFinder(finder, limitMods);
+            finder = limitFinder(finder, limitMods, addMods);
         }
         return finder;
     }
 
-    private static ImageFileHelper createImageFileHelper(Path output,
-                                                         ModuleFinder finder,
-                                                         Set<String> addMods,
-                                                         Set<String> limitMods,
-                                                         Layer pluginsLayer,
-                                                         String bom,
-                                                         ByteOrder order)
-        throws IOException
-    {
+    private static ImageProvider createImageProvider(Path output,
+            ModuleFinder finder,
+            Set<String> addMods,
+            Set<String> limitMods,
+            String bom,
+            ByteOrder order)
+            throws IOException {
         if (addMods.isEmpty()) {
-            if (limitMods.isEmpty()) {
-                throw new IllegalArgumentException("empty modules and limitmods");
-            }
-            addMods = limitMods;
+            throw new IllegalArgumentException("empty modules and limitmods");
         }
         Configuration cf
-            = Configuration.resolve(finder,
-                    Layer.empty(),
-                    ModuleFinder.empty(),
-                    addMods);
-        cf = cf.bind();
+                = Configuration.resolve(finder,
+                        Layer.empty(),
+                        ModuleFinder.empty(),
+                        addMods);
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
-        return new ImageFileHelper(cf, mods, output, pluginsLayer, bom, order);
+        return new ImageHelper(cf, mods, output, bom, order);
     }
 
 
     /**
-     * Returns a ModuleFinder that locates modules via the given ModuleFinder
-     * but limits what can be found to the given modules and their transitive
-     * dependences.
+     * Returns a ModuleFinder that limits observability to the given root
+     * modules, their transitive dependences, plus a set of other modules.
      */
-    private static ModuleFinder limitFinder(ModuleFinder finder, Set<String> mods) {
-        Configuration cf
-            = Configuration.resolve(finder,
+    private static ModuleFinder limitFinder(ModuleFinder finder,
+                                            Set<String> roots,
+                                            Set<String> otherMods)
+    {
+        // resolve all root modules
+        Configuration cf = Configuration.resolve(finder,
                 Layer.empty(),
                 ModuleFinder.empty(),
-                mods);
+                roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -410,7 +456,20 @@ public class JlinkTask {
             map.put(name, finder.find(name).get());
         });
 
+        // set of modules that are observable
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
+
+        // add the other modules
+        for (String mod : otherMods) {
+            Optional<ModuleReference> omref = finder.find(mod);
+            if (omref.isPresent()) {
+                ModuleReference mref = omref.get();
+                map.putIfAbsent(mod, mref);
+                mrefs.add(mref);
+            } else {
+                // no need to fail
+            }
+        }
 
         return new ModuleFinder() {
             @Override
@@ -456,11 +515,6 @@ public class JlinkTask {
             sb.append("\n");
         }
 
-        String pluginsContent = optionsHelper.getPluginsConfig();
-        if (pluginsContent != null) {
-            sb.append("\n").append("# Plugins configuration\n");
-            sb.append(pluginsContent);
-        }
         return sb.toString();
     }
 
@@ -475,46 +529,24 @@ public class JlinkTask {
         return sb.toString();
     }
 
-    private static class ImageFileHelper {
-        final Set<ModuleDescriptor> modules;
-        final Map<String, Path> modsPaths;
+    private static class ImageHelper implements ImageProvider {
         final Path output;
         final Set<Archive> archives;
-        final Layer pluginsLayer;
         final String bom;
         final ByteOrder order;
 
-        ImageFileHelper(Configuration cf,
-                        Map<String, Path> modsPaths,
-                        Path output,
-                        Layer pluginsLayer,
-                        String bom,
-                        ByteOrder order)
-            throws IOException
-        {
-            this.modules = cf.descriptors();
-            this.modsPaths = modsPaths;
+        ImageHelper(Configuration cf,
+                Map<String, Path> modsPaths,
+                Path output,
+                String bom,
+                ByteOrder order)
+                throws IOException {
             this.output = output;
-            this.pluginsLayer = pluginsLayer;
             this.bom = bom;
             archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             this.order = order;
-        }
-
-        void createModularImage(Properties properties) throws Exception {
-            ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output, modsPaths,
-                            properties, pluginsLayer,
-                            bom);
-            ImageFileCreator.create(archives, order, pc);
-        }
-
-        void createModularImage(PluginsConfiguration plugins) throws Exception {
-            ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(output, modsPaths, plugins, pluginsLayer, bom);
-            ImageFileCreator.create(archives, order, pc);
         }
 
         private Archive newArchive(String module, Path path) {
@@ -535,6 +567,16 @@ public class JlinkTask {
                 }
             }
             return null;
+        }
+
+        @Override
+        public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
+            return ImageFileCreator.create(archives, order, stack);
+        }
+
+        @Override
+        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image, List<String> args) throws IOException {
+            stack.getImageBuilder().storeJavaLauncherOptions(image, args);
         }
     }
 

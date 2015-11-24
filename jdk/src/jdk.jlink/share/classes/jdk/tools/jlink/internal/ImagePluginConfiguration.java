@@ -37,18 +37,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
+import jdk.tools.jlink.plugins.ExecutableImage;
 
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageFilePlugin;
 import jdk.tools.jlink.plugins.ImageFilePluginProvider;
 import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PostProcessingPlugin;
+import jdk.tools.jlink.plugins.PostProcessingPluginProvider;
 
 /**
  * Plugins configuration.
@@ -74,38 +75,35 @@ public final class ImagePluginConfiguration {
             return diff;
         }
 
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            if (!(other instanceof OrderedPlugin)) {
+                return false;
+            }
+            OrderedPlugin op = (OrderedPlugin) other;
+            return op.plugin.equals(plugin) && op.order == order;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 71 * hash + this.order;
+            hash = 71 * hash + Objects.hashCode(this.plugin);
+            return hash;
+        }
     }
-
-    public static final String ON_ARGUMENT = "on";
-    public static final String OFF_ARGUMENT = "off";
-
-    public static final String IMAGE_BUILDER_PROPERTY = "jdk.jlink.image.builder";
-
-    public static final String RESOURCES_RADICAL_PROPERTY = "jdk.jlink.plugins.resources.";
-    public static final String FILES_RADICAL_PROPERTY = "jdk.jlink.plugins.files.";
-
-    public static final String FILES_TRANSFORMER_PROPERTY = FILES_RADICAL_PROPERTY +
- PluginProvider.TRANSFORMER;
-    public static final String FILES_FILTER_PROPERTY = FILES_RADICAL_PROPERTY +
- PluginProvider.FILTER;
-
-    public static final String RESOURCES_COMPRESSOR_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.COMPRESSOR;
-    public static final String RESOURCES_SORTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.SORTER;
-    public static final String RESOURCES_TRANSFORMER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.TRANSFORMER;
-    public static final String RESOURCES_FILTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
- PluginProvider.FILTER;
-    public static final String RESOURCES_LAST_SORTER_PROPERTY = RESOURCES_RADICAL_PROPERTY +
-            "resources.last-sorter";
-
 
     private static final Map<String, Integer> RESOURCES_RANGES = new HashMap<>();
     private static final List<String> RESOURCES_CATEGORIES = new ArrayList<>();
 
     private static final List<String> FILES_CATEGORIES = new ArrayList<>();
     private static final Map<String, Integer> FILES_RANGES = new HashMap<>();
+
+    private static final List<String> POST_PROCESSORS_CATEGORIES = new ArrayList<>();
+    private static final Map<String, Integer> POST_PROCESSORS_RANGES = new HashMap<>();
 
     private static final int RANGE_LENGTH = 5000;
 
@@ -114,7 +112,6 @@ public final class ImagePluginConfiguration {
         RESOURCES_CATEGORIES.add(PluginProvider.TRANSFORMER);
         RESOURCES_CATEGORIES.add(PluginProvider.SORTER);
         RESOURCES_CATEGORIES.add(PluginProvider.COMPRESSOR);
-        RESOURCES_CATEGORIES.add(PluginProvider.PACKAGER);
 
         int end = RANGE_LENGTH;
         for(String category : RESOURCES_CATEGORIES) {
@@ -126,34 +123,37 @@ public final class ImagePluginConfiguration {
         FILES_CATEGORIES.add(PluginProvider.TRANSFORMER);
         FILES_CATEGORIES.add(PluginProvider.SORTER);
         FILES_CATEGORIES.add(PluginProvider.COMPRESSOR);
-        FILES_CATEGORIES.add(PluginProvider.PACKAGER);
 
         int end2 = RANGE_LENGTH;
         for(String category : FILES_CATEGORIES) {
             FILES_RANGES.put(category, end2);
             end2 +=RANGE_LENGTH;
         }
+
+        POST_PROCESSORS_CATEGORIES.add(PluginProvider.VERIFIER);
+        POST_PROCESSORS_CATEGORIES.add(PluginProvider.PROCESSOR);
+        POST_PROCESSORS_CATEGORIES.add(PluginProvider.PACKAGER);
+
+        int end3 = RANGE_LENGTH;
+        for (String category : POST_PROCESSORS_CATEGORIES) {
+            POST_PROCESSORS_RANGES.put(category, end3);
+            end3 += RANGE_LENGTH;
+        }
+
     }
 
-    private ImagePluginConfiguration() {}
+    private ImagePluginConfiguration() {
+    }
 
-    /**
-     * Create a stack of plugins from a configuration file.
-     * @param p Properties file.
-     * @return A stack of plugins.
-     * @throws IOException
-     */
-    public static ImagePluginStack parseConfiguration(Properties p)
+    public static ImagePluginStack parseConfiguration(Jlink.PluginsConfiguration plugins)
             throws Exception {
-        return parseConfiguration(null, Collections.emptyMap(), p, Layer.boot(), null);
+        return parseConfiguration(null, plugins, Layer.boot(), null);
     }
-
     /*
      * Create a stack of plugins from a a configuration.
      *
      */
     public static ImagePluginStack parseConfiguration(Path outDir,
-            Map<String, Path> mods,
             Jlink.PluginsConfiguration plugins,
             Layer pluginsLayer,
             String bom)
@@ -169,7 +169,10 @@ public final class ImagePluginConfiguration {
         // Validate stack
         Map<String, List<Integer>> resources = new HashMap<>();
         Map<String, List<Integer>> files = new HashMap<>();
-        for (Jlink.StackedPluginConfiguration plug : plugins.getPluginsConfig()) {
+        List<OrderedPlugin> postProcessingPlugins = new ArrayList<>();
+        List<StackedPluginConfiguration> allPlugins = new ArrayList<>();
+
+        for (Jlink.StackedPluginConfiguration plug : plugins.getTransformerPluginsConfig()) {
             if (plug.getIndex() < 0) {
                 throw new Exception("Invalid index " + plug.getIndex() + " for "
                         + plug.getName());
@@ -181,7 +184,6 @@ public final class ImagePluginConfiguration {
             if (!isImageFileProvider(prov) && !isResourceProvider(prov)) {
                 throw new Exception("Invalid provider type " + prov);
             }
-
             Map<String, List<Integer>> map = isResourceProvider(prov) ? resources : files;
             List<Integer> lst = map.get(prov.getCategory());
             if (lst == null) {
@@ -190,14 +192,12 @@ public final class ImagePluginConfiguration {
             }
             int index;
             if (isResourceProvider(prov)) {
-                index = getIndex(plug.getIndex(),
-                        RESOURCES_RADICAL_PROPERTY,
+                index = getAbsoluteIndex(plug.getIndex(),
                         prov.getCategory(),
                         plug.isAbsoluteIndex(),
                         RESOURCES_RANGES);
             } else {
-                index = getIndex(plug.getIndex(),
-                        FILES_RADICAL_PROPERTY,
+                index = getAbsoluteIndex(plug.getIndex(),
                         prov.getCategory(),
                         plug.isAbsoluteIndex(),
                         FILES_RANGES);
@@ -206,13 +206,54 @@ public final class ImagePluginConfiguration {
                 throw new Exception(plug.getName() + ", a Plugin is already located at index " + index);
             }
             lst.add(index);
+            allPlugins.add(plug);
         }
 
-        for (Jlink.StackedPluginConfiguration prop : plugins.getPluginsConfig()) {
+        Map<String, List<Integer>> postprocessors = new HashMap<>();
+        for (Jlink.StackedPluginConfiguration plug : plugins.getPostProcessorPluginsConfig()) {
+            if (plug.getIndex() < 0) {
+                throw new Exception("Invalid index " + plug.getIndex() + " for "
+                        + plug.getName());
+            }
+            PluginProvider prov = providers.get(plug.getName());
+            if (prov == null) {
+                throw new Exception("Unknown plugin " + plug.getName());
+            }
+
+            if (!isPostProcessingProvider(prov)) {
+                throw new Exception("Invalid provider type " + prov);
+            }
+
+            List<Integer> lst = postprocessors.get(prov.getCategory());
+            if (lst == null) {
+                lst = new ArrayList<>();
+                postprocessors.put(prov.getCategory(), lst);
+            }
+            int index = getAbsoluteIndex(plug.getIndex(),
+                    prov.getCategory(),
+                    plug.isAbsoluteIndex(),
+                    POST_PROCESSORS_RANGES);
+
+            if (lst.contains(index)) {
+                throw new Exception(plug.getName() + ", a Plugin is already located at index " + index);
+            }
+            lst.add(index);
+            allPlugins.add(plug);
+        }
+
+        List<String> seen = new ArrayList<>();
+        for (StackedPluginConfiguration prop : allPlugins) {
             PluginProvider prov = providers.get(prop.getName());
+            if (!prov.isFunctional()) {
+                throw new Exception("Provider " + prov.getName() + " is not functional");
+            }
+            if (seen.contains(prov.getName())) {
+                throw new Exception("Plugin " + prov.getName()
+                        + " added more than once to stack ");
+            }
+            seen.add(prov.getName());
             if (isResourceProvider(prov)) {
-                int index = getIndex(prop.getIndex(),
-                        RESOURCES_RADICAL_PROPERTY,
+                int index = getAbsoluteIndex(prop.getIndex(),
                         prov.getCategory(),
                         prop.isAbsoluteIndex(),
                         RESOURCES_RANGES);
@@ -220,14 +261,21 @@ public final class ImagePluginConfiguration {
                         prop.getConfig(), pluginsLayer));
             } else {
                 if (isImageFileProvider(prov)) {
-                    int index = getIndex(prop.getIndex(),
-                            FILES_RADICAL_PROPERTY,
+                    int index = getAbsoluteIndex(prop.getIndex(),
                             prov.getCategory(),
                             prop.isAbsoluteIndex(),
                             FILES_RANGES);
                     filePlugins.addAll(createOrderedPlugins(index, prop.getName(),
                             prop.getConfig(), pluginsLayer));
-
+                } else {
+                    if (isPostProcessingProvider(prov)) {
+                        int index = getAbsoluteIndex(prop.getIndex(),
+                                prov.getCategory(),
+                                prop.isAbsoluteIndex(),
+                                POST_PROCESSORS_RANGES);
+                        postProcessingPlugins.addAll(createOrderedPlugins(index, prop.getName(),
+                                prop.getConfig(), pluginsLayer));
+                    }
                 }
             }
         }
@@ -245,9 +293,12 @@ public final class ImagePluginConfiguration {
                     + plugins.getLastSorterPluginName());
         }
         List<ImageFilePlugin> filePluginsList = toPluginsList(filePlugins);
+
+        List<PostProcessingPlugin> postprocessorPluginsList = toPluginsList(postProcessingPlugins);
+
         ImageBuilder builder;
         if (outDir == null) {
-            // This should be the case for jimage only creation.
+            // This should be the case for jimage only creation or post-install.
             builder = new ImageBuilder() {
 
                 @Override
@@ -262,41 +313,61 @@ public final class ImagePluginConfiguration {
                 public DataOutputStream getJImageOutputStream() throws IOException {
                     throw new IOException("No directory setup to store files");
                 }
+
+                @Override
+                public ExecutableImage getExecutableImage() throws IOException {
+                    throw new UnsupportedOperationException("No directory setup to store files");
+                }
+
+                @Override
+                public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
+                    throw new UnsupportedOperationException("No directory setup to store files");
+                }
             };
         } else {
             String builderName = plugins.getImageBuilder() == null
                     ? DefaultImageBuilderProvider.NAME : plugins.getImageBuilder().getName();
-            Map<Object, Object> builderConfig = plugins.getImageBuilder() == null
+            Map<String, Object> builderConfig = plugins.getImageBuilder() == null
                     ? Collections.emptyMap() : plugins.getImageBuilder().getConfig();
-            builder = ImagePluginProviderRepository.newImageBuilder(builderConfig,
+            Map<String, Object> map = getDefaultContent();
+            map.putAll(builderConfig);
+            builder = ImagePluginProviderRepository.newImageBuilder(map,
                     outDir,
                     builderName,
                     pluginsLayer);
         }
         return new ImagePluginStack(builder, resourcePluginsList,
-                lastSorter, filePluginsList, bom, mods);
+                lastSorter, filePluginsList, postprocessorPluginsList, bom);
     }
 
+    private static Map<String, Object> getDefaultContent() {
+        Map<String, Object> map = new HashMap<>();
+        // Direct mapping from system properties
+        map.put(PluginProvider.PLATFORM_NAME_OPTION, System.getProperty("os.name"));
+
+        return map;
+    }
     private static boolean isResourceProvider(PluginProvider prov) {
-        return prov instanceof ResourcePluginProvider
-                || prov instanceof CmdResourcePluginProvider;
+        return prov instanceof ResourcePluginProvider;
     }
 
     private static boolean isImageFileProvider(PluginProvider prov) {
-        return prov instanceof ImageFilePluginProvider
-                || prov instanceof CmdImageFilePluginProvider;
+        return prov instanceof ImageFilePluginProvider;
     }
 
-    private static int getIndex(int index, String radical, String category,
+    private static boolean isPostProcessingProvider(PluginProvider prov) {
+        return prov instanceof PostProcessingPluginProvider;
+    }
+
+    private static int getAbsoluteIndex(int index, String category,
             boolean absolute, Map<String, Integer> ranges) throws Exception {
 
         if (absolute) {
             return index;
         }
         // If non null category and not absolute, get index within category
-        if (category != null && !absolute) {
-            String prop = radical + category + "." + index;
-            return getAbsoluteIndex(prop, radical, ranges);
+        if (category != null) {
+            return ranges.get(category) + index;
         }
 
         throw new Exception("Can't compute index, no category");
@@ -311,59 +382,6 @@ public final class ImagePluginConfiguration {
     }
 
     /**
-     * Create a stack of plugins from a configuration file.
-     * @param outDir The directory where to generate the image.
-     * Used to build an ImageBuilder.
-     * @param mods
-     * @param p Properties file.
-     * @param pluginsLayer Layer to retrieve plugins
-     * @param bom The tooling config data
-     * @return A stack of plugins.
-     * @throws Exception
-     */
-    public static ImagePluginStack parseConfiguration(Path outDir,
-            Map<String, Path> mods,
-            Properties p,
-            Layer pluginsLayer,
-            String bom)
-            throws Exception {
-        if (p == null) {
-            return parseConfiguration(outDir, mods,
-                    (Jlink.PluginsConfiguration) null, pluginsLayer, bom);
-        }
-        String lastSorterName = (String) p.remove(RESOURCES_LAST_SORTER_PROPERTY);
-        List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
-        for (String prop : p.stringPropertyNames()) {
-            String value = p.getProperty(prop);
-            if (prop.startsWith(RESOURCES_RADICAL_PROPERTY)) {
-                int index = getAbsoluteIndex(prop, RESOURCES_RADICAL_PROPERTY,
-                        RESOURCES_RANGES);
-                lst.add(new Jlink.StackedPluginConfiguration(value, index, true, filter(p, value)));
-            } else if (prop.startsWith(FILES_RADICAL_PROPERTY)) {
-                int index = getAbsoluteIndex(prop, FILES_RADICAL_PROPERTY, FILES_RANGES);
-                lst.add(new Jlink.StackedPluginConfiguration(value, index, true, filter(p, value)));
-            }
-        }
-        String builderName = p.getProperty(IMAGE_BUILDER_PROPERTY);
-        builderName = builderName == null ? DefaultImageBuilderProvider.NAME : builderName;
-
-        Map<Object, Object> builderConfig = filter(p, builderName);
-        Jlink.PluginsConfiguration config = new Jlink.PluginsConfiguration(lst,
-                new Jlink.PluginConfiguration(builderName, builderConfig), lastSorterName);
-        return parseConfiguration(outDir, mods, config, pluginsLayer, bom);
-    }
-
-    private static Map<Object, Object> filter(Properties p, String name) {
-        Map<Object, Object> filtered = new HashMap<>();
-        p.stringPropertyNames().stream().filter(
-                (n) -> (n.startsWith(name))).forEach((n) -> {
-                    String pluginProp = n.substring(name.length() + 1);
-                    filtered.put(pluginProp, p.getProperty(n));
-                });
-        return filtered;
-    }
-
-    /**
      * Retrieve the range array (index 0 is range start, index 1 is range end)
      * associated to a category.
      * @param provider The provider for which the range is wanted.
@@ -375,20 +393,12 @@ public final class ImagePluginConfiguration {
             ranges = RESOURCES_RANGES;
         } else if (isImageFileProvider(provider)) {
             ranges = FILES_RANGES;
+        } else if (isPostProcessingProvider(provider)) {
+            ranges = POST_PROCESSORS_RANGES;
         } else {
             throw new IllegalArgumentException("Unknown provider type");
         }
         return getRange(provider.getCategory(), ranges);
-    }
-
-    /**
-     * Retrieve the range array (index 0 is range start, index 1 is range end)
-     * associated to a category.
-     * @param category The category for which the range is wanted.
-     * @return The range or null if the category is unknown.
-     */
-    public static Integer[] getFilesRange(String category) {
-        return getRange(category, FILES_RANGES);
     }
 
     private static Integer[] getRange(String category, Map<String, Integer> ranges) {
@@ -403,111 +413,18 @@ public final class ImagePluginConfiguration {
         return range;
     }
 
-    /**
-     * Return a list of the names of the known plugin categories ordered from
-     * the smaller range start index to the bigger range start index.
-     * @return
-     */
-    public List<String> getOrderedResourcesCategories() {
-        return Collections.unmodifiableList(RESOURCES_CATEGORIES);
-    }
-
-    /**
-     * Return a list of the names of the known plugin categories ordered from
-     * the smaller range start index to the bigger range start index.
-     * @return
-     */
-    public List<String> getOrderedFilesCategories() {
-        return Collections.unmodifiableList(FILES_CATEGORIES);
-    }
-
-    public static void addPluginProperty(Properties properties,
-            PluginProvider provider) throws IllegalArgumentException {
-
-        String radical = null;
-        Map<String, Integer> ranges = null;
-        if (provider instanceof CmdResourcePluginProvider) {
-            ranges = RESOURCES_RANGES;
-            radical = RESOURCES_RADICAL_PROPERTY;
-        } else if (provider instanceof CmdImageFilePluginProvider) {
-            ranges = FILES_RANGES;
-            radical = FILES_RADICAL_PROPERTY;
-        } else {
-            throw new IllegalArgumentException("Unknown provider type");
-        }
-        int index = getNextIndex(properties, provider.getCategory(), radical, ranges);
-        properties.setProperty(radical
-                + provider.getCategory() + "." + index, provider.getName());
-    }
-
-    private static int getNextIndex(Properties props,
-            String category, String radical, Map<String, Integer> ranges)
-            throws IllegalArgumentException {
-        Objects.requireNonNull(props);
-        Objects.requireNonNull(category);
-        Integer range_start = ranges.get(category);
-        if (range_start == null) {
-            throw new IllegalArgumentException("Unknown " + category);
-        }
-        int index = range_start;
-        for (String prop : props.stringPropertyNames()) {
-            if (prop.startsWith(radical)) {
-                int i = getAbsoluteIndex(prop, radical, ranges);
-                // we are in same range
-                if (i >= range_start && i < range_start + RANGE_LENGTH) {
-                    if (i > index) {
-                        index = i;
-                    }
-                }
-            }
-        }
-        index = index - range_start + 1;
-        if (index >= RANGE_LENGTH) {
-            throw new IllegalArgumentException("Can't find an available index for "
-                    + category);
-        }
-        return index;
-    }
-
-    private static int getAbsoluteIndex(String prop, String radical,
-            Map<String, Integer> ranges) {
-        String suffix = prop.substring(radical.length());
-        String[] split = suffix.split("\\.");
-        if (split.length > 2 || split.length == 0) {
-            throw new IllegalArgumentException("Invalid property " + prop);
-        }
-        int order = 0;
-        boolean label = false;
-        // radical.label[.num] or radical.num
-        for (int i = 0; i < split.length; i++) {
-            Integer val = null;
-            String s = split[i];
-            if (i == 0) {
-                val = ranges.get(s);
-                if (val == null) {
-                    val = Integer.valueOf(s);
-                } else {
-                    label = true;
-                }
-            } else {
-                if (!label) {
-                    throw new IllegalArgumentException("Invalid property " + prop);
-                }
-                val = Integer.valueOf(s);
-            }
-            order += val;
-        }
-        return order;
-    }
-
     private static List<OrderedPlugin> createOrderedPlugins(int index,
-            String name, Map<Object, Object> config, Layer pluginsLayer) throws IOException {
-        Plugin[] plugins = ImagePluginProviderRepository.newPlugins(config,
+            String name, Map<String, Object> config, Layer pluginsLayer) throws IOException {
+        Map<String, Object> map = getDefaultContent();
+        map.putAll(config);
+        Plugin[] plugins = ImagePluginProviderRepository.newPlugins(map,
                 name, pluginsLayer);
         List<OrderedPlugin> ordered = new ArrayList<>();
-        for (Plugin plugin : plugins) {
-            ordered.add(new OrderedPlugin(index, plugin));
-            index = index+1;
+        if (plugins != null) {
+            for (Plugin plugin : plugins) {
+                ordered.add(new OrderedPlugin(index, plugin));
+                index = index + 1;
+            }
         }
         return ordered;
     }
