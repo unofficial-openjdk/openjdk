@@ -93,7 +93,8 @@ public class ProxyClassAccessTest {
         Configuration cf = Configuration
                 .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
 
-        ClassLoader loader = new ModuleClassLoader(cf);
+        ClassLoader parent = this.getClass().getClassLoader();
+        ClassLoader loader = new ModuleClassLoader(parent, cf);
         Layer layer = Layer.create(cf, mn -> loader);
         Class<?>[] interfaces = new Class<?>[] {
                 Class.forName("p.one.I", false, loader),
