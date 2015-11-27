@@ -91,7 +91,7 @@ public class NmodNpkg_UmodUPkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -102,7 +102,7 @@ public class NmodNpkg_UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -140,7 +140,7 @@ public class NmodNpkg_UmodUPkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -151,7 +151,7 @@ public class NmodNpkg_UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -189,7 +189,7 @@ public class NmodNpkg_UmodUPkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -200,7 +200,7 @@ public class NmodNpkg_UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
