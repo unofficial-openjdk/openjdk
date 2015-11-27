@@ -955,10 +955,10 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         if (location.isModuleLocation()) {
             Collection<Path> paths = locations.getLocation(location);
             ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
-            Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+            Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder);
             cf = cf.bind();
             ModuleClassLoader cl = new ModuleClassLoader(cf);
-            Layer layer = Layer.create(cf, cl);
+            Layer layer = Layer.create(cf, Layer.boot(), cl);
             return ServiceLoaderHelper.load(layer, service);
         } else {
             return ServiceLoader.load(service, getClassLoader(location));
