@@ -121,7 +121,7 @@ public class Reflection {
                 if (!canRead) {
                     msg += m1 + " does not read " + m2;
                 } else {
-                    msg += m2 + " does not export package " + memberPackageName;
+                    msg += m2 + " does not export " + memberPackageName;
                     if (m2.isNamed()) msg += " to " + m1;
                 }
 

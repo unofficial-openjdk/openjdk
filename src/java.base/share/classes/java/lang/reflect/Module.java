@@ -1066,7 +1066,7 @@ public final class Module {
             return "module " + name;
         } else {
             String id = Integer.toHexString(System.identityHashCode(this));
-            return "<unnamed module @" + id + ">";
+            return "unnamed module @" + id;
         }
     }
 
