@@ -91,11 +91,11 @@ public class ProxyClassAccessTest {
     public void testNoReadAccess() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+                .resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder, modules).bind();
 
         ClassLoader parent = this.getClass().getClassLoader();
         ClassLoader loader = new ModuleClassLoader(parent, cf);
-        Layer layer = Layer.create(cf, mn -> loader);
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
         Class<?>[] interfaces = new Class<?>[] {
                 Class.forName("p.one.I", false, loader),
                 Class.forName("q.NP", false, loader)     // non-public interface in unnamed module

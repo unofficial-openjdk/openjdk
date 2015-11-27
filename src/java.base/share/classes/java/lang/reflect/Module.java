@@ -28,6 +28,7 @@ package java.lang.reflect;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.Configuration;
+import java.lang.module.Configuration.ReadDependence;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -849,8 +850,28 @@ public final class Module {
     }
 
 
-
     // -- creating Module objects --
+
+    /**
+     * Find the runtime Module corresponding to the given ReadDependence
+     * in the given parent Layer (or its parents).
+     */
+    private static Module find(ReadDependence d, Layer layer) {
+        Configuration cf = d.configuration();
+        String dn = d.descriptor().name();
+
+        Module m = null;
+        while (layer != null) {
+            if (layer.configuration() == cf) {
+                Optional<Module> om = layer.findModule(dn);
+                m = om.get();
+                assert m.getLayer() == layer;
+                break;
+            }
+            layer = layer.parent().orElse(null);
+        }
+        return m;
+    }
 
     /**
      * Defines each of the module in the given configuration to the runtime.
@@ -886,42 +907,24 @@ public final class Module {
         }
 
         // setup readability and exports
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
-            Module m = modules.get(descriptor.name());
+        for (ModuleDescriptor descriptor : cf.descriptors()) {
+            String mn = descriptor.name();
+            Module m = modules.get(mn);
             assert m != null;
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ModuleDescriptor other : cf.reads(descriptor)) {
-                Module m2 = null;
+            for (ReadDependence d : cf.reads(descriptor)) {
 
-                // Search the configuration and parent layers for the module
-                // descriptor. This is temporary until Configuration defines
-                // an API to return the layer + name of the source rather than
-                // the module descriptor.
-                String dn = other.name();
-                Module candidate = modules.get(dn);
-                if (candidate != null && other.equals(candidate.getDescriptor())) {
-                    m2 = candidate;
+                Module m2;
+                if (d.configuration() == cf) {
+                    String dn = d.descriptor().name();
+                    m2 = modules.get(dn);
+                    assert m2 != null;
                 } else {
-                    Layer parent = cf.layer();
-                    while (parent != null) {
-                        Optional<Module> om = parent.findModule(dn);
-                        if (om.isPresent()) {
-                            candidate = om.get();
-                            if (other.equals(candidate.getDescriptor())) {
-                                m2 = candidate;
-                                break;
-                            }
-                        }
-                        parent = parent.parent().orElse(null);
-                    }
+                    m2 = find(d, layer.parent().orElse(null));
                 }
 
-                if (m2 == null) {
-                    throw new InternalError(descriptor.name() +
-                            " reads unknown module: " + other.name());
-                }
                 reads.add(m2);
 
                 // update VM view

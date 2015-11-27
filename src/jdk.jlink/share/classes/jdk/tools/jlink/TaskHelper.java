@@ -895,14 +895,17 @@ public final class TaskHelper {
         if (finder instanceof ConfigurableModuleFinder)
             ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
 
-        Configuration cf
-            = Configuration.resolve(ModuleFinder.empty(), Layer.boot(), finder);
+        Configuration bootConfiguration= Layer.boot().configuration();
+
+        Configuration cf = Configuration.resolve(ModuleFinder.empty(), bootConfiguration, finder);
+
         cf = cf.bind();
+
         // The creation of this classloader is done outside privileged block in purpose
         // If a security manager is set, then permission must be granted to jlink
         // codebase to create a classloader. This is the expected behavior.
         ClassLoader cl = new ModuleClassLoader(cf);
-        return Layer.create(cf, mn -> cl);
+        return Layer.create(cf, Layer.boot(), mn -> cl);
     }
 
     // Display all plugins or resource only.

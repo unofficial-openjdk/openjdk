@@ -46,7 +46,7 @@ public class Main {
 
         // and read all modules in the boot Layer
         Layer layer = Layer.boot();
-        layer.configuration().get().descriptors().stream()
+        layer.configuration().descriptors().stream()
                 .map(ModuleDescriptor::name)
                 .map(layer::findModule)
                 .forEach(om -> assertTrue(httpModule.canRead(om.get())));

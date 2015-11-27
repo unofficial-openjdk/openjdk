@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -288,7 +287,7 @@ public class ModuleSummary {
 
     static Configuration resolve(Set<String> roots) {
         return Configuration.resolve(ModuleFinder.ofInstalled(),
-                                     Layer.empty(),
+                                     Configuration.empty(),
                                      ModuleFinder.empty(),
                                      roots);
     }

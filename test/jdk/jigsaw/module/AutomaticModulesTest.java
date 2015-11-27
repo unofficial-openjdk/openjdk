@@ -50,9 +50,6 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import static java.lang.reflect.Layer.boot;
-import static java.lang.module.ModuleFinder.empty;
-
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -63,6 +60,7 @@ public class AutomaticModulesTest {
     private static final Path USER_DIR
          = Paths.get(System.getProperty("user.dir"));
 
+    private final Configuration BOOT_CONFIGURATION = Layer.boot().configuration();
 
     @DataProvider(name = "names")
     public Object[][] createNames() {
@@ -144,7 +142,10 @@ public class AutomaticModulesTest {
         ModuleFinder finder = ModuleFinder.of(dir);
 
         Configuration cf
-            = Configuration.resolve(finder, boot(), empty(), "m1");
+            = Configuration.resolve(finder,
+                                    BOOT_CONFIGURATION,
+                                    ModuleFinder.empty(),
+                                    "m1");
 
         ModuleDescriptor m1 = cf.findDescriptor("m1").get();
 
@@ -176,7 +177,10 @@ public class AutomaticModulesTest {
         ModuleFinder finder = ModuleFinder.of(dir);
 
         Configuration cf
-            = Configuration.resolve(finder, boot(), empty(), "m1");
+            = Configuration.resolve(finder,
+                                    BOOT_CONFIGURATION,
+                                    ModuleFinder.empty(),
+                                    "m1");
 
         ModuleDescriptor m1 = cf.findDescriptor("m1").get();
 
@@ -184,6 +188,23 @@ public class AutomaticModulesTest {
         assertEquals(m1.mainClass().get(), mainClass);
     }
 
+
+    /**
+     * Returns {@code true} if the configuration contains module mn1
+     * that reads module mn2.
+     */
+    static boolean reads(Configuration cf, String mn1, String mn2) {
+
+        Optional<ModuleDescriptor> omd1 = cf.findDescriptor(mn1);
+        if (!omd1.isPresent())
+            return false;
+
+        ModuleDescriptor md1 = omd1.get();
+        return cf.reads(md1).stream()
+                .map(Configuration.ReadDependence::descriptor)
+                .map(ModuleDescriptor::name)
+                .anyMatch(mn2::equals);
+    }
 
     /**
      * Basic test of a configuration created with automatic modules
@@ -207,7 +228,10 @@ public class AutomaticModulesTest {
                                   ModuleFinder.of(dir));
 
         Configuration cf
-            = Configuration.resolve(finder, boot(), empty(), "m1");
+            = Configuration.resolve(finder,
+                                    BOOT_CONFIGURATION,
+                                    ModuleFinder.empty(),
+                                    "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.findDescriptor("m1").isPresent());
@@ -221,28 +245,22 @@ public class AutomaticModulesTest {
         assertTrue(m2.requires().size() == 1);
         assertTrue(m3.requires().size() == 1);
 
-        // the descriptors for the modules in the boot Layer
-        Set<ModuleDescriptor> bootModules
-            = Layer.boot().configuration().get().descriptors();
+        // the modules in the boot Layer
+        Set<String> bootModules = Layer.boot().modules().stream()
+                .map(Module::getName)
+                .collect(Collectors.toSet());
 
-        // As m2 and m3 are automatic modules then they read all modules
-        // As m1 requires m2 & m3 then it needs to read all modules that
-        // m2 and m3 read.
+        assertTrue(reads(cf, "m1", "m2"));
+        assertTrue(reads(cf, "m1", "m3"));
+        bootModules.forEach(mn -> assertTrue(reads(cf, "m1", mn)));
 
-        //assertFalse(cf.reads(m1).contains(m1));
-        assertTrue(cf.reads(m1).contains(m2));
-        assertTrue(cf.reads(m1).contains(m3));
-        assertTrue(cf.reads(m1).containsAll(bootModules));
+        assertTrue(reads(cf, "m2", "m1"));
+        assertTrue(reads(cf, "m2", "m3"));
+        bootModules.forEach(mn -> assertTrue(reads(cf, "m2", mn)));
 
-        //assertFalse(cf.reads(m2).contains(m2));
-        assertTrue(cf.reads(m2).contains(m1));
-        assertTrue(cf.reads(m2).contains(m3));
-        assertTrue(cf.reads(m2).containsAll(bootModules));
-
-        //assertFalse(cf.reads(m3).contains(m3));
-        assertTrue(cf.reads(m3).contains(m1));
-        assertTrue(cf.reads(m3).contains(m2));
-        assertTrue(cf.reads(m3).containsAll(bootModules));
+        assertTrue(reads(cf, "m3", "m1"));
+        assertTrue(reads(cf, "m3", "m2"));
+        bootModules.forEach(mn -> assertTrue(reads(cf, "m3", mn)));
     }
 
 
@@ -264,14 +282,17 @@ public class AutomaticModulesTest {
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.concat(ModuleUtils.finderOf(descriptor),
-                                  ModuleFinder.of(dir));
+                ModuleFinder.of(dir));
 
         Configuration cf
-            = Configuration.resolve(finder, Layer.boot(), ModuleFinder.empty(), "m1");
+            = Configuration.resolve(finder,
+                                    BOOT_CONFIGURATION,
+                                    ModuleFinder.empty(),
+                                    "m1");
         assertTrue(cf.descriptors().size() == 3);
 
         // each module gets its own loader
-        Layer layer = Layer.create(cf, mn -> new ClassLoader(){});
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> new ClassLoader(){});
 
         Module m2 = layer.findModule("m2").get();
         assertTrue(m2.isNamed());
@@ -292,7 +313,7 @@ public class AutomaticModulesTest {
         while (layer != Layer.empty()) {
 
             // check that m reads all module in the layer
-            layer.configuration().get().descriptors().stream()
+            layer.configuration().descriptors().stream()
                 .map(ModuleDescriptor::name)
                 .map(layer::findModule)
                 .map(Optional::get)

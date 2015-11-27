@@ -176,10 +176,10 @@ public final class ModuleBootstrap {
 
         // run the resolver to create the configuration
         Configuration cf = (Configuration.resolve(finder,
-                                                  Layer.empty(),
+                                                  Configuration.empty(),
                                                   ModuleFinder.empty(),
-                                                  roots)
-                            .bind());
+                                                  roots))
+                            .bind();
 
         // time to create configuration
         PerfCounters.configTime.addElapsedTimeFrom(t1);
@@ -208,7 +208,7 @@ public final class ModuleBootstrap {
         long t2 = System.nanoTime();
 
         // define modules to VM/runtime
-        Layer bootLayer = Layer.create(cf, clf);
+        Layer bootLayer = Layer.create(cf, Layer.empty(), clf);
 
         // define the module to its class loader, except java.base
         for (ModuleReference mref : cf.modules()) {
@@ -251,9 +251,9 @@ public final class ModuleBootstrap {
     {
         // resolve all root modules
         Configuration cf = Configuration.resolve(finder,
-                Layer.empty(),
-                ModuleFinder.empty(),
-                roots);
+                                                 Configuration.empty(),
+                                                 ModuleFinder.empty(),
+                                                 roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();

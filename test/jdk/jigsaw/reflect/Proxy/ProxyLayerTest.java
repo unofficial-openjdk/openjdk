@@ -50,6 +50,8 @@ import static org.testng.Assert.*;
 
 public class ProxyLayerTest {
 
+    private final Configuration BOOT_CONFIGURATION = Layer.boot().configuration();
+
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");
 
@@ -80,11 +82,11 @@ public class ProxyLayerTest {
     public void testProxyInUnnamed() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules)
+                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules)
                 .bind();
 
         ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, mn -> loader);
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());
@@ -112,10 +114,10 @@ public class ProxyLayerTest {
     public void testProxyInDynamicModule() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
 
         ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, mn -> loader);
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());
@@ -139,10 +141,10 @@ public class ProxyLayerTest {
     public void testNoReadAccess() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot(), finder, modules).bind();
+                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
 
         ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, mn -> loader);
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());

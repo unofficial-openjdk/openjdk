@@ -120,7 +120,7 @@ public class Main {
      * Returns the directory for the given module (by name).
      */
     static Path directoryFor(String name) {
-        Configuration cf = Layer.boot().configuration().get();
+        Configuration cf = Layer.boot().configuration();
         ModuleReference mref = cf.findModule(name).orElse(null);
         if (mref == null)
             throw new RuntimeException("not found: " + name);

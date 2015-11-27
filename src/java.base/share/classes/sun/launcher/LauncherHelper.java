@@ -910,7 +910,7 @@ public enum LauncherHelper {
         if (layer == null)
             return;
 
-        Configuration cf = layer.configuration().get();
+        Configuration cf = layer.configuration();
         int colon = optionFlag.indexOf(':');
         if (colon == -1) {
             cf.modules().stream()

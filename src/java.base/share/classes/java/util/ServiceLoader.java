@@ -571,10 +571,8 @@ public final class ServiceLoader<S>
             currentLayer = layer;
 
             // need to get us started
-            Configuration cf = layer.configuration().orElse(null);
-            if (cf != null) {
-                descriptorIterator = cf.provides(serviceName).iterator();
-            }
+            Configuration cf = layer.configuration();
+            descriptorIterator = cf.provides(serviceName).iterator();
         }
 
         @Override
@@ -593,7 +591,7 @@ public final class ServiceLoader<S>
                 }
 
                 // next descriptor
-                if (descriptorIterator != null && descriptorIterator.hasNext()) {
+                if (descriptorIterator.hasNext()) {
                     ModuleDescriptor descriptor = descriptorIterator.next();
 
                     nextModule = currentLayer.findModule(descriptor.name()).get();
@@ -609,13 +607,8 @@ public final class ServiceLoader<S>
                 if (parent == null)
                     return false;
 
-                // if the current layer doesn't have a configuration then it means
-                // we've hit the empty layer
                 currentLayer = parent;
-                Configuration cf = currentLayer.configuration().orElse(null);
-                if (cf == null)
-                    return false;
-
+                Configuration cf = currentLayer.configuration();
                 descriptorIterator = cf.provides(service.getName()).iterator();
             }
         }

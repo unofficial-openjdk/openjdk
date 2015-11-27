@@ -811,14 +811,12 @@ public abstract class ClassLoader {
         if (p == null) {
             URL url = null;
             if (m.isNamed() && m.getLayer() != null) {
-                Optional<Configuration> cf = m.getLayer().configuration();
-                if (cf.isPresent()) {
-                    ModuleReference mref = cf.get().findModule(m.getName()).orElse(null);
-                    URI uri = mref != null ? mref.location().orElse(null) : null;
-                    try {
-                        url = uri != null ? uri.toURL() : null;
-                    } catch (MalformedURLException e) {
-                    }
+                Configuration cf = m.getLayer().configuration();
+                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
+                URI uri = mref != null ? mref.location().orElse(null) : null;
+                try {
+                    url = uri != null ? uri.toURL() : null;
+                } catch (MalformedURLException e) {
                 }
             }
             p = definePackage(pn, null, null, null, null, null, null, url);
