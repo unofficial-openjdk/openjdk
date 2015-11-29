@@ -25,13 +25,12 @@
 
 package java.lang.module;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,22 +40,20 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.ImageReader;
-import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.Hasher;
 import sun.net.www.ParseUtil;
 
 
 /**
  * A factory for creating ModuleReference implementations where the modules are
- * located in the run-time image, packaged as jmod or modular JAR files, or
- * where the modules are exploded on the file system.
+ * packaged as modular JAR file, JMOD files or where the modules are exploded
+ * on the file system.
  */
 
 class ModuleReferences {
@@ -64,269 +61,31 @@ class ModuleReferences {
     private ModuleReferences() { }
 
     /**
-     * Creates a ModuleReference.
+     * Creates the ModuleReference.
      */
     static ModuleReference newModuleReference(ModuleDescriptor md,
                                               URI location,
                                               Hasher.HashSupplier hasher)
     {
         // use new ModuleDescriptor if new packages added by -Xpatch
-        md = ModulePatcher.patchIfNeeded(md);
+        ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
 
         String scheme = location.getScheme();
-        if (scheme.equalsIgnoreCase("jrt"))
-            return new JrtModuleReference(md, location, hasher);
-        if (scheme.equalsIgnoreCase("jmod"))
-            return new JModModuleReference(md, location, hasher);
-        if (scheme.equalsIgnoreCase("jar"))
-            return new JarModuleReference(md, location, hasher);
-        if (scheme.equalsIgnoreCase("file"))
-            return new ExplodedModuleReference(md, location, hasher);
 
-        throw new InternalError("Should not get here");
+        Supplier<ModuleReader> readerSupplier;
+        if (scheme.equalsIgnoreCase("jar")) {
+            readerSupplier = () -> new JarModuleReader(location);
+        } else if (scheme.equalsIgnoreCase("jmod")) {
+            readerSupplier = () -> new JModModuleReader(location);
+        } else if (scheme.equalsIgnoreCase("file")) {
+            readerSupplier = () -> new ExplodedModuleReader(location);
+        } else {
+            throw new InternalError("Should not get here");
+        }
+
+        return new ModuleReference(descriptor, location, readerSupplier, hasher);
     }
 
-    /**
-     * A ModuleReference for a module that is linked into the run-time image.
-     */
-    static class JrtModuleReference extends ModuleReference {
-        JrtModuleReference(ModuleDescriptor descriptor,
-                          URI location,
-                          Hasher.HashSupplier hasher) {
-            super(descriptor, location, hasher);
-        }
-
-        public ModuleReader open() throws IOException {
-            return new JrtModuleReader(this);
-        }
-    }
-
-    /**
-     * A ModuleReference for a module that is exploded on the file system.
-     */
-    static class ExplodedModuleReference extends ModuleReference {
-        ExplodedModuleReference(ModuleDescriptor descriptor,
-                               URI location,
-                               Hasher.HashSupplier hasher) {
-            super(descriptor, location, hasher);
-        }
-
-        public ModuleReader open() throws IOException {
-            return new ExplodedModuleReader(this);
-        }
-    }
-
-    /**
-     * A ModuleReference for a module that is packaged as jmod file.
-     */
-    static class JModModuleReference extends ModuleReference {
-        JModModuleReference(ModuleDescriptor descriptor,
-                            URI location,
-                            Hasher.HashSupplier hasher) {
-            super(descriptor, location, hasher);
-        }
-
-        public ModuleReader open() throws IOException {
-            return new JModModuleReader(this);
-        }
-    }
-
-    /**
-     * A ModuleReference for a module that is packaged as a modular JAR file.
-     */
-    static class JarModuleReference extends ModuleReference {
-        JarModuleReference(ModuleDescriptor descriptor,
-                          URI location,
-                          Hasher.HashSupplier hasher) {
-            super(descriptor, location, hasher);
-        }
-
-        @Override
-        public ModuleReader open() throws IOException {
-            return new JarModuleReader(this);
-        }
-    }
-
-    /**
-     * A ModuleReader for reading resources from a module linked into the
-     * run-time image.
-     */
-    static class JrtModuleReader implements ModuleReader {
-        // ImageReader, shared between instances of this module reader
-        private static ImageReader imageReader;
-        static {
-            // detect image or exploded build
-            String home = System.getProperty("java.home");
-            Path libModules = Paths.get(home, "lib", "modules");
-            if (Files.isDirectory(libModules)) {
-                // this can throw UncheckedIOException
-                imageReader = ImageReaderFactory.getImageReader();
-            } else {
-                imageReader = null;
-            }
-        }
-
-        private final String module;
-        private volatile boolean closed;
-
-        JrtModuleReader(ModuleReference mref) throws IOException {
-            assert mref.location().isPresent();
-            // when running with a security manager then check that the caller
-            // has access to the run-time image
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                URLConnection uc = mref.location().get().toURL().openConnection();
-                sm.checkPermission(uc.getPermission());
-            }
-            this.module = mref.descriptor().name();
-        }
-
-        /**
-         * Returns the ImageLocation for the given resource, {@code null}
-         * if not found.
-         */
-        private ImageLocation findImageLocation(String name) throws IOException {
-            if (closed)
-                throw new IOException("ModuleReader is closed");
-
-            if (imageReader != null) {
-                return imageReader.findLocation(module, name);
-            } else {
-                // not an images build
-                return null;
-            }
-        }
-
-        @Override
-        public Optional<URI> find(String name) throws IOException {
-            ImageLocation location = findImageLocation(name);
-            if (location != null) {
-                URI u = URI.create("jrt:/" + module + "/" + name);
-                return Optional.of(u);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<InputStream> open(String name) throws IOException {
-            return read(name).map(this::toInputStream);
-        }
-
-        private InputStream toInputStream(ByteBuffer bb) { // ## -> ByteBuffer?
-            try {
-                int rem = bb.remaining();
-                byte[] bytes = new byte[rem];
-                bb.get(bytes);
-                return new ByteArrayInputStream(bytes);
-            } finally {
-                release(bb);
-            }
-        }
-
-        @Override
-        public Optional<ByteBuffer> read(String name) throws IOException {
-            ImageLocation location = findImageLocation(name);
-            if (location != null) {
-                return Optional.of(imageReader.getResourceBuffer(location));
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public void release(ByteBuffer bb) {
-            ImageReader.releaseByteBuffer(bb);
-        }
-
-        @Override
-        public void close() {
-            closed = true;
-        }
-    }
-
-    /**
-     * A ModuleReader for an exploded module.
-     */
-    static class ExplodedModuleReader implements ModuleReader {
-        private final Path dir;
-        private volatile boolean closed;
-
-        ExplodedModuleReader(ModuleReference mref) {
-            dir = Paths.get(mref.location().get());
-
-            // when running with a security manager then check that the caller
-            // has access to the directory.
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                boolean unused = Files.isDirectory(dir);
-            }
-        }
-
-        /**
-         * Returns a Path to access to the given resource.
-         */
-        private Path toPath(String name) {
-            Path path = Paths.get(name.replace('/', File.separatorChar));
-            if (path.getRoot() == null) {
-                return dir.resolve(path);
-            } else {
-                // drop the root component so that the resource is
-                // located relative to the module directory
-                int n = path.getNameCount();
-                return (n > 0) ? dir.resolve(path.subpath(0, n)) : null;
-            }
-        }
-
-        /**
-         * Throws IOException if the module reader is closed;
-         */
-        private void ensureOpen() throws IOException {
-            if (closed) throw new IOException("ModuleReader is closed");
-        }
-
-        @Override
-        public Optional<URI> find(String name) throws IOException {
-            ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
-                try {
-                    return Optional.of(path.toUri());
-                } catch (IOError e) {
-                    throw (IOException) e.getCause();
-                }
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<InputStream> open(String name) throws IOException {
-            ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
-                return Optional.of(Files.newInputStream(path));
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<ByteBuffer> read(String name) throws IOException {
-            ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
-                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public void close() {
-            closed = true;
-        }
-    }
 
     /**
      * A base module reader that encapsulates machinery required to close the
@@ -404,19 +163,81 @@ class ModuleReferences {
         }
     }
 
+
     /**
-     * A ModuleReader for a jmod file.
+     * A ModuleReader for a modular JAR file.
+     */
+    static class JarModuleReader extends SafeCloseModuleReader {
+        private final URI uri;
+        private final JarFile jf;
+
+        static JarFile newJarFile(String name) {
+            try {
+                return new JarFile(name);
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+        }
+
+        JarModuleReader(URI uri) {
+            String s = uri.toString();
+            URI fileURI = URI.create(s.substring(4, s.length()-2));
+            this.uri = uri;
+            this.jf = newJarFile(Paths.get(fileURI).toString());
+        }
+
+        private JarEntry getEntry(String name) {
+            return jf.getJarEntry(Objects.requireNonNull(name));
+        }
+
+        @Override
+        Optional<URI> implFind(String name) throws IOException {
+            JarEntry je = getEntry(name);
+            if (je != null) {
+                String encodedPath = ParseUtil.encodePath(name, false);
+                return Optional.of(URI.create(uri + encodedPath));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        Optional<InputStream> implOpen(String name) throws IOException {
+            JarEntry je = getEntry(name);
+            if (je != null) {
+                return Optional.of(jf.getInputStream(je));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        void implClose() throws IOException {
+            jf.close();
+        }
+    }
+
+
+    /**
+     * A ModuleReader for a JMOD file.
      */
     static class JModModuleReader extends SafeCloseModuleReader {
         private final URI uri;
         private final ZipFile zf;
 
-        JModModuleReader(ModuleReference mref) throws IOException {
-            URI uri = mref.location().get();
+        static ZipFile newZipFile(String name) {
+            try {
+                return new ZipFile(name);
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+        }
+
+        JModModuleReader(URI uri) {
             String s = uri.toString();
             URI fileURI = URI.create(s.substring(5, s.length() - 2));
             this.uri = uri;
-            this.zf = new ZipFile(Paths.get(fileURI).toString());
+            this.zf = newZipFile(Paths.get(fileURI).toString());
         }
 
         private ZipEntry getEntry(String name) {
@@ -450,49 +271,87 @@ class ModuleReferences {
         }
     }
 
+
     /**
-     * A ModuleReader for a modular JAR file.
+     * A ModuleReader for an exploded module.
      */
-    static class JarModuleReader extends SafeCloseModuleReader {
-        private final URI uri;
-        private final JarFile jf;
+    static class ExplodedModuleReader implements ModuleReader {
+        private final Path dir;
+        private volatile boolean closed;
 
-        JarModuleReader(ModuleReference mref) throws IOException {
-            URI uri = mref.location().get();
-            String s = uri.toString();
-            URI fileURI = URI.create(s.substring(4, s.length()-2));
-            this.uri = uri;
-            this.jf = new JarFile(Paths.get(fileURI).toString());
+        ExplodedModuleReader(URI location) {
+            dir = Paths.get(location);
+
+            // when running with a security manager then check that the caller
+            // has access to the directory.
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                boolean unused = Files.isDirectory(dir);
+            }
         }
 
-        private JarEntry getEntry(String name) {
-            return jf.getJarEntry(Objects.requireNonNull(name));
+        /**
+         * Returns a Path to access to the given resource.
+         */
+        private Path toPath(String name) {
+            Path path = Paths.get(name.replace('/', File.separatorChar));
+            if (path.getRoot() == null) {
+                return dir.resolve(path);
+            } else {
+                // drop the root component so that the resource is
+                // located relative to the module directory
+                int n = path.getNameCount();
+                return (n > 0) ? dir.resolve(path.subpath(0, n)) : null;
+            }
+        }
+
+        /**
+         * Throws IOException if the module reader is closed;
+         */
+        private void ensureOpen() throws IOException {
+            if (closed) throw new IOException("ModuleReader is closed");
         }
 
         @Override
-        Optional<URI> implFind(String name) throws IOException {
-            JarEntry je = getEntry(name);
-            if (je != null) {
-                String encodedPath = ParseUtil.encodePath(name, false);
-                return Optional.of(URI.create(uri + encodedPath));
+        public Optional<URI> find(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                try {
+                    return Optional.of(path.toUri());
+                } catch (IOError e) {
+                    throw (IOException) e.getCause();
+                }
             } else {
                 return Optional.empty();
             }
         }
 
         @Override
-        Optional<InputStream> implOpen(String name) throws IOException {
-            JarEntry je = getEntry(name);
-            if (je != null) {
-                return Optional.of(jf.getInputStream(je));
+        public Optional<InputStream> open(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                return Optional.of(Files.newInputStream(path));
             } else {
                 return Optional.empty();
             }
         }
 
         @Override
-        void implClose() throws IOException {
-            jf.close();
+        public Optional<ByteBuffer> read(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public void close() {
+            closed = true;
         }
     }
 

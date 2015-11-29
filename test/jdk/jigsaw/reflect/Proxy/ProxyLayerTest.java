@@ -23,7 +23,6 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
