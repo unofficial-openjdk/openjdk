@@ -174,6 +174,7 @@ public final class ModuleReference {
         int hc = hash;
         if (hc == 0) {
             hc = Objects.hash(descriptor, location, readerSupplier, hasher);
+            hash = hc;
         }
         return hc;
     }
