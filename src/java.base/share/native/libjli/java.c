@@ -396,10 +396,7 @@ JavaMain(void * _args)
     if (listModules != NULL) {
         ListModules(env, listModules);
         CHECK_EXCEPTION_LEAVE(1);
-        if (what == NULL) {
-            /* No main class or module specified */
-            LEAVE();
-        }
+        LEAVE();
     }
 
     if (printVersion || showVersion) {
@@ -1178,6 +1175,7 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
             listModules = arg;
+            return JNI_TRUE;
         } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
             static jboolean haveAddReads = JNI_FALSE;
             /* -XaddReads only allowed once */
@@ -1300,10 +1298,7 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        /* No main class or module specified */
-        if (listModules == NULL) {
-            *pret = 1;
-        }
+        *pret = 1;
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */

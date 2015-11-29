@@ -69,6 +69,16 @@ public final class ModuleBootstrap {
     // the token for "all system modules"
     private static final String ALL_SYSTEM = "ALL-SYSTEM";
 
+    // ModuleFinder for the initial configuration
+    private static ModuleFinder initialFinder;
+
+    /**
+     * Returns the ModuleFinder for the initial configuration
+     */
+    public static ModuleFinder finder() {
+        assert initialFinder != null;
+        return initialFinder;
+    }
 
     /**
      * Initialize the module system, returning the boot Layer.
@@ -237,6 +247,9 @@ public final class ModuleBootstrap {
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
+
+        // remember the ModuleFinder
+        initialFinder = finder;
 
         return bootLayer;
     }

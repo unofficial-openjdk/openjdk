@@ -43,7 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
@@ -895,7 +895,7 @@ public enum LauncherHelper {
     }
 
     /**
-     * Called by the launcher to list modules in the boot Layer.
+     * Called by the launcher to list the observable modules.
      * If called without any sub-options then the output is a simple list of
      * the modules. If called with sub-options then the sub-options are the
      * names of the modules to list (-listmods:java.base,java.desktop for
@@ -906,35 +906,32 @@ public enum LauncherHelper {
     {
         initOutput(printToStderr);
 
-        Layer layer = Layer.boot();
-        if (layer == null)
-            return;
+        ModuleFinder finder = jdk.internal.module.ModuleBootstrap.finder();
 
-        Configuration cf = layer.configuration();
         int colon = optionFlag.indexOf(':');
         if (colon == -1) {
-            cf.modules().stream()
+            finder.findAll().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
                 .forEach(md -> {
-                        ostream.println(midAndLocation(md.descriptor(),
-                                                       md.location()));
-                    });
+                    ostream.println(midAndLocation(md.descriptor(),
+                                                   md.location()));
+                });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
             for (String name: names) {
-                ModuleReference mref = cf.findModule(name).orElse(null);
+                ModuleReference mref = finder.find(name).orElse(null);
                 if (mref == null) {
-                    // skip as module is not in the boot Layer
+                    // not found
                     continue;
                 }
 
                 ModuleDescriptor md = mref.descriptor();
                 ostream.println(midAndLocation(md, mref.location()));
 
-                for (Requires d: md.requires()) {
+                for (Requires d : md.requires()) {
                     ostream.format("  requires %s%n", d);
                 }
-                for (String s: md.uses()) {
+                for (String s : md.uses()) {
                     ostream.format("  uses %s%n", s);
                 }
 
