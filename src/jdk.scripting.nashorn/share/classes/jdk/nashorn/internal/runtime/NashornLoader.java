@@ -38,7 +38,6 @@ import java.security.Permissions;
 import java.security.SecureClassLoader;
 import java.util.HashSet;
 import java.util.Set;
-import jdk.nashorn.tools.Shell;
 import jdk.internal.module.Modules;
 
 /**
@@ -134,10 +133,10 @@ abstract class NashornLoader extends SecureClassLoader {
     /**
      * Create a secure URL class loader for the given classpath
      * @param classPath classpath for the loader to search from
+     * @param parent the parent class loader for the new class loader
      * @return the class loader
      */
-    static ClassLoader createClassLoader(final String classPath) {
-        final ClassLoader parent = Shell.class.getClassLoader();
+    static ClassLoader createClassLoader(final String classPath, final ClassLoader parent) {
         final URL[] urls = pathToURLs(classPath);
         return URLClassLoader.newInstance(urls, parent);
     }
