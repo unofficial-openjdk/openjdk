@@ -43,7 +43,7 @@ public class XpatchTest {
                         "}";
 
         ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
-             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source),
+             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source, "-Xmodule:java.naming"),
              "mods/java.naming");
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods",

@@ -49,11 +49,11 @@ public class Xpatch2Dirs {
                         "}";
 
         ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
-             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source1),
+             InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source1, "-Xmodule:java.naming"),
              "mods/java.naming");
 
         ClassFileInstaller.writeClassToDisk("java/beans/Encoder",
-             InMemoryJavaCompiler.compile("java.beans.Encoder", source2),
+             InMemoryJavaCompiler.compile("java.beans.Encoder", source2, "-Xmodule:java.desktop"),
              "mods2/java.desktop");
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
