@@ -22,7 +22,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package jdk.internal.jrtfs;
 
 import java.nio.file.DirectoryStream;
@@ -34,48 +33,41 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.io.IOException;
 
+/**
+ * DirectoryStream implementation for jrt file system implementations.
+ */
 final class JrtDirectoryStream implements DirectoryStream<Path> {
-    private final JrtFileSystem jrtfs;
-    private final byte[] path;
-    // prefix to be used for children of this directory
-    // so that child path are reported relatively (if needed)
-    private final String childPrefix;
+
+    private final AbstractJrtFileSystem jrtfs;
+    private final AbstractJrtPath dir;
     private final DirectoryStream.Filter<? super Path> filter;
     private volatile boolean isClosed;
     private volatile Iterator<Path> itr;
 
-    JrtDirectoryStream(JrtPath jrtPath,
-                       DirectoryStream.Filter<? super java.nio.file.Path> filter)
-        throws IOException
-    {
+    JrtDirectoryStream(AbstractJrtPath jrtPath,
+            DirectoryStream.Filter<? super java.nio.file.Path> filter)
+            throws IOException {
         this.jrtfs = jrtPath.getFileSystem();
-        this.path = jrtPath.getResolvedPath();
+        this.dir = jrtPath;
         // sanity check
-        if (!jrtfs.isDirectory(path, true))
+        if (!jrtfs.isDirectory(dir, true)) {
             throw new NotDirectoryException(jrtPath.toString());
-
-        // absolute path and does not have funky chars in front like /./java.base
-        if (jrtPath.isAbsolute() && (path.length == jrtPath.getPathLength())) {
-            childPrefix = null;
-        } else {
-            // cases where directory content needs to modified with prefix
-            // like ./java.base, /./java.base, java.base and so on.
-            String dirName = jrtPath.toString();
-            int idx = dirName.indexOf(JrtFileSystem.getString(path).substring(1));
-            childPrefix = dirName.substring(0, idx);
         }
+
         this.filter = filter;
     }
 
     @Override
     public synchronized Iterator<Path> iterator() {
-        if (isClosed)
+        if (isClosed) {
             throw new ClosedDirectoryStreamException();
-        if (itr != null)
+        }
+        if (itr != null) {
             throw new IllegalStateException("Iterator has already been returned");
+        }
 
         try {
-            itr = jrtfs.iteratorOf(path, childPrefix);
+            itr = jrtfs.iteratorOf(dir);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

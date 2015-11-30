@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.List;
 import java.util.Locale;
+import java.io.IOException;
 
 class BreakIteratorRBControl extends ResourceBundle.Control {
     static final BreakIteratorRBControl INSTANCE = new BreakIteratorRBControl();

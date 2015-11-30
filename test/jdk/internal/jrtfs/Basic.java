@@ -28,8 +28,10 @@
  */
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.DataInputStream;
 import java.nio.file.DirectoryStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -383,6 +385,8 @@ public class Basic {
             { "/modules/java.base/packages.offsets" },
             { "/modules/java.instrument/packages.offsets" },
             { "/modules/jdk.zipfs/packages.offsets" },
+            { "/modules/java.base/_the.java.base.vardeps" },
+            { "/modules/java.base/_the.java.base_batch" },
             { "/java/lang" },
             { "/java/util" },
         };
@@ -568,48 +572,55 @@ public class Basic {
     }
 
     @Test
-    public void testPackagesSubDirList() throws Exception {
+    public void invalidPathTest() {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-        String pathName = "/packages/javax.annotation";
-        Path path = fs.getPath(pathName);
-        boolean seenJavaCompiler = false, seenAnnotationsCommon = false;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path p : stream) {
-               String str = p.toString();
-               if (str.equals(pathName + "/java.compiler")) {
-                   seenJavaCompiler = true;
-               } else if (str.equals(pathName + "/java.annotations.common")) {
-                   seenAnnotationsCommon = true;
-               }
-            }
+        InvalidPathException ipe = null;
+        try {
+            boolean res = Files.exists(fs.getPath("/packages/\ud834\udd7b"));
+            assertFalse(res);
+            return;
+        } catch (InvalidPathException e) {
+            ipe = e;
         }
-        assertTrue(seenJavaCompiler);
-        assertTrue(seenAnnotationsCommon);
+        assertTrue(ipe != null);
     }
 
-    @Test
-    public void testRootDirList() throws Exception {
+    @DataProvider(name="packagesLinkedDirs")
+    private Object[][] packagesLinkedDirs() {
+        return new Object[][] {
+            { "/packages/java.lang/java.base/java/lang/ref"             },
+            { "/./packages/java.lang/java.base/java/lang/ref"           },
+            { "packages/java.lang/java.base/java/lang/ref"              },
+            { "/packages/../packages/java.lang/java.base/java/lang/ref" },
+            { "/packages/java.lang/java.base/java/util/zip"             },
+            { "/./packages/java.lang/java.base/java/util/zip"           },
+            { "packages/java.lang/java.base/java/util/zip"              },
+            { "/packages/../packages/java.lang/java.base/java/util/zip" },
+            { "/packages/com.oracle/java.xml.ws/com"                    },
+            { "/./packages/com.oracle/java.xml.ws/com"                  },
+            { "packages/com.oracle/java.xml.ws/com"                     },
+            { "/packages/../packages/com.oracle/java.xml.ws/com"        }
+        };
+    }
+
+    // @bug 8141521: jrt file system's DirectoryStream reports child paths
+    // with wrong paths for directories under /packages
+    @Test(dataProvider = "packagesLinkedDirs")
+    public void dirStreamPackagesDirTest(String dirName) throws IOException {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-        Path path = fs.getPath("/");
-        // check /packages and /modules are not repeated
-        // and seen once.
-        boolean packages = false, modules = false;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path p : stream) {
-                String str = p.toString();
-                switch (str) {
-                    case "/packages":
-                        assertFalse(packages, "/packages repeated");
-                        packages = true;
-                        break;
-                    case "/modules":
-                        assertFalse(modules, "/modules repeated");
-                        modules = true;
-                        break;
+        Path path = fs.getPath(dirName);
+
+        int childCount = 0, dirPrefixOkayCount = 0;
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path)) {
+            for (Path child : dirStream) {
+                childCount++;
+                if (child.toString().startsWith(dirName)) {
+                    dirPrefixOkayCount++;
                 }
             }
         }
-        assertTrue(packages, "/packages missing in / list!");
-        assertTrue(modules, "/modules missing in / list!");
+
+        assertTrue(childCount != 0);
+        assertEquals(dirPrefixOkayCount, childCount);
     }
 }

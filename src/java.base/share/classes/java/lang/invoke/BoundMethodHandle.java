@@ -788,7 +788,8 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
         static void setSpeciesDataToConcreteBMHClass(Class<? extends BoundMethodHandle> cbmh, SpeciesData speciesData) {
             try {
                 Field F_SPECIES_DATA = cbmh.getDeclaredField("SPECIES_DATA");
-                assert F_SPECIES_DATA.getDeclaredAnnotation(Stable.class) != null;
+                // ## FIXME
+                // assert F_SPECIES_DATA.getDeclaredAnnotation(Stable.class) != null;
                 F_SPECIES_DATA.set(null, speciesData);
             } catch (ReflectiveOperationException ex) {
                 throw newInternalError(ex);

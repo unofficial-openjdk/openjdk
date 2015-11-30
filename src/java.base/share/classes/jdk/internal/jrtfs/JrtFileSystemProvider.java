@@ -22,7 +22,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package jdk.internal.jrtfs;
 
 import java.io.*;
@@ -32,16 +31,20 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * File system provider for jrt file systems. Conditionally creates jrt fs on
+ * .jimage file or exploded modules directory of underlying JDK.
+ */
 public final class JrtFileSystemProvider extends FileSystemProvider {
+
     private volatile FileSystem theFileSystem;
 
-    public JrtFileSystemProvider() { }
+    public JrtFileSystemProvider() {
+    }
 
     @Override
     public String getScheme() {
@@ -55,50 +58,60 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             String home = SystemImages.RUNTIME_HOME;
-            FilePermission perm =
-                new FilePermission(home + File.separator + "-", "read");
+            FilePermission perm
+                    = new FilePermission(home + File.separator + "-", "read");
             sm.checkPermission(perm);
         }
     }
 
     private void checkUri(URI uri) {
-        if (!uri.getScheme().equalsIgnoreCase(getScheme()))
+        if (!uri.getScheme().equalsIgnoreCase(getScheme())) {
             throw new IllegalArgumentException("URI does not match this provider");
-        if (uri.getAuthority() != null)
+        }
+        if (uri.getAuthority() != null) {
             throw new IllegalArgumentException("Authority component present");
-        if (uri.getPath() == null)
+        }
+        if (uri.getPath() == null) {
             throw new IllegalArgumentException("Path component is undefined");
-        if (!uri.getPath().equals("/"))
+        }
+        if (!uri.getPath().equals("/")) {
             throw new IllegalArgumentException("Path component should be '/'");
-        if (uri.getQuery() != null)
+        }
+        if (uri.getQuery() != null) {
             throw new IllegalArgumentException("Query component present");
-        if (uri.getFragment() != null)
+        }
+        if (uri.getFragment() != null) {
             throw new IllegalArgumentException("Fragment component present");
+        }
     }
 
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> env)
-        throws IOException
-    {
+            throws IOException {
         checkPermission();
         checkUri(uri);
-        return new JrtFileSystem(this, env);
+        return SystemImages.bootImageExists ? new JrtFileSystem(this, env) : new JrtExplodedFileSystem(this, env);
     }
 
     @Override
     public Path getPath(URI uri) {
         checkPermission();
-        if (!uri.getScheme().equalsIgnoreCase(getScheme()))
+        if (!uri.getScheme().equalsIgnoreCase(getScheme())) {
             throw new IllegalArgumentException("URI does not match this provider");
-        if (uri.getAuthority() != null)
+        }
+        if (uri.getAuthority() != null) {
             throw new IllegalArgumentException("Authority component present");
-        if (uri.getQuery() != null)
+        }
+        if (uri.getQuery() != null) {
             throw new IllegalArgumentException("Query component present");
-        if (uri.getFragment() != null)
+        }
+        if (uri.getFragment() != null) {
             throw new IllegalArgumentException("Fragment component present");
+        }
         String path = uri.getPath();
-        if (path == null || path.charAt(0) != '/')
+        if (path == null || path.charAt(0) != '/') {
             throw new IllegalArgumentException("Invalid path component");
+        }
         return getTheFileSystem().getPath(path);
     }
 
@@ -110,11 +123,21 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
                 fs = this.theFileSystem;
                 if (fs == null) {
                     try {
-                        this.theFileSystem = fs = new JrtFileSystem(this, null) {
-                            @Override public void close() {
-                                throw new UnsupportedOperationException();
-                            }
-                        };
+                        if (SystemImages.bootImageExists) {
+                            this.theFileSystem = fs = new JrtFileSystem(this, null) {
+                                @Override
+                                public void close() {
+                                    throw new UnsupportedOperationException();
+                                }
+                            };
+                        } else {
+                            this.theFileSystem = fs = new JrtExplodedFileSystem(this, null) {
+                                @Override
+                                public void close() {
+                                    throw new UnsupportedOperationException();
+                                }
+                            };
+                        }
                     } catch (IOException ioe) {
                         throw new InternalError(ioe);
                     }
@@ -132,71 +155,69 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
     }
 
     // Checks that the given file is a JrtPath
-    static final JrtPath toJrtPath(Path path) {
-        if (path == null)
+    static final AbstractJrtPath toAbstractJrtPath(Path path) {
+        if (path == null) {
             throw new NullPointerException();
-        if (!(path instanceof JrtPath))
+        }
+        if (!(path instanceof AbstractJrtPath)) {
             throw new ProviderMismatchException();
-        return (JrtPath)path;
+        }
+        return (AbstractJrtPath) path;
     }
 
     @Override
     public void checkAccess(Path path, AccessMode... modes) throws IOException {
-        toJrtPath(path).checkAccess(modes);
+        toAbstractJrtPath(path).checkAccess(modes);
     }
 
     @Override
     public Path readSymbolicLink(Path link) throws IOException {
-        return toJrtPath(link).readSymbolicLink();
+        return toAbstractJrtPath(link).readSymbolicLink();
     }
 
     @Override
     public void copy(Path src, Path target, CopyOption... options)
-        throws IOException
-    {
-        toJrtPath(src).copy(toJrtPath(target), options);
+            throws IOException {
+        toAbstractJrtPath(src).copy(toAbstractJrtPath(target), options);
     }
 
     @Override
     public void createDirectory(Path path, FileAttribute<?>... attrs)
-        throws IOException
-    {
-        toJrtPath(path).createDirectory(attrs);
+            throws IOException {
+        toAbstractJrtPath(path).createDirectory(attrs);
     }
 
     @Override
     public final void delete(Path path) throws IOException {
-        toJrtPath(path).delete();
+        toAbstractJrtPath(path).delete();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <V extends FileAttributeView> V
-        getFileAttributeView(Path path, Class<V> type, LinkOption... options)
-    {
-        return JrtFileAttributeView.get(toJrtPath(path), type, options);
+            getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
+        return JrtFileAttributeView.get(toAbstractJrtPath(path), type, options);
     }
 
     @Override
     public FileStore getFileStore(Path path) throws IOException {
-        return toJrtPath(path).getFileStore();
+        return toAbstractJrtPath(path).getFileStore();
     }
 
     @Override
     public boolean isHidden(Path path) {
-        return toJrtPath(path).isHidden();
+        return toAbstractJrtPath(path).isHidden();
     }
 
     @Override
     public boolean isSameFile(Path path, Path other) throws IOException {
-        return toJrtPath(path).isSameFile(other);
+        return toAbstractJrtPath(path).isSameFile(other);
     }
 
     @Override
     public void move(Path src, Path target, CopyOption... options)
-        throws IOException
-    {
-        toJrtPath(src).move(toJrtPath(target), options);
+            throws IOException {
+        toAbstractJrtPath(src).move(toAbstractJrtPath(target), options);
     }
 
     @Override
@@ -204,74 +225,66 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
             Set<? extends OpenOption> options,
             ExecutorService exec,
             FileAttribute<?>... attrs)
-            throws IOException
-    {
+            throws IOException {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs)
-        throws IOException
-    {
-        return toJrtPath(path).newByteChannel(options, attrs);
+            Set<? extends OpenOption> options,
+            FileAttribute<?>... attrs)
+            throws IOException {
+        return toAbstractJrtPath(path).newByteChannel(options, attrs);
     }
 
     @Override
     public DirectoryStream<Path> newDirectoryStream(
-        Path path, Filter<? super Path> filter) throws IOException
-    {
-        return toJrtPath(path).newDirectoryStream(filter);
+            Path path, Filter<? super Path> filter) throws IOException {
+        return toAbstractJrtPath(path).newDirectoryStream(filter);
     }
 
     @Override
     public FileChannel newFileChannel(Path path,
-                                      Set<? extends OpenOption> options,
-                                      FileAttribute<?>... attrs)
-        throws IOException
-    {
-        return toJrtPath(path).newFileChannel(options, attrs);
+            Set<? extends OpenOption> options,
+            FileAttribute<?>... attrs)
+            throws IOException {
+        return toAbstractJrtPath(path).newFileChannel(options, attrs);
     }
 
     @Override
     public InputStream newInputStream(Path path, OpenOption... options)
-        throws IOException
-    {
-        return toJrtPath(path).newInputStream(options);
+            throws IOException {
+        return toAbstractJrtPath(path).newInputStream(options);
     }
 
     @Override
     public OutputStream newOutputStream(Path path, OpenOption... options)
-        throws IOException
-    {
-        return toJrtPath(path).newOutputStream(options);
+            throws IOException {
+        return toAbstractJrtPath(path).newOutputStream(options);
     }
 
     @Override
     @SuppressWarnings("unchecked") // Cast to A
     public <A extends BasicFileAttributes> A
-        readAttributes(Path path, Class<A> type, LinkOption... options)
-        throws IOException
-    {
-        if (type == BasicFileAttributes.class || type == JrtFileAttributes.class)
-            return (A)toJrtPath(path).getAttributes(options);
+            readAttributes(Path path, Class<A> type, LinkOption... options)
+            throws IOException {
+        if (type == BasicFileAttributes.class || type == JrtFileAttributes.class) {
+            return (A) toAbstractJrtPath(path).getAttributes(options);
+        }
         return null;
     }
 
     @Override
     public Map<String, Object>
-        readAttributes(Path path, String attribute, LinkOption... options)
-        throws IOException
-    {
-        return toJrtPath(path).readAttributes(attribute, options);
+            readAttributes(Path path, String attribute, LinkOption... options)
+            throws IOException {
+        return toAbstractJrtPath(path).readAttributes(attribute, options);
     }
 
     @Override
     public void setAttribute(Path path, String attribute,
-                             Object value, LinkOption... options)
-        throws IOException
-    {
-        toJrtPath(path).setAttribute(attribute, value, options);
+            Object value, LinkOption... options)
+            throws IOException {
+        toAbstractJrtPath(path).setAttribute(attribute, value, options);
     }
 }

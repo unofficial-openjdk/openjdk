@@ -55,9 +55,10 @@ static const char* const_jargs[] = JAVA_ARGS;
  * value of -cp option to the launcher.
  */
 #ifndef APP_CLASSPATH
-#define APP_CLASSPATH        { "/lib/tools.jar", "/classes" }
-#endif /* APP_CLASSPATH */
+static const char* const_appclasspath[] = { NULL };
+#else
 static const char* const_appclasspath[] = APP_CLASSPATH;
+#endif /* APP_CLASSPATH */
 #else  /* !JAVA_ARGS */
 #define HAS_JAVA_ARGS JNI_FALSE
 #ifdef PROGNAME
@@ -66,7 +67,7 @@ static const char* const_progname = PROGNAME;
 static char* const_progname = NULL;
 #endif
 static const char** const_jargs = NULL;
-static const char** const_appclasspath = NULL;
+static const char* const_appclasspath[] = { NULL };
 #endif /* JAVA_ARGS */
 
 #ifdef LAUNCHER_NAME

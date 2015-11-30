@@ -138,7 +138,7 @@ static jboolean JIMAGE_ReadCompressed(JNIEnv *env,
     if (is_read) {
         const ImageStrings strings = reader->get_strings();
         ImageDecompressor::decompress_resource(compressedAddress, uncompressedAddress,
-                (u4) uncompressed_size, &strings);
+                uncompressed_size, &strings, reader->endian());
     }
     return (jboolean) is_read;
 }

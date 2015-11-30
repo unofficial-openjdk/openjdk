@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
  * @library ../../../../lib/testlibrary ../
  * @build ExtendedRobot SystemTrayIconHelper
+ * @compile/module=java.desktop java/awt/Helper.java
  * @run main ModalityTest
  */
 public class ModalityTest {

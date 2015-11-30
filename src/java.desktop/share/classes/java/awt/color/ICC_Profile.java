@@ -1890,12 +1890,14 @@ public class ICC_Profile implements Serializable {
     /**
      * Checks whether built-in profile specified by fileName exists.
      */
-    private static boolean standardProfileExists(final String fileName) {
-        return AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-                public Boolean run() {
-                    return PCMM.class.getResource("profiles/"+fileName) != null;
-                }
-            });
+    private static boolean standardProfileExists(String fileName) {
+        InputStream in = getStandardProfileInputStream(fileName);
+        if (in != null) {
+            try { in.close(); } catch (IOException ignore) { }
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

@@ -30,6 +30,7 @@ import java.awt.image.BufferedImage;
  *          right clicked. It uses a JWindow as the parent of the JPopupMenu
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
  * @library ../../../../lib/testlibrary ../
+ * @compile/module=java.desktop java/awt/Helper.java
  * @build ExtendedRobot SystemTrayIconHelper
  * @run main TrayIconPopupTest
  */
