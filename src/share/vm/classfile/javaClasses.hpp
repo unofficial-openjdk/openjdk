@@ -254,26 +254,32 @@ class java_lang_Class : AllStatic {
   static int _init_lock_offset;
   static int _signers_offset;
   static int _class_loader_offset;
+  static int _module_offset;
   static int _component_mirror_offset;
 
   static bool offsets_computed;
   static int classRedefinedCount_offset;
 
   static GrowableArray<Klass*>* _fixup_mirror_list;
+  static GrowableArray<Klass*>* _fixup_jlrM_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
   static void set_class_loader(oop java_class, oop class_loader);
+  static void set_module(oop java_class, oop module);
   static void set_component_mirror(oop java_class, oop comp_mirror);
   static void initialize_mirror_fields(KlassHandle k, Handle mirror, Handle protection_domain, TRAPS);
  public:
   static void compute_offsets();
 
   // Instance creation
-  static void create_mirror(KlassHandle k, Handle class_loader,
+  static void create_mirror(KlassHandle k, Handle class_loader, Handle module,
                             Handle protection_domain, TRAPS);
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
+
+  static void fixup_jlrM(KlassHandle k, Handle module, TRAPS);
+
   // Conversion
   static Klass* as_Klass(oop java_class);
   static void set_klass(oop java_class, Klass* klass);
@@ -311,11 +317,13 @@ class java_lang_Class : AllStatic {
   static void set_signers(oop java_class, objArrayOop signers);
 
   static oop class_loader(oop java_class);
+  static oop module(oop java_class);
 
   static int oop_size(oop java_class);
   static void set_oop_size(oop java_class, int size);
   static int static_oop_field_count(oop java_class);
   static void set_static_oop_field_count(oop java_class, int size);
+
 
   static GrowableArray<Klass*>* fixup_mirror_list() {
     return _fixup_mirror_list;
@@ -323,6 +331,14 @@ class java_lang_Class : AllStatic {
   static void set_fixup_mirror_list(GrowableArray<Klass*>* v) {
     _fixup_mirror_list = v;
   }
+
+  static GrowableArray<Klass*>* fixup_jlrM_list() {
+    return _fixup_jlrM_list;
+  }
+  static void set_fixup_jlrM_list(GrowableArray<Klass*>* v) {
+    _fixup_jlrM_list = v;
+  }
+
   // Debugging
   friend class JavaClasses;
   friend class InstanceKlass;   // verification code accesses offsets
@@ -802,6 +818,39 @@ class java_lang_reflect_Parameter {
   friend class JavaClasses;
 };
 
+#define MODULE_INJECTED_FIELDS(macro)                            \
+  macro(java_lang_reflect_Module, module_entry, intptr_signature, false)
+
+class java_lang_reflect_Module {
+  private:
+    static int loader_offset;
+    static int name_offset;
+    static int _module_entry_offset;
+    static void compute_offsets();
+
+  public:
+    // Allocation
+    static Handle create(Handle loader, Handle module_name, TRAPS);
+
+    // Testers
+    static bool is_subclass(Klass* klass) {
+      return klass->is_subclass_of(SystemDictionary::reflect_Module_klass());
+    }
+    static bool is_instance(oop obj);
+
+    // Accessors
+    static oop loader(oop module);
+    static void set_loader(oop module, oop value);
+
+    static oop name(oop module);
+    static void set_name(oop module, oop value);
+
+    static ModuleEntry* module_entry(oop module, TRAPS);
+    static void set_module_entry(oop module, ModuleEntry* module_entry);
+
+  friend class JavaClasses;
+};
+
 // Interface to sun.reflect.ConstantPool objects
 class sun_reflect_ConstantPool {
  private:
@@ -1269,6 +1318,7 @@ class java_lang_ClassLoader : AllStatic {
   static bool offsets_computed;
   static int parent_offset;
   static int parallelCapable_offset;
+  static int unnamedModule_offset;
 
  public:
   static void compute_offsets();
@@ -1292,6 +1342,8 @@ class java_lang_ClassLoader : AllStatic {
     return klass->is_subclass_of(SystemDictionary::ClassLoader_klass());
   }
   static bool is_instance(oop obj);
+
+  static oop unnamedModule(oop loader);
 
   // Debugging
   friend class JavaClasses;
@@ -1332,12 +1384,16 @@ class java_lang_System : AllStatic {
 class java_lang_StackTraceElement: AllStatic {
  private:
   enum {
-    hc_declaringClass_offset  = 0,
-    hc_methodName_offset = 1,
-    hc_fileName_offset   = 2,
-    hc_lineNumber_offset = 3
+    hc_moduleName_offset = 0,
+    hc_moduleVersion_offset = 1,
+    hc_declaringClass_offset = 2,
+    hc_methodName_offset = 3,
+    hc_fileName_offset   = 4,
+    hc_lineNumber_offset = 5
   };
 
+  static int moduleName_offset;
+  static int moduleVersion_offset;
   static int declaringClass_offset;
   static int methodName_offset;
   static int fileName_offset;
@@ -1345,6 +1401,8 @@ class java_lang_StackTraceElement: AllStatic {
 
  public:
   // Setters
+  static void set_moduleName(oop element, oop value);
+  static void set_moduleVersion(oop element, oop value);
   static void set_declaringClass(oop element, oop value);
   static void set_methodName(oop element, oop value);
   static void set_fileName(oop element, oop value);
@@ -1442,7 +1500,8 @@ class InjectedField {
   CLASS_INJECTED_FIELDS(macro)              \
   CLASSLOADER_INJECTED_FIELDS(macro)        \
   MEMBERNAME_INJECTED_FIELDS(macro)         \
-  CALLSITECONTEXT_INJECTED_FIELDS(macro)
+  CALLSITECONTEXT_INJECTED_FIELDS(macro)    \
+  MODULE_INJECTED_FIELDS(macro)
 
 // Interface to hard-coded offset checking
 

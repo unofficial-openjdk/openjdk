@@ -24,8 +24,12 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
+#include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/modules.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -985,6 +989,53 @@ JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
             (jclass) JNIHandles::make_local(env, k->java_mirror());
 JVM_END
 
+// Module support //////////////////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
+                                 jobjectArray packages))
+  JVMWrapper("JVM_DefineModule");
+  Modules::define_module(env, module, version, location, packages);
+JVM_END
+
+JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
+  JVMWrapper("JVM_SetBootLoaderUnnamedModule");
+  Modules::set_bootloader_unnamed_module(env, module);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+  JVMWrapper("JVM_AddModuleExports");
+  Modules::add_module_exports_qualified(env, from_module, package, to_module);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))
+  JVMWrapper("JVM_AddModuleExportsToAllUnnamed");
+  Modules::add_module_exports_to_all_unnamed(env, from_module, package);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package))
+  JVMWrapper("JVM_AddModuleExportsToAll");
+  Modules::add_module_exports(env, from_module, package, NULL);
+JVM_END
+
+JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject source_module))
+  JVMWrapper("JVM_AddReadsModule");
+  Modules::add_reads_module(env, from_module, source_module);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module))
+  JVMWrapper("JVM_CanReadModule");
+  return Modules::can_read_module(env, asking_module, source_module);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+  JVMWrapper("JVM_IsExportedToModule");
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
+JVM_END
+
+JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
+  JVMWrapper("JVM_AddModulePackage");
+  Modules::add_module_package(env, module, package);
+JVM_END
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
 

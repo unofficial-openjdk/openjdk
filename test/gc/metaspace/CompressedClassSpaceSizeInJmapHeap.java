@@ -28,6 +28,7 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management
+ * @ignore 8134071
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:CompressedClassSpaceSize=50m CompressedClassSpaceSizeInJmapHeap
  */
 
