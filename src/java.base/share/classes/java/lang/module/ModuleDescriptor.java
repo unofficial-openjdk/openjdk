@@ -1060,7 +1060,7 @@ public class ModuleDescriptor
             hc = hc * 43 + Objects.hashCode(mainClass);
             hc = hc * 43 + Objects.hashCode(conceals);
             hc = hc * 43 + Objects.hashCode(hashes);
-            hash = hc;
+            if (hc != 0) hash = hc;
         }
         return hc;
     }
