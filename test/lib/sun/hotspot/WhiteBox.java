@@ -377,6 +377,18 @@ public class WhiteBox {
                        .findAny()
                        .orElse(null);
   }
+
+  // Jigsaw
+  public native void DefineModule(Object module, String version, String location,
+                                  Object[] packages);
+  public native void AddModuleExports(Object from_module, String pkg, Object to_module);
+  public native void AddReadsModule(Object from_module, Object source_module);
+  public native boolean CanReadModule(Object asking_module, Object source_module);
+  public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
+  public native void AddModulePackage(Object module, String pkg);
+  public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
+  public native void AddModuleExportsToAll(Object module, String pkg);
+
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
     int offset = getOffsetForName0(name);
@@ -408,5 +420,6 @@ public class WhiteBox {
 
   // Sharing
   public native boolean isShared(Object o);
+  public native boolean isSharedClass(Class<?> c);
   public native boolean areSharedStringsIgnored();
 }
