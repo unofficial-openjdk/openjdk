@@ -9,7 +9,7 @@
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
+ * version 2 for more details (a copy is included i
  * accompanied this code).
  *
  * You should have received a copy of the GNU General Public License version
@@ -50,7 +50,8 @@ public class TestSubTitle extends JavadocTester {
             "<div class=\"block\">This is the description of package pkg.</div>");
 
         checkOutput("pkg/C.html", true,
-            "<div class=\"subTitle\">pkg</div>");
+                "<div class=\"subTitle\"><span class=\"packageLabelInClass\">Package</span>&nbsp;"
+                + "<a href=\"../pkg/package-summary.html\" target=\"classFrame\">pkg</a></div>");
 
         checkOutput("pkg/package-summary.html", false,
             "<p class=\"subTitle\">\n" +

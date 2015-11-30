@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -289,8 +289,10 @@ public class Arguments {
         checkOptionAllowed(platformString == null,
                 option -> error("err.release.bootclasspath.conflict", option.getText()),
                 Option.BOOTCLASSPATH, Option.XBOOTCLASSPATH, Option.XBOOTCLASSPATH_APPEND,
-                Option.XBOOTCLASSPATH_PREPEND, Option.ENDORSEDDIRS, Option.EXTDIRS, Option.SOURCE,
-                Option.TARGET);
+                Option.XBOOTCLASSPATH_PREPEND,
+                Option.ENDORSEDDIRS, Option.DJAVA_ENDORSED_DIRS,
+                Option.EXTDIRS, Option.DJAVA_EXT_DIRS,
+                Option.SOURCE, Option.TARGET);
 
         if (platformString != null) {
             PlatformDescription platformDescription = PlatformUtils.lookupPlatformDescription(platformString);
@@ -490,6 +492,37 @@ public class Arguments {
         } else if (target == Target.MIN && lintOptions) {
             log.warning(LintCategory.OPTIONS, "option.obsolete.target", target.name);
             obsoleteOptionFound = true;
+        }
+
+        final Target t = target;
+        checkOptionAllowed(t.compareTo(Target.JDK1_8) <= 0,
+                option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
+                Option.BOOTCLASSPATH,
+                Option.XBOOTCLASSPATH_PREPEND, Option.XBOOTCLASSPATH, Option.XBOOTCLASSPATH_APPEND,
+                Option.ENDORSEDDIRS, Option.DJAVA_ENDORSED_DIRS,
+                Option.EXTDIRS, Option.DJAVA_EXT_DIRS);
+
+        checkOptionAllowed(t.compareTo(Target.JDK1_9) >= 0,
+                option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
+                Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
+                Option.SYSTEMMODULEPATH, Option.MODULEPATH,
+                Option.XOVERRIDE, Option.XPATCH);
+
+        JavaFileManager fm = getFileManager();
+
+        if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
+            if (!options.isSet(Option.PROC, "only")
+                    && !fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
+                log.error("no.output.dir");
+            }
+            if (options.isSet(Option.XMODULE)) {
+                log.error("xmodule.no.module.sourcepath");
+            }
+        }
+
+        if (fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH) &&
+            fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH)) {
+            log.error("processorpath.no.procesormodulepath");
         }
 
         if (obsoleteOptionFound)

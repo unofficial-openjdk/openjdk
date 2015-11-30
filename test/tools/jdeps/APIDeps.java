@@ -37,8 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.*;
 
@@ -85,7 +83,7 @@ public class APIDeps {
         // -jdkinternals parses all classes on -classpath and the input arguments
         test(new File(mDir, "Gee.class"),
              new String[] {"com.sun.tools.jdeps.Main", "com.sun.tools.classfile.ClassFile",
-                           "sun.security.x509.X509CertInfo", "sun.misc.Unsafe"},
+                           "sun.security.x509.X509CertInfo"},
              new String[] {"JDK internal API"},
              new String[] {"-classpath", testDir.getPath(), "-jdkinternals"});
 

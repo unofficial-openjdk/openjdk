@@ -25,19 +25,25 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
 import javax.tools.JavaFileManager;
+import javax.tools.JavaFileManager.Location;
+import javax.tools.StandardLocation;
 
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclint.DocLint;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.StringUtils;
+import com.sun.tools.javadoc.ClassDocImpl;
+import com.sun.tools.javadoc.PackageDocImpl;
 import com.sun.tools.javadoc.RootDocImpl;
 
 /**
@@ -639,6 +645,34 @@ public class ConfigurationImpl extends Configuration {
     @Override
     public Content newContent() {
         return new ContentBuilder();
+    }
+
+    @Override
+    public Location getLocationForPackage(PackageDoc pd) {
+        JavaFileManager fm = getFileManager();
+        if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH) && (pd instanceof PackageDocImpl)) {
+            try {
+                ModuleSymbol msym = ((PackageDocImpl) pd).sym.modle;
+                return fm.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH, msym.name.toString());
+            } catch (IOException e) {
+                throw new DocletAbortException(e);
+            }
+        }
+        return StandardLocation.SOURCE_PATH;
+    }
+
+    @Override
+    public String getModule(ClassDoc classDoc) {
+        if (!(classDoc instanceof ClassDocImpl))
+            return null;
+        return ((ClassDocImpl) classDoc).tsym.modle.name.toString();
+    }
+
+    @Override
+    public String getModule(PackageDoc packageDoc) {
+        if (!(packageDoc instanceof PackageDocImpl))
+            return null;
+        return ((PackageDocImpl) packageDoc).sym.modle.name.toString();
     }
 
     protected void buildSearchTagIndex() {

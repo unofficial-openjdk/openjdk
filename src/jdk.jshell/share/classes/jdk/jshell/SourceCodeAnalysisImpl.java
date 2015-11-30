@@ -620,7 +620,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
     private PackageElement createPackageElement(AnalyzeTask at, String packageName) {
         Names names = Names.instance(at.getContext());
         Symtab syms = Symtab.instance(at.getContext());
-        PackageElement existing = syms.enterPackage(names.fromString(packageName));
+        PackageElement existing = syms.enterPackage(syms.unnamedModule, names.fromString(packageName));
 
         return existing;
     }

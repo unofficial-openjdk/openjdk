@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.javadoc.*;
-import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.builders.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
@@ -237,6 +236,7 @@ public class HtmlDoclet extends AbstractDoclet {
             } catch (IOException e) {
                 throw new DocletAbortException(e);
             } catch (DocletAbortException de) {
+                de.printStackTrace();
                 throw de;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -248,44 +248,21 @@ public class HtmlDoclet extends AbstractDoclet {
     /**
      * {@inheritDoc}
      */
-    protected void generateProfileFiles() throws Exception {
-        if (configuration.showProfiles && configuration.profilePackages.size() > 0) {
-            ProfileIndexFrameWriter.generate(configuration);
-            Profile prevProfile = null, nextProfile;
-            String profileName;
-            for (int i = 1; i < configuration.profiles.getProfileCount(); i++) {
-                profileName = Profile.lookup(i).name;
-                // Generate profile package pages only if there are any packages
-                // in a profile to be documented. The profilePackages map will not
-                // contain an entry for the profile if there are no packages to be documented.
-                if (!configuration.shouldDocumentProfile(profileName))
-                    continue;
-                ProfilePackageIndexFrameWriter.generate(configuration, profileName);
-                List<PackageDoc> packages = configuration.profilePackages.get(
-                        profileName);
-                PackageDoc prev = null, next;
-                for (int j = 0; j < packages.size(); j++) {
-                    // if -nodeprecated option is set and the package is marked as
-                    // deprecated, do not generate the profilename-package-summary.html
-                    // and profilename-package-frame.html pages for that package.
-                    PackageDoc pkg = packages.get(j);
-                    if (!(configuration.nodeprecated && utils.isDeprecated(pkg))) {
-                        ProfilePackageFrameWriter.generate(configuration, pkg, i);
-                        next = getNamedPackage(packages, j + 1);
-                        AbstractBuilder profilePackageSummaryBuilder =
-                                configuration.getBuilderFactory().getProfilePackageSummaryBuilder(
-                                pkg, prev, next, Profile.lookup(i));
-                        profilePackageSummaryBuilder.build();
-                        prev = pkg;
-                    }
-                }
-                nextProfile = (i + 1 < configuration.profiles.getProfileCount()) ?
-                        Profile.lookup(i + 1) : null;
-                AbstractBuilder profileSummaryBuilder =
-                        configuration.getBuilderFactory().getProfileSummaryBuilder(
-                        Profile.lookup(i), prevProfile, nextProfile);
-                profileSummaryBuilder.build();
-                prevProfile = Profile.lookup(i);
+    protected void generateModuleFiles() throws Exception {
+        if (configuration.showModules) {
+            ModuleIndexFrameWriter.generate(configuration);
+            String prevModuleName = null, nextModuleName;
+            List<String> moduleNames = new ArrayList<>(configuration.modulePackages.keySet());
+            int i = 0;
+            for (String moduleName: moduleNames) {
+                ModulePackageIndexFrameWriter.generate(configuration, moduleName);
+                nextModuleName = (i + 1 < moduleNames.size()) ? moduleNames.get(i + 1) : null;
+                AbstractBuilder moduleSummaryBuilder =
+                        configuration.getBuilderFactory().getModuleSummaryBuilder(
+                        moduleName, prevModuleName, nextModuleName);
+                moduleSummaryBuilder.build();
+                prevModuleName = moduleName;
+                i++;
             }
         }
     }
