@@ -2182,6 +2182,12 @@ public class Types {
             }
 
             @Override
+            public Type visitWildcardType(WildcardType t, Boolean recurse) {
+                Type erased = erasure(wildUpperBound(t), recurse);
+                return combineMetadata(erased, t);
+            }
+
+            @Override
             public Type visitClassType(ClassType t, Boolean recurse) {
                 Type erased = t.tsym.erasure(Types.this);
                 if (recurse) {
@@ -3837,7 +3843,7 @@ public class Types {
 
             @Override
             public Integer visitTypeVar(TypeVar t, Void ignored) {
-                return System.identityHashCode(t.tsym);
+                return System.identityHashCode(t);
             }
 
             @Override
