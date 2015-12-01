@@ -118,7 +118,7 @@ void ImageLocation::set_data(u1* data) {
     // Deflate the attribute stream into an array of attributes.
     u1 byte;
     // Repeat until end header is found.
-    while ((byte = *data)) {
+    while ((data != NULL) && (byte = *data)) {
         // Extract kind from header byte.
         u1 kind = attribute_kind(byte);
         assert(kind < ATTRIBUTE_COUNT && "invalid image location attribute");
@@ -197,10 +197,11 @@ const char* ImageModuleData::package_to_module(const char* package_name) {
 // to share an open image.
 ImageFileReaderTable::ImageFileReaderTable() : _count(0), _max(_growth) {
     _table = new ImageFileReader*[_max];
+    assert( _table != NULL && "allocation failed");
 }
 
 ImageFileReaderTable::~ImageFileReaderTable() {
-    delete _table;
+    delete[] _table;
 }
 
 // Add a new image entry to the table.
@@ -256,6 +257,7 @@ ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
             // Retrieve table entry.
             ImageFileReader* reader = _reader_table.get(i);
             // If name matches, then reuse (bump up use count.)
+            assert(reader->name() != NULL && "reader->name must not be null");
             if (strcmp(reader->name(), name) == 0) {
                 reader->inc_use();
                 return reader;
@@ -265,20 +267,20 @@ ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
 
     // Need a new image reader.
     ImageFileReader* reader = new ImageFileReader(name, big_endian);
-    bool opened = reader->open();
-    // If failed to open.
-    if (!opened) {
+    if (reader == NULL || !reader->open()) {
+        // Failed to open.
         delete reader;
         return NULL;
     }
 
     // Lock to update
     SimpleCriticalSectionLock cs(&_reader_table_lock);
-    // Search for an exist image file.
+    // Search for an existing image file.
     for (u4 i = 0; i < _reader_table.count(); i++) {
         // Retrieve table entry.
         ImageFileReader* existing_reader = _reader_table.get(i);
         // If name matches, then reuse (bump up use count.)
+        assert(reader->name() != NULL && "reader->name still must not be null");
         if (strcmp(existing_reader->name(), name) == 0) {
             existing_reader->inc_use();
             reader->close();
@@ -327,6 +329,7 @@ ImageFileReader::ImageFileReader(const char* name, bool big_endian) {
     // Copy the image file name.
      int len = (int) strlen(name) + 1;
     _name = new char[len];
+    assert(_name != NULL  && "allocation failed");
     strncpy(_name, name, len);
     // Initialize for a closed file.
     _fd = -1;
@@ -340,7 +343,7 @@ ImageFileReader::~ImageFileReader() {
     close();
     // Free up name.
     if (_name) {
-        delete _name;
+        delete[] _name;
         _name = NULL;
     }
 }
@@ -591,7 +594,7 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
                         &strings, _endian);
         // If not memory mapped then release temporary buffer.
         if (!MemoryMapImage) {
-                delete compressed_data;
+                delete[] compressed_data;
         }
     } else {
         // Read bytes from offset beyond the image index.

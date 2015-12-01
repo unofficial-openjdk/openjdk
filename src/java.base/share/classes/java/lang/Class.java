@@ -63,7 +63,7 @@ import java.util.StringJoiner;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.BuiltinClassLoader;
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;

@@ -94,6 +94,7 @@ module java.base {
 
     // the service types defined by the APIs in this module
 
+    uses java.lang.System.LoggerFinder;
     uses java.net.ContentHandlerFactory;
     uses java.net.spi.URLStreamHandlerProvider;
     uses java.nio.channels.spi.AsynchronousChannelProvider;
@@ -134,6 +135,8 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
         jdk.jlink;
+    exports jdk.internal.logger to
+        java.logging;
     exports jdk.internal.org.objectweb.asm to
         jdk.jlink,
         jdk.scripting.nashorn,
@@ -161,7 +164,9 @@ module java.base {
         java.logging,
         java.management,
         java.naming,
+        java.security.jgss,
         java.sql,
+        java.xml,
         jdk.scripting.nashorn;
     exports sun.net.dns to
         java.security.jgss,
@@ -269,6 +274,7 @@ module java.base {
 
 
     // JDK-internal service types
+    uses jdk.internal.logger.DefaultLoggerFinder;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.security.ssl.ClientKeyExchangeService;
     uses sun.util.spi.CalendarProvider;

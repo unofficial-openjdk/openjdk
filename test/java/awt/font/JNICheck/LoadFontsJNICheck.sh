@@ -1,7 +1,6 @@
 #!/bin/sh
-
 #
-# Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,32 +20,43 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
+
 #
+#   @test
+#   @bug        8138817
+#   @summary    Tests that there are no JNI warnings about local references.
+#   @compile LoadFontsJNICheck.java
+#   @run shell/timeout=300 LoadFontsJNICheck.sh
+#
+OS=`uname`
 
+# pick up the compiled class files.
+if [ -z "${TESTCLASSES}" ]; then
+  CP="."
+else
+  CP="${TESTCLASSES}"
+fi
 
-# @test
-# @bug 6318171 6931562
-# @run shell IsSunMSCAPIAvailable.sh
-# @summary Basic test of the Microsoft CryptoAPI provider.
+if [ $OS != Darwin ]
+then
+    exit 0
+fi
 
-OS=`uname -s`
-case "$OS" in
-    Windows* | CYGWIN* )
+if [ -z "${TESTJAVA}" ] ; then
+   JAVACMD=java
+else
+   JAVACMD=$TESTJAVA/bin/java
+fi
 
-    # 'uname -m' does not give us enough information -
-    #  should rely on $PROCESSOR_IDENTIFIER (as is done in Defs-windows.gmk),
-    #  but JTREG does not pass this env variable when executing a shell script.
-    #
-    #  execute test program - rely on it to exit if platform unsupported
+$JAVACMD ${TESTVMOPTS} \
+    -cp "${CP}" -Xcheck:jni LoadFontsJNICheck | grep "local refs"  > "${CP}"/log.txt
 
-	${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}\\IsSunMSCAPIAvailable.java
-	${TESTJAVA}/bin/java ${TESTVMOPTS} IsSunMSCAPIAvailable
-	exit
-	;;
+# any messages logged may indicate a failure.
+if [ -s "${CP}"/log.txt ]; then
+    echo "Test failed"
+    cat "${CP}"/log.txt
+    exit 1
+fi
 
-    * )
-        echo "This test is not intended for '$OS' - passing test"
-        exit 0
-        ;;
-esac
-
+echo "Test passed"
+exit 0
