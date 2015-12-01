@@ -323,18 +323,18 @@ final class Resolver {
     /**
      * Poll the given {@code Deque} for modules to resolve. On completion the
      * {@code Deque} will be empty and any selected modules will be added to
-     * the given Resolution.
+     * the Selected.
      *
-     * @return The set of module selected by this invocation of resolve
+     * @return The set of module resolved by this invocation of resolve
      */
     private Set<ModuleDescriptor> resolve(Deque<ModuleDescriptor> q,
                                           Selected selected)
     {
-
-        Set<ModuleDescriptor> newlySelected = new HashSet<>();
+        Set<ModuleDescriptor> resolved = new HashSet<>();
 
         while (!q.isEmpty()) {
             ModuleDescriptor descriptor = q.poll();
+            assert selected.contains(descriptor.name());
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
@@ -356,7 +356,7 @@ final class Resolver {
                 if (!selected.contains(dn)) {
                     selected.add(mref);
                     q.offer(mref.descriptor());
-                    newlySelected.add(mref.descriptor());
+                    resolved.add(mref.descriptor());
 
                     if (TRACE) {
                         trace("Module %s located, required by %s",
@@ -367,9 +367,11 @@ final class Resolver {
                 }
 
             }
+
+            resolved.add(descriptor);
         }
 
-        return newlySelected;
+        return resolved;
     }
 
 

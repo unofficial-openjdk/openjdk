@@ -433,6 +433,8 @@ public class ConfigurationTest {
 
     /**
      * Basic test of binding services
+     *     m1 uses p.Service
+     *     m2 provides p.Service
      */
     public void testServiceBinding1() {
 
@@ -473,13 +475,64 @@ public class ConfigurationTest {
         assertTrue(cf.findModule("m1").isPresent());
         assertTrue(cf.findModule("m2").isPresent());
 
-        assertEquals(cf.modules().stream()
-                        .map(ModuleReference::descriptor)
-                        .collect(Collectors.toSet()),
-                cf.descriptors());
-
         assertTrue(cf.provides("p.Service").size() == 1);
         assertTrue(cf.provides("p.Service").contains(descriptor2));
+    }
+
+
+    /**
+     * Basic test of binding services
+     *     m1 uses p.Service1
+     *     m2 provides p.Service1, m2 uses p.Service2
+     *     m3 provides p.Service2
+     */
+    public void testServiceBinding2() {
+
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .uses("p.Service1")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .uses("p.Service2")
+                .provides("p.Service1", "q.Service1Impl")
+                .build();
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .provides("p.Service2", "q.Service2Impl")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
+
+        Configuration cf
+            = Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
+
+        // only m1 in configuration
+        assertTrue(cf.descriptors().size() == 1);
+        assertTrue(cf.findModule("m1").isPresent());
+
+        assertTrue(cf.parent().get() == empty());
+
+        assertTrue(cf.provides("p.Service1").isEmpty());
+
+        // bind services, should augment graph with m2 and m3
+        cf = cf.bind();
+
+        assertTrue(cf.parent().get() == empty());
+
+        assertTrue(cf.descriptors().size() == 3);
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+        assertTrue(cf.findModule("m3").isPresent());
+
+        assertTrue(cf.provides("p.Service1").size() == 1);
+        assertTrue(cf.provides("p.Service1").contains(descriptor2));
+
+        assertTrue(cf.provides("p.Service2").size() == 1);
+        assertTrue(cf.provides("p.Service2").contains(descriptor3));
     }
 
 
@@ -490,7 +543,7 @@ public class ConfigurationTest {
      * - Configuration cf1: m1 uses p.Service
      * - Configuration cf2: m2 provides p.Service
      */
-    public void testServiceBinding2() {
+    public void testServiceBindingWithConfigurations1() {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -537,7 +590,7 @@ public class ConfigurationTest {
      * - Configuration cf2: m3 provides p.Service
      *                      m4 provides p.Service
      */
-    public void testServiceBinding3() {
+    public void testServiceBindingWithConfigurations2() {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -609,7 +662,7 @@ public class ConfigurationTest {
      * Test configuration cf2: m1 uses p.Service
      * Test configuration cf2: m1 uses p.Service, p@2.0 uses p.Service
      */
-    public void testServiceBinding4() {
+    public void testServiceBindingWithConfigurations3() {
 
         ModuleDescriptor provider_v1
             = new ModuleDescriptor.Builder("p")
