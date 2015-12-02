@@ -114,7 +114,7 @@ public class UmodUpkgDiffCL_PkgExpQualOther {
             throw new RuntimeException("Failed to get IAE (p6 in m2 is exported to m1, not unqualifiedly");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
-            if (!e.getMessage().contains("not exported")) {
+            if (!e.getMessage().contains("does not export")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

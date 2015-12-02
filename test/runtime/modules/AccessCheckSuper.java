@@ -57,7 +57,7 @@ public class AccessCheckSuper {
             throw new RuntimeException("Failed to get IAE (can't read superclass)");
         } catch (IllegalAccessError e) {
             if (!e.getMessage().contains("superclass access check failed") ||
-                !e.getMessage().contains("cannot read")) {
+                !e.getMessage().contains("does not read")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

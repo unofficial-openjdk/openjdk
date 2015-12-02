@@ -115,7 +115,7 @@ public class UmodNpkgDiffCL_PkgNotExp {
             throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported to an unnamed module)");
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
-          if (!e.getMessage().contains("not exported")) {
+          if (!e.getMessage().contains("does not export")) {
               throw new RuntimeException("Wrong message: " + e.getMessage());
           }
         }

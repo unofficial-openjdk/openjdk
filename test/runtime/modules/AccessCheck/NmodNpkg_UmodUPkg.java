@@ -25,7 +25,7 @@
 
 /*
  * @test
- * @summary class p3.c3 defined in module m1 tries tries to access c4 defined in unnamed module.
+ * @summary class p3.c3 defined in module m1 tries to access c4 defined in unnamed module.
  * @library /testlibrary /../../test/lib
  * @compile myloaders/MySameClassLoader.java
  * @compile c4.java

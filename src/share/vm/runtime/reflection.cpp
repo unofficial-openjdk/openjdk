@@ -533,29 +533,55 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
     ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
     const char * module_from_name = module_from->is_named() ?
       module_from->name()->as_C_string() : UNNAMED_MODULE;
-    size_t len = 122 + strlen(current_class_name) + strlen(new_class_name) +
-      strlen(module_to_name) + 2 * strlen(module_from_name);
 
     if (result == MODULE_NOT_READABLE) {
-      len = len + strlen(module_to_name);
-      msg = NEW_RESOURCE_ARRAY(char, len);
-      jio_snprintf(msg, len - 1,
-        "class %s (in%s module: %s) cannot access class %s (in module: %s), %s cannot read %s",
-        current_class_name,
-        module_to->is_named() ? "" : " strict",
-        module_from_name, new_class_name,
-        module_to_name, module_from_name, module_to_name);
+      assert(module_from->is_named(), "Unnamed modules can read all modules");
+      if (module_to->is_named()) {
+        size_t len = 100 + strlen(current_class_name) + 2*strlen(module_from_name) +
+          strlen(new_class_name) + 2*strlen(module_to_name);
+        msg = NEW_RESOURCE_ARRAY(char, len);
+        jio_snprintf(msg, len - 1,
+          "class %s (in module %s) cannot access class %s (in module %s) because module %s does not read module %s",
+          current_class_name, module_from_name, new_class_name,
+          module_to_name, module_from_name, module_to_name);
+      } else {
+        jobject jlrm = module_to->jlrM_module();
+        assert(jlrm != NULL, "Null jlrm in module_to ModuleEntry");
+        intptr_t identity_hash = JNIHandles::resolve(jlrm)->identity_hash();
+        size_t len = 160 + strlen(current_class_name) + 2*strlen(module_from_name) +
+          strlen(new_class_name) + 2*sizeof(uintx);
+        msg = NEW_RESOURCE_ARRAY(char, len);
+        jio_snprintf(msg, len - 1,
+          "class %s (in module %s) cannot access class %s (in unnamed module @" SIZE_FORMAT_HEX ") because module %s does not read unnamed module @" SIZE_FORMAT_HEX,
+          current_class_name, module_from_name, new_class_name, uintx(identity_hash),
+          module_from_name, uintx(identity_hash));
+      }
 
     } else if (result == TYPE_NOT_EXPORTED) {
-      if (InstanceKlass::cast(new_class)->package() != NULL) {
-          const char * package_name =
-            InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
-          len = len + strlen(package_name);
-          msg = NEW_RESOURCE_ARRAY(char, len);
-          jio_snprintf(msg, len - 1,
-            "class %s (in module: %s) cannot access class %s (in module: %s), %s is not exported to %s",
-            current_class_name, module_from_name, new_class_name,
-            module_to_name, package_name, module_from_name);
+      assert(InstanceKlass::cast(new_class)->package() != NULL,
+             "Unnamed packages are always exported");
+      const char * package_name =
+        InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
+      assert(module_to->is_named(), "Unnamed modules export all packages");
+      if (module_from->is_named()) {
+        size_t len = 118 + strlen(current_class_name) + 2*strlen(module_from_name) +
+          strlen(new_class_name) + 2*strlen(module_to_name) + strlen(package_name);
+        msg = NEW_RESOURCE_ARRAY(char, len);
+        jio_snprintf(msg, len - 1,
+          "class %s (in module %s) cannot access class %s (in module %s) because module %s does not export %s to module %s",
+          current_class_name, module_from_name, new_class_name,
+          module_to_name, module_to_name, package_name, module_from_name);
+      } else {
+        jobject jlrm = module_from->jlrM_module();
+        assert(jlrm != NULL, "Null jlrm in module_from ModuleEntry");
+        intptr_t identity_hash = JNIHandles::resolve(jlrm)->identity_hash();
+        size_t len = 170 + strlen(current_class_name) + strlen(new_class_name) +
+          2*strlen(module_to_name) + strlen(package_name) + 2*sizeof(uintx);
+        msg = NEW_RESOURCE_ARRAY(char, len);
+        jio_snprintf(msg, len - 1,
+          "class %s (in unnamed module @" SIZE_FORMAT_HEX ") cannot access class %s (in module %s) because module %s does not export %s to unnamed module @" SIZE_FORMAT_HEX,
+          current_class_name, uintx(identity_hash), new_class_name, module_to_name,
+          module_to_name, package_name, uintx(identity_hash));
       }
     } else {
         ShouldNotReachHere();

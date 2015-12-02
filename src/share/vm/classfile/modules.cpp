@@ -449,25 +449,12 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
       if (module_entry == NULL) {
         dupl_modules = true;
       } else {
-        if (TraceModules) {
-          tty->print("[define_module(): Definition of module: %s, version: %s, location: %s, ",
-            module_name, module_version != NULL ? module_version : "NULL",
-            module_location != NULL ? module_location : "NULL");
-          loader_data->print_value();
-          tty->print_cr(", package #: %d]", pkg_list->length());
-        }
-
         // Add the packages.
         assert(pkg_list->length() == 0 || package_table != NULL, "Bad package table");
         PackageEntry* pkg;
         for (int y = 0; y < pkg_list->length(); y++) {
           pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
           assert(pkg != NULL, "Unable to create a module's package entry");
-
-          if (TraceModules) {
-            tty->print_cr("[define_module(): creation of package %s for module %s]",
-                          (pkg_list->at(y))->as_C_string(), module_name);
-          }
 
           // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
           // the Symbol* that was created above for each package. The refcount was incremented
@@ -490,6 +477,18 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s for module %s already exists for class loader",
                       pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
+  }
+
+  if (TraceModules) {
+    tty->print("[define_module(): creation of module: %s, version: %s, location: %s, ",
+      module_name, module_version != NULL ? module_version : "NULL",
+      module_location != NULL ? module_location : "NULL");
+    loader_data->print_value();
+    tty->print_cr(", package #: %d]", pkg_list->length());
+    for (int y = 0; y < pkg_list->length(); y++) {
+      tty->print_cr("[define_module(): creation of package %s for module %s]",
+                    (pkg_list->at(y))->as_C_string(), module_name);
+    }
   }
 
   if (loader == NULL && !Universe::is_module_initialized()) {
