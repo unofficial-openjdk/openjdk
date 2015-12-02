@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ CXX_FLAGS=$(CXX_FLAGS) $(DEBUG_OPT_OPTION) /D "_NMT_NOINLINE_"
 !include $(WorkSpace)/make/windows/makefiles/vm.make
 !include local.make
 
-HS_BUILD_ID=$(HS_BUILD_VER)-debug
+HS_BUILD_ID=$(HOTSPOT_VERSION_STRING)-debug
 
 # Force resources to be rebuilt every time
 $(Res_Files): FORCE
