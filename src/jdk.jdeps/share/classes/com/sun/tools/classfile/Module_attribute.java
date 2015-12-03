@@ -107,7 +107,7 @@ public class Module_attribute extends Attribute {
             this.requires_flags = flags;
         }
 
-        public String getRequires(int index, ConstantPool constant_pool) throws ConstantPoolException {
+        public String getRequires(ConstantPool constant_pool) throws ConstantPoolException {
             return constant_pool.getUTF8Value(requires_index);
         }
 

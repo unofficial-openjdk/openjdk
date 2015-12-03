@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ class ModulePath {
             for (int i = 0; i < attr.requires_count; i++) {
                 Module_attribute.RequiresEntry entry = attr.requires[i];
                 boolean reexport = (entry.requires_flags & Module_attribute.ACC_PUBLIC) != 0;
-                String target = entry.getRequires(i, cf.constant_pool).replace('/', '.');
+                String target = entry.getRequires(cf.constant_pool).replace('/', '.');
                 builder.require(target, reexport);
             }
             for (int i = 0; i < attr.exports_count; i++) {
