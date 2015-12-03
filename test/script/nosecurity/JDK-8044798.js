@@ -27,7 +27,6 @@
  * @test
  * @option -Dnashorn.mirror.always=false
  * @fork
- * @run
  */
 
 // basic API exercise checks
@@ -120,16 +119,21 @@ printValue(this);
 
 var Source = Java.type("jdk.nashorn.internal.runtime.Source");
 var Context = Java.type("jdk.nashorn.internal.runtime.Context");
+var ThrowErrorManager = Java.type("jdk.nashorn.internal.runtime.Context.ThrowErrorManager");
+var contextCls = java.lang.Class.forName("jdk.nashorn.internal.runtime.Context");
 var sourceCls = Source.class;
 var errorMgrCls = Java.type("jdk.nashorn.internal.runtime.ErrorManager").class;
 var booleanCls = Java.type("java.lang.Boolean").TYPE;
 
 // private compile method of Context class
-var compileMethod = Context.class.getDeclaredMethod("compile",
+var compileMethod = contextCls.getDeclaredMethod("compile",
                 sourceCls, errorMgrCls, booleanCls, booleanCls);
 compileMethod.accessible = true;
 
-var scriptCls = compileMethod.invoke(Context.context,
+var getContextMethod = contextCls.getMethod("getContext");
+getContextMethod.accessible = true;
+
+var scriptCls = compileMethod.invoke(getContextMethod.invoke(null),
     Source.sourceFor("test", "print('hello')"),
     new Context.ThrowErrorManager(), false, false);
 
