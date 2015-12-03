@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,25 @@
  * questions.
  */
 
-package com.sun.corba.se.impl.presentation.rmi;
+package com.sun.corba.se.impl.util;
 
-import com.sun.corba.se.impl.util.Modules;
+import org.omg.CORBA.ORB;
 
-public class StubFactoryStaticImpl extends StubFactoryBase
-{
-    private final Class stubClass ;
+/**
+ * Utility class to aid calling java.lang.reflect.Module.addReads/canRead
+ */
 
-    public StubFactoryStaticImpl(Class cls)
-    {
-        super( null ) ;
-        this.stubClass = cls;
-        Modules.ensureReadable(stubClass);
+public class Modules {
+    private Modules() { }
+
+    /**
+     * Ensures that module java.corba that read the module of the given class.
+     */
+    public static void ensureReadable(Class<?> targetClass) {
+        ORB.class.getModule().addReads(targetClass.getModule());
     }
 
-    public org.omg.CORBA.Object makeStub()
-    {
-        org.omg.CORBA.Object stub = null;
-        try {
-            stub = (org.omg.CORBA.Object) stubClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        return stub ;
+    public static boolean canRead(Class<?> targetClass) {
+        return ORB.class.getModule().canRead(targetClass.getModule());
     }
 }

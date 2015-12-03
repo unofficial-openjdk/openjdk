@@ -61,6 +61,7 @@ import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
 import com.sun.corba.se.impl.orbutil.ORBUtility;
 import com.sun.corba.se.impl.orbutil.ORBConstants;
 import com.sun.corba.se.impl.protocol.AddressingDispositionException;
+import com.sun.corba.se.impl.util.Modules;
 
 import sun.corba.SharedSecrets;
 
@@ -912,6 +913,11 @@ public abstract class MessageBase implements Message{
         try {
             Class<?> clazz =
                 SharedSecrets.getJavaCorbaAccess().loadClass(exClassName);
+            if (!SystemException.class.isAssignableFrom(clazz)) {
+                throw new ClassCastException(exClassName + " can't be cast to "
+                        + SystemException.class.getName());
+            }
+            Modules.ensureReadable(clazz);
             if (message == null) {
                 sysEx = (SystemException) clazz.newInstance();
             } else {
