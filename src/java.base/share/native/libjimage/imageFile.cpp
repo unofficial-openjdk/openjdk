@@ -152,6 +152,7 @@ ImageModuleData::~ImageModuleData() {
 const char* ImageModuleData::package_to_module(const char* package_name) {
     // replace all '/' by '.'
     char* replaced = new char[(int) strlen(package_name) + 1];
+    assert(replaced != NULL && "allocation failed");
     int i;
     for (i = 0; package_name[i] != '\0'; i++) {
       replaced[i] = package_name[i] == '/' ? '.' : package_name[i];
@@ -161,6 +162,7 @@ const char* ImageModuleData::package_to_module(const char* package_name) {
     // build path /packages/<package_name>
     const char* radical = "/packages/";
     char* path = new char[(int) strlen(radical) + (int) strlen(package_name) + 1];
+    assert(path != NULL && "allocation failed");
     strcpy(path, radical);
     strcat(path, replaced);
     delete[] replaced;
@@ -176,6 +178,7 @@ const char* ImageModuleData::package_to_module(const char* package_name) {
     // retrieve offsets to module name
     int size = (int)location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
     u1* content = new u1[size];
+    assert(content != NULL && "allocation failed");
     _image_file->get_resource(location, content);
     u1* ptr = content;
     // sequence of sizeof(8) isEmpty|offset. Use the first module that is not empty.
@@ -197,7 +200,7 @@ const char* ImageModuleData::package_to_module(const char* package_name) {
 // to share an open image.
 ImageFileReaderTable::ImageFileReaderTable() : _count(0), _max(_growth) {
     _table = new ImageFileReader*[_max];
-    assert( _table != NULL && "allocation failed");
+    assert(_table != NULL && "allocation failed");
 }
 
 ImageFileReaderTable::~ImageFileReaderTable() {
@@ -215,13 +218,10 @@ void ImageFileReaderTable::add(ImageFileReader* image) {
 
 // Remove an image entry from the table.
 void ImageFileReaderTable::remove(ImageFileReader* image) {
-    s4 last = _count - 1;
-    for (s4 i = 0; _count; i++) {
+    for (u4 i = 0; i < _count; i++) {
         if (_table[i] == image) {
-            if (i != last) {
-                _table[i] = _table[last];
-                _count = last;
-            }
+            // Swap the last element into the found slot
+            _table[i] = _table[--_count];
             break;
         }
     }
@@ -234,7 +234,7 @@ void ImageFileReaderTable::remove(ImageFileReader* image) {
 
 // Determine if image entry is in table.
 bool ImageFileReaderTable::contains(ImageFileReader* image) {
-    for (s4 i = 0; _count; i++) {
+    for (u4 i = 0; i < _count; i++) {
         if (_table[i] == image) {
             return true;
         }
@@ -399,8 +399,8 @@ bool ImageFileReader::open() {
 
     // Initialize the module data
     module_data = new ImageModuleData(this);
-    // Successful open.
-    return true;
+    // Successful open (if memory allocation succeeded).
+    return module_data != NULL;
 }
 
 // Close image file.
@@ -581,6 +581,7 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
         if (!MemoryMapImage) {
             // Allocate buffer for compression.
             compressed_data = new u1[(size_t)compressed_size];
+            assert(compressed_data != NULL && "allocation failed");
             // Read bytes from offset beyond the image index.
             bool is_read = read_at(compressed_data, compressed_size, _index_size + offset);
             assert(is_read && "error reading from image or short read");
