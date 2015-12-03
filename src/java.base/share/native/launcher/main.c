@@ -156,7 +156,7 @@ main(int argc, char **argv)
     return JLI_Launch(margc, margv,
                    sizeof(const_jargs) / sizeof(char *), const_jargs,
                    appclassc, const_appclasspath,
-                   FULL_VERSION,
+                   VERSION_STRING,
                    DOT_VERSION,
                    (const_progname != NULL) ? const_progname : *margv,
                    (const_launcher != NULL) ? const_launcher : *margv,
