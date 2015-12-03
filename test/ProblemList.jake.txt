@@ -50,11 +50,3 @@ tools/javac/api/taskListeners/CompileEvent.java                                 
 
 tools/javah/T7185778.java                                                       0 generic-all   Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
 
-##### jshell ##################################################################
-
-jdk/jshell/CompletionSuggestionTest.java					8143007	generic-all
-jdk/jshell/SnippetTest.java							8143007 generic-all
-jdk/jshell/MethodsTest.java							8143007 generic-all
-jdk/jshell/DropTest.java							8143007 generic-all
-jdk/jshell/ReplaceTest.java							8143007 generic-all
-
