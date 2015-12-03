@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import java.util.Set;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ElementVisitor;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -67,12 +68,16 @@ import com.sun.tools.javac.tree.JCTree.JCMemberReference;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.DefinedBy.Api;
+import com.sun.tools.javac.util.JCDiagnostic.Factory;
 import com.sun.tools.javac.util.Log.WriterKind;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
+
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 /** This class could be the main entry point for GJC when GJC is used as a
@@ -276,6 +281,14 @@ public class JavaCompiler {
      */
     protected Flow flow;
 
+    /** The modules visitor
+     */
+    protected Modules modules;
+
+    /** The diagnostics factory
+     */
+    protected JCDiagnostic.Factory diags;
+
     /** The type eraser.
      */
     protected TransTypes transTypes;
@@ -383,6 +396,8 @@ public class JavaCompiler {
         annotate = Annotate.instance(context);
         types = Types.instance(context);
         taskListener = MultiTaskListener.instance(context);
+        modules = Modules.instance(context);
+        diags = Factory.instance(context);
 
         finder.sourceCompleter = sourceCompleter;
 
@@ -435,6 +450,18 @@ public class JavaCompiler {
 
         if (platformProvider != null)
             closeables = closeables.prepend(platformProvider);
+
+        silentFail = new Symbol(ABSENT_TYP, 0, names.empty, Type.noType, syms.rootPackage) {
+            @DefinedBy(Api.LANGUAGE_MODEL)
+            public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+                return v.visitUnknown(this, p);
+            }
+            @Override
+            public boolean exists() {
+                return false;
+            }
+        };
+
     }
 
     /* Switches:
@@ -535,6 +562,11 @@ public class JavaCompiler {
      *  initialized by `compile'.
      */
     protected Set<JavaFileObject> inputFiles = new HashSet<>();
+
+    /** Used by the resolveBinaryNameOrIdent to say that the given type cannot be found, and that
+     *  an error has already been produced about that.
+     */
+    private final Symbol silentFail;
 
     protected boolean shouldStop(CompileState cs) {
         CompileState shouldStopPolicy = (errorCount() > 0 || unrecoverableError())
@@ -649,11 +681,37 @@ public class JavaCompiler {
      * @param name      The name to resolve
      */
     public Symbol resolveBinaryNameOrIdent(String name) {
+        ModuleSymbol msym;
+        String typeName;
+        int sep = name.indexOf('/');
+        if (sep == -1) {
+            msym = modules.getDefaultModule();
+            typeName = name;
+        } else if (source.allowModules() && !options.isSet("noModules")) {
+            Name modName = names.fromString(name.substring(0, sep));
+            ModuleFinder mf = ModuleFinder.instance(context); //TODO
+
+            msym = mf.findModule(modName);
+            typeName = name.substring(sep + 1);
+        } else {
+            log.error("invalid.module.specifier", name);
+            return silentFail;
+        }
+
+        return resolveBinaryNameOrIdent(msym, typeName);
+    }
+
+    /** Resolve an identifier which may be the binary name of a class or
+     * the Java name of a class or package.
+     * @param msym      The module in which the search should be performed
+     * @param name      The name to resolve
+     */
+    public Symbol resolveBinaryNameOrIdent(ModuleSymbol msym, String name) {
         try {
             Name flatname = names.fromString(name.replace("/", "."));
-            return finder.loadClass(flatname);
+            return finder.loadClass(msym, flatname);
         } catch (CompletionFailure ignore) {
-            return resolveIdent(name);
+            return resolveIdent(msym, name);
         }
     }
 
@@ -661,6 +719,15 @@ public class JavaCompiler {
      * @param name      The identifier to resolve
      */
     public Symbol resolveIdent(String name) {
+        //TODO:
+        return resolveIdent(modules.getDefaultModule(), name);
+    }
+
+    /** Resolve an identifier.
+     * @param msym      The module in which the search should be performed
+     * @param name      The identifier to resolve
+     */
+    public Symbol resolveIdent(ModuleSymbol msym, String name) {
         if (name.equals(""))
             return syms.errSymbol;
         JavaFileObject prev = log.useSource(null);
@@ -674,7 +741,8 @@ public class JavaCompiler {
             }
             JCCompilationUnit toplevel =
                 make.TopLevel(List.<JCTree>nil());
-            toplevel.packge = syms.unnamedPackage;
+            toplevel.modle = msym;
+            toplevel.packge = msym.unnamedPackage;
             return attr.attribIdent(tree, toplevel);
         } finally {
             log.useSource(prev);
@@ -761,6 +829,16 @@ public class JavaCompiler {
             taskListener.started(e);
         }
 
+        // Process module declarations.
+        // If module resolution fails, ignore trees, and if trying to
+        // complete a specific symbol, throw CompletionFailure.
+        // Note that if module resolution failed, we may not even
+        // have enough modules available to access java.lang, and
+        // so risk getting FatalError("no.java.lang") from MemberEnter.
+        if (!modules.enter(List.of(tree), c)) {
+            throw new CompletionFailure(c, diags.fragment("cant.resolve.modules"));
+        }
+
         enter.complete(List.of(tree), c);
 
         if (!taskListener.isEmpty()) {
@@ -772,7 +850,12 @@ public class JavaCompiler {
             boolean isPkgInfo =
                 tree.sourcefile.isNameCompatible("package-info",
                                                  JavaFileObject.Kind.SOURCE);
-            if (isPkgInfo) {
+            boolean isModuleInfo =
+                tree.sourcefile.isNameCompatible("module-info",
+                                                 JavaFileObject.Kind.SOURCE);
+            if (isModuleInfo) {
+                // TODO: INSERT CHECK HERE
+            } else if (isPkgInfo) {
                 if (enter.getEnv(tree.packge) == null) {
                     JCDiagnostic diag =
                         diagFactory.fragment("file.does.not.contain.package",
@@ -836,8 +919,12 @@ public class JavaCompiler {
 
             // These method calls must be chained to avoid memory leaks
             processAnnotations(
-                enterTrees(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))),
-                classnames);
+                enterTrees(
+                        stopIfError(CompileState.PARSE,
+                                initModules(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))))
+                ),
+                classnames
+            );
 
             // If it's safe to do so, skip attr / flow / gen for implicit classes
             if (taskListener.isEmpty() &&
@@ -942,7 +1029,16 @@ public class JavaCompiler {
     public List<JCCompilationUnit> enterTreesIfNeeded(List<JCCompilationUnit> roots) {
        if (shouldStop(CompileState.ATTR))
            return List.nil();
-        return enterTrees(roots);
+        return enterTrees(initModules(roots));
+    }
+
+    public List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots) {
+        return initModules(roots, null);
+    }
+
+    List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots, ClassSymbol c) {
+        modules.enter(roots, c);
+        return roots;
     }
 
     /**
@@ -1115,7 +1211,8 @@ public class JavaCompiler {
                         if (sym == null ||
                             (sym.kind == PCK && !processPcks) ||
                             sym.kind == ABSENT_TYP) {
-                            log.error("proc.cant.find.class", nameStr);
+                            if (sym != silentFail)
+                                log.error("proc.cant.find.class", nameStr);
                             errors = true;
                             continue;
                         }
@@ -1184,6 +1281,7 @@ public class JavaCompiler {
         return
             options.isSet(PROCESSOR) ||
             options.isSet(PROCESSORPATH) ||
+            options.isSet(PROCESSORMODULEPATH) ||
             options.isSet(PROC, "only") ||
             options.isSet(XPRINT);
     }
@@ -1423,14 +1521,14 @@ public class JavaCompiler {
             make.at(Position.FIRSTPOS);
             TreeMaker localMake = make.forToplevel(env.toplevel);
 
-            if (env.tree.hasTag(JCTree.Tag.PACKAGEDEF)) {
+            if (env.tree.hasTag(JCTree.Tag.PACKAGEDEF) || env.tree.hasTag(JCTree.Tag.MODULEDEF)) {
                 if (!(stubOutput || sourceOutput || printFlat)) {
                     if (shouldStop(CompileState.LOWER))
                         return;
-                    List<JCTree> pdef = lower.translateTopLevelClass(env, env.tree, localMake);
-                    if (pdef.head != null) {
-                        Assert.check(pdef.tail.isEmpty());
-                        results.add(new Pair<>(env, (JCClassDecl)pdef.head));
+                    List<JCTree> def = lower.translateTopLevelClass(env, env.tree, localMake);
+                    if (def.head != null) {
+                        Assert.check(def.tail.isEmpty());
+                        results.add(new Pair<>(env, (JCClassDecl)def.head));
                     }
                 }
                 return;

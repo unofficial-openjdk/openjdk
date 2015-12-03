@@ -1,0 +1,60 @@
+##### doclets ##################################################################
+
+com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 generic-all   javadoc can't find {@link java.math}
+com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 generic-all   test includes code that adds class into java.lang
+
+com/sun/javadoc/testCustomTag/TestCustomTag.java                                0 generic-all   addExports
+com/sun/javadoc/testTaglets/TestTaglets.java                                    0 generic-all   addExports
+com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java                    0 generic-all   addExports
+
+com/sun/javadoc/testProfiles/TestProfiles.java                                  0 generic-all   rewrite for modules instead of profiles
+com/sun/javadoc/testProfiles/TestProfilesConfiguration.java                     0 generic-all   rewrite for modules instead of profiles
+com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            0 generic-all   update for modules instead of profiles
+
+##### javac ####################################################################
+
+tools/javac/6330997/T6330997.java                                               0 generic-all   NPE in Resolve
+tools/javac/Paths/Diagnostics.sh                                                0 generic-all   needs rewrite
+tools/javac/Paths/MineField.sh                                                  0 generic-all   needs rewrite
+tools/javac/T8003967/DetectMutableStaticFields.java                             0 generic-all   uses URI to determine location of class files
+tools/javac/api/6418694/T6418694.java                                           0 generic-all   need to update for new StandardLocations
+tools/javac/api/T6397104.java                                                   0 generic-all   need to update for new StandardLocations
+tools/javac/api/T6430241.java                                                   0 generic-all   test for disabling symbol file through API; delete test?
+tools/javac/api/TestResolveIdent.java                                           0 generic-all   NPE in Resolve
+tools/javac/api/TestSearchPaths.java                                            0 generic-all   need to update for new StandardLocations
+tools/javac/diags/CheckExamples.java                                            0 generic-all   need to update resource files
+tools/javac/file/BootClassPathPrepend.java                                      0 generic-all   currently verifies -Xbcp/p; rewrite for -Xpatch?
+tools/javac/file/ExplodedImage.java                                             0 generic-all   "Did not load java.util.List from correct place"
+tools/javac/importscope/dependencies/DependenciesTest.java                      0 generic-all   NPE in test's internal scanner
+tools/javac/options/xprefer/XPreferTest.java                                    0 generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
+tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java          0 generic-all   ?? need more investigation 
+tools/javac/processing/model/testgetallmembers/Main.java                        0 generic-all   NPE in test in getPackage method
+tools/javac/processing/options/testCommandLineClasses/Test.java                 0 generic-all   problem locating nested classes
+tools/javac/profiles/ProfileOptionTest.java                                     0 generic-all   need to determine future of -profile option (JDK 8 only? JDK 9)
+tools/javac/synthesize/Main.java                                                0 generic-all   convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world
+tools/javac/tree/ScopeTest.java                                                 0 generic-all   ?? need more investigation
+tools/javac/warnings/6594914/T6594914b.java                                     0 generic-all   uses -Xlint:sunapi; should this go away or be limited to 8?
+
+tools/javac/api/TestTrees.java                                                  0 generic-all   addExports
+tools/javac/util/context/T7021650.java                                          0 generic-all   addExports
+tools/javac/file/T7018098.java                                                  0 generic-all   addExports
+tools/javac/util/T6597678.java                                                  0 generic-all   addExports
+tools/javac/annotations/typeAnnotations/TypeProcOnly.java                       0 generic-all   addExports
+tools/javac/T6406771.java                                                       0 generic-all   addExports
+tools/javac/processing/loader/testClose/TestClose.java                          0 generic-all   addExports
+tools/javac/diags/MessageInfo.java                                              0 generic-all   addExports
+tools/javac/diags/RunExamples.java                                              0 generic-all   addExports
+tools/javac/api/taskListeners/CompileEvent.java                                 0 generic-all   addExports
+
+##### javah ####################################################################
+
+tools/javah/T7185778.java                                                       0 generic-all   Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
+
+##### jshell ##################################################################
+
+jdk/jshell/CompletionSuggestionTest.java					8143007	generic-all
+jdk/jshell/SnippetTest.java							8143007 generic-all
+jdk/jshell/MethodsTest.java							8143007 generic-all
+jdk/jshell/DropTest.java							8143007 generic-all
+jdk/jshell/ReplaceTest.java							8143007 generic-all
+

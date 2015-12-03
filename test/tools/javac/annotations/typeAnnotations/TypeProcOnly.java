@@ -20,9 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 import java.io.*;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -117,7 +118,7 @@ public class TypeProcOnly extends AbstractProcessor {
 
         try {
             File f = writeTestFile();
-            com.sun.tools.javac.Main.compile(new String[] {"-proc:only", "-processor", "TypeProcOnly", f.getAbsolutePath()});
+            com.sun.tools.javac.Main.compile(new String[] {"-XDaccessInternalAPI", "-proc:only", "-processor", "TypeProcOnly", f.getAbsolutePath()});
         } finally {
             System.setOut(prevOut);
         }

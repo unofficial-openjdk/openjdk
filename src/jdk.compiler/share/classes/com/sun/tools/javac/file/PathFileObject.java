@@ -104,7 +104,7 @@ public abstract class PathFileObject implements JavaFileObject {
         return new PathFileObject(fileManager, path) {
             @Override
             public String inferBinaryName(Iterable<? extends Path> paths) {
-                // use subpath to ignore the leading /modules/MODULE-NAME
+                // use subpath to ignore the leading components containing modules/MODULE-NAME
                 return toBinaryName(path.subpath(2, path.getNameCount()));
             }
         };

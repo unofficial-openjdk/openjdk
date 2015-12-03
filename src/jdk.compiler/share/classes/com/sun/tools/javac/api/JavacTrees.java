@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -421,11 +422,28 @@ public class JavacTrees extends DocTrees {
                 if (t.isErroneous()) {
                     if (ref.memberName == null) {
                         // Attr/Resolve assume packages exist and create symbols as needed
-                        // so use getPackageElement to restrict search to existing packages
-                        PackageSymbol pck = elements.getPackageElement(ref.qualifierExpression.toString());
-                        if (pck != null) {
-                            return pck;
-                        } else if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
+                        // so restrict the search to existing packages only:
+                        if (SourceVersion.isName(ref.qualifierExpression.toString())) { //XXX: avoid querying packages with a wrong name - see TestSupplementary.
+                            //XXX: avoid Elements.getPackageElement for now, as that could resolve packages/classes from different module, which may be incompilable with the current javac settings
+                            Symbol pck;
+                            PackageSymbol origPackge = env.toplevel.packge;
+                            ClassSymbol origEnclClass = env.enclClass.sym;
+
+                            try {
+                                pck = attr.attribIdent(ref.qualifierExpression, env);
+                            } finally {
+                                env.toplevel.packge = origPackge;
+                                env.enclClass.sym = origEnclClass;
+                            }
+
+                            pck.complete();
+
+                            if (pck.kind == PCK && pck.exists()) {
+                                return pck;
+                            }
+                        }
+
+                        if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
                             // fixup:  allow "identifier" instead of "#identifier"
                             // for compatibility with javadoc
                             tsym = env.enclClass.sym;

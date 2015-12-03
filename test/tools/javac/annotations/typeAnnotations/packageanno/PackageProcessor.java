@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,7 +52,7 @@ import static com.sun.tools.javac.comp.CompileStates.CompileState;
  *          jdk.compiler/com.sun.tools.javac.processing
  *          jdk.compiler/com.sun.tools.javac.util
  * @compile PackageProcessor.java
- * @compile -cp . -processor PackageProcessor mypackage/Anno.java mypackage/MyClass.java mypackage/package-info.java
+ * @compile -XDaccessInternalAPI -cp . -processor PackageProcessor mypackage/Anno.java mypackage/MyClass.java mypackage/package-info.java
  */
 
 @SupportedAnnotationTypes("*")
