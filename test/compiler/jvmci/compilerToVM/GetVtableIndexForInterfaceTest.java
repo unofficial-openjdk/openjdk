@@ -26,6 +26,7 @@
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library / /testlibrary /test/lib
+ * @ignore 8143238
  * @compile ../common/CompilerToVMHelper.java
  * @build compiler.jvmci.compilerToVM.GetVtableIndexForInterfaceTest
  * @run main ClassFileInstaller
