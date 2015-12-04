@@ -4734,7 +4734,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1449051336
+DATE_WHEN_GENERATED=1449228293
 
 ###############################################################################
 #
@@ -29935,10 +29935,10 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
       $RM -rf "$IMPORT_MODULES_TOPDIR"
       $MKDIR -p "$IMPORT_MODULES_TOPDIR"
       if ! $UNZIP -q "$with_import_modules" -d "$IMPORT_MODULES_TOPDIR"; then
-        as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+        as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
       fi
     else
-      as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+      as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
     fi
   fi
 

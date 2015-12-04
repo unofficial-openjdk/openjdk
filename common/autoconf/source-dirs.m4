@@ -103,10 +103,10 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
       $RM -rf "$IMPORT_MODULES_TOPDIR"
       $MKDIR -p "$IMPORT_MODULES_TOPDIR"
       if ! $UNZIP -q "$with_import_modules" -d "$IMPORT_MODULES_TOPDIR"; then
-        AC_MSG_ERROR([--with-import-modules must point to a dir or a zip file])
+        AC_MSG_ERROR([--with-import-modules="$with_import_modules" must point to a dir or a zip file])
       fi
     else
-      AC_MSG_ERROR([--with-import-modules must point to a dir or a zip file])
+      AC_MSG_ERROR([--with-import-modules="$with_import_modules" must point to a dir or a zip file])
     fi
   fi
 
