@@ -36,4 +36,7 @@ const int StackAlignmentInBytes = 16;
 // The PPC CPUs are NOT multiple-copy-atomic.
 #define CPU_NOT_MULTIPLE_COPY_ATOMIC
 
+// The expected size in bytes of a cache line, used to pad data structures.
+#define DEFAULT_CACHE_LINE_SIZE 128
+
 #endif // CPU_PPC_VM_GLOBALDEFINITIONS_PPC_HPP
