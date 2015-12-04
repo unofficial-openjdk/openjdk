@@ -1210,6 +1210,13 @@ public class ConfigurationTest {
 
         assertTrue(cf.bind() == cf);
         assertTrue(cf.provides("java.security.Provider").isEmpty());
+
+        ModuleDescriptor md = new ModuleDescriptor.Builder("m").build();
+        try {
+            cf.reads(md);
+            assertTrue(false);
+        } catch (IllegalArgumentException expected) { }
+
     }
 
 

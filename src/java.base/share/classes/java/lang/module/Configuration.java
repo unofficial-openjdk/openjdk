@@ -484,7 +484,7 @@ public final class Configuration {
      */
     public Set<ReadDependence> reads(ModuleDescriptor descriptor) {
         String name = descriptor.name();
-        if (result.findDescriptor(name) == null)
+        if (result == null || result.findDescriptor(name) == null)
             throw new IllegalArgumentException(name + " not in this Configuration");
 
         ReadDependence rd = new ReadDependence(this, descriptor);
