@@ -223,9 +223,9 @@ final class ModuleInfo {
                     readMainClassAttribute(in, cpool);
                     break;
 
-                case SYNETHETIC :
+                case SYNTHETIC :
                     if (length != 0) {
-                        throw invalidModuleDescriptor(SYNETHETIC + " attribute"
+                        throw invalidModuleDescriptor(SYNTHETIC + " attribute"
                                                       + " length should be zero");
                     }
                     break;

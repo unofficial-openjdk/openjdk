@@ -243,7 +243,7 @@ class ClassFileAttributes {
      */
     static class SyntheticAttribute extends Attribute {
         SyntheticAttribute() {
-            super(SYNETHETIC);
+            super(SYNTHETIC);
         }
 
         @Override
