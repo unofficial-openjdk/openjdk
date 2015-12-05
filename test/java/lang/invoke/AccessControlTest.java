@@ -230,8 +230,10 @@ public class AccessControlTest {
             Class<?> c1 = lookupClass();
             Class<?> c2 = m.getDeclaringClass();
 
-            // if public access then public members in an unnamed module can be accessed
-            if ((lookupModes & PUBLIC) != 0
+            // if the lookup class is in a loose module with PUBLIC access then
+            // public members of public types in all unnamed modules can be accessed
+            if (c1.getModule().canRead(null)
+                && (lookupModes & PUBLIC) != 0
                 && (!c2.getModule().isNamed())
                 && Modifier.isPublic(c2.getModifiers())
                 && Modifier.isPublic(m.getModifiers()))
@@ -258,9 +260,25 @@ public class AccessControlTest {
         /** Predict the success or failure of accessing this class. */
         public boolean willAccessClass(Class<?> c2, boolean load) {
             Class<?> c1 = lookupClass();
-            if (load && c1.getClassLoader() == null) {
-                return false;
+            if (load && c2.getClassLoader() != null) {
+                if (c1.getClassLoader() == null) {
+                    // not visible
+                    return false;
+                }
+                if (c1 == publicLookup().lookupClass()) {
+                    // not visible as lookup class is defined by child of the boot loader
+                    return false;
+                }
             }
+
+            // if the lookup class is in a loose module with PUBLIC access then
+            // public types in all unnamed modules can be accessed
+            if (c1.getModule().canRead(null)
+                && (lookupModes & PUBLIC) != 0
+                && (!c2.getModule().isNamed())
+                && Modifier.isPublic(c2.getModifiers()))
+                return true;
+
             LookupCase lc = this.in(c2);
             int m1 = lc.lookupModes();
             boolean r = false;
