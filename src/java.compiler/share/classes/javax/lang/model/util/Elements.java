@@ -67,7 +67,7 @@ public interface Elements {
      *
      * @param name  the name
      * @return the named module element, or {@code null} if it cannot be found
-     * @since 1.9
+     * @since 9
      */
     ModuleElement getModuleElement(CharSequence name);
 
@@ -142,7 +142,7 @@ public interface Elements {
      *
      * @param type the element being examined
      * @return the module of an element
-     * @since 1.9
+     * @since 9
      */
     ModuleElement getModuleOf(Element type);
 

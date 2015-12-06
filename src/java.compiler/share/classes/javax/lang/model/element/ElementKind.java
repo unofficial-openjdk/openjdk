@@ -98,7 +98,7 @@ public enum ElementKind {
 
     /**
      * A module.
-     * @since 1.9
+     * @since 9
      */
      MODULE;
 

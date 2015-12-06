@@ -32,7 +32,7 @@ import java.util.List;
  * about the module and its members.
  *
  * @see javax.lang.model.util.Elements#getModuleOf
- * @since 1.9
+ * @since 9
  */  // TODO: add @jls to module section
 public interface ModuleElement extends Element, QualifiedNameable {
 
@@ -82,6 +82,9 @@ public interface ModuleElement extends Element, QualifiedNameable {
 
     List<? extends Directive> getDirectives();
 
+    /**
+     * @since 9
+     */
     enum DirectiveKind {
         /** A "requires [public] module-name" directive. */
         REQUIRES,
@@ -93,12 +96,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
         PROVIDES
     };
 
+    /**
+     * @since 9
+     */
     interface Directive {
         DirectiveKind getKind();
     }
 
     /**
      * A dependency of a module.
+     * @since 9
      */
     interface RequiresDirective extends Directive {
         /**
@@ -122,6 +129,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
 
     /**
      * An exported package of a module.
+     * @since 9
      */
     interface ExportsDirective extends Directive {
         /**
@@ -147,6 +155,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
 
     /**
      * An implementation of a service provided by a module.
+     * @since 9
      */
     interface ProvidesDirective extends Directive {
         /**
@@ -170,6 +179,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
 
     /**
      * A reference to a service used by a module.
+     * @since 9
      */
     interface UsesDirective extends Directive {
         /**

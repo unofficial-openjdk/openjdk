@@ -196,6 +196,7 @@ public class ElementFilter {
      * Returns a list of modules in {@code elements}.
      * @return a list of modules in {@code elements}
      * @param elements the elements to filter
+     * @since 9
      */
     public static List<ModuleElement>
             modulesIn(Iterable<? extends Element> elements) {
@@ -206,6 +207,7 @@ public class ElementFilter {
      * Returns a set of modules in {@code elements}.
      * @return a set of modules in {@code elements}
      * @param elements the elements to filter
+     * @since 9
      */
     public static Set<ModuleElement>
             modulesIn(Set<? extends Element> elements) {
@@ -243,6 +245,7 @@ public class ElementFilter {
      * Returns a list of export directives in {@code directives}.
      * @return a list of export directives in {@code directives}
      * @param directives the directives to filter
+     * @since 9
      */
     public static List<ExportsDirective>
             exportsIn(Iterable<? extends Directive> directives) {
@@ -253,6 +256,7 @@ public class ElementFilter {
      * Returns a list of provides directives in {@code directives}.
      * @return a list of provides directives in {@code directives}
      * @param directives the directives to filter
+     * @since 9
      */
     public static List<ProvidesDirective>
             providesIn(Iterable<? extends Directive> directives) {
@@ -263,6 +267,7 @@ public class ElementFilter {
      * Returns a list of requires directives in {@code directives}.
      * @return a list of requires directives in {@code directives}
      * @param directives the directives to filter
+     * @since 9
      */
     public static List<RequiresDirective>
             requiresIn(Iterable<? extends Directive> directives) {
@@ -273,6 +278,7 @@ public class ElementFilter {
      * Returns a list of uses directives in {@code directives}.
      * @return a list of uses directives in {@code directives}
      * @param directives the directives to filter
+     * @since 9
      */
     public static List<UsesDirective>
             usesIn(Iterable<? extends Directive> directives) {

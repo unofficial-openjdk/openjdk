@@ -132,6 +132,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
          * as compared to a location which contains packages and classes.
          *
          * @return true if this location is expected to contain modules
+         * @since 9
          */
         default boolean isModuleLocation() {
             return false;
@@ -416,6 +417,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
 
     /**
      * Gets a location for a named module within a module-oriented location.
+     * @since 9
      */
     default Location getModuleLocation(Location location, String moduleName) throws IOException {
         throw new UnsupportedOperationException();
@@ -423,6 +425,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
 
     /**
      * Gets a location for the module containing a specific file.
+     * @since 9
      */
     default Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
         throw new UnsupportedOperationException();
@@ -433,6 +436,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * @param location the location
      * @param service  the service class
      * @return a service loader for the given service class
+     * @since 9
      */
     default <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws  IOException {
         throw new UnsupportedOperationException();
@@ -444,6 +448,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * @param location
      * @return
      * @throws IOException
+     * @since 9
      */
     default String inferModuleName(Location location) throws IOException {
         throw new UnsupportedOperationException();
@@ -453,6 +458,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      * Lists the modules in a module-oriented location.
      * @param location  the location for which to list the modules
      * @return  a series of sets of locations containing modules
+     * @since 9
      */
     default Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
         throw new UnsupportedOperationException();

@@ -141,7 +141,7 @@ public abstract class AbstractElementVisitor6<R, P> implements ElementVisitor<R,
      * @param p  {@inheritDoc}
      * @return the result of {@code visitUnknown}
      *
-     * @since 1.9
+     * @since 9
      */
     @Override
     public R visitModule(ModuleElement e, P p) {

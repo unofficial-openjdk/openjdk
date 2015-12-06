@@ -149,7 +149,7 @@ public interface ElementVisitor<R, P> {
      * @param e  the element to visit
      * @param p  a visitor-specified parameter
      * @return a visitor-specified result
-     * @since 1.9
+     * @since 9
      */
     R visitModule(ModuleElement e, P p);
 }
