@@ -419,7 +419,7 @@ public final class Class<T> implements java.io.Serializable,
      *         the caller requests to load a class in another module,
      *         it denies the {@code RuntimePermission("getClassLoader")} permission.
      *
-     * @since 1.9
+     * @since 9
      */
     @CallerSensitive
     public static Class<?> forName(Module module, String name) {
@@ -805,7 +805,7 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return the module that this class or interface is a member of
      *
-     * @since 1.9
+     * @since 9
      */
     public Module getModule() {
         Module module = this.module;
@@ -962,7 +962,7 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return the fully qualified package name
      *
-     * @since 1.9
+     * @since 9
      * @jls 6.7  Fully Qualified Names
      */
     public String getPackageName() {

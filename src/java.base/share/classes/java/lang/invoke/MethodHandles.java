@@ -577,7 +577,7 @@ public class MethodHandles {
          *  which may contribute to the result of {@link #lookupModes lookupModes}.
          *  The value is {@code 0x10}, which does not correspond meaningfully to
          *  any particular {@linkplain java.lang.reflect.Modifier modifier bit}.
-         *  @since 1.9
+         *  @since 9
          */
         public static final int MODULE = PACKAGE << 1;
 

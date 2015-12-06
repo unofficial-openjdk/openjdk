@@ -45,7 +45,7 @@ import jdk.internal.module.Hasher.HashSupplier;
  *
  * @see ModuleFinder
  * @see ModuleReader
- * @since 1.9
+ * @since 9
  */
 
 public final class ModuleReference {

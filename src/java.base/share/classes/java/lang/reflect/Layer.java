@@ -68,7 +68,7 @@ import sun.security.util.SecurityConstants;
  * @apiNote As Layer is in java.lang.reflect then its method names may
  * need to follow the convention in this package.
  *
- * @since 1.9
+ * @since 9
  */
 
 public final class Layer {
@@ -78,7 +78,7 @@ public final class Layer {
      * Finds the class loader for a module.
      *
      * @see Layer#create
-     * @since 1.9
+     * @since 9
      */
     @FunctionalInterface
     public static interface ClassLoaderFinder {

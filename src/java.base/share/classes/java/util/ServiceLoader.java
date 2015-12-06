@@ -1083,7 +1083,7 @@ public final class ServiceLoader<S>
      *         caller is in a named module and its module descriptor does
      *         not declare that it uses {@code service}
      *
-     * @since 1.9
+     * @since 9
      */
     @CallerSensitive
     public static <S> ServiceLoader<S> load(Layer layer, Class<S> service) {

@@ -29,7 +29,7 @@ package java.lang.module;
  * Thrown by module finders when finding a module fails.
  *
  * @see ModuleFinder
- * @since 1.9
+ * @since 9
  */
 
 public class FindException extends RuntimeException {

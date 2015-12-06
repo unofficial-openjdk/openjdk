@@ -30,7 +30,7 @@ package java.lang.module;
  * to be malformed or otherwise cannot be interpreted as a module descriptor.
  *
  * @see ModuleDescriptor#read
- * @since 1.9
+ * @since 9
  */
 public class InvalidModuleDescriptorException extends RuntimeException {
     private static final long serialVersionUID = 1L;

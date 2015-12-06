@@ -144,7 +144,7 @@ import java.util.stream.Collectors;
  *                        .bind();
  * }</pre>
  *
- * @since 1.9
+ * @since 9
  * @see Layer
  */
 
@@ -422,7 +422,7 @@ public final class Configuration {
      * method to obtain the set of {@code ReadDependence} that a module in the
      * configuration reads.
      *
-     * @since 1.9
+     * @since 9
      */
     public static final class ReadDependence {
         private final Configuration cf;

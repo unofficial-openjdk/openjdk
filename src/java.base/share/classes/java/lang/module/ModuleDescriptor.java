@@ -51,7 +51,7 @@ import jdk.internal.module.Hasher.DependencyHashes;
 /**
  * A module descriptor.
  *
- * @since 1.9
+ * @since 9
  */
 
 public class ModuleDescriptor
@@ -62,7 +62,7 @@ public class ModuleDescriptor
      * <p> A dependence upon a module </p>
      *
      * @see ModuleDescriptor#requires()
-     * @since 1.9
+     * @since 9
      */
 
     public final static class Requires
@@ -72,7 +72,7 @@ public class ModuleDescriptor
         /**
          * A modifier on a module dependence.
          *
-         * @since 1.9
+         * @since 9
          */
         public static enum Modifier {
 
@@ -188,7 +188,7 @@ public class ModuleDescriptor
      * <p> A module export, may be qualified or unqualified. </p>
      *
      * @see ModuleDescriptor#exports()
-     * @since 1.9
+     * @since 9
      */
 
     public final static class Exports {
@@ -265,7 +265,7 @@ public class ModuleDescriptor
      * <p> A service that a module provides one or more implementations of. </p>
      *
      * @see ModuleDescriptor#provides()
-     * @since 1.9
+     * @since 9
      */
 
     public final static class Provides {
@@ -324,7 +324,7 @@ public class ModuleDescriptor
      * Policy Manual, Chapter 5: Control files and their fields<a>
      *
      * @see ModuleDescriptor#version()
-     * @since 1.9
+     * @since 9
      */
 
     public final static class Version
@@ -733,7 +733,7 @@ public class ModuleDescriptor
     /**
      * A builder used for building {@link ModuleDescriptor} objects.
      *
-     * @since 1.9
+     * @since 9
      */
     public static final class Builder {
 

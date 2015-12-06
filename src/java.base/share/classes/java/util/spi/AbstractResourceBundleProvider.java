@@ -38,7 +38,7 @@ import sun.util.locale.provider.ResourceBundleProviderSupport;
  * {@code AbstractResourceBundleProvider} is an abstract class for helping
  * implement the {@link ResourceBundleProvider} interface.
  *
- * @since 1.9
+ * @since 9
  */
 public abstract class AbstractResourceBundleProvider implements ResourceBundleProvider {
     private static final String FORMAT_CLASS = "java.class";

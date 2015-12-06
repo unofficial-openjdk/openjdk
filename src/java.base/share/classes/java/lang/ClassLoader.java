@@ -634,7 +634,7 @@ public abstract class ClassLoader {
      * @return The resulting {@code Class} object, or {@code null}
      *         if the class could not be found.
      *
-     * @since 1.9
+     * @since 9
      */
     protected Class<?> findClass(String moduleName, String name) {
         return null;
@@ -1239,7 +1239,7 @@ public abstract class ClassLoader {
      *         If I/O errors occur
      *
      * @see java.lang.module.ModuleReader#find(String)
-     * @since 1.9
+     * @since 9
      */
     protected URL findResource(String moduleName, String name) throws IOException {
         return null;
@@ -1559,7 +1559,7 @@ public abstract class ClassLoader {
      * @return The unnamed Module for this class loader
      *
      * @see Module#isNamed()
-     * @since 1.9
+     * @since 9
      */
     public final Module getUnnamedModule() {
         return unnamedModule;
@@ -1845,7 +1845,7 @@ public abstract class ClassLoader {
      * @return The {@code Package} of the given name defined by this class loader,
      *         or {@code null} if not found
      *
-     * @since  1.9
+     * @since  9
      */
     public final Package getDefinedPackage(String name) {
         return packages.get(name);
@@ -1861,7 +1861,7 @@ public abstract class ClassLoader {
      * @return The array of {@code Package} objects defined by this class loader;
      *         or an zero length array if no package has been defined by this class loader.
      *
-     * @since  1.9
+     * @since  9
      */
     public final Package[] getDefinedPackages() {
         return packages().toArray(Package[]::new);

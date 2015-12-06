@@ -77,7 +77,7 @@ import sun.security.util.SecurityConstants;
  * section 6.5.3 of <cite>The Java&trade; Language Specification </cite>, for
  * example, {@code "java.lang"}. </p>
  *
- * @since 1.9
+ * @since 9
  * @see java.lang.Class#getModule
  */
 
