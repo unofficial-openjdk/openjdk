@@ -34,9 +34,9 @@ SA_PROPERTIES := $(SUPPORT_OUTPUTDIR)/gensrc/jdk.hotspot.agent/sa.properties
 
 SA_BUILD_VERSION_PROP_NAME := "sun.jvm.hotspot.runtime.VM.saBuildVersion"
 
-$(SA_PROPERTIES): $(call DependOnVariable, FULL_VERSION)
+$(SA_PROPERTIES): $(call DependOnVariable, VERSION_STRING)
 	$(MKDIR) -p $(@D)
-	$(ECHO) "$(SA_BUILD_VERSION_PROP_NAME)=$(FULL_VERSION)" > $@
+	$(ECHO) "$(SA_BUILD_VERSION_PROP_NAME)=$(VERSION_STRING)" > $@
 
 TARGETS += $(SA_PROPERTIES)
 
