@@ -266,7 +266,6 @@ class java_lang_Class : AllStatic {
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
   static void set_class_loader(oop java_class, oop class_loader);
-  static void set_module(oop java_class, oop module);
   static void set_component_mirror(oop java_class, oop comp_mirror);
   static void initialize_mirror_fields(KlassHandle k, Handle mirror, Handle protection_domain, TRAPS);
  public:
@@ -317,6 +316,7 @@ class java_lang_Class : AllStatic {
   static void set_signers(oop java_class, objArrayOop signers);
 
   static oop class_loader(oop java_class);
+  static void set_module(oop java_class, oop module);
   static oop module(oop java_class);
 
   static int oop_size(oop java_class);

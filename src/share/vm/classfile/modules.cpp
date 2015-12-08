@@ -800,34 +800,15 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
                "Invalid class", JNI_FALSE);
   }
 
-  Klass* klass = NULL;
-  oop module;
-  if (java_lang_Class::is_primitive(mirror)) {
-    // Return java.base module
-    module = JNIHandles::resolve(ModuleEntryTable::javabase_module()->jlrM_module());
-  } else {
-    Klass* klass = java_lang_Class::as_Klass(mirror);
-    assert(klass != NULL, "Null Klass");
-    assert(klass->is_instance_klass() || klass->is_objArray_klass() ||
-           klass->is_typeArray_klass(), "Bad Klass");
+  oop module = java_lang_Class::module(mirror);
 
-    if (klass->is_objArray_klass()) {
-      ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(klass);
-      klass = obj_arr_klass->bottom_klass();
-      mirror = klass->java_mirror();
-    }
-    if (klass->is_instance_klass()) {
-      module = java_lang_Class::module(mirror);
-      assert(module != NULL, "Unexpected NULL module");
-    } else {
-      // Return java.base module
-      module = JNIHandles::resolve(ModuleEntryTable::javabase_module()->jlrM_module());
-    }
-  }
+  assert(module != NULL, "java.lang.Class module field not set");
+  assert(java_lang_reflect_Module::is_subclass(module->klass()), "Module is not a java.lang.reflect.Module");
 
   if (log_is_enabled(Debug, modules)) {
     ResourceMark rm;
     outputStream* logst = LogHandle(modules)::debug_stream();
+    Klass* klass = java_lang_Class::as_Klass(mirror);
     oop module_name = java_lang_reflect_Module::name(module);
     if (module_name != NULL) {
       logst->print("get_module(): module ");
@@ -842,7 +823,6 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     }
   }
 
-  assert(java_lang_reflect_Module::is_subclass(module->klass()), "Module is not a java.lang.reflect.Module");
   return JNIHandles::make_local(env, module);
 }
 
@@ -853,7 +833,6 @@ jobject Modules::get_module(Symbol* package_name, Handle h_loader, TRAPS) {
   const ModuleEntry* const module_entry = (pkg_entry != NULL ? pkg_entry->module() : NULL);
 
   if (module_entry != NULL &&
-      module_entry->is_named() &&
       module_entry->jlrM_module() != NULL) {
     return JNIHandles::make_local(THREAD, JNIHandles::resolve(module_entry->jlrM_module()));
   }

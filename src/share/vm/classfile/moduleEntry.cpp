@@ -303,6 +303,17 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
 
+  // Do the fixups for the basic primitive types
+  java_lang_Class::set_module(Universe::int_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::float_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::double_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::byte_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::bool_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::char_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::long_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::short_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::void_mirror(), jlrM_handle());
+
   // Do the fixups for classes that have already been created.
   GrowableArray <Klass*>* list = java_lang_Class::fixup_jlrM_list();
   int list_length = list->length();

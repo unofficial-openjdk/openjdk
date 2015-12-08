@@ -538,7 +538,6 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
     // Obtain j.l.r.Module if available
     oop jlrM_module = (oop)NULL;
     if (module_entry != NULL &&
-        module_entry->is_named() &&
         module_entry->jlrM_module() != NULL) {
       jlrM_module = JNIHandles::resolve(module_entry->jlrM_module());
     }

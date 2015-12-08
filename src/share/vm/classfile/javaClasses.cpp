@@ -859,6 +859,16 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
     if (!k.is_null()) {
       k->set_java_mirror(mirror());
     }
+
+    // Keep list of classes needing java.base module fixup.
+    if (!ModuleEntryTable::javabase_defined()) {
+      if (fixup_jlrM_list() == NULL) {
+        GrowableArray<Klass*>* list =
+          new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(500, true);
+        set_fixup_jlrM_list(list);
+      }
+      fixup_jlrM_list()->push(k());
+    }
   } else {
     if (fixup_mirror_list() == NULL) {
       GrowableArray<Klass*>* list =
@@ -866,20 +876,6 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
       set_fixup_mirror_list(list);
     }
     fixup_mirror_list()->push(k());
-  }
-  // Keep list of classes needing java.base module fixup.
-  if (!ModuleEntryTable::javabase_defined()) {
-    if (fixup_jlrM_list() == NULL) {
-      GrowableArray<Klass*>* list =
-        new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(500, true);
-      set_fixup_jlrM_list(list);
-    }
-    if (k->is_instance_klass()) {
-      fixup_jlrM_list()->push(k());
-    } else if (k->is_objArray_klass()) {
-      ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(k());
-      fixup_jlrM_list()->push(obj_arr_klass->bottom_klass());
-    }
   }
 }
 

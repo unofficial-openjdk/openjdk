@@ -4305,8 +4305,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
 
     // Obtain j.l.r.Module
     oop module_jlrM = (oop)NULL;
-    if (module_entry->is_named() &&
-        module_entry->jlrM_module() != NULL) {
+    if (module_entry->jlrM_module() != NULL) {
       module_jlrM = JNIHandles::resolve(module_entry->jlrM_module());
     }
     Handle jlrM_handle(THREAD, module_jlrM);
