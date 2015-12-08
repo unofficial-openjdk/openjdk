@@ -808,26 +808,6 @@ public final class Class<T> implements java.io.Serializable,
      * @since 9
      */
     public Module getModule() {
-        Module module = this.module;
-        if (module != null)
-            return module;
-
-        // called early in the startup before patching
-        if (Object.class.module == null)
-            return null;
-
-        if (isArray())
-            module = componentType.getModule();
-        else if (isPrimitive())
-            module = Object.class.getModule();
-        else if (classLoader == null)
-            module = BootLoader.getUnnamedModule();
-        else
-            module = classLoader.getUnnamedModule();
-
-        // cache it
-        this.module = module;
-
         return module;
     }
 
