@@ -34,6 +34,7 @@
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "logging/log.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
@@ -297,17 +298,16 @@ static void define_javabase_module(JNIEnv *env, jobject module, jstring version,
     ModuleEntryTable::finalize_javabase(jlrM_handle, version_symbol, location_symbol);
   }
 
-  if (TraceModules) {
-    tty->print("[define_javabase_module(): Definition of module: java.base, version: %s, location: %s, ",
-               module_version != NULL ? module_version : "NULL",
-               module_location != NULL ? module_location : "NULL");
-    tty->print_cr("package #: %d]", pkg_list->length());
+  log_debug(modules)("define_javabase_module(): Definition of module: java.base,"
+                     " version: %s, location: %s, package #: %d",
+                     module_version != NULL ? module_version : "NULL",
+                     module_location != NULL ? module_location : "NULL",
+                     pkg_list->length());
 
-    // packages defined to java.base
-    for (int x = 0; x < pkg_list->length(); x++) {
-      tty->print_cr("[define_javabase_module(): creation of package %s for module java.base]",
-                     (pkg_list->at(x))->as_C_string());
-    }
+  // packages defined to java.base
+  for (int x = 0; x < pkg_list->length(); x++) {
+    log_trace(modules)("define_javabase_module(): creation of package %s for module java.base",
+                       (pkg_list->at(x))->as_C_string());
   }
 
   // Patch any previously loaded classes' module field with java.base's jlr.Module.
@@ -479,15 +479,16 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
                       pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
   }
 
-  if (TraceModules) {
-    tty->print("[define_module(): creation of module: %s, version: %s, location: %s, ",
-      module_name, module_version != NULL ? module_version : "NULL",
-      module_location != NULL ? module_location : "NULL");
-    loader_data->print_value();
-    tty->print_cr(", package #: %d]", pkg_list->length());
+  if (log_is_enabled(Debug, modules)) {
+    outputStream* logst = LogHandle(modules)::debug_stream();
+    logst->print("define_module(): creation of module: %s, version: %s, location: %s, ",
+                 module_name, module_version != NULL ? module_version : "NULL",
+                 module_location != NULL ? module_location : "NULL");
+    loader_data->print_value_on(logst);
+    logst->print_cr(", package #: %d", pkg_list->length());
     for (int y = 0; y < pkg_list->length(); y++) {
-      tty->print_cr("[define_module(): creation of package %s for module %s]",
-                    (pkg_list->at(y))->as_C_string(), module_name);
+      log_trace(modules)("define_module(): creation of package %s for module %s",
+                         (pkg_list->at(y))->as_C_string(), module_name);
     }
   }
 
@@ -529,9 +530,7 @@ void Modules::set_bootloader_unnamed_module(JNIEnv *env, jobject module) {
   }
   Handle h_loader = Handle(THREAD, loader);
 
-  if (TraceModules) {
-    tty->print_cr("[set_bootloader_unnamed_module(): recording unnamed module for boot loader]");
-  }
+  log_debug(modules)("set_bootloader_unnamed_module(): recording unnamed module for boot loader");
 
   // Ensure the boot loader's PackageEntryTable has been created
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK);
@@ -576,9 +575,8 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
   }
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package, CHECK);
-
+  ResourceMark rm;
   if (package_entry == NULL) {
-    ResourceMark rm;
     const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s not found in from_module %s",
@@ -586,7 +584,6 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                       from_module_entry->name()->as_C_string()));
   }
   if (package_entry->module() != from_module_entry) {
-    ResourceMark rm;
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package: %s found in module %s, not in from_module: %s",
                       package_entry->name()->as_C_string(),
@@ -594,15 +591,12 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                       from_module_entry->name()->as_C_string()));
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[add_module_exports(): package %s in module %s is exported to module %s]",
-                  package_entry->name()->as_C_string(),
-                  from_module_entry->name()->as_C_string(),
-                  to_module_entry == NULL ? "NULL" :
-                    to_module_entry->is_named() ?
-                      to_module_entry->name()->as_C_string() : UNNAMED_MODULE);
-  }
+  log_debug(modules)("add_module_exports(): package %s in module %s is exported to module %s",
+                     package_entry->name()->as_C_string(),
+                     from_module_entry->name()->as_C_string(),
+                     to_module_entry == NULL ? "NULL" :
+                      to_module_entry->is_named() ?
+                        to_module_entry->name()->as_C_string() : UNNAMED_MODULE);
 
   // If this is a qualified export, make sure the entry has not already been exported
   // unqualifiedly.
@@ -654,13 +648,13 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
     to_module_entry = NULL;
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[add_reads_module(): Adding read from module %s to module %s]",
-      from_module_entry->is_named() ? from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-      to_module_entry == NULL ? "all unnamed" :
-        (to_module_entry->is_named() ? to_module_entry->name()->as_C_string() : UNNAMED_MODULE));
-  }
+  ResourceMark rm;
+  log_debug(modules)("add_reads_module(): Adding read from module %s to module %s",
+                     from_module_entry->is_named() ?
+                     from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                      to_module_entry == NULL ? "all unnamed" :
+                        (to_module_entry->is_named() ?
+                          to_module_entry->name()->as_C_string() : UNNAMED_MODULE));
 
   // if modules are the same or if from_module is unnamed then no need to add the read.
   if (from_module_entry != to_module_entry && from_module_entry->is_named()) {
@@ -693,18 +687,16 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
                "target_module is invalid", JNI_FALSE);
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[can_read_module(): module %s trying to read module %s, allowed = %s",
-      asking_module_entry->is_named() ?
-        asking_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-      target_module_entry->is_named() ?
-        target_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-      BOOL_TO_STR(asking_module_entry == target_module_entry ||
-                  (asking_module_entry->can_read_unnamed() &&
-                    !target_module_entry->is_named()) ||
-                  asking_module_entry->can_read(target_module_entry)));
-  }
+  ResourceMark rm;
+  log_debug(modules)("can_read_module(): module %s trying to read module %s, allowed = %s",
+                     asking_module_entry->is_named() ?
+                       asking_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                     target_module_entry->is_named() ?
+                       target_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                     BOOL_TO_STR(asking_module_entry == target_module_entry ||
+                                 (asking_module_entry->can_read_unnamed() &&
+                                  !target_module_entry->is_named()) ||
+                                  asking_module_entry->can_read(target_module_entry)));
 
   // Return true if:
   // 1. the modules are the same, or
@@ -746,9 +738,9 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
   }
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
-    CHECK_false);
+                                                  CHECK_false);
+  ResourceMark rm;
   if (package_entry == NULL) {
-    ResourceMark rm;
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                err_msg("Package not found in from_module: %s",
                        from_module_entry->is_named() ?
@@ -756,7 +748,6 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
                JNI_FALSE);
   }
   if (package_entry->module() != from_module_entry) {
-    ResourceMark rm;
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                err_msg("Package: %s found in module %s, not in from_module: %s",
                        package_entry->name()->as_C_string(),
@@ -767,19 +758,17 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
                JNI_FALSE);
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[is_exported_to_module: package %s from module %s checking if exported to module %s, exported? = %s",
-                  package_entry->name()->as_C_string(),
-                  from_module_entry->is_named() ?
-                    from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-                  to_module_entry->is_named() ?
-                    to_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-                  BOOL_TO_STR(!from_module_entry->is_named() ||
-                    package_entry->is_unqual_exported() ||
-                    from_module_entry == to_module_entry ||
-                    package_entry->is_qexported_to(to_module_entry)));
-  }
+  log_debug(modules)("is_exported_to_module: package %s from module %s checking"
+                     " if exported to module %s, exported? = %s",
+                     package_entry->name()->as_C_string(),
+                     from_module_entry->is_named() ?
+                       from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                     to_module_entry->is_named() ?
+                       to_module_entry->name()->as_C_string() : UNNAMED_MODULE,
+                     BOOL_TO_STR(!from_module_entry->is_named() ||
+                       package_entry->is_unqual_exported() ||
+                       from_module_entry == to_module_entry ||
+                       package_entry->is_qexported_to(to_module_entry)));
 
   // Return true if:
   // 1. from_module is unnamed because unnamed modules export all their packages (by default), or
@@ -803,9 +792,7 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   }
   oop mirror = JNIHandles::resolve_non_null(clazz);
   if (mirror == NULL) {
-    if (TraceModules) {
-      tty->print_cr("[get_module(): no mirror, returning NULL]");
-    }
+    log_debug(modules)("get_module(): no mirror, returning NULL");
     return NULL;
   }
   if (!java_lang_Class::is_instance(mirror)) {
@@ -838,19 +825,20 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     }
   }
 
-  if (TraceModules) {
+  if (log_is_enabled(Debug, modules)) {
     ResourceMark rm;
+    outputStream* logst = LogHandle(modules)::debug_stream();
     oop module_name = java_lang_reflect_Module::name(module);
     if (module_name != NULL) {
-      tty->print("[get_module(): module ");
+      logst->print("get_module(): module ");
       java_lang_String::print(module_name, tty);
     } else {
-      tty->print("[get_module(): Unamed Module");
+      logst->print("get_module(): Unamed Module");
     }
     if (klass != NULL) {
-      tty->print_cr(" for class %s]", klass->external_name());
+      logst->print_cr(" for class %s", klass->external_name());
     } else {
-      tty->print_cr(" for primitive class]");
+      logst->print_cr(" for primitive class");
     }
   }
 
@@ -904,11 +892,8 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
               err_msg("Invalid package name: %s", package_name));
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[add_module_package(): Adding package %s to module %s]",
-                  package_name, module_entry->name()->as_C_string());
-  }
+  log_debug(modules)("add_module_package(): Adding package %s to module %s",
+                     package_name, module_entry->name()->as_C_string());
 
   TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
   PackageEntryTable* package_table = module_entry->loader()->packages();
@@ -955,8 +940,8 @@ void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jst
   }
 
   PackageEntry *package_entry = get_package_entry(module_entry, package, CHECK);
+  ResourceMark rm;
   if (package_entry == NULL) {
-    ResourceMark rm;
     const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s not found in module %s",
@@ -964,7 +949,6 @@ void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jst
                       module_entry->name()->as_C_string()));
   }
   if (package_entry->module() != module_entry) {
-    ResourceMark rm;
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package: %s found in module %s, not in module: %s",
                       package_entry->name()->as_C_string(),
@@ -972,12 +956,10 @@ void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jst
                       module_entry->name()->as_C_string()));
   }
 
-  if (TraceModules) {
-    ResourceMark rm;
-    tty->print_cr("[add_module_exports_to_all_unnamed(): package %s in module %s is exported to all unnamed modules]",
-                  package_entry->name()->as_C_string(),
-                  module_entry->name()->as_C_string());
-  }
+  log_debug(modules)("add_module_exports_to_all_unnamed(): package %s in module"
+                     " %s is exported to all unnamed modules",
+                     package_entry->name()->as_C_string(),
+                     module_entry->name()->as_C_string());
 
   // Mark package as exported to all unnamed modules, unless already
   // unqualifiedly exported.

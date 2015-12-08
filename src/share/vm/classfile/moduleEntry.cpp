@@ -26,6 +26,7 @@
 #include "classfile/classLoaderData.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jni.h"
@@ -135,11 +136,9 @@ ModuleEntryTable::~ModuleEntryTable() {
       // read next before freeing.
       m = m->next();
 
-      if (TraceModules) {
-        ResourceMark rm;
-        tty->print_cr("[ModuleEntryTable: deleting module: %s]", to_remove->name() != NULL ?
-                      to_remove->name()->as_C_string() : UNNAMED_MODULE);
-      }
+      ResourceMark rm;
+      log_debug(modules)("ModuleEntryTable: deleting module: %s", to_remove->name() != NULL ?
+                         to_remove->name()->as_C_string() : UNNAMED_MODULE);
 
       // Clean out the C heap allocated reads list first before freeing the entry
       to_remove->delete_reads();

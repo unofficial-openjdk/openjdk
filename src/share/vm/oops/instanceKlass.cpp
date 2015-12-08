@@ -33,6 +33,7 @@
 #include "interpreter/oopMapCache.hpp"
 #include "interpreter/rewriter.hpp"
 #include "jvmtifiles/jvmti.h"
+#include "logging/log.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/metadataFactory.hpp"
@@ -2405,23 +2406,21 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
              name->as_C_string(), loader->loader_name());
     }
 
-    if (TraceModules) {
+    if (log_is_enabled(Debug, modules)) {
       ResourceMark rm;
       ModuleEntry* m = _package_entry->module();
-      tty->print_cr("[Setting package: class: %s, package: %s, loader: %s, module: %s]",
-                    external_name(),
-                    pkg_name->as_C_string(),
-                    loader->loader_name(),
-                    (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
+      log_trace(modules)("Setting package: class: %s, package: %s, loader: %s, module: %s",
+                         external_name(),
+                         pkg_name->as_C_string(),
+                         loader->loader_name(),
+                         (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
     }
   } else {
-    if (TraceModules) {
-      ResourceMark rm;
-      tty->print_cr("[Setting package: class: %s, package: unnamed, loader: %s, module: %s]",
-                    external_name(),
-                    (loader != NULL) ? loader->loader_name() : "NULL",
-                    UNNAMED_MODULE);
-    }
+    ResourceMark rm;
+    log_trace(modules)("Setting package: class: %s, package: unnamed, loader: %s, module: %s",
+                       external_name(),
+                       (loader != NULL) ? loader->loader_name() : "NULL",
+                       UNNAMED_MODULE);
   }
 }
 
