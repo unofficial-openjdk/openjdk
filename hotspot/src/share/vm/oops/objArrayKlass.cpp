@@ -102,7 +102,7 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
 
   // Create type name for klass.
   Symbol* name = NULL;
-  if (!element_klass->oop_is_instance() ||
+  if (!element_klass->is_instance_klass() ||
       (name = InstanceKlass::cast(element_klass())->array_name()) == NULL) {
 
     ResourceMark rm(THREAD);
@@ -111,17 +111,17 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
     char *new_str = NEW_RESOURCE_ARRAY(char, len + 4);
     int idx = 0;
     new_str[idx++] = '[';
-    if (element_klass->oop_is_instance()) { // it could be an array or simple type
+    if (element_klass->is_instance_klass()) { // it could be an array or simple type
       new_str[idx++] = 'L';
     }
     memcpy(&new_str[idx], name_str, len * sizeof(char));
     idx += len;
-    if (element_klass->oop_is_instance()) {
+    if (element_klass->is_instance_klass()) {
       new_str[idx++] = ';';
     }
     new_str[idx++] = '\0';
     name = SymbolTable::new_permanent_symbol(new_str, CHECK_0);
-    if (element_klass->oop_is_instance()) {
+    if (element_klass->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(element_klass());
       ik->set_array_name(name);
     }
@@ -135,8 +135,18 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
   // GC walks these as strong roots.
   loader_data->add_class(oak);
 
+  // The array is defined in the module of its bottom class
+  Klass* bottom_klass = oak->bottom_klass();
+  ModuleEntry* module;
+  if (bottom_klass->is_instance_klass()) {
+    module = InstanceKlass::cast(bottom_klass)->module();
+  } else {
+    module = ModuleEntryTable::javabase_module();
+  }
+  assert(module != NULL, "No module entry for array");
+
   // Call complete_create_array_klass after all instance variables has been initialized.
-  ArrayKlass::complete_create_array_klass(oak, super_klass, CHECK_0);
+  ArrayKlass::complete_create_array_klass(oak, super_klass, module, CHECK_0);
 
   return oak;
 }
@@ -150,18 +160,18 @@ ObjArrayKlass::ObjArrayKlass(int n, KlassHandle element_klass, Symbol* name) : A
   name->decrement_refcount();
 
   Klass* bk;
-  if (element_klass->oop_is_objArray()) {
+  if (element_klass->is_objArray_klass()) {
     bk = ObjArrayKlass::cast(element_klass())->bottom_klass();
   } else {
     bk = element_klass();
   }
-  assert(bk != NULL && (bk->oop_is_instance() || bk->oop_is_typeArray()), "invalid bottom klass");
+  assert(bk != NULL && (bk->is_instance_klass() || bk->is_typeArray_klass()), "invalid bottom klass");
   this->set_bottom_klass(bk);
   this->set_class_loader_data(bk->class_loader_data());
 
   this->set_layout_helper(array_layout_helper(T_OBJECT));
-  assert(this->oop_is_array(), "sanity");
-  assert(this->oop_is_objArray(), "sanity");
+  assert(this->is_array_klass(), "sanity");
+  assert(this->is_objArray_klass(), "sanity");
 }
 
 int ObjArrayKlass::oop_size(oop obj) const {
@@ -336,7 +346,7 @@ Klass* ObjArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
         ak->set_lower_dimension(this);
         OrderAccess::storestore();
         set_higher_dimension(ak);
-        assert(ak->oop_is_objArray(), "incorrect initialization of ObjArrayKlass");
+        assert(ak->is_objArray_klass(), "incorrect initialization of ObjArrayKlass");
       }
     }
   } else {
@@ -386,7 +396,7 @@ GrowableArray<Klass*>* ObjArrayKlass::compute_secondary_supers(int num_extra_slo
 }
 
 bool ObjArrayKlass::compute_is_subtype_of(Klass* k) {
-  if (!k->oop_is_objArray())
+  if (!k->is_objArray_klass())
     return ArrayKlass::compute_is_subtype_of(k);
 
   ObjArrayKlass* oak = ObjArrayKlass::cast(k);
@@ -484,7 +494,7 @@ void ObjArrayKlass::verify_on(outputStream* st) {
   guarantee(element_klass()->is_klass(), "should be klass");
   guarantee(bottom_klass()->is_klass(), "should be klass");
   Klass* bk = bottom_klass();
-  guarantee(bk->oop_is_instance() || bk->oop_is_typeArray(),  "invalid bottom klass");
+  guarantee(bk->is_instance_klass() || bk->is_typeArray_klass(),  "invalid bottom klass");
 }
 
 void ObjArrayKlass::oop_verify_on(oop obj, outputStream* st) {

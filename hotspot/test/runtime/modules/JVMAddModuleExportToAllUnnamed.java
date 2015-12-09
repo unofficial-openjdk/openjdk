@@ -68,8 +68,7 @@ public class JVMAddModuleExportToAllUnnamed {
             p1_c1_class.newInstance();
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
-            if (!e.getMessage().contains("cannot read Unnamed") ||
-                (!e.getMessage().contains("strict"))) {
+            if (!e.getMessage().contains("does not read unnamed module")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

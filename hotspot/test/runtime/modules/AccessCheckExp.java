@@ -77,7 +77,7 @@ public class AccessCheckExp {
             throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported");
         } catch (IllegalAccessError f) {
             System.out.println(f.getMessage());
-            if (!f.getMessage().contains("not exported")) {
+            if (!f.getMessage().contains("does not export")) {
                 throw new RuntimeException("Wrong message: " + f.getMessage());
             }
         }

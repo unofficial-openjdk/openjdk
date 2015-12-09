@@ -41,7 +41,6 @@ import static jdk.test.lib.Asserts.*;
 import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,7 +91,7 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
         // then augments that configuration with additional modules (and edges) induced
         // by service-use relationships.
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.boot(),
+                                                 Layer.boot().configuration(),
                                                  ModuleFinder.empty(),
                                                  "m1");
 
@@ -102,7 +101,7 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
         map.put("m2", MyDiffClassLoader.loader2);
 
         // Create Layer that contains m1 & m2
-        Layer layer = Layer.create(cf, map::get);
+        Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
         assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
         assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
@@ -117,7 +116,7 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
             throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m1, not unqualifiedly");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
-            if (!e.getMessage().contains("not exported")) {
+            if (!e.getMessage().contains("does not export")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

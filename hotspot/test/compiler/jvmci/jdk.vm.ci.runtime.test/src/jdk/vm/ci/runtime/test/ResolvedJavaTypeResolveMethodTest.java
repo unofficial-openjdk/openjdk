@@ -24,16 +24,20 @@
 /**
  * @test
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @ignore 8143238
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.ResolvedJavaTypeResolveMethodTest
  */
 
 package jdk.vm.ci.runtime.test;
 
-import static org.junit.Assert.*;
-import jdk.vm.ci.meta.*;
-import jdk.vm.ci.runtime.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import jdk.vm.ci.meta.MetaAccessProvider;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaType;
+import jdk.vm.ci.runtime.JVMCI;
 
-import org.junit.*;
+import org.junit.Test;
 
 public class ResolvedJavaTypeResolveMethodTest {
     public final MetaAccessProvider metaAccess;

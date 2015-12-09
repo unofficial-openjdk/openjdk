@@ -24,20 +24,27 @@
 /**
  * @test
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @ignore 8143238
  * @compile TestConstantReflectionProvider.java TypeUniverse.java TestMetaAccessProvider.java
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestConstantReflectionProvider
  */
 
 package jdk.vm.ci.runtime.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Array;
+import java.util.List;
 
-import jdk.vm.ci.meta.*;
+import jdk.vm.ci.meta.ConstantReflectionProvider;
+import jdk.vm.ci.meta.JavaConstant;
+import jdk.vm.ci.meta.JavaKind;
 
-import org.junit.*;
+import org.junit.Test;
 
 /**
  * Tests for {@link ConstantReflectionProvider}. It assumes an implementation of the interface that

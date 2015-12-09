@@ -26,6 +26,7 @@
 #include "classfile/classLoaderData.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jni.h"
@@ -135,11 +136,9 @@ ModuleEntryTable::~ModuleEntryTable() {
       // read next before freeing.
       m = m->next();
 
-      if (TraceModules) {
-        ResourceMark rm;
-        tty->print_cr("[ModuleEntryTable: deleting module: %s]", to_remove->name() != NULL ?
-                      to_remove->name()->as_C_string() : UNNAMED_MODULE);
-      }
+      ResourceMark rm;
+      log_debug(modules)("ModuleEntryTable: deleting module: %s", to_remove->name() != NULL ?
+                         to_remove->name()->as_C_string() : UNNAMED_MODULE);
 
       // Clean out the C heap allocated reads list first before freeing the entry
       to_remove->delete_reads();
@@ -303,6 +302,17 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
   if (jlrM_handle.is_null()) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
+
+  // Do the fixups for the basic primitive types
+  java_lang_Class::set_module(Universe::int_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::float_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::double_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::byte_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::bool_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::char_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::long_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::short_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::void_mirror(), jlrM_handle());
 
   // Do the fixups for classes that have already been created.
   GrowableArray <Klass*>* list = java_lang_Class::fixup_jlrM_list();

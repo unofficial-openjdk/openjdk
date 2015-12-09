@@ -26,6 +26,7 @@
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library / /testlibrary
+ * @ignore 8143238
  * @compile ../common/CompilerToVMHelper.java
  * @build compiler.jvmci.compilerToVM.InitializeConfigurationTest
  * @run main ClassFileInstaller
@@ -44,6 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
+import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Utils;
 import sun.misc.Unsafe;
@@ -72,7 +74,7 @@ public class InitializeConfigurationTest {
 
     private void runTest(List<TestCase> tcases) {
         VMStructDataReader reader = new VMStructDataReader(
-                CompilerToVMHelper.initializeConfiguration());
+                CompilerToVMHelper.initializeConfiguration(HotSpotJVMCIRuntime.runtime().getConfig()));
         while (reader.hasNext()) {
             VMFieldData data = reader.next();
             for (TestCase tcase : tcases) {

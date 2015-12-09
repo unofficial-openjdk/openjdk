@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.code;
 
-import jdk.vm.ci.meta.*;
+#include <jni.h>
 
-/**
- * Common base class for {@linkplain StackSlot real} and {@linkplain VirtualStackSlot virtual} stack
- * slots.
+static jobject weakRef;
+
+/*
+ * Class:     SameObject
+ * Method:    createWeakRef
+ * Signature: (Ljava/lang/Object;)V
  */
-public abstract class StackSlotValue extends AllocatableValue {
+JNIEXPORT void JNICALL Java_SameObject_createWeakRef
+(JNIEnv *env, jobject obj1, jobject obj2) {
+    weakRef = (*env)->NewWeakGlobalRef(env, obj2);
+}
 
-    public StackSlotValue(LIRKind lirKind) {
-        super(lirKind);
-    }
-
+/*
+ * Class:     SameObject
+ * Method:    checkWeakRef
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_SameObject_checkWeakRef
+(JNIEnv *env, jobject obj) {
+    return (*env)->IsSameObject(env, weakRef, NULL) ? 0 : 1;
 }

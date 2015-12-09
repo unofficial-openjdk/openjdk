@@ -41,7 +41,6 @@ import static jdk.test.lib.Asserts.*;
 import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.util.HashMap;
@@ -91,7 +90,7 @@ public class NmodNpkg_UmodNpkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -102,7 +101,7 @@ public class NmodNpkg_UmodNpkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -140,7 +139,7 @@ public class NmodNpkg_UmodNpkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -151,7 +150,7 @@ public class NmodNpkg_UmodNpkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -189,7 +188,7 @@ public class NmodNpkg_UmodNpkg {
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot(),
+                                              Layer.boot().configuration(),
                                               ModuleFinder.empty(),
                                               "m1");
 
@@ -200,7 +199,7 @@ public class NmodNpkg_UmodNpkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, map::get);
+     Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);

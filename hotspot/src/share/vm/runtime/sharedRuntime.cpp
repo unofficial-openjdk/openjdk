@@ -37,6 +37,7 @@
 #include "gc/shared/gcLocker.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
+#include "logging/log.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/klass.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -558,17 +559,10 @@ address SharedRuntime::get_poll_stub(address pc) {
            "polling page safepoint stub not created yet");
     stub = SharedRuntime::polling_page_safepoint_handler_blob()->entry_point();
   }
-#ifndef PRODUCT
-  if (TraceSafepoint) {
-    char buf[256];
-    jio_snprintf(buf, sizeof(buf),
-                 "... found polling page %s exception at pc = "
-                 INTPTR_FORMAT ", stub =" INTPTR_FORMAT,
-                 at_poll_return ? "return" : "loop",
-                 (intptr_t)pc, (intptr_t)stub);
-    tty->print_raw_cr(buf);
-  }
-#endif // PRODUCT
+  log_debug(safepoint)("... found polling page %s exception at pc = "
+                       INTPTR_FORMAT ", stub =" INTPTR_FORMAT,
+                       at_poll_return ? "return" : "loop",
+                       (intptr_t)pc, (intptr_t)stub);
   return stub;
 }
 
@@ -1144,7 +1138,7 @@ Handle SharedRuntime::find_callee_info_helper(JavaThread* thread,
            callee->is_method_handle_intrinsic() ||
            callee->is_compiled_lambda_form(),
            "actual receiver must be subclass of static receiver klass");
-    if (receiver_klass->oop_is_instance()) {
+    if (receiver_klass->is_instance_klass()) {
       if (InstanceKlass::cast(receiver_klass())->is_not_initialized()) {
         tty->print_cr("ERROR: Klass not yet initialized!!");
         receiver_klass()->print();
@@ -1699,7 +1693,7 @@ methodHandle SharedRuntime::reresolve_call_site(JavaThread *thread, TRAPS) {
 }
 
 #ifdef ASSERT
-void SharedRuntime::check_member_name_argument_is_last_argument(methodHandle method,
+void SharedRuntime::check_member_name_argument_is_last_argument(const methodHandle& method,
                                                                 const BasicType* sig_bt,
                                                                 const VMRegPair* regs) {
   ResourceMark rm;
@@ -1867,11 +1861,11 @@ char* SharedRuntime::generate_class_cast_message(
     Klass* caster_klass, Klass* target_klass) {
 
   const char* caster_klass_name = caster_klass->external_name();
-  Klass* c_klass = caster_klass->oop_is_objArray() ?
+  Klass* c_klass = caster_klass->is_objArray_klass() ?
     ObjArrayKlass::cast(caster_klass)->bottom_klass() : caster_klass;
   ModuleEntry* caster_module;
   const char* caster_module_name;
-  if (c_klass->oop_is_instance()) {
+  if (c_klass->is_instance_klass()) {
     caster_module = InstanceKlass::cast(c_klass)->module();
     caster_module_name = caster_module->is_named() ?
       caster_module->name()->as_C_string() : UNNAMED_MODULE;
@@ -1879,11 +1873,11 @@ char* SharedRuntime::generate_class_cast_message(
     caster_module_name = "java.base";
   }
   const char* target_klass_name = target_klass->external_name();
-  Klass* t_klass = target_klass->oop_is_objArray() ?
+  Klass* t_klass = target_klass->is_objArray_klass() ?
     ObjArrayKlass::cast(target_klass)->bottom_klass() : target_klass;
   ModuleEntry* target_module;
   const char* target_module_name;
-  if (t_klass->oop_is_instance()) {
+  if (t_klass->is_instance_klass()) {
     target_module = InstanceKlass::cast(t_klass)->module();
     target_module_name = target_module->is_named() ?
       target_module->name()->as_C_string(): UNNAMED_MODULE;
@@ -2462,7 +2456,7 @@ AdapterHandlerEntry* AdapterHandlerLibrary::new_entry(AdapterFingerPrint* finger
   return _adapters->new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
 }
 
-AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter(methodHandle method) {
+AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter(const methodHandle& method) {
   // Use customized signature handler.  Need to lock around updates to
   // the AdapterHandlerTable (it is not safe for concurrent readers
   // and a single writer: this could be fixed if it becomes a
@@ -2672,7 +2666,7 @@ bool AdapterHandlerEntry::compare_code(unsigned char* buffer, int length) {
  * arguments, and transitions to native.  On return from the native we transition
  * back to java blocking if a safepoint is in progress.
  */
-void AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
+void AdapterHandlerLibrary::create_native_wrapper(const methodHandle& method) {
   ResourceMark rm;
   nmethod* nm = NULL;
 

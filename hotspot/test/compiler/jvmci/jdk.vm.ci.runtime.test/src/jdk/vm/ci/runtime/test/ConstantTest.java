@@ -24,15 +24,18 @@
 /**
  * @test
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @ignore 8143238
  * @compile ConstantTest.java FieldUniverse.java TypeUniverse.java TestMetaAccessProvider.java
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.ConstantTest
  */
 
 package jdk.vm.ci.runtime.test;
 
-import jdk.vm.ci.meta.*;
+import jdk.vm.ci.meta.JavaConstant;
+import jdk.vm.ci.meta.JavaKind;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ConstantTest extends FieldUniverse {
 

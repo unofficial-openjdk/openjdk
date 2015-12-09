@@ -1451,6 +1451,6 @@ void logStream::write(const char* s, size_t len) {
     _current_line.reset();
   } else {
     _current_line.write(s, len);
-    update_position(s, len);
   }
+  update_position(s, len);
 }

@@ -66,7 +66,7 @@ public class AccessCheckUnnamed {
             throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported to unnamed module)");
         } catch (IllegalAccessError f) {
             System.out.println(f.getMessage());
-            if (!f.getMessage().contains("p2 is not exported to Unnamed Module")) {
+            if (!f.getMessage().contains("does not export p2 to unnamed module")) {
                 throw new RuntimeException("Wrong message: " + f.getMessage());
             }
         }

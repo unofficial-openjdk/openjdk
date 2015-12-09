@@ -40,7 +40,6 @@ import static jdk.test.lib.Asserts.*;
 import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
@@ -103,7 +102,7 @@ public class NmodNpkg_CheckRead {
         // then augments that configuration with additional modules (and edges) induced
         // by service-use relationships.
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.boot(),
+                                                 Layer.boot().configuration(),
                                                  ModuleFinder.empty(),
                                                  "m1");
 
@@ -114,7 +113,7 @@ public class NmodNpkg_CheckRead {
         map.put("m3", MySameClassLoader.loader1);
 
         // Create Layer that contains m1, m2 and m3
-        Layer layer = Layer.create(cf, map::get);
+        Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
         assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
         assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);

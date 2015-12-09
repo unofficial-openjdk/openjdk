@@ -25,7 +25,8 @@
  * @test
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
- * @library / /testlibrary /../../test/lib
+ * @library / /testlibrary /test/lib
+ * @ignore 8143238
  * @compile ../common/CompilerToVMHelper.java
  * @build compiler.jvmci.compilerToVM.ResolveMethodTest
  * @run main ClassFileInstaller
@@ -49,8 +50,8 @@ import compiler.jvmci.common.CTVMUtilities;
 import java.util.HashSet;
 import java.util.Set;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
-import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethodImpl;
-import jdk.vm.ci.hotspot.HotSpotResolvedObjectTypeImpl;
+import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
+import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Utils;
 import sun.misc.Unsafe;
@@ -125,16 +126,16 @@ public class ResolveMethodTest {
 
     private void runTest(TestCase tcase) throws NoSuchMethodException {
         System.out.println(tcase);
-        HotSpotResolvedJavaMethodImpl metaspaceMethod = CTVMUtilities
+        HotSpotResolvedJavaMethod metaspaceMethod = CTVMUtilities
                 .getResolvedMethod(tcase.holder,
                         tcase.holder.getDeclaredMethod(tcase.methodName));
-        HotSpotResolvedObjectTypeImpl holderMetaspace = CompilerToVMHelper
+        HotSpotResolvedObjectType holderMetaspace = CompilerToVMHelper
                 .lookupType(Utils.toJVMTypeSignature(tcase.holder),
                         getClass(), /* resolve = */ true);
-        HotSpotResolvedObjectTypeImpl callerMetaspace = CompilerToVMHelper
+        HotSpotResolvedObjectType callerMetaspace = CompilerToVMHelper
                 .lookupType(Utils.toJVMTypeSignature(tcase.caller),
                         getClass(), /* resolve = */ true);
-        HotSpotResolvedJavaMethodImpl resolvedMetaspaceMethod
+        HotSpotResolvedJavaMethod resolvedMetaspaceMethod
                 = CompilerToVMHelper.resolveMethod(holderMetaspace,
                         metaspaceMethod, callerMetaspace);
         if (tcase.isPositive) {

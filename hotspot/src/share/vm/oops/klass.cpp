@@ -347,7 +347,7 @@ GrowableArray<Klass*>* Klass::compute_secondary_supers(int num_extra_slots) {
 }
 
 InstanceKlass* Klass::superklass() const {
-  assert(super() == NULL || super()->oop_is_instance(), "must be instance klass");
+  assert(super() == NULL || super()->is_instance_klass(), "must be instance klass");
   return _super == NULL ? NULL : InstanceKlass::cast(_super);
 }
 
@@ -439,10 +439,9 @@ void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive
     }
 
     // Clean the implementors list and method data.
-    if (clean_alive_klasses && current->oop_is_instance()) {
+    if (clean_alive_klasses && current->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(current);
-      ik->clean_implementors_list(is_alive);
-      ik->clean_method_data(is_alive);
+      ik->clean_weak_instanceklass_links(is_alive);
     }
   }
 }
@@ -526,11 +525,11 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
     Handle loader = loader_data->class_loader();
     ModuleEntry* module_entry = NULL;
     Klass* k = this;
-    if (k->oop_is_objArray()) {
+    if (k->is_objArray_klass()) {
       k = ObjArrayKlass::cast(k)->bottom_klass();
     }
     // Obtain klass' module.
-    if (k->oop_is_instance()) {
+    if (k->is_instance_klass()) {
       InstanceKlass* ik = (InstanceKlass*) k;
       module_entry = ik->module();
     } else {
@@ -539,7 +538,6 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
     // Obtain j.l.r.Module if available
     oop jlrM_module = (oop)NULL;
     if (module_entry != NULL &&
-        module_entry->is_named() &&
         module_entry->jlrM_module() != NULL) {
       jlrM_module = JNIHandles::resolve(module_entry->jlrM_module());
     }
@@ -577,9 +575,11 @@ Klass* Klass::array_klass_impl(bool or_null, TRAPS) {
 
 oop Klass::class_loader() const { return class_loader_data()->class_loader(); }
 
+// In product mode, this function doesn't have virtual function calls so
+// there might be some performance advantage to handling InstanceKlass here.
 const char* Klass::external_name() const {
-  if (oop_is_instance()) {
-    InstanceKlass* ik = (InstanceKlass*) this;
+  if (is_instance_klass()) {
+    const InstanceKlass* ik = static_cast<const InstanceKlass*>(this);
     if (ik->is_anonymous()) {
       intptr_t hash = 0;
       if (ik->java_mirror() != NULL) {
@@ -707,19 +707,13 @@ void Klass::oop_verify_on(oop obj, outputStream* st) {
 #ifndef PRODUCT
 
 bool Klass::verify_vtable_index(int i) {
-  if (oop_is_instance()) {
-    int limit = ((InstanceKlass*)this)->vtable_length()/vtableEntry::size();
-    assert(i >= 0 && i < limit, "index %d out of bounds %d", i, limit);
-  } else {
-    assert(oop_is_array(), "Must be");
-    int limit = ((ArrayKlass*)this)->vtable_length()/vtableEntry::size();
-    assert(i >= 0 && i < limit, "index %d out of bounds %d", i, limit);
-  }
+  int limit = vtable_length()/vtableEntry::size();
+  assert(i >= 0 && i < limit, "index %d out of bounds %d", i, limit);
   return true;
 }
 
 bool Klass::verify_itable_index(int i) {
-  assert(oop_is_instance(), "");
+  assert(is_instance_klass(), "");
   int method_count = klassItable::method_count_for_interface(this);
   assert(i >= 0 && i < method_count, "index out of bounds");
   return true;
@@ -735,11 +729,11 @@ class TestKlass {
  public:
   static void test_oop_is_instanceClassLoader() {
     Klass* klass = SystemDictionary::ClassLoader_klass();
-    guarantee(klass->oop_is_instance(), "assert");
+    guarantee(klass->is_instance_klass(), "assert");
     guarantee(InstanceKlass::cast(klass)->is_class_loader_instance_klass(), "test failed");
 
     klass = SystemDictionary::String_klass();
-    guarantee(!klass->oop_is_instance() ||
+    guarantee(!klass->is_instance_klass() ||
               !InstanceKlass::cast(klass)->is_class_loader_instance_klass(),
               "test failed");
   }
@@ -749,4 +743,4 @@ void TestKlass_test() {
   TestKlass::test_oop_is_instanceClassLoader();
 }
 
-#endif
+#endif  // PRODUCT

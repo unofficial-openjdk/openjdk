@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.compiler;
 
-public interface StartupEventListener {
+package jdk.vm.ci.hotspot;
 
-    /**
-     * This method is called before any of the {@link CompilerFactory} methods.
-     */
-    void beforeJVMCIStartup();
-}
+/**
+ * A public available version of MetaspaceWrapperObject interface.
+ */
+public interface PublicMetaspaceWrapperObject extends MetaspaceWrapperObject { }
