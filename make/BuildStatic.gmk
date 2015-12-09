@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,21 +23,32 @@
 # questions.
 #
 
-default: install
+default: all
 
 include $(SPEC)
+include MakeBase.gmk
 
-BINARIES := $(notdir $(wildcard $(JDK_IMAGE_DIR)/bin/*))
-INSTALLDIR := openjdk-$(VERSION_SHORT)
+################################################################################
+#
+# Concatenate exported.symbols files for modules into a single global file.
+#
 
-# Install the jdk image, in a very crude way. Not taking into
-# account, how to install properly on macosx or windows etc.
-install:
-	echo Installing jdk image into $(INSTALL_PREFIX)/jvm/$(INSTALLDIR)
-	echo and creating $(words $(BINARIES)) links from $(INSTALL_PREFIX)/bin into the jdk.
-	$(MKDIR) -p $(INSTALL_PREFIX)/jvm/$(INSTALLDIR)
-	$(RM) -r $(INSTALL_PREFIX)/jvm/$(INSTALLDIR)/*
-	$(CP) -rp $(JDK_IMAGE_DIR)/* $(INSTALL_PREFIX)/jvm/$(INSTALLDIR)
-	$(MKDIR) -p $(INSTALL_PREFIX)/bin
-	$(RM) $(addprefix $(INSTALL_PREFIX)/bin/, $(BINARIES))
-	$(foreach b, $(BINARIES), $(LN) -s $(INSTALL_PREFIX)/jvm/$(INSTALLDIR)/bin/$b $(INSTALL_PREFIX)/bin/$b &&) true
+GLOBAL_SYMBOLS_FILE := $(SUPPORT_OUTPUTDIR)/build-static/exported.symbols
+
+EXPORTED_SYMBOLS_MODULES := java.base jdk.jdwp.agent
+
+MODULES_SYMBOLS_FILES := $(foreach module, $(EXPORTED_SYMBOLS_MODULES), \
+    $(SUPPORT_OUTPUTDIR)/modules_libs/$(module)/$(module).symbols)
+
+$(GLOBAL_SYMBOLS_FILE): $(MODULES_SYMBOLS_FILES)
+	$(ECHO) $(LOG_INFO) "Generating global exported.symbols file"
+	$(MKDIR) -p $(@D)
+	$(CAT) $^ > $@
+
+TARGETS += $(GLOBAL_SYMBOLS_FILE)
+
+################################################################################
+
+all: $(TARGETS)
+
+.PHONY: default all

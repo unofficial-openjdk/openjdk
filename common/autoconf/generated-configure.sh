@@ -813,6 +813,7 @@ STATIC_LIBRARY_SUFFIX
 SHARED_LIBRARY_SUFFIX
 LIBRARY_PREFIX
 TOOLCHAIN_TYPE
+STATIC_BUILD
 IMPORT_MODULES_MAKE
 IMPORT_MODULES_SRC
 IMPORT_MODULES_CONF
@@ -843,9 +844,18 @@ JAVA
 BOOT_JDK
 JAVA_CHECK
 JAVAC_CHECK
-COOKED_BUILD_NUMBER
-JDK_VERSION
-COPYRIGHT_YEAR
+VERSION_IS_GA
+VERSION_SHORT
+VERSION_STRING
+VERSION_NUMBER_FOUR_POSITIONS
+VERSION_NUMBER
+VERSION_OPT
+VERSION_BUILD
+VERSION_PRE
+VERSION_PATCH
+VERSION_SECURITY
+VERSION_MINOR
+VERSION_MAJOR
 MACOSX_BUNDLE_ID_BASE
 MACOSX_BUNDLE_NAME_BASE
 COMPANY_NAME
@@ -853,13 +863,7 @@ JDK_RC_PLATFORM_NAME
 PRODUCT_SUFFIX
 PRODUCT_NAME
 LAUNCHER_NAME
-MILESTONE
-JDK_BUILD_NUMBER
-JDK_UPDATE_VERSION
-JDK_MICRO_VERSION
-JDK_MINOR_VERSION
-JDK_MAJOR_VERSION
-USER_RELEASE_SUFFIX
+COPYRIGHT_YEAR
 COMPRESS_JARS
 UNLIMITED_CRYPTO
 CACERTS_FILE
@@ -1080,11 +1084,19 @@ enable_headful
 enable_hotspot_test_in_build
 with_cacerts_file
 enable_unlimited_crypto
+with_copyright_year
 with_milestone
 with_update_version
 with_user_release_suffix
 with_build_number
-with_copyright_year
+with_version_string
+with_version_pre
+with_version_opt
+with_version_build
+with_version_major
+with_version_minor
+with_version_security
+with_version_patch
 with_boot_jdk
 with_build_jdk
 with_add_source_root
@@ -1099,6 +1111,7 @@ with_override_nashorn
 with_override_jdk
 with_import_hotspot
 with_import_modules
+enable_static_build
 with_toolchain_type
 with_extra_cflags
 with_extra_cxxflags
@@ -1879,6 +1892,7 @@ Optional Features:
                           run the Queens test after Hotspot build [disabled]
   --enable-unlimited-crypto
                           Enable unlimited crypto policy [disabled]
+  --enable-static-build   enable static library build [disabled]
   --disable-warnings-as-errors
                           do not consider native warnings to be an error
                           [enabled]
@@ -1930,13 +1944,31 @@ Optional Packages:
   --with-output-sync      set make output sync type if supported by make.
                           [recurse]
   --with-cacerts-file     specify alternative cacerts file
-  --with-milestone        Set milestone value for build [internal]
-  --with-update-version   Set update version value for build [b00]
-  --with-user-release-suffix
-                          Add a custom string to the version string if build
-                          number is not set.[username_builddateb00]
-  --with-build-number     Set build number value for build [b00]
   --with-copyright-year   Set copyright year value for build [current year]
+  --with-milestone        Deprecated. Option is kept for backwards
+                          compatibility and is ignored
+  --with-update-version   Deprecated. Option is kept for backwards
+                          compatibility and is ignored
+  --with-user-release-suffix
+                          Deprecated. Option is kept for backwards
+                          compatibility and is ignored
+  --with-build-number     Deprecated. Option is kept for backwards
+                          compatibility and is ignored
+  --with-version-string   Set version string [calculated]
+  --with-version-pre      Set the base part of the version 'PRE' field
+                          (pre-release identifier) ['internal']
+  --with-version-opt      Set version 'OPT' field (build metadata)
+                          [<timestamp>.<user>.<dirname>]
+  --with-version-build    Set version 'BUILD' field (build number) [not
+                          specified]
+  --with-version-major    Set version 'MAJOR' field (first number) [current
+                          source value]
+  --with-version-minor    Set version 'MINOR' field (second number) [current
+                          source value]
+  --with-version-security Set version 'SECURITY' field (third number) [current
+                          source value]
+  --with-version-patch    Set version 'PATCH' field (fourth number) [not
+                          specified]
   --with-boot-jdk         path to Boot JDK (used to bootstrap build) [probed]
   --with-build-jdk        path to JDK of same version as is being built[the
                           newly built JDK]
@@ -4022,11 +4054,12 @@ pkgadd_help() {
 
 
 
+
+
 ###############################################################################
 #
-# Setup version numbers
+# Enable or disable the elliptic curve crypto implementation
 #
-
 
 
 
@@ -4036,6 +4069,54 @@ pkgadd_help() {
 #
 # Gcov coverage data for hotspot
 #
+
+
+################################################################################
+#
+# Static build support.  When enabled will generate static
+# libraries instead of shared libraries for all JDK libs.
+#
+
+
+
+
+#
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+###############################################################################
+#
+# Setup version numbers
+#
+
+# Verify that a given string represents a valid version number, and assign it
+# to a variable.
+
+# Argument 1: the variable to assign to
+# Argument 2: the value given by the user
+
+
 
 
 #
@@ -4653,7 +4734,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1448354029
+DATE_WHEN_GENERATED=1449228293
 
 ###############################################################################
 #
@@ -23147,106 +23228,13 @@ fi
 
   ###############################################################################
   #
-  # Enable or disable the elliptic curve crypto implementation
-  #
-
-
-  ###############################################################################
-  #
   # Compress jars
   #
   COMPRESS_JARS=false
 
 
 
-
-  # Source the version numbers
-  . $AUTOCONF_DIR/version-numbers
-
-  # Get the settings from parameters
-
-# Check whether --with-milestone was given.
-if test "${with_milestone+set}" = set; then :
-  withval=$with_milestone;
-fi
-
-  if test "x$with_milestone" = xyes; then
-    as_fn_error $? "Milestone must have a value" "$LINENO" 5
-  elif test "x$with_milestone" != x; then
-    MILESTONE="$with_milestone"
-  fi
-  if test "x$MILESTONE" = x; then
-    MILESTONE=internal
-  fi
-
-
-# Check whether --with-update-version was given.
-if test "${with_update_version+set}" = set; then :
-  withval=$with_update_version;
-fi
-
-  if test "x$with_update_version" = xyes; then
-    as_fn_error $? "Update version must have a value" "$LINENO" 5
-  elif test "x$with_update_version" != x; then
-    JDK_UPDATE_VERSION="$with_update_version"
-    # On macosx 10.7, it's not possible to set --with-update-version=0X due
-    # to a bug in expr (which reduces it to just X). To work around this, we
-    # always add a 0 to one digit update versions.
-    if test "${#JDK_UPDATE_VERSION}" = "1"; then
-      JDK_UPDATE_VERSION="0${JDK_UPDATE_VERSION}"
-    fi
-  fi
-
-
-# Check whether --with-user-release-suffix was given.
-if test "${with_user_release_suffix+set}" = set; then :
-  withval=$with_user_release_suffix;
-fi
-
-  if test "x$with_user_release_suffix" = xyes; then
-    as_fn_error $? "Release suffix must have a value" "$LINENO" 5
-  elif test "x$with_user_release_suffix" != x; then
-    USER_RELEASE_SUFFIX="$with_user_release_suffix"
-  fi
-
-
-# Check whether --with-build-number was given.
-if test "${with_build_number+set}" = set; then :
-  withval=$with_build_number;
-fi
-
-  if test "x$with_build_number" = xyes; then
-    as_fn_error $? "Build number must have a value" "$LINENO" 5
-  elif test "x$with_build_number" != x; then
-    JDK_BUILD_NUMBER="$with_build_number"
-  fi
-  # Define default USER_RELEASE_SUFFIX if BUILD_NUMBER and USER_RELEASE_SUFFIX are not set
-  if test "x$JDK_BUILD_NUMBER" = x; then
-    JDK_BUILD_NUMBER=b00
-    if test "x$USER_RELEASE_SUFFIX" = x; then
-      BUILD_DATE=`date '+%Y_%m_%d_%H_%M'`
-      # Avoid [:alnum:] since it depends on the locale.
-      CLEAN_USERNAME=`echo "$USER" | $TR -d -c 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'`
-      USER_RELEASE_SUFFIX=`echo "${CLEAN_USERNAME}_${BUILD_DATE}" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-    fi
-  fi
-
-  # Now set the JDK version, milestone, build number etc.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  # Setup default copyright year. Mostly overridden when building close to a new year.
 
 # Check whether --with-copyright-year was given.
 if test "${with_copyright_year+set}" = set; then :
@@ -23262,14 +23250,442 @@ fi
   fi
 
 
-  if test "x$JDK_UPDATE_VERSION" != x; then
-    JDK_VERSION="${JDK_MAJOR_VERSION}.${JDK_MINOR_VERSION}.${JDK_MICRO_VERSION}_${JDK_UPDATE_VERSION}"
-  else
-    JDK_VERSION="${JDK_MAJOR_VERSION}.${JDK_MINOR_VERSION}.${JDK_MICRO_VERSION}"
+
+  # Warn user that old version arguments are deprecated.
+
+
+# Check whether --with-milestone was given.
+if test "${with_milestone+set}" = set; then :
+  withval=$with_milestone; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Option --with-milestone is deprecated and will be ignored." >&5
+$as_echo "$as_me: WARNING: Option --with-milestone is deprecated and will be ignored." >&2;}
+fi
+
+
+
+
+# Check whether --with-update-version was given.
+if test "${with_update_version+set}" = set; then :
+  withval=$with_update_version; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Option --with-update-version is deprecated and will be ignored." >&5
+$as_echo "$as_me: WARNING: Option --with-update-version is deprecated and will be ignored." >&2;}
+fi
+
+
+
+
+# Check whether --with-user-release-suffix was given.
+if test "${with_user_release_suffix+set}" = set; then :
+  withval=$with_user_release_suffix; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Option --with-user-release-suffix is deprecated and will be ignored." >&5
+$as_echo "$as_me: WARNING: Option --with-user-release-suffix is deprecated and will be ignored." >&2;}
+fi
+
+
+
+
+# Check whether --with-build-number was given.
+if test "${with_build_number+set}" = set; then :
+  withval=$with_build_number; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Option --with-build-number is deprecated and will be ignored." >&5
+$as_echo "$as_me: WARNING: Option --with-build-number is deprecated and will be ignored." >&2;}
+fi
+
+
+
+  # Source the version numbers file
+  . $AUTOCONF_DIR/version-numbers
+
+  # Some non-version number information is set in that file
+
+
+
+
+
+
+
+
+  # Override version from arguments
+
+  # If --with-version-string is set, process it first. It is possible to
+  # override parts with more specific flags, since these are processed later.
+
+# Check whether --with-version-string was given.
+if test "${with_version_string+set}" = set; then :
+  withval=$with_version_string;
+fi
+
+  if test "x$with_version_string" = xyes; then
+    as_fn_error $? "--with-version-string must have a value" "$LINENO" 5
+  elif test "x$with_version_string" != x; then
+    # Additional [] needed to keep m4 from mangling shell constructs.
+    if  [[ $with_version_string =~ ^([0-9]+)(\.([0-9]+))?(\.([0-9]+))?(\.([0-9]+))?(-([a-zA-Z]+))?((\+)([0-9]+)?(-([-a-zA-Z0-9.]+))?)?$ ]] ; then
+      VERSION_MAJOR=${BASH_REMATCH[1]}
+      VERSION_MINOR=${BASH_REMATCH[3]}
+      VERSION_SECURITY=${BASH_REMATCH[5]}
+      VERSION_PATCH=${BASH_REMATCH[7]}
+      VERSION_PRE=${BASH_REMATCH[9]}
+      version_plus_separator=${BASH_REMATCH[11]}
+      VERSION_BUILD=${BASH_REMATCH[12]}
+      VERSION_OPT=${BASH_REMATCH[14]}
+      # Unspecified numerical fields are interpreted as 0.
+      if test "x$VERSION_MINOR" = x; then
+        VERSION_MINOR=0
+      fi
+      if test "x$VERSION_SECURITY" = x; then
+        VERSION_SECURITY=0
+      fi
+      if test "x$VERSION_PATCH" = x; then
+        VERSION_PATCH=0
+      fi
+      if test "x$version_plus_separator" != x \
+          && test "x$VERSION_BUILD$VERSION_OPT" = x; then
+        as_fn_error $? "Version string contains + but both 'BUILD' and 'OPT' are missing" "$LINENO" 5
+      fi
+      # Stop the version part process from setting default values.
+      # We still allow them to explicitely override though.
+      NO_DEFAULT_VERSION_PARTS=true
+    else
+      as_fn_error $? "--with-version-string fails to parse as a valid version string: $with_version_string" "$LINENO" 5
+    fi
   fi
 
 
-  COOKED_BUILD_NUMBER=`$ECHO $JDK_BUILD_NUMBER | $SED -e 's/^b//' -e 's/^0//'`
+# Check whether --with-version-pre was given.
+if test "${with_version_pre+set}" = set; then :
+  withval=$with_version_pre; with_version_pre_present=true
+else
+  with_version_pre_present=false
+fi
+
+
+  if test "x$with_version_pre_present" = xtrue; then
+    if test "x$with_version_pre" = xyes; then
+      as_fn_error $? "--with-version-pre must have a value" "$LINENO" 5
+    elif test "x$with_version_pre" = xno; then
+      # Interpret --without-* as empty string instead of the literal "no"
+      VERSION_PRE=
+    else
+      # Only [a-zA-Z] is allowed in the VERSION_PRE. Outer [ ] to quote m4.
+       VERSION_PRE=`$ECHO "$with_version_pre" | $TR -c -d '[a-z][A-Z]'`
+      if test "x$VERSION_PRE" != "x$with_version_pre"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-version-pre value has been sanitized from '$with_version_pre' to '$VERSION_PRE'" >&5
+$as_echo "$as_me: WARNING: --with-version-pre value has been sanitized from '$with_version_pre' to '$VERSION_PRE'" >&2;}
+      fi
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is to use "internal" as pre
+      VERSION_PRE="internal"
+    fi
+  fi
+
+
+# Check whether --with-version-opt was given.
+if test "${with_version_opt+set}" = set; then :
+  withval=$with_version_opt; with_version_opt_present=true
+else
+  with_version_opt_present=false
+fi
+
+
+  if test "x$with_version_opt_present" = xtrue; then
+    if test "x$with_version_opt" = xyes; then
+      as_fn_error $? "--with-version-opt must have a value" "$LINENO" 5
+    elif test "x$with_version_opt" = xno; then
+      # Interpret --without-* as empty string instead of the literal "no"
+      VERSION_OPT=
+    else
+      # Only [-.a-zA-Z0-9] is allowed in the VERSION_OPT. Outer [ ] to quote m4.
+       VERSION_OPT=`$ECHO "$with_version_opt" | $TR -c -d '[a-z][A-Z][0-9].-'`
+      if test "x$VERSION_OPT" != "x$with_version_opt"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-version-opt value has been sanitized from '$with_version_opt' to '$VERSION_OPT'" >&5
+$as_echo "$as_me: WARNING: --with-version-opt value has been sanitized from '$with_version_opt' to '$VERSION_OPT'" >&2;}
+      fi
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is to calculate a string like this <timestamp>.<username>.<base dir name>
+      timestamp=`$DATE '+%Y-%m-%d-%H%M%S'`
+      # Outer [ ] to quote m4.
+       username=`$ECHO "$USER" | $TR -d -c '[a-z][A-Z][0-9]'`
+       basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'`
+      VERSION_OPT="$timestamp.$username.$basedirname"
+    fi
+  fi
+
+
+# Check whether --with-version-build was given.
+if test "${with_version_build+set}" = set; then :
+  withval=$with_version_build; with_version_build_present=true
+else
+  with_version_build_present=false
+fi
+
+
+  if test "x$with_version_build_present" = xtrue; then
+    if test "x$with_version_build" = xyes; then
+      as_fn_error $? "--with-version-build must have a value" "$LINENO" 5
+    elif test "x$with_version_build" = xno; then
+      # Interpret --without-* as empty string instead of the literal "no"
+      VERSION_BUILD=
+    elif test "x$with_version_build" = x; then
+      VERSION_BUILD=
+    else
+
+  # Additional [] needed to keep m4 from mangling shell constructs.
+  if  ! [[ "$with_version_build" =~ ^0*([1-9][0-9]*)|(0)$ ]]  ; then
+    as_fn_error $? "\"$with_version_build\" is not a valid numerical value for VERSION_BUILD" "$LINENO" 5
+  fi
+  # Extract the version number without leading zeros.
+  cleaned_value=${BASH_REMATCH[1]}
+  if test "x$cleaned_value" = x; then
+    # Special case for zero
+    cleaned_value=${BASH_REMATCH[2]}
+  fi
+
+  if test $cleaned_value -gt 255; then
+    as_fn_error $? "VERSION_BUILD is given as $with_version_build. This is greater than 255 which is not allowed." "$LINENO" 5
+  fi
+  if test "x$cleaned_value" != "x$with_version_build"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Value for VERSION_BUILD has been sanitized from '$with_version_build' to '$cleaned_value'" >&5
+$as_echo "$as_me: WARNING: Value for VERSION_BUILD has been sanitized from '$with_version_build' to '$cleaned_value'" >&2;}
+  fi
+  VERSION_BUILD=$cleaned_value
+
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is to not have a build number.
+      VERSION_BUILD=""
+      # FIXME: Until all code can cope with an empty VERSION_BUILD, set it to 0.
+      VERSION_BUILD=0
+    fi
+  fi
+
+
+# Check whether --with-version-major was given.
+if test "${with_version_major+set}" = set; then :
+  withval=$with_version_major; with_version_major_present=true
+else
+  with_version_major_present=false
+fi
+
+
+  if test "x$with_version_major_present" = xtrue; then
+    if test "x$with_version_major" = xyes; then
+      as_fn_error $? "--with-version-major must have a value" "$LINENO" 5
+    else
+
+  # Additional [] needed to keep m4 from mangling shell constructs.
+  if  ! [[ "$with_version_major" =~ ^0*([1-9][0-9]*)|(0)$ ]]  ; then
+    as_fn_error $? "\"$with_version_major\" is not a valid numerical value for VERSION_MAJOR" "$LINENO" 5
+  fi
+  # Extract the version number without leading zeros.
+  cleaned_value=${BASH_REMATCH[1]}
+  if test "x$cleaned_value" = x; then
+    # Special case for zero
+    cleaned_value=${BASH_REMATCH[2]}
+  fi
+
+  if test $cleaned_value -gt 255; then
+    as_fn_error $? "VERSION_MAJOR is given as $with_version_major. This is greater than 255 which is not allowed." "$LINENO" 5
+  fi
+  if test "x$cleaned_value" != "x$with_version_major"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Value for VERSION_MAJOR has been sanitized from '$with_version_major' to '$cleaned_value'" >&5
+$as_echo "$as_me: WARNING: Value for VERSION_MAJOR has been sanitized from '$with_version_major' to '$cleaned_value'" >&2;}
+  fi
+  VERSION_MAJOR=$cleaned_value
+
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is to get value from version-numbers
+      VERSION_MAJOR="$DEFAULT_VERSION_MAJOR"
+    fi
+  fi
+
+
+# Check whether --with-version-minor was given.
+if test "${with_version_minor+set}" = set; then :
+  withval=$with_version_minor; with_version_minor_present=true
+else
+  with_version_minor_present=false
+fi
+
+
+  if test "x$with_version_minor_present" = xtrue; then
+    if test "x$with_version_minor" = xyes; then
+      as_fn_error $? "--with-version-minor must have a value" "$LINENO" 5
+    elif test "x$with_version_minor" = xno; then
+      # Interpret --without-* as empty string (i.e. 0) instead of the literal "no"
+      VERSION_MINOR=0
+    elif test "x$with_version_minor" = x; then
+      VERSION_MINOR=0
+    else
+
+  # Additional [] needed to keep m4 from mangling shell constructs.
+  if  ! [[ "$with_version_minor" =~ ^0*([1-9][0-9]*)|(0)$ ]]  ; then
+    as_fn_error $? "\"$with_version_minor\" is not a valid numerical value for VERSION_MINOR" "$LINENO" 5
+  fi
+  # Extract the version number without leading zeros.
+  cleaned_value=${BASH_REMATCH[1]}
+  if test "x$cleaned_value" = x; then
+    # Special case for zero
+    cleaned_value=${BASH_REMATCH[2]}
+  fi
+
+  if test $cleaned_value -gt 255; then
+    as_fn_error $? "VERSION_MINOR is given as $with_version_minor. This is greater than 255 which is not allowed." "$LINENO" 5
+  fi
+  if test "x$cleaned_value" != "x$with_version_minor"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Value for VERSION_MINOR has been sanitized from '$with_version_minor' to '$cleaned_value'" >&5
+$as_echo "$as_me: WARNING: Value for VERSION_MINOR has been sanitized from '$with_version_minor' to '$cleaned_value'" >&2;}
+  fi
+  VERSION_MINOR=$cleaned_value
+
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is 0, if unspecified
+      VERSION_MINOR=0
+    fi
+  fi
+
+
+# Check whether --with-version-security was given.
+if test "${with_version_security+set}" = set; then :
+  withval=$with_version_security; with_version_security_present=true
+else
+  with_version_security_present=false
+fi
+
+
+  if test "x$with_version_security_present" = xtrue; then
+    if test "x$with_version_security" = xyes; then
+      as_fn_error $? "--with-version-security must have a value" "$LINENO" 5
+    elif test "x$with_version_security" = xno; then
+      # Interpret --without-* as empty string (i.e. 0) instead of the literal "no"
+      VERSION_SECURITY=0
+    elif test "x$with_version_security" = x; then
+      VERSION_SECURITY=0
+    else
+
+  # Additional [] needed to keep m4 from mangling shell constructs.
+  if  ! [[ "$with_version_security" =~ ^0*([1-9][0-9]*)|(0)$ ]]  ; then
+    as_fn_error $? "\"$with_version_security\" is not a valid numerical value for VERSION_SECURITY" "$LINENO" 5
+  fi
+  # Extract the version number without leading zeros.
+  cleaned_value=${BASH_REMATCH[1]}
+  if test "x$cleaned_value" = x; then
+    # Special case for zero
+    cleaned_value=${BASH_REMATCH[2]}
+  fi
+
+  if test $cleaned_value -gt 255; then
+    as_fn_error $? "VERSION_SECURITY is given as $with_version_security. This is greater than 255 which is not allowed." "$LINENO" 5
+  fi
+  if test "x$cleaned_value" != "x$with_version_security"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Value for VERSION_SECURITY has been sanitized from '$with_version_security' to '$cleaned_value'" >&5
+$as_echo "$as_me: WARNING: Value for VERSION_SECURITY has been sanitized from '$with_version_security' to '$cleaned_value'" >&2;}
+  fi
+  VERSION_SECURITY=$cleaned_value
+
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is 0, if unspecified
+      VERSION_SECURITY=0
+    fi
+  fi
+
+
+# Check whether --with-version-patch was given.
+if test "${with_version_patch+set}" = set; then :
+  withval=$with_version_patch; with_version_patch_present=true
+else
+  with_version_patch_present=false
+fi
+
+
+  if test "x$with_version_patch_present" = xtrue; then
+    if test "x$with_version_patch" = xyes; then
+      as_fn_error $? "--with-version-patch must have a value" "$LINENO" 5
+    elif test "x$with_version_patch" = xno; then
+      # Interpret --without-* as empty string (i.e. 0) instead of the literal "no"
+      VERSION_PATCH=0
+    elif test "x$with_version_patch" = x; then
+      VERSION_PATCH=0
+    else
+
+  # Additional [] needed to keep m4 from mangling shell constructs.
+  if  ! [[ "$with_version_patch" =~ ^0*([1-9][0-9]*)|(0)$ ]]  ; then
+    as_fn_error $? "\"$with_version_patch\" is not a valid numerical value for VERSION_PATCH" "$LINENO" 5
+  fi
+  # Extract the version number without leading zeros.
+  cleaned_value=${BASH_REMATCH[1]}
+  if test "x$cleaned_value" = x; then
+    # Special case for zero
+    cleaned_value=${BASH_REMATCH[2]}
+  fi
+
+  if test $cleaned_value -gt 255; then
+    as_fn_error $? "VERSION_PATCH is given as $with_version_patch. This is greater than 255 which is not allowed." "$LINENO" 5
+  fi
+  if test "x$cleaned_value" != "x$with_version_patch"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Value for VERSION_PATCH has been sanitized from '$with_version_patch' to '$cleaned_value'" >&5
+$as_echo "$as_me: WARNING: Value for VERSION_PATCH has been sanitized from '$with_version_patch' to '$cleaned_value'" >&2;}
+  fi
+  VERSION_PATCH=$cleaned_value
+
+    fi
+  else
+    if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
+      # Default is 0, if unspecified
+      VERSION_PATCH=0
+    fi
+  fi
+
+  # Calculate derived version properties
+
+  # Set VERSION_IS_GA based on if VERSION_PRE has a value
+  if test "x$VERSION_PRE" = x; then
+    VERSION_IS_GA=true
+  else
+    VERSION_IS_GA=false
+  fi
+
+  # VERSION_NUMBER but always with exactly 4 positions, with 0 for empty positions.
+  VERSION_NUMBER_FOUR_POSITIONS=$VERSION_MAJOR.$VERSION_MINOR.$VERSION_SECURITY.$VERSION_PATCH
+
+  stripped_version_number=$VERSION_NUMBER_FOUR_POSITIONS
+  # Strip trailing zeroes from stripped_version_number
+  for i in 1 2 3 ; do stripped_version_number=${stripped_version_number%.0} ; done
+  VERSION_NUMBER=$stripped_version_number
+
+  # The complete version string, with additional build information
+  if test "x$VERSION_BUILD$VERSION_OPT" = x; then
+    VERSION_STRING=$VERSION_NUMBER${VERSION_PRE:+-$VERSION_PRE}
+  else
+    # If either build or opt is set, we need a + separator
+    VERSION_STRING=$VERSION_NUMBER${VERSION_PRE:+-$VERSION_PRE}+$VERSION_BUILD${VERSION_OPT:+-$VERSION_OPT}
+  fi
+
+  # The short version string, just VERSION_NUMBER and PRE, if present.
+  VERSION_SHORT=$VERSION_NUMBER${VERSION_PRE:+-$VERSION_PRE}
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for version string" >&5
+$as_echo_n "checking for version string... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $VERSION_STRING" >&5
+$as_echo "$VERSION_STRING" >&6; }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23326,7 +23742,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -23522,7 +23938,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -23706,7 +24122,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -23889,7 +24305,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -24072,7 +24488,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -24246,7 +24662,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -24565,7 +24981,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -24890,7 +25306,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -25102,7 +25518,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -25279,7 +25695,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -25484,7 +25900,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -25661,7 +26077,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -25866,7 +26282,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26043,7 +26459,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26248,7 +26664,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26425,7 +26841,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26617,7 +27033,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26792,7 +27208,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -26985,7 +27401,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -27160,7 +27576,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -27352,7 +27768,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -27527,7 +27943,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -27720,7 +28136,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -27895,7 +28311,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -28069,7 +28485,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
-          FOUND_CORRECT_VERSION=`echo $BOOT_JDK_VERSION | grep  '\"1\.[89]\.'`
+          FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
           if test "x$FOUND_CORRECT_VERSION" = x; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&5
 $as_echo "$as_me: Potential Boot JDK found at $BOOT_JDK is incorrect JDK version ($BOOT_JDK_VERSION); ignoring" >&6;}
@@ -29519,10 +29935,10 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
       $RM -rf "$IMPORT_MODULES_TOPDIR"
       $MKDIR -p "$IMPORT_MODULES_TOPDIR"
       if ! $UNZIP -q "$with_import_modules" -d "$IMPORT_MODULES_TOPDIR"; then
-        as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+        as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
       fi
     else
-      as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+      as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
     fi
   fi
 
@@ -29559,6 +29975,40 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
 # native code.
 #
 ###############################################################################
+
+# See if we are doing a complete static build or not
+
+  # Check whether --enable-static-build was given.
+if test "${enable_static_build+set}" = set; then :
+  enableval=$enable_static_build;
+fi
+
+  STATIC_BUILD=false
+  if test "x$enable_static_build" = "xyes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if static build is enabled" >&5
+$as_echo_n "checking if static build is enabled... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    if test "x$OPENJDK_TARGET_OS" != "xmacosx"; then
+      as_fn_error $? "--enable-static-build is only supported for macosx builds" "$LINENO" 5
+    fi
+    STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
+    LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $STATIC_BUILD_CFLAGS"
+    LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $STATIC_BUILD_CFLAGS"
+    CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+    CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+    STATIC_BUILD=true
+  elif test "x$enable_static_build" = "xno"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if static build is enabled" >&5
+$as_echo_n "checking if static build is enabled... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  elif test "x$enable_static_build" != "x"; then
+    as_fn_error $? "--enable-static-build can only be assigned \"yes\" or \"no\"" "$LINENO" 5
+  fi
+
+
+
 
 # First determine the toolchain type (compiler family)
 
@@ -29668,8 +30118,19 @@ $as_echo "$as_me: Valid toolchains: $VALID_TOOLCHAINS." >&6;}
     OBJ_SUFFIX='.o'
     EXE_SUFFIX=''
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
-      SHARED_LIBRARY='lib$1.dylib'
-      SHARED_LIBRARY_SUFFIX='.dylib'
+      # For full static builds, we're overloading the SHARED_LIBRARY
+      # variables in order to limit the amount of changes required.
+      # It would be better to remove SHARED and just use LIBRARY and
+      # LIBRARY_SUFFIX for libraries that can be built either
+      # shared or static and use STATIC_* for libraries that are
+      # always built statically.
+      if test "x$STATIC_BUILD" = xtrue; then
+        SHARED_LIBRARY='lib$1.a'
+        SHARED_LIBRARY_SUFFIX='.a'
+      else
+        SHARED_LIBRARY='lib$1.dylib'
+        SHARED_LIBRARY_SUFFIX='.dylib'
+      fi
     fi
   fi
 
@@ -45784,13 +46245,13 @@ $as_echo "$tool_specified" >&6; }
     # The \$ are escaped to the shell, and the $(...) variables
     # are evaluated by make.
     RC_FLAGS="$RC_FLAGS \
-        -D\"JDK_BUILD_ID=\$(FULL_VERSION)\" \
+        -D\"JDK_VERSION_STRING=\$(VERSION_STRING)\" \
         -D\"JDK_COMPANY=\$(COMPANY_NAME)\" \
         -D\"JDK_COMPONENT=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) binary\" \
-        -D\"JDK_VER=\$(JDK_MINOR_VERSION).\$(JDK_MICRO_VERSION).\$(if \$(JDK_UPDATE_VERSION),\$(JDK_UPDATE_VERSION),0).\$(COOKED_BUILD_NUMBER)\" \
+        -D\"JDK_VER=\$(VERSION_NUMBER)\" \
         -D\"JDK_COPYRIGHT=Copyright \xA9 $COPYRIGHT_YEAR\" \
-        -D\"JDK_NAME=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) \$(JDK_MINOR_VERSION) \$(JDK_UPDATE_META_TAG)\" \
-        -D\"JDK_FVER=\$(JDK_MINOR_VERSION),\$(JDK_MICRO_VERSION),\$(if \$(JDK_UPDATE_VERSION),\$(JDK_UPDATE_VERSION),0),\$(COOKED_BUILD_NUMBER)\""
+        -D\"JDK_NAME=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) \$(VERSION_MAJOR)\" \
+        -D\"JDK_FVER=\$(subst .,\$(COMMA),\$(VERSION_NUMBER_FOUR_POSITIONS))\""
   fi
 
 
@@ -46449,7 +46910,11 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
 
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
       # Linking is different on MacOSX
-      SHARED_LIBRARY_FLAGS="-dynamiclib -compatibility_version 1.0.0 -current_version 1.0.0 $PICFLAG"
+      if test "x$STATIC_BUILD" = xtrue; then
+        SHARED_LIBRARY_FLAGS ='-undefined dynamic_lookup'
+      else
+        SHARED_LIBRARY_FLAGS="-dynamiclib -compatibility_version 1.0.0 -current_version 1.0.0 $PICFLAG"
+      fi
       SET_EXECUTABLE_ORIGIN='-Xlinker -rpath -Xlinker @loader_path/.'
       SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Xlinker -install_name -Xlinker @rpath/$1'
@@ -46921,10 +47386,6 @@ $as_echo "$supports" >&6; }
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DDEBUG"
   fi
 
-  # Setup release name
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DRELEASE='\"\$(RELEASE)\"'"
-
-
   # Set some additional per-OS defines.
   if test "x$OPENJDK_TARGET_OS" = xmacosx; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
@@ -46955,7 +47416,9 @@ $as_echo "$supports" >&6; }
   COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK \
       -I${JDK_TOPDIR}/src/java.base/share/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS/native/include \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/include"
+      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/include \
+      -I${JDK_TOPDIR}/src/java.base/share/native/libjava \
+      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava"
 
   # The shared libraries are compiled using the picflag.
   CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
@@ -56668,18 +57131,18 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if elliptic curve crypto implementation is present" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if elliptic curve crypto implementation is present" >&5
 $as_echo_n "checking if elliptic curve crypto implementation is present... " >&6; }
 
-    if test -d "${SRC_ROOT}/jdk/src/jdk.crypto.ec/share/native/libsunec/impl"; then
-      ENABLE_INTREE_EC=yes
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+  if test -d "${SRC_ROOT}/jdk/src/jdk.crypto.ec/share/native/libsunec/impl"; then
+    ENABLE_INTREE_EC=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-    else
-      ENABLE_INTREE_EC=no
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+  else
+    ENABLE_INTREE_EC=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-    fi
+  fi
 
 
 
@@ -58809,6 +59272,7 @@ fi
   printf "* JDK variant:    $JDK_VARIANT\n"
   printf "* JVM variants:   $with_jvm_variants\n"
   printf "* OpenJDK target: OS: $OPENJDK_TARGET_OS, CPU architecture: $OPENJDK_TARGET_CPU_ARCH, address length: $OPENJDK_TARGET_CPU_BITS\n"
+  printf "* Version string: $VERSION_STRING ($VERSION_SHORT)\n"
 
   printf "\n"
   printf "Tools summary:\n"
