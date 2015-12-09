@@ -131,8 +131,8 @@ public class BootLoader {
      * if the package has not been defined.
      */
     public static Package getDefinedPackage(String pn) {
-        String location = getSystemPackageLocation(pn.replace('.', '/').concat("/"));
-        if (location == null) {
+        String found = getSystemPackageLocation(pn.replace('.', '/'));
+        if (found == null) {
             return null;
         }
         return ClassLoaders.bootLoader().definePackage(pn);
@@ -144,7 +144,7 @@ public class BootLoader {
     public static Stream<Package> packages() {
         return Arrays.stream(getSystemPackageNames())
             .map(name -> {
-                String pn = name.substring(0, name.length() - 1).replace('/', '.');
+                String pn = name.replace('/', '.');
                 return ClassLoaders.bootLoader().definePackage(pn);
             });
     }
