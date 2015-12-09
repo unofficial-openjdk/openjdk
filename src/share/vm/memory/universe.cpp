@@ -656,7 +656,6 @@ jint universe_init() {
   } else {
     SymbolTable::create_table();
     StringTable::create_table();
-    ClassLoader::create_package_info_table();
 
     if (DumpSharedSpaces) {
       MetaspaceShared::prepare_for_dumping();

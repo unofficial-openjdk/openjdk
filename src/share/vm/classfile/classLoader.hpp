@@ -138,16 +138,10 @@ public:
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
 
-class PackageHashtable;
-class PackageInfo;
 class SharedPathsMiscInfo;
-template <MEMFLAGS F> class HashtableBucket;
 
 class ClassLoader: AllStatic {
  public:
-  enum SomeConstants {
-    package_hash_table_size = 31  // Number of buckets
-  };
   enum ClassLoaderType {
     BOOT = 1,
     EXT  = 2,
@@ -207,8 +201,6 @@ class ClassLoader: AllStatic {
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_append_entry;
 
-  // Hash table used to keep track of loaded packages
-  static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
 
   // True if the boot path has a bootmodules.jimage
@@ -224,14 +216,12 @@ class ClassLoader: AllStatic {
   CDS_ONLY(static ClassPathEntry* _last_append_entry;)
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
-  // Hash function
-  static unsigned int hash(const char *s, int n);
-  // Returns the package file name corresponding to the specified package
-  // or class name, or null if not found.
-  static PackageInfo* lookup_package(const char *pkgname, int len);
-  // Adds a new package entry for the specified class or package name and
-  // corresponding directory or jar file name.
-  static bool add_package(const char *pkgname, int classpath_index, TRAPS);
+  // If the package for the fully qualified class name is in the boot
+  // loader's package entry table then add_package() sets the has_loaded_class
+  // flag so that get_system_package() will know to return a non-null (but unread)
+  // value for the package's location.  And, so that the package will be added to
+  // the list of packages returned by get_system_packages().
+  static bool add_package(const char *fullq_class_name, TRAPS);
 
   // Initialization
   static void setup_bootstrap_search_path();
@@ -347,9 +337,7 @@ class ClassLoader: AllStatic {
   // Initialization
   static void initialize();
   CDS_ONLY(static void initialize_shared_path();)
-  static void create_package_info_table();
-  static void create_package_info_table(HashtableBucket<mtClass> *t, int length,
-                                        int number_of_entries);
+
   static int compute_Object_vtable();
 
   static ClassPathEntry* classpath_entry(int n) {
@@ -363,8 +351,6 @@ class ClassLoader: AllStatic {
 
 #if INCLUDE_CDS
   // Sharing dump and restore
-  static void copy_package_info_buckets(char** top, char* end);
-  static void copy_package_info_table(char** top, char* end);
 
   static void  check_shared_classpath(const char *path);
   static void  finalize_shared_paths_misc_info();

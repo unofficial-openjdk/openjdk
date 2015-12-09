@@ -50,7 +50,7 @@ public:
     instanceKlassHandle record_result(const int classpath_index,
                                       const jshort classloader_type,
                                       ClassPathEntry* e, instanceKlassHandle result, TRAPS) {
-      if (ClassLoader::add_package(_file_name, classpath_index, THREAD)) {
+      if (ClassLoader::add_package(_file_name, THREAD)) {
         if (DumpSharedSpaces) {
           result->set_shared_classpath_index(classpath_index);
           result->set_class_loader_type(classloader_type);

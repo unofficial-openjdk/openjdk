@@ -49,6 +49,7 @@ private:
   ModuleEntry* _module;
   bool _is_exported;
   bool _is_exported_allUnnamed;
+  bool _has_loaded_class;  // Only apply to packages in the boot loader.
   GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
   GrowableArray<ModuleEntry*>* _qualified_exports;
   TRACE_DEFINE_TRACE_ID_FIELD;
@@ -58,6 +59,7 @@ public:
     _module = NULL;
     _is_exported = false;
     _is_exported_allUnnamed = false;
+    _has_loaded_class = false;
     _exported_pending_delete = NULL;
     _qualified_exports = NULL;
   }
@@ -99,6 +101,11 @@ public:
            "is_allUnnamed set without is_exported being set");
     return _is_exported_allUnnamed;
   }
+
+  void set_has_loaded_class(bool has_loaded_class) {
+    _has_loaded_class = has_loaded_class;
+  }
+  bool has_loaded_class() const { return _has_loaded_class; }
 
   // returns true if the package is defined in the unnamed module
   bool in_unnamed_module() const  { return !_module->is_named(); }

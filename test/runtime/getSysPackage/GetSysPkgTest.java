@@ -106,42 +106,54 @@ public class GetSysPkgTest {
             return;
         }
 
-        getPkg("java/lang/", "jrt:/java.base");
-        getPkg("java/lang", null);              // Need trailing '/'
-        getPkg("javax/script/", null);          // Package not defined
+        getPkg("java/lang", "jrt:/java.base");
+        getPkg("javax/script", null);          // Package not defined
 
-        // Make sure a class in the package is referenced.
-        Class newClass = Class.forName("sun.invoke.util.Wrapper");
-        getPkg("sun/invoke/util/", "jrt:/java.base");
-        getPkg("java/nio/charset/", "jrt:/java.base");
+        // Test a package that does not yet have any referenced classes.
+        // Note: if another class in com/sun/crypto/provider/ happens to get
+        //       loaded or if class PrivateKeyInfo disappears from this package
+        //       then this test will fail.
+        getPkg("com/sun/crypto/provider", null);
+        // Now make sure a class in the package is referenced.
+        Class newClass = Class.forName("com.sun.crypto.provider.PrivateKeyInfo");
+        getPkg("com/sun/crypto/provider", "jrt:/java.base");
+
+        getPkg("java/nio/charset", "jrt:/java.base");
 
         // Test a package in a module not owned by boot loader.
         Class clss = Class.forName("javax.activation.DataHandler");
         if (clss == null)
             throw new RuntimeException("Could not find class javax.activation.DataHandler");
-        getPkg("javax/activation/", null);       // Not owned by boot loader
+        getPkg("javax/activation", null);       // Not owned by boot loader
 
         // Test a package not in jimage file.
         clss = Class.forName("GetSysPkg_package.GetSysClass");
         if (clss == null)
             throw new RuntimeException("Could not find class GetSysPkg_package.GetSysClass");
-        getPkg("GetSysPkg_package/", null);
+        getPkg("GetSysPkg_package", null);
 
         // Access a class with a package in a boot loader module other than java.base
         clss = Class.forName("java.awt.Button");
         if (clss == null)
             throw new RuntimeException("Could not find class java.awt.Button");
-        getPkg("java/awt/", "jrt:/java.desktop");
+        getPkg("java/awt", "jrt:/java.desktop");
 
         // Test getting the package location from a class found via -Xbootclasspath/a
         clss = Class.forName("BootLdr_package.BootLdrPkg");
         if (clss == null)
             throw new RuntimeException("Could not find class BootLdr_package.BootLdrPkg");
-        String bootldrPkg = (String)invoke(findMethod("getSystemPackageLocation"), null, "BootLdr_package/");
-        if (bootldrPkg == null || !bootldrPkg.toLowerCase().endsWith("bl_dir")) {
-            System.out.println("Expected BootLdr_package/ to end in bl_dir, but got " +
-                bootldrPkg == null ? "null" : bootldrPkg);
-            throw new RuntimeException();
+        String bootldrPkg = (String)invoke(findMethod("getSystemPackageLocation"), null, "BootLdr_package");
+        if (bootldrPkg == null) {
+            throw new RuntimeException("Expected BootLdr_package/ to return non-null value");
         }
+
+        // Test when package's class reference is an array.
+        // Note: if another class in javax/crypto happens to get loaded
+        //       or if class AEADBadTagException disappears from this package
+        //       then this test will fail.
+        getPkg("javax/crypto", null);
+        javax.crypto.AEADBadTagException[] blah = new javax.crypto.AEADBadTagException[3];
+        getPkg("javax/crypto", "jrt:/java.base");
+
     }
 }

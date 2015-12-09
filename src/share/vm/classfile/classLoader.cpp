@@ -140,8 +140,7 @@ ClassPathEntry* ClassLoader::_first_entry = NULL;
 ClassPathEntry* ClassLoader::_last_entry  = NULL;
 int             ClassLoader::_num_entries = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
-PackageHashtable* ClassLoader::_package_hash_table = NULL;
-bool              ClassLoader::_has_bootmodules_jimage = false;
+bool            ClassLoader::_has_bootmodules_jimage = false;
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
 GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
 
@@ -760,9 +759,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
             (mark_append_entry && (!check_for_duplicates || !contains_entry(new_entry)))),
            "failed to mark boot loader's first append boundary");
 
-    // The kernel VM adds dynamically to the end of the classloader path and
-    // doesn't reorder the bootclasspath which would break java.lang.Package
-    // (see PackageInfo).
+    // Do not reorder the bootclasspath which would break get_system_package().
     // Add new entry to linked list
     if (!check_for_duplicates || !contains_entry(new_entry)) {
       ClassLoaderExt::add_class_path_entry(path, check_for_duplicates, new_entry, prepend_entry);
@@ -939,215 +936,30 @@ jshort ClassLoader::module_to_classloader(const char* module_name) {
   return APP;
 }
 
-// PackageInfo data exists in order to support the java.lang.Package
-// class.  A Package object provides information about a java package
-// (version, vendor, etc.) which originates in the manifest of the jar
-// file supplying the package.  For application classes, the ClassLoader
-// object takes care of this.
+// Function add_package extracts the package from the fully qualified class name
+// and checks if the package is in the boot loader's package entry table.  If so,
+// then it sets the has_loaded_class flag in the package entry record.
+//
+// The has_loaded_class flag is used by get_system_package() to know whether or
+// not to return a non-null value for the package's location.
+// The has_loaded_class flag is used by get_system_packages() when compiling the
+// list of boot loader defined classes.
+bool ClassLoader::add_package(const char *fullq_class_name, TRAPS) {
+  assert(fullq_class_name != NULL, "just checking");
 
-// For system (boot) classes, the Java code in the Package class needs
-// to be able to identify which source jar file contained the boot
-// class, so that it can extract the manifest from it.  This table
-// identifies java packages with jar files in the boot classpath.
-
-// Because the boot classpath cannot change, the classpath index is
-// sufficient to identify the source jar file or directory.  (Since
-// directories have no manifests, the directory name is not required,
-// but is available.)
-
-// When using sharing -- the pathnames of entries in the boot classpath
-// may not be the same at runtime as they were when the archive was
-// created (NFS, Samba, etc.).  The actual files and directories named
-// in the classpath must be the same files, in the same order, even
-// though the exact name is not the same.
-
-class PackageInfo: public BasicHashtableEntry<mtClass> {
-public:
-  const char* _pkgname;       // Package name
-  int _classpath_index;       // Index of directory or JAR file loaded from
-  Symbol* _module_location;   // Location of module containing the package
-
-  PackageInfo* next() {
-    return (PackageInfo*)BasicHashtableEntry<mtClass>::next();
-  }
-
-  const char* pkgname()           { return _pkgname; }
-  void set_pkgname(char* pkgname) { _pkgname = pkgname; }
-
-  const char* filename() {
-    return ClassLoader::classpath_entry(_classpath_index)->name();
-  }
-
-  void set_location_and_index(Symbol* mod_loc, int index) {
-    _module_location = mod_loc;
-    if (_module_location != NULL)
-        _module_location->increment_refcount();
-    _classpath_index = index;
-  }
-
-  Symbol* module_location() { return _module_location; }
-};
-
-
-class PackageHashtable : public BasicHashtable<mtClass> {
-private:
-  inline unsigned int compute_hash(const char *s, int n) {
-    unsigned int val = 0;
-    while (--n >= 0) {
-      val = *s++ + 31 * val;
-    }
-    return val;
-  }
-
-  PackageInfo* bucket(int index) {
-    return (PackageInfo*)BasicHashtable<mtClass>::bucket(index);
-  }
-
-  PackageInfo* get_entry(int index, unsigned int hash,
-                         const char* pkgname, size_t n) {
-    for (PackageInfo* pp = bucket(index); pp != NULL; pp = pp->next()) {
-      if (pp->hash() == hash &&
-          strncmp(pkgname, pp->pkgname(), n) == 0 &&
-          pp->pkgname()[n] == '\0') {
-        return pp;
-      }
-    }
-    return NULL;
-  }
-
-public:
-  PackageHashtable(int table_size)
-    : BasicHashtable<mtClass>(table_size, sizeof(PackageInfo)) {}
-
-  PackageHashtable(int table_size, HashtableBucket<mtClass>* t, int number_of_entries)
-    : BasicHashtable<mtClass>(table_size, sizeof(PackageInfo), t, number_of_entries) {}
-
-  PackageInfo* get_entry(const char* pkgname, int n) {
-    unsigned int hash = compute_hash(pkgname, n);
-    return get_entry(hash_to_index(hash), hash, pkgname, n);
-  }
-
-  PackageInfo* new_entry(char* pkgname, int n) {
-    unsigned int hash = compute_hash(pkgname, n);
-    PackageInfo* pp;
-    pp = (PackageInfo*)BasicHashtable<mtClass>::new_entry(hash);
-    pp->set_pkgname(pkgname);
-    return pp;
-  }
-
-  void add_entry(PackageInfo* pp) {
-    int index = hash_to_index(pp->hash());
-    BasicHashtable<mtClass>::add_entry(index, pp);
-  }
-
-  void copy_pkgnames(const char** packages) {
-    int n = 0;
-    for (int i = 0; i < table_size(); ++i) {
-      for (PackageInfo* pp = bucket(i); pp != NULL; pp = pp->next()) {
-        packages[n++] = pp->pkgname();
-      }
-    }
-    assert(n == number_of_entries(), "just checking");
-  }
-
-  CDS_ONLY(void copy_table(char** top, char* end, PackageHashtable* table);)
-};
-
-#if INCLUDE_CDS
-void PackageHashtable::copy_table(char** top, char* end,
-                                  PackageHashtable* table) {
-  // Copy (relocate) the table to the shared space.
-  BasicHashtable<mtClass>::copy_table(top, end);
-
-  // Calculate the space needed for the package name strings.
-  int i;
-  intptr_t* tableSize = (intptr_t*)(*top);
-  *top += sizeof(intptr_t);  // For table size
-  char* tableStart = *top;
-
-  for (i = 0; i < table_size(); ++i) {
-    for (PackageInfo* pp = table->bucket(i);
-                      pp != NULL;
-                      pp = pp->next()) {
-      int n1 = (int)(strlen(pp->pkgname()) + 1);
-      if (*top + n1 >= end) {
-        report_out_of_shared_space(SharedMiscData);
-      }
-      pp->set_pkgname((char*)memcpy(*top, pp->pkgname(), n1));
-      *top += n1;
-    }
-  }
-  *top = (char*)align_size_up((intptr_t)*top, sizeof(HeapWord));
-  if (*top >= end) {
-    report_out_of_shared_space(SharedMiscData);
-  }
-
-  // Write table size
-  intptr_t len = *top - (char*)tableStart;
-  *tableSize = len;
-}
-
-
-void ClassLoader::copy_package_info_buckets(char** top, char* end) {
-  _package_hash_table->copy_buckets(top, end);
-}
-
-void ClassLoader::copy_package_info_table(char** top, char* end) {
-  _package_hash_table->copy_table(top, end, _package_hash_table);
-}
-#endif
-
-PackageInfo* ClassLoader::lookup_package(const char *pkgname, int len) {
-  return _package_hash_table->get_entry(pkgname, len);
-}
-
-// If a class's package is in a module defined by the boot loader then
-// return the module location, else return NULL.
-static Symbol* boot_module_location(const char* pkg_name, int len, TRAPS) {
-  PackageEntryTable* pkg_entry_tbl =
-    ClassLoaderData::the_null_class_loader_data()->packages();
-  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name, len, CHECK_NULL);
-  PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
-
-  if (pkg_entry != NULL && !pkg_entry->in_unnamed_module()) {
-    return pkg_entry->module()->location();
-  }
-  return NULL;
-}
-
-
-bool ClassLoader::add_package(const char *pkgname, int classpath_index, TRAPS) {
-  assert(pkgname != NULL, "just checking");
-  // Bootstrap loader no longer holds system loader lock obj serializing
-  // load_instance_class and thereby add_package
-  {
-    MutexLocker ml(PackageTable_lock, THREAD);
-    // First check for previously loaded entry
-    const char *cp = strrchr(pkgname, '/');
-    if (cp != NULL) {
-      // Package prefix found
-      int len = cp - pkgname + 1;
-      PackageInfo* pp = lookup_package(pkgname, len);
-      if (pp != NULL) {
-        // Existing entry found, check source of package (remove trailing '/')
-        Symbol* module_location = boot_module_location(pkgname, len - 1, CHECK_false);
-        pp->set_location_and_index(module_location, classpath_index);
-        return true;
-      }
-
-      char* new_pkgname = NEW_C_HEAP_ARRAY(char, len + 1, mtClass);
-      if (new_pkgname == NULL) {
-        return false;
-      }
-
-      memcpy(new_pkgname, pkgname, len);
-      new_pkgname[len] = '\0';
-      pp = _package_hash_table->new_entry(new_pkgname, len);
-      Symbol* module_location = boot_module_location(new_pkgname, len - 1, CHECK_false);
-      pp->set_location_and_index(module_location, classpath_index);
-
-      // Insert into hash table
-      _package_hash_table->add_entry(pp);
+  // Get package name from fully qualified class name.
+  const char *cp = strrchr(fullq_class_name, '/');
+  if (cp != NULL) {
+    int len = cp - fullq_class_name;
+    PackageEntryTable* pkg_entry_tbl =
+      ClassLoaderData::the_null_class_loader_data()->packages();
+    TempNewSymbol pkg_symbol =
+      SymbolTable::new_symbol(fullq_class_name, len, CHECK_false);
+    PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
+    if (pkg_entry != NULL) {
+      pkg_entry->set_has_loaded_class(true);
+    } else {
+      return false;
     }
   }
   return true;
@@ -1155,55 +967,63 @@ bool ClassLoader::add_package(const char *pkgname, int classpath_index, TRAPS) {
 
 
 oop ClassLoader::get_system_package(const char* name, TRAPS) {
-  PackageInfo* pp = NULL;
-  {
-    MutexLocker ml(PackageTable_lock, THREAD);
-    const char *cp = strrchr(name, '/');
-    if (cp != NULL) {
-      pp = lookup_package(name, cp - name + 1);
-    }
-  }
-  if (pp == NULL) {
-    return NULL;
-  } else {
-    // If the module_location field of the PackageInfo record is not null then
-    // return the module location.  Otherwise, use boot class path index.
-    Symbol* module_location = pp->module_location();
-    if (module_location != NULL) {
-      ResourceMark rm(THREAD);
-      Handle ml = java_lang_String::create_from_str(
-        module_location->as_C_string(), THREAD);
-      return ml();
-    } else {
-      Handle p = java_lang_String::create_from_str(pp->filename(), THREAD);
+  // Look up the name in the boot loader's package entry table.
+  if (name != NULL) {
+    TempNewSymbol package_sym = SymbolTable::new_symbol(name, (int)strlen(name), CHECK_NULL);
+    // Look for the package entry in the boot loader's package entry table.
+    PackageEntry* package =
+      ClassLoaderData::the_null_class_loader_data()->packages()->lookup_only(package_sym);
+
+    // Return NULL if package does not exist or if no classes in that package
+    // have been loaded.
+    if (package != NULL && package->has_loaded_class()) {
+      ModuleEntry* module = package->module();
+      if (module->location() != NULL) {
+        ResourceMark rm(THREAD);
+        Handle ml = java_lang_String::create_from_str(
+          module->location()->as_C_string(), THREAD);
+        return ml();
+      }
+      // Otherwise, use dummy non-null value for -Xbootclasspath/a packages.
+      Handle p = java_lang_String::create_from_str("Dummy", THREAD);
       return p();
     }
   }
+  return NULL;
 }
-
 
 objArrayOop ClassLoader::get_system_packages(TRAPS) {
   ResourceMark rm(THREAD);
-  int nof_entries;
-  const char** packages;
+  // List of pointers to PackageEntrys that have loaded classes.
+  GrowableArray<PackageEntry*>* loaded_class_pkgs = new GrowableArray<PackageEntry*>(50);
   {
-    MutexLocker ml(PackageTable_lock, THREAD);
-    // Allocate resource char* array containing package names
-    nof_entries = _package_hash_table->number_of_entries();
-    if ((packages = NEW_RESOURCE_ARRAY(const char*, nof_entries)) == NULL) {
-      return NULL;
+    MutexLocker ml(Module_lock, THREAD);
+
+    PackageEntryTable* pe_table =
+      ClassLoaderData::the_null_class_loader_data()->packages();
+
+    // Collect the packages that have has_loaded_class set.
+    for (int x = 0; x < pe_table->table_size(); x++) {
+      for (PackageEntry* package_entry = pe_table->bucket(x);
+           package_entry != NULL;
+           package_entry = package_entry->next()) {
+        if (package_entry->has_loaded_class()) {
+          loaded_class_pkgs->append(package_entry);
+        }
+      }
     }
-    _package_hash_table->copy_pkgnames(packages);
-  }
-  // Allocate objArray and fill with java.lang.String
-  objArrayOop r = oopFactory::new_objArray(SystemDictionary::String_klass(),
-                                           nof_entries, CHECK_0);
-  objArrayHandle result(THREAD, r);
-  for (int i = 0; i < nof_entries; i++) {
-    Handle str = java_lang_String::create_from_str(packages[i], CHECK_0);
-    result->obj_at_put(i, str());
   }
 
+
+  // Allocate objArray and fill with java.lang.String
+  objArrayOop r = oopFactory::new_objArray(SystemDictionary::String_klass(),
+                                           loaded_class_pkgs->length(), CHECK_NULL);
+  objArrayHandle result(THREAD, r);
+  for (int x = 0; x < loaded_class_pkgs->length(); x++) {
+    PackageEntry* package_entry = loaded_class_pkgs->at(x);
+    Handle str = java_lang_String::create_from_symbol(package_entry->name(), CHECK_NULL);
+    result->obj_at_put(x, str());
+  }
   return result();
 }
 
@@ -1361,29 +1181,12 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
 }
 
 
-void ClassLoader::create_package_info_table(HashtableBucket<mtClass> *t, int length,
-                                            int number_of_entries) {
-  assert(_package_hash_table == NULL, "One package info table allowed.");
-  assert(length == package_hash_table_size * sizeof(HashtableBucket<mtClass>),
-         "bad shared package info size.");
-  _package_hash_table = new PackageHashtable(package_hash_table_size, t,
-                                             number_of_entries);
-}
-
-
-void ClassLoader::create_package_info_table() {
-    assert(_package_hash_table == NULL, "shouldn't have one yet");
-    _package_hash_table = new PackageHashtable(package_hash_table_size);
-}
-
-
 // Initialize the class loader's access to methods in libzip.  Parse and
 // process the boot classpath into a list ClassPathEntry objects.  Once
 // this list has been created, it must not change order (see class PackageInfo)
 // it can be appended to and is by jvmti and the kernel vm.
 
 void ClassLoader::initialize() {
-  assert(_package_hash_table == NULL, "should have been initialized by now.");
   EXCEPTION_MARK;
 
   if (UsePerfData) {
@@ -1572,11 +1375,6 @@ void ClassLoader::create_javabase() {
 }
 
 #ifndef PRODUCT
-
-void ClassLoader::verify() {
-  _package_hash_table->verify();
-}
-
 
 // CompileTheWorld
 //

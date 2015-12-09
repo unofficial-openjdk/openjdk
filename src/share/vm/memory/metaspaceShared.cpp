@@ -560,14 +560,7 @@ void VM_PopulateDumpSharedSpace::doit() {
   SystemDictionary::reverse();
   SystemDictionary::copy_buckets(&md_top, md_end);
 
-  ClassLoader::verify();
-  ClassLoader::copy_package_info_buckets(&md_top, md_end);
-  ClassLoader::verify();
-
   SystemDictionary::copy_table(&md_top, md_end);
-  ClassLoader::verify();
-  ClassLoader::copy_package_info_table(&md_top, md_end);
-  ClassLoader::verify();
 
   // Write the other data to the output array.
   WriteClosure wc(md_top, md_end);
@@ -1089,33 +1082,11 @@ void MetaspaceShared::initialize_shared_spaces() {
                                           number_of_entries);
   buffer += sharedDictionaryLen;
 
-  // Create the package info table using the bucket array at this spot in
-  // the misc data space.  Since the package info table is never
-  // modified, this region (of mapped pages) will be (effectively, if
-  // not explicitly) read-only.
-
-  int pkgInfoLen = *(intptr_t*)buffer;
-  buffer += sizeof(intptr_t);
-  number_of_entries = *(intptr_t*)buffer;
-  buffer += sizeof(intptr_t);
-  ClassLoader::create_package_info_table((HashtableBucket<mtClass>*)buffer, pkgInfoLen,
-                                         number_of_entries);
-  buffer += pkgInfoLen;
-  ClassLoader::verify();
-
   // The following data in the shared misc data region are the linked
   // list elements (HashtableEntry objects) for the shared dictionary
-  // and package info table.
+  // table.
 
   int len = *(intptr_t*)buffer;     // skip over shared dictionary entries
-  buffer += sizeof(intptr_t);
-  buffer += len;
-
-  len = *(intptr_t*)buffer;     // skip over package info table entries
-  buffer += sizeof(intptr_t);
-  buffer += len;
-
-  len = *(intptr_t*)buffer;     // skip over package info table char[] arrays.
   buffer += sizeof(intptr_t);
   buffer += len;
 
