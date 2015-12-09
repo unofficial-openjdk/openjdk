@@ -256,8 +256,10 @@ public class Modules extends JCTree.Visitor {
         // update the module for each compilation unit
         if (multiModuleMode) {
             for (JCCompilationUnit tree: trees) {
-                if (tree.defs.isEmpty())
+                if (tree.defs.isEmpty()) {
+                    tree.modle = syms.unnamedModule;
                     continue;
+                }
 
                 JavaFileObject prev = log.useSource(tree.sourcefile);
                 try {
