@@ -99,7 +99,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *        is a native method
      * @throws NullPointerException if {@code declaringClass} is {@code null}
      *         or {@code methodName} is {@code null}
-     * @since 1.9
+     * @since 9
      */
     public StackTraceElement(String moduleName, String moduleVersion,
                              String declaringClass, String methodName,
@@ -150,7 +150,7 @@ public final class StackTraceElement implements java.io.Serializable {
      * @return the module name of the {@code Module} containing the execution
      *         point represented by this stack trace element; {@code null}
      *         if the module name is not available.
-     * @since 1.9
+     * @since 9
      * @see java.lang.reflect.Module#getName()
      */
     public String getModuleName() {
@@ -164,7 +164,7 @@ public final class StackTraceElement implements java.io.Serializable {
      * @return the module version of the {@code Module} containing the execution
      *         point represented by this stack trace element; {@code null}
      *         if the module version is not available.
-     * @since 1.9
+     * @since 9
      * @see java.lang.module.ModuleDescriptor.Version
      */
     public String getModuleVersion() {

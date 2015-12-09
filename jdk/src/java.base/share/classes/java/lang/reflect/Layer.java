@@ -43,23 +43,24 @@ import sun.security.util.SecurityConstants;
 /**
  * Represents a layer of modules in the Java virtual machine.
  *
- * <p> The following example resolves a module named <em>myapp</em>. It then
- * instantiates the {@link Configuration} as a {@code Layer}. In the example
- * then all modules in the configuration are defined to the same class loader.
- * </p>
+ * <p> The following example invokes the {@code resolve} method to resolve a
+ * module named <em>myapp</em> with the {@link Configuration} for the boot
+ * layer as the parent configuration. It then instantiates the configuration
+ * as a {@code Layer}. In the example then all modules in the configuration
+ * are defined to the same class loader. </p>
  *
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Configuration cf
- *         = Configuration.resolve(ModuleFinder.empty(),
- *                                 Layer.boot(),
- *                                 finder,
+ *         = Configuration.resolve(finder,
+ *                                 Layer.boot().configuration(),
+ *                                 ModuleFinder.empty(),
  *                                 "myapp");
  *
  *     ClassLoader loader = new ModuleClassLoader(cf);
  *
- *     Layer layer = Layer.create(cf, mn -> loader);
+ *     Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
@@ -67,7 +68,7 @@ import sun.security.util.SecurityConstants;
  * @apiNote As Layer is in java.lang.reflect then its method names may
  * need to follow the convention in this package.
  *
- * @since 1.9
+ * @since 9
  */
 
 public final class Layer {
@@ -77,7 +78,7 @@ public final class Layer {
      * Finds the class loader for a module.
      *
      * @see Layer#create
-     * @since 1.9
+     * @since 9
      */
     @FunctionalInterface
     public static interface ClassLoaderFinder {
@@ -96,10 +97,14 @@ public final class Layer {
 
 
     // the empty Layer
-    private static final Layer EMPTY_LAYER = new Layer(null, null);
+    private static final Layer EMPTY_LAYER
+        = new Layer(Configuration.empty(), null, null);
 
     // the configuration from which this Layer was created
     private final Configuration cf;
+
+    // parent layer, null in the case of the empty layer
+    private final Layer parent;
 
     // maps module name to jlr.Module
     private final Map<String, Module> nameToModule;
@@ -108,23 +113,27 @@ public final class Layer {
     /**
      * Creates a new Layer from the modules in the given configuration.
      */
-    private Layer(Configuration cf, ClassLoaderFinder clf) {
+    private Layer(Configuration cf, Layer parent, ClassLoaderFinder clf) {
+
+        this.cf = cf;
+        this.parent = parent;
 
         Map<String, Module> map;
-        if (cf == null) {
+        if (parent == null) {
             map = Collections.emptyMap();
         } else {
             map = Module.defineModules(cf, clf, this);
         }
-
-        this.cf = cf;
         this.nameToModule = map; // no need to do defensive copy
     }
 
 
     /**
-     * Creates a {@code Layer} by defining the modules, as described in the
-     * given {@code Configuration}, to the Java virtual machine.
+     * Creates a {@code Layer} by defining the modules in the given {@code
+     * Configuration} to the Java virtual machine.
+     * The {@link Configuration#parent() parent} of the given configuration is
+     * the configuration that was to used to create the {@link Layer#parent()
+     * parent layer}.
      *
      * <p> Modules are mapped to module-capable class loaders by means of the
      * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
@@ -157,26 +166,41 @@ public final class Layer {
      * modules in the configuration defined to the run-time.
      *
      * @param  cf
-     *         The configuration to instantiate
+     *         The configuration to instantiate as a layer
+     * @param  parent
+     *         The parent layer
      * @param  clf
      *         The {@code ClassLoaderFinder} to map modules to class loaders
      *
      * @return The newly created layer
      *
+     * @throws IllegalArgumentException
+     *         If the parent of the given configuration is not the configuration
+     *         of the parent {@code Layer}
      * @throws LayerInstantiationException
      *         If creating the {@code Layer} fails for any of the reasons
      *         listed above
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public static Layer create(Configuration cf, ClassLoaderFinder clf) {
+    public static Layer create(Configuration cf, Layer parent, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
+        Objects.requireNonNull(parent);
         Objects.requireNonNull(clf);
+
+        // The configuration parent and the configuration for the parent layer
+        // must be the same
+        Optional<Configuration> oparent = cf.parent();
+        if (!oparent.isPresent() || oparent.get() != parent.configuration()) {
+            throw new IllegalArgumentException(
+                    "Parent of configuration != configuration of parent Layer");
+        }
 
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
         }
+
 
         // For now, no two modules in the boot Layer may contain the same
         // package so we use a simple check for the boot Layer to keep
@@ -188,7 +212,7 @@ public final class Layer {
         }
 
         try {
-            return new Layer(cf, clf);
+            return new Layer(cf, parent, clf);
         } catch (IllegalArgumentException iae) {
             // IAE is thrown by VM when defining the module fails
             throw new LayerInstantiationException(iae.getMessage());
@@ -255,13 +279,12 @@ public final class Layer {
 
 
     /**
-     * Returns the {@code Configuration} used to create this layer unless this
-     * is the {@linkplain #empty empty layer}, which has no configuration.
+     * Returns the {@code Configuration} used to create this layer.
      *
      * @return The configuration used to create this layer
      */
-    public Optional<Configuration> configuration() {
-        return Optional.ofNullable(cf);
+    public Configuration configuration() {
+        return cf;
     }
 
 
@@ -272,21 +295,18 @@ public final class Layer {
      * @return This layer's parent
      */
     public Optional<Layer> parent() {
-        if (cf == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(cf.layer());
-        }
+        return Optional.ofNullable(parent);
     }
 
 
     /**
      * Returns a set of the {@code Module}s in this layer.
      *
-     * @return The set of modules in this layer
+     * @return A possibly-empty unmodifiable set of the modules in this layer
      */
     public Set<Module> modules() {
-        return nameToModule.values().stream().collect(Collectors.toSet());
+        return Collections.unmodifiableSet(
+                nameToModule.values().stream().collect(Collectors.toSet()));
     }
 
 
@@ -328,12 +348,12 @@ public final class Layer {
      * @return The ClassLoader that the module is defined to
      *
      * @throws IllegalArgumentException if a module of the given name is not
-     * defined in this layer or any parent of this layer
+     *         defined in this layer or any parent of this layer
      *
      * @throws SecurityException if denied by the security manager
      */
     public ClassLoader findLoader(String name) {
-        Module m = nameToModule.get(name);
+        Module m = nameToModule.get(Objects.requireNonNull(name));
         if (m != null)
             return m.getClassLoader();
         Optional<Layer> ol = parent();

@@ -38,13 +38,13 @@ import jdk.testlibrary.ProcessTools;
  * @summary Unit test for jmap utility
  * @key intermittent
  * @library /lib/testlibrary
- * @library /../../test/lib/share/classes
+ * @library /test/lib/share/classes
  * @modules java.management
  * @build jdk.testlibrary.*
  * @build jdk.test.lib.hprof.*
- * @build jdk.test.lib.hprof.module.*
+ * @build jdk.test.lib.hprof.model.*
  * @build jdk.test.lib.hprof.parser.*
- * @build jdk.test.lib.hprof.utils.*
+ * @build jdk.test.lib.hprof.util.*
  * @run main/timeout=240 BasicJMapTest
  */
 public class BasicJMapTest {
@@ -111,7 +111,7 @@ public class BasicJMapTest {
                 launcher.addToolArg(toolArg);
             }
         }
-        launcher.addToolArg(Integer.toString(ProcessTools.getProcessId()));
+        launcher.addToolArg(Long.toString(ProcessTools.getProcessId()));
 
         processBuilder.command(launcher.getCommand());
         System.out.println(Arrays.toString(processBuilder.command().toArray()).replace(",", ""));

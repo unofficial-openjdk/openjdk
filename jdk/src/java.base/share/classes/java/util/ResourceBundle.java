@@ -1003,7 +1003,7 @@ public abstract class ResourceBundle {
      *         if no resource bundle for the specified base name can be found in the
      *         specified module
      * @return a resource bundle for the given base name and the default locale
-     * @since 1.9
+     * @since 9
      * @see ResourceBundleProvider
      */
     public static ResourceBundle getBundle(String baseName, Module module) {
@@ -1041,7 +1041,7 @@ public abstract class ResourceBundle {
      *         if no resource bundle for the specified base name and locale can
      *         be found in the specified {@code module}
      * @return a resource bundle for the given base name and locale in the module
-     * @since 1.9
+     * @since 9
      */
     public static ResourceBundle getBundle(String baseName, Locale targetLocale, Module module) {
         return getBundleImpl(module, baseName, targetLocale, Control.INSTANCE);
@@ -2192,7 +2192,7 @@ public abstract class ResourceBundle {
      *         if the caller doesn't have the permission to
      *         {@linkplain Module#getClassLoader() get the class loader}
      *         of the given {@code module}
-     * @since 1.9
+     * @since 9
      * @see ResourceBundle.Control#getTimeToLive(String,Locale)
      */
     public static final void clearCache(Module module) {

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -64,10 +64,10 @@ GENSRC_JDK_JDI += $(GENSRC_JDWP)
 
 include GensrcProperties.gmk
 
-$(eval $(call SetupCompileProperties,COMPILE_PROPERTIES, \
-    $(filter %.properties, \
-        $(call CacheFind, $(JDK_TOPDIR)/src/jdk.jdi/share/classes/com/sun/tools/jdi/resources)), \
-    ListResourceBundle))
+$(eval $(call SetupCompileProperties, COMPILE_PROPERTIES, \
+    SRC_DIRS := $(JDK_TOPDIR)/src/jdk.jdi/share/classes/com/sun/tools/jdi/resources, \
+    CLASS := ListResourceBundle, \
+))
 
 GENSRC_JDK_JDI += $(COMPILE_PROPERTIES)
 

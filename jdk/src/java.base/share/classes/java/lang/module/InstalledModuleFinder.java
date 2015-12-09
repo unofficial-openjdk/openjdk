@@ -25,7 +25,12 @@
 
 package java.lang.module;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
@@ -62,11 +68,15 @@ class InstalledModuleFinder implements ModuleFinder {
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
     private static final String MODULE_INFO = "module-info.class";
 
+    // ImageReader used to access all modules in the image
+    static final ImageReader imageReader;
+
     // the set of modules in the run-time image
     private static final Set<ModuleReference> modules;
 
     // maps module name to module reference
     private static final Map<String, ModuleReference> nameToModule;
+
 
     /**
      * For now, the module references are created eagerly on the assumption
@@ -75,9 +85,9 @@ class InstalledModuleFinder implements ModuleFinder {
     static {
         long t0 = System.nanoTime();
 
-        ImageReader imageReader = ImageReaderFactory.getImageReader();
-        String[] moduleNames = null;
-        boolean fastpath = false;;
+        imageReader = ImageReaderFactory.getImageReader();
+        String[] moduleNames;
+        boolean haveModuleDescriptors;
         Map<String, ModuleDescriptor> descriptors = InstalledModules.modules();
         if (descriptors.isEmpty()) {
             // InstalledModules.MODULE_NAMES is generated at link time and
@@ -85,9 +95,10 @@ class InstalledModuleFinder implements ModuleFinder {
             // when building jdk image.
             ImageModuleData mdata = new ImageModuleData(imageReader);
             moduleNames = mdata.allModuleNames().toArray(new String[0]);
+            haveModuleDescriptors = false;
         } else {
             moduleNames = InstalledModules.MODULE_NAMES;
-            fastpath = true;
+            haveModuleDescriptors = true;
         }
 
         int n = moduleNames.length;
@@ -101,20 +112,33 @@ class InstalledModuleFinder implements ModuleFinder {
             try {
                 // parse the module-info.class file
                 final ModuleDescriptor md;
-                if (fastpath) {
+                if (haveModuleDescriptors) {
                     md = descriptors.get(mn);
                 } else {
                     ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
                     bb = imageReader.getResourceBuffer(loc);
                     md = ModuleInfo.readIgnoringHashes(bb, null);
                 }
-
                 if (!md.name().equals(mn))
                     throw new InternalError();
 
+                // replace ModuleDescriptor if new packages added by -Xpatch
+                ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
+
+                // create the ModuleReference
+
                 URI uri = URI.create("jrt:/" + mn);
+
+                Supplier<ModuleReader> readerSupplier = new Supplier<>() {
+                    @Override
+                    public ModuleReader get() {
+                        return new ImageModuleReader(mn, uri);
+                    }
+                };
+
                 ModuleReference mref
-                    = ModuleReferences.newModuleReference(md, uri, null);
+                    = new ModuleReference(descriptor, uri, readerSupplier);
+
                 mods.add(mref);
                 map.put(mn, mref);
 
@@ -145,6 +169,102 @@ class InstalledModuleFinder implements ModuleFinder {
     @Override
     public Set<ModuleReference> findAll() {
         return modules;
+    }
+
+
+    /**
+     * A ModuleReader for reading resources from a module linked into the
+     * run-time image.
+     */
+    static class ImageModuleReader implements ModuleReader {
+
+        private final String module;
+        private volatile boolean closed;
+
+        /**
+         * If there is a security manager set then check permission to
+         * connect to the run-time image.
+         */
+        private static void checkPermissionToConnect(URI uri) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                try {
+                    URLConnection uc = uri.toURL().openConnection();
+                    sm.checkPermission(uc.getPermission());
+                } catch (IOException ioe) {
+                    throw new UncheckedIOException(ioe);
+                }
+            }
+        }
+
+        ImageModuleReader(String module, URI uri) {
+            checkPermissionToConnect(uri);
+            this.module = module;
+        }
+
+        /**
+         * Returns the ImageLocation for the given resource, {@code null}
+         * if not found.
+         */
+        private ImageLocation findImageLocation(String name) throws IOException {
+            if (closed)
+                throw new IOException("ModuleReader is closed");
+
+            if (imageReader != null) {
+                return imageReader.findLocation(module, name);
+            } else {
+                // not an images build
+                return null;
+            }
+        }
+
+        @Override
+        public Optional<URI> find(String name) throws IOException {
+            ImageLocation location = findImageLocation(name);
+            if (location != null) {
+                URI u = URI.create("jrt:/" + module + "/" + name);
+                return Optional.of(u);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public Optional<InputStream> open(String name) throws IOException {
+            return read(name).map(this::toInputStream);
+        }
+
+        private InputStream toInputStream(ByteBuffer bb) { // ## -> ByteBuffer?
+            try {
+                int rem = bb.remaining();
+                byte[] bytes = new byte[rem];
+                bb.get(bytes);
+                return new ByteArrayInputStream(bytes);
+            } finally {
+                release(bb);
+            }
+        }
+
+        @Override
+        public Optional<ByteBuffer> read(String name) throws IOException {
+            ImageLocation location = findImageLocation(name);
+            if (location != null) {
+                return Optional.of(imageReader.getResourceBuffer(location));
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public void release(ByteBuffer bb) {
+            ImageReader.releaseByteBuffer(bb);
+        }
+
+        @Override
+        public void close() {
+            // nothing else to do
+            closed = true;
+        }
     }
 
 }

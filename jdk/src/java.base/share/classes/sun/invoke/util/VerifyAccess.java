@@ -187,7 +187,7 @@ public class VerifyAccess {
 
             // early VM startup case, java.base not defined
             if (lookupModule == null) {
-                if (refModule != null) throw new InternalError();
+                assert refModule == null;
                 return true;
             }
 
@@ -195,7 +195,11 @@ public class VerifyAccess {
                 return false;
 
             // check the package is exported unconditionally
-            if (refModule.isExported(getPackageName(refc)))
+            Class<?> c = refc;
+            while (c.isArray()) {
+                c = c.getComponentType();
+            }
+            if (c.isPrimitive() || refModule.isExported(c.getPackageName()))
                 return true;
 
             // not exported but allow access during VM initialization
@@ -288,14 +292,11 @@ public class VerifyAccess {
     /** Return the package name for this class.
      */
     public static String getPackageName(Class<?> cls) {
-        if (cls.isArray()) {
-            return getPackageName(cls.getComponentType());
-        } else {
-            String name = cls.getName();
-            int dot = name.lastIndexOf('.');
-            if (dot < 0) return "";
-            return name.substring(0, dot);
-        }
+        assert (!cls.isArray());
+        String name = cls.getName();
+        int dot = name.lastIndexOf('.');
+        if (dot < 0) return "";
+        return name.substring(0, dot);
     }
 
     /**

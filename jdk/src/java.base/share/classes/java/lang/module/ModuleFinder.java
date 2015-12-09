@@ -68,7 +68,7 @@ import java.util.stream.Stream;
  *
  * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
- * @since 1.9
+ * @since 9
  */
 
 public interface ModuleFinder {

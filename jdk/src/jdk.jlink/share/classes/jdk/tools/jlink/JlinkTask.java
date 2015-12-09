@@ -425,11 +425,10 @@ public class JlinkTask {
         if (addMods.isEmpty()) {
             throw new IllegalArgumentException("empty modules and limitmods");
         }
-        Configuration cf
-                = Configuration.resolve(finder,
-                        Layer.empty(),
-                        ModuleFinder.empty(),
-                        addMods);
+        Configuration cf = Configuration.resolve(finder,
+                Configuration.empty(),
+                ModuleFinder.empty(),
+                addMods);
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
         return new ImageHelper(cf, mods, output, bom, order);
     }
@@ -445,7 +444,7 @@ public class JlinkTask {
     {
         // resolve all root modules
         Configuration cf = Configuration.resolve(finder,
-                Layer.empty(),
+                Configuration.empty(),
                 ModuleFinder.empty(),
                 roots);
 

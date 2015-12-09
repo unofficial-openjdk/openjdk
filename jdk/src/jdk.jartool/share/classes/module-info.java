@@ -25,5 +25,6 @@
 
 module jdk.jartool {
     exports com.sun.jarsigner;
+    exports jdk.security.jarsigner;
 }
 

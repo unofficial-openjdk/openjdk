@@ -138,17 +138,6 @@ public class JLinkNegativeTest {
                 .call().assertFailure("Error: Module failure5 not found");
     }
 
-    public void testAddedModuleIsFiltered() {
-        // added module is filtered out
-        Path imageFile = helper.createNewImageDir("test");
-        JImageGenerator.getJLinkTask()
-                .output(imageFile)
-                .addMods("leaf1")
-                .limitMods("leaf2")
-                .modulePath(helper.defaultModulePath())
-                .call().assertFailure("Error: Module leaf1 not found");
-    }
-
     public void testJmodIsDir() throws IOException {
         Path imageFile = helper.createNewImageDir("test");
         Path dirJmod = helper.createNewJmodFile("dir");

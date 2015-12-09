@@ -21,7 +21,6 @@
  * questions.
  */
 
-import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 
 /**
@@ -52,15 +52,18 @@ public final class ModuleUtils {
 
         // Create a ModuleReference for each module
         Map<String, ModuleReference> namesToReference = new HashMap<>();
-        for (ModuleDescriptor descriptor: descriptors) {
+
+        for (ModuleDescriptor descriptor : descriptors) {
             String name = descriptor.name();
-            URI uri = URI.create("module:/" + descriptor.name());
-            ModuleReference mref = new ModuleReference(descriptor, uri) {
-                @Override
-                public ModuleReader open() throws IOException {
-                    throw new IOException("No module reader for: " + uri);
-                }
+
+            URI uri = URI.create("module:/" + name);
+
+            Supplier<ModuleReader> supplier = () -> {
+                throw new UnsupportedOperationException();
             };
+
+            ModuleReference mref = new ModuleReference(descriptor, uri, supplier);
+
             namesToReference.put(name, mref);
         }
 

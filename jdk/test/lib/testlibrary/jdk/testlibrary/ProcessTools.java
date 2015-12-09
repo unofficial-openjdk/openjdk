@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -253,11 +251,8 @@ public final class ProcessTools {
      *
      * @return Process id
      */
-    public static int getProcessId() throws Exception {
-        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
-        int pid = Integer.parseInt(runtime.getName().split("@")[0]);
-
-        return pid;
+    public static long getProcessId() {
+        return ProcessHandle.current().getPid();
     }
 
     /**
@@ -372,11 +367,31 @@ public final class ProcessTools {
      * @return The {@linkplain OutputAnalyzer} instance wrapping the process.
      */
     public static OutputAnalyzer executeProcess(ProcessBuilder pb) throws Exception {
+        return executeProcess(pb, null);
+    }
+
+    /**
+     * Executes a process, pipe some text into its STDIN, waits for it
+     * to finish and returns the process output. The process will have exited
+     * before this method returns.
+     * @param pb The ProcessBuilder to execute.
+     * @param input The text to pipe into STDIN. Can be null.
+     * @return The {@linkplain OutputAnalyzer} instance wrapping the process.
+     */
+    public static OutputAnalyzer executeProcess(ProcessBuilder pb, String input)
+            throws Exception {
         OutputAnalyzer output = null;
         Process p = null;
         boolean failed = false;
         try {
             p = pb.start();
+            if (input != null) {
+                try (OutputStream os = p.getOutputStream();
+                        PrintStream ps = new PrintStream(os)) {
+                    ps.print(input);
+                    ps.flush();
+                }
+            }
             output = new OutputAnalyzer(p);
             p.waitFor();
 

@@ -63,7 +63,7 @@ import java.util.StringJoiner;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.BuiltinClassLoader;
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -419,7 +419,7 @@ public final class Class<T> implements java.io.Serializable,
      *         the caller requests to load a class in another module,
      *         it denies the {@code RuntimePermission("getClassLoader")} permission.
      *
-     * @since 1.9
+     * @since 9
      */
     @CallerSensitive
     public static Class<?> forName(Module module, String name) {
@@ -805,29 +805,9 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return the module that this class or interface is a member of
      *
-     * @since 1.9
+     * @since 9
      */
     public Module getModule() {
-        Module module = this.module;
-        if (module != null)
-            return module;
-
-        // called early in the startup before patching
-        if (Object.class.module == null)
-            return null;
-
-        if (isArray())
-            module = componentType.getModule();
-        else if (isPrimitive())
-            module = Object.class.getModule();
-        else if (classLoader == null)
-            module = BootLoader.getUnnamedModule();
-        else
-            module = classLoader.getUnnamedModule();
-
-        // cache it
-        this.module = module;
-
         return module;
     }
 
@@ -962,7 +942,7 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return the fully qualified package name
      *
-     * @since 1.9
+     * @since 9
      * @jls 6.7  Fully Qualified Names
      */
     public String getPackageName() {

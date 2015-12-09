@@ -31,7 +31,7 @@ package java.lang.module;
  * @see Configuration#resolve
  * @see Configuration#bind
  *
- * @since 1.9
+ * @since 9
  */
 public class ResolutionException extends RuntimeException {
     private static final long serialVersionUID = 1L;

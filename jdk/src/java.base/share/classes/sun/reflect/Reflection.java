@@ -104,7 +104,12 @@ public class Reflection {
             if (m2.isNamed())
                 memberSuffix = " (in " + m2 + ")";
 
-            String memberPackageName = packageName(memberClass);
+            Class<?> c = memberClass;
+            while (c.isArray()) {
+                c = c.getComponentType();
+            }
+            String memberPackageName = c.getPackageName();
+
             boolean canRead = m1.canRead(m2);
 
             String msg = currentClass + currentSuffix + " cannot access ";
@@ -121,7 +126,7 @@ public class Reflection {
                 if (!canRead) {
                     msg += m1 + " does not read " + m2;
                 } else {
-                    msg += m2 + " does not export package " + memberPackageName;
+                    msg += m2 + " does not export " + memberPackageName;
                     if (m2.isNamed()) msg += " to " + m1;
                 }
 
@@ -234,17 +239,16 @@ public class Reflection {
         if (!currentModule.canRead(memberModule))
             return false;
 
-        // check that memberModule exports the package to currentModule
-        return memberModule.isExported(packageName(memberClass), currentModule);
-    }
-
-    private static String packageName(Class<?> c) {
-        String pn = c.getPackageName();
-        if (pn != null) {
-            return pn;
-        } else {
-            throw new InternalError("Should not get here: " + c);
+        // memberClass may be primitive or array class
+        Class<?> c = memberClass;
+        while (c.isArray()) {
+            c = c.getComponentType();
         }
+        if (c.isPrimitive())
+            return true;
+
+        // check that memberModule exports the package to currentModule
+        return memberModule.isExported(c.getPackageName(), currentModule);
     }
 
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {

@@ -38,9 +38,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.lang.module.Configuration;
+import java.lang.module.Configuration.ReadDependence;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
@@ -86,14 +85,14 @@ public class GenGraphs {
             }
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
-                    Layer.empty(),
+                    Configuration.empty(),
                     ModuleFinder.empty(),
                     name);
             genGraphs.genDotFile(dir, name, cf);
         }
 
         Configuration cf = Configuration.resolve(finder,
-                Layer.empty(),
+                Configuration.empty(),
                 ModuleFinder.empty(),
                 mods);
         genGraphs.genDotFile(dir, "jdk", cf);
@@ -205,7 +204,8 @@ public class GenGraphs {
             String mn = md.name();
             builder.addNode(mn);
             cf.reads(md).stream()
-                    .map(d -> d.name())
+                    .map(ReadDependence::descriptor)
+                    .map(ModuleDescriptor::name)
                     .forEach(d -> builder.addEdge(mn, d));
         });
 

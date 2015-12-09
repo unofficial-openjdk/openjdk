@@ -56,7 +56,7 @@ import java.util.Optional;
  * access is denied by the security manager. </p>
  *
  * @see ModuleReference
- * @since 1.9
+ * @since 9
  */
 
 public interface ModuleReader extends Closeable {

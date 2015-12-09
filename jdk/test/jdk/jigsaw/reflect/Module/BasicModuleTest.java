@@ -45,7 +45,7 @@ public class BasicModuleTest {
      */
     private void testReadsAllBootModules(Module m) {
         Layer bootLayer = Layer.boot();
-        bootLayer.configuration().get()
+        bootLayer.configuration()
             .descriptors()
             .stream()
             .map(ModuleDescriptor::name)

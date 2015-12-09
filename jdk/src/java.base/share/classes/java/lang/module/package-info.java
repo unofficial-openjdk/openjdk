@@ -24,7 +24,7 @@
  */
 
 /**
- * @since 1.9
+ * @since 9
  */
 
 package java.lang.module;

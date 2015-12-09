@@ -76,7 +76,6 @@ static const char *_launcher_name;
 static jboolean _is_java_args = JNI_FALSE;
 static jboolean _have_classpath = JNI_FALSE;
 static const char *_fVersion;
-static const char *_dVersion;
 static jboolean _wc_enabled = JNI_FALSE;
 static jint _ergo_policy = DEFAULT_POLICY;
 
@@ -194,7 +193,7 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         int jargc, const char** jargv,          /* java args */
         int appclassc, const char** appclassv,  /* app classpath */
         const char* fullversion,                /* full version defined */
-        const char* dotversion,                 /* dot version defined */
+        const char* dotversion,                 /* UNUSED dot version defined */
         const char* pname,                      /* program name */
         const char* lname,                      /* launcher name */
         jboolean javaargs,                      /* JAVA_ARGS */
@@ -214,7 +213,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
     char jvmcfg[MAXPATHLEN];
 
     _fVersion = fullversion;
-    _dVersion = dotversion;
     _launcher_name = lname;
     _program_name = pname;
     _is_java_args = javaargs;
@@ -396,10 +394,7 @@ JavaMain(void * _args)
     if (listModules != NULL) {
         ListModules(env, listModules);
         CHECK_EXCEPTION_LEAVE(1);
-        if (what == NULL) {
-            /* No main class or module specified */
-            LEAVE();
-        }
+        LEAVE();
     }
 
     if (printVersion || showVersion) {
@@ -1178,6 +1173,7 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
             listModules = arg;
+            return JNI_TRUE;
         } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
             static jboolean haveAddReads = JNI_FALSE;
             /* -XaddReads only allowed once */
@@ -1300,10 +1296,7 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        /* No main class or module specified */
-        if (listModules == NULL) {
-            *pret = 1;
-        }
+        *pret = 1;
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */
@@ -2091,12 +2084,6 @@ ShowSplashScreen()
 }
 
 const char*
-GetDotVersion()
-{
-    return _dVersion;
-}
-
-const char*
 GetFullVersion()
 {
     return _fVersion;
@@ -2184,7 +2171,6 @@ DumpState()
     printf("\tlauncher name:%s\n", GetLauncherName());
     printf("\tjavaw:%s\n", (IsJavaw() == JNI_TRUE) ? "on" : "off");
     printf("\tfullversion:%s\n", GetFullVersion());
-    printf("\tdotversion:%s\n", GetDotVersion());
     printf("\tergo_policy:");
     switch(GetErgoPolicy()) {
         case NEVER_SERVER_CLASS:

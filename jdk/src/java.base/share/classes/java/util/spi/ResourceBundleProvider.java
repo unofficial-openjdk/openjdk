@@ -44,7 +44,7 @@ import java.util.ResourceBundle;
  * ResourceBundle.Control.newBundle()}. Refer to {@link ResourceBundle} for
  * details.
  *
- * @since 1.9
+ * @since 9
  */
 public interface ResourceBundleProvider {
     /**

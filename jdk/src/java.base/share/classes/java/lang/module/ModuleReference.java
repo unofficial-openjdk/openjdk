@@ -26,9 +26,11 @@
 package java.lang.module;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import jdk.internal.module.Hasher.HashSupplier;
 
@@ -43,13 +45,14 @@ import jdk.internal.module.Hasher.HashSupplier;
  *
  * @see ModuleFinder
  * @see ModuleReader
- * @since 1.9
+ * @since 9
  */
 
-public abstract class ModuleReference {
+public final class ModuleReference {
 
     private final ModuleDescriptor descriptor;
     private final Optional<URI> location;
+    private final Supplier<ModuleReader> readerSupplier;
 
     // the function that computes the hash of this module reference
     private final HashSupplier hasher;
@@ -62,35 +65,50 @@ public abstract class ModuleReference {
      */
     ModuleReference(ModuleDescriptor descriptor,
                     URI location,
+                    Supplier<ModuleReader> readerSupplier,
                     HashSupplier hasher)
     {
         this.descriptor = Objects.requireNonNull(descriptor);
         this.location = Optional.ofNullable(location);
+        this.readerSupplier = Objects.requireNonNull(readerSupplier);
         this.hasher = hasher;
     }
 
+
     /**
      * Constructs a new instance of this class.
+     *
+     * <p> The {@code readSupplier} parameter is the supplier of the {@link
+     * ModuleReader} that may be used to read the module content. Its {@link
+     * Supplier#get() get()} method throws {@link UncheckedIOException} if an
+     * I/O error occurs opening the module content. The {@code get()} method
+     * throws {@link SecurityException} if opening the module is denied by the
+     * security manager.
      *
      * @param descriptor
      *        The module descriptor
      * @param location
      *        The module location or {@code null} if not known
+     * @param readerSupplier
+     *        The {@code Supplier} of the {@code ModuleReader}
      */
-    protected ModuleReference(ModuleDescriptor descriptor,
-                              URI location)
+    public ModuleReference(ModuleDescriptor descriptor,
+                           URI location,
+                           Supplier<ModuleReader> readerSupplier)
     {
-        this(descriptor, location, null);
+        this(descriptor, location, readerSupplier, null);
     }
+
 
     /**
      * Returns the module descriptor.
      *
      * @return The module descriptor
      */
-    public final ModuleDescriptor descriptor() {
+    public ModuleDescriptor descriptor() {
         return descriptor;
     }
+
 
     /**
      * Returns the location of this module's content, if known.
@@ -103,13 +121,18 @@ public abstract class ModuleReference {
      *
      * @return The location or an empty {@code Optional} if not known
      */
-    public final Optional<URI> location() {
+    public Optional<URI> location() {
         return location;
     }
 
+
     /**
-     * Opens the modules reference for reading, returning a {@code ModuleReader}
+     * Opens the module content for reading, returning a {@code ModuleReader}
      * that may be used to locate or read classes and resources.
+     *
+     * <p> </p>This method opens the module content by invoking the {@link
+     * Supplier#get() get()} method of the {@code readSupplier} specified at
+     * construction time. </p>
      *
      * @return A {@code ModuleReader} to read the module
      *
@@ -118,7 +141,15 @@ public abstract class ModuleReference {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public abstract ModuleReader open() throws IOException;
+    public ModuleReader open() throws IOException {
+        try {
+            return readerSupplier.get();
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+
+    }
+
 
     /**
      * Computes the MD5 hash of this module, returning it as a hex string.
@@ -138,26 +169,29 @@ public abstract class ModuleReference {
 
     private int hash;
 
+    @Override
     public int hashCode() {
         int hc = hash;
         if (hc == 0) {
-            hc = descriptor.hashCode() ^ location.hashCode();
-            hash = hc;
+            hc = Objects.hash(descriptor, location, readerSupplier, hasher);
+            if (hc != 0) hash = hc;
         }
         return hc;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof ModuleReference))
             return false;
         ModuleReference that = (ModuleReference)obj;
-        if (!this.descriptor.equals(that.descriptor))
-            return false;
-        if (!this.location.equals(that.location))
-            return false;
-        return true;
+
+        return Objects.equals(this.descriptor, that.descriptor)
+                && Objects.equals(this.location, that.location)
+                && Objects.equals(this.readerSupplier, that.readerSupplier)
+                && Objects.equals(this.hasher, that.hasher);
     }
 
+    @Override
     public String toString() {
         return ("[module " + descriptor().name()
                 + ", location=" + location.orElse(null) + "]");

@@ -30,7 +30,6 @@
  */
 
 import java.io.FilePermission;
-import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.net.URL;
@@ -72,7 +71,7 @@ public class Basic {
     static void test(ClassLoader parent, boolean succeed) throws ClassNotFoundException {
 
         Configuration cf = Configuration.resolve(ModuleFinder.empty(),
-                                                 Layer.empty(),
+                                                 Configuration.empty(),
                                                  ModuleFinder.empty());
         try {
             ModuleClassLoader loader = new ModuleClassLoader(parent, cf);

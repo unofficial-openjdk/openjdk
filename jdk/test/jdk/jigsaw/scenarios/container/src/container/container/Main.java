@@ -42,7 +42,7 @@ public class Main {
 
         System.out.println("Boot layer");
         Layer.boot()
-             .configuration().get()
+             .configuration()
              .descriptors()
              .stream()
              .map(ModuleDescriptor::name)
@@ -66,12 +66,10 @@ public class Main {
             paths[i++] = Paths.get(dir);
         }
 
-        Layer bootLayer = Layer.boot();
-
         ModuleFinder finder = ModuleFinder.of(paths);
 
         Configuration cf = Configuration.resolve(finder,
-                bootLayer,
+                Layer.boot().configuration(),
                 ModuleFinder.empty(),
                 appModuleName);
         cf = cf.bind();
@@ -84,7 +82,7 @@ public class Main {
         ModuleClassLoader loader = new ModuleClassLoader(cf);
 
         // reify the configuration as a Layer
-        Layer layer = Layer.create(cf, mn -> loader);
+        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);

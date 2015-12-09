@@ -29,7 +29,7 @@ package java.lang.reflect;
  * Thrown when Java language access checks cannot be suppressed.
  *
  * @see AccessibleObject#setAccessible(boolean)
- * @since 1.9
+ * @since 9
  */
 
 public class InaccessibleObjectException extends RuntimeException {
