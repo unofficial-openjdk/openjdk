@@ -1025,7 +1025,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(JavaThread,                  _stack_size,                                   size_t)                                \
   nonstatic_field(JavaThread,                  _vframe_array_head,                            vframeArray*)                          \
   nonstatic_field(JavaThread,                  _vframe_array_last,                            vframeArray*)                          \
-  nonstatic_field(JavaThread,                  _satb_mark_queue,                              ObjPtrQueue)                           \
+  nonstatic_field(JavaThread,                  _satb_mark_queue,                              SATBMarkQueue)                         \
   nonstatic_field(JavaThread,                  _dirty_card_queue,                             DirtyCardQueue)                        \
   nonstatic_field(Thread,                      _resource_area,                                ResourceArea*)                         \
   nonstatic_field(CompilerThread,              _env,                                          ciEnv*)                                \
@@ -1313,12 +1313,11 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
      static_field(Abstract_VM_Version,         _s_internal_vm_info_string,                    const char*)                           \
      static_field(Abstract_VM_Version,         _vm_major_version,                             int)                                   \
      static_field(Abstract_VM_Version,         _vm_minor_version,                             int)                                   \
-     static_field(Abstract_VM_Version,         _vm_micro_version,                             int)                                   \
+     static_field(Abstract_VM_Version,         _vm_security_version,                          int)                                   \
      static_field(Abstract_VM_Version,         _vm_build_number,                              int)                                   \
      static_field(Abstract_VM_Version,         _reserve_for_allocation_prefetch,              int)                                   \
                                                                                                                                      \
      static_field(JDK_Version,                 _current,                                      JDK_Version)                           \
-  nonstatic_field(JDK_Version,                 _partially_initialized,                        bool)                                  \
   nonstatic_field(JDK_Version,                 _major,                                        unsigned char)                         \
                                                                                                                                      \
   /*************************/                                                                                                        \
@@ -1617,7 +1616,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_toplevel_type(MemRegion)                                        \
   declare_toplevel_type(ThreadLocalAllocBuffer)                           \
   declare_toplevel_type(VirtualSpace)                                     \
-  declare_toplevel_type(ObjPtrQueue)                                      \
+  declare_toplevel_type(SATBMarkQueue)                                    \
   declare_toplevel_type(DirtyCardQueue)                                   \
                                                                           \
   /* Pointers to Garbage Collection types */                              \
