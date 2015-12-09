@@ -80,7 +80,7 @@ class TaskFactory {
         if (compiler == null) {
             throw new UnsupportedOperationException("Compiler not available, must be run with full JDK 9.");
         }
-        if (!System.getProperty("java.specification.version").equals("1.9"))  {
+        if (!System.getProperty("java.specification.version").equals("9"))  {
             throw new UnsupportedOperationException("Wrong compiler, must be run with full JDK 9.");
         }
         this.fileManager = new MemoryFileManager(
@@ -249,7 +249,7 @@ class TaskFactory {
 
         AnalyzeTask(final Collection<Unit> units) {
             this(units.stream(), new UnitSourceHandler(),
-                    "-XDshouldStopPolicy=FLOW", "-Xlint:unchecked", "-proc:none");
+                    "-XDshouldStopPolicy=FLOW", "-Xlint:unchecked", "-XaddExports:jdk.jshell/jdk.internal.jshell.remote=ALL-UNNAMED", "-proc:none");
         }
 
         <T>AnalyzeTask(final Stream<T> stream, SourceHandler<T> sourceHandler,
@@ -298,7 +298,7 @@ class TaskFactory {
 
         CompileTask(Collection<Unit> units) {
             super(units.stream(), new UnitSourceHandler(),
-                    "-Xlint:unchecked", "-proc:none");
+                    "-Xlint:unchecked", "-XaddExports:jdk.jshell/jdk.internal.jshell.remote=ALL-UNNAMED", "-proc:none");
         }
 
         boolean compile() {

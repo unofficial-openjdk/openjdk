@@ -27,6 +27,7 @@ tools/javac/file/BootClassPathPrepend.java                                      
 tools/javac/file/ExplodedImage.java                                             0 generic-all   "Did not load java.util.List from correct place"
 tools/javac/importscope/dependencies/DependenciesTest.java                      0 generic-all   NPE in test's internal scanner
 tools/javac/options/xprefer/XPreferTest.java                                    0 generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
+tools/javac/processing/T8142931.java                                            0 generic-all   package com.sun.tools.javac.api does not exist
 tools/javac/processing/errors/CrashOnNonExistingAnnotation/Source.java          0 generic-all   ?? need more investigation 
 tools/javac/processing/model/testgetallmembers/Main.java                        0 generic-all   NPE in test in getPackage method
 tools/javac/processing/options/testCommandLineClasses/Test.java                 0 generic-all   problem locating nested classes
@@ -49,12 +50,4 @@ tools/javac/api/taskListeners/CompileEvent.java                                 
 ##### javah ####################################################################
 
 tools/javah/T7185778.java                                                       0 generic-all   Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java
-
-##### jshell ##################################################################
-
-jdk/jshell/CompletionSuggestionTest.java					8143007	generic-all
-jdk/jshell/SnippetTest.java							8143007 generic-all
-jdk/jshell/MethodsTest.java							8143007 generic-all
-jdk/jshell/DropTest.java							8143007 generic-all
-jdk/jshell/ReplaceTest.java							8143007 generic-all
 

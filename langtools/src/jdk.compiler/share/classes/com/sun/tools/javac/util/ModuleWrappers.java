@@ -186,14 +186,14 @@ public class ModuleWrappers {
 
         public static Configuration resolve(
                 ModuleFinder beforeFinder,
-                Layer parent,
+                Configuration parent,
                 ModuleFinder afterFinder,
                 String... roots) {
             try {
                 Object result = ConfigurationHelper.getResolveMethod()
                         .invoke(ConfigurationHelper.getConfigurationClass(),
                                     beforeFinder.theRealModuleFinder,
-                                    parent.theRealLayer,
+                                    parent.theRealConfiguration,
                                     afterFinder.theRealModuleFinder,
                                     roots
                                 );
@@ -225,10 +225,10 @@ public class ModuleWrappers {
                 try {
                     getConfigurationClass();
                     Class<?> moduleFinderInterface = ModuleFinderHelper.getModuleFinderInterface();
-                    Class<?> layerClass = LayerHelper.getLayerClass();
+                    Class<?> configurationClass = ConfigurationHelper.getConfigurationClass();
                     resolveMethod = configurationClass.getDeclaredMethod("resolve",
                                 moduleFinderInterface,
-                                layerClass,
+                                configurationClass,
                                 moduleFinderInterface,
                                 String[].class
                     );
@@ -279,7 +279,17 @@ public class ModuleWrappers {
             }
         }
 
-        public static Layer create(Configuration configuration, ModuleClassLoader modClassLoader) {
+        public Configuration configuration() {
+            try {
+                Object result = LayerHelper.getConfigurationMethod().invoke(theRealLayer);
+                Layer layer = new Layer(result);
+                return new Configuration(result);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        public static Layer create(Configuration configuration, Layer parent, ModuleClassLoader modClassLoader) {
             try {
                 Class<?> classLoaderFinderInterface = LayerHelper.getClassLoaderFinderInterface();
                 LayerHelper.ClassLoaderFinderInvocationHandler handler =
@@ -289,7 +299,7 @@ public class ModuleWrappers {
                                             new Class<?>[] { classLoaderFinderInterface },
                                             handler);
                 Object result = LayerHelper.getCreateMethod()
-                        .invoke(LayerHelper.getLayerClass(), configuration.theRealConfiguration, proxy);
+                        .invoke(LayerHelper.getLayerClass(), configuration.theRealConfiguration, parent.theRealLayer, proxy);
                 Layer layer = new Layer(result);
                 return layer;
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -303,6 +313,7 @@ public class ModuleWrappers {
         static Class<?> classLoaderFinderInterface;
         static Method bootMethod = null;
         static Method createMethod = null;
+        static Method configurationMethod;
 
         static Class<?> getLayerClass() {
             if (layerClass == null) {
@@ -355,6 +366,7 @@ public class ModuleWrappers {
                 try {
                     createMethod = getLayerClass().getDeclaredMethod("create",
                                 ConfigurationHelper.getConfigurationClass(),
+                                LayerHelper.getLayerClass(),
                                 getClassLoaderFinderInterface()
                     );
                 } catch (NoSuchMethodException | SecurityException ex) {
@@ -362,6 +374,17 @@ public class ModuleWrappers {
                 }
             }
             return createMethod;
+        }
+
+        static Method getConfigurationMethod() {
+            if (configurationMethod == null) {
+                try {
+                    configurationMethod =  getLayerClass().getDeclaredMethod("configuration");
+                } catch (NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+            return configurationMethod;
         }
     }
 }

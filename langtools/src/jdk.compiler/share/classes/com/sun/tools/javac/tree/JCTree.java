@@ -2833,8 +2833,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /** (let int x = 3; in x+2) */
     public static class LetExpr extends JCExpression {
         public List<JCVariableDecl> defs;
-        public JCTree expr;
-        protected LetExpr(List<JCVariableDecl> defs, JCTree expr) {
+        public JCExpression expr;
+        protected LetExpr(List<JCVariableDecl> defs, JCExpression expr) {
             this.defs = defs;
             this.expr = expr;
         }
@@ -2946,7 +2946,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isPublic, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
-        LetExpr LetExpr(List<JCVariableDecl> defs, JCTree expr);
+        LetExpr LetExpr(List<JCVariableDecl> defs, JCExpression expr);
     }
 
     /** A generic visitor class for trees.

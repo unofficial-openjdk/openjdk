@@ -81,7 +81,7 @@ public class ModuleTestBase {
         List<Pair<String, Integer>> actualRequires = new ArrayList<>();
         for (Module_attribute.RequiresEntry require : module.requires) {
             actualRequires.add(Pair.of(
-                    require.getRequires(require.requires_index, constantPool), require.requires_flags));
+                    require.getRequires(constantPool), require.requires_flags));
         }
         tr.checkContains(actualRequires, moduleDescriptor.requires, "Lists of requires don't match");
     }

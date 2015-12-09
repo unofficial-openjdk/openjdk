@@ -47,7 +47,7 @@ define SetupInterimModule
           $$(wildcard $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
       EXCLUDES := sun jdk, \
       EXCLUDE_FILES := module-info.java, \
-      COPY := .gif .xml .css .js javax.tools.JavaCompilerTool, \
+      COPY := .gif .png .xml .css .js javax.tools.JavaCompilerTool, \
       BIN := $(BUILDTOOLS_OUTPUTDIR)/override_modules/$(strip $1), \
       ADD_JAVAC_FLAGS := -Xbootclasspath/p:$$(call PathList, \
           $$(foreach m, $2, $(BUILDTOOLS_OUTPUTDIR)/override_modules/$$m)), \

@@ -156,7 +156,7 @@ public enum TypeKind {
     /**
      * A pseudo-type corresponding to a package element.
      * @see NoType
-     * @since 1.9
+     * @since 9
      */
     MODULE;
 

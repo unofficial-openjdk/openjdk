@@ -164,7 +164,7 @@ public class HtmlWriter {
 
     private final Writer writer;
 
-    private Content script;
+    protected Content script;
 
     /**
      * Constructor.

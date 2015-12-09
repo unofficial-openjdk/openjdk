@@ -64,6 +64,7 @@ public enum StandardLocation implements Location {
 
     /**
      * Location to search for modules containing annotation processors.
+     * @since 9
      */
     ANNOTATION_PROCESSOR_MODULE_PATH,
 
@@ -81,21 +82,25 @@ public enum StandardLocation implements Location {
 
     /**
      * Location to search for the source code of modules.
+     * @since 9
      */
     MODULE_SOURCE_PATH,
 
     /**
      * Location to search for upgradeable system modules.
+     * @since 9
      */
     UPGRADE_MODULE_PATH,
 
     /**
      * Location to search for system modules.
+     * @since 9
      */
     SYSTEM_MODULE_PATH,
 
     /**
      * Location to search for precompiled user modules.
+     * @since 9
      */
     MODULE_PATH;
 
