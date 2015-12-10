@@ -29,9 +29,10 @@ import java.awt.image.BufferedImage;
  * @test
  * @summary Check for MouseEvents with all mouse buttons
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
+ * @library /java/awt/patchlib
  * @library ../../../../lib/testlibrary ../
  * @build ExtendedRobot SystemTrayIconHelper
- * @compile/module=java.desktop java/awt/Helper.java
+ * @build java.desktop/java.awt.Helper
  * @run main ModalityTest
  */
 public class ModalityTest {

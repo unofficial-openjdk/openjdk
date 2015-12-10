@@ -29,8 +29,9 @@ import java.awt.image.BufferedImage;
  * @summary Check if a JPopupMenu can be displayed when TrayIcon is
  *          right clicked. It uses a JWindow as the parent of the JPopupMenu
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
+ * @library /java/awt/patchlib
  * @library ../../../../lib/testlibrary ../
- * @compile/module=java.desktop java/awt/Helper.java
+ * @build java.desktop/java.awt.Helper
  * @build ExtendedRobot SystemTrayIconHelper
  * @run main TrayIconPopupTest
  */
