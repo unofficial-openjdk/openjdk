@@ -255,9 +255,6 @@ public class Ktab {
         PrincipalName pname = null;
         try {
             pname = new PrincipalName(principal);
-            if (pname.getRealm() == null) {
-                pname.setRealm(Config.getInstance().getDefaultRealm());
-            }
         } catch (KrbException e) {
             System.err.println("Failed to add " + principal +
                                " to keytab.");
@@ -364,9 +361,6 @@ public class Ktab {
         PrincipalName pname = null;
         try {
             pname = new PrincipalName(principal);
-            if (pname.getRealm() == null) {
-                pname.setRealm(Config.getInstance().getDefaultRealm());
-            }
             if (!forced) {
                 String answer;
                 BufferedReader cis =

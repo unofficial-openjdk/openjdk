@@ -25,6 +25,11 @@
 
 package sun.security.krb5;
 
+import sun.security.krb5.internal.Krb5;
+
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -36,6 +41,8 @@ import java.util.List;
 import javax.naming.*;
 import javax.naming.directory.*;
 import javax.naming.spi.NamingManager;
+
+import sun.misc.SharedSecrets;
 
 /**
  * This class discovers the location of Kerberos services by querying DNS,
@@ -55,6 +62,8 @@ class KrbServiceLocator {
 
     private static final Random random = new Random();
 
+    private static final boolean DEBUG = Krb5.DEBUG;
+
     private KrbServiceLocator() {
     }
 
@@ -65,27 +74,37 @@ class KrbServiceLocator {
      * Information on the mapping of DNS hostnames and domain names
      * to Kerberos realms is stored using DNS TXT records
      *
-     * @param domainName A string domain name.
-     * @param environment The possibly null environment of the context.
+     * @param realmName A string realm name.
      * @return An ordered list of hostports for the Kerberos service or null if
      *          the service has not been located.
      */
     static String[] getKerberosService(String realmName) {
 
         // search realm in SRV TXT records
-        String dnsUrl = "dns:///_kerberos." + realmName;
+        final String dnsUrl = "dns:///_kerberos." + realmName;
         String[] records = null;
         try {
             // Create the DNS context using NamingManager rather than using
             // the initial context constructor. This avoids having the initial
             // context constructor call itself (when processing the URL
             // argument in the getAttributes call).
-            Context ctx = NamingManager.getURLContext("dns", new Hashtable(0));
+            final Context ctx = NamingManager.getURLContext("dns", new Hashtable(0));
             if (!(ctx instanceof DirContext)) {
                 return null; // cannot create a DNS context
             }
-            Attributes attrs =
-                ((DirContext)ctx).getAttributes(dnsUrl, SRV_TXT_ATTR);
+            Attributes attrs = null;
+            try {
+                // both connect and accept are needed since DNS is thru UDP
+                attrs = SharedSecrets.getJavaSecurityAccess().doPrivileged
+                    (new PrivilegedExceptionAction<Attributes>() {
+                            public Attributes run() throws Exception {
+                                return ((DirContext)ctx).getAttributes(dnsUrl, SRV_TXT_ATTR);
+                            }
+                        }, null,
+                        new java.net.SocketPermission("*", "connect,accept"));
+            } catch (PrivilegedActionException e) {
+                throw (NamingException)e.getCause();
+            }
             Attribute attr;
 
             if (attrs != null && ((attr = attrs.get(SRV_TXT)) != null)) {
@@ -127,13 +146,14 @@ class KrbServiceLocator {
      * Queries DNS for a list of KERBEROS Service Location Records (SRV) for a
      * given domain name.
      *
-     * @param domainName A string domain name.
+     * @param realmName A string realm name.
+     * @param protocol the protocol string, can be "_udp" or "_tcp"
      * @return An ordered list of hostports for the Kerberos service or null if
      *          the service has not been located.
      */
     static String[] getKerberosService(String realmName, String protocol) {
 
-        String dnsUrl = "dns:///_kerberos." + protocol + "." + realmName;
+        final String dnsUrl = "dns:///_kerberos." + protocol + "." + realmName;
         String[] hostports = null;
 
         try {
@@ -141,12 +161,25 @@ class KrbServiceLocator {
             // the initial context constructor. This avoids having the initial
             // context constructor call itself (when processing the URL
             // argument in the getAttributes call).
-            Context ctx = NamingManager.getURLContext("dns", new Hashtable(0));
+            final Context ctx = NamingManager.getURLContext("dns", new Hashtable(0));
             if (!(ctx instanceof DirContext)) {
                 return null; // cannot create a DNS context
             }
-            Attributes attrs =
-                ((DirContext)ctx).getAttributes(dnsUrl, SRV_RR_ATTR);
+
+            Attributes attrs = null;
+            try {
+                // both connect and accept are needed since DNS is thru UDP
+                attrs = SharedSecrets.getJavaSecurityAccess().doPrivileged
+                    (new PrivilegedExceptionAction<Attributes>() {
+                            public Attributes run() throws Exception {
+                                return ((DirContext)ctx).getAttributes(dnsUrl, SRV_RR_ATTR);
+                            }
+                        }, null,
+                        new java.net.SocketPermission("*", "connect,accept"));
+            } catch (PrivilegedActionException e) {
+                throw (NamingException)e.getCause();
+            }
+
             Attribute attr;
 
             if (attrs != null && ((attr = attrs.get(SRV_RR)) != null)) {

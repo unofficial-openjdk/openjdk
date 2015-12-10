@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 /*
  * @test
- * @bug 6856069
- * @summary PrincipalName.clone() does not invoke super.clone()
+ * @bug 8028780
+ * @summary JDK KRB5 module throws OutOfMemoryError when CCache is corrupt
+ * @run main/othervm -Xmx8m CorruptedCC
  */
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import sun.security.krb5.internal.ccache.CredentialsCache;
 
-import sun.security.krb5.ServiceName;
-
-public class ServiceNameClone {
+public class CorruptedCC {
     public static void main(String[] args) throws Exception {
-        ServiceName sn = new ServiceName("me@HERE");
-        if (sn.clone().getClass() != ServiceName.class) {
-            throw new Exception("ServiceName's clone is not a ServiceName");
-        }
-        if (!sn.clone().equals(sn)) {
-            throw new Exception("ServiceName's clone changed");
+        for (int i=0; i<TimeInCCache.ccache.length; i++) {
+            byte old = TimeInCCache.ccache[i];
+            TimeInCCache.ccache[i] = 0x7f;
+            Files.write(Paths.get("tmpcc"), TimeInCCache.ccache);
+            // The next line will return null for I/O issues. That's OK.
+            CredentialsCache.getInstance("tmpcc");
+            TimeInCCache.ccache[i] = old;
         }
     }
 }
