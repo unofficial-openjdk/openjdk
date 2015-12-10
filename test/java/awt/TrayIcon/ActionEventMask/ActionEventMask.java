@@ -33,8 +33,9 @@ import java.awt.image.BufferedImage;
  *          triggered when multiple AWTEventListeners and ActionListeners
  *          are added.
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
+ * @library /java/awt/patchlib
  * @library ../../../../lib/testlibrary ../
- * @compile/module=java.desktop java/awt/Helper.java
+ * @build java.desktop/java.awt.Helper
  * @build ExtendedRobot SystemTrayIconHelper
  * @run main ActionEventMask
  */
