@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  */
-
 /*
- * Copyright 2005 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -362,7 +362,7 @@ protected static final String PARSER_SETTINGS =
     // entities
     
     /** Entities. */
-    protected Hashtable fEntities = new Hashtable();
+    protected Map<String, Entity> fEntities = new HashMap<String, Entity>();
     
     /** Entity stack. */
     protected Stack fEntityStack = new Stack();
@@ -375,7 +375,7 @@ protected static final String PARSER_SETTINGS =
     /** Shared declared entities.
      * XXX understand it more deeply, why are we doing this ?? Is it really required ?
      */
-    protected Hashtable fDeclaredEntities;
+    protected Map<String, Entity> fDeclaredEntities;
     
     protected XMLEntityStorage fEntityStorage ;
     
@@ -401,6 +401,8 @@ protected static final String PARSER_SETTINGS =
      * If this constructor is used to create the object, reset() should be invoked on this object
      */
     public XMLEntityManager() {
+        //for entity managers not created by parsers
+        fSecurityManager = new XMLSecurityManager(true);
         fEntityStorage = new XMLEntityStorage(this) ;
         setScannerVersion(Constants.XML_VERSION_1_0);
     } // <init>()
@@ -596,6 +598,8 @@ protected static final String PARSER_SETTINGS =
     /**
      * This method uses the passed-in XMLInputSource to make
      * fCurrentEntity usable for reading.
+     *
+     * @param reference flag to indicate whether the entity is an Entity Reference.
      * @param name  name of the entity (XML is it's the document entity)
      * @param xmlInputSource    the input source, with sufficient information
      *      to begin scanning characters.
@@ -606,7 +610,7 @@ protected static final String PARSER_SETTINGS =
      *  XNIException    If any parser-specific goes wrong.
      * @return the encoding of the new entity or null if a character stream was employed
      */
-    public String setupCurrentEntity(String name, XMLInputSource xmlInputSource,
+    public String setupCurrentEntity(boolean reference, String name, XMLInputSource xmlInputSource,
             boolean literal, boolean isExternal)
             throws IOException, XNIException {
         // get information
@@ -849,7 +853,9 @@ protected static final String PARSER_SETTINGS =
          * in the prolog of the XML document is not considered. Hence, prolog can
          * be read in Chunks of data instead of byte by byte.  
          */
-        fCurrentEntity = new com.sun.xml.internal.stream.Entity.ScannedEntity(name,new XMLResourceIdentifierImpl(publicId, literalSystemId, baseSystemId, expandedSystemId),stream, reader, encoding, literal, encodingExternallySpecified, isExternal);        
+        fCurrentEntity = new Entity.ScannedEntity(reference, name,
+                new XMLResourceIdentifierImpl(publicId, literalSystemId, baseSystemId, expandedSystemId),
+                stream, reader, encoding, literal, encodingExternallySpecified, isExternal);
         fCurrentEntity.setEncodingExternallySpecified(encodingExternallySpecified);
         fEntityScanner.setCurrentEntity(fCurrentEntity);
         fResourceIdentifier.setValues(publicId, literalSystemId, baseSystemId, expandedSystemId);
@@ -869,7 +875,7 @@ protected static final String PARSER_SETTINGS =
      */               
     public boolean isExternalEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -886,7 +892,7 @@ protected static final String PARSER_SETTINGS =
      */
     public boolean isEntityDeclInExternalSubset(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -916,13 +922,13 @@ protected static final String PARSER_SETTINGS =
     
     public boolean isDeclaredEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         return entity != null;
     }
     
     public boolean isUnparsedEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -1110,6 +1116,7 @@ protected static final String PARSER_SETTINGS =
     /**
      * Starts a named entity.
      *
+     * @param reference flag to indicate whether the entity is an Entity Reference.
      * @param entityName The name of the entity to start.
      * @param literal    True if this entity is started within a literal
      *                   value.
@@ -1117,11 +1124,11 @@ protected static final String PARSER_SETTINGS =
      * @throws IOException  Thrown on i/o error.
      * @throws XNIException Thrown by entity handler to signal an error.
      */
-    public void startEntity(String entityName, boolean literal)
+    public void startEntity(boolean reference, String entityName, boolean literal)
     throws IOException, XNIException {
         
         // was entity declared?
-        Entity entity = (Entity)fEntityStorage.getDeclaredEntities().get(entityName);
+        Entity entity = fEntityStorage.getDeclaredEntities().get(entityName);
         if (entity == null) {
             if (fEntityHandler != null) {
                 String encoding = null;
@@ -1236,7 +1243,7 @@ protected static final String PARSER_SETTINGS =
         }
         
         // start the entity
-        startEntity(entityName, xmlInputSource, literal, external);
+        startEntity(reference, entityName, xmlInputSource, literal, external);
         
     } // startEntity(String,boolean)
     
@@ -1251,7 +1258,7 @@ protected static final String PARSER_SETTINGS =
      */
     public void startDocumentEntity(XMLInputSource xmlInputSource)
     throws IOException, XNIException {
-        startEntity(XMLEntity, xmlInputSource, false, true);
+        startEntity(false, XMLEntity, xmlInputSource, false, true);
     } // startDocumentEntity(XMLInputSource)
     
     //xxx these methods are not required.
@@ -1266,7 +1273,7 @@ protected static final String PARSER_SETTINGS =
      */
     public void startDTDEntity(XMLInputSource xmlInputSource)
     throws IOException, XNIException {
-        startEntity(DTDEntity, xmlInputSource, false, true);
+        startEntity(false, DTDEntity, xmlInputSource, false, true);
     } // startDTDEntity(XMLInputSource)
     
     // indicate start of external subset so that
@@ -1285,6 +1292,7 @@ protected static final String PARSER_SETTINGS =
      * This method can be used to insert an application defined XML
      * entity stream into the parsing stream.
      *
+     * @param reference flag to indicate whether the entity is an Entity Reference.
      * @param name           The name of the entity.
      * @param xmlInputSource The input source of the entity.
      * @param literal        True if this entity is started within a
@@ -1294,12 +1302,12 @@ protected static final String PARSER_SETTINGS =
      * @throws IOException  Thrown on i/o error.
      * @throws XNIException Thrown by entity handler to signal an error.
      */
-    public void startEntity(String name,
+    public void startEntity(boolean reference, String name,
             XMLInputSource xmlInputSource,
             boolean literal, boolean isExternal)
             throws IOException, XNIException {
        
-        String encoding = setupCurrentEntity(name, xmlInputSource, literal, isExternal);
+        String encoding = setupCurrentEntity(reference, name, xmlInputSource, literal, isExternal);
         
         //when entity expansion limit is set by the Application, we need to
         //check for the entity expansion limit set by the parser, if number of entity
@@ -1311,7 +1319,7 @@ protected static final String PARSER_SETTINGS =
         }
         if( fSecurityManager != null && fSecurityManager.isOverLimit(entityExpansionIndex, fLimitAnalyzer)){
             fSecurityManager.debugPrint(fLimitAnalyzer);
-            fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,"EntityExpansionLimitExceeded",
+            fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,"EntityExpansionLimit",
                     new Object[]{fSecurityManager.getLimitValueByIndex(entityExpansionIndex)},
                                              XMLErrorReporter.SEVERITY_FATAL_ERROR );
             // is there anything better to do than reset the counter?
@@ -1430,10 +1438,6 @@ protected static final String PARSER_SETTINGS =
     // XMLComponent methods
     //
     public void reset(PropertyManager propertyManager){
-        //reset fEntityStorage
-        fEntityStorage.reset(propertyManager);
-        //reset XMLEntityReaderImpl
-        fEntityScanner.reset(propertyManager);
         // xerces properties
         fSymbolTable = (SymbolTable)propertyManager.getProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY);
         fErrorReporter = (XMLErrorReporter)propertyManager.getProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY);
@@ -1448,6 +1452,12 @@ protected static final String PARSER_SETTINGS =
         fSupportExternalEntities = ((Boolean)propertyManager.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)).booleanValue();
 
         fSecurityManager = (XMLSecurityManager)propertyManager.getProperty(SECURITY_MANAGER);
+
+        fLimitAnalyzer = new XMLLimitAnalyzer();
+        //reset fEntityStorage
+        fEntityStorage.reset(propertyManager);
+        //reset XMLEntityReaderImpl
+        fEntityScanner.reset(propertyManager);
 
         // initialize state
         //fStandalone = false;
@@ -1579,7 +1589,7 @@ protected static final String PARSER_SETTINGS =
     // a class acting as a component manager but not
     // implementing that interface for whatever reason.
     public void reset() {
-                
+        fLimitAnalyzer = new XMLLimitAnalyzer();
         // initialize state
         fStandalone = false;
         fEntities.clear();
@@ -1619,11 +1629,8 @@ protected static final String PARSER_SETTINGS =
 
         // copy declared entities
         if (fDeclaredEntities != null) {
-            java.util.Enumeration keys = fDeclaredEntities.keys();
-            while (keys.hasMoreElements()) {
-                Object key = keys.nextElement();
-                Object value = fDeclaredEntities.get(key);
-                fEntities.put(key, value);
+            for (Map.Entry<String, Entity> entry : fDeclaredEntities.entrySet()) {
+                fEntities.put(entry.getKey(), entry.getValue());
             }
         }
         fEntityHandler = null;

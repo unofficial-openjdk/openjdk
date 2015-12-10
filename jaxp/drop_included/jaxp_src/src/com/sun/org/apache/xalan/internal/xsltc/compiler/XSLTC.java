@@ -1,13 +1,13 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2001-2004 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -32,7 +32,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -85,14 +85,14 @@ public final class XSLTC {
     // Name index tables
     private int       _nextGType;  // Next available element type
     private Vector    _namesIndex; // Index of all registered QNames
-    private Hashtable _elements;   // Hashtable of all registered elements
-    private Hashtable _attributes; // Hashtable of all registered attributes
+    private Map<String, Integer> _elements;   // Map of all registered elements
+    private Map<String, Integer> _attributes; // Map of all registered attributes
 
     // Namespace index tables
     private int       _nextNSType; // Next available namespace type
     private Vector    _namespaceIndex; // Index of all registered namespaces
-    private Hashtable _namespaces; // Hashtable of all registered namespaces
-    private Hashtable _namespacePrefixes;// Hashtable of all registered namespace prefixes
+    private Map<String, Integer> _namespaces; // Map of all registered namespaces
+    private Map<String, Integer> _namespacePrefixes;// Map of all registered namespace prefixes
 
 
     // All literal text in the stylesheet
@@ -211,13 +211,13 @@ public final class XSLTC {
      */
     private void reset() {
         _nextGType      = DTM.NTYPES;
-        _elements       = new Hashtable();
-        _attributes     = new Hashtable();
-        _namespaces     = new Hashtable();
+        _elements       = new HashMap<String, Integer>();
+        _attributes     = new HashMap<String, Integer>();
+        _namespaces     = new HashMap<String, Integer>();
         _namespaces.put("",new Integer(_nextNSType));
         _namesIndex     = new Vector(128);
         _namespaceIndex = new Vector(32);
-        _namespacePrefixes = new Hashtable();
+        _namespacePrefixes = new HashMap<String, Integer>();
         _stylesheet     = null;
         _parser.init();
         //_variableSerial     = 1;
@@ -650,9 +650,9 @@ public final class XSLTC {
      * DOM attribute types at run-time.
      */
     public int registerAttribute(QName name) {
-        Integer code = (Integer)_attributes.get(name.toString());
+        Integer code = _attributes.get(name.toString());
         if (code == null) {
-            code = new Integer(_nextGType++);
+            code = _nextGType++;
             _attributes.put(name.toString(), code);
             final String uri = name.getNamespace();
             final String local = "@"+name.getLocalPart();
@@ -673,9 +673,9 @@ public final class XSLTC {
      */
     public int registerElement(QName name) {
         // Register element (full QName)
-        Integer code = (Integer)_elements.get(name.toString());
+        Integer code = _elements.get(name.toString());
         if (code == null) {
-            _elements.put(name.toString(), code = new Integer(_nextGType++));
+            _elements.put(name.toString(), code = _nextGType++);
             _namesIndex.addElement(name.toString());
         }
         if (name.getLocalPart().equals("*")) {
@@ -691,9 +691,9 @@ public final class XSLTC {
 
     public int registerNamespacePrefix(QName name) {
 
-    Integer code = (Integer)_namespacePrefixes.get(name.toString());
+    Integer code = _namespacePrefixes.get(name.toString());
     if (code == null) {
-        code = new Integer(_nextGType++);
+        code = _nextGType++;
         _namespacePrefixes.put(name.toString(), code);
         final String uri = name.getNamespace();
         if ((uri != null) && (!uri.equals(""))){
@@ -711,9 +711,9 @@ public final class XSLTC {
      * DOM namespace types at run-time.
      */
     public int registerNamespace(String namespaceURI) {
-        Integer code = (Integer)_namespaces.get(namespaceURI);
+        Integer code = _namespaces.get(namespaceURI);
         if (code == null) {
-            code = new Integer(_nextNSType++);
+            code = _nextNSType++;
             _namespaces.put(namespaceURI,code);
             _namespaceIndex.addElement(namespaceURI);
         }
