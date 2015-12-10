@@ -36,6 +36,7 @@ import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import static jdk.nashorn.internal.runtime.Source.sourceFor;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
@@ -490,7 +491,7 @@ public final class Context {
     private static final ConcurrentMap<String, Class<?>> structureClasses = new ConcurrentHashMap<>();
 
     /*package-private*/ @SuppressWarnings("static-method")
-    ClassLoader getSharedLoader() {
+    StructureLoader getSharedLoader() {
         return sharedLoader;
     }
 
@@ -842,8 +843,8 @@ public final class Context {
                         @Override
                         public Source run() {
                             try {
-                                final URL resURL = Context.class.getResource(resource);
-                                return resURL != null ? sourceFor(srcStr, resURL) : null;
+                                final InputStream resStream = Context.class.getResourceAsStream(resource);
+                                return resStream != null ? sourceFor(srcStr, Source.readFully(resStream)) : null;
                             } catch (final IOException exp) {
                                 return null;
                             }
@@ -1300,7 +1301,16 @@ public final class Context {
      * @return context
      */
     static Context fromClass(final Class<?> clazz) {
-        final ClassLoader loader = clazz.getClassLoader();
+        ClassLoader loader = null;
+        try {
+            loader = clazz.getClassLoader();
+        } catch (SecurityException ignored) {
+            // This could fail because of anonymous classes being used.
+            // Accessing loader of anonymous class fails (for extension
+            // loader class too?). In any case, for us fetching Context
+            // from class loader is just an optimization. We can always
+            // get Context from thread local storage (below).
+        }
 
         if (loader instanceof ScriptLoader) {
             return ((ScriptLoader)loader).getContext();
