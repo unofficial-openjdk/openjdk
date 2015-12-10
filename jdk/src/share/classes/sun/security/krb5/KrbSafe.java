@@ -89,8 +89,7 @@ class KrbSafe extends KrbAppMessage {
                            raddr,
                            timestampRequired,
                            seqNumberRequired,
-                           creds.client,
-                           creds.client.getRealm()
+                           creds.client
                            );
     }
 
@@ -153,8 +152,7 @@ class KrbSafe extends KrbAppMessage {
                            HostAddress rAddress,
                            boolean timestampRequired,
                            boolean seqNumberRequired,
-                           PrincipalName cname,
-                           Realm crealm
+                           PrincipalName cname
                            ) throws Asn1Exception, KdcErrException,
                            KrbApErrException, IOException, KrbCryptoException {
 
@@ -176,8 +174,7 @@ class KrbSafe extends KrbAppMessage {
                                      rAddress,
                                      timestampRequired,
                                      seqNumberRequired,
-                                     cname,
-                                     crealm
+                                     cname
                                      );
 
                                return krb_safe.safeBody.userData;

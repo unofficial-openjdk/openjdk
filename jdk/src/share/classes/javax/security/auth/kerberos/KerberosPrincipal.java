@@ -26,7 +26,6 @@
 package javax.security.auth.kerberos;
 
 import java.io.*;
-import sun.security.krb5.Asn1Exception;
 import sun.security.krb5.KrbException;
 import sun.security.krb5.PrincipalName;
 import sun.security.krb5.Realm;
@@ -81,14 +80,12 @@ public final class KerberosPrincipal
 
     public static final int KRB_NT_UID = 5;
 
-
     private transient String fullName;
 
     private transient String realm;
 
     private transient int nameType;
 
-    private static final char NAME_REALM_SEPARATOR = '@';
 
     /**
      * Constructs a KerberosPrincipal from the provided string input. The
@@ -115,18 +112,7 @@ public final class KerberosPrincipal
      * java.security.krb5.realm system property.
      */
     public KerberosPrincipal(String name) {
-
-        PrincipalName krb5Principal = null;
-
-        try {
-            // Appends the default realm if it is missing
-            krb5Principal = new PrincipalName(name, KRB_NT_PRINCIPAL);
-        } catch (KrbException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-        nameType = KRB_NT_PRINCIPAL;  // default name type
-        fullName = krb5Principal.toString();
-        realm = krb5Principal.getRealmString();
+        this(name, KRB_NT_PRINCIPAL);
     }
 
     /**
@@ -168,6 +154,20 @@ public final class KerberosPrincipal
             throw new IllegalArgumentException(e.getMessage());
         }
 
+        // A ServicePermission with a principal in the deduced realm and
+        // any action must be granted if no realm is provided by caller.
+        if (krb5Principal.isRealmDeduced() && !Realm.AUTODEDUCEREALM) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                try {
+                    sm.checkPermission(new ServicePermission(
+                            "@" + krb5Principal.getRealmAsString(), "-"));
+                } catch (SecurityException se) {
+                    // Swallow the actual exception to hide info
+                    throw new SecurityException("Cannot read realm info");
+                }
+            }
+        }
         this.nameType = nameType;
         fullName = krb5Principal.toString();
         realm = krb5Principal.getRealmString();
@@ -233,41 +233,35 @@ public final class KerberosPrincipal
      *          realm in their DER-encoded form as specified in Section 5.2.2 of
      *          <a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>.
      */
-
     private void writeObject(ObjectOutputStream oos)
-        throws IOException {
+            throws IOException {
 
-        PrincipalName krb5Principal = null;
+        PrincipalName krb5Principal;
         try {
-            krb5Principal  = new PrincipalName(fullName,nameType);
+            krb5Principal  = new PrincipalName(fullName, nameType);
             oos.writeObject(krb5Principal.asn1Encode());
             oos.writeObject(krb5Principal.getRealm().asn1Encode());
         } catch (Exception e) {
-            IOException ioe = new IOException(e.getMessage());
-            ioe.initCause(e);
-            throw ioe;
+            throw new IOException(e);
         }
     }
 
     /**
      * Reads this object from a stream (i.e., deserializes it)
      */
-
     private void readObject(ObjectInputStream ois)
-         throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
         byte[] asn1EncPrincipal = (byte [])ois.readObject();
         byte[] encRealm = (byte [])ois.readObject();
         try {
-           PrincipalName krb5Principal = new PrincipalName(new
-                                                DerValue(asn1EncPrincipal));
-           realm = (new Realm(new DerValue(encRealm))).toString();
-           fullName = krb5Principal.toString() + NAME_REALM_SEPARATOR +
-                         realm.toString();
+           Realm realmObject = new Realm(new DerValue(encRealm));
+           PrincipalName krb5Principal = new PrincipalName(
+                   new DerValue(asn1EncPrincipal), realmObject);
+           realm = realmObject.toString();
+           fullName = krb5Principal.toString();
            nameType = krb5Principal.getNameType();
         } catch (Exception e) {
-            IOException ioe = new IOException(e.getMessage());
-            ioe.initCause(e);
-            throw ioe;
+            throw new IOException(e);
         }
     }
 
@@ -288,9 +282,7 @@ public final class KerberosPrincipal
      * <a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>.
      *
      * @return the name type.
-     *
      */
-
     public int getNameType() {
         return nameType;
     }

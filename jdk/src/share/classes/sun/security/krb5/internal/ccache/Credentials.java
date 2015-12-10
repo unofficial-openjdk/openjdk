@@ -35,9 +35,7 @@ import sun.security.krb5.internal.*;
 public class Credentials {
 
     PrincipalName cname;
-    Realm crealm;
     PrincipalName sname;
-    Realm srealm;
     EncryptionKey key;
     KerberosTime authtime;
     KerberosTime starttime;//optional
@@ -66,21 +64,17 @@ public class Credentials {
             Ticket new_ticket,
             Ticket new_secondTicket) {
         cname = (PrincipalName) new_cname.clone();
-        if (new_cname.getRealm() != null) {
-            crealm = (Realm) new_cname.getRealm().clone();
-        }
-
         sname = (PrincipalName) new_sname.clone();
-        if (new_sname.getRealm() != null) {
-            srealm = (Realm) new_sname.getRealm().clone();
-        }
-
         key = (EncryptionKey) new_key.clone();
 
         authtime = (KerberosTime) new_authtime.clone();
-        starttime = (KerberosTime) new_starttime.clone();
+        if (new_starttime != null) {
+            starttime = (KerberosTime) new_starttime.clone();
+        }
         endtime = (KerberosTime) new_endtime.clone();
-        renewTill = (KerberosTime) new_renewTill.clone();
+        if (new_renewTill != null) {
+            renewTill = (KerberosTime) new_renewTill.clone();
+        }
         if (new_caddr != null) {
             caddr = (HostAddresses) new_caddr.clone();
         }
@@ -105,16 +99,18 @@ public class Credentials {
         {
             return;
         }
-        crealm = (Realm) kdcRep.crealm.clone();
         cname = (PrincipalName) kdcRep.cname.clone();
         ticket = (Ticket) kdcRep.ticket.clone();
         key = (EncryptionKey) kdcRep.encKDCRepPart.key.clone();
         flags = (TicketFlags) kdcRep.encKDCRepPart.flags.clone();
         authtime = (KerberosTime) kdcRep.encKDCRepPart.authtime.clone();
-        starttime = (KerberosTime) kdcRep.encKDCRepPart.starttime.clone();
+        if (kdcRep.encKDCRepPart.starttime != null) {
+            starttime = (KerberosTime) kdcRep.encKDCRepPart.starttime.clone();
+        }
         endtime = (KerberosTime) kdcRep.encKDCRepPart.endtime.clone();
-        renewTill = (KerberosTime) kdcRep.encKDCRepPart.renewTill.clone();
-        srealm = (Realm) kdcRep.encKDCRepPart.srealm.clone();
+        if (kdcRep.encKDCRepPart.renewTill != null) {
+            renewTill = (KerberosTime) kdcRep.encKDCRepPart.renewTill.clone();
+        }
         sname = (PrincipalName) kdcRep.encKDCRepPart.sname.clone();
         caddr = (HostAddresses) kdcRep.encKDCRepPart.caddr.clone();
         secondTicket = (Ticket) new_secondTicket.clone();
@@ -129,17 +125,7 @@ public class Credentials {
 
     public Credentials(KDCRep kdcRep, Ticket new_ticket) {
         sname = (PrincipalName) kdcRep.encKDCRepPart.sname.clone();
-        srealm = (Realm) kdcRep.encKDCRepPart.srealm.clone();
-        try {
-            sname.setRealm(srealm);
-        } catch (RealmException e) {
-        }
         cname = (PrincipalName) kdcRep.cname.clone();
-        crealm = (Realm) kdcRep.crealm.clone();
-        try {
-            cname.setRealm(crealm);
-        } catch (RealmException e) {
-        }
         key = (EncryptionKey) kdcRep.encKDCRepPart.key.clone();
         authtime = (KerberosTime) kdcRep.encKDCRepPart.authtime.clone();
         if (kdcRep.encKDCRepPart.starttime != null) {
@@ -180,17 +166,19 @@ public class Credentials {
         boolean valid = true;
         if (endtime.getTime() < System.currentTimeMillis()) {
             valid = false;
-        } else if ((starttime.getTime() > System.currentTimeMillis())
-                || ((starttime == null) && (authtime.getTime() > System.currentTimeMillis()))) {
-            valid = false;
+        } else if (starttime != null) {
+            if (starttime.getTime() > System.currentTimeMillis()) {
+                valid = false;
+            }
+        } else {
+            if (authtime.getTime() > System.currentTimeMillis()) {
+                valid = false;
+            }
         }
         return valid;
     }
 
     public PrincipalName getServicePrincipal() throws RealmException {
-        if (sname.getRealm() == null) {
-            sname.setRealm(srealm);
-        }
         return sname;
     }
 

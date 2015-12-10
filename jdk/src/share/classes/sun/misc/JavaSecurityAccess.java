@@ -26,7 +26,10 @@
 package sun.misc;
 
 import java.security.AccessControlContext;
+import java.security.Permission;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 public interface JavaSecurityAccess {
 
@@ -36,5 +39,14 @@ public interface JavaSecurityAccess {
 
     <T> T doIntersectionPrivilege(PrivilegedAction<T> action,
                                   AccessControlContext context);
+
+    <T> T doPrivileged(PrivilegedAction<T> action,
+                       AccessControlContext context,
+                       Permission... perms);
+
+    <T> T doPrivileged(PrivilegedExceptionAction<T> action,
+                       AccessControlContext context,
+                       Permission... perms)
+        throws PrivilegedActionException;
 
 }

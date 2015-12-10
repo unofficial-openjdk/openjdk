@@ -147,7 +147,7 @@ final class KerberosClientKeyExchange extends HandshakeMessage {
 
             EncryptedData encPart = t.encPart;
             PrincipalName ticketSname = t.sname;
-            Realm ticketRealm = t.realm;
+            Realm ticketRealm = t.sname.getRealm();
 
             String serverPrincipal = serverKeys[0].getPrincipal().getName();
 
@@ -159,8 +159,7 @@ final class KerberosClientKeyExchange extends HandshakeMessage {
              */
 
             // Check that ticket Sname matches serverPrincipal
-            String ticketPrinc = ticketSname.toString().concat("@" +
-                                        ticketRealm.toString());
+            String ticketPrinc = ticketSname.toString();
             if (!ticketPrinc.equals(serverPrincipal)) {
                 if (debug != null && Debug.isOn("handshake"))
                    System.out.println("Service principal in Ticket does not"
@@ -189,7 +188,7 @@ final class KerberosClientKeyExchange extends HandshakeMessage {
             byte[] bytes = encPart.decrypt(secretKey, KeyUsage.KU_TICKET);
 
             // Reset data stream after decryption, remove redundant bytes
-            byte[] temp = encPart.reset(bytes, true);
+            byte[] temp = encPart.reset(bytes);
             EncTicketPart encTicketPart = new EncTicketPart(temp);
 
             // Record the Kerberos Principals
@@ -201,7 +200,6 @@ final class KerberosClientKeyExchange extends HandshakeMessage {
 
             if (debug != null && Debug.isOn("handshake")) {
                 System.out.println("server principal: " + serverPrincipal);
-                System.out.println("realm: " + encTicketPart.crealm.toString());
                 System.out.println("cname: " + encTicketPart.cname.toString());
             }
         } catch (IOException e) {

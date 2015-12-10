@@ -32,16 +32,9 @@ package sun.security.krb5;
 
 import sun.security.krb5.internal.*;
 import sun.security.krb5.internal.ccache.CredentialsCache;
-import java.util.StringTokenizer;
-import sun.security.krb5.internal.ktab.*;
 import sun.security.krb5.internal.crypto.EType;
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
-import java.util.Vector;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
 /**
@@ -62,6 +55,7 @@ public class Credentials {
     KerberosTime renewTill;
     HostAddresses cAddr;
     EncryptionKey serviceKey;
+    AuthorizationData authzData;
     private static boolean DEBUG = Krb5.DEBUG;
     private static CredentialsCache cache;
     static boolean alreadyLoaded = false;
@@ -69,6 +63,22 @@ public class Credentials {
 
     // Read native ticket with session key type in the given list
     private static native Credentials acquireDefaultNativeCreds(int[] eTypes);
+
+    public Credentials(Ticket new_ticket,
+                       PrincipalName new_client,
+                       PrincipalName new_server,
+                       EncryptionKey new_key,
+                       TicketFlags new_flags,
+                       KerberosTime authTime,
+                       KerberosTime new_startTime,
+                       KerberosTime new_endTime,
+                       KerberosTime renewTill,
+                       HostAddresses cAddr,
+                       AuthorizationData authzData) {
+        this(new_ticket, new_client, new_server, new_key, new_flags,
+                authTime, new_startTime, new_endTime, renewTill, cAddr);
+        this.authzData = authzData;
+    }
 
     public Credentials(Ticket new_ticket,
                        PrincipalName new_client,
@@ -214,13 +224,28 @@ public class Credentials {
         return flags;
     }
 
+    public AuthorizationData getAuthzData() {
+        return authzData;
+    }
     /**
      * Checks if the service ticket returned by the KDC has the OK-AS-DELEGATE
      * flag set
      * @return true if OK-AS_DELEGATE flag is set, otherwise, return false.
      */
     public boolean checkDelegate() {
-        return (flags.get(Krb5.TKT_OPTS_DELEGATE));
+        return flags.get(Krb5.TKT_OPTS_DELEGATE);
+    }
+
+    /**
+     * Reset TKT_OPTS_DELEGATE to false, called at credentials acquirement
+     * when one of the cross-realm TGTs does not have the OK-AS-DELEGATE
+     * flag set. This info must be preservable and restorable through
+     * the Krb5Util.credsToTicket/ticketToCreds() methods so that even if
+     * the service ticket is cached it still remembers the cross-realm
+     * authentication result.
+     */
+    public void resetDelegate() {
+        flags.set(Krb5.TKT_OPTS_DELEGATE, false);
     }
 
     public Credentials renew() throws KrbException, IOException {
@@ -304,11 +329,16 @@ public class Credentials {
         CredentialsCache ccache =
             CredentialsCache.getInstance(princ, ticketCache);
 
-        if (ccache == null)
+        if (ccache == null) {
             return null;
+        }
 
         sun.security.krb5.internal.ccache.Credentials tgtCred  =
             ccache.getDefaultCreds();
+
+        if (tgtCred == null) {
+            return null;
+        }
 
         if (EType.isSupported(tgtCred.getEType())) {
             return tgtCred.setKrbCreds();
@@ -320,94 +350,6 @@ public class Credentials {
             }
             return null;
         }
-    }
-
-    /**
-     * Returns a TGT for the given client principal via an AS-Exchange.
-     * This method causes pre-authentication data to be sent in the
-     * AS-REQ.
-     *
-     * @param princ the client principal. This value cannot be null.
-     * @param secretKey the secret key of the client principal.This value
-     * cannot be null.
-     * @returns the TGT credentials
-     */
-    public static Credentials acquireTGT(PrincipalName princ,
-                                         EncryptionKey[] secretKeys,
-                                         char[] password)
-        throws KrbException, IOException {
-
-        if (princ == null)
-            throw new IllegalArgumentException(
-                        "Cannot have null principal to do AS-Exchange");
-
-        if (secretKeys == null)
-            throw new IllegalArgumentException(
-                        "Cannot have null secretKey to do AS-Exchange");
-
-        KrbAsRep asRep = null;
-        try {
-            asRep = sendASRequest(princ, secretKeys, null);
-        } catch (KrbException ke) {
-            if ((ke.returnCode() == Krb5.KDC_ERR_PREAUTH_FAILED) ||
-                (ke.returnCode() == Krb5.KDC_ERR_PREAUTH_REQUIRED)) {
-                // process pre-auth info
-                if (DEBUG) {
-                    System.out.println("AcquireTGT: PREAUTH FAILED/REQUIRED," +
-                                " re-send AS-REQ");
-                }
-
-                KRBError error = ke.getError();
-                // update salt in PrincipalName
-                byte[] newSalt = error.getSalt();
-                if (newSalt != null && newSalt.length > 0) {
-                    princ.setSalt(new String(newSalt));
-                }
-
-                // refresh keys
-                if (password != null) {
-                    secretKeys = EncryptionKey.acquireSecretKeys(password,
-                                princ.getSalt(), true,
-                                error.getEType(), error.getParams());
-                }
-                asRep = sendASRequest(princ, secretKeys, ke.getError());
-            } else {
-                throw ke;
-            }
-        }
-        return asRep.getCreds();
-    }
-
-    /**
-     * Sends the AS-REQ
-     */
-    private static KrbAsRep sendASRequest(PrincipalName princ,
-        EncryptionKey[] secretKeys, KRBError error)
-        throws KrbException, IOException {
-
-        // %%%
-        KrbAsReq asReq = null;
-        if (error == null) {
-            asReq = new KrbAsReq(princ, secretKeys);
-        } else {
-            asReq = new KrbAsReq(princ, secretKeys, true,
-                        error.getEType(), error.getSalt(), error.getParams());
-        }
-
-        String kdc = null;
-        KrbAsRep asRep  = null;
-        try {
-            kdc = asReq.send();
-            asRep =  asReq.getReply(secretKeys);
-        } catch (KrbException ke) {
-                if (ke.returnCode() == Krb5.KRB_ERR_RESPONSE_TOO_BIG) {
-                    asReq.send(princ.getRealmString(), kdc, true);
-                    asRep =  asReq.getReply(secretKeys);
-                } else {
-                    throw ke;
-                }
-        }
-        return asRep;
     }
 
     /**
@@ -439,19 +381,21 @@ public class Credentials {
             cache = CredentialsCache.getInstance();
         }
         if (cache != null) {
-            if (DEBUG) {
-                System.out.println(">>> KrbCreds found the default ticket " +
-                                   "granting ticket in credential cache.");
-            }
             sun.security.krb5.internal.ccache.Credentials temp =
                 cache.getDefaultCreds();
-            if (EType.isSupported(temp.getEType())) {
-                result = temp.setKrbCreds();
-            } else {
+            if (temp != null) {
                 if (DEBUG) {
-                    System.out.println(
-                        ">>> unsupported key type found the default TGT: " +
-                        temp.getEType());
+                    System.out.println(">>> KrbCreds found the default ticket"
+                            + " granting ticket in credential cache.");
+                }
+                if (EType.isSupported(temp.getEType())) {
+                    result = temp.setKrbCreds();
+                } else {
+                    if (DEBUG) {
+                        System.out.println(
+                            ">>> unsupported key type found the default TGT: " +
+                            temp.getEType());
+                    }
                 }
             }
         }
@@ -476,65 +420,14 @@ public class Credentials {
                 if (DEBUG) {
                     System.out.println(">> Acquire default native Credentials");
                 }
-                result = acquireDefaultNativeCreds(
-                        EType.getDefaults("default_tkt_enctypes"));
-            }
-        }
-        return result;
-    }
-
-
-    /**
-     * Gets service credential from key table. The credential is used to
-     * decrypt the received client message
-     * and authenticate the client by verifying the client's credential.
-     *
-     * @param serviceName the name of service, using format component@realm
-     * @param keyTabFile the file of key table.
-     * @return a <code>KrbCreds</code> object.
-     */
-    public static Credentials getServiceCreds(String serviceName,
-                                              File keyTabFile) {
-        EncryptionKey k = null;
-        PrincipalName service = null;
-        Credentials result = null;
-        try {
-            service = new PrincipalName(serviceName);
-            if (service.getRealm() == null) {
-                String realm = Config.getInstance().getDefaultRealm();
-                if (realm == null) {
-                    return null;
-                } else {
-                    service.setRealm(realm);
+                int[] etypes = EType.getDefaults("default_tkt_enctypes");
+                if (etypes != null) {
+                    result = acquireDefaultNativeCreds(etypes);
                 }
             }
-        } catch (RealmException e) {
-            if (DEBUG) {
-                e.printStackTrace();
-            }
-            return null;
-        } catch (KrbException e) {
-            if (DEBUG) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-        KeyTab kt;
-        if (keyTabFile == null) {
-            kt = KeyTab.getInstance();
-        } else {
-            kt = KeyTab.getInstance(keyTabFile);
-        }
-        if ((kt != null) && (kt.findServiceEntry(service))) {
-            k = kt.readServiceKey(service);
-            result = new Credentials(null, service, null, null, null,
-                                     null, null, null, null, null);
-            result.serviceKey = k;
         }
         return result;
     }
-
-
 
     /**
      * Acquires credentials for a specified service using initial credential.
@@ -560,29 +453,6 @@ public class Credentials {
         return CredentialsUtil.acquireServiceCreds(service, ccreds);
     }
 
-
-    /*
-     * This method does the real job to request the service credential.
-     */
-
-    private static Credentials serviceCreds(ServiceName service,
-                                            Credentials ccreds)
-        throws KrbException, IOException {
-        return new KrbTgsReq(
-                new KDCOptions(),
-                ccreds,
-                service,
-                null, // KerberosTime from
-                null, // KerberosTime till
-                null, // KerberosTime rtime
-                null, // int[] eTypes
-                null, // HostAddresses addresses
-                null, // AuthorizationData
-                null, // Ticket[] additionalTickets
-                null  // EncryptionKey subSessionKey
-                ).sendAndGetCreds();
-    }
-
     public CredentialsCache getCache() {
         return cache;
     }
@@ -598,8 +468,7 @@ public class Credentials {
         System.out.println(">>> DEBUG: ----Credentials----");
         System.out.println("\tclient: " + c.client.toString());
         System.out.println("\tserver: " + c.server.toString());
-        System.out.println("\tticket: realm: " + c.ticket.realm.toString());
-        System.out.println("\t        sname: " + c.ticket.sname.toString());
+        System.out.println("\tticket: sname: " + c.ticket.sname.toString());
         if (c.startTime != null) {
             System.out.println("\tstartTime: " + c.startTime.getTime());
         }

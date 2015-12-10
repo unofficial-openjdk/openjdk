@@ -46,4 +46,7 @@ public class RealmException extends KrbException {
         super(i,s);
     }
 
+    public RealmException(Throwable cause) {
+        super(cause);
+    }
 }

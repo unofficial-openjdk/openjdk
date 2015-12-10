@@ -25,10 +25,10 @@
 
 package sun.security.jgss.spnego;
 
+import com.sun.security.jgss.ExtendedGSSContext;
+import com.sun.security.jgss.InquireType;
 import java.io.*;
 import java.security.Provider;
-import java.util.List;
-import java.util.ArrayList;
 import org.ietf.jgss.*;
 import sun.security.jgss.*;
 import sun.security.jgss.spi.*;
@@ -63,6 +63,7 @@ public class SpNegoContext implements GSSContextSpi {
     private boolean sequenceDetState = true;
     private boolean confState = true;
     private boolean integState = true;
+    private boolean delegPolicyState = false;
 
     private GSSNameSpi peerName = null;
     private GSSNameSpi myName = null;
@@ -154,10 +155,31 @@ public class SpNegoContext implements GSSContextSpi {
     }
 
     /**
+     * Requests that deleg policy be respected.
+     */
+    public final void requestDelegPolicy(boolean value) throws GSSException {
+        if (state == STATE_NEW && isInitiator())
+            delegPolicyState = value;
+    }
+
+    /**
      * Is integrity available?
      */
     public final boolean getIntegState() {
         return integState;
+    }
+
+    /**
+     * Is deleg policy respected?
+     */
+    public final boolean getDelegPolicyState() {
+        if (isInitiator() && mechContext != null &&
+                mechContext instanceof ExtendedGSSContext &&
+                (state == STATE_IN_PROCESS || state == STATE_DONE)) {
+            return ((ExtendedGSSContext)mechContext).getDelegPolicyState();
+        } else {
+            return delegPolicyState;
+        }
     }
 
     /**
@@ -173,7 +195,7 @@ public class SpNegoContext implements GSSContextSpi {
      * Is credential delegation enabled?
      */
     public final boolean getCredDelegState() {
-        if (mechContext != null &&
+        if (isInitiator() && mechContext != null &&
                 (state == STATE_IN_PROCESS || state == STATE_DONE)) {
             return mechContext.getCredDelegState();
         } else {
@@ -199,30 +221,6 @@ public class SpNegoContext implements GSSContextSpi {
      */
     public final boolean getMutualAuthState() {
         return mutualAuthState;
-    }
-
-    final void setCredDelegState(boolean state) {
-        credDelegState = state;
-    }
-
-    final void setMutualAuthState(boolean state) {
-        mutualAuthState = state;
-    }
-
-    final void setReplayDetState(boolean state) {
-        replayDetState = state;
-    }
-
-    final void setSequenceDetState(boolean state) {
-        sequenceDetState = state;
-    }
-
-    final void setConfState(boolean state) {
-        confState = state;
-    }
-
-    final void setIntegState(boolean state) {
-        integState = state;
     }
 
     /**
@@ -406,13 +404,14 @@ public class SpNegoContext implements GSSContextSpi {
                     // pull out the mechanism token
                     byte[] accept_token = targToken.getResponseToken();
                     if (accept_token == null) {
-                        // return wth failure
-                        throw new GSSException(errorCode, -1,
-                                        "mechansim token from server is null");
+                        if (!isMechContextEstablished()) {
+                            // return with failure
+                            throw new GSSException(errorCode, -1,
+                                    "mechanism token from server is null");
+                        }
+                    } else {
+                        mechToken = GSS_initSecContext(accept_token);
                     }
-
-                    mechToken = GSS_initSecContext(accept_token);
-
                     // verify MIC
                     if (!GSSUtil.useMSInterop()) {
                         byte[] micToken = targToken.getMechListMIC();
@@ -421,7 +420,6 @@ public class SpNegoContext implements GSSContextSpi {
                                 "verification of MIC on MechList Failed!");
                         }
                     }
-
                     if (isMechContextEstablished()) {
                         state = STATE_DONE;
                         retVal = mechToken;
@@ -687,6 +685,10 @@ public class SpNegoContext implements GSSContextSpi {
             throw gssException;
         }
 
+        if (state == STATE_DONE) {
+            // now set the context flags for acceptor
+            setContextFlags();
+        }
         return retVal;
     }
 
@@ -737,28 +739,31 @@ public class SpNegoContext implements GSSContextSpi {
         return out;
     }
 
+    // Only called on acceptor side. On the initiator side, most flags
+    // are already set at request. For those that might get chanegd,
+    // state from mech below is used.
     private void setContextFlags() {
 
         if (mechContext != null) {
             // default for cred delegation is false
             if (mechContext.getCredDelegState()) {
-                setCredDelegState(true);
+                credDelegState = true;
             }
             // default for the following are true
             if (!mechContext.getMutualAuthState()) {
-                setMutualAuthState(false);
+                mutualAuthState = false;
             }
             if (!mechContext.getReplayDetState()) {
-                setReplayDetState(false);
+                replayDetState = false;
             }
             if (!mechContext.getSequenceDetState()) {
-                setSequenceDetState(false);
+                sequenceDetState = false;
             }
             if (!mechContext.getIntegState()) {
-                setIntegState(false);
+                integState = false;
             }
             if (!mechContext.getConfState()) {
-                setConfState(false);
+                confState = false;
             }
         }
     }
@@ -871,6 +876,10 @@ public class SpNegoContext implements GSSContextSpi {
             mechContext.requestMutualAuth(mutualAuthState);
             mechContext.requestReplayDet(replayDetState);
             mechContext.requestSequenceDet(sequenceDetState);
+            if (mechContext instanceof ExtendedGSSContext) {
+                ((ExtendedGSSContext)mechContext).requestDelegPolicy(
+                        delegPolicyState);
+            }
         }
 
         // pass token
@@ -1219,4 +1228,22 @@ public class SpNegoContext implements GSSContextSpi {
                 return ("Unknown state " + state);
         }
     }
+
+    /**
+     * Retrieve attribute of the context for {@code type}.
+     */
+    public Object inquireSecContext(InquireType type)
+            throws GSSException {
+        if (mechContext == null) {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                    "Underlying mech not established.");
+        }
+        if (mechContext instanceof ExtendedGSSContext) {
+            return ((ExtendedGSSContext)mechContext).inquireSecContext(type);
+        } else {
+            throw new GSSException(GSSException.BAD_MECH, -1,
+                    "inquireSecContext not supported by underlying mech.");
+        }
+    }
 }
+

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import sun.misc.JavaSecurityProtectionDomainAccess;
 import static sun.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
+import sun.misc.JavaSecurityAccess;
 import sun.misc.SharedSecrets;
 import sun.security.util.Debug;
 import sun.security.util.SecurityConstants;
@@ -58,6 +59,60 @@ import sun.security.util.SecurityConstants;
  */
 
 public class ProtectionDomain {
+    private static class JavaSecurityAccessImpl implements JavaSecurityAccess {
+
+        private JavaSecurityAccessImpl() {
+        }
+
+        public <T> T doIntersectionPrivilege(
+                PrivilegedAction<T> action,
+                final AccessControlContext stack,
+                final AccessControlContext context) {
+            if (action == null) {
+                throw new NullPointerException();
+            }
+
+            return AccessController.doPrivileged(
+                action,
+                getCombinedACC(context, stack)
+            );
+        }
+
+        public <T> T doIntersectionPrivilege(
+                PrivilegedAction<T> action,
+                AccessControlContext context) {
+            return doIntersectionPrivilege(action,
+                AccessController.getContext(), context);
+        }
+
+        public <T> T doPrivileged(PrivilegedAction<T> action,
+                                  AccessControlContext context,
+                                  Permission... perms)
+        {
+            return AccessController.doPrivileged(action, context,
+                                                 perms);
+        }
+
+        public <T> T doPrivileged(PrivilegedExceptionAction<T> action,
+                                  AccessControlContext context,
+                                  Permission... perms)
+        throws PrivilegedActionException
+        {
+            return AccessController.doPrivileged(action, context,
+                                                 perms);
+        }
+
+        private static AccessControlContext getCombinedACC(AccessControlContext context, AccessControlContext stack) {
+            AccessControlContext acc = new AccessControlContext(context, stack.getCombiner(), true);
+
+            return new AccessControlContext(stack.getContext(), acc).optimize();
+        }
+    }
+
+    static {
+        // Set up JavaSecurityAccess in SharedSecrets
+        SharedSecrets.setJavaSecurityAccess(new JavaSecurityAccessImpl());
+    }
 
     /* CodeSource */
     private CodeSource codesource ;

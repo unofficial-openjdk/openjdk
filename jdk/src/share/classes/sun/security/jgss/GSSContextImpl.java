@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,14 +27,13 @@ package sun.security.jgss;
 
 import org.ietf.jgss.*;
 import sun.security.jgss.spi.*;
-import sun.security.jgss.*;
 import sun.security.util.ObjectIdentifier;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import com.sun.security.jgss.*;
 
 /**
  * This class represents the JGSS security context and its associated
@@ -88,9 +87,10 @@ import java.io.IOException;
  * per-message operations are returned in an instance of the MessageProp
  * class, which is used as an argument in these calls.</dl>
  */
-class GSSContextImpl implements GSSContext {
+class GSSContextImpl implements ExtendedGSSContext {
 
-    private GSSManagerImpl gssManager = null;
+    private final GSSManagerImpl gssManager;
+    private final boolean initiator;
 
     // private flags for the context state
     private static final int PRE_INIT = 1;
@@ -100,14 +100,12 @@ class GSSContextImpl implements GSSContext {
 
     // instance variables
     private int currentState = PRE_INIT;
-    private boolean initiator;
 
     private GSSContextSpi mechCtxt = null;
     private Oid mechOid = null;
     private ObjectIdentifier objId = null;
 
     private GSSCredentialImpl myCred = null;
-    private GSSCredentialImpl delegCred = null;
 
     private GSSNameImpl srcName = null;
     private GSSNameImpl targName = null;
@@ -122,6 +120,7 @@ class GSSContextImpl implements GSSContext {
     private boolean reqSequenceDetState = true;
     private boolean reqCredDelegState = false;
     private boolean reqAnonState = false;
+    private boolean reqDelegPolicyState = false;
 
     /**
      * Creates a GSSContextImp on the context initiator's side.
@@ -222,6 +221,7 @@ class GSSContextImpl implements GSSContext {
                 mechCtxt.requestSequenceDet(reqSequenceDetState);
                 mechCtxt.requestAnonymity(reqAnonState);
                 mechCtxt.setChannelBinding(channelBindings);
+                mechCtxt.requestDelegPolicy(reqDelegPolicyState);
 
                 objId = new ObjectIdentifier(mechOid.toString());
 
@@ -284,7 +284,8 @@ class GSSContextImpl implements GSSContext {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(100);
         acceptSecContext(new ByteArrayInputStream(inTok, offset, len),
                          bos);
-        return bos.toByteArray();
+        byte[] out = bos.toByteArray();
+        return (out.length == 0) ? null : out;
     }
 
     public void acceptSecContext(InputStream inStream,
@@ -465,42 +466,42 @@ class GSSContextImpl implements GSSContext {
     }
 
     public void requestMutualAuth(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqMutualAuthState = state;
     }
 
     public void requestReplayDet(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqReplayDetState = state;
     }
 
     public void requestSequenceDet(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqSequenceDetState = state;
     }
 
     public void requestCredDeleg(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqCredDelegState = state;
     }
 
     public void requestAnonymity(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqAnonState = state;
     }
 
     public void requestConf(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqConfState = state;
     }
 
     public void requestInteg(boolean state) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqIntegState = state;
     }
 
     public void requestLifetime(int lifetime) throws GSSException {
-        if (mechCtxt == null)
+        if (mechCtxt == null && initiator)
             reqLifetime = lifetime;
     }
 
@@ -628,5 +629,30 @@ class GSSContextImpl implements GSSContext {
         myCred = null;
         srcName = null;
         targName = null;
+    }
+
+    // ExtendedGSSContext methods:
+
+    public Object inquireSecContext(InquireType type) throws GSSException {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new InquireSecContextPermission(type.toString()));
+        }
+        if (mechCtxt == null) {
+            throw new GSSException(GSSException.NO_CONTEXT);
+        }
+        return mechCtxt.inquireSecContext(type);
+    }
+
+    public void requestDelegPolicy(boolean state) throws GSSException {
+        if (mechCtxt == null && initiator)
+            reqDelegPolicyState = state;
+    }
+
+    public boolean getDelegPolicyState() {
+        if (mechCtxt != null)
+            return mechCtxt.getDelegPolicyState();
+        else
+            return reqDelegPolicyState;
     }
 }

@@ -137,7 +137,7 @@ public class SharedSecrets {
 
     public static JavaSecurityAccess getJavaSecurityAccess() {
         if (javaSecurityAccess == null) {
-            unsafe.ensureClassInitialized(AccessController.class);
+            unsafe.ensureClassInitialized(ProtectionDomain.class);
         }
         return javaSecurityAccess;
     }
@@ -167,6 +167,9 @@ public class SharedSecrets {
     }
 
     public static JavaIOFileAccess getJavaIOFileAccess() {
+        if (javaIOFileAccess == null) {
+            unsafe.ensureClassInitialized(File.class);
+        }
         return javaIOFileAccess;
     }
 }

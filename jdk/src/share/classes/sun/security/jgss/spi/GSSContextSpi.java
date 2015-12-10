@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import org.ietf.jgss.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Provider;
+import com.sun.security.jgss.*;
 
 /**
  * This interface is implemented by a mechanism specific instance of a GSS
@@ -111,6 +112,8 @@ public interface GSSContextSpi {
 
     public void requestInteg(boolean state) throws GSSException;
 
+    public void requestDelegPolicy(boolean state) throws GSSException;
+
     public void setChannelBinding(ChannelBinding cb) throws GSSException;
 
     public boolean getCredDelegState();
@@ -122,6 +125,8 @@ public interface GSSContextSpi {
     public boolean getSequenceDetState();
 
     public boolean getAnonymityState();
+
+    public boolean getDelegPolicyState();
 
     public boolean isTransferable() throws GSSException;
 
@@ -253,7 +258,6 @@ public interface GSSContextSpi {
      * @param msgPro on input it contains the requested qop and
      *    confidentiality state, on output, the applied values
      * @exception GSSException may be thrown
-     * @see MessageInfo
      * @see unwrap
      */
     public void wrap(InputStream is, OutputStream os, MessageProp msgProp)
@@ -303,7 +307,6 @@ public interface GSSContextSpi {
      * @param msgProp will contain the applied qop and confidentiality
      *    of the input token and any informatory status values
      * @exception GSSException may be thrown
-     * @see MessageInfo
      * @see wrap
      */
     public void unwrap(InputStream is, OutputStream os,
@@ -391,4 +394,15 @@ public interface GSSContextSpi {
      * @exception GSSException may be thrown
      */
     public void dispose() throws GSSException;
+
+    /**
+     * Return the mechanism-specific attribute associated with (@code type}.
+     *
+     * @param type the type of the attribute requested
+     * @return the attribute
+     * @throws GSSException see {@link ExtendedGSSContext#inquireSecContext}
+     * for details
+     */
+    public Object inquireSecContext(InquireType type)
+            throws GSSException;
 }

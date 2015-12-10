@@ -26,7 +26,7 @@
 SPP='sh ../../../../make/java/nio/spp.sh'
 
 gen() {
-  $SPP -K$1 -Dtype=$1 -DType=$2 -DFulltype=$3<CopyDirect-X-Memory.java >CopyDirect$2Memory.java
+  $SPP -K$1 -Dtype=$1 -DType=$2 -DFulltype=$3<CopyDirect-X-Memory.java.template >CopyDirect$2Memory.java
 }
 
 gen byte Byte Byte

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.Security;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -46,36 +44,26 @@ import sun.security.krb5.Config;
  */
 public class OneKDC extends KDC {
 
-    // The krb5 codes would try to canonicalize hostnames before creating
-    // a service principal name, so let's find out the canonicalized form
-    // of localhost first. The following codes mimic the process inside
-    // PrincipalName.java.
-    static String localhost = "localhost";
-    static {
-        try {
-            localhost = InetAddress.getByName(localhost)
-                    .getCanonicalHostName();
-        } catch (UnknownHostException uhe) {
-            ;   // Ignore, localhost is still "localhost"
-        }
-    }
     public static final String USER = "dummy";
     public static final char[] PASS = "bogus".toCharArray();
-    public static String SERVER = "server/" + localhost;
-    public static String BACKEND = "backend/" + localhost;
+    public static final String USER2 = "foo";
+    public static final char[] PASS2 = "bar".toCharArray();
     public static final String KRB5_CONF = "localkdc-krb5.conf";
     public static final String KTAB = "localkdc.ktab";
     public static final String JAAS_CONF = "localkdc-jaas.conf";
     public static final String REALM = "RABBIT.HOLE";
-
+    public static String SERVER = "server/host." + REALM.toLowerCase();
+    public static String BACKEND = "backend/host." + REALM.toLowerCase();
+    public static String KDCHOST = "kdc." + REALM.toLowerCase();
     /**
      * Creates the KDC and starts it.
      * @param etype Encryption type, null if not specified
      * @throws java.lang.Exception if there's anything wrong
      */
     public OneKDC(String etype) throws Exception {
-        super(REALM, 0, true);
+        super(REALM, KDCHOST, 0, true);
         addPrincipal(USER, PASS);
+        addPrincipal(USER2, PASS2);
         addPrincipalRandKey("krbtgt/" + REALM);
         addPrincipalRandKey(SERVER);
         addPrincipalRandKey(BACKEND);

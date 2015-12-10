@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -156,6 +156,22 @@ public class EncryptionKey
     }
 
     /**
+     * Obtains a key for a given etype with salt and optional s2kparams
+     * @param password NOT null
+     * @param salt NOT null
+     * @param etype
+     * @param s2kparams can be NULL
+     */
+    public static EncryptionKey acquireSecretKey(char[] password,
+            String salt, int etype, byte[] s2kparams)
+            throws KrbException {
+
+        return new EncryptionKey(
+                        stringToKey(password, salt, s2kparams, etype),
+                        etype, null);
+    }
+
+    /**
      * Generate a list of keys using the given principal and password.
      * Construct a key for each configured etype.
      * Caller is responsible for clearing password.
@@ -168,43 +184,19 @@ public class EncryptionKey
      * as the default in that case. If default_tkt_enctypes was set in
      * the libdefaults of krb5.conf, then use that sequence.
      */
-         // Used in Krb5LoginModule
     public static EncryptionKey[] acquireSecretKeys(char[] password,
-        String salt) throws KrbException {
-        return (acquireSecretKeys(password, salt, false, 0, null));
-    }
-
-    /**
-     * Generates a list of keys using the given principal, password,
-     * and the pre-authentication values.
-     */
-    public static EncryptionKey[] acquireSecretKeys(char[] password,
-        String salt, boolean pa_exists, int pa_etype, byte[] pa_s2kparams)
-        throws KrbException {
+            String salt) throws KrbException {
 
         int[] etypes = EType.getDefaults("default_tkt_enctypes");
         if (etypes == null) {
             etypes = EType.getBuiltInDefaults();
         }
 
-        // set the preferred etype for preauth
-        if ((pa_exists) && (pa_etype != EncryptedData.ETYPE_NULL)) {
-            if (DEBUG) {
-                System.out.println("Pre-Authentication: " +
-                        "Set preferred etype = " + pa_etype);
-            }
-            if (EType.isSupported(pa_etype)) {
-                // reset etypes to preferred value
-                etypes = new int[1];
-                etypes[0] = pa_etype;
-            }
-        }
-
         EncryptionKey[] encKeys = new EncryptionKey[etypes.length];
         for (int i = 0; i < etypes.length; i++) {
             if (EType.isSupported(etypes[i])) {
                 encKeys[i] = new EncryptionKey(
-                        stringToKey(password, salt, pa_s2kparams, etypes[i]),
+                        stringToKey(password, salt, null, etypes[i]),
                         etypes[i], null);
             } else {
                 if (DEBUG) {
@@ -502,7 +494,36 @@ public class EncryptionKey
                              + '\n'));
     }
 
+    /**
+     * Find a key with given etype
+     */
     public static EncryptionKey findKey(int etype, EncryptionKey[] keys)
+            throws KrbException {
+        return findKey(etype, null, keys);
+    }
+
+    /**
+     * Determines if a kvno matches another kvno. Used in the method
+     * findKey(type, kvno, keys). Always returns true if either input
+     * is null or zero, in case any side does not have kvno info available.
+     *
+     * Note: zero is included because N/A is not a legal value for kvno
+     * in javax.security.auth.kerberos.KerberosKey. Therefore, the info
+     * that the kvno is N/A might be lost when converting between this
+     * class and KerberosKey.
+     */
+    private static boolean versionMatches(Integer v1, Integer v2) {
+        if (v1 == null || v1 == 0 || v2 == null || v2 == 0) {
+            return true;
+        }
+        return v1.equals(v2);
+    }
+
+    /**
+     * Find a key with given etype and kvno
+     * @param kvno if null, return any (first?) key
+     */
+    public static EncryptionKey findKey(int etype, Integer kvno, EncryptionKey[] keys)
         throws KrbException {
 
         // check if encryption type is supported
@@ -512,14 +533,30 @@ public class EncryptionKey
         }
 
         int ktype;
+        boolean etypeFound = false;
+
+        // When no matched kvno is found, returns tke key of the same
+        // etype with the highest kvno
+        int kvno_found = 0;
+        EncryptionKey key_found = null;
+
         for (int i = 0; i < keys.length; i++) {
             ktype = keys[i].getEType();
             if (EType.isSupported(ktype)) {
+                Integer kv = keys[i].getKeyVersionNumber();
                 if (etype == ktype) {
-                    return keys[i];
+                    etypeFound = true;
+                    if (versionMatches(kvno, kv)) {
+                        return keys[i];
+                    } else if (kv > kvno_found) {
+                        // kv is not null
+                        key_found = keys[i];
+                        kvno_found = kv;
+                    }
                 }
             }
         }
+
         // Key not found.
         // allow DES key to be used for the DES etypes
         if ((etype == EncryptedData.ETYPE_DES_CBC_CRC ||
@@ -527,10 +564,22 @@ public class EncryptionKey
             for (int i = 0; i < keys.length; i++) {
                 ktype = keys[i].getEType();
                 if (ktype == EncryptedData.ETYPE_DES_CBC_CRC ||
-                    ktype == EncryptedData.ETYPE_DES_CBC_MD5) {
-                    return new EncryptionKey(etype, keys[i].getBytes());
+                        ktype == EncryptedData.ETYPE_DES_CBC_MD5) {
+                    Integer kv = keys[i].getKeyVersionNumber();
+                    etypeFound = true;
+                    if (versionMatches(kvno, kv)) {
+                        return new EncryptionKey(etype, keys[i].getBytes());
+                    } else if (kv > kvno_found) {
+                        key_found = new EncryptionKey(etype, keys[i].getBytes());
+                        kvno_found = kv;
+                    }
                 }
             }
+        }
+        if (etypeFound) {
+            return key_found;
+            // For compatibility, will not fail here.
+            //throw new KrbException(Krb5.KRB_AP_ERR_BADKEYVER);
         }
         return null;
     }

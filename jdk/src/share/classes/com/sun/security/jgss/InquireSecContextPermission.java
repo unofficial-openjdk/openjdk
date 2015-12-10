@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,35 +23,32 @@
  * questions.
  */
 
-/*
- *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
- *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
+package com.sun.security.jgss;
+
+import java.security.BasicPermission;
+
+/**
+ * This class is used to protect various attributes of an established
+ * GSS security context that can be accessed using the
+ * {@link com.sun.security.jgss.ExtendedGSSContext#inquireSecContext}
+ * method.
+ *
+ * <p>The target name is the {@link InquireType} allowed.
  */
+public final class InquireSecContextPermission extends BasicPermission {
 
-package sun.security.krb5;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-public class ServiceName extends PrincipalName {
-
-    public ServiceName(String name, int type) throws RealmException {
-        super(name, type);
-
+    /**
+     * Constructs a new {@code InquireSecContextPermission} object with
+     * the specified name. The name is the symbolic name of the
+     * {@link InquireType} allowed.
+     *
+     * @param name the {@link InquireType} allowed by this
+     * permission. "*" means all {@link InquireType}s are allowed.
+     *
+     * @throws NullPointerException if <code>name</code> is <code>null</code>.
+     * @throws IllegalArgumentException if <code>name</code> is empty.
+     */
+    public InquireSecContextPermission(String name) {
+        super(name);
     }
-    public ServiceName(String name) throws RealmException {
-        this(name, PrincipalName.KRB_NT_UNKNOWN);
-    }
-
-    public ServiceName(String name, String realm) throws RealmException {
-        this(name, PrincipalName.KRB_NT_UNKNOWN);
-        setRealm(realm);
-    }
-
-    public ServiceName (String service, String instance, String realm)
-        throws KrbException
-    {
-        super(service, instance, realm, PrincipalName.KRB_NT_SRV_INST);
-    }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,20 +40,18 @@ import java.io.IOException;
  * This class encapsulates a AS-REP message that the KDC sends to the
  * client.
  */
-public class KrbAsRep extends KrbKdcRep {
+class KrbAsRep extends KrbKdcRep {
 
-    private ASRep rep;
-    private Credentials creds;
+    private ASRep rep;  // The AS-REP message
+    private Credentials creds;  // The Credentials provide by the AS-REP
+                                // message, created by initiator after calling
+                                // the decrypt() method
 
     private boolean DEBUG = Krb5.DEBUG;
 
-    KrbAsRep(byte[] ibuf, EncryptionKey[] keys, KrbAsReq asReq) throws
-    KrbException, Asn1Exception, IOException {
-        if (keys == null)
-            throw new KrbException(Krb5.API_INVALID_ARG);
+    KrbAsRep(byte[] ibuf) throws
+            KrbException, Asn1Exception, IOException {
         DerValue encoding = new DerValue(ibuf);
-        ASReq req = asReq.getMessage();
-        ASRep rep = null;
         try {
             rep = new ASRep(encoding);
         } catch (Asn1Exception e) {
@@ -82,26 +80,77 @@ public class KrbAsRep extends KrbKdcRep {
             ke.initCause(e);
             throw ke;
         }
+    }
 
+    // KrbAsReqBuilder need to read back the PA for key generation
+    PAData[] getPA() {
+        return rep.pAData;
+    }
+
+    /**
+     * Called by KrbAsReqBuilder to resolve a AS-REP message using keys.
+     * @param keys user provided keys, not null
+     * @param asReq the original AS-REQ sent, used to validate AS-REP
+     */
+    void decryptUsingKeys(EncryptionKey[] keys, KrbAsReq asReq)
+            throws KrbException, Asn1Exception, IOException {
+        EncryptionKey dkey = null;
         int encPartKeyType = rep.encPart.getEType();
-        EncryptionKey dkey = EncryptionKey.findKey(encPartKeyType, keys);
-
+        Integer encPartKvno = rep.encPart.kvno;
+        try {
+            dkey = EncryptionKey.findKey(encPartKeyType, encPartKvno, keys);
+        } catch (KrbException ke) {
+            if (ke.returnCode() == Krb5.KRB_AP_ERR_BADKEYVER) {
+                // Fallback to no kvno. In some cases, keytab is generated
+                // not by sysadmin but Java's ktab command
+                dkey = EncryptionKey.findKey(encPartKeyType, keys);
+            }
+        }
         if (dkey == null) {
             throw new KrbException(Krb5.API_INVALID_ARG,
-                "Cannot find key of appropriate type to decrypt AS REP - " +
-                EType.toString(encPartKeyType));
+                "Cannot find key for type/kvno to decrypt AS REP - " +
+                EType.toString(encPartKeyType) + "/" + encPartKvno);
         }
+        decrypt(dkey, asReq);
+    }
 
+    /**
+     * Called by KrbAsReqBuilder to resolve a AS-REP message using a password.
+     * @param password user provided password. not null
+     * @param asReq the original AS-REQ sent, used to validate AS-REP
+     * @param cname the user principal name, used to provide salt
+     */
+    void decryptUsingPassword(char[] password,
+            KrbAsReq asReq, PrincipalName cname)
+            throws KrbException, Asn1Exception, IOException {
+        int encPartKeyType = rep.encPart.getEType();
+        PAData.SaltAndParams snp =
+                PAData.getSaltAndParams(encPartKeyType, rep.pAData);
+        EncryptionKey dkey = null;
+        dkey = EncryptionKey.acquireSecretKey(password,
+                snp.salt == null ? cname.getSalt() : snp.salt,
+                encPartKeyType,
+                snp.params);
+        decrypt(dkey, asReq);
+    }
+
+    /**
+     * Decrypts encrypted content inside AS-REP. Called by initiator.
+     * @param dkey the decryption key to use
+     * @param asReq the original AS-REQ sent, used to validate AS-REP
+     */
+    private void decrypt(EncryptionKey dkey, KrbAsReq asReq)
+            throws KrbException, Asn1Exception, IOException {
         byte[] enc_as_rep_bytes = rep.encPart.decrypt(dkey,
             KeyUsage.KU_ENC_AS_REP_PART);
-        byte[] enc_as_rep_part = rep.encPart.reset(enc_as_rep_bytes, true);
+        byte[] enc_as_rep_part = rep.encPart.reset(enc_as_rep_bytes);
 
-        encoding = new DerValue(enc_as_rep_part);
+        DerValue encoding = new DerValue(enc_as_rep_part);
         EncASRepPart enc_part = new EncASRepPart(encoding);
-        rep.ticket.sname.setRealm(rep.ticket.realm);
         rep.encKDCRepPart = enc_part;
 
-        check(req, rep);
+        ASReq req = asReq.getMessage();
+        check(true, req, rep);
 
         creds = new Credentials(
                                 rep.ticket,
@@ -118,17 +167,15 @@ public class KrbAsRep extends KrbKdcRep {
             System.out.println(">>> KrbAsRep cons in KrbAsReq.getReply " +
                                req.reqBody.cname.getNameString());
         }
-
-        this.rep = rep;
-        this.creds = creds;
     }
 
-    public Credentials getCreds() {
-        return creds;
+    Credentials getCreds() {
+	if (creds != null)
+	    return creds;
+        throw new NullPointerException("Creds not available yet.");
     }
 
-    // made public for Kinit
-    public sun.security.krb5.internal.ccache.Credentials setCredentials() {
+    sun.security.krb5.internal.ccache.Credentials getCCreds() {
         return new sun.security.krb5.internal.ccache.Credentials(rep);
     }
 }

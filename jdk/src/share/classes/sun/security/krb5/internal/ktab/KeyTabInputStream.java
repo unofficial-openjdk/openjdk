@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import java.io.InputStream;
 public class KeyTabInputStream extends KrbDataInputStream implements KeyTabConstants {
 
     boolean DEBUG = Krb5.DEBUG;
-    static int index;
+    int index;
 
     public KeyTabInputStream(InputStream is) {
         super(is);
@@ -82,8 +82,7 @@ public class KeyTabInputStream extends KrbDataInputStream implements KeyTabConst
         }
         int nameType = read(4);
         index -= 4;
-        PrincipalName service = new PrincipalName(nameParts, nameType);
-        service.setRealm(realm);
+        PrincipalName service = new PrincipalName(nameType, nameParts, realm);
         KerberosTime timeStamp = readTimeStamp();
 
         int keyVersion = read() & 0xff;

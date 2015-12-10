@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,9 @@ import sun.security.krb5.Config;
 import sun.security.krb5.EncryptedData;
 import sun.security.krb5.EncryptionKey;
 import sun.security.krb5.KrbException;
-import sun.security.krb5.Asn1Exception;
 import sun.security.krb5.KrbCryptoException;
 import javax.crypto.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -47,6 +47,23 @@ import java.util.ArrayList;
 public abstract class EType {
 
     private static final boolean DEBUG = Krb5.DEBUG;
+    private static final boolean ALLOW_WEAK_CRYPTO;
+
+    static {
+        boolean allowed = true;
+        try {
+            Config cfg = Config.getInstance();
+            String temp = cfg.getDefault("allow_weak_crypto", "libdefaults");
+            if (temp != null && temp.equals("false")) allowed = false;
+        } catch (Exception exc) {
+            if (DEBUG) {
+                System.out.println ("Exception in getting allow_weak_crypto, " +
+                                    "using default value " +
+                                    exc.getMessage());
+            }
+        }
+        ALLOW_WEAK_CRYPTO = allowed;
+    }
 
     public static EType getInstance  (int eTypeConst)
         throws KdcErrException {
@@ -162,21 +179,25 @@ public abstract class EType {
         return result;
     }
 
+    // Note: the first 2 entries of BUILTIN_ETYPES and BUILTIN_ETYPES_NOAES256
+    // should be kept DES-related. They will be removed when allow_weak_crypto
+    // is set to false.
+
     private static final int[] BUILTIN_ETYPES = new int[] {
-        EncryptedData.ETYPE_DES_CBC_MD5,
-        EncryptedData.ETYPE_DES_CBC_CRC,
-        EncryptedData.ETYPE_ARCFOUR_HMAC,
-        EncryptedData.ETYPE_DES3_CBC_HMAC_SHA1_KD,
-        EncryptedData.ETYPE_AES128_CTS_HMAC_SHA1_96,
         EncryptedData.ETYPE_AES256_CTS_HMAC_SHA1_96,
+        EncryptedData.ETYPE_AES128_CTS_HMAC_SHA1_96,
+        EncryptedData.ETYPE_DES3_CBC_HMAC_SHA1_KD,
+        EncryptedData.ETYPE_ARCFOUR_HMAC,
+        EncryptedData.ETYPE_DES_CBC_CRC,
+        EncryptedData.ETYPE_DES_CBC_MD5,
     };
 
     private static final int[] BUILTIN_ETYPES_NOAES256 = new int[] {
-        EncryptedData.ETYPE_DES_CBC_MD5,
-        EncryptedData.ETYPE_DES_CBC_CRC,
-        EncryptedData.ETYPE_ARCFOUR_HMAC,
-        EncryptedData.ETYPE_DES3_CBC_HMAC_SHA1_KD,
         EncryptedData.ETYPE_AES128_CTS_HMAC_SHA1_96,
+        EncryptedData.ETYPE_DES3_CBC_HMAC_SHA1_KD,
+        EncryptedData.ETYPE_ARCFOUR_HMAC,
+        EncryptedData.ETYPE_DES_CBC_CRC,
+        EncryptedData.ETYPE_DES_CBC_MD5,
     };
 
 
@@ -188,10 +209,17 @@ public abstract class EType {
         } catch (Exception e) {
             // should not happen
         }
+        int[] result;
         if (allowed < 256) {
-            return BUILTIN_ETYPES_NOAES256;
+            result = BUILTIN_ETYPES_NOAES256;
+        } else {
+            result = BUILTIN_ETYPES;
         }
-        return BUILTIN_ETYPES;
+        if (!ALLOW_WEAK_CRYPTO) {
+            // The last 2 etypes are now weak ones
+            return Arrays.copyOfRange(result, 0, result.length - 2);
+        }
+        return result;
     }
 
     /**
@@ -206,9 +234,7 @@ public abstract class EType {
             if (DEBUG) {
                 System.out.println("Exception while getting " +
                     configName + exc.getMessage());
-                System.out.println("Using defaults " +
-                    "des-cbc-md5, des-cbc-crc, des3-cbc-sha1," +
-                        " aes128cts, aes256cts, rc4-hmac");
+                System.out.println("Using default builtin etypes");
             }
             return getBuiltInDefaults();
         }

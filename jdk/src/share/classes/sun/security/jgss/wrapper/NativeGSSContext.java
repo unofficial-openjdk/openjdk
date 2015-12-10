@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import sun.security.util.ObjectIdentifier;
 import sun.security.jgss.spnego.NegTokenInit;
 import sun.security.jgss.spnego.NegTokenTarg;
 import javax.security.auth.kerberos.DelegationPermission;
+import com.sun.security.jgss.InquireType;
 import java.io.*;
 
 
@@ -548,6 +549,9 @@ class NativeGSSContext implements GSSContextSpi {
     public void requestInteg(boolean state) throws GSSException {
         changeFlags(GSS_C_INTEG_FLAG, state);
     }
+    public void requestDelegPolicy(boolean state) throws GSSException {
+        // Not supported, ignore
+    }
     public void requestLifetime(int lifetime) throws GSSException {
         if (isInitiator && pContext == 0) {
             this.lifetime = lifetime;
@@ -589,6 +593,9 @@ class NativeGSSContext implements GSSContextSpi {
     public boolean getIntegState() {
         return checkFlags(GSS_C_INTEG_FLAG);
     }
+    public boolean getDelegPolicyState() {
+        return false;
+    }
     public int getLifetime() {
         return cStub.getContextTime(pContext);
     }
@@ -614,5 +621,11 @@ class NativeGSSContext implements GSSContextSpi {
 
     protected void finalize() throws Throwable {
         dispose();
+    }
+
+    public Object inquireSecContext(InquireType type)
+            throws GSSException {
+        throw new GSSException(GSSException.UNAVAILABLE, -1,
+                "Inquire type not supported.");
     }
 }

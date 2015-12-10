@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,20 +30,16 @@
 
 package sun.security.krb5;
 
-import sun.security.util.*;
-import sun.security.krb5.EncryptionKey;
 import sun.security.krb5.internal.*;
 import sun.security.krb5.internal.crypto.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.StringTokenizer;
-import java.io.InterruptedIOException;
 
 /**
  * This class encapsulates a Kerberos TGS-REQ that is sent from the
  * client to the KDC.
  */
-public class KrbTgsReq extends KrbKdcReq {
+public class KrbTgsReq {
 
     private PrincipalName princName;
     private PrincipalName servName;
@@ -55,7 +51,8 @@ public class KrbTgsReq extends KrbKdcReq {
 
     private static final boolean DEBUG = Krb5.DEBUG;
 
-    private int defaultTimeout = 30*1000; // 30 seconds
+    private byte[] obuf;
+    private byte[] ibuf;
 
      // Used in CredentialsUtil
     public KrbTgsReq(Credentials asCreds,
@@ -150,7 +147,6 @@ public class KrbTgsReq extends KrbKdcReq {
                 asCreds.key,
                 ctime,
                 princName,
-                princName.getRealm(),
                 servName,
                 from,
                 till,
@@ -181,11 +177,12 @@ public class KrbTgsReq extends KrbKdcReq {
      * @throws KrbException
      * @throws IOException
      */
-    public String send() throws IOException, KrbException {
+    public void send() throws IOException, KrbException {
         String realmStr = null;
         if (servName != null)
             realmStr = servName.getRealmString();
-        return (send(realmStr));
+        KdcComm comm = new KdcComm(realmStr);
+        ibuf = comm.send(obuf);
     }
 
     public KrbTgsRep getReply()
@@ -200,18 +197,8 @@ public class KrbTgsReq extends KrbKdcReq {
     public Credentials sendAndGetCreds() throws IOException, KrbException {
         KrbTgsRep tgs_rep = null;
         String kdc = null;
-        try {
-            kdc = send();
-            tgs_rep = getReply();
-        } catch (KrbException ke) {
-            if (ke.returnCode() == Krb5.KRB_ERR_RESPONSE_TOO_BIG) {
-                // set useTCP and retry
-                send(servName.getRealmString(), kdc, true);
-                tgs_rep = getReply();
-            } else {
-                throw ke;
-            }
-        }
+        send();
+        tgs_rep = getReply();
         return tgs_rep.getCreds();
     }
 
@@ -225,7 +212,6 @@ public class KrbTgsReq extends KrbKdcReq {
                          EncryptionKey key,
                          KerberosTime ctime,
                          PrincipalName cname,
-                         Realm crealm,
                          PrincipalName sname,
                          KerberosTime from,
                          KerberosTime till,
@@ -239,7 +225,7 @@ public class KrbTgsReq extends KrbKdcReq {
                UnknownHostException, KrbCryptoException {
         KerberosTime req_till = null;
         if (till == null) {
-            req_till = new KerberosTime();
+            req_till = new KerberosTime(0);
         } else {
             req_till = till;
         }
@@ -284,8 +270,6 @@ public class KrbTgsReq extends KrbKdcReq {
         KDCReqBody reqBody = new KDCReqBody(
                                             kdc_options,
                                             cname,
-                                            // crealm,
-                                            sname.getRealm(), // TO
                                             sname,
                                             from,
                                             req_till,
@@ -326,7 +310,6 @@ public class KrbTgsReq extends KrbKdcReq {
                                          new APOptions(),
                                          ticket,
                                          key,
-                                         crealm,
                                          cname,
                                          cksum,
                                          ctime,

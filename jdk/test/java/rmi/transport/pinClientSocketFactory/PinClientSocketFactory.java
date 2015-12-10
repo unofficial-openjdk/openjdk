@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,8 @@
  * should become unreachable too (through the RMI implementation).
  * @author Peter Jones
  *
+ * @library ../../testlibrary
+ * @build TestLibrary
  * @run main/othervm -Dsun.rmi.transport.connectionTimeout=2000
  *     PinClientSocketFactory
  */
@@ -56,7 +58,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PinClientSocketFactory {
 
-    private static final int PORT = 2345;
     private static final int SESSIONS = 50;
 
     public interface Factory extends Remote {
@@ -94,10 +95,13 @@ public class PinClientSocketFactory {
         }
         UnicastRemoteObject.unexportObject(factoryImpl, true);
 
-        Registry registryImpl = LocateRegistry.createRegistry(PORT);
+        Registry registryImpl = TestLibrary.createRegistryOnEphemeralPort();
+        int port = TestLibrary.getRegistryPort(registryImpl);
+        System.out.println("Registry listening on port " + port);
+
         CSF csf = new CSF();
         Reference<CSF> registryRef = new WeakReference<CSF>(csf);
-        Registry registryStub = LocateRegistry.getRegistry("", PORT, csf);
+        Registry registryStub = LocateRegistry.getRegistry("", port, csf);
         csf = null;
         registryStub.list();
         registryStub = null;

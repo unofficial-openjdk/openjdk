@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import sun.security.krb5.internal.rcache.*;
 import java.net.InetAddress;
 import sun.security.util.*;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * This class encapsulates a KRB-AP-REQ that a client sends to a
@@ -52,9 +53,6 @@ public class KrbApReq {
 
     private static CacheTable table = new CacheTable();
     private static boolean DEBUG = Krb5.DEBUG;
-
-    // default is address-less tickets
-    private boolean KDC_EMPTY_ADDRESSES_ALLOWED = true;
 
     /**
      * Contructs a AP-REQ message to send to the peer.
@@ -180,7 +178,6 @@ public class KrbApReq {
     KrbApReq(APOptions apOptions,
              Ticket ticket,
              EncryptionKey key,
-             Realm crealm,
              PrincipalName cname,
              Checksum cksum,
              KerberosTime ctime,
@@ -190,7 +187,7 @@ public class KrbApReq {
         throws Asn1Exception, IOException,
                KdcErrException, KrbCryptoException {
 
-        init(apOptions, ticket, key, crealm, cname,
+        init(apOptions, ticket, key, cname,
              cksum, ctime, subKey, seqNumber, authorizationData,
             KeyUsage.KU_PA_TGS_REQ_AUTHENTICATOR);
 
@@ -209,7 +206,6 @@ public class KrbApReq {
         init(options,
              tgs_creds.ticket,
              tgs_creds.key,
-             tgs_creds.client.getRealm(),
              tgs_creds.client,
              cksum,
              ctime,
@@ -222,7 +218,6 @@ public class KrbApReq {
     private void init(APOptions apOptions,
                       Ticket ticket,
                       EncryptionKey key,
-                      Realm crealm,
                       PrincipalName cname,
                       Checksum cksum,
                       KerberosTime ctime,
@@ -233,7 +228,7 @@ public class KrbApReq {
         throws Asn1Exception, IOException,
                KdcErrException, KrbCryptoException {
 
-        createMessage(apOptions, ticket, key, crealm, cname,
+        createMessage(apOptions, ticket, key, cname,
                       cksum, ctime, subKey, seqNumber, authorizationData,
             usage);
         obuf = apReqMessg.asn1Encode();
@@ -267,7 +262,8 @@ public class KrbApReq {
     private void authenticate(EncryptionKey[] keys, InetAddress initiator)
         throws KrbException, IOException {
         int encPartKeyType = apReqMessg.ticket.encPart.getEType();
-        EncryptionKey dkey = EncryptionKey.findKey(encPartKeyType, keys);
+        Integer kvno = apReqMessg.ticket.encPart.getKeyVersionNumber();
+        EncryptionKey dkey = EncryptionKey.findKey(encPartKeyType, kvno, keys);
 
         if (dkey == null) {
             throw new KrbException(Krb5.API_INVALID_ARG,
@@ -277,23 +273,18 @@ public class KrbApReq {
 
         byte[] bytes = apReqMessg.ticket.encPart.decrypt(dkey,
             KeyUsage.KU_TICKET);
-        byte[] temp = apReqMessg.ticket.encPart.reset(bytes, true);
+        byte[] temp = apReqMessg.ticket.encPart.reset(bytes);
         EncTicketPart enc_ticketPart = new EncTicketPart(temp);
 
         checkPermittedEType(enc_ticketPart.key.getEType());
 
         byte[] bytes2 = apReqMessg.authenticator.decrypt(enc_ticketPart.key,
             KeyUsage.KU_AP_REQ_AUTHENTICATOR);
-        byte[] temp2 = apReqMessg.authenticator.reset(bytes2, true);
+        byte[] temp2 = apReqMessg.authenticator.reset(bytes2);
         authenticator = new Authenticator(temp2);
         ctime = authenticator.ctime;
         cusec = authenticator.cusec;
         authenticator.ctime.setMicroSeconds(authenticator.cusec);
-        authenticator.cname.setRealm(authenticator.crealm);
-        apReqMessg.ticket.sname.setRealm(apReqMessg.ticket.realm);
-        enc_ticketPart.cname.setRealm(enc_ticketPart.crealm);
-
-        Config.getInstance().resetDefaultRealm(apReqMessg.ticket.realm.toString());
 
         if (!authenticator.cname.equals(enc_ticketPart.cname))
             throw new KrbApErrException(Krb5.KRB_AP_ERR_BADMATCH);
@@ -312,23 +303,19 @@ public class KrbApReq {
             table.put(client, time, currTime.getTime());
         }
 
-        // check to use addresses in tickets
-        if (Config.getInstance().useAddresses()) {
-            KDC_EMPTY_ADDRESSES_ALLOWED = false;
-        }
-
-        // sender host address
-        HostAddress sender = null;
         if (initiator != null) {
-            sender = new HostAddress(initiator);
-        }
-
-        if (sender != null || !KDC_EMPTY_ADDRESSES_ALLOWED) {
-            if (enc_ticketPart.caddr != null) {
-                if (sender == null)
-                    throw new KrbApErrException(Krb5.KRB_AP_ERR_BADADDR);
-                if (!enc_ticketPart.caddr.inList(sender))
-                    throw new KrbApErrException(Krb5.KRB_AP_ERR_BADADDR);
+            // sender host address
+            HostAddress sender = new HostAddress(initiator);
+            if (enc_ticketPart.caddr != null
+                    && !enc_ticketPart.caddr.inList(sender)) {
+                if (DEBUG) {
+                    System.out.println(">>> KrbApReq: initiator is "
+                            + sender.getInetAddress()
+                            + ", but caddr is "
+                            + Arrays.toString(
+                                enc_ticketPart.caddr.getInetAddresses()));
+                }
+                throw new KrbApErrException(Krb5.KRB_AP_ERR_BADADDR);
             }
         }
 
@@ -357,12 +344,13 @@ public class KrbApReq {
                                 authenticator.cname,
                                 apReqMessg.ticket.sname,
                                 enc_ticketPart.key,
-                                null,
+                                enc_ticketPart.flags,
                                 enc_ticketPart.authtime,
                                 enc_ticketPart.starttime,
                                 enc_ticketPart.endtime,
                                 enc_ticketPart.renewTill,
-                                enc_ticketPart.caddr);
+                                enc_ticketPart.caddr,
+                                enc_ticketPart.authorizationData);
         if (DEBUG) {
             System.out.println(">>> KrbApReq: authenticate succeed.");
         }
@@ -462,7 +450,6 @@ public class KrbApReq {
     private void createMessage(APOptions apOptions,
                                Ticket ticket,
                                EncryptionKey key,
-                               Realm crealm,
                                PrincipalName cname,
                                Checksum cksum,
                                KerberosTime ctime,
@@ -479,8 +466,7 @@ public class KrbApReq {
             seqno = new Integer(seqNumber.current());
 
         authenticator =
-            new Authenticator(crealm,
-                              cname,
+            new Authenticator(cname,
                               cksum,
                               ctime.getMicroSeconds(),
                               ctime,

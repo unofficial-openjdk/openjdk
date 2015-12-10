@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 
 import com.sun.security.auth.module.Krb5LoginModule;
+import java.security.Key;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
@@ -38,6 +39,11 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
+import com.sun.security.jgss.ExtendedGSSContext;
+import com.sun.security.jgss.InquireType;
+import com.sun.security.jgss.AuthorizationDataEntry;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Context of a JGSS subject, encapsulating Subject and GSSContext.
@@ -68,10 +74,12 @@ import org.ietf.jgss.Oid;
 public class Context {
 
     private Subject s;
-    private GSSContext x;
+    private ExtendedGSSContext x;
     private boolean f;      // context established?
     private String name;
     private GSSCredential cred;     // see static method delegated().
+
+    static boolean usingStream = false;
 
     private Context() {}
 
@@ -103,7 +111,8 @@ public class Context {
      * Logins with a username and a password, using Krb5LoginModule directly
      * @param storeKey true if key should be saved, used on acceptor side
      */
-    public static Context fromUserPass(String user, char[] pass, boolean storeKey) throws Exception {
+    public static Context fromUserPass(String user, char[] pass, boolean storeKey)
+            throws Exception {
         Context out = new Context();
         out.name = user;
         out.s = new Subject();
@@ -133,6 +142,33 @@ public class Context {
     }
 
     /**
+     * Logins with a username and a keytab, using Krb5LoginModule directly
+     * @param storeKey true if key should be saved, used on acceptor side
+     */
+    public static Context fromUserKtab(String user, String ktab, boolean storeKey)
+            throws Exception {
+        Context out = new Context();
+        out.name = user;
+        out.s = new Subject();
+        Krb5LoginModule krb5 = new Krb5LoginModule();
+        Map<String, String> map = new HashMap<String, String>();
+
+        map.put("doNotPrompt", "true");
+        map.put("useTicketCache", "false");
+        map.put("useKeyTab", "true");
+        map.put("keyTab", ktab);
+        map.put("principal", user);
+        if (storeKey) {
+            map.put("storeKey", "true");
+        }
+
+        krb5.initialize(out.s, null, null, map);
+        krb5.login();
+        krb5.commit();
+        return out;
+    }
+
+    /**
      * Starts as a client
      * @param target communication peer
      * @param mech GSS mech
@@ -143,8 +179,8 @@ public class Context {
             @Override
             public byte[] run(Context me, byte[] dummy) throws Exception {
                 GSSManager m = GSSManager.getInstance();
-                me.x = m.createContext(
-                        target.indexOf('@') < 0 ?
+                me.x = (ExtendedGSSContext)m.createContext(
+                          target.indexOf('@') < 0 ?
                             m.createName(target, null) :
                             m.createName(target, GSSName.NT_HOSTBASED_SERVICE),
                         mech,
@@ -166,7 +202,7 @@ public class Context {
             @Override
             public byte[] run(Context me, byte[] dummy) throws Exception {
                 GSSManager m = GSSManager.getInstance();
-                me.x = m.createContext(m.createCredential(
+                me.x = (ExtendedGSSContext)m.createContext(m.createCredential(
                         null,
                         GSSCredential.INDEFINITE_LIFETIME,
                         mech,
@@ -189,7 +225,7 @@ public class Context {
      *
      * @return the GSSContext object
      */
-    public GSSContext x() {
+    public ExtendedGSSContext x() {
         return x;
     }
 
@@ -251,6 +287,11 @@ public class Context {
             if (x.getSequenceDetState()) {
                 sb.append("seq det, ");
             }
+            if (x instanceof ExtendedGSSContext) {
+                if (((ExtendedGSSContext)x).getDelegPolicyState()) {
+                    sb.append("deleg policy, ");
+                }
+            }
             System.out.println("Context status of " + name + ": " + sb.toString());
             System.out.println(x.getSrcName() + " -> " + x.getTargName());
         } catch (Exception e) {
@@ -273,6 +314,34 @@ public class Context {
                 Map map = (Map) o;
                 for (Object k : map.keySet()) {
                     System.out.println("        " + k + ": " + map.get(k));
+                }
+            }
+        }
+        if (x != null && x instanceof ExtendedGSSContext) {
+            if (x.isEstablished()) {
+                ExtendedGSSContext ex = (ExtendedGSSContext)x;
+                Key k = (Key)ex.inquireSecContext(
+                        InquireType.KRB5_GET_SESSION_KEY);
+                if (k == null) {
+                    throw new Exception("Session key cannot be null");
+                }
+                System.out.println("Session key is: " + k);
+                boolean[] flags = (boolean[])ex.inquireSecContext(
+                        InquireType.KRB5_GET_TKT_FLAGS);
+                if (flags == null) {
+                    throw new Exception("Ticket flags cannot be null");
+                }
+                System.out.println("Ticket flags is: " + Arrays.toString(flags));
+                String authTime = (String)ex.inquireSecContext(
+                        InquireType.KRB5_GET_AUTHTIME);
+                if (authTime == null) {
+                    throw new Exception("Auth time cannot be null");
+                }
+                System.out.println("AuthTime is: " + authTime);
+                if (!x.isInitiator()) {
+                    AuthorizationDataEntry[] ad = (AuthorizationDataEntry[])ex.inquireSecContext(
+                            InquireType.KRB5_GET_AUTHZ_DATA);
+                    System.out.println("AuthzData is: " + Arrays.toString(ad));
                 }
             }
         }
@@ -299,7 +368,14 @@ public class Context {
             public byte[] run(Context me, byte[] dummy) throws Exception {
                 System.out.println("wrap");
                 MessageProp p1 = new MessageProp(0, true);
-                byte[] out = me.x.wrap(messageBytes, 0, messageBytes.length, p1);
+                byte[] out;
+                if (usingStream) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    me.x.wrap(new ByteArrayInputStream(messageBytes), os, p1);
+                    out = os.toByteArray();
+                } else {
+                    out = me.x.wrap(messageBytes, 0, messageBytes.length, p1);
+                }
                 System.out.println(printProp(p1));
                 return out;
             }
@@ -309,27 +385,46 @@ public class Context {
             @Override
             public byte[] run(Context me, byte[] input) throws Exception {
                 MessageProp p1 = new MessageProp(0, true);
-                byte[] bytes = me.x.unwrap(input, 0, input.length, p1);
+                byte[] bytes;
+                if (usingStream) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    me.x.unwrap(new ByteArrayInputStream(input), os, p1);
+                    bytes = os.toByteArray();
+                } else {
+                    bytes = me.x.unwrap(input, 0, input.length, p1);
+                }
                 if (!Arrays.equals(messageBytes, bytes))
                     throw new Exception("wrap/unwrap mismatch");
                 System.out.println("unwrap");
                 System.out.println(printProp(p1));
                 p1 = new MessageProp(0, true);
                 System.out.println("getMIC");
-                bytes = me.x.getMIC(bytes, 0, bytes.length, p1);
+                if (usingStream) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    me.x.getMIC(new ByteArrayInputStream(messageBytes), os, p1);
+                    bytes = os.toByteArray();
+                } else {
+                    bytes = me.x.getMIC(messageBytes, 0, messageBytes.length, p1);
+                }
                 System.out.println(printProp(p1));
                 return bytes;
             }
         }, t);
+
         // Re-unwrap should make p2.isDuplicateToken() returns true
         s1.doAs(new Action() {
             @Override
             public byte[] run(Context me, byte[] input) throws Exception {
                 MessageProp p1 = new MessageProp(0, true);
                 System.out.println("verifyMIC");
-                me.x.verifyMIC(input, 0, input.length,
-                        messageBytes, 0, messageBytes.length,
-                        p1);
+                if (usingStream) {
+                    me.x.verifyMIC(new ByteArrayInputStream(input),
+                            new ByteArrayInputStream(messageBytes), p1);
+                } else {
+                    me.x.verifyMIC(input, 0, input.length,
+                            messageBytes, 0, messageBytes.length,
+                            p1);
+                }
                 System.out.println(printProp(p1));
                 return null;
             }
@@ -350,7 +445,9 @@ public class Context {
         sb.append(prop.isGapToken()?"gap, ":"");
         sb.append(prop.isOldToken()?"old, ":"");
         sb.append(prop.isUnseqToken()?"unseq, ":"");
-        sb.append(prop.getMinorString()+ "(" + prop.getMinorStatus()+")");
+        if (prop.getMinorStatus() != 0) {
+            sb.append(prop.getMinorString()+ "(" + prop.getMinorStatus()+")");
+        }
         return sb.toString();
     }
 
@@ -369,10 +466,20 @@ public class Context {
                     if (me.x.isEstablished()) {
                         me.f = true;
                         System.out.println(c.name + " side established");
+                        if (input != null) {
+                            throw new Exception("Context established but " +
+                                    "still receive token at " + c.name);
+                        }
                         return null;
                     } else {
                         System.out.println(c.name + " call initSecContext");
-                        return me.x.initSecContext(input, 0, input.length);
+                        if (usingStream) {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            me.x.initSecContext(new ByteArrayInputStream(input), os);
+                            return os.size() == 0 ? null : os.toByteArray();
+                        } else {
+                            return me.x.initSecContext(input, 0, input.length);
+                        }
                     }
                 }
             }, t);
@@ -383,10 +490,20 @@ public class Context {
                     if (me.x.isEstablished()) {
                         me.f = true;
                         System.out.println(s.name + " side established");
+                        if (input != null) {
+                            throw new Exception("Context established but " +
+                                    "still receive token at " + s.name);
+                        }
                         return null;
                     } else {
                         System.out.println(s.name + " called acceptSecContext");
-                        return me.x.acceptSecContext(input, 0, input.length);
+                        if (usingStream) {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            me.x.acceptSecContext(new ByteArrayInputStream(input), os);
+                            return os.size() == 0 ? null : os.toByteArray();
+                        } else {
+                            return me.x.acceptSecContext(input, 0, input.length);
+                        }
                     }
                 }
             }, t);

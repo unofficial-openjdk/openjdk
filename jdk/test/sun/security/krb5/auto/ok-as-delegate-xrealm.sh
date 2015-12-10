@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,18 @@
 #
 
 # @test
-# @bug 6706974
-# @summary Add krb5 test infrastructure
-# @run shell/timeout=300 basic.sh
+# @bug 6853328
+# @summary Support OK-AS-DELEGATE flag
+# @run shell/timeout=600 ok-as-delegate-xrealm.sh
 #
 
 if [ "${TESTSRC}" = "" ] ; then
-  TESTSRC="."
+  TESTSRC=`dirname $0`
 fi
+
 if [ "${TESTJAVA}" = "" ] ; then
-  echo "TESTJAVA not set.  Test cannot execute."
-  echo "FAILED!!!"
-  exit 1
+  JAVAC_CMD=`which javac`
+  TESTJAVA=`dirname $JAVAC_CMD`/..
 fi
 
 # set platform-dependent variables
@@ -41,25 +41,39 @@ OS=`uname -s`
 case "$OS" in
   Windows_* )
     FS="\\"
+    SEP=";"
+    ;;
+  CYGWIN* )
+    FS="/"
+    SEP=";"
     ;;
   * )
     FS="/"
+    SEP=":"
     ;;
 esac
 
-${TESTJAVA}${FS}bin${FS}javac -d . \
-    ${TESTSRC}${FS}BasicKrb5Test.java \
+${TESTJAVA}${FS}bin${FS}javac -XDignore.symbol.file -d . \
+    ${TESTSRC}${FS}OkAsDelegateXRealm.java \
     ${TESTSRC}${FS}KDC.java \
     ${TESTSRC}${FS}OneKDC.java \
     ${TESTSRC}${FS}Action.java \
     ${TESTSRC}${FS}Context.java \
     || exit 10
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test || exit 100
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des-cbc-crc || exit 1
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des-cbc-md5 || exit 3
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des3-cbc-sha1 || exit 16
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test aes128-cts || exit 17
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test aes256-cts || exit 18
-${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test rc4-hmac || exit 23
+
+# Add $TESTSRC to classpath so that customized nameservice can be used
+J="${TESTJAVA}${FS}bin${FS}java -cp $TESTSRC${SEP}."
+
+# KDC no OK-AS-DELEGATE, fail
+$J OkAsDelegateXRealm false || exit 1
+
+# KDC set OK-AS-DELEGATE for all, succeed
+$J -Dtest.kdc.policy.ok-as-delegate OkAsDelegateXRealm true || exit 2
+
+# KDC set OK-AS-DELEGATE for host/host.r3.local only, fail
+$J -Dtest.kdc.policy.ok-as-delegate=host/host.r3.local OkAsDelegateXRealm false || exit 3
+
+# KDC set OK-AS-DELEGATE for all, succeed
+$J "-Dtest.kdc.policy.ok-as-delegate=host/host.r3.local krbtgt/R2 krbtgt/R3" OkAsDelegateXRealm true || exit 4
 
 exit 0

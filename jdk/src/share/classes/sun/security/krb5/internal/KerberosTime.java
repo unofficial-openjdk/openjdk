@@ -67,11 +67,6 @@ public class KerberosTime implements Cloneable {
     public static final boolean NOW = true;
     public static final boolean UNADJUSTED_NOW = false;
 
-    //defaults to zero instead of now; use setNow() for current time
-    public KerberosTime() {
-        kerberosTime = 0;
-    }
-
     public KerberosTime(long time) {
         kerberosTime = time;
     }

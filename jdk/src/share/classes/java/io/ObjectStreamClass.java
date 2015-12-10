@@ -164,6 +164,9 @@ public class ObjectStreamClass implements Serializable {
     /** superclass descriptor appearing in stream */
     private ObjectStreamClass superDesc;
 
+    /** true if, and only if, the object has been correctly initialized */
+    private boolean initialized;
+
     /**
      * Initializes native code.
      */
@@ -241,6 +244,7 @@ public class ObjectStreamClass implements Serializable {
         if (cl == null) {
             return null;
         }
+        requireInitialized();
         if (System.getSecurityManager() != null) {
             Class<?> caller = Reflection.getCallerClass();
             if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), cl.getClassLoader())) {
@@ -508,6 +512,7 @@ public class ObjectStreamClass implements Serializable {
                     name, "unmatched serializable field(s) declared");
             }
         }
+        initialized = true;
     }
 
     /**
@@ -525,6 +530,14 @@ public class ObjectStreamClass implements Serializable {
                    ObjectStreamClass superDesc)
         throws InvalidClassException
     {
+        ObjectStreamClass osc = null;
+        if (cl != null) {
+            osc = lookup(cl, true);
+            if (!osc.isProxy) {
+                throw new InvalidClassException(
+                    "cannot bind proxy descriptor to a non-proxy class");
+            }
+        }
         this.cl = cl;
         this.resolveEx = resolveEx;
         this.superDesc = superDesc;
@@ -532,21 +545,17 @@ public class ObjectStreamClass implements Serializable {
         serializable = true;
         suid = Long.valueOf(0);
         fields = NO_FIELDS;
-
-        if (cl != null) {
-            localDesc = lookup(cl, true);
-            if (!localDesc.isProxy) {
-                throw new InvalidClassException(
-                    "cannot bind proxy descriptor to a non-proxy class");
-            }
+        if (osc != null) {
+            localDesc = osc;
             name = localDesc.name;
             externalizable = localDesc.externalizable;
-            cons = localDesc.cons;
             writeReplaceMethod = localDesc.writeReplaceMethod;
             readResolveMethod = localDesc.readResolveMethod;
             deserializeEx = localDesc.deserializeEx;
+            cons = localDesc.cons;
         }
         fieldRefl = getReflector(fields, localDesc);
+        initialized = true;
     }
 
     /**
@@ -558,11 +567,57 @@ public class ObjectStreamClass implements Serializable {
                       ObjectStreamClass superDesc)
         throws InvalidClassException
     {
+        long suid = Long.valueOf(model.getSerialVersionUID());
+        ObjectStreamClass osc = null;
+        if (cl != null) {
+            osc = lookup(cl, true);
+            if (osc.isProxy) {
+                throw new InvalidClassException(
+                        "cannot bind non-proxy descriptor to a proxy class");
+            }
+            if (model.isEnum != osc.isEnum) {
+                throw new InvalidClassException(model.isEnum ?
+                        "cannot bind enum descriptor to a non-enum class" :
+                        "cannot bind non-enum descriptor to an enum class");
+            }
+
+            if (model.serializable == osc.serializable &&
+                    !cl.isArray() &&
+                    suid != osc.getSerialVersionUID()) {
+                throw new InvalidClassException(osc.name,
+                        "local class incompatible: " +
+                                "stream classdesc serialVersionUID = " + suid +
+                                ", local class serialVersionUID = " +
+                                osc.getSerialVersionUID());
+            }
+
+            if (!classNamesEqual(model.name, osc.name)) {
+                throw new InvalidClassException(osc.name,
+                        "local class name incompatible with stream class " +
+                                "name \"" + model.name + "\"");
+            }
+
+            if (!model.isEnum) {
+                if ((model.serializable == osc.serializable) &&
+                        (model.externalizable != osc.externalizable)) {
+                    throw new InvalidClassException(osc.name,
+                            "Serializable incompatible with Externalizable");
+                }
+
+                if ((model.serializable != osc.serializable) ||
+                        (model.externalizable != osc.externalizable) ||
+                        !(model.serializable || model.externalizable)) {
+                    deserializeEx = new InvalidClassException(
+                            osc.name, "class invalid for deserialization");
+                }
+            }
+        }
+
         this.cl = cl;
         this.resolveEx = resolveEx;
         this.superDesc = superDesc;
         name = model.name;
-        suid = Long.valueOf(model.getSerialVersionUID());
+        this.suid = suid;
         isProxy = false;
         isEnum = model.isEnum;
         serializable = model.serializable;
@@ -573,53 +628,8 @@ public class ObjectStreamClass implements Serializable {
         primDataSize = model.primDataSize;
         numObjFields = model.numObjFields;
 
-        if (cl != null) {
-            localDesc = lookup(cl, true);
-            if (localDesc.isProxy) {
-                throw new InvalidClassException(
-                    "cannot bind non-proxy descriptor to a proxy class");
-            }
-            if (isEnum != localDesc.isEnum) {
-                throw new InvalidClassException(isEnum ?
-                    "cannot bind enum descriptor to a non-enum class" :
-                    "cannot bind non-enum descriptor to an enum class");
-            }
-
-            if (serializable == localDesc.serializable &&
-                !cl.isArray() &&
-                suid.longValue() != localDesc.getSerialVersionUID())
-            {
-                throw new InvalidClassException(localDesc.name,
-                    "local class incompatible: " +
-                    "stream classdesc serialVersionUID = " + suid +
-                    ", local class serialVersionUID = " +
-                    localDesc.getSerialVersionUID());
-            }
-
-            if (!classNamesEqual(name, localDesc.name)) {
-                throw new InvalidClassException(localDesc.name,
-                    "local class name incompatible with stream class " +
-                    "name \"" + name + "\"");
-            }
-
-            if (!isEnum) {
-                if ((serializable == localDesc.serializable) &&
-                    (externalizable != localDesc.externalizable))
-                {
-                    throw new InvalidClassException(localDesc.name,
-                        "Serializable incompatible with Externalizable");
-                }
-
-                if ((serializable != localDesc.serializable) ||
-                    (externalizable != localDesc.externalizable) ||
-                    !(serializable || externalizable))
-                {
-                    deserializeEx = new InvalidClassException(localDesc.name,
-                        "class invalid for deserialization");
-                }
-            }
-
-            cons = localDesc.cons;
+        if (osc != null) {
+            localDesc = osc;
             writeObjectMethod = localDesc.writeObjectMethod;
             readObjectMethod = localDesc.readObjectMethod;
             readObjectNoDataMethod = localDesc.readObjectNoDataMethod;
@@ -628,10 +638,13 @@ public class ObjectStreamClass implements Serializable {
             if (deserializeEx == null) {
                 deserializeEx = localDesc.deserializeEx;
             }
+            cons = localDesc.cons;
         }
+
         fieldRefl = getReflector(fields, localDesc);
         // reassign to matched fields so as to reflect local unshared settings
         fields = fieldRefl.getFields();
+        initialized = true;
     }
 
     /**
@@ -734,11 +747,20 @@ public class ObjectStreamClass implements Serializable {
     }
 
     /**
+     * Throws InternalError if not initialized.
+     */
+    private final void requireInitialized() {
+        if (!initialized)
+            throw new InternalError("Unexpected call when not initialized");
+    }
+
+    /**
      * Throws an InvalidClassException if object instances referencing this
      * class descriptor should not be allowed to deserialize.  This method does
      * not apply to deserialization of enum constants.
      */
     void checkDeserialize() throws InvalidClassException {
+        requireInitialized();
         if (deserializeEx != null) {
             InvalidClassException ice =
                 new InvalidClassException(deserializeEx.classname,
@@ -753,6 +775,7 @@ public class ObjectStreamClass implements Serializable {
      * not apply to serialization of enum constants.
      */
     void checkSerialize() throws InvalidClassException {
+        requireInitialized();
         if (serializeEx != null) {
             InvalidClassException ice =
                 new InvalidClassException(serializeEx.classname,
@@ -769,6 +792,7 @@ public class ObjectStreamClass implements Serializable {
      * does not apply to deserialization of enum constants.
      */
     void checkDefaultSerialize() throws InvalidClassException {
+        requireInitialized();
         if (defaultSerializeEx != null) {
             InvalidClassException ice =
                 new InvalidClassException(defaultSerializeEx.classname,
@@ -783,6 +807,7 @@ public class ObjectStreamClass implements Serializable {
      * of the subclass descriptor's bound class.
      */
     ObjectStreamClass getSuperDesc() {
+        requireInitialized();
         return superDesc;
     }
 
@@ -793,6 +818,7 @@ public class ObjectStreamClass implements Serializable {
      * associated with this descriptor.
      */
     ObjectStreamClass getLocalDesc() {
+        requireInitialized();
         return localDesc;
     }
 
@@ -835,6 +861,7 @@ public class ObjectStreamClass implements Serializable {
      * otherwise.
      */
     boolean isProxy() {
+        requireInitialized();
         return isProxy;
     }
 
@@ -843,6 +870,7 @@ public class ObjectStreamClass implements Serializable {
      * otherwise.
      */
     boolean isEnum() {
+        requireInitialized();
         return isEnum;
     }
 
@@ -851,6 +879,7 @@ public class ObjectStreamClass implements Serializable {
      * otherwise.
      */
     boolean isExternalizable() {
+        requireInitialized();
         return externalizable;
     }
 
@@ -859,6 +888,7 @@ public class ObjectStreamClass implements Serializable {
      * otherwise.
      */
     boolean isSerializable() {
+        requireInitialized();
         return serializable;
     }
 
@@ -867,6 +897,7 @@ public class ObjectStreamClass implements Serializable {
      * has written its data in 1.2 (block data) format, false otherwise.
      */
     boolean hasBlockExternalData() {
+        requireInitialized();
         return hasBlockExternalData;
     }
 
@@ -876,6 +907,7 @@ public class ObjectStreamClass implements Serializable {
      * writeObject() method, false otherwise.
      */
     boolean hasWriteObjectData() {
+        requireInitialized();
         return hasWriteObjectData;
     }
 
@@ -887,6 +919,7 @@ public class ObjectStreamClass implements Serializable {
      * accessible no-arg constructor.  Otherwise, returns false.
      */
     boolean isInstantiable() {
+        requireInitialized();
         return (cons != null);
     }
 
@@ -896,6 +929,7 @@ public class ObjectStreamClass implements Serializable {
      * returns false.
      */
     boolean hasWriteObjectMethod() {
+        requireInitialized();
         return (writeObjectMethod != null);
     }
 
@@ -905,6 +939,7 @@ public class ObjectStreamClass implements Serializable {
      * returns false.
      */
     boolean hasReadObjectMethod() {
+        requireInitialized();
         return (readObjectMethod != null);
     }
 
@@ -914,6 +949,7 @@ public class ObjectStreamClass implements Serializable {
      * Otherwise, returns false.
      */
     boolean hasReadObjectNoDataMethod() {
+        requireInitialized();
         return (readObjectNoDataMethod != null);
     }
 
@@ -922,6 +958,7 @@ public class ObjectStreamClass implements Serializable {
      * defines a conformant writeReplace method.  Otherwise, returns false.
      */
     boolean hasWriteReplaceMethod() {
+        requireInitialized();
         return (writeReplaceMethod != null);
     }
 
@@ -930,6 +967,7 @@ public class ObjectStreamClass implements Serializable {
      * defines a conformant readResolve method.  Otherwise, returns false.
      */
     boolean hasReadResolveMethod() {
+        requireInitialized();
         return (readResolveMethod != null);
     }
 
@@ -946,6 +984,7 @@ public class ObjectStreamClass implements Serializable {
         throws InstantiationException, InvocationTargetException,
                UnsupportedOperationException
     {
+        requireInitialized();
         if (cons != null) {
             try {
                 return cons.newInstance();
@@ -967,6 +1006,7 @@ public class ObjectStreamClass implements Serializable {
     void invokeWriteObject(Object obj, ObjectOutputStream out)
         throws IOException, UnsupportedOperationException
     {
+        requireInitialized();
         if (writeObjectMethod != null) {
             try {
                 writeObjectMethod.invoke(obj, new Object[]{ out });
@@ -996,6 +1036,7 @@ public class ObjectStreamClass implements Serializable {
         throws ClassNotFoundException, IOException,
                UnsupportedOperationException
     {
+        requireInitialized();
         if (readObjectMethod != null) {
             try {
                 readObjectMethod.invoke(obj, new Object[]{ in });
@@ -1026,6 +1067,7 @@ public class ObjectStreamClass implements Serializable {
     void invokeReadObjectNoData(Object obj)
         throws IOException, UnsupportedOperationException
     {
+        requireInitialized();
         if (readObjectNoDataMethod != null) {
             try {
                 readObjectNoDataMethod.invoke(obj, (Object[]) null);
@@ -1054,6 +1096,7 @@ public class ObjectStreamClass implements Serializable {
     Object invokeWriteReplace(Object obj)
         throws IOException, UnsupportedOperationException
     {
+        requireInitialized();
         if (writeReplaceMethod != null) {
             try {
                 return writeReplaceMethod.invoke(obj, (Object[]) null);
@@ -1083,6 +1126,7 @@ public class ObjectStreamClass implements Serializable {
     Object invokeReadResolve(Object obj)
         throws IOException, UnsupportedOperationException
     {
+        requireInitialized();
         if (readResolveMethod != null) {
             try {
                 return readResolveMethod.invoke(obj, (Object[]) null);
