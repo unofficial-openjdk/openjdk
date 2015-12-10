@@ -60,6 +60,14 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   java.base_EXCLUDE_FILES += sun/nio/fs/GnomeFileTypeDetector.java
 endif
 
+ifneq ($(filter solaris macosx linux windows,$(OPENJDK_TARGET_OS)), )
+  java.base_EXCLUDE_FILES += \
+      sun/nio/ch/AbstractPollSelectorImpl.java \
+      sun/nio/ch/PollSelectorImpl.java \
+      sun/nio/ch/PollSelectorProvider.java \
+      #
+endif
+
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   java.base_EXCLUDE_FILES += \
       SolarisLoginModule.java \
@@ -76,8 +84,6 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   java.base_EXCLUDE_FILES += \
-      sun/nio/ch/AbstractPollSelectorImpl.java \
-      sun/nio/ch/PollSelectorProvider.java \
       sun/nio/ch/SimpleAsynchronousFileChannelImpl.java \
       #
 endif
@@ -367,11 +373,38 @@ jdk.compiler_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
+jdk.hotspot.agent_SRC += \
+    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.hotspot.agent \
+    $(HOTSPOT_TOPDIR)/agent/src/share/classes \
+    #
+jdk.hotspot.agent_ADD_JAVAC_FLAGS := $(DISABLE_WARNINGS),-overrides
+jdk.hotspot.agent_COPY := .png sa.js .properties
+
+ifeq ($(MODULE), jdk.hotspot.agent)
+  ### Copy gif files
+  # Special handling to copy gif files in images/toolbarButtonGraphics \
+  #   -> classes/toolbarButtonGraphics.
+  # These can't be handled by COPY to SetupJavaCompilation since they chop off
+  # one directory level.
+  $(eval $(call SetupCopyFiles, COPY_SA_IMAGES, \
+      SRC := $(HOTSPOT_TOPDIR)/agent/src/share/classes/images, \
+      DEST := $(JDK_OUTPUTDIR)/modules/$(MODULE), \
+      FILES := $(wildcard $(HOTSPOT_TOPDIR)/agent/src/share/classes/images/*/*/*.gif), \
+  ))
+  jdk.hotspot.agent: $(COPY_SA_IMAGES)
+endif
+
+################################################################################
+
 jdk.internal.le_COPY := .properties
 
 ################################################################################
 
 jdk.jcmd_COPY := _options
+
+################################################################################
+
+jdk.dynalink_CLEAN := .properties
 
 ################################################################################
 
@@ -569,7 +602,7 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 	$(install-file)
 
 CreateHkTargets = \
-    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules, \
+    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
       $(subst /share/classes,, \
         $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 
