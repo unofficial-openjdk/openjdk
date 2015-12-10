@@ -27,6 +27,7 @@
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library /testlibrary /
+ * @ignore 8143238
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *      -Dcompiler.jvmci.JVM_GetJVMCIRuntimeTest.positive=true
  *      -XX:+EnableJVMCI

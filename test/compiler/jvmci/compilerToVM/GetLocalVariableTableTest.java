@@ -27,6 +27,7 @@
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library /testlibrary /test/lib /
+ * @ignore 8143238
  * @clean compiler.jvmci.compilerToVM.*
  * @compile -g DummyInterface.java
  * @compile -g DummyAbstractClass.java

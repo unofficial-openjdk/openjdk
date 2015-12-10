@@ -34,6 +34,7 @@
   LOG_TAG(defaultmethods) \
   LOG_TAG(gc) \
   LOG_TAG(logging) \
+  LOG_TAG(modules) \
   LOG_TAG(safepoint) \
   LOG_TAG(vmoperation)
 

@@ -26,6 +26,7 @@
  * @bug 8136421
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library /testlibrary /
+ * @ignore 8143238
  * @build compiler.jvmci.common.JVMCIHelpers
  *        compiler.jvmci.events.JvmciShutdownEventListener
  *        compiler.jvmci.events.JvmciShutdownEventTest

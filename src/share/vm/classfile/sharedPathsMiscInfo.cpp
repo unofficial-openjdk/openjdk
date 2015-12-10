@@ -111,7 +111,7 @@ bool SharedPathsMiscInfo::check(jint type, const char* path) {
   switch (type) {
   case BOOT:
     if (os::file_name_strcmp(path, Arguments::get_sysclasspath()) != 0) {
-      return fail("[BOOT classpath mismatch, actual: -Dsun.boot.class.path=", Arguments::get_sysclasspath());
+      return fail("[BOOT classpath mismatch, actual: -Djdk.boot.class.path.append=", Arguments::get_sysclasspath());
     }
     break;
   case NON_EXIST: // fall-through

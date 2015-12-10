@@ -28,6 +28,7 @@
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/defaultMethods.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/verificationType.hpp"
@@ -3758,6 +3759,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   // Timing
   assert(THREAD->is_Java_thread(), "must be a JavaThread");
   JavaThread* jt = (JavaThread*) THREAD;
+  bool cf_changed_in_CFLH = false;
 
   PerfClassTraceTime ctimer(ClassLoader::perf_class_parse_time(),
                             ClassLoader::perf_class_parse_selftime(),
@@ -3797,6 +3799,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       // class file data.
       cfs = new ClassFileStream(ptr, end_ptr - ptr, cfs->source());
       set_stream(cfs);
+      cf_changed_in_CFLH = true;
     }
   }
 
@@ -4148,6 +4151,17 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       this_klass->set_host_klass(host_klass());
     }
 
+    // After the majority of the set up for this_klass has occurred,
+    // set its PackageEntry.  Critical to be done after set_name
+    // and set_host_klass in order to handle anonymous classes
+    // properly.
+    oop cl = this_klass->is_anonymous() ? this_klass->host_klass()->class_loader() :
+                                          this_klass->class_loader();
+
+    Handle clh = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(cl));
+    ClassLoaderData* cld = ClassLoaderData::class_loader_data_or_null(clh());
+    this_klass->set_package(this_klass->name(), cld, CHECK_NULL);
+
     // Set up Method*::intrinsic_id as soon as we know the names of methods.
     // (We used to do this lazily, but now we query it in Rewriter,
     // which is eagerly done for every method, so we might as well do it now,
@@ -4285,8 +4299,19 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       }
     }
 
+    // Obtain this_klass' module entry
+    ModuleEntry* module_entry = this_klass->module();
+    assert(module_entry != NULL, "module_entry should always be set");
+
+    // Obtain j.l.r.Module
+    oop module_jlrM = (oop)NULL;
+    if (module_entry->jlrM_module() != NULL) {
+      module_jlrM = JNIHandles::resolve(module_entry->jlrM_module());
+    }
+    Handle jlrM_handle(THREAD, module_jlrM);
+
     // Allocate mirror and initialize static fields
-    java_lang_Class::create_mirror(this_klass, class_loader, protection_domain,
+    java_lang_Class::create_mirror(this_klass, class_loader, jlrM_handle, protection_domain,
                                    CHECK_(nullHandle));
 
     // Generate any default methods - default methods are interface methods
@@ -4294,6 +4319,11 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     if (has_default_methods ) {
       DefaultMethods::generate_default_methods(
           this_klass(), &all_mirandas, CHECK_(nullHandle));
+    }
+
+    // Add read edges to the unnamed modules of the bootstrap and app class loaders.
+    if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named()) {
+      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
     }
 
     // Update the loader_data graph.
@@ -4306,8 +4336,18 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       ResourceMark rm;
       // print in a single call to reduce interleaving of output
       if (cfs->source() != NULL) {
-        tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
-                   cfs->source());
+        static const size_t boot_image_name_len = strlen(BOOT_IMAGE_NAME);
+        size_t cfs_len = strlen(cfs->source());
+        // See if cfs->source() ends in "bootmodules.jimage"
+        if (module_entry->is_named() && boot_image_name_len < cfs_len &&
+          (strncmp(cfs->source() + cfs_len - boot_image_name_len,
+                  BOOT_IMAGE_NAME, boot_image_name_len) == 0)) {
+          tty->print_cr("[Loaded %s from jrt:/%s]", this_klass->external_name(),
+                     module_entry->name()->as_C_string());
+        } else {
+          tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
+                     cfs->source());
+        }
       } else if (class_loader.is_null()) {
         Klass* caller =
             THREAD->is_Java_thread()
@@ -4680,17 +4720,29 @@ Array<Klass*>* ClassFileParser::compute_transitive_interfaces(
 
 void ClassFileParser::check_super_class_access(instanceKlassHandle this_klass, TRAPS) {
   Klass* super = this_klass->super();
-  if ((super != NULL) &&
-      (!Reflection::verify_class_access(this_klass(), super, false))) {
-    ResourceMark rm(THREAD);
-    Exceptions::fthrow(
-      THREAD_AND_LOCATION,
-      vmSymbols::java_lang_IllegalAccessError(),
-      "class %s cannot access its superclass %s",
-      this_klass->external_name(),
-      super->external_name()
-    );
-    return;
+  if (super != NULL) {
+    Reflection::VerifyClassAccessResults vca_result =
+      Reflection::verify_class_access(this_klass(), super, false);
+    if (vca_result != Reflection::ACCESS_OK) {
+      ResourceMark rm(THREAD);
+      char* msg =  Reflection::verify_class_access_msg(this_klass(), super, vca_result);
+      if (msg == NULL) {
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s cannot access its superclass %s",
+          this_klass->external_name(),
+          InstanceKlass::cast(super)->external_name());
+      } else {
+        // Add additional message content.
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "superclass access check failed: %s",
+          msg);
+      }
+      return;
+    }
   }
 }
 
@@ -4701,15 +4753,26 @@ void ClassFileParser::check_super_interface_access(instanceKlassHandle this_klas
   for (int i = lng - 1; i >= 0; i--) {
     Klass* k = local_interfaces->at(i);
     assert (k != NULL && k->is_interface(), "invalid interface");
-    if (!Reflection::verify_class_access(this_klass(), k, false)) {
+    Reflection::VerifyClassAccessResults vca_result =
+      Reflection::verify_class_access(this_klass(), k, false);
+    if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
-      Exceptions::fthrow(
-        THREAD_AND_LOCATION,
-        vmSymbols::java_lang_IllegalAccessError(),
-        "class %s cannot access its superinterface %s",
-        this_klass->external_name(),
-        k->external_name()
-      );
+      char* msg =  Reflection::verify_class_access_msg(this_klass(), k, vca_result);
+      if (msg == NULL) {
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s cannot access its superinterface %s",
+          this_klass->external_name(),
+          k->external_name());
+      } else {
+        // Add additional message content.
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "superinterface check failed: %s",
+          msg);
+      }
       return;
     }
   }
@@ -4808,12 +4871,13 @@ void ClassFileParser::verify_legal_class_modifiers(jint flags, TRAPS) {
   const bool is_super      = (flags & JVM_ACC_SUPER)      != 0;
   const bool is_enum       = (flags & JVM_ACC_ENUM)       != 0;
   const bool is_annotation = (flags & JVM_ACC_ANNOTATION) != 0;
+  const bool is_module_info= (flags & JVM_ACC_MODULE)     != 0;
   const bool major_gte_15  = _major_version >= JAVA_1_5_VERSION;
 
   if ((is_abstract && is_final) ||
       (is_interface && !is_abstract) ||
       (is_interface && major_gte_15 && (is_super || is_enum)) ||
-      (!is_interface && major_gte_15 && is_annotation)) {
+      (!is_interface && major_gte_15 && is_annotation) || is_module_info) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
       THREAD_AND_LOCATION,
@@ -4964,65 +5028,9 @@ void ClassFileParser::verify_legal_method_modifiers(
 
 void ClassFileParser::verify_legal_utf8(const unsigned char* buffer, int length, TRAPS) {
   assert(_need_verify, "only called when _need_verify is true");
-  int i = 0;
-  int count = length >> 2;
-  for (int k=0; k<count; k++) {
-    unsigned char b0 = buffer[i];
-    unsigned char b1 = buffer[i+1];
-    unsigned char b2 = buffer[i+2];
-    unsigned char b3 = buffer[i+3];
-    // For an unsigned char v,
-    // (v | v - 1) is < 128 (highest bit 0) for 0 < v < 128;
-    // (v | v - 1) is >= 128 (highest bit 1) for v == 0 or v >= 128.
-    unsigned char res = b0 | b0 - 1 |
-                        b1 | b1 - 1 |
-                        b2 | b2 - 1 |
-                        b3 | b3 - 1;
-    if (res >= 128) break;
-    i += 4;
+  if (!UTF8::is_legal_utf8(buffer, length, _major_version <= 47)) {
+        classfile_parse_error("Illegal UTF8 string in constant pool in class file %s", CHECK);
   }
-  for(; i < length; i++) {
-    unsigned short c;
-    // no embedded zeros
-    guarantee_property((buffer[i] != 0), "Illegal UTF8 string in constant pool in class file %s", CHECK);
-    if(buffer[i] < 128) {
-      continue;
-    }
-    if ((i + 5) < length) { // see if it's legal supplementary character
-      if (UTF8::is_supplementary_character(&buffer[i])) {
-        c = UTF8::get_supplementary_character(&buffer[i]);
-        i += 5;
-        continue;
-      }
-    }
-    switch (buffer[i] >> 4) {
-      default: break;
-      case 0x8: case 0x9: case 0xA: case 0xB: case 0xF:
-        classfile_parse_error("Illegal UTF8 string in constant pool in class file %s", CHECK);
-      case 0xC: case 0xD:  // 110xxxxx  10xxxxxx
-        c = (buffer[i] & 0x1F) << 6;
-        i++;
-        if ((i < length) && ((buffer[i] & 0xC0) == 0x80)) {
-          c += buffer[i] & 0x3F;
-          if (_major_version <= 47 || c == 0 || c >= 0x80) {
-            // for classes with major > 47, c must a null or a character in its shortest form
-            break;
-          }
-        }
-        classfile_parse_error("Illegal UTF8 string in constant pool in class file %s", CHECK);
-      case 0xE:  // 1110xxxx 10xxxxxx 10xxxxxx
-        c = (buffer[i] & 0xF) << 12;
-        i += 2;
-        if ((i < length) && ((buffer[i-1] & 0xC0) == 0x80) && ((buffer[i] & 0xC0) == 0x80)) {
-          c += ((buffer[i-1] & 0x3F) << 6) + (buffer[i] & 0x3F);
-          if (_major_version <= 47 || c >= 0x800) {
-            // for classes with major > 47, c must be in its shortest form
-            break;
-          }
-        }
-        classfile_parse_error("Illegal UTF8 string in constant pool in class file %s", CHECK);
-    }  // end of switch
-  } // end of for
 }
 
 // Checks if name is a legal class name.
@@ -5214,6 +5222,8 @@ int ClassFileParser::verify_legal_method_signature(Symbol* name, Symbol* signatu
 // or <clinit>.  Note that method names may not be <init> or <clinit> in this
 // method.  Because these names have been checked as special cases before
 // calling this method in verify_legal_method_name.
+//
+// This method is also called from jvm.cpp. Be careful about changing it.
 bool ClassFileParser::verify_unqualified_name(
     char* name, unsigned int length, int type) {
   jchar ch;
@@ -5221,8 +5231,15 @@ bool ClassFileParser::verify_unqualified_name(
   for (char* p = name; p != name + length; ) {
     ch = *p;
     if (ch < 128) {
-      p++;
-      if (ch == '.' || ch == ';' || ch == '[' ) {
+      if (ch == '.') {
+        // permit '.' in module names unless it's the first char, or
+        // preceding char is also a '.', or last char is a '.'.
+        if ((type != LegalModule) || (p == name) || (*(p-1) == '.') ||
+          (p == name + length - 1)) {
+          return false;
+        }
+      }
+      if (ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
       }
       if (type != LegalClass && ch == '/') {
@@ -5231,6 +5248,7 @@ bool ClassFileParser::verify_unqualified_name(
       if (type == LegalMethod && (ch == '<' || ch == '>')) {
         return false;   // do not permit '<' or '>' in method names
       }
+      p++;
     } else {
       char* tmp_p = UTF8::next(p, &ch);
       p = tmp_p;
