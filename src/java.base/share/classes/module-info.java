@@ -155,6 +155,7 @@ module java.base {
     exports jdk.internal.module to
         java.management,
         java.xml,
+        jdk.dynalink,
         jdk.jartool,
         jdk.jlink,
         jdk.scripting.nashorn;

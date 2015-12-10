@@ -26,6 +26,8 @@
 module java.desktop {
     requires public java.datatransfer;
     requires public java.xml;
+    // ## revisit the dependence to java.logging was brought back by 8144526
+    requires java.logging;
     requires java.prefs;
 
     exports java.applet;
