@@ -50,6 +50,7 @@ module java.desktop {
     exports javax.imageio.metadata;
     exports javax.imageio.plugins.bmp;
     exports javax.imageio.plugins.jpeg;
+    exports javax.imageio.plugins.tiff;
     exports javax.imageio.spi;
     exports javax.imageio.stream;
     exports javax.print;
