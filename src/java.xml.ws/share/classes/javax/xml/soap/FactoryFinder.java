@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
-import com.sun.xml.internal.ws.Modules;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
