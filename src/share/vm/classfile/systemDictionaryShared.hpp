@@ -58,6 +58,7 @@ public:
       assert(class_loader.is_null(), "Unsupported classloader");
     } );
     return true;
+  }
 
   static Klass* dump_time_resolve_super_or_fail(Symbol* child_name,
                                                 Symbol* class_name,
