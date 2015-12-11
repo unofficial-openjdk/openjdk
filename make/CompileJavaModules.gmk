@@ -373,10 +373,6 @@ jdk.compiler_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
-jdk.hotspot.agent_SRC += \
-    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.hotspot.agent \
-    $(HOTSPOT_TOPDIR)/agent/src/share/classes \
-    #
 jdk.hotspot.agent_ADD_JAVAC_FLAGS := $(DISABLE_WARNINGS),-overrides
 jdk.hotspot.agent_COPY := .png sa.js .properties
 
@@ -556,6 +552,14 @@ MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SR
 # Add imported modules to the moduleclasspath
 MODULECLASSPATH := $(subst $(SPACE),$(PATH_SEP), $(IMPORT_MODULES_CLASSES))
 
+jdk.hotspot.agent_SRC := $(HOTSPOT_TOPDIR)/jdk.hotspot.agent/src/share/classes 
+ifeq ($(MODULE), jdk.hotspot.agent)
+  ## WORKAROUND jdk.hotspot.agent source structure issue
+  HOTSPOT_AGENT_MODULESOURCEPATH := $(MODULESOURCEPATH) \
+      $(subst /$(MODULE)/,/*/, $(jdk.hotspot.agent_SRC))
+  MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP), $(HOTSPOT_AGENT_MODULESOURCEPATH))
+endif
+  
 ifeq ($(MODULE), jdk.vm.ci)
   ## WORKAROUND jdk.vm.ci source structure issue
   JVMCI_MODULESOURCEPATH := $(MODULESOURCEPATH) \
@@ -573,7 +577,7 @@ $(call MakeDir, $(GENERATED_SRC_DIRS))
 $(eval $(call SetupJavaCompilation, $(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
-    SRC := $(wildcard $(MODULE_SRC_DIRS)), \
+    SRC := $(wildcard $(MODULE_SRC_DIRS)) $(if $($(MODULE)_SRC), $($(MODULE)_SRC),), \
     INCLUDES := $(JDK_USER_DEFINED_FILTER),\
     BIN := $(if $($(MODULE)_BIN), $($(MODULE)_BIN), $(JDK_OUTPUTDIR)/modules), \
     HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
