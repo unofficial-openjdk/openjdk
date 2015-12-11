@@ -419,7 +419,6 @@ public class WhiteBox {
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
   // Sharing
-  public native boolean isSharedClass(Class<?> c);
   public native boolean isShared(Object o);
   public native boolean isSharedClass(Class<?> c);
   public native boolean areSharedStringsIgnored();
