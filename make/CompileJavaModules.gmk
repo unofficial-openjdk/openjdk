@@ -552,7 +552,7 @@ MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SR
 # Add imported modules to the moduleclasspath
 MODULECLASSPATH := $(subst $(SPACE),$(PATH_SEP), $(IMPORT_MODULES_CLASSES))
 
-jdk.hotspot.agent_SRC := $(HOTSPOT_TOPDIR)/jdk.hotspot.agent/src/share/classes 
+jdk.hotspot.agent_SRC += $(HOTSPOT_TOPDIR)/jdk.hotspot.agent/src/share/classes 
 ifeq ($(MODULE), jdk.hotspot.agent)
   ## WORKAROUND jdk.hotspot.agent source structure issue
   HOTSPOT_AGENT_MODULESOURCEPATH := $(MODULESOURCEPATH) \
