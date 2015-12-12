@@ -73,4 +73,11 @@ sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 # 8130054, needs to be changed to headless
 javax/naming/module/basic.sh					generic-all
 
+# 8145242
+javax/xml/soap/XmlTest.java                                     generic-all
+javax/xml/soap/spi/SAAJFactoryTest.java                         generic-all
+javax/xml/ws/clientjar/TestWsImport.java                        generic-all
+javax/xml/ws/xsanymixed/Test.java                               generic-all
+
 ############################################################################
+
