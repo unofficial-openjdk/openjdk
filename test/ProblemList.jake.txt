@@ -27,7 +27,10 @@ sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 
 ############################################################################
 
 # 8134916
-sun/text/resources/LocaleDataTest.java                                   generic-all
+sun/text/resources/LocaleDataTest.java                          generic-all
+
+# 8145351
+java/text/Format/DateFormat/Bug8141243.java                     generic-all
 
 ############################################################################
 
