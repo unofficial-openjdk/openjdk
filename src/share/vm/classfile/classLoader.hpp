@@ -213,7 +213,6 @@ class ClassLoader: AllStatic {
   static GrowableArray<char*>* _ext_modules_array;
 
   // Info used by CDS
-  CDS_ONLY(static ClassPathEntry* _last_append_entry;)
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
   // If the package for the fully qualified class name is in the boot
@@ -359,8 +358,10 @@ class ClassLoader: AllStatic {
   static bool  check_shared_paths_misc_info(void* info, int size);
   static void  exit_with_path_failure(const char* error, const char* message);
 
-  static bool class_in_append_entries(const char* file_name, TRAPS);
+  static jshort module_to_classloader(const char* module_name);
 #endif
+  static jshort classloader_type(Symbol* class_name, ClassPathEntry* e,
+                                 int classpath_index, TRAPS);
 
   static void  trace_class_path(outputStream* out, const char* msg, const char* name = NULL);
 
@@ -399,7 +400,6 @@ class ClassLoader: AllStatic {
 
   static void initialize_module_loader_map(JImageFile* jimage);
 
-  static jshort module_to_classloader(const char* module_name);
   // Debugging
   static void verify()              PRODUCT_RETURN;
 

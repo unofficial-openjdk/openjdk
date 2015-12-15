@@ -84,6 +84,9 @@ public:
     }
   }
   static void setup_search_paths() {}
+  static bool is_boot_classpath(int classpath_index) {
+   return true;
+ }
   static Klass* load_one_class(ClassListParser* parser, TRAPS);
 };
 

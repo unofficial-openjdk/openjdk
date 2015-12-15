@@ -145,9 +145,6 @@ GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
 GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
 
 #if INCLUDE_CDS
-// The _last_append_entry is only set when DumpSharedSpaces is true and there are
-// append path entries.
-ClassPathEntry* ClassLoader::_last_append_entry = NULL;
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
 // helper routines
@@ -576,16 +573,6 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
       end++;
     }
   }
-
-#if INCLUDE_CDS
-  // Mark the last entry corresponding to the -Xbootclasspath/a
-  if (DumpSharedSpaces) {
-    if (_first_append_entry != NULL && bootstrap_search) {
-      assert(_last_append_entry == NULL, "The _last_append_entry is already set");
-      _last_append_entry = _last_entry;
-    }
-  }
-#endif
 }
 
 ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const struct stat* st,
@@ -914,28 +901,6 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   FREE_RESOURCE_ARRAY(u1, buffer, size);
 }
 
-jshort ClassLoader::module_to_classloader(const char* module_name) {
-
-  assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
-  assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
-
-  int array_size = _boot_modules_array->length();
-  for (int i = 0; i < array_size; i++) {
-    if (strcmp(module_name, _boot_modules_array->at(i)) == 0) {
-      return BOOT;
-    }
-  }
-
-  array_size = _ext_modules_array->length();
-  for (int i = 0; i < array_size; i++) {
-    if (strcmp(module_name, _ext_modules_array->at(i)) == 0) {
-      return EXT;
-    }
-  }
-
-  return APP;
-}
-
 // Function add_package extracts the package from the fully qualified class name
 // and checks if the package is in the boot loader's package entry table.  If so,
 // then it sets the has_loaded_class flag in the package entry record.
@@ -1028,18 +993,60 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 }
 
 #if INCLUDE_CDS
-bool ClassLoader::class_in_append_entries(const char* file_name, TRAPS) {
-  ClassPathEntry* tmp_e = _first_append_entry;
-  while ((tmp_e != NULL) && (tmp_e != _last_append_entry->next())) {
-    ClassFileStream* stream = tmp_e->open_stream(file_name, CHECK_false);
-    if (stream != NULL) {
-      return true;
+jshort ClassLoader::module_to_classloader(const char* module_name) {
+
+  assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
+  assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
+
+  int array_size = _boot_modules_array->length();
+  for (int i = 0; i < array_size; i++) {
+    if (strcmp(module_name, _boot_modules_array->at(i)) == 0) {
+      return BOOT;
     }
-    tmp_e = tmp_e->next();
   }
-  return false;
+
+  array_size = _ext_modules_array->length();
+  for (int i = 0; i < array_size; i++) {
+    if (strcmp(module_name, _ext_modules_array->at(i)) == 0) {
+      return EXT;
+    }
+  }
+
+  return APP;
 }
 #endif
+
+jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
+                                     int classpath_index, TRAPS) {
+#if INCLUDE_CDS
+  // obtain the classloader type based on the class name.
+  // First obtain the package name based on the class name. Then obtain
+  // the classloader type based on the package name from the jimage using
+  // a jimage API. If the classloader type cannot be found from the
+  // jimage, it is determined by the class path entry.
+  jshort loader_type = ClassLoader::APP;
+  if (e->is_jrt()) {
+    int length;
+    const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+    TempNewSymbol pkg_name = NULL;
+    if (pkg_string != NULL) {
+      ResourceMark rm;
+      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, THREAD);
+      const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
+      ClassPathImageEntry* cpie = (ClassPathImageEntry*)e;
+      JImageFile* jimage = cpie->jimage();
+      char* module_name = (char*)(*JImagePackageToModule)(jimage, pkg_name_C_string);
+      if (module_name != NULL) {
+        loader_type = ClassLoader::module_to_classloader(module_name);
+      }
+    }
+  } else if (ClassLoaderExt::is_boot_classpath(classpath_index)) {
+    loader_type = ClassLoader::BOOT;
+  }
+  return loader_type;
+#endif
+  return ClassLoader::BOOT; // the classloader type is ignored in non-CDS cases
+}
 
 instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_append_only, TRAPS) {
   ResourceMark rm(THREAD);
@@ -1060,14 +1067,6 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
   PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
                              ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
                              PerfClassTraceTime::CLASS_LOAD);
-#if INCLUDE_CDS
-  // Don't archive any class that exists in the append path entries.
-  if (DumpSharedSpaces && class_in_append_entries(file_name, THREAD)) {
-    tty->print_cr("Preload Warning: skipping class from -Xbootclasspath/a %s",
-                  class_name);
-    return h; // NULL
-  }
-#endif
 
   // Lookup stream for parsing .class file
   ClassFileStream* stream = NULL;
@@ -1140,37 +1139,8 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
       return h;
     }
 
-    // obtain the classloader type based on the class name.
-    // First obtain the package name based on the class name. Then obtain
-    // the classloader type based on the package name from the jimage using
-    // a jimage API. If the classloader type cannot be found from the
-    // jimage, it is default to the app classloader type.
-    jshort classloader_type = ClassLoader::APP;
-    int length;
-    const jbyte* pkg_string = InstanceKlass::package_from_name(h_name, length);
-    TempNewSymbol pkg_name = NULL;
-    if (pkg_string != NULL) {
-      ResourceMark rm;
-      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_NULL);
-      const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
-      ClassPathEntry *cpe = ClassLoader::classpath_entry(0);
-      while (cpe != NULL) {
-        ClassPathImageEntry* cpie = (ClassPathImageEntry*)cpe;
-        char* module_name;
-        // the cpe == e check is to ensure we are inspecting the correct ClassPathEntry
-        // from which the class was found
-        if (cpie->is_jrt() && cpe == e) {
-          JImageFile* jimage = cpie->jimage();
-          module_name = (char*)(*JImagePackageToModule)(jimage, pkg_name_C_string);
-          if (module_name != NULL) {
-            classloader_type = ClassLoader::module_to_classloader(module_name);
-            break;
-          }
-        }
-        cpe = cpe->next();
-      }
-    }
-    h = context.record_result(classpath_index, classloader_type, e, result, THREAD);
+    jshort loader_type = classloader_type(h_name, e, classpath_index, CHECK_NULL);
+    h = context.record_result(classpath_index, loader_type, e, result, THREAD);
   } else {
     if (DumpSharedSpaces) {
       tty->print_cr("Preload Warning: Cannot find %s", class_name);

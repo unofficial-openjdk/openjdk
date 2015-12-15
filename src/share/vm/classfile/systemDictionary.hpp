@@ -643,6 +643,8 @@ protected:
   static instanceKlassHandle find_or_define_instance_class(Symbol* class_name,
                                                 Handle class_loader,
                                                 instanceKlassHandle k, TRAPS);
+  static bool is_shared_class_visible(Symbol* class_name, instanceKlassHandle ik,
+                                      Handle class_loader, TRAPS);
   static instanceKlassHandle load_shared_class(instanceKlassHandle ik,
                                                Handle class_loader,
                                                Handle protection_domain,

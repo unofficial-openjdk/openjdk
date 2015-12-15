@@ -1219,6 +1219,81 @@ instanceKlassHandle SystemDictionary::load_shared_class(
   return instanceKlassHandle();
 }
 
+// Check if a shared class can be loaded by the specific classloader:
+//
+// NULL classloader:
+//   - Module class from boot jimage. ModuleEntry must be defined in the classloader.
+//   - Class from -Xbootclasspath/a. The class has no defined PackageEntry, or must
+//     be defined in an unnamed module.
+bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
+                                               instanceKlassHandle ik,
+                                               Handle class_loader, TRAPS) {
+  int path_index = ik->shared_classpath_index();
+  SharedClassPathEntry* ent =
+            (SharedClassPathEntry*)FileMapInfo::shared_classpath(path_index);
+  if (!Universe::is_module_initialized()) {
+    assert(ent->is_jrt(),
+           "Loading non-bootstrap classes before the module system is initialized");
+    assert(class_loader.is_null(), "sanity");
+    return true;
+  }
+  // Get the pkg_entry from the classloader
+  TempNewSymbol pkg_name = NULL;
+  PackageEntry* pkg_entry = NULL;
+  ModuleEntry* mod_entry = NULL;
+  int length;
+  ClassLoaderData* loader_data = class_loader_data(class_loader);
+  const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+  if (pkg_string != NULL) {
+    pkg_name = SymbolTable::new_symbol((const char*)pkg_string,
+                                       length, CHECK_(false));
+    if (loader_data != NULL) {
+      pkg_entry = loader_data->packages()->lookup_only(pkg_name);
+    }
+    if (pkg_entry != NULL) {
+      mod_entry = pkg_entry->module();
+    }
+  }
+
+  if (class_loader.is_null()) {
+    // The NULL classloader can load archived class originated from the
+    // bootmodules.jimage and the -Xbootclasspath/a. For class from the
+    // bootmodules.jimage, the PackageEntry/ModuleEntry must be defined
+    // by the NULL classloader.
+    if (mod_entry != NULL) {
+      // PackageEntry/ModuleEntry is found in the classloader. Check if the
+      // ModuleEntry's location agrees with the archived class' origination.
+      if (ent->is_jrt() && mod_entry->location()->starts_with("jrt:")) {
+        return true; // Module class from the boot jimage
+      }
+    }
+
+    // If the archived class is not from the jimage, the class can be loaded
+    // by the NULL classloader if
+    //
+    // 1. the class is from the unamed package
+    // 2. or, the class is not from a module defined in the NULL classloader
+    // 3. or, the class is from an unamed module
+    if (!ent->is_jrt() && ik->is_shared_boot_class()) {
+      // the class is from the -Xbootclasspath/a
+      if (pkg_string == NULL ||
+          pkg_entry == NULL ||
+          pkg_entry->in_unnamed_module()) {
+        assert(mod_entry == NULL ||
+               mod_entry == loader_data->modules()->unnamed_module(),
+               "the unnamed module is not defined in the classloader");
+        return true;
+      }
+    }
+    return false;
+  } else {
+    bool res = SystemDictionaryShared::is_shared_class_visible_for_classloader(
+              ik, class_loader, pkg_string, pkg_name,
+              pkg_entry, mod_entry, CHECK_(false));
+    return res;
+  }
+}
+
 instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
                                                         Handle class_loader,
                                                         Handle protection_domain, TRAPS) {
@@ -1226,7 +1301,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     instanceKlassHandle nh = instanceKlassHandle(); // null Handle
     Symbol* class_name = ik->name();
 
-    bool visible = SystemDictionaryShared::is_shared_class_visible_for_classloader(
+    bool visible = is_shared_class_visible(
                             class_name, ik, class_loader, CHECK_(nh));
     if (!visible) {
       return nh;
@@ -1381,10 +1456,8 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
     instanceKlassHandle k;
     {
 #if INCLUDE_CDS
-      if (!search_only_bootloader_append) {
-        PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
-        k = load_shared_class(class_name, class_loader, THREAD);
-      }
+      PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
+      k = load_shared_class(class_name, class_loader, THREAD);
 #endif
     }
 
