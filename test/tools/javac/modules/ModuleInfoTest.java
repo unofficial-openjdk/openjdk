@@ -193,6 +193,34 @@ public class ModuleInfoTest extends ModuleTestBase {
     }
 
     /**
+     * Verify that a multi-module loop is detected.
+     */
+    @Test
+    void testRequiresPublicLoop(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { requires m2; }");
+        Path src_m2 = src.resolve("m2");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires public m3; }");
+        Path src_m3 = src.resolve("m3");
+        tb.writeFile(src_m3.resolve("module-info.java"), "module m3 { requires m1; }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:22: compiler.err.cyclic.requires: m1"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
      * Verify that duplicate requires are detected.
      */
     @Test
@@ -231,6 +259,30 @@ public class ModuleInfoTest extends ModuleTestBase {
 
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:32: compiler.err.duplicate.exports: p"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
+     * Verify that duplicate exported packages are detected.
+     */
+    @Test
+    void testDuplicateExports_packages2(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src.resolve("m1"), "module m1 { exports p; exports p to m2; }");
+        tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
                 .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)

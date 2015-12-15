@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Base class for module tests.
@@ -56,6 +57,7 @@ public class ModuleTestBase {
     /**
      * Run all methods annotated with @Test, and throw an exception if any
      * errors are reported..
+     *
      * @throws Exception if any errors occurred
      */
     void runTests() throws Exception {
@@ -111,6 +113,8 @@ public class ModuleTestBase {
         private final String name;
         private String requires = "";
         private String exports = "";
+        private String uses = "";
+        private String provides = "";
         private String modulePath = "";
         private List<String> content = new ArrayList<>();
 
@@ -118,14 +122,34 @@ public class ModuleTestBase {
             this.name = name;
         }
 
-        public ModuleBuilder requires(String requires, Path modulePath) {
+        public ModuleBuilder requiresPublic(String requires, Path... modulePath) {
+            return requires("public " + requires, modulePath);
+        }
+
+        public ModuleBuilder requires(String requires, Path... modulePath) {
             this.requires += "    requires " + requires + ";\n";
-            this.modulePath += File.pathSeparator + modulePath;
+            this.modulePath += Arrays.stream(modulePath)
+                    .map(Path::toString)
+                    .collect(Collectors.joining(File.pathSeparator));
             return this;
         }
 
-        public ModuleBuilder exports(String exports) {
-            this.exports += "    exports " + exports + ";\n";
+        public ModuleBuilder exportsTo(String pkg, String module) {
+            return exports(pkg + " to " + module);
+        }
+
+        public ModuleBuilder exports(String pkg) {
+            this.exports += "    exports " + pkg + ";\n";
+            return this;
+        }
+
+        public ModuleBuilder uses(String uses) {
+            this.uses += "    uses " + uses + ";\n";
+            return this;
+        }
+
+        public ModuleBuilder provides(String service, String implementation) {
+            this.provides += "    provides " + service + " with " + implementation + ";\n";
             return this;
         }
 
@@ -134,21 +158,27 @@ public class ModuleTestBase {
             return this;
         }
 
-        public void build(Path where) throws IOException {
+        public Path write(Path where) throws IOException {
             Files.createDirectories(where);
             List<String> sources = new ArrayList<>();
             sources.add("module " + name + "{"
                     + requires
                     + exports
+                    + uses
+                    + provides
                     + "}");
             sources.addAll(content);
-            tb.writeJavaFiles(where.resolve(name), sources.toArray(new String[]{}));
+            Path moduleSrc = where.resolve(name + "/src");
+            tb.writeJavaFiles(moduleSrc, sources.toArray(new String[]{}));
+            return moduleSrc;
+        }
 
+        public void build(Path where) throws IOException {
+            Path moduleSrc = write(where);
             tb.new JavacTask()
-                    .outdir(where)
-                    .options("-modulesourcepath", where.toString(),
-                            "-mp", modulePath)
-                    .files(findJavaFiles(where))
+                    .outdir(where.resolve(name))
+                    .options("-mp", modulePath)
+                    .files(findJavaFiles(moduleSrc))
                     .run()
                     .writeAll();
         }
