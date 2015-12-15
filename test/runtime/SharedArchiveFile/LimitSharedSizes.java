@@ -26,6 +26,7 @@
  * @library /testlibrary /runtime/CommandLine/OptionsValidation/common
  * @modules java.base/sun.misc
  *          java.management
+ *          jdk.attach/sun.tools.attach
  * @run main LimitSharedSizes
  */
 
