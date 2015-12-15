@@ -56,20 +56,19 @@ final class Builder {
 
     final String name;
     final Set<Requires> requires;
-    final Set<String> uses;
     final Set<Exports> exports;
     final Map<String, Provides> provides;
     final Set<String> conceals;
     final Set<String> packages;
+    Set<String> uses = Collections.emptySet();
     Version version;
     String mainClass;
 
-    Builder(String name, int reqs, int exports, int uses,
+    Builder(String name, int reqs, int exports,
             int provides, int conceals, int packages) {
         this.name = name;
         this.requires = reqs > 0 ? new HashSet<>(reqs) : Collections.emptySet();
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
-        this.uses     = uses > 0 ? new HashSet<>(uses) : Collections.emptySet();
         this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
         this.conceals = conceals > 0 ? new HashSet<>(conceals) : Collections.emptySet();
         this.packages = packages > 0 ? new HashSet<>(packages) : Collections.emptySet();
@@ -99,10 +98,10 @@ final class Builder {
     }
 
     /**
-     * Adds a service dependence.
+     * Sets the set of service dependences.
      */
-    public Builder uses(String st) {
-        uses.add(st);
+    public Builder uses(Set<String> uses) {
+        this.uses = uses;
         return this;
     }
 

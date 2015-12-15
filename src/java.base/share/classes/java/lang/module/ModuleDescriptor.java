@@ -1185,6 +1185,9 @@ public class ModuleDescriptor
     private static <K,V> Map<K,V> emptyOrUnmodifiableMap(Map<K,V> map) {
         if (map.isEmpty()) {
             return Collections.emptyMap();
+        } else if (map.size() == 1) {
+            Map.Entry<K, V> entry = map.entrySet().iterator().next();
+            return Collections.singletonMap(entry.getKey(), entry.getValue());
         } else {
             return Collections.unmodifiableMap(map);
         }
@@ -1193,6 +1196,8 @@ public class ModuleDescriptor
     private static <T> Set<T> emptyOrUnmodifiableSet(Set<T> set) {
         if (set.isEmpty()) {
             return Collections.emptySet();
+        } else if (set.size() == 1) {
+            return Collections.singleton(set.iterator().next());
         } else {
             return Collections.unmodifiableSet(set);
         }
