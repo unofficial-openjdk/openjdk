@@ -666,31 +666,6 @@ public class Symtab {
         return () -> Iterators.createCompoundIterator(classes.values(), v -> v.values().iterator());
     }
 
-    private ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
-        Assert.checkNonNull(msym);
-        ClassSymbol cs = getClass(msym, flatName);
-        if (cs != null) {
-            String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
-                                    cs.fullname,
-                                    cs.completer,
-                                    cs.classfile,
-                                    cs.sourcefile);
-            throw new AssertionError(msg);
-        }
-        Name packageName = Convert.packagePart(flatName);
-        PackageSymbol owner;
-
-        if (packageName.isEmpty()) {
-            owner = msym.unnamedPackage;
-         } else {
-           owner = lookupPackage(msym, packageName);
-        }
-        cs = defineClass(Convert.shortName(flatName), owner);
-        cs.classfile = classFile;
-        doEnterClass(msym, cs);
-        return cs;
-    }
-
     private void doEnterClass(ModuleSymbol msym, ClassSymbol cs) {
         classes.computeIfAbsent(cs.flatname, n -> new HashMap<>()).put(msym, cs);
     }
@@ -705,7 +680,9 @@ public class Symtab {
         Assert.checkNonNull(ps.modle);
         ClassSymbol c = getClass(ps.modle, flatname);
         if (c == null) {
-            return enterClass(ps.modle, flatname, (JavaFileObject)null);
+            c = defineClass(Convert.shortName(flatname), ps);
+            doEnterClass(ps.modle, c);
+            return c;
         } else
             return c;
     }

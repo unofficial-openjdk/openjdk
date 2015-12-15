@@ -33,6 +33,7 @@
  * @run main EdgeCases
  */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -169,6 +170,65 @@ public class EdgeCases extends ModuleTestBase {
         if (!log.contains("Test.java:1:52: compiler.err.not.def.access.class.intf.cant.access: call(), api1.Api1") ||
             !log.contains("Test.java:1:76: compiler.err.not.def.access.class.intf.cant.access: toString(), java.lang.Object"))
             throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testAssignClassToAutomaticModule(Path base) throws Exception {
+        //check that if a ClassSymbol belongs to an automatic module, it is properly assigned and not
+        //duplicated when being accessed through a classfile.
+        Path automaticSrc = base.resolve("automaticSrc");
+        tb.writeJavaFiles(automaticSrc, "package api1; public class Api1 {}");
+        Path automaticClasses = base.resolve("automaticClasses");
+        tb.createDirectories(automaticClasses);
+
+        String automaticLog = tb.new JavacTask()
+                                .outdir(automaticClasses)
+                                .files(findJavaFiles(automaticSrc))
+                                .run()
+                                .writeAll()
+                                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!automaticLog.isEmpty())
+            throw new Exception("expected output not found: " + automaticLog);
+
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        Path automaticJar = modulePath.resolve("m1-1.0.jar");
+
+        tb.new JarTask(automaticJar)
+          .baseDir(automaticClasses)
+          .files("api1/Api1.class")
+          .run();
+
+        Path src = base.resolve("src");
+        Path src_m2 = src.resolve("m2");
+        tb.writeJavaFiles(src_m2,
+                          "module m2 { requires m1; exports api2; }",
+                          "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
+        Path src_m3 = src.resolve("m3");
+        tb.writeJavaFiles(src_m3,
+                          "module m3 { requires m1; requires m2; }",
+                          "package test; public class Test { { api2.Api2.get(); api1.Api1 a1; } }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString(),
+                         "-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src_m2))
+                .run()
+                .writeAll();
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString(),
+                         "-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src_m3))
+                .run()
+                .writeAll();
     }
 
 }

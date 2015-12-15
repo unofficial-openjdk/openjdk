@@ -84,19 +84,20 @@ public class ModuleTestBase {
 
     // move to ToolBox?
     // change returntyp to List<Path> -- means updating ToolBox methods
-    Path[] findJavaFiles(Path p) throws IOException {
+    Path[] findJavaFiles(Path... paths) throws IOException {
         Set<Path> files = new TreeSet<>();
-        Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
-                if (file.getFileName().toString().endsWith(".java")) {
-                    files.add(file);
+        for (Path p : paths) {
+            Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                        throws IOException {
+                    if (file.getFileName().toString().endsWith(".java")) {
+                        files.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
                 }
-                return FileVisitResult.CONTINUE;
-            }
-
-        });
+            });
+        }
         return files.toArray(new Path[files.size()]);
     }
 
