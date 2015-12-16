@@ -46,7 +46,6 @@ BREAK_ITERATOR_CLASSES := $(BUILDTOOLS_OUTPUTDIR)/break_iterator_classes
 $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    INCLUDES := $(TEXT_PKG), \
     INCLUDE_FILES := \
         $(TEXT_PKG)/BreakIteratorRules.java \
         $(TEXT_PKG)/BreakIteratorInfo.java, \
@@ -55,7 +54,6 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
 $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(JDK_TOPDIR)/src/jdk.localedata/share/classes, \
-    INCLUDES := $(TEXT_PKG), \
     INCLUDE_FILES := \
         $(TEXT_PKG)/th/BreakIteratorRules_th.java \
         $(TEXT_PKG)/th/BreakIteratorInfo_th.java, \
