@@ -29,7 +29,7 @@ $(eval $(call IncludeCustomExtension, hotspot, lib/Lib-jdk.hotspot.agent.gmk))
 
 ################################################################################
 
-SA_TOPDIR := $(HOTSPOT_TOPDIR)/jdk.hotspot.agent
+SA_TOPDIR := $(HOTSPOT_TOPDIR)/agent
 
 # SA has a slightly different OS naming scheme
 ifeq ($(OPENJDK_TARGET_OS), windows)
