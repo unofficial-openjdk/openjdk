@@ -26,12 +26,9 @@
 package com.sun.tools.javac.util;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.nio.file.Path;
-import java.security.SecureClassLoader;
 import java.util.ServiceLoader;
 
 /** This class provides wrappers for classes and methods that are new in JDK 9, and which are not
@@ -56,53 +53,6 @@ public class ModuleWrappers {
                     InvocationTargetException ex) {
                 throw new Abort(ex);
             }
-        }
-    }
-
-    public static final class ModuleClassLoader extends SecureClassLoader {
-        Object theRealModuleClassLoader;
-
-        private ModuleClassLoader(Object moduleClassLoader) {
-            this.theRealModuleClassLoader = moduleClassLoader;
-        }
-
-        public ModuleClassLoader(Configuration configuration) {
-            try {
-                theRealModuleClassLoader = ModuleClassLoaderHelper.getConfigurationCtor().newInstance(configuration.theRealConfiguration);
-            } catch (InstantiationException |
-                    IllegalAccessException |
-                    IllegalArgumentException |
-                    InvocationTargetException ex) {
-                throw new Abort(ex);
-            }
-        }
-    }
-
-    private static class ModuleClassLoaderHelper {
-        static Constructor<?> configurationCtor = null;
-        static Class<?> moduleClassLoaderClass;
-
-        static Constructor<?> getConfigurationCtor() {
-            if (moduleClassLoaderClass == null) {
-                try {
-                    Class<?> configurationClass = ConfigurationHelper.getConfigurationClass();
-                    configurationCtor = getModuleClassLoaderClass().getDeclaredConstructor(new Class<?>[] { configurationClass });
-                } catch (NoSuchMethodException | SecurityException ex) {
-                    throw new Abort(ex);
-                }
-            }
-            return configurationCtor;
-        }
-
-        static Class<?> getModuleClassLoaderClass() {
-            if (moduleClassLoaderClass == null) {
-                try {
-                    moduleClassLoaderClass = Class.forName("java.lang.ModuleClassLoader", false, ClassLoader.getSystemClassLoader());
-                } catch (ClassNotFoundException ex) {
-                    throw new Abort(ex);
-                }
-            }
-            return moduleClassLoaderClass;
         }
     }
 
@@ -289,23 +239,17 @@ public class ModuleWrappers {
             }
         }
 
-        public static Layer create(Configuration configuration, Layer parent, ModuleClassLoader modClassLoader) {
+        public static Layer createWithOneLoader(Configuration configuration, Layer parent, ClassLoader parentClassLoader) {
             try {
-                Class<?> classLoaderFinderInterface = LayerHelper.getClassLoaderFinderInterface();
-                LayerHelper.ClassLoaderFinderInvocationHandler handler =
-                        new LayerHelper.ClassLoaderFinderInvocationHandler(modClassLoader);
-                Object proxy = Proxy.newProxyInstance(
-                                            ClassLoader.getSystemClassLoader(),
-                                            new Class<?>[] { classLoaderFinderInterface },
-                                            handler);
-                Object result = LayerHelper.getCreateMethod()
-                        .invoke(LayerHelper.getLayerClass(), configuration.theRealConfiguration, parent.theRealLayer, proxy);
+                Object result = LayerHelper.getCreateWithOneLoaderMethod()
+                        .invoke(LayerHelper.getLayerClass(), configuration.theRealConfiguration, parent.theRealLayer, parentClassLoader);
                 Layer layer = new Layer(result);
                 return layer;
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                 throw new Abort(ex);
             }
         }
+
     }
 
     private static class LayerHelper {
@@ -313,6 +257,7 @@ public class ModuleWrappers {
         static Class<?> classLoaderFinderInterface;
         static Method bootMethod = null;
         static Method createMethod = null;
+        static Method createWithOneLoader = null;
         static Method configurationMethod;
 
         static Class<?> getLayerClass() {
@@ -324,19 +269,6 @@ public class ModuleWrappers {
                 }
             }
             return layerClass;
-        }
-
-        static class ClassLoaderFinderInvocationHandler implements InvocationHandler {
-            ModuleClassLoader moduleClassLoader;
-
-            public ClassLoaderFinderInvocationHandler(ModuleClassLoader moduleClassLoader) {
-                this.moduleClassLoader = moduleClassLoader;
-            }
-
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return moduleClassLoader.theRealModuleClassLoader;
-            }
         }
 
         static Class<?> getClassLoaderFinderInterface() {
@@ -374,6 +306,21 @@ public class ModuleWrappers {
                 }
             }
             return createMethod;
+        }
+
+        static Method getCreateWithOneLoaderMethod() {
+            if (createWithOneLoader == null) {
+                try {
+                    createWithOneLoader = getLayerClass().getDeclaredMethod("createWithOneLoader",
+                                ConfigurationHelper.getConfigurationClass(),
+                                LayerHelper.getLayerClass(),
+                                ClassLoader.class
+                    );
+                } catch (NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+            return createWithOneLoader;
         }
 
         static Method getConfigurationMethod() {

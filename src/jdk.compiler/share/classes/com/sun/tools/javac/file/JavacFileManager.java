@@ -71,7 +71,6 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.ModuleWrappers.Configuration;
 import com.sun.tools.javac.util.ModuleWrappers.Layer;
-import com.sun.tools.javac.util.ModuleWrappers.ModuleClassLoader;
 import com.sun.tools.javac.util.ModuleWrappers.ModuleFinder;
 import com.sun.tools.javac.util.ModuleWrappers.ServiceLoaderHelper;
 
@@ -957,8 +956,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
             Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder);
             cf = cf.bind();
-            ModuleClassLoader cl = new ModuleClassLoader(cf);
-            Layer layer = Layer.create(cf, Layer.boot(), cl);
+            Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
             return ServiceLoaderHelper.load(layer, service);
         } else {
             return ServiceLoader.load(service, getClassLoader(location));
