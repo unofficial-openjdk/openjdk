@@ -572,6 +572,9 @@ public class Modules extends JCTree.Visitor {
         private final ModuleSymbol msym;
         private final Env<AttrContext> env;
 
+        private final Set<Directive> allUses = new HashSet<>();
+        private final Set<Directive> allProvides = new HashSet<>();
+
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
             this.msym = msym;
             this.env = env;
@@ -587,6 +590,8 @@ public class Modules extends JCTree.Visitor {
             msym.directives = List.nil();
             msym.provides = List.nil();
             msym.uses = List.nil();
+            allUses.clear();
+            allProvides.clear();
             acceptAll(tree.directives);
             msym.directives = msym.directives.reverse();
             msym.provides = msym.provides.reverse();
@@ -609,6 +614,9 @@ public class Modules extends JCTree.Visitor {
                 ClassSymbol service = (ClassSymbol) st.tsym;
                 ClassSymbol impl = (ClassSymbol) it.tsym;
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+                if (!allProvides.add(d)) {
+                    log.error(tree.pos(), "duplicate.provides", d);
+                }
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
             }
@@ -623,6 +631,9 @@ public class Modules extends JCTree.Visitor {
             if (st.hasTag(CLASS)) {
                 ClassSymbol service = (ClassSymbol) st.tsym;
                 Directive.UsesDirective d = new Directive.UsesDirective(service);
+                if (!allUses.add(d)) {
+                    log.error(tree.pos(), "duplicate.uses", d);
+                }
                 msym.uses = msym.uses.prepend(d);
                 msym.directives = msym.directives.prepend(d);
             }
