@@ -901,11 +901,8 @@ public final class TaskHelper {
 
         cf = cf.bind();
 
-        // The creation of this classloader is done outside privileged block in purpose
-        // If a security manager is set, then permission must be granted to jlink
-        // codebase to create a classloader. This is the expected behavior.
-        ClassLoader cl = new ModuleClassLoader(cf);
-        return Layer.create(cf, Layer.boot(), mn -> cl);
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        return Layer.createWithOneLoader(cf, Layer.boot(), scl);
     }
 
     // Display all plugins or resource only.

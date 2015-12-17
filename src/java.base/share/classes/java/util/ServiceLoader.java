@@ -43,11 +43,13 @@ import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
-import jdk.internal.module.ServicesCatalog;
-import jdk.internal.module.ServicesCatalog.ServiceProvider;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.Loader;
+import jdk.internal.misc.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ServicesCatalog;
+import jdk.internal.module.ServicesCatalog.ServiceProvider;
 
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
@@ -672,6 +674,22 @@ public final class ServiceLoader<S>
          * service} in modules defined to the given class loader.
          */
         private Iterator<ServiceProvider> iteratorFor(ClassLoader loader) {
+
+            // if the class loader is in a loader pool then return an Iterator
+            // that iterates over all service providers in the pool that provide
+            // an implementation of the service
+            if (currentLoader instanceof Loader) {
+                LoaderPool pool = ((Loader) loader).pool();
+                if (pool != null) {
+                    return pool.loaders()
+                            .map(l -> langAccess.getServicesCatalog(l))
+                            .filter(sc -> sc != null)
+                            .map(sc -> sc.findServices(service.getName()))
+                            .flatMap(Set::stream)
+                            .iterator();
+                }
+            }
+
             ServicesCatalog catalog;
             if (currentLoader == null) {
                 catalog = BootLoader.getServicesCatalog();

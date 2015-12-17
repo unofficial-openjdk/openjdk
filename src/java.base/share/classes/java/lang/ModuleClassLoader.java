@@ -76,6 +76,7 @@ import jdk.internal.misc.BootLoader;
  * @since 1.9
  */
 
+@Deprecated
 public final class ModuleClassLoader
     extends SecureClassLoader
 {

@@ -24,9 +24,9 @@
 /**
  * @test
  * @library ../../lib
- * @build LayerTest ModuleUtils
+ * @build BasicLayerTest ModuleUtils
  * @compile layertest/Test.java
- * @run testng LayerTest
+ * @run testng BasicLayerTest
  * @summary Basic tests for java.lang.reflect.Layer
  */
 
@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
-public class LayerTest {
+public class BasicLayerTest {
 
     /**
      * Exercise Layer.empty()
@@ -857,19 +857,45 @@ public class LayerTest {
     public void testCreateWithNull1() {
         ClassLoader loader = new ClassLoader() { };
         Layer.create(null, Layer.empty(), mn -> loader);
-
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull2() {
         ClassLoader loader = new ClassLoader() { };
         Layer.create(Configuration.empty(), null, mn -> loader);
-
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull3() {
-        Layer.create(Configuration.empty(), Layer.empty(), null);
+        Configuration cf
+            = Configuration.resolve(ModuleFinder.empty(),
+                                    Layer.boot().configuration(),
+                                    ModuleFinder.empty());
+        Layer.create(cf, Layer.boot(), null);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testCreateWithNull4() {
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer.createWithOneLoader(null, Layer.empty(), scl);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testCreateWithNull5() {
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer.createWithOneLoader(Configuration.empty(), null, scl);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testCreateWithNull6() {
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer.createWithManyLoaders(null, Layer.empty(), scl);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testCreateWithNull7() {
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer.createWithManyLoaders(Configuration.empty(), null, scl);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })

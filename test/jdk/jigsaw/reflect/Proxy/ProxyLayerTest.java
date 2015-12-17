@@ -84,8 +84,9 @@ public class ProxyLayerTest {
                 .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules)
                 .bind();
 
-        ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+
+        ClassLoader loader = layer.findLoader("m1");
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());
@@ -115,8 +116,9 @@ public class ProxyLayerTest {
         Configuration cf = Configuration
                 .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
 
-        ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+
+        ClassLoader loader = layer.findLoader("m1");
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());
@@ -142,8 +144,9 @@ public class ProxyLayerTest {
         Configuration cf = Configuration
                 .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
 
-        ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+
+        ClassLoader loader = layer.findLoader("m1");
 
         assertTrue(layer.findModule("m1").isPresent());
         assertTrue(layer.findModule("m2").isPresent());
