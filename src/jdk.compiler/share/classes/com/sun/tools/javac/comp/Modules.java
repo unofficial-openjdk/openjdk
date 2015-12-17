@@ -84,8 +84,11 @@ import com.sun.tools.javac.util.Options;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
+
 import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.Tag;
+
+import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -610,9 +613,12 @@ public class Modules extends JCTree.Visitor {
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
             Type it = attr.attribType(tree.implName, env, st);
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            ClassSymbol impl = (ClassSymbol) it.tsym;
+            if ((impl.flags() & ABSTRACT) != 0 || impl.isInner()) {
+                log.error(tree.implName.pos(), "bad.service.implementation", impl);
+            }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
-                ClassSymbol service = (ClassSymbol) st.tsym;
-                ClassSymbol impl = (ClassSymbol) it.tsym;
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
                 if (!allProvides.add(d)) {
                     log.error(tree.pos(), "duplicate.provides", d);
