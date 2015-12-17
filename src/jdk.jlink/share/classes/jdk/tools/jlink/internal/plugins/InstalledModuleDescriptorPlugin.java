@@ -122,9 +122,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
     }
 
     /*
-     * Size sets and maps appropriately to avoid resizing.
+     * Returns the initial capacity for a new Set or Map of the given size
+     * to avoid resizing.
      */
-    static final int appropriateSize(int size) {
+    static final int initialCapacity(int size) {
         if (size == 0) {
             return 0;
         } else {
@@ -152,82 +153,21 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         private static final String DESCRIPTOR_MAP = "MAP";
         private static final String MAP_TYPE = "Ljava/util/Map;";
 
+        private static final int BUILDER_VAR    = 0;
+        private static final int MODS_VAR       = 1;
+        private static final int STRING_SET_VAR = 2;
+        private static final int MAX_LOCAL_VARS = 256;
+
         private final ClassWriter cw;
         private final MethodVisitor mv;
-
-        private static final int BUILDER_VAR = 0;
-        private static final int MODS_VAR = 1;
-
-        private final int STRING_SET_VAR = 2;
-        private int NEXT_LOCAL_VAR = 3;
-        private final int OVERFLOW = 256;
+        private int nextLocalVar = 3;
 
         // list of all ModuleDescriptorBuilders, invoked in turn when building.
         private final ArrayList<ModuleDescriptorBuilder> builders = new ArrayList<>();
 
         // map Set<String> to a specialized builder to allow them to be
         // deduplicated as they are requested
-        private final HashMap<Set<String>, StringSetBuilder> stringSetBuilderMap
-                = new HashMap<>();
-
-        class StringSetBuilder {
-            int count;
-            int index;
-            final Set<String> stringSet;
-
-            StringSetBuilder(Set<String> stringSet) {
-                this.stringSet = stringSet;
-            }
-
-            public void addCount() {
-                count++;
-            }
-
-            /*
-             * Build bytecode for the Set<String> represented by this builder,
-             * or get the index of a previously generated set (in the local
-             * scope).
-             *
-             * @return local variable index of the generated set.
-             */
-            int build() {
-                if (index == 0) {
-                    // if more than one set reference this builder, emit to a
-                    // unique local
-                    if (count > 1) {
-                        index = NEXT_LOCAL_VAR++;
-                        if (index >= OVERFLOW) {
-                            index = STRING_SET_VAR;
-                        }
-                    } else {
-                        index = STRING_SET_VAR;
-                    }
-
-                    if (stringSet.size() == 1) {
-                        mv.visitLdcInsn(stringSet.iterator().next());
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
-                        mv.visitVarInsn(ASTORE, index);
-                    } else {
-                        mv.visitTypeInsn(NEW, "java/util/HashSet");
-                        mv.visitInsn(DUP);
-                        pushInt(appropriateSize(stringSet.size()));
-                        mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
-                                           "<init>", "(I)V", false);
-
-                        mv.visitVarInsn(ASTORE, index);
-                        for (String t : stringSet) {
-                            mv.visitVarInsn(ALOAD, index);
-                            mv.visitLdcInsn(t);
-                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                                "add", "(Ljava/lang/Object;)Z", true);
-                            mv.visitInsn(POP);
-                        }
-                    }
-                }
-                return index;
-            }
-        }
+        private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
 
         public Builder(Set<String> moduleNames, int numPackages) {
             this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
@@ -298,26 +238,21 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             // exports
             for (ModuleDescriptor.Exports exp : md.exports()) {
                 if (exp.targets().isPresent()) {
-                    Set<String> targets = exp.targets().get();
-                    addSetBuilderIfAbsent(targets);
+                    stringSets.computeIfAbsent(exp.targets().get(), s -> new StringSetBuilder(s))
+                              .increment();
                 }
             }
 
             // provides
             for (ModuleDescriptor.Provides p : md.provides().values()) {
-                addSetBuilderIfAbsent(p.providers());
+                stringSets.computeIfAbsent(p.providers(), s -> new StringSetBuilder(s))
+                          .increment();
             }
 
             // uses
-            Set<String> uses = md.uses();
-            addSetBuilderIfAbsent(uses);
-
+            stringSets.computeIfAbsent(md.uses(), s -> new StringSetBuilder(s))
+                      .increment();
             return this;
-        }
-
-        private void addSetBuilderIfAbsent(Set<String> stringSet) {
-            stringSetBuilderMap.computeIfAbsent(stringSet, s -> new StringSetBuilder(s));
-            stringSetBuilderMap.get(stringSet).addCount();
         }
 
         /*
@@ -359,6 +294,18 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             }
         }
 
+        void pushInt(int num) {
+            if (num <= 5) {
+                mv.visitInsn(ICONST_0 + num);
+            } else if (num < Byte.MAX_VALUE) {
+                mv.visitIntInsn(BIPUSH, num);
+            } else if (num < Short.MAX_VALUE) {
+                mv.visitIntInsn(SIPUSH, num);
+            } else {
+                throw new IllegalArgumentException("exceed limit: " + num);
+            }
+        }
+
         class ModuleDescriptorBuilder {
             static final String REQUIRES_MODIFIER_CLASSNAME =
                     "java/lang/module/ModuleDescriptor$Requires$Modifier";
@@ -392,11 +339,11 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
                 mv.visitInsn(DUP);
                 mv.visitLdcInsn(name);
-                pushInt(appropriateSize(reqs));
-                pushInt(appropriateSize(exports));
-                pushInt(appropriateSize(provides));
-                pushInt(appropriateSize(conceals));
-                pushInt(appropriateSize(packages));
+                pushInt(initialCapacity(reqs));
+                pushInt(initialCapacity(exports));
+                pushInt(initialCapacity(provides));
+                pushInt(initialCapacity(conceals));
+                pushInt(initialCapacity(packages));
                 mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
                                    "<init>", "(Ljava/lang/String;IIIII)V", false);
                 mv.visitVarInsn(ASTORE, BUILDER_VAR);
@@ -557,10 +504,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              * Builder.exports(pn, targets);
              */
             void exports(String pn, Set<String> targets) {
-                int index = stringSetBuilderMap.get(targets).build();
+                int varIndex = stringSets.get(targets).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(pn);
-                mv.visitVarInsn(ALOAD, index);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "exports", STRING_SET_SIG, false);
                 mv.visitInsn(POP);
@@ -570,9 +517,9 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              * Invokes Builder.uses(Set<String> uses)
              */
             void uses(Set<String> uses) {
-                int index = stringSetBuilderMap.get(uses).build();
+                int varIndex = stringSets.get(uses).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitVarInsn(ALOAD, index);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                         "uses", SET_SIG, false);
                 mv.visitInsn(POP);
@@ -588,10 +535,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              * Builder.exports(service, providers);
              */
             void provides(String service, Set<String> providers) {
-                int index = stringSetBuilderMap.get(providers).build();
+                int varIndex = stringSets.get(providers).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(service);
-                mv.visitVarInsn(ALOAD, index);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "provides", STRING_SET_SIG, false);
                 mv.visitInsn(POP);
@@ -632,15 +579,68 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
 
         }
 
-        void pushInt(int num) {
-            if (num <= 5) {
-                mv.visitInsn(ICONST_0 + num);
-            } else if (num < Byte.MAX_VALUE) {
-                mv.visitIntInsn(BIPUSH, num);
-            } else if (num < Short.MAX_VALUE) {
-                mv.visitIntInsn(SIPUSH, num);
-            } else {
-                throw new IllegalArgumentException("exceed limit: " + num);
+        /*
+         * StringSetBuilder generates bytecode to create one single instance
+         * of HashSet for a given set of names and assign to a local variable
+         * slot.  When there is only one single reference to a Set<String>,
+         * it will reuse STRING_SET_VAR for reference.  For Set<String> with
+         * multiple references, it will use a new local variable.
+         */
+        class StringSetBuilder {
+            final Set<String> names;
+            int refCount;
+            int localVarIndex;
+            StringSetBuilder(Set<String> names) {
+                this.names = names;
+            }
+
+            void increment() {
+                refCount++;
+            }
+
+            /*
+             * Build bytecode for the Set<String> represented by this builder,
+             * or get the local variable index of a previously generated set
+             * (in the local scope).
+             *
+             * @return local variable index of the generated set.
+             */
+            int build() {
+                int index = localVarIndex;
+                if (localVarIndex == 0) {
+                    // if more than one set reference this builder, emit to a
+                    // unique local
+                    index = refCount == 1 ? STRING_SET_VAR : nextLocalVar++;
+                    if (index < MAX_LOCAL_VARS) {
+                        localVarIndex = index;
+                    } else {
+                        // overflow: disable optimization and keep localVarIndex = 0
+                        index = STRING_SET_VAR;
+                    }
+
+                    if (names.size() == 1) {
+                        mv.visitLdcInsn(names.iterator().next());
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                                "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
+                        mv.visitVarInsn(ASTORE, index);
+                    } else {
+                        mv.visitTypeInsn(NEW, "java/util/HashSet");
+                        mv.visitInsn(DUP);
+                        pushInt(initialCapacity(names.size()));
+                        mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
+                                "<init>", "(I)V", false);
+
+                        mv.visitVarInsn(ASTORE, index);
+                        for (String t : names) {
+                            mv.visitVarInsn(ALOAD, index);
+                            mv.visitLdcInsn(t);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
+                                    "add", "(Ljava/lang/Object;)Z", true);
+                            mv.visitInsn(POP);
+                        }
+                    }
+                }
+                return index;
             }
         }
     }

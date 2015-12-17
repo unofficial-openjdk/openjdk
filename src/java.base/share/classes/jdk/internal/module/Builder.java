@@ -60,7 +60,7 @@ final class Builder {
     final Map<String, Provides> provides;
     final Set<String> conceals;
     final Set<String> packages;
-    Set<String> uses = Collections.emptySet();
+    Set<String> uses;
     Version version;
     String mainClass;
 
@@ -72,6 +72,7 @@ final class Builder {
         this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
         this.conceals = conceals > 0 ? new HashSet<>(conceals) : Collections.emptySet();
         this.packages = packages > 0 ? new HashSet<>(packages) : Collections.emptySet();
+        this.uses = Collections.emptySet();
     }
 
     /**
