@@ -587,27 +587,6 @@ public class BuiltinClassLoader
     // -- packages
 
     /**
-     * Define a Package this to this class loader if not already defined.
-     * If the package name is in a module defined to this class loader then
-     * the resulting Package is sealed with the code source that is the
-     * module location.
-     *
-     * @param pn package name
-     */
-    Package definePackage(String pn) {
-        Package pkg = getDefinedPackage(pn);
-        if (pkg == null) {
-            LoadedModule loadedModule = packageToModule.get(pn);
-            if (loadedModule == null || loadedModule.loader() != this) {
-                pkg = definePackage(pn, null, null, null, null, null, null, null);
-            } else {
-                pkg = definePackage(pn, loadedModule);
-            }
-        }
-        return pkg;
-    }
-
-    /**
      * Define a package for the given class to this class loader, if not
      * already defined.
      *
@@ -644,7 +623,13 @@ public class BuiltinClassLoader
                 }
             }
 
-            p = definePackage(pn, null, null, null, null, null, null, url);
+            try {
+                p = definePackage(pn, null, null, null, null, null, null, url);
+            } catch (IllegalArgumentException e) {
+                // Package being defined should always have the same location
+                // either location of a named module or null.
+                throw new InternalError(e);
+            }
         }
         return p;
     }
@@ -654,8 +639,38 @@ public class BuiltinClassLoader
      * is sealed with the code source that is the module location.
      */
     private Package definePackage(String pn, LoadedModule loadedModule) {
-        URL url = loadedModule.location();
-        return definePackage(pn, null, null, null, null, null, null, url);
+        final URL url;
+        if (loadedModule != null && loadedModule.loader() == this) {
+            url = loadedModule.location();
+        } else {
+            url = null;
+        }
+
+        try {
+            return definePackage(pn, null, null, null, null, null, null, url);
+        } catch (IllegalArgumentException e) {
+            // Package being defined should always have the same location
+            // either location of a named module or null.
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Define a Package this to this class loader if not already defined.
+     * If the package name is in a module defined to this class loader then
+     * the resulting Package is sealed with the code source that is the
+     * module location.
+     *
+     * This method is used to define Package objects for the boot loader.
+     *
+     * @param pn package name
+     */
+    Package definePackage(String pn) {
+        Package pkg = getDefinedPackage(pn);
+        if (pkg == null) {
+            pkg = definePackage(pn, packageToModule.get(pn));
+        }
+        return pkg;
     }
 
     /**

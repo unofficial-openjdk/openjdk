@@ -819,7 +819,12 @@ public abstract class ClassLoader {
                 } catch (MalformedURLException e) {
                 }
             }
-            p = definePackage(pn, null, null, null, null, null, null, url);
+            try {
+                p = definePackage(pn, null, null, null, null, null, null, url);
+            } catch (IllegalArgumentException e) {
+                // this class loader already defines a package
+                p = getDefinedPackage(pn);
+            }
         }
         return p;
     }
@@ -1808,7 +1813,10 @@ public abstract class ClassLoader {
      *          if {@code name} is {@code null}.
      *
      * @throws  IllegalArgumentException
-     *          if {@code name} denotes a package already defined by this class loader.
+     *          if a package of the given {@code name} is already
+     *          defined by this class loader but the versioning information
+     *          or code source of the defined package is different than
+     *          the specified arguments
      *
      * @since  1.2
      *
