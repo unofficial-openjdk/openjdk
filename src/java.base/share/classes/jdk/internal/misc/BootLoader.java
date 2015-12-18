@@ -131,8 +131,8 @@ public class BootLoader {
      * if the package has not been defined.
      */
     public static Package getDefinedPackage(String pn) {
-        String found = getSystemPackageLocation(pn.replace('.', '/'));
-        if (found == null) {
+        String pkg = getSystemPackageLocation(pn.replace('.', '/'));
+        if (pkg == null) {
             return null;
         }
         return ClassLoaders.bootLoader().definePackage(pn);

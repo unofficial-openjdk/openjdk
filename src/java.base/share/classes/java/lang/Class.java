@@ -811,7 +811,8 @@ public final class Class<T> implements java.io.Serializable,
         return module;
     }
 
-    private transient Module module;  // set by VM or lazily by getModule
+    // set by VM, will eventually move to a helper type with module
+    private transient Module module;
 
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField
