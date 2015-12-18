@@ -72,6 +72,7 @@ import sun.security.util.SecurityConstants;
  * need to follow the convention in this package.
  *
  * @since 9
+ * @see Module#getLayer()
  */
 
 public final class Layer {
@@ -237,7 +238,8 @@ public final class Layer {
      *         If the parent of the given configuration is not the configuration
      *         of the parent {@code Layer}
      * @throws SecurityException
-     *         If {@code RuntimePermission("createClassLoader")} is denied by
+     *         If {@code RuntimePermission("createClassLoader")} or
+     *         {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager
      *
      * @see #findLoader
@@ -294,7 +296,8 @@ public final class Layer {
      *         If all modules cannot be defined to the same class loader for any
      *         of the reasons listed above
      * @throws SecurityException
-     *         If {@code RuntimePermission("createClassLoader")} is denied by
+     *         If {@code RuntimePermission("createClassLoader")} or
+     *         {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager
      *
      * @see #findLoader

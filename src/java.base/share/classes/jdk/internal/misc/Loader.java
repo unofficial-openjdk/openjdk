@@ -243,7 +243,18 @@ public final class Loader extends SecureClassLoader {
                 String target = mref.descriptor().name();
                 for (ModuleDescriptor.Exports e : rd.descriptor().exports()) {
                     Optional<Set<String>> targets = e.targets();
-                    if (!targets.isPresent() || targets.get().contains(target)) {
+
+                    boolean delegate;
+                    if (targets.isPresent()) {
+                        // qualified export in same configuration
+                        delegate = (rd.configuration() == cf)
+                                && targets.get().contains(target);
+                    } else {
+                        // unqualified
+                        delegate = true;
+                    }
+
+                    if (delegate) {
                         String pn = e.source();
                         ClassLoader l = remotePackageToLoader.putIfAbsent(pn, loader);
                         if (l != null && l != loader) {
@@ -424,7 +435,8 @@ public final class Loader extends SecureClassLoader {
                 // define the package if not already defined
                 String pn = packageName(cn);
                 if (getDefinedPackage(pn) == null) {
-                    definePackage(pn, loadedModule);
+                    URL url = loadedModule.location();
+                    definePackage(pn, null, null, null, null, null, null, url);
                 }
 
                 return defineClass(cn, bb, loadedModule.codeSource());
@@ -437,20 +449,6 @@ public final class Loader extends SecureClassLoader {
             // TBD on how I/O errors should be propagated
             return null;
         }
-    }
-
-
-    // -- packages
-
-    /**
-     * Define a Package this to this class loader. The resulting Package
-     * is sealed with the code source that is the module location.
-     */
-    private Package definePackage(String pn, LoadedModule loadedModule) {
-        URL url = loadedModule.location();
-
-        // can this throw IAE?
-        return definePackage(pn, null, null, null, null, null, null, url);
     }
 
 
