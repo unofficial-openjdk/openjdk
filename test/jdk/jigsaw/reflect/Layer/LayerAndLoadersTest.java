@@ -39,8 +39,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -69,60 +70,13 @@ public class LayerAndLoadersTest {
 
     /**
      * Basic test of Layer.createWithOneLoader
+     *
+     * Test scenario:
+     *   m1 requires m2 and m3
      */
     public void testWithOneLoader() throws Exception {
 
         Configuration cf = resolve("m1");
-
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), scl);
-
-        checkLayer(layer, "m1", "m2");
-
-        ClassLoader cl1 = layer.findLoader("m1");
-        ClassLoader cl2 = layer.findLoader("m2");
-
-        assertTrue(cl1.getParent() == scl);
-        assertTrue(cl2 == cl1);
-
-        invoke(layer, "m1", "p.Main");
-
-    }
-
-
-    /**
-     * Basic test of Layer.createWithManyLoaders
-     */
-    public void testWithManyLoaders() throws Exception {
-
-        Configuration cf = resolve("m1");
-
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-
-        Layer layer = Layer.createWithManyLoaders(cf, Layer.boot(), scl);
-
-        checkLayer(layer, "m1", "m2");
-
-        ClassLoader cl1 = layer.findLoader("m1");
-        ClassLoader cl2 = layer.findLoader("m2");
-
-        assertTrue(cl1.getParent() == scl);
-        assertTrue(cl2.getParent() == scl);
-        assertTrue(cl2 != cl1);
-
-        invoke(layer, "m1", "p.Main");
-
-    }
-
-
-    /**
-     * Basic test of Layer.createWithOneLoader where one of the modules
-     * is a service provider module.
-     */
-    public void testServicesWithOneLoader() throws Exception {
-
-        Configuration cf = resolve("m1").bind();
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
@@ -137,6 +91,72 @@ public class LayerAndLoadersTest {
         assertTrue(cl1.getParent() == scl);
         assertTrue(cl2 == cl1);
         assertTrue(cl3 == cl1);
+
+        invoke(layer, "m1", "p.Main");
+
+    }
+
+
+    /**
+     * Basic test of Layer.createWithManyLoaders
+     *
+     * Test scenario:
+     *   m1 requires m2 and m3
+     */
+    public void testWithManyLoaders() throws Exception {
+
+        Configuration cf = resolve("m1");
+
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+
+        Layer layer = Layer.createWithManyLoaders(cf, Layer.boot(), scl);
+
+        checkLayer(layer, "m1", "m2", "m3");
+
+        ClassLoader cl1 = layer.findLoader("m1");
+        ClassLoader cl2 = layer.findLoader("m2");
+        ClassLoader cl3 = layer.findLoader("m3");
+
+        assertTrue(cl1.getParent() == scl);
+        assertTrue(cl2.getParent() == scl);
+        assertTrue(cl3.getParent() == scl);
+        assertTrue(cl2 != cl1);
+        assertTrue(cl3 != cl1);
+        assertTrue(cl3 != cl2);
+
+        invoke(layer, "m1", "p.Main");
+
+    }
+
+
+    /**
+     * Basic test of Layer.createWithOneLoader where one of the modules
+     * is a service provider module.
+     *
+     * Test scenario:
+     *    m1 requires m2 and m3
+     *    m1 uses S
+     *    m4 provides S with ...
+     */
+    public void testServicesWithOneLoader() throws Exception {
+
+        Configuration cf = resolve("m1").bind();
+
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), scl);
+
+        checkLayer(layer, "m1", "m2", "m3", "m4");
+
+        ClassLoader cl1 = layer.findLoader("m1");
+        ClassLoader cl2 = layer.findLoader("m2");
+        ClassLoader cl3 = layer.findLoader("m3");
+        ClassLoader cl4 = layer.findLoader("m4");
+
+        assertTrue(cl1.getParent() == scl);
+        assertTrue(cl2 == cl1);
+        assertTrue(cl3 == cl1);
+        assertTrue(cl4 == cl1);
 
         Class<?> serviceType = cl1.loadClass("p.Service");
         assertTrue(serviceType.getClassLoader() == cl1);
@@ -153,6 +173,11 @@ public class LayerAndLoadersTest {
     /**
      * Basic test of Layer.createWithManyLoaders where one of the modules
      * is a service provider module.
+     *
+     * Test scenario:
+     *    m1 requires m2 and m3
+     *    m1 uses S
+     *    m4 provides S with ...
      */
     public void testServicesWithManyLoaders() throws Exception {
 
@@ -161,17 +186,23 @@ public class LayerAndLoadersTest {
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
         Layer layer = Layer.createWithManyLoaders(cf, Layer.boot(), scl);
-        checkLayer(layer, "m1", "m2", "m3");
+        checkLayer(layer, "m1", "m2", "m3", "m4");
 
         ClassLoader cl1 = layer.findLoader("m1");
         ClassLoader cl2 = layer.findLoader("m2");
         ClassLoader cl3 = layer.findLoader("m3");
+        ClassLoader cl4 = layer.findLoader("m4");
 
         assertTrue(cl1.getParent() == scl);
         assertTrue(cl2.getParent() == scl);
         assertTrue(cl3.getParent() == scl);
+        assertTrue(cl4.getParent() == scl);
         assertTrue(cl2 != cl1);
         assertTrue(cl3 != cl1);
+        assertTrue(cl3 != cl2);
+        assertTrue(cl4 != cl1);
+        assertTrue(cl4 != cl2);
+        assertTrue(cl4 != cl3);
 
         Class<?> serviceType = cl1.loadClass("p.Service");
         assertTrue(serviceType.getClassLoader() == cl1);
@@ -183,11 +214,12 @@ public class LayerAndLoadersTest {
             Iterator<?> iter = ServiceLoader.load(serviceType, loader).iterator();
             Object provider = iter.next();
             assertTrue(serviceType.isInstance(provider));
-            assertTrue(provider.getClass().getClassLoader() == cl3);
+            assertTrue(provider.getClass().getClassLoader() == cl4);
             assertFalse(iter.hasNext());
         }
 
     }
+
 
     /**
      * Tests that the class loaders created by Layer.createWithXXX delegate
@@ -221,6 +253,10 @@ public class LayerAndLoadersTest {
 
     /**
      * Test Layer.createWithXXX when modules that have overlapping packages.
+     *
+     * Test scenario:
+     *   m1 exports p
+     *   m2 exports p
      */
     public void testOverlappingPackages() {
 
@@ -254,8 +290,9 @@ public class LayerAndLoadersTest {
     /**
      * Test Layer.createWithXXX with split delegation.
      *
-     * layer1: m1 exports p, m2 exports p
-     * layer2: m3 reads m1, m4 reads m2
+     * Test scenario:
+     *   layer1: m1 exports p, m2 exports p
+     *   layer2: m3 reads m1, m4 reads m2
      */
     public void testSplitDelegation() {
 
@@ -305,37 +342,46 @@ public class LayerAndLoadersTest {
      * Test Layer.createWithXXX when the modules that override same named
      * modules in the parent layer.
      *
-     * layer1: m1, m2 => same loader
-     * layer2: m1, m2 => same loader
+     * Test scenario:
+     *   layer1: m1, m2, m3 => same loader
+     *   layer2: m1, m2, m4 => same loader
      */
     public void testOverriding1() throws Exception {
 
         Configuration cf1 = resolve("m1");
 
         Layer layer1 = Layer.createWithOneLoader(cf1, Layer.boot(), null);
-        checkLayer(layer1, "m1", "m2");
+        checkLayer(layer1, "m1", "m2", "m3");
 
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf2 = Configuration.resolve(finder, cf1, ModuleFinder.empty(), "m1");
 
         Layer layer2 = Layer.createWithOneLoader(cf2, layer1, null);
-        checkLayer(layer2, "m1", "m2");
+        checkLayer(layer2, "m1", "m2", "m3");
         invoke(layer1, "m1", "p.Main");
 
         ClassLoader loader1 = layer1.findLoader("m1");
         ClassLoader loader2 = layer1.findLoader("m2");
-        ClassLoader loader3 = layer2.findLoader("m1");
-        ClassLoader loader4 = layer2.findLoader("m2");
+        ClassLoader loader3 = layer1.findLoader("m3");
+
+        ClassLoader loader4 = layer2.findLoader("m1");
+        ClassLoader loader5 = layer2.findLoader("m2");
+        ClassLoader loader6 = layer2.findLoader("m3");
 
         assertTrue(loader1 == loader2);
-        assertTrue(loader3 == loader4);
-        assertTrue(loader3 != loader1);
+        assertTrue(loader1 == loader3);
+
+        assertTrue(loader4 == loader5);
+        assertTrue(loader4 == loader6);
+        assertTrue(loader4 != loader1);
 
         assertTrue(loader1.loadClass("p.Main").getClassLoader() == loader1);
         assertTrue(loader1.loadClass("q.Hello").getClassLoader() == loader1);
+        assertTrue(loader1.loadClass("w.Hello").getClassLoader() == loader1);
 
-        assertTrue(loader3.loadClass("p.Main").getClassLoader() == loader3);
-        assertTrue(loader3.loadClass("q.Hello").getClassLoader() == loader3);
+        assertTrue(loader4.loadClass("p.Main").getClassLoader() == loader4);
+        assertTrue(loader4.loadClass("q.Hello").getClassLoader() == loader4);
+        assertTrue(loader4.loadClass("w.Hello").getClassLoader() == loader4);
 
     }
 
@@ -344,39 +390,40 @@ public class LayerAndLoadersTest {
      * Test Layer.createWithXXX when the modules that override same named
      * modules in the parent layer.
      *
-     * layer1: m1, m2 => loader pool
-     * layer2: m1, m2 => loader pool
+     * Test scenario:
+     *   layer1: m1, m2, m3 => loader pool
+     *   layer2: m1, m2, m3 => loader pool
      */
     public void testOverriding2() throws Exception {
 
         Configuration cf1 = resolve("m1");
 
         Layer layer1 = Layer.createWithManyLoaders(cf1, Layer.boot(), null);
-        checkLayer(layer1, "m1", "m2");
+        checkLayer(layer1, "m1", "m2", "m3");
 
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf2
             = Configuration.resolve(finder, cf1, ModuleFinder.empty(), "m1");
 
         Layer layer2 = Layer.createWithManyLoaders(cf2, layer1, null);
-        checkLayer(layer2, "m1", "m2");
+        checkLayer(layer2, "m1", "m2", "m3");
         invoke(layer1, "m1", "p.Main");
 
         ClassLoader loader1 = layer1.findLoader("m1");
         ClassLoader loader2 = layer1.findLoader("m2");
-        ClassLoader loader3 = layer2.findLoader("m1");
-        ClassLoader loader4 = layer2.findLoader("m2");
+        ClassLoader loader3 = layer1.findLoader("m3");
 
-        assertTrue(loader1 != loader2);
-        assertTrue(loader1 != loader3);
-        assertTrue(loader1 != loader4);
-        assertTrue(loader2 != loader3);
-        assertTrue(loader2 != loader4);
-        assertTrue(loader3 != loader4);
+        ClassLoader loader4 = layer2.findLoader("m1");
+        ClassLoader loader5 = layer2.findLoader("m2");
+        ClassLoader loader6 = layer2.findLoader("m3");
+
+        assertTrue(loader4 != loader1);
+        assertTrue(loader5 != loader2);
+        assertTrue(loader6 != loader3);
 
         assertTrue(loader1.loadClass("p.Main").getClassLoader() == loader1);
         assertTrue(loader1.loadClass("q.Hello").getClassLoader() == loader2);
-        assertTrue(loader2.loadClass("q.Hello").getClassLoader() == loader2);
+        assertTrue(loader1.loadClass("w.Hello").getClassLoader() == loader3);
 
         // p.Main is not visible via loader2
         try {
@@ -384,14 +431,50 @@ public class LayerAndLoadersTest {
             assertTrue(false);
         } catch (ClassNotFoundException expected) { }
 
-
-        assertTrue(loader3.loadClass("p.Main").getClassLoader() == loader3);
-        assertTrue(loader3.loadClass("q.Hello").getClassLoader() == loader4);
-        assertTrue(loader4.loadClass("q.Hello").getClassLoader() == loader4);
-
-        // p.Main is not visible via loader4
+        // w.Hello is not visible via loader2
         try {
-            loader2.loadClass("p.Main");
+            loader2.loadClass("w.Hello");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+        // p.Main is not visible via loader3
+        try {
+            loader3.loadClass("p.Main");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+        // q.Hello is not visible via loader3
+        try {
+            loader3.loadClass("q.Hello");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+
+        assertTrue(loader4.loadClass("p.Main").getClassLoader() == loader4);
+        assertTrue(loader5.loadClass("q.Hello").getClassLoader() == loader5);
+        assertTrue(loader6.loadClass("w.Hello").getClassLoader() == loader6);
+
+        // p.Main is not visible via loader5
+        try {
+            loader5.loadClass("p.Main");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+        // w.Hello is not visible via loader5
+        try {
+            loader5.loadClass("w.Hello");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+        // p.Main is not visible via loader6
+        try {
+            loader6.loadClass("p.Main");
+            assertTrue(false);
+        } catch (ClassNotFoundException expected) { }
+
+        // q.Hello is not visible via loader6
+        try {
+            loader6.loadClass("q.Hello");
             assertTrue(false);
         } catch (ClassNotFoundException expected) { }
 
@@ -402,58 +485,89 @@ public class LayerAndLoadersTest {
      * Test Layer.createWithXXX when the modules that override same named
      * modules in the parent layer.
      *
-     * layer1: m1, m2 => same loader
-     * layer2: m1 => one loader
+     * layer1: m1, m2, m3 => same loader
+     * layer2: m1, m3 => same loader
      */
     public void testOverriding3() throws Exception {
 
         Configuration cf1 = resolve("m1");
 
         Layer layer1 = Layer.createWithOneLoader(cf1, Layer.boot(), null);
-        checkLayer(layer1, "m1", "m2");
+        checkLayer(layer1, "m1", "m2", "m3");
 
-
-        // ModuleFinder that only finds m1
-        ModuleFinder finder = new ModuleFinder() {
-            ModuleReference mref = ModuleFinder.of(MODS_DIR).find("m1").get();
-            @Override
-            public Optional<ModuleReference> find(String name) {
-                if (name.equals("m1")) {
-                    return Optional.of(mref);
-                } else {
-                    return Optional.empty();
-                }
-            }
-            @Override
-            public Set<ModuleReference> findAll() {
-                return Collections.singleton(mref);
-            }
-        };
+        ModuleFinder finder = finderFor("m1", "m3");
 
         Configuration cf2
             = Configuration.resolve(finder, cf1, ModuleFinder.empty(), "m1");
 
         Layer layer2 = Layer.createWithOneLoader(cf2, layer1, null);
-        checkLayer(layer2, "m1");
+        checkLayer(layer2, "m1", "m3");
         invoke(layer1, "m1", "p.Main");
 
         ClassLoader loader1 = layer1.findLoader("m1");
-        ClassLoader loader2 = layer1.findLoader("m2");
-        ClassLoader loader3 = layer2.findLoader("m1");
-
-        assertTrue(loader1 == loader2);
-        assertTrue(loader3 != loader1);
+        ClassLoader loader2 = layer2.findLoader("m1");
 
         assertTrue(loader1.loadClass("p.Main").getClassLoader() == loader1);
         assertTrue(loader1.loadClass("q.Hello").getClassLoader() == loader1);
+        assertTrue(loader1.loadClass("w.Hello").getClassLoader() == loader1);
 
-        assertTrue(loader3.loadClass("p.Main").getClassLoader() == loader3);
-        assertTrue(loader3.loadClass("q.Hello").getClassLoader() == loader1);
+        assertTrue(loader2.loadClass("p.Main").getClassLoader() == loader2);
+        assertTrue(loader2.loadClass("q.Hello").getClassLoader() == loader1);
+        assertTrue(loader2.loadClass("w.Hello").getClassLoader() == loader2);
 
     }
 
 
-    // test qualified exports?
+    /**
+     * Test Layer.createWithXXX when the modules that override same named
+     * modules in the parent layer.
+     *
+     * layer1: m1, m2, m3 => loader pool
+     * layer2: m1, m3 => loader pool
+     */
+    public void testOverriding4() throws Exception {
+
+        Configuration cf1 = resolve("m1");
+
+        Layer layer1 = Layer.createWithManyLoaders(cf1, Layer.boot(), null);
+        checkLayer(layer1, "m1", "m2", "m3");
+
+        ModuleFinder finder = finderFor("m1", "m3");
+
+        Configuration cf2
+            = Configuration.resolve(finder, cf1, ModuleFinder.empty(), "m1");
+
+        Layer layer2 = Layer.createWithManyLoaders(cf2, layer1, null);
+        checkLayer(layer2, "m1", "m3");
+        invoke(layer1, "m1", "p.Main");
+
+        ClassLoader loader1 = layer1.findLoader("m1");
+        ClassLoader loader2 = layer1.findLoader("m2");
+        ClassLoader loader3 = layer1.findLoader("m3");
+
+        ClassLoader loader4 = layer2.findLoader("m1");
+        ClassLoader loader5 = layer2.findLoader("m2");
+        ClassLoader loader6 = layer2.findLoader("m3");
+
+        assertTrue(loader4 != loader1);
+        assertTrue(loader5 == loader2);  // m2 not overridden
+        assertTrue(loader6 != loader3);
+
+        assertTrue(loader1.loadClass("p.Main").getClassLoader() == loader1);
+        assertTrue(loader1.loadClass("q.Hello").getClassLoader() == loader2);
+        assertTrue(loader1.loadClass("w.Hello").getClassLoader() == loader3);
+
+        assertTrue(loader2.loadClass("q.Hello").getClassLoader() == loader2);
+
+        assertTrue(loader3.loadClass("w.Hello").getClassLoader() == loader3);
+
+        assertTrue(loader4.loadClass("p.Main").getClassLoader() == loader4);
+        assertTrue(loader4.loadClass("q.Hello").getClassLoader() == loader2);
+        assertTrue(loader4.loadClass("w.Hello").getClassLoader() == loader6);
+
+        assertTrue(loader6.loadClass("w.Hello").getClassLoader() == loader6);
+
+    }
 
 
     // -- supporting methods --
@@ -524,6 +638,34 @@ public class LayerAndLoadersTest {
                 assertTrue(false);
             } catch (ClassNotFoundException expected) { }
         }
+    }
+
+
+    /**
+     * Returns a ModuleFinder that only finds the given test modules
+     */
+    static ModuleFinder finderFor(String... names) {
+
+        ModuleFinder finder = ModuleFinder.of(MODS_DIR);
+
+        Map<String, ModuleReference> mrefs = new HashMap<>();
+        for (String name : names) {
+            Optional<ModuleReference> omref = finder.find(name);
+            assert omref.isPresent();
+            mrefs.put(name, omref.get());
+        }
+
+        return new ModuleFinder() {
+            @Override
+            public Optional<ModuleReference> find(String name) {
+                ModuleReference mref = mrefs.get(name);
+                return Optional.ofNullable(mref);
+            }
+            @Override
+            public Set<ModuleReference> findAll() {
+                return mrefs.values().stream().collect(Collectors.toSet());
+            }
+        };
     }
 
 }

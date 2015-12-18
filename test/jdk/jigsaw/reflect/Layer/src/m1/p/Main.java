@@ -34,5 +34,6 @@ public class Main {
         if (url2 == null) throw new RuntimeException();
 
         q.Hello.hello();
+        w.Hello.hello();
     }
 }

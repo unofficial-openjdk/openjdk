@@ -21,7 +21,7 @@
  * questions.
  */
 
-module m3 {
-    // qualified export
-    exports w to m1;
+module m4 {
+    requires m1;
+    provides p.Service with impl.ServiceImpl;
 }
