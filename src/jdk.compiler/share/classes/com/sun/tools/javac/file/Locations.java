@@ -821,7 +821,7 @@ public class Locations {
      * SYSTEM_MODULE_PATH and MODULE_PATH.
      *
      * The Location can be specified to accept overriding classes from the
-     * -Xoverride:dir parameter.
+     * -Xpatch:dir parameter.
      */
     private class ModuleLocationHandler extends LocationHandler implements Location {
         protected final String name;
@@ -1409,7 +1409,6 @@ public class Locations {
 
     boolean handleOption(Option option, String value) {
         switch (option) {
-            case XOVERRIDE:
             case XPATCH:
                 moduleOverrideSearchPath = new SearchPath().addFiles(value);
                 return true;
