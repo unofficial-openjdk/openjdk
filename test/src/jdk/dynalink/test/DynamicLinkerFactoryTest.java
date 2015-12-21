@@ -220,7 +220,7 @@ public class DynamicLinkerFactoryTest {
         Assert.assertTrue(cause.toString().contains("dynalink.exportLinkersAutomatically"));
     }
 
-    @Test(enabled = false)
+    @Test
     public void autoLoadedLinkerNegativeTest() {
         // enable auto loaded linkers
         final DynamicLinkerFactory factory = newDynamicLinkerFactory(false);
@@ -228,7 +228,7 @@ public class DynamicLinkerFactoryTest {
         checkOneAutoLoadingError(factory);
     }
 
-    @Test(enabled = false)
+    @Test
     public void autoLoadedLinkerTest() {
         final DynamicLinkerFactory factory = newDynamicLinkerFactory(false);
         final DynamicLinker linker = factory.createLinker();
