@@ -25,6 +25,8 @@
 
 package jdk.internal.jimage;
 
+import java.nio.ByteBuffer;
+
 public class ImageLocationBase {
     public static final int ATTRIBUTE_END = 0;
     public static final int ATTRIBUTE_MODULE = 1;
@@ -57,16 +59,12 @@ public class ImageLocationBase {
         return data >>> 3;
     }
 
-    protected static long[] decompress(byte[] bytes) {
-        return decompress(bytes, 0);
-    }
-
-    protected static long[] decompress(byte[] bytes, int offset) {
+    protected static long[] decompress(ByteBuffer bytes) {
         long[] attributes = new long[ATTRIBUTE_COUNT];
 
         if (bytes != null) {
-            for (int i = offset; i < bytes.length; ) {
-                int data = bytes[i++] & 0xFF;
+            while (bytes.hasRemaining()) {
+                int data = bytes.get() & 0xFF;
                 int kind = attributeKind(data);
 
                 if (kind == ATTRIBUTE_END) {
@@ -80,7 +78,8 @@ public class ImageLocationBase {
 
                 for (int j = 0; j < length; j++) {
                     value <<= 8;
-                    value |= bytes[i++] & 0xFF;
+                    assert bytes.hasRemaining() : "Missing attribute data";
+                    value |= bytes.get() & 0xFF;
                 }
 
                  attributes[kind] = value;

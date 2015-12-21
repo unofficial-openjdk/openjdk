@@ -25,6 +25,8 @@
 
 package jdk.internal.jimage;
 
+import java.nio.ByteBuffer;
+
 public class ImageStringsReader implements ImageStrings {
     public static final int HASH_MULTIPLIER = 0x01000193;
     private final BasicImageReader reader;
@@ -43,7 +45,7 @@ public class ImageStringsReader implements ImageStrings {
         throw new InternalError("Can not add strings at runtime");
     }
 
-    private static int hashCode(int seed, byte[] bytes, int offset, int count) {
+    private static int hashCode(byte[] bytes, int offset, int count, int seed) {
         for (int i = offset, limit = offset + count; i < limit; i++) {
             seed = (seed * HASH_MULTIPLIER) ^ (bytes[i] & 0xFF);
         }
@@ -51,14 +53,20 @@ public class ImageStringsReader implements ImageStrings {
         return seed & 0x7FFFFFFF;
     }
 
-    public static int hashCode(String string) {
-        return hashCode(string, HASH_MULTIPLIER);
+    public static int hashCode(byte[] bytes, int seed) {
+        return hashCode(bytes, 0, bytes.length, seed);
+    }
+
+    public static int hashCode(byte[] bytes) {
+        return hashCode(bytes, 0, bytes.length, HASH_MULTIPLIER);
     }
 
     public static int hashCode(String string, int seed) {
-        byte[] bytes = mutf8FromString(string);
+        return hashCode(mutf8FromString(string), seed);
+    }
 
-        return hashCode(seed, bytes, 0, bytes.length);
+    public static int hashCode(String string) {
+        return hashCode(mutf8FromString(string), HASH_MULTIPLIER);
     }
 
     static int charsFromMUTF8Length(byte[] bytes, int offset, int count) {
@@ -119,6 +127,66 @@ public class ImageStringsReader implements ImageStrings {
 
     public static String stringFromMUTF8(byte[] bytes) {
         return stringFromMUTF8(bytes, 0, bytes.length);
+    }
+
+   static int charsFromByteBufferLength(ByteBuffer buffer) {
+        int length = 0;
+
+        while(buffer.hasRemaining()) {
+            byte ch = buffer.get();
+
+            if (ch == 0) {
+                return length;
+            }
+
+            if ((ch & 0xC0) != 0x80) {
+                length++;
+            }
+        }
+
+        assert true : "No terminating zero byte";
+        return length;
+    }
+
+    static void charsFromByteBuffer(char chars[], ByteBuffer buffer) {
+        int j = 0;
+
+        while(buffer.hasRemaining()) {
+            byte ch = buffer.get();
+
+            if (ch == 0) {
+                return;
+            }
+
+            boolean is_unicode = (ch & 0x80) != 0;
+            int uch = ch & 0x7F;
+
+            if (is_unicode) {
+                int mask = 0x40;
+
+                while ((uch & mask) != 0) {
+                    ch = buffer.get();
+                    assert (ch & 0xC0) == 0x80 : "error in unicode";
+                    uch = ((uch & ~mask) << 6) | (ch & 0x3F);
+                    mask <<= 6 - 1;
+                }
+            }
+
+            assert (uch & 0xFFFF) == uch : "error in unicode)";
+
+            chars[j++] = (char)uch;
+        }
+
+        assert true : "No terminating zero byte";
+    }
+
+    public static String stringFromByteBuffer(ByteBuffer buffer) {
+        int length = charsFromByteBufferLength(buffer);
+        buffer.rewind();
+        char[] chars = new char[length];
+        charsFromByteBuffer(chars, buffer);
+
+        return new String(chars);
     }
 
     static int mutf8FromCharsLength(char chars[]) {

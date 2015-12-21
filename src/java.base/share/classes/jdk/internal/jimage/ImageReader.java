@@ -584,7 +584,7 @@ public class ImageReader extends BasicImageReader {
         BasicFileAttributes attrs = imageFileAttributes;
         if (attrs == null) {
             try {
-                Path file = Paths.get(imagePath());
+                Path file = getImageFile().toPath();
                 attrs = Files.readAttributes(file, BasicFileAttributes.class);
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
