@@ -22,21 +22,44 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api;
+package jdk.tools.jlink.builder;
 
-import java.security.BasicPermission;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import java.io.DataOutputStream;
+import java.util.List;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 /**
- * The permission required to use jlink API. The permission target_name is
- * "jlink". e.g.: permission jdk.tools.jlink.plugins.JlinkPermission "jlink";
- *
+ * Implement this interface to develop your own image layout. First the jimage
+ * is written onto the output stream returned by getOutputStream then storeFiles
+ * is called.
  */
-public final class JlinkPermission extends BasicPermission {
+public interface ImageBuilder {
 
-    private static final long serialVersionUID = -3687912306077727801L;
+    /**
+     * Store the external files.
+     *
+     * @param content Pool of module content.
+     * @param bom The options used to build the image file.
+     * @throws PluginException
+     */
+    public void storeFiles(Pool content, String bom);
 
-    public JlinkPermission(String name) {
-        super(name);
-    }
+    /**
+     * The OutputStream to store the jimage file.
+     *
+     * @return The output stream
+     * @throws PluginException
+     */
+    public DataOutputStream getJImageOutputStream();
 
+    /**
+     * Gets the executable image that is generated.
+     *
+     * @return The executable image.
+     * @throws PluginException
+     */
+    public ExecutableImage getExecutableImage();
 }

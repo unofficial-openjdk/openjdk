@@ -22,9 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api.plugin.transformer;
+package jdk.tools.jlink.plugin;
 
-import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,6 +79,9 @@ public abstract class Pool {
         public void add(ModuleData data);
 
         public Set<String> getAllPackages();
+
+        public Collection<ModuleData> getContent();
+
     }
 
     private class ModuleImpl implements Module {
@@ -153,6 +156,11 @@ public abstract class Pool {
         @Override
         public String toString() {
             return getName();
+        }
+
+        @Override
+        public Collection<ModuleData> getContent() {
+            return Collections.unmodifiableCollection(moduleContent.values());
         }
     }
 

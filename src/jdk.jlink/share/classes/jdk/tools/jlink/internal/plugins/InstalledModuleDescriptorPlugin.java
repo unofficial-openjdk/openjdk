@@ -42,19 +42,19 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption;
 
 /**
- * Jlink plugin to reconstitute module descriptors for installed modules. It
- * also determines the number of packages of the boot layer at link time.
+ * Jlink plugin to reconstitute module descriptors for installed modules.
+ * It also determines the number of packages of the boot layer at link time.
  *
  * This plugin will override jdk.internal.module.InstalledModules class
  *
- * This plugin is enabled by default. This can be disabled via jlink
- * --gen-installed-modules off option.
+ * This plugin is enabled by default. This can be disabled via
+ * jlink --gen-installed-modules off option.
  *
- * TODO: module-info.class may not have the ConcealedPackages attribute. This
- * plugin or a new plugin should add to module-info.class, if not present.
+ * TODO: module-info.class may not have the ConcealedPackages attribute.
+ * This plugin or a new plugin should add to module-info.class, if not present.
  *
  * @see java.lang.module.InstalledModuleFinder
  * @see jdk.internal.module.InstalledModules
@@ -162,17 +162,17 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
     }
 
     /**
-     * Builder of a new jdk.internal.module.InstalledModules class to
-     * reconstitute ModuleDescriptor of the installed modules.
+     * Builder of a new jdk.internal.module.InstalledModules class
+     * to reconstitute ModuleDescriptor of the installed modules.
      */
     static class Builder {
 
-        private static final String CLASSNAME
-                = "jdk/internal/module/InstalledModules";
-        private static final String MODULE_DESCRIPTOR_BUILDER
-                = "jdk/internal/module/Builder";
-        private static final String MODULES_MAP_SIGNATURE
-                = "Ljava/util/Map<Ljava/lang/String;Ljava/lang/module/ModuleDescriptor;>;";
+        private static final String CLASSNAME =
+            "jdk/internal/module/InstalledModules";
+        private static final String MODULE_DESCRIPTOR_BUILDER =
+            "jdk/internal/module/Builder";
+        private static final String MODULES_MAP_SIGNATURE =
+            "Ljava/util/Map<Ljava/lang/String;Ljava/lang/module/ModuleDescriptor;>;";
 
         // static variables in InstalledModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
@@ -197,9 +197,9 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
 
         public Builder(Set<String> moduleNames, int numPackages) {
-            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
+            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
             this.clinit(moduleNames, numPackages);
-            this.mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC,
+            this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
                     "modules", "()Ljava/util/Map;",
                     "()" + MODULES_MAP_SIGNATURE, null);
             mv.visitCode();
@@ -211,21 +211,21 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
          * static Map<String, ModuleDescriptor> map = new HashMap<>();
          */
         private void clinit(Set<String> moduleNames, int numPackages) {
-            cw.visit(Opcodes.V1_8, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, CLASSNAME,
+            cw.visit(Opcodes.V1_8, ACC_PUBLIC+ACC_FINAL+ACC_SUPER, CLASSNAME,
                     null, "java/lang/Object", null);
 
             // public static String[] MODULE_NAMES = new String[] {....};
-            cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, MODULE_NAMES,
+            cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULE_NAMES,
                     "[Ljava/lang/String;", null, null)
                     .visitEnd();
 
             // public static int PACKAGES_IN_BOOT_LAYER;
-            cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, PACKAGE_COUNT,
+            cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, PACKAGE_COUNT,
                     "I", null, numPackages)
                     .visitEnd();
 
             // static Map<String, ModuleDescriptor> map = new HashMap<>();
-            cw.visitField(ACC_FINAL + ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
+            cw.visitField(ACC_FINAL+ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
                     MODULES_MAP_SIGNATURE, null)
                     .visitEnd();
 
@@ -240,6 +240,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                     "[Ljava/lang/String;");
             mv.visitIntInsn(numModules < Byte.MAX_VALUE ? BIPUSH : SIPUSH, numModules);
             mv.visitTypeInsn(ANEWARRAY, "[Ljava/lang/String;");
+
 
             mv.visitTypeInsn(NEW, "java/util/HashMap");
             mv.visitInsn(DUP);
@@ -298,7 +299,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 Set<String> names, int size) {
             mv.visitIntInsn(size < Byte.MAX_VALUE ? BIPUSH : SIPUSH, size);
             mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
-            int index = 0;
+            int index=0;
             for (String n : names) {
                 addElement(cw, mv, index++);
                 mv.visitLdcInsn(n);      // value
@@ -390,8 +391,8 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                             requires(req.name());
                             break;
                         case 1:
-                            ModuleDescriptor.Requires.Modifier mod
-                                    = req.modifiers().iterator().next();
+                            ModuleDescriptor.Requires.Modifier mod =
+                                req.modifiers().iterator().next();
                             requires(mod, req.name());
                             break;
                         default:

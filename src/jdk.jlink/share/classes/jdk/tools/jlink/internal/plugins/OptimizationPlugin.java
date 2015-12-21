@@ -46,8 +46,8 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
 import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
@@ -70,7 +70,7 @@ public final class OptimizationPlugin extends AsmPlugin {
             argumentDescription(PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL)).
             build();
     public static final PluginOption LOG_OPTION = new Builder(LOG_FILE).
-            description(PluginsResourceBundle.getOption(NAME, LOG_FILE)).
+            argumentDescription(PluginsResourceBundle.getOption(NAME, LOG_FILE)).
             build();
 
     /**
@@ -263,8 +263,8 @@ public final class OptimizationPlugin extends AsmPlugin {
 
     @Override
     public void configure(Map<PluginOption, String> config) {
-       String strategies = config.get(NAME_OPTION);
-       String[] arr = strategies.split(":");
+        String strategies = config.get(NAME_OPTION);
+        String[] arr = strategies.split(":");
         for (String s : arr) {
             if (s.equals(ALL)) {
                 optimizers.clear();

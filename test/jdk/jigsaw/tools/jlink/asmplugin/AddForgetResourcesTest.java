@@ -44,18 +44,20 @@ import java.util.Map;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Method;
 import java.io.UncheckedIOException;
+import java.util.Set;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.plugins.asm.AsmGlobalPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableClassPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableResourcePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 public class AddForgetResourcesTest extends AsmPluginTestBase {
 

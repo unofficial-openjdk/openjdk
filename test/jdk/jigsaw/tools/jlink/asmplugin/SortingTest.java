@@ -38,9 +38,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 public class SortingTest extends AsmPluginTestBase {
 

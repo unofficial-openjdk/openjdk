@@ -31,18 +31,15 @@
  */
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
-import jdk.tools.jlink.internal.plugins.ExcludeProvider;
-import jdk.tools.jlink.api.plugin.CmdPluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.ExcludePlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 public class ExcludePluginTest {
 
@@ -75,10 +72,10 @@ public class ExcludePluginTest {
     }
 
     public void check(String s, String sample, boolean exclude) throws Exception {
-        Map<String, Object> p = new HashMap<>();
-        p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
-        ExcludeProvider provider = new ExcludeProvider();
-        TransformerPlugin excludePlugin = (TransformerPlugin) provider.newPlugin(p);
+        Map<PluginOption, String> prop = new HashMap<>();
+        prop.put(ExcludePlugin.NAME_OPTION, s);
+        ExcludePlugin excludePlugin = new ExcludePlugin();
+        excludePlugin.configure(prop);
         Pool resources = new PoolImpl();
         ModuleData resource = Pool.newResource(sample, new byte[0]);
         resources.add(resource);

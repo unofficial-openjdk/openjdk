@@ -32,29 +32,29 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.plugin.CmdPluginProvider;
-import jdk.tools.jlink.api.Jlink;
-import jdk.tools.jlink.api.Jlink.OrderedPluginConfiguration;
-import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.Jlink.OrderedPlugin;
+import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class LastSorterTest {
 
     public LastSorterTest() {
-        for (int i = 1; i <= 5; i++) {
-            PluginRepository.registerPluginProvider(new SorterProvider("sorterplugin" + i));
+        for (int i = 1; i <= 6; i++) {
+            PluginRepository.registerPlugin(new SorterPlugin("sorterplugin" + i));
         }
-        PluginRepository.registerPluginProvider(new SorterProvider2("sorterplugin" + 6));
     }
 
     public static void main(String[] args) throws Exception {
@@ -72,11 +72,11 @@ public class LastSorterTest {
     }
 
     private void checkTwoLastSorters() throws Exception {
-        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin5", "/a", 0));
         plugins.add(createConfig("sorterplugin6", "/a", 1));
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null, "sorterplugin5");
+                null, "sorterplugin5");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -107,20 +107,20 @@ public class LastSorterTest {
         return res;
     }
 
-    private static OrderedPluginConfiguration createConfig(String name, String arg, int index) {
-        Map<String, Object> conf = new HashMap<>();
-        conf.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
-        return new OrderedPluginConfiguration(name, index, true, conf);
+    private static OrderedPlugin createConfig(String name, String arg, int index) {
+        Map<PluginOption, String> conf = new HashMap<>();
+        conf.put(new PluginOption.Builder(name).build(), arg);
+        return new OrderedPlugin(name, index, true, conf);
     }
 
     private void checkPositiveCase() throws Exception {
-        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/c", 0));
         plugins.add(createConfig("sorterplugin2", "/b", 1));
         plugins.add(createConfig("sorterplugin3", "/a", 2));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null, "sorterplugin3");
+                null, "sorterplugin3");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -131,14 +131,14 @@ public class LastSorterTest {
     }
 
     private void checkUnknownPlugin() {
-        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/1", 0));
         plugins.add(createConfig("sorterplugin2", "/1", 1));
         plugins.add(createConfig("sorterplugin3", "/1", 2));
         plugins.add(createConfig("sorterplugin4", "/1", 3));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null, "sorterplugin5");
+                null, "sorterplugin5");
         try {
             ImagePluginConfiguration.parseConfiguration(config);
             throw new AssertionError("Unknown plugin should have failed.");
@@ -148,14 +148,14 @@ public class LastSorterTest {
     }
 
     private void checkOrderAfterLastSorter() throws Exception {
-        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/c", 0));
         plugins.add(createConfig("sorterplugin2", "/b", 1));
         plugins.add(createConfig("sorterplugin3", "/a", 2));
         plugins.add(createConfig("sorterplugin4", "/d", 3));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null, "sorterplugin3");
+                null, "sorterplugin3");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -172,11 +172,10 @@ public class LastSorterTest {
     public static class SorterPlugin implements TransformerPlugin {
 
         private final String name;
-        private final String starts;
+        private String starts;
 
-        private SorterPlugin(String name, String starts) {
+        private SorterPlugin(String name) {
             this.name = name;
-            this.starts = starts;
         }
 
         @Override
@@ -199,55 +198,28 @@ public class LastSorterTest {
         public String getName() {
             return name;
         }
-    }
 
-    public static class SorterProvider extends TransformerCmdProvider {
-
-        SorterProvider(String name) {
-            super(name, "");
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
 
         @Override
-        public String getCategory() {
+        public String getDescription() {
             return null;
         }
 
         @Override
-        public String getToolOption() {
+        public PluginOption getOption() {
             return null;
         }
 
         @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
-        }
-
-        @Override
-        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
-            return new SorterPlugin(getName(), arguments == null ? null : arguments[0]);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
-        }
-    }
-
-    public static class SorterProvider2 extends SorterProvider {
-
-        SorterProvider2(String name) {
-            super(name);
-        }
-
-        @Override
-         public TransformerPlugin newPlugin(String[] arguments,
-                Map<String, String> otherOptions) {
-            return (SorterPlugin) super.newPlugin(arguments, otherOptions);
+        public void configure(Map<PluginOption, String> config) {
+            String arguments = config.get(new PluginOption.Builder(name).build());
+            this.starts = arguments;
         }
     }
 }

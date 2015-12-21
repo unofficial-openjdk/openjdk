@@ -32,9 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
-import jdk.tools.jlink.api.plugin.Plugin;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  *
@@ -58,7 +60,11 @@ public final class PluginRepository {
      */
     public static Plugin getPlugin(String name,
             Layer pluginsLayer) {
-        return getPlugin(Plugin.class, name, pluginsLayer);
+        Plugin p = getPlugin(TransformerPlugin.class, name, pluginsLayer);
+        if (p == null) {
+            p = getPlugin(PostProcessorPlugin.class, name, pluginsLayer);
+        }
+        return p;
     }
 
     /**
@@ -67,14 +73,16 @@ public final class PluginRepository {
      * @param config Optional config.
      * @param name Non null name.
      * @param pluginsLayer
-     * @return A plugin.
+     * @return A plugin or null if no plugin found.
      */
     public static Plugin newPlugin(Map<PluginOption, String> config, String name,
             Layer pluginsLayer) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
         Plugin plugin = getPlugin(name, pluginsLayer);
-        plugin.configure(config);
+        if (plugin != null) {
+            plugin.configure(config);
+        }
         return plugin;
     }
 
@@ -99,7 +107,10 @@ public final class PluginRepository {
     }
 
     public static List<Plugin> getPlugins(Layer pluginsLayer) {
-        return getPlugins(Plugin.class, pluginsLayer);
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.addAll(getPlugins(TransformerPlugin.class, pluginsLayer));
+        plugins.addAll(getPlugins(PostProcessorPlugin.class, pluginsLayer));
+        return plugins;
     }
 
     private static <T extends Plugin> T getPlugin(Class<T> clazz, String name,

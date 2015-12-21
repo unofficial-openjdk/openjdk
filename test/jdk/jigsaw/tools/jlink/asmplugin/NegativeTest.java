@@ -36,10 +36,13 @@
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteOrder;
+import java.util.Map;
+import java.util.Set;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmGlobalPool;
@@ -47,8 +50,9 @@ import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
 
 public class NegativeTest extends AsmPluginTestBase {
     public static void main(String[] args) throws Exception {
@@ -99,6 +103,27 @@ public class NegativeTest extends AsmPluginTestBase {
                 }
             }
 
+
+            @Override
+            public Set<Plugin.PluginType> getType() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return "";
+            }
+
+            @Override
+            public PluginOption getOption() {
+                return null;
+            }
+
+            @Override
+            public void configure(Map<PluginOption, String> config) {
+
+            }
+
             @Override
             public String getName() {
                 return null;
@@ -141,6 +166,26 @@ public class NegativeTest extends AsmPluginTestBase {
             @Override
             public String getName() {
                 return null;
+            }
+
+            @Override
+            public Set<Plugin.PluginType> getType() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return "";
+            }
+
+            @Override
+            public PluginOption getOption() {
+                return null;
+            }
+
+            @Override
+            public void configure(Map<PluginOption, String> config) {
+
             }
         };
         Pool resources = new PoolImpl(ByteOrder.BIG_ENDIAN, new StringTable() {

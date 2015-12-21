@@ -24,28 +24,43 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
+import java.util.function.Predicate;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  *
  * Strip debug attributes plugin
  */
-public final class StripDebugPlugin extends AsmPlugin {
+public final class StripDebugPlugin implements TransformerPlugin {
 
-    public static final String NAME = "strip-java-debug";
+    private Predicate<String> predicate;
+    public static final String NAME = "strip-debug";
     public static final PluginOption NAME_OPTION
             = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            hasOnOffArgument().build();
+            description(PluginsResourceBundle.getDescription(NAME)).build();
+    private static final String[] PATTERNS = {"*.diz"};
+
+    public StripDebugPlugin() {
+        try {
+            predicate = new ResourceFilter(PATTERNS);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
 
     @Override
     public String getName() {
@@ -65,20 +80,6 @@ public final class StripDebugPlugin extends AsmPlugin {
     }
 
     @Override
-    public void visit(AsmPools pools) {
-        pools.getGlobalPool().visitClassReaders((reader) -> {
-            ClassWriter writer = null;
-            if (reader.getClassName().contains("module-info")) {//eg: java.base/module-info
-                // XXX. Do we have debug info? Is Asm ready for module-info?
-            } else {
-                writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                reader.accept(writer, ClassReader.SKIP_DEBUG);
-            }
-            return writer;
-        });
-    }
-
-    @Override
     public String getDescription() {
         return PluginsResourceBundle.getDescription(NAME);
     }
@@ -86,5 +87,30 @@ public final class StripDebugPlugin extends AsmPlugin {
     @Override
     public void configure(Map<PluginOption, String> config) {
 
+    }
+
+    @Override
+    public void visit(Pool in, Pool out) {
+        //remove *.diz files as well as debug attributes.
+        in.visit((resource) -> {
+            ModuleData res = resource;
+            if (resource.getType().equals(ModuleDataType.CLASS_OR_RESOURCE)) {
+                String path = resource.getPath();
+                if (path.endsWith(".class")) {
+                    if (path.endsWith("module-info.class")) {
+                        // XXX. Do we have debug info? Is Asm ready for module-info?
+                    } else {
+                        ClassReader reader = new ClassReader(resource.getBytes());
+                        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                        reader.accept(writer, ClassReader.SKIP_DEBUG);
+                        byte[] content = writer.toByteArray();
+                        res = Pool.newResource(path, new ByteArrayInputStream(content), content.length);
+                    }
+                }
+            } else if (predicate.test(res.getPath())) {
+                res = null;
+            }
+            return res;
+        }, out);
     }
 }

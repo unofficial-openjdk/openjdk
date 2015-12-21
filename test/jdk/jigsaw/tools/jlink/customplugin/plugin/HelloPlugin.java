@@ -25,21 +25,36 @@ package plugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
- *
- * Strip debug attributes plugin
+ * Custom plugin
  */
-final class HelloPlugin implements TransformerPlugin {
+public final class HelloPlugin implements TransformerPlugin {
 
     private static final String OUTPUT_FILE = "customplugin.txt";
+    public static final String NAME = "hello";
+    private final static PluginOption NAME_OPTION
+            = new PluginOption.Builder(NAME).
+            description(NAME + "-description").build();
+
+    public static boolean called;
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
 
     @Override
     public String getName() {
-        return HelloProvider.NAME;
+        return NAME;
     }
 
     @Override
@@ -54,5 +69,22 @@ final class HelloPlugin implements TransformerPlugin {
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public String getDescription() {
+        return NAME + "-description";
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
     }
 }

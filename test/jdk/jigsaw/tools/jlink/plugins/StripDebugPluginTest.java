@@ -30,7 +30,6 @@
  * @modules java.base/jdk.internal.jimage
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jdeps/com.sun.tools.classfile
@@ -55,13 +54,12 @@ import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
 import java.util.HashMap;
 import java.util.Map;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.internal.plugins.StripDebugProvider;
-import jdk.tools.jlink.api.plugin.CmdPluginProvider;
-import jdk.tools.jlink.api.plugin.OnOffPluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import tests.Helper;
 
 public class StripDebugPluginTest {
@@ -106,11 +104,11 @@ public class StripDebugPluginTest {
     }
 
     private void check(String path, byte[] content, String infoPath, byte[] moduleInfo) throws Exception {
-        StripDebugProvider prov = new StripDebugProvider();
-        Map<String, Object> options = new HashMap<>();
-        options.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                OnOffPluginProvider.ON_ARGUMENT);
-        TransformerPlugin debug = (TransformerPlugin) prov.newPlugin(options);
+        StripDebugPlugin debug = new StripDebugPlugin();
+        Map<PluginOption, String> options = new HashMap<>();
+        options.put(StripDebugPlugin.NAME_OPTION,
+                PluginOption.Builder.ON_ARGUMENT);
+        debug.configure(options);
         ModuleData result1 = stripDebug(debug, Pool.newResource(path,content), path, infoPath, moduleInfo);
 
         if (!path.endsWith("module-info.class")) {

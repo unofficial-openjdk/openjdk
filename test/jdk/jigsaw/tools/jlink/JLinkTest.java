@@ -29,13 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import jdk.tools.jlink.TaskHelper;
-import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.PluginRepository;
 import tests.Helper;
 import tests.JImageGenerator;
@@ -48,7 +46,6 @@ import tests.JImageGenerator.InMemoryFile;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -66,7 +63,7 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 12;
+        int numPlugins = 10;
         {
             // number of built-in plugins
             List<Plugin> builtInPlugins = new ArrayList<>();
@@ -115,11 +112,22 @@ public class JLinkTest {
         {
             // Help
             StringWriter writer = new StringWriter();
-            jdk.tools.jlink.Main.run(new String[]{"--help"}, new PrintWriter(writer));
+            jdk.tools.jlink.internal.Main.run(new String[]{"--help"}, new PrintWriter(writer));
+            String output = writer.toString();
+            if (output.split("\n").length < 10) {
+                System.err.println(output);
+                throw new AssertionError("Help");
+            }
+        }
+
+        {
+            // XHelp
+            StringWriter writer = new StringWriter();
+            jdk.tools.jlink.internal.Main.run(new String[]{"--xhelp"}, new PrintWriter(writer));
             String output = writer.toString();
             if (output.split("\n").length < 30) {
                 System.err.println(output);
-                throw new AssertionError("Help");
+                throw new AssertionError("XHelp");
             }
         }
 
@@ -137,7 +145,7 @@ public class JLinkTest {
         {
             // List plugins
             StringWriter writer = new StringWriter();
-            jdk.tools.jlink.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
+            jdk.tools.jlink.internal.Main.run(new String[]{"--xhelp"}, new PrintWriter(writer));
             String output = writer.toString();
             long number = Stream.of(output.split("\n"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
@@ -150,7 +158,7 @@ public class JLinkTest {
 
         // filter out files and resources + Skip debug + compress
         {
-            String[] userOptions = {"--compress-resources", "on", "--strip-java-debug", "on",
+            String[] userOptions = {"--compress-resources", "--strip-debug",
                 "--exclude-resources", "*.jcov, */META-INF/*", "--exclude-files",
                 "*" + Helper.getDebugSymbolsExtension()};
             String moduleName = "excludezipskipdebugcomposite2";
@@ -163,8 +171,8 @@ public class JLinkTest {
 
         // filter out + Skip debug + compress with filter + sort resources
         {
-            String[] userOptions2 = {"--compress-resources", "on", "--compress-resources-filter",
-                "^/java.base/*", "--strip-java-debug", "on", "--exclude-resources",
+            String[] userOptions2 = {"--compress-resources", "--compress-resources-filter",
+                "^/java.base/*", "--strip-debug", "--exclude-resources",
                 "*.jcov, */META-INF/*", "--sort-resources",
                 "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
             String moduleName = "excludezipfilterskipdebugcomposite2";
@@ -176,65 +184,54 @@ public class JLinkTest {
 
         // default compress
         {
-            testCompress(helper, "compresscmdcomposite2", "--compress-resources", "on");
+            testCompress(helper, "compresscmdcomposite2", "--compress-resources");
         }
 
         {
             testCompress(helper, "compressfiltercmdcomposite2",
-                    "--compress-resources", "on", "--compress-resources-filter",
+                    "--compress-resources", "--compress-resources-filter",
                     "^/java.base/java/lang/*");
         }
 
         // compress 0
         {
             testCompress(helper, "compress0filtercmdcomposite2",
-                    "--compress-resources", "on", "--compress-resources-level", "0",
+                    "--compress-resources", "--compress-resources-level", "0",
                     "--compress-resources-filter", "^/java.base/java/lang/*");
         }
 
         // compress 1
         {
             testCompress(helper, "compress1filtercmdcomposite2",
-                    "--compress-resources", "on", "--compress-resources-level", "1",
+                    "--compress-resources", "--compress-resources-level", "1",
                     "--compress-resources-filter", "^/java.base/java/lang/*");
         }
 
         // compress 2
         {
             testCompress(helper, "compress2filtercmdcomposite2",
-                    "--compress-resources", "on", "--compress-resources-level", "2",
+                    "--compress-resources", "--compress-resources-level", "2",
                     "--compress-resources-filter", "^/java.base/java/lang/*");
         }
 
         // invalid compress level
         {
-            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "invalid"};
+            String[] userOptions = {"--compress-resources", "--compress-resources-level", "invalid"};
             String moduleName = "invalidCompressLevel";
             helper.generateDefaultJModule(moduleName, "composite2");
             helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: java.io.IOException: Invalid level invalid");
         }
 
-        // configuration
+        // @file
         {
             Path path = Paths.get("embedded.properties");
-            Files.write(path, Collections.singletonList("jdk.jlink.defaults=--strip-java-debug on --addmods " +
+            Files.write(path, Collections.singletonList("--strip-debug --addmods " +
                     "toto.unknown --compress-resources UNKNOWN\n"));
-            String[] userOptions = {"--configuration", path.toAbsolutePath().toString(),
-                    "--compress-resources", "off"};
+            String[] userOptions = {"@", path.toAbsolutePath().toString()};
             String moduleName = "configembeddednocompresscomposite2";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, null, null);
-        }
-
-        {
-            // Defaults configuration unit parsing
-            List<String> lst = Arrays.asList("--aaaa", "a,b,c,d", "--koko", "--bbbbb",
-                    "x,y,z", "--xxx", "-x", "--ddd", "ddd", "--compress", "--doit");
-            String sample = "  --aaaa a, b, c, d --koko --bbbbb    x,y,z   --xxx -x  --ddd ddd --compress --doit";
-
-            checkDefaults(sample, lst);
-            checkDefaults(sample + " ", lst);
         }
 
     }
@@ -243,14 +240,5 @@ public class JLinkTest {
         helper.generateDefaultJModule(moduleName, "composite2");
         Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
         helper.checkImage(imageDir, moduleName, null, null);
-    }
-
-    private static void checkDefaults(String value, List<String> expected)
-            throws Exception {
-        List<String> arguments = TaskHelper.parseDefaults(value);
-        if (!expected.equals(arguments)) {
-            throw new Exception("Lists are not equal. Expected: " + expected
-                    + " Actual: " + arguments);
-        }
     }
 }

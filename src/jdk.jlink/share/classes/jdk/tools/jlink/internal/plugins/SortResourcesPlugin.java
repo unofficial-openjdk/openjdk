@@ -39,13 +39,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.internal.Utils;
 
 /**

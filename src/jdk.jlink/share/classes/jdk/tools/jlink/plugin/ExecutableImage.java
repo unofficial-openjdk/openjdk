@@ -22,29 +22,52 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api.plugin;
+package jdk.tools.jlink.plugin;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * An unchecked exception thrown by jlink plugin API for unrecoverable
- * conditions.
+ * An executable Image.
  */
-public final class PluginException extends RuntimeException {
+public abstract class ExecutableImage {
 
-    private static final long serialVersionUID = 7117982019443100395L;
+    private final Path home;
+    private final List<String> args;
+    private final Set<String> modules;
 
-    public PluginException() {
-
+    protected ExecutableImage(Path home, Set<String> modules,
+            List<String> args) {
+        Objects.requireNonNull(home);
+        Objects.requireNonNull(args);
+        if (!Files.exists(home)) {
+            throw new IllegalArgumentException("Invalid image home");
+        }
+        this.home = home;
+        this.modules = Collections.unmodifiableSet(modules);
+        this.args = Collections.unmodifiableList(args);
     }
 
-    public PluginException(Throwable ex) {
-        super(ex);
+    public Path getHome() {
+        return home;
     }
 
-    public PluginException(String msg) {
-        super(msg);
+    /**
+     * The names of the modules located in the image.
+     *
+     * @return The set of modules.
+     */
+    public Set<String> getModules() {
+        return modules;
     }
 
-    public PluginException(String msg, Throwable thr) {
-        super(msg, thr);
+    public List<String> getExecutionArgs() {
+        return args;
     }
+
+    public abstract void storeLaunchArgs(List<String> args);
 }

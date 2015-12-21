@@ -35,14 +35,14 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
-import jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
-import jdk.tools.jlink.api.plugin.CmdPluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class ExcludeFilesPluginTest {
     public static void main(String[] args) throws Exception {
@@ -50,17 +50,17 @@ public class ExcludeFilesPluginTest {
     }
 
     public void test() throws Exception {
-        checkFiles("*.jcov", "/num/toto.jcov", "", true);
-        checkFiles("*.jcov", "//toto.jcov", "", true);
-        checkFiles("*.jcov", "/toto.jcov/tutu/tata", "", false);
-        checkFiles("/java.base/*.jcov", "/toto.jcov", "java.base", true);
-        checkFiles("/java.base/toto.jcov", "/iti.jcov", "t/java.base", false);
-        checkFiles("/java.base/*/toto.jcov", "/toto.jcov", "java.base", false);
-        checkFiles("/java.base/*/toto.jcov", "/tutu/toto.jcov", "java.base", true);
-        checkFiles("*/java.base/*/toto.jcov", "/java.base/tutu/toto.jcov", "/tutu", true);
+        checkFiles("*.jcov", "num/toto.jcov", "", true);
+        checkFiles("*.jcov", "/toto.jcov", "", true);
+        checkFiles("*.jcov", "toto.jcov/tutu/tata", "", false);
+        checkFiles("/java.base/*.jcov", "toto.jcov", "java.base", true);
+        checkFiles("/java.base/toto.jcov", "iti.jcov", "t/java.base", false);
+        checkFiles("/java.base/*/toto.jcov", "toto.jcov", "java.base", false);
+        checkFiles("/java.base/*/toto.jcov", "tutu/toto.jcov", "java.base", true);
+        checkFiles("*/java.base/*/toto.jcov", "java.base/tutu/toto.jcov", "/tutu", true);
 
-        checkFiles("/*$*.properties", "/tutu/Toto$Titi.properties", "java.base", true);
-        checkFiles("*$*.properties", "/tutu/Toto$Titi.properties", "java.base", true);
+        checkFiles("/*$*.properties", "tutu/Toto$Titi.properties", "java.base", true);
+        checkFiles("*$*.properties", "tutu/Toto$Titi.properties", "java.base", true);
 
         // Excluded files list in a file
         File order = new File("files.exc");
@@ -70,13 +70,13 @@ public class ExcludeFilesPluginTest {
     }
 
     public void checkFiles(String s, String sample, String module, boolean exclude) throws Exception {
-        Map<String, Object> prop = new HashMap<>();
-        prop.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
-        ExcludeFilesProvider fprovider = new ExcludeFilesProvider();
-        TransformerPlugin fplug = (TransformerPlugin) fprovider.newPlugin(prop);
+        Map<PluginOption, String> prop = new HashMap<>();
+        prop.put(ExcludeFilesPlugin.NAME_OPTION, s);
+        ExcludeFilesPlugin fplug = new ExcludeFilesPlugin();
+        fplug.configure(prop);
         PoolImpl files = new PoolImpl();
         PoolImpl fresult = new PoolImpl();
-        ModuleData f = Pool.newImageFile(module, sample,
+        ModuleData f = Pool.newImageFile(module, "/" + module + "/" + sample,
                 ModuleDataType.CONFIG, new ByteArrayInputStream(new byte[0]), 0);
         files.add(f);
 

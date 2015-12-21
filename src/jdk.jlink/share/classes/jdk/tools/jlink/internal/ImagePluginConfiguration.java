@@ -26,7 +26,7 @@ package jdk.tools.jlink.internal;
 
 import java.io.DataOutputStream;
 
-import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.plugin.Plugin;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,14 +34,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
-import jdk.tools.jlink.api.Jlink;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.Plugin.CATEGORY;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPlugin;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.builder.ImageBuilder;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Plugin.CATEGORY;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
 
 /**
  * Plugins configuration.
@@ -100,7 +100,6 @@ public final class ImagePluginConfiguration {
         CATEGORIES_ORDER.add(Plugin.CATEGORY.MODULEINFO_TRANSFORMER);
         CATEGORIES_ORDER.add(Plugin.CATEGORY.SORTER);
         CATEGORIES_ORDER.add(Plugin.CATEGORY.COMPRESSOR);
-        CATEGORIES_ORDER.add(Plugin.CATEGORY.BUILDER);
         CATEGORIES_ORDER.add(Plugin.CATEGORY.VERIFIER);
         CATEGORIES_ORDER.add(Plugin.CATEGORY.PROCESSOR);
         CATEGORIES_ORDER.add(Plugin.CATEGORY.PACKAGER);
@@ -145,13 +144,18 @@ public final class ImagePluginConfiguration {
                         + " added more than once to stack ");
             }
             seen.add(plug.getPlugin().getName());
-            List<Integer> lst = resources.get(plug.getCategory());
+            CATEGORY category = Utils.getCategory(plug.getPlugin());
+            if (category == null) {
+                throw new PluginException("Invalid category for "
+                        + plug.getPlugin().getName());
+            }
+            List<Integer> lst = resources.get(category);
             if (lst == null) {
                 lst = new ArrayList<>();
-                resources.put(plug.getCategory(), lst);
+                resources.put(category, lst);
             }
             int index = getAbsoluteIndex(plug.getIndex(),
-                    plug.getCategory(),
+                    category,
                     plug.isAbsoluteIndex(),
                     CATEGORIES_RANGES);
             if (lst.contains(index)) {
@@ -160,7 +164,7 @@ public final class ImagePluginConfiguration {
             }
             lst.add(index);
             OrderedPlugin p = new OrderedPlugin(index, plug.getPlugin());
-            if (Utils.isPostProcessor(plug.getCategory())) {
+            if (Utils.isPostProcessor(category)) {
                 postProcessingPlugins.add(p);
             } else {
                 resourcePlugins.add(p);
@@ -197,8 +201,7 @@ public final class ImagePluginConfiguration {
                 }
 
                 @Override
-                public void storeFiles(Pool files, List<Pool.ModuleData> removed,
-                        String bom) {
+                public void storeFiles(Pool files, String bom) {
                     throw new PluginException("No directory setup to store files");
                 }
             };
@@ -214,9 +217,12 @@ public final class ImagePluginConfiguration {
         if (absolute) {
             return index;
         }
-        // If non null category and not absolute, get index within category
-        if (category != null) {
-            return ranges.get(category) + index;
+        if (index == Integer.MAX_VALUE) {
+            return ranges.get(category) + RANGE_LENGTH - 1;
+        } else { // If non null category and not absolute, get index within category
+            if (category != null) {
+                return ranges.get(category) + index;
+            }
         }
 
         throw new Exception("Can't compute index, no category");

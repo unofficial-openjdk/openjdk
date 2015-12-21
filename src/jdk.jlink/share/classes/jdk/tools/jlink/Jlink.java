@@ -22,19 +22,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api;
+package jdk.tools.jlink;
 
+import java.lang.reflect.Layer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import jdk.tools.jlink.JlinkTask;
-import jdk.tools.jlink.api.plugin.Plugin;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
+import jdk.tools.jlink.internal.JlinkTask;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.builder.ImageBuilder;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.internal.PluginRepository;
 
 /**
  * API for jlink tool.
@@ -50,7 +54,6 @@ public final class Jlink {
         private final int index;
         private final boolean absIndex;
         private final Plugin plugin;
-        private final Plugin.CATEGORY category;
         /**
          * A plugin inside the stack configuration.
          *
@@ -58,9 +61,8 @@ public final class Jlink {
          * @param index index in the plugin stack. Must be > 0.
          * @param absIndex true, the index is absolute otherwise index is within
          * the plugin category.
-         * @param category The plugin category.
          */
-        public OrderedPlugin(Plugin plugin, int index, boolean absIndex, Plugin.CATEGORY category) {
+        public OrderedPlugin(Plugin plugin, int index, boolean absIndex) {
             Objects.requireNonNull(plugin);
             if (index < 0) {
                 throw new IllegalArgumentException("negative index");
@@ -68,7 +70,45 @@ public final class Jlink {
             this.plugin = plugin;
             this.index = index;
             this.absIndex = absIndex;
-            this.category = category;
+        }
+
+        /**
+         * A builtin plugin inside the stack configuration.
+         *
+         * @param name Plugin name. The name of the plugin,
+         * will be resolved thanks to ServiceLoader.
+         * @param index index in the plugin stack. Must be > 0.
+         * @param absIndex true, the index is absolute otherwise index is within
+         * the plugin category.
+         * @param configuration
+         */
+        public OrderedPlugin(String name, int index,
+                boolean absIndex, Map<PluginOption, String> configuration) {
+            this(createPlugin(name, configuration, Layer.boot()), index, absIndex);
+        }
+
+        /**
+         * A plugin inside the stack configuration.
+         *
+         * @param pluginsLayer Layer to resolve plugins.
+         * @param name Plugin name. The name of the plugin,
+         * will be resolved thanks to ServiceLoader.
+         * @param index index in the plugin stack. Must be > 0.
+         * @param absIndex true, the index is absolute otherwise index is within
+         * the plugin category.
+         * @param configuration
+         */
+        public OrderedPlugin(Layer pluginsLayer, String name, int index,
+                boolean absIndex, Map<PluginOption, String> configuration) {
+            this(createPlugin(name, configuration, pluginsLayer), index, absIndex);
+        }
+
+        private static Plugin createPlugin(String name,
+                Map<PluginOption, String> configuration, Layer pluginsLayer) {
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(configuration);
+            Objects.requireNonNull(pluginsLayer);
+            return PluginRepository.newPlugin(configuration, name, pluginsLayer);
         }
 
         /**
@@ -78,10 +118,6 @@ public final class Jlink {
          */
         public int getIndex() {
             return index;
-        }
-
-        public Plugin.CATEGORY getCategory() {
-            return category;
         }
 
         @Override
@@ -201,14 +237,12 @@ public final class Jlink {
          * @param modulepaths Modules paths
          * @param modules Root modules to resolve
          * @param limitmods Limit the universe of observable modules
-         * @param pluginpaths Custom plugins module path
          * @param endian Jimage byte order. Native order by default
          */
         public JlinkConfiguration(Path output,
                 List<Path> modulepaths,
                 Set<String> modules,
                 Set<String> limitmods,
-                List<Path> pluginpaths,
                 ByteOrder endian) {
             this.output = output;
             this.modulepaths = modulepaths == null ? Collections.emptyList() : modulepaths;
@@ -224,14 +258,12 @@ public final class Jlink {
          * @param modulepaths Modules paths
          * @param modules Root modules to resolve
          * @param limitmods Limit the universe of observable modules
-         * @param pluginpaths Custom plugins module path
          */
         public JlinkConfiguration(Path output,
                 List<Path> modulepaths,
                 Set<String> modules,
-                Set<String> limitmods,
-                List<Path> pluginpaths) {
-            this(output, modulepaths, modules, limitmods, pluginpaths,
+                Set<String> limitmods) {
+            this(output, modulepaths, modules, limitmods,
                     ByteOrder.nativeOrder());
         }
 
@@ -338,13 +370,13 @@ public final class Jlink {
      * Post process the image with a plugin configuration.
      *
      * @param image Existing image.
-     * @param transformerPlugins Plugins config, cannot be null
+     * @param plugins Plugins config, cannot be null
      */
-    public void postProcess(ExecutableImage image, List<OrderedPlugin> transformerPlugins) {
+    public void postProcess(ExecutableImage image, List<OrderedPlugin> plugins) {
         Objects.requireNonNull(image);
-        Objects.requireNonNull(transformerPlugins);
+        Objects.requireNonNull(plugins);
         try {
-            JlinkTask.postProcessImage(image, transformerPlugins);
+            JlinkTask.postProcessImage(image, plugins);
         } catch (Exception ex) {
             throw new PluginException(ex);
         }

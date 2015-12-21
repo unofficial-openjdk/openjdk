@@ -35,14 +35,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.plugin.builder.DefaultImageBuilder;
+import jdk.tools.jlink.builder.DefaultImageBuilder;
+import jdk.tools.jlink.plugin.PluginOption;
 
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 
 public class FileCopierPluginTest {
 
@@ -58,7 +59,7 @@ public class FileCopierPluginTest {
      * @throws Exception
      */
     public void test() throws Exception {
-        FileCopierPlugin prov = new FileCopierPlugin();
+        FileCopierPlugin plug = new FileCopierPlugin();
         String content = "You \n should \n be \bthere.\n";
         String name = "sample.txt";
         File src = new File("src");
@@ -73,20 +74,21 @@ public class FileCopierPluginTest {
         String target = "target" + File.separator + name;
         Files.write(txt.toPath(), content.getBytes());
         File lic = new File(System.getProperty("java.home"), "LICENSE");
-        String[] args = new String[lic.exists() ? 4 : 3];
-        int i = 0;
+        StringBuilder builder = new StringBuilder();
+        int expected = lic.exists() ? 4 : 3;
         if (lic.exists()) {
-            args[i] = "LICENSE";
-            i += 1;
+            builder.append("LICENSE,");
         }
-        args[i++] = txt.getAbsolutePath();
-        args[i++] = txt.getAbsolutePath() + "=" + target;
-        args[i++] = src.getAbsolutePath() + "=src2";
+        builder.append(txt.getAbsolutePath()+",");
+        builder.append(txt.getAbsolutePath() + "=" + target+",");
+        builder.append(src.getAbsolutePath() + "=src2");
 
-        TransformerPlugin plug = prov.newPlugin(args, null);
+        Map<PluginOption, String> conf = new HashMap<>();
+        conf.put(FileCopierPlugin.NAME_OPTION, builder.toString());
+        plug.configure(conf);
         Pool pool = new PoolImpl();
         plug.visit(new PoolImpl(), pool);
-        if (pool.getContent().size() != args.length) {
+        if (pool.getContent().size() != expected) {
             throw new AssertionError("Wrong number of added files");
         }
         for (ModuleData f : pool.getContent()) {
@@ -100,10 +102,9 @@ public class FileCopierPluginTest {
 
         }
         Path root = new File(".").toPath();
-        DefaultImageBuilder builder = new DefaultImageBuilder(new HashMap<String, Object>(),
+        DefaultImageBuilder imgbuilder = new DefaultImageBuilder(false,
                 root);
-        builder.storeFiles(pool, Collections.EMPTY_LIST,
-                "", new PoolImpl());
+        imgbuilder.storeFiles(pool, "");
 
         if (lic.exists()) {
             File license = new File(root.toFile(), "LICENSE");

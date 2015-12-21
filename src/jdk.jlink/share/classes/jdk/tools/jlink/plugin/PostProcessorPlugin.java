@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,9 +22,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.plugin;
 
-module customplugin {
-    requires jdk.jlink;
-    provides jdk.tools.jlink.plugin.TransformerPlugin with plugin.HelloPlugin;
-    provides jdk.tools.jlink.plugin.TransformerPlugin with plugin.CustomPlugin;
+import java.util.List;
+
+/**
+ * Implement this interface to develop your own plugin.
+ * PostProcessing can
+ * modify the image content.
+ */
+public interface PostProcessorPlugin extends Plugin {
+
+    /**
+     * Post process an image.
+     *
+     * @param image The executable image.
+     * @return The list of arguments to add to launchers if any.
+     */
+    public List<String> process(ExecutableImage image);
 }

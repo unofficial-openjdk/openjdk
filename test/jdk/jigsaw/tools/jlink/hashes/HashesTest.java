@@ -103,7 +103,7 @@ public class HashesTest {
 
         runJava(1, "-mp", jmods.toString(), "-m", "m1/org.m1.Main");
 
-        if (jdk.tools.jlink.Main.run(new String[]{
+        if (jdk.tools.jlink.internal.Main.run(new String[]{
                 "--modulepath", stdJmods.toString() + File.pathSeparator + jmods.toString(),
                 "--addmods", "m1", "--output", "myimage"}, new PrintWriter(System.out)) == 0) {
             throw new AssertionError("Expected failure. rc = 0");

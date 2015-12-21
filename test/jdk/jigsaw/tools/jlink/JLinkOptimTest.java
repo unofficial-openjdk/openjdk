@@ -7,10 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -19,23 +22,21 @@ import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
-import jdk.tools.jlink.api.plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.internal.plugins.OptimizationProvider;
+import jdk.tools.jlink.internal.plugins.OptimizationPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow.Block;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 import tests.Helper;
 import tests.JImageGenerator;
+
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -59,17 +60,15 @@ import tests.JImageGenerator;
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test image creation with class optimization
  * @author Jean-Francois Denise
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
- *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jlink.internal.plugins.asm
@@ -86,84 +85,77 @@ public class JLinkOptimTest {
     private static final String EXPECTED = "expected";
     private static Helper helper;
 
-    private static class ControlFlowProvider extends TransformerPluginProvider {
+    public static class ControlFlowPlugin extends AsmPlugin {
 
         private boolean called;
         private int numMethods;
         private int numBlocks;
 
-        private class ControlFlowPlugin extends AsmPlugin {
-
-            private ControlFlowPlugin() {
-            }
-
-            @Override
-            public void visit(AsmPools pools) {
-                called = true;
-                for (AsmModulePool p : pools.getModulePools()) {
-
-                    p.visitClassReaders((reader) -> {
-                        ClassNode cn = new ClassNode();
-                        if ((reader.getAccess() & Opcodes.ACC_INTERFACE) == 0) {
-                            reader.accept(cn, ClassReader.EXPAND_FRAMES);
-                            for (MethodNode m : cn.methods) {
-                                if ((m.access & Opcodes.ACC_ABSTRACT) == 0
-                                        && (m.access & Opcodes.ACC_NATIVE) == 0) {
-                                    numMethods += 1;
-                                    try {
-                                        ControlFlow f
-                                                = ControlFlow.createControlFlow(cn.name, m);
-                                        for (Block b : f.getBlocks()) {
-                                            numBlocks += 1;
-                                            f.getClosure(b);
-                                        }
-                                    } catch (Throwable ex) {
-                                        //ex.printStackTrace();
-                                        throw new RuntimeException("Exception in "
-                                                + cn.name + "." + m.name, ex);
-                                    }
-                                }
-                            }
-                        }
-                        return null;
-                    });
-                }
-            }
-
-            @Override
-            public String getName() {
-                return NAME;
-            }
-
-        }
-
         private static final String NAME = "test-optim";
-        private static final PluginOption NAME_OPTION =
-                new PluginOptionBuilder(NAME).build();
+        private static final PluginOption NAME_OPTION
+               = new PluginOption.Builder(NAME).build();
 
-        ControlFlowProvider() {
-            super(NAME, "");
+        private ControlFlowPlugin() {
         }
 
         @Override
-        public String getCategory() {
-            return TRANSFORMER;
+        public void visit(AsmPools pools) {
+            called = true;
+            for (AsmModulePool p : pools.getModulePools()) {
+
+                p.visitClassReaders((reader) -> {
+                    ClassNode cn = new ClassNode();
+                    if ((reader.getAccess() & Opcodes.ACC_INTERFACE) == 0) {
+                        reader.accept(cn, ClassReader.EXPAND_FRAMES);
+                        for (MethodNode m : cn.methods) {
+                            if ((m.access & Opcodes.ACC_ABSTRACT) == 0
+                                    && (m.access & Opcodes.ACC_NATIVE) == 0) {
+                                numMethods += 1;
+                                try {
+                                    ControlFlow f
+                                            = ControlFlow.createControlFlow(cn.name, m);
+                                    for (Block b : f.getBlocks()) {
+                                        numBlocks += 1;
+                                        f.getClosure(b);
+                                    }
+                                } catch (Throwable ex) {
+                                    //ex.printStackTrace();
+                                    throw new RuntimeException("Exception in "
+                                            + cn.name + "." + m.name, ex);
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                });
+            }
+        }
+
+        @Override
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
+            return "";
         }
 
         @Override
         public PluginOption getOption() {
             return NAME_OPTION;
-         }
         }
 
         @Override
-        public TransformerPlugin newPlugin(Map<PluginOption, Object> otherOptions) {
-            return new ControlFlowPlugin();
-        }
+        public void configure(Map<PluginOption, String> config) {
 
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
         }
     }
 
@@ -207,13 +199,13 @@ public class JLinkOptimTest {
             pool.add(r);
         }
 
-        OptimizationProvider prov = new OptimizationProvider();
-        Map<PluginOption, Object> optional = new HashMap<>();
-        optional.put(OptimizationProvider.NAME_OPTION, OptimizationProvider.FORNAME_REMOVAL);
-        optional.put(OptimizationProvider.LOG_OPTION, "forName.log");
-        TransformerPlugin plug = prov.newPlugin(optional);
+        OptimizationPlugin plugin = new OptimizationPlugin();
+        Map<PluginOption, String> optional = new HashMap<>();
+        optional.put(OptimizationPlugin.NAME_OPTION, OptimizationPlugin.FORNAME_REMOVAL);
+        optional.put(OptimizationPlugin.LOG_OPTION, "forName.log");
+        plugin.configure(optional);
         Pool out = new PoolImpl();
-        plug.visit(pool, out);
+        plugin.visit(pool, out);
 
         ModuleData result = out.getContent().iterator().next();
 
@@ -255,12 +247,10 @@ public class JLinkOptimTest {
                         throw new Exception("Unexpected exception " + ex);
                     }
                 }
-            } else {
-                if (!m.getName().startsWith("negative")) {
-                    Class<?> clazz = (Class<?>) m.invoke(null);
-                    if (clazz != String.class && clazz != loader.findClass("optim.AType")) {
-                        throw new Exception("Invalid class " + clazz);
-                    }
+            } else if (!m.getName().startsWith("negative")) {
+                Class<?> clazz = (Class<?>) m.invoke(null);
+                if (clazz != String.class && clazz != loader.findClass("optim.AType")) {
+                    throw new Exception("Invalid class " + clazz);
                 }
             }
         }
@@ -320,6 +310,7 @@ public class JLinkOptimTest {
 
         private final Map<String, byte[]> classes;
         private final Map<String, Class<?>> cache = new HashMap<>();
+
         MemClassLoader(Map<String, byte[]> classes) {
             super(null);
             this.classes = classes;
@@ -367,7 +358,7 @@ public class JLinkOptimTest {
          helper.generateDefaultImage(userOptions, "optim1")
          .assertFailure("java.io.FileNotFoundException: dir.log (Is a directory)");
          }*/
-        /*{
+ /*{
          String[] userOptions = {"--class-optim", "UNKNOWN"};
          helper.generateDefaultImage(userOptions, "optim1").assertFailure("Unknown optimization");
          }*/
@@ -379,23 +370,23 @@ public class JLinkOptimTest {
         }
 
         {
-            ControlFlowProvider provider = new ControlFlowProvider();
-            PluginRepository.registerPluginProvider(provider);
+            ControlFlowPlugin plugin = new ControlFlowPlugin();
+            PluginRepository.registerPlugin(plugin);
             String[] userOptions = {"--test-optim"};
             Path imageDir = helper.generateDefaultImage(userOptions, "optim1").assertSuccess();
             helper.checkImage(imageDir, "optim1", null, null);
             //System.out.println("Num methods analyzed " + provider.numMethods
             //        + "num blocks " + provider.numBlocks);
-            if (!provider.called) {
+            if (!plugin.called) {
                 throw new Exception("Plugin not called");
             }
-            if (provider.numMethods < 1000) {
+            if (plugin.numMethods < 1000) {
                 throw new Exception("Not enough method called,  should be "
-                        + "around 10000 but is " + provider.numMethods);
+                        + "around 10000 but is " + plugin.numMethods);
             }
-            if (provider.numBlocks < 100000) {
+            if (plugin.numBlocks < 100000) {
                 throw new Exception("Not enough blocks,  should be "
-                        + "around 640000 but is " + provider.numMethods);
+                        + "around 640000 but is " + plugin.numMethods);
             }
         }
     }

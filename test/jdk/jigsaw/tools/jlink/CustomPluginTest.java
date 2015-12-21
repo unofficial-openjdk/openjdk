@@ -41,7 +41,6 @@ import tests.Result;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -68,47 +67,11 @@ public class CustomPluginTest {
 
         testHelloProvider(helper, pluginModulePath);
         testCustomPlugins(helper, pluginModulePath);
-        testHelp(pluginModulePath);
-    }
-
-    private void testHelp(Path pluginModulePath) {
-        Result result = JImageGenerator.getJLinkTask()
-                .option("--help")
-                .pluginModulePath(pluginModulePath)
-                .call();
-        result.assertSuccess();
-        String output = result.getMessage();
-        List<String> plugins = new ArrayList<>();
-        String[] lines = output.split("\n");
-        for (String s : lines) {
-            if (s.startsWith(" --custom-image-plugin") || s.startsWith(" custom-image-plugin") ||
-                    s.startsWith(" --custom-resource-plugin") || s.startsWith(" custom-resource-plugin")) {
-                plugins.add(s);
-            }
-        }
-        if (plugins.size() != 4) {
-            System.err.println(output);
-            throw new AssertionError("Expected two plugins " + plugins);
-        }
-        for (int i = 0; i < plugins.size(); i += 2) {
-            String[] ss = plugins.get(i).trim().split(" +");
-            String pluginName = ss[0].substring(2, ss[0].lastIndexOf('-'));
-            assertEquals("--" + pluginName + "-option", ss[0], output);
-            assertEquals(pluginName + "-argument", ss[1], output);
-            assertEquals(pluginName + "-description", plugins.get(i + 1).trim(), output);
-        }
-    }
-
-    private static void assertEquals(String expected, String actual, String message) {
-        if (!expected.equals(actual)) {
-            System.err.println(message);
-            throw new AssertionError("Expected: " + expected + ", got: " + actual);
-        }
     }
 
     private void testCustomPlugins(Helper helper, Path pluginModulePath) {
         Result result = JImageGenerator.getJLinkTask()
-                .option("--list-plugins")
+                .option("--xhelp")
                 .pluginModulePath(pluginModulePath)
                 .output(helper.createNewImageDir("customplugin"))
                 .call();
@@ -120,7 +83,7 @@ public class CustomPluginTest {
                 .filter(s -> s.startsWith("Plugin Name:"))
                 .filter(s -> s.contains("custom"))
                 .collect(Collectors.toList());
-        if (customPlugins.size() != 2) {
+        if (customPlugins.size() != 1) {
             System.err.println(result.getMessage());
             throw new AssertionError("Found plugins: " + customPlugins);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,29 +22,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.plugin;
 
-package jdk.tools.jlink;
+/**
+ * An unchecked exception thrown by jlink plugin API for unrecoverable
+ * conditions.
+ */
+public final class PluginException extends RuntimeException {
 
-import java.io.*;
+    private static final long serialVersionUID = 7117982019443100395L;
 
-public class Main {
-    public static void main(String... args) throws Exception {
-        JlinkTask t = new JlinkTask();
-        int rc = t.run(args);
-        System.exit(rc);
+    public PluginException() {
+
     }
 
+    public PluginException(Throwable ex) {
+        super(ex);
+    }
 
-    /**
-     * Entry point that does <i>not</i> call System.exit.
-     *
-     * @param args command line arguments
-     * @param out output stream
-     * @return an exit code. 0 means success, non-zero means an error occurred.
-     */
-    public static int run(String[] args, PrintWriter out) {
-        JlinkTask t = new JlinkTask();
-        t.setLog(out);
-        return t.run(args);
+    public PluginException(String msg) {
+        super(msg);
+    }
+
+    public PluginException(String msg, Throwable thr) {
+        super(msg, thr);
     }
 }

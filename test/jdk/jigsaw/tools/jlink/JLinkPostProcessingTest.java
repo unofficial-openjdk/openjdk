@@ -25,15 +25,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jdk.tools.jlink.internal.PluginRepository;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
-import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPlugin;
-import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPluginProvider;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
 import tests.Helper;
 
 /*
@@ -43,7 +44,6 @@ import tests.Helper;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -53,40 +53,39 @@ import tests.Helper;
  */
 public class JLinkPostProcessingTest {
 
-    private static class PostProcessingTest extends PostProcessorPluginProvider {
+    private static class PPPlugin implements PostProcessorPlugin {
 
         private static ExecutableImage called;
+        private static final String NAME = "pp";
+        private static final PluginOption NAME_OPTION = new PluginOption.Builder(NAME).hasOnOffArgument().build();
 
         @Override
-        public PostProcessorPlugin newPlugin(Map<PluginOption, Object> config) {
-            return new PPPlugin();
+        public List<String> process(ExecutableImage image) {
+            called = image;
+            Path gen = image.getHome().resolve("lib").resolve("toto.txt");
+            try {
+                Files.createFile(gen);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+            return null;
         }
 
-        private static class PPPlugin implements PostProcessorPlugin {
-
-            @Override
-            public List<String> process(ExecutableImage image) {
-                called = image;
-                Path gen = image.getHome().resolve("lib").resolve("toto.txt");
-                try {
-                    Files.createFile(gen);
-                } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
-                }
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return NAME;
-            }
-
+        @Override
+        public String getName() {
+            return NAME;
         }
-        private static final String NAME = "pp";
-        private static final PluginOption NAME_OPTION = new PluginOptionBuilder(NAME).hasOnOffArgument().build();
 
-        PostProcessingTest() {
-            super(NAME, "");
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.PROCESSOR);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
+            return NAME;
         }
 
         @Override
@@ -95,8 +94,7 @@ public class JLinkPostProcessingTest {
         }
 
         @Override
-        public String getCategory() {
-            return PROCESSOR;
+        public void configure(Map<PluginOption, String> config) {
         }
 
     }
@@ -110,7 +108,7 @@ public class JLinkPostProcessingTest {
         }
         helper.generateDefaultModules();
 
-        PluginRepository.registerPluginProvider(new PostProcessingTest());
+        PluginRepository.registerPlugin(new PPPlugin());
 
         // Generate an image and post-process in same jlink execution.
         {
@@ -143,19 +141,19 @@ public class JLinkPostProcessingTest {
 
     private static void test(Path imageDir)
             throws Exception {
-        if (PostProcessingTest.called == null) {
+        if (PPPlugin.called == null) {
             throw new Exception("Post processor not called.");
         }
-        if (!PostProcessingTest.called.getHome().equals(imageDir)) {
-            throw new Exception("Not right imageDir " + PostProcessingTest.called.getHome());
+        if (!PPPlugin.called.getHome().equals(imageDir)) {
+            throw new Exception("Not right imageDir " + PPPlugin.called.getHome());
         }
-        if (PostProcessingTest.called.getExecutionArgs().isEmpty()) {
+        if (PPPlugin.called.getExecutionArgs().isEmpty()) {
             throw new Exception("No arguments to run java...");
         }
         Path gen = imageDir.resolve("lib").resolve("toto.txt");
         if (!Files.exists(gen)) {
             throw new Exception("Generated file doesn;t exist");
         }
-        PostProcessingTest.called = null;
+        PPPlugin.called = null;
     }
 }

@@ -32,11 +32,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
@@ -51,19 +51,16 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
     static final String NAME = "compress-resources";
     public static final PluginOption NAME_OPTION
             = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            hasOnOffArgument().build();
+            description(PluginsResourceBundle.getDescription(NAME)).build();
 
     private static final String LEVEL = "compress-resources-level";
     public static final PluginOption LEVEL_OPTION
             = new Builder(LEVEL).
-            description(PluginsResourceBundle.getOption(NAME, LEVEL)).
             argumentDescription(PluginsResourceBundle.getOption(NAME, LEVEL)).
             build();
     private static final String FILTER = "compress-resources-filter";
     public static final PluginOption FILTER_OPTION
             = new Builder(FILTER).
-            description(PluginsResourceBundle.getOption(NAME, FILTER)).
             argumentDescription(PluginsResourceBundle.getOption(NAME, FILTER)).
             build();
     public static final String LEVEL_0 = "0";

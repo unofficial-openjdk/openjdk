@@ -677,7 +677,7 @@ public class JImageGenerator {
             String[] args = optionsJLink();
             System.err.println("jlink options: " + optionsPrettyPrint(args));
             StringWriter writer = new StringWriter();
-            int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
+            int exitCode = jdk.tools.jlink.internal.Main.run(args, new PrintWriter(writer));
             return new Result(exitCode, writer.toString(), output);
         }
 
@@ -685,7 +685,7 @@ public class JImageGenerator {
             String[] args = optionsPostProcessJLink();
             System.err.println("jlink options: " + optionsPrettyPrint(args));
             StringWriter writer = new StringWriter();
-            int exitCode = jdk.tools.jlink.Main.run(args, new PrintWriter(writer));
+            int exitCode = jdk.tools.jlink.internal.Main.run(args, new PrintWriter(writer));
             return new Result(exitCode, writer.toString(), output);
         }
     }

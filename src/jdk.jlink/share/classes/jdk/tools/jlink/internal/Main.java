@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api.plugin.postprocessor;
 
-import jdk.tools.jlink.api.plugin.Plugin;
-import java.util.List;
+package jdk.tools.jlink.internal;
 
-/**
- * Implement this interface to develop your own plugin.
- * PostProcessing can
- * modify the image content.
- */
-public interface PostProcessorPlugin extends Plugin {
+import java.io.*;
+
+public class Main {
+    public static void main(String... args) throws Exception {
+        JlinkTask t = new JlinkTask();
+        int rc = t.run(args);
+        System.exit(rc);
+    }
+
 
     /**
-     * Post process an image.
+     * Entry point that does <i>not</i> call System.exit.
      *
-     * @param image The executable image.
-     * @return The list of arguments to add to launchers if any.
+     * @param args command line arguments
+     * @param out output stream
+     * @return an exit code. 0 means success, non-zero means an error occurred.
      */
-    public List<String> process(ExecutableImage image);
+    public static int run(String[] args, PrintWriter out) {
+        JlinkTask t = new JlinkTask();
+        t.setLog(out);
+        return t.run(args);
+    }
 }

@@ -31,11 +31,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 import jdk.tools.jlink.internal.Utils;
 
 /**
@@ -60,7 +60,7 @@ public final class ExcludeFilesPlugin implements TransformerPlugin {
     public void visit(Pool in, Pool out) {
         in.visit((file) -> {
             if (!file.getType().equals(ModuleDataType.CLASS_OR_RESOURCE)) {
-                file = predicate.test("/" + file.getModule() + "/" + file.getPath()) ? file : null;
+                file = predicate.test(file.getPath()) ? file : null;
             }
             return file;
         }, out);

@@ -22,8 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package jdk.tools.jlink;
+package jdk.tools.jlink.internal;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +34,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ResolutionException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Layer;
 import java.net.URI;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -52,28 +50,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.tools.jlink.internal.Archive;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
-import jdk.tools.jlink.TaskHelper.BadArgs;
-import jdk.tools.jlink.TaskHelper.HiddenOption;
-import static jdk.tools.jlink.TaskHelper.JLINK_BUNDLE;
-import jdk.tools.jlink.TaskHelper.Option;
-import jdk.tools.jlink.TaskHelper.OptionsHelper;
-import jdk.tools.jlink.api.Jlink;
-import jdk.tools.jlink.internal.ModularJarArchive;
-import jdk.tools.jlink.internal.JmodArchive;
-import jdk.tools.jlink.internal.DirArchive;
-import jdk.tools.jlink.internal.ImageFileCreator;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.internal.TaskHelper.BadArgs;
+import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
+import jdk.tools.jlink.internal.TaskHelper.Option;
+import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.builder.DefaultImageBuilderProvider;
-
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.builder.DefaultImageBuilder;
 
 /**
  * Implementation for the jlink tool.
@@ -90,9 +80,9 @@ public class JlinkTask {
             T t = type.getConstructor(String.class).newInstance(msg);
             throw t;
         } catch (InstantiationException |
-                 InvocationTargetException |
-                 NoSuchMethodException |
-                 IllegalAccessException e) {
+                InvocationTargetException |
+                NoSuchMethodException |
+                IllegalAccessException e) {
             throw new InternalError("Unable to create an instance of " + type, e);
         }
     }
@@ -104,6 +94,9 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.xhelp = true;
+        }, "--xhelp"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             String[] dirs = arg.split(File.pathSeparator);
             task.options.modulePath = new Path[dirs.length];
@@ -116,7 +109,7 @@ public class JlinkTask {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                                                "--limitmods");
+                            "--limitmods");
                 }
                 task.options.limitMods.add(mn);
             }
@@ -125,7 +118,7 @@ public class JlinkTask {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                                                "--addmods");
+                            "--addmods");
                 }
                 task.options.addMods.add(mn);
             }
@@ -135,37 +128,31 @@ public class JlinkTask {
             task.options.output = path;
         }, "--output"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
-            Path path = Paths.get(arg);
-            if (!Files.exists(path) || !Files.isDirectory(path)) {
-                throw taskHelper.newBadArgs("err.existing.image.must.exist");
-            }
-            task.options.existingImage = path.toAbsolutePath();
-        }, "--post-process-path"),
-        new Option<JlinkTask>(true, (task, opt, arg) -> {
             if ("little".equals(arg)) {
                 task.options.endian = ByteOrder.LITTLE_ENDIAN;
+            } else if ("big".equals(arg)) {
+                task.options.endian = ByteOrder.BIG_ENDIAN;
             } else {
-                if ("big".equals(arg)) {
-                    task.options.endian = ByteOrder.BIG_ENDIAN;
-                } else {
-                    throw taskHelper.newBadArgs("err.unknown.byte.order", arg);
-                }
+                throw taskHelper.newBadArgs("err.unknown.byte.order", arg);
             }
         }, "--endian"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.genbom = true;
+        }, "--genbom"),
         new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, "--fullversion"),
-    };
+        }, "--fullversion"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
 
-    private static final OptionsHelper<JlinkTask> optionsHelper =
-            taskHelper.newOptionsHelper(JlinkTask.class, recognizedOptions);
+    private static final OptionsHelper<JlinkTask> optionsHelper
+            = taskHelper.newOptionsHelper(JlinkTask.class, recognizedOptions);
     private PrintWriter log;
+
     void setLog(PrintWriter out) {
         log = out;
         taskHelper.setLog(log);
@@ -175,20 +162,21 @@ public class JlinkTask {
      * Result codes.
      */
     static final int EXIT_OK = 0, // Completed with no errors.
-                     EXIT_ERROR = 1, // Completed but reported errors.
-                     EXIT_CMDERR = 2, // Bad command-line arguments
-                     EXIT_SYSERR = 3, // System error or resource exhaustion.
-                     EXIT_ABNORMAL = 4;// terminated abnormally
+            EXIT_ERROR = 1, // Completed but reported errors.
+            EXIT_CMDERR = 2, // Bad command-line arguments
+            EXIT_SYSERR = 3, // System error or resource exhaustion.
+            EXIT_ABNORMAL = 4;// terminated abnormally
 
     static class OptionsValues {
         boolean help;
+        boolean xhelp;
+        boolean genbom;
         boolean version;
         boolean fullVersion;
         Path[] modulePath;
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
-        Path existingImage;
         ByteOrder endian = ByteOrder.nativeOrder();
     }
 
@@ -199,34 +187,32 @@ public class JlinkTask {
         try {
             optionsHelper.handleOptions(this, args);
             if (options.help) {
-                optionsHelper.showHelp(PROGNAME, "jimage creation only options:", true);
+                optionsHelper.showHelp(PROGNAME);
+                return EXIT_OK;
+            }
+            if (options.xhelp) {
+                optionsHelper.showXHelp(PROGNAME, true);
                 return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
                 taskHelper.showVersion(options.fullVersion);
                 return EXIT_OK;
             }
-            if(optionsHelper.listPlugins()) {
-                optionsHelper.showPlugins(log, true);
-                 return EXIT_OK;
-            }
-            if (options.existingImage == null) {
+            if (taskHelper.getExistingImage() == null) {
                 if (options.modulePath == null || options.modulePath.length == 0) {
                     throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
                 }
                 createImage();
             } else {
-                postProcessOnly(options.existingImage);
+                postProcessOnly(taskHelper.getExistingImage());
             }
 
             return EXIT_OK;
         } catch (UncheckedIOException | PluginException | IOException | ResolutionException e) {
-            e.printStackTrace();
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             return EXIT_ERROR;
         } catch (BadArgs e) {
-            e.printStackTrace();
             taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
                 log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
@@ -242,9 +228,8 @@ public class JlinkTask {
     }
 
     private static Map<String, Path> modulesToPath(ModuleFinder finder,
-                                                   Set<ModuleDescriptor> modules)
-    {
-        Map<String,Path> modPaths = new HashMap<>();
+            Set<ModuleDescriptor> modules) {
+        Map<String, Path> modPaths = new HashMap<>();
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
@@ -252,8 +237,8 @@ public class JlinkTask {
             if (!omref.isPresent()) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
-                     "Selected module %s not on module path",
-                     name);
+                        "Selected module %s not on module path",
+                        name);
             }
 
             URI location = omref.get().location().get();
@@ -271,15 +256,13 @@ public class JlinkTask {
             if (scheme.equalsIgnoreCase("jmod")) {
                 // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
                 String s = location.toString();
-                fileURI = URI.create(s.substring(5, s.length()-2));
+                fileURI = URI.create(s.substring(5, s.length() - 2));
+            } else if (scheme.equalsIgnoreCase("jar")) {
+                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
+                String s = location.toString();
+                fileURI = URI.create(s.substring(4, s.length() - 2));
             } else {
-                if (scheme.equalsIgnoreCase("jar")) {
-                    // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                    String s = location.toString();
-                    fileURI = URI.create(s.substring(4, s.length() - 2));
-                } else {
-                    fileURI = URI.create(location.toString());
-                }
+                fileURI = URI.create(location.toString());
             }
 
             modPaths.put(name, Paths.get(fileURI));
@@ -292,8 +275,7 @@ public class JlinkTask {
      */
     public static void createImage(JlinkConfiguration config,
             PluginsConfiguration plugins)
-            throws Exception
-    {
+            throws Exception {
         Objects.requireNonNull(config);
         Objects.requireNonNull(config.getOutput());
         plugins = plugins == null ? new PluginsConfiguration() : plugins;
@@ -304,7 +286,7 @@ public class JlinkTask {
         Path[] arr = new Path[config.getModulepaths().size()];
         arr = config.getModulepaths().toArray(arr);
         ModuleFinder finder
-            = newModuleFinder(arr, config.getLimitmods(), config.getModules());
+                = newModuleFinder(arr, config.getLimitmods(), config.getModules());
 
         // First create the image provider
         ImageProvider imageProvider
@@ -314,7 +296,7 @@ public class JlinkTask {
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins,
-                        genBOMContent(config, plugins));
+                genBOMContent(config, plugins));
 
         //Ask the stack to proceed;
         stack.operate(imageProvider);
@@ -335,9 +317,9 @@ public class JlinkTask {
     }
 
     private void postProcessOnly(Path existingImage) throws Exception {
-        PluginsConfiguration config = taskHelper.getPluginsConfig(null);
-        ExecutableImage img = DefaultImageBuilderProvider.getExecutableImage(existingImage);
-        if(img == null) {
+        PluginsConfiguration config = taskHelper.getPluginsConfig(null, false);
+        ExecutableImage img = DefaultImageBuilder.getExecutableImage(existingImage);
+        if (img == null) {
             throw taskHelper.newBadArgs("err.existing.image.invalid");
         }
         postProcessImage(img, config.getPlugins());
@@ -348,7 +330,7 @@ public class JlinkTask {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
         ModuleFinder finder
-            = newModuleFinder(options.modulePath, options.limitMods, options.addMods);
+                = newModuleFinder(options.modulePath, options.limitMods, options.addMods);
         try {
             options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
@@ -364,7 +346,7 @@ public class JlinkTask {
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(taskHelper.getPluginsConfig(options.output),
+                parseConfiguration(taskHelper.getPluginsConfig(options.output, options.genbom),
                         genBOMContent());
 
         //Ask the stack to proceed
@@ -379,14 +361,14 @@ public class JlinkTask {
     }
 
     private static ModuleFinder newModuleFinder(Path[] paths,
-                                                Set<String> limitMods,
-                                                Set<String> addMods)
-    {
+            Set<String> limitMods,
+            Set<String> addMods) {
         ModuleFinder finder = ModuleFinder.of(paths);
 
         // jmods are located at link-time
-        if (finder instanceof ConfigurableModuleFinder)
-            ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
+        if (finder instanceof ConfigurableModuleFinder) {
+            ((ConfigurableModuleFinder) finder).configurePhase(Phase.LINK_TIME);
+        }
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {
@@ -411,15 +393,13 @@ public class JlinkTask {
         return new ImageHelper(cf, mods, order);
     }
 
-
     /**
      * Returns a ModuleFinder that limits observability to the given root
      * modules, their transitive dependences, plus a set of other modules.
      */
     private static ModuleFinder limitFinder(ModuleFinder finder,
-                                            Set<String> roots,
-                                            Set<String> otherMods)
-    {
+            Set<String> roots,
+            Set<String> otherMods) {
         // resolve all root modules
         Configuration cf = Configuration.resolve(finder,
                 Configuration.empty(),
@@ -453,6 +433,7 @@ public class JlinkTask {
             public Optional<ModuleReference> find(String name) {
                 return Optional.ofNullable(map.get(name));
             }
+
             @Override
             public Set<ModuleReference> findAll() {
                 return mrefs;
@@ -477,28 +458,12 @@ public class JlinkTask {
         sb.append("command").append(" = ").append(command);
         sb.append("\n");
 
-        // Expanded command
-        String[] expanded = optionsHelper.getExpandedCommand();
-        if (expanded != null) {
-            String defaults = optionsHelper.getDefaults();
-            sb.append("\n").append("#Defaults").append("\n");
-            sb.append("defaults = ").append(defaults).append("\n");
-
-            StringBuilder builder = new StringBuilder();
-            for (String c : expanded) {
-                builder.append(c).append(" ");
-            }
-            sb.append("expanded command").append(" = ").append(builder);
-            sb.append("\n");
-        }
-
         return sb.toString();
     }
 
     private static String genBOMContent(JlinkConfiguration config,
-                                        PluginsConfiguration plugins)
-        throws IOException
-    {
+            PluginsConfiguration plugins)
+            throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append(getBomHeader());
         sb.append(config);
@@ -507,6 +472,7 @@ public class JlinkTask {
     }
 
     private static class ImageHelper implements ImageProvider {
+
         final Set<Archive> archives;
         final ByteOrder order;
 
@@ -523,19 +489,15 @@ public class JlinkTask {
         private Archive newArchive(String module, Path path) {
             if (path.toString().endsWith(".jmod")) {
                 return new JmodArchive(module, path);
+            } else if (path.toString().endsWith(".jar")) {
+                return new ModularJarArchive(module, path);
+            } else if (Files.isDirectory(path)) {
+                return new DirArchive(path);
             } else {
-                if (path.toString().endsWith(".jar")) {
-                    return new ModularJarArchive(module, path);
-                } else {
-                    if (Files.isDirectory(path)) {
-                        return new DirArchive(path);
-                    } else {
-                        fail(RuntimeException.class,
-                                "Selected module %s (%s) not in jmod or modular jar format",
-                                module,
-                                path);
-                    }
-                }
+                fail(RuntimeException.class,
+                        "Selected module %s (%s) not in jmod or modular jar format",
+                        module,
+                        path);
             }
             return null;
         }
@@ -569,24 +531,30 @@ public class JlinkTask {
             this.imageDir = imageDir;
         }
 
-        String imageDir() { return imageDir; }
-        String jmodDir() { return jmodDir; }
+        String imageDir() {
+            return imageDir;
+        }
+
+        String jmodDir() {
+            return jmodDir;
+        }
 
         boolean matches(String path) {
             return path.startsWith(jmodDir);
         }
 
         static Section getSectionFromName(String dir) {
-            if (Section.NATIVE_LIBS.matches(dir))
+            if (Section.NATIVE_LIBS.matches(dir)) {
                 return Section.NATIVE_LIBS;
-            else if (Section.NATIVE_CMDS.matches(dir))
+            } else if (Section.NATIVE_CMDS.matches(dir)) {
                 return Section.NATIVE_CMDS;
-            else if (Section.CLASSES.matches(dir))
+            } else if (Section.CLASSES.matches(dir)) {
                 return Section.CLASSES;
-            else if (Section.CONFIG.matches(dir))
+            } else if (Section.CONFIG.matches(dir)) {
                 return Section.CONFIG;
-            else
+            } else {
                 return Section.UNKNOWN;
+            }
         }
     }
 }

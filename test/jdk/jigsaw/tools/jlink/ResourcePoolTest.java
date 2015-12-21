@@ -34,17 +34,17 @@ import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.Module;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.Pool.Visitor;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.Module;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.Pool.Visitor;
 
 public class ResourcePoolTest {
 
@@ -233,7 +233,11 @@ public class ResourcePoolTest {
     }
 
     private void checkResources(Pool resources, ModuleData... expected) {
-        Map<String, Set<String>> modules = resources.getModulePackages();
+        Collection<Module> ms = resources.getModules();
+        List<String> modules = new ArrayList();
+        for(Module m : ms) {
+            modules.add(m.getName());
+        }
         for (ModuleData res : expected) {
             if (!resources.contains(res)) {
                 throw new AssertionError("Resource not found: " + res);
@@ -243,7 +247,7 @@ public class ResourcePoolTest {
                 throw new AssertionError("Resource not found: " + res);
             }
 
-            if (!modules.containsKey(res.getModule())) {
+            if (!modules.contains(res.getModule())) {
                 throw new AssertionError("Module not found: " + res.getModule());
             }
 

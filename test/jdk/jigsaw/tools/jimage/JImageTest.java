@@ -49,7 +49,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jmod
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.compiler
@@ -129,15 +128,13 @@ public class JImageTest {
         Path recreatedImage2 = JImageGenerator.getJImageTask()
                 .dir(extractedDir)
                 .option("--compress-resources")
-                .option("on")
                 .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
                 .recreate().assertSuccess();
         JImageValidator.validate(recreatedImage2.toFile(), bootClasses, Collections.emptyList());
 
         Path recreatedImage3 = JImageGenerator.getJImageTask()
                 .dir(extractedDir)
-                .option("--strip-java-debug")
-                .option("on")
+                .option("--strip-debug")
                 .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
                 .recreate().assertSuccess();
         JImageValidator.validate(recreatedImage3.toFile(), bootClasses, Collections.emptyList());
@@ -156,9 +153,7 @@ public class JImageTest {
         Path recreatedImage5 = JImageGenerator.getJImageTask()
                 .dir(extractedDir)
                 .option("--compress-resources")
-                .option("on")
-                .option("--strip-java-debug")
-                .option("on")
+                .option("--strip-debug")
                 .option("--exclude-resources")
                 .option("*.jcov, */META-INF/*")
                 .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))

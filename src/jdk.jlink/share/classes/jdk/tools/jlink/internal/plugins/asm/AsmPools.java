@@ -43,9 +43,9 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.Sorter;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 /**
  * A container for pools of ClassReader and other resource files. A pool of all

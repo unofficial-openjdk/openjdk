@@ -21,14 +21,13 @@
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test order of plugins
  * @author Jean-Francois Denise
  * @library ../../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -36,27 +35,24 @@
  * @build tests.*
  * @run main/othervm PluginOrderTest
  */
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.Jlink.OrderedPluginConfiguration;
-import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.PluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
+import jdk.tools.jlink.Jlink.OrderedPlugin;
+import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 import tests.Helper;
 import tests.Result;
@@ -69,50 +65,41 @@ public class PluginOrderTest {
 
     public void test() throws Exception {
         List<String> order = new ArrayList<>();
-        PluginRepository.registerPluginProvider(new PProvider("plugin1_F",
-                TransformerPluginProvider.FILTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin2_F",
-                TransformerPluginProvider.FILTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin3_F",
-                TransformerPluginProvider.FILTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin4_F",
-                TransformerPluginProvider.FILTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin1_F",
+                Plugin.CATEGORY.FILTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin2_F",
+                Plugin.CATEGORY.FILTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin3_F",
+                Plugin.CATEGORY.FILTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin4_F",
+                Plugin.CATEGORY.FILTER, order));
 
-        PluginRepository.registerPluginProvider(new PProvider("plugin1_T",
-                TransformerPluginProvider.TRANSFORMER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin2_T",
-                TransformerPluginProvider.TRANSFORMER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin3_T",
-                TransformerPluginProvider.TRANSFORMER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin4_T",
-                TransformerPluginProvider.TRANSFORMER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin1_T",
+                Plugin.CATEGORY.TRANSFORMER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin2_T",
+                Plugin.CATEGORY.TRANSFORMER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin3_T",
+                Plugin.CATEGORY.TRANSFORMER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin4_T",
+                Plugin.CATEGORY.TRANSFORMER, order));
 
-        PluginRepository.registerPluginProvider(new PProvider("plugin1_S",
-                TransformerPluginProvider.SORTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin2_S",
-                TransformerPluginProvider.SORTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin3_S",
-                TransformerPluginProvider.SORTER, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin4_S",
-                TransformerPluginProvider.SORTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin1_S",
+                Plugin.CATEGORY.SORTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin2_S",
+                Plugin.CATEGORY.SORTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin3_S",
+                Plugin.CATEGORY.SORTER, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin4_S",
+                Plugin.CATEGORY.SORTER, order));
 
-        PluginRepository.registerPluginProvider(new PProvider("plugin1_C",
-                TransformerPluginProvider.COMPRESSOR, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin2_C",
-                TransformerPluginProvider.COMPRESSOR, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin3_C",
-                TransformerPluginProvider.COMPRESSOR, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin4_C",
-                TransformerPluginProvider.COMPRESSOR, order));
-
-        PluginRepository.registerPluginProvider(new PProvider("plugin1_A",
-                null, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin2_A",
-                null, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin3_A",
-                null, order));
-        PluginRepository.registerPluginProvider(new PProvider("plugin4_A",
-                null, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin1_C",
+                Plugin.CATEGORY.COMPRESSOR, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin2_C",
+                Plugin.CATEGORY.COMPRESSOR, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin3_C",
+                Plugin.CATEGORY.COMPRESSOR, order));
+        PluginRepository.registerPlugin(new PluginTrap("plugin4_C",
+                Plugin.CATEGORY.COMPRESSOR, order));
 
         test1(order);
 
@@ -127,12 +114,6 @@ public class PluginOrderTest {
         test6(order);
 
         test7(order);
-
-        testAbs(order);
-
-        test8(order);
-
-        test9(order);
     }
 
     private void check(PluginsConfiguration config, List<String> expected, List<String> order)
@@ -150,16 +131,16 @@ public class PluginOrderTest {
     }
 
     private PluginsConfiguration createConfig(String... nameIndexAbs) {
-        List<OrderedPluginConfiguration> lst = new ArrayList<>();
+        List<OrderedPlugin> lst = new ArrayList<>();
         for (String s : nameIndexAbs) {
             String name = s.substring(0, s.indexOf(":"));
             int sep = s.indexOf("/");
             int index = Integer.valueOf(s.substring(s.indexOf(":") + 1, sep));
             boolean absolute = Boolean.valueOf(s.substring(sep + 1));
-            lst.add(new OrderedPluginConfiguration(name, index,
+            lst.add(new OrderedPlugin(name, index,
                     absolute, Collections.emptyMap()));
         }
-        return new PluginsConfiguration(lst, Collections.emptyList(), null);
+        return new PluginsConfiguration(lst, null, null);
     }
 
     private void test1(List<String> order) throws Exception {
@@ -209,56 +190,38 @@ public class PluginOrderTest {
     }
 
     private void test2(List<String> order) throws Exception {
-        check(createConfig("plugin1_F:0/false", "plugin1_T:0/false", "plugin1_S:0/false",
-                "plugin1_C:0/false", "plugin1_A:900000/true"),
-                Arrays.asList("plugin1_F", "plugin1_T", "plugin1_S", "plugin1_C", "plugin1_A"), order);
-    }
-
-    private void test3(List<String> order) throws Exception {
-        check(createConfig("plugin1_F:250/false", "plugin1_T:100/false", "plugin1_S:50/false",
-                "plugin1_C:10/false", "plugin1_A:0/true"),
-                Arrays.asList("plugin1_A", "plugin1_F", "plugin1_T", "plugin1_S", "plugin1_C"), order);
-    }
-
-    private void test4(List<String> order) throws Exception {
         check(createConfig("plugin2_F:0/false", "plugin3_F:1/false", "plugin4_F:2/false",
                 "plugin1_F:3/false"),
                 Arrays.asList("plugin2_F", "plugin3_F", "plugin4_F", "plugin1_F"), order);
     }
 
-    private void test5(List<String> order) throws Exception {
+    private void test3(List<String> order) throws Exception {
         check(createConfig("plugin2_T:0/false", "plugin3_T:1/false", "plugin4_T:2/false",
                 "plugin1_T:3/false"),
                 Arrays.asList("plugin2_T", "plugin3_T", "plugin4_T", "plugin1_T"), order);
     }
 
-    private void test6(List<String> order) throws Exception {
+    private void test4(List<String> order) throws Exception {
         check(createConfig("plugin2_S:0/false", "plugin3_S:1/false", "plugin4_S:2/false",
                 "plugin1_S:3/false"),
                 Arrays.asList("plugin2_S", "plugin3_S", "plugin4_S", "plugin1_S"), order);
     }
 
-    private void test7(List<String> order) throws Exception {
+    private void test5(List<String> order) throws Exception {
         check(createConfig("plugin2_C:0/false", "plugin3_C:1/false", "plugin4_C:2/false",
                 "plugin1_C:3/false"),
                 Arrays.asList("plugin2_C", "plugin3_C", "plugin4_C", "plugin1_C"), order);
     }
 
-    private void testAbs(List<String> order) throws Exception {
-        check(createConfig("plugin2_A:0/true", "plugin3_A:1/true", "plugin4_A:2/true",
-                "plugin1_A:3/true"),
-                Arrays.asList("plugin2_A", "plugin3_A", "plugin4_A", "plugin1_A"), order);
-    }
-
-    private void test8(List<String> order) throws Exception {
-        check(createConfig("plugin1_F:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.FILTER))[0] + "/true",
-                "plugin1_T:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.TRANSFORMER))[0] + "/true",
-                "plugin1_S:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.SORTER))[0] + "/true",
-                "plugin1_C:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.COMPRESSOR))[0] + "/true"),
+    private void test6(List<String> order) throws Exception {
+        check(createConfig("plugin1_F:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.FILTER)[0] + "/true",
+                "plugin1_T:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.TRANSFORMER)[0] + "/true",
+                "plugin1_S:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.SORTER)[0] + "/true",
+                "plugin1_C:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.COMPRESSOR)[0] + "/true"),
                 Arrays.asList("plugin1_F", "plugin1_T", "plugin1_S", "plugin1_C"), order);
     }
 
-    private void test9(List<String> order) throws Exception {
+    private void test7(List<String> order) throws Exception {
         List<String> expected = new ArrayList<>();
         expected.add("plugin1_F");
         expected.add("plugin2_F");
@@ -270,116 +233,57 @@ public class PluginOrderTest {
         expected.add("plugin2_C");
 
         check(createConfig("plugin1_F:0/false", "plugin1_T:0/false", "plugin1_S:0/false",
-                "plugin1_C:0/false", "plugin2_F:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.FILTER))[0] + 1) + "/true",
-                "plugin2_T:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.TRANSFORMER))[0] + 1) + "/true",
-                "plugin2_S:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.SORTER))[0] + 1) + "/true",
-                "plugin2_C:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.COMPRESSOR))[0] + 1) + "/true"), expected, order);
+                "plugin1_C:0/false", "plugin2_F:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.FILTER)[0] + 1) + "/true",
+                "plugin2_T:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.TRANSFORMER)[0] + 1) + "/true",
+                "plugin2_S:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.SORTER)[0] + 1) + "/true",
+                "plugin2_C:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.COMPRESSOR)[0] + 1) + "/true"), expected, order);
     }
 
-    public static class PProvider extends TransformerCmdProvider {
+    public static class PluginTrap implements TransformerPlugin {
 
         private final List<String> order;
-        private final String category;
+        private final CATEGORY category;
         private final String name;
-        PProvider(String name, String category, List<String> order) {
-            super(name, "");
+
+        PluginTrap(String name, CATEGORY category, List<String> order) {
             this.name = name;
             this.order = order;
             this.category = category;
         }
 
         @Override
-        public String getCategory() {
-            return category;
-        }
-
-        @Override
-        public String getToolOption() {
-            return name;
-        }
-
-        @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
-        }
-
-        @Override
-        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
-            return new PluginTrap(getName(), order);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
-        }
-    }
-
-    public static class PluginTrap implements TransformerPlugin {
-
-        private final String name;
-        private final List<String> order;
-
-        private PluginTrap(String name, List<String> order) {
-            this.name = name;
-            this.order = order;
-        }
-
-        @Override
-        public void visit(Pool resources, Pool output) {
+        public void visit(Pool in, Pool out) {
             order.add(name);
-            resources.visit((resource) -> {
+            in.visit((resource) -> {
                 return resource;
-            }, output);
+            }, out);
         }
 
         @Override
         public String getName() {
             return name;
         }
-    }
 
-    public static class CategoryProvider extends TransformerCmdProvider {
-
-        private final String category;
-
-        CategoryProvider(String category) {
-            super("CategoryProvider", "");
-            this.category = category;
+        @Override
+        public String getDescription() {
+            return "";
         }
 
         @Override
-        public String getCategory() {
-            return category;
+        public PluginOption getOption() {
+            return new PluginOption.Builder(name).build();
         }
 
         @Override
-        public String getToolArgument() {
-            throw new UnsupportedOperationException("Shouldn't be called");
+        public void configure(Map<PluginOption, String> config) {
+
         }
 
         @Override
-        public String getToolOption() {
-            throw new UnsupportedOperationException("Shouldn't be called");
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            throw new UnsupportedOperationException("Shouldn't be called");
-        }
-
-        @Override
-        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
-            throw new PluginException("Shouldn't be called");
-        }
-
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(category);
+            return Collections.unmodifiableSet(set);
         }
     }
 }

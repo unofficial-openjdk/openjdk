@@ -41,13 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.internal.Utils;
 
 /**
@@ -67,7 +67,7 @@ public class FileCopierPlugin implements TransformerPlugin {
         Path source;
         Path target;
     }
-    private static final String FAKE_MODULE = "$jlink-file-copier";
+    public static final String FAKE_MODULE = "$jlink-file-copier";
 
     private final List<CopiedFile> files = new ArrayList<>();
 
@@ -183,7 +183,8 @@ public class FileCopierPlugin implements TransformerPlugin {
         Objects.requireNonNull(pool);
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
-        ModuleData impl = Pool.newImageFile(FAKE_MODULE, path,
+        ModuleData impl = Pool.newImageFile(FAKE_MODULE,
+                "/" + FAKE_MODULE + "/other/" + path,
                 Pool.ModuleDataType.OTHER, newStream(file), length(file));
         try {
             pool.add(impl);

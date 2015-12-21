@@ -28,10 +28,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  *
@@ -43,8 +43,7 @@ public final class StripNativeCommandsPlugin implements TransformerPlugin {
 
     private static final PluginOption NAME_OPTION
             = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            hasOnOffArgument().build();
+            description(PluginsResourceBundle.getDescription(NAME)).build();
 
     @Override
     public String getName() {

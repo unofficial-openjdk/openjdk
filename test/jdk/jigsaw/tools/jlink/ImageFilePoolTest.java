@@ -32,10 +32,10 @@
 
 import java.io.ByteArrayInputStream;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
-import jdk.tools.jlink.api.plugin.transformer.Pool.Visitor;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.Pool.Visitor;
 
 public class ImageFilePoolTest {
     public static void main(String[] args) throws Exception {

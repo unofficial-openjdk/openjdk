@@ -22,10 +22,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api.plugin.builder;
+package jdk.tools.jlink.builder;
 
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.plugin.PluginException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -49,24 +49,26 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
 import jdk.tools.jlink.internal.BasicImageWriter;
-import jdk.tools.jlink.internal.JvmHandler;
+import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin.SymImageFile;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.Module;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.Module;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 /**
  *
  * Default Image Builder. This builder create the default Java image layout.
  */
 public class DefaultImageBuilder implements ImageBuilder {
+
+    public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
+    public static final String NAME = "default-image-builder";
+
     /**
      * The default java executable Image.
      */
@@ -80,8 +82,7 @@ public class DefaultImageBuilder implements ImageBuilder {
             Objects.requireNonNull(home);
             List<String> javaArgs = new ArrayList<>();
             javaArgs.add(home.resolve("bin").
-                    resolve(DefaultImageBuilderProvider.
-                            getJavaProcessName()).toString());
+                    resolve(getJavaProcessName()).toString());
             return javaArgs;
         }
 
@@ -103,14 +104,14 @@ public class DefaultImageBuilder implements ImageBuilder {
     /**
      * Default image builder constructor.
      *
-     * @param properties Properties to configure the builder.
+     * @param genBom
      * @param root The image directory.
      * @throws IOException
      */
-    public DefaultImageBuilder(Map<PluginOption, String> properties, Path root) throws IOException {
+    public DefaultImageBuilder(boolean genBom, Path root) throws IOException {
         Objects.requireNonNull(root);
 
-        genBom = properties.containsKey(DefaultImageBuilderProvider.GEN_BOM_OPTION);
+        this.genBom = genBom;
 
         this.root = root;
         this.mdir = root.resolve("lib").resolve("modules");
@@ -163,21 +164,20 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-     public void storeFiles(Pool allContent, List<ModuleData> removedFiles,
+    public void storeFiles(Pool files, String bom) {
             String bom) {
         try {
-            Pool files = new JvmHandler().handlePlatforms(allContent, removedFiles);
-
             for (ModuleData f : files.getContent()) {
                if (!f.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
                     accept(f);
                 }
             }
-            for (Module m : allContent.getModules()) {
+            for (Module m : files.getModules()) {
                 // Only add modules that contain packages
                 if (!m.getAllPackages().isEmpty()) {
-                    if(m.getName().equals("$jlink-file-copier")) {
-                        System.err.println("MODULE " + m + " has packages " + m.getAllPackages());
+                    // Skip the fake module used by FileCopierPlugin when copying files.
+                    if (m.getName().equals(FileCopierPlugin.FAKE_MODULE)) {
+                       continue;
                     }
                     modules.add(m.getName());
                 }
@@ -203,17 +203,17 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             }
 
-            prepareApplicationFiles(allContent, modules);
+            prepareApplicationFiles(files, modules);
         } catch (IOException ex) {
             throw new PluginException(ex);
         }
     }
 
-    protected void prepareApplicationFiles(Pool resources, Set<String> modules) throws IOException {
+    protected void prepareApplicationFiles(Pool files, Set<String> modules) throws IOException {
         // generate launch scripts for the modules with a main class
         for (String module : modules) {
             String path = "/" + module + "/module-info.class";
-            ModuleData res = resources.get(path);
+            ModuleData res = files.get(path);
             if (res == null) {
                 throw new IOException("module-info not found for " + module);
             }
@@ -262,8 +262,11 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     private void accept(ModuleData file) throws IOException {
-        String name = file.getPath();
-        String filename = name.substring(name.indexOf('/') + 1);
+        String fullPath = file.getPath();
+        String module = "/" + file.getModule()+ "/";
+        String filename = fullPath.substring(module.length());
+        // Remove radical native|config|...
+        filename = filename.substring(filename.indexOf('/') + 1);
         try (InputStream in = file.stream()) {
             switch (file.getType()) {
                 case NATIVE_LIB:
@@ -278,8 +281,6 @@ public class DefaultImageBuilder implements ImageBuilder {
                     writeEntry(in, destFile("conf", filename));
                     break;
                 case OTHER:
-                    int i = name.indexOf('/');
-                    String dir = i < 0 ? "" : name.substring(0, i);
                     if (file instanceof SymImageFile) {
                         SymImageFile sym = (SymImageFile) file;
                         Path target = root.resolve(sym.getTargetPath());
@@ -287,14 +288,13 @@ public class DefaultImageBuilder implements ImageBuilder {
                             throw new IOException("Sym link target " + target
                                     + " doesn't exist");
                         }
-                        writeSymEntry(destFile(dir, filename), target);
+                        writeSymEntry(root.resolve(filename), target);
                     } else {
-                        writeEntry(in, destFile(dir, filename));
+                        writeEntry(in, root.resolve(filename));
                     }
                     break;
                 default:
-                    //throw new InternalError("unexpected entry: " + name + " " + zipfile.toString()); //TODO
-                    throw new InternalError("unexpected entry: " + name + " " + name);
+                    throw new InternalError("unexpected entry: " + fullPath);
             }
         }
     }
@@ -398,5 +398,39 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             });
         }
+    }
+
+    static String getJavaProcessName() {
+        return isWindows() ? "java.exe" : "java";
+    }
+
+    public static ExecutableImage getExecutableImage(Path root) {
+        if (Files.exists(root.resolve("bin").resolve(getJavaProcessName()))) {
+            return new DefaultImageBuilder.DefaultExecutableImage(root,
+                    retrieveModules(root));
+        }
+        return null;
+    }
+
+    private static Set<String> retrieveModules(Path root) {
+        Path releaseFile = root.resolve("release");
+        Set<String> modules = new HashSet<>();
+        if (Files.exists(releaseFile)) {
+            Properties release = new Properties();
+            try (FileInputStream fi = new FileInputStream(releaseFile.toFile())) {
+                release.load(fi);
+            } catch (IOException ex) {
+                System.err.println("Can't read release file " + ex);
+            }
+            String mods = release.getProperty("MODULES");
+            if (mods != null) {
+                String[] arr = mods.split(",");
+                for (String m : arr) {
+                    modules.add(m.trim());
+                }
+
+            }
+        }
+        return modules;
     }
 }

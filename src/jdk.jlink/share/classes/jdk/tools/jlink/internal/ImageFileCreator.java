@@ -45,10 +45,10 @@ import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive.Entry;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 import jdk.tools.jlink.internal.PoolImpl.CompressedModuleData;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 
 /**
  * An image (native endian.)
@@ -295,9 +295,9 @@ public final class ImageFileCreator {
                 } else {
                     try {
                         // Entry.path() contains the kind of file native, conf, bin, ...
-                        // It is kept in order for ImageBuilder to put files in right place
+                        // Keep it to avoid naming conflict (eg: native/jvm.cfg and config/jvm.cfg
                         resources.add(Pool.newImageFile(mn,
-                                entry.path(), mapImageFileType(entry.type()),
+                                "/" + mn + "/" + entry.path(), mapImageFileType(entry.type()),
                                 entry.stream(), entry.size()));
                     } catch (Exception ex) {
                         throw new IOException(ex);

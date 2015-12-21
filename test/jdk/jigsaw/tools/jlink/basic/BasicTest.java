@@ -27,7 +27,7 @@
  * @author Andrei Eremeev
  * @library /jdk/jigsaw/lib /lib/testlibrary
  * @modules java.base/jdk.internal.module
- *          jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
  * @build jdk.testlibrary.ProcessTools
@@ -79,7 +79,7 @@ public class BasicTest {
 
         Path image = Paths.get("mysmallimage");
         runJmod(jarfile.toString(), modName);
-        runJlink(image, modName, "--compress-resources", "on");
+        runJlink(image, modName, "--compress-resources");
         execute(image, modName);
 
         Files.delete(jmods.resolve(modName + ".jmod"));
@@ -110,7 +110,7 @@ public class BasicTest {
                 "--addmods", modName,
                 "--output", image.toString());
         Collections.addAll(args, options);
-        int rc = jdk.tools.jlink.Main.run(args.toArray(new String[args.size()]), new PrintWriter(System.out));
+        int rc = jdk.tools.jlink.internal.Main.run(args.toArray(new String[args.size()]), new PrintWriter(System.out));
         if (rc != 0) {
             throw new AssertionError("Jlink failed: rc = " + rc);
         }

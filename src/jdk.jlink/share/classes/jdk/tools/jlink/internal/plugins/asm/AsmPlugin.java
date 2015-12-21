@@ -25,9 +25,9 @@
 package jdk.tools.jlink.internal.plugins.asm;
 
 import java.util.Objects;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.internal.PoolImpl;
 
 /**
@@ -62,7 +62,7 @@ public abstract class AsmPlugin implements TransformerPlugin {
      * apply Asm transformation to jimage contained classes.
      * @param pools The pool of Asm classes and other resource files.
      * @param strings To add a string to the jimage strings table.
-     * @throws jdk.tools.jlink.api.plugin.PluginException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
     public abstract void visit(AsmPools pools);
 }

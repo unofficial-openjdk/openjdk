@@ -21,21 +21,22 @@
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test previsitor
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
  * @run main/othervm PrevisitorTest
  */
-
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
@@ -44,11 +45,11 @@ import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
-import jdk.tools.jlink.api.Jlink;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class PrevisitorTest {
 
@@ -56,17 +57,17 @@ public class PrevisitorTest {
         new PrevisitorTest().test();
     }
 
-    private static Jlink.OrderedPluginConfiguration createConfig(String name, int index) {
-        return new Jlink.OrderedPluginConfiguration(name, index, true, Collections.emptyMap());
+    private static Jlink.OrderedPlugin createConfig(String name, int index) {
+        return new Jlink.OrderedPlugin(name, index, true, Collections.emptyMap());
     }
 
     public void test() throws Exception {
-        CustomProvider provider = new CustomProvider("plugin");
-        PluginRepository.registerPluginProvider(provider);
-        List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
-        plugins.add(createConfig("plugin", 0));
+        CustomPlugin plugin = new CustomPlugin();
+        PluginRepository.registerPlugin(plugin);
+        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
+        plugins.add(createConfig(CustomPlugin.NAME, 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null));
+                null, null));
         PoolImpl inResources = new PoolImpl(ByteOrder.nativeOrder(), new CustomStringTable());
         inResources.add(Pool.newResource("/aaa/bbb/res1.class", new byte[90]));
         inResources.add(Pool.newResource("/aaa/bbb/res2.class", new byte[90]));
@@ -81,12 +82,13 @@ public class PrevisitorTest {
                 .map(Object::toString)
                 .collect(Collectors.toList());
         if (!input.equals(output)) {
-            throw new AssertionError("Input and output resources differ: input: " +
-                    input + ", output: " + output);
+            throw new AssertionError("Input and output resources differ: input: "
+                    + input + ", output: " + output);
         }
     }
 
     private static class CustomStringTable implements StringTable {
+
         private final List<String> strings = new ArrayList<>();
 
         @Override
@@ -107,6 +109,8 @@ public class PrevisitorTest {
 
     private static class CustomPlugin implements TransformerPlugin, ResourcePrevisitor {
 
+        private static String NAME = "plugin";
+
         private boolean isPrevisitCalled = false;
 
         @Override
@@ -114,8 +118,7 @@ public class PrevisitorTest {
             if (!isPrevisitCalled) {
                 throw new AssertionError("Previsit was not called");
             }
-            CustomStringTable table = (CustomStringTable)
-                    ((PoolImpl)inResources).getStringTable();
+            CustomStringTable table = (CustomStringTable) ((PoolImpl) inResources).getStringTable();
             if (table.size() == 0) {
                 throw new AssertionError("Table is empty");
             }
@@ -139,7 +142,7 @@ public class PrevisitorTest {
 
         @Override
         public String getName() {
-            return "custom-plugin";
+            return NAME;
         }
 
         @Override
@@ -153,42 +156,26 @@ public class PrevisitorTest {
                 }
             }
         }
-    }
 
-    public static class CustomProvider extends TransformerCmdProvider {
-
-        CustomProvider(String name) {
-            super(name, "");
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
 
         @Override
-        public String getCategory() {
+        public String getDescription() {
+            return "";
+        }
+
+        @Override
+        public PluginOption getOption() {
             return null;
         }
 
         @Override
-        public String getToolOption() {
-            return null;
-        }
-
-        @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
-        }
-
-        @Override
-        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
-            return new CustomPlugin();
-        }
-
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
+        public void configure(Map<PluginOption, String> config) {
         }
     }
 }

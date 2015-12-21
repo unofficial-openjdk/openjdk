@@ -25,10 +25,11 @@
 package jdk.tools.jlink.internal;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
-import jdk.tools.jlink.api.plugin.Plugin;
-import jdk.tools.jlink.api.plugin.Plugin.PluginType;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.Plugin.PluginType;
 
 /**
  *
@@ -62,36 +63,44 @@ public class Utils {
     }
 
     public static boolean isPostProcessor(Plugin prov) {
-        for(PluginType pt : prov.getType()) {
-            if(pt instanceof Plugin.CATEGORY) {
-                return isPostProcessor((Plugin.CATEGORY) pt);
+        if (prov.getType() != null) {
+            for (PluginType pt : prov.getType()) {
+                if (pt instanceof Plugin.CATEGORY) {
+                    return isPostProcessor((Plugin.CATEGORY) pt);
+                }
             }
         }
         return false;
     }
 
     public static boolean isPreProcessor(Plugin prov) {
-        for(PluginType pt : prov.getType()) {
-            if(pt instanceof Plugin.CATEGORY) {
-                return isPreProcessor((Plugin.CATEGORY) pt);
+        if (prov.getType() != null) {
+            for (PluginType pt : prov.getType()) {
+                if (pt instanceof Plugin.CATEGORY) {
+                    return isPreProcessor((Plugin.CATEGORY) pt);
+                }
             }
         }
         return false;
     }
 
     public static Plugin.ORDER getOrder(Plugin provider) {
-        for (Plugin.PluginType t : provider.getType()) {
-            if (t instanceof Plugin.ORDER) {
-                return (Plugin.ORDER) t;
+        if (provider.getType() != null) {
+            for (Plugin.PluginType t : provider.getType()) {
+                if (t instanceof Plugin.ORDER) {
+                    return (Plugin.ORDER) t;
+                }
             }
         }
         return null;
     }
 
     public static Plugin.CATEGORY getCategory(Plugin provider) {
-        for (Plugin.PluginType t : provider.getType()) {
-            if (t instanceof Plugin.CATEGORY) {
-                return (Plugin.CATEGORY) t;
+        if (provider.getType() != null) {
+            for (Plugin.PluginType t : provider.getType()) {
+                if (t instanceof Plugin.CATEGORY) {
+                    return (Plugin.CATEGORY) t;
+                }
             }
         }
         return null;
@@ -104,6 +113,28 @@ public class Utils {
                 res.add(p);
             }
         }
+        return res;
+    }
+
+    public static List<Plugin> getSortedPostProcessors(List<Plugin> plugins) {
+        List<Plugin> res = getPostProcessors(plugins);
+        res.sort(new Comparator<Plugin>() {
+            @Override
+            public int compare(Plugin o1, Plugin o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        return res;
+    }
+
+    public static List<Plugin> getSortedPreProcessors(List<Plugin> plugins) {
+        List<Plugin> res = getPreProcessors(plugins);
+        res.sort(new Comparator<Plugin>() {
+            @Override
+            public int compare(Plugin o1, Plugin o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
         return res;
     }
 

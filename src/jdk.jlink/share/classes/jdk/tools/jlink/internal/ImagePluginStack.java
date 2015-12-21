@@ -26,7 +26,7 @@ package jdk.tools.jlink.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
-import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.plugin.Plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
@@ -43,14 +43,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.Decompressor;
-import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
-import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.PluginException;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPlugin;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.builder.ImageBuilder;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 
 /**
  * Plugins Stack. Plugins entry point to apply transformations onto resources
@@ -278,6 +278,10 @@ public final class ImagePluginStack {
         return current;
     }
 
+    /**
+     * This pool wrap the original pool and automatically uncompress moduledata
+     * if needed.
+     */
     private class LastPool extends Pool {
         private class LastModule implements Module {
 
@@ -316,6 +320,15 @@ public final class ImagePluginStack {
             @Override
             public String toString() {
                 return getName();
+            }
+
+            @Override
+            public Collection<ModuleData> getContent() {
+                List<ModuleData> lst = new ArrayList<>();
+                for(ModuleData md : module.getContent()) {
+                    lst.add(getUncompressed(md));
+                }
+                return lst;
             }
         }
         private final PoolImpl pool;
@@ -450,14 +463,7 @@ public final class ImagePluginStack {
             BasicImageWriter writer)
             throws Exception {
         Objects.requireNonNull(original);
-        // Build the diff between input and output
-        List<ModuleData> removed = new ArrayList<>();
-        for (ModuleData f : transformed.getContent()) {
-            if (!f.getType().equals(ModuleDataType.CLASS_OR_RESOURCE) && !transformed.contains(f)) {
-                removed.add(f);
-            }
-        }
-        imageBuilder.storeFiles(new LastPool(transformed), removed, bom);
+        imageBuilder.storeFiles(new LastPool(transformed), bom);
     }
 
     public ExecutableImage getExecutableImage() throws IOException {

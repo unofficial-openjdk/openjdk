@@ -22,25 +22,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.api.plugin.transformer;
+package jdk.tools.jlink;
 
-import jdk.tools.jlink.api.plugin.Plugin;
-
+import java.security.BasicPermission;
 
 /**
- * Implement this interface to develop your own plugin.
- * TransformerPlugin
- * instances modify the content of a jimage.
+ * The permission required to use jlink API. The permission target_name is
+ * "jlink". e.g.: permission jdk.tools.jlink.plugins.JlinkPermission "jlink";
+ *
  */
-public interface TransformerPlugin extends Plugin {
-    /**
-     * Visit the content of modules.
-     *
-     * @param in Read only content.
-     * @param out The pool to fill with content. Will contain the result of the
-     * visit
-     *
-     * @throws PluginException
-     */
-    public void visit(Pool in, Pool out);
+public final class JlinkPermission extends BasicPermission {
+
+    private static final long serialVersionUID = -3687912306077727801L;
+
+    public JlinkPermission(String name) {
+        super(name);
+    }
+
 }

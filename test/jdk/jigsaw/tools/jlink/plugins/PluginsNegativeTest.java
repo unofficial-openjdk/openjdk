@@ -21,32 +21,34 @@
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Negative test for ImagePluginStack.
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
  * @run main/othervm PluginsNegativeTest
  */
-
 import java.lang.reflect.Layer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.api.Jlink;
-import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.api.plugin.PluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class PluginsNegativeTest {
+
     public static void main(String[] args) throws Exception {
         new PluginsNegativeTest().test();
     }
@@ -54,53 +56,47 @@ public class PluginsNegativeTest {
     public void test() throws Exception {
         testDuplicateBuiltInProviders();
         testUnknownProvider();
-        PluginRepository.registerPluginProvider(new CustomProvider("plugin"));
+        PluginRepository.registerPlugin(new CustomPlugin("plugin"));
         testEmptyInputResource();
         testEmptyOutputResource();
     }
 
     private void testDuplicateBuiltInProviders() {
-        List<PluginProvider> javaPlugins = new ArrayList<>();
-        javaPlugins.addAll(PluginRepository.getTransformerProviders(Layer.boot()));
-        for (PluginProvider javaPlugin : javaPlugins) {
+        List<Plugin> javaPlugins = new ArrayList<>();
+        javaPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+        for (Plugin javaPlugin : javaPlugins) {
             System.out.println("Registered plugin: " + javaPlugin.getName());
         }
-        for (PluginProvider javaPlugin : javaPlugins) {
+        for (Plugin javaPlugin : javaPlugins) {
             String pluginName = javaPlugin.getName();
             try {
-                PluginRepository.registerPluginProvider(new CustomProvider(pluginName));
+                PluginRepository.registerPlugin(new CustomPlugin(pluginName));
                 try {
-                    PluginRepository.getTransformerPluginProvider(pluginName, Layer.boot());
+                    PluginRepository.getPlugin(pluginName, Layer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
                 } catch (Exception ignored) {
                 }
             } finally {
-                PluginRepository.unregisterPluginProvider(pluginName);
+                PluginRepository.unregisterPlugin(pluginName);
             }
         }
     }
 
     private void testUnknownProvider() {
-        if (PluginRepository.getTransformerPluginProvider("unknown", Layer.boot()) != null) {
-            throw new AssertionError("Exception expected for unknown plugin name");
-        }
-        if (PluginRepository.getPostProcessingPluginProvider("unknown", Layer.boot()) != null) {
-            throw new AssertionError("Exception expected for unknown plugin name");
-        }
-        if (PluginRepository.getImageBuilderProvider("unknown", Layer.boot()) != null) {
+        if (PluginRepository.getPlugin("unknown", Layer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
         }
     }
 
-    private static Jlink.OrderedPluginConfiguration createConfig(String name, int index) {
-        return new Jlink.OrderedPluginConfiguration(name, index, true, Collections.emptyMap());
+    private static Jlink.OrderedPlugin createConfig(String name, int index) {
+        return new Jlink.OrderedPlugin(name, index, true, Collections.emptyMap());
     }
 
     private void testEmptyOutputResource() throws Exception {
-        List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
-                Collections.emptyList(), null));
+                null, null));
         PoolImpl inResources = new PoolImpl();
         inResources.add(Pool.newResource("/aaa/bbb/A", new byte[10]));
         try {
@@ -111,10 +107,10 @@ public class PluginsNegativeTest {
     }
 
     private void testEmptyInputResource() throws Exception {
-        List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
+        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
-                Collections.emptyList(), null));
+                null, null));
         PoolImpl inResources = new PoolImpl();
         PoolImpl outResources = (PoolImpl) stack.visitResources(inResources);
         if (!outResources.isEmpty()) {
@@ -124,6 +120,12 @@ public class PluginsNegativeTest {
 
     public static class CustomPlugin implements TransformerPlugin {
 
+        private final String name;
+
+        CustomPlugin(String name) {
+            this.name = name;
+        }
+
         @Override
         public void visit(Pool inResources, Pool outResources) {
             // do nothing
@@ -131,44 +133,29 @@ public class PluginsNegativeTest {
 
         @Override
         public String getName() {
-            return "custom-provider";
-        }
-    }
-
-    public static class CustomProvider extends TransformerCmdProvider {
-
-        protected CustomProvider(String name) {
-            super(name, "");
+            return name;
         }
 
         @Override
-        public String getCategory() {
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
             return null;
         }
 
         @Override
-        public String getToolArgument() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String getToolOption() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
+        public PluginOption getOption() {
             return null;
         }
 
         @Override
-        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
-            return new CustomPlugin();
-        }
+        public void configure(Map<PluginOption, String> config) {
 
-        @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
         }
     }
 }

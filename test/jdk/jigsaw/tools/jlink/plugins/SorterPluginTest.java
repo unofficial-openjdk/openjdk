@@ -34,12 +34,15 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
-import jdk.tools.jlink.internal.plugins.SortResourcesProvider;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
-import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.SortResourcesPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class SorterPluginTest {
 
@@ -87,8 +90,10 @@ public class SorterPluginTest {
 
         {
             Pool out = new PoolImpl();
-            String[] arguments = {"/zazou/*", "*/module-info.class"};
-            TransformerPlugin p = new SortResourcesProvider().newPlugin(arguments, null);
+            Map<PluginOption, String> config = new HashMap<>();
+            config.put(SortResourcesPlugin.NAME_OPTION, "/zazou/*,*/module-info.class");
+            TransformerPlugin p = new SortResourcesPlugin();
+            p.configure(config);
             p.visit(resources, out);
             check(out.getContent(), sorted);
         }
@@ -105,8 +110,10 @@ public class SorterPluginTest {
             Files.write(order.toPath(), builder.toString().getBytes());
 
             Pool out = new PoolImpl();
-            String[] arguments = {order.getAbsolutePath()};
-            TransformerPlugin p = new SortResourcesProvider().newPlugin(arguments, null);
+            Map<PluginOption, String> config = new HashMap<>();
+            config.put(SortResourcesPlugin.NAME_OPTION, order.getAbsolutePath());
+            TransformerPlugin p = new SortResourcesPlugin();
+            p.configure(config);
             p.visit(resources, out);
             check(out.getContent(), sorted2);
 

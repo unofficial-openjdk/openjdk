@@ -30,7 +30,6 @@
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.module
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -350,16 +349,5 @@ public class JLinkNegativeTest {
             deleteDirectory(jar1);
             deleteDirectory(jar2);
         }
-    }
-
-    public void testCustomImageBuilderNotFound() throws IOException {
-        String builderName = "not-found-image-builder";
-        JImageGenerator.getJLinkTask()
-                .option("--image-builder")
-                .option("not-found-image-builder")
-                .modulePath(helper.defaultModulePath())
-                .output(helper.createNewImageDir("leaf1"))
-                .addMods("leaf1")
-                .call().assertFailure("Error: Image builder not found for " + builderName);
     }
 }

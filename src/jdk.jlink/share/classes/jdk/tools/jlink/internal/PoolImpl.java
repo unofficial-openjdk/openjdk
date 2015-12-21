@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
-import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.plugin.Pool;
 
 /**
  * Pool of module data.

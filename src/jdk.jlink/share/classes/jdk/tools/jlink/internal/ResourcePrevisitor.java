@@ -24,7 +24,7 @@
  */
 package jdk.tools.jlink.internal;
 
-import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.plugin.Pool;
 
 /**
  * Plugin wishing to pre-visit the resources must implement this interface.

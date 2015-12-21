@@ -23,15 +23,17 @@
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.api.plugin.PluginOption;
-import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
-import jdk.tools.jlink.api.plugin.PluginProvider;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
-import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import tests.Helper;
 
 /*
@@ -41,7 +43,6 @@ import tests.Helper;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -54,33 +55,24 @@ public class DefaultProviderTest {
     private final static List<PluginOption> options;
     private static final String NAME = "toto";
     private static final PluginOption NAME_OPTION
-            = new PluginOptionBuilder(NAME).isEnabled().build();
+            = new PluginOption.Builder(NAME).isEnabled().build();
     private final static Map<PluginOption, Object> expectedOptions = new HashMap<>();
 
     static {
         options = new ArrayList<>();
         options.add(NAME_OPTION);
-        options.add(new PluginOptionBuilder("option1").description("value1").build());
-        options.add(new PluginOptionBuilder("option2").description("value2").build());
+        options.add(new PluginOption.Builder("option1").description("value1").build());
+        options.add(new PluginOption.Builder("option2").description("value2").build());
 
         expectedOptions.put(NAME_OPTION, "on");
-        expectedOptions.put(new PluginOptionBuilder("option1").
+        expectedOptions.put(new PluginOption.Builder("option1").
                 description("value1").build(), "value1");
-        expectedOptions.put(new PluginOptionBuilder("option2").
+        expectedOptions.put(new PluginOption.Builder("option2").
                 description("value2").build(), "value2");
 
     }
 
-    private static class CustomProvider extends TransformerPluginProvider {
-
-        public CustomProvider() {
-            super(NAME, NAME);
-        }
-
-        @Override
-        public String getCategory() {
-            return TRANSFORMER;
-        }
+    private static class Custom implements TransformerPlugin {
 
         @Override
         public PluginOption getOption() {
@@ -93,27 +85,43 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public Type getType() {
-            return Type.RESOURCE_PLUGIN;
+        public void visit(Pool in, Pool out) {
+            in.visit((Pool.ModuleData content) -> {
+                return content;
+            }, out);
         }
 
         @Override
-        public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public String getDescription() {
+            return NAME;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
             DefaultProviderTest.isNewPluginsCalled = true;
             DefaultProviderTest.receivedOptions = config;
-            return null;
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
     }
 
-    private static class CustomProvider2 extends TransformerPluginProvider {
-
-        public CustomProvider2() {
-            super(NAME, NAME);
-        }
+    private static class Custom2 implements TransformerPlugin {
 
         @Override
-        public String getCategory() {
-            return TRANSFORMER;
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
 
         @Override
@@ -127,20 +135,31 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public Type getType() {
-            return Type.IMAGE_FILE_PLUGIN;
+        public void visit(Pool in, Pool out) {
+            in.visit((Pool.ModuleData content) -> {
+                return content;
+            }, out);
         }
 
         @Override
-        public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public String getDescription() {
+            return NAME;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
             DefaultProviderTest.isNewPluginsCalled = true;
             DefaultProviderTest.receivedOptions = config;
-            return null;
         }
     }
 
     private static boolean isNewPluginsCalled;
-    private static Map<PluginOption, Object> receivedOptions;
+    private static Map<PluginOption, String> receivedOptions;
 
     private static void reset() {
         isNewPluginsCalled = false;
@@ -154,12 +173,12 @@ public class DefaultProviderTest {
             return;
         }
         helper.generateDefaultModules();
-        test(helper, new CustomProvider());
-        test(helper, new CustomProvider2());
+        test(helper, new Custom());
+        test(helper, new Custom2());
     }
 
-    private static void test(Helper helper, PluginProvider provider) throws Exception {
-        PluginRepository.registerPluginProvider(provider);
+    private static void test(Helper helper, Plugin plugin) throws Exception {
+        PluginRepository.registerPlugin(plugin);
 
         {
             String[] userOptions = {};
