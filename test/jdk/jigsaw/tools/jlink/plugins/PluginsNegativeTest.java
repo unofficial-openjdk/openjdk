@@ -88,13 +88,13 @@ public class PluginsNegativeTest {
         }
     }
 
-    private static Jlink.OrderedPlugin createConfig(String name, int index) {
-        return new Jlink.OrderedPlugin(name, index, true, Collections.emptyMap());
+    private static Plugin createPlugin(String name) {
+        return Jlink.newPlugin(name, Collections.emptyMap(), null);
     }
 
     private void testEmptyOutputResource() throws Exception {
-        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("plugin", 0));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("plugin"));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
                 null, null));
         PoolImpl inResources = new PoolImpl();
@@ -107,8 +107,8 @@ public class PluginsNegativeTest {
     }
 
     private void testEmptyInputResource() throws Exception {
-        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("plugin", 0));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("plugin"));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
                 null, null));
         PoolImpl inResources = new PoolImpl();

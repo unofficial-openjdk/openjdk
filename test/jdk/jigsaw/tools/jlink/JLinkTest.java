@@ -125,7 +125,7 @@ public class JLinkTest {
             StringWriter writer = new StringWriter();
             jdk.tools.jlink.internal.Main.run(new String[]{"--xhelp"}, new PrintWriter(writer));
             String output = writer.toString();
-            if (output.split("\n").length < 30) {
+            if (output.split("\n").length < 20) {
                 System.err.println(output);
                 throw new AssertionError("XHelp");
             }
@@ -145,7 +145,7 @@ public class JLinkTest {
         {
             // List plugins
             StringWriter writer = new StringWriter();
-            jdk.tools.jlink.internal.Main.run(new String[]{"--xhelp"}, new PrintWriter(writer));
+            jdk.tools.jlink.internal.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
             String output = writer.toString();
             long number = Stream.of(output.split("\n"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
@@ -158,7 +158,7 @@ public class JLinkTest {
 
         // filter out files and resources + Skip debug + compress
         {
-            String[] userOptions = {"--compress-resources", "--strip-debug",
+            String[] userOptions = {"--compress", "2", "--strip-debug",
                 "--exclude-resources", "*.jcov, */META-INF/*", "--exclude-files",
                 "*" + Helper.getDebugSymbolsExtension()};
             String moduleName = "excludezipskipdebugcomposite2";
@@ -171,7 +171,7 @@ public class JLinkTest {
 
         // filter out + Skip debug + compress with filter + sort resources
         {
-            String[] userOptions2 = {"--compress-resources", "--compress-resources-filter",
+            String[] userOptions2 = {"--compress", "2", "--compress-filter",
                 "^/java.base/*", "--strip-debug", "--exclude-resources",
                 "*.jcov, */META-INF/*", "--sort-resources",
                 "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
@@ -184,49 +184,49 @@ public class JLinkTest {
 
         // default compress
         {
-            testCompress(helper, "compresscmdcomposite2", "--compress-resources");
+            testCompress(helper, "compresscmdcomposite2", "--compress", "2");
         }
 
         {
             testCompress(helper, "compressfiltercmdcomposite2",
-                    "--compress-resources", "--compress-resources-filter",
+                    "--compress", "2", "--compress-filter",
                     "^/java.base/java/lang/*");
         }
 
         // compress 0
         {
             testCompress(helper, "compress0filtercmdcomposite2",
-                    "--compress-resources", "--compress-resources-level", "0",
-                    "--compress-resources-filter", "^/java.base/java/lang/*");
+                    "--compress", "0",
+                    "--compress-filter", "^/java.base/java/lang/*");
         }
 
         // compress 1
         {
             testCompress(helper, "compress1filtercmdcomposite2",
-                    "--compress-resources", "--compress-resources-level", "1",
-                    "--compress-resources-filter", "^/java.base/java/lang/*");
+                    "--compress", "1",
+                    "--compress-filter", "^/java.base/java/lang/*");
         }
 
         // compress 2
         {
             testCompress(helper, "compress2filtercmdcomposite2",
-                    "--compress-resources", "--compress-resources-level", "2",
-                    "--compress-resources-filter", "^/java.base/java/lang/*");
+                    "--compress", "2",
+                    "--compress-filter", "^/java.base/java/lang/*");
         }
 
         // invalid compress level
         {
-            String[] userOptions = {"--compress-resources", "--compress-resources-level", "invalid"};
+            String[] userOptions = {"--compress", "invalid"};
             String moduleName = "invalidCompressLevel";
             helper.generateDefaultJModule(moduleName, "composite2");
-            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: java.io.IOException: Invalid level invalid");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid level invalid");
         }
 
         // @file
         {
             Path path = Paths.get("embedded.properties");
             Files.write(path, Collections.singletonList("--strip-debug --addmods " +
-                    "toto.unknown --compress-resources UNKNOWN\n"));
+                    "toto.unknown --compress UNKNOWN\n"));
             String[] userOptions = {"@", path.toAbsolutePath().toString()};
             String moduleName = "configembeddednocompresscomposite2";
             helper.generateDefaultJModule(moduleName, "composite2");

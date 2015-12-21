@@ -84,17 +84,6 @@ public class Utils {
         return false;
     }
 
-    public static Plugin.ORDER getOrder(Plugin provider) {
-        if (provider.getType() != null) {
-            for (Plugin.PluginType t : provider.getType()) {
-                if (t instanceof Plugin.ORDER) {
-                    return (Plugin.ORDER) t;
-                }
-            }
-        }
-        return null;
-    }
-
     public static Plugin.CATEGORY getCategory(Plugin provider) {
         if (provider.getType() != null) {
             for (Plugin.PluginType t : provider.getType()) {
@@ -152,8 +141,12 @@ public class Utils {
         return prov.getState().contains(Plugin.STATE.FUNCTIONAL);
     }
 
-    public static boolean isEnabled(Plugin prov) {
-        return prov.getState().contains(Plugin.STATE.ENABLED);
+    public static boolean isAutoEnabled(Plugin prov) {
+        return prov.getState().contains(Plugin.STATE.AUTO_ENABLED);
+    }
+
+    public static boolean isDisabled(Plugin prov) {
+        return prov.getState().contains(Plugin.STATE.DISABLED);
     }
 
 }

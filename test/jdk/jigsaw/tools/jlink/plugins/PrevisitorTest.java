@@ -46,6 +46,7 @@ import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
@@ -57,15 +58,15 @@ public class PrevisitorTest {
         new PrevisitorTest().test();
     }
 
-    private static Jlink.OrderedPlugin createConfig(String name, int index) {
-        return new Jlink.OrderedPlugin(name, index, true, Collections.emptyMap());
+    private static Plugin createPlugin(String name) {
+        return Jlink.newPlugin(name, Collections.emptyMap(), null);
     }
 
     public void test() throws Exception {
         CustomPlugin plugin = new CustomPlugin();
         PluginRepository.registerPlugin(plugin);
-        List<Jlink.OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig(CustomPlugin.NAME, 0));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin(CustomPlugin.NAME));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins,
                 null, null));
         PoolImpl inResources = new PoolImpl(ByteOrder.nativeOrder(), new CustomStringTable());
@@ -118,7 +119,8 @@ public class PrevisitorTest {
             if (!isPrevisitCalled) {
                 throw new AssertionError("Previsit was not called");
             }
-            CustomStringTable table = (CustomStringTable) ((PoolImpl) inResources).getStringTable();
+            CustomStringTable table = (CustomStringTable)
+                    ((PoolImpl) inResources).getStringTable();
             if (table.size() == 0) {
                 throw new AssertionError("Table is empty");
             }

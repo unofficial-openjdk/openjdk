@@ -64,6 +64,7 @@ import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
+import jdk.tools.jlink.plugin.Plugin;
 
 /**
  * Implementation for the jlink tool.
@@ -194,6 +195,10 @@ public class JlinkTask {
                 optionsHelper.showXHelp(PROGNAME, true);
                 return EXIT_OK;
             }
+            if(optionsHelper.listPlugins()) {
+                optionsHelper.listPlugins(true);
+                return EXIT_OK;
+            }
             if (options.version || options.fullVersion) {
                 taskHelper.showVersion(options.fullVersion);
                 return EXIT_OK;
@@ -305,7 +310,7 @@ public class JlinkTask {
     /*
      * Jlink API entry point.
      */
-    public static void postProcessImage(ExecutableImage image, List<Jlink.OrderedPlugin> postProcessorPlugins)
+    public static void postProcessImage(ExecutableImage image, List<Plugin> postProcessorPlugins)
             throws Exception {
         Objects.requireNonNull(image);
         Objects.requireNonNull(postProcessorPlugins);

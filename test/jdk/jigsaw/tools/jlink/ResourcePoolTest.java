@@ -142,16 +142,6 @@ public class ResourcePoolTest {
         });
         test(samples, (resources, module, path) -> {
             try {
-                resources.addTransformedResource(new ModuleData(module, path,
-                        ModuleDataType.CLASS_OR_RESOURCE,
-                        new ByteArrayInputStream(new byte[0]), 0),
-                        new ByteArrayInputStream(new byte[56]), 56);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-        test(samples, (resources, module, path) -> {
-            try {
                 resources.add(PoolImpl.
                         newCompressedResource(new ModuleData(module, path,
                                 ModuleDataType.CLASS_OR_RESOURCE,
@@ -225,7 +215,10 @@ public class ResourcePoolTest {
 
         checkResources(resources1, res1, res2);
         Pool resources2 = new PoolImpl();
-        resources2.addTransformedResource(res2, new ByteArrayInputStream(new byte[7]), 7);
+        ModuleData res3 = new ModuleData("module2", "/module2/toto1",
+                ModuleDataType.CLASS_OR_RESOURCE,
+                new ByteArrayInputStream(new byte[7]), 7);
+        resources2.add(res3);
         resources2.add(PoolImpl.newCompressedResource(res1,
                 ByteBuffer.allocate(7), "zip", null, resources1.getStringTable(),
                 ByteOrder.nativeOrder()));

@@ -79,7 +79,7 @@ public class BasicTest {
 
         Path image = Paths.get("mysmallimage");
         runJmod(jarfile.toString(), modName);
-        runJlink(image, modName, "--compress-resources");
+        runJlink(image, modName, "--compress", "2");
         execute(image, modName);
 
         Files.delete(jmods.resolve(modName + ".jmod"));

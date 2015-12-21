@@ -71,7 +71,7 @@ public class CustomPluginTest {
 
     private void testCustomPlugins(Helper helper, Path pluginModulePath) {
         Result result = JImageGenerator.getJLinkTask()
-                .option("--xhelp")
+                .option("--list-plugins")
                 .pluginModulePath(pluginModulePath)
                 .output(helper.createNewImageDir("customplugin"))
                 .call();

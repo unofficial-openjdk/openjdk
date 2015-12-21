@@ -70,6 +70,7 @@ public final class OptimizationPlugin extends AsmPlugin {
             argumentDescription(PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL)).
             build();
     public static final PluginOption LOG_OPTION = new Builder(LOG_FILE).
+            description("").
             argumentDescription(PluginsResourceBundle.getOption(NAME, LOG_FILE)).
             build();
 
@@ -264,7 +265,7 @@ public final class OptimizationPlugin extends AsmPlugin {
     @Override
     public void configure(Map<PluginOption, String> config) {
         String strategies = config.get(NAME_OPTION);
-        String[] arr = strategies.split(":");
+        String[] arr = strategies.split(",");
         for (String s : arr) {
             if (s.equals(ALL)) {
                 optimizers.clear();

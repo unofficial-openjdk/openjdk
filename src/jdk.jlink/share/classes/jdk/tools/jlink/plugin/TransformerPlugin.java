@@ -24,21 +24,19 @@
  */
 package jdk.tools.jlink.plugin;
 
-import jdk.tools.jlink.plugin.Plugin;
-
 
 /**
- * Implement this interface to develop your own plugin.
- * TransformerPlugin
- * instances modify the content of a jimage.
+ * Implement this interface to develop a Transformer plugin.
+ * TransformerPlugin are called during image creation. This kind of plugin aims to
+ * modify the content of the runtime image.
  */
 public interface TransformerPlugin extends Plugin {
     /**
-     * Visit the content of modules.
+     * Visit the content of the modules that are composing the image.
      *
      * @param in Read only content.
-     * @param out The pool to fill with content. Will contain the result of the
-     * visit
+     * @param out The pool to fill with content. This pool must contain
+     * the result of the visit.
      *
      * @throws PluginException
      */

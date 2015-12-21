@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.Jlink.OrderedPlugin;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
@@ -46,6 +45,7 @@ import jdk.tools.jlink.plugin.PostProcessorPlugin;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+import jdk.tools.jlink.plugin.Plugin;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -114,9 +114,23 @@ public class IntegrationTest {
     public static class MyPlugin1 implements TransformerPlugin {
 
         Integer index;
+        Set<String> after;
+        Set<String> before;
 
-        private MyPlugin1(Integer index) {
+        private MyPlugin1(Integer index, Set<String> after, Set<String> before) {
             this.index = index;
+            this.after = after;
+            this.before = before;
+        }
+
+        @Override
+        public Set<String> isAfter() {
+            return after;
+        }
+
+        @Override
+        public Set<String> isBefore() {
+            return before;
         }
 
         @Override
@@ -169,7 +183,7 @@ public class IntegrationTest {
         apitest();
         test();
         testOrder();
-        testNegativeOrder();
+        testCycleOrder();
     }
 
     private static void apitest() throws Exception {
@@ -192,38 +206,14 @@ public class IntegrationTest {
 
         System.out.println(config);
 
-        try {
-            OrderedPlugin spc = new OrderedPlugin(null, 0, false);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new Exception("Should have failed");
+        Plugin p = Jlink.newPlugin("toto", Collections.emptyMap(), null);
+        if (p != null) {
+            throw new Exception("Plugin should be null");
         }
 
-        try {
-            OrderedPlugin spc = new OrderedPlugin(null, null, 0, false, null);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new Exception("Should have failed");
-        }
-
-        System.out.println(new OrderedPlugin(new MyPlugin1(0), 0, false));
-
-        System.out.println(new OrderedPlugin(StripDebugPlugin.NAME, 0, false, Collections.emptyMap()));
-
-        try {
-            new OrderedPlugin("toto", 0, false, Collections.emptyMap());
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new Exception("Should have failed");
+        Plugin p2 = Jlink.newPlugin("compress", Collections.emptyMap(), null);
+        if (p2 == null) {
+            throw new Exception("Plugin should not be null");
         }
     }
 
@@ -241,34 +231,28 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.OrderedPlugin> lst = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
         //Strip debug
         {
             Map<PluginOption, String> config1 = new HashMap<>();
-            config1.put(StripDebugPlugin.NAME_OPTION, PluginOption.Builder.ON_ARGUMENT);
-            OrderedPlugin strip
-                    = new OrderedPlugin("strip-debug", 0, false, config1);
+            config1.put(StripDebugPlugin.NAME_OPTION, "");
+            Plugin strip = Jlink.newPlugin("strip-debug", config1, null);
             lst.add(strip);
         }
         // compress
         {
             Map<PluginOption, String> config1 = new HashMap<>();
-            config1.put(DefaultCompressPlugin.NAME_OPTION, PluginOption.Builder.ON_ARGUMENT);
-            config1.put(DefaultCompressPlugin.LEVEL_OPTION, "0");
-            OrderedPlugin compress
-                    = new OrderedPlugin("compress-resources", 0, false, config1);
+            config1.put(DefaultCompressPlugin.NAME_OPTION, "2");
+            Plugin compress
+                    = Jlink.newPlugin("compress", config1, null);
             lst.add(compress);
         }
         // Post processor
         {
-            Map<PluginOption, Object> config1 = new HashMap<>();
-            OrderedPlugin postprocessor
-                    = new OrderedPlugin(new MyPostProcessor(), 0, false);
-            lst.add(postprocessor);
+            lst.add(new MyPostProcessor());
         }
         // Image builder
-        Map<PluginOption, String> config1 = new HashMap<>();
         DefaultImageBuilder builder = new DefaultImageBuilder(true, output);
         PluginsConfiguration plugins
                 = new Jlink.PluginsConfiguration(lst, builder, null);
@@ -312,34 +296,31 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.OrderedPlugin> lst = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
-        // packager 1
+        // Order is Plug1>Plug2>Plug3
+        // Plug1
+
+
+        // TRANSFORMER 3, must be after 2.
         {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(2), 0, false);
-            lst.add(compress);
+            Set<String> after = new HashSet<>();
+            after.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(3, after, Collections.emptySet()));
         }
 
-        // packager 2
+        // TRANSFORMER 2, must be after 1.
         {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(0), 0, true);
-            lst.add(compress);
+            Set<String> after = new HashSet<>();
+            after.add(MyPlugin1.NAME+"1");
+            lst.add(new MyPlugin1(2, after, Collections.emptySet()));
         }
 
-        // packager 3
+        // TRANSFORMER 1
         {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(1), 1, true);
-            lst.add(compress);
-        }
-
-        // packager 4
-        {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(3), 1, false);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
         }
 
         // Image builder
@@ -360,7 +341,7 @@ public class IntegrationTest {
         }
     }
 
-    private static void testNegativeOrder() throws Exception {
+    private static void testCycleOrder() throws Exception {
         Jlink jlink = new Jlink();
         Path output = Paths.get("integrationout3");
         List<Path> modulePaths = new ArrayList<>();
@@ -374,20 +355,20 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.OrderedPlugin> lst = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
         // packager 1
         {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(2), 0, false);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
         }
 
         // packager 2
         {
-            OrderedPlugin compress
-                    = new OrderedPlugin(new MyPlugin1(0), 0, false);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"1");
+            lst.add(new MyPlugin1(2, Collections.emptySet(), before));
         }
 
         // Image builder

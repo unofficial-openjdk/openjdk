@@ -62,12 +62,9 @@ import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 /**
  *
- * Default Image Builder. This builder create the default Java image layout.
+ * Default Image Builder. This builder creates the default runtime image layout.
  */
 public class DefaultImageBuilder implements ImageBuilder {
-
-    public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
-    public static final String NAME = "default-image-builder";
 
     /**
      * The default java executable Image.
@@ -104,8 +101,8 @@ public class DefaultImageBuilder implements ImageBuilder {
     /**
      * Default image builder constructor.
      *
-     * @param genBom
-     * @param root The image directory.
+     * @param genBom true, generates a bom file.
+     * @param root The image root directory.
      * @throws IOException
      */
     public DefaultImageBuilder(boolean genBom, Path root) throws IOException {
@@ -165,7 +162,6 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     @Override
     public void storeFiles(Pool files, String bom) {
-            String bom) {
         try {
             for (ModuleData f : files.getContent()) {
                if (!f.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
@@ -209,11 +205,17 @@ public class DefaultImageBuilder implements ImageBuilder {
         }
     }
 
-    protected void prepareApplicationFiles(Pool files, Set<String> modules) throws IOException {
+    /**
+     * Generates launcher scripts.
+     * @param imageContent The image content.
+     * @param modules The set of modules that the runtime image contains.
+     * @throws IOException
+     */
+    protected void prepareApplicationFiles(Pool imageContent, Set<String> modules) throws IOException {
         // generate launch scripts for the modules with a main class
         for (String module : modules) {
             String path = "/" + module + "/module-info.class";
-            ModuleData res = files.get(path);
+            ModuleData res = imageContent.get(path);
             if (res == null) {
                 throw new IOException("module-info not found for " + module);
             }
@@ -330,12 +332,8 @@ public class DefaultImageBuilder implements ImageBuilder {
         }
     }
 
-    static boolean isWindows() {
+    private static boolean isWindows() {
         return System.getProperty("os.name").startsWith("Windows");
-    }
-
-    static boolean isMac() {
-        return System.getProperty("os.name").startsWith("Mac OS");
     }
 
     /**
@@ -400,7 +398,7 @@ public class DefaultImageBuilder implements ImageBuilder {
         }
     }
 
-    static String getJavaProcessName() {
+    private static String getJavaProcessName() {
         return isWindows() ? "java.exe" : "java";
     }
 

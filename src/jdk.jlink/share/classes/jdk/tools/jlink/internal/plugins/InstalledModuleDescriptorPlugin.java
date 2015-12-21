@@ -28,6 +28,7 @@ import java.lang.module.ModuleDescriptor.*;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,6 +43,7 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.PluginOption;
 
 /**
@@ -61,31 +63,57 @@ import jdk.tools.jlink.plugin.PluginOption;
  */
 public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
 
-    static final String NAME = "gen-installed-modules";
-    private static final PluginOption NAME_OPTION
-            = new PluginOption.Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            isEnabled().build();
+    private static final String OPTION_NAME = "disable-installed-modules";
+    private static final String DESCRIPTION = PluginsResourceBundle.getDescription(OPTION_NAME);
+    private final PluginOption option;
+    private boolean enabled;
+
+    public InstalledModuleDescriptorPlugin() {
+        this.option = new PluginOption.Builder(OPTION_NAME)
+                .description(DESCRIPTION)
+                .build();
+        this.enabled = true;
+    }
 
     @Override
     public PluginOption getOption() {
-        return NAME_OPTION;
+        return option;
     }
 
     @Override
     public Set<PluginType> getType() {
-        Set<PluginType> set = new HashSet<>();
-        set.add(CATEGORY.TRANSFORMER);
-        return Collections.unmodifiableSet(set);
+        return Collections.singleton(CATEGORY.TRANSFORMER);
     }
 
     @Override
     public String getName() {
-        return NAME;
+        return "installed-modules";
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
+
+    @Override
+    public Set<STATE> getState() {
+        return enabled ? EnumSet.of(STATE.AUTO_ENABLED, STATE.FUNCTIONAL)
+                : EnumSet.of(STATE.DISABLED);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        if (config.containsKey(option)) {
+            enabled = false;
+        }
     }
 
     @Override
     public void visit(AsmPools pools) {
+        if (!enabled) {
+            throw new PluginException(OPTION_NAME + " was set");
+        }
+
         Set<String> moduleNames = new HashSet<>();
         int numPackages = 0;
         for (AsmModulePool module : pools.getModulePools()) {
@@ -120,7 +148,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         for (Exports exp : md.exports()) {
             Checks.requirePackageName(exp.source());
             exp.targets()
-                    .ifPresent(targets -> targets.forEach(Checks::requireModuleName));
+               .ifPresent(targets -> targets.forEach(Checks::requireModuleName));
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();
@@ -149,16 +177,6 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             // HashSet/HashMap default load factor without going over.
             return (int)(Math.ceil((double)size / 0.75));
         }
-    }
-
-    @Override
-    public String getDescription() {
-        return PluginsResourceBundle.getDescription(NAME);
-    }
-
-    @Override
-    public void configure(Map<PluginOption, String> config) {
-        //NOOP
     }
 
     /**
@@ -437,9 +455,9 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitLdcInsn(md.name());
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "build", "()Ljava/lang/module/ModuleDescriptor;", false);
+                    "build", "()Ljava/lang/module/ModuleDescriptor;", false);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put",
-                        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                 mv.visitInsn(POP);
             }
 
@@ -452,9 +470,9 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitLdcInsn(mn);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "build", "()Ljava/lang/module/ModuleDescriptor;", false);
+                    "build", "()Ljava/lang/module/ModuleDescriptor;", false);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map",
-                        "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                    "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                 mv.visitInsn(POP);
             }
 
@@ -465,7 +483,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "requires", STRING_SIG, false);
+                                   "requires", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -475,10 +493,10 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             void requires(ModuleDescriptor.Requires.Modifier mod, String name) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, mod.name(),
-                        REQUIRES_MODIFIER_TYPE);
+                                  REQUIRES_MODIFIER_TYPE);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "requires", REQUIRES_MODIFIER_STRING_SIG, false);
+                                   "requires", REQUIRES_MODIFIER_STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -493,18 +511,18 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 String signature = "(";
                 for (ModuleDescriptor.Requires.Modifier m : mods) {
                     mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, m.name(),
-                            REQUIRES_MODIFIER_TYPE);
+                                      REQUIRES_MODIFIER_TYPE);
                     signature += "Ljava/util/Enum;";
                 }
                 signature += ")Ljava/util/EnumSet;";
                 mv.visitMethodInsn(INVOKESTATIC, "java/util/EnumSet", "of",
-                        signature, false);
+                                   signature, false);
                 mv.visitVarInsn(ASTORE, MODS_VAR);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, MODS_VAR);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "requires", SET_STRING_SIG, false);
+                                   "requires", SET_STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -577,7 +595,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(pn);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "conceals", STRING_SIG, false);
+                                   "conceals", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -588,7 +606,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(cn);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "mainClass", STRING_SIG, false);
+                                   "mainClass", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -599,7 +617,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(v.toString());
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "version", STRING_SIG, false);
+                                   "version", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 

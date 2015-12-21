@@ -41,102 +41,24 @@ import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
 
 /**
- * API for jlink tool.
+ * API to call jlink.
  */
 public final class Jlink {
 
     /**
-     * A plugin located inside a stack of plugins. Ordered plugin has an index
-     * in the stack.
+     * Create a plugin.
+     *
+     * @param name Plugin name
+     * @param configuration Plugin configuration.
+     * @param pluginsLayer Plugins Layer. null means boot layer.
+     * @return A new plugin or null if plugin is unknown.
      */
-    public static final class OrderedPlugin {
-
-        private final int index;
-        private final boolean absIndex;
-        private final Plugin plugin;
-        /**
-         * A plugin inside the stack configuration.
-         *
-         * @param plugin Plugin.
-         * @param index index in the plugin stack. Must be > 0.
-         * @param absIndex true, the index is absolute otherwise index is within
-         * the plugin category.
-         */
-        public OrderedPlugin(Plugin plugin, int index, boolean absIndex) {
-            Objects.requireNonNull(plugin);
-            if (index < 0) {
-                throw new IllegalArgumentException("negative index");
-            }
-            this.plugin = plugin;
-            this.index = index;
-            this.absIndex = absIndex;
-        }
-
-        /**
-         * A builtin plugin inside the stack configuration.
-         *
-         * @param name Plugin name. The name of the plugin,
-         * will be resolved thanks to ServiceLoader.
-         * @param index index in the plugin stack. Must be > 0.
-         * @param absIndex true, the index is absolute otherwise index is within
-         * the plugin category.
-         * @param configuration
-         */
-        public OrderedPlugin(String name, int index,
-                boolean absIndex, Map<PluginOption, String> configuration) {
-            this(createPlugin(name, configuration, Layer.boot()), index, absIndex);
-        }
-
-        /**
-         * A plugin inside the stack configuration.
-         *
-         * @param pluginsLayer Layer to resolve plugins.
-         * @param name Plugin name. The name of the plugin,
-         * will be resolved thanks to ServiceLoader.
-         * @param index index in the plugin stack. Must be > 0.
-         * @param absIndex true, the index is absolute otherwise index is within
-         * the plugin category.
-         * @param configuration
-         */
-        public OrderedPlugin(Layer pluginsLayer, String name, int index,
-                boolean absIndex, Map<PluginOption, String> configuration) {
-            this(createPlugin(name, configuration, pluginsLayer), index, absIndex);
-        }
-
-        private static Plugin createPlugin(String name,
-                Map<PluginOption, String> configuration, Layer pluginsLayer) {
-            Objects.requireNonNull(name);
-            Objects.requireNonNull(configuration);
-            Objects.requireNonNull(pluginsLayer);
-            return PluginRepository.newPlugin(configuration, name, pluginsLayer);
-        }
-
-        /**
-         * Get the plugin index.
-         *
-         * @return the index
-         */
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
-        public String toString() {
-            return plugin.getName() + "[" + index + "]";
-        }
-
-        public Plugin getPlugin() {
-            return plugin;
-        }
-
-        /**
-         * The plugin index.
-         *
-         * @return the absolute index.
-         */
-        public boolean isAbsoluteIndex() {
-            return absIndex;
-        }
+    public static Plugin newPlugin(String name,
+            Map<PluginOption, String> configuration, Layer pluginsLayer) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(configuration);
+        pluginsLayer = pluginsLayer == null ? Layer.boot() : pluginsLayer;
+        return PluginRepository.newPlugin(configuration, name, pluginsLayer);
     }
 
     /**
@@ -145,7 +67,7 @@ public final class Jlink {
      */
     public static final class PluginsConfiguration {
 
-        private final List<OrderedPlugin> plugins;
+        private final List<Plugin> plugins;
         private final ImageBuilder imageBuilder;
         private final String lastSorterPluginName;
 
@@ -159,22 +81,23 @@ public final class Jlink {
         /**
          * Plugins configuration.
          *
-         * @param plugins List of  plugins.
+         * @param plugins List of plugins.
          */
-        public PluginsConfiguration(List<OrderedPlugin> plugins) {
+        public PluginsConfiguration(List<Plugin> plugins) {
             this(plugins, null, null);
         }
 
         /**
-         * Plugins configuration with a last sorter. No sorting can occur after
-         * the last sorter plugin.
+         * Plugins configuration with a last sorter and an ImageBuilder. No
+         * sorting can occur after the last sorter plugin. The ImageBuilder is
+         * in charge to layout the image content on disk.
          *
          * @param plugins List of transformer plugins.
-         * @param imageBuilder Image builder (null default builder).
+         * @param imageBuilder Image builder.
          * @param lastSorterPluginName Name of last sorter plugin, no sorting
          * can occur after it.
          */
-        public PluginsConfiguration(List<OrderedPlugin> plugins,
+        public PluginsConfiguration(List<Plugin> plugins,
                 ImageBuilder imageBuilder, String lastSorterPluginName) {
             this.plugins = plugins == null ? Collections.emptyList()
                     : plugins;
@@ -185,7 +108,7 @@ public final class Jlink {
         /**
          * @return the plugins
          */
-        public List<OrderedPlugin> getPlugins() {
+        public List<Plugin> getPlugins() {
             return plugins;
         }
 
@@ -208,7 +131,7 @@ public final class Jlink {
             StringBuilder builder = new StringBuilder();
             builder.append("imagebuilder=").append(imageBuilder).append("\n");
             StringBuilder pluginsBuilder = new StringBuilder();
-            for (OrderedPlugin p : plugins) {
+            for (Plugin p : plugins) {
                 pluginsBuilder.append(p).append(",");
             }
             builder.append("plugins=").append(pluginsBuilder).append("\n");
@@ -370,9 +293,9 @@ public final class Jlink {
      * Post process the image with a plugin configuration.
      *
      * @param image Existing image.
-     * @param plugins Plugins config, cannot be null
+     * @param plugins Plugins cannot be null
      */
-    public void postProcess(ExecutableImage image, List<OrderedPlugin> plugins) {
+    public void postProcess(ExecutableImage image, List<Plugin> plugins) {
         Objects.requireNonNull(image);
         Objects.requireNonNull(plugins);
         try {

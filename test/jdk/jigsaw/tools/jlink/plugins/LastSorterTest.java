@@ -42,8 +42,8 @@ import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.Jlink.OrderedPlugin;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
@@ -72,9 +72,9 @@ public class LastSorterTest {
     }
 
     private void checkTwoLastSorters() throws Exception {
-        List<OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("sorterplugin5", "/a", 0));
-        plugins.add(createConfig("sorterplugin6", "/a", 1));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("sorterplugin5", "/a"));
+        plugins.add(createPlugin("sorterplugin6", "/a"));
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
                 null, "sorterplugin5");
 
@@ -107,17 +107,17 @@ public class LastSorterTest {
         return res;
     }
 
-    private static OrderedPlugin createConfig(String name, String arg, int index) {
+    private static Plugin createPlugin(String name, String arg) {
         Map<PluginOption, String> conf = new HashMap<>();
         conf.put(new PluginOption.Builder(name).build(), arg);
-        return new OrderedPlugin(name, index, true, conf);
+        return Jlink.newPlugin(name, conf, null);
     }
 
     private void checkPositiveCase() throws Exception {
-        List<OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("sorterplugin1", "/c", 0));
-        plugins.add(createConfig("sorterplugin2", "/b", 1));
-        plugins.add(createConfig("sorterplugin3", "/a", 2));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("sorterplugin1", "/c"));
+        plugins.add(createPlugin("sorterplugin2", "/b"));
+        plugins.add(createPlugin("sorterplugin3", "/a"));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
                 null, "sorterplugin3");
@@ -131,11 +131,11 @@ public class LastSorterTest {
     }
 
     private void checkUnknownPlugin() {
-        List<OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("sorterplugin1", "/1", 0));
-        plugins.add(createConfig("sorterplugin2", "/1", 1));
-        plugins.add(createConfig("sorterplugin3", "/1", 2));
-        plugins.add(createConfig("sorterplugin4", "/1", 3));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("sorterplugin1", "/1"));
+        plugins.add(createPlugin("sorterplugin2", "/1"));
+        plugins.add(createPlugin("sorterplugin3", "/1"));
+        plugins.add(createPlugin("sorterplugin4", "/1"));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
                 null, "sorterplugin5");
@@ -148,11 +148,11 @@ public class LastSorterTest {
     }
 
     private void checkOrderAfterLastSorter() throws Exception {
-        List<OrderedPlugin> plugins = new ArrayList<>();
-        plugins.add(createConfig("sorterplugin1", "/c", 0));
-        plugins.add(createConfig("sorterplugin2", "/b", 1));
-        plugins.add(createConfig("sorterplugin3", "/a", 2));
-        plugins.add(createConfig("sorterplugin4", "/d", 3));
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin("sorterplugin1", "/c"));
+        plugins.add(createPlugin("sorterplugin2", "/b"));
+        plugins.add(createPlugin("sorterplugin3", "/a"));
+        plugins.add(createPlugin("sorterplugin4", "/d"));
 
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
                 null, "sorterplugin3");

@@ -27,17 +27,16 @@ package jdk.tools.jlink.plugin;
 import java.util.List;
 
 /**
- * Implement this interface to develop your own plugin.
- * PostProcessing can
- * modify the image content.
- */
+ * Implement this interface to develop a PostProcessor plugin.
+ * PostProcessor plugins are called once the image has been generated and is executable.
+ **/
 public interface PostProcessorPlugin extends Plugin {
 
     /**
      * Post process an image.
      *
      * @param image The executable image.
-     * @return The list of arguments to add to launchers if any.
+     * @return The list of arguments to add to launchers (if any).
      */
     public List<String> process(ExecutableImage image);
 }

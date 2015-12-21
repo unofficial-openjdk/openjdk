@@ -127,7 +127,7 @@ public class JImageTest {
 
         Path recreatedImage2 = JImageGenerator.getJImageTask()
                 .dir(extractedDir)
-                .option("--compress-resources")
+                .option("--compress").option("2")
                 .image(helper.createNewRecreatedDir(extractedDir.getFileName().toString()))
                 .recreate().assertSuccess();
         JImageValidator.validate(recreatedImage2.toFile(), bootClasses, Collections.emptyList());
@@ -152,7 +152,8 @@ public class JImageTest {
 
         Path recreatedImage5 = JImageGenerator.getJImageTask()
                 .dir(extractedDir)
-                .option("--compress-resources")
+                .option("--compress")
+                .option("2")
                 .option("--strip-debug")
                 .option("--exclude-resources")
                 .option("*.jcov, */META-INF/*")

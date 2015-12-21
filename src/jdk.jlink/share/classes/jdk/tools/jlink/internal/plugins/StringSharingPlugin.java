@@ -346,8 +346,6 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
         this(new String[0]);
     }
 
-    }
-
     StringSharingPlugin(String[] patterns) throws IOException {
         this(new ResourceFilter(patterns));
     }

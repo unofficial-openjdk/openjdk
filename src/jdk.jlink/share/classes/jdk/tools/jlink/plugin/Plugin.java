@@ -32,30 +32,16 @@ import java.util.Set;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
- * Implement this interface to develop your own plugin.
+ * Base interface that jlink plugins are extending.
  */
 public interface Plugin {
 
+    /**
+     * Type of plugin.
+     */
     public interface PluginType {
 
         public String getName();
-    }
-
-    public enum ORDER implements PluginType {
-        FIRST("FIRST"),
-        LAST("LAST"),
-        ANY("ANY");
-
-        private final String name;
-
-        ORDER(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
     }
 
     /**
@@ -94,25 +80,79 @@ public interface Plugin {
         }
     }
 
+    /**
+     * Plugin state:
+     * <ul>
+     * <li>DISABLED: The plugin is not exposed in help and will be not called.</li>
+     * <li>AUTO_ENABLED: The plugin is enabled by default. It doesn't require its
+     * option to be present to be called.<li>
+     * <li>FUNCTIONAL: The plugin is properly configured and can operate.
+     * Non functional plugin must advertise their status in the
+     * {@link #getStateDescription() getStateDescription} method</li>
+     * </ul>
+     */
     public enum STATE {
-        ENABLED,
+        DISABLED,
+        AUTO_ENABLED,
         FUNCTIONAL
     }
 
+    /**
+     * The Plugin set of types.
+     * @return The set of types.
+     */
     public abstract Set<PluginType> getType();
 
+    /**
+     * The Plugin set of states.
+     * @return The set of states.
+     */
     public default Set<STATE> getState() {
-        return EnumSet.of(STATE.ENABLED, STATE.FUNCTIONAL);
+        return EnumSet.of(STATE.FUNCTIONAL);
     }
 
+    /**
+     * The set of plugin names that must be located, within the stack of plugins,
+     * before this plugin.
+     * @return The set of names. By default this set is empty.
+     */
+    public default Set<String> isBefore() {
+        return Collections.emptySet();
+    }
+
+    /**
+     * The set of plugin names that must be located, within the stack of plugins,
+     * after this plugin.
+     * @return The set of names. By default this set is empty.
+     */
+    public default Set<String> isAfter() {
+        return Collections.emptySet();
+    }
+
+    /**
+     * The plugin name.
+     * @return The name.
+     */
     public String getName();
 
+    /**
+     * The plugin description.
+     * @return  The description.
+     */
     public String getDescription();
 
+    /**
+     * The list of options that a plugin can require for configuration needs.
+     * @return
+     */
     public default List<PluginOption> getAdditionalOptions() {
         return Collections.emptyList();
     }
 
+    /**
+     * The option that identifies this plugin.
+     * @return The plugin option.
+     */
     public PluginOption getOption();
 
     /**
@@ -128,6 +168,7 @@ public interface Plugin {
 
     /**
      * Configure the plugin based on the passed configuration.
+     * This method is called prior to invoke the plugin.
      *
      * @param config The plugin configuration.
      */

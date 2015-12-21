@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.PoolImpl;
@@ -47,20 +49,16 @@ import jdk.tools.jlink.internal.Utils;
  * ZIP and String Sharing compression plugin
  */
 public final class DefaultCompressPlugin implements TransformerPlugin, ResourcePrevisitor {
+    private static final String NAME = "compress";
+    public static final PluginOption NAME_OPTION =
+        new Builder(NAME).description(PluginsResourceBundle.getDescription(NAME))
+                         .showHelp(true)
+                         .argumentDescription(PluginsResourceBundle.getArgument(NAME))
+                         .build();
 
-    static final String NAME = "compress-resources";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).build();
-
-    private static final String LEVEL = "compress-resources-level";
-    public static final PluginOption LEVEL_OPTION
-            = new Builder(LEVEL).
-            argumentDescription(PluginsResourceBundle.getOption(NAME, LEVEL)).
-            build();
-    private static final String FILTER = "compress-resources-filter";
+    private static final String FILTER = "compress-filter";
     public static final PluginOption FILTER_OPTION
-            = new Builder(FILTER).
+            = new Builder(FILTER).description(PluginsResourceBundle.getDescription(NAME+"."+FILTER)).
             argumentDescription(PluginsResourceBundle.getOption(NAME, FILTER)).
             build();
     public static final String LEVEL_0 = "0";
@@ -104,7 +102,6 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
     @Override
     public List<PluginOption> getAdditionalOptions() {
         List<PluginOption> lst = new ArrayList<>();
-        lst.add(LEVEL_OPTION);
         lst.add(FILTER_OPTION);
         return lst;
     }
@@ -127,11 +124,10 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
             String filter = config.get(FILTER_OPTION);
             String[] patterns = filter == null ? null
                     : Utils.listParser.apply(filter);
-            Object level = config.get(LEVEL_OPTION);
             ResourceFilter resFilter = new ResourceFilter(patterns);
+            String level = config.get(NAME_OPTION);
             if (level != null) {
-                String l = config.get(LEVEL_OPTION);
-                switch (l) {
+                switch (level) {
                     case LEVEL_0:
                         ss = new StringSharingPlugin(resFilter);
                         break;
@@ -143,7 +139,7 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
                         zip = new ZipPlugin(resFilter);
                         break;
                     default:
-                        throw new IOException("Invalid level " + l);
+                        throw new PluginException("Invalid level " + level);
                 }
             } else {
                 ss = new StringSharingPlugin(resFilter);

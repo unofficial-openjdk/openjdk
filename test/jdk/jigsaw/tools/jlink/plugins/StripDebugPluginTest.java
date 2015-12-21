@@ -105,10 +105,7 @@ public class StripDebugPluginTest {
 
     private void check(String path, byte[] content, String infoPath, byte[] moduleInfo) throws Exception {
         StripDebugPlugin debug = new StripDebugPlugin();
-        Map<PluginOption, String> options = new HashMap<>();
-        options.put(StripDebugPlugin.NAME_OPTION,
-                PluginOption.Builder.ON_ARGUMENT);
-        debug.configure(options);
+        debug.configure(new HashMap<>());
         ModuleData result1 = stripDebug(debug, Pool.newResource(path,content), path, infoPath, moduleInfo);
 
         if (!path.endsWith("module-info.class")) {

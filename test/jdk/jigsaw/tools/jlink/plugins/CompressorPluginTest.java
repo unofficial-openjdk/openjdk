@@ -95,8 +95,7 @@ public class CompressorPluginTest {
 
         // compress == ZIP + String sharing
         Properties options = new Properties();
-        options.setProperty(ZipPlugin.NAME_OPTION.getName(),
-                PluginOption.Builder.ON_ARGUMENT);
+        options.setProperty(ZipPlugin.NAME_OPTION.getName(), "");
         checkCompress(classes, new DefaultCompressPlugin(), options,
                 new ResourceDecompressorFactory[]{
                     new ZipDecompressorFactory(),
@@ -116,8 +115,7 @@ public class CompressorPluginTest {
         // compress level 1 == ZIP
         Properties options1 = new Properties();
         options1.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(),
-                PluginOption.Builder.ON_ARGUMENT);
-        options1.setProperty(DefaultCompressPlugin.LEVEL_OPTION.getName(), "1");
+                "1");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options1,
                 new ResourceDecompressorFactory[]{
@@ -137,8 +135,7 @@ public class CompressorPluginTest {
         // compress level 2 == ZIP + String sharing
         Properties options2 = new Properties();
         options2.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(),
-                PluginOption.Builder.ON_ARGUMENT);
-        options2.setProperty(DefaultCompressPlugin.LEVEL_OPTION.getName(), "2");
+                "2");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options2,
                 new ResourceDecompressorFactory[]{
@@ -159,9 +156,7 @@ public class CompressorPluginTest {
 
         // compress level 0 == String sharing
         Properties options0 = new Properties();
-        options0.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(),
-                PluginOption.Builder.ON_ARGUMENT);
-        options0.setProperty(DefaultCompressPlugin.LEVEL_OPTION.getName(), "0");
+        options0.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(), "0");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options0,
                 new ResourceDecompressorFactory[]{

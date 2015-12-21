@@ -32,7 +32,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * An executable Image.
+ * An executable runtime image. Instance of this class contains the information
+ * needed to create image processes.
  */
 public abstract class ExecutableImage {
 
@@ -52,6 +53,11 @@ public abstract class ExecutableImage {
         this.args = Collections.unmodifiableList(args);
     }
 
+    /**
+     * Image home directory,
+     *
+     * @return The home directory.
+     */
     public Path getHome() {
         return home;
     }
@@ -65,9 +71,19 @@ public abstract class ExecutableImage {
         return modules;
     }
 
+    /**
+     * The list of arguments required to execute the image.
+     *
+     * @return The list of arguments.
+     */
     public List<String> getExecutionArgs() {
         return args;
     }
 
+    /**
+     * Store new arguments required to execute the image.
+     *
+     * @param args Additional arguments
+     */
     public abstract void storeLaunchArgs(List<String> args);
 }

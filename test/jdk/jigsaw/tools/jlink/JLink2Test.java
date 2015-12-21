@@ -139,7 +139,8 @@ public class JLink2Test {
 
     private static void testBomFile(Helper helper) throws Exception {
         String[] userOptions = {
-            "--compress-resources",
+            "--compress",
+            "2",
             "--addmods",
             "bomzip",
             "--strip-debug",
@@ -156,7 +157,7 @@ public class JLink2Test {
         }
         String bomcontent = new String(Files.readAllBytes(bom.toPath()));
         if (!bomcontent.contains("--strip-debug")
-                || !bomcontent.contains("--compress-resources")
+                || !bomcontent.contains("--compress")
                 || !bomcontent.contains("--genbom")
                 || !bomcontent.contains("--exclude-resources *.jcov,"
                         + "*/META-INF/*")

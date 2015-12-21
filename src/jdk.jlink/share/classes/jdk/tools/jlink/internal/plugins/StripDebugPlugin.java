@@ -46,14 +46,15 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
  * Strip debug attributes plugin
  */
 public final class StripDebugPlugin implements TransformerPlugin {
-
-    private Predicate<String> predicate;
-    public static final String NAME = "strip-debug";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).build();
     private static final String[] PATTERNS = {"*.diz"};
+    public static final String NAME = "strip-debug";
+    public static final PluginOption NAME_OPTION =
+        new Builder(NAME)
+            .description(PluginsResourceBundle.getDescription(NAME))
+            .showHelp(true)
+            .build();
 
+    private final Predicate<String> predicate;
     public StripDebugPlugin() {
         try {
             predicate = new ResourceFilter(PATTERNS);

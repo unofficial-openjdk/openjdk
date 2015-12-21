@@ -171,6 +171,10 @@ class JImageTask {
             if (options.xhelp) {
                 optionsHelper.showXHelp(PROGNAME, false);
             }
+            if(optionsHelper.listPlugins()) {
+                optionsHelper.listPlugins(true);
+                return EXIT_OK;
+            }
             if (options.version || options.fullVersion) {
                 taskHelper.showVersion(options.fullVersion);
             }

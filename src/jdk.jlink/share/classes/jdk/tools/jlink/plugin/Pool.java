@@ -24,7 +24,6 @@
  */
 package jdk.tools.jlink.plugin;
 
-import jdk.tools.jlink.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,19 +46,32 @@ import jdk.tools.jlink.internal.ImageFileCreator;
  */
 public abstract class Pool {
 
+    /**
+     * Interface to visit the content of a Pool.
+     */
     public interface Visitor {
 
         /**
-         * Called for each visited file.
+         * Called for each visited ModuleData.
          *
-         * @param content The file to deal with.
-         * @return A resource or null if the passed resource is to be removed
-         * from the image.
+         * @param content A ModuleData
+         * @return A ModuleData instance or null if the passed ModuleData is to
+         * be removed from the image.
          * @throws PluginException
          */
         public ModuleData visit(ModuleData content);
     }
 
+    /**
+     * Type of module data.
+     * <li>
+     * <ul>CLASS_OR_RESOURCE: A java class or resource file.</ul>
+     * <ul>CONFIG: A configuration file.</ul>
+     * <ul>NATIVE_CMD: A native process launcher.</ul>
+     * <ul>NATIVE_LIB: A native library.</ul>
+     * <ul>OTHER: Other kind of file.</ul>
+     * </li>
+     */
     public static enum ModuleDataType {
 
         CLASS_OR_RESOURCE,
@@ -69,25 +81,64 @@ public abstract class Pool {
         OTHER;
     }
 
+    /**
+     * A module in the pool.
+     */
     public interface Module {
-         public String getName();
 
+        /**
+         * The module name.
+         *
+         * @return The name.
+         */
+        public String getName();
+
+        /**
+         * Retrieves a ModuleData from a path (e.g:
+         * /mymodule/com.foo.bar/MyClass.class)
+         *
+         * @param path The piece of data path.
+         * @return A ModuleData or null if the path doesn't identify a
+         * ModuleData.
+         */
         public ModuleData get(String path);
 
+        /**
+         * The module descriptor of this module.
+         *
+         * @return The module descriptor.
+         */
         public ModuleDescriptor getDescriptor();
 
+        /**
+         * Add a ModuleData to this module.
+         *
+         * @param data The ModuleData to add.
+         */
         public void add(ModuleData data);
 
+        /**
+         * Retrieves all the packages located in this module.
+         *
+         * @return The set of packages.
+         */
         public Set<String> getAllPackages();
 
+        /**
+         * Retrieves the collection of ModuleData.
+         *
+         * @return The ModuleData collection.
+         */
         public Collection<ModuleData> getContent();
 
     }
 
     private class ModuleImpl implements Module {
+
         private final Map<String, ModuleData> moduleContent = new LinkedHashMap<>();
         private ModuleDescriptor descriptor;
         private final String name;
+
         private ModuleImpl(String name) {
             this.name = name;
         }
@@ -110,12 +161,12 @@ public abstract class Pool {
 
         @Override
         public ModuleDescriptor getDescriptor() {
-            if(descriptor == null) {
+            if (descriptor == null) {
                 String p = "/" + name + "/module-info.class";
                 ModuleData content = moduleContent.get(p);
-                if(content == null) {
-                    throw new PluginException("No module-info for " + name +
-                            " module");
+                if (content == null) {
+                    throw new PluginException("No module-info for " + name
+                            + " module");
                 }
                 ByteBuffer bb = ByteBuffer.wrap(content.getBytes());
                 descriptor = ModuleDescriptor.read(bb);
@@ -164,6 +215,19 @@ public abstract class Pool {
         }
     }
 
+    /**
+     * A ModuleData is the elementary unit of data inside an image. It is
+     * generally a file. e.g.: a java class file, a resource file, a shared
+     * library, ...
+     * <br>
+     * A ModuleData is identified by a path of the form:
+     * <ul>
+     * <li>For jimage content: /{module name}/{package1}>/.../{packageN}/{file
+     * name}</li>
+     * <li>For other files (shared lib, launchers, config, ...):/{module name>}/
+     * {@literal <bin|conf|native>}/{dir1}>/.../{dirN}/{file name}</li>
+     * </ul>
+     */
     public static class ModuleData {
 
         private final ModuleDataType type;
@@ -171,8 +235,17 @@ public abstract class Pool {
         private final String module;
         private final long length;
         private final InputStream stream;
-
         private byte[] buffer;
+
+        /**
+         * Create a new ModuleData.
+         *
+         * @param module The module name.
+         * @param path The data path identifier.
+         * @param type The data type.
+         * @param stream The data content stream.
+         * @param length The stream length.
+         */
         public ModuleData(String module, String path, ModuleDataType type,
                 InputStream stream, long length) {
             Objects.requireNonNull(module);
@@ -186,18 +259,38 @@ public abstract class Pool {
             this.length = length;
         }
 
+        /**
+         * The ModuleData module name.
+         *
+         * @return The module name.
+         */
         public final String getModule() {
             return module;
         }
 
+        /**
+         * The ModuleData path.
+         *
+         * @return The module path.
+         */
         public final String getPath() {
             return path;
         }
 
+        /**
+         * The ModuleData type.
+         *
+         * @return The data type.
+         */
         public final ModuleDataType getType() {
             return type;
         }
 
+        /**
+         * The ModuleData content as an array of byte.
+         *
+         * @return An Array of bytes.
+         */
         public byte[] getBytes() {
             if (buffer == null) {
                 try {
@@ -209,10 +302,20 @@ public abstract class Pool {
             return buffer;
         }
 
+        /**
+         * The ModuleData content length.
+         *
+         * @return The length.
+         */
         public long getLength() {
             return length;
         }
 
+        /**
+         * The ModuleData stream.
+         *
+         * @return The module data stream.
+         */
         public InputStream stream() {
             return stream;
         }
@@ -254,37 +357,38 @@ public abstract class Pool {
     }
 
     /**
-     * Read only state.
+     * Read only state. No data can be added to a ReadOnly Pool.
      *
      * @return true if readonly false otherwise.
      */
     public abstract boolean isReadOnly();
 
     /**
-     * Add a resource.
+     * Add a ModuleData.
      *
-     * @param resource The Resource to add.
+     * @param data The ModuleData to add.
      */
-    public void add(ModuleData resource) {
+    public void add(ModuleData data) {
         if (isReadOnly()) {
             throw new PluginException("pool is readonly");
         }
-        Objects.requireNonNull(resource);
-        if (resources.get(resource.getPath()) != null) {
-            throw new PluginException("Resource " + resource.getPath()
+        Objects.requireNonNull(data);
+        if (resources.get(data.getPath()) != null) {
+            throw new PluginException("Resource " + data.getPath()
                     + " already present");
         }
-        ModuleImpl m = modules.get(resource.getModule());
-        if(m == null) {
-            m = new ModuleImpl(resource.getModule());
-            modules.put(resource.getModule(), m);
+        ModuleImpl m = modules.get(data.getModule());
+        if (m == null) {
+            m = new ModuleImpl(data.getModule());
+            modules.put(data.getModule(), m);
         }
-        resources.put(resource.getPath(), resource);
-        m.moduleContent.put(resource.getPath(), resource);
+        resources.put(data.getPath(), data);
+        m.moduleContent.put(data.getPath(), data);
     }
 
     /**
-     * Retrieves the module of the provided name.
+     * Retrieves the module for the provided name.
+     *
      * @param name The module name
      * @return the module or null if the module doesn't exist.
      */
@@ -295,6 +399,7 @@ public abstract class Pool {
 
     /**
      * The collection of modules contained in this pool.
+     *
      * @return The collection of modules.
      */
     public Collection<Module> getModules() {
@@ -302,7 +407,7 @@ public abstract class Pool {
     }
 
     /**
-     * Get all resources contained in this pool instance.
+     * Get all ModuleData contained in this pool instance.
      *
      * @return The collection of resources;
      */
@@ -311,25 +416,42 @@ public abstract class Pool {
     }
 
     /**
-     * Get the resource for the passed path.
+     * Get the ModuleData for the passed path.
      *
-     * @param path A resource path
-     * @return A Resource instance or null if the resource is not found
+     * @param path A data path
+     * @return A ModuleData instance or null if the data is not found
      */
     public ModuleData get(String path) {
         Objects.requireNonNull(path);
         return resources.get(path);
     }
 
-    public boolean contains(ModuleData res) {
-        Objects.requireNonNull(res);
-        return get(res.getPath()) != null;
+    /**
+     * Check if the pool contains this data.
+     *
+     * @param data The module data to check existence for.
+     * @return The module data or null if not found.
+     */
+    public boolean contains(ModuleData data) {
+        Objects.requireNonNull(data);
+        return get(data.getPath()) != null;
     }
 
+    /**
+     * Check if the Pool contains some content.
+     *
+     * @return True, no content, false otherwise.
+     */
     public boolean isEmpty() {
         return resources.isEmpty();
     }
 
+    /**
+     * Visit the pool.
+     *
+     * @param visitor The Visitor called for each ModuleData found in the pool.
+     * @param output The pool to be filled with Visitor returned ModuleData.
+     */
     public void visit(Visitor visitor, Pool output) {
         for (ModuleData resource : getContent()) {
             ModuleData res = visitor.visit(resource);
@@ -339,24 +461,24 @@ public abstract class Pool {
         }
     }
 
+    /**
+     * The ByteOrder currently in use when generating the jimage file.
+     *
+     * @return The ByteOrder.
+     */
     public ByteOrder getByteOrder() {
         return order;
     }
 
-    public void addTransformedResource(ModuleData original, InputStream transformed, long length) {
-        if (isReadOnly()) {
-            throw new PluginException("Pool is readonly");
-        }
-        Objects.requireNonNull(original);
-        Objects.requireNonNull(transformed);
-        if (get(original.getPath()) != null) {
-            throw new PluginException("Resource already present");
-        }
-        ModuleData res = new ModuleData(original.getModule(), original.getPath(),
-                original.getType(), transformed, length);
-        add(res);
-    }
-
+    /**
+     * Create a ModuleData located inside a jimage file. Such ModuleData has a
+     * ModuleDataType being equals to CLASS_OR_RESOURCE.
+     *
+     * @param path The complete resource path (contains the module radical).
+     * @param content The resource content.
+     * @param size The content size.
+     * @return A new ModuleData.
+     */
     public static ModuleData newResource(String path, InputStream content, long size) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(content);
@@ -365,11 +487,29 @@ public abstract class Pool {
         return new ModuleData(module, path, ModuleDataType.CLASS_OR_RESOURCE, content, size);
     }
 
+    /**
+     * Create a ModuleData for a file that will be located inside a jimage file.
+     *
+     * @param path The resource path.
+     * @param content The resource content.
+     * @return A new ModuleData.
+     */
     public static ModuleData newResource(String path, byte[] content) {
         return newResource(path, new ByteArrayInputStream(content),
                 content.length);
     }
 
+    /**
+     * Create a ModuleData for a file that will be located outside a jimage
+     * file.
+     *
+     * @param module The module in which this files is located.
+     * @param path The file path locator (doesn't contain the module name).
+     * @param type The ModuleData type.
+     * @param content The file content.
+     * @param size The content size.
+     * @return A new ModuleData.
+     */
     public static ModuleData newImageFile(String module, String path, ModuleDataType type,
             InputStream content, long size) {
         Objects.requireNonNull(path);

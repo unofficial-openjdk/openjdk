@@ -26,10 +26,8 @@ package jdk.tools.jlink.builder;
 
 import jdk.tools.jlink.plugin.ExecutableImage;
 import java.io.DataOutputStream;
-import java.util.List;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Pool;
-import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 /**
  * Implement this interface to develop your own image layout. First the jimage

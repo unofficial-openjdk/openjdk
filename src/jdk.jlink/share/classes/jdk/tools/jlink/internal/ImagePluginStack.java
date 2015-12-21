@@ -28,7 +28,6 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import jdk.tools.jlink.plugin.Plugin;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.PostProcessorPlugin;
-import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 
 /**
  * Plugins Stack. Plugins entry point to apply transformations onto resources
@@ -443,11 +441,6 @@ public final class ImagePluginStack {
                 }
             }
             return res;
-        }
-
-        @Override
-        public void addTransformedResource(ModuleData original, InputStream transformed, long length) {
-            pool.addTransformedResource(original, transformed, length);
         }
     }
 

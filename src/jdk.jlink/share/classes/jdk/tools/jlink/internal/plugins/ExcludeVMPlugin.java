@@ -87,10 +87,12 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
     private static final String SERVER = "server";
     private static final String MINIMAL = "minimal";
 
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
+    public static final PluginOption NAME_OPTION =
+        new Builder(NAME)
+                .description(PluginsResourceBundle.getDescription(NAME))
+                .argumentDescription(PluginsResourceBundle.getArgument(NAME))
+                .showHelp(true)
+                .build();
     private Predicate<String> predicate;
     private Jvm target;
     private boolean keepAll;

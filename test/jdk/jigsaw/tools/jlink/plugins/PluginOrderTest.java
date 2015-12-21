@@ -36,227 +36,233 @@
  * @run main/othervm PluginOrderTest
  */
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.PluginRepository;
-import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.Jlink.OrderedPlugin;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.internal.PluginOrderingGraph;
 import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.Plugin.CATEGORY;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
-import tests.Helper;
-import tests.Result;
-
 public class PluginOrderTest {
 
     public static void main(String[] args) throws Exception {
-        new PluginOrderTest().test();
-    }
 
-    public void test() throws Exception {
-        List<String> order = new ArrayList<>();
-        PluginRepository.registerPlugin(new PluginTrap("plugin1_F",
-                Plugin.CATEGORY.FILTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin2_F",
-                Plugin.CATEGORY.FILTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin3_F",
-                Plugin.CATEGORY.FILTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin4_F",
-                Plugin.CATEGORY.FILTER, order));
+        validGraph0();
+        validGraph1();
 
-        PluginRepository.registerPlugin(new PluginTrap("plugin1_T",
-                Plugin.CATEGORY.TRANSFORMER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin2_T",
-                Plugin.CATEGORY.TRANSFORMER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin3_T",
-                Plugin.CATEGORY.TRANSFORMER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin4_T",
-                Plugin.CATEGORY.TRANSFORMER, order));
+        boolean failed = false;
 
-        PluginRepository.registerPlugin(new PluginTrap("plugin1_S",
-                Plugin.CATEGORY.SORTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin2_S",
-                Plugin.CATEGORY.SORTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin3_S",
-                Plugin.CATEGORY.SORTER, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin4_S",
-                Plugin.CATEGORY.SORTER, order));
-
-        PluginRepository.registerPlugin(new PluginTrap("plugin1_C",
-                Plugin.CATEGORY.COMPRESSOR, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin2_C",
-                Plugin.CATEGORY.COMPRESSOR, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin3_C",
-                Plugin.CATEGORY.COMPRESSOR, order));
-        PluginRepository.registerPlugin(new PluginTrap("plugin4_C",
-                Plugin.CATEGORY.COMPRESSOR, order));
-
-        test1(order);
-
-        test2(order);
-
-        test3(order);
-
-        test4(order);
-
-        test5(order);
-
-        test6(order);
-
-        test7(order);
-    }
-
-    private void check(PluginsConfiguration config, List<String> expected, List<String> order)
-            throws Exception {
-        order.clear();
-        ImagePluginStack plugins = ImagePluginConfiguration.parseConfiguration(config);
-        PoolImpl pool = new PoolImpl();
-        pool.add(Pool.newResource("/mod/com/foo/bar/A.somthing", new byte[0]));
-        plugins.visitResources(pool);
-        if (!order.equals(expected)) {
-            throw new Exception("plugins not called in right order. Expected "
-                    + expected + " actual " + order);
+        try {
+            withCycles0();
+            failed = true;
+        } catch (Exception ex) {
+            //ok
+            System.err.println(ex.getMessage());
         }
-        System.err.println("Gathered plugins: " + order);
-    }
-
-    private PluginsConfiguration createConfig(String... nameIndexAbs) {
-        List<OrderedPlugin> lst = new ArrayList<>();
-        for (String s : nameIndexAbs) {
-            String name = s.substring(0, s.indexOf(":"));
-            int sep = s.indexOf("/");
-            int index = Integer.valueOf(s.substring(s.indexOf(":") + 1, sep));
-            boolean absolute = Boolean.valueOf(s.substring(sep + 1));
-            lst.add(new OrderedPlugin(name, index,
-                    absolute, Collections.emptyMap()));
-        }
-        return new PluginsConfiguration(lst, null, null);
-    }
-
-    private void test1(List<String> order) throws Exception {
-
-        Helper helper = Helper.newHelper();
-        if (helper == null) {
-            System.err.println("test1 not run");
-            return;
-        }
-        helper.generateDefaultModules();
-
-        {
-            order.clear();
-            String[] userOptions = {"--plugin1_C", "--plugin2_C", "--plugin1_S", "--plugin2_S", "--plugin1_T", "--plugin2_T", "--plugin1_F", "--plugin2_F"};
-            String moduleName = "order1";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Result res = helper.generateDefaultImage(userOptions, moduleName);
-            res.assertSuccess();
-            if (!order.equals(Arrays.asList("plugin1_F", "plugin2_F", "plugin1_T", "plugin2_T", "plugin1_S", "plugin2_S", "plugin1_C", "plugin2_C"))) {
-                throw new Exception("plugins not called in right order. " + order);
-            }
+        if (failed) {
+            throw new Exception("Should have failed");
         }
 
-        {
-            order.clear();
-            String[] userOptions = {"--plugin1_F:2", "--plugin2_F:1"};
-            String moduleName = "order2";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Result res = helper.generateDefaultImage(userOptions, moduleName);
-            res.assertSuccess();
-            if (!order.equals(Arrays.asList("plugin2_F", "plugin1_F"))) {
-                throw new Exception("plugins not called in right order. " + order);
-            }
+        try {
+            withCycles1();
+            failed = true;
+        } catch (Exception ex) {
+            //ok
+            System.err.println(ex.getMessage());
+        }
+        if (failed) {
+            throw new Exception("Should have failed");
         }
 
-        {
-            order.clear();
-            String[] userOptions = {"--plugin1_C:LAST", "--plugin2_C:FIRST"};
-            String moduleName = "order3";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Result res = helper.generateDefaultImage(userOptions, moduleName);
-            res.assertSuccess();
-            if (!order.equals(Arrays.asList("plugin2_C", "plugin1_C"))) {
-                throw new Exception("plugins not called in right order. " + order);
-            }
+        try {
+            withCycles2();
+            failed = true;
+        } catch (Exception ex) {
+            //ok
+            System.err.println(ex.getMessage());
+        }
+        if (failed) {
+            throw new Exception("Should have failed");
         }
     }
 
-    private void test2(List<String> order) throws Exception {
-        check(createConfig("plugin2_F:0/false", "plugin3_F:1/false", "plugin4_F:2/false",
-                "plugin1_F:3/false"),
-                Arrays.asList("plugin2_F", "plugin3_F", "plugin4_F", "plugin1_F"), order);
+    private static void validGraph0() throws Exception {
+        Set<String> set = new HashSet<>();
+        set.add("plug2");
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(new Plug("plug2", Collections.emptySet(), Collections.emptySet(),
+                CATEGORY.TRANSFORMER));
+        plugins.add(new Plug("plug1", set, Collections.emptySet(), CATEGORY.TRANSFORMER));
+        List<Plugin> ordered = PluginOrderingGraph.sort(plugins);
+        if (ordered.get(0) != plugins.get(1) || ordered.get(1) != plugins.get(0)) {
+            throw new Exception("Invalid sorting");
+        }
     }
 
-    private void test3(List<String> order) throws Exception {
-        check(createConfig("plugin2_T:0/false", "plugin3_T:1/false", "plugin4_T:2/false",
-                "plugin1_T:3/false"),
-                Arrays.asList("plugin2_T", "plugin3_T", "plugin4_T", "plugin1_T"), order);
+    private static void validGraph1() {
+        Set<String> lst1 = new HashSet<>();
+        lst1.add("plug2");
+        lst1.add("plug3");
+        Plugin p1 = new Plug("plug1", lst1, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p2 = new Plug("plug2", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst3 = new HashSet<>();
+        lst3.add("plug4");
+        lst3.add("plug6");
+        Plugin p3 = new Plug("plug3", lst3, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p4 = new Plug("plug4", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst5 = new HashSet<>();
+        lst5.add("plug3");
+        lst5.add("plug1");
+        lst5.add("plug2");
+        lst5.add("plug6");
+        Plugin p5 = new Plug("plug5", lst5, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst6 = new HashSet<>();
+        lst6.add("plug4");
+        lst6.add("plug2");
+        Plugin p6 = new Plug("plug6", lst6, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p7 = new Plug("plug7", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p8 = new Plug("plug8", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(p1);
+        plugins.add(p2);
+        plugins.add(p3);
+        plugins.add(p4);
+        plugins.add(p5);
+        plugins.add(p6);
+        plugins.add(p7);
+        plugins.add(p8);
+
+        PluginOrderingGraph.sort(plugins);
     }
 
-    private void test4(List<String> order) throws Exception {
-        check(createConfig("plugin2_S:0/false", "plugin3_S:1/false", "plugin4_S:2/false",
-                "plugin1_S:3/false"),
-                Arrays.asList("plugin2_S", "plugin3_S", "plugin4_S", "plugin1_S"), order);
+    private static void withCycles0() throws Exception {
+        Set<String> set2 = new HashSet<>();
+        set2.add("plug1");
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(new Plug("plug2", set2, Collections.emptySet(),
+                CATEGORY.TRANSFORMER));
+
+        Set<String> set1 = new HashSet<>();
+        set1.add("plug2");
+        plugins.add(new Plug("plug1", set1, Collections.emptySet(), CATEGORY.TRANSFORMER));
+        PluginOrderingGraph.sort(plugins);
+
     }
 
-    private void test5(List<String> order) throws Exception {
-        check(createConfig("plugin2_C:0/false", "plugin3_C:1/false", "plugin4_C:2/false",
-                "plugin1_C:3/false"),
-                Arrays.asList("plugin2_C", "plugin3_C", "plugin4_C", "plugin1_C"), order);
+    private static void withCycles2() {
+        Set<String> lst1 = new HashSet<>();
+        lst1.add("plug2");
+        lst1.add("plug3");
+        Plugin p1 = new Plug("plug1", lst1, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p2 = new Plug("plug2", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst3 = new HashSet<>();
+        lst3.add("plug4");
+        lst3.add("plug6");
+        Plugin p3 = new Plug("plug3", lst3, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p4 = new Plug("plug4", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst5 = new HashSet<>();
+        lst5.add("plug3");
+        lst5.add("plug1");
+        lst5.add("plug2");
+        Plugin p5 = new Plug("plug5", lst5, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst6 = new HashSet<>();
+        lst6.add("plug4");
+        lst6.add("plug1");
+        Plugin p6 = new Plug("plug6", lst6, Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p7 = new Plug("plug7", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Plugin p8 = new Plug("plug8", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(p1);
+        plugins.add(p2);
+        plugins.add(p3);
+        plugins.add(p4);
+        plugins.add(p5);
+        plugins.add(p6);
+        plugins.add(p7);
+        plugins.add(p8);
+        PluginOrderingGraph.sort(plugins);
     }
 
-    private void test6(List<String> order) throws Exception {
-        check(createConfig("plugin1_F:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.FILTER)[0] + "/true",
-                "plugin1_T:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.TRANSFORMER)[0] + "/true",
-                "plugin1_S:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.SORTER)[0] + "/true",
-                "plugin1_C:" + ImagePluginConfiguration.getRange(Plugin.CATEGORY.COMPRESSOR)[0] + "/true"),
-                Arrays.asList("plugin1_F", "plugin1_T", "plugin1_S", "plugin1_C"), order);
+    private static void withCycles1() {
+        Set<String> lst1 = new HashSet<>();
+        lst1.add("plug2");
+        lst1.add("plug3");
+        Plugin p = new Plug("plug1", lst1, Collections.emptySet(), CATEGORY.TRANSFORMER);
+        Plugin p2 = new Plug("plug2", Collections.emptySet(), Collections.emptySet(), CATEGORY.TRANSFORMER);
+
+        Set<String> lst3 = new HashSet<>();
+        lst3.add("plug2");
+
+        Set<String> lst4 = new HashSet<>();
+        lst4.add("plug1");
+
+        Plugin p3 = new Plug("plug3", lst4, lst3, CATEGORY.TRANSFORMER);
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(p);
+        plugins.add(p2);
+        plugins.add(p3);
+        PluginOrderingGraph.sort(plugins);
     }
 
-    private void test7(List<String> order) throws Exception {
-        List<String> expected = new ArrayList<>();
-        expected.add("plugin1_F");
-        expected.add("plugin2_F");
-        expected.add("plugin1_T");
-        expected.add("plugin2_T");
-        expected.add("plugin1_S");
-        expected.add("plugin2_S");
-        expected.add("plugin1_C");
-        expected.add("plugin2_C");
+    private static class Plug implements TransformerPlugin {
 
-        check(createConfig("plugin1_F:0/false", "plugin1_T:0/false", "plugin1_S:0/false",
-                "plugin1_C:0/false", "plugin2_F:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.FILTER)[0] + 1) + "/true",
-                "plugin2_T:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.TRANSFORMER)[0] + 1) + "/true",
-                "plugin2_S:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.SORTER)[0] + 1) + "/true",
-                "plugin2_C:" + (ImagePluginConfiguration.getRange(Plugin.CATEGORY.COMPRESSOR)[0] + 1) + "/true"), expected, order);
-    }
-
-    public static class PluginTrap implements TransformerPlugin {
-
-        private final List<String> order;
+        private final Set<String> isBefore;
+        private final Set<String> isAfter;
         private final CATEGORY category;
         private final String name;
 
-        PluginTrap(String name, CATEGORY category, List<String> order) {
+        private Plug(String name, Set<String> isBefore, Set<String> isAfter, CATEGORY category) {
             this.name = name;
-            this.order = order;
+            this.isBefore = isBefore;
+            this.isAfter = isAfter;
             this.category = category;
         }
 
         @Override
+        public Set<String> isAfter() {
+            return isAfter;
+        }
+
+        @Override
+        public Set<String> isBefore() {
+            return isBefore;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
         public void visit(Pool in, Pool out) {
-            order.add(name);
-            in.visit((resource) -> {
-                return resource;
-            }, out);
+
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            return Collections.singleton(category);
         }
 
         @Override
@@ -266,24 +272,17 @@ public class PluginOrderTest {
 
         @Override
         public String getDescription() {
-            return "";
+            return null;
         }
 
         @Override
         public PluginOption getOption() {
-            return new PluginOption.Builder(name).build();
+            return null;
         }
 
         @Override
         public void configure(Map<PluginOption, String> config) {
 
-        }
-
-        @Override
-        public Set<PluginType> getType() {
-            Set<PluginType> set = new HashSet<>();
-            set.add(category);
-            return Collections.unmodifiableSet(set);
         }
     }
 }

@@ -57,7 +57,7 @@ public class JLinkPostProcessingTest {
 
         private static ExecutableImage called;
         private static final String NAME = "pp";
-        private static final PluginOption NAME_OPTION = new PluginOption.Builder(NAME).hasOnOffArgument().build();
+        private static final PluginOption NAME_OPTION = new PluginOption.Builder(NAME).build();
 
         @Override
         public List<String> process(ExecutableImage image) {
@@ -112,7 +112,7 @@ public class JLinkPostProcessingTest {
 
         // Generate an image and post-process in same jlink execution.
         {
-            String[] userOptions = {"--pp", "on"};
+            String[] userOptions = {"--pp"};
             String moduleName = "postprocessing1";
             helper.generateDefaultJModule(moduleName, "composite2");
             String[] res = {};
@@ -133,7 +133,7 @@ public class JLinkPostProcessingTest {
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, res, files);
 
-            String[] ppOptions = {"--pp", "on"};
+            String[] ppOptions = {"--pp"};
             helper.postProcessImage(imageDir, ppOptions);
             test(imageDir);
         }
