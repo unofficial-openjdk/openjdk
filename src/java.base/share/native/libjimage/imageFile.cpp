@@ -35,7 +35,7 @@
 #include "osSupport.hpp"
 
 // Map the full jimage, only with 64 bit addressing.
-bool MemoryMapImage = sizeof(void *) == 8;
+bool ImageFileReader::memory_map_image = sizeof(void *) == 8;
 
 #ifdef WIN32
 const char FileSeparator = '\\';
@@ -247,26 +247,34 @@ ImageFileReaderTable ImageFileReader::_reader_table;
 
 SimpleCriticalSection _reader_table_lock;
 
+// Locate an image if file already open.
+ImageFileReader* ImageFileReader::find_image(const char* name) {
+    // Lock out _reader_table.
+    SimpleCriticalSectionLock cs(&_reader_table_lock);
+    // Search for an exist image file.
+    for (u4 i = 0; i < _reader_table.count(); i++) {
+        // Retrieve table entry.
+        ImageFileReader* reader = _reader_table.get(i);
+        // If name matches, then reuse (bump up use count.)
+        assert(reader->name() != NULL && "reader->name must not be null");
+        if (strcmp(reader->name(), name) == 0) {
+            reader->inc_use();
+            return reader;
+        }
+    }
+
+    return NULL;
+}
+
 // Open an image file, reuse structure if file already open.
 ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
-    {
-        // Lock out _reader_table.
-        SimpleCriticalSectionLock cs(&_reader_table_lock);
-        // Search for an exist image file.
-        for (u4 i = 0; i < _reader_table.count(); i++) {
-            // Retrieve table entry.
-            ImageFileReader* reader = _reader_table.get(i);
-            // If name matches, then reuse (bump up use count.)
-            assert(reader->name() != NULL && "reader->name must not be null");
-            if (strcmp(reader->name(), name) == 0) {
-                reader->inc_use();
-                return reader;
-            }
-        }
-    } // Unlock the mutex
+    ImageFileReader* reader = find_image(name);
+    if (reader != NULL) {
+        return reader;
+    }
 
     // Need a new image reader.
-    ImageFileReader* reader = new ImageFileReader(name, big_endian);
+    reader = new ImageFileReader(name, big_endian);
     if (reader == NULL || !reader->open()) {
         // Failed to open.
         delete reader;
@@ -306,21 +314,21 @@ void ImageFileReader::close(ImageFileReader *reader) {
 }
 
 // Return an id for the specifed ImageFileReader.
-u8 ImageFileReader::readerToID(ImageFileReader *reader) {
+u8 ImageFileReader::reader_to_ID(ImageFileReader *reader) {
     // ID is just the cloaked reader address.
     return (u8)reader;
 }
 
 // Validate the image id.
-bool ImageFileReader::idCheck(u8 id) {
+bool ImageFileReader::id_check(u8 id) {
     // Make sure the ID is a managed (_reader_table) reader.
     SimpleCriticalSectionLock cs(&_reader_table_lock);
     return _reader_table.contains((ImageFileReader*)id);
 }
 
 // Return an id for the specifed ImageFileReader.
-ImageFileReader* ImageFileReader::idToReader(u8 id) {
-    assert(idCheck(id) && "invalid image id");
+ImageFileReader* ImageFileReader::id_to_reader(u8 id) {
+    assert(id_check(id) && "invalid image id");
     return (ImageFileReader*)id;
 }
 
@@ -373,10 +381,8 @@ bool ImageFileReader::open() {
     if (_file_size < _index_size) {
         return false;
     }
-    // Determine how much of the image is memory mapped.
-    size_t map_size = (size_t)(MemoryMapImage ? _file_size : _index_size);
     // Memory map image (minimally the index.)
-    _index_data = (u1*)osSupport::map_memory(_fd, _name, 0, map_size);
+    _index_data = (u1*)osSupport::map_memory(_fd, _name, 0, (size_t)map_size());
     assert(_index_data && "image file not memory mapped");
     // Retrieve length of index perfect hash table.
     u4 length = table_length();
@@ -578,7 +584,7 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
     if (compressed_size != 0) {
         u1* compressed_data;
         // If not memory mapped read in bytes.
-        if (!MemoryMapImage) {
+        if (!memory_map_image) {
             // Allocate buffer for compression.
             compressed_data = new u1[(size_t)compressed_size];
             assert(compressed_data != NULL && "allocation failed");
@@ -594,7 +600,7 @@ void ImageFileReader::get_resource(ImageLocation& location, u1* uncompressed_dat
         ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, uncompressed_size,
                         &strings, _endian);
         // If not memory mapped then release temporary buffer.
-        if (!MemoryMapImage) {
+        if (!memory_map_image) {
                 delete[] compressed_data;
         }
     } else {

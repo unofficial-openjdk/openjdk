@@ -58,6 +58,8 @@ public class BasicImageReader implements AutoCloseable {
     private final ImageStringsReader stringsReader;
     private final Decompressor decompressor;
 
+    private native static ByteBuffer getNativeMap(String imagePath);
+
     protected BasicImageReader(String imagePath, ByteOrder byteOrder)
             throws IOException {
         this.byteOrder = byteOrder;
