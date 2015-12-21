@@ -23,30 +23,36 @@
 package plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
-import jdk.tools.jlink.plugins.StringTable;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
 /**
  *
  * Strip debug attributes plugin
  */
-final class HelloPlugin implements ResourcePlugin {
+final class HelloPlugin implements TransformerPlugin {
 
     private static final String OUTPUT_FILE = "customplugin.txt";
+
     @Override
     public String getName() {
         return HelloProvider.NAME;
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
-        System.out.println("Hello!!!!!!!!!!");
-        File f = new File(OUTPUT_FILE);
-        f.createNewFile();
-        for (Resource res : inResources.getResources()) {
-            outResources.addResource(res);
+    public void visit(Pool inResources, Pool outResources) {
+        try {
+            System.out.println("Hello!!!!!!!!!!");
+            File f = new File(OUTPUT_FILE);
+            f.createNewFile();
+            for (ModuleData res : inResources.getContent()) {
+                outResources.add(res);
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
     }
 }

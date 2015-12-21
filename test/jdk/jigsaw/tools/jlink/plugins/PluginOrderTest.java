@@ -48,15 +48,15 @@ import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
+import jdk.tools.jlink.plugins.PluginException;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Visitor;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 import tests.Helper;
 import tests.Result;
@@ -70,40 +70,40 @@ public class PluginOrderTest {
     public void test() throws Exception {
         List<String> order = new ArrayList<>();
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_F",
-                PluginProvider.FILTER, order));
+                TransformerPluginProvider.FILTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_F",
-                PluginProvider.FILTER, order));
+                TransformerPluginProvider.FILTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_F",
-                PluginProvider.FILTER, order));
+                TransformerPluginProvider.FILTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_F",
-                PluginProvider.FILTER, order));
+                TransformerPluginProvider.FILTER, order));
 
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_T",
-                PluginProvider.TRANSFORMER, order));
+                TransformerPluginProvider.TRANSFORMER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_T",
-                PluginProvider.TRANSFORMER, order));
+                TransformerPluginProvider.TRANSFORMER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_T",
-                PluginProvider.TRANSFORMER, order));
+                TransformerPluginProvider.TRANSFORMER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_T",
-                PluginProvider.TRANSFORMER, order));
+                TransformerPluginProvider.TRANSFORMER, order));
 
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_S",
-                PluginProvider.SORTER, order));
+                TransformerPluginProvider.SORTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_S",
-                PluginProvider.SORTER, order));
+                TransformerPluginProvider.SORTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_S",
-                PluginProvider.SORTER, order));
+                TransformerPluginProvider.SORTER, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_S",
-                PluginProvider.SORTER, order));
+                TransformerPluginProvider.SORTER, order));
 
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_C",
-                PluginProvider.COMPRESSOR, order));
+                TransformerPluginProvider.COMPRESSOR, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_C",
-                PluginProvider.COMPRESSOR, order));
+                TransformerPluginProvider.COMPRESSOR, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_C",
-                PluginProvider.COMPRESSOR, order));
+                TransformerPluginProvider.COMPRESSOR, order));
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_C",
-                PluginProvider.COMPRESSOR, order));
+                TransformerPluginProvider.COMPRESSOR, order));
 
         ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_A",
                 null, order));
@@ -139,21 +139,9 @@ public class PluginOrderTest {
             throws Exception {
         order.clear();
         ImagePluginStack plugins = ImagePluginConfiguration.parseConfiguration(config);
-        ResourcePoolImpl pool = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        pool.addResource(new ResourcePool.Resource("/mod/com/foo/bar/A.somthing",
-                ByteBuffer.allocate(0)));
-        plugins.visitResources(pool, new StringTable() {
-
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        PoolImpl pool = new PoolImpl();
+        pool.add(Pool.newResource("/mod/com/foo/bar/A.somthing", new byte[0]));
+        plugins.visitResources(pool);
         if (!order.equals(expected)) {
             throw new Exception("plugins not called in right order. Expected "
                     + expected + " actual " + order);
@@ -162,13 +150,13 @@ public class PluginOrderTest {
     }
 
     private PluginsConfiguration createConfig(String... nameIndexAbs) {
-        List<StackedPluginConfiguration> lst = new ArrayList<>();
+        List<OrderedPluginConfiguration> lst = new ArrayList<>();
         for (String s : nameIndexAbs) {
             String name = s.substring(0, s.indexOf(":"));
             int sep = s.indexOf("/");
             int index = Integer.valueOf(s.substring(s.indexOf(":") + 1, sep));
             boolean absolute = Boolean.valueOf(s.substring(sep + 1));
-            lst.add(new StackedPluginConfiguration(name, index,
+            lst.add(new OrderedPluginConfiguration(name, index,
                     absolute, Collections.emptyMap()));
         }
         return new PluginsConfiguration(lst, Collections.emptyList(), null);
@@ -263,10 +251,10 @@ public class PluginOrderTest {
     }
 
     private void test8(List<String> order) throws Exception {
-        check(createConfig("plugin1_F:" + ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.FILTER))[0] + "/true",
-                "plugin1_T:" + ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.TRANSFORMER))[0] + "/true",
-                "plugin1_S:" + ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.SORTER))[0] + "/true",
-                "plugin1_C:" + ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.COMPRESSOR))[0] + "/true"),
+        check(createConfig("plugin1_F:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.FILTER))[0] + "/true",
+                "plugin1_T:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.TRANSFORMER))[0] + "/true",
+                "plugin1_S:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.SORTER))[0] + "/true",
+                "plugin1_C:" + ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.COMPRESSOR))[0] + "/true"),
                 Arrays.asList("plugin1_F", "plugin1_T", "plugin1_S", "plugin1_C"), order);
     }
 
@@ -282,13 +270,13 @@ public class PluginOrderTest {
         expected.add("plugin2_C");
 
         check(createConfig("plugin1_F:0/false", "plugin1_T:0/false", "plugin1_S:0/false",
-                "plugin1_C:0/false", "plugin2_F:" + (ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.FILTER))[0] + 1) + "/true",
-                "plugin2_T:" + (ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.TRANSFORMER))[0] + 1) + "/true",
-                "plugin2_S:" + (ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.SORTER))[0] + 1) + "/true",
-                "plugin2_C:" + (ImagePluginConfiguration.getRange(new CategoryProvider(PluginProvider.COMPRESSOR))[0] + 1) + "/true"), expected, order);
+                "plugin1_C:0/false", "plugin2_F:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.FILTER))[0] + 1) + "/true",
+                "plugin2_T:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.TRANSFORMER))[0] + 1) + "/true",
+                "plugin2_S:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.SORTER))[0] + 1) + "/true",
+                "plugin2_C:" + (ImagePluginConfiguration.getRange(new CategoryProvider(TransformerPluginProvider.COMPRESSOR))[0] + 1) + "/true"), expected, order);
     }
 
-    public static class PProvider extends CmdResourcePluginProvider {
+    public static class PProvider extends TransformerCmdProvider {
 
         private final List<String> order;
         private final String category;
@@ -301,12 +289,6 @@ public class PluginOrderTest {
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> options) throws IOException {
-            return new ResourcePlugin[]{new PluginTrap(getName(), order)
-            };
-        }
-
-        @Override
         public String getCategory() {
             return category;
         }
@@ -325,9 +307,21 @@ public class PluginOrderTest {
         public Map<String, String> getAdditionalOptions() {
             return null;
         }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new PluginTrap(getName(), order));
+            return lst;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
     }
 
-    public static class PluginTrap implements ResourcePlugin {
+    public static class PluginTrap implements TransformerPlugin {
 
         private final String name;
         private final List<String> order;
@@ -338,12 +332,11 @@ public class PluginOrderTest {
         }
 
         @Override
-        public void visit(ResourcePool resources, ResourcePool output, StringTable strings)
-                throws Exception {
+        public void visit(Pool resources, Pool output) {
             order.add(name);
-            resources.visit((resource, order, str) -> {
+            resources.visit((resource) -> {
                 return resource;
-            }, output, strings);
+            }, output);
         }
 
         @Override
@@ -352,19 +345,13 @@ public class PluginOrderTest {
         }
     }
 
-    public static class CategoryProvider extends CmdResourcePluginProvider {
+    public static class CategoryProvider extends TransformerCmdProvider {
 
         private final String category;
 
         CategoryProvider(String category) {
             super("CategoryProvider", "");
             this.category = category;
-        }
-
-        @Override
-        public ResourcePlugin[] newPlugins(String[] argument,
-                Map<String, String> options) throws IOException {
-            throw new IOException("Shouldn't be called");
         }
 
         @Override
@@ -385,6 +372,16 @@ public class PluginOrderTest {
         @Override
         public Map<String, String> getAdditionalOptions() {
             throw new UnsupportedOperationException("Shouldn't be called");
+        }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            throw new PluginException("Shouldn't be called");
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
         }
     }
 }

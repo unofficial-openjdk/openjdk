@@ -24,8 +24,10 @@
 package plugin;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +37,9 @@ import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
 
-public class CustomImageBuilderProvider implements ImageBuilderProvider {
+public class CustomImageBuilderProvider extends ImageBuilderProvider {
 
-    private static final String NAME = "custom-image-builder";
+    static final String NAME = "custom-image-builder";
     static final String OPTION = "custom-image-option";
     private static final String OPTION_DESCRIPTION = OPTION + "-description";
     private static final Map<String, String> OPTIONS = new HashMap<>();
@@ -48,20 +50,8 @@ public class CustomImageBuilderProvider implements ImageBuilderProvider {
         }
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return NAME + "-description";
-    }
-
-    @Override
-    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
-        Files.createDirectories(imageOutDir);
-        return new CustomImageBuilder(config, imageOutDir);
+    public CustomImageBuilderProvider() {
+        super(NAME, NAME + "-description");
     }
 
     @Override
@@ -81,6 +71,19 @@ public class CustomImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) throws IOException {
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) {
+    }
+
+    @Override
+    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
+        try {
+            Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
+            Files.createDirectories(imageOutDir);
+            List<ImageBuilder> lst = new ArrayList<>();
+            lst.add(new CustomImageBuilder(config, imageOutDir));
+            return lst;
+        } catch (IOException ex) {
+           throw new UncheckedIOException(ex);
+        }
     }
 }

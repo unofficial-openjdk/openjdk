@@ -21,16 +21,15 @@
  * questions.
  */
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 import tests.Helper;
 
 /*
@@ -59,27 +58,20 @@ public class DefaultProviderTest {
         additionalOptions.put("option2", "value2");
     }
 
-    private static class CustomProvider extends OnOffResourcePluginProvider {
+    private static class CustomProvider extends TransformerOnOffProvider {
 
         public CustomProvider() {
             super(NAME, NAME);
         }
 
         @Override
-        public ResourcePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return null;
-        }
-
-        @Override
         public boolean isEnabledByDefault() {
             return true;
         }
 
         @Override
         public String getCategory() {
-            return PluginProvider.TRANSFORMER;
+            return TRANSFORMER;
         }
 
         @Override
@@ -91,28 +83,33 @@ public class DefaultProviderTest {
         public Map<String, String> getAdditionalOptions() {
             return additionalOptions;
         }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
+
+        @Override
+        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+            DefaultProviderTest.isNewPluginsCalled = true;
+            DefaultProviderTest.otherOptions = otherOptions;
+            return Collections.emptyList();
+        }
     }
 
-    private static class CustomProvider2 extends OnOffImageFilePluginProvider {
+    private static class CustomProvider2 extends TransformerOnOffProvider {
         public CustomProvider2() {
             super(NAME, NAME);
         }
 
         @Override
-        public ImageFilePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return null;
-        }
-
-        @Override
         public boolean isEnabledByDefault() {
             return true;
         }
 
         @Override
         public String getCategory() {
-            return PluginProvider.TRANSFORMER;
+            return TRANSFORMER;
         }
 
         @Override
@@ -123,6 +120,18 @@ public class DefaultProviderTest {
         @Override
         public Map<String, String> getAdditionalOptions() {
             return additionalOptions;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.IMAGE_FILE_PLUGIN;
+        }
+
+        @Override
+        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+            DefaultProviderTest.isNewPluginsCalled = true;
+            DefaultProviderTest.otherOptions = otherOptions;
+            return Collections.emptyList();
         }
     }
     private static final String NAME = "toto";

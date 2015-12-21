@@ -39,9 +39,10 @@ public interface AsmGlobalPool extends AsmPool {
      * @param pkg The new package, following java binary syntax (/-separated
      * path name).
      * @param module An existing or new module.
-     * @throws java.lang.Exception If a mapping already exist for this package.
+     * @throws jdk.tools.jlink.plugins.PluginException If a mapping already
+     * exist for this package.
      */
-    public void addPackageModuleMapping(String pkg, String module) throws Exception;
+    public void addPackageModuleMapping(String pkg, String module);
 
     /**
      * Return the set of accessible packages for a given module.

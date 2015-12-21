@@ -24,18 +24,21 @@
  */
 package jdk.tools.jlink.plugins;
 
+
 /**
  * Implement this interface to develop your own plugin.
- * ResourcePlugin can modify the Resources located in jimage file.
+ * TransformerPlugin
+ * instances modify the content of a jimage.
  */
-public interface ResourcePlugin extends Plugin {
+public interface TransformerPlugin extends Plugin {
     /**
-     * Visit the collection of resources.
-     * @param inResources Read only resources.
-     * @param outResources The pool to fill with resources. Will contain the result of the visit
-     * @param strings Bridge to the jimage strings table.
-     * @throws Exception
+     * Visit the content of modules.
+     *
+     * @param in Read only content.
+     * @param out The pool to fill with content. Will contain the result of the
+     * visit
+     *
+     * @throws PluginException
      */
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
-            throws Exception;
+    public void visit(Pool in, Pool out);
 }

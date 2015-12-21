@@ -24,12 +24,14 @@
  */
 package jdk.tools.jlink.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,14 +44,11 @@ import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.Decompressor;
 import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.PostProcessingPlugin;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.ResourcePrevisitor;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.PostProcessorPlugin;
 
 /**
  * Plugins Stack. Plugins entry point to apply transformations onto resources and files.
@@ -63,12 +62,12 @@ public final class ImagePluginStack {
                 List<String> args) throws IOException;
     }
 
-    private static final class OrderedResourcePool extends ResourcePoolImpl {
+    private static final class OrderedResourcePool extends PoolImpl {
 
-        private final List<Resource> orderedList = new ArrayList<>();
+        private final List<ModuleData> orderedList = new ArrayList<>();
 
-        public OrderedResourcePool(ByteOrder order) {
-            super(order);
+        public OrderedResourcePool(ByteOrder order, StringTable table) {
+            super(order, table);
         }
 
         /**
@@ -78,23 +77,23 @@ public final class ImagePluginStack {
          * @throws java.lang.Exception If the pool is read only.
          */
         @Override
-        public void addResource(Resource resource) throws Exception {
-            super.addResource(resource);
+        public void add(ModuleData resource) {
+            super.add(resource);
             orderedList.add(resource);
         }
 
-        List<Resource> getOrderedList() {
+        List<ModuleData> getOrderedList() {
             return Collections.unmodifiableList(orderedList);
         }
     }
 
-    private final static class CheckOrderResourcePool extends ResourcePoolImpl {
+    private final static class CheckOrderResourcePool extends PoolImpl {
 
-        private final List<Resource> orderedList;
+        private final List<ModuleData> orderedList;
         private int currentIndex;
 
-        public CheckOrderResourcePool(ByteOrder order, List<Resource> orderedList) {
-            super(order);
+        public CheckOrderResourcePool(ByteOrder order, List<ModuleData> orderedList, StringTable table) {
+            super(order, table);
             this.orderedList = orderedList;
         }
 
@@ -102,15 +101,14 @@ public final class ImagePluginStack {
          * Add a resource.
          *
          * @param resource The Resource to add.
-         * @throws java.lang.Exception If the pool is read only.
          */
         @Override
-        public void addResource(Resource resource) throws Exception {
-            Resource ordered = orderedList.get(currentIndex);
+        public void add(ModuleData resource) {
+            ModuleData ordered = orderedList.get(currentIndex);
             if (!resource.equals(ordered)) {
-                throw new Exception("Resource " + resource.getPath() + " not in the right order");
+                throw new PluginException("Resource " + resource.getPath() + " not in the right order");
             }
-            super.addResource(resource);
+            super.add(resource);
             currentIndex += 1;
         }
     }
@@ -162,9 +160,9 @@ public final class ImagePluginStack {
     }
 
     private final Plugin lastSorter;
-    private final List<ResourcePlugin> resourcePlugins = new ArrayList<>();
-    private final List<ImageFilePlugin> filePlugins = new ArrayList<>();
-    private final List<PostProcessingPlugin> postProcessingPlugins = new ArrayList<>();
+    private final List<TransformerPlugin> resourcePlugins = new ArrayList<>();
+    private final List<TransformerPlugin> filePlugins = new ArrayList<>();
+    private final List<PostProcessorPlugin> postProcessingPlugins = new ArrayList<>();
     private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
 
     private final ImageBuilder imageBuilder;
@@ -177,26 +175,26 @@ public final class ImagePluginStack {
     }
 
     public ImagePluginStack(ImageBuilder imageBuilder,
-            List<ResourcePlugin> resourcePlugins,
+            List<TransformerPlugin> resourcePlugins,
             Plugin lastSorter,
-            List<ImageFilePlugin> filePlugins,
-            List<PostProcessingPlugin> postprocessingPlugins,
+            List<TransformerPlugin> filePlugins,
+            List<PostProcessorPlugin> postprocessingPlugins,
             String bom) {
         Objects.requireNonNull(resourcePlugins);
         Objects.requireNonNull(filePlugins);
         this.lastSorter = lastSorter;
-        for (ResourcePlugin p : resourcePlugins) {
+        for (TransformerPlugin p : resourcePlugins) {
             Objects.requireNonNull(p);
             if (p instanceof ResourcePrevisitor) {
                 resourcePrevisitors.add((ResourcePrevisitor) p);
             }
             this.resourcePlugins.add(p);
         }
-        for (ImageFilePlugin p : filePlugins) {
+        for (TransformerPlugin p : filePlugins) {
             Objects.requireNonNull(p);
             this.filePlugins.add(p);
         }
-        for (PostProcessingPlugin p : postprocessingPlugins) {
+        for (PostProcessorPlugin p : postprocessingPlugins) {
             Objects.requireNonNull(p);
             this.postProcessingPlugins.add(p);
         }
@@ -212,7 +210,7 @@ public final class ImagePluginStack {
         ProcessingManagerImpl manager = new ProcessingManagerImpl(img);
         arguments = new ArrayList<>();
         try {
-            for (PostProcessingPlugin plugin : postProcessingPlugins) {
+            for (PostProcessorPlugin plugin : postProcessingPlugins) {
                 List<String> lst = plugin.process(manager);
                 if (lst != null) {
                     arguments.addAll(lst);
@@ -237,17 +235,16 @@ public final class ImagePluginStack {
      * plugins.
      *
      * @param resources The set of resources to visit
-     * @param strings Allows to add strings to the JImage
      * @return The result of the visit.
      * @throws IOException
      */
-    public ResourcePool visitResources(ResourcePoolImpl resources, StringTable strings)
+    public PoolImpl visitResources(PoolImpl resources)
             throws Exception {
         Objects.requireNonNull(resources);
-        Objects.requireNonNull(strings);
         resources.setReadOnly();
         if (resources.isEmpty()) {
-            return new ResourcePoolImpl(resources.getByteOrder());
+            return new PoolImpl(resources.getByteOrder(),
+                    resources.getStringTable());
         }
         PreVisitStrings previsit = new PreVisitStrings();
         for (ResourcePrevisitor p : resourcePrevisitors) {
@@ -257,32 +254,34 @@ public final class ImagePluginStack {
         // Store the strings resulting from the previsit.
         List<String> sorted = previsit.getSortedStrings();
         for (String s : sorted) {
-            strings.addString(s);
+            resources.getStringTable().addString(s);
         }
 
-        ResourcePoolImpl current = resources;
-        List<Resource> frozenOrder = null;
-        for (ResourcePlugin p : resourcePlugins) {
+        PoolImpl current = resources;
+        List<Pool.ModuleData> frozenOrder = null;
+        for (TransformerPlugin p : resourcePlugins) {
             current.setReadOnly();
-            ResourcePoolImpl output = null;
+            PoolImpl output = null;
             if (p == lastSorter) {
                 if (frozenOrder != null) {
                     throw new Exception("Oder of resources is already frozen. Plugin "
                             + p.getName() + " is badly located");
                 }
                 // Create a special Resource pool to compute the indexes.
-                output = new OrderedResourcePool(current.getByteOrder());
+                output = new OrderedResourcePool(current.getByteOrder(),
+                        resources.getStringTable());
             } else {
                 // If we have an order, inject it
                 if (frozenOrder != null) {
                     output = new CheckOrderResourcePool(current.getByteOrder(),
-                            frozenOrder);
+                            frozenOrder, resources.getStringTable());
                 } else {
-                    output = new ResourcePoolImpl(current.getByteOrder());
+                    output = new PoolImpl(current.getByteOrder(),
+                            resources.getStringTable());
                 }
             }
-            p.visit(current, output, strings);
-            if (output.getResources().isEmpty()) {
+            p.visit(current, output);
+            if (output.isEmpty()) {
                 throw new Exception("Invalid resource pool for plugin " + p);
             }
             if (output instanceof OrderedResourcePool) {
@@ -295,36 +294,103 @@ public final class ImagePluginStack {
         return current;
     }
 
-    private static final class RetrieverImpl implements ImageBuilder.ResourceRetriever {
+    private class LastPool extends Pool {
 
-        private final ResourcePool resources;
-        private final BasicImageWriter writer;
-        private final Decompressor decompressor = new Decompressor();
-        private RetrieverImpl(ResourcePool resources, BasicImageWriter writer) {
-            this.resources = resources;
-            this.writer = writer;
+        private final PoolImpl pool;
+        Decompressor decompressor = new Decompressor();
+        Collection<ModuleData> content;
+        LastPool(PoolImpl pool) {
+            this.pool = pool;
         }
 
         @Override
-        public Resource retrieves(String path) throws IOException {
-            Resource res = resources.getResource(path);
+        public boolean isReadOnly() {
+            return true;
+        }
+
+        @Override
+        public void add(ModuleData resource) {
+            throw new PluginException("pool is readonly");
+        }
+
+        /**
+         * Get all resources contained in this pool instance.
+         *
+         * @return The collection of resources;
+         */
+        @Override
+        public Collection<ModuleData> getContent() {
+            if (content == null) {
+                content = new ArrayList<>();
+                for (ModuleData md : pool.getContent()) {
+                    content.add(getUncompressed(md));
+                }
+            }
+            return content;
+        }
+
+        /**
+         * Get the resource for the passed path.
+         *
+         * @param path A resource path
+         * @return A Resource instance or null if the resource is not found
+         */
+        @Override
+        public ModuleData get(String path) {
+            Objects.requireNonNull(path);
+            Pool.ModuleData res = pool.get(path);
+            return getUncompressed(res);
+        }
+
+        @Override
+        public boolean contains(ModuleData res) {
+            return pool.contains(res);
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return pool.isEmpty();
+        }
+
+        @Override
+        public void visit(Visitor visitor, Pool output) {
+            pool.visit(visitor, output);
+        }
+
+        @Override
+        public ByteOrder getByteOrder() {
+            return pool.getByteOrder();
+        }
+
+        private ModuleData getUncompressed(ModuleData res) {
             if (res != null) {
-                if (res instanceof ResourcePool.CompressedResource) {
-                    byte[] content = decompressor.decompressResource(writer.getByteOrder(),
-                            (int offset) -> writer.getString(offset),
-                            res.getByteArray());
-                    res = new Resource(path, ByteBuffer.wrap(content));
+                if (res instanceof PoolImpl.CompressedModuleData) {
+                    try {
+                        byte[] bytes = decompressor.decompressResource(getByteOrder(),
+                                (int offset) -> pool.getStringTable().getString(offset),
+                                res.getBytes());
+                        res = Pool.newResource(res.getPath(),
+                                new ByteArrayInputStream(bytes),
+                                bytes.length);
+                    } catch (IOException ex) {
+                        throw new PluginException(ex);
+                    }
                 }
             }
             return res;
         }
 
         @Override
-        public Set<String> getModules() {
-            return resources.getModulePackages().keySet();
+        public Map<String, Set<String>> getModulePackages() {
+            return pool.getModulePackages();
         }
 
+        @Override
+        public void addTransformedResource(ModuleData original, InputStream transformed, long length) {
+            pool.addTransformedResource(original, transformed, length);
+        }
     }
+
     /**
      * ImageFile Plugins stack entry point. All files are going through all the
      * plugins.
@@ -332,32 +398,31 @@ public final class ImagePluginStack {
      * @param files
      * @param resources
      * @param writer
-     * @throws IOException
+     * @throws Exception
      */
-    public void storeFiles(ImageFilePoolImpl files, ResourcePool resources,
+    public void storeFiles(PoolImpl files, PoolImpl resources,
             BasicImageWriter writer)
             throws Exception {
         Objects.requireNonNull(files);
-        ImageFilePoolImpl current = files;
-        for (ImageFilePlugin p : filePlugins) {
+        PoolImpl current = files;
+        for (TransformerPlugin p : filePlugins) {
             current.setReadOnly();
-            ImageFilePoolImpl output = new ImageFilePoolImpl();
+            PoolImpl output = new PoolImpl();
             p.visit(current, output);
-             if (output.getFiles().isEmpty()) {
+            if (output.isEmpty()) {
                 throw new Exception("Invalid files pool for plugin " + p);
             }
             current = output;
         }
         current.setReadOnly();
         // Build the diff between input and output
-        List<ImageFile> removed = new ArrayList<>();
-        for (ImageFile f : files.getFiles()) {
+        List<ModuleData> removed = new ArrayList<>();
+        for (ModuleData f : files.getContent()) {
             if (!current.contains(f)) {
                 removed.add(f);
             }
         }
-        RetrieverImpl retriever = new RetrieverImpl(resources, writer);
-        imageBuilder.storeFiles(current, removed, bom, retriever);
+        imageBuilder.storeFiles(current, removed, bom, new LastPool(resources));
     }
 
     public ExecutableImage getExecutableImage() throws IOException {

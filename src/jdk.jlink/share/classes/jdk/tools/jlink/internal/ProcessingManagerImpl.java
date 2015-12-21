@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -43,12 +44,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.ProcessingManager;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Sessions;
 
 /**
  * A process manager.
  */
-class ProcessingManagerImpl implements ProcessingManager {
+class ProcessingManagerImpl implements Sessions {
 
     private static final class StreamReader implements Runnable {
 
@@ -110,14 +112,14 @@ class ProcessingManagerImpl implements ProcessingManager {
         @Override
         public String getStdout() throws InterruptedException, ExecutionException {
             outTask.get();
-            return stdoutBuffer.toString();
+            return new String(stdoutBuffer.toByteArray(), StandardCharsets.UTF_8);
 
         }
 
         @Override
         public String getStderr() throws InterruptedException, ExecutionException {
             errTask.get();
-            return stderrBuffer.toString();
+            return new String(stderrBuffer.toByteArray(), StandardCharsets.UTF_8);
         }
 
         @Override
@@ -145,7 +147,7 @@ class ProcessingManagerImpl implements ProcessingManager {
         }
     }
 
-    private final class ProcessingSessionImpl implements ProcessingSession {
+    private final class ProcessingSessionImpl implements Session {
 
         private boolean closed;
         private final Path dir;
@@ -168,18 +170,26 @@ class ProcessingManagerImpl implements ProcessingManager {
         }
 
         @Override
-        public RunningProcess newRunningProcess(ProcessBuilder builder) throws IOException {
-            ProcessBuilder pb = builder.directory(dir.toFile());
-            RunningProcessImpl p = new RunningProcessImpl(pb);
-            processes.add(p);
-            return p;
+        public RunningProcess newRunningProcess(ProcessBuilder builder) {
+            try {
+                ProcessBuilder pb = builder.directory(dir.toFile());
+                RunningProcessImpl p = new RunningProcessImpl(pb);
+                processes.add(p);
+                return p;
+            } catch (IOException ex) {
+                throw new PluginException(ex);
+            }
         }
 
         @Override
-        public RunningProcess newImageProcess(List<String> args) throws IOException {
-            RunningProcessImpl p = new RunningProcessImpl(newJavaProcessBuilder(args));
-            processes.add(p);
-            return p;
+        public RunningProcess newImageProcess(List<String> args) {
+            try {
+                RunningProcessImpl p = new RunningProcessImpl(newJavaProcessBuilder(args));
+                processes.add(p);
+                return p;
+            } catch (IOException ex) {
+                throw new PluginException(ex);
+            }
         }
 
         @Override
@@ -206,7 +216,7 @@ class ProcessingManagerImpl implements ProcessingManager {
     }
 
     private final Path tmp;
-    private final Map<String, ProcessingSession> sessions = new HashMap<>();
+    private final Map<String, Session> sessions = new HashMap<>();
     private final ExecutableImage img;
 
     ProcessingManagerImpl(ExecutableImage img) throws IOException {
@@ -218,11 +228,15 @@ class ProcessingManagerImpl implements ProcessingManager {
     }
 
     @Override
-    public ProcessingSession newSession(String name) throws IOException {
-        String id = name.replaceAll(" ", "_") + System.currentTimeMillis();
-        Path dirPath = tmp.resolve(id);
-        Files.createDirectory(dirPath);
-        return new ProcessingSessionImpl(name, dirPath);
+    public Session newSession(String name) {
+        try {
+            String id = name.replaceAll(" ", "_") + System.currentTimeMillis();
+            Path dirPath = tmp.resolve(id);
+            Files.createDirectory(dirPath);
+            return new ProcessingSessionImpl(name, dirPath);
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 
     @Override
@@ -231,7 +245,7 @@ class ProcessingManagerImpl implements ProcessingManager {
     }
 
     public void close() throws IOException {
-        for (ProcessingSession session : sessions.values()) {
+        for (Session session : sessions.values()) {
             session.close();
         }
         Files.walkFileTree(tmp, new FileVisitor<Path>() {

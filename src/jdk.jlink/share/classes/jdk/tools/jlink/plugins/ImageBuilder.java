@@ -25,76 +25,50 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 /**
  * Implement this interface to develop your own image layout. First the jimage
  * is written onto the output stream returned by getOutputStream then storeFiles
  * is called.
  */
-public interface ImageBuilder {
-
-    /**
-     * Retrieves resource. Retrieved resource content is, whatever the
-     * configuration, uncompressed.
-     */
-    public interface ResourceRetriever {
-
-        /**
-         * Retrieve a resource.
-         *
-         * @param path Resource path.
-         * @return A resource or null if not found.
-         * @throws java.io.IOException
-         */
-        public Resource retrieves(String path) throws IOException;
-
-        /**
-         * Returns the set of modules present in the jimage,
-         *
-         * @return
-         */
-        public Set<String> getModules();
-    }
+public interface ImageBuilder extends Plugin {
 
     /**
      * Store the external files.
      *
-     * @param files Set of module names that are composing this image.
+     * @param files Pool of files.
      * @param removed List of files that have been removed (if any).
      * @param bom The options used to build the image
-     * @param retriever To retrieve any resource that had been stored in the
-     * jimage file.
-     * @throws java.io.IOException
+     * @param resources Pool of resources that have been stored in the jimage
+     * file.
+     * @throws PluginException
      */
-    public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
-            String bom, ResourceRetriever retriever) throws IOException;
+    public void storeFiles(Pool files, List<ModuleData> removed,
+            String bom, Pool resources);
 
     /**
      * The OutputStream to store the jimage file.
      *
      * @return The output stream
-     * @throws java.io.IOException
+     * @throws PluginException
      */
-    public DataOutputStream getJImageOutputStream() throws IOException;
+    public DataOutputStream getJImageOutputStream();
 
     /**
      * Gets executable image.
      *
      * @return The executable image.
-     * @throws java.io.IOException
+     * @throws PluginException
      */
-    public ExecutableImage getExecutableImage() throws IOException;
+    public ExecutableImage getExecutableImage();
 
     /**
      * Store the options that would have bee nadded by the post processing
      * @param image
      * @param args
-     * @throws java.io.IOException
+     * @throws PluginException
      */
-    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args)
-            throws IOException;
+    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args);
 }

@@ -53,20 +53,18 @@ import java.util.Properties;
 import java.util.Set;
 import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.tools.jlink.internal.JvmHandler;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.internal.plugins.FileCopierProvider.SymImageFile;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 /**
  *
  * Default Image Builder.
  */
 public class DefaultImageBuilder implements ImageBuilder {
-
     /**
      * The default java executable Image.
      */
-    public static class DefaultExecutableImage extends ExecutableImage {
+    static class DefaultExecutableImage extends ExecutableImage {
 
         public DefaultExecutableImage(Path home, Set<String> modules) {
             super(home, modules, createArgs(home));
@@ -143,49 +141,52 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(ImageFilePool pool, List<ImageFile> removedFiles,
-            String bom, ResourceRetriever retriever) throws IOException {
+    public void storeFiles(Pool pool, List<ModuleData> removedFiles,
+            String bom, Pool resources) {
+        try {
+            Pool files = new JvmHandler().handlePlatforms(pool, removedFiles);
 
-        ImageFilePool files = new JvmHandler().handlePlatforms(pool, removedFiles);
+            for (ModuleData f : files.getContent()) {
+                accept(f);
+            }
+            modules = resources.getModulePackages().keySet();
+            storeFiles(modules, bom);
 
-        for (ImageFile f : files.getFiles()) {
-            accept(f);
-        }
-        modules = retriever.getModules();
-        storeFiles(modules, bom);
+            if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
+                // launchers in the bin directory need execute permission
+                Path bin = root.resolve("bin");
+                if (Files.isDirectory(bin)) {
+                    Files.list(bin)
+                            .filter(f -> !f.toString().endsWith(".diz"))
+                            .filter(f -> Files.isRegularFile(f))
+                            .forEach(this::setExecutable);
+                }
 
-        if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
-            // launchers in the bin directory need execute permission
-            Path bin = root.resolve("bin");
-            if (Files.isDirectory(bin)) {
-                Files.list(bin)
-                        .filter(f -> !f.toString().endsWith(".diz"))
-                        .filter(f -> Files.isRegularFile(f))
-                        .forEach(this::setExecutable);
+                // jspawnhelper is in lib or lib/<arch>
+                Path lib = root.resolve("lib");
+                if (Files.isDirectory(lib)) {
+                    Files.find(lib, 2, (path, attrs) -> {
+                        return path.getFileName().toString().equals("jspawnhelper");
+                    }).forEach(this::setExecutable);
+                }
             }
 
-            // jspawnhelper is in lib or lib/<arch>
-            Path lib = root.resolve("lib");
-            if (Files.isDirectory(lib)) {
-                Files.find(lib, 2, (path, attrs) -> {
-                    return path.getFileName().toString().equals("jspawnhelper");
-                }).forEach(this::setExecutable);
-            }
+            prepareApplicationFiles(resources, modules);
+        } catch (IOException ex) {
+            throw new PluginException(ex);
         }
-
-        prepareApplicationFiles(retriever, modules);
     }
 
-    protected void prepareApplicationFiles(ResourceRetriever retriever, Set<String> modules) throws IOException {
+    protected void prepareApplicationFiles(Pool resources, Set<String> modules) throws IOException {
         // generate launch scripts for the modules with a main class
         for (String module : modules) {
             String path = "/" + module + "/module-info.class";
-            Resource res = retriever.retrieves(path);
+            ModuleData res = resources.get(path);
             if (res == null) {
                 throw new IOException("module-info not found for " + module);
             }
             Optional<String> mainClass;
-            ByteArrayInputStream stream = new ByteArrayInputStream(res.getByteArray());
+            ByteArrayInputStream stream = new ByteArrayInputStream(res.getBytes());
             mainClass = ModuleDescriptor.read(stream).mainClass();
             if (mainClass.isPresent()) {
                 Path cmd = root.resolve("bin").resolve(module);
@@ -217,14 +218,18 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public DataOutputStream getJImageOutputStream() throws IOException {
-        Path jimageFile = mdir.resolve(BasicImageWriter.BOOT_IMAGE_NAME);
-        OutputStream fos = Files.newOutputStream(jimageFile);
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
-        return new DataOutputStream(bos);
+    public DataOutputStream getJImageOutputStream() {
+        try {
+            Path jimageFile = mdir.resolve(BasicImageWriter.BOOT_IMAGE_NAME);
+            OutputStream fos = Files.newOutputStream(jimageFile);
+            BufferedOutputStream bos = new BufferedOutputStream(fos);
+            return new DataOutputStream(bos);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
-    private void accept(ImageFile file) throws IOException {
+    private void accept(ModuleData file) throws IOException {
         String name = file.getPath();
         String filename = name.substring(name.indexOf('/') + 1);
         try (InputStream in = file.stream()) {
@@ -329,8 +334,12 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeJavaLauncherOptions(ExecutableImage img, List<String> args) throws IOException {
-        patchScripts(img, args);
+    public void storeJavaLauncherOptions(ExecutableImage img, List<String> args) {
+        try {
+            patchScripts(img, args);
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 
     // This is experimental, we should get rid-off the scripts in a near future
@@ -366,5 +375,10 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             });
         }
+    }
+
+    @Override
+    public String getName() {
+        return DefaultImageBuilderProvider.NAME;
     }
 }

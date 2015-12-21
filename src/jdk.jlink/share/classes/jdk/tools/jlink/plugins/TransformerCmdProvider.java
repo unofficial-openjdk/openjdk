@@ -25,21 +25,26 @@
 package jdk.tools.jlink.plugins;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Implement this interface to develop your own plugin.
- * PostProcessing can
- * modify the image content.
+ * An Plugin provider that creates command line oriented plugins.
  */
-public interface PostProcessingPlugin extends Plugin {
+public abstract class TransformerCmdProvider extends TransformerPluginProvider
+        implements CmdPluginProvider<TransformerPlugin> {
 
-    /**
-     * Post processing on existing image.
-     *
-     * @param manager The instance in charge to manage remote processes the
-     * plugin could have launched.
-     * @return The list of arguments to add to launchers.
-     * @throws Exception
-     */
-    public List<String> process(ProcessingManager manager) throws Exception;
+    public TransformerCmdProvider(String name, String description) {
+        super(name, description);
+    }
+
+    @Override
+    public abstract List<TransformerPlugin> newPlugins(String[] arguments,
+            Map<String, String> otherOptions);
+
+    // Must be implemented, an abstract method can't be implemented with a default method
+    @Override
+    public List<TransformerPlugin> newPlugins(Map<String, Object> conf) {
+        return CmdPluginProvider.super.newPlugins(conf);
+    }
+
 }

@@ -23,10 +23,9 @@
 
 module customplugin {
     requires jdk.jlink;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.HelloProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.CustomImageFileProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with plugin.CustomResourcePluginProvider;
+    provides jdk.tools.jlink.plugins.TransformerPluginProvider with plugin.HelloProvider;
+    provides jdk.tools.jlink.plugins.TransformerPluginProvider with plugin.CustomImageFileProvider;
+    provides jdk.tools.jlink.plugins.TransformerPluginProvider with plugin.CustomResourcePluginProvider;
     provides jdk.tools.jlink.plugins.ImageBuilderProvider with plugin.CustomImageBuilderProvider;
     provides jdk.tools.jlink.plugins.ImageBuilderProvider with plugin.SecondImageBuilderProvider;
 }
-

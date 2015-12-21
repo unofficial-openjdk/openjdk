@@ -33,16 +33,15 @@
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
 import jdk.tools.jlink.plugins.OnOffPluginProvider;
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class OnOffProviderTest {
 
@@ -79,8 +78,8 @@ public class OnOffProviderTest {
         {
             Map<String, Object> config = new HashMap<>();
             config.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, OnOffPluginProvider.OFF_ARGUMENT);
-            Plugin[] plugins = factory.newProvider().newPlugins(config);
-            if (plugins.length != 0) {
+            List<? extends Plugin> plugins = factory.newProvider().newPlugins(config);
+            if (!plugins.isEmpty()) {
                 throw new AssertionError("Expected empty list of plugins");
             }
             reset();
@@ -102,7 +101,7 @@ public class OnOffProviderTest {
             try {
                 factory.newProvider().newPlugins(config);
                 throw new AssertionError("IOException expected");
-            } catch (IOException e) {
+            } catch (Exception e) {
                 assertException(e, "Invalid number of arguments expecting on|off");
             }
             reset();
@@ -113,69 +112,64 @@ public class OnOffProviderTest {
             try {
                 factory.newProvider().newPlugins(config);
                 throw new AssertionError("IOException expected");
-            } catch (IOException e) {
+            } catch (Exception e) {
                 assertException(e, "Invalid argument INVALID, expecting on or off");
             }
             reset();
         }
     }
 
-    private static void assertException(IOException e, String expectedMessage) {
+    private static void assertException(Exception e, String expectedMessage) {
         String message = e.getMessage();
         if (!Objects.equals(message, expectedMessage)) {
             throw new AssertionError("Expected: " + expectedMessage + ", got: " + message);
         }
     }
 
-    private static class CustomProvider extends OnOffResourcePluginProvider {
+    private static class CustomProvider extends TransformerOnOffProvider {
 
         public CustomProvider() {
             super("custom-on-off-provider", "custom-on-off-provider");
         }
 
         @Override
-        public ResourcePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            if (!additionalOptions.equals(otherOptions)) {
+        public String getCategory() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String getToolOption() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Map<String, String> getAdditionalOptions() {
+            return additionalOptions;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
+
+        @Override
+        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+             if (!additionalOptions.equals(otherOptions)) {
                 throw new AssertionError("Additional options: expected: " +
                         additionalOptions + ", got: " + otherOptions);
             }
             isNewPluginsCalled = true;
             return null;
         }
-
-        @Override
-        public String getCategory() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String getToolOption() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return additionalOptions;
-        }
     }
 
-    private static class CustomProvider2 extends OnOffImageFilePluginProvider {
+    private static class CustomProvider2 extends TransformerOnOffProvider {
 
         public CustomProvider2() {
             super("custom-on-off-provider", "custom-on-off-provider");
         }
 
         @Override
-        public ImageFilePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            if (!additionalOptions.equals(otherOptions)) {
-                throw new AssertionError("Additional options: expected: "
-                        + additionalOptions + ", got: " + otherOptions);
-            }
-            isNewPluginsCalled = true;
-            return null;
-        }
-
-        @Override
         public String getCategory() {
             throw new UnsupportedOperationException();
         }
@@ -188,6 +182,21 @@ public class OnOffProviderTest {
         @Override
         public Map<String, String> getAdditionalOptions() {
             return additionalOptions;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.IMAGE_FILE_PLUGIN;
+        }
+
+        @Override
+        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+            if (!additionalOptions.equals(otherOptions)) {
+                throw new AssertionError("Additional options: expected: "
+                        + additionalOptions + ", got: " + otherOptions);
+            }
+            isNewPluginsCalled = true;
+            return null;
         }
     }
 }

@@ -24,9 +24,7 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.io.IOException;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -43,7 +41,7 @@ final class StripDebugPlugin extends AsmPlugin {
     }
 
     @Override
-    public void visit(AsmPools pools, StringTable strings) throws IOException {
+    public void visit(AsmPools pools) {
         pools.getGlobalPool().visitClassReaders((reader) -> {
             ClassWriter writer = null;
             if (reader.getClassName().contains("module-info")) {//eg: java.base/module-info

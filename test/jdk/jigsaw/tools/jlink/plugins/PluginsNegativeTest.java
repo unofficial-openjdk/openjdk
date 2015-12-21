@@ -29,10 +29,7 @@
  * @run main/othervm PluginsNegativeTest
  */
 
-import java.io.IOException;
 import java.lang.reflect.Layer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,14 +38,13 @@ import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
+import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.plugins.Jlink;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class PluginsNegativeTest {
     public static void main(String[] args) throws Exception {
@@ -64,7 +60,8 @@ public class PluginsNegativeTest {
     }
 
     private void testDuplicateBuiltInProviders() {
-        List<PluginProvider> javaPlugins = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
+        List<PluginProvider> javaPlugins = new ArrayList<>();
+        javaPlugins.addAll(ImagePluginProviderRepository.getTransformerProviders(Layer.boot()));
         for (PluginProvider javaPlugin : javaPlugins) {
             System.out.println("Registered plugin: " + javaPlugin.getName());
         }
@@ -73,7 +70,7 @@ public class PluginsNegativeTest {
             try {
                 ImagePluginProviderRepository.registerPluginProvider(new CustomProvider(pluginName));
                 try {
-                    ImagePluginProviderRepository.getPluginProvider(pluginName, Layer.boot());
+                    ImagePluginProviderRepository.getTransformerPluginProvider(pluginName, Layer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
                 } catch (Exception ignored) {
                 }
@@ -84,67 +81,51 @@ public class PluginsNegativeTest {
     }
 
     private void testUnknownProvider() {
-        try {
-            ImagePluginProviderRepository.getPluginProvider("unknown", Layer.boot());
+        if (ImagePluginProviderRepository.getTransformerPluginProvider("unknown", Layer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
-        } catch (Exception ignored) {
+        }
+        if (ImagePluginProviderRepository.getPostProcessingPluginProvider("unknown", Layer.boot()) != null) {
+            throw new AssertionError("Exception expected for unknown plugin name");
+        }
+        if (ImagePluginProviderRepository.getImageBuilderProvider("unknown", Layer.boot()) != null) {
+            throw new AssertionError("Exception expected for unknown plugin name");
         }
     }
 
-    private static Jlink.StackedPluginConfiguration createConfig(String name, int index) {
-        return new Jlink.StackedPluginConfiguration(name, index, true, Collections.emptyMap());
+    private static Jlink.OrderedPluginConfiguration createConfig(String name, int index) {
+        return new Jlink.OrderedPluginConfiguration(name, index, true, Collections.emptyMap());
     }
 
     private void testEmptyOutputResource() throws Exception {
-        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
                 Collections.emptyList(), null));
-        ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        inResources.addResource(new ResourcePool.Resource("/aaa/bbb/A", ByteBuffer.allocate(10)));
+        PoolImpl inResources = new PoolImpl();
+        inResources.add(Pool.newResource("/aaa/bbb/A", new byte[10]));
         try {
-            stack.visitResources(inResources, new StringTable() {
-                @Override
-                public int addString(String str) {
-                    return -1;
-                }
-
-                @Override
-                public String getString(int id) {
-                    return null;
-                }
-            });
+            stack.visitResources(inResources);
             throw new AssertionError("Exception expected when output resource is empty");
         } catch (Exception ignored) {
         }
     }
 
     private void testEmptyInputResource() throws Exception {
-        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new PluginsConfiguration(plugins,
                 Collections.emptyList(), null));
-        ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        ResourcePoolImpl outResources = (ResourcePoolImpl) stack.visitResources(inResources, new StringTable() {
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                return null;
-            }
-        });
+        PoolImpl inResources = new PoolImpl();
+        PoolImpl outResources = (PoolImpl) stack.visitResources(inResources);
         if (!outResources.isEmpty()) {
             throw new AssertionError("Output resource is not empty");
         }
     }
 
-    public static class CustomPlugin implements ResourcePlugin {
+    public static class CustomPlugin implements TransformerPlugin {
 
         @Override
-        public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
+        public void visit(Pool inResources, Pool outResources) {
             // do nothing
         }
 
@@ -154,7 +135,7 @@ public class PluginsNegativeTest {
         }
     }
 
-    public static class CustomProvider extends CmdResourcePluginProvider {
+    public static class CustomProvider extends TransformerCmdProvider {
 
         protected CustomProvider(String name) {
             super(name, "");
@@ -181,8 +162,15 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-            return new ResourcePlugin[]{new CustomPlugin()};
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new CustomPlugin());
+            return lst;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
         }
     }
 }

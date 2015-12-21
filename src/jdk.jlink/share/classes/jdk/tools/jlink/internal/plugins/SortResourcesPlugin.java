@@ -35,16 +35,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  * Sort Resources plugin
  */
-final class SortResourcesPlugin implements ResourcePlugin {
+final class SortResourcesPlugin implements TransformerPlugin {
 
     private final List<Pattern> filters = new ArrayList<>();
     private final List<String> orderedPaths;
@@ -84,15 +83,15 @@ final class SortResourcesPlugin implements ResourcePlugin {
     }
 
     static class SortWrapper {
-        private final Resource resource;
+        private final ModuleData resource;
         private final int ordinal;
 
-        SortWrapper(Resource resource, int ordinal) {
+        SortWrapper(ModuleData resource, int ordinal) {
             this.resource = resource;
             this.ordinal = ordinal;
         }
 
-        Resource getResource() {
+        ModuleData getResource() {
             return resource;
         }
 
@@ -122,9 +121,8 @@ final class SortResourcesPlugin implements ResourcePlugin {
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
-
-        inResources.getResources().stream()
+    public void visit(Pool in, Pool out) {
+        in.getContent().stream()
                 .map((r) -> new SortWrapper(r, isFile
                                         ? getFileOrdinal(r.getPath())
                                         : getPatternOrdinal(r.getPath())))
@@ -145,7 +143,7 @@ final class SortResourcesPlugin implements ResourcePlugin {
                     return sw1.getPath().compareTo(sw2.getPath());
                 }).forEach((sw) -> {
                     try {
-                        outResources.addResource(sw.getResource());
+                        out.add(sw.getResource());
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }

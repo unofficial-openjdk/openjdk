@@ -25,33 +25,27 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  *
  * Exclude resources plugin provider
  */
-public final class ExcludeProvider extends CmdResourcePluginProvider {
+public final class ExcludeProvider extends TransformerCmdProvider {
     public static final String NAME = "exclude-resources";
     public ExcludeProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-     public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new ExcludePlugin(argument)};
-    }
-
-
-
-    @Override
     public String getCategory() {
-        return PluginProvider.FILTER;
+        return TransformerCmdProvider.FILTER;
     }
 
     @Override
@@ -67,5 +61,21 @@ public final class ExcludeProvider extends CmdResourcePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        try {
+            List<TransformerPlugin> ret = new ArrayList<>(1);
+            ret.add(new ExcludePlugin(arguments));
+            return ret;
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 }

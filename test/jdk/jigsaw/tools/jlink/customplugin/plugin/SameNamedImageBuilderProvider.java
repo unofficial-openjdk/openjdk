@@ -24,7 +24,9 @@
 package plugin;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,23 +35,12 @@ import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
 
-public class SameNamedImageBuilderProvider implements ImageBuilderProvider {
+public class SameNamedImageBuilderProvider extends ImageBuilderProvider {
 
     private static final String NAME = "custom-image-builder";
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return NAME + "-description";
-    }
-
-    @Override
-    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
-        return new CustomImageBuilder(config, imageOutDir);
+    public SameNamedImageBuilderProvider() {
+        super(NAME, NAME + "-description");
     }
 
     @Override
@@ -68,7 +59,19 @@ public class SameNamedImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) throws IOException {
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) {
 
+    }
+
+    @Override
+    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
+        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
+        List<ImageBuilder> lst = new ArrayList<>();
+        try {
+            lst.add(new CustomImageBuilder(config, imageOutDir));
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+        return lst;
     }
 }

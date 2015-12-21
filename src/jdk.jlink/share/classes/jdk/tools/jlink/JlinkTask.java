@@ -28,6 +28,7 @@ package jdk.tools.jlink;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -71,6 +72,7 @@ import jdk.tools.jlink.plugins.ExecutableImage;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
 import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugins.PluginException;
 
 
 /**
@@ -218,7 +220,7 @@ public class JlinkTask {
             }
 
             return EXIT_OK;
-        } catch (IOException | ResolutionException e) {
+        } catch (UncheckedIOException | PluginException | IOException | ResolutionException e) {
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             return EXIT_ERROR;
@@ -307,11 +309,9 @@ public class JlinkTask {
 
         // First create the image provider
         ImageProvider imageProvider
-                = createImageProvider(config.getOutput(),
-                        finder,
+                = createImageProvider(finder,
                         checkAddMods(config.getModules()),
-                        config.getLimitmods(),
-                        genBOMContent(config, plugins), config.getByteOrder());
+                        config.getLimitmods(), config.getByteOrder());
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
@@ -375,10 +375,9 @@ public class JlinkTask {
         }
         // First create the image provider
         ImageProvider imageProvider
-                = createImageProvider(options.output, finder,
+                = createImageProvider(finder,
                         options.addMods,
                         options.limitMods,
-                        genBOMContent(),
                         options.endian);
 
         // Then create the Plugin Stack
@@ -415,11 +414,9 @@ public class JlinkTask {
         return finder;
     }
 
-    private static ImageProvider createImageProvider(Path output,
-            ModuleFinder finder,
+    private static ImageProvider createImageProvider(ModuleFinder finder,
             Set<String> addMods,
             Set<String> limitMods,
-            String bom,
             ByteOrder order)
             throws IOException {
         if (addMods.isEmpty()) {
@@ -430,7 +427,7 @@ public class JlinkTask {
                 ModuleFinder.empty(),
                 addMods);
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
-        return new ImageHelper(cf, mods, output, bom, order);
+        return new ImageHelper(cf, mods, order);
     }
 
 
@@ -529,19 +526,13 @@ public class JlinkTask {
     }
 
     private static class ImageHelper implements ImageProvider {
-        final Path output;
         final Set<Archive> archives;
-        final String bom;
         final ByteOrder order;
 
         ImageHelper(Configuration cf,
                 Map<String, Path> modsPaths,
-                Path output,
-                String bom,
                 ByteOrder order)
                 throws IOException {
-            this.output = output;
-            this.bom = bom;
             archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());

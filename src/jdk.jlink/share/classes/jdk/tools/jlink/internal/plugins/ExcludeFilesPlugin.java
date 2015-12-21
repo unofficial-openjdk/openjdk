@@ -26,14 +26,14 @@ package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  *
  * Exclude files plugin
  */
-final class ExcludeFilesPlugin implements ImageFilePlugin {
+final class ExcludeFilesPlugin implements TransformerPlugin {
 
     private final Predicate<String> predicate;
 
@@ -51,10 +51,9 @@ final class ExcludeFilesPlugin implements ImageFilePlugin {
     }
 
     @Override
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception {
-        inFiles.visit((file) -> {
+    public void visit(Pool in, Pool out) {
+        in.visit((file) -> {
             return predicate.test("/" + file.getModule() + "/" + file.getPath()) ? file : null;
-        }, outFiles);
+        }, out);
     }
 }

@@ -27,7 +27,6 @@ package jdk.tools.jlink.internal;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -37,9 +36,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 /**
  * A class to deal with JVM platforms
@@ -55,6 +53,7 @@ public final class JvmHandler {
     }
 
     private enum Jvm {
+
         SERVER("server", 0), CLIENT("client", 1), MINIMAL("minimal", 2);
         private final String name;
         private final int index;
@@ -63,6 +62,7 @@ public final class JvmHandler {
             this.name = name;
             this.index = index;
         }
+
         private static int getIndex(String platform) {
             return Jvm.valueOf(platform.toUpperCase(Locale.US)).index;
         }
@@ -78,30 +78,33 @@ public final class JvmHandler {
         return System.getProperty("os.name").startsWith("Mac OS");
     }
 
-    public ImageFilePool handlePlatforms(ImageFilePool files,
-            List<ImageFile> removedFiles) throws IOException {
+    public Pool handlePlatforms(Pool files,
+            List<ModuleData> removedFiles) throws IOException {
         Objects.requireNonNull(files);
         Objects.requireNonNull(removedFiles);
 
         List<String> removed = getJVM(removedFiles);
-        ImageFilePool ret = files;
+        Pool ret = files;
         if (!removed.isEmpty()) {
             List<String> existing = new ArrayList<>();
             String jvmlib = jvmlib();
-            ret = new ImageFilePoolImpl();
-            List<ImageFile> origHolder = new ArrayList<>();
+            ret = new PoolImpl();
+            List<ModuleData> origHolder = new ArrayList<>();
             try {
-                files.visit((file) -> {
-                    // skip the original cfg file
-                    if (file.getName().endsWith(JVM_CFG)) {
-                        origHolder.add(file);
-                        return null;
-                    } else {
-                        String jvm = getJVM(file, jvmlib);
-                        if (jvm != null) {
-                            existing.add(jvm);
+                files.visit(new Pool.Visitor() {
+                    @Override
+                    public ModuleData visit(ModuleData file) {
+                        // skip the original cfg file
+                        if (file.getPath().endsWith(JVM_CFG)) {
+                            origHolder.add(file);
+                            return null;
+                        } else {
+                            String jvm = getJVM(file, jvmlib);
+                            if (jvm != null) {
+                                existing.add(jvm);
+                            }
+                            return file;
                         }
-                        return file;
                     }
                 }, ret);
                 if (existing.isEmpty()) {
@@ -110,7 +113,7 @@ public final class JvmHandler {
                 //create the cfg file based on removed and existing
                 if (origHolder.size() == 1) {
                     StringBuilder builder = new StringBuilder();
-                    ImageFile orig = origHolder.get(0);
+                    ModuleData orig = origHolder.get(0);
                     // Keep comments
                     try (BufferedReader reader
                             = new BufferedReader(new InputStreamReader(orig.stream(),
@@ -121,7 +124,6 @@ public final class JvmHandler {
                             }
                         });
                     }
-
                     Collections.sort(existing, new JvmComparator());
                     List<String> remaining = new ArrayList<>();
                     for (String platform : existing) {
@@ -139,20 +141,11 @@ public final class JvmHandler {
                     }
 
                     byte[] content = builder.toString().getBytes(StandardCharsets.UTF_8);
-                    ImageFile rewritten = new ImageFile(orig.getModule(),
-                            orig.getPath(), orig.getName(), orig.getType()) {
-
-                        @Override
-                        public long size() {
-                            return content.length;
-                        }
-
-                        @Override
-                        public InputStream stream() throws IOException {
-                            return new ByteArrayInputStream(content);
-                        }
-                    };
-                    ret.addFile(rewritten);
+                    ModuleData rewritten = Pool.newImageFile(orig.getModule(),
+                            orig.getPath(),
+                            orig.getType(),
+                            new ByteArrayInputStream(content), content.length);
+                    ret.add(rewritten);
                 } else {
                     System.err.println("No jvm.cfg file, skipping rewriting.");
                 }
@@ -163,10 +156,10 @@ public final class JvmHandler {
         return ret;
     }
 
-    private static List<String> getJVM(Collection<ImageFile> removed) {
+    private static List<String> getJVM(Collection<ModuleData> removed) {
         List<String> ret = new ArrayList<>();
         String jvmlib = jvmlib();
-        for (ImageFile f : removed) {
+        for (ModuleData f : removed) {
             String jvm = getJVM(f, jvmlib);
             if (jvm != null) {
                 ret.add(jvm);
@@ -175,8 +168,11 @@ public final class JvmHandler {
         return ret;
     }
 
-    private static String getJVM(ImageFile f, String jvmlib) {
-        String p = f.getName();
+    private static String getJVM(ModuleData f, String jvmlib) {
+        // Path is /<native|classes|...>/actual path
+        String path = f.getPath().substring(1);
+        int nameIndex = path.indexOf("/");
+        String p = path.substring(nameIndex + 1);
         String radical;
         int ind = p.lastIndexOf("/");
         if (ind != -1) {

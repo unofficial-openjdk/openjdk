@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,6 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
@@ -74,39 +74,33 @@ public final class OptimizationPlugin extends AsmPlugin {
 
         @Override
         public ClassReader resolve(ClassNode cn, MethodNode mn, String type) {
-            try {
-                int classIndex = cn.name.lastIndexOf("/");
-                String callerPkg = classIndex == -1 ? ""
-                        : cn.name.substring(0, classIndex);
-                int typeClassIndex = type.lastIndexOf("/");
-                String pkg = typeClassIndex == - 1 ? ""
-                        : type.substring(0, typeClassIndex);
-                ClassReader reader = null;
-                if (packages.contains(pkg) || pkg.equals(callerPkg)) {
-                    ClassReader r = pools.getGlobalPool().getClassReader(type);
-                    if (r != null) {
-                        // if not private
-                        if ((r.getAccess() & Opcodes.ACC_PRIVATE)
-                                != Opcodes.ACC_PRIVATE) {
-                            // public
-                            if (((r.getAccess() & Opcodes.ACC_PUBLIC)
-                                    == Opcodes.ACC_PUBLIC)) {
+            int classIndex = cn.name.lastIndexOf("/");
+            String callerPkg = classIndex == -1 ? ""
+                    : cn.name.substring(0, classIndex);
+            int typeClassIndex = type.lastIndexOf("/");
+            String pkg = typeClassIndex == - 1 ? ""
+                    : type.substring(0, typeClassIndex);
+            ClassReader reader = null;
+            if (packages.contains(pkg) || pkg.equals(callerPkg)) {
+                ClassReader r = pools.getGlobalPool().getClassReader(type);
+                if (r != null) {
+                    // if not private
+                    if ((r.getAccess() & Opcodes.ACC_PRIVATE)
+                            != Opcodes.ACC_PRIVATE) {
+                        // public
+                        if (((r.getAccess() & Opcodes.ACC_PUBLIC)
+                                == Opcodes.ACC_PUBLIC)) {
+                            reader = r;
+                        } else {
+                            if (pkg.equals(callerPkg)) {
                                 reader = r;
-                            } else {
-                                if (pkg.equals(callerPkg)) {
-                                    reader = r;
-                                }
                             }
                         }
                     }
                 }
-                return reader;
-            } catch (IOException ex) {
-                System.err.println("Exception resolving " + type + ". " + ex);
-                return null;
             }
+            return reader;
         }
-
     }
 
     public interface Optimizer {
@@ -191,7 +185,7 @@ public final class OptimizationPlugin extends AsmPlugin {
     }
 
     @Override
-    public void visit(AsmPools pools, StringTable strings) throws IOException {
+    public void visit(AsmPools pools) {
         try {
             for (AsmModulePool p : pools.getModulePools()) {
                 DefaultTypeResolver resolver = new DefaultTypeResolver(pools, p);
@@ -207,7 +201,11 @@ public final class OptimizationPlugin extends AsmPlugin {
                 });
             }
         } finally {
-            close();
+            try {
+                close();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
         }
     }
 

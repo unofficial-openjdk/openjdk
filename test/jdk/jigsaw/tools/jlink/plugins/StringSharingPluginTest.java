@@ -51,12 +51,12 @@ import java.util.function.Consumer;
 
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
 import jdk.internal.jimage.decompressor.StringSharingDecompressor;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.internal.plugins.StringSharingProvider;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 import tests.Helper;
 import tests.JImageValidator;
 
@@ -75,30 +75,11 @@ public class StringSharingPluginTest {
         List<String> classes = Arrays.asList("toto.Main", "toto.com.foo.bar.X");
         Path compiledClasses = helper.generateModuleCompiledClasses(
                 helper.getJmodSrcDir(), helper.getJmodClassesDir(), "composite2", classes);
-        ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        Consumer<Path> c = (p) -> {
-            // take only the .class resources.
-            if (Files.isRegularFile(p) && p.toString().endsWith(".class")
-                    && !p.toString().endsWith("module-info.class")) {
-                try {
-                    byte[] content = Files.readAllBytes(p);
-                    String path = p.toString();
-                    path = path.substring("/modules".length());
-                    Resource res = new Resource(path, ByteBuffer.wrap(content));
-                    resources.addResource(res);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        };
-        try (java.util.stream.Stream<Path> stream = Files.walk(compiledClasses)) {
-            stream.forEach(c);
-        }
-        ResourcePlugin plugin = new StringSharingProvider().newPlugins(null, null)[0];
+
         Map<String, Integer> map = new HashMap<>();
         Map<Integer, String> reversedMap = new HashMap<>();
-        ResourcePoolImpl result = new ResourcePoolImpl(resources.getByteOrder());
-        plugin.visit(resources, result, new StringTable() {
+
+        PoolImpl resources = new PoolImpl(ByteOrder.nativeOrder(), new StringTable() {
             @Override
             public int addString(String str) {
                 Integer id = map.get(str);
@@ -116,14 +97,35 @@ public class StringSharingPluginTest {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
         });
+        Consumer<Path> c = (p) -> {
+            // take only the .class resources.
+            if (Files.isRegularFile(p) && p.toString().endsWith(".class")
+                    && !p.toString().endsWith("module-info.class")) {
+                try {
+                    byte[] content = Files.readAllBytes(p);
+                    String path = p.toString();
+                    path = path.substring("/modules".length());
+                    ModuleData res = Pool.newResource(path, content);
+                    resources.add(res);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        };
+        try (java.util.stream.Stream<Path> stream = Files.walk(compiledClasses)) {
+            stream.forEach(c);
+        }
+        TransformerPlugin plugin = new StringSharingProvider().newPlugins(null, null).get(0);
+        PoolImpl result = new PoolImpl(resources.getByteOrder(), resources.getStringTable());
+        plugin.visit(resources, result);
 
         if (result.isEmpty()) {
             throw new AssertionError("No result");
         }
 
-        for (Resource res : result.getResources()) {
+        for (ModuleData res : result.getContent()) {
             if (res.getPath().endsWith(".class")) {
-                byte[] uncompacted = StringSharingDecompressor.normalize(reversedMap::get, res.getByteArray(),
+                byte[] uncompacted = StringSharingDecompressor.normalize(reversedMap::get, res.getBytes(),
                         CompressedResourceHeader.getSize());
                 JImageValidator.readClass(uncompacted);
             }

@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal.plugins;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -37,77 +38,69 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ImageFilePool.SymImageFile;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.Pool.ModuleDataType;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * Copy files to image from various locations.
  */
-public class FileCopierProvider extends CmdImageFilePluginProvider {
+public class FileCopierProvider extends TransformerCmdProvider {
 
-    private static final class ImageFileImpl extends ImageFile {
+    /**
+     * Symbolic link to another path.
+     */
+    public static abstract class SymImageFile extends Pool.ModuleData {
 
-        private final Path file;
+        private final String targetPath;
 
-        public ImageFileImpl(Path file, String module, String path, String name, ImageFileType type) {
-            super(module, path, name, type);
-            this.file = file;
+        public SymImageFile(String targetPath, String module, String path,
+                Pool.ModuleDataType type, InputStream stream, long size) {
+            super(module, path, type, stream, size);
+            this.targetPath = targetPath;
         }
 
-        @Override
-        public long size() {
-            try {
-                return Files.size(file);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+        public String getTargetPath() {
+            return targetPath;
         }
-
-        @Override
-        public InputStream stream() throws IOException {
-            return Files.newInputStream(file);
-        }
-
     }
 
     private static final class SymImageFileImpl extends SymImageFile {
 
-        private final Path file;
         public SymImageFileImpl(String targetPath, Path file, String module,
-                String path, String name, ImageFile.ImageFileType type) {
-            super(targetPath, module, path, name, type);
-            this.file = file;
+                String path, ModuleDataType type) {
+            super(targetPath, module, path, type, newStream(file), length(file));
         }
-
-        @Override
-        public long size() {
-            try {
-                return Files.size(file);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public InputStream stream() throws IOException {
-            return Files.newInputStream(file);
-        }
-
     }
 
+    private static long length(Path file) {
+        try {
+            return Files.size(file);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static InputStream newStream(Path file) {
+        try {
+            return Files.newInputStream(file);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
     private static final class DirectoryCopy implements FileVisitor<Path> {
 
         private final Path source;
-        private final ImageFilePool pool;
+        private final Pool pool;
         private final String targetDir;
-        private final List<ImageFile> symlinks = new ArrayList<>();
+        private final List<SymImageFile> symlinks = new ArrayList<>();
 
-        DirectoryCopy(Path source, ImageFilePool pool, String targetDir) {
+        DirectoryCopy(Path source, Pool pool, String targetDir) {
             this.source = source;
             this.pool = pool;
             this.targetDir = targetDir;
@@ -140,9 +133,8 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
                     return FileVisitResult.CONTINUE;
                 }
                 SymImageFileImpl impl = new SymImageFileImpl(symTarget.toString(),
-                        file, "$jlink-file-copier",
-                        path, Objects.requireNonNull(file.getFileName()).toString(),
-                        ImageFile.ImageFileType.OTHER);
+                        file, path, Objects.requireNonNull(file.getFileName()).toString(),
+                        Pool.ModuleDataType.OTHER);
                 symlinks.add(impl);
             } else {
                 addFile(pool, file, path);
@@ -166,22 +158,21 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
         }
     }
 
-    private static void addFile(ImageFilePool pool, Path file, String path)
+    private static void addFile(Pool pool, Path file, String path)
             throws IOException {
         Objects.requireNonNull(pool);
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
-        ImageFileImpl impl = new ImageFileImpl(file, "$jlink-file-copier",
-                path, Objects.requireNonNull(file.getFileName()).toString(),
-                ImageFile.ImageFileType.OTHER);
+        ModuleData impl = Pool.newImageFile("$jlink-file-copier", path,
+                Pool.ModuleDataType.OTHER, newStream(file), length(file));
         try {
-            pool.addFile(impl);
+            pool.add(impl);
         } catch (Exception ex) {
             throw new IOException(ex);
         }
     }
 
-    public static final class FileCopier implements ImageFilePlugin {
+    public static final class FileCopier implements TransformerPlugin {
 
         private static final class CopiedFile {
             Path source;
@@ -231,31 +222,34 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
         }
 
         @Override
-        public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-                throws Exception {
-            inFiles.visit((ImageFile file) -> {
+        public void visit(Pool in, Pool out) {
+            in.visit((file) -> {
                 return file;
-            }, outFiles);
+            }, out);
 
             // Add new files.
-            for (CopiedFile file : files) {
-                if (Files.isRegularFile(file.source)) {
-                    addFile(outFiles, file.source, file.target.toString());
-                } else {
-                    if (Files.isDirectory(file.source)) {
-                        DirectoryCopy dc = new DirectoryCopy(file.source,
-                                outFiles, file.target.toString());
-                        Files.walkFileTree(file.source, dc);
-                        // Add symlinks after actual content
-                        for (ImageFile imf : dc.symlinks) {
-                            try {
-                                outFiles.addFile(imf);
-                            } catch (Exception ex) {
-                                throw new IOException(ex);
+            try {
+                for (CopiedFile file : files) {
+                    if (Files.isRegularFile(file.source)) {
+                        addFile(out, file.source, file.target.toString());
+                    } else {
+                        if (Files.isDirectory(file.source)) {
+                            DirectoryCopy dc = new DirectoryCopy(file.source,
+                                    out, file.target.toString());
+                            Files.walkFileTree(file.source, dc);
+                            // Add symlinks after actual content
+                            for (SymImageFile imf : dc.symlinks) {
+                                try {
+                                    out.add(imf);
+                                } catch (Exception ex) {
+                                    throw new PluginException(ex);
+                                }
                             }
                         }
                     }
                 }
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
         }
 
@@ -278,7 +272,7 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TransformerPluginProvider.TRANSFORMER;
     }
 
     @Override
@@ -292,9 +286,14 @@ public class FileCopierProvider extends CmdImageFilePluginProvider {
     }
 
     @Override
-    public ImageFilePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException {
-        return new ImageFilePlugin[]{new FileCopier(arguments)};
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new FileCopier(arguments));
+        return lst;
+    }
+    @Override
+    public Type getType() {
+        return Type.IMAGE_FILE_PLUGIN;
     }
 
 }

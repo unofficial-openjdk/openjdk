@@ -24,30 +24,26 @@
  */
 package jdk.tools.jlink.internal.plugins.asm;
 
-import java.io.IOException;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  * Extend this class to develop your own plugin in order to transform jimage
  * resources.
  *
  */
-public abstract class AsmPlugin implements ResourcePlugin {
+public abstract class AsmPlugin implements TransformerPlugin {
 
     public AsmPlugin() {
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
-            throws Exception {
+    public void visit(Pool inResources, Pool outResources) {
         Objects.requireNonNull(inResources);
         Objects.requireNonNull(outResources);
-        Objects.requireNonNull(strings);
         AsmPools pools = new AsmPools(inResources);
-        visit(pools, strings);
+        visit(pools);
         pools.fillOutputResources(outResources);
     }
 
@@ -56,8 +52,7 @@ public abstract class AsmPlugin implements ResourcePlugin {
      * apply Asm transformation to jimage contained classes.
      * @param pools The pool of Asm classes and other resource files.
      * @param strings To add a string to the jimage strings table.
-     * @throws IOException
+     * @throws jdk.tools.jlink.plugins.PluginException
      */
-    public abstract void visit(AsmPools pools, StringTable strings)
-            throws IOException;
+    public abstract void visit(AsmPools pools);
 }

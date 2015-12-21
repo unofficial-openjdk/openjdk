@@ -40,16 +40,16 @@ import java.util.Objects;
 import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePool;
 import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
+import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
+import jdk.tools.jlink.plugins.OrderedPluginProvider;
+import jdk.tools.jlink.plugins.PluginException;
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.PostProcessingPlugin;
-import jdk.tools.jlink.plugins.PostProcessingPluginProvider;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.PostProcessorPlugin;
+import jdk.tools.jlink.plugins.PostProcessorPluginProvider;
 
 /**
  * Plugins configuration.
@@ -108,10 +108,10 @@ public final class ImagePluginConfiguration {
     private static final int RANGE_LENGTH = 5000;
 
     static {
-        RESOURCES_CATEGORIES.add(PluginProvider.FILTER);
-        RESOURCES_CATEGORIES.add(PluginProvider.TRANSFORMER);
-        RESOURCES_CATEGORIES.add(PluginProvider.SORTER);
-        RESOURCES_CATEGORIES.add(PluginProvider.COMPRESSOR);
+        RESOURCES_CATEGORIES.add(TransformerPluginProvider.FILTER);
+        RESOURCES_CATEGORIES.add(TransformerPluginProvider.TRANSFORMER);
+        RESOURCES_CATEGORIES.add(TransformerPluginProvider.SORTER);
+        RESOURCES_CATEGORIES.add(TransformerPluginProvider.COMPRESSOR);
 
         int end = RANGE_LENGTH;
         for(String category : RESOURCES_CATEGORIES) {
@@ -119,10 +119,10 @@ public final class ImagePluginConfiguration {
             end +=RANGE_LENGTH;
         }
 
-        FILES_CATEGORIES.add(PluginProvider.FILTER);
-        FILES_CATEGORIES.add(PluginProvider.TRANSFORMER);
-        FILES_CATEGORIES.add(PluginProvider.SORTER);
-        FILES_CATEGORIES.add(PluginProvider.COMPRESSOR);
+        FILES_CATEGORIES.add(TransformerPluginProvider.FILTER);
+        FILES_CATEGORIES.add(TransformerPluginProvider.TRANSFORMER);
+        FILES_CATEGORIES.add(TransformerPluginProvider.SORTER);
+        FILES_CATEGORIES.add(TransformerPluginProvider.COMPRESSOR);
 
         int end2 = RANGE_LENGTH;
         for(String category : FILES_CATEGORIES) {
@@ -130,9 +130,9 @@ public final class ImagePluginConfiguration {
             end2 +=RANGE_LENGTH;
         }
 
-        POST_PROCESSORS_CATEGORIES.add(PluginProvider.VERIFIER);
-        POST_PROCESSORS_CATEGORIES.add(PluginProvider.PROCESSOR);
-        POST_PROCESSORS_CATEGORIES.add(PluginProvider.PACKAGER);
+        POST_PROCESSORS_CATEGORIES.add(PostProcessorPluginProvider.VERIFIER);
+        POST_PROCESSORS_CATEGORIES.add(PostProcessorPluginProvider.PROCESSOR);
+        POST_PROCESSORS_CATEGORIES.add(PostProcessorPluginProvider.PACKAGER);
 
         int end3 = RANGE_LENGTH;
         for (String category : POST_PROCESSORS_CATEGORIES) {
@@ -164,20 +164,20 @@ public final class ImagePluginConfiguration {
 
         List<OrderedPlugin> resourcePlugins = new ArrayList<>();
         List<OrderedPlugin> filePlugins = new ArrayList<>();
-        Map<String, PluginProvider> providers
-                = toMap(ImagePluginProviderRepository.getPluginProviders(pluginsLayer));
+        Map<String, OrderedPluginProvider> mtProviders
+                = toMap(ImagePluginProviderRepository.getTransformerProviders(pluginsLayer));
         // Validate stack
         Map<String, List<Integer>> resources = new HashMap<>();
         Map<String, List<Integer>> files = new HashMap<>();
         List<OrderedPlugin> postProcessingPlugins = new ArrayList<>();
-        List<StackedPluginConfiguration> allPlugins = new ArrayList<>();
+        List<OrderedPluginConfiguration> allPlugins = new ArrayList<>();
 
-        for (Jlink.StackedPluginConfiguration plug : plugins.getTransformerPluginsConfig()) {
+        for (Jlink.OrderedPluginConfiguration plug : plugins.getTransformerPluginsConfig()) {
             if (plug.getIndex() < 0) {
                 throw new Exception("Invalid index " + plug.getIndex() + " for "
                         + plug.getName());
             }
-            PluginProvider prov = providers.get(plug.getName());
+            OrderedPluginProvider prov = mtProviders.get(plug.getName());
             if (prov == null) {
                 throw new Exception("Unknown plugin " + plug.getName());
             }
@@ -210,12 +210,14 @@ public final class ImagePluginConfiguration {
         }
 
         Map<String, List<Integer>> postprocessors = new HashMap<>();
-        for (Jlink.StackedPluginConfiguration plug : plugins.getPostProcessorPluginsConfig()) {
+        Map<String, OrderedPluginProvider> ppProviders
+                = toMap(ImagePluginProviderRepository.getPostProcessingProviders(pluginsLayer));
+        for (Jlink.OrderedPluginConfiguration plug : plugins.getPostProcessorPluginsConfig()) {
             if (plug.getIndex() < 0) {
                 throw new Exception("Invalid index " + plug.getIndex() + " for "
                         + plug.getName());
             }
-            PluginProvider prov = providers.get(plug.getName());
+            OrderedPluginProvider prov = ppProviders.get(plug.getName());
             if (prov == null) {
                 throw new Exception("Unknown plugin " + plug.getName());
             }
@@ -242,8 +244,11 @@ public final class ImagePluginConfiguration {
         }
 
         List<String> seen = new ArrayList<>();
-        for (StackedPluginConfiguration prop : allPlugins) {
-            PluginProvider prov = providers.get(prop.getName());
+        for (OrderedPluginConfiguration prop : allPlugins) {
+            OrderedPluginProvider prov = ppProviders.get(prop.getName());
+            if (prov == null) {
+                prov = mtProviders.get(prop.getName());
+            }
             if (!prov.isFunctional()) {
                 throw new Exception("Provider " + prov.getName() + " is not functional");
             }
@@ -280,7 +285,7 @@ public final class ImagePluginConfiguration {
             }
         }
 
-        List<ResourcePlugin> resourcePluginsList = toPluginsList(resourcePlugins);
+        List<TransformerPlugin> resourcePluginsList = toPluginsList(resourcePlugins);
         Plugin lastSorter = null;
         for (Plugin plugin : resourcePluginsList) {
             if (plugin.getName().equals(plugins.getLastSorterPluginName())) {
@@ -292,9 +297,9 @@ public final class ImagePluginConfiguration {
             throw new IOException("Unknown last plugin "
                     + plugins.getLastSorterPluginName());
         }
-        List<ImageFilePlugin> filePluginsList = toPluginsList(filePlugins);
+        List<TransformerPlugin> filePluginsList = toPluginsList(filePlugins);
 
-        List<PostProcessingPlugin> postprocessorPluginsList = toPluginsList(postProcessingPlugins);
+        List<PostProcessorPlugin> postprocessorPluginsList = toPluginsList(postProcessingPlugins);
 
         ImageBuilder builder;
         if (outDir == null) {
@@ -302,26 +307,29 @@ public final class ImagePluginConfiguration {
             builder = new ImageBuilder() {
 
                 @Override
-                public void storeFiles(ImageFilePool files,
-                        List<ImageFilePool.ImageFile> removed,
-                        String bom, ResourceRetriever resources)
-                        throws IOException {
-                    throw new IOException("No directory setup to store files");
+                public DataOutputStream getJImageOutputStream() {
+                    throw new PluginException("No directory setup to store files");
                 }
 
                 @Override
-                public DataOutputStream getJImageOutputStream() throws IOException {
-                    throw new IOException("No directory setup to store files");
+                public ExecutableImage getExecutableImage() {
+                    throw new PluginException("No directory setup to store files");
                 }
 
                 @Override
-                public ExecutableImage getExecutableImage() throws IOException {
-                    throw new UnsupportedOperationException("No directory setup to store files");
+                public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) {
+                    throw new PluginException("No directory setup to store files");
                 }
 
                 @Override
-                public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
-                    throw new UnsupportedOperationException("No directory setup to store files");
+                public String getName() {
+                    return "";
+                }
+
+                @Override
+                public void storeFiles(Pool files, List<Pool.ModuleData> removed,
+                        String bom, Pool retriever) {
+                    throw new PluginException("No directory setup to store files");
                 }
             };
         } else {
@@ -329,9 +337,7 @@ public final class ImagePluginConfiguration {
                     ? DefaultImageBuilderProvider.NAME : plugins.getImageBuilder().getName();
             Map<String, Object> builderConfig = plugins.getImageBuilder() == null
                     ? Collections.emptyMap() : plugins.getImageBuilder().getConfig();
-            Map<String, Object> map = getDefaultContent();
-            map.putAll(builderConfig);
-            builder = ImagePluginProviderRepository.newImageBuilder(map,
+            builder = ImagePluginProviderRepository.newImageBuilder(builderConfig,
                     outDir,
                     builderName,
                     pluginsLayer);
@@ -340,23 +346,24 @@ public final class ImagePluginConfiguration {
                 lastSorter, filePluginsList, postprocessorPluginsList, bom);
     }
 
-    private static Map<String, Object> getDefaultContent() {
-        Map<String, Object> map = new HashMap<>();
-        // Direct mapping from system properties
-        map.put(PluginProvider.PLATFORM_NAME_OPTION, System.getProperty("os.name"));
-
-        return map;
-    }
-    private static boolean isResourceProvider(PluginProvider prov) {
-        return prov instanceof ResourcePluginProvider;
+    private static boolean isResourceProvider(OrderedPluginProvider prov) {
+        if (prov instanceof TransformerPluginProvider) {
+            return ((TransformerPluginProvider) prov).getType().
+                    equals(TransformerPluginProvider.Type.RESOURCE_PLUGIN);
+        }
+        return false;
     }
 
-    private static boolean isImageFileProvider(PluginProvider prov) {
-        return prov instanceof ImageFilePluginProvider;
+    private static boolean isImageFileProvider(OrderedPluginProvider prov) {
+        if (prov instanceof TransformerPluginProvider) {
+            return ((TransformerPluginProvider) prov).getType().
+                    equals(TransformerPluginProvider.Type.IMAGE_FILE_PLUGIN);
+        }
+        return false;
     }
 
     private static boolean isPostProcessingProvider(PluginProvider prov) {
-        return prov instanceof PostProcessingPluginProvider;
+        return prov instanceof PostProcessorPluginProvider;
     }
 
     private static int getAbsoluteIndex(int index, String category,
@@ -373,9 +380,9 @@ public final class ImagePluginConfiguration {
         throw new Exception("Can't compute index, no category");
     }
 
-    private static Map<String, PluginProvider> toMap(List<PluginProvider> providers) {
-        Map<String, PluginProvider> ret = new HashMap<>();
-        for (PluginProvider prov : providers) {
+    private static Map<String, OrderedPluginProvider> toMap(List<? extends OrderedPluginProvider> providers) {
+        Map<String, OrderedPluginProvider> ret = new HashMap<>();
+        for (OrderedPluginProvider prov : providers) {
             ret.put(prov.getName(), prov);
         }
         return ret;
@@ -387,7 +394,7 @@ public final class ImagePluginConfiguration {
      * @param provider The provider for which the range is wanted.
      * @return The range or null if the provider category is unknown.
      */
-    public static Integer[] getRange(PluginProvider provider) {
+    public static Integer[] getRange(OrderedPluginProvider provider) {
         Map<String, Integer> ranges = null;
         if (isResourceProvider(provider)) {
             ranges = RESOURCES_RANGES;
@@ -414,17 +421,28 @@ public final class ImagePluginConfiguration {
     }
 
     private static List<OrderedPlugin> createOrderedPlugins(int index,
-            String name, Map<String, Object> config, Layer pluginsLayer) throws IOException {
-        Map<String, Object> map = getDefaultContent();
-        map.putAll(config);
-        Plugin[] plugins = ImagePluginProviderRepository.newPlugins(map,
-                name, pluginsLayer);
-        List<OrderedPlugin> ordered = new ArrayList<>();
-        if (plugins != null) {
-            for (Plugin plugin : plugins) {
-                ordered.add(new OrderedPlugin(index, plugin));
-                index = index + 1;
+            String name, Map<String, Object> config, Layer pluginsLayer) throws PluginException {
+        List<? extends Plugin> plugins = null;
+        PluginProvider prov = ImagePluginProviderRepository.getTransformerPluginProvider(name, pluginsLayer);
+        if (prov != null) {
+            plugins = prov.newPlugins(config);
+        }
+        if (plugins == null) {
+            prov = ImagePluginProviderRepository.getPostProcessingPluginProvider(name, pluginsLayer);
+            if (prov != null) {
+                plugins = prov.newPlugins(config);
             }
+        }
+        if (prov == null) {
+            throw new PluginException("Provider not found for " + name);
+        }
+        if (plugins == null) {
+            throw new PluginException("Null plugins for " + name);
+        }
+        List<OrderedPlugin> ordered = new ArrayList<>();
+        for (Plugin plugin : plugins) {
+            ordered.add(new OrderedPlugin(index, plugin));
+            index = index + 1;
         }
         return ordered;
     }

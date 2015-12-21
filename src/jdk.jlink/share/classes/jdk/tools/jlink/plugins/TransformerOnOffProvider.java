@@ -24,26 +24,24 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
- * An ImageFile Plugin provider that creates command line oriented plugins.
+ *
+ * On/Off plugin provider support class.
  */
-public abstract class CmdImageFilePluginProvider extends ImageFilePluginProvider
-        implements CmdPluginProvider<ImageFilePlugin> {
+public abstract class TransformerOnOffProvider extends TransformerPluginProvider
+        implements OnOffPluginProvider<TransformerPlugin> {
 
-    protected CmdImageFilePluginProvider(String name, String description) {
+    public TransformerOnOffProvider(String name, String description) {
         super(name, description);
     }
 
-    @Override
-    public abstract ImageFilePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
-
     // Must be implemented, an abstract method can't be implemented with a default method
     @Override
-    public ImageFilePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
-        return CmdPluginProvider.super.newPlugins(conf);
+    public List<TransformerPlugin> newPlugins(Map<String, Object> conf) {
+        return OnOffPluginProvider.super.newPlugins(conf);
     }
+
 }

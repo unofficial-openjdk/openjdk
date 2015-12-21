@@ -39,12 +39,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 public class BasicTest extends AsmPluginTestBase {
 
@@ -59,7 +61,7 @@ public class BasicTest extends AsmPluginTestBase {
     @Override
     public void test() throws Exception {
         BasicPlugin basicPlugin = new BasicPlugin(getClasses());
-        ResourcePool res = basicPlugin.visit(getPool());
+        Pool res = basicPlugin.visit(getPool());
         basicPlugin.test(getPool(), res);
     }
 
@@ -72,7 +74,7 @@ public class BasicTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             for (String m : MODULES.keySet()) {
                 AsmModulePool pool = getPools().getModulePool(m);
                 if (pool == null) {
@@ -96,18 +98,22 @@ public class BasicTest extends AsmPluginTestBase {
                     }
                 }
             }
-            testPools();
-            testVisitor();
+            try {
+                testPools();
+                testVisitor();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
         }
 
         @Override
-        public void test(ResourcePool inResources, ResourcePool outResources) throws Exception {
+        public void test(Pool inResources, Pool outResources) throws Exception {
             if (!isVisitCalled()) {
                 throw new AssertionError("Resources not visited");
             }
-            if (inResources.getResources().size() != outResources.getResources().size()) {
-                throw new AssertionError("Input size " + inResources.getResources().size() +
-                        " != to " + outResources.getResources().size());
+            if (inResources.getContent().size() != outResources.getContent().size()) {
+                throw new AssertionError("Input size " + inResources.getContent().size() +
+                        " != to " + outResources.getContent().size());
             }
         }
 
@@ -122,12 +128,8 @@ public class BasicTest extends AsmPluginTestBase {
                 if (!classes.contains(className)) {
                     throw new AssertionError("Class is not expected " + className);
                 }
-                try {
-                    if (getPools().getGlobalPool().getClassReader(className) == null) {
-                        throw new AssertionError("Class not found in pool " + className);
-                    }
-                } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
+                if (getPools().getGlobalPool().getClassReader(className) == null) {
+                    throw new AssertionError("Class not found in pool " + className);
                 }
                 seen.add(className);
                 return null;
@@ -140,7 +142,7 @@ public class BasicTest extends AsmPluginTestBase {
 
         private void testPools() throws IOException {
             Set<String> remain = new HashSet<>(classes);
-            for (Resource res : getPools().getGlobalPool().getClasses()) {
+            for (ModuleData res : getPools().getGlobalPool().getClasses()) {
                 ClassReader reader = getPools().getGlobalPool().getClassReader(res);
                 String className = reader.getClassName();
                 // Wrong naming of module-info.class in ASM

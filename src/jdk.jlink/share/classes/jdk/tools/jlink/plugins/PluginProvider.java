@@ -24,58 +24,20 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
- * An abstract plugin provider class. A provider has a name, a description and
- * an optional category.<br>
- * The provider classes to extend to add plugins to jlink are:
- * <ul>
- * <li><code>ResourcePluginProvider</code></li>
- * <li><code>ImageFilePluginProvider</code></li>
- * </ul>
- *
- * Order of known categories are:
- * <ol>
- * <li>FILTER: Filter in/out resources or files.</li>
- * <li>TRANSFORMER: Transform resources or files(eg: refactoring, bytecode
- * manipulation).</li>
- * <li>SORTER: Sort resources within the resource container.</li>
- * <li>COMPRESSOR: Compress resource within the resouce containers.</li>
- * <li>VERIFIER: Does some image verification.</li>
- * <li>PROCESSOR: Does some post processing on image.</li>
- * <li>PACKAGER: Final processing</li>
- * </ol>
+ * An abstract plugin provider class. A provider has a name and a description.
  */
 public abstract class PluginProvider {
-
-    /**
-     * This option is present in the configuration passed at Plugin creation
-     * time.
-     */
-    public static final String PLATFORM_NAME_OPTION = "jlink.platform";
-
-    public static final String COMPRESSOR = "compressor";
-    public static final String SORTER = "sorter";
-    public static final String TRANSFORMER = "transformer";
-    public static final String FILTER = "filter";
-    public static final String PACKAGER = "packager";
-    public static final String PROCESSOR = "processor";
-    public static final String VERIFIER = "verifier";
-
-    public static enum ORDER {
-        FIRST,
-        ANY,
-        LAST
-    }
 
     private final String name;
     private final String description;
 
-    PluginProvider(String name, String description) {
+    public PluginProvider(String name, String description) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(description);
         this.name = name;
@@ -84,17 +46,6 @@ public abstract class PluginProvider {
 
     public String getName() {
         return name;
-    }
-
-    public abstract String getCategory();
-
-    /**
-     * Order of the plugin within its category. By default ANY.
-     *
-     * @return Expected order.
-     */
-    public ORDER getOrder() {
-        return ORDER.ANY;
     }
 
     public String getDescription() {
@@ -136,8 +87,7 @@ public abstract class PluginProvider {
      *
      * @param config The plugins configuration.
      * @return An array of plugins.
-     * @throws IOException
+     * @throws PluginException
      */
-    public abstract Plugin[] newPlugins(Map<String, Object> config)
-            throws IOException;
+    public abstract List<? extends Plugin> newPlugins(Map<String, Object> config);
 }

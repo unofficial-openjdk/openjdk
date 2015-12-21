@@ -25,33 +25,27 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  * Exclude image files plugin provider
  */
-public final class ExcludeFilesProvider extends CmdImageFilePluginProvider {
+public final class ExcludeFilesProvider extends TransformerCmdProvider {
     public static final String NAME = "exclude-files";
     public ExcludeFilesProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-    public ImageFilePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ImageFilePlugin[]{new ExcludeFilesPlugin(argument)};
-    }
-
-
-
-    @Override
     public String getCategory() {
-        return PluginProvider.FILTER;
+        return TransformerCmdProvider.FILTER;
     }
 
     @Override
@@ -67,5 +61,21 @@ public final class ExcludeFilesProvider extends CmdImageFilePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> ret = new ArrayList<>(1);
+        try {
+            ret.add(new ExcludeFilesPlugin(arguments));
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+        return ret;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.IMAGE_FILE_PLUGIN;
     }
 }

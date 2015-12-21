@@ -26,6 +26,7 @@ package plugin;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -35,8 +36,7 @@ import java.util.Objects;
 import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.Pool;
 
 public class CustomImageBuilder implements ImageBuilder {
 
@@ -61,25 +61,36 @@ public class CustomImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(ImageFilePool files, List<ImageFile> removed, String bom, ResourceRetriever retriever) throws IOException {
+    public void storeFiles(Pool files, List<Pool.ModuleData> removed, String bom, Pool resources) {
         try (BufferedWriter writer = Files.newBufferedWriter(image.resolve("files.txt"))) {
-            writer.write(Integer.toString(files.getFiles().size()));
+            writer.write(Integer.toString(files.getContent().size()));
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
     }
 
     @Override
-    public DataOutputStream getJImageOutputStream() throws IOException {
-        return new DataOutputStream(Files.newOutputStream(image.resolve("image.jimage")));
+    public DataOutputStream getJImageOutputStream() {
+        try {
+            return new DataOutputStream(Files.newOutputStream(image.resolve("image.jimage")));
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     @Override
-    public ExecutableImage getExecutableImage() throws IOException {
+    public ExecutableImage getExecutableImage() {
         return new ExecutableImage(image, Collections.emptySet(),
                 Collections.emptyList()) {
                 };
     }
 
     @Override
-    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
+    public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) {
+    }
+
+    @Override
+    public String getName() {
+        return CustomImageBuilderProvider.NAME;
     }
 }

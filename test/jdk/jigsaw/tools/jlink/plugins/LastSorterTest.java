@@ -29,9 +29,6 @@
  * @run main/othervm LastSorterTest
  */
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,15 +38,15 @@ import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
 import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
 import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class LastSorterTest {
 
@@ -75,7 +72,7 @@ public class LastSorterTest {
     }
 
     private void checkTwoLastSorters() throws Exception {
-        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin6", "/a", 0));
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
                 Collections.emptyList(), null, "sorterplugin6");
@@ -83,20 +80,10 @@ public class LastSorterTest {
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
-        ResourcePoolImpl res = fillOutResourcePool();
+        PoolImpl res = fillOutResourcePool();
 
         try {
-            stack.visitResources(res, new StringTable() {
-                @Override
-                public int addString(String str) {
-                    return -1;
-                }
-
-                @Override
-                public String getString(int id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            });
+            stack.visitResources(res);
             throw new AssertionError("Exception expected: Order of resources is already frozen." +
                     "Plugin sorterplugin6 is badly located");
         } catch (Exception e) {
@@ -104,29 +91,29 @@ public class LastSorterTest {
         }
     }
 
-    private ResourcePoolImpl fillOutResourcePool() throws Exception {
-        ResourcePoolImpl res = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        res.addResource(new ResourcePool.Resource("/eee/bbb/res1.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/aaaa/bbb/res2.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/bbb/aa/res1.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/aaaa/bbb/res3.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/bbb/aa/res2.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/fff/bbb/res1.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/aaaa/bbb/res1.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/bbb/aa/res3.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/ccc/bbb/res1.class", ByteBuffer.allocate(90)));
-        res.addResource(new ResourcePool.Resource("/ddd/bbb/res1.class", ByteBuffer.allocate(90)));
+    private PoolImpl fillOutResourcePool() throws Exception {
+        PoolImpl res = new PoolImpl();
+        res.add(Pool.newResource("/eee/bbb/res1.class", new byte[90]));
+        res.add(Pool.newResource("/aaaa/bbb/res2.class", new byte[90]));
+        res.add(Pool.newResource("/bbb/aa/res1.class", new byte[90]));
+        res.add(Pool.newResource("/aaaa/bbb/res3.class", new byte[90]));
+        res.add(Pool.newResource("/bbb/aa/res2.class", new byte[90]));
+        res.add(Pool.newResource("/fff/bbb/res1.class", new byte[90]));
+        res.add(Pool.newResource("/aaaa/bbb/res1.class", new byte[90]));
+        res.add(Pool.newResource("/bbb/aa/res3.class", new byte[90]));
+        res.add(Pool.newResource("/ccc/bbb/res1.class", new byte[90]));
+        res.add(Pool.newResource("/ddd/bbb/res1.class", new byte[90]));
         return res;
     }
 
-    private static StackedPluginConfiguration createConfig(String name, String arg, int index) {
+    private static OrderedPluginConfiguration createConfig(String name, String arg, int index) {
         Map<String, Object> conf = new HashMap<>();
         conf.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
-        return new StackedPluginConfiguration(name, index, true, conf);
+        return new OrderedPluginConfiguration(name, index, true, conf);
     }
 
     private void checkPositiveCase() throws Exception {
-        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/c", 0));
         plugins.add(createConfig("sorterplugin2", "/b", 1));
         plugins.add(createConfig("sorterplugin3", "/a", 2));
@@ -137,23 +124,13 @@ public class LastSorterTest {
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
-        ResourcePoolImpl res = fillOutResourcePool();
+        PoolImpl res = fillOutResourcePool();
 
-        stack.visitResources(res, new StringTable() {
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        stack.visitResources(res);
     }
 
     private void checkUnknownPlugin() {
-        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/1", 0));
         plugins.add(createConfig("sorterplugin2", "/1", 1));
         plugins.add(createConfig("sorterplugin3", "/1", 2));
@@ -170,7 +147,7 @@ public class LastSorterTest {
     }
 
     private void checkOrderAfterLastSorter() throws Exception {
-        List<StackedPluginConfiguration> plugins = new ArrayList<>();
+        List<OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("sorterplugin1", "/c", 0));
         plugins.add(createConfig("sorterplugin2", "/b", 1));
         plugins.add(createConfig("sorterplugin3", "/a", 2));
@@ -182,26 +159,16 @@ public class LastSorterTest {
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
         // check order
-        ResourcePoolImpl res = fillOutResourcePool();
+        PoolImpl res = fillOutResourcePool();
         try {
-            stack.visitResources(res, new StringTable() {
-                @Override
-                public int addString(String str) {
-                    return -1;
-                }
-
-                @Override
-                public String getString(int id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            });
+            stack.visitResources(res);
             throw new AssertionError("Order was changed after the last sorter, but no exception occurred");
         } catch (Exception ex) {
             // XXX OK expected
         }
     }
 
-    public static class SorterPlugin implements ResourcePlugin {
+    public static class SorterPlugin implements TransformerPlugin {
 
         private final String name;
         private final String starts;
@@ -212,10 +179,9 @@ public class LastSorterTest {
         }
 
         @Override
-        public void visit(ResourcePool resources, ResourcePool output, StringTable strings)
-                throws Exception {
-            List<ResourcePool.Resource> paths = new ArrayList<>();
-            for (ResourcePool.Resource res : resources.getResources()) {
+        public void visit(Pool resources, Pool output) {
+            List<ModuleData> paths = new ArrayList<>();
+            for (ModuleData res : resources.getContent()) {
                 if (res.getPath().startsWith(starts)) {
                     paths.add(0, res);
                 } else {
@@ -223,8 +189,8 @@ public class LastSorterTest {
                 }
             }
 
-            for (ResourcePool.Resource r : paths) {
-                output.addResource(r);
+            for (ModuleData r : paths) {
+                output.add(r);
             }
         }
 
@@ -234,16 +200,10 @@ public class LastSorterTest {
         }
     }
 
-    public static class SorterProvider extends CmdResourcePluginProvider {
+    public static class SorterProvider extends TransformerCmdProvider {
 
         SorterProvider(String name) {
             super(name, "");
-        }
-
-        @Override
-        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
-                throws IOException {
-            return new ResourcePlugin[]{new SorterPlugin(getName(), arguments == null ? null : arguments[0])};
         }
 
         @Override
@@ -265,6 +225,18 @@ public class LastSorterTest {
         public Map<String, String> getAdditionalOptions() {
             return null;
         }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new SorterPlugin(getName(), arguments == null ? null : arguments[0]));
+            return lst;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
     }
 
     public static class SorterProvider2 extends SorterProvider {
@@ -274,12 +246,14 @@ public class LastSorterTest {
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
-                throws IOException {
-            SorterPlugin sorterPlugin = (SorterPlugin) super.newPlugins(arguments, options)[0];
-            return new ResourcePlugin[]{                    sorterPlugin,
-                    sorterPlugin
-            };
+        public List<TransformerPlugin> newPlugins(String[] arguments,
+                Map<String, String> otherOptions) {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            SorterPlugin sorterPlugin =
+                    (SorterPlugin) super.newPlugins(arguments, otherOptions).get(0);
+            lst.add(sorterPlugin);
+            lst.add(sorterPlugin);
+            return lst;
         }
     }
 }

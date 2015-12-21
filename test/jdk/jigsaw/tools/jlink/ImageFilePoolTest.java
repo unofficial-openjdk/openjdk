@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @summary Test ImageFilePool class
+ * @summary Test a pool containing external files.
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
  * @run build ImageFilePoolTest
@@ -31,14 +31,11 @@
  */
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import jdk.tools.jlink.internal.ImageFilePoolImpl;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile.ImageFileType;
-import jdk.tools.jlink.plugins.ImageFilePool.Visitor;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.Pool.ModuleDataType;
+import jdk.tools.jlink.plugins.Pool.Visitor;
 
 public class ImageFilePoolTest {
     public static void main(String[] args) throws Exception {
@@ -53,32 +50,32 @@ public class ImageFilePoolTest {
     private static final String SUFFIX = "END";
 
     private void checkVisitor() throws Exception {
-        ImageFilePool input = new ImageFilePoolImpl();
+        Pool input = new PoolImpl();
         for (int i = 0; i < 1000; ++i) {
             String module = "module" + (i / 100);
-            input.addFile(new InMemoryImageFile(module, "/" + module + "/java/class" + i,
-                    "class" + i, ImageFileType.CONFIG, "class" + i));
+            input.add(new InMemoryImageFile(module, "/" + module + "/java/class" + i,
+                    ModuleDataType.CONFIG, "class" + i));
         }
-        if (input.getFiles().size() != 1000) {
+        if (input.getContent().size() != 1000) {
             throw new AssertionError();
         }
-        ImageFilePool output = new ImageFilePoolImpl();
+        Pool output = new PoolImpl();
         ResourceVisitor visitor = new ResourceVisitor();
         input.visit(visitor, output);
         if (visitor.getAmountBefore() == 0) {
             throw new AssertionError("Resources not found");
         }
-        if (visitor.getAmountBefore() != input.getFiles().size()) {
+        if (visitor.getAmountBefore() != input.getContent().size()) {
             throw new AssertionError("Number of visited resources. Expected: " +
-                    visitor.getAmountBefore() + ", got: " + input.getFiles().size());
+                    visitor.getAmountBefore() + ", got: " + input.getContent().size());
         }
-        if (visitor.getAmountAfter() != output.getFiles().size()) {
+        if (visitor.getAmountAfter() != output.getContent().size()) {
             throw new AssertionError("Number of added resources. Expected: " +
-                    visitor.getAmountAfter() + ", got: " + output.getFiles().size());
+                    visitor.getAmountAfter() + ", got: " + output.getContent().size());
         }
-        for (ImageFile outFile : output.getFiles()) {
+        for (ModuleData outFile : output.getContent()) {
             String path = outFile.getPath().replaceAll(SUFFIX + "$", "");
-            ImageFile inFile = input.getFile(path);
+            ModuleData inFile = input.get(path);
             if (inFile == null) {
                 throw new AssertionError("Unknown resource: " + path);
             }
@@ -91,17 +88,17 @@ public class ImageFilePoolTest {
         private int amountAfter;
 
         @Override
-        public ImageFile visit(ImageFile file) throws Exception {
+        public ModuleData visit(ModuleData file) {
             int index = ++amountBefore % 3;
             switch (index) {
                 case 0:
                     ++amountAfter;
                     return new InMemoryImageFile(file.getModule(), file.getPath() + SUFFIX,
-                            file.getName(), file.getType(), file.getName());
+                            file.getType(), file.getPath());
                 case 1:
                     ++amountAfter;
                     return new InMemoryImageFile(file.getModule(), file.getPath(),
-                            file.getName(), file.getType(), file.getName());
+                            file.getType(), file.getPath());
             }
             return null;
         }
@@ -116,9 +113,9 @@ public class ImageFilePoolTest {
     }
 
     private void checkNegative() throws Exception {
-        ImageFilePoolImpl input = new ImageFilePoolImpl();
+        PoolImpl input = new PoolImpl();
         try {
-            input.addFile(null);
+            input.add(null);
             throw new AssertionError("NullPointerException is not thrown");
         } catch (NullPointerException e) {
             // expected
@@ -129,46 +126,31 @@ public class ImageFilePoolTest {
         } catch (NullPointerException e) {
             // expected
         }
-        if (input.getFile("unknown") != null) {
+        if (input.get("unknown") != null) {
             throw new AssertionError("ImageFilePool does not return null for unknown file");
         }
-        if (input.contains(new InMemoryImageFile("", "unknown", "", ImageFileType.CONFIG, "unknown"))) {
+        if (input.contains(new InMemoryImageFile("", "unknown", ModuleDataType.CONFIG, "unknown"))) {
             throw new AssertionError("'contain' returns true for unknown file");
         }
-        input.addFile(new InMemoryImageFile("", "/aaa/bbb", "bbb", ImageFileType.CONFIG, ""));
+        input.add(new InMemoryImageFile("", "/aaa/bbb", ModuleDataType.CONFIG, ""));
         try {
-            input.addFile(new InMemoryImageFile("", "/aaa/bbb", "bbb", ImageFileType.CONFIG, ""));
+            input.add(new InMemoryImageFile("", "/aaa/bbb", ModuleDataType.CONFIG, ""));
             throw new AssertionError("Exception expected");
         } catch (Exception e) {
             // expected
         }
         input.setReadOnly();
         try {
-            input.addFile(new InMemoryImageFile("", "/aaa/ccc", "ccc", ImageFileType.CONFIG, ""));
+            input.add(new InMemoryImageFile("", "/aaa/ccc", ModuleDataType.CONFIG, ""));
             throw new AssertionError("Exception expected");
         } catch (Exception e) {
             // expected
         }
     }
 
-    private static class InMemoryImageFile extends ImageFile {
-        private final ByteArrayInputStream bais;
-        private final long size;
-
-        public InMemoryImageFile(String module, String path, String name, ImageFileType type, String content) {
-            super(module, path, name, type);
-            bais = new ByteArrayInputStream(content.getBytes());
-            size = bais.available();
-        }
-
-        @Override
-        public long size() {
-            return size;
-        }
-
-        @Override
-        public InputStream stream() throws IOException {
-            return bais;
+    private static class InMemoryImageFile extends ModuleData {
+        public InMemoryImageFile(String module, String path, ModuleDataType type, String content) {
+            super(module, path, type, new ByteArrayInputStream(content.getBytes()), content.getBytes().length);
         }
     }
 }

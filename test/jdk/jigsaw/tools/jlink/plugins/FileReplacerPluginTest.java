@@ -30,26 +30,32 @@
  * @run main FileReplacerPluginTest
  */
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.tools.jlink.internal.PoolImpl;
 
-import jdk.tools.jlink.internal.ImageFilePoolImpl;
 import jdk.tools.jlink.internal.plugins.FileReplacerProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.Pool.ModuleDataType;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class FileReplacerPluginTest {
     public static void main(String[] args) throws Exception {
@@ -108,15 +114,15 @@ public class FileReplacerPluginTest {
         Map<String, Object> p = new HashMap<>();
         p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
         FileReplacerProvider provider = new FileReplacerProvider();
-        ImageFilePlugin replacerPlugin = (ImageFilePlugin) provider.newPlugins(p)[0];
-        ImageFilePool input = new ImageFilePoolImpl();
-        ImageFilePool output = new ImageFilePoolImpl();
+        TransformerPlugin replacerPlugin = (TransformerPlugin) provider.newPlugins(p).get(0);
+        Pool input = new PoolImpl();
+        Pool output = new PoolImpl();
         for (Replacement replacement : replacements) {
-            input.addFile(new CustomImageFile(replacement.first));
+            input.add(new CustomImageFile(replacement.first));
         }
         replacerPlugin.visit(input, output);
         for (Replacement replacement : replacements) {
-            ImageFilePool.ImageFile main = output.getFile(replacement.first);
+            ModuleData main = output.get(replacement.first);
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(main.stream()))) {
                 String content = reader.lines().collect(Collectors.joining("\n"));
                 if (!Objects.equals(content, replacement.second)) {
@@ -137,27 +143,32 @@ public class FileReplacerPluginTest {
         }
     }
 
-    private static class CustomImageFile extends ImageFilePool.ImageFile {
+    private static class CustomImageFile extends ModuleData {
 
         private final String path;
 
-        public CustomImageFile(String path) {
-            super("java.base", path, path, ImageFilePool.ImageFile.ImageFileType.CONFIG);
+        public CustomImageFile(String path) throws IOException {
+            super("java.base", path, ModuleDataType.CONFIG,
+                    new ByteArrayInputStream(new byte[0]),-1);
             this.path = path;
         }
 
         @Override
-        public long size() {
+        public long getLength() {
             try {
                 return Files.size(Paths.get(path));
-            } catch (IOException e) {
-                return -1;
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
         }
 
         @Override
-        public InputStream stream() throws IOException {
-            return Files.newInputStream(Paths.get(path));
+        public InputStream stream() {
+            try {
+                return Files.newInputStream(Paths.get(path));
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
         }
     }
 }

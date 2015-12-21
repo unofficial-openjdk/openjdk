@@ -30,7 +30,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,11 +44,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive.Entry;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
+import jdk.tools.jlink.internal.PoolImpl.CompressedModuleData;
 import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile.ImageFileType;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 /**
  * An image (native endian.)
@@ -136,11 +134,11 @@ public final class ImageFileCreator {
                                         }
                                     }));
             ByteOrder order = ByteOrder.nativeOrder();
-            Pools pools = createPools(archives, entriesForModule, order);
+            BasicImageWriter writer = new BasicImageWriter(order);
+            Pools pools = createPools(archives, entriesForModule, order, writer);
             try (OutputStream fos = Files.newOutputStream(jimageFile);
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     DataOutputStream out = new DataOutputStream(bos)) {
-                BasicImageWriter writer = new BasicImageWriter(order);
                 generateJImage(pools.resources, writer, pluginSupport, out);
             }
         } finally {
@@ -155,11 +153,11 @@ public final class ImageFileCreator {
             ByteOrder byteOrder)
             throws IOException {
         try {
-            Pools pools = createPools(archives,
-                    entriesForModule, byteOrder);
             BasicImageWriter writer = new BasicImageWriter(byteOrder);
-            ResourcePool result = generateJImage(pools.resources,
-                    writer, plugins, plugins.getJImageFileOutputStream());
+            Pools pools = createPools(archives,
+                    entriesForModule, byteOrder, writer);
+            PoolImpl result = generateJImage(pools.resources,
+                 writer, plugins, plugins.getJImageFileOutputStream());
 
             //Handle files.
             try {
@@ -175,43 +173,32 @@ public final class ImageFileCreator {
         }
     }
 
-    private static ResourcePool generateJImage(ResourcePoolImpl resources,
+    private static PoolImpl generateJImage(PoolImpl resources,
             BasicImageWriter writer,
             ImagePluginStack pluginSupport,
             DataOutputStream out
     ) throws IOException {
-        ResourcePool resultResources;
+        PoolImpl resultResources;
         try {
-            resultResources = pluginSupport.visitResources(resources, new StringTable() {
-
-                @Override
-                public int addString(String str) {
-                    return writer.addString(str);
-                }
-
-                @Override
-                public String getString(int id) {
-                    return writer.getString(id);
-                }
-            });
+            resultResources = pluginSupport.visitResources(resources);
         } catch (Exception ex) {
             throw new IOException(ex);
         }
         Set<String> duplicates = new HashSet<>();
         long offset = 0;
 
-        List<ResourcePool.Resource> content = new ArrayList<>();
+        List<ModuleData> content = new ArrayList<>();
         List<String> paths = new ArrayList<>();
                  // the order of traversing the resources and the order of
         // the module content being written must be the same
-        for (ResourcePool.Resource res : resultResources.getResources()) {
+        for (ModuleData res : resultResources.getContent()) {
             String path = res.getPath();
             content.add(res);
             long uncompressedSize = res.getLength();
             long compressedSize = 0;
-            if (res instanceof ResourcePool.CompressedResource) {
-                ResourcePool.CompressedResource comp
-                        = (ResourcePool.CompressedResource) res;
+            if (res instanceof CompressedModuleData) {
+                CompressedModuleData comp
+                        = (CompressedModuleData) res;
                 compressedSize = res.getLength();
                 uncompressedSize = comp.getUncompressedSize();
             }
@@ -239,8 +226,8 @@ public final class ImageFileCreator {
         out.write(bytes, 0, bytes.length);
 
         // write module content
-        for (ResourcePool.Resource res : content) {
-            byte[] buf = res.getByteArray();
+        for (ModuleData res : content) {
+            byte[] buf = res.getBytes();
             out.write(buf, 0, buf.length);
         }
 
@@ -252,41 +239,20 @@ public final class ImageFileCreator {
     }
 
     private static class Pools {
-        private ResourcePoolImpl resources;
-        private ImageFilePoolImpl files;
+        private PoolImpl resources;
+        private PoolImpl files;
     }
 
-    private static class EntryFile extends ImageFile {
-        private final Entry entry;
-        private EntryFile(Entry entry) {
-            super(entry.archive().moduleName(),
-                    entry.path(), entry.name(),
-                    mapImageFileType(entry.type()));
-            this.entry = entry;
-        }
-
-        @Override
-        public long size() {
-            return entry.size();
-        }
-
-        @Override
-        public InputStream stream() throws IOException {
-            return entry.stream();
-        }
-
-    }
-
-    private static ImageFileType mapImageFileType(EntryType type) {
+    private static Pool.ModuleDataType mapImageFileType(EntryType type) {
         switch(type) {
             case CONFIG: {
-                return ImageFileType.CONFIG;
+                return Pool.ModuleDataType.CONFIG;
             }
             case NATIVE_CMD: {
-                return ImageFileType.NATIVE_CMD;
+                return Pool.ModuleDataType.NATIVE_CMD;
             }
             case NATIVE_LIB: {
-                return ImageFileType.NATIVE_LIB;
+                return Pool.ModuleDataType.NATIVE_LIB;
             }
         }
         return null;
@@ -294,33 +260,48 @@ public final class ImageFileCreator {
 
     private static Pools createPools(Set<Archive> archives,
             Map<String, List<Entry>> entriesForModule,
-            ByteOrder byteOrder) throws IOException {
-        ResourcePoolImpl resources = new ResourcePoolImpl(byteOrder);
-        ImageFilePoolImpl files = new ImageFilePoolImpl();
+            ByteOrder byteOrder,
+            BasicImageWriter writer) throws IOException {
+        PoolImpl resources = new PoolImpl(byteOrder, new StringTable() {
+
+            @Override
+            public int addString(String str) {
+                return writer.addString(str);
+            }
+
+            @Override
+            public String getString(int id) {
+                return writer.getString(id);
+            }
+        });
+        PoolImpl files = new PoolImpl();
         for (Archive archive : archives) {
             String mn = archive.moduleName();
             for (Entry entry : entriesForModule.get(mn)) {
-                String path = entry.name();
+
                 if (entry.type() == EntryType.CLASS_OR_RESOURCE) {
-                    if (!entry.path().endsWith(BasicImageWriter.BOOT_NAME)) {
-                        try (InputStream stream = entry.stream()) {
-                            byte[] bytes = readAllBytes(stream);
-                            if (path.endsWith("module-info.class")) {
-                                path = "/" + path;
-                            } else {
-                                path = "/" + mn + "/" + path;
-                            }
-                            try {
-                                resources.addResource(new ResourcePool.Resource(path,
-                                        ByteBuffer.wrap(bytes)));
-                            } catch (Exception ex) {
-                                throw new IOException(ex);
-                            }
+                    // Removal of "classes/" radical.
+                    String path = entry.name();
+                    try (InputStream stream = entry.stream()) {
+                        byte[] bytes = readAllBytes(stream);
+                        if (path.endsWith("module-info.class")) {
+                            path = "/" + path;
+                        } else {
+                            path = "/" + mn + "/" + path;
+                        }
+                        try {
+                            resources.add(Pool.newResource(path, bytes));
+                        } catch (Exception ex) {
+                            throw new IOException(ex);
                         }
                     }
                 } else {
                     try {
-                        files.addFile(new EntryFile(entry));
+                        // Entry.path() contains the kind of file native, conf, bin, ...
+                        // It is kept in order for ImageBuilder to put files in right place
+                        files.add(Pool.newImageFile(mn,
+                                entry.path(), mapImageFileType(entry.type()),
+                                entry.stream(), entry.size()));
                     } catch (Exception ex) {
                         throw new IOException(ex);
                     }

@@ -22,22 +22,23 @@
  */
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.OnOffPostProcessingPluginProvider;
-import jdk.tools.jlink.plugins.PostProcessingPlugin;
-import jdk.tools.jlink.plugins.ProcessingManager;
-import jdk.tools.jlink.plugins.ProcessingManager.ProcessingSession;
-import jdk.tools.jlink.plugins.ProcessingManager.RunningProcess;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.PostProcessorOnOffProvider;
+import jdk.tools.jlink.plugins.PostProcessorPlugin;
+import jdk.tools.jlink.plugins.Sessions;
+import jdk.tools.jlink.plugins.Sessions.RunningProcess;
+import jdk.tools.jlink.plugins.Sessions.Session;
 import tests.Helper;
-import tests.JImageGenerator;
-import tests.JImageGenerator.InMemoryFile;
 
 /*
  * @test
@@ -56,69 +57,84 @@ import tests.JImageGenerator.InMemoryFile;
  */
 public class JLinkPostProcessingTest {
 
-    private static class PostProcessingTest extends OnOffPostProcessingPluginProvider {
+    private static class PostProcessingTest extends PostProcessorOnOffProvider {
 
         private static ExecutableImage called;
-        @Override
-        public PostProcessingPlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            return new PostProcessingPlugin[]{new PPPlugin()};
-        }
 
         private static boolean isWindows() {
             return System.getProperty("os.name").startsWith("Windows");
         }
 
-        private static class PPPlugin implements PostProcessingPlugin {
+        @Override
+        public List<PostProcessorPlugin> createPlugins(Map<String, String> otherOptions) {
+            List<PostProcessorPlugin> lst = new ArrayList<>();
+            lst.add(new PPPlugin());
+            return lst;
+        }
+
+        private static class PPPlugin implements PostProcessorPlugin {
 
             @Override
-            public List<String> process(ProcessingManager manager) throws Exception {
+            public List<String> process(Sessions manager) {
                 called = manager.getImage();
                 List<String> args = new ArrayList<>();
                 args.add("-version");
 
-                ProcessingSession session = manager.newSession("test");
+                Session session = manager.newSession("test");
                 {
-                    RunningProcess i = session.newImageProcess(args);
-                    String str = i.getStdout();
-                    if (!str.isEmpty()) {
-                        throw new Exception("Unexpected out " + str);
-                    }
-                    String str2 = i.getStderr();
-                    if (str2.isEmpty()) {
-                        throw new Exception("Version not print ");
-                    } else {
-                        System.out.println("REMOTE PROCESS output: " + str2);
-                    }
-                    if (i.getExitCode() != 0) {
-                        throw new Exception("Not valid exit code " + i.getExitCode());
+                    try {
+                        RunningProcess i = session.newImageProcess(args);
+                        String str = i.getStdout();
+                        if (!str.isEmpty()) {
+                            throw new PluginException("Unexpected out " + str);
+                        }
+                        String str2 = i.getStderr();
+                        if (str2.isEmpty()) {
+                            throw new PluginException("Version not print ");
+                        } else {
+                            System.out.println("REMOTE PROCESS output: " + str2);
+                        }
+                        if (i.getExitCode() != 0) {
+                            throw new PluginException("Not valid exit code " + i.getExitCode());
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        throw new PluginException(ex);
                     }
                 }
 
                 {
-                    ProcessBuilder builder = new ProcessBuilder(manager.getImage().
-                            getHome().resolve("bin").
-                            resolve(isWindows() ? "java.exe" : "java").toString(), "-version");
-                    RunningProcess i = session.newRunningProcess(builder);
-                    String str = i.getStdout();
-                    if (!str.isEmpty()) {
-                        throw new Exception("Unexpected out " + str);
-                    }
-                    String str2 = i.getStderr();
-                    if (str2.isEmpty()) {
-                        throw new Exception("Version not print ");
-                    } else {
-                        System.out.println("REMOTE PROCESS output: " + str2);
-                    }
-                    if (i.getExitCode() != 0) {
-                        throw new Exception("Not valid exit code " + i.getExitCode());
+                    try {
+                        ProcessBuilder builder = new ProcessBuilder(manager.getImage().
+                                getHome().resolve("bin").
+                                resolve(isWindows() ? "java.exe" : "java").toString(), "-version");
+                        RunningProcess i = session.newRunningProcess(builder);
+                        String str = i.getStdout();
+                        if (!str.isEmpty()) {
+                            throw new PluginException("Unexpected out " + str);
+                        }
+                        String str2 = i.getStderr();
+                        if (str2.isEmpty()) {
+                            throw new PluginException("Version not print ");
+                        } else {
+                            System.out.println("REMOTE PROCESS output: " + str2);
+                        }
+                        if (i.getExitCode() != 0) {
+                            throw new PluginException("Not valid exit code " + i.getExitCode());
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        throw new PluginException(ex);
                     }
                 }
 
+                try {
 
-                session.close();
+                    session.close();
 
-                Path gen = manager.getImage().getHome().resolve("lib").resolve("toto.txt");
-                Files.createFile(gen);
+                    Path gen = manager.getImage().getHome().resolve("lib").resolve("toto.txt");
+                    Files.createFile(gen);
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
                 return null;
             }
 
@@ -150,6 +166,7 @@ public class JLinkPostProcessingTest {
         }
 
     }
+
     public static void main(String[] args) throws Exception {
 
         Helper helper = Helper.newHelper();

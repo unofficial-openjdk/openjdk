@@ -25,12 +25,9 @@
 package jdk.tools.jlink.internal;
 
 import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.Plugin;
-import java.io.IOException;
 import java.lang.reflect.Layer;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +36,11 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.PostProcessorPlugin;
+import jdk.tools.jlink.plugins.PostProcessorPluginProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
@@ -53,19 +55,16 @@ public final class ImagePluginProviderRepository {
     private static final Map<String, PluginProvider> registeredProviders = new HashMap<>();
 
     /**
-     * Retrieve the provider to build a plugin for the passed name.
-     * @param config Optional config.
-     * @param name Non null name.
+     * Retrieves the provider associated to the passed name. If multiple providers
+     * exist for the same name,
+     * then an exception is thrown.
+     * @param name The plugin provider name.
      * @param pluginsLayer
-     * @return An array of plugins.
-     * @throws IOException
+     * @return A provider or null if not found.
      */
-    public static Plugin[] newPlugins(Map<String, Object> config, String name,
-            Layer pluginsLayer) throws IOException {
-        Objects.requireNonNull(name);
-        Objects.requireNonNull(pluginsLayer);
-        PluginProvider fact = getPluginProvider(name, pluginsLayer);
-        return fact.newPlugins(config);
+    public static TransformerPluginProvider getTransformerPluginProvider(String name,
+            Layer pluginsLayer) {
+        return getPluginProvider(TransformerPluginProvider.class, name, pluginsLayer);
     }
 
     /**
@@ -74,52 +73,62 @@ public final class ImagePluginProviderRepository {
      * then an exception is thrown.
      * @param name The plugin provider name.
      * @param pluginsLayer
-     * @return A provider.
-     * @throws IOException
+     * @return A provider or null if not found.
      */
-    public static PluginProvider getPluginProvider(String name,
-            Layer pluginsLayer) throws IOException {
-        Objects.requireNonNull(name);
-        Objects.requireNonNull(pluginsLayer);
-        PluginProvider provider = registeredProviders.get(name);
-        @SuppressWarnings("unchecked")
-        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
-        while (javaProviders.hasNext()) {
-            @SuppressWarnings("unchecked")
-            PluginProvider factory = javaProviders.next();
-            if (factory.getName().equals(name)) {
-                if (provider != null) {
-                    throw new IOException("Multiple ImageWriterProvider "
-                            + "for the name " + name);
-                }
-                provider = factory;
-            }
-        }
-        if (provider == null) {
-            throw new IOException("Provider not found for " + name);
-        }
-        return provider;
+    public static ImageBuilderProvider getImageBuilderProvider(String name,
+            Layer pluginsLayer) {
+        return getPluginProvider(ImageBuilderProvider.class, name, pluginsLayer);
     }
 
     /**
-     * The list of all the providers accessible in the current context.
+     * Retrieves the provider associated to the passed name. If multiple providers
+     * exist for the same name,
+     * then an exception is thrown.
+     * @param name The plugin provider name.
      * @param pluginsLayer
-     * @return A list of all the providers.
+     * @return A provider or null if not found.
      */
-    public static List<PluginProvider> getPluginProviders(Layer pluginsLayer) {
+    public static PostProcessorPluginProvider getPostProcessingPluginProvider(String name,
+            Layer pluginsLayer) {
+        return getPluginProvider(PostProcessorPluginProvider.class, name, pluginsLayer);
+    }
+
+    /**
+     * Build module transformer plugins for the passed name.
+     *
+     * @param config Optional config.
+     * @param name Non null name.
+     * @param pluginsLayer
+     * @return An array of plugins.
+     */
+    public static List<? extends TransformerPlugin> newTransformerPlugins(Map<String, Object> config, String name,
+            Layer pluginsLayer) {
+        Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
-        List<PluginProvider> factories = new ArrayList<>();
-        @SuppressWarnings("unchecked")
-        Iterator<PluginProvider> javaProviders = getJavaPluginProviders(pluginsLayer);
-        while (javaProviders.hasNext()) {
-            @SuppressWarnings("unchecked")
-            PluginProvider fact = javaProviders.next();
-            factories.add(fact);
+        TransformerPluginProvider fact = getTransformerPluginProvider(name, pluginsLayer);
+        if(fact != null) {
+            return fact.newPlugins(config);
         }
-        registeredProviders.values().stream().forEach((fact) -> {
-            factories.add(fact);
-        });
-        return Collections.unmodifiableList(factories);
+        return null;
+    }
+
+    /**
+     * Build post processing plugins for the passed name.
+     *
+     * @param config Optional config.
+     * @param name Non null name.
+     * @param pluginsLayer
+     * @return An array of plugins.
+     */
+    public static List<? extends PostProcessorPlugin> newPostProcessingPlugins(Map<String, Object> config, String name,
+            Layer pluginsLayer) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(pluginsLayer);
+        PostProcessorPluginProvider fact = getPostProcessingPluginProvider(name, pluginsLayer);
+        if(fact != null) {
+            return fact.newPlugins(config);
+        }
+        return null;
     }
 
     /**
@@ -144,49 +153,102 @@ public final class ImagePluginProviderRepository {
     }
 
     public static ImageBuilder newImageBuilder(Map<String, Object> config, Path outputDir,
-            String name, Layer pluginsLayer) throws IOException {
+            String name, Layer pluginsLayer) {
         Objects.requireNonNull(config);
         Objects.requireNonNull(outputDir);
         Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
-        Iterator<ImageBuilderProvider> providers
-                = ServiceLoader.load(pluginsLayer, ImageBuilderProvider.class).iterator();
-        ImageBuilder builder = null;
-        while (providers.hasNext()) {
-            ImageBuilderProvider fact = providers.next();
+        List<ImageBuilderProvider> providers = getImageBuilderProviders(pluginsLayer);
+        List<? extends ImageBuilder> builder = null;
+        for (ImageBuilderProvider fact : providers) {
             if (fact.getName().equals(name)) {
                 if(builder != null) {
-                     throw new IOException("Multiple ImageBuilderProvider "
+                     throw new PluginException("Multiple ImageBuilderProvider "
                             + "for the name " + name);
                 }
-                builder = fact.newBuilder(config, outputDir);
+                Map<String, Object> all = new HashMap<>();
+                all.putAll(config);
+                all.put(ImageBuilderProvider.IMAGE_PATH_KEY, outputDir);
+                builder = fact.newPlugins(all);
             }
         }
-        if (builder == null) {
-            throw new IOException("Image builder not found for " + name);
+        if (builder == null || builder.isEmpty()) {
+            throw new PluginException("Image builder not found for " + name);
         }
-        return builder;
+        return builder.get(0);
     }
 
     /**
      * The image builder providers accessible in the current context.
      *
      * @param pluginsLayer
-     * @return The image builder provider or null if no provider.
+     * @return The list of image builder provider.
      */
     public static List<ImageBuilderProvider> getImageBuilderProviders(Layer pluginsLayer) {
+        return getPluginProviders(ImageBuilderProvider.class, pluginsLayer);
+    }
+
+    /**
+     * The module transformers accessible in the current context.
+     *
+     * @param pluginsLayer
+     * @return The list of module transformer.
+     */
+    public static List<TransformerPluginProvider> getTransformerProviders(Layer pluginsLayer) {
+        return getPluginProviders(TransformerPluginProvider.class, pluginsLayer);
+    }
+
+    /**
+     * The post processors accessible in the current context.
+     *
+     * @param pluginsLayer
+     * @return The list of post processors.
+     */
+    public static List<PostProcessorPluginProvider> getPostProcessingProviders(Layer pluginsLayer) {
+        return getPluginProviders(PostProcessorPluginProvider.class, pluginsLayer);
+    }
+
+    private static <T extends PluginProvider> T getPluginProvider(Class<T> clazz, String name,
+            Layer pluginsLayer) {
+        Objects.requireNonNull(name);
         Objects.requireNonNull(pluginsLayer);
-        List<ImageBuilderProvider> factories = new ArrayList<>();
-        Iterator<ImageBuilderProvider> providers
-                = ServiceLoader.load(pluginsLayer, ImageBuilderProvider.class).iterator();
+        @SuppressWarnings("unchecked")
+        T provider = null;
+        List<T> javaProviders = getPluginProviders(clazz, pluginsLayer);
+        for(T factory : javaProviders) {
+            if (factory.getName().equals(name)) {
+                if (provider != null) {
+                    throw new PluginException("Multiple plugin "
+                            + "for the name " + name);
+                }
+                provider = factory;
+            }
+        }
+        return provider;
+    }
+
+    /**
+     * The post processors accessible in the current context.
+     *
+     * @param pluginsLayer
+     * @return The list of post processors.
+     */
+    private static <T extends PluginProvider> List<T> getPluginProviders(Class<T> clazz, Layer pluginsLayer) {
+        Objects.requireNonNull(pluginsLayer);
+        List<T> factories = new ArrayList<>();
+        Iterator<T> providers
+                = ServiceLoader.load(pluginsLayer, clazz).iterator();
         while (providers.hasNext()) {
             factories.add(providers.next());
         }
+        registeredProviders.values().stream().forEach((fact) -> {
+            if (clazz.isInstance(fact)) {
+                @SuppressWarnings("unchecked")
+                T trans = (T) fact;
+                factories.add(trans);
+            }
+        });
         return factories;
     }
 
-    private static Iterator<PluginProvider> getJavaPluginProviders(Layer pluginsLayer) {
-        Objects.requireNonNull(pluginsLayer);
-        return ServiceLoader.load(pluginsLayer, PluginProvider.class).iterator();
-    }
 }

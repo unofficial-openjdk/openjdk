@@ -24,20 +24,27 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
- * An abstract ImageFile Plugin provider. Such provider are creating
- * ImageFilePlugin.
+ * A PostProcessing Plugin provider. Order of known categories are:
+ * <ol>
+ * <li>VERIFIER: Does some image verification.</li>
+ * <li>PROCESSOR: Does some post processing on image.</li>
+ * <li>PACKAGER: Final processing</li>
+ * </ol>
  */
-public abstract class ImageFilePluginProvider extends PluginProvider {
+public abstract class PostProcessorPluginProvider extends OrderedPluginProvider {
 
-    protected ImageFilePluginProvider(String name, String description) {
+    public static final String PACKAGER = "packager";
+    public static final String PROCESSOR = "processor";
+    public static final String VERIFIER = "verifier";
+
+    protected PostProcessorPluginProvider(String name, String description) {
         super(name, description);
     }
 
     @Override
-    public abstract ImageFilePlugin[] newPlugins(Map<String, Object> config)
-            throws IOException;
+    public abstract List<? extends PostProcessorPlugin> newPlugins(Map<String, Object> config);
 }

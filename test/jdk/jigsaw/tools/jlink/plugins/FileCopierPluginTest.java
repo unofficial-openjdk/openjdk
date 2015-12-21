@@ -31,24 +31,18 @@
  */
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Properties;
-import java.util.Set;
+import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.plugins.DefaultImageBuilder;
-import jdk.tools.jlink.internal.ImageFilePoolImpl;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
 
 import jdk.tools.jlink.internal.plugins.FileCopierProvider;
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.Pool.ModuleDataType;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class FileCopierPluginTest {
 
@@ -89,19 +83,19 @@ public class FileCopierPluginTest {
         args[i++] = txt.getAbsolutePath() + "=" + target;
         args[i++] = src.getAbsolutePath() + "=src2";
 
-        ImageFilePlugin plug = prov.newPlugins(args, null)[0];
-        ImageFilePool pool = new ImageFilePoolImpl();
-        plug.visit(new ImageFilePoolImpl(), pool);
-        if (pool.getFiles().size() != args.length) {
+        TransformerPlugin plug = prov.newPlugins(args, null).get(0);
+        Pool pool = new PoolImpl();
+        plug.visit(new PoolImpl(), pool);
+        if (pool.getContent().size() != args.length) {
             throw new AssertionError("Wrong number of added files");
         }
-        for (ImageFile f : pool.getFiles()) {
-            if (!f.getType().equals(ImageFile.ImageFileType.OTHER)) {
+        for (ModuleData f : pool.getContent()) {
+            if (!f.getType().equals(ModuleDataType.OTHER)) {
                 throw new AssertionError("Invalid type " + f.getType()
-                        + " for file " + f.getName());
+                        + " for file " + f.getPath());
             }
             if (f.stream() == null) {
-                throw new AssertionError("Null stream for file " + f.getName());
+                throw new AssertionError("Null stream for file " + f.getPath());
             }
 
         }
@@ -109,18 +103,7 @@ public class FileCopierPluginTest {
         DefaultImageBuilder builder = new DefaultImageBuilder(new HashMap<String, Object>(),
                 root);
         builder.storeFiles(pool, Collections.EMPTY_LIST,
-                "", new ImageBuilder.ResourceRetriever() {
-
-                    @Override
-                    public ResourcePool.Resource retrieves(String path) throws IOException {
-                        return null;
-                    }
-
-                    @Override
-                    public Set<String> getModules() {
-                        return Collections.emptySet();
-                    }
-                });
+                "", new PoolImpl());
 
         if (lic.exists()) {
             File license = new File(root.toFile(), "LICENSE");

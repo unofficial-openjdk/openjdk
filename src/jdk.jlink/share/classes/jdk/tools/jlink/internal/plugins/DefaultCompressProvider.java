@@ -24,21 +24,20 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  * Default compression provider.
  */
-public class DefaultCompressProvider extends OnOffResourcePluginProvider {
+public class DefaultCompressProvider extends TransformerOnOffProvider {
 
     public static final String NAME = "compress-resources";
     public static final String LEVEL_OPTION = "compress-resources-level";
@@ -52,35 +51,8 @@ public class DefaultCompressProvider extends OnOffResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException {
-        String filter = otherOptions.get(FILTER_OPTION);
-        String[] patterns = filter == null ? null : filter.split(",");
-        String level = otherOptions.get(LEVEL_OPTION);
-        List<Plugin> plugins = new ArrayList<>();
-        ResourceFilter resFilter = new ResourceFilter(patterns);
-        if (level != null) {
-            if (LEVEL_0.equals(level)) {
-                plugins.add(new StringSharingPlugin(resFilter));
-            } else if (LEVEL_1.equals(level)) {
-                plugins.add(new ZipPlugin(resFilter));
-            } else if (LEVEL_2.equals(level)) {
-                plugins.add(new StringSharingPlugin(resFilter));
-                plugins.add(new ZipPlugin(resFilter));
-            } else {
-                throw new IOException("Invalid level " + level);
-            }
-        } else {
-            plugins.add(new StringSharingPlugin(resFilter));
-            plugins.add(new ZipPlugin(resFilter));
-        }
-        ResourcePlugin[] array = new ResourcePlugin[plugins.size()];
-        return plugins.toArray(array);
-    }
-
-    @Override
     public String getCategory() {
-        return PluginProvider.COMPRESSOR;
+        return TransformerOnOffProvider.COMPRESSOR;
     }
 
     @Override
@@ -96,4 +68,41 @@ public class DefaultCompressProvider extends OnOffResourcePluginProvider {
         return m;
     }
 
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
+    }
+
+    @Override
+    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        try {
+            String filter = otherOptions.get(FILTER_OPTION);
+            String[] patterns = filter == null ? null : filter.split(",");
+            String level = otherOptions.get(LEVEL_OPTION);
+            List<TransformerPlugin> plugins = new ArrayList<>();
+            ResourceFilter resFilter = new ResourceFilter(patterns);
+            if (level != null) {
+                switch (level) {
+                    case LEVEL_0:
+                        plugins.add(new StringSharingPlugin(resFilter));
+                        break;
+                    case LEVEL_1:
+                        plugins.add(new ZipPlugin(resFilter));
+                        break;
+                    case LEVEL_2:
+                        plugins.add(new StringSharingPlugin(resFilter));
+                        plugins.add(new ZipPlugin(resFilter));
+                        break;
+                    default:
+                        throw new IOException("Invalid level " + level);
+                }
+            } else {
+                plugins.add(new StringSharingPlugin(resFilter));
+                plugins.add(new ZipPlugin(resFilter));
+            }
+            return plugins;
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
 }

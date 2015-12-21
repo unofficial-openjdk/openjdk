@@ -23,14 +23,14 @@
 
 package plugin;
 
-import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
-public class CustomResourcePluginProvider extends CmdResourcePluginProvider {
+public class CustomResourcePluginProvider extends TransformerCmdProvider {
 
     private final static String NAME = "custom-resource-plugin";
 
@@ -40,7 +40,7 @@ public class CustomResourcePluginProvider extends CmdResourcePluginProvider {
 
     @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TRANSFORMER;
     }
 
     @Override
@@ -59,7 +59,12 @@ public class CustomResourcePluginProvider extends CmdResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-        return new ResourcePlugin[0];
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 }

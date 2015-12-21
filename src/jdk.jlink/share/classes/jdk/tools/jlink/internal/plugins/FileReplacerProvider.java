@@ -24,19 +24,19 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * Replace files by custom content
  */
-public class FileReplacerProvider extends CmdImageFilePluginProvider {
+public class FileReplacerProvider extends TransformerCmdProvider {
 
     public static final String NAME = "replace-file";
 
@@ -51,7 +51,7 @@ public class FileReplacerProvider extends CmdImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TransformerPluginProvider.TRANSFORMER;
     }
 
     @Override
@@ -65,8 +65,15 @@ public class FileReplacerProvider extends CmdImageFilePluginProvider {
     }
 
     @Override
-    public ImageFilePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-        return new ImageFilePlugin[] { new FileReplacerPlugin(arguments) };
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new FileReplacerPlugin(arguments));
+        return lst;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.IMAGE_FILE_PLUGIN;
     }
 
 }

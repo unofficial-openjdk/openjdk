@@ -26,7 +26,6 @@ package jdk.tools.jlink.plugins;
 
 /**
  * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
  */
 public interface Plugin {
 

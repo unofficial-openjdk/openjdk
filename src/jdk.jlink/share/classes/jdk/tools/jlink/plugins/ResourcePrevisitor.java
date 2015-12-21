@@ -22,7 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.internal;
+
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  * Plugin wishing to pre-visit the resources must implement this interface.
@@ -40,8 +42,7 @@ public interface ResourcePrevisitor {
      * @param resources Read only resources.
      * @param strings StringTable instance. Add string to the StringTable to track string
      * usage.
-     * @throws Exception
+     * @throws PluginException
      */
-    public void previsit(ResourcePool resources, StringTable strings)
-            throws Exception;
+    public void previsit(Pool resources, StringTable strings);
 }

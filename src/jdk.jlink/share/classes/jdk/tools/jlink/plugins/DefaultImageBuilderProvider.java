@@ -26,8 +26,10 @@ package jdk.tools.jlink.plugins;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +42,7 @@ import static jdk.tools.jlink.plugins.DefaultImageBuilder.isWindows;
 /**
  * Default Image Builder provider.
  */
-public class DefaultImageBuilderProvider implements ImageBuilderProvider {
+public class DefaultImageBuilderProvider extends ImageBuilderProvider {
 
     public static final String GEN_BOM = "genbom";
     public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
@@ -50,6 +52,10 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
 
     static {
         OPTIONS.put(GEN_BOM, PluginsResourceBundle.getOption(NAME, GEN_BOM));
+    }
+
+    public DefaultImageBuilderProvider() {
+        super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
@@ -73,16 +79,6 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
-            throws IOException {
-        if (Files.exists(imageOutDir)) {
-            throw new IOException(PluginsResourceBundle.
-                    getMessage("err.dir.already.exits", imageOutDir));
-        }
-        return new DefaultImageBuilder(config, imageOutDir);
-    }
-
-    @Override
     public ExecutableImage canExecute(Path root) {
         if (Files.exists(root.resolve("bin").resolve(getJavaProcessName()))) {
             return new DefaultImageBuilder.DefaultExecutableImage(root,
@@ -103,7 +99,7 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
             try (FileInputStream fi = new FileInputStream(releaseFile.toFile())) {
                 release.load(fi);
             } catch (IOException ex) {
-                System.err.println("Cant read release file " + ex);
+                System.err.println("Can't read release file " + ex);
             }
             String mods = release.getProperty("MODULES");
             if (mods != null) {
@@ -118,8 +114,28 @@ public class DefaultImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments)
-            throws IOException {
-        DefaultImageBuilder.patchScripts(image, arguments);
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) {
+        try {
+            DefaultImageBuilder.patchScripts(image, arguments);
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
+    }
+
+    @Override
+    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
+        try {
+            @SuppressWarnings("unchecked")
+            Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
+            if (Files.exists(imageOutDir)) {
+                throw new PluginException(PluginsResourceBundle.
+                        getMessage("err.dir.already.exits", imageOutDir));
+            }
+            List<ImageBuilder> lst = new ArrayList<>();
+            lst.add(new DefaultImageBuilder(config, imageOutDir));
+            return lst;
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 }

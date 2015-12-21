@@ -1,14 +1,13 @@
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jdk.tools.jlink.internal.ImageFilePoolImpl;
 import jdk.tools.jlink.internal.JvmHandler;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.Pool.ModuleDataType;
 
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
@@ -164,72 +163,39 @@ public class JvmHandlerTest {
 
     private static void test(List<String> jvm, String jvmcfg, List<String> removed,
             boolean platformRemoved, String expectedcfg, String dll) throws Exception {
-        ImageFilePoolImpl files = new ImageFilePoolImpl();
-        List<ImageFile> removedFiles = new ArrayList<>();
+        Pool files = new PoolImpl();
+        List<ModuleData> removedFiles = new ArrayList<>();
 
         // remaining platforms
         for (String j : jvm) {
             String path = "/native/" + j + "/" + dll;
             System.err.println("PATH " + path);
-            ImageFile f = new ImageFile("java.base", path, j + "/" + dll,
-                    ImageFile.ImageFileType.NATIVE_LIB) {
+            ModuleData f = Pool.newImageFile("java.base", path, ModuleDataType.NATIVE_LIB, new ByteArrayInputStream(new byte[0]), 0);
 
-                @Override
-                public long size() {
-                    return 0;
-                }
-
-                @Override
-                public InputStream stream() throws IOException {
-                    return new ByteArrayInputStream(new byte[0]);
-                }
-            };
-            files.addFile(f);
+            files.add(f);
         }
 
         // removed platforms or other file
         for (String j : removed) {
             String name = j + "/" + (platformRemoved ? dll : "crazy.txt");
             String path = "/native/" + name;
-            ImageFile f = new ImageFile("java.base", path, name,
-                    ImageFile.ImageFileType.NATIVE_LIB) {
-
-                @Override
-                public long size() {
-                    return 0;
-                }
-
-                @Override
-                public InputStream stream() throws IOException {
-                    return new ByteArrayInputStream(new byte[0]);
-                }
-            };
+            ModuleData f = Pool.newImageFile("java.base", path,
+                    ModuleDataType.NATIVE_LIB, new ByteArrayInputStream(new byte[0]), 0);
             removedFiles.add(f);
         }
 
         String jvmcfgpath = "/native/jvm.cfg";
         byte[] content = jvmcfg.getBytes();
-        ImageFile f = new ImageFile("java.base", jvmcfgpath, "jvm.cfg",
-                ImageFile.ImageFileType.NATIVE_LIB) {
-
-            @Override
-            public long size() {
-                return content.length;
-            }
-
-            @Override
-            public InputStream stream() throws IOException {
-                return new ByteArrayInputStream(content);
-            }
-        };
-        files.addFile(f);
+        ModuleData f = Pool.newImageFile("java.base", jvmcfgpath,
+                ModuleDataType.NATIVE_LIB, new ByteArrayInputStream(content), content.length);
+        files.add(f);
 
         JvmHandler handler = new JvmHandler();
-        ImageFilePool res = handler.handlePlatforms(files, removedFiles);
+        Pool res = handler.handlePlatforms(files, removedFiles);
 
         // check that all files are still there
-        ImageFile newcfg = null;
-        for (ImageFile file : res.getFiles()) {
+        ModuleData newcfg = null;
+        for (ModuleData file : res.getContent()) {
             if (file.getPath().equals(jvmcfgpath)) {
                 newcfg = file;
             }
@@ -240,12 +206,12 @@ public class JvmHandlerTest {
         if (newcfg == null) {
             throw new Exception("No jvm.cfg file found");
         }
-        for (ImageFile file : files.getFiles()) {
+        for (ModuleData file : files.getContent()) {
             if (!res.contains(file)) {
                 throw new Exception("File " + file + ", not contained in output");
             }
         }
-        byte[] bytes = newcfg.stream().readAllBytes();
+        byte[] bytes = newcfg.getBytes();
         String newcontent = new String(bytes);
         if (!newcontent.equals(expectedcfg)) {
             throw new Exception(expectedcfg + " NOT EQUAL TO " + newcontent);

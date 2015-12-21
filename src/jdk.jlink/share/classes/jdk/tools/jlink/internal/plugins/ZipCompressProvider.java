@@ -25,30 +25,27 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * ZIP compression plugin provider
  */
-public class ZipCompressProvider extends CmdResourcePluginProvider {
+public class ZipCompressProvider extends TransformerCmdProvider {
     public static final String NAME = "zip";
     public ZipCompressProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new ZipPlugin(arguments)};
-    }
-
-    @Override
     public String getCategory() {
-        return PluginProvider.COMPRESSOR;
+        return TransformerPluginProvider.COMPRESSOR;
     }
 
     @Override
@@ -64,6 +61,22 @@ public class ZipCompressProvider extends CmdResourcePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        try {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new ZipPlugin(arguments));
+            return lst;
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 
 }

@@ -24,28 +24,39 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
-import java.util.Map;
-
 /**
- *
- * Abstract class for command line resource provider that requires ON/OFF
- * support. Plugin created by this provider can be enabled by default (enabled
- * although no option is provided to the command line).
+ * An abstract plugin provider class for plugins that are ordered.
  */
-public abstract class OnOffResourcePluginProvider extends ResourcePluginProvider
-        implements OnOffPluginProvider<ResourcePlugin> {
+public abstract class OrderedPluginProvider extends PluginProvider {
 
-    public OnOffResourcePluginProvider(String name, String description) {
+    public static enum ORDER {
+        FIRST,
+        ANY,
+        LAST
+    }
+
+    public enum Type {
+        RESOURCE_PLUGIN,
+        IMAGE_FILE_PLUGIN
+    }
+
+    protected OrderedPluginProvider(String name, String description) {
         super(name, description);
     }
 
-    // Must be implemented, an abstract method can't be implemented with a default method
-    @Override
-    public ResourcePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
-        ResourcePlugin[] arr = OnOffPluginProvider.super.newPlugins(conf);
-        arr = arr == null ? new ResourcePlugin[0] : arr;
-        return arr;
+    /**
+     * Order of the plugin within its category. By default ANY.
+     *
+     * @return Expected order.
+     */
+    public ORDER getOrder() {
+        return ORDER.ANY;
     }
 
+    /**
+     * A category in which to understand the order.
+     *
+     * @return
+     */
+    public abstract String getCategory();
 }

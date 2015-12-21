@@ -24,24 +24,19 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /**
  * An abstract command line plugin provider class. Such a provider has a command
- * line option, an optional argument, and optional additional options. The
- * provider classes to extend to add plugins to jlink command line tool are:
- * <ul>
- * <li><code>CmdResourcePluginProvider</code></li>
- * <li><code>CmdImageFilePluginProvider</code></li>
- * </ul>
- * @param <T>
+ * line option, an optional argument, and optional additional options.
+ * @param <T> A plugin class
  */
-public interface CmdPluginProvider<T> {
+public interface CmdPluginProvider<T extends Plugin> {
 
     /**
      * This property is the main argument (if any) passed to the plugin.
@@ -73,7 +68,7 @@ public interface CmdPluginProvider<T> {
      */
     public abstract Map<String, String> getAdditionalOptions();
 
-    public default T[] newPlugins(Map<String, Object> conf) throws IOException {
+    public default List<T> newPlugins(Map<String, Object> conf) {
         Map<String, String> config = toString(conf);
         String[] arguments = null;
         Collection<String> options = Collections.emptyList();
@@ -106,10 +101,9 @@ public interface CmdPluginProvider<T> {
      * @param arguments The main option value.
      * @param otherOptions The additional option values.
      * @return An array of plugins.
-     * @throws IOException
      */
-    public abstract T[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
+    public abstract List<T> newPlugins(String[] arguments,
+            Map<String, String> otherOptions);
 
     static Map<String, String> toString(Map<String, Object> input) {
         Map<String, String> map = new HashMap<>();

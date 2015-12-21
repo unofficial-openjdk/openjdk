@@ -25,8 +25,10 @@ package plugin;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,44 +36,13 @@ import jdk.tools.jlink.plugins.ExecutableImage;
 
 import jdk.tools.jlink.plugins.ImageBuilder;
 import jdk.tools.jlink.plugins.ImageBuilderProvider;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugins.Pool;
 
-public class SecondImageBuilderProvider implements ImageBuilderProvider {
+public class SecondImageBuilderProvider extends ImageBuilderProvider {
     private static final String NAME = "second-image-builder";
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return NAME + "-description";
-    }
-
-    @Override
-    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir) throws IOException {
-        return new ImageBuilder() {
-            @Override
-            public void storeFiles(ImageFilePool files, List<ImageFilePool.ImageFile> removed,
-                                   String bom, ResourceRetriever retriever) throws IOException {
-            }
-
-            @Override
-            public DataOutputStream getJImageOutputStream() throws IOException {
-                return new DataOutputStream(Files.newOutputStream(imageOutDir.resolve("image.jimage")));
-            }
-
-            @Override
-            public ExecutableImage getExecutableImage() throws IOException {
-                return new ExecutableImage(imageOutDir, Collections.emptySet(), Collections.emptyList());
-            }
-
-            @Override
-            public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) throws IOException {
-
-            }
-        };
+    public SecondImageBuilderProvider() {
+        super(NAME, NAME + "-description");
     }
 
     @Override
@@ -90,7 +61,45 @@ public class SecondImageBuilderProvider implements ImageBuilderProvider {
     }
 
     @Override
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) throws IOException {
+    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) {
 
+    }
+
+    @Override
+    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
+        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
+        List<ImageBuilder> lst = new ArrayList<>();
+        lst.add(new ImageBuilder() {
+
+            @Override
+            public DataOutputStream getJImageOutputStream() {
+                try {
+                    return new DataOutputStream(Files.newOutputStream(imageOutDir.resolve("image.jimage")));
+                } catch (IOException ex) {
+                   throw new UncheckedIOException(ex);
+                }
+            }
+
+            @Override
+            public ExecutableImage getExecutableImage() {
+                return new ExecutableImage(imageOutDir, Collections.emptySet(), Collections.emptyList());
+            }
+
+            @Override
+            public void storeJavaLauncherOptions(ExecutableImage image, List<String> args) {
+
+            }
+
+            @Override
+            public void storeFiles(Pool files, List<Pool.ModuleData> removed, String bom, Pool resources) {
+
+            }
+
+            @Override
+            public String getName() {
+                return NAME;
+            }
+        });
+        return lst;
     }
 }

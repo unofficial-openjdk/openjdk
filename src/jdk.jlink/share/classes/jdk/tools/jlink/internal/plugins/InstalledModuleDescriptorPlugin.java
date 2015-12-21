@@ -25,7 +25,6 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.lang.module.ModuleDescriptor.*;
-import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +37,6 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
@@ -69,7 +67,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
     }
 
     @Override
-    public void visit(AsmPools pools, StringTable strings) throws IOException {
+    public void visit(AsmPools pools) {
         Set<String> moduleNames = new HashSet<>();
         int numPackages = 0;
         for (AsmModulePool module : pools.getModulePools()) {

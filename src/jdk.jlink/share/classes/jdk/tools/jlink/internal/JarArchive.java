@@ -138,4 +138,3 @@ public abstract class JarArchive implements Archive {
         zipFile = new ZipFile(file.toFile());
     }
 }
-

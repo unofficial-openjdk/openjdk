@@ -20,12 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+
 import tests.Helper;
 
 /*
@@ -45,7 +46,7 @@ import tests.Helper;
  */
 public class JLinkOptionsTest {
 
-    private static class TestProvider extends CmdResourcePluginProvider {
+    private static class TestProvider extends TransformerCmdProvider {
 
         private final String option;
         private final Map<String, String> options;
@@ -55,12 +56,6 @@ public class JLinkOptionsTest {
             super(name, "");
             this.option = option;
             this.options = options;
-        }
-
-        @Override
-        public ResourcePlugin[] newPlugins(String[] arguments,
-                Map<String, String> otherOptions) throws IOException {
-            return null;
         }
 
         @Override
@@ -82,6 +77,16 @@ public class JLinkOptionsTest {
         @Override
         public Map<String, String> getAdditionalOptions() {
             return options;
+        }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            return null;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
         }
     }
 

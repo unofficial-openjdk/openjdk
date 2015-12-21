@@ -24,7 +24,8 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,34 +34,32 @@ import java.util.Objects;
  * On/Off plugin provider support class.
  * @param <T>
  */
-public interface OnOffPluginProvider<T> extends CmdPluginProvider<T> {
+public interface OnOffPluginProvider<T extends Plugin> extends CmdPluginProvider<T> {
 
     public static final String ON_ARGUMENT = "on";
     public static final String OFF_ARGUMENT = "off";
 
     @Override
-    public default T[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions)
-            throws IOException {
+    public default List<T> newPlugins(String[] arguments,
+            Map<String, String> otherOptions) {
         Objects.requireNonNull(arguments);
         if (arguments.length != 1) {
-            throw new IOException("Invalid number of arguments expecting "
+            throw new PluginException("Invalid number of arguments expecting "
                     + getToolArgument());
         }
         if (!OFF_ARGUMENT.equals(arguments[0])
                 && !ON_ARGUMENT.equals(arguments[0])) {
-            throw new IOException("Invalid argument " + arguments[0]
+            throw new PluginException("Invalid argument " + arguments[0]
                     + ", expecting " + ON_ARGUMENT + " or "
                     + OFF_ARGUMENT);
         }
         if (OFF_ARGUMENT.equals(arguments[0])) {
-            return null;
+            return Collections.emptyList();
         }
         return createPlugins(otherOptions);
     }
 
-    public T[] createPlugins(Map<String, String> otherOptions)
-            throws IOException;
+    public List<T> createPlugins(Map<String, String> otherOptions);
 
     @Override
     public default String getToolArgument() {

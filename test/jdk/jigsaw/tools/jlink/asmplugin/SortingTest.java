@@ -38,8 +38,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 public class SortingTest extends AsmPluginTestBase {
 
@@ -52,16 +53,20 @@ public class SortingTest extends AsmPluginTestBase {
     }
 
     @Override
-    public void test() throws Exception {
-        classSorting();
-        moduleSorting();
+    public void test() {
+        try {
+            classSorting();
+            moduleSorting();
+        } catch (Exception ex) {
+            throw new PluginException(ex);
+        }
     }
 
     private void classSorting() throws Exception {
         List<String> sorted = new ArrayList<>(getResources());
         sorted.sort(null);
         ClassSorterPlugin sorterPlugin = new ClassSorterPlugin(sorted);
-        ResourcePool resourcePool = sorterPlugin.visit(getPool());
+        Pool resourcePool = sorterPlugin.visit(getPool());
         sorterPlugin.test(getPool(), resourcePool);
     }
 
@@ -73,18 +78,18 @@ public class SortingTest extends AsmPluginTestBase {
         List<String> sorted = new ArrayList<>(getResources());
         sorted.sort((s1, s2) -> -getModuleName(s1).compareTo(getModuleName(s2)));
         ModuleSorterPlugin sorterPlugin = new ModuleSorterPlugin();
-        ResourcePool resourcePool = sorterPlugin.visit(getPool());
+        Pool resourcePool = sorterPlugin.visit(getPool());
         sorterPlugin.test(getPool(), resourcePool);
     }
 
     private class ModuleSorterPlugin extends TestPlugin {
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             for (AsmModulePool modulePool : getPools().getModulePools()) {
                 modulePool.setSorter(resources -> {
-                    List<String> sort = resources.getResources().stream()
-                            .map(Resource::getPath)
+                    List<String> sort = resources.getContent().stream()
+                            .map(ModuleData::getPath)
                             .collect(Collectors.toList());
                     sort.sort(null);
                     return sort;
@@ -97,17 +102,17 @@ public class SortingTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void test(ResourcePool inResources, ResourcePool outResources) throws Exception {
+        public void test(Pool inResources, Pool outResources) throws Exception {
             if (!isVisitCalled()) {
                 throw new AssertionError("Resources not visited");
             }
-            List<String> sortedResourcePaths = outResources.getResources().stream()
-                    .map(Resource::getPath)
+            List<String> sortedResourcePaths = outResources.getContent().stream()
+                    .map(ModuleData::getPath)
                     .collect(Collectors.toList());
 
             List<String> defaultResourceOrder = new ArrayList<>();
-            for (Resource r : inResources.getResources()) {
-                if (!inResources.getResources().contains(r)) {
+            for (ModuleData r : inResources.getContent()) {
+                if (!inResources.getContent().contains(r)) {
                     throw new AssertionError("Resource " + r.getPath() + " not in result pool");
                 }
                 defaultResourceOrder.add(r.getPath());
@@ -139,26 +144,26 @@ public class SortingTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             getPools().getGlobalPool().setSorter(
                     (resources) -> expectedClassesOrder.stream()
-                            .map(resources::getResource)
-                            .map(Resource::getPath)
+                            .map(resources::get)
+                            .map(ModuleData::getPath)
                             .collect(Collectors.toList()));
         }
 
         @Override
-        public void test(ResourcePool inResources, ResourcePool outResources) throws Exception {
+        public void test(Pool inResources, Pool outResources) throws Exception {
             if (!isVisitCalled()) {
                 throw new AssertionError("Resources not visited");
             }
-            List<String> sortedResourcePaths = outResources.getResources().stream()
-                    .map(Resource::getPath)
+            List<String> sortedResourcePaths = outResources.getContent().stream()
+                    .map(ModuleData::getPath)
                     .collect(Collectors.toList());
 
             List<String> defaultResourceOrder = new ArrayList<>();
-            for (Resource r : getPool().getResources()) {
-                if (!getPool().getResources().contains(r)) {
+            for (ModuleData r : getPool().getContent()) {
+                if (!getPool().getContent().contains(r)) {
                     throw new AssertionError("Resource " + r.getPath() + " not in result pool");
                 }
                 defaultResourceOrder.add(r.getPath());

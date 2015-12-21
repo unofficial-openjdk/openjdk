@@ -90,10 +90,10 @@ public final class Jlink {
     }
 
     /**
-     * A plugin located inside a stack of plugins. Such plugin as an index in
+     * A plugin located inside a stack of plugins. Such plugin has an index in
      * the stack.
      */
-    public static final class StackedPluginConfiguration extends PluginConfiguration {
+    public static final class OrderedPluginConfiguration extends PluginConfiguration {
 
         private final int index;
         private final boolean absIndex;
@@ -107,7 +107,7 @@ public final class Jlink {
          * the category.
          * @param config Plugin configuration. Can be null;
          */
-        public StackedPluginConfiguration(String name, int index, boolean absIndex,
+        public OrderedPluginConfiguration(String name, int index, boolean absIndex,
                 Map<String, Object> config) {
             super(name, config);
             if (index < 0) {
@@ -153,8 +153,8 @@ public final class Jlink {
      */
     public static final class PluginsConfiguration {
 
-        private final List<StackedPluginConfiguration> transformerPluginsConfig;
-        private final List<StackedPluginConfiguration> processorPluginsConfig;
+        private final List<OrderedPluginConfiguration> transformerPluginsConfig;
+        private final List<OrderedPluginConfiguration> processorPluginsConfig;
         private final PluginConfiguration imageBuilder;
         private final String lastSorterPluginName;
 
@@ -174,8 +174,8 @@ public final class Jlink {
          * configuration.
          * @param imageBuilder Image builder (null default builder).
          */
-        public PluginsConfiguration(List<StackedPluginConfiguration> transformerPluginsConfig,
-                List<StackedPluginConfiguration> processorPluginsConfig,
+        public PluginsConfiguration(List<OrderedPluginConfiguration> transformerPluginsConfig,
+                List<OrderedPluginConfiguration> processorPluginsConfig,
                 PluginConfiguration imageBuilder) {
             this(transformerPluginsConfig, processorPluginsConfig, imageBuilder, null);
         }
@@ -192,8 +192,8 @@ public final class Jlink {
          * @param lastSorterPluginName Name of last sorter plugin, no sorting
          * can occur after it.
          */
-        public PluginsConfiguration(List<StackedPluginConfiguration> transformerPluginsConfig,
-                List<StackedPluginConfiguration> processorPluginsConfig,
+        public PluginsConfiguration(List<OrderedPluginConfiguration> transformerPluginsConfig,
+                List<OrderedPluginConfiguration> processorPluginsConfig,
                 PluginConfiguration imageBuilder, String lastSorterPluginName) {
             this.transformerPluginsConfig = transformerPluginsConfig == null ? Collections.emptyList()
                     : transformerPluginsConfig;
@@ -206,14 +206,14 @@ public final class Jlink {
         /**
          * @return the transformer pluginsConfig
          */
-        public List<StackedPluginConfiguration> getTransformerPluginsConfig() {
+        public List<OrderedPluginConfiguration> getTransformerPluginsConfig() {
             return transformerPluginsConfig;
         }
 
         /**
          * @return the post processors pluginsConfig
          */
-        public List<StackedPluginConfiguration> getPostProcessorPluginsConfig() {
+        public List<OrderedPluginConfiguration> getPostProcessorPluginsConfig() {
             return processorPluginsConfig;
         }
 
@@ -389,9 +389,9 @@ public final class Jlink {
      * Build the image.
      *
      * @param config Jlink config, must not be null.
-     * @throws Exception
+     * @throws PluginException
      */
-    public void build(JlinkConfiguration config) throws Exception {
+    public void build(JlinkConfiguration config) {
         build(config, null);
     }
 
@@ -400,10 +400,14 @@ public final class Jlink {
      *
      * @param config Jlink config, must not be null.
      * @param pluginsConfig Plugins config, can be null
-     * @throws Exception
+     * @throws PluginException
      */
-    public void build(JlinkConfiguration config, PluginsConfiguration pluginsConfig) throws Exception {
+    public void build(JlinkConfiguration config, PluginsConfiguration pluginsConfig) {
         Objects.requireNonNull(config);
-        JlinkTask.createImage(config, pluginsConfig);
+        try {
+            JlinkTask.createImage(config, pluginsConfig);
+        } catch (Exception ex) {
+            throw new PluginException(ex);
+        }
     }
 }

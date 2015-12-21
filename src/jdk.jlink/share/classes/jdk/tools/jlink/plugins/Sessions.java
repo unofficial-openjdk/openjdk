@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * A process execution manager.
  */
-public interface ProcessingManager {
+public interface Sessions {
 
     /**
      * A running process.
@@ -55,7 +55,7 @@ public interface ProcessingManager {
      * close time. From a session one can start new processes. Direct execution
      * of Java image is also offered.
      */
-    public interface ProcessingSession {
+    public interface Session {
 
         public String getName();
 
@@ -71,18 +71,18 @@ public interface ProcessingManager {
          *
          * @param builder
          * @return
-         * @throws IOException
+         * @throws PluginException
          */
-        public RunningProcess newRunningProcess(ProcessBuilder builder) throws IOException;
+        public RunningProcess newRunningProcess(ProcessBuilder builder);
 
         /**
          * Run the image. The working directory is the private storage.
          *
          * @param args
          * @return
-         * @throws IOException
+         * @throws PluginException
          */
-        public RunningProcess newImageProcess(List<String> args) throws IOException;
+        public RunningProcess newImageProcess(List<String> args);
 
         public void close() throws IOException;
     }
@@ -92,9 +92,9 @@ public interface ProcessingManager {
      *
      * @param name Session name.
      * @return A new Session.
-     * @throws java.io.IOException
+     * @throws PluginException
      */
-    public ProcessingSession newSession(String name) throws IOException;
+    public Session newSession(String name);
 
     /**
      * Return the current image.

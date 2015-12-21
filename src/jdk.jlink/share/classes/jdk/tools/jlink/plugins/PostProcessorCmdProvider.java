@@ -24,26 +24,26 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
  * A PostProcessing Plugin provider that creates command line oriented plugins.
  */
-public abstract class CmdPostProcessingPluginProvider extends PostProcessingPluginProvider
-        implements CmdPluginProvider<PostProcessingPlugin> {
+public abstract class PostProcessorCmdProvider extends PostProcessorPluginProvider
+        implements CmdPluginProvider<PostProcessorPlugin> {
 
-    protected CmdPostProcessingPluginProvider(String name, String description) {
+    protected PostProcessorCmdProvider(String name, String description) {
         super(name, description);
     }
 
     @Override
-    public abstract PostProcessingPlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException;
+    public abstract List<PostProcessorPlugin> newPlugins(String[] arguments,
+            Map<String, String> otherOptions);
 
     // Must be implemented, an abstract method can't be implemented with a default method
     @Override
-    public PostProcessingPlugin[] newPlugins(Map<String, Object> conf) throws IOException {
+    public List<PostProcessorPlugin> newPlugins(Map<String, Object> conf) {
         return CmdPluginProvider.super.newPlugins(conf);
     }
 }

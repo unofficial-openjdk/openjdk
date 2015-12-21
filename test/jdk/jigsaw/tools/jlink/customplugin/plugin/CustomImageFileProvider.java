@@ -23,14 +23,14 @@
 
 package plugin;
 
-import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import jdk.tools.jlink.plugins.CmdImageFilePluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
-public class CustomImageFileProvider extends CmdImageFilePluginProvider {
+public class CustomImageFileProvider extends TransformerCmdProvider {
 
     private final static String NAME = "custom-image-plugin";
 
@@ -40,7 +40,7 @@ public class CustomImageFileProvider extends CmdImageFilePluginProvider {
 
     @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TRANSFORMER;
     }
 
     @Override
@@ -59,7 +59,12 @@ public class CustomImageFileProvider extends CmdImageFilePluginProvider {
     }
 
     @Override
-    public ImageFilePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-        return new ImageFilePlugin[0];
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Type getType() {
+        return Type.IMAGE_FILE_PLUGIN;
     }
 }

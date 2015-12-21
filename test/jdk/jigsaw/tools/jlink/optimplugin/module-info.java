@@ -24,4 +24,3 @@
 module optimplugin {
     exports optim;
 }
-

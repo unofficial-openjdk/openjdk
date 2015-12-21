@@ -29,8 +29,7 @@
  * @modules jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins.asm
  * @run main PackageMappingTest
-*/
-
+ */
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -48,8 +47,9 @@ import jdk.tools.jlink.internal.plugins.asm.AsmGlobalPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 public class PackageMappingTest extends AsmPluginTestBase {
 
@@ -67,12 +67,12 @@ public class PackageMappingTest extends AsmPluginTestBase {
     }
 
     public void test() throws Exception {
-        TestPlugin[] plugins = new TestPlugin[] {
-                new PackageMappingPlugin(newFiles, false),
-                new PackageMappingPlugin(newFiles, true)
+        TestPlugin[] plugins = new TestPlugin[]{
+            new PackageMappingPlugin(newFiles, false),
+            new PackageMappingPlugin(newFiles, true)
         };
         for (TestPlugin p : plugins) {
-            ResourcePool pool = p.visit(getPool());
+            Pool pool = p.visit(getPool());
             p.test(getPool(), pool);
         }
     }
@@ -93,24 +93,24 @@ public class PackageMappingTest extends AsmPluginTestBase {
                 String moduleName = getModuleName(file);
                 String path = file.substring(1 + moduleName.length() + 1);
                 newFiles.computeIfAbsent(moduleName, $ -> new ArrayList<>()).add(
-                        new ResourceFile(path, ByteBuffer.allocate(0)));
+                        new ResourceFile(path, new byte[0]));
             }
         }
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             testMapToUnknownModule();
             testMapPackageTwice();
             testPackageMapping();
         }
 
         @Override
-        public void test(ResourcePool inResources, ResourcePool outResources) throws Exception {
+        public void test(Pool inResources, Pool outResources) {
             Set<String> in = getPools().getGlobalPool().getResourceFiles().stream()
-                    .map(Resource::getPath)
+                    .map(ModuleData::getPath)
                     .collect(Collectors.toSet());
             Set<String> out = extractResources(outResources).stream()
-                    .map(Resource::getPath)
+                    .map(ModuleData::getPath)
                     .collect(Collectors.toSet());
             in.addAll(PackageMappingTest.this.newFiles);
             if (!Objects.equals(in, out)) {
@@ -134,24 +134,23 @@ public class PackageMappingTest extends AsmPluginTestBase {
                             globalPool.addPackageModuleMapping(packageName, moduleName);
                         }
                         WritableResourcePool transformedResourceFiles = testGlobal
-                                        ? globalPool.getTransformedResourceFiles()
-                                        : modulePool.getTransformedResourceFiles();
+                                ? globalPool.getTransformedResourceFiles()
+                                : modulePool.getTransformedResourceFiles();
                         transformedResourceFiles.addResourceFile(r);
                     }
-
                     try {
                         modulePool.getTransformedResourceFiles().addResourceFile(
-                                new ResourceFile("a3/bbb", ByteBuffer.allocate(0)));
+                                new ResourceFile("a3/bbb", new byte[0]));
                         throw new AssertionError("Exception expected");
-                    } catch (IOException e) {
+                    } catch (Exception ex) {
                         // expected
                     }
                 }
                 try {
                     globalPool.getTransformedResourceFiles().addResourceFile(
-                            new ResourceFile("a3/bbb", ByteBuffer.allocate(0)));
+                            new ResourceFile("a3/bbb", new byte[0]));
                     throw new AssertionError("Exception expected");
-                } catch (IOException e) {
+                } catch (Exception ex) {
                     // expected
                 }
             } catch (Exception e) {
@@ -166,7 +165,7 @@ public class PackageMappingTest extends AsmPluginTestBase {
                 globalPool.addPackageModuleMapping("a/p1", TEST_MODULE);
                 throw new AssertionError("Exception expected after mapping a package twice to the same module");
             } catch (Exception e) {
-                if (e instanceof IOException) {
+                if (e instanceof PluginException) {
                     // expected
                     String message = e.getMessage();
                     if (!(TEST_MODULE + " module already contains package a.p1").equals(message)) {

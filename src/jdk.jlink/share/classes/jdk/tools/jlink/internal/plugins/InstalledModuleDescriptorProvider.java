@@ -24,12 +24,14 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
-public class InstalledModuleDescriptorProvider extends OnOffResourcePluginProvider {
+public class InstalledModuleDescriptorProvider extends TransformerOnOffProvider {
+
     public static final String NAME = "gen-installed-modules";
 
     public InstalledModuleDescriptorProvider() {
@@ -52,14 +54,19 @@ public class InstalledModuleDescriptorProvider extends OnOffResourcePluginProvid
     }
 
     @Override
-    public ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException
-    {
-        return new ResourcePlugin[]{new InstalledModuleDescriptorPlugin()};
+    public boolean isEnabledByDefault() {
+        return true;
     }
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
+    }
+
+    @Override
+    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new InstalledModuleDescriptorPlugin());
+        return lst;
     }
 }

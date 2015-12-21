@@ -40,8 +40,6 @@
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -57,14 +55,13 @@ import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
 import jdk.tools.jlink.plugins.OnOffPluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 import tests.Helper;
 
 public class StripDebugPluginTest {
@@ -113,46 +110,37 @@ public class StripDebugPluginTest {
         Map<String, Object> options = new HashMap<>();
         options.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 OnOffPluginProvider.ON_ARGUMENT);
-        ResourcePlugin debug = (ResourcePlugin) prov.newPlugins(options)[0];
-        Resource result1 = stripDebug(debug, new Resource(path, ByteBuffer.wrap(content)), path, infoPath, moduleInfo);
+        TransformerPlugin debug = (TransformerPlugin) prov.newPlugins(options).get(0);
+        ModuleData result1 = stripDebug(debug, Pool.newResource(path,content), path, infoPath, moduleInfo);
 
         if (!path.endsWith("module-info.class")) {
             if (result1.getLength() >= content.length) {
                 throw new AssertionError("Class size not reduced, debug info not "
                         + "removed for " + path);
             }
-            checkDebugAttributes(result1.getByteArray());
+            checkDebugAttributes(result1.getBytes());
         }
 
-        Resource result2 = stripDebug(debug, result1, path, infoPath, moduleInfo);
+        ModuleData result2 = stripDebug(debug, result1, path, infoPath, moduleInfo);
         if (result1.getLength() != result2.getLength()) {
             throw new AssertionError("removing debug info twice reduces class size of "
                     + path);
         }
-        checkDebugAttributes(result1.getByteArray());
+        checkDebugAttributes(result1.getBytes());
     }
 
-    private Resource stripDebug(ResourcePlugin debug, Resource classResource, String path, String infoPath, byte[] moduleInfo) throws Exception {
-        ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        resources.addResource(classResource);
+    private ModuleData stripDebug(TransformerPlugin debug, ModuleData classResource,
+            String path, String infoPath, byte[] moduleInfo) throws Exception {
+        Pool resources = new PoolImpl();
+        resources.add(classResource);
         if (!path.endsWith("module-info.class")) {
-            Resource res2 = new Resource(infoPath, ByteBuffer.wrap(moduleInfo));
-            resources.addResource(res2);
+            ModuleData res2 = Pool.newResource(infoPath, moduleInfo);
+            resources.add(res2);
         }
-        ResourcePool results = new ResourcePoolImpl(resources.getByteOrder());
-        debug.visit(resources, results, new StringTable() {
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        Pool results = new PoolImpl();
+        debug.visit(resources, results);
         System.out.println(classResource.getPath());
-        return results.getResource(classResource.getPath());
+        return results.get(classResource.getPath());
     }
 
     private void checkDebugAttributes(byte[] strippedClassFile) throws IOException, ConstantPoolException {

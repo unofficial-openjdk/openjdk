@@ -26,19 +26,18 @@ package jdk.tools.jlink.internal.plugins;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.FileNotFoundException;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  * Replaces files with custom content
  */
-final class FileReplacerPlugin implements ImageFilePlugin {
+final class FileReplacerPlugin implements TransformerPlugin {
 
     private final Map<String, File> mapping = new HashMap<>();
 
@@ -66,25 +65,17 @@ final class FileReplacerPlugin implements ImageFilePlugin {
     }
 
     @Override
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception {
-        inFiles.visit((ImageFilePool.ImageFile file) -> {
-            File replaced = mapping.get("/" + file.getModule() + "/" +
-                    file.getPath());
+    public void visit(Pool inFiles, Pool outFiles) {
+        inFiles.visit((file) -> {
+            File replaced = mapping.get("/" + file.getModule() + "/"
+                    + file.getPath());
             if (replaced != null) {
-                file = new ImageFile(file.getModule(), file.getPath(),
-                        file.getName(), file.getType()) {
-
-                            @Override
-                            public long size() {
-                                return replaced.length();
-                            }
-
-                            @Override
-                            public InputStream stream() throws IOException {
-                                return new FileInputStream(replaced);
-                            }
-                        };
+                try {
+                    file = Pool.newImageFile(file.getModule(), file.getPath(),
+                            file.getType(), new FileInputStream(replaced), replaced.length());
+                } catch (FileNotFoundException ex) {
+                    throw new UncheckedIOException(ex);
+                }
             }
             return file;
         }, outFiles);

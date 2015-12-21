@@ -26,15 +26,14 @@ package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  *
  * Exclude resources plugin
  */
-final class ExcludePlugin implements ResourcePlugin {
+final class ExcludePlugin implements TransformerPlugin {
 
     private final Predicate<String> predicate;
 
@@ -52,11 +51,9 @@ final class ExcludePlugin implements ResourcePlugin {
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources,
-            StringTable strings)
-            throws Exception {
-        inResources.visit((resource, order,  str) -> {
+    public void visit(Pool in, Pool out) {
+        in.visit((resource) -> {
             return predicate.test(resource.getPath()) ? resource : null;
-        }, outResources, strings);
+        }, out);
     }
 }

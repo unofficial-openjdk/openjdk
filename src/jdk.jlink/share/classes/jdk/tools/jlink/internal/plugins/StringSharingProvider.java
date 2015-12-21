@@ -25,16 +25,19 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
 
 /**
  *
  * Compact CP provider.
  */
-public class StringSharingProvider extends CmdResourcePluginProvider {
+public class StringSharingProvider extends TransformerCmdProvider {
 
     public static final String NAME = "compact-cp";
 
@@ -43,15 +46,8 @@ public class StringSharingProvider extends CmdResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(String[] arguments,
-            Map<String, String> otherOptions) throws IOException {
-
-        return new ResourcePlugin[]{new StringSharingPlugin(arguments)};
-    }
-
-    @Override
     public String getCategory() {
-        return PluginProvider.COMPRESSOR;
+        return TransformerCmdProvider.COMPRESSOR;
     }
 
     @Override
@@ -67,6 +63,22 @@ public class StringSharingProvider extends CmdResourcePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> ret = new ArrayList<>();
+        try {
+            ret.add(new StringSharingPlugin(arguments));
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
+        return ret;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 
 }

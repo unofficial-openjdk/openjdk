@@ -1,11 +1,6 @@
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -18,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
@@ -26,19 +20,17 @@ import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.OptimizationProvider;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow.Block;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -92,7 +84,7 @@ public class JLinkOptimTest {
     private static final String EXPECTED = "expected";
     private static Helper helper;
 
-    private static class ControlFlowProvider extends CmdResourcePluginProvider {
+    private static class ControlFlowProvider extends TransformerCmdProvider {
 
         private boolean called;
         private int numMethods;
@@ -104,7 +96,7 @@ public class JLinkOptimTest {
             }
 
             @Override
-            public void visit(AsmPools pools, StringTable strings) throws IOException {
+            public void visit(AsmPools pools) {
                 called = true;
                 for (AsmModulePool p : pools.getModulePools()) {
 
@@ -150,14 +142,8 @@ public class JLinkOptimTest {
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] argument,
-                Map<String, String> options) throws IOException {
-            return new ResourcePlugin[]{new ControlFlowPlugin()};
-        }
-
-        @Override
         public String getCategory() {
-            return PluginProvider.TRANSFORMER;
+            return TRANSFORMER;
         }
 
         @Override
@@ -174,6 +160,18 @@ public class JLinkOptimTest {
         public Map<String, String> getAdditionalOptions() {
             return null;
         }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new ControlFlowPlugin());
+            return lst;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
     }
 
     private static void testForName() throws Exception {
@@ -185,15 +183,14 @@ public class JLinkOptimTest {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         Path root = fs.getPath("/modules/java.base");
         // Access module-info.class to be reused as fake module-info.class
-        List<Resource> javabaseResources = new ArrayList<>();
+        List<ModuleData> javabaseResources = new ArrayList<>();
         try (Stream<Path> stream = Files.walk(root)) {
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext();) {
                 Path p = iterator.next();
                 if (Files.isRegularFile(p)) {
                     try {
-                        javabaseResources.add(
-                                new Resource(p.toString().substring("/modules".length()),
-                                        ByteBuffer.wrap(Files.readAllBytes(p))));
+                        javabaseResources.add(Pool.newResource(p.toString().
+                                substring("/modules".length()), Files.readAllBytes(p)));
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
@@ -202,44 +199,32 @@ public class JLinkOptimTest {
         }
 
         //forName folding
-        ResourcePool pool = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        PoolImpl pool = new PoolImpl();
         byte[] content = Files.readAllBytes(classes.
                 resolve("optim").resolve("ForNameTestCase.class"));
         byte[] content2 = Files.readAllBytes(classes.
                 resolve("optim").resolve("AType.class"));
         byte[] mcontent = Files.readAllBytes(classes.resolve("module-info.class"));
 
-        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/ForNameTestCase.class", ByteBuffer.wrap(content)));
-        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/AType.class", ByteBuffer.wrap(content2)));
-        pool.addResource(new ResourcePool.Resource("/optimplugin/module-info.class",
-                ByteBuffer.wrap(mcontent)));
+        pool.add(Pool.newResource("/optimplugin/optim/ForNameTestCase.class", content));
+        pool.add(Pool.newResource("/optimplugin/optim/AType.class", content2));
+        pool.add(Pool.newResource("/optimplugin/module-info.class", mcontent));
 
-        for (Resource r : javabaseResources) {
-            pool.addResource(r);
+        for (ModuleData r : javabaseResources) {
+            pool.add(r);
         }
 
         OptimizationProvider prov = new OptimizationProvider();
         String[] a = {OptimizationProvider.FORNAME_REMOVAL};
         Map<String, String> optional = new HashMap<>();
         optional.put(OptimizationProvider.LOG_FILE, "forName.log");
-        ResourcePlugin plug = prov.newPlugins(a, optional)[0];
-        ResourcePool out = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        plug.visit(pool, out, new StringTable() {
+        TransformerPlugin plug = prov.newPlugins(a, optional).get(0);
+        Pool out = new PoolImpl();
+        plug.visit(pool, out);
 
-            @Override
-            public int addString(String str) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
+        ModuleData result = out.getContent().iterator().next();
 
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-
-        Resource result = out.getResources().iterator().next();
-
-        ClassReader optimReader = new ClassReader(result.getByteArray());
+        ClassReader optimReader = new ClassReader(result.getBytes());
         ClassNode optimClass = new ClassNode();
         optimReader.accept(optimClass, ClassReader.EXPAND_FRAMES);
 
@@ -260,7 +245,7 @@ public class JLinkOptimTest {
             }
         }
         Map<String, byte[]> newClasses = new HashMap<>();
-        newClasses.put("optim.ForNameTestCase", result.getByteArray());
+        newClasses.put("optim.ForNameTestCase", result.getBytes());
         newClasses.put("optim.AType", content2);
         MemClassLoader loader = new MemClassLoader(newClasses);
         Class<?> loaded = loader.loadClass("optim.ForNameTestCase");

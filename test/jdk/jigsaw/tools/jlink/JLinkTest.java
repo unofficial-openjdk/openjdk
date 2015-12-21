@@ -28,6 +28,7 @@ import java.lang.reflect.Layer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -65,10 +66,13 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 12;
+        int numPlugins = 13;
         {
             // number of built-in plugins
-            List<PluginProvider> builtInPluginsProviders = ImagePluginProviderRepository.getPluginProviders(Layer.boot());
+            List<PluginProvider> builtInPluginsProviders = new ArrayList<>();
+            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getTransformerProviders(Layer.boot()));
+            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getPostProcessingProviders(Layer.boot()));
+            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getImageBuilderProviders(Layer.boot()));
             for (PluginProvider p : builtInPluginsProviders) {
                 p.isExposed();
                 p.isFunctional();
@@ -137,7 +141,7 @@ public class JLinkTest {
             jdk.tools.jlink.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
             String output = writer.toString();
             long number = Stream.of(output.split("\n"))
-                    .filter((s) -> s.matches("Plugin Name:.*"))
+                    .filter((s) -> s.matches("(Plugin|Image Builder) Name:.*"))
                     .count();
             if (number != numPlugins) {
                 System.err.println(output);
@@ -208,7 +212,7 @@ public class JLinkTest {
             String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "invalid"};
             String moduleName = "invalidCompressLevel";
             helper.generateDefaultJModule(moduleName, "composite2");
-            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid level invalid");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: java.io.IOException: Invalid level invalid");
         }
 
         // configuration

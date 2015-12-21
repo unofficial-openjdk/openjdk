@@ -24,19 +24,27 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
-import java.util.Map;
-
 /**
- * A PostProcessing Plugin provider.
+ * An unchecked exception thrown by jlink plugin API for unrecoverable
+ * conditions.
  */
-public abstract class PostProcessingPluginProvider extends PluginProvider {
+public final class PluginException extends RuntimeException {
 
-    protected PostProcessingPluginProvider(String name, String description) {
-        super(name, description);
+    private static final long serialVersionUID = 7117982019443100395L;
+
+    public PluginException() {
+
     }
 
-    @Override
-    public abstract PostProcessingPlugin[] newPlugins(Map<String, Object> config)
-            throws IOException;
+    public PluginException(Throwable ex) {
+        super(ex);
+    }
+
+    public PluginException(String msg) {
+        super(msg);
+    }
+
+    public PluginException(String msg, Throwable thr) {
+        super(msg, thr);
+    }
 }

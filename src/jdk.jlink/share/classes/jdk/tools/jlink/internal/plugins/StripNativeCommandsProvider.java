@@ -24,33 +24,27 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.PluginProvider;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * Exclude native commands (such as java/java.exe) from the image.
  */
-public final class StripNativeCommandsProvider extends OnOffImageFilePluginProvider {
+public final class StripNativeCommandsProvider extends TransformerOnOffProvider {
     public static final String NAME = "strip-native-commands";
     public StripNativeCommandsProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
-    @Override
-    public ImageFilePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException {
-        return new ImageFilePlugin[]{new StripNativeCommandsPlugin()};
-    }
-
 
     @Override
     public String getCategory() {
-        return PluginProvider.FILTER;
+        return TransformerPluginProvider.FILTER;
     }
 
     @Override
@@ -61,5 +55,17 @@ public final class StripNativeCommandsProvider extends OnOffImageFilePluginProvi
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.IMAGE_FILE_PLUGIN;
+    }
+
+    @Override
+    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new StripNativeCommandsPlugin());
+        return lst;
     }
 }

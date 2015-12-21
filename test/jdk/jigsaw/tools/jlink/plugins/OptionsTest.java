@@ -31,13 +31,11 @@
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class OptionsTest {
     public static void main(String[] args) throws IOException {
@@ -52,7 +50,7 @@ public class OptionsTest {
         }
     }
 
-    public static class OptionsProvider extends CmdResourcePluginProvider {
+    public static class OptionsProvider extends TransformerCmdProvider {
 
         public static final String[] OPTIONS = {"a", "nnn", "cccc"};
 
@@ -60,21 +58,6 @@ public class OptionsTest {
 
         OptionsProvider() {
             super("Config", "");
-        }
-
-        @Override
-        public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> options)
-                throws IOException {
-            if (options.size() != OPTIONS.length) {
-                throw new IOException("Invalid options");
-            }
-            for (String o : OPTIONS) {
-                if (!options.keySet().contains(o)) {
-                    throw new IOException("Invalid option " + o);
-                }
-            }
-            this.options = options;
-            return null;
         }
 
         @Override
@@ -101,5 +84,23 @@ public class OptionsTest {
             return m;
         }
 
+        @Override
+        public Type getType() {
+            return Type.RESOURCE_PLUGIN;
+        }
+
+        @Override
+        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> options) {
+            if (options.size() != OPTIONS.length) {
+                throw new PluginException("Invalid options");
+            }
+            for (String o : OPTIONS) {
+                if (!options.keySet().contains(o)) {
+                    throw new PluginException("Invalid option " + o);
+                }
+            }
+            this.options = options;
+            return null;
+        }
     }
 }

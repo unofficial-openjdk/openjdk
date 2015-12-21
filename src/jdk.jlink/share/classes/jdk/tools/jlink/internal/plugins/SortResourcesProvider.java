@@ -25,31 +25,29 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * Sort resources plugin provider
  */
-public final class SortResourcesProvider extends CmdResourcePluginProvider {
+public final class SortResourcesProvider extends TransformerCmdProvider {
     public static final String NAME = "sort-resources";
     public SortResourcesProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
-    @Override
-    public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[] {new SortResourcesPlugin(argument)};
-    }
 
     @Override
     public String getCategory() {
-        return PluginProvider.SORTER;
+        return TransformerPluginProvider.SORTER;
     }
 
     @Override
@@ -65,5 +63,21 @@ public final class SortResourcesProvider extends CmdResourcePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        try {
+            List<TransformerPlugin> lst = new ArrayList<>();
+            lst.add(new SortResourcesPlugin(arguments));
+            return lst;
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 }

@@ -24,17 +24,17 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  */
-public final class OptimizationProvider extends CmdResourcePluginProvider {
+public final class OptimizationProvider extends TransformerCmdProvider {
 
     public static final String NAME = "class-optim";
     public static final String LOG_FILE = NAME + "-log-file";
@@ -47,7 +47,7 @@ public final class OptimizationProvider extends CmdResourcePluginProvider {
 
     @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TransformerCmdProvider.TRANSFORMER;
     }
 
     @Override
@@ -63,13 +63,20 @@ public final class OptimizationProvider extends CmdResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions) throws IOException {
-        return new ResourcePlugin[]{new OptimizationPlugin(arguments, otherOptions)};
+    public String getToolArgument() {
+        return PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL);
     }
 
     @Override
-    public String getToolArgument() {
-        return PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL);
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new OptimizationPlugin(arguments, otherOptions));
+        return lst;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 
 }

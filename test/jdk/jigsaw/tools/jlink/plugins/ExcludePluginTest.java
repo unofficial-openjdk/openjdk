@@ -36,14 +36,13 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
+import jdk.tools.jlink.internal.PoolImpl;
 
-import jdk.tools.jlink.internal.ResourcePoolImpl;
 import jdk.tools.jlink.internal.plugins.ExcludeProvider;
 import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 public class ExcludePluginTest {
 
@@ -79,28 +78,18 @@ public class ExcludePluginTest {
         Map<String, Object> p = new HashMap<>();
         p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeProvider provider = new ExcludeProvider();
-        ResourcePlugin excludePlugin = (ResourcePlugin) provider.newPlugins(p)[0];
-        ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        ResourcePool.Resource resource = new ResourcePool.Resource(sample, ByteBuffer.allocate(0));
-        resources.addResource(resource);
-        ResourcePool result = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        excludePlugin.visit(resources, result, new StringTable() {
-            @Override
-            public int addString(String str) {
-                return -1;
-            }
-
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        TransformerPlugin excludePlugin = (TransformerPlugin) provider.newPlugins(p).get(0);
+        Pool resources = new PoolImpl();
+        ModuleData resource = Pool.newResource(sample, new byte[0]);
+        resources.add(resource);
+        Pool result = new PoolImpl();
+        excludePlugin.visit(resources, result);
         if (exclude) {
-            if (result.getResources().contains(resource)) {
+            if (result.getContent().contains(resource)) {
                 throw new AssertionError(sample + " should be excluded by " + s);
             }
         } else {
-            if (!result.getResources().contains(resource)) {
+            if (!result.getContent().contains(resource)) {
                 throw new AssertionError(sample + " shouldn't be excluded by " + s);
             }
         }

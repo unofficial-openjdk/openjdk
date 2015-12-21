@@ -24,4 +24,3 @@
 module m2 {
     exports org.m2;
 }
-

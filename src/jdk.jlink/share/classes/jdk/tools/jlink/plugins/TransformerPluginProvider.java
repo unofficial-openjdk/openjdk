@@ -24,27 +24,47 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import jdk.tools.jlink.plugins.Pool.ModuleData;
 
 /**
+ * An abstract plugin provider class. A provider has a name, a description and
+ * an optional category.<br>
+ * The provider classes to extend to add plugins to jlink are:
+ * <ul>
+ * <li><code>ResourcePluginProvider</code></li>
+ * <li><code>ImageFilePluginProvider</code></li>
+ * </ul>
  *
- * Abstract class for command line ImageFile provider that requires ON/OFF
- * support. Plugin created by this provider can be enabled by default (enabled
- * although no option is provided to the command line).
+ * Order of known categories are:
+ * <ol>
+ * <li>FILTER: Filter in/out resources or files.</li>
+ * <li>TRANSFORMER: Transform resources or files(eg: refactoring, bytecode
+ * manipulation).</li>
+ * <li>SORTER: Sort resources within the resource container.</li>
+ * <li>COMPRESSOR: Compress resource within the resouce containers.</li>
+ * </ol>
  */
-public abstract class OnOffImageFilePluginProvider extends ImageFilePluginProvider
-        implements OnOffPluginProvider<ImageFilePlugin> {
+public abstract class TransformerPluginProvider extends OrderedPluginProvider {
 
-    public OnOffImageFilePluginProvider(String name, String description) {
+    public static final String COMPRESSOR = "compressor";
+    public static final String SORTER = "sorter";
+    public static final String TRANSFORMER = "transformer";
+    public static final String FILTER = "filter";
+
+    public enum Type {
+        RESOURCE_PLUGIN,
+        IMAGE_FILE_PLUGIN
+    }
+
+    protected TransformerPluginProvider(String name, String description) {
         super(name, description);
     }
 
-    // Must be implemented, an abstract method can't be implemented with a default method
+    public abstract Type getType();
+
     @Override
-    public ImageFilePlugin[] newPlugins(Map<String, Object> conf) throws IOException {
-        ImageFilePlugin[] arr = OnOffPluginProvider.super.newPlugins(conf);
-        arr = arr == null ? new ImageFilePlugin[0] : arr;
-        return arr;
-    }
+    public abstract List<? extends TransformerPlugin> newPlugins(Map<String, Object> config);
+
 }

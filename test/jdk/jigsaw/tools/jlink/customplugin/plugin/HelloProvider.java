@@ -22,16 +22,16 @@
  */
 package plugin;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.TransformerCmdProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class HelloProvider extends CmdResourcePluginProvider {
+public final class HelloProvider extends TransformerCmdProvider {
 
     public static final String NAME = "hello";
     public static boolean called;
@@ -41,14 +41,8 @@ public final class HelloProvider extends CmdResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new HelloPlugin()};
-    }
-
-    @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TRANSFORMER;
     }
 
     @Override
@@ -64,5 +58,17 @@ public final class HelloProvider extends CmdResourcePluginProvider {
     @Override
     public String getToolArgument() {
         return null;
+    }
+
+    @Override
+    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new HelloPlugin());
+        return lst;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
     }
 }

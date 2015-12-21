@@ -24,14 +24,14 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.plugins.TransformerPlugin;
 
 /**
  *
  * Strip Native Commands plugin
  */
-final class StripNativeCommandsPlugin implements ImageFilePlugin {
+final class StripNativeCommandsPlugin implements TransformerPlugin {
 
     @Override
     public String getName() {
@@ -39,8 +39,9 @@ final class StripNativeCommandsPlugin implements ImageFilePlugin {
     }
 
     @Override
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception {
-        inFiles.visit((file) -> file.getType() == ImageFilePool.ImageFile.ImageFileType.NATIVE_CMD ? null : file, outFiles);
+    public void visit(Pool in, Pool out) {
+        in.visit((file) -> {
+            return file.getType() == Pool.ModuleDataType.NATIVE_CMD ? null : file;
+        }, out);
     }
 }

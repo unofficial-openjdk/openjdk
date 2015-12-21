@@ -24,42 +24,25 @@
  */
 package jdk.tools.jlink.plugins;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
- * Implement this interface and make your class available to the ServiceLoader
- * in order to expose your ImageBuilder.
+ * Extend this class and make your class available to the ServiceLoader in order
+ * to expose your ImageBuilder.
  */
-public interface ImageBuilderProvider {
+public abstract class ImageBuilderProvider extends PluginProvider {
 
-    /**
-     * The name that identifies this builder.
-     *
-     * @return Builder name.
-     */
-    public String getName();
+    public static final String IMAGE_PATH_KEY = "jlink.image.path";
 
-    /**
-     * The builder description.
-     *
-     * @return The description.
-     */
-    public String getDescription();
+    public ImageBuilderProvider(String name, String description) {
+        super(name, description);
+    }
 
-    /**
-     * Create the builder that will build the image.
-     *
-     * @param config Configuration properties
-     * @param imageOutDir The directory where to store the image.
-     * @return The builder.
-     * @throws java.io.IOException
-     */
-    public ImageBuilder newBuilder(Map<String, Object> config, Path imageOutDir)
-            throws IOException;
+    @Override
+    public abstract List<? extends ImageBuilder> newPlugins(Map<String, Object> config);
 
     /**
      * Image builder provider can execute the image located in the passed dir
@@ -67,24 +50,24 @@ public interface ImageBuilderProvider {
      * @param root The image directory.
      * @return An ExecutableImage if runnable, otherwise null.
      */
-    public ExecutableImage canExecute(Path root);
+    public abstract ExecutableImage canExecute(Path root);
 
     /**
      * Ask the provider to store some options in the image launcher(s).
      *
      * @param image
      * @param arguments The arguments to add to the launcher.
-     * @throws java.io.IOException
+     * @throws PluginException
      */
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments)
-            throws IOException;
+    public abstract void storeLauncherOptions(ExecutableImage image, List<String> arguments)
+            throws PluginException;
 
     /**
      * Options to configure the image builder.
      *
      * @return The option name / description mapping
      */
-    public Map<String, String> getOptions();
+    public abstract Map<String, String> getOptions();
 
     /**
      * Check if an option expects an argument.
@@ -92,35 +75,5 @@ public interface ImageBuilderProvider {
      * @param option
      * @return true if an argument is expected. False otherwise.
      */
-    public boolean hasArgument(String option);
-
-    /**
-     * An exposed provider wants to be advertised (e.g.: displayed in help).
-     *
-     * @return True, the provider is exposed, false the provider is hidden.
-     */
-    public default boolean isExposed() {
-        return true;
-    }
-
-    /**
-     * Check if the provider can properly operate in the current context.
-     *
-     * @return true, the provider can operate
-     */
-    public default boolean isFunctional() {
-        return true;
-    }
-
-    /**
-     * Return a message indicating the status of the provider.
-     *
-     * @param functional
-     * @return A status description.
-     */
-    public default String getFunctionalStateDescription(boolean functional) {
-        return functional
-                ? PluginsResourceBundle.getMessage("main.status.ok")
-                : PluginsResourceBundle.getMessage("main.status.not.ok");
-    }
+    public abstract boolean hasArgument(String option);
 }

@@ -24,18 +24,22 @@
  */
 package jdk.tools.jlink.plugins;
 
+import java.util.List;
+
 /**
  * Implement this interface to develop your own plugin.
- * FilePlugin can modify the Files located in an image.
+ * PostProcessing can
+ * modify the image content.
  */
-public interface ImageFilePlugin extends Plugin {
+public interface PostProcessorPlugin extends Plugin {
 
     /**
-     * Visit the collection of files.
-     * @param inFiles Read only files.
-     * @param outFiles The pool to fill with files. Will contain the result of the visit
-     * @throws Exception
+     * Post processing on existing image.
+     *
+     * @param manager The instance in charge to manage remote processes the
+     * plugin could have launched.
+     * @return The list of arguments to add to launchers if any.
+     * @throws PluginException
      */
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception;
+    public List<String> process(Sessions manager);
 }

@@ -24,17 +24,18 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.plugins.TransformerOnOffProvider;
+import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class StripDebugProvider extends OnOffResourcePluginProvider {
+public final class StripDebugProvider extends TransformerOnOffProvider {
 
     public static final String NAME = "strip-java-debug";
 
@@ -43,14 +44,8 @@ public final class StripDebugProvider extends OnOffResourcePluginProvider {
     }
 
     @Override
-    public ResourcePlugin[] createPlugins(Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new StripDebugPlugin()};
-    }
-
-    @Override
     public String getCategory() {
-        return PluginProvider.TRANSFORMER;
+        return TransformerPluginProvider.TRANSFORMER;
     }
 
     @Override
@@ -61,6 +56,18 @@ public final class StripDebugProvider extends OnOffResourcePluginProvider {
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESOURCE_PLUGIN;
+    }
+
+    @Override
+    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        List<TransformerPlugin> lst = new ArrayList<>();
+        lst.add(new StripDebugPlugin());
+        return lst;
     }
 
 }

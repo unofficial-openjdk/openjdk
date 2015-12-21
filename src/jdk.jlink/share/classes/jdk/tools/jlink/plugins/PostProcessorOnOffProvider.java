@@ -22,23 +22,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.jimage;
+package jdk.tools.jlink.plugins;
+
+import java.util.List;
+import java.util.Map;
 
 /**
-* Added strings are stored in the jimage strings table.
-*/
-public interface StringTable {
-    /**
-     * Add a string to the jimage strings table.
-     * @param str The string to add.
-     * @return a String identifier.
-     */
-    public int addString(String str);
+ *
+ * Abstract class for command line PostProcessing provider that requires ON/OFF
+ * support. Plugin created by this provider can be enabled by default (enabled
+ * although no option is provided to the command line).
+ */
+public abstract class PostProcessorOnOffProvider extends PostProcessorPluginProvider
+        implements OnOffPluginProvider<PostProcessorPlugin> {
 
-    /**
-     * Retrieve a string from the passed id.
-     * @param id The string id.
-     * @return The string referenced by the passed id.
-     */
-    public String getString(int id);
+    public PostProcessorOnOffProvider(String name, String description) {
+        super(name, description);
+    }
+
+    // Must be implemented, an abstract method can't be implemented with a default method
+    @Override
+    public List<PostProcessorPlugin> newPlugins(Map<String, Object> conf) {
+        return OnOffPluginProvider.super.newPlugins(conf);
+    }
 }
