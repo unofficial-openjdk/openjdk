@@ -22,73 +22,79 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.builder;
 
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
 import java.io.FileInputStream;
+import jdk.tools.jlink.api.plugin.PluginException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
-import static jdk.tools.jlink.plugins.DefaultImageBuilder.isWindows;
+import static jdk.tools.jlink.api.plugin.builder.DefaultImageBuilder.isWindows;
 
 /**
  * Default Image Builder provider.
  */
-public class DefaultImageBuilderProvider extends ImageBuilderProvider {
+public class DefaultImageBuilderProvider {
+
+    public static final PluginOption IMAGE_PATH_OPTION
+            = new Builder("jlink.image.path").build();
 
     public static final String GEN_BOM = "genbom";
     public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
     public static final String NAME = "default-image-builder";
-
-    private static final Map<String, String> OPTIONS = new HashMap<>();
+    static final List<PluginOption> OPTIONS = new ArrayList<>();
+    public static final PluginOption GEN_BOM_OPTION;
 
     static {
-        OPTIONS.put(GEN_BOM, PluginsResourceBundle.getOption(NAME, GEN_BOM));
+        GEN_BOM_OPTION = new Builder(GEN_BOM).description(
+                PluginsResourceBundle.getOption(NAME, GEN_BOM)).build();
+        OPTIONS.add(GEN_BOM_OPTION);
     }
 
-    public DefaultImageBuilderProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
+    public PluginOption getOption() {
+        return new Builder(NAME).description(
+                PluginsResourceBundle.getDescription(NAME)).build();
     }
 
-    @Override
-    public Map<String, String> getOptions() {
+    public List<PluginOption> getAdditionalOptions() {
         return OPTIONS;
     }
 
-    @Override
-    public boolean hasArgument(String option) {
-        return false;
+    static String getJavaProcessName() {
+        return isWindows() ? "java.exe" : "java";
     }
 
-    @Override
-    public String getName() {
-        return NAME;
+    public ImageBuilder newPlugin(Map<PluginOption, String> config) {
+        try {
+            Path imageOutDir = Paths.get(config.get(IMAGE_PATH_OPTION));
+            if (Files.exists(imageOutDir)) {
+                throw new PluginException(PluginsResourceBundle.
+                        getMessage("err.dir.already.exits", imageOutDir));
+            }
+            return new DefaultImageBuilder(config, imageOutDir);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
-    @Override
-    public String getDescription() {
-        return PluginsResourceBundle.getDescription(NAME);
-    }
-
-    @Override
-    public ExecutableImage canExecute(Path root) {
+    public static ExecutableImage getExecutableImage(Path root) {
         if (Files.exists(root.resolve("bin").resolve(getJavaProcessName()))) {
             return new DefaultImageBuilder.DefaultExecutableImage(root,
                     retrieveModules(root));
         }
         return null;
-    }
-
-    static String getJavaProcessName() {
-        return isWindows() ? "java.exe" : "java";
     }
 
     private static Set<String> retrieveModules(Path root) {
@@ -111,31 +117,5 @@ public class DefaultImageBuilderProvider extends ImageBuilderProvider {
             }
         }
         return modules;
-    }
-
-    @Override
-    public void storeLauncherOptions(ExecutableImage image, List<String> arguments) {
-        try {
-            DefaultImageBuilder.patchScripts(image, arguments);
-        } catch (IOException ex) {
-            throw new PluginException(ex);
-        }
-    }
-
-    @Override
-    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
-        try {
-            @SuppressWarnings("unchecked")
-            Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
-            if (Files.exists(imageOutDir)) {
-                throw new PluginException(PluginsResourceBundle.
-                        getMessage("err.dir.already.exits", imageOutDir));
-            }
-            List<ImageBuilder> lst = new ArrayList<>();
-            lst.add(new DefaultImageBuilder(config, imageOutDir));
-            return lst;
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
     }
 }

@@ -24,20 +24,44 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
 
 /**
  *
  * Strip debug attributes plugin
  */
-final class StripDebugPlugin extends AsmPlugin {
+public final class StripDebugPlugin extends AsmPlugin {
+
+    public static final String NAME = "strip-java-debug";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            hasOnOffArgument().build();
 
     @Override
     public String getName() {
-        return StripDebugProvider.NAME;
+        return NAME;
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
     }
 
     @Override
@@ -52,5 +76,15 @@ final class StripDebugPlugin extends AsmPlugin {
             }
             return writer;
         });
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
     }
 }

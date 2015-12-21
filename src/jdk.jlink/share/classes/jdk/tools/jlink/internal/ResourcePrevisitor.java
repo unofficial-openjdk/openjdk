@@ -22,28 +22,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.internal;
 
-import java.util.List;
-import java.util.Map;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 /**
- * A PostProcessing Plugin provider that creates command line oriented plugins.
+ * Plugin wishing to pre-visit the resources must implement this interface.
+ * Pre-visit can be useful when some activities are required prior to the actual
+ * Resource visit.
+ * The StringTable plays a special role during previsit. The passed Strings are NOT
+ * added to the jimage file. The string usage is tracked in order to build an efficient
+ * string storage.
  */
-public abstract class PostProcessorCmdProvider extends PostProcessorPluginProvider
-        implements CmdPluginProvider<PostProcessorPlugin> {
+public interface ResourcePrevisitor {
 
-    protected PostProcessorCmdProvider(String name, String description) {
-        super(name, description);
-    }
-
-    @Override
-    public abstract List<PostProcessorPlugin> newPlugins(String[] arguments,
-            Map<String, String> otherOptions);
-
-    // Must be implemented, an abstract method can't be implemented with a default method
-    @Override
-    public List<PostProcessorPlugin> newPlugins(Map<String, Object> conf) {
-        return CmdPluginProvider.super.newPlugins(conf);
-    }
+    /**
+     * Previsit the collection of resources.
+     *
+     * @param resources Read only resources.
+     * @param strings StringTable instance. Add string to the StringTable to track string
+     * usage.
+     * @throws PluginException
+     */
+    public void previsit(Pool resources, StringTable strings);
 }

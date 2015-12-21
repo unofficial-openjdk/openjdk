@@ -34,19 +34,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugins.PostProcessorPluginProvider;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.PostProcessorPlugin;
-import jdk.tools.jlink.plugins.Sessions;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.TransformerPluginProvider;
+import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPluginProvider;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.api.Jlink;
+import jdk.tools.jlink.api.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.api.Jlink.OrderedPluginConfiguration;
+import jdk.tools.jlink.api.Jlink.PluginConfiguration;
+import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.api.plugin.builder.DefaultImageBuilderProvider;
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
+import jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
+import jdk.tools.jlink.internal.plugins.StripDebugProvider;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -60,6 +64,7 @@ import tests.JImageGenerator;
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
@@ -69,12 +74,12 @@ import tests.JImageGenerator;
 public class IntegrationTest {
 
     static {
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "0"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "1"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "2"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "3"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "4"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyPostProcessorProvider());
+        PluginRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "0"));
+        PluginRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "1"));
+        PluginRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "2"));
+        PluginRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "3"));
+        PluginRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "4"));
+        PluginRepository.registerPluginProvider(new MyPostProcessorProvider());
     }
 
     private static final List<Integer> ordered = new ArrayList<>();
@@ -84,9 +89,9 @@ public class IntegrationTest {
         public class MyPostProcessor implements PostProcessorPlugin {
 
             @Override
-            public List<String> process(Sessions manager) {
+            public List<String> process(ExecutableImage image) {
                 try {
-                    Files.createFile(manager.getImage().getHome().resolve("toto.txt"));
+                    Files.createFile(image.getHome().resolve("toto.txt"));
                     return null;
                 } catch (IOException ex) {
                     throw new UncheckedIOException(ex);
@@ -107,10 +112,8 @@ public class IntegrationTest {
         }
 
         @Override
-        public List<? extends PostProcessorPlugin> newPlugins(Map<String, Object> config) {
-            List<PostProcessorPlugin> lst = new ArrayList<>();
-            lst.add(new MyPostProcessor());
-            return lst;
+        public PostProcessorPlugin newPlugin(Map<PluginOption, Object> config) {
+            return new MyPostProcessor();
         }
 
         @Override
@@ -147,6 +150,7 @@ public class IntegrationTest {
         }
         static final String NAME = "myprovider";
         static final String INDEX = "INDEX";
+        static final PluginOption INDEX_OPTION = new PluginOptionBuilder(INDEX).build();
 
         public MyProvider(String name) {
             super(name, "");
@@ -163,10 +167,8 @@ public class IntegrationTest {
         }
 
         @Override
-        public List<? extends TransformerPlugin> newPlugins(Map<String, Object> config) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new MyPlugin1((Integer) config.get(INDEX)));
-            return lst;
+        public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
+            return new MyPlugin1((Integer) config.get(new PluginOptionBuilder(INDEX).build()));
         }
     }
 
@@ -255,31 +257,31 @@ public class IntegrationTest {
 
         //Strip debug
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(StripDebugProvider.NAME_OPTION, PluginOptionBuilder.ON_ARGUMENT);
             OrderedPluginConfiguration strip
                     = new OrderedPluginConfiguration("strip-java-debug", 0, false, config1);
             lst.add(strip);
         }
         // compress
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
-            config1.put("compress-resources-level", "0");
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(DefaultCompressProvider.NAME_OPTION, PluginOptionBuilder.ON_ARGUMENT);
+            config1.put(DefaultCompressProvider.LEVEL_OPTION, "0");
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration("compress-resources", 0, false, config1);
             lst.add(compress);
         }
         // Post processor
         {
-            Map<String, Object> config1 = new HashMap<>();
+            Map<PluginOption, Object> config1 = new HashMap<>();
             OrderedPluginConfiguration postprocessor
                     = new OrderedPluginConfiguration(MyPostProcessorProvider.NAME, 0, false, config1);
             post.add(postprocessor);
         }
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
-        config1.put("genbom", "true");
+        Map<PluginOption, Object> config1 = new HashMap<>();
+        config1.put(DefaultImageBuilderProvider.GEN_BOM_OPTION, "true");
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
@@ -328,8 +330,8 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 2);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 2);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME + "0", 0, false, config1);
             lst.add(compress);
@@ -337,8 +339,8 @@ public class IntegrationTest {
 
         // packager 2
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 0);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 0);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME + "1", 0, true, config1);
             lst.add(compress);
@@ -346,8 +348,8 @@ public class IntegrationTest {
 
         // packager 3
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 1);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 1);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME + "2", 1, true, config1);
             lst.add(compress);
@@ -355,15 +357,15 @@ public class IntegrationTest {
 
         // packager 4
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 3);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 3);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME + "3", 1, false, config1);
             lst.add(compress);
         }
 
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
+        Map<PluginOption, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins
@@ -400,8 +402,8 @@ public class IntegrationTest {
 
         // packager 1
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 2);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 2);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME, 0, false, config1);
             lst.add(compress);
@@ -409,15 +411,15 @@ public class IntegrationTest {
 
         // packager 2
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 0);
+            Map<PluginOption, Object> config1 = new HashMap<>();
+            config1.put(MyProvider.INDEX_OPTION, 0);
             OrderedPluginConfiguration compress
                     = new OrderedPluginConfiguration(MyProvider.NAME, 0, false, config1);
             lst.add(compress);
         }
 
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
+        Map<PluginOption, Object> config1 = new HashMap<>();
         PluginConfiguration imgBuilder
                 = new Jlink.PluginConfiguration("default-image-builder", config1);
         PluginsConfiguration plugins

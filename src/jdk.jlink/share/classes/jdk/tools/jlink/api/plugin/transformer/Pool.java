@@ -22,8 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.transformer;
 
+import jdk.tools.jlink.api.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,10 +34,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -70,18 +69,32 @@ public abstract class Pool {
         OTHER;
     }
 
-    public class Module {
+    public interface Module {
+         public String getName();
+
+        public ModuleData get(String path);
+
+        public ModuleDescriptor getDescriptor();
+
+        public void add(ModuleData data);
+
+        public Set<String> getAllPackages();
+    }
+
+    private class ModuleImpl implements Module {
         private final Map<String, ModuleData> moduleContent = new LinkedHashMap<>();
         private ModuleDescriptor descriptor;
         private final String name;
-        private Module(String name) {
+        private ModuleImpl(String name) {
             this.name = name;
         }
 
+        @Override
         public String getName() {
             return name;
         }
 
+        @Override
         public ModuleData get(String path) {
             if (!path.startsWith("/")) {
                 path = "/" + path;
@@ -92,6 +105,7 @@ public abstract class Pool {
             return moduleContent.get(path);
         }
 
+        @Override
         public ModuleDescriptor getDescriptor() {
             if(descriptor == null) {
                 String p = "/" + name + "/module-info.class";
@@ -106,25 +120,39 @@ public abstract class Pool {
             return descriptor;
         }
 
+        @Override
         public void add(ModuleData data) {
+            if (isReadOnly()) {
+                throw new PluginException("pool is readonly");
+            }
             Objects.requireNonNull(data);
-            if(!data.getModule().equals(name)) {
-                throw new PluginException("Can;t add resource " + data.getPath()
-                        +" to module " + name);
+            if (!data.getModule().equals(name)) {
+                throw new PluginException("Can't add resource " + data.getPath()
+                        + " to module " + name);
             }
             Pool.this.add(data);
         }
 
+        @Override
         public Set<String> getAllPackages() {
-            ModuleDescriptor desc = getDescriptor();
-            Set<String> packages = new HashSet<>();
-            for (String p : desc.conceals()) {
-                packages.add(p.replaceAll("\\.", "/"));
-            }
-            for (ModuleDescriptor.Exports ex : desc.exports()) {
-                packages.add(ex.source().replaceAll("\\.", "/"));
-            }
-            return packages;
+            Set<String> pkgs = new HashSet<>();
+            moduleContent.values().stream().filter(m -> m.getType().
+                    equals(ModuleDataType.CLASS_OR_RESOURCE)).forEach((res) -> {
+                // Module metadata only contains packages with .class files
+                if (ImageFileCreator.isClassPackage(res.getPath())) {
+                    String[] split = ImageFileCreator.splitPath(res.getPath());
+                    String pkg = split[1];
+                    if (pkg != null && !pkg.isEmpty()) {
+                        pkgs.add(pkg);
+                    }
+                }
+            });
+            return pkgs;
+        }
+
+        @Override
+        public String toString() {
+            return getName();
         }
     }
 
@@ -204,7 +232,7 @@ public abstract class Pool {
     }
 
     private final Map<String, ModuleData> resources = new LinkedHashMap<>();
-    private final Map<String, Module> modules = new LinkedHashMap<>();
+    private final Map<String, ModuleImpl> modules = new LinkedHashMap<>();
 
     private final ByteOrder order;
 
@@ -238,9 +266,9 @@ public abstract class Pool {
             throw new PluginException("Resource " + resource.getPath()
                     + " already present");
         }
-        Module m = modules.get(resource.getModule());
+        ModuleImpl m = modules.get(resource.getModule());
         if(m == null) {
-            m = new Module(resource.getModule());
+            m = new ModuleImpl(resource.getModule());
             modules.put(resource.getModule(), m);
         }
         resources.put(resource.getPath(), resource);
@@ -305,23 +333,6 @@ public abstract class Pool {
 
     public ByteOrder getByteOrder() {
         return order;
-    }
-
-    public Map<String, Set<String>> getModulePackages() {
-        Map<String, Set<String>> moduleToPackage = new HashMap<>();
-        getContent().stream().forEach((res) -> {
-            Set<String> pkgs = moduleToPackage.computeIfAbsent(res.getModule(), k -> new HashSet<>());
-            // Module metadata only contains packages with .class files
-            if (ImageFileCreator.isClassPackage(res.getPath())) {
-                String[] split = ImageFileCreator.splitPath(res.getPath());
-                String pkg = split[1];
-                if (pkg != null && !pkg.isEmpty()) {
-                    pkgs.add(pkg);
-                }
-            }
-        });
-
-        return moduleToPackage;
     }
 
     public void addTransformedResource(ModuleData original, InputStream transformed, long length) {

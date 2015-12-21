@@ -32,22 +32,24 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.api.plugin.builder.ExecutableImage;
 
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageBuilderProvider;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilderProvider;
 
 public class CustomImageBuilderProvider extends ImageBuilderProvider {
 
     static final String NAME = "custom-image-builder";
     static final String OPTION = "custom-image-option";
     private static final String OPTION_DESCRIPTION = OPTION + "-description";
-    private static final Map<String, String> OPTIONS = new HashMap<>();
-
+    private static final List<PluginOption> OPTIONS = new ArrayList<>();
+    public static PluginOption OPTION1 = new PluginOptionBuilder(OPTION + "-1" ).description(OPTION + "-1").build();
+    public static PluginOption OPTION2 = new PluginOptionBuilder(OPTION + "-2" ).description(OPTION + "-2").build();
     static {
-        for (int i = 1; i <= 2; ++i) {
-            OPTIONS.put(OPTION + "-" + i, OPTION_DESCRIPTION);
-        }
+        OPTIONS.add(OPTION1);
+        OPTIONS.add(OPTION2);
     }
 
     public CustomImageBuilderProvider() {
@@ -55,13 +57,8 @@ public class CustomImageBuilderProvider extends ImageBuilderProvider {
     }
 
     @Override
-    public Map<String, String> getOptions() {
+    public List<PluginOption> getAdditionalOptions() {
         return OPTIONS;
-    }
-
-    @Override
-    public boolean hasArgument(String option) {
-        return option.equals(OPTION + "-1");
     }
 
     @Override
@@ -75,13 +72,11 @@ public class CustomImageBuilderProvider extends ImageBuilderProvider {
     }
 
     @Override
-    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
+    public ImageBuilder newPlugin(Map<PluginOption, Object> config) {
         try {
-            Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
+            Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_OPTION);
             Files.createDirectories(imageOutDir);
-            List<ImageBuilder> lst = new ArrayList<>();
-            lst.add(new CustomImageBuilder(config, imageOutDir));
-            return lst;
+            return new CustomImageBuilder(config, imageOutDir);
         } catch (IOException ex) {
            throw new UncheckedIOException(ex);
         }

@@ -28,31 +28,21 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.builder.ExecutableImage;
 
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageBuilderProvider;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilderProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 public class SecondImageBuilderProvider extends ImageBuilderProvider {
     private static final String NAME = "second-image-builder";
 
     public SecondImageBuilderProvider() {
         super(NAME, NAME + "-description");
-    }
-
-    @Override
-    public Map<String, String> getOptions() {
-        return null;
-    }
-
-    @Override
-    public boolean hasArgument(String option) {
-        return false;
     }
 
     @Override
@@ -66,10 +56,9 @@ public class SecondImageBuilderProvider extends ImageBuilderProvider {
     }
 
     @Override
-    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
-        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
-        List<ImageBuilder> lst = new ArrayList<>();
-        lst.add(new ImageBuilder() {
+    public ImageBuilder newPlugin(Map<PluginOption, Object> config) {
+        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_OPTION);
+        return new ImageBuilder() {
 
             @Override
             public DataOutputStream getJImageOutputStream() {
@@ -99,7 +88,6 @@ public class SecondImageBuilderProvider extends ImageBuilderProvider {
             public String getName() {
                 return NAME;
             }
-        });
-        return lst;
+        };
     }
 }

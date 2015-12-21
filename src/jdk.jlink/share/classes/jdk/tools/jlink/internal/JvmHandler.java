@@ -36,8 +36,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 /**
  * A class to deal with JVM platforms

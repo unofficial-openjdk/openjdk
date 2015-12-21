@@ -37,9 +37,9 @@ import java.util.Collection;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.SortResourcesProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class SorterPluginTest {
 
@@ -88,7 +88,7 @@ public class SorterPluginTest {
         {
             Pool out = new PoolImpl();
             String[] arguments = {"/zazou/*", "*/module-info.class"};
-            TransformerPlugin p = new SortResourcesProvider().newPlugins(arguments, null).get(0);
+            TransformerPlugin p = new SortResourcesProvider().newPlugin(arguments, null);
             p.visit(resources, out);
             check(out.getContent(), sorted);
         }
@@ -106,7 +106,7 @@ public class SorterPluginTest {
 
             Pool out = new PoolImpl();
             String[] arguments = {order.getAbsolutePath()};
-            TransformerPlugin p = new SortResourcesProvider().newPlugins(arguments, null).get(0);
+            TransformerPlugin p = new SortResourcesProvider().newPlugin(arguments, null);
             p.visit(resources, out);
             check(out.getContent(), sorted2);
 

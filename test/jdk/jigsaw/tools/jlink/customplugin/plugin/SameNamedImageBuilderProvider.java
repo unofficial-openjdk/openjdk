@@ -30,10 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.builder.ExecutableImage;
 
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageBuilderProvider;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilderProvider;
 
 public class SameNamedImageBuilderProvider extends ImageBuilderProvider {
 
@@ -41,16 +42,6 @@ public class SameNamedImageBuilderProvider extends ImageBuilderProvider {
 
     public SameNamedImageBuilderProvider() {
         super(NAME, NAME + "-description");
-    }
-
-    @Override
-    public Map<String, String> getOptions() {
-        return null;
-    }
-
-    @Override
-    public boolean hasArgument(String option) {
-        return false;
     }
 
     @Override
@@ -64,14 +55,12 @@ public class SameNamedImageBuilderProvider extends ImageBuilderProvider {
     }
 
     @Override
-    public List<? extends ImageBuilder> newPlugins(Map<String, Object> config) {
-        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_KEY);
-        List<ImageBuilder> lst = new ArrayList<>();
+    public ImageBuilder newPlugin(Map<PluginOption, Object> config) {
+        Path imageOutDir = (Path) config.get(ImageBuilderProvider.IMAGE_PATH_OPTION);
         try {
-            lst.add(new CustomImageBuilder(config, imageOutDir));
+            return new CustomImageBuilder(config, imageOutDir);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-        return lst;
     }
 }

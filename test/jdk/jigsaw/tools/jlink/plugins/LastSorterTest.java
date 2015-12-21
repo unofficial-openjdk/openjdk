@@ -36,25 +36,25 @@ import java.util.List;
 import java.util.Map;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
+import jdk.tools.jlink.api.Jlink;
+import jdk.tools.jlink.api.Jlink.OrderedPluginConfiguration;
+import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class LastSorterTest {
 
     public LastSorterTest() {
         for (int i = 1; i <= 5; i++) {
-            ImagePluginProviderRepository.registerPluginProvider(new SorterProvider("sorterplugin" + i));
+            PluginRepository.registerPluginProvider(new SorterProvider("sorterplugin" + i));
         }
-        ImagePluginProviderRepository.registerPluginProvider(new SorterProvider2("sorterplugin" + 6));
+        PluginRepository.registerPluginProvider(new SorterProvider2("sorterplugin" + 6));
     }
 
     public static void main(String[] args) throws Exception {
@@ -73,9 +73,10 @@ public class LastSorterTest {
 
     private void checkTwoLastSorters() throws Exception {
         List<OrderedPluginConfiguration> plugins = new ArrayList<>();
-        plugins.add(createConfig("sorterplugin6", "/a", 0));
+        plugins.add(createConfig("sorterplugin5", "/a", 0));
+        plugins.add(createConfig("sorterplugin6", "/a", 1));
         PluginsConfiguration config = new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null, "sorterplugin6");
+                Collections.emptyList(), null, "sorterplugin5");
 
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(config);
 
@@ -227,10 +228,8 @@ public class LastSorterTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new SorterPlugin(getName(), arguments == null ? null : arguments[0]));
-            return lst;
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
+            return new SorterPlugin(getName(), arguments == null ? null : arguments[0]);
         }
 
         @Override
@@ -246,14 +245,9 @@ public class LastSorterTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments,
+         public TransformerPlugin newPlugin(String[] arguments,
                 Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            SorterPlugin sorterPlugin =
-                    (SorterPlugin) super.newPlugins(arguments, otherOptions).get(0);
-            lst.add(sorterPlugin);
-            lst.add(sorterPlugin);
-            return lst;
+            return (SorterPlugin) super.newPlugin(arguments, otherOptions);
         }
     }
 }

@@ -57,11 +57,11 @@ import java.util.HashMap;
 import java.util.Map;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.OnOffPluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
+import jdk.tools.jlink.api.plugin.OnOffPluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 import tests.Helper;
 
 public class StripDebugPluginTest {
@@ -110,7 +110,7 @@ public class StripDebugPluginTest {
         Map<String, Object> options = new HashMap<>();
         options.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
                 OnOffPluginProvider.ON_ARGUMENT);
-        TransformerPlugin debug = (TransformerPlugin) prov.newPlugins(options).get(0);
+        TransformerPlugin debug = (TransformerPlugin) prov.newPlugin(options);
         ModuleData result1 = stripDebug(debug, Pool.newResource(path,content), path, infoPath, moduleInfo);
 
         if (!path.endsWith("module-info.class")) {

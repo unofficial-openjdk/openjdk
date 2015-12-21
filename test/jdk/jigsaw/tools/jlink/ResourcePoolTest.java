@@ -40,11 +40,11 @@ import java.util.Map;
 import java.util.Set;
 
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.Module;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
-import jdk.tools.jlink.plugins.Pool.Visitor;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.Module;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.Pool.Visitor;
 
 public class ResourcePoolTest {
 

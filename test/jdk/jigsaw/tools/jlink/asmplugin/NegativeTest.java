@@ -47,8 +47,8 @@ import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 public class NegativeTest extends AsmPluginTestBase {
     public static void main(String[] args) throws Exception {

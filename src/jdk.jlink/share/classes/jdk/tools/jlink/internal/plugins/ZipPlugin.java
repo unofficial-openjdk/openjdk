@@ -27,20 +27,38 @@ package jdk.tools.jlink.internal.plugins;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.zip.Deflater;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
  * ZIP Compression plugin
  */
-final class ZipPlugin implements TransformerPlugin {
+public final class ZipPlugin implements TransformerPlugin {
 
-    private final Predicate<String> predicate;
+    public static final String NAME = "zip";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
+    private Predicate<String> predicate;
+
+    public ZipPlugin() {
+
+    }
 
     ZipPlugin(String[] patterns) throws IOException {
         this(new ResourceFilter(patterns));
@@ -52,7 +70,34 @@ final class ZipPlugin implements TransformerPlugin {
 
     @Override
     public String getName() {
-        return ZipCompressProvider.NAME;
+        return NAME;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.COMPRESSOR);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        try {
+            String val = config.get(NAME_OPTION);
+            predicate = new ResourceFilter(Utils.listParser.apply(val));
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 
     static byte[] compress(byte[] bytesIn) {
@@ -83,12 +128,13 @@ final class ZipPlugin implements TransformerPlugin {
     public void visit(Pool in, Pool out) {
         in.visit((resource) -> {
             ModuleData res = resource;
-            if (predicate.test(resource.getPath())) {
+            if (resource.getType().equals(ModuleDataType.CLASS_OR_RESOURCE)
+                    && predicate.test(resource.getPath())) {
                 byte[] compressed;
                 compressed = compress(resource.getBytes());
                 res = PoolImpl.newCompressedResource(resource,
                         ByteBuffer.wrap(compressed), getName(), null,
-                        ((PoolImpl)in).getStringTable(), in.getByteOrder());
+                        ((PoolImpl) in).getStringTable(), in.getByteOrder());
             }
             return res;
         }, out);

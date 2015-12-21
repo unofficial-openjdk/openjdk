@@ -23,16 +23,20 @@
 
 package plugin;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
 
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
 
-public class CustomImageFileProvider extends TransformerCmdProvider {
+public class CustomImageFileProvider extends TransformerPluginProvider {
 
-    private final static String NAME = "custom-image-plugin";
+    private final static String NAME = "custom-file-plugin";
+
+    private final static PluginOption NAME_OPTION = new PluginOptionBuilder(NAME + "-option").
+            description(NAME + "-description").
+            argumentDescription(NAME + "-argument").build();
 
     public CustomImageFileProvider() {
         super(NAME, NAME + "-description");
@@ -44,27 +48,17 @@ public class CustomImageFileProvider extends TransformerCmdProvider {
     }
 
     @Override
-    public String getToolArgument() {
-        return NAME + "-argument";
-    }
-
-    @Override
-    public String getToolOption() {
-        return NAME + "-option";
-    }
-
-    @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
-    }
-
-    @Override
-    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-        return Collections.emptyList();
+    public PluginOption getOption() {
+        return NAME_OPTION;
     }
 
     @Override
     public Type getType() {
         return Type.IMAGE_FILE_PLUGIN;
+    }
+
+    @Override
+    public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
+        return null;
     }
 }

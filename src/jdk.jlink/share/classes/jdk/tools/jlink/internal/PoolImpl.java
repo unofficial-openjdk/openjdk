@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 /**
  * Pool of module data.
@@ -75,6 +75,20 @@ public class PoolImpl extends Pool {
 
     public PoolImpl() {
         this(ByteOrder.nativeOrder(), new StringTable() {
+
+            @Override
+            public int addString(String str) {
+                return -1;
+            }
+            @Override
+            public String getString(int id) {
+                return null;
+            }
+        });
+    }
+
+    public PoolImpl(ByteOrder order) {
+        this(order, new StringTable() {
 
             @Override
             public int addString(String str) {

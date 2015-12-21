@@ -33,30 +33,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.builder.ExecutableImage;
 
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 public class CustomImageBuilder implements ImageBuilder {
 
     private final Path image;
-    private final Map<String, Object> config;
+    private final Map<PluginOption, Object> config;
 
-    public CustomImageBuilder(Map<String, Object> config, Path image) throws IOException {
+    public CustomImageBuilder(Map<PluginOption, Object> config, Path image) throws IOException {
         this.image = image;
         this.config = config;
         System.err.println(config);
         config.forEach((k, v) -> System.err.println(k + " " + v));
 
-        handleOption(CustomImageBuilderProvider.OPTION + "-1");
-        handleOption(CustomImageBuilderProvider.OPTION + "-2");
+        handleOption(CustomImageBuilderProvider.OPTION1);
+        handleOption(CustomImageBuilderProvider.OPTION2);
     }
 
-    private void handleOption(String option) throws IOException {
+    private void handleOption(PluginOption option) throws IOException {
         if (config.containsKey(option)) {
             String firstValue = (String) config.get(option);
-            Files.write(image.resolve(option), Objects.toString(firstValue == null ? "" : firstValue).getBytes());
+            Files.write(image.resolve(option.getName()), Objects.toString(firstValue == null ? "" : firstValue).getBytes());
         }
     }
 

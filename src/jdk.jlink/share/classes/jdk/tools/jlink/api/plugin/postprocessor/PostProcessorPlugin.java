@@ -22,50 +22,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.internal.plugins;
+package jdk.tools.jlink.api.plugin.postprocessor;
 
-import java.util.ArrayList;
+import jdk.tools.jlink.api.plugin.Plugin;
 import java.util.List;
-import java.util.Map;
-import jdk.tools.jlink.plugins.TransformerOnOffProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.TransformerPluginProvider;
 
 /**
- *
- * Exclude native commands (such as java/java.exe) from the image.
+ * Implement this interface to develop your own plugin.
+ * PostProcessing can
+ * modify the image content.
  */
-public final class StripNativeCommandsProvider extends TransformerOnOffProvider {
-    public static final String NAME = "strip-native-commands";
-    public StripNativeCommandsProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
-    }
+public interface PostProcessorPlugin extends Plugin {
 
-
-    @Override
-    public String getCategory() {
-        return TransformerPluginProvider.FILTER;
-    }
-
-    @Override
-    public String getToolOption() {
-        return NAME;
-    }
-
-    @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
-    }
-
-    @Override
-    public Type getType() {
-        return Type.IMAGE_FILE_PLUGIN;
-    }
-
-    @Override
-    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
-        List<TransformerPlugin> lst = new ArrayList<>();
-        lst.add(new StripNativeCommandsPlugin());
-        return lst;
-    }
+    /**
+     * Post process an image.
+     *
+     * @param image The executable image.
+     * @return The list of arguments to add to launchers if any.
+     */
+    public List<String> process(ExecutableImage image);
 }

@@ -36,13 +36,13 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.DefaultImageBuilder;
+import jdk.tools.jlink.api.plugin.builder.DefaultImageBuilder;
 
-import jdk.tools.jlink.internal.plugins.FileCopierProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class FileCopierPluginTest {
 
@@ -58,7 +58,7 @@ public class FileCopierPluginTest {
      * @throws Exception
      */
     public void test() throws Exception {
-        FileCopierProvider prov = new FileCopierProvider();
+        FileCopierPlugin prov = new FileCopierPlugin();
         String content = "You \n should \n be \bthere.\n";
         String name = "sample.txt";
         File src = new File("src");
@@ -83,7 +83,7 @@ public class FileCopierPluginTest {
         args[i++] = txt.getAbsolutePath() + "=" + target;
         args[i++] = src.getAbsolutePath() + "=src2";
 
-        TransformerPlugin plug = prov.newPlugins(args, null).get(0);
+        TransformerPlugin plug = prov.newPlugin(args, null);
         Pool pool = new PoolImpl();
         plug.visit(new PoolImpl(), pool);
         if (pool.getContent().size() != args.length) {

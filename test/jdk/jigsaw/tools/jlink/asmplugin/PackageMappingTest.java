@@ -47,9 +47,9 @@ import jdk.tools.jlink.internal.plugins.asm.AsmGlobalPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableResourcePool;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 public class PackageMappingTest extends AsmPluginTestBase {
 

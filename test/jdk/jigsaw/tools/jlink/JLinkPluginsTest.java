@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
 import tests.Helper;
 
 /*

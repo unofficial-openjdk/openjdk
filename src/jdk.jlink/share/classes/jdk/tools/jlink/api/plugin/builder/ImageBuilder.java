@@ -22,23 +22,48 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.builder;
 
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import java.io.DataOutputStream;
+import java.util.List;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 /**
- * Implement this interface to develop your own plugin.
- * TransformerPlugin
- * instances modify the content of a jimage.
+ * Implement this interface to develop your own image layout. First the jimage
+ * is written onto the output stream returned by getOutputStream then storeFiles
+ * is called.
  */
-public interface TransformerPlugin extends Plugin {
+public interface ImageBuilder {
+
     /**
-     * Visit the content of modules.
+     * Store the external files.
      *
-     * @param in Read only content.
-     * @param out The pool to fill with content. Will contain the result of the
-     * visit
-     *
+     * @param content Pool of module content.
+     * @param removed List of files that have been removed (if any).
+     * @param bom The options used to build the image
+     * file.
      * @throws PluginException
      */
-    public void visit(Pool in, Pool out);
+    public void storeFiles(Pool content, List<ModuleData> removed,
+            String bom);
+
+    /**
+     * The OutputStream to store the jimage file.
+     *
+     * @return The output stream
+     * @throws PluginException
+     */
+    public DataOutputStream getJImageOutputStream();
+
+    /**
+     * Gets the executable image that is generated.
+     *
+     * @return The executable image.
+     * @throws PluginException
+     */
+    public ExecutableImage getExecutableImage();
+
 }

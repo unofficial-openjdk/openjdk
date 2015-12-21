@@ -22,16 +22,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.transformer;
+
+import jdk.tools.jlink.api.plugin.Plugin;
+
 
 /**
  * Implement this interface to develop your own plugin.
+ * TransformerPlugin
+ * instances modify the content of a jimage.
  */
-public interface Plugin {
-
+public interface TransformerPlugin extends Plugin {
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * Visit the content of modules.
+     *
+     * @param in Read only content.
+     * @param out The pool to fill with content. Will contain the result of the
+     * visit
+     *
+     * @throws PluginException
      */
-    public String getName();
+    public void visit(Pool in, Pool out);
 }

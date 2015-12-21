@@ -19,7 +19,9 @@ import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.OptimizationProvider;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
@@ -27,10 +29,10 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow.Block;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -84,7 +86,7 @@ public class JLinkOptimTest {
     private static final String EXPECTED = "expected";
     private static Helper helper;
 
-    private static class ControlFlowProvider extends TransformerCmdProvider {
+    private static class ControlFlowProvider extends TransformerPluginProvider {
 
         private boolean called;
         private int numMethods;
@@ -136,6 +138,8 @@ public class JLinkOptimTest {
         }
 
         private static final String NAME = "test-optim";
+        private static final PluginOption NAME_OPTION =
+                new PluginOptionBuilder(NAME).build();
 
         ControlFlowProvider() {
             super(NAME, "");
@@ -147,25 +151,14 @@ public class JLinkOptimTest {
         }
 
         @Override
-        public String getToolArgument() {
-            return null;
+        public PluginOption getOption() {
+            return NAME_OPTION;
+         }
         }
 
         @Override
-        public String getToolOption() {
-            return NAME;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
-        }
-
-        @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new ControlFlowPlugin());
-            return lst;
+        public TransformerPlugin newPlugin(Map<PluginOption, Object> otherOptions) {
+            return new ControlFlowPlugin();
         }
 
         @Override
@@ -215,10 +208,10 @@ public class JLinkOptimTest {
         }
 
         OptimizationProvider prov = new OptimizationProvider();
-        String[] a = {OptimizationProvider.FORNAME_REMOVAL};
-        Map<String, String> optional = new HashMap<>();
-        optional.put(OptimizationProvider.LOG_FILE, "forName.log");
-        TransformerPlugin plug = prov.newPlugins(a, optional).get(0);
+        Map<PluginOption, Object> optional = new HashMap<>();
+        optional.put(OptimizationProvider.NAME_OPTION, OptimizationProvider.FORNAME_REMOVAL);
+        optional.put(OptimizationProvider.LOG_OPTION, "forName.log");
+        TransformerPlugin plug = prov.newPlugin(optional);
         Pool out = new PoolImpl();
         plug.visit(pool, out);
 
@@ -387,7 +380,7 @@ public class JLinkOptimTest {
 
         {
             ControlFlowProvider provider = new ControlFlowProvider();
-            ImagePluginProviderRepository.registerPluginProvider(provider);
+            PluginRepository.registerPluginProvider(provider);
             String[] userOptions = {"--test-optim"};
             Path imageDir = helper.generateDefaultImage(userOptions, "optim1").assertSuccess();
             helper.checkImage(imageDir, "optim1", null, null);

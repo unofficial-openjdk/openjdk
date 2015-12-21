@@ -22,128 +22,84 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api;
 
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import jdk.tools.jlink.JlinkTask;
+import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import jdk.tools.jlink.api.plugin.builder.ImageBuilder;
 
 /**
- * Jlink, entry point to interact with jlink support.
- *
+ * API for jlink tool.
  */
 public final class Jlink {
 
     /**
-     * A plugin configuration.
+     * A plugin located inside a stack of plugins. Ordered plugin has an index
+     * in the stack.
      */
-    public static class PluginConfiguration {
-
-        private final String name;
-        private final Map<String, Object> config;
-
-        /**
-         * A configuration.
-         *
-         * @param name Plugin name
-         * @param config Plugin configuration. Can be null;
-         */
-        public PluginConfiguration(String name, Map<String, Object> config) {
-            Objects.requireNonNull(name);
-            this.name = name;
-            this.config = config == null ? Collections.emptyMap() : config;
-        }
-
-        /**
-         * @return the name
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * @return the config
-         */
-        public Map<String, Object> getConfig() {
-            return config;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (!(other instanceof PluginConfiguration)) {
-                return false;
-            }
-            return name.equals(((PluginConfiguration) other).name);
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 5;
-            hash = 41 * hash + Objects.hashCode(this.name);
-            return hash;
-        }
-    }
-
-    /**
-     * A plugin located inside a stack of plugins. Such plugin has an index in
-     * the stack.
-     */
-    public static final class OrderedPluginConfiguration extends PluginConfiguration {
+    public static final class OrderedPlugin {
 
         private final int index;
         private final boolean absIndex;
-
+        private final Plugin plugin;
+        private final Plugin.CATEGORY category;
         /**
          * A plugin inside the stack configuration.
          *
-         * @param name Plugin name
+         * @param plugin Plugin.
          * @param index index in the plugin stack. Must be > 0.
          * @param absIndex true, the index is absolute otherwise index is within
-         * the category.
-         * @param config Plugin configuration. Can be null;
+         * the plugin category.
+         * @param category The plugin category.
          */
-        public OrderedPluginConfiguration(String name, int index, boolean absIndex,
-                Map<String, Object> config) {
-            super(name, config);
+        public OrderedPlugin(Plugin plugin, int index, boolean absIndex, Plugin.CATEGORY category) {
+            Objects.requireNonNull(plugin);
             if (index < 0) {
                 throw new IllegalArgumentException("negative index");
             }
+            this.plugin = plugin;
             this.index = index;
             this.absIndex = absIndex;
+            this.category = category;
         }
 
         /**
+         * Get the plugin index.
+         *
          * @return the index
          */
         public int getIndex() {
             return index;
         }
 
+        public Plugin.CATEGORY getCategory() {
+            return category;
+        }
+
         @Override
         public String toString() {
-            return getName() + "[" + index + "]";
+            return plugin.getName() + "[" + index + "]";
+        }
+
+        public Plugin getPlugin() {
+            return plugin;
         }
 
         /**
-         * @return the absIndex
+         * The plugin index.
+         *
+         * @return the absolute index.
          */
         public boolean isAbsoluteIndex() {
             return absIndex;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return super.equals(other);
-        }
-
-        @Override
-        public int hashCode() {
-            return super.hashCode();
         }
     }
 
@@ -153,74 +109,54 @@ public final class Jlink {
      */
     public static final class PluginsConfiguration {
 
-        private final List<OrderedPluginConfiguration> transformerPluginsConfig;
-        private final List<OrderedPluginConfiguration> processorPluginsConfig;
-        private final PluginConfiguration imageBuilder;
+        private final List<OrderedPlugin> plugins;
+        private final ImageBuilder imageBuilder;
         private final String lastSorterPluginName;
 
         /**
          * Empty plugins configuration.
          */
         public PluginsConfiguration() {
-            this(Collections.emptyList(), Collections.emptyList(), null);
+            this(Collections.emptyList());
         }
 
         /**
          * Plugins configuration.
          *
-         * @param transformerPluginsConfig List of transformer plugins
-         * configuration.
-         * @param processorPluginsConfig List of processor plugins
-         * configuration.
-         * @param imageBuilder Image builder (null default builder).
+         * @param plugins List of  plugins.
          */
-        public PluginsConfiguration(List<OrderedPluginConfiguration> transformerPluginsConfig,
-                List<OrderedPluginConfiguration> processorPluginsConfig,
-                PluginConfiguration imageBuilder) {
-            this(transformerPluginsConfig, processorPluginsConfig, imageBuilder, null);
+        public PluginsConfiguration(List<OrderedPlugin> plugins) {
+            this(plugins, null, null);
         }
 
         /**
          * Plugins configuration with a last sorter. No sorting can occur after
          * the last sorter plugin.
          *
-         * @param transformerPluginsConfig List of transformer plugins
-         * configuration.
-         * @param processorPluginsConfig List of processor plugins
-         * configuration.
+         * @param plugins List of transformer plugins.
          * @param imageBuilder Image builder (null default builder).
          * @param lastSorterPluginName Name of last sorter plugin, no sorting
          * can occur after it.
          */
-        public PluginsConfiguration(List<OrderedPluginConfiguration> transformerPluginsConfig,
-                List<OrderedPluginConfiguration> processorPluginsConfig,
-                PluginConfiguration imageBuilder, String lastSorterPluginName) {
-            this.transformerPluginsConfig = transformerPluginsConfig == null ? Collections.emptyList()
-                    : transformerPluginsConfig;
-            this.processorPluginsConfig = processorPluginsConfig == null ? Collections.emptyList()
-                    : processorPluginsConfig;
+        public PluginsConfiguration(List<OrderedPlugin> plugins,
+                ImageBuilder imageBuilder, String lastSorterPluginName) {
+            this.plugins = plugins == null ? Collections.emptyList()
+                    : plugins;
             this.imageBuilder = imageBuilder;
             this.lastSorterPluginName = lastSorterPluginName;
         }
 
         /**
-         * @return the transformer pluginsConfig
+         * @return the plugins
          */
-        public List<OrderedPluginConfiguration> getTransformerPluginsConfig() {
-            return transformerPluginsConfig;
-        }
-
-        /**
-         * @return the post processors pluginsConfig
-         */
-        public List<OrderedPluginConfiguration> getPostProcessorPluginsConfig() {
-            return processorPluginsConfig;
+        public List<OrderedPlugin> getPlugins() {
+            return plugins;
         }
 
         /**
          * @return the imageBuilder
          */
-        public PluginConfiguration getImageBuilder() {
+        public ImageBuilder getImageBuilder() {
             return imageBuilder;
         }
 
@@ -236,10 +172,7 @@ public final class Jlink {
             StringBuilder builder = new StringBuilder();
             builder.append("imagebuilder=").append(imageBuilder).append("\n");
             StringBuilder pluginsBuilder = new StringBuilder();
-            for (PluginConfiguration p : transformerPluginsConfig) {
-                pluginsBuilder.append(p).append(",");
-            }
-            for (PluginConfiguration p : processorPluginsConfig) {
+            for (OrderedPlugin p : plugins) {
                 pluginsBuilder.append(p).append(",");
             }
             builder.append("plugins=").append(pluginsBuilder).append("\n");
@@ -258,7 +191,7 @@ public final class Jlink {
         private final Path output;
         private final Set<String> modules;
         private final Set<String> limitmods;
-        private final List<Path> pluginpaths;
+
         private final ByteOrder endian;
 
         /**
@@ -281,7 +214,6 @@ public final class Jlink {
             this.modulepaths = modulepaths == null ? Collections.emptyList() : modulepaths;
             this.modules = modules == null ? Collections.emptySet() : modules;
             this.limitmods = limitmods == null ? Collections.emptySet() : limitmods;
-            this.pluginpaths = pluginpaths == null ? Collections.emptyList() : pluginpaths;
             this.endian = endian == null ? ByteOrder.nativeOrder() : endian;
         }
 
@@ -338,13 +270,6 @@ public final class Jlink {
             return limitmods;
         }
 
-        /**
-         * @return the pluginpaths
-         */
-        public List<Path> getPluginpaths() {
-            return pluginpaths;
-        }
-
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
@@ -367,17 +292,15 @@ public final class Jlink {
                 limitsBuilder.append(p).append(",");
             }
             builder.append("limitmodules=").append(limitsBuilder).append("\n");
-
-            StringBuilder pluginsBuilder = new StringBuilder();
-            for (Path p : pluginpaths) {
-                pluginsBuilder.append(p).append(",");
-            }
-            builder.append("pluginspaths=").append(pluginsBuilder).append("\n");
             builder.append("endian=").append(endian).append("\n");
             return builder.toString();
         }
     }
 
+    /**
+     * Jlink instance constructor, if a security manager is set, the jlink
+     * permission is checked.
+     */
     public Jlink() {
         if (System.getSecurityManager() != null) {
             System.getSecurityManager().
@@ -396,7 +319,7 @@ public final class Jlink {
     }
 
     /**
-     * Build the image.
+     * Build the image with a plugin configuration.
      *
      * @param config Jlink config, must not be null.
      * @param pluginsConfig Plugins config, can be null
@@ -406,6 +329,22 @@ public final class Jlink {
         Objects.requireNonNull(config);
         try {
             JlinkTask.createImage(config, pluginsConfig);
+        } catch (Exception ex) {
+            throw new PluginException(ex);
+        }
+    }
+
+    /**
+     * Post process the image with a plugin configuration.
+     *
+     * @param image Existing image.
+     * @param transformerPlugins Plugins config, cannot be null
+     */
+    public void postProcess(ExecutableImage image, List<OrderedPlugin> transformerPlugins) {
+        Objects.requireNonNull(image);
+        Objects.requireNonNull(transformerPlugins);
+        try {
+            JlinkTask.postProcessImage(image, transformerPlugins);
         } catch (Exception ex) {
             throw new PluginException(ex);
         }

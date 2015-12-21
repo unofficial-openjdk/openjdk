@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal.plugins;
 import java.lang.module.ModuleDescriptor.*;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,29 +42,46 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
 
 /**
- * Jlink plugin to reconstitute module descriptors for installed modules.
- * It also determines the number of packages of the boot layer at link time.
+ * Jlink plugin to reconstitute module descriptors for installed modules. It
+ * also determines the number of packages of the boot layer at link time.
  *
  * This plugin will override jdk.internal.module.InstalledModules class
  *
- * This plugin is enabled by default.  This can be disabled via
- * jlink --gen-installed-modules off option.
+ * This plugin is enabled by default. This can be disabled via jlink
+ * --gen-installed-modules off option.
  *
- * TODO: module-info.class may not have the ConcealedPackages attribute.
- * This plugin or a new plugin should add to module-info.class, if not present.
+ * TODO: module-info.class may not have the ConcealedPackages attribute. This
+ * plugin or a new plugin should add to module-info.class, if not present.
  *
  * @see java.lang.module.InstalledModuleFinder
  * @see jdk.internal.module.InstalledModules
  */
-final class InstalledModuleDescriptorPlugin extends AsmPlugin {
-    InstalledModuleDescriptorPlugin() {
+public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
+
+    static final String NAME = "gen-installed-modules";
+    private static final PluginOption NAME_OPTION
+            = new PluginOption.Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            isEnabled().build();
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
     }
 
     @Override
     public String getName() {
-        return InstalledModuleDescriptorProvider.NAME;
+        return NAME;
     }
 
     @Override
@@ -102,7 +120,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         for (Exports exp : md.exports()) {
             Checks.requirePackageName(exp.source());
             exp.targets()
-               .ifPresent(targets -> targets.forEach(Checks::requireModuleName));
+                    .ifPresent(targets -> targets.forEach(Checks::requireModuleName));
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();
@@ -133,17 +151,28 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
     }
 
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        //NOOP
+    }
+
     /**
-     * Builder of a new jdk.internal.module.InstalledModules class
-     * to reconstitute ModuleDescriptor of the installed modules.
+     * Builder of a new jdk.internal.module.InstalledModules class to
+     * reconstitute ModuleDescriptor of the installed modules.
      */
     static class Builder {
-        private static final String CLASSNAME =
-            "jdk/internal/module/InstalledModules";
-        private static final String MODULE_DESCRIPTOR_BUILDER =
-            "jdk/internal/module/Builder";
-        private static final String MODULES_MAP_SIGNATURE =
-            "Ljava/util/Map<Ljava/lang/String;Ljava/lang/module/ModuleDescriptor;>;";
+
+        private static final String CLASSNAME
+                = "jdk/internal/module/InstalledModules";
+        private static final String MODULE_DESCRIPTOR_BUILDER
+                = "jdk/internal/module/Builder";
+        private static final String MODULES_MAP_SIGNATURE
+                = "Ljava/util/Map<Ljava/lang/String;Ljava/lang/module/ModuleDescriptor;>;";
 
         // static variables in InstalledModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
@@ -168,11 +197,11 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
 
         public Builder(Set<String> moduleNames, int numPackages) {
-            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
+            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
             this.clinit(moduleNames, numPackages);
-            this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                                     "modules", "()Ljava/util/Map;",
-                                     "()" + MODULES_MAP_SIGNATURE, null);
+            this.mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC,
+                    "modules", "()Ljava/util/Map;",
+                    "()" + MODULES_MAP_SIGNATURE, null);
             mv.visitCode();
         }
 
@@ -182,42 +211,40 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
          * static Map<String, ModuleDescriptor> map = new HashMap<>();
          */
         private void clinit(Set<String> moduleNames, int numPackages) {
-            cw.visit(Opcodes.V1_8, ACC_PUBLIC+ACC_FINAL+ACC_SUPER, CLASSNAME,
-                     null, "java/lang/Object", null);
+            cw.visit(Opcodes.V1_8, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, CLASSNAME,
+                    null, "java/lang/Object", null);
 
             // public static String[] MODULE_NAMES = new String[] {....};
-            cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULE_NAMES,
-                          "[Ljava/lang/String;", null, null)
-              .visitEnd();
-
+            cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, MODULE_NAMES,
+                    "[Ljava/lang/String;", null, null)
+                    .visitEnd();
 
             // public static int PACKAGES_IN_BOOT_LAYER;
-            cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, PACKAGE_COUNT,
-                          "I", null, numPackages)
-              .visitEnd();
+            cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, PACKAGE_COUNT,
+                    "I", null, numPackages)
+                    .visitEnd();
 
             // static Map<String, ModuleDescriptor> map = new HashMap<>();
-            cw.visitField(ACC_FINAL+ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
-                          MODULES_MAP_SIGNATURE, null)
-              .visitEnd();
+            cw.visitField(ACC_FINAL + ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
+                    MODULES_MAP_SIGNATURE, null)
+                    .visitEnd();
 
             MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V",
-                                              null, null);
+                    null, null);
             mv.visitCode();
 
             // create the MODULE_NAMES array
             int numModules = moduleNames.size();
             newArray(cw, mv, moduleNames, numModules);
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULE_NAMES,
-                              "[Ljava/lang/String;");
+                    "[Ljava/lang/String;");
             mv.visitIntInsn(numModules < Byte.MAX_VALUE ? BIPUSH : SIPUSH, numModules);
             mv.visitTypeInsn(ANEWARRAY, "[Ljava/lang/String;");
-
 
             mv.visitTypeInsn(NEW, "java/util/HashMap");
             mv.visitInsn(DUP);
             mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap",
-                               "<init>", "()V", false);
+                    "<init>", "()V", false);
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
@@ -268,10 +295,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
 
         private static void newArray(ClassWriter cw, MethodVisitor mv,
-                                     Set<String> names, int size) {
+                Set<String> names, int size) {
             mv.visitIntInsn(size < Byte.MAX_VALUE ? BIPUSH : SIPUSH, size);
             mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
-            int index=0;
+            int index = 0;
             for (String n : names) {
                 addElement(cw, mv, index++);
                 mv.visitLdcInsn(n);      // value
@@ -363,8 +390,8 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                             requires(req.name());
                             break;
                         case 1:
-                            ModuleDescriptor.Requires.Modifier mod =
-                                req.modifiers().iterator().next();
+                            ModuleDescriptor.Requires.Modifier mod
+                                    = req.modifiers().iterator().next();
                             requires(mod, req.name());
                             break;
                         default:
@@ -409,9 +436,9 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitLdcInsn(md.name());
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                    "build", "()Ljava/lang/module/ModuleDescriptor;", false);
+                        "build", "()Ljava/lang/module/ModuleDescriptor;", false);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put",
-                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                 mv.visitInsn(POP);
             }
 
@@ -424,9 +451,9 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitLdcInsn(mn);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                    "build", "()Ljava/lang/module/ModuleDescriptor;", false);
+                        "build", "()Ljava/lang/module/ModuleDescriptor;", false);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map",
-                    "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                        "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                 mv.visitInsn(POP);
             }
 
@@ -437,7 +464,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", STRING_SIG, false);
+                        "requires", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -447,10 +474,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             void requires(ModuleDescriptor.Requires.Modifier mod, String name) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, mod.name(),
-                                  REQUIRES_MODIFIER_TYPE);
+                        REQUIRES_MODIFIER_TYPE);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", REQUIRES_MODIFIER_STRING_SIG, false);
+                        "requires", REQUIRES_MODIFIER_STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -465,18 +492,18 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 String signature = "(";
                 for (ModuleDescriptor.Requires.Modifier m : mods) {
                     mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, m.name(),
-                                      REQUIRES_MODIFIER_TYPE);
+                            REQUIRES_MODIFIER_TYPE);
                     signature += "Ljava/util/Enum;";
                 }
                 signature += ")Ljava/util/EnumSet;";
                 mv.visitMethodInsn(INVOKESTATIC, "java/util/EnumSet", "of",
-                                   signature, false);
+                        signature, false);
                 mv.visitVarInsn(ASTORE, MODS_VAR);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, MODS_VAR);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", SET_STRING_SIG, false);
+                        "requires", SET_STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -549,7 +576,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(pn);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "conceals", STRING_SIG, false);
+                        "conceals", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -560,7 +587,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(cn);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "mainClass", STRING_SIG, false);
+                        "mainClass", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -571,7 +598,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(v.toString());
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "version", STRING_SIG, false);
+                        "version", STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 

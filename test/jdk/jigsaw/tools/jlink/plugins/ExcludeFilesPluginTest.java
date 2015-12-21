@@ -38,11 +38,11 @@ import java.util.Map;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class ExcludeFilesPluginTest {
     public static void main(String[] args) throws Exception {
@@ -73,7 +73,7 @@ public class ExcludeFilesPluginTest {
         Map<String, Object> prop = new HashMap<>();
         prop.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeFilesProvider fprovider = new ExcludeFilesProvider();
-        TransformerPlugin fplug = (TransformerPlugin) fprovider.newPlugins(prop).get(0);
+        TransformerPlugin fplug = (TransformerPlugin) fprovider.newPlugin(prop);
         PoolImpl files = new PoolImpl();
         PoolImpl fresult = new PoolImpl();
         ModuleData f = Pool.newImageFile(module, sample,

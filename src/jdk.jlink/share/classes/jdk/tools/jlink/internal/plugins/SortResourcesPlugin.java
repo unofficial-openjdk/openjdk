@@ -31,58 +31,45 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
  * Sort Resources plugin
  */
-final class SortResourcesPlugin implements TransformerPlugin {
+public final class SortResourcesPlugin implements TransformerPlugin {
 
+    public static final String NAME = "sort-resources";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
     private final List<Pattern> filters = new ArrayList<>();
-    private final List<String> orderedPaths;
-    private final boolean isFile;
-    SortResourcesPlugin(String[] patterns) throws IOException {
-        boolean isf = false;
-        List<String> paths = null;
-        if (patterns != null) {
-            if (patterns.length == 1) {
-                String filePath = patterns[0];
-                File f = new File(filePath);
-                if (f.exists()) {
-                    isf = true;
-                    try (FileInputStream fis = new FileInputStream(f);
-                            InputStreamReader ins
-                            = new InputStreamReader(fis, StandardCharsets.UTF_8);
-                            BufferedReader reader = new BufferedReader(ins)) {
-                        paths = reader.lines().collect(Collectors.toList());
-                    }
-                }
-            }
-            if (!isf) {
-                for (String p : patterns) {
-                    p = p.replaceAll(" ", "");
-                    Pattern pattern = Pattern.compile(ResourceFilter.escape(p));
-                    filters.add(pattern);
-                }
-            }
-        }
-        orderedPaths = paths;
-        isFile = isf;
-    }
+    private List<String> orderedPaths;
+    private boolean isFile;
 
     @Override
     public String getName() {
-        return SortResourcesProvider.NAME;
+        return NAME;
     }
 
     static class SortWrapper {
+
         private final ModuleData resource;
         private final int ordinal;
 
@@ -123,9 +110,10 @@ final class SortResourcesPlugin implements TransformerPlugin {
     @Override
     public void visit(Pool in, Pool out) {
         in.getContent().stream()
+                .filter(w -> w.getType().equals(ModuleDataType.CLASS_OR_RESOURCE))
                 .map((r) -> new SortWrapper(r, isFile
-                                        ? getFileOrdinal(r.getPath())
-                                        : getPatternOrdinal(r.getPath())))
+                        ? getFileOrdinal(r.getPath())
+                        : getPatternOrdinal(r.getPath())))
                 .sorted((sw1, sw2) -> {
                     int ordinal1 = sw1.getOrdinal();
                     int ordinal2 = sw2.getOrdinal();
@@ -142,11 +130,73 @@ final class SortResourcesPlugin implements TransformerPlugin {
 
                     return sw1.getPath().compareTo(sw2.getPath());
                 }).forEach((sw) -> {
+            try {
+                out.add(sw.getResource());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        in.getContent().stream()
+                .filter(m -> !m.getType().equals(ModuleDataType.CLASS_OR_RESOURCE))
+                .forEach((m) -> {
                     try {
-                        out.add(sw.getResource());
+                        out.add(m);
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 });
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.SORTER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        String val = config.get(NAME_OPTION);
+        try {
+            String[] patterns = Utils.listParser.apply(val);
+            boolean isf = false;
+            List<String> paths = null;
+            if (patterns != null) {
+                if (patterns.length == 1) {
+                    String filePath = patterns[0];
+                    File f = new File(filePath);
+                    if (f.exists()) {
+                        isf = true;
+                        try (FileInputStream fis = new FileInputStream(f);
+                                InputStreamReader ins
+                                = new InputStreamReader(fis, StandardCharsets.UTF_8);
+                                BufferedReader reader = new BufferedReader(ins)) {
+                            paths = reader.lines().collect(Collectors.toList());
+                        }
+                    }
+                }
+                if (!isf) {
+                    for (String p : patterns) {
+                        p = p.replaceAll(" ", "");
+                        Pattern pattern = Pattern.compile(ResourceFilter.escape(p));
+                        filters.add(pattern);
+                    }
+                }
+            }
+            orderedPaths = paths;
+            isFile = isf;
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 }

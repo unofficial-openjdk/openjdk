@@ -54,8 +54,8 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableClassPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableResourcePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 public class AddForgetResourcesTest extends AsmPluginTestBase {
 

@@ -46,8 +46,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -55,12 +57,15 @@ import jdk.internal.jimage.decompressor.CompressIndexes;
 import jdk.internal.jimage.decompressor.SignatureParser;
 import jdk.internal.jimage.decompressor.StringSharingDecompressor;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
@@ -69,11 +74,19 @@ import jdk.tools.jlink.internal.StringTable;
  */
 public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisitor {
 
+    public static final String NAME = "compact-cp";
+
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).
+            build();
     private static final int[] SIZES;
 
     static {
         SIZES = StringSharingDecompressor.getSizes();
     }
+
     private static final class CompactCPHelper {
 
         private static final class DescriptorsScanner {
@@ -263,8 +276,7 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
                                         return strings.addString(type);
                                     }).collect(Collectors.toList());
                             if (!indexes.isEmpty()) {
-                                out.write(StringSharingDecompressor.
-                                        EXTERNALIZED_STRING_DESCRIPTOR);
+                                out.write(StringSharingDecompressor.EXTERNALIZED_STRING_DESCRIPTOR);
                                 int sigIndex = strings.addString(parseResult.formatted);
                                 byte[] compressed
                                         = CompressIndexes.compress(sigIndex);
@@ -328,14 +340,30 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
         }
     }
 
-    private final Predicate<String> predicate;
+    private Predicate<String> predicate;
 
-    public StringSharingPlugin(String[] patterns) throws IOException {
+    public StringSharingPlugin() {
+
+    }
+
+    StringSharingPlugin(String[] patterns) throws IOException {
         this(new ResourceFilter(patterns));
     }
 
-    public StringSharingPlugin(Predicate<String> predicate) {
+    StringSharingPlugin(Predicate<String> predicate) {
         this.predicate = predicate;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.COMPRESSOR);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
     }
 
     @Override
@@ -343,31 +371,47 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
         CompactCPHelper visit = new CompactCPHelper();
         in.visit((resource) -> {
             ModuleData res = resource;
-                if (predicate.test(resource.getPath()) && resource.getPath().endsWith(".class")) {
-                    byte[] compressed = null;
-                    try {
-                        compressed = visit.transform(resource, result, ((PoolImpl)in).getStringTable());
-                    } catch (Exception ex) {
-                        throw new PluginException(ex);
-                    }
-                    res = PoolImpl.newCompressedResource(resource,
-                            ByteBuffer.wrap(compressed), getName(), null,
-                            ((PoolImpl)in).getStringTable(), in.getByteOrder());
+            if (predicate.test(resource.getPath()) && resource.getPath().endsWith(".class")) {
+                byte[] compressed = null;
+                try {
+                    compressed = visit.transform(resource, result, ((PoolImpl) in).getStringTable());
+                } catch (Exception ex) {
+                    throw new PluginException(ex);
                 }
-                return res;
+                res = PoolImpl.newCompressedResource(resource,
+                        ByteBuffer.wrap(compressed), getName(), null,
+                        ((PoolImpl) in).getStringTable(), in.getByteOrder());
+            }
+            return res;
         }, result);
     }
 
     @Override
     public String getName() {
-        return StringSharingProvider.NAME;
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        try {
+            String val = config.get(NAME_OPTION);
+            predicate = new ResourceFilter(Utils.listParser.apply(val));
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 
     @Override
     public void previsit(Pool resources, StringTable strings) {
         CompactCPHelper preVisit = new CompactCPHelper();
         for (ModuleData resource : resources.getContent()) {
-            if (resource.getPath().endsWith(".class") && predicate.test(resource.getPath())) {
+            if (resource.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)
+                    && resource.getPath().endsWith(".class") && predicate.test(resource.getPath())) {
                 try {
                     preVisit.transform(resource, null, strings);
                 } catch (Exception ex) {

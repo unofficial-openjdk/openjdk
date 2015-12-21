@@ -25,19 +25,15 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.PostProcessorOnOffProvider;
-import jdk.tools.jlink.plugins.PostProcessorPlugin;
-import jdk.tools.jlink.plugins.Sessions;
-import jdk.tools.jlink.plugins.Sessions.RunningProcess;
-import jdk.tools.jlink.plugins.Sessions.Session;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPlugin;
+import jdk.tools.jlink.api.plugin.postprocessor.PostProcessorPluginProvider;
 import tests.Helper;
 
 /*
@@ -57,80 +53,22 @@ import tests.Helper;
  */
 public class JLinkPostProcessingTest {
 
-    private static class PostProcessingTest extends PostProcessorOnOffProvider {
+    private static class PostProcessingTest extends PostProcessorPluginProvider {
 
         private static ExecutableImage called;
 
-        private static boolean isWindows() {
-            return System.getProperty("os.name").startsWith("Windows");
-        }
-
         @Override
-        public List<PostProcessorPlugin> createPlugins(Map<String, String> otherOptions) {
-            List<PostProcessorPlugin> lst = new ArrayList<>();
-            lst.add(new PPPlugin());
-            return lst;
+        public PostProcessorPlugin newPlugin(Map<PluginOption, Object> config) {
+            return new PPPlugin();
         }
 
         private static class PPPlugin implements PostProcessorPlugin {
 
             @Override
-            public List<String> process(Sessions manager) {
-                called = manager.getImage();
-                List<String> args = new ArrayList<>();
-                args.add("-version");
-
-                Session session = manager.newSession("test");
-                {
-                    try {
-                        RunningProcess i = session.newImageProcess(args);
-                        String str = i.getStdout();
-                        if (!str.isEmpty()) {
-                            throw new PluginException("Unexpected out " + str);
-                        }
-                        String str2 = i.getStderr();
-                        if (str2.isEmpty()) {
-                            throw new PluginException("Version not print ");
-                        } else {
-                            System.out.println("REMOTE PROCESS output: " + str2);
-                        }
-                        if (i.getExitCode() != 0) {
-                            throw new PluginException("Not valid exit code " + i.getExitCode());
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        throw new PluginException(ex);
-                    }
-                }
-
-                {
-                    try {
-                        ProcessBuilder builder = new ProcessBuilder(manager.getImage().
-                                getHome().resolve("bin").
-                                resolve(isWindows() ? "java.exe" : "java").toString(), "-version");
-                        RunningProcess i = session.newRunningProcess(builder);
-                        String str = i.getStdout();
-                        if (!str.isEmpty()) {
-                            throw new PluginException("Unexpected out " + str);
-                        }
-                        String str2 = i.getStderr();
-                        if (str2.isEmpty()) {
-                            throw new PluginException("Version not print ");
-                        } else {
-                            System.out.println("REMOTE PROCESS output: " + str2);
-                        }
-                        if (i.getExitCode() != 0) {
-                            throw new PluginException("Not valid exit code " + i.getExitCode());
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        throw new PluginException(ex);
-                    }
-                }
-
+            public List<String> process(ExecutableImage image) {
+                called = image;
+                Path gen = image.getHome().resolve("lib").resolve("toto.txt");
                 try {
-
-                    session.close();
-
-                    Path gen = manager.getImage().getHome().resolve("lib").resolve("toto.txt");
                     Files.createFile(gen);
                 } catch (IOException ex) {
                     throw new UncheckedIOException(ex);
@@ -145,19 +83,15 @@ public class JLinkPostProcessingTest {
 
         }
         private static final String NAME = "pp";
+        private static final PluginOption NAME_OPTION = new PluginOptionBuilder(NAME).hasOnOffArgument().build();
 
         PostProcessingTest() {
             super(NAME, "");
         }
 
         @Override
-        public String getToolOption() {
-            return NAME;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
+        public PluginOption getOption() {
+            return NAME_OPTION;
         }
 
         @Override
@@ -176,7 +110,7 @@ public class JLinkPostProcessingTest {
         }
         helper.generateDefaultModules();
 
-        ImagePluginProviderRepository.registerPluginProvider(new PostProcessingTest());
+        PluginRepository.registerPluginProvider(new PostProcessingTest());
 
         // Generate an image and post-process in same jlink execution.
         {

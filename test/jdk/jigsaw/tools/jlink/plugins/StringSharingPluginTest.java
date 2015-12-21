@@ -54,9 +54,9 @@ import jdk.internal.jimage.decompressor.StringSharingDecompressor;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.internal.plugins.StringSharingProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 import tests.Helper;
 import tests.JImageValidator;
 
@@ -115,7 +115,7 @@ public class StringSharingPluginTest {
         try (java.util.stream.Stream<Path> stream = Files.walk(compiledClasses)) {
             stream.forEach(c);
         }
-        TransformerPlugin plugin = new StringSharingProvider().newPlugins(null, null).get(0);
+        TransformerPlugin plugin = new StringSharingProvider().newPlugin(null, null);
         PoolImpl result = new PoolImpl(resources.getByteOrder(), resources.getStringTable());
         plugin.visit(resources, result);
 

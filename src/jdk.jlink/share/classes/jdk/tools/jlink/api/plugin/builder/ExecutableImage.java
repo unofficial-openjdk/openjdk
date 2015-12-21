@@ -22,41 +22,54 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.postprocessor;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import jdk.tools.jlink.api.plugin.transformer.Pool.Module;
 
 /**
- * An abstract plugin provider class for plugins that are ordered.
+ * An executable Image.
  */
-public abstract class OrderedPluginProvider extends PluginProvider {
+public abstract class ExecutableImage {
 
-    public static enum ORDER {
-        FIRST,
-        ANY,
-        LAST
+    private final Path home;
+    private final List<String> args;
+    private final Set<String> modules;
+
+    protected ExecutableImage(Path home, Set<String> modules,
+            List<String> args) {
+        Objects.requireNonNull(home);
+        Objects.requireNonNull(args);
+        if (!Files.exists(home)) {
+            throw new IllegalArgumentException("Invalid image home");
+        }
+        this.home = home;
+        this.modules = Collections.unmodifiableSet(modules);
+        this.args = Collections.unmodifiableList(args);
     }
 
-    public enum Type {
-        RESOURCE_PLUGIN,
-        IMAGE_FILE_PLUGIN
-    }
-
-    protected OrderedPluginProvider(String name, String description) {
-        super(name, description);
-    }
-
-    /**
-     * Order of the plugin within its category. By default ANY.
-     *
-     * @return Expected order.
-     */
-    public ORDER getOrder() {
-        return ORDER.ANY;
+    public Path getHome() {
+        return home;
     }
 
     /**
-     * A category in which to understand the order.
+     * The names of the modules located in the image.
      *
-     * @return
+     * @return The set of modules.
      */
-    public abstract String getCategory();
+    public Set<String> getModules() {
+        return modules;
+    }
+
+    public List<String> getExecutionArgs() {
+        return args;
+    }
+
+    public abstract void storeLaunchArgs(List<String> args);
 }

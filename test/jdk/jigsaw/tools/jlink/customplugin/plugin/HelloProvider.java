@@ -22,18 +22,21 @@
  */
 package plugin;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class HelloProvider extends TransformerCmdProvider {
+public final class HelloProvider extends TransformerPluginProvider {
 
     public static final String NAME = "hello";
+    private final static PluginOption NAME_OPTION = new PluginOptionBuilder(NAME + "-option").
+            description(NAME + "-description").build();
+
     public static boolean called;
 
     public HelloProvider() {
@@ -42,33 +45,21 @@ public final class HelloProvider extends TransformerCmdProvider {
 
     @Override
     public String getCategory() {
-        return TRANSFORMER;
+        return TransformerPluginProvider.TRANSFORMER;
     }
 
     @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
-    }
-
-    @Override
-    public String getToolOption() {
-        return NAME;
-    }
-
-    @Override
-    public String getToolArgument() {
-        return null;
-    }
-
-    @Override
-    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-        List<TransformerPlugin> lst = new ArrayList<>();
-        lst.add(new HelloPlugin());
-        return lst;
+    public PluginOption getOption() {
+        return NAME_OPTION;
     }
 
     @Override
     public Type getType() {
         return Type.RESOURCE_PLUGIN;
+    }
+
+    @Override
+    public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
+         return new HelloPlugin();
     }
 }

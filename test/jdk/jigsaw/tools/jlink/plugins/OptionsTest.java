@@ -33,9 +33,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class OptionsTest {
     public static void main(String[] args) throws IOException {
@@ -44,7 +44,7 @@ public class OptionsTest {
         for (String c : OptionsProvider.OPTIONS) {
             props.put(c, c);
         }
-        prov.newPlugins(props);
+        prov.newPlugin(props);
         if (prov.options == null) {
             throw new AssertionError("Something wrong occured, no config");
         }
@@ -90,7 +90,7 @@ public class OptionsTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> options) {
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> options) {
             if (options.size() != OPTIONS.length) {
                 throw new PluginException("Invalid options");
             }

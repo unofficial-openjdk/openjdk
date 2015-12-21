@@ -39,16 +39,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.Jlink;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class PrevisitorTest {
 
@@ -62,7 +62,7 @@ public class PrevisitorTest {
 
     public void test() throws Exception {
         CustomProvider provider = new CustomProvider("plugin");
-        ImagePluginProviderRepository.registerPluginProvider(provider);
+        PluginRepository.registerPluginProvider(provider);
         List<Jlink.OrderedPluginConfiguration> plugins = new ArrayList<>();
         plugins.add(createConfig("plugin", 0));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins,
@@ -182,10 +182,8 @@ public class PrevisitorTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new CustomPlugin());
-            return lst;
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
+            return new CustomPlugin();
         }
 
         @Override

@@ -25,8 +25,10 @@
 package jdk.tools.jlink.internal.plugins.asm;
 
 import java.util.Objects;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.internal.PoolImpl;
 
 /**
  * Extend this class to develop your own plugin in order to transform jimage
@@ -39,10 +41,18 @@ public abstract class AsmPlugin implements TransformerPlugin {
     }
 
     @Override
-    public void visit(Pool inResources, Pool outResources) {
-        Objects.requireNonNull(inResources);
+    public void visit(Pool allContent, Pool outResources) {
+        Objects.requireNonNull(allContent);
         Objects.requireNonNull(outResources);
-        AsmPools pools = new AsmPools(inResources);
+        PoolImpl resources = new PoolImpl(allContent.getByteOrder());
+        for(ModuleData md : allContent.getContent()) {
+            if(md.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
+                resources.add(md);
+            } else {
+                outResources.add(md);
+            }
+        }
+        AsmPools pools = new AsmPools(resources);
         visit(pools);
         pools.fillOutputResources(outResources);
     }
@@ -52,7 +62,7 @@ public abstract class AsmPlugin implements TransformerPlugin {
      * apply Asm transformation to jimage contained classes.
      * @param pools The pool of Asm classes and other resource files.
      * @param strings To add a string to the jimage strings table.
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public abstract void visit(AsmPools pools);
 }

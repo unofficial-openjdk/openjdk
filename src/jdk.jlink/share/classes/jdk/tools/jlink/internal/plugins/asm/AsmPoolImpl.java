@@ -47,9 +47,9 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 /**
  * A pool of ClassReader and other resource files. This class allows to

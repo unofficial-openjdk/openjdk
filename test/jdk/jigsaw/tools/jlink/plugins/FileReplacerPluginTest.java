@@ -51,11 +51,11 @@ import java.util.stream.Stream;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.FileReplacerProvider;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class FileReplacerPluginTest {
     public static void main(String[] args) throws Exception {
@@ -114,7 +114,7 @@ public class FileReplacerPluginTest {
         Map<String, Object> p = new HashMap<>();
         p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, arguments);
         FileReplacerProvider provider = new FileReplacerProvider();
-        TransformerPlugin replacerPlugin = (TransformerPlugin) provider.newPlugins(p).get(0);
+        TransformerPlugin replacerPlugin = (TransformerPlugin) provider.newPlugin(p);
         Pool input = new PoolImpl();
         Pool output = new PoolImpl();
         for (Replacement replacement : replacements) {

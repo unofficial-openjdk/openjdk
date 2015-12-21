@@ -39,10 +39,10 @@ import java.util.Map;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.ExcludeProvider;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.CmdPluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class ExcludePluginTest {
 
@@ -78,7 +78,7 @@ public class ExcludePluginTest {
         Map<String, Object> p = new HashMap<>();
         p.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, s);
         ExcludeProvider provider = new ExcludeProvider();
-        TransformerPlugin excludePlugin = (TransformerPlugin) provider.newPlugins(p).get(0);
+        TransformerPlugin excludePlugin = (TransformerPlugin) provider.newPlugin(p);
         Pool resources = new PoolImpl();
         ModuleData resource = Pool.newResource(sample, new byte[0]);
         resources.add(resource);

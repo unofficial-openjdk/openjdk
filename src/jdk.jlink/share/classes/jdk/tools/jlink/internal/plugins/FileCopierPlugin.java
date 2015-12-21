@@ -35,22 +35,41 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.TransformerPluginProvider;
+import java.util.Set;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
  * Copy files to image from various locations.
  */
-public class FileCopierProvider extends TransformerCmdProvider {
+public class FileCopierPlugin implements TransformerPlugin {
+
+    public static final String NAME = "copy-files";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
+
+    private static final class CopiedFile {
+
+        Path source;
+        Path target;
+    }
+    private static final String FAKE_MODULE = "$jlink-file-copier";
+
+    private final List<CopiedFile> files = new ArrayList<>();
 
     /**
      * Symbolic link to another path.
@@ -93,6 +112,7 @@ public class FileCopierProvider extends TransformerCmdProvider {
             throw new UncheckedIOException(ex);
         }
     }
+
     private static final class DirectoryCopy implements FileVisitor<Path> {
 
         private final Path source;
@@ -163,7 +183,7 @@ public class FileCopierProvider extends TransformerCmdProvider {
         Objects.requireNonNull(pool);
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
-        ModuleData impl = Pool.newImageFile("$jlink-file-copier", path,
+        ModuleData impl = Pool.newImageFile(FAKE_MODULE, path,
                 Pool.ModuleDataType.OTHER, newStream(file), length(file));
         try {
             pool.add(impl);
@@ -172,128 +192,99 @@ public class FileCopierProvider extends TransformerCmdProvider {
         }
     }
 
-    public static final class FileCopier implements TransformerPlugin {
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
+    }
 
-        private static final class CopiedFile {
-            Path source;
-            Path target;
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        String val = config.get(NAME_OPTION);
+        String[] argument = Utils.listParser.apply(val);
+        if (argument == null || argument.length == 0) {
+            throw new RuntimeException("Invalid argument for " + NAME);
         }
 
-        private final List<CopiedFile> files = new ArrayList<>();
-
-        public FileCopier(String[] argument) {
-            if (argument == null || argument.length == 0) {
-                throw new RuntimeException("Invalid argument for " + NAME);
+        String javahome = System.getProperty("java.home");
+        for (String a : argument) {
+            int i = a.indexOf("=");
+            CopiedFile cf = new CopiedFile();
+            if (i == -1) {
+                Path file = Paths.get(a);
+                if (file.isAbsolute()) {
+                    cf.source = file;
+                    // The target is the image root directory.
+                    cf.target = file.getFileName();
+                } else {
+                    file = new File(javahome, a).toPath();
+                    cf.source = file;
+                    cf.target = Paths.get(a);
+                }
+            } else {
+                String target = a.substring(i + 1);
+                String f = a.substring(0, i);
+                Path file = Paths.get(f);
+                if (file.isAbsolute()) {
+                    cf.source = file;
+                } else {
+                    cf.source = new File(javahome,
+                            file.toFile().getPath()).toPath();
+                }
+                cf.target = Paths.get(target);
             }
-            String javahome = System.getProperty("java.home");
-            for (String a : argument) {
-                int i = a.indexOf("=");
-                CopiedFile cf = new CopiedFile();
-                if (i == -1) {
-                    Path file = Paths.get(a);
-                    if (file.isAbsolute()) {
-                        cf.source = file;
-                        // The target is the image root directory.
-                        cf.target = file.getFileName();
-                    } else {
-                        file = new File(javahome, a).toPath();
-                        cf.source = file;
-                        cf.target = Paths.get(a);
-                    }
-                } else {
-                    String target = a.substring(i + 1);
-                    String f = a.substring(0, i);
-                    Path file = Paths.get(f);
-                    if (file.isAbsolute()) {
-                        cf.source = file;
-                    } else {
-                        cf.source = new File(javahome,
-                                file.toFile().getPath()).toPath();
-                    }
-                    cf.target = Paths.get(target);
-                }
-                if (!Files.exists(cf.source)) {
-                    System.err.println("Skipping file " + cf.source
-                            + ", it doesn't exist");
-                } else {
-                    files.add(cf);
-                }
+            if (!Files.exists(cf.source)) {
+                System.err.println("Skipping file " + cf.source
+                        + ", it doesn't exist");
+            } else {
+                files.add(cf);
             }
         }
+    }
 
-        @Override
-        public void visit(Pool in, Pool out) {
-            in.visit((file) -> {
-                return file;
-            }, out);
+    @Override
+    public void visit(Pool in, Pool out) {
+        in.visit((file) -> {
+            return file;
+        }, out);
 
-            // Add new files.
-            try {
-                for (CopiedFile file : files) {
-                    if (Files.isRegularFile(file.source)) {
-                        addFile(out, file.source, file.target.toString());
-                    } else {
-                        if (Files.isDirectory(file.source)) {
-                            DirectoryCopy dc = new DirectoryCopy(file.source,
-                                    out, file.target.toString());
-                            Files.walkFileTree(file.source, dc);
-                            // Add symlinks after actual content
-                            for (SymImageFile imf : dc.symlinks) {
-                                try {
-                                    out.add(imf);
-                                } catch (Exception ex) {
-                                    throw new PluginException(ex);
-                                }
-                            }
+        // Add new files.
+        try {
+            for (CopiedFile file : files) {
+                if (Files.isRegularFile(file.source)) {
+                    addFile(out, file.source, file.target.toString());
+                } else if (Files.isDirectory(file.source)) {
+                    DirectoryCopy dc = new DirectoryCopy(file.source,
+                            out, file.target.toString());
+                    Files.walkFileTree(file.source, dc);
+                    // Add symlinks after actual content
+                    for (SymImageFile imf : dc.symlinks) {
+                        try {
+                            out.add(imf);
+                        } catch (Exception ex) {
+                            throw new PluginException(ex);
                         }
                     }
                 }
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
             }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
-
-        @Override
-        public String getName() {
-            return NAME;
-        }
-
-    }
-    public static final String NAME = "copy-files";
-
-    public FileCopierProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-    public String getToolArgument() {
-        return PluginsResourceBundle.getArgument(NAME);
-    }
-
-    @Override
-    public String getCategory() {
-        return TransformerPluginProvider.TRANSFORMER;
-    }
-
-    @Override
-    public String getToolOption() {
+    public String getName() {
         return NAME;
     }
 
     @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
     }
-
-    @Override
-    public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-        List<TransformerPlugin> lst = new ArrayList<>();
-        lst.add(new FileCopier(arguments));
-        return lst;
-    }
-    @Override
-    public Type getType() {
-        return Type.IMAGE_FILE_PLUGIN;
-    }
-
 }

@@ -22,52 +22,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.internal.plugins;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import jdk.tools.jlink.plugins.TransformerOnOffProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.TransformerPluginProvider;
+package jdk.tools.jlink.api.plugin;
 
 /**
- *
- * Strip Debug attributes plugin
+ * An unchecked exception thrown by jlink plugin API for unrecoverable
+ * conditions.
  */
-public final class StripDebugProvider extends TransformerOnOffProvider {
+public final class PluginException extends RuntimeException {
 
-    public static final String NAME = "strip-java-debug";
+    private static final long serialVersionUID = 7117982019443100395L;
 
-    public StripDebugProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
+    public PluginException() {
+
     }
 
-    @Override
-    public String getCategory() {
-        return TransformerPluginProvider.TRANSFORMER;
+    public PluginException(Throwable ex) {
+        super(ex);
     }
 
-    @Override
-    public String getToolOption() {
-        return NAME;
+    public PluginException(String msg) {
+        super(msg);
     }
 
-    @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
+    public PluginException(String msg, Throwable thr) {
+        super(msg, thr);
     }
-
-    @Override
-    public Type getType() {
-        return Type.RESOURCE_PLUGIN;
-    }
-
-    @Override
-    public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
-        List<TransformerPlugin> lst = new ArrayList<>();
-        lst.add(new StripDebugPlugin());
-        return lst;
-    }
-
 }

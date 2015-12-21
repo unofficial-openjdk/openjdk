@@ -36,15 +36,15 @@ import java.util.List;
 import java.util.Map;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.Jlink;
+import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.api.plugin.PluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class PluginsNegativeTest {
     public static void main(String[] args) throws Exception {
@@ -54,40 +54,40 @@ public class PluginsNegativeTest {
     public void test() throws Exception {
         testDuplicateBuiltInProviders();
         testUnknownProvider();
-        ImagePluginProviderRepository.registerPluginProvider(new CustomProvider("plugin"));
+        PluginRepository.registerPluginProvider(new CustomProvider("plugin"));
         testEmptyInputResource();
         testEmptyOutputResource();
     }
 
     private void testDuplicateBuiltInProviders() {
         List<PluginProvider> javaPlugins = new ArrayList<>();
-        javaPlugins.addAll(ImagePluginProviderRepository.getTransformerProviders(Layer.boot()));
+        javaPlugins.addAll(PluginRepository.getTransformerProviders(Layer.boot()));
         for (PluginProvider javaPlugin : javaPlugins) {
             System.out.println("Registered plugin: " + javaPlugin.getName());
         }
         for (PluginProvider javaPlugin : javaPlugins) {
             String pluginName = javaPlugin.getName();
             try {
-                ImagePluginProviderRepository.registerPluginProvider(new CustomProvider(pluginName));
+                PluginRepository.registerPluginProvider(new CustomProvider(pluginName));
                 try {
-                    ImagePluginProviderRepository.getTransformerPluginProvider(pluginName, Layer.boot());
+                    PluginRepository.getTransformerPluginProvider(pluginName, Layer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
                 } catch (Exception ignored) {
                 }
             } finally {
-                ImagePluginProviderRepository.unregisterPluginProvider(pluginName);
+                PluginRepository.unregisterPluginProvider(pluginName);
             }
         }
     }
 
     private void testUnknownProvider() {
-        if (ImagePluginProviderRepository.getTransformerPluginProvider("unknown", Layer.boot()) != null) {
+        if (PluginRepository.getTransformerPluginProvider("unknown", Layer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
         }
-        if (ImagePluginProviderRepository.getPostProcessingPluginProvider("unknown", Layer.boot()) != null) {
+        if (PluginRepository.getPostProcessingPluginProvider("unknown", Layer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
         }
-        if (ImagePluginProviderRepository.getImageBuilderProvider("unknown", Layer.boot()) != null) {
+        if (PluginRepository.getImageBuilderProvider("unknown", Layer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
         }
     }
@@ -162,10 +162,8 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new CustomPlugin());
-            return lst;
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
+            return new CustomPlugin();
         }
 
         @Override

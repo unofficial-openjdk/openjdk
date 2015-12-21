@@ -46,17 +46,17 @@ import java.util.List;
 import java.util.Map;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.Jlink.OrderedPluginConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.PluginException;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.TransformerCmdProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
-import jdk.tools.jlink.plugins.TransformerPluginProvider;
+import jdk.tools.jlink.api.Jlink.OrderedPluginConfiguration;
+import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.PluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.TransformerCmdProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
 
 import tests.Helper;
 import tests.Result;
@@ -69,49 +69,49 @@ public class PluginOrderTest {
 
     public void test() throws Exception {
         List<String> order = new ArrayList<>();
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_F",
+        PluginRepository.registerPluginProvider(new PProvider("plugin1_F",
                 TransformerPluginProvider.FILTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_F",
+        PluginRepository.registerPluginProvider(new PProvider("plugin2_F",
                 TransformerPluginProvider.FILTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_F",
+        PluginRepository.registerPluginProvider(new PProvider("plugin3_F",
                 TransformerPluginProvider.FILTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_F",
+        PluginRepository.registerPluginProvider(new PProvider("plugin4_F",
                 TransformerPluginProvider.FILTER, order));
 
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_T",
+        PluginRepository.registerPluginProvider(new PProvider("plugin1_T",
                 TransformerPluginProvider.TRANSFORMER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_T",
+        PluginRepository.registerPluginProvider(new PProvider("plugin2_T",
                 TransformerPluginProvider.TRANSFORMER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_T",
+        PluginRepository.registerPluginProvider(new PProvider("plugin3_T",
                 TransformerPluginProvider.TRANSFORMER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_T",
+        PluginRepository.registerPluginProvider(new PProvider("plugin4_T",
                 TransformerPluginProvider.TRANSFORMER, order));
 
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_S",
+        PluginRepository.registerPluginProvider(new PProvider("plugin1_S",
                 TransformerPluginProvider.SORTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_S",
+        PluginRepository.registerPluginProvider(new PProvider("plugin2_S",
                 TransformerPluginProvider.SORTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_S",
+        PluginRepository.registerPluginProvider(new PProvider("plugin3_S",
                 TransformerPluginProvider.SORTER, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_S",
+        PluginRepository.registerPluginProvider(new PProvider("plugin4_S",
                 TransformerPluginProvider.SORTER, order));
 
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_C",
+        PluginRepository.registerPluginProvider(new PProvider("plugin1_C",
                 TransformerPluginProvider.COMPRESSOR, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_C",
+        PluginRepository.registerPluginProvider(new PProvider("plugin2_C",
                 TransformerPluginProvider.COMPRESSOR, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_C",
+        PluginRepository.registerPluginProvider(new PProvider("plugin3_C",
                 TransformerPluginProvider.COMPRESSOR, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_C",
+        PluginRepository.registerPluginProvider(new PProvider("plugin4_C",
                 TransformerPluginProvider.COMPRESSOR, order));
 
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin1_A",
+        PluginRepository.registerPluginProvider(new PProvider("plugin1_A",
                 null, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin2_A",
+        PluginRepository.registerPluginProvider(new PProvider("plugin2_A",
                 null, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin3_A",
+        PluginRepository.registerPluginProvider(new PProvider("plugin3_A",
                 null, order));
-        ImagePluginProviderRepository.registerPluginProvider(new PProvider("plugin4_A",
+        PluginRepository.registerPluginProvider(new PProvider("plugin4_A",
                 null, order));
 
         test1(order);
@@ -309,10 +309,8 @@ public class PluginOrderTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
-            List<TransformerPlugin> lst = new ArrayList<>();
-            lst.add(new PluginTrap(getName(), order));
-            return lst;
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
+            return new PluginTrap(getName(), order);
         }
 
         @Override
@@ -375,7 +373,7 @@ public class PluginOrderTest {
         }
 
         @Override
-        public List<TransformerPlugin> newPlugins(String[] arguments, Map<String, String> otherOptions) {
+        public TransformerPlugin newPlugin(String[] arguments, Map<String, String> otherOptions) {
             throw new PluginException("Shouldn't be called");
         }
 

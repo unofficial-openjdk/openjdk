@@ -58,13 +58,13 @@ import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
 import jdk.tools.jlink.internal.plugins.StringSharingProvider;
 import jdk.tools.jlink.internal.plugins.ZipCompressProvider;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.OnOffPluginProvider;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.api.plugin.PluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 public class CompressorPluginTest {
 
@@ -97,8 +97,8 @@ public class CompressorPluginTest {
 
         // compress == ZIP + String sharing
         Properties options = new Properties();
-        options.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                OnOffPluginProvider.ON_ARGUMENT);
+        options.setProperty(ZipCompressProvider.NAME_OPTION.getName(),
+                PluginOptionBuilder.ON_ARGUMENT);
         checkCompress(classes, new DefaultCompressProvider(), options,
                 new ResourceDecompressorFactory[]{
                     new ZipDecompressorFactory(),
@@ -106,7 +106,7 @@ public class CompressorPluginTest {
                 });
 
         // compress == ZIP + String sharing + filter
-        options.setProperty(DefaultCompressProvider.FILTER_OPTION,
+        options.setProperty(DefaultCompressProvider.FILTER_OPTION.getName(),
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressProvider(), options,
                 new ResourceDecompressorFactory[]{
@@ -117,9 +117,9 @@ public class CompressorPluginTest {
 
         // compress level 1 == ZIP
         Properties options1 = new Properties();
-        options1.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                OnOffPluginProvider.ON_ARGUMENT);
-        options1.setProperty(DefaultCompressProvider.LEVEL_OPTION, "1");
+        options1.setProperty(DefaultCompressProvider.NAME_OPTION.getName(),
+                PluginOptionBuilder.ON_ARGUMENT);
+        options1.setProperty(DefaultCompressProvider.LEVEL_OPTION.getName(), "1");
         checkCompress(classes, new DefaultCompressProvider(),
                 options1,
                 new ResourceDecompressorFactory[]{
@@ -127,7 +127,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 1 == ZIP
-        options1.setProperty(DefaultCompressProvider.FILTER_OPTION,
+        options1.setProperty(DefaultCompressProvider.FILTER_OPTION.getName(),
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressProvider(),
                 options1,
@@ -138,9 +138,9 @@ public class CompressorPluginTest {
 
         // compress level 2 == ZIP + String sharing
         Properties options2 = new Properties();
-        options2.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                OnOffPluginProvider.ON_ARGUMENT);
-        options2.setProperty(DefaultCompressProvider.LEVEL_OPTION, "2");
+        options2.setProperty(DefaultCompressProvider.NAME_OPTION.getName(),
+                PluginOptionBuilder.ON_ARGUMENT);
+        options2.setProperty(DefaultCompressProvider.LEVEL_OPTION.getName(), "2");
         checkCompress(classes, new DefaultCompressProvider(),
                 options2,
                 new ResourceDecompressorFactory[]{
@@ -149,7 +149,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 2 == ZIP + String sharing + filter
-        options2.setProperty(DefaultCompressProvider.FILTER_OPTION,
+        options2.setProperty(DefaultCompressProvider.FILTER_OPTION.getName(),
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressProvider(),
                 options2,
@@ -161,9 +161,9 @@ public class CompressorPluginTest {
 
         // compress level 0 == String sharing
         Properties options0 = new Properties();
-        options0.setProperty(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY,
-                OnOffPluginProvider.ON_ARGUMENT);
-        options0.setProperty(DefaultCompressProvider.LEVEL_OPTION, "0");
+        options0.setProperty(DefaultCompressProvider.NAME_OPTION.getName(),
+                PluginOptionBuilder.ON_ARGUMENT);
+        options0.setProperty(DefaultCompressProvider.LEVEL_OPTION.getName(), "0");
         checkCompress(classes, new DefaultCompressProvider(),
                 options0,
                 new ResourceDecompressorFactory[]{
@@ -171,7 +171,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 0 == String sharing + filter
-        options0.setProperty(DefaultCompressProvider.FILTER_OPTION,
+        options0.setProperty(DefaultCompressProvider.FILTER_OPTION.getName(),
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressProvider(),
                 options0,
@@ -252,13 +252,13 @@ public class CompressorPluginTest {
                     .map(Pattern::compile)
                     .collect(Collectors.toList());
 
-            Map<String, Object> props = new HashMap<>();
+            Map<PluginOption, Object> props = new HashMap<>();
             if (config != null) {
                 for (String p : config.stringPropertyNames()) {
-                    props.put(p, config.getProperty(p));
+                    props.put(new PluginOptionBuilder(p).build(), config.getProperty(p));
                 }
             }
-            List<? extends Plugin> compressors = prov.newPlugins(props);
+            Plugin compressor = prov.newPlugin(props);
             final Map<Integer, String> strings = new HashMap<>();
             PoolImpl inputResources = new PoolImpl(ByteOrder.nativeOrder(), new StringTable() {
                 @Override
@@ -275,7 +275,7 @@ public class CompressorPluginTest {
                 }
             });
             inputResources.add(resource);
-            Pool compressedResources = applyCompressors(compressors, inputResources, resource, includesPatterns, excludesPatterns);
+            Pool compressedResources = applyCompressor(compressor, inputResources, resource, includesPatterns, excludesPatterns);
             original += resource.getLength();
             compressed += compressedResources.get(resource.getPath()).getLength();
             applyDecompressors(factories, inputResources, compressedResources, strings, includesPatterns, excludesPatterns);
@@ -291,36 +291,21 @@ public class CompressorPluginTest {
         }
     }
 
-    private Pool applyCompressors(List<? extends Plugin> compressors,
+    private Pool applyCompressor(Plugin plugin,
             PoolImpl inputResources,
             ModuleData res,
             List<Pattern> includesPatterns,
             List<Pattern> excludesPatterns) throws Exception {
-        Pool input = inputResources;
-        for (int i = 0; i < compressors.size(); i++) {
-            TransformerPlugin compressor = (TransformerPlugin) compressors.get(i);
-            Pool compressedPool = new PoolImpl(ByteOrder.nativeOrder(), inputResources.getStringTable());
-            compressor.visit(input, compressedPool);
-            String path = res.getPath();
-            ModuleData compressed = compressedPool.get(path);
-            CompressedResourceHeader header
-                    = CompressedResourceHeader.readFromResource(ByteOrder.nativeOrder(), compressed.getBytes());
-            if (isIncluded(includesPatterns, excludesPatterns, path)) {
-                if (header == null) {
-                    throw new AssertionError("Path should be compressed: " + path);
-                }
-            } else {
-                if (header != null) {
-                    throw new AssertionError("Path should not be compressed: " + path);
-                }
-                continue;
-            }
-            if (!header.isTerminal()) {
-                if (i != compressors.size() - 1) {
-                    throw new AssertionError("Wrong not terminal resource at " + i);
-                }
-            } else if (i != 0) {
-                throw new AssertionError("Wrong terminal resource at " + i);
+        TransformerPlugin compressor = (TransformerPlugin) plugin;
+        Pool compressedPool = new PoolImpl(ByteOrder.nativeOrder(), inputResources.getStringTable());
+        compressor.visit(inputResources, compressedPool);
+        String path = res.getPath();
+        ModuleData compressed = compressedPool.get(path);
+        CompressedResourceHeader header
+                = CompressedResourceHeader.readFromResource(ByteOrder.nativeOrder(), compressed.getBytes());
+        if (isIncluded(includesPatterns, excludesPatterns, path)) {
+            if (header == null) {
+                throw new AssertionError("Path should be compressed: " + path);
             }
             if (header.getDecompressorNameOffset() == 0) {
                 throw new AssertionError("Invalid plugin offset "
@@ -330,9 +315,10 @@ public class CompressorPluginTest {
                 throw new AssertionError("Invalid compressed size "
                         + header.getResourceSize());
             }
-            input = compressedPool;
+        } else if (header != null) {
+            throw new AssertionError("Path should not be compressed: " + path);
         }
-        return input;
+        return compressedPool;
     }
 
     private void applyDecompressors(ResourceDecompressorFactory[] decompressors,

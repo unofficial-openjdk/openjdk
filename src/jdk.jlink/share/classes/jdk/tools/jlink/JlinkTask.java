@@ -60,19 +60,19 @@ import jdk.tools.jlink.TaskHelper.HiddenOption;
 import static jdk.tools.jlink.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
+import jdk.tools.jlink.api.Jlink;
 import jdk.tools.jlink.internal.ModularJarArchive;
 import jdk.tools.jlink.internal.JmodArchive;
 import jdk.tools.jlink.internal.DirArchive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
-import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.ImageBuilderProvider;
-import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.PluginException;
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import jdk.tools.jlink.api.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.api.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.api.plugin.PluginException;
+import jdk.tools.jlink.api.plugin.builder.DefaultImageBuilderProvider;
 
 
 /**
@@ -139,7 +139,7 @@ public class JlinkTask {
             if (!Files.exists(path) || !Files.isDirectory(path)) {
                 throw taskHelper.newBadArgs("err.existing.image.must.exist");
             }
-            task.options.existingImage = path;
+            task.options.existingImage = path.toAbsolutePath();
         }, "--post-process-path"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             if ("little".equals(arg)) {
@@ -216,15 +216,17 @@ public class JlinkTask {
                 }
                 createImage();
             } else {
-                postProcessOnly();
+                postProcessOnly(options.existingImage);
             }
 
             return EXIT_OK;
         } catch (UncheckedIOException | PluginException | IOException | ResolutionException e) {
+            e.printStackTrace();
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             return EXIT_ERROR;
         } catch (BadArgs e) {
+            e.printStackTrace();
             taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
                 log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
@@ -304,9 +306,6 @@ public class JlinkTask {
         ModuleFinder finder
             = newModuleFinder(arr, config.getLimitmods(), config.getModules());
 
-        Path[] pluginsPath = new Path[config.getPluginpaths().size()];
-        pluginsPath = config.getPluginpaths().toArray(pluginsPath);
-
         // First create the image provider
         ImageProvider imageProvider
                 = createImageProvider(finder,
@@ -314,51 +313,34 @@ public class JlinkTask {
                         config.getLimitmods(), config.getByteOrder());
 
         // Then create the Plugin Stack
-        ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(config.getOutput(), plugins,
-                        TaskHelper.createPluginsLayer(pluginsPath),
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins,
                         genBOMContent(config, plugins));
 
         //Ask the stack to proceed;
         stack.operate(imageProvider);
     }
 
-    private class PostProcessingImageHelper implements ImageProvider {
+    /*
+     * Jlink API entry point.
+     */
+    public static void postProcessImage(ExecutableImage image, List<Jlink.OrderedPlugin> postProcessorPlugins)
+            throws Exception {
+        Objects.requireNonNull(image);
+        Objects.requireNonNull(postProcessorPlugins);
+        PluginsConfiguration config = new PluginsConfiguration(postProcessorPlugins);
+        ImagePluginStack stack = ImagePluginConfiguration.
+                parseConfiguration(config);
 
-        private ImageBuilderProvider provider;
-        @Override
-        public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
-            ExecutableImage img = null;
-            for (ImageBuilderProvider provider
-                    : ImagePluginProviderRepository.
-                    getImageBuilderProviders(optionsHelper.getPluginsLayer())) {
-                img = provider.canExecute(options.existingImage);
-                if (img != null) {
-                    this.provider = provider;
-                }
-            }
-            if (img == null) {
-                throw new IOException("Image in " + options.existingImage + " is not recognized");
-            }
-            return img;
-        }
-
-        @Override
-        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image,
-                List<String> args) throws IOException {
-            provider.storeLauncherOptions(image, args);
-        }
-
+        stack.operate((ImagePluginStack stack1) -> image);
     }
 
-    private void postProcessOnly() throws Exception {
-        // Create the Plugin Stack
-        ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(null, taskHelper.getPluginsConfig(),
-                        optionsHelper.getPluginsLayer(),
-                        genBOMContent());
-
-        stack.operate(new PostProcessingImageHelper());
+    private void postProcessOnly(Path existingImage) throws Exception {
+        PluginsConfiguration config = taskHelper.getPluginsConfig(null);
+        ExecutableImage img = DefaultImageBuilderProvider.getExecutableImage(existingImage);
+        if(img == null) {
+            throw taskHelper.newBadArgs("err.existing.image.invalid");
+        }
+        postProcessImage(img, config.getPlugins());
     }
 
     private void createImage() throws Exception {
@@ -382,8 +364,7 @@ public class JlinkTask {
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(options.output, taskHelper.getPluginsConfig(),
-                        optionsHelper.getPluginsLayer(),
+                parseConfiguration(taskHelper.getPluginsConfig(options.output),
                         genBOMContent());
 
         //Ask the stack to proceed
@@ -562,11 +543,6 @@ public class JlinkTask {
         @Override
         public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
             return ImageFileCreator.create(archives, order, stack);
-        }
-
-        @Override
-        public void storeLauncherArgs(ImagePluginStack stack, ExecutableImage image, List<String> args) throws IOException {
-            stack.getImageBuilder().storeJavaLauncherOptions(image, args);
         }
     }
 

@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import jdk.tools.jlink.internal.JvmHandler;
 import jdk.tools.jlink.internal.PoolImpl;
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
-import jdk.tools.jlink.plugins.Pool.ModuleDataType;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleDataType;
 
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.

@@ -100,7 +100,7 @@ public class JLink2Test {
                 .addJmods(helper.getStdJmodsDir())
                 .addJmods(jar.getParent())
                 .addMods("bad")
-                .call().assertFailure("Error: jdk.tools.jlink.plugins.PluginException: module-info not found for bad");
+                .call().assertFailure("Error: jdk.tools.jlink.api.plugin.PluginException: module-info not found for bad");
         try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
             JarEntry entry = new JarEntry("classes");
             out.putNextEntry(entry);
@@ -117,7 +117,7 @@ public class JLink2Test {
                 .addJmods(jar.getParent())
                 .addJars(helper.getStdJmodsDir())
                 .addMods("bad")
-                .call().assertFailure("Error: jdk.tools.jlink.plugins.PluginException: module-info not found for bad");
+                .call().assertFailure("Error: jdk.tools.jlink.api.plugin.PluginException: module-info not found for bad");
     }
 
     private static void testSameNames(Helper helper) throws Exception {

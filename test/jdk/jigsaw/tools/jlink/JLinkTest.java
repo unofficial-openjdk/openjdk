@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import jdk.tools.jlink.TaskHelper;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.api.plugin.Plugin;
+import jdk.tools.jlink.internal.PluginRepository;
 import tests.Helper;
 import tests.JImageGenerator;
 import tests.JImageGenerator.InMemoryFile;
@@ -66,19 +66,18 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 13;
+        int numPlugins = 12;
         {
             // number of built-in plugins
-            List<PluginProvider> builtInPluginsProviders = new ArrayList<>();
-            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getTransformerProviders(Layer.boot()));
-            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getPostProcessingProviders(Layer.boot()));
-            builtInPluginsProviders.addAll(ImagePluginProviderRepository.getImageBuilderProviders(Layer.boot()));
-            for (PluginProvider p : builtInPluginsProviders) {
-                p.isExposed();
-                p.isFunctional();
+            List<Plugin> builtInPlugins = new ArrayList<>();
+            builtInPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+            for (Plugin p : builtInPlugins) {
+                p.getState();
+                p.getType();
             }
-            if (builtInPluginsProviders.size() != numPlugins) {
-                throw new AssertionError("Plugins not found: " + builtInPluginsProviders.size());
+            if (builtInPlugins.size() != numPlugins) {
+                throw new AssertionError("Found plugins doesn't match expected number : " +
+                        numPlugins + "\n" + builtInPlugins);
             }
         }
 
@@ -141,11 +140,11 @@ public class JLinkTest {
             jdk.tools.jlink.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
             String output = writer.toString();
             long number = Stream.of(output.split("\n"))
-                    .filter((s) -> s.matches("(Plugin|Image Builder) Name:.*"))
+                    .filter((s) -> s.matches("Plugin Name:.*"))
                     .count();
             if (number != numPlugins) {
                 System.err.println(output);
-                throw new AssertionError("Plugins not found: " + number);
+                throw new AssertionError("Found: " + number + " expected " + numPlugins);
             }
         }
 

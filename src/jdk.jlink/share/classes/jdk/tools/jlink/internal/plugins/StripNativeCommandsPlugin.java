@@ -24,18 +24,43 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.Pool;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
 
 /**
  *
  * Strip Native Commands plugin
  */
-final class StripNativeCommandsPlugin implements TransformerPlugin {
+public final class StripNativeCommandsPlugin implements TransformerPlugin {
+
+    public static final String NAME = "strip-native-commands";
+
+    private static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            hasOnOffArgument().build();
 
     @Override
     public String getName() {
-        return StripNativeCommandsProvider.NAME;
+        return NAME;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.FILTER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
     }
 
     @Override
@@ -43,5 +68,15 @@ final class StripNativeCommandsPlugin implements TransformerPlugin {
         in.visit((file) -> {
             return file.getType() == Pool.ModuleDataType.NATIVE_CMD ? null : file;
         }, out);
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
     }
 }

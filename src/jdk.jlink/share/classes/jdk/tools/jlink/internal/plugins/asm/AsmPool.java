@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.tools.jlink.plugins.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
 
 /**
  * A pool of ClassReader and other resource files.
@@ -110,7 +110,7 @@ public interface AsmPool {
          * Add a class to the pool, if a class already exists, it is replaced.
          *
          * @param writer The class writer.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public void addClass(ClassWriter writer);
 
@@ -118,7 +118,7 @@ public interface AsmPool {
          * The class will be not added to the jimage file.
          *
          * @param className The class name to forget.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public void forgetClass(String className);
 
@@ -127,7 +127,7 @@ public interface AsmPool {
          *
          * @param binaryName The java class binary name
          * @return The ClassReader or null if the class is not found.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public ClassReader getClassReader(String binaryName);
 
@@ -136,7 +136,7 @@ public interface AsmPool {
          *
          * @param res A class resource.
          * @return The ClassReader or null if the class is not found.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public ClassReader getClassReader(Pool.ModuleData res);
 
@@ -158,7 +158,7 @@ public interface AsmPool {
          * Add a resource, if the resource exists, it is replaced.
          *
          * @param resFile The resource file to add.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public void addResourceFile(ResourceFile resFile);
 
@@ -166,7 +166,7 @@ public interface AsmPool {
          * The resource will be not added to the jimage file.
          *
          * @param resourceName
-         * @throws jdk.tools.jlink.plugins.PluginException If the resource to
+         * @throws jdk.tools.jlink.api.plugin.PluginException If the resource to
          * forget doesn't exist or is null.
          */
         public void forgetResourceFile(String resourceName);
@@ -204,7 +204,7 @@ public interface AsmPool {
          * @param resources The resources will be added to the jimage following
          * the order of this ResourcePool.
          * @return The resource paths ordered in the way to use for storage in the jimage.
-         * @throws jdk.tools.jlink.plugins.PluginException
+         * @throws jdk.tools.jlink.api.plugin.PluginException
          */
         public List<String> sort(Pool resources);
     }
@@ -273,7 +273,7 @@ public interface AsmPool {
      *
      * @param binaryName Class binary name
      * @return A reader or null if the class is unknown
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public ClassReader getClassReader(String binaryName);
 
@@ -282,7 +282,7 @@ public interface AsmPool {
      *
      * @param res A resource.
      * @return A reader or null if the class is unknown
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public ClassReader getClassReader(Pool.ModuleData res);
 
@@ -290,7 +290,7 @@ public interface AsmPool {
      * To visit the set of ClassReaders.
      *
      * @param visitor The visitor.
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public void visitClassReaders(ClassReaderVisitor visitor);
 
@@ -298,7 +298,7 @@ public interface AsmPool {
      * To visit the set of ClassReaders.
      *
      * @param visitor The visitor.
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public void visitResourceFiles(ResourceFileVisitor visitor);
 
@@ -308,7 +308,7 @@ public interface AsmPool {
      * If a sorter has been set, it is used to sort the returned resources.
      *
      * @param output The pool used to fill the jimage.
-     * @throws jdk.tools.jlink.plugins.PluginException
+     * @throws jdk.tools.jlink.api.plugin.PluginException
      */
     public void fillOutputResources(Pool output);
 

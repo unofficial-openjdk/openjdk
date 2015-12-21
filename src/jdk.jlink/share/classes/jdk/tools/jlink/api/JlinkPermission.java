@@ -22,26 +22,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api;
 
-import java.util.List;
-import java.util.Map;
+import java.security.BasicPermission;
 
 /**
+ * The permission required to use jlink API. The permission target_name is
+ * "jlink". e.g.: permission jdk.tools.jlink.plugins.JlinkPermission "jlink";
  *
- * On/Off plugin provider support class.
  */
-public abstract class TransformerOnOffProvider extends TransformerPluginProvider
-        implements OnOffPluginProvider<TransformerPlugin> {
+public final class JlinkPermission extends BasicPermission {
 
-    public TransformerOnOffProvider(String name, String description) {
-        super(name, description);
-    }
+    private static final long serialVersionUID = -3687912306077727801L;
 
-    // Must be implemented, an abstract method can't be implemented with a default method
-    @Override
-    public List<TransformerPlugin> newPlugins(Map<String, Object> conf) {
-        return OnOffPluginProvider.super.newPlugins(conf);
+    public JlinkPermission(String name) {
+        super(name);
     }
 
 }

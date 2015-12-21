@@ -31,6 +31,8 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +46,8 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
 import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
@@ -54,6 +58,20 @@ import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
  * of <code>ClassOptimizer</code> and <code>MethodOptimizer</code>.
  */
 public final class OptimizationPlugin extends AsmPlugin {
+
+    public static final String NAME = "class-optim";
+    public static final String LOG_FILE = NAME + "-log-file";
+    public static final String ALL = "all";
+    public static final String FORNAME_REMOVAL = "forName-folding";
+
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL)).
+            build();
+    public static final PluginOption LOG_OPTION = new Builder(LOG_FILE).
+            description(PluginsResourceBundle.getOption(NAME, LOG_FILE)).
+            build();
 
     /**
      * Default resolver. A resolver that retrieve types that are in an
@@ -91,10 +109,8 @@ public final class OptimizationPlugin extends AsmPlugin {
                         if (((r.getAccess() & Opcodes.ACC_PUBLIC)
                                 == Opcodes.ACC_PUBLIC)) {
                             reader = r;
-                        } else {
-                            if (pkg.equals(callerPkg)) {
-                                reader = r;
-                            }
+                        } else if (pkg.equals(callerPkg)) {
+                            reader = r;
                         }
                     }
                 }
@@ -127,32 +143,6 @@ public final class OptimizationPlugin extends AsmPlugin {
     private OutputStream stream;
     private int numMethods;
 
-    OptimizationPlugin(String[] arguments, Map<String, String> options) {
-        String strategies = arguments[0];
-        String[] arr = strategies.split(":");
-        for (String s : arr) {
-            if (s.equals(OptimizationProvider.ALL)) {
-                optimizers.clear();
-                optimizers.add(new ForNameFolding());
-                break;
-            } else {
-                if (s.equals(OptimizationProvider.FORNAME_REMOVAL)) {
-                    optimizers.add(new ForNameFolding());
-                } else {
-                    throw new RuntimeException("Unknown optimization");
-                }
-            }
-        }
-        String f = options.get(OptimizationProvider.LOG_FILE);
-        if (f != null) {
-            try {
-                stream = new FileOutputStream(f);
-            } catch (FileNotFoundException ex) {
-                System.err.println(ex);
-            }
-        }
-    }
-
     private void log(String content) {
         if (stream != null) {
             try {
@@ -181,7 +171,7 @@ public final class OptimizationPlugin extends AsmPlugin {
 
     @Override
     public String getName() {
-        return OptimizationProvider.NAME;
+        return NAME;
     }
 
     @Override
@@ -264,5 +254,54 @@ public final class OptimizationPlugin extends AsmPlugin {
             }
         }
         return writer;
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+       String strategies = config.get(NAME_OPTION);
+       String[] arr = strategies.split(":");
+        for (String s : arr) {
+            if (s.equals(ALL)) {
+                optimizers.clear();
+                optimizers.add(new ForNameFolding());
+                break;
+            } else if (s.equals(FORNAME_REMOVAL)) {
+                optimizers.add(new ForNameFolding());
+            } else {
+                throw new RuntimeException("Unknown optimization");
+            }
+        }
+        String f = config.get(LOG_OPTION);
+        if (f != null) {
+            try {
+                stream = new FileOutputStream(f);
+            } catch (FileNotFoundException ex) {
+                System.err.println(ex);
+            }
+        }
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public List<PluginOption> getAdditionalOptions() {
+        List<PluginOption> options = new ArrayList<>();
+        options.add(LOG_OPTION);
+        return options;
     }
 }

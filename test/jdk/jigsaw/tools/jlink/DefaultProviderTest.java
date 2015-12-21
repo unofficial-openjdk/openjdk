@@ -22,14 +22,16 @@
  */
 
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.TransformerOnOffProvider;
-import jdk.tools.jlink.plugins.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.PluginOption;
+import jdk.tools.jlink.api.plugin.PluginOptionBuilder;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.api.plugin.PluginProvider;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPlugin;
+import jdk.tools.jlink.api.plugin.transformer.TransformerPluginProvider;
 import tests.Helper;
 
 /*
@@ -47,26 +49,32 @@ import tests.Helper;
  * @build tests.*
  * @run main/othervm DefaultProviderTest
  */
-
 public class DefaultProviderTest {
 
-    private final static Map<String, String> additionalOptions;
+    private final static List<PluginOption> options;
+    private static final String NAME = "toto";
+    private static final PluginOption NAME_OPTION
+            = new PluginOptionBuilder(NAME).isEnabled().build();
+    private final static Map<PluginOption, Object> expectedOptions = new HashMap<>();
 
     static {
-        additionalOptions = new HashMap<>();
-        additionalOptions.put("option1", "value1");
-        additionalOptions.put("option2", "value2");
+        options = new ArrayList<>();
+        options.add(NAME_OPTION);
+        options.add(new PluginOptionBuilder("option1").description("value1").build());
+        options.add(new PluginOptionBuilder("option2").description("value2").build());
+
+        expectedOptions.put(NAME_OPTION, "on");
+        expectedOptions.put(new PluginOptionBuilder("option1").
+                description("value1").build(), "value1");
+        expectedOptions.put(new PluginOptionBuilder("option2").
+                description("value2").build(), "value2");
+
     }
 
-    private static class CustomProvider extends TransformerOnOffProvider {
+    private static class CustomProvider extends TransformerPluginProvider {
 
         public CustomProvider() {
             super(NAME, NAME);
-        }
-
-        @Override
-        public boolean isEnabledByDefault() {
-            return true;
         }
 
         @Override
@@ -75,13 +83,13 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public String getToolOption() {
-            return NAME;
+        public PluginOption getOption() {
+            return NAME_OPTION;
         }
 
         @Override
-        public Map<String, String> getAdditionalOptions() {
-            return additionalOptions;
+        public List<PluginOption> getAdditionalOptions() {
+            return options;
         }
 
         @Override
@@ -90,21 +98,17 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
             DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return Collections.emptyList();
+            DefaultProviderTest.receivedOptions = config;
+            return null;
         }
     }
 
-    private static class CustomProvider2 extends TransformerOnOffProvider {
+    private static class CustomProvider2 extends TransformerPluginProvider {
+
         public CustomProvider2() {
             super(NAME, NAME);
-        }
-
-        @Override
-        public boolean isEnabledByDefault() {
-            return true;
         }
 
         @Override
@@ -113,13 +117,13 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public String getToolOption() {
-            return NAME;
+        public PluginOption getOption() {
+            return NAME_OPTION;
         }
 
         @Override
-        public Map<String, String> getAdditionalOptions() {
-            return additionalOptions;
+        public List<PluginOption> getAdditionalOptions() {
+            return options;
         }
 
         @Override
@@ -128,20 +132,19 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public List<TransformerPlugin> createPlugins(Map<String, String> otherOptions) {
+        public TransformerPlugin newPlugin(Map<PluginOption, Object> config) {
             DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return Collections.emptyList();
+            DefaultProviderTest.receivedOptions = config;
+            return null;
         }
     }
-    private static final String NAME = "toto";
 
     private static boolean isNewPluginsCalled;
-    private static Map<String, String> otherOptions;
+    private static Map<PluginOption, Object> receivedOptions;
 
     private static void reset() {
         isNewPluginsCalled = false;
-        otherOptions = null;
+        receivedOptions = null;
     }
 
     public static void main(String[] args) throws Exception {
@@ -156,7 +159,7 @@ public class DefaultProviderTest {
     }
 
     private static void test(Helper helper, PluginProvider provider) throws Exception {
-        ImagePluginProviderRepository.registerPluginProvider(provider);
+        PluginRepository.registerPluginProvider(provider);
 
         {
             String[] userOptions = {};
@@ -175,11 +178,11 @@ public class DefaultProviderTest {
             if (!isNewPluginsCalled) {
                 throw new Exception("Should have been called");
             }
-            if (!otherOptions.equals(additionalOptions)) {
-                throw new Exception("Optional options are not expected one "
-                        + otherOptions);
+            if (!receivedOptions.equals(expectedOptions)) {
+                throw new Exception("Optional options " + receivedOptions + " are not expected one "
+                        + expectedOptions);
             }
-            System.err.println("OPTIONS " + otherOptions);
+            System.err.println("OPTIONS " + receivedOptions);
             reset();
         }
 
@@ -190,7 +193,7 @@ public class DefaultProviderTest {
             if (isNewPluginsCalled) {
                 throw new Exception("Should not have been called");
             }
-            if (otherOptions != null) {
+            if (receivedOptions != null) {
                 throw new Exception("Optional options are not expected");
             }
             reset();

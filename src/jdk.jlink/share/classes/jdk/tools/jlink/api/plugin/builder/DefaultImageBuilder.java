@@ -22,8 +22,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.api.plugin.builder;
 
+import jdk.tools.jlink.api.plugin.postprocessor.ExecutableImage;
+import jdk.tools.jlink.api.plugin.PluginException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -45,20 +47,24 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import jdk.tools.jlink.api.plugin.Plugin.PluginOption;
 import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.tools.jlink.internal.JvmHandler;
-import jdk.tools.jlink.internal.plugins.FileCopierProvider.SymImageFile;
-import jdk.tools.jlink.plugins.Pool.ModuleData;
+import jdk.tools.jlink.internal.plugins.FileCopierPlugin.SymImageFile;
+import jdk.tools.jlink.api.plugin.transformer.Pool;
+import jdk.tools.jlink.api.plugin.transformer.Pool.Module;
+import jdk.tools.jlink.api.plugin.transformer.Pool.ModuleData;
 
 /**
  *
- * Default Image Builder.
+ * Default Image Builder. This builder create the default Java image layout.
  */
 public class DefaultImageBuilder implements ImageBuilder {
     /**
@@ -78,20 +84,36 @@ public class DefaultImageBuilder implements ImageBuilder {
                             getJavaProcessName()).toString());
             return javaArgs;
         }
+
+        @Override
+        public void storeLaunchArgs(List<String> args) {
+            try {
+                patchScripts(this, args);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        }
     }
 
     private final Path root;
     private final Path mdir;
     private final boolean genBom;
-    private Set<String> modules;
+    private final Set<String> modules = new HashSet<>();
 
-    public DefaultImageBuilder(Map<String, Object> properties, Path root) throws IOException {
+    /**
+     * Default image builder constructor.
+     *
+     * @param properties Properties to configure the builder.
+     * @param root The image directory.
+     * @throws IOException
+     */
+    public DefaultImageBuilder(Map<PluginOption, String> properties, Path root) throws IOException {
         Objects.requireNonNull(root);
 
-        genBom = properties.containsKey(DefaultImageBuilderProvider.GEN_BOM);
+        genBom = properties.containsKey(DefaultImageBuilderProvider.GEN_BOM_OPTION);
 
         this.root = root;
-        this.mdir = root.resolve(root.getFileSystem().getPath("lib", "modules"));
+        this.mdir = root.resolve("lib").resolve("modules");
         Files.createDirectories(mdir);
     }
 
@@ -141,15 +163,25 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     @Override
-    public void storeFiles(Pool pool, List<ModuleData> removedFiles,
-            String bom, Pool resources) {
+     public void storeFiles(Pool allContent, List<ModuleData> removedFiles,
+            String bom) {
         try {
-            Pool files = new JvmHandler().handlePlatforms(pool, removedFiles);
+            Pool files = new JvmHandler().handlePlatforms(allContent, removedFiles);
 
             for (ModuleData f : files.getContent()) {
-                accept(f);
+               if (!f.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
+                    accept(f);
+                }
             }
-            modules = resources.getModulePackages().keySet();
+            for (Module m : allContent.getModules()) {
+                // Only add modules that contain packages
+                if (!m.getAllPackages().isEmpty()) {
+                    if(m.getName().equals("$jlink-file-copier")) {
+                        System.err.println("MODULE " + m + " has packages " + m.getAllPackages());
+                    }
+                    modules.add(m.getName());
+                }
+            }
             storeFiles(modules, bom);
 
             if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
@@ -171,7 +203,7 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             }
 
-            prepareApplicationFiles(resources, modules);
+            prepareApplicationFiles(allContent, modules);
         } catch (IOException ex) {
             throw new PluginException(ex);
         }
@@ -333,17 +365,8 @@ public class DefaultImageBuilder implements ImageBuilder {
         return new DefaultExecutableImage(root, modules);
     }
 
-    @Override
-    public void storeJavaLauncherOptions(ExecutableImage img, List<String> args) {
-        try {
-            patchScripts(img, args);
-        } catch (IOException ex) {
-            throw new PluginException(ex);
-        }
-    }
-
     // This is experimental, we should get rid-off the scripts in a near future
-    static void patchScripts(ExecutableImage img, List<String> args) throws IOException {
+    private static void patchScripts(ExecutableImage img, List<String> args) throws IOException {
         Objects.requireNonNull(args);
         if (!args.isEmpty()) {
             Files.find(img.getHome().resolve("bin"), 2, (path, attrs) -> {
@@ -375,10 +398,5 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             });
         }
-    }
-
-    @Override
-    public String getName() {
-        return DefaultImageBuilderProvider.NAME;
     }
 }
