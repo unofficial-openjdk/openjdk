@@ -151,8 +151,8 @@ public final class ImageNativeSubstrate implements ImageSubstrate {
     }
 
     @Override
-    public ImageLocation findLocation(UTF8String name, ImageStringsReader strings) {
-        long[] attributes = findAttributes(id, name.getBytes());
+    public ImageLocation findLocation(String name, ImageStringsReader strings) {
+        long[] attributes = findAttributes(id, ImageStringsReader.mutf8FromString(name));
 
         return attributes != null ? new ImageLocation(attributes, strings) : null;
     }

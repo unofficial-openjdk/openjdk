@@ -112,22 +112,14 @@ public class BasicImageReader implements AutoCloseable {
         return findLocation("/" + mn + "/" + rn);
     }
 
-    public ImageLocation findLocation(String name) {
-        return findLocation(new UTF8String(name));
-    }
-
-    public ImageLocation findLocation(byte[] name) {
-        return findLocation(new UTF8String(name));
-    }
-
-    public synchronized ImageLocation findLocation(UTF8String name) {
+    public synchronized ImageLocation findLocation(String name) {
         return substrate.findLocation(name, strings);
     }
 
     public String[] getEntryNames() {
         return IntStream.of(substrate.attributeOffsets())
                         .filter(o -> o != 0)
-                        .mapToObj(o -> ImageLocation.readFrom(this, o).getFullNameString())
+                        .mapToObj(o -> ImageLocation.readFrom(this, o).getFullName())
                         .sorted()
                         .toArray(String[]::new);
     }
@@ -136,7 +128,7 @@ public class BasicImageReader implements AutoCloseable {
         return IntStream.of(substrate.attributeOffsets())
                         .filter(o -> o != 0)
                         .mapToObj(o -> ImageLocation.readFrom(this, o))
-                        .sorted(Comparator.comparing(ImageLocation::getFullNameString))
+                        .sorted(Comparator.comparing(ImageLocation::getFullName))
                         .toArray(ImageLocation[]::new);
     }
 
@@ -157,11 +149,8 @@ public class BasicImageReader implements AutoCloseable {
     }
 
     public String getString(int offset) {
-        return getUTF8String(offset).toString();
-    }
-
-    public UTF8String getUTF8String(int offset) {
-        return new UTF8String(substrate.getStringBytes(offset));
+        byte[] bytes = substrate.getStringBytes(offset);
+        return ImageStringsReader.stringFromMUTF8(bytes, 0, bytes.length);
     }
 
     private byte[] getBufferBytes(ByteBuffer buffer, long size) {

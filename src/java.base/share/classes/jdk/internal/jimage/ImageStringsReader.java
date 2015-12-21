@@ -25,7 +25,8 @@
 
 package jdk.internal.jimage;
 
-class ImageStringsReader implements ImageStrings {
+public class ImageStringsReader implements ImageStrings {
+    public static final int HASH_MULTIPLIER = 0x01000193;
     private final BasicImageReader reader;
 
     ImageStringsReader(BasicImageReader reader) {
@@ -33,12 +34,163 @@ class ImageStringsReader implements ImageStrings {
     }
 
     @Override
-    public UTF8String get(int offset) {
-        return reader.getUTF8String(offset);
+    public String get(int offset) {
+        return reader.getString(offset);
     }
 
     @Override
-    public int add(final UTF8String string) {
+    public int add(final String string) {
         throw new InternalError("Can not add strings at runtime");
+    }
+
+    private static int hashCode(int seed, byte[] bytes, int offset, int count) {
+        for (int i = offset, limit = offset + count; i < limit; i++) {
+            seed = (seed * HASH_MULTIPLIER) ^ (bytes[i] & 0xFF);
+        }
+
+        return seed & 0x7FFFFFFF;
+    }
+
+    public static int hashCode(String string) {
+        return hashCode(string, HASH_MULTIPLIER);
+    }
+
+    public static int hashCode(String string, int seed) {
+        byte[] bytes = mutf8FromString(string);
+
+        return hashCode(seed, bytes, 0, bytes.length);
+    }
+
+    static int charsFromMUTF8Length(byte[] bytes, int offset, int count) {
+        int length = 0;
+
+        for (int i = offset; i < offset + count; i++) {
+            byte ch = bytes[i];
+
+            if (ch == 0) {
+                break;
+            }
+
+            if ((ch & 0xC0) != 0x80) {
+                length++;
+            }
+        }
+
+        return length;
+    }
+
+    static void charsFromMUTF8(char chars[], byte[] bytes, int offset, int count) {
+        int j = 0;
+
+        for (int i = offset; i < offset + count; i++) {
+            byte ch = bytes[i];
+
+            if (ch == 0) {
+                break;
+            }
+
+            boolean is_unicode = (ch & 0x80) != 0;
+            int uch = ch & 0x7F;
+
+            if (is_unicode) {
+                int mask = 0x40;
+
+                while ((uch & mask) != 0) {
+                    ch = bytes[++i];
+                    assert (ch & 0xC0) == 0x80 : "error in unicode";
+                    uch = ((uch & ~mask) << 6) | (ch & 0x3F);
+                    mask <<= 6 - 1;
+                }
+            }
+
+            assert (uch & 0xFFFF) == uch : "error in unicode)";
+
+            chars[j++] = (char)uch;
+        }
+    }
+
+    public static String stringFromMUTF8(byte[] bytes, int offset, int count) {
+        int length = charsFromMUTF8Length(bytes, offset, count);
+        char[] chars = new char[length];
+        charsFromMUTF8(chars, bytes, offset, count);
+
+        return new String(chars);
+    }
+
+    public static String stringFromMUTF8(byte[] bytes) {
+        return stringFromMUTF8(bytes, 0, bytes.length);
+    }
+
+    static int mutf8FromCharsLength(char chars[]) {
+        int length = 0;
+
+        for (char ch : chars) {
+            int uch = ch & 0xFFFF;
+
+            if ((uch & ~0x7F) != 0) {
+                int mask = ~0x3F;
+                int n = 0;
+
+                do {
+                    n++;
+                    uch >>= 6;
+                    mask >>= 1;
+                } while ((uch & mask) != 0);
+
+                length += n + 1;
+            } else if (uch == 0) {
+                length += 2;
+            } else {
+                length++;
+            }
+        }
+
+        return length;
+    }
+
+    static void mutf8FromChars(byte[] bytes, int offset, char chars[]) {
+        int j = offset;
+
+        for (char ch : chars) {
+            int uch = ch & 0xFFFF;
+
+            if ((uch & ~0x7F) != 0) {
+                byte[] buffer = new byte[8];
+                int mask = ~0x3F;
+                int n = 0;
+
+                do {
+                    buffer[n++] = (byte)(0x80 | (uch & 0x3F));
+                    uch >>= 6;
+                    mask >>= 1;
+                } while ((uch & mask) != 0);
+
+                buffer[n] = (byte)((mask << 1) | uch);
+
+                do {
+                    bytes[j++] = buffer[n--];
+                } while (0 <= n);
+            } else if (uch == 0) {
+                bytes[j++] = (byte)0xC0;
+                bytes[j++] = (byte)0x80;
+            } else {
+                bytes[j++] = (byte)uch;
+            }
+        }
+    }
+
+    static int mutf8FromStringLength(String string) {
+        char[] chars = string.toCharArray();
+
+        return mutf8FromCharsLength(chars);
+    }
+
+    public static byte[] mutf8FromString(String string) {
+        char[] chars = string.toCharArray();
+        int length = mutf8FromCharsLength(chars);
+        byte[] bytes = new byte[length];
+        mutf8FromChars(bytes, 0, chars);
+
+        return bytes;
     }
 }

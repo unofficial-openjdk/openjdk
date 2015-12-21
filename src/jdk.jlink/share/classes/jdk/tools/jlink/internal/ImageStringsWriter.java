@@ -29,14 +29,13 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import jdk.internal.jimage.ImageStream;
 import jdk.internal.jimage.ImageStrings;
-import jdk.internal.jimage.UTF8String;
+import jdk.internal.jimage.ImageStringsReader;
 
 class ImageStringsWriter implements ImageStrings {
     private static final int NOT_FOUND = -1;
     static final int EMPTY_OFFSET = 0;
-    static final UTF8String CLASS_STRING = new UTF8String("class");
 
-    private final HashMap<UTF8String, Integer> stringToOffsetMap;
+    private final HashMap<String, Integer> stringToOffsetMap;
     private final ImageStream stream;
 
     ImageStringsWriter() {
@@ -44,15 +43,16 @@ class ImageStringsWriter implements ImageStrings {
         this.stream = new ImageStream();
 
         // Reserve 0 offset for empty string.
-        int offset = addString(UTF8String.EMPTY_STRING);
+        int offset = addString("");
         assert offset == 0 : "Empty string not zero offset";
         // Reserve 1 offset for frequently used ".class".
-        addString(CLASS_STRING);
+        addString("class");
     }
 
-    private int addString(final UTF8String string) {
+    private int addString(final String string) {
         int offset = stream.getPosition();
-        string.writeTo(stream);
+        byte[] bytes = ImageStringsReader.mutf8FromString(string);
+        stream.put(bytes, 0, bytes.length);
         stream.put('\0');
         stringToOffsetMap.put(string, offset);
 
@@ -60,30 +60,31 @@ class ImageStringsWriter implements ImageStrings {
     }
 
     @Override
-    public int add(final UTF8String string) {
+    public int add(final String string) {
         int offset = find(string);
 
         return offset == NOT_FOUND ? addString(string) : offset;
     }
 
-    int find(final UTF8String string) {
+    int find(final String string) {
         Integer offset = stringToOffsetMap.get(string);
 
         return offset != null ? offset : NOT_FOUND;
     }
 
     @Override
-    public UTF8String get(int offset) {
+    public String get(int offset) {
         ByteBuffer buffer = stream.getBuffer();
-        assert 0 <= offset && offset < buffer.capacity() : "String buffer offset out of range";
+        int capacity = buffer.capacity();
+        assert 0 <= offset && offset < capacity : "String buffer offset out of range";
         int zero = NOT_FOUND;
-        for (int i = offset; i < buffer.capacity(); i++) {
+        for (int i = offset; i < capacity; i++) {
             if (buffer.get(i) == '\0') {
                 zero = i;
                 break;
             }
         }
-        assert zero != UTF8String.NOT_FOUND;
+        assert zero != NOT_FOUND;
         int length = zero - offset;
         byte[] bytes = new byte[length];
         int mark = buffer.position();
@@ -91,7 +92,7 @@ class ImageStringsWriter implements ImageStrings {
         buffer.get(bytes);
         buffer.position(mark);
 
-        return new UTF8String(bytes, 0, length);
+        return ImageStringsReader.stringFromMUTF8(bytes);
     }
 
     ImageStream getStream() {

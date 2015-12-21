@@ -165,7 +165,8 @@ final class ImageJavaSubstrate implements ImageSubstrate {
             byte[] bytesOut;
             try {
                 bytesOut = decompressor.decompressResource(byteOrder, (int strOffset) -> {
-                    return new UTF8String(getStringBytes(strOffset)).toString();
+                    byte[] bytes = getStringBytes(strOffset);
+                    return ImageStringsReader.stringFromMUTF8(bytes, 0, bytes.length);
                 }, bytesIn);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -214,14 +215,14 @@ final class ImageJavaSubstrate implements ImageSubstrate {
     }
 
     @Override
-    public ImageLocation findLocation(UTF8String name, ImageStringsReader strings) {
+    public ImageLocation findLocation(String name, ImageStringsReader strings) {
         int count = header.getTableLength();
-        int index = redirect[name.hashCode() % count];
+        int index = redirect[ImageStringsReader.hashCode(name) % count];
 
         if (index < 0) {
             index = -index - 1;
         } else {
-            index = name.hashCode(index) % count;
+            index = ImageStringsReader.hashCode(name, index) % count;
         }
 
         long[] attributes = getAttributes(offsets[index]);

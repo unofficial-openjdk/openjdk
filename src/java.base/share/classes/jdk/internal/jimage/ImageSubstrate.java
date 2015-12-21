@@ -40,6 +40,6 @@ interface ImageSubstrate extends Closeable {
                           ByteBuffer uncompressedBuffer, long uncompressedSize);
     byte[] getStringBytes(int offset);
     long[] getAttributes(int offset);
-    ImageLocation findLocation(UTF8String name, ImageStringsReader strings);
+    ImageLocation findLocation(String name, ImageStringsReader strings);
     int[] attributeOffsets();
 }
