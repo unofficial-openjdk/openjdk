@@ -32,16 +32,21 @@ import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class ImageReader extends BasicImageReader {
+    private static ConcurrentHashMap<String, ImageReader> openFiles = new ConcurrentHashMap<>();
+    private final String imagePath;
+    private AtomicInteger openCount;
+
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
     // of the jimage file itself (creation, modification, access times).
@@ -55,17 +60,30 @@ public class ImageReader extends BasicImageReader {
     private Directory packagesDir;
     private Directory modulesDir;
 
-    ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
+    private ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
+        this.imagePath = imagePath;
+        this.openCount = new AtomicInteger(0);
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
-    ImageReader(String imagePath) throws IOException {
+    private ImageReader(String imagePath) throws IOException {
         this(imagePath, ByteOrder.nativeOrder());
     }
 
     public static ImageReader open(String imagePath, ByteOrder byteOrder) throws IOException {
-        return new ImageReader(imagePath, byteOrder);
+        openFiles.computeIfAbsent(imagePath, (ip) -> {
+            try {
+                return new ImageReader(ip, byteOrder);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
+
+        ImageReader reader = openFiles.get(imagePath);
+        reader.openCount.incrementAndGet();
+
+        return reader;
     }
 
     /**
@@ -77,8 +95,13 @@ public class ImageReader extends BasicImageReader {
 
     @Override
     public synchronized void close() throws IOException {
-        super.close();
-        clearNodes();
+        int count = openCount.decrementAndGet();
+
+        if (count == 0) {
+            openFiles.remove(imagePath, this);
+            super.close();
+            clearNodes();
+       }
     }
 
     // jimage file does not store directory structure. We build nodes
