@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,23 +22,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package sun.swing.text;
 
-<!--
-  @test
-  @bug 6176814
-  @summary Metalworks frame maximizes after the move
-  @author Andrei.Dmitriev.Com area=Event
-  @run applet MaximizedFrameTest.html
-  -->
-<head>
-<title>  </title>
-</head>
-<body>
+import javax.swing.undo.UndoableEdit;
 
-<h1>bug 6176814<br>Bug ID:  6176814 </h1>
+/**
+ * UndoableEdit support for undo/redo actions synchronization
+ * @since 1.9
+ */
+public interface UndoableEditLockSupport extends UndoableEdit {
+    /**
+     * lock the UndoableEdit for threadsafe undo/redo
+     */
+    void lockEdit();
 
-<p> This is an AUTOMATIC test, simply wait for completion </p>
-
-<APPLET CODE="MaximizedFrameTest.class" WIDTH=200 HEIGHT=200></APPLET>
-</body>
-</html>
+    /**
+     * unlock the UndoableEdit
+     */
+    void unlockEdit();
+}
