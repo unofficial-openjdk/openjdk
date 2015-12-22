@@ -261,7 +261,7 @@ class java_lang_Class : AllStatic {
   static int classRedefinedCount_offset;
 
   static GrowableArray<Klass*>* _fixup_mirror_list;
-  static GrowableArray<Klass*>* _fixup_jlrM_list;
+  static GrowableArray<Klass*>* _fixup_modulefield_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
@@ -277,7 +277,7 @@ class java_lang_Class : AllStatic {
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
 
-  static void fixup_jlrM(KlassHandle k, Handle module, TRAPS);
+  static void fixup_modulefield(KlassHandle k, Handle module, TRAPS);
 
   // Conversion
   static Klass* as_Klass(oop java_class);
@@ -332,11 +332,11 @@ class java_lang_Class : AllStatic {
     _fixup_mirror_list = v;
   }
 
-  static GrowableArray<Klass*>* fixup_jlrM_list() {
-    return _fixup_jlrM_list;
+  static GrowableArray<Klass*>* fixup_modulefield_list() {
+    return _fixup_modulefield_list;
   }
-  static void set_fixup_jlrM_list(GrowableArray<Klass*>* v) {
-    _fixup_jlrM_list = v;
+  static void set_fixup_modulefield_list(GrowableArray<Klass*>* v) {
+    _fixup_modulefield_list = v;
   }
 
   // Debugging
