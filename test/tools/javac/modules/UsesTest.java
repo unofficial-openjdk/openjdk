@@ -173,8 +173,7 @@ public class UsesTest extends ModuleTestBase {
                 .writeAll();
     }
 
-    //@ignore JDK-8145012
-    //@Test
+    @Test
     void testDuplicateUses(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m"),
@@ -189,7 +188,8 @@ public class UsesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        if (!output.containsAll(Arrays.asList(""))) {
+        if (!output.containsAll(Arrays.asList(
+                "module-info.java:1:22: compiler.err.duplicate.uses: Uses[p.C]"))) {
             throw new Exception("Expected output not found");
         }
     }
