@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,12 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 4041231
- * @summary Test UUEncoder.java for proper masking in encodeAtom
- * @modules java.base/sun.misc
+/**
+ * This is a test program used in the test jjs-cpTest.sh.
  */
-
-import sun.misc.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-
-public class Encode {
-
-    public static void main(String[] args) throws Exception {
-        UUEncoder encoder = new UUEncoder("encode.buf");
-        byte[] buffer = new byte[3];
-
-        buffer[0] = -1;
-        buffer[1] = -1;
-        buffer[2] = -1;
-
-        ByteArrayInputStream in = new ByteArrayInputStream(buffer);
-        ByteArrayOutputStream out = new ByteArrayOutputStream(10);
-
-        encoder.encodeBuffer(in, out);
-        byte[] result = out.toByteArray();
-
-        if (result[22] == 31)
-            throw new RuntimeException("UUEncoder generates incorrect byte sequences in encodeAtom.");
-
-    }
+public class Hello {
+   public Hello() {}
+   public String getString() {
+       return "hello";
+   }
 }
