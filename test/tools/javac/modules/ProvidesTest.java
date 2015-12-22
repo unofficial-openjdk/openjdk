@@ -103,8 +103,7 @@ public class ProvidesTest extends ModuleTestBase {
 
     }
 
-    //@ignore JDK-8145012
-    //@Test
+    @Test
     void testDuplicateProvides(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
@@ -237,8 +236,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll();
     }
 
-    //@ignore JDK-8145016
-    //@Test
+    @Test
     void testAbstractImplementation(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
@@ -254,14 +252,14 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("#");
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:34: compiler.err.bad.service.implementation: p2.C2");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
     }
 
-    //@ignore JDK-8145016
-    //@Test
+    @Test
     void testInterfaceImplementation(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
@@ -277,7 +275,8 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("#");
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:39: compiler.err.bad.service.implementation: p2.Impl");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -387,3 +386,4 @@ public class ProvidesTest extends ModuleTestBase {
         }
     }
 }
+
