@@ -1695,7 +1695,7 @@ public class ToolBox {
         /*
          * A file: URL is of the form  file:/path/to/{modules,patches}/<module>/<package>/<file>
          */
-        private final Pattern fileEntry = Pattern.compile(".*/(modules|patches)/([^/]+)/(.*)");
+        private final Pattern fileEntry = Pattern.compile(".*/(?:modules|patches)/([^/]+)/(.*)");
 
         private String guessPath(FileObject fo) {
             URI u = fo.toUri();
