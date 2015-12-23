@@ -699,14 +699,18 @@ public final class TaskHelper {
         }
 
         Configuration bootConfiguration = Layer.boot().configuration();
+        try {
+            Configuration cf
+                    = Configuration.resolve(ModuleFinder.empty(), bootConfiguration, finder);
 
-        Configuration cf
-                = Configuration.resolve(ModuleFinder.empty(), bootConfiguration, finder);
+            cf = cf.bind();
 
-        cf = cf.bind();
-
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-        return Layer.createWithOneLoader(cf, Layer.boot(), scl);
+            ClassLoader scl = ClassLoader.getSystemClassLoader();
+            return Layer.createWithOneLoader(cf, Layer.boot(), scl);
+        } catch (Exception ex) {
+            // Malformed plugin modules (e.g.: same package in multiple modules).
+            throw new PluginException("Invalid modules in the plugins path: " + ex);
+        }
     }
 
     // Display all plugins or pre processors only.
