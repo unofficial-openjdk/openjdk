@@ -141,19 +141,23 @@ public final class PluginRepository {
     private static <T extends Plugin> List<T> getPlugins(Class<T> clazz, Layer pluginsLayer) {
         Objects.requireNonNull(pluginsLayer);
         List<T> factories = new ArrayList<>();
-        Iterator<T> providers
-                = ServiceLoader.load(pluginsLayer, clazz).iterator();
-        while (providers.hasNext()) {
-            factories.add(providers.next());
-        }
-        registeredPlugins.values().stream().forEach((fact) -> {
-            if (clazz.isInstance(fact)) {
-                @SuppressWarnings("unchecked")
-                T trans = (T) fact;
-                factories.add(trans);
+        try {
+            Iterator<T> providers
+                    = ServiceLoader.load(pluginsLayer, clazz).iterator();
+            while (providers.hasNext()) {
+                factories.add(providers.next());
             }
-        });
-        return factories;
+            registeredPlugins.values().stream().forEach((fact) -> {
+                if (clazz.isInstance(fact)) {
+                    @SuppressWarnings("unchecked")
+                    T trans = (T) fact;
+                    factories.add(trans);
+                }
+            });
+            return factories;
+        } catch (Exception ex) {
+            throw new PluginException(ex);
+        }
     }
 
 }

@@ -80,16 +80,16 @@ public class JLink2Test {
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(unknownDir)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NoSuchFileException: .*jar.image(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*jar.image(\n|\r|.)*");
         Files.createFile(jar);
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NotDirectoryException: .*bad.jar(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*bad.jar(\n|\r|.)*");
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar.getParent())
                 .option("--help")
-                .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+                .call().assertFailure("Error: Invalid modules in the plugins path: .*zip file is empty(\n|\r|.)*");
         try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
             JarEntry entry = new JarEntry("class");
             out.putNextEntry(entry);
