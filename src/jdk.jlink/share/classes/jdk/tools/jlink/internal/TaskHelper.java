@@ -279,7 +279,7 @@ public final class TaskHelper {
         }
 
         private PluginsConfiguration getPluginsConfig(Path output,
-                boolean genbom) throws IOException {
+                boolean genbom) throws IOException, BadArgs {
             if (output != null) {
                 if (Files.exists(output)) {
                     throw new PluginException(PluginsResourceBundle.
@@ -290,9 +290,18 @@ public final class TaskHelper {
             List<Plugin> pluginsList = new ArrayList<>();
             for (Entry<Plugin, Map<PluginOption, String>> entry : plugins.entrySet()) {
                 Plugin plugin = entry.getKey();
-
+                Map<PluginOption, String> options = entry.getValue();
+                PluginOption option = plugin.getOption();
+                if (!Utils.isAutoEnabled(plugin)) {
+                    if (option != null) {
+                        if (!options.containsKey(option)) {
+                            throw newBadArgs("err.plugin.option.not.set",
+                                    option.getName()).showUsage(true);
+                        }
+                    }
+                }
                 Map<PluginOption, String> config = new HashMap<>();
-                config.putAll(entry.getValue());
+                config.putAll(options);
                 plugin.configure(config);
                 if (!Utils.isDisabled(plugin)) {
                     pluginsList.add(plugin);
@@ -662,7 +671,8 @@ public final class TaskHelper {
                 + bundleHelper.getMessage(key, args));
     }
 
-    public PluginsConfiguration getPluginsConfig(Path output, boolean genbom) throws IOException {
+    public PluginsConfiguration getPluginsConfig(Path output, boolean genbom)
+            throws IOException, BadArgs {
         return pluginOptions.getPluginsConfig(output, genbom);
     }
 
