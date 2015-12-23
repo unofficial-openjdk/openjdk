@@ -46,9 +46,12 @@ public class ExcludeVMPluginTest {
 
     private static final String TAG = "# orig in test\n";
 
-    private static final String[] CLIENT = {"/java.base/native/client/" + jvmlib(),};
-    private static final String[] SERVER = {"/java.base/native/server/" + jvmlib()};
-    private static final String[] MINIMAL = {"/java.base/native/minimal/" + jvmlib()};
+    private static final String[] ARCHITECTURES = {"/", "/amd64/", "/i386/", "/arm/",
+        "/aarch64/", "/toto/"};
+
+    private static final String[] CLIENT = {"client/" + jvmlib(),};
+    private static final String[] SERVER = {"server/" + jvmlib()};
+    private static final String[] MINIMAL = {"minimal/" + jvmlib()};
     private static final String[] ALL = {CLIENT[0], SERVER[0], MINIMAL[0]};
     private static final String JVM_CFG_ALL = TAG + "-server KNOWN\n-client KNOWN\n-minimal KNOWN\n";
     private static final String JVM_CFG_CLIENT = TAG + "-client KNOWN\n";
@@ -147,6 +150,20 @@ public class ExcludeVMPluginTest {
 
     public void checkVM(String vm, String[] input, String jvmcfg, String[] expectedOutput, String expectdJvmCfg) throws Exception {
 
+        for (String arch : ARCHITECTURES) {
+            String[] winput = new String[input.length];
+            String[] woutput = new String[expectedOutput.length];
+            for (int i = 0; i < input.length; i++) {
+                winput[i] = "/java.base/native" + arch + input[i];
+            }
+            for (int i = 0; i < expectedOutput.length; i++) {
+                woutput[i] = "/java.base/native" + arch + expectedOutput[i];
+            }
+            doCheckVM(vm, winput, jvmcfg, woutput, expectdJvmCfg);
+        }
+    }
+
+    private void doCheckVM(String vm, String[] input, String jvmcfg, String[] expectedOutput, String expectdJvmCfg) throws Exception {
         // Create a pool with jvm.cfg and the input paths.
         byte[] jvmcfgContent = jvmcfg.getBytes();
         Pool pool = new PoolImpl();
@@ -173,7 +190,7 @@ public class ExcludeVMPluginTest {
         }
 
         if (out.getContent().size() != (expectedOutput.length + 1)) {
-            for(ModuleData m : out.getContent()) {
+            for (ModuleData m : out.getContent()) {
                 System.err.println(m.getPath());
             }
             throw new Exception("Invalid output size " + out.getContent().size() + " expected " + (expectedOutput.length + 1));

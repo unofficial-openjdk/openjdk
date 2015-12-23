@@ -33,10 +33,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -87,12 +89,12 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
     private static final String SERVER = "server";
     private static final String MINIMAL = "minimal";
 
-    public static final PluginOption NAME_OPTION =
-        new Builder(NAME)
-                .description(PluginsResourceBundle.getDescription(NAME))
-                .argumentDescription(PluginsResourceBundle.getArgument(NAME))
-                .showHelp(true)
-                .build();
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME)
+            .description(PluginsResourceBundle.getDescription(NAME))
+            .argumentDescription(PluginsResourceBundle.getArgument(NAME))
+            .showHelp(true)
+            .build();
     private Predicate<String> predicate;
     private Jvm target;
     private boolean keepAll;
@@ -102,6 +104,20 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
         return NAME;
     }
 
+    /**
+     * VM paths:
+     * /java.base/native/{architecture}/{server|client|minimal}/{shared lib}
+     * e.g.: /java.base/native/amd64/server/libjvm.so
+     * /java.base/native/server/libjvm.dylib
+     */
+    private List<Pool.ModuleData> getVMs(Pool in) {
+        String jvmlib = jvmlib();
+        List<Pool.ModuleData> ret = in.getModule("java.base").getContent().stream().filter((t) -> {
+            return t.getPath().endsWith("/" + jvmlib);
+        }).collect(Collectors.toList());
+        return ret;
+    }
+
     @Override
     public void visit(Pool in, Pool out) {
         String jvmlib = jvmlib();
@@ -109,17 +125,18 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
         TreeSet<Jvm> removed = new TreeSet<>(new JvmComparator());
         if (!keepAll) {
             // First retrieve all available VM names and removed VM
+            List<Pool.ModuleData> jvms = getVMs(in);
             for (Jvm jvm : Jvm.values()) {
-                Pool.ModuleData file = in.get("/java.base/native/" + jvm.getName() + "/" + jvmlib);
-                if (file != null) {
-                    existing.add(jvm);
-                    if (isRemoved(file)) {
-                        removed.add(jvm);
+                for (Pool.ModuleData md : jvms) {
+                    if (md.getPath().endsWith("/" + jvm.getName() + "/" + jvmlib)) {
+                        existing.add(jvm);
+                        if (isRemoved(md)) {
+                            removed.add(jvm);
+                        }
                     }
                 }
             }
         }
-
         // Check that target exists
         if (!keepAll) {
             if (!existing.contains(target)) {
@@ -180,17 +197,17 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
                 }
                 case CLIENT: {
                     target = Jvm.CLIENT;
-                    exclude = "/java.base/native/server/*,/java.base/native/minimal/*";
+                    exclude = "/java.base/native*server/*,/java.base/native*minimal/*";
                     break;
                 }
                 case SERVER: {
                     target = Jvm.SERVER;
-                    exclude = "/java.base/native/client/*,/java.base/native/minimal/*";
+                    exclude = "/java.base/native*client/*,/java.base/native*minimal/*";
                     break;
                 }
                 case MINIMAL: {
                     target = Jvm.MINIMAL;
-                    exclude = "/java.base/native/server/*,/java.base/native/client/*";
+                    exclude = "/java.base/native*server/*,/java.base/native*client/*";
                     break;
                 }
                 default: {
