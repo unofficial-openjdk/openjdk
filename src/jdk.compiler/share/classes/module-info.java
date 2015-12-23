@@ -53,8 +53,6 @@ module jdk.compiler {
         jdk.jshell;
     exports com.sun.tools.javac.platform to
         jdk.javadoc;
-    exports com.sun.tools.javac.sym to
-        jdk.javadoc;
     exports com.sun.tools.javac.tree to
         jdk.javadoc,
         jdk.jshell;
