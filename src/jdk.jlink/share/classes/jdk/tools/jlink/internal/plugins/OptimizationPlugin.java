@@ -281,8 +281,8 @@ public final class OptimizationPlugin extends AsmPlugin {
         if (f != null) {
             try {
                 stream = new FileOutputStream(f);
-            } catch (FileNotFoundException ex) {
-                System.err.println(ex);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
         }
     }
