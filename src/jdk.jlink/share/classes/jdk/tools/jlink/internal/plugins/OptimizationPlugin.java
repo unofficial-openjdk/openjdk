@@ -51,6 +51,7 @@ import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
 import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
+import jdk.tools.jlink.plugin.PluginException;
 
 /**
  *
@@ -185,7 +186,7 @@ public final class OptimizationPlugin extends AsmPlugin {
                     try {
                         w = optimize(pools, p, reader, resolver);
                     } catch (IOException ex) {
-                        throw new RuntimeException("Problem optimizing "
+                        throw new PluginException("Problem optimizing "
                                 + reader.getClassName(), ex);
                     }
                     return w;
@@ -217,7 +218,7 @@ public final class OptimizationPlugin extends AsmPlugin {
                             optimized = true;
                         }
                     } catch (Throwable ex) {
-                        throw new RuntimeException("Exception optimizing "
+                        throw new PluginException("Exception optimizing "
                                 + reader.getClassName(), ex);
                     }
                 } else {
@@ -234,7 +235,7 @@ public final class OptimizationPlugin extends AsmPlugin {
                                     optimized = true;
                                 }
                             } catch (Throwable ex) {
-                                throw new RuntimeException("Exception optimizing "
+                                throw new PluginException("Exception optimizing "
                                         + reader.getClassName() + "." + m.name, ex);
                             }
 
@@ -250,7 +251,7 @@ public final class OptimizationPlugin extends AsmPlugin {
                     CheckClassAdapter ca = new CheckClassAdapter(writer);
                     cn.accept(ca);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Exception optimizing class " + cn.name, ex);
+                    throw new PluginException("Exception optimizing class " + cn.name, ex);
                 }
             }
         }
@@ -274,7 +275,7 @@ public final class OptimizationPlugin extends AsmPlugin {
             } else if (s.equals(FORNAME_REMOVAL)) {
                 optimizers.add(new ForNameFolding());
             } else {
-                throw new RuntimeException("Unknown optimization");
+                throw new PluginException("Unknown optimization");
             }
         }
         String f = config.get(LOG_OPTION);
