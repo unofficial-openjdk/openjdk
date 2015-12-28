@@ -25,7 +25,6 @@ module exported.named.bundles {
     // unqualified exports to verify that resource bundles are not picked
     // up by other named modules
     exports jdk.test.resources.exported.classes;
-    exports jdk.test.resources.exported.props;
     provides jdk.test.resources.exported.classes.MyResourcesProvider
         with jdk.test.resources.exported.classes.MyResourcesProvider;
 }
