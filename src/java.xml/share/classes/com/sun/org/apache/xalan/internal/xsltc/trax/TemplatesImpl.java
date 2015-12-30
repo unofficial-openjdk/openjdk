@@ -418,30 +418,28 @@ public final class TemplatesImpl implements Templates, Serializable {
 
             // create a module for the translet
             Module xmlModule = TemplatesImpl.class.getModule();
-            if (xmlModule != null) {
-                String pkg = _tfactory.getPackageName();
-                assert pkg != null && pkg.length() > 0;
+            String pn = _tfactory.getPackageName();
+            assert pn != null && pn.length() > 0;
 
-                Module m = Modules.defineModule(loader, "jdk.translet",
-                                                Collections.singleton(pkg));
+            Module m = Modules.defineModule(loader, "jdk.translet",
+                                            Collections.singleton(pn));
 
-                // jdk.translate reads java.base && java.xml
-                Modules.addReads(m, Object.class.getModule());
-                Modules.addReads(m, xmlModule);
+            // jdk.translate reads java.base && java.xml
+            Modules.addReads(m, Object.class.getModule());
+            Modules.addReads(m, xmlModule);
 
-                // jdk.translet needs access to runtime classes
-                Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
-                    Modules.addExports(xmlModule, p, m);
-                });
+            // jdk.translet needs access to runtime classes
+            Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
+                xmlModule.addExports(p, m);
+            });
 
-                // jdk.translate also needs to be loose as the XSL may bind to
-                // java types in an unnamed module
-                Modules.addReads(m, null);
+            // jdk.translate also needs to be loose as the XSL may bind to
+            // java types in an unnamed module
+            Modules.addReads(m, null);
 
-                // java.xml needs to instanitate the translate class
-                Modules.addReads(xmlModule, m);
-                Modules.addExports(m, pkg, xmlModule);
-            }
+            // java.xml needs to instanitate the translate class
+            xmlModule.addReads(m);
+            Modules.addExports(m, pn, xmlModule);
 
             for (int i = 0; i < classCount; i++) {
                 _class[i] = loader.defineClass(_bytecodes[i]);
