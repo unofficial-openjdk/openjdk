@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,7 +298,7 @@ void ModuleEntryTable::finalize_javabase(Handle jlrM_module, Symbol* version, Sy
   java_lang_reflect_Module::set_module_entry(jlrM_module(), jb_module);
 }
 
-void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
+void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle) {
   if (jlrM_handle.is_null()) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
@@ -320,9 +320,9 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
   for (int i = 0; i < list_length; i++) {
     Klass* k = list->at(i);
     assert(k->is_klass(), "List should only hold classes");
-    EXCEPTION_MARK;
+    Thread* THREAD = Thread::current();
     KlassHandle kh(THREAD, k);
-    java_lang_Class::fixup_modulefield(kh, jlrM_handle, CATCH);
+    java_lang_Class::fixup_modulefield(kh, jlrM_handle);
   }
 
   delete java_lang_Class::fixup_modulefield_list();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -880,7 +880,7 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
   }
 }
 
-void java_lang_Class::fixup_modulefield(KlassHandle k, Handle module, TRAPS) {
+void java_lang_Class::fixup_modulefield(KlassHandle k, Handle module) {
   assert(_module_offset != 0, "must have been computed already");
   java_lang_Class::set_module(k->java_mirror(), module());
 }
@@ -956,9 +956,9 @@ oop java_lang_Class::module(oop java_class) {
   return java_class->obj_field(_module_offset);
 }
 
-void java_lang_Class::set_module(oop java_class, oop md) {
+void java_lang_Class::set_module(oop java_class, oop module) {
   assert(_module_offset != 0, "must be set");
-  java_class->obj_field_put(_module_offset, md);
+  java_class->obj_field_put(_module_offset, module);
 }
 
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {

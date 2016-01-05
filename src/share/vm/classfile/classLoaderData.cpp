@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -886,10 +886,10 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure,
   data = _head;
   while (data != NULL) {
     if (data->is_alive(is_alive_closure)) {
-      if (!data->packageTable_is_null()) {
+      if (data->packages_defined()) {
         data->packages()->purge_all_package_exports();
       }
-      if (!data->moduleTable_is_null()) {
+      if (data->modules_defined()) {
         data->modules()->purge_all_module_reads();
       }
       // clean metaspace

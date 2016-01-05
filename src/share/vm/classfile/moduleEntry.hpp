@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -203,7 +203,7 @@ public:
   static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
                                                                     (_javabase_module->jlrM_module() != NULL)); }
   static void finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location);
-  static void patch_javabase_entries(Handle jlrM_handle, TRAPS);
+  static void patch_javabase_entries(Handle jlrM_handle);
 
   void print() PRODUCT_RETURN;
   void verify();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -314,9 +314,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   void record_dependency(Klass* to, TRAPS);
   void init_dependencies(TRAPS);
   PackageEntryTable* packages();
-  bool packageTable_is_null() { return (_packages == NULL); }
+  bool packages_defined() { return (_packages != NULL); }
   ModuleEntryTable* modules();
-  bool moduleTable_is_null() { return (_modules == NULL); }
+  bool modules_defined() { return (_modules != NULL); }
 
   void add_to_deallocate_list(Metadata* m);
 

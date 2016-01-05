@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -4877,7 +4877,8 @@ void ClassFileParser::verify_legal_class_modifiers(jint flags, TRAPS) {
   if ((is_abstract && is_final) ||
       (is_interface && !is_abstract) ||
       (is_interface && major_gte_15 && (is_super || is_enum)) ||
-      (!is_interface && major_gte_15 && is_annotation) || is_module_info) {
+      (!is_interface && major_gte_15 && is_annotation) ||
+      is_module_info) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
       THREAD_AND_LOCATION,
@@ -5223,7 +5224,8 @@ int ClassFileParser::verify_legal_method_signature(Symbol* name, Symbol* signatu
 // method.  Because these names have been checked as special cases before
 // calling this method in verify_legal_method_name.
 //
-// This method is also called from jvm.cpp. Be careful about changing it.
+// This method is also called from the modular system APIs in modules.cpp
+// to verify the validity of module and package names.
 bool ClassFileParser::verify_unqualified_name(
     char* name, unsigned int length, int type) {
   jchar ch;
