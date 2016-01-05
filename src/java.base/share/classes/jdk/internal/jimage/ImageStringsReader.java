@@ -25,6 +25,7 @@
 
 package jdk.internal.jimage;
 
+import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
 
 public class ImageStringsReader implements ImageStrings {
@@ -87,7 +88,7 @@ public class ImageStringsReader implements ImageStrings {
         return length;
     }
 
-    static void charsFromMUTF8(char chars[], byte[] bytes, int offset, int count) {
+    static void charsFromMUTF8(char[] chars, byte[] bytes, int offset, int count) throws UTFDataFormatException {
         int j = 0;
 
         for (int i = offset; i < offset + count; i++) {
@@ -105,13 +106,19 @@ public class ImageStringsReader implements ImageStrings {
 
                 while ((uch & mask) != 0) {
                     ch = bytes[++i];
-                    assert (ch & 0xC0) == 0x80 : "error in unicode";
+
+                    if ((ch & 0xC0) != 0x80) {
+                        throw new UTFDataFormatException("bad continuation 0x" + Integer.toHexString(ch));
+                    }
+
                     uch = ((uch & ~mask) << 6) | (ch & 0x3F);
                     mask <<= 6 - 1;
                 }
-            }
 
-            assert (uch & 0xFFFF) == uch : "error in unicode)";
+                if ((uch & 0xFFFF) != uch) {
+                    throw new UTFDataFormatException("character out of range \\u" + Integer.toHexString(uch));
+                }
+            }
 
             chars[j++] = (char)uch;
         }
@@ -120,7 +127,12 @@ public class ImageStringsReader implements ImageStrings {
     public static String stringFromMUTF8(byte[] bytes, int offset, int count) {
         int length = charsFromMUTF8Length(bytes, offset, count);
         char[] chars = new char[length];
-        charsFromMUTF8(chars, bytes, offset, count);
+
+        try {
+            charsFromMUTF8(chars, bytes, offset, count);
+        } catch (UTFDataFormatException ex) {
+            throw new InternalError("Attempt to convert non modified UTF-8 byte sequence");
+        }
 
         return new String(chars);
     }
@@ -129,7 +141,7 @@ public class ImageStringsReader implements ImageStrings {
         return stringFromMUTF8(bytes, 0, bytes.length);
     }
 
-   static int charsFromByteBufferLength(ByteBuffer buffer) {
+    static int charsFromByteBufferLength(ByteBuffer buffer) {
         int length = 0;
 
         while(buffer.hasRemaining()) {
