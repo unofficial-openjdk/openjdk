@@ -23,6 +23,8 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static jdk.testlibrary.ProcessTools.*;
 
@@ -35,7 +37,7 @@ import static org.testng.Assert.assertTrue;
  * @bug 8087335
  * @summary Tests for Class.forName(Module,String)
  * @library /lib/testlibrary /jdk/jigsaw/lib
- * @build TestDriver CompilerUtils jdk.testlibrary.ProcessTools TestMain
+ * @build TestDriver CompilerUtils jdk.testlibrary.ProcessTools TestMain TestLayer
  * @run testng TestDriver
  */
 
@@ -62,29 +64,67 @@ public class TestDriver {
                         MOD_SRC_DIR.toString()));
     }
 
+    private String[] runWithSecurityManager(String[] options) {
+        Path policyFile = Paths.get(TEST_SRC, "policy");
+        Stream<String> opts = Stream.concat(Stream.of("-Djava.security.manager",
+                                                      "-Djava.security.policy=" + policyFile.toString()),
+                                            Arrays.stream(options));
+        return opts.toArray(String[]::new);
+    }
+
     @Test
     public void test() throws Exception {
-        assertTrue(executeTestJava(
-                        "-XaddExports:m1/p1=ALL-UNNAMED",
-                        "-cp", TEST_CLASSES,
-                        "-mp", MOD_DEST_DIR.toString(),
-                        "-addmods", String.join(",", modules),
-                        "-m", "m2/p2.test.Main")
+        String[] options = new String[]{
+                "-cp", TEST_CLASSES,
+                "-mp", MOD_DEST_DIR.toString(),
+                "-addmods", String.join(",", modules),
+                "-m", "m2/p2.test.Main"
+        };
+        assertTrue(executeTestJava(options)
+                        .outputTo(System.out)
+                        .errorTo(System.err)
+                        .getExitValue() == 0);
+
+
+        assertTrue(executeTestJava(runWithSecurityManager(options))
+                .outputTo(System.out)
+                .errorTo(System.err)
+                .getExitValue() == 0);
+    }
+
+    @Test
+    public void testUnnamedModule() throws Exception {
+        String[] options = new String[] {
+                "-cp", TEST_CLASSES,
+                "-mp", MOD_DEST_DIR.toString(),
+                "-addmods", String.join(",", modules),
+                "TestMain"
+        };
+        assertTrue(executeTestJava(options)
+                        .outputTo(System.out)
+                        .errorTo(System.err)
+                        .getExitValue() == 0);
+
+        assertTrue(executeTestJava(runWithSecurityManager(options))
                         .outputTo(System.out)
                         .errorTo(System.err)
                         .getExitValue() == 0);
     }
 
     @Test
-    public void testUnnamedModule() throws Exception {
-        assertTrue(executeTestJava(
-                        "-XaddExports:m1/p1=ALL-UNNAMED",
-                        "-cp", TEST_CLASSES,
-                        "-mp", MOD_DEST_DIR.toString(),
-                        "-addmods", String.join(",", modules),
-                        "TestMain")
-                        .outputTo(System.out)
-                        .errorTo(System.err)
-                        .getExitValue() == 0);
+    public void testLayer() throws Exception {
+        String[] options = new String[]{
+                "-cp", TEST_CLASSES,
+                "TestLayer"
+        };
+        assertTrue(executeTestJava(options)
+                .outputTo(System.out)
+                .errorTo(System.err)
+                .getExitValue() == 0);
+
+        assertTrue(executeTestJava(runWithSecurityManager(options))
+                .outputTo(System.out)
+                .errorTo(System.err)
+                .getExitValue() == 0);
     }
 }
