@@ -538,7 +538,9 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
                 JLI_StrCmp(arg, "-cp") == 0 ||
                 JLI_StrCmp(arg, "-modulepath") == 0 ||
                 JLI_StrCmp(arg, "-mp") == 0 ||
-                JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+                JLI_StrCmp(arg, "-upgrademodulepath") == 0 ||
+                JLI_StrCmp(arg, "-addmods") == 0 ||
+                JLI_StrCmp(arg, "-limitmods") == 0) {
                 newArgv[newArgvIdx++] = arg;
                 argi++;
                 if (argi < argc) {
