@@ -52,9 +52,6 @@ com/sun/jdi/cds/CDSFieldWatchpoints.java			generic-all
 
 # core_tools
 
-# 8146242
-jdk/internal/jrtfs/Basic.java					generic-all
-
 # 8048100
 tools/pack200/Pack200Test.java					generic-all
 
