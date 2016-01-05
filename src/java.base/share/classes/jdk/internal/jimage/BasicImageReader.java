@@ -41,7 +41,11 @@ import jdk.internal.jimage.decompressor.Decompressor;
 
 public class BasicImageReader implements AutoCloseable {
     static private final boolean is64Bit = AccessController.doPrivileged(
-        (PrivilegedAction<Boolean>) () -> "64".equals(System.getProperty("sun.arch.data.model")));
+        new PrivilegedAction<Boolean>() {
+            Boolean run() {
+                return "64".equals(System.getProperty("sun.arch.data.model"));
+            }
+        });
 
     private final ByteOrder byteOrder;
     private ByteBuffer map;
