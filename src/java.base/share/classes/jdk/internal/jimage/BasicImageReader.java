@@ -42,7 +42,7 @@ import jdk.internal.jimage.decompressor.Decompressor;
 public class BasicImageReader implements AutoCloseable {
     static private final boolean is64Bit = AccessController.doPrivileged(
         new PrivilegedAction<Boolean>() {
-            Boolean run() {
+            public Boolean run() {
                 return "64".equals(System.getProperty("sun.arch.data.model"));
             }
         });
