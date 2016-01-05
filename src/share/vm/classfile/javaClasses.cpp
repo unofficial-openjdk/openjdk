@@ -2144,11 +2144,11 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   // Fill in module name and version
   ModuleEntry* module = holder->module();
   if (module->is_named()) {
-    oop module_name = StringTable::intern(module->name()->as_utf8(), CHECK_0);
+    oop module_name = StringTable::intern(module->name(), CHECK_0);
     java_lang_StackTraceElement::set_moduleName(element(), module_name);
     oop module_version;
     if (module->version() != NULL) {
-      module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+      module_version = StringTable::intern(module->version(), CHECK_0);
     } else {
       module_version = NULL;
     }
