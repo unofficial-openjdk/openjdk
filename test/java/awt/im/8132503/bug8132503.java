@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,29 +21,27 @@
  * questions.
  */
 
-/**
- * @test
- * @bug 6449335
- * @requires os.family == "windows"
- * @summary MSCAPI's PRNG is too slow
+/* @test
+   @bug 8132503
+   @summary [macosx] Chinese full stop symbol cannot be entered with Pinyin IM on OS X
+   @author Anton Litvinov
+   @run applet/manual=yesno bug8132503.html
  */
 
-import java.security.SecureRandom;
+import javax.swing.JApplet;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
-public class PrngSlow {
-
-    public static void main(String[] args) throws Exception {
-        double t = 0.0;
-        SecureRandom sr = null;
-        sr = SecureRandom.getInstance("Windows-PRNG", "SunMSCAPI");
-        long start = System.nanoTime();
-        for (int i = 0; i < 10000; i++) {
-            if (i % 100 == 0) System.err.print(".");
-            sr.nextBoolean();
-        };
-        t = (System.nanoTime() - start) / 1000000000.0;
-        System.err.println("\nSpend " + t + " seconds");
-        if (t > 5)
-            throw new RuntimeException("Still too slow");
+public class bug8132503 extends JApplet {
+    @Override
+    public void init() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                JTextArea textArea = new JTextArea("Text area of the test.", 40, 40);
+                add(new JScrollPane(textArea));
+            }
+        });
     }
 }
