@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,7 +230,7 @@ public class SjavacImpl implements Sjavac {
                 Map<String,Source> generated_sources = new HashMap<>();
 
                 Source.scanRoot(Util.pathToFile(options.getGenSrcDir()), Util.set(".java"), null, null, null, null,
-                        generated_sources, modules, current_module, false, true, false);
+                        generated_sources, modules, current_module, true, true, false);
                 javac_state.now().flattenPackagesSourcesAndArtifacts(modules);
                 // Recheck the the source files and their timestamps again.
                 javac_state.checkSourceStatus(true);
