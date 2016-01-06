@@ -84,10 +84,10 @@ public class BasicImageReader implements AutoCloseable {
             this.map = null;
         }
 
+        this.imageFile = new File(imagePath);
         int headerSize = ImageHeader.getHeaderSize();
 
         if (this.map == null || !is64Bit) {
-            this.imageFile = new File(imagePath);
             this.raf = new RandomAccessFile(this.imageFile, "r");
             this.channel = this.raf.getChannel();
             this.size = this.channel.size();
@@ -98,7 +98,6 @@ public class BasicImageReader implements AutoCloseable {
             this.indexSize = this.header.getIndexSize();
             this.map = channel.map(FileChannel.MapMode.READ_ONLY, 0, is64Bit ? size : indexSize);
         } else {
-            this.imageFile = null;
             this.raf = null;
             this.channel = null;
             this.size = this.map.capacity();
@@ -165,7 +164,9 @@ public class BasicImageReader implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        raf.close();
+        if (raf != null) {
+            raf.close();
+        }
     }
 
     public ImageStringsReader getStrings() {
