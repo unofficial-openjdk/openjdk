@@ -42,8 +42,7 @@ java.activation_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 
 ################################################################################
 
-# TODO: This needs to be reenabled before integration into jdk9
-#java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
+java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
 java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-umalqura.properties
 java.base_CLEAN := intrinsic.properties
 
