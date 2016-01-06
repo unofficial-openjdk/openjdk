@@ -38,14 +38,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class ImageReader extends BasicImageReader {
-    private static ConcurrentHashMap<String, ImageReader> openFiles = new ConcurrentHashMap<>();
+    private static HashMap<String, ImageReader> openFiles = new HashMap<>();
     private final String imagePath;
-    private AtomicInteger openCount;
+    private int openCount;
 
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
@@ -63,7 +61,7 @@ public class ImageReader extends BasicImageReader {
     private ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
         this.imagePath = imagePath;
-        this.openCount = new AtomicInteger(0);
+        this.openCount = 0;
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -71,17 +69,15 @@ public class ImageReader extends BasicImageReader {
         this(imagePath, ByteOrder.nativeOrder());
     }
 
-    public static ImageReader open(String imagePath, ByteOrder byteOrder) throws IOException {
-        openFiles.computeIfAbsent(imagePath, (ip) -> {
-            try {
-                return new ImageReader(ip, byteOrder);
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
-        });
-
+    public synchronized static ImageReader open(String imagePath, ByteOrder byteOrder) throws IOException {
         ImageReader reader = openFiles.get(imagePath);
-        reader.openCount.incrementAndGet();
+
+        if (reader == null) {
+            reader = new ImageReader(imagePath, byteOrder);
+            openFiles.put(imagePath, reader);
+        }
+
+        reader.openCount++;
 
         return reader;
     }
@@ -93,12 +89,17 @@ public class ImageReader extends BasicImageReader {
         return open(imagePath, ByteOrder.nativeOrder());
     }
 
-    @Override
-    public synchronized void close() throws IOException {
-        int count = openCount.decrementAndGet();
+    private synchronized static boolean canClose(ImageReader reader) {
+        if (--reader.openCount == 0) {
+            return openFiles.remove(reader.imagePath, reader);
+        }
 
-        if (count == 0) {
-            openFiles.remove(imagePath, this);
+        return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (canClose(this)) {
             super.close();
             clearNodes();
        }
