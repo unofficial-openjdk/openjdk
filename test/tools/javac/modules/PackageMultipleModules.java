@@ -67,12 +67,9 @@ public class PackageMultipleModules extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("B.java:1:1: compiler.warn.package.in.other.module.1: m1",
-                                              "B1.java:1:1: compiler.warn.package.in.other.module.1: m1",
-                                              "A.java:1:26: compiler.err.not.def.access.package.cant.access: test.B, test",
+        List<String> expected = Arrays.asList("A.java:1:26: compiler.err.not.def.access.package.cant.access: test.B, test",
                                               "B.java:1:26: compiler.err.not.def.access.package.cant.access: test.A, test",
-                                              "2 errors",
-                                              "2 warnings");
+                                              "2 errors");
         if (!log.equals(expected))
             throw new Exception("expected output not found");
     }

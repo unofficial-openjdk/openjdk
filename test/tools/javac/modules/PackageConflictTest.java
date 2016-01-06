@@ -55,12 +55,67 @@ public class PackageConflictTest extends ModuleTestBase {
                 .options("-XDrawDiagnostics")
                 .outdir(classes)
                 .files(findJavaFiles(src))
-                .run(ToolBox.Expect.SUCCESS)
+                .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("MyList.java:1:1: compiler.warn.package.in.other.module.1: java.base"))
+        if (!log.contains("MyList.java:1:1: compiler.err.package.in.other.module: java.base"))
             throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testDisjoint(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        Path m2 = base.resolve("m2");
+        tb.writeJavaFiles(m1,
+                          "module m1 {}",
+                          "package test; public class A {}");
+        tb.writeJavaFiles(m2,
+                          "module m2 {}",
+                          "package test; public class B {}");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask()
+          .options("-Werror", "-modulesourcepath", base.toString())
+          .outdir(classes)
+          .files(findJavaFiles(base))
+          .run()
+          .writeAll();
+    }
+
+    @Test
+    void testConflictInDependencies(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        Path m2 = base.resolve("m2");
+        Path m3 = base.resolve("m3");
+        tb.writeJavaFiles(m1,
+                          "module m1 { exports test; }",
+                          "package test; public class A {}");
+        tb.writeJavaFiles(m2,
+                          "module m2 { exports test; }",
+                          "package test; public class B {}");
+        tb.writeJavaFiles(m3,
+                          "module m3 { requires m1; requires m2; }",
+                          "package impl; public class Impl {}");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        List<String> log = tb.new JavacTask()
+                       .options("-XDrawDiagnostics", "-modulesourcepath", base.toString())
+                       .outdir(classes)
+                       .files(findJavaFiles(base))
+                       .run(ToolBox.Expect.FAIL)
+                       .writeAll()
+                       .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        List<String> expected =
+                Arrays.asList("module-info.java:1:1: compiler.err.package.clash.from.requires: m3, test, m1, m2",
+                              "1 error");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
     }
 
     @Test
@@ -79,11 +134,11 @@ public class PackageConflictTest extends ModuleTestBase {
                 .options("-XDrawDiagnostics", "-mp", modules.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modules.resolve("M")))
-                .run(ToolBox.Expect.SUCCESS)
+                .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("B.java:1:1: compiler.warn.package.in.other.module.1: N"))
+        if (!log.contains("B.java:1:1: compiler.err.package.in.other.module: N"))
             throw new Exception("expected output not found");
     }
 
@@ -108,13 +163,12 @@ public class PackageConflictTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("A.java:1:1: compiler.warn.package.in.other.module.1: M"))
-            throw new Exception("expected output not found");
+        if (!log.contains(""))
+            throw new Exception("unexpected output not found");
 
     }
 
-    //@ignore JDK-8144845
-    //@Test
+    @Test
     void testPrivateConflictOnModulePath(Path base) throws Exception {
         Path modules = base.resolve("modules");
         new ModuleBuilder("N")
@@ -135,13 +189,12 @@ public class PackageConflictTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("A.java:1:1: compiler.warn.package.in.other.module.1: M"))
+        if (!log.contains(""))
             throw new Exception("expected output not found");
 
     }
 
-    //@ignore JDK-8144845
-    //@Test
+    @Test
     void testRequiresConflictExports(Path base) throws Exception {
         Path modules = base.resolve("modules");
         new ModuleBuilder("M")
@@ -167,9 +220,8 @@ public class PackageConflictTest extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         List<String> expected =
-                Arrays.asList("C.java:1:35: compiler.err.cant.resolve.location: kindname.class, A, , , (compiler.misc.location: kindname.package, pack, null",
-                        "C.java:1:45: compiler.err.cant.resolve.location: kindname.class, B, , , (compiler.misc.location: kindname.package, pack, null)",
-                        "2 errors");
+                Arrays.asList("module-info.java:1:1: compiler.err.package.clash.from.requires: K, pack, M, N",
+                        "1 error");
         if (!log.containsAll(expected))
             throw new Exception("expected output not found");
     }
@@ -212,7 +264,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("DuplicatePackage.java:1:1: compiler.warn.package.in.other.module: M,N",
+        List<String> expected = Arrays.asList(
                 "DependsOnM.java:1:55: compiler.err.cant.resolve.location: kindname.variable, flagM, , , (compiler.misc.location: kindname.class, pkg.A, null)");
         if (!output.containsAll(expected)) {
             throw new Exception("expected output not found");

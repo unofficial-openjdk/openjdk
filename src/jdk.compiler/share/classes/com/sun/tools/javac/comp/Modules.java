@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.lang.model.SourceVersion;
@@ -75,6 +76,7 @@ import com.sun.tools.javac.tree.JCTree.JCUses;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
@@ -244,6 +246,10 @@ public class Modules extends JCTree.Visitor {
                 log.error(toplevel.pos(), "too.many.modules");
             }
 
+            Env<AttrContext> provisionalEnv = new Env<>(decl, null);
+
+            provisionalEnv.toplevel = toplevel;
+            typeEnvs.put(sym, provisionalEnv);
         } else if (isModuleInfo) {
             if (multiModuleMode) {
                 JCTree tree = toplevel.defs.isEmpty() ? toplevel : toplevel.defs.head;
@@ -678,7 +684,7 @@ public class Modules extends JCTree.Visitor {
 
         msym.requires = msym.requires.appendList(List.from(addReads.getOrDefault(msym, Collections.emptySet())));
 
-        Set<ModuleSymbol> readable = new HashSet<>();
+        Set<ModuleSymbol> readable = new LinkedHashSet<>();
         Set<ModuleSymbol> requiresPublic = new HashSet<>();
         if ((msym.flags() & Flags.AUTOMATIC_MODULE) == 0) {
             for (RequiresDirective d: msym.requires) {
@@ -755,20 +761,45 @@ public class Modules extends JCTree.Visitor {
         msym.visiblePackages = new LinkedHashSet<>();
         msym.visiblePackages.add(syms.rootPackage);
 
+        Map<Name, ModuleSymbol> seen = new HashMap<>();
+
         for (ModuleSymbol rm : readable) {
             if (rm == syms.unnamedModule)
                 continue;
-            addVisiblePackages(msym, rm.exports);
+            addVisiblePackages(msym, seen, rm, rm.exports);
         }
 
-        for (Set<ExportsDirective> exports: addExports.values())
-            addVisiblePackages(msym, exports);
+        for (Entry<ModuleSymbol, Set<ExportsDirective>> addExportsEntry : addExports.entrySet())
+            addVisiblePackages(msym, seen, addExportsEntry.getKey(), addExportsEntry.getValue());
     }
 
-    private void addVisiblePackages(ModuleSymbol msym, Collection<ExportsDirective> directives) {
-        for (ExportsDirective d: directives) {
-            if (d.modules == null || d.modules.contains(msym))
+    private void addVisiblePackages(ModuleSymbol msym,
+                                    Map<Name, ModuleSymbol> seenPackages,
+                                    ModuleSymbol exportsFrom,
+                                    Collection<ExportsDirective> exports) {
+        for (ExportsDirective d : exports) {
+            if (d.modules == null || d.modules.contains(msym)) {
+                Name packageName = d.packge.fullname;
+                ModuleSymbol previousModule = seenPackages.get(packageName);
+
+                if (previousModule != null && previousModule != exportsFrom) {
+                    Env<AttrContext> env = typeEnvs.get(msym);
+                    JavaFileObject origSource = env != null ? log.useSource(env.toplevel.sourcefile)
+                                                            : null;
+                    DiagnosticPosition pos = env != null ? env.tree.pos() : null;
+                    try {
+                        log.error(pos, "package.clash.from.requires", msym, packageName,
+                                                                      previousModule, exportsFrom);
+                    } finally {
+                        if (env != null)
+                            log.useSource(origSource);
+                    }
+                    continue;
+                }
+
+                seenPackages.put(packageName, exportsFrom);
                 msym.visiblePackages.add(d.packge);
+            }
         }
     }
 
