@@ -108,12 +108,9 @@ final class Module extends Archive {
      * Tests if a given package name is exported.
      */
     public boolean isExportedPackage(String pn) {
-        if (isJDKUnsupportedAPI(this, pn)) {
-            // should flag as internal API
-            return false;
-        }
-
-        return exports.containsKey(pn) ? exports.get(pn).isEmpty() : false;
+        return exports.containsKey(pn)
+                    ? exports.get(pn).isEmpty() && !isJDKUnsupportedAPI(this, pn)
+                    : false;
     }
 
     private final static String JDK_UNSUPPORTED = "jdk.unsupported";
