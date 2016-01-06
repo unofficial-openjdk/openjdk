@@ -30,9 +30,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -106,8 +108,26 @@ final class Module extends Archive {
      * Tests if a given package name is exported.
      */
     public boolean isExportedPackage(String pn) {
+        if (isJDKUnsupportedAPI(this, pn)) {
+            // should flag as internal API
+            return false;
+        }
+
         return exports.containsKey(pn) ? exports.get(pn).isEmpty() : false;
     }
+
+    private final static String JDK_UNSUPPORTED = "jdk.unsupported";
+
+    // temporary until jdk.unsupported module
+    private final static List<String> unsupported = Arrays.asList("sun.misc", "sun.reflect");
+
+    /*
+     * Returns true if the given package name is JDK critical internal API
+     * in jdk.unsupported module
+     */
+    private static boolean isJDKUnsupportedAPI(Module m, String pn) {
+        return JDK_UNSUPPORTED.equals(m.name()) || unsupported.contains(pn);
+    };
 
     /**
      * Tests if the given classname is accessible to module m
