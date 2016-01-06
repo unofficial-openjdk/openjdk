@@ -40,16 +40,6 @@ import java.util.stream.IntStream;
 import jdk.internal.jimage.decompressor.Decompressor;
 
 public class BasicImageReader implements AutoCloseable {
-    static {
-        java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction<Void>() {
-                    public Void run() {
-                        System.loadLibrary("jimage");
-                        return null;
-                    }
-                });
-    }
-
     static private final boolean is64Bit = AccessController.doPrivileged(
         new PrivilegedAction<Boolean>() {
             public Boolean run() {
@@ -72,15 +62,14 @@ public class BasicImageReader implements AutoCloseable {
     private final ImageStringsReader stringsReader;
     private final Decompressor decompressor;
 
-    private native static ByteBuffer getNativeMap(String imagePath);
-
     protected BasicImageReader(String imagePath, ByteOrder byteOrder)
             throws IOException {
         this.byteOrder = byteOrder;
 
-        try {
-            this.map = getNativeMap(imagePath);
-        } catch (UnsatisfiedLinkError ex) {
+        if (BasicImageReader.class.getClassLoader() == null) {
+            // use libjimage native entry when loading the image for this runtime
+            this.map = NativeImageBuffer.getNativeMap(imagePath);
+        } else {
             this.map = null;
         }
 

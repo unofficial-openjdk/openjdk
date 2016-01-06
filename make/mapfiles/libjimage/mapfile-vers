@@ -27,7 +27,7 @@
 
 SUNWprivate_1.1 {
     global:
-        Java_jdk_internal_jimage_BasicImageReader_getNativeMap;
+        Java_jdk_internal_jimage_NativecImageBuffer_getNativeMap;
         JIMAGE_Open;
         JIMAGE_Close;
         JIMAGE_PackageToModule;
