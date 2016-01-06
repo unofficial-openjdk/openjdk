@@ -40,6 +40,16 @@ import java.util.stream.IntStream;
 import jdk.internal.jimage.decompressor.Decompressor;
 
 public class BasicImageReader implements AutoCloseable {
+    static {
+        java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<Void>() {
+                    public Void run() {
+                        System.loadLibrary("jimage");
+                        return null;
+                    }
+                });
+    }
+
     static private final boolean is64Bit = AccessController.doPrivileged(
         new PrivilegedAction<Boolean>() {
             public Boolean run() {
@@ -81,7 +91,7 @@ public class BasicImageReader implements AutoCloseable {
             this.raf = new RandomAccessFile(this.imageFile, "r");
             this.channel = this.raf.getChannel();
             this.size = this.channel.size();
-            ByteBuffer buffer = ByteBuffer.allocate(headerSize);
+            ByteBuffer buffer = ByteBuffer.allocateDirect(headerSize);
             this.channel.read(buffer, 0L);
             buffer.rewind();
             this.header = readHeader(intBuffer(buffer, 0, headerSize));
