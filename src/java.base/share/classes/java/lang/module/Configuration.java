@@ -84,7 +84,7 @@ import java.util.stream.Collectors;
  * } </pre>
  * where module {@code java.xml} is in the parent configuration. For
  * simplicity, this example omits the implicitly declared dependence on the
- * {@code java.base} module. </p>
+ * {@code java.base} module.
  *
  * <p> Service binding is the process of augmenting a configuration with
  * modules from the set of observable modules induced by the service-use
@@ -229,8 +229,11 @@ public final class Configuration {
      * @return The configuration that is the result of resolving the given
      *         root modules
      *
-     * @throws ResolutionException If resolution or the post-resolution checks
-     *         fail for any of the reasons listed
+     * @throws ResolutionException
+     *         If resolution or the post-resolution checks fail for any of the
+     *         reasons listed
+     * @throws SecurityException
+     *         If locating a module is denied by the security manager
      */
     public static Configuration resolve(ModuleFinder beforeFinder,
                                         Configuration parent,
@@ -271,8 +274,11 @@ public final class Configuration {
      * @return The configuration that is the result of resolving the given
      *         root modules
      *
-     * @throws ResolutionException If resolution or the post-resolution checks
-     *         fail for any of the reasons listed
+     * @throws ResolutionException
+     *         If resolution or the post-resolution checks fail for any of the
+     *         reasons listed
+     * @throws SecurityException
+     *         If locating a module is denied by the security manager
      */
     public static Configuration resolve(ModuleFinder beforeFinder,
                                         Configuration parent,
@@ -324,8 +330,11 @@ public final class Configuration {
      * @return A configuration that is this configuration augmented with
      *         modules that are induced by the service-use relation
      *
-     * @throws ResolutionException If resolution or the post-resolution checks
-     *         fail for any of the reasons listed
+     * @throws ResolutionException
+     *         If resolution or the post-resolution checks fail for any of the
+     *         reasons listed
+     * @throws SecurityException
+     *         If locating a module is denied by the security manager
      */
     public Configuration bind() {
         if (result == null) {
@@ -397,8 +406,8 @@ public final class Configuration {
      * configuration, or if not in this configuration, the {@linkplain #parent
      * parent} configuration.
      *
-     * @param name
-     *        The name of the module to find
+     * @param  name
+     *         The name of the module to find
      *
      * @return The module with the given name or an empty {@code Optional}
      *         if there isn't a module with this name in this configuration
@@ -474,8 +483,11 @@ public final class Configuration {
 
 
     /**
-     * Returns an immutable set of the read dependences for a named module in
+     * Returns an immutable set of the read dependences for a module in
      * this configuration.
+     *
+     * @param  descriptor
+     *         The module descriptor of the module
      *
      * @return A possibly-empty unmodifiable set of the read dependences
      *

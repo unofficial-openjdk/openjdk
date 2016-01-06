@@ -86,6 +86,7 @@ public final class Layer {
      */
     @FunctionalInterface
     public static interface ClassLoaderFinder {
+
         /**
          * Returns the class loader for the given module.
          *
@@ -94,9 +95,13 @@ public final class Layer {
          * Failure to do so will lead to unspecified behavior when creating
          * a Layer. </p>
          *
+         * @param  moduleName
+         *         The module name
+         *
          * @return The class loader for the given module
          */
         ClassLoader loaderForModule(String moduleName);
+
     }
 
 

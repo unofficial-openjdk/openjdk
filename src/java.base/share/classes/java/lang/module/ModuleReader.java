@@ -51,7 +51,7 @@ import java.util.Optional;
  * module readers are closed. </p>
  *
  * <p> A {@code ModuleReader} implementation may require permissions to access
- * resources in the module. Consequently the {@link #find find}, {#link #open
+ * resources in the module. Consequently the {@link #find find}, {@link #open
  * open} and {@link #read read} methods may throw {@code SecurityException} if
  * access is denied by the security manager. </p>
  *

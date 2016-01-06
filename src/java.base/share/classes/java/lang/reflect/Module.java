@@ -159,6 +159,8 @@ public final class Module {
     /**
      * Returns {@code true} if this module is a named module.
      *
+     * @return {@code true} if this is a named module
+     *
      * @see ClassLoader#getUnnamedModule()
      */
     public boolean isNamed() {
@@ -170,6 +172,8 @@ public final class Module {
      *
      * For now, this method returns {@code null} if this module is an
      * unnamed module.
+     *
+     * @return The module name
      */
     public String getName() {
         return name;
@@ -182,6 +186,8 @@ public final class Module {
      * method if first called with a {@code RuntimePermission("getClassLoader")}
      * permission to check that the caller is allowed to get access to the
      * class loader. </p>
+     *
+     * @return The class loader for this module
      *
      * @throws SecurityException
      *         If denied by the security manager
@@ -199,6 +205,8 @@ public final class Module {
      *
      * For now, this method returns {@code null} if this module is an
      * unnamed module.
+     *
+     * @return The module descriptor for this module
      */
     public ModuleDescriptor getDescriptor() {
         return descriptor;
@@ -253,6 +261,9 @@ public final class Module {
      * Indicates if this module reads the given {@code Module}.
      * If {@code source} is {@code null} then this method tests if this
      * module reads all unnamed modules.
+     *
+     * @param  source
+     *         The source module
      *
      * @return {@code true} if this module reads {@code source}
      *
@@ -311,6 +322,9 @@ public final class Module {
      * @apiNote As this method can only be used to update the caller's module
      * then this method could be static and the IllegalStateException would
      * not be needed.
+     *
+     * @param  source
+     *         The source module
      *
      * @return this module
      *
@@ -451,13 +465,21 @@ public final class Module {
 
     /**
      * Returns {@code true} if this module exports the given package to the
-     * given module.
+     * given target module.
      *
      * <p> If invoked on an unnamed module then this method always returns
      * {@code true} for any non-{@code null} package name. </p>
      *
      * <p> This method does not check if the given module reads this
      * module. </p>
+     *
+     * @param  pn
+     *         The package name
+     * @param  target
+     *         The target module
+     *
+     * @return {@code true} if this module exports the package to the target
+     *         module
      */
     public boolean isExported(String pn, Module target) {
         Objects.requireNonNull(pn);
@@ -471,6 +493,11 @@ public final class Module {
      *
      * <p> If invoked on an unnamed module then this method always returns
      * {@code true} for any non-{@code null} package name. </p>
+     *
+     * @param  pn
+     *         The package name
+     *
+     * @return {@code true} if this module exports the package unconditionally
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
@@ -525,6 +552,11 @@ public final class Module {
      *
      * @implNote Augmenting the exports is potentially an expensive operation,
      * it is not expected to be used very often.
+     *
+     * @param  pn
+     *         The package name
+     * @param  target
+     *         The target module
      *
      * @return this module
      *
@@ -660,6 +692,9 @@ public final class Module {
      * then this method could be static and the IllegalStateException would
      * not be needed.
      *
+     * @param  st
+     *         The service type
+     *
      * @return this module
      *
      * @throws IllegalStateException
@@ -699,7 +734,11 @@ public final class Module {
     }
 
     /**
-     * Indicates if this module has a service dependence on the given type.
+     * Indicates if this module has a service dependence on the given service
+     * type.
+     *
+     * @param  st
+     *         The service type
      *
      * @return {@code true} if this module uses service type {@code st}
      *
@@ -1011,6 +1050,8 @@ public final class Module {
      *
      * @param  name
      *         The resource name
+     *
+     * @return An input stream for reading the resource or {@code null}
      *
      * @throws IOException
      *         If an I/O error occurs

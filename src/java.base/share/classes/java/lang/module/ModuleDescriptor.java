@@ -124,6 +124,8 @@ public class ModuleDescriptor
 
         /**
          * Return the module name.
+         *
+         * @return The module name
          */
         public String name() {
             return name;
@@ -225,6 +227,8 @@ public class ModuleDescriptor
 
         /**
          * Returns the package name.
+         *
+         * @return The package name
          */
         public String source() {
             return source;
@@ -234,6 +238,9 @@ public class ModuleDescriptor
          * For a qualified export, returns the non-empty and immutable set
          * of the module names to which the package is exported. For an
          * unqualified export, returns an empty {@code Optional}.
+         *
+         * @return The set of target module names or for an unqualified
+         *         export, an empty {@code Optional}
          */
         public Optional<Set<String>> targets() {
             return targets;
@@ -290,6 +297,8 @@ public class ModuleDescriptor
 
         /**
          * Returns the service type.
+         *
+         * @return The service type
          */
         public String service() { return service; }
 
@@ -321,7 +330,7 @@ public class ModuleDescriptor
      * This will, eventually, change.
      *
      * @see <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version">Debian
-     * Policy Manual, Chapter 5: Control files and their fields<a>
+     * Policy Manual, Chapter 5: Control files and their fields</a>
      *
      * @see ModuleDescriptor#version()
      * @since 9
@@ -447,6 +456,11 @@ public class ModuleDescriptor
 
         /**
          * Parses the given string as a version string.
+         *
+         * @param  v
+         *         The string to parse as a version string
+         *
+         * @return The resulting {@code Version}
          *
          * @throws IllegalArgumentException
          *         If {@code v} is {@code null}, an empty string, or cannot be
@@ -632,6 +646,8 @@ public class ModuleDescriptor
 
     /**
      * <p> The module name </p>
+     *
+     * @return The module name
      */
     public String name() {
         return name;
@@ -683,6 +699,8 @@ public class ModuleDescriptor
 
     /**
      * Returns this module's version.
+     *
+     * @return This module's version
      */
     public Optional<Version> version() {
         return version;
@@ -691,6 +709,9 @@ public class ModuleDescriptor
     /**
      * Returns a string containing this module's name and, if present, its
      * version.
+     *
+     * @return A string containing this module's name and, if present, its
+     *         version.
      */
     public String toNameAndVersion() {
         return version.map(v -> name() + "@" + v.toString()).orElse(name());
@@ -698,6 +719,8 @@ public class ModuleDescriptor
 
     /**
      * Returns the module's main class.
+     *
+     * @return This module's main class
      */
     public Optional<String> mainClass() {
         return mainClass;
@@ -764,8 +787,12 @@ public class ModuleDescriptor
         /**
          * Initializes a new builder with the given module name.
          *
-         * @throws IllegalArgumentException if the module name is {@code null}
-         *         or is not a legal Java identifier
+         * @param  name
+         *         The module name
+         *
+         * @throws IllegalArgumentException
+         *         If the module name is {@code null} or is not a legal Java
+         *         identifier
          */
         public Builder(String name) {
             this(name, false);
@@ -780,11 +807,19 @@ public class ModuleDescriptor
          * Adds a module dependence with the given (and possibly empty) set
          * of modifiers.
          *
-         * @throws IllegalArgumentException if the module name is {@code null},
-         *         is not a legal Java identifier, or is equal to the module
-         *         name that this builder was initialized to build
-         * @throws IllegalStateException if a dependency on the module has
-         *         already been declared
+         * @param  mods
+         *         The set of modifiers
+         * @param  mn
+         *         The module name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the module name is {@code null}, is not a legal Java
+         *         identifier, or is equal to the module name that this builder
+         *         was initialized to build
+         * @throws IllegalStateException
+         *         If a dependency on the module has already been declared
          */
         public Builder requires(Set<Requires.Modifier> mods, String mn) {
             if (name.equals(mn))
@@ -799,11 +834,17 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence with an empty set of modifiers.
          *
-         * @throws IllegalArgumentException if the module name is {@code null},
-         *         is not a legal Java identifier, or is equal to the module
-         *         name that this builder was initialized to build
-         * @throws IllegalStateException if a dependency on the module has
-         *         already been declared
+         * @param  mn
+         *         The module name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the module name is {@code null}, is not a legal Java
+         *         identifier, or is equal to the module name that this builder
+         *         was initialized to build
+         * @throws IllegalStateException
+         *         If a dependency on the module has already been declared
          */
         public Builder requires(String mn) {
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
@@ -812,11 +853,19 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence with the given modifier.
          *
-         * @throws IllegalArgumentException if the module name is {@code null},
-         *         is not a legal Java identifier, or is equal to the module
-         *         name that this builder was initialized to build
-         * @throws IllegalStateException if a dependency on the module has
-         *         already been declared
+         * @param  mod
+         *         The modifier
+         * @param  mn
+         *         The module name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the module name is {@code null}, is not a legal Java
+         *         identifier, or is equal to the module name that this builder
+         *         was initialized to build
+         * @throws IllegalStateException
+         *         If a dependency on the module has already been declared
          */
         public Builder requires(Requires.Modifier mod, String mn) {
             return requires(EnumSet.of(mod), mn);
@@ -825,10 +874,16 @@ public class ModuleDescriptor
         /**
          * Adds a service dependence.
          *
-         * @throws IllegalArgumentException if the service type is {@code null}
-         *         or is not a legal Java identifier
-         * @throws IllegalStateException if a dependency on the service type
-         *         has already been declared
+         * @param  st
+         *         The service type
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the service type is {@code null} or is not a legal Java
+         *         identifier
+         * @throws IllegalStateException
+         *         If a dependency on the service type has already been declared
          */
         public Builder uses(String st) {
             if (uses.contains(requireServiceTypeName(st)))
@@ -841,11 +896,20 @@ public class ModuleDescriptor
         /**
          * Adds an export to a set of target modules.
          *
-         * @throws IllegalArgumentException if the package name or any of the
-         *         target modules is {@code null} or is not a legal Java
-         *         identifier, or the set of targets is empty
-         * @throws IllegalStateException if the package is already declared as
-         *         an exported or concealed package
+         * @param  pn
+         *         The package name
+         * @param  targets
+         *         The set of target modules names
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name or any of the target modules is {@code
+         *         null} or is not a legal Java identifier, or the set of
+         *         targets is empty
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
          */
         public Builder exports(String pn, Set<String> targets) {
             ensureNotExportedOrConcealed(pn);
@@ -856,10 +920,19 @@ public class ModuleDescriptor
         /**
          * Adds an export to a target module.
          *
-         * @throws IllegalArgumentException if the package name or target
-         *         module is {@code null} or is not a legal Java identifier
-         * @throws IllegalStateException if the package is already declared as
-         *         an exported or concealed package
+         * @param  pn
+         *         The package name
+         * @param  target
+         *         The target module name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name or target module is {@code null} or is
+         *         not a legal Java identifier
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
          */
         public Builder exports(String pn, String target) {
             return exports(pn, Collections.singleton(target));
@@ -868,10 +941,17 @@ public class ModuleDescriptor
         /**
          * Adds an export.
          *
-         * @throws IllegalArgumentException if the package name is {@code null}
-         *         or is not a legal Java identifier
-         * @throws IllegalStateException if the package is already declared as
-         *         an exported or concealed package
+         * @param  pn
+         *         The package name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name is {@code null} or is not a legal Java
+         *         identifier
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
          */
         public Builder exports(String pn) {
             ensureNotExportedOrConcealed(pn);
@@ -887,11 +967,20 @@ public class ModuleDescriptor
         /**
          * Provides service {@code st} with implementations {@code pcs}.
          *
-         * @throws IllegalArgumentException if the service type or any of the
-         *         provider class names is {@code null} or is not a legal Java
-         *         identifier, or the set of provider class names is empty
-         * @throws IllegalStateException if the providers for the service type
-         *         have already been declared
+         * @param  st
+         *         The service type
+         * @param  pcs
+         *         The set of provider class names
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the service type or any of the provider class names is
+         *         {@code null} or is not a legal Java identifier, or the set
+         *         of provider class names is empty
+         * @throws IllegalStateException
+         *         If the providers for the service type have already been
+         *         declared
          */
         public Builder provides(String st, Set<String> pcs) {
             if (provides.containsKey(st))
@@ -904,11 +993,19 @@ public class ModuleDescriptor
         /**
          * Provides service {@code st} with implementation {@code pc}.
          *
-         * @throws IllegalArgumentException if the service type or the
-         *         provider class name is {@code null} or is not a legal Java
-         *         identifier
-         * @throws IllegalStateException if the providers for the service type
-         *         have already been declared
+         * @param  st
+         *         The service type
+         * @param  pc
+         *         The provider class name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the service type or the provider class name is {@code
+         *         null} or is not a legal Java identifier
+         * @throws IllegalStateException
+         *         If the providers for the service type have already been
+         *         declared
          */
         public Builder provides(String st, String pc) {
             return provides(st, Collections.singleton(pc));
@@ -917,23 +1014,37 @@ public class ModuleDescriptor
         /**
          * Adds a set of (possible empty) concealed packages.
          *
-         * @throws IllegalArgumentException if any of the package names is
-         *         {@code null} or is not a legal Java identifier
-         * @throws IllegalStateException if any of packages are already declared
-         *         as a concealed or exported package
+         * @param  pns
+         *         The set of package names of the concealed packages
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If any of the package names is {@code null} or is not a
+         *         legal Java identifier
+         * @throws IllegalStateException
+         *         If any of packages are already declared as a concealed or
+         *         exported package
          */
-        public Builder conceals(Set<String> packages) {
-            packages.forEach(this::conceals);
+        public Builder conceals(Set<String> pns) {
+            pns.forEach(this::conceals);
             return this;
         }
 
         /**
          * Adds a concealed package.
          *
-         * @throws IllegalArgumentException if the package name is {@code null},
-         *         or is not a legal Java identifier
-         * @throws IllegalStateException if the package is already declared as
-         *         a concealed or exported package
+         * @param  pn
+         *         The package name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name is {@code null}, or is not a legal Java
+         *         identifier
+         * @throws IllegalStateException
+         *         If the package is already declared as a concealed or exported
+         *         package
          */
         public Builder conceals(String pn) {
             Checks.requirePackageName(pn);
@@ -947,9 +1058,15 @@ public class ModuleDescriptor
         /**
          * Sets the module version.
          *
-         * @throws IllegalArgumentException if {@code v} is null or cannot be
-         *         parsed as a version string
-         * @throws IllegalStateException if the module version is already set
+         * @param  v
+         *         The version string to parse
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code v} is null or cannot be parsed as a version string
+         * @throws IllegalStateException
+         *         If the module version is already set
          *
          * @see Version#parse(String)
          */
@@ -963,10 +1080,15 @@ public class ModuleDescriptor
         /**
          * Sets the module main class.
          *
-         * @throws IllegalArgumentException if {@code mainClass} is null or
-         *         is not a legal Java identifier
-         * @throws IllegalStateException if the module main class is already
-         *         set
+         * @param  mc
+         *         The module main class
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code mainClass} is null or is not a legal Java identifier
+         * @throws IllegalStateException
+         *         If the module main class is already set
          */
         public Builder mainClass(String mc) {
             if (mainClass != null)
@@ -982,6 +1104,8 @@ public class ModuleDescriptor
 
         /**
          * Builds a {@code ModuleDescriptor} from the components.
+         *
+         * @return The module descriptor
          */
         public ModuleDescriptor build() {
             assert name != null;
@@ -1006,6 +1130,9 @@ public class ModuleDescriptor
      * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
      * module name lexicographically.  Where the module names are equal then
      * the versions, if present, are compared.
+     *
+     * @param  that
+     *         The object to which this module descriptor is to be compared
      *
      * @return A negative integer, zero, or a positive integer if this module
      *         descriptor is less than, equal to, or greater than the given
@@ -1110,14 +1237,18 @@ public class ModuleDescriptor
      * been read from the input stream. It is strongly recommended that the
      * stream be promptly closed and discarded if an exception occurs.
      *
-     * @param  packageFinder  A supplier that can produce a set of package
-     *         names
+     * @param  in
+     *         The input stream
+     * @param  packageFinder
+     *         A supplier that can produce a set of package names
      *
-     * @throws InvalidModuleDescriptorException If an invalid module descriptor
-     *         is detected
+     * @return The module descriptor
      *
-     * @throws IOException If an I/O error occurs reading from the input stream
-     *         or {@code UncheckedIOException} is thrown by the package finder
+     * @throws InvalidModuleDescriptorException
+     *         If an invalid module descriptor is detected
+     * @throws IOException
+     *         If an I/O error occurs reading from the input stream or {@code
+     *         UncheckedIOException} is thrown by the package finder
      */
     public static ModuleDescriptor read(InputStream in,
                                         Supplier<Set<String>> packageFinder)
@@ -1129,10 +1260,15 @@ public class ModuleDescriptor
     /**
      * Reads a module descriptor from an input stream.
      *
-     * @throws InvalidModuleDescriptorException If an invalid module descriptor
-     *         is detected
+     * @param  in
+     *         The input stream
      *
-     * @throws IOException If an I/O error occurs reading from the input stream
+     * @return The module descriptor
+     *
+     * @throws InvalidModuleDescriptorException
+     *         If an invalid module descriptor is detected
+     * @throws IOException
+     *         If an I/O error occurs reading from the input stream
      */
     public static ModuleDescriptor read(InputStream in) throws IOException {
         return ModuleInfo.read(in, null);
@@ -1163,8 +1299,15 @@ public class ModuleDescriptor
      * may do so after some, but not all,
      * bytes have been read.
      *
-     * @throws InvalidModuleDescriptorException If an invalid module descriptor
-     *         is detected
+     * @param  bb
+     *         The byte buffer
+     * @param  packageFinder
+     *         A supplier that can produce a set of package names
+     *
+     * @return The module descriptor
+     *
+     * @throws InvalidModuleDescriptorException
+     *         If an invalid module descriptor is detected
      */
     public static ModuleDescriptor read(ByteBuffer bb,
                                         Supplier<Set<String>> packageFinder)
@@ -1175,8 +1318,13 @@ public class ModuleDescriptor
     /**
      * Reads a module descriptor from a byte buffer.
      *
-     * @throws InvalidModuleDescriptorException If an invalid module descriptor
-     *         is detected
+     * @param  bb
+     *         The byte buffer
+     *
+     * @return The module descriptor
+     *
+     * @throws InvalidModuleDescriptorException
+     *         If an invalid module descriptor is detected
      */
     public static ModuleDescriptor read(ByteBuffer bb) {
         return ModuleInfo.read(bb, null);

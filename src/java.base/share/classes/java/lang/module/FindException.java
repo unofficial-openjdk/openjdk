@@ -33,7 +33,7 @@ package java.lang.module;
  */
 
 public class FindException extends RuntimeException {
-    private static final long serialVersionUID = 1L; // TBD
+    private static final long serialVersionUID = -5817081036963388391L;
 
     /**
      * Constructs a {@code FindException} with no detail message.
@@ -44,6 +44,9 @@ public class FindException extends RuntimeException {
     /**
      * Constructs a {@code FindException} with the given detail
      * message.
+     *
+     * @param msg
+     *        The detail message
      */
     public FindException(String msg) {
         super(msg);
@@ -51,6 +54,9 @@ public class FindException extends RuntimeException {
 
     /**
      * Constructs a {@code FindException} with the given cause.
+     *
+     * @param cause
+     *        The cause
      */
     public FindException(Throwable cause) {
         super(cause);
@@ -59,6 +65,11 @@ public class FindException extends RuntimeException {
     /**
      * Constructs a {@code FindException} with the given detail message
      * and cause.
+     *
+     * @param msg
+     *        The detail message
+     * @param cause
+     *        The cause
      */
     public FindException(String msg, Throwable cause) {
         super(msg, cause);

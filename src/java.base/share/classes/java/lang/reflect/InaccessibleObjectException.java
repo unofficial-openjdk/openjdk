@@ -33,7 +33,7 @@ package java.lang.reflect;
  */
 
 public class InaccessibleObjectException extends RuntimeException {
-    private static final long serialVersionUID = 1L; // TBD
+    private static final long serialVersionUID = 4158786093378140901L;
 
     /**
      * Constructs a {@code InaccessibleObjectException} with no detail message.
@@ -44,6 +44,9 @@ public class InaccessibleObjectException extends RuntimeException {
     /**
      * Constructs a {@code InaccessibleObjectException} with the given detail
      * message.
+     *
+     * @param msg
+     *        The detail message
      */
     public InaccessibleObjectException(String msg) {
         super(msg);

@@ -33,7 +33,7 @@ package java.lang.module;
  * @since 9
  */
 public class InvalidModuleDescriptorException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 4863390386809347380L;
 
     /**
      * Constructs an {@code InvalidModuleDescriptorException} with no detail
@@ -45,6 +45,9 @@ public class InvalidModuleDescriptorException extends RuntimeException {
     /**
      * Constructs an {@code InvalidModuleDescriptorException} with the
      * specified detail message.
+     *
+     * @param msg
+     *        The detail message
      */
     public InvalidModuleDescriptorException(String msg) {
         super(msg);
