@@ -42,7 +42,6 @@ import java.util.function.Consumer;
 
 public class ImageReader extends BasicImageReader {
     private static HashMap<String, ImageReader> openFiles = new HashMap<>();
-    private final String imagePath;
     private int openCount;
 
     // attributes of the .jimage file. jimage file does not contain
@@ -60,7 +59,6 @@ public class ImageReader extends BasicImageReader {
 
     private ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
-        this.imagePath = imagePath;
         this.openCount = 0;
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
@@ -91,7 +89,7 @@ public class ImageReader extends BasicImageReader {
 
     private synchronized static boolean canClose(ImageReader reader) {
         if (--reader.openCount == 0) {
-            return openFiles.remove(reader.imagePath, reader);
+            return openFiles.remove(reader.getName(), reader);
         }
 
         return false;
@@ -608,7 +606,7 @@ public class ImageReader extends BasicImageReader {
         BasicFileAttributes attrs = imageFileAttributes;
         if (attrs == null) {
             try {
-                Path file = getImageFile().toPath();
+                Path file = getImagePath();
                 attrs = Files.readAttributes(file, BasicFileAttributes.class);
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);

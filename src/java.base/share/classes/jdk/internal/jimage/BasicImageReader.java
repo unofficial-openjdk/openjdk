@@ -26,13 +26,14 @@ package jdk.internal.jimage;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.File;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Comparator;
@@ -40,19 +41,29 @@ import java.util.stream.IntStream;
 import jdk.internal.jimage.decompressor.Decompressor;
 
 public class BasicImageReader implements AutoCloseable {
-    static private final boolean is64Bit = AccessController.doPrivileged(
-        new PrivilegedAction<Boolean>() {
-            public Boolean run() {
-                return "64".equals(System.getProperty("sun.arch.data.model"));
-            }
-        });
+    private static boolean isSystemProperty(String key, String value, String def) {
+        // No lambdas during bootstrap
+        return AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                @Override
+                public Boolean run() {
+                    return value.equals(System.getProperty(key, def));
+                }
+            });
+    }
 
+    static private final boolean is64Bit =
+            isSystemProperty("sun.arch.data.model", "64", "32");
+    static private final boolean useJVMMap =
+            isSystemProperty("jdk.image.use.jvm.map", "true", "true");
+    static private final boolean mapAll =
+            isSystemProperty("jdk.image.map.all", "true", is64Bit ? "true" : "false");
+
+    private final String name;
     private final ByteOrder byteOrder;
-    private ByteBuffer map;
-    private final File imageFile;
-    private final RandomAccessFile raf;
+    private final Path imagePath;
+    private final ByteBuffer memoryMap;
     private final FileChannel channel;
-    private final long size;
     private final ImageHeader header;
     private final long indexSize;
     private final IntBuffer redirect;
@@ -62,45 +73,61 @@ public class BasicImageReader implements AutoCloseable {
     private final ImageStringsReader stringsReader;
     private final Decompressor decompressor;
 
-    protected BasicImageReader(String imagePath, ByteOrder byteOrder)
+    protected BasicImageReader(String name, ByteOrder byteOrder)
             throws IOException {
+        this.name = name;
         this.byteOrder = byteOrder;
+        imagePath = Paths.get(name);
+        ByteBuffer map;
 
-        if (BasicImageReader.class.getClassLoader() == null) {
-            // use libjimage native entry when loading the image for this runtime
-            this.map = NativeImageBuffer.getNativeMap(imagePath);
+        if (useJVMMap && BasicImageReader.class.getClassLoader() == null) {
+            // Check to see if the jvm has opened the file using libjimage
+            // native entry when loading the image for this runtime
+            map = NativeImageBuffer.getNativeMap(name);
         } else {
-            this.map = null;
+            map = null;
         }
 
-        this.imageFile = new File(imagePath);
+        // Open the file only if no memory map yet or is 32 bit jvm
+        channel = map != null && mapAll ? null :
+                  FileChannel.open(imagePath, StandardOpenOption.READ);
+
+        // If no memory map yet and 64 bit jvm then memory map entire file
+        if (mapAll && map == null) {
+            map = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+        }
+
+        // Assume we have a memory map to read image file header
+        ByteBuffer headerBuffer = map;
         int headerSize = ImageHeader.getHeaderSize();
 
-        if (this.map == null || !is64Bit) {
-            this.raf = new RandomAccessFile(this.imageFile, "r");
-            this.channel = this.raf.getChannel();
-            this.size = this.channel.size();
-            ByteBuffer buffer = ByteBuffer.allocateDirect(headerSize);
-            this.channel.read(buffer, 0L);
-            buffer.rewind();
-            this.header = readHeader(intBuffer(buffer, 0, headerSize));
-            this.indexSize = this.header.getIndexSize();
-            this.map = channel.map(FileChannel.MapMode.READ_ONLY, 0, is64Bit ? size : indexSize);
-        } else {
-            this.raf = null;
-            this.channel = null;
-            this.size = this.map.capacity();
-            this.header = readHeader(intBuffer(this.map, 0, headerSize));
-            this.indexSize = this.header.getIndexSize();
+        // If no memory map then read header from image file
+        if (map == null) {
+            headerBuffer = ByteBuffer.allocateDirect(headerSize);
+            channel.read(headerBuffer, 0L);
+            headerBuffer.rewind();
         }
 
-        this.redirect = intBuffer(this.map, this.header.getRedirectOffset(), this.header.getRedirectSize());
-        this.offsets = intBuffer(this.map, this.header.getOffsetsOffset(), this.header.getOffsetsSize());
-        this.locations = slice(this.map, this.header.getLocationsOffset(), this.header.getLocationsSize());
-        this.strings = slice(this.map, this.header.getStringsOffset(), this.header.getStringsSize());
+        // Interpret the image file header
+        header = readHeader(intBuffer(headerBuffer, 0, headerSize));
+        indexSize = header.getIndexSize();
 
-        this.stringsReader = new ImageStringsReader(this);
-        this.decompressor = new Decompressor();
+        // If no memory map yet then must be 32 bit jvm not previously mapped
+        if (map == null) {
+            // Just map the image index
+            map = channel.map(FileChannel.MapMode.READ_ONLY, 0, indexSize);
+        }
+
+        memoryMap = map;
+
+        // Interpret the image index
+        redirect = intBuffer(map, header.getRedirectOffset(), header.getRedirectSize());
+        offsets = intBuffer(map, header.getOffsetsOffset(), header.getOffsetsSize());
+        locations = slice(map, header.getLocationsOffset(), header.getLocationsSize());
+        strings = slice(map, header.getStringsOffset(), header.getStringsSize());
+
+        stringsReader = new ImageStringsReader(this);
+        decompressor = new Decompressor();
     }
 
     protected BasicImageReader(String imagePath) throws IOException {
@@ -121,7 +148,7 @@ public class BasicImageReader implements AutoCloseable {
         if (result.getMagic() != ImageHeader.MAGIC ||
                 result.getMajorVersion() != ImageHeader.MAJOR_VERSION ||
                 result.getMinorVersion() != ImageHeader.MINOR_VERSION) {
-            throw new IOException("Image not found \"" + imageFile + "\"");
+            throw new IOException("Image not found \"" + name + "\"");
         }
 
         return result;
@@ -143,18 +170,22 @@ public class BasicImageReader implements AutoCloseable {
         ImageBufferCache.releaseBuffer(buffer);
     }
 
+    public String getName() {
+        return name;
+    }
+
     public ByteOrder getByteOrder() {
         return byteOrder;
     }
 
-    public File getImageFile() {
-        return imageFile;
+    public Path getImagePath() {
+        return imagePath;
     }
 
     @Override
     public void close() throws IOException {
-        if (raf != null) {
-            raf.close();
+        if (channel != null) {
+            channel.close();
         }
     }
 
@@ -233,8 +264,8 @@ public class BasicImageReader implements AutoCloseable {
         assert offset < Integer.MAX_VALUE;
         assert size < Integer.MAX_VALUE;
 
-        if (is64Bit) {
-            ByteBuffer buffer = slice(map, (int)offset, (int)size);
+        if (mapAll) {
+            ByteBuffer buffer = slice(memoryMap, (int)offset, (int)size);
             buffer.order(ByteOrder.BIG_ENDIAN);
 
             return buffer;
@@ -295,7 +326,8 @@ public class BasicImageReader implements AutoCloseable {
                 byte[] bytesOut;
 
                 try {
-                    bytesOut = decompressor.decompressResource(byteOrder, (int strOffset) -> getString(strOffset), bytesIn);
+                    bytesOut = decompressor.decompressResource(byteOrder,
+                            (int strOffset) -> getString(strOffset), bytesIn);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
