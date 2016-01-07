@@ -25,13 +25,20 @@
 package jdk.internal.jrtfs;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.channels.*;
 import java.nio.file.*;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -90,7 +97,79 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
             throws IOException {
         checkPermission();
         checkUri(uri);
-        return SystemImages.bootImageExists ? new JrtFileSystem(this, env) : new JrtExplodedFileSystem(this, env);
+
+        if (env != null && env.containsKey("java.home")) {
+            return newFileSystem((String)env.get("java.home"), uri, env);
+        } else {
+            return SystemImages.bootImageExists
+                    ? new JrtFileSystem(this, env)
+                    : new JrtExplodedFileSystem(this, env);
+        }
+    }
+
+    private static final String JRT_FS_JAR = "jrt-fs.jar";
+    private FileSystem newFileSystem(String targetHome, URI uri, Map<String, ?> env)
+            throws IOException {
+        Objects.requireNonNull(targetHome);
+        Path jrtfs = FileSystems.getDefault().getPath(targetHome, JRT_FS_JAR);
+        if (Files.notExists(jrtfs)) {
+            throw new IOException(jrtfs.toString() + " not exist");
+        }
+
+        Map<String,?> newEnv = new HashMap<>(env);
+        newEnv.remove("java.home");
+        ClassLoader cl = newJrtFsLoader(jrtfs);
+        try {
+            Class<?> c = Class.forName(JrtFileSystemProvider.class.getName(), false, cl);
+            return ((FileSystemProvider)c.newInstance()).newFileSystem(uri, newEnv);
+        } catch (ClassNotFoundException |
+                 IllegalAccessException |
+                 InstantiationException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private static class JrtFsLoader extends URLClassLoader {
+        JrtFsLoader(URL[] urls) {
+            super(urls);
+        }
+
+        @Override
+        protected Class<?> loadClass(String cn, boolean resolve)
+                throws ClassNotFoundException
+        {
+            Class<?> c = findLoadedClass(cn);
+            if (c == null) {
+                URL u = findResource(cn.replace('.', '/') + ".class");
+                if (u != null) {
+                    c = findClass(cn);
+                } else {
+                    return super.loadClass(cn, resolve);
+                }
+            }
+            if (resolve)
+                resolveClass(c);
+            return c;
+        }
+    }
+
+    private static URLClassLoader newJrtFsLoader(Path jrtfs) {
+        final URL url;
+        try {
+            url = jrtfs.toUri().toURL();
+        } catch (MalformedURLException mue) {
+            throw new IllegalArgumentException(mue);
+        }
+
+        final URL[] urls = new URL[] { url };
+        return AccessController.doPrivileged(
+                new PrivilegedAction<URLClassLoader>() {
+                    @Override
+                    public URLClassLoader run() {
+                        return new JrtFsLoader(urls);
+                    }
+                }
+        );
     }
 
     @Override

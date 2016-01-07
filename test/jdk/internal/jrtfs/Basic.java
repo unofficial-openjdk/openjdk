@@ -40,16 +40,20 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 
@@ -58,6 +62,34 @@ import static org.testng.Assert.assertFalse;
  */
 
 public class Basic {
+
+    private FileSystem theFileSystem;
+    private FileSystem fs;
+
+    @BeforeClass
+    public void setup() {
+        try {
+            theFileSystem = FileSystems.getFileSystem(URI.create("jrt:/"));
+            Map<String, String> env = new HashMap<>();
+            // set java.home property to be underlying java.home
+            // so that jrt-fs.jar loading is exercised.
+            env.put("java.home", System.getProperty("java.home"));
+            fs = FileSystems.newFileSystem(URI.create("jrt:/"), env);
+        } catch (IOException ioExp) {
+            throw new RuntimeException(ioExp);
+        }
+    }
+
+    @AfterClass
+    public void tearDown() {
+        try {
+            fs.close();
+        } catch (Exception ignored) {}
+    }
+
+    private FileSystem selectFileSystem(boolean theDefault) {
+        return theDefault? theFileSystem : fs;
+    }
 
     // Checks that the given FileSystem is a jrt file system.
     private void checkFileSystem(FileSystem fs) {
@@ -97,17 +129,32 @@ public class Basic {
         }
     }
 
+    @Test
+    public void testNewFileSystemWithJavaHome() throws Exception {
+        Map<String, String> env = new HashMap<>();
+        // set java.home property to be underlying java.home
+        // so that jrt-fs.jar loading is exercised.
+        env.put("java.home", System.getProperty("java.home"));
+        try (FileSystem fs = FileSystems.newFileSystem(URI.create("jrt:/"), env)) {
+            checkFileSystem(fs);
+            // jrt-fs.jar classes are loaded by another (non-boot) loader in this case
+            assertNotNull(fs.provider().getClass().getClassLoader());
+        }
+    }
+
     @DataProvider(name = "knownClassFiles")
     private Object[][] knownClassFiles() {
         return new Object[][] {
-            { "/modules/java.base/java/lang/Object.class" },
-            { "modules/java.base/java/lang/Object.class" },
+            { "/modules/java.base/java/lang/Object.class", true },
+            { "modules/java.base/java/lang/Object.class", true },
+            { "/modules/java.base/java/lang/Object.class", false },
+            { "modules/java.base/java/lang/Object.class", false },
         };
     }
 
     @Test(dataProvider = "knownClassFiles")
-    public void testKnownClassFiles(String path) throws Exception {
-        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+    public void testKnownClassFiles(String path, boolean theDefault) throws Exception {
+        FileSystem fs = selectFileSystem(theDefault);
         Path classFile = fs.getPath(path);
 
         assertTrue(Files.isRegularFile(classFile));
@@ -123,25 +170,38 @@ public class Basic {
     @DataProvider(name = "knownDirectories")
     private Object[][] knownDirectories() {
         return new Object[][] {
-            { "/"                     },
-            { "."                     },
-            { "./"                    },
-            { "/."                    },
-            { "/./"                   },
-            { "/modules/java.base/.."         },
-            { "/modules/java.base/../"        },
-            { "/modules/java.base/../."       },
-            { "/modules/java.base"            },
-            { "/modules/java.base/java/lang"  },
-            { "modules/java.base/java/lang"   },
-            { "/modules/java.base/java/lang/" },
-            { "modules/java.base/java/lang/"  }
+            { "/", true                     },
+            { "." , true                    },
+            { "./", true                    },
+            { "/.", true                    },
+            { "/./", true                   },
+            { "/modules/java.base/..", true         },
+            { "/modules/java.base/../", true        },
+            { "/modules/java.base/../.", true       },
+            { "/modules/java.base", true            },
+            { "/modules/java.base/java/lang", true  },
+            { "modules/java.base/java/lang", true   },
+            { "/modules/java.base/java/lang/", true },
+            { "modules/java.base/java/lang/", true  },
+            { "/", false                     },
+            { "." , false                    },
+            { "./", false                    },
+            { "/.", false                    },
+            { "/./", false                   },
+            { "/modules/java.base/..", false         },
+            { "/modules/java.base/../", false        },
+            { "/modules/java.base/../.", false       },
+            { "/modules/java.base", false            },
+            { "/modules/java.base/java/lang", false  },
+            { "modules/java.base/java/lang", false   },
+            { "/modules/java.base/java/lang/", false },
+            { "modules/java.base/java/lang/", false  },
         };
     }
 
     @Test(dataProvider = "knownDirectories")
-    public void testKnownDirectories(String path) throws Exception {
-        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+    public void testKnownDirectories(String path, boolean theDefault) throws Exception {
+        FileSystem fs = selectFileSystem(theDefault);
         Path dir = fs.getPath(path);
 
         assertTrue(Files.isDirectory(dir));
