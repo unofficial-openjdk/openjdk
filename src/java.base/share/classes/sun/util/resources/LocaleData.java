@@ -275,6 +275,11 @@ public class LocaleData {
                         }
                     }
                 }
+                // Force fallback to Locale.ENGLISH for CLDR time zone names support
+                if (locale.getLanguage() != "en"
+                        && type == CLDR && category.equals("TimeZoneNames")) {
+                    candidates.add(candidates.size() - 1, Locale.ENGLISH);
+                }
                 candidatesMap.putIfAbsent(key, candidates);
             }
             return candidates;
