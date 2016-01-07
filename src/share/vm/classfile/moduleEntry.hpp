@@ -88,10 +88,10 @@ public:
   void               set_loader(ClassLoaderData* l) { _loader = l; }
 
   Symbol*            version() const                { return _version; }
-  void               set_version(Symbol* version)   { _version = version; }
+  void               set_version(Symbol* version);
 
   Symbol*            location() const               { return _location; }
-  void               set_location(Symbol* location) { _location = location; }
+  void               set_location(Symbol* location);
 
   bool               can_read(ModuleEntry* m) const;
   bool               has_reads() const;

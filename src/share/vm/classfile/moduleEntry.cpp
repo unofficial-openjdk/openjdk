@@ -211,16 +211,9 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, 
   }
 
   entry->set_loader(loader_data);
+  entry->set_version(version);
+  entry->set_location(location);
 
-  if (version != NULL) {
-    entry->set_version(version);
-    version->increment_refcount();
-  }
-
-  if (location != NULL) {
-    entry->set_location(location);
-    location->increment_refcount();
-  }
   TRACE_INIT_MODULE_ID(entry);
 
   return entry;
@@ -372,4 +365,28 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(loader() != NULL, "A module entry must be associated with a loader.");
+}
+
+void ModuleEntry::set_version(Symbol* version) {
+  if (_version != NULL) {
+    _version->decrement_refcount();
+  }
+
+  _version = version;
+
+  if (version != NULL) {
+    version->increment_refcount();
+  }
+}
+
+void ModuleEntry::set_location(Symbol* location) {
+  if (_location != NULL) {
+    _location->decrement_refcount();
+  }
+
+  _location = location;
+
+  if (location != NULL) {
+    location->increment_refcount();
+  }
 }
