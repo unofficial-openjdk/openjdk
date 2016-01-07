@@ -241,12 +241,14 @@ module java.base {
         java.naming,
         java.rmi,
         java.security.jgss,
+        java.security.sasl,
         java.smartcardio,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
         jdk.jartool,
         jdk.policytool,
-        jdk.security.auth;
+        jdk.security.auth,
+        jdk.security.jgss;
     exports sun.security.x509 to
         java.naming,
         jdk.crypto.ec,

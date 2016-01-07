@@ -35,6 +35,7 @@ import static java.lang.String.UTF16;
 import static java.lang.String.LATIN1;
 import static java.lang.String.checkIndex;
 import static java.lang.String.checkOffset;
+import static java.lang.String.checkBoundsOffCount;
 
 final class StringUTF16 {
 
@@ -119,7 +120,8 @@ final class StringUTF16 {
     public static byte[] toBytes(char[] value, int off, int len) {
         byte[] val = newBytesFor(len);
         for (int i = 0; i < len; i++) {
-            putChar(val, i, value[off++]);
+            putChar(val, i, value[off]);
+            off++;
         }
         return val;
     }
@@ -144,11 +146,14 @@ final class StringUTF16 {
     @HotSpotIntrinsicCandidate
     private static int compress(char[] src, int srcOff, byte[] dst, int dstOff, int len) {
         for (int i = 0; i < len; i++) {
-            int c = src[srcOff++];
-            if (c >>> 8 != 0) {
-                return 0;
+            char c = src[srcOff];
+            if (c > 0xFF) {
+                len = 0;
+                break;
             }
-            dst[dstOff++] = (byte)c;
+            dst[dstOff] = (byte)c;
+            srcOff++;
+            dstOff++;
         }
         return len;
     }
@@ -156,12 +161,17 @@ final class StringUTF16 {
     // compressedCopy byte[] -> byte[]
     @HotSpotIntrinsicCandidate
     public static int compress(byte[] src, int srcOff, byte[] dst, int dstOff, int len) {
+        // We need a range check here because 'getChar' has no checks
+        checkBoundsOffCount(srcOff, len, src.length);
         for (int i = 0; i < len; i++) {
-            int c = getChar(src, srcOff++);
-            if (c >>> 8 != 0) {
-                return 0;
+            char c = getChar(src, srcOff);
+            if (c > 0xFF) {
+                len = 0;
+                break;
             }
-            dst[dstOff++] = (byte)c;
+            dst[dstOff] = (byte)c;
+            srcOff++;
+            dstOff++;
         }
         return len;
     }
@@ -200,6 +210,8 @@ final class StringUTF16 {
 
     @HotSpotIntrinsicCandidate
     public static void getChars(byte[] value, int srcBegin, int srcEnd, char dst[], int dstBegin) {
+        // We need a range check here because 'getChar' has no checks
+        checkBoundsOffCount(srcBegin, srcEnd - srcBegin, value.length);
         for (int i = srcBegin; i < srcEnd; i++) {
             dst[dstBegin++] = getChar(value, i);
         }
@@ -576,7 +588,7 @@ final class StringUTF16 {
             bits |= cp;
             putChar(result, i, cp);
         }
-        if (bits >>> 8 != 0) {
+        if (bits > 0xFF) {
             return new String(result, UTF16);
         } else {
             return newString(result, 0, len);
@@ -673,7 +685,7 @@ final class StringUTF16 {
             bits |= cp;
             putChar(result, i, cp);
         }
-        if (bits >>> 8 != 0) {
+        if (bits > 0xFF) {
             return new String(result, UTF16);
         } else {
             return newString(result, 0, len);
@@ -909,11 +921,6 @@ final class StringUTF16 {
 
     ////////////////////////////////////////////////////////////////
 
-    public static void getCharsSB(byte[] val, int srcBegin, int srcEnd, char dst[], int dstBegin) {
-        checkOffset(srcEnd, val.length >> 1);
-        getChars(val, srcBegin, srcEnd, dst, dstBegin);
-    }
-
     public static void putCharSB(byte[] val, int index, int c) {
         checkIndex(index, val.length >> 1);
         putChar(val, index, c);
@@ -944,11 +951,6 @@ final class StringUTF16 {
     public static int codePointCountSB(byte[] val, int beginIndex, int endIndex) {
         checkOffset(endIndex, val.length >> 1);
         return codePointCount(val, beginIndex, endIndex);
-    }
-
-    public static String newStringSB(byte[] val, int index, int len) {
-        checkOffset(index + len, val.length >> 1);
-        return newString(val, index, len);
     }
 
     ////////////////////////////////////////////////////////////////
