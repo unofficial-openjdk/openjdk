@@ -4151,13 +4151,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       this_klass->set_host_klass(host_klass());
     }
 
-    // After the majority of the set up for this_klass has occurred,
-    // set its PackageEntry.  Critical to be done after set_name
-    // and set_host_klass in order to handle anonymous classes
-    // properly.
-    oop cl = this_klass->is_anonymous() ? this_klass->host_klass()->class_loader() :
-                                          this_klass->class_loader();
-
+    // Set PackageEntry for this_klass
+    oop cl = this_klass->class_loader();
     Handle clh = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(cl));
     ClassLoaderData* cld = ClassLoaderData::class_loader_data_or_null(clh());
     this_klass->set_package(this_klass->name(), cld, CHECK_NULL);
