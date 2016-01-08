@@ -28,7 +28,7 @@
  * @test
  * @bug 8043758
  * @summary Datagram Transport Layer Security (DTLS)
- * @modules java.base/sun.security.utils
+ * @modules java.base/sun.security.util
  * @build DTLSOverDatagram
  * @run main/othervm -Djdk.tls.client.enableStatusRequestExtension=false
  *      NoMacInitialClientHello
