@@ -234,12 +234,7 @@ public class VerifyJimage {
         }
 
         int entries() {
-            try {
-                return getHeader().getTableLength();
-            } catch (IOException ex) {
-                failed.add(imageName() + ": can't access header");
-                return 0;
-            }
+            return getHeader().getTableLength();
         }
 
         void compare(String entry, Path p) {

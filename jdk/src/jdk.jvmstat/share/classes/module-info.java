@@ -24,21 +24,19 @@
  */
 
 module jdk.jvmstat {
-    requires java.rmi;
-
     exports sun.jvmstat.monitor to
         jdk.attach,
         jdk.jcmd,
-        jdk.jconsole;
+        jdk.jconsole,
+        jdk.jvmstat.rmi;
     exports sun.jvmstat.monitor.event to
-        jdk.jcmd;
-
-    // RMI needs to serialize types in this package
-    exports sun.jvmstat.monitor.remote to java.rmi;
+        jdk.jcmd,
+        jdk.jvmstat.rmi;
+    exports sun.jvmstat.perfdata.monitor to
+        jdk.jvmstat.rmi;
 
     uses sun.jvmstat.monitor.MonitoredHostService;
     provides sun.jvmstat.monitor.MonitoredHostService with sun.jvmstat.perfdata.monitor.protocol.file.MonitoredHostFileService;
     provides sun.jvmstat.monitor.MonitoredHostService with sun.jvmstat.perfdata.monitor.protocol.local.MonitoredHostLocalService;
-    provides sun.jvmstat.monitor.MonitoredHostService with sun.jvmstat.perfdata.monitor.protocol.rmi.MonitoredHostRmiService;
 }
 

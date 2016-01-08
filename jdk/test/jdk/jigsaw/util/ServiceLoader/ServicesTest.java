@@ -155,9 +155,9 @@ public class ServicesTest {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         Configuration cf = Configuration
             .resolve(finder, Layer.boot().configuration(), ModuleFinder.empty()).bind();
-        ClassLoader loader = new ModuleClassLoader(cf);
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
         assertTrue(layer.findModule("bananascript").isPresent());
+        ClassLoader loader = layer.findLoader("bananascript");
 
         sl = ServiceLoader.load(layer, ScriptEngineFactory.class);
         ScriptEngineFactory factory = find("BananaScriptEngine", sl);

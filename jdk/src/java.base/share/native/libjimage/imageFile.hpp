@@ -401,6 +401,9 @@ private:
     // multiple uses (ex. loader.)
     static ImageFileReaderTable _reader_table;
 
+    // true if image should be fully memory mapped.
+    static bool memory_map_image;
+
     char* _name;         // Name of image
     s4 _use;             // Use count
     int _fd;             // File descriptor
@@ -436,6 +439,9 @@ public:
         MINOR_VERSION = 0
     };
 
+    // Locate an image if file already open.
+    static ImageFileReader* find_image(const char* name);
+
     // Open an image file, reuse structure if file already open.
     static ImageFileReader* open(const char* name, bool big_endian = Endian::is_big_endian());
 
@@ -443,13 +449,13 @@ public:
     static void close(ImageFileReader *reader);
 
     // Return an id for the specifed ImageFileReader.
-    static u8 readerToID(ImageFileReader *reader);
+    static u8 reader_to_ID(ImageFileReader *reader);
 
     // Validate the image id.
-    static bool idCheck(u8 id);
+    static bool id_check(u8 id);
 
     // Return an id for the specifed ImageFileReader.
-    static ImageFileReader* idToReader(u8 id);
+    static ImageFileReader* id_to_reader(u8 id);
 
     // Open image file for read access.
     bool open();
@@ -470,6 +476,11 @@ public:
     // Retrieve size of image file.
     inline u8 file_size() const {
         return _file_size;
+    }
+
+    // Retrieve the size of the mapped image.
+    inline u8 map_size() const {
+        return (u8)(memory_map_image ? _file_size : _index_size);
     }
 
     // Return first address of index data.

@@ -41,7 +41,7 @@ import javax.crypto.*;
 import javax.crypto.spec.*;
 
 import javax.net.ssl.*;
-import sun.misc.HexDumpEncoder;
+import sun.security.util.HexDumpEncoder;
 
 import sun.security.internal.spec.*;
 import sun.security.internal.interfaces.TlsMasterSecret;
@@ -115,6 +115,12 @@ abstract class Handshaker {
     // The server name indication and matchers
     List<SNIServerName> serverNames = Collections.<SNIServerName>emptyList();
     Collection<SNIMatcher> sniMatchers = Collections.<SNIMatcher>emptyList();
+
+    // List of local ApplicationProtocols
+    String[] localApl = null;
+
+    // Negotiated ALPN value
+    String applicationProtocol = null;
 
     // The maximum expected network packet size for SSL/TLS/DTLS records.
     int                         maximumPacketSize = 0;
@@ -478,6 +484,20 @@ abstract class Handshaker {
      */
     void setMaximumPacketSize(int maximumPacketSize) {
         this.maximumPacketSize = maximumPacketSize;
+    }
+
+    /**
+     * Sets the Application Protocol list.
+     */
+    void setApplicationProtocols(String[] apl) {
+        this.localApl = apl;
+    }
+
+    /**
+     * Gets the "negotiated" ALPN value.
+     */
+    String getHandshakeApplicationProtocol() {
+        return applicationProtocol;
     }
 
     /**

@@ -27,5 +27,6 @@ module jdk.rmic {
     requires java.corba;
     requires jdk.compiler;
     requires jdk.javadoc;
+    exports jdk.rmi.rmic;
 }
 

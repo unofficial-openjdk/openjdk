@@ -27,8 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
 import tests.Helper;
 
 /*
@@ -38,7 +36,6 @@ import tests.Helper;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -62,16 +59,8 @@ public class JLinkPluginsTest {
         }
         helper.generateDefaultModules();
         {
-            // zip
-            String[] userOptions = {"--zip", "toto"};
-            String moduleName = "zipfiltercomposite";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
-        }
-        {
             // Skip debug
-            String[] userOptions = {"--strip-java-debug", "on"};
+            String[] userOptions = {"--strip-debug"};
             String moduleName = "skipdebugcomposite";
             helper.generateDefaultJModule(moduleName, "composite2");
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
@@ -85,22 +74,6 @@ public class JLinkPluginsTest {
             String[] res = {".jcov", "/META-INF/"};
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, res, null);
-        }
-        {
-            // Shared UTF_8 Constant Pool entries
-            String[] userOptions = {"--compact-cp", "*"};
-            String moduleName = "cpccomposite";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
-        }
-        {
-            // Ordered zip and constant cp
-            String[] userOptions = {"--zip:1", "*", "--compact-cp:0", "*"};
-            String moduleName = "zipcpccomposite";
-            helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
         }
     }
 }

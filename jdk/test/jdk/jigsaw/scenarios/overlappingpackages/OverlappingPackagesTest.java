@@ -51,7 +51,7 @@ public class OverlappingPackagesTest {
     private static final Path MODS_DIR = Paths.get("mods");
 
     // the names of the modules in this test
-    private static List<String> modules = Arrays.asList("m1", "m2", "misc", "test");
+    private static List<String> modules = Arrays.asList("m1", "m2", "test");
 
 
     /**
@@ -64,6 +64,16 @@ public class OverlappingPackagesTest {
             Path mods = MODS_DIR.resolve(mn);
             assertTrue(CompilerUtils.compile(src, mods));
         }
+        Path srcMisc = SRC_DIR.resolve("misc");
+        Path modsMisc = MODS_DIR.resolve("misc");
+        assertTrue(CompilerUtils.compile(srcMisc.resolve("sun")
+                                                .resolve("misc")
+                                                .resolve("Unsafe.java"),
+                                         modsMisc,
+                                         "-Xmodule:java.base"));
+        assertTrue(CompilerUtils.compile(srcMisc.resolve("module-info.java"),
+                                         modsMisc,
+                                         "-classpath", modsMisc.toString()));
     }
 
     /**

@@ -46,8 +46,8 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPool.ClassReaderVisitor;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFileVisitor;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 public class VisitorTest extends AsmPluginTestBase {
 
@@ -69,7 +69,7 @@ public class VisitorTest extends AsmPluginTestBase {
         };
         for (TestPlugin p : plugins) {
             System.err.println("Testing: " + p.getName());
-            ResourcePool out = p.visit(getPool());
+            Pool out = p.visit(getPool());
             p.test(getPool(), out);
         }
     }
@@ -143,21 +143,21 @@ public class VisitorTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             AsmPool pool = getPool.apply(getPools());
             pool.visitClassReaders(classReaderVisitor);
         }
 
         @Override
-        public void test(ResourcePool in, ResourcePool out) throws Exception {
-            Collection<Resource> inClasses = getPool.apply(getPools()).getClasses();
+        public void test(Pool in, Pool out) throws Exception {
+            Collection<ModuleData> inClasses = getPool.apply(getPools()).getClasses();
             if (inClasses.size() != classReaderVisitor.getAmount()) {
                 throw new AssertionError("Testing " + name + ". Number of visited classes. Expected: " +
                         inClasses.size() + ", got: " + classReaderVisitor.getAmount());
             }
-            Collection<Resource> outClasses = extractClasses(out);
+            Collection<ModuleData> outClasses = extractClasses(out);
             int changedClasses = 0;
-            for (Resource r : outClasses) {
+            for (ModuleData r : outClasses) {
                 if (r.getPath().endsWith("Changed.class")) {
                     ++changedClasses;
                 }
@@ -186,21 +186,21 @@ public class VisitorTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void visit() throws IOException {
+        public void visit() {
             AsmPool pool = getPool.apply(getPools());
             pool.visitResourceFiles(resourceFileVisitor);
         }
 
         @Override
-        public void test(ResourcePool in, ResourcePool out) throws Exception {
-            Collection<Resource> inResources = getPool.apply(getPools()).getResourceFiles();
+        public void test(Pool in, Pool out) throws Exception {
+            Collection<ModuleData> inResources = getPool.apply(getPools()).getResourceFiles();
             if (inResources.size() != resourceFileVisitor.getAmount()) {
                 throw new AssertionError("Testing " + name + ". Number of visited resources. Expected: " +
                         inResources.size() + ", got: " + resourceFileVisitor.getAmount());
             }
-            Collection<Resource> outResources = extractResources(out);
+            Collection<ModuleData> outResources = extractResources(out);
             int changedClasses = 0;
-            for (Resource r : outResources) {
+            for (ModuleData r : outResources) {
                 if (r.getPath().endsWith("Changed")) {
                     ++changedClasses;
                 }

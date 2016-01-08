@@ -1,47 +1,42 @@
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.internal.plugins.OptimizationProvider;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.internal.plugins.OptimizationPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow;
 import jdk.tools.jlink.internal.plugins.optim.ControlFlow.Block;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 import tests.Helper;
 import tests.JImageGenerator;
+
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -65,17 +60,15 @@ import tests.JImageGenerator;
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test image creation with class optimization
  * @author Jean-Francois Denise
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
- *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jlink.internal.plugins.asm
@@ -92,87 +85,77 @@ public class JLinkOptimTest {
     private static final String EXPECTED = "expected";
     private static Helper helper;
 
-    private static class ControlFlowProvider extends CmdResourcePluginProvider {
+    public static class ControlFlowPlugin extends AsmPlugin {
 
         private boolean called;
         private int numMethods;
         private int numBlocks;
 
-        private class ControlFlowPlugin extends AsmPlugin {
+        private static final String NAME = "test-optim";
+        private static final PluginOption NAME_OPTION
+               = new PluginOption.Builder(NAME).build();
 
-            private ControlFlowPlugin() {
-            }
+        private ControlFlowPlugin() {
+        }
 
-            @Override
-            public void visit(AsmPools pools, StringTable strings) throws IOException {
-                called = true;
-                for (AsmModulePool p : pools.getModulePools()) {
+        @Override
+        public void visit(AsmPools pools) {
+            called = true;
+            for (AsmModulePool p : pools.getModulePools()) {
 
-                    p.visitClassReaders((reader) -> {
-                        ClassNode cn = new ClassNode();
-                        if ((reader.getAccess() & Opcodes.ACC_INTERFACE) == 0) {
-                            reader.accept(cn, ClassReader.EXPAND_FRAMES);
-                            for (MethodNode m : cn.methods) {
-                                if ((m.access & Opcodes.ACC_ABSTRACT) == 0
-                                        && (m.access & Opcodes.ACC_NATIVE) == 0) {
-                                    numMethods += 1;
-                                    try {
-                                        ControlFlow f
-                                                = ControlFlow.createControlFlow(cn.name, m);
-                                        for (Block b : f.getBlocks()) {
-                                            numBlocks += 1;
-                                            f.getClosure(b);
-                                        }
-                                    } catch (Throwable ex) {
-                                        //ex.printStackTrace();
-                                        throw new RuntimeException("Exception in "
-                                                + cn.name + "." + m.name, ex);
+                p.visitClassReaders((reader) -> {
+                    ClassNode cn = new ClassNode();
+                    if ((reader.getAccess() & Opcodes.ACC_INTERFACE) == 0) {
+                        reader.accept(cn, ClassReader.EXPAND_FRAMES);
+                        for (MethodNode m : cn.methods) {
+                            if ((m.access & Opcodes.ACC_ABSTRACT) == 0
+                                    && (m.access & Opcodes.ACC_NATIVE) == 0) {
+                                numMethods += 1;
+                                try {
+                                    ControlFlow f
+                                            = ControlFlow.createControlFlow(cn.name, m);
+                                    for (Block b : f.getBlocks()) {
+                                        numBlocks += 1;
+                                        f.getClosure(b);
                                     }
+                                } catch (Throwable ex) {
+                                    //ex.printStackTrace();
+                                    throw new RuntimeException("Exception in "
+                                            + cn.name + "." + m.name, ex);
                                 }
                             }
                         }
-                        return null;
-                    });
-                }
+                    }
+                    return null;
+                });
             }
-
-            @Override
-            public String getName() {
-                return NAME;
-            }
-
-        }
-
-        private static final String NAME = "test-optim";
-
-        ControlFlowProvider() {
-            super(NAME, "");
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] argument,
-                Map<String, String> options) throws IOException {
-            return new ResourcePlugin[]{new ControlFlowPlugin()};
-        }
-
-        @Override
-        public String getCategory() {
-            return PluginProvider.TRANSFORMER;
-        }
-
-        @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public String getToolOption() {
+        public String getName() {
             return NAME;
         }
 
         @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
+            return "";
+        }
+
+        @Override
+        public PluginOption getOption() {
+            return NAME_OPTION;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
+
         }
     }
 
@@ -185,15 +168,14 @@ public class JLinkOptimTest {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         Path root = fs.getPath("/modules/java.base");
         // Access module-info.class to be reused as fake module-info.class
-        List<Resource> javabaseResources = new ArrayList<>();
+        List<ModuleData> javabaseResources = new ArrayList<>();
         try (Stream<Path> stream = Files.walk(root)) {
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext();) {
                 Path p = iterator.next();
                 if (Files.isRegularFile(p)) {
                     try {
-                        javabaseResources.add(
-                                new Resource(p.toString().substring("/modules".length()),
-                                        ByteBuffer.wrap(Files.readAllBytes(p))));
+                        javabaseResources.add(Pool.newResource(p.toString().
+                                substring("/modules".length()), Files.readAllBytes(p)));
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
@@ -202,44 +184,32 @@ public class JLinkOptimTest {
         }
 
         //forName folding
-        ResourcePool pool = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        PoolImpl pool = new PoolImpl();
         byte[] content = Files.readAllBytes(classes.
                 resolve("optim").resolve("ForNameTestCase.class"));
         byte[] content2 = Files.readAllBytes(classes.
                 resolve("optim").resolve("AType.class"));
         byte[] mcontent = Files.readAllBytes(classes.resolve("module-info.class"));
 
-        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/ForNameTestCase.class", ByteBuffer.wrap(content)));
-        pool.addResource(new ResourcePool.Resource("/optimplugin/optim/AType.class", ByteBuffer.wrap(content2)));
-        pool.addResource(new ResourcePool.Resource("/optimplugin/module-info.class",
-                ByteBuffer.wrap(mcontent)));
+        pool.add(Pool.newResource("/optimplugin/optim/ForNameTestCase.class", content));
+        pool.add(Pool.newResource("/optimplugin/optim/AType.class", content2));
+        pool.add(Pool.newResource("/optimplugin/module-info.class", mcontent));
 
-        for (Resource r : javabaseResources) {
-            pool.addResource(r);
+        for (ModuleData r : javabaseResources) {
+            pool.add(r);
         }
 
-        OptimizationProvider prov = new OptimizationProvider();
-        String[] a = {OptimizationProvider.FORNAME_REMOVAL};
-        Map<String, String> optional = new HashMap<>();
-        optional.put(OptimizationProvider.LOG_FILE, "forName.log");
-        ResourcePlugin plug = prov.newPlugins(a, optional)[0];
-        ResourcePool out = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        plug.visit(pool, out, new StringTable() {
+        OptimizationPlugin plugin = new OptimizationPlugin();
+        Map<PluginOption, String> optional = new HashMap<>();
+        optional.put(OptimizationPlugin.NAME_OPTION, OptimizationPlugin.FORNAME_REMOVAL);
+        optional.put(OptimizationPlugin.LOG_OPTION, "forName.log");
+        plugin.configure(optional);
+        Pool out = new PoolImpl();
+        plugin.visit(pool, out);
 
-            @Override
-            public int addString(String str) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
+        ModuleData result = out.getContent().iterator().next();
 
-            @Override
-            public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-
-        Resource result = out.getResources().iterator().next();
-
-        ClassReader optimReader = new ClassReader(result.getByteArray());
+        ClassReader optimReader = new ClassReader(result.getBytes());
         ClassNode optimClass = new ClassNode();
         optimReader.accept(optimClass, ClassReader.EXPAND_FRAMES);
 
@@ -260,7 +230,7 @@ public class JLinkOptimTest {
             }
         }
         Map<String, byte[]> newClasses = new HashMap<>();
-        newClasses.put("optim.ForNameTestCase", result.getByteArray());
+        newClasses.put("optim.ForNameTestCase", result.getBytes());
         newClasses.put("optim.AType", content2);
         MemClassLoader loader = new MemClassLoader(newClasses);
         Class<?> loaded = loader.loadClass("optim.ForNameTestCase");
@@ -277,12 +247,10 @@ public class JLinkOptimTest {
                         throw new Exception("Unexpected exception " + ex);
                     }
                 }
-            } else {
-                if (!m.getName().startsWith("negative")) {
-                    Class<?> clazz = (Class<?>) m.invoke(null);
-                    if (clazz != String.class && clazz != loader.findClass("optim.AType")) {
-                        throw new Exception("Invalid class " + clazz);
-                    }
+            } else if (!m.getName().startsWith("negative")) {
+                Class<?> clazz = (Class<?>) m.invoke(null);
+                if (clazz != String.class && clazz != loader.findClass("optim.AType")) {
+                    throw new Exception("Invalid class " + clazz);
                 }
             }
         }
@@ -342,6 +310,7 @@ public class JLinkOptimTest {
 
         private final Map<String, byte[]> classes;
         private final Map<String, Class<?>> cache = new HashMap<>();
+
         MemClassLoader(Map<String, byte[]> classes) {
             super(null);
             this.classes = classes;
@@ -389,7 +358,7 @@ public class JLinkOptimTest {
          helper.generateDefaultImage(userOptions, "optim1")
          .assertFailure("java.io.FileNotFoundException: dir.log (Is a directory)");
          }*/
-        /*{
+ /*{
          String[] userOptions = {"--class-optim", "UNKNOWN"};
          helper.generateDefaultImage(userOptions, "optim1").assertFailure("Unknown optimization");
          }*/
@@ -401,23 +370,23 @@ public class JLinkOptimTest {
         }
 
         {
-            ControlFlowProvider provider = new ControlFlowProvider();
-            ImagePluginProviderRepository.registerPluginProvider(provider);
+            ControlFlowPlugin plugin = new ControlFlowPlugin();
+            PluginRepository.registerPlugin(plugin);
             String[] userOptions = {"--test-optim"};
             Path imageDir = helper.generateDefaultImage(userOptions, "optim1").assertSuccess();
             helper.checkImage(imageDir, "optim1", null, null);
             //System.out.println("Num methods analyzed " + provider.numMethods
             //        + "num blocks " + provider.numBlocks);
-            if (!provider.called) {
+            if (!plugin.called) {
                 throw new Exception("Plugin not called");
             }
-            if (provider.numMethods < 1000) {
+            if (plugin.numMethods < 1000) {
                 throw new Exception("Not enough method called,  should be "
-                        + "around 10000 but is " + provider.numMethods);
+                        + "around 10000 but is " + plugin.numMethods);
             }
-            if (provider.numBlocks < 100000) {
+            if (plugin.numBlocks < 100000) {
                 throw new Exception("Not enough blocks,  should be "
-                        + "around 640000 but is " + provider.numMethods);
+                        + "around 640000 but is " + plugin.numMethods);
             }
         }
     }

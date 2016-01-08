@@ -26,6 +26,8 @@
 module java.desktop {
     requires public java.datatransfer;
     requires public java.xml;
+    // ## revisit the dependence to java.logging was brought back by 8144526
+    requires java.logging;
     requires java.prefs;
 
     exports java.applet;
@@ -48,6 +50,7 @@ module java.desktop {
     exports javax.imageio.metadata;
     exports javax.imageio.plugins.bmp;
     exports javax.imageio.plugins.jpeg;
+    exports javax.imageio.plugins.tiff;
     exports javax.imageio.spi;
     exports javax.imageio.stream;
     exports javax.print;

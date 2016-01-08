@@ -52,7 +52,6 @@ BOOT_MODULES += \
     jdk.sctp \
     jdk.security.auth \
     jdk.security.jgss \
-    jdk.vm.ci \
     #
 
 # to be deprivileged
@@ -78,6 +77,7 @@ EXT_MODULES += \
     jdk.accessibility \
     jdk.crypto.ec \
     jdk.crypto.pkcs11 \
+    jdk.dynalink \
     jdk.xml.dom \
     jdk.localedata \
     jdk.naming.dns \

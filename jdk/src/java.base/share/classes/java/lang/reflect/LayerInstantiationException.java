@@ -33,7 +33,7 @@ package java.lang.reflect;
  * @since 9
  */
 public class LayerInstantiationException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -906239691613568347L;
 
     /**
      * Constructs a {@code LayerInstantiationException} with no detail message.
@@ -44,6 +44,9 @@ public class LayerInstantiationException extends RuntimeException {
     /**
      * Constructs a {@code LayerInstantiationException} with the given detail
      * message.
+     *
+     * @param msg
+     *        The detail message
      */
     public LayerInstantiationException(String msg) {
         super(msg);
@@ -51,6 +54,9 @@ public class LayerInstantiationException extends RuntimeException {
 
     /**
      * Constructs a {@code LayerInstantiationException} with the given cause.
+     *
+     * @param cause
+     *        The cause
      */
     public LayerInstantiationException(Throwable cause) {
         super(cause);
@@ -59,6 +65,11 @@ public class LayerInstantiationException extends RuntimeException {
     /**
      * Constructs a {@code FindException} with the given detail message
      * and cause.
+     *
+     * @param msg
+     *        The detail message
+     * @param cause
+     *        The cause
      */
     public LayerInstantiationException(String msg, Throwable cause) {
         super(msg, cause);

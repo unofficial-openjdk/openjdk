@@ -336,13 +336,7 @@ public class Helper {
     }
 
     public static String getDebugSymbolsExtension() {
-        String s = System.getProperty("os.name");
-        if (s.startsWith("Mac OS")) {
-            return ".diz";
-        } else {
-            System.out.println("WARNING no debug extension for OS, update test");
-            return ".unknown";
-        }
+        return ".diz";
     }
 
     public Path createNewImageDir(String moduleName) {

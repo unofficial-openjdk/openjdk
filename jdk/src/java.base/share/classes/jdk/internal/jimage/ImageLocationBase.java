@@ -25,6 +25,8 @@
 
 package jdk.internal.jimage;
 
+import java.nio.ByteBuffer;
+
 public class ImageLocationBase {
     public static final int ATTRIBUTE_END = 0;
     public static final int ATTRIBUTE_MODULE = 1;
@@ -57,16 +59,12 @@ public class ImageLocationBase {
         return data >>> 3;
     }
 
-    protected static long[] decompress(byte[] bytes) {
-        return decompress(bytes, 0);
-    }
-
-    protected static long[] decompress(byte[] bytes, int offset) {
+    protected static long[] decompress(ByteBuffer bytes) {
         long[] attributes = new long[ATTRIBUTE_COUNT];
 
         if (bytes != null) {
-            for (int i = offset; i < bytes.length; ) {
-                int data = bytes[i++] & 0xFF;
+            while (bytes.hasRemaining()) {
+                int data = bytes.get() & 0xFF;
                 int kind = attributeKind(data);
 
                 if (kind == ATTRIBUTE_END) {
@@ -80,7 +78,8 @@ public class ImageLocationBase {
 
                 for (int j = 0; j < length; j++) {
                     value <<= 8;
-                    value |= bytes[i++] & 0xFF;
+                    assert bytes.hasRemaining() : "Missing attribute data";
+                    value |= bytes.get() & 0xFF;
                 }
 
                  attributes[kind] = value;
@@ -111,8 +110,8 @@ public class ImageLocationBase {
         return stream.toArray();
      }
 
-    public boolean verify(UTF8String name) {
-        return UTF8String.equals(getFullName(), name);
+    public boolean verify(String name) {
+        return name.equals(getFullName());
     }
 
     protected long getAttribute(int kind) {
@@ -122,133 +121,106 @@ public class ImageLocationBase {
         return attributes[kind];
     }
 
-    protected UTF8String getAttributeUTF8String(int kind) {
+    protected String getAttributeString(int kind) {
         assert ATTRIBUTE_END < kind &&
                kind < ATTRIBUTE_COUNT : "Invalid attribute kind";
 
         return getStrings().get((int)attributes[kind]);
     }
 
-    protected String getAttributeString(int kind) {
-        return getAttributeUTF8String(kind).toString();
-    }
-
-    public UTF8String getModule() {
-        return getAttributeUTF8String(ATTRIBUTE_MODULE);
-    }
-
-    public String getModuleString() {
-        return getModule().toString();
+    public String getModule() {
+        return getAttributeString(ATTRIBUTE_MODULE);
     }
 
     public int getModuleOffset() {
         return (int)getAttribute(ATTRIBUTE_MODULE);
     }
 
-    public UTF8String getBase() {
-        return getAttributeUTF8String(ATTRIBUTE_BASE);
-    }
-
-    public String getBaseString() {
-        return  getBase().toString();
+    public String getBase() {
+        return getAttributeString(ATTRIBUTE_BASE);
     }
 
     public int getBaseOffset() {
         return (int)getAttribute(ATTRIBUTE_BASE);
     }
 
-    public UTF8String getParent() {
-        return getAttributeUTF8String(ATTRIBUTE_PARENT);
-    }
-
-    public String getParentString() {
-        return getParent().toString();
+    public String getParent() {
+        return getAttributeString(ATTRIBUTE_PARENT);
     }
 
     public int getParentOffset() {
         return (int)getAttribute(ATTRIBUTE_PARENT);
     }
 
-    public UTF8String getExtension() {
-        return getAttributeUTF8String(ATTRIBUTE_EXTENSION);
-    }
-
-    public String getExtensionString() {
-        return getExtension().toString();
+    public String getExtension() {
+        return getAttributeString(ATTRIBUTE_EXTENSION);
     }
 
     public int getExtensionOffset() {
         return (int)getAttribute(ATTRIBUTE_EXTENSION);
     }
 
-    public UTF8String getFullName() {
+    public String getFullName() {
         return getFullName(false);
     }
 
-    public UTF8String getFullName(boolean modulesPrefix) {
-        // Note: Consider a UTF8StringBuilder.
-        UTF8String fullName = UTF8String.EMPTY_STRING;
+    public String getFullName(boolean modulesPrefix) {
+        StringBuilder builder = new StringBuilder();
 
         if (getModuleOffset() != 0) {
-            fullName = fullName.concat(
-                // TODO The use of UTF8String.MODULES_STRING does not belong here.
-                modulesPrefix? UTF8String.MODULES_STRING :
-                               UTF8String.EMPTY_STRING,
-                UTF8String.SLASH_STRING,
-                getModule(),
-                UTF8String.SLASH_STRING);
+            if (modulesPrefix) {
+                builder.append("/modules");
+            }
+
+            builder.append('/');
+            builder.append(getModule());
+            builder.append('/');
         }
 
         if (getParentOffset() != 0) {
-            fullName = fullName.concat(getParent(),
-                                       UTF8String.SLASH_STRING);
+            builder.append(getParent());
+            builder.append('/');
         }
 
-        fullName = fullName.concat(getBase());
+        builder.append(getBase());
 
         if (getExtensionOffset() != 0) {
-                fullName = fullName.concat(UTF8String.DOT_STRING,
-                                           getExtension());
+            builder.append('.');
+            builder.append(getExtension());
         }
 
-        return fullName;
+        return builder.toString();
     }
 
-    protected UTF8String buildName(boolean includeModule, boolean includeParent,
+    protected String buildName(boolean includeModule, boolean includeParent,
             boolean includeName) {
-        // Note: Consider a UTF8StringBuilder.
-        UTF8String name = UTF8String.EMPTY_STRING;
+        StringBuilder builder = new StringBuilder();
 
         if (includeModule && getModuleOffset() != 0) {
-            name = name.concat(UTF8String.MODULES_STRING,
-                               UTF8String.SLASH_STRING,
-                               getModule());
-        }
+            builder.append("/modules/");
+            builder.append(getModule());
+         }
 
         if (includeParent && getParentOffset() != 0) {
-            name = name.concat(UTF8String.SLASH_STRING,
-                                       getParent());
+            builder.append('/');
+            builder.append(getParent());
         }
 
         if (includeName) {
             if (includeModule || includeParent) {
-                name = name.concat(UTF8String.SLASH_STRING);
+                builder.append('/');
             }
 
-            name = name.concat(getBase());
+            builder.append(getBase());
 
             if (getExtensionOffset() != 0) {
-                name = name.concat(UTF8String.DOT_STRING,
-                                           getExtension());
+                builder.append('.');
+                builder.append(getExtension());
             }
         }
 
-        return name;
-    }
-
-    public String getFullNameString() {
-        return getFullName().toString();
-    }
+        return builder.toString();
+   }
 
     public long getContentOffset() {
         return getAttribute(ATTRIBUTE_OFFSET);

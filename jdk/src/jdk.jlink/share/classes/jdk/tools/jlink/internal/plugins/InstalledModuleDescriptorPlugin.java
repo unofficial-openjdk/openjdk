@@ -25,8 +25,11 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.lang.module.ModuleDescriptor.*;
-import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,11 +39,12 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
 
 /**
  * Jlink plugin to reconstitute module descriptors for installed modules.
@@ -48,7 +52,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  *
  * This plugin will override jdk.internal.module.InstalledModules class
  *
- * This plugin is enabled by default.  This can be disabled via
+ * This plugin is enabled by default. This can be disabled via
  * jlink --gen-installed-modules off option.
  *
  * TODO: module-info.class may not have the ConcealedPackages attribute.
@@ -57,17 +61,59 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  * @see java.lang.module.InstalledModuleFinder
  * @see jdk.internal.module.InstalledModules
  */
-final class InstalledModuleDescriptorPlugin extends AsmPlugin {
-    InstalledModuleDescriptorPlugin() {
+public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
+
+    private static final String OPTION_NAME = "disable-installed-modules";
+    private static final String DESCRIPTION = PluginsResourceBundle.getDescription(OPTION_NAME);
+    private final PluginOption option;
+    private boolean enabled;
+
+    public InstalledModuleDescriptorPlugin() {
+        this.option = new PluginOption.Builder(OPTION_NAME)
+                .description(DESCRIPTION)
+                .build();
+        this.enabled = true;
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return option;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        return Collections.singleton(CATEGORY.TRANSFORMER);
     }
 
     @Override
     public String getName() {
-        return InstalledModuleDescriptorProvider.NAME;
+        return "installed-modules";
     }
 
     @Override
-    public void visit(AsmPools pools, StringTable strings) throws IOException {
+    public String getDescription() {
+        return DESCRIPTION;
+    }
+
+    @Override
+    public Set<STATE> getState() {
+        return enabled ? EnumSet.of(STATE.AUTO_ENABLED, STATE.FUNCTIONAL)
+                : EnumSet.of(STATE.DISABLED);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        if (config.containsKey(option)) {
+            enabled = false;
+        }
+    }
+
+    @Override
+    public void visit(AsmPools pools) {
+        if (!enabled) {
+            throw new PluginException(OPTION_NAME + " was set");
+        }
+
         Set<String> moduleNames = new HashSet<>();
         int numPackages = 0;
         for (AsmModulePool module : pools.getModulePools()) {
@@ -119,11 +165,26 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
     }
 
+    /*
+     * Returns the initial capacity for a new Set or Map of the given size
+     * to avoid resizing.
+     */
+    static final int initialCapacity(int size) {
+        if (size == 0) {
+            return 0;
+        } else {
+            // Adjust to try and get size/capacity as close to the
+            // HashSet/HashMap default load factor without going over.
+            return (int)(Math.ceil((double)size / 0.75));
+        }
+    }
+
     /**
      * Builder of a new jdk.internal.module.InstalledModules class
      * to reconstitute ModuleDescriptor of the installed modules.
      */
     static class Builder {
+
         private static final String CLASSNAME =
             "jdk/internal/module/InstalledModules";
         private static final String MODULE_DESCRIPTOR_BUILDER =
@@ -137,15 +198,28 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         private static final String DESCRIPTOR_MAP = "MAP";
         private static final String MAP_TYPE = "Ljava/util/Map;";
 
+        private static final int BUILDER_VAR    = 0;
+        private static final int MODS_VAR       = 1;
+        private static final int STRING_SET_VAR = 2;
+        private static final int MAX_LOCAL_VARS = 256;
+
         private final ClassWriter cw;
         private final MethodVisitor mv;
+        private int nextLocalVar = 3;
+
+        // list of all ModuleDescriptorBuilders, invoked in turn when building.
+        private final ArrayList<ModuleDescriptorBuilder> builders = new ArrayList<>();
+
+        // map Set<String> to a specialized builder to allow them to be
+        // deduplicated as they are requested
+        private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
 
         public Builder(Set<String> moduleNames, int numPackages) {
             this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
             this.clinit(moduleNames, numPackages);
             this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                                     "modules", "()Ljava/util/Map;",
-                                     "()" + MODULES_MAP_SIGNATURE, null);
+                    "modules", "()Ljava/util/Map;",
+                    "()" + MODULES_MAP_SIGNATURE, null);
             mv.visitCode();
         }
 
@@ -156,33 +230,32 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
          */
         private void clinit(Set<String> moduleNames, int numPackages) {
             cw.visit(Opcodes.V1_8, ACC_PUBLIC+ACC_FINAL+ACC_SUPER, CLASSNAME,
-                     null, "java/lang/Object", null);
+                    null, "java/lang/Object", null);
 
             // public static String[] MODULE_NAMES = new String[] {....};
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULE_NAMES,
-                          "[Ljava/lang/String;", null, null)
-              .visitEnd();
-
+                    "[Ljava/lang/String;", null, null)
+                    .visitEnd();
 
             // public static int PACKAGES_IN_BOOT_LAYER;
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, PACKAGE_COUNT,
-                          "I", null, numPackages)
-              .visitEnd();
+                    "I", null, numPackages)
+                    .visitEnd();
 
             // static Map<String, ModuleDescriptor> map = new HashMap<>();
             cw.visitField(ACC_FINAL+ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
-                          MODULES_MAP_SIGNATURE, null)
-              .visitEnd();
+                    MODULES_MAP_SIGNATURE, null)
+                    .visitEnd();
 
             MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V",
-                                              null, null);
+                    null, null);
             mv.visitCode();
 
             // create the MODULE_NAMES array
             int numModules = moduleNames.size();
             newArray(cw, mv, moduleNames, numModules);
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULE_NAMES,
-                              "[Ljava/lang/String;");
+                    "[Ljava/lang/String;");
             mv.visitIntInsn(numModules < Byte.MAX_VALUE ? BIPUSH : SIPUSH, numModules);
             mv.visitTypeInsn(ANEWARRAY, "[Ljava/lang/String;");
 
@@ -190,7 +263,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             mv.visitTypeInsn(NEW, "java/util/HashMap");
             mv.visitInsn(DUP);
             mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap",
-                               "<init>", "()V", false);
+                    "<init>", "()V", false);
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
@@ -198,11 +271,31 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
 
         /*
-         * Add the given ModuleDescriptor to the installed module list.
+         * Adds the given ModuleDescriptor to the installed module list, and
+         * prepares mapping from Set<String> to StringSetBuilders to emit an
+         * optimized number of string sets during build.
          */
         public Builder module(ModuleDescriptor md, Set<String> packages) {
-            ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(mv);
-            builder.run(md);
+            ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages, mv);
+            builders.add(builder);
+
+            // exports
+            for (ModuleDescriptor.Exports exp : md.exports()) {
+                if (exp.targets().isPresent()) {
+                    stringSets.computeIfAbsent(exp.targets().get(), s -> new StringSetBuilder(s))
+                              .increment();
+                }
+            }
+
+            // provides
+            for (ModuleDescriptor.Provides p : md.provides().values()) {
+                stringSets.computeIfAbsent(p.providers(), s -> new StringSetBuilder(s))
+                          .increment();
+            }
+
+            // uses
+            stringSets.computeIfAbsent(md.uses(), s -> new StringSetBuilder(s))
+                      .increment();
             return this;
         }
 
@@ -210,6 +303,9 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
          * Finish up to generate bytecode for the return value of the modules method
          */
         public ClassWriter build() {
+            for (ModuleDescriptorBuilder builder : builders) {
+                builder.build();
+            }
             mv.visitFieldInsn(GETSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
@@ -218,7 +314,7 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         }
 
         private static void newArray(ClassWriter cw, MethodVisitor mv,
-                                     Set<String> names, int size) {
+                Set<String> names, int size) {
             mv.visitIntInsn(size < Byte.MAX_VALUE ? BIPUSH : SIPUSH, size);
             mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
             int index=0;
@@ -242,6 +338,18 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             }
         }
 
+        void pushInt(int num) {
+            if (num <= 5) {
+                mv.visitInsn(ICONST_0 + num);
+            } else if (num < Byte.MAX_VALUE) {
+                mv.visitIntInsn(BIPUSH, num);
+            } else if (num < Short.MAX_VALUE) {
+                mv.visitIntInsn(SIPUSH, num);
+            } else {
+                throw new IllegalArgumentException("exceed limit: " + num);
+            }
+        }
+
         class ModuleDescriptorBuilder {
             static final String REQUIRES_MODIFIER_CLASSNAME =
                     "java/lang/module/ModuleDescriptor$Requires$Modifier";
@@ -254,40 +362,42 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 "(Ljava/lang/String;Ljava/util/Set;)" + BUILDER_TYPE;
             static final String SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String SET_SIG =
+                "(Ljava/util/Set;)" + BUILDER_TYPE;
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
             static final String STRING_STRING_SIG =
                 "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
             final MethodVisitor mv;
-            final int BUILDER_VAR = 0;
-            final int MODS_VAR = 1;
-            final int TARGETS_VAR = 2;
-            final int PROVIDERS_VAR = 3;
-            ModuleDescriptorBuilder(MethodVisitor mv) {
+            final ModuleDescriptor md;
+            final Set<String> packages;
+
+            ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages,
+                    MethodVisitor mv) {
+                this.md = md;
+                this.packages = packages;
                 this.mv = mv;
             }
 
-            void newBuilder(String name, int reqs, int exports, int uses,
-                            int provides, int conceals, int packages) {
+            void newBuilder(String name, int reqs, int exports, int provides,
+                    int conceals, int packages) {
                 mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
                 mv.visitInsn(DUP);
                 mv.visitLdcInsn(name);
-                pushInt(reqs);
-                pushInt(exports);
-                pushInt(uses);
-                pushInt(provides);
-                pushInt(conceals);
-                pushInt(packages);
+                pushInt(initialCapacity(reqs));
+                pushInt(initialCapacity(exports));
+                pushInt(initialCapacity(provides));
+                pushInt(initialCapacity(conceals));
+                pushInt(initialCapacity(packages));
                 mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "<init>", "(Ljava/lang/String;IIIIII)V", false);
+                                   "<init>", "(Ljava/lang/String;IIIII)V", false);
                 mv.visitVarInsn(ASTORE, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
             }
 
-            void run(ModuleDescriptor md) {
+            void build() {
                 // ## handle if module-info.class doesn't have concealed attribute
                 newBuilder(md.name(), md.requires().size(),
                            md.exports().size(),
-                           md.uses().size(),
                            md.provides().size(),
                            md.conceals().size(),
                            md.conceals().size() + md.exports().size());
@@ -318,17 +428,11 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 }
 
                 // uses
-                for (String s : md.uses()) {
-                    uses(s);
-                }
+                uses(md.uses());
 
                 // provides
                 for (ModuleDescriptor.Provides p : md.provides().values()) {
-                    if (p.providers().size() == 1) {
-                        provides(p.service(), p.providers().iterator().next());
-                    } else {
-                        provides(p.service(), p.providers());
-                    }
+                    provides(p.service(), p.providers());
                 }
 
                 // concealed packages
@@ -444,48 +548,24 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              * Builder.exports(pn, targets);
              */
             void exports(String pn, Set<String> targets) {
-                mv.visitTypeInsn(NEW, "java/util/HashSet");
-                mv.visitInsn(DUP);
-                pushInt(targets.size());
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
-                                   "<init>", "(I)V", false);
-                mv.visitVarInsn(ASTORE, TARGETS_VAR);
-                for (String t : targets) {
-                    mv.visitVarInsn(ALOAD, TARGETS_VAR);
-                    mv.visitLdcInsn(t);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                        "add", "(Ljava/lang/Object;)Z", true);
-                    mv.visitInsn(POP);
-                }
+                int varIndex = stringSets.get(targets).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(pn);
-                mv.visitVarInsn(ALOAD, TARGETS_VAR);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "exports", STRING_SET_SIG, false);
                 mv.visitInsn(POP);
-
             }
 
             /*
-             * Invokes Builder.use(String cn)
+             * Invokes Builder.uses(Set<String> uses)
              */
-            void uses(String cn) {
+            void uses(Set<String> uses) {
+                int varIndex = stringSets.get(uses).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitLdcInsn(cn);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "uses", STRING_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
-             * Invoke Builder.provides(service, provider);
-             */
-            void provides(String service, String provider) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitLdcInsn(service);
-                mv.visitLdcInsn(provider);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "provides", STRING_STRING_SIG, false);
+                        "uses", SET_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -499,22 +579,10 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
              * Builder.exports(service, providers);
              */
             void provides(String service, Set<String> providers) {
-                mv.visitTypeInsn(NEW, "java/util/HashSet");
-                mv.visitInsn(DUP);
-                pushInt(providers.size());
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
-                                   "<init>", "(I)V", false);
-                mv.visitVarInsn(ASTORE, PROVIDERS_VAR);
-                for (String impl : providers) {
-                    mv.visitVarInsn(ALOAD, PROVIDERS_VAR);
-                    mv.visitLdcInsn(impl);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                        "add", "(Ljava/lang/Object;)Z", true);
-                    mv.visitInsn(POP);
-                }
+                int varIndex = stringSets.get(providers).build();
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(service);
-                mv.visitVarInsn(ALOAD, PROVIDERS_VAR);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "provides", STRING_SET_SIG, false);
                 mv.visitInsn(POP);
@@ -553,16 +621,70 @@ final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitInsn(POP);
             }
 
-            void pushInt(int num) {
-                if (num <= 5) {
-                    mv.visitInsn(ICONST_0 + num);
-                } else if (num < Byte.MAX_VALUE) {
-                    mv.visitIntInsn(BIPUSH, num);
-                } else if (num < Short.MAX_VALUE) {
-                    mv.visitIntInsn(SIPUSH, num);
-                } else {
-                    throw new IllegalArgumentException("exceed limit: " + num);
+        }
+
+        /*
+         * StringSetBuilder generates bytecode to create one single instance
+         * of HashSet for a given set of names and assign to a local variable
+         * slot.  When there is only one single reference to a Set<String>,
+         * it will reuse STRING_SET_VAR for reference.  For Set<String> with
+         * multiple references, it will use a new local variable.
+         */
+        class StringSetBuilder {
+            final Set<String> names;
+            int refCount;
+            int localVarIndex;
+            StringSetBuilder(Set<String> names) {
+                this.names = names;
+            }
+
+            void increment() {
+                refCount++;
+            }
+
+            /*
+             * Build bytecode for the Set<String> represented by this builder,
+             * or get the local variable index of a previously generated set
+             * (in the local scope).
+             *
+             * @return local variable index of the generated set.
+             */
+            int build() {
+                int index = localVarIndex;
+                if (localVarIndex == 0) {
+                    // if more than one set reference this builder, emit to a
+                    // unique local
+                    index = refCount == 1 ? STRING_SET_VAR : nextLocalVar++;
+                    if (index < MAX_LOCAL_VARS) {
+                        localVarIndex = index;
+                    } else {
+                        // overflow: disable optimization and keep localVarIndex = 0
+                        index = STRING_SET_VAR;
+                    }
+
+                    if (names.size() == 1) {
+                        mv.visitLdcInsn(names.iterator().next());
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                                "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
+                        mv.visitVarInsn(ASTORE, index);
+                    } else {
+                        mv.visitTypeInsn(NEW, "java/util/HashSet");
+                        mv.visitInsn(DUP);
+                        pushInt(initialCapacity(names.size()));
+                        mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
+                                "<init>", "(I)V", false);
+
+                        mv.visitVarInsn(ASTORE, index);
+                        for (String t : names) {
+                            mv.visitVarInsn(ALOAD, index);
+                            mv.visitLdcInsn(t);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
+                                    "add", "(Ljava/lang/Object;)Z", true);
+                            mv.visitInsn(POP);
+                        }
+                    }
                 }
+                return index;
             }
         }
     }

@@ -23,6 +23,7 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,20 +34,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.CmdPluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePluginProvider;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginConfiguration;
-import jdk.tools.jlink.plugins.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugins.Jlink.StackedPluginConfiguration;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.PostProcessingPlugin;
-import jdk.tools.jlink.plugins.PostProcessingPluginProvider;
-import jdk.tools.jlink.plugins.ProcessingManager;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.builder.DefaultImageBuilder;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
+import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+import jdk.tools.jlink.plugin.Plugin;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -58,8 +57,8 @@ import tests.JImageGenerator;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.internal.plugins
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
@@ -68,91 +67,109 @@ import tests.JImageGenerator;
  */
 public class IntegrationTest {
 
-    static {
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "0"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "1"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "2"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "3"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyProvider(MyProvider.NAME + "4"));
-        ImagePluginProviderRepository.registerPluginProvider(new MyPostProcessorProvider());
-    }
-
     private static final List<Integer> ordered = new ArrayList<>();
 
-    public static class MyPostProcessorProvider extends PostProcessingPluginProvider {
-
-        public class MyPostProcessor implements PostProcessingPlugin {
-
-            @Override
-            public List<String> process(ProcessingManager manager) throws Exception {
-                Files.createFile(manager.getImage().getHome().resolve("toto.txt"));
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return NAME;
-            }
-
-        }
+    public static class MyPostProcessor implements PostProcessorPlugin {
 
         public static final String NAME = "mypostprocessor";
 
-        public MyPostProcessorProvider() {
-            super(NAME, "");
+        @Override
+        public List<String> process(ExecutableImage image) {
+            try {
+                Files.createFile(image.getHome().resolve("toto.txt"));
+                return null;
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
         }
 
         @Override
-        public PostProcessingPlugin[] newPlugins(Map<String, Object> config) throws IOException {
-            return new PostProcessingPlugin[]{new MyPostProcessor()};
+        public String getName() {
+            return NAME;
         }
 
         @Override
-        public String getCategory() {
-            return PROCESSOR;
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.PROCESSOR);
+            return Collections.unmodifiableSet(set);
         }
 
+        @Override
+        public String getDescription() {
+            return null;
+        }
+
+        @Override
+        public PluginOption getOption() {
+            return null;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
+            throw new UnsupportedOperationException("Shouldn't be called");
+        }
     }
 
-    public static class MyProvider extends ImageFilePluginProvider {
-        public class MyPlugin1 implements ImageFilePlugin {
+    public static class MyPlugin1 implements TransformerPlugin {
 
-            Integer index;
+        Integer index;
+        Set<String> after;
+        Set<String> before;
 
-            private MyPlugin1(Integer index) {
-                this.index = index;
-            }
+        private MyPlugin1(Integer index, Set<String> after, Set<String> before) {
+            this.index = index;
+            this.after = after;
+            this.before = before;
+        }
 
-            @Override
-            public void visit(ImageFilePool inFiles, ImageFilePool outFiles) throws Exception {
-                System.err.println(NAME + index);
-                ordered.add(index);
-                inFiles.visit((ImageFilePool.ImageFile file) -> {
-                    return file;
-                }, outFiles);
-            }
+        @Override
+        public Set<String> isAfter() {
+            return after;
+        }
 
-            @Override
-            public String getName() {
-                return NAME;
-            }
+        @Override
+        public Set<String> isBefore() {
+            return before;
+        }
 
+        @Override
+        public String getName() {
+            return NAME + index;
+        }
+
+        @Override
+        public void visit(Pool in, Pool out) {
+            System.err.println(NAME + index);
+            ordered.add(index);
+            in.visit((file) -> {
+                return file;
+            }, out);
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
+            return null;
+        }
+
+        @Override
+        public PluginOption getOption() {
+            return null;
         }
         static final String NAME = "myprovider";
         static final String INDEX = "INDEX";
-
-        public MyProvider(String name) {
-            super(name, "");
-        }
+        static final PluginOption INDEX_OPTION = new PluginOption.Builder(INDEX).build();
 
         @Override
-        public ImageFilePlugin[] newPlugins(Map<String, Object> config) throws IOException {
-            return new ImageFilePlugin[]{new MyPlugin1((Integer) config.get(INDEX))};
-        }
-
-        @Override
-        public String getCategory() {
-            return PluginProvider.TRANSFORMER;
+        public void configure(Map<PluginOption, String> config) {
+            throw new UnsupportedOperationException("Shouldn't be called");
         }
     }
 
@@ -166,7 +183,7 @@ public class IntegrationTest {
         apitest();
         test();
         testOrder();
-        testNegativeOrder();
+        testCycleOrder();
     }
 
     private static void apitest() throws Exception {
@@ -185,40 +202,18 @@ public class IntegrationTest {
         System.out.println(jl);
 
         JlinkConfiguration config
-                = new JlinkConfiguration(null, null, null, null, null);
+                = new JlinkConfiguration(null, null, null, null);
 
         System.out.println(config);
 
-        try {
-            PluginConfiguration pc = new PluginConfiguration(null, null);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
+        Plugin p = Jlink.newPlugin("toto", Collections.emptyMap(), null);
+        if (p != null) {
+            throw new Exception("Plugin should be null");
         }
-        if (failed) {
-            throw new Exception("Should have failed");
-        }
-        System.out.println(new PluginConfiguration("toto", null));
 
-        try {
-            StackedPluginConfiguration spc = new StackedPluginConfiguration(null, 0, failed, null);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new Exception("Should have failed");
-        }
-        System.out.println(new StackedPluginConfiguration("toto", 0, failed, null));
-
-        try {
-            StackedPluginConfiguration spc = new StackedPluginConfiguration("toto", -1, failed, null);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new Exception("Should have failed");
+        Plugin p2 = Jlink.newPlugin("compress", Collections.emptyMap(), null);
+        if (p2 == null) {
+            throw new Exception("Plugin should not be null");
         }
     }
 
@@ -236,40 +231,31 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
-        List<Jlink.StackedPluginConfiguration> post = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
         //Strip debug
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
-            StackedPluginConfiguration strip
-                    = new StackedPluginConfiguration("strip-java-debug", 0, false, config1);
+            Map<PluginOption, String> config1 = new HashMap<>();
+            config1.put(StripDebugPlugin.NAME_OPTION, "");
+            Plugin strip = Jlink.newPlugin("strip-debug", config1, null);
             lst.add(strip);
         }
         // compress
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(CmdPluginProvider.TOOL_ARGUMENT_PROPERTY, "on");
-            config1.put("compress-resources-level", "0");
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration("compress-resources", 0, false, config1);
+            Map<PluginOption, String> config1 = new HashMap<>();
+            config1.put(DefaultCompressPlugin.NAME_OPTION, "2");
+            Plugin compress
+                    = Jlink.newPlugin("compress", config1, null);
             lst.add(compress);
         }
         // Post processor
         {
-            Map<String, Object> config1 = new HashMap<>();
-            StackedPluginConfiguration postprocessor
-                    = new StackedPluginConfiguration(MyPostProcessorProvider.NAME, 0, false, config1);
-            post.add(postprocessor);
+            lst.add(new MyPostProcessor());
         }
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
-        config1.put("genbom", "true");
-        PluginConfiguration imgBuilder
-                = new Jlink.PluginConfiguration("default-image-builder", config1);
+        DefaultImageBuilder builder = new DefaultImageBuilder(true, output);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, post, imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, builder, null);
 
         jlink.build(config, plugins);
 
@@ -310,50 +296,37 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
-        // packager 1
+        // Order is Plug1>Plug2>Plug3
+        // Plug1
+
+
+        // TRANSFORMER 3, must be after 2.
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 2);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME + "0", 0, false, config1);
-            lst.add(compress);
+            Set<String> after = new HashSet<>();
+            after.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(3, after, Collections.emptySet()));
         }
 
-        // packager 2
+        // TRANSFORMER 2, must be after 1.
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 0);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME + "1", 0, true, config1);
-            lst.add(compress);
+            Set<String> after = new HashSet<>();
+            after.add(MyPlugin1.NAME+"1");
+            lst.add(new MyPlugin1(2, after, Collections.emptySet()));
         }
 
-        // packager 3
+        // TRANSFORMER 1
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 1);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME + "2", 1, true, config1);
-            lst.add(compress);
-        }
-
-        // packager 4
-        {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 3);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME + "3", 1, false, config1);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
         }
 
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
-        PluginConfiguration imgBuilder
-                = new Jlink.PluginConfiguration("default-image-builder", config1);
+        DefaultImageBuilder builder = new DefaultImageBuilder(false, output);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, Collections.emptyList(), imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, builder, null);
 
         jlink.build(config, plugins);
 
@@ -368,7 +341,7 @@ public class IntegrationTest {
         }
     }
 
-    private static void testNegativeOrder() throws Exception {
+    private static void testCycleOrder() throws Exception {
         Jlink jlink = new Jlink();
         Path output = Paths.get("integrationout3");
         List<Path> modulePaths = new ArrayList<>();
@@ -382,32 +355,26 @@ public class IntegrationTest {
         JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
                 modulePaths, mods, limits, null);
 
-        List<Jlink.StackedPluginConfiguration> lst = new ArrayList<>();
+        List<Plugin> lst = new ArrayList<>();
 
         // packager 1
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 2);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"2");
+            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
         }
 
         // packager 2
         {
-            Map<String, Object> config1 = new HashMap<>();
-            config1.put(MyProvider.INDEX, 0);
-            StackedPluginConfiguration compress
-                    = new StackedPluginConfiguration(MyProvider.NAME, 0, false, config1);
-            lst.add(compress);
+            Set<String> before = new HashSet<>();
+            before.add(MyPlugin1.NAME+"1");
+            lst.add(new MyPlugin1(2, Collections.emptySet(), before));
         }
 
         // Image builder
-        Map<String, Object> config1 = new HashMap<>();
-        PluginConfiguration imgBuilder
-                = new Jlink.PluginConfiguration("default-image-builder", config1);
+        DefaultImageBuilder builder = new DefaultImageBuilder(false, output);
         PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, Collections.emptyList(), imgBuilder);
+                = new Jlink.PluginsConfiguration(lst, builder, null);
         boolean failed = false;
         try {
             jlink.build(config, plugins);

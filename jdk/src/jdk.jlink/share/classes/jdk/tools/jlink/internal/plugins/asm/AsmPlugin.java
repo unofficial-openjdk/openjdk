@@ -24,30 +24,36 @@
  */
 package jdk.tools.jlink.internal.plugins.asm;
 
-import java.io.IOException;
 import java.util.Objects;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.internal.PoolImpl;
 
 /**
  * Extend this class to develop your own plugin in order to transform jimage
  * resources.
  *
  */
-public abstract class AsmPlugin implements ResourcePlugin {
+public abstract class AsmPlugin implements TransformerPlugin {
 
     public AsmPlugin() {
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
-            throws Exception {
-        Objects.requireNonNull(inResources);
+    public void visit(Pool allContent, Pool outResources) {
+        Objects.requireNonNull(allContent);
         Objects.requireNonNull(outResources);
-        Objects.requireNonNull(strings);
-        AsmPools pools = new AsmPools(inResources);
-        visit(pools, strings);
+        PoolImpl resources = new PoolImpl(allContent.getByteOrder());
+        for(ModuleData md : allContent.getContent()) {
+            if(md.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
+                resources.add(md);
+            } else {
+                outResources.add(md);
+            }
+        }
+        AsmPools pools = new AsmPools(resources);
+        visit(pools);
         pools.fillOutputResources(outResources);
     }
 
@@ -56,8 +62,7 @@ public abstract class AsmPlugin implements ResourcePlugin {
      * apply Asm transformation to jimage contained classes.
      * @param pools The pool of Asm classes and other resource files.
      * @param strings To add a string to the jimage strings table.
-     * @throws IOException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public abstract void visit(AsmPools pools, StringTable strings)
-            throws IOException;
+    public abstract void visit(AsmPools pools);
 }

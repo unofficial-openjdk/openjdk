@@ -34,7 +34,7 @@ package java.lang.module;
  * @since 9
  */
 public class ResolutionException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -1031186845316729450L;
 
     /**
      * Constructs a {@code ResolutionException} with no detail message.
@@ -44,6 +44,9 @@ public class ResolutionException extends RuntimeException {
     /**
      * Constructs a {@code ResolutionException} with the given detail
      * message.
+     *
+     * @param msg
+     *        The detail message
      */
     public ResolutionException(String msg) {
         super(msg);
@@ -51,6 +54,9 @@ public class ResolutionException extends RuntimeException {
 
     /**
      * Constructs an instance of this exception with the given cause.
+     *
+     * @param cause
+     *        The cause
      */
     public ResolutionException(Throwable cause) {
         super(cause);
@@ -59,6 +65,11 @@ public class ResolutionException extends RuntimeException {
     /**
      * Constructs a {@code ResolutionException} with the given detail message
      * and cause.
+     *
+     * @param msg
+     *        The detail message
+     * @param cause
+     *        The cause
      */
     public ResolutionException(String msg, Throwable cause) {
         super(msg, cause);

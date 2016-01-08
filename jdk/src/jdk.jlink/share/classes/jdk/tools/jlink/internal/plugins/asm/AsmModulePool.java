@@ -24,7 +24,6 @@
  */
 package jdk.tools.jlink.internal.plugins.asm;
 
-import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.util.Set;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -41,9 +40,10 @@ public interface AsmModulePool extends AsmPool {
      *
      * @param pkg The new package, following java binary syntax (/-separated
      * path name).
-     * @throws java.io.IOException If a mapping already exist for this package.
+     * @throws jdk.tools.jlink.plugins.PluginException If a mapping already
+     * exist for this package.
      */
-    public void addPackage(String pkg) throws IOException;
+    public void addPackage(String pkg);
 
     /**
      * The module name of this pool.
@@ -57,9 +57,9 @@ public interface AsmModulePool extends AsmPool {
      *
      * @param binaryName The class to lookup.
      * @return The reader or null if not found
-     * @throws java.io.IOException
+     * @throws jdk.tools.jlink.plugins.PluginException
      */
-    public ClassReader getClassReaderInDependencies(String binaryName) throws IOException;
+    public ClassReader getClassReaderInDependencies(String binaryName);
 
     /**
      * Lookup the class in the exported packages of this module. "public
@@ -69,10 +69,10 @@ public interface AsmModulePool extends AsmPool {
      * @param callerModule Name of calling module.
      * @param binaryName The class to lookup.
      * @return The reader or null if not found
-     * @throws java.io.IOException
+     * @throws jdk.tools.jlink.plugins.PluginException
      */
     public ClassReader getExportedClassReader(String callerModule,
-            String binaryName) throws IOException;
+            String binaryName);
 
     /**
      * The module descriptor.

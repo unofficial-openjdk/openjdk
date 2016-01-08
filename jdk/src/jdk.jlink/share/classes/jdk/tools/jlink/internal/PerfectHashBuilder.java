@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.internal.jimage.UTF8String;
+import jdk.internal.jimage.ImageStringsReader;
 
 public class PerfectHashBuilder<E> {
     private static final int RETRY_LIMIT = 1000;
@@ -39,14 +39,14 @@ public class PerfectHashBuilder<E> {
     private Class<?> entryComponent;
     private Class<?> bucketComponent;
 
-    private final Map<UTF8String, Entry<E>> map = new LinkedHashMap<>();
+    private final Map<String, Entry<E>> map = new LinkedHashMap<>();
     private int[] redirect;
     private Entry<E>[] order;
     private int count = 0;
 
     @SuppressWarnings("EqualsAndHashcode")
     public static class Entry<E> {
-        private final UTF8String key;
+        private final String key;
         private final E value;
 
         Entry() {
@@ -54,15 +54,11 @@ public class PerfectHashBuilder<E> {
         }
 
         Entry(String key, E value) {
-            this(new UTF8String(key), value);
-        }
-
-        Entry(UTF8String key, E value) {
             this.key = key;
             this.value = value;
         }
 
-        UTF8String getKey() {
+        String getKey() {
             return key;
         }
 
@@ -71,12 +67,12 @@ public class PerfectHashBuilder<E> {
         }
 
         int hashCode(int seed) {
-            return key.hashCode(seed);
+            return ImageStringsReader.hashCode(key, seed);
         }
 
         @Override
         public int hashCode() {
-            return key.hashCode();
+            return ImageStringsReader.hashCode(key);
         }
 
         @Override
@@ -147,10 +143,6 @@ public class PerfectHashBuilder<E> {
     }
 
     public Entry<E> put(String key, E value) {
-        return put(new UTF8String(key), value);
-    }
-
-    public Entry<E> put(UTF8String key, E value) {
         return put(new Entry<>(key, value));
     }
 
@@ -228,7 +220,7 @@ public class PerfectHashBuilder<E> {
 
     private boolean collidedEntries(Bucket<E> bucket, int count) {
         List<Integer> undo = new ArrayList<>();
-        int seed = UTF8String.HASH_MULTIPLIER + 1;
+        int seed = ImageStringsReader.HASH_MULTIPLIER + 1;
         int retry = 0;
 
         redo:

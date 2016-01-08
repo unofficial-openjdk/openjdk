@@ -78,14 +78,13 @@ public class Main {
         cf.descriptors()
           .forEach(md -> System.out.format("  %s%n", md.name()));
 
-        // choose a class loader
-        ModuleClassLoader loader = new ModuleClassLoader(cf);
-
         // reify the configuration as a Layer
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithManyLoaders(cf, Layer.boot(),
+                ClassLoader.getSystemClassLoader());
 
         // invoke application main method
-        Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);
+        ClassLoader loader = layer.findLoader(appModuleName);
+        Class<?> c = loader.loadClass(appMainClass);
         Main.class.getModule().addReads(c.getModule());
         Method mainMethod = c.getMethod("main", String[].class);
 

@@ -24,14 +24,13 @@
  */
 package jdk.tools.jlink.internal.plugins.asm;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugin.Pool;
 
 /**
  * A pool of ClassReader and other resource files.
@@ -56,9 +55,9 @@ public interface AsmPool {
     public class ResourceFile {
 
         private final String path;
-        private final ByteBuffer content;
+        private final byte[] content;
 
-        public ResourceFile(String path, ByteBuffer content) {
+        public ResourceFile(String path, byte[] content) {
             this.path = path;
             this.content = content;
         }
@@ -67,7 +66,7 @@ public interface AsmPool {
             return path;
         }
 
-        public ByteBuffer getContent() {
+        public byte[] getContent() {
             return content;
         }
     }
@@ -111,42 +110,42 @@ public interface AsmPool {
          * Add a class to the pool, if a class already exists, it is replaced.
          *
          * @param writer The class writer.
-         * @throws java.io.IOException
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public void addClass(ClassWriter writer) throws IOException;
+        public void addClass(ClassWriter writer);
 
         /**
          * The class will be not added to the jimage file.
          *
          * @param className The class name to forget.
-         * @throws java.io.IOException
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public void forgetClass(String className) throws IOException ;
+        public void forgetClass(String className);
 
         /**
          * Get a transformed class.
          *
          * @param binaryName The java class binary name
          * @return The ClassReader or null if the class is not found.
-         * @throws java.io.IOException
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public ClassReader getClassReader(String binaryName) throws IOException;
+        public ClassReader getClassReader(String binaryName);
 
         /**
          * Get a transformed class.
          *
          * @param res A class resource.
          * @return The ClassReader or null if the class is not found.
-         * @throws java.io.IOException
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public ClassReader getClassReader(Resource res) throws IOException;
+        public ClassReader getClassReader(Pool.ModuleData res);
 
         /**
          * Returns all the classes contained in the writable pool.
          *
          * @return The collection of classes.
          */
-        public Collection<Resource> getClasses();
+        public Collection<Pool.ModuleData> getClasses();
     }
 
     /**
@@ -159,17 +158,18 @@ public interface AsmPool {
          * Add a resource, if the resource exists, it is replaced.
          *
          * @param resFile The resource file to add.
-         * @throws IOException
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public void addResourceFile(ResourceFile resFile) throws IOException;
+        public void addResourceFile(ResourceFile resFile);
 
         /**
          * The resource will be not added to the jimage file.
          *
          * @param resourceName
-         * @throws IOException If the resource to forget doesn't exist or is null.
+         * @throws jdk.tools.jlink.plugin.PluginException If the resource to
+         * forget doesn't exist or is null.
          */
-        public void forgetResourceFile(String resourceName) throws IOException;
+        public void forgetResourceFile(String resourceName);
 
         /**
          * Get a transformed resource.
@@ -185,14 +185,14 @@ public interface AsmPool {
          * @param res The java resource
          * @return The Resource or null if the resource is not found.
          */
-        public ResourceFile getResourceFile(Resource res);
+        public ResourceFile getResourceFile(Pool.ModuleData res);
 
         /**
          * Returns all the resources contained in the writable pool.
          *
          * @return The array of resources.
          */
-        public Collection<Resource> getResourceFiles();
+        public Collection<Pool.ModuleData> getResourceFiles();
     }
 
     /**
@@ -204,9 +204,9 @@ public interface AsmPool {
          * @param resources The resources will be added to the jimage following
          * the order of this ResourcePool.
          * @return The resource paths ordered in the way to use for storage in the jimage.
-         * @throws java.lang.Exception
+         * @throws jdk.tools.jlink.plugin.PluginException
          */
-        public List<String> sort(ResourcePool resources) throws Exception;
+        public List<String> sort(Pool resources);
     }
 
     /**
@@ -237,7 +237,7 @@ public interface AsmPool {
      *
      * @return The classes.
      */
-    public Collection<Resource> getClasses();
+    public Collection<Pool.ModuleData> getClasses();
 
     /**
      * Returns the resources contained in the pool. Resources are all the file
@@ -245,7 +245,7 @@ public interface AsmPool {
      *
      * @return The array of resource files.
      */
-    public Collection<Resource> getResourceFiles();
+    public Collection<Pool.ModuleData> getResourceFiles();
 
     /**
      * Retrieves a resource based on the binary name. This name doesn't contain
@@ -266,41 +266,41 @@ public interface AsmPool {
      * @param res The resource
      * @return The resource file or null if it doesn't exist.
      */
-    public ResourceFile getResourceFile(Resource res);
+    public ResourceFile getResourceFile(Pool.ModuleData res);
 
     /**
      * Retrieve a ClassReader from the pool.
      *
      * @param binaryName Class binary name
      * @return A reader or null if the class is unknown
-     * @throws IOException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public ClassReader getClassReader(String binaryName) throws IOException;
+    public ClassReader getClassReader(String binaryName);
 
     /**
      * Retrieve a ClassReader from the pool.
      *
      * @param res A resource.
      * @return A reader or null if the class is unknown
-     * @throws IOException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public ClassReader getClassReader(Resource res) throws IOException;
+    public ClassReader getClassReader(Pool.ModuleData res);
 
     /**
      * To visit the set of ClassReaders.
      *
      * @param visitor The visitor.
-     * @throws java.io.IOException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public void visitClassReaders(ClassReaderVisitor visitor) throws IOException;
+    public void visitClassReaders(ClassReaderVisitor visitor);
 
     /**
      * To visit the set of ClassReaders.
      *
      * @param visitor The visitor.
-     * @throws java.io.IOException
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public void visitResourceFiles(ResourceFileVisitor visitor) throws IOException;
+    public void visitResourceFiles(ResourceFileVisitor visitor);
 
     /**
      * Returns the pool of all the resources (transformed and unmodified).
@@ -308,8 +308,8 @@ public interface AsmPool {
      * If a sorter has been set, it is used to sort the returned resources.
      *
      * @param output The pool used to fill the jimage.
-     * @throws Exception
+     * @throws jdk.tools.jlink.plugin.PluginException
      */
-    public void fillOutputResources(ResourcePool output) throws Exception;
+    public void fillOutputResources(Pool output);
 
 }

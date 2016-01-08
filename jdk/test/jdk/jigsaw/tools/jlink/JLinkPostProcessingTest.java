@@ -22,22 +22,20 @@
  */
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.ExecutableImage;
-import jdk.tools.jlink.plugins.OnOffPostProcessingPluginProvider;
-import jdk.tools.jlink.plugins.PostProcessingPlugin;
-import jdk.tools.jlink.plugins.ProcessingManager;
-import jdk.tools.jlink.plugins.ProcessingManager.ProcessingSession;
-import jdk.tools.jlink.plugins.ProcessingManager.RunningProcess;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PostProcessorPlugin;
 import tests.Helper;
-import tests.JImageGenerator;
-import tests.JImageGenerator.InMemoryFile;
 
 /*
  * @test
@@ -46,7 +44,6 @@ import tests.JImageGenerator.InMemoryFile;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -56,100 +53,52 @@ import tests.JImageGenerator.InMemoryFile;
  */
 public class JLinkPostProcessingTest {
 
-    private static class PostProcessingTest extends OnOffPostProcessingPluginProvider {
+    private static class PPPlugin implements PostProcessorPlugin {
 
         private static ExecutableImage called;
-        @Override
-        public PostProcessingPlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            return new PostProcessingPlugin[]{new PPPlugin()};
-        }
-
-        private static boolean isWindows() {
-            return System.getProperty("os.name").startsWith("Windows");
-        }
-
-        private static class PPPlugin implements PostProcessingPlugin {
-
-            @Override
-            public List<String> process(ProcessingManager manager) throws Exception {
-                called = manager.getImage();
-                List<String> args = new ArrayList<>();
-                args.add("-version");
-
-                ProcessingSession session = manager.newSession("test");
-                {
-                    RunningProcess i = session.newImageProcess(args);
-                    String str = i.getStdout();
-                    if (!str.isEmpty()) {
-                        throw new Exception("Unexpected out " + str);
-                    }
-                    String str2 = i.getStderr();
-                    if (str2.isEmpty()) {
-                        throw new Exception("Version not print ");
-                    } else {
-                        System.out.println("REMOTE PROCESS output: " + str2);
-                    }
-                    if (i.getExitCode() != 0) {
-                        throw new Exception("Not valid exit code " + i.getExitCode());
-                    }
-                }
-
-                {
-                    ProcessBuilder builder = new ProcessBuilder(manager.getImage().
-                            getHome().resolve("bin").
-                            resolve(isWindows() ? "java.exe" : "java").toString(), "-version");
-                    RunningProcess i = session.newRunningProcess(builder);
-                    String str = i.getStdout();
-                    if (!str.isEmpty()) {
-                        throw new Exception("Unexpected out " + str);
-                    }
-                    String str2 = i.getStderr();
-                    if (str2.isEmpty()) {
-                        throw new Exception("Version not print ");
-                    } else {
-                        System.out.println("REMOTE PROCESS output: " + str2);
-                    }
-                    if (i.getExitCode() != 0) {
-                        throw new Exception("Not valid exit code " + i.getExitCode());
-                    }
-                }
-
-
-                session.close();
-
-                Path gen = manager.getImage().getHome().resolve("lib").resolve("toto.txt");
-                Files.createFile(gen);
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return NAME;
-            }
-
-        }
         private static final String NAME = "pp";
-
-        PostProcessingTest() {
-            super(NAME, "");
-        }
+        private static final PluginOption NAME_OPTION = new PluginOption.Builder(NAME).build();
 
         @Override
-        public String getToolOption() {
-            return NAME;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
+        public List<String> process(ExecutableImage image) {
+            called = image;
+            Path gen = image.getHome().resolve("lib").resolve("toto.txt");
+            try {
+                Files.createFile(gen);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
             return null;
         }
 
         @Override
-        public String getCategory() {
-            return PROCESSOR;
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.PROCESSOR);
+            return Collections.unmodifiableSet(set);
+        }
+
+        @Override
+        public String getDescription() {
+            return NAME;
+        }
+
+        @Override
+        public PluginOption getOption() {
+            return NAME_OPTION;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
         }
 
     }
+
     public static void main(String[] args) throws Exception {
 
         Helper helper = Helper.newHelper();
@@ -159,11 +108,11 @@ public class JLinkPostProcessingTest {
         }
         helper.generateDefaultModules();
 
-        ImagePluginProviderRepository.registerPluginProvider(new PostProcessingTest());
+        PluginRepository.registerPlugin(new PPPlugin());
 
         // Generate an image and post-process in same jlink execution.
         {
-            String[] userOptions = {"--pp", "on"};
+            String[] userOptions = {"--pp"};
             String moduleName = "postprocessing1";
             helper.generateDefaultJModule(moduleName, "composite2");
             String[] res = {};
@@ -184,7 +133,7 @@ public class JLinkPostProcessingTest {
             Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
             helper.checkImage(imageDir, moduleName, res, files);
 
-            String[] ppOptions = {"--pp", "on"};
+            String[] ppOptions = {"--pp"};
             helper.postProcessImage(imageDir, ppOptions);
             test(imageDir);
         }
@@ -192,19 +141,19 @@ public class JLinkPostProcessingTest {
 
     private static void test(Path imageDir)
             throws Exception {
-        if (PostProcessingTest.called == null) {
+        if (PPPlugin.called == null) {
             throw new Exception("Post processor not called.");
         }
-        if (!PostProcessingTest.called.getHome().equals(imageDir)) {
-            throw new Exception("Not right imageDir " + PostProcessingTest.called.getHome());
+        if (!PPPlugin.called.getHome().equals(imageDir)) {
+            throw new Exception("Not right imageDir " + PPPlugin.called.getHome());
         }
-        if (PostProcessingTest.called.getExecutionArgs().isEmpty()) {
+        if (PPPlugin.called.getExecutionArgs().isEmpty()) {
             throw new Exception("No arguments to run java...");
         }
         Path gen = imageDir.resolve("lib").resolve("toto.txt");
         if (!Files.exists(gen)) {
             throw new Exception("Generated file doesn;t exist");
         }
-        PostProcessingTest.called = null;
+        PPPlugin.called = null;
     }
 }

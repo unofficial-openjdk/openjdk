@@ -41,7 +41,8 @@ import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.WritableClassPool;
-import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
 
 public class IdentityPluginTest extends AsmPluginTestBase {
 
@@ -55,15 +56,15 @@ public class IdentityPluginTest extends AsmPluginTestBase {
 
     public void test() throws Exception {
         IdentityPlugin asm = new IdentityPlugin();
-        ResourcePool resourcePool = asm.visit(getPool());
+        Pool resourcePool = asm.visit(getPool());
         asm.test(getPool(), resourcePool);
     }
 
     private class IdentityPlugin extends TestPlugin {
 
         @Override
-        public void visit() throws IOException {
-            for (ResourcePool.Resource res : getPools().getGlobalPool().getClasses()) {
+        public void visit() {
+            for (ModuleData res : getPools().getGlobalPool().getClasses()) {
                 if (res.getPath().endsWith("module-info.class")) {
                     continue;
                 }
@@ -76,7 +77,7 @@ public class IdentityPluginTest extends AsmPluginTestBase {
         }
 
         @Override
-        public void test(ResourcePool inResources, ResourcePool outResources) throws Exception {
+        public void test(Pool inResources, Pool outResources) throws IOException {
             if (outResources.isEmpty()) {
                 throw new AssertionError("Empty result");
             }
@@ -92,9 +93,9 @@ public class IdentityPluginTest extends AsmPluginTestBase {
                     throw new AssertionError("Class not transformed " + className);
                 }
             }
-            for (ResourcePool.Resource r : outResources.getResources()) {
+            for (ModuleData r : outResources.getContent()) {
                 if (r.getPath().endsWith(".class") && !r.getPath().endsWith("module-info.class")) {
-                    ClassReader reader = new ClassReader(new ByteArrayInputStream(r.getByteArray()));
+                    ClassReader reader = new ClassReader(new ByteArrayInputStream(r.getBytes()));
                     ClassWriter w = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
                     reader.accept(w, ClassReader.EXPAND_FRAMES);
                 }

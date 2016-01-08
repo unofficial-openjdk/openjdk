@@ -308,6 +308,12 @@ javax/sound/midi/Gervill/SoftProvider/GetDevice.java            generic-all
 
 ############################################################################
 
+# jdk_imageio
+
+javax/imageio/plugins/shared/WriteAfterAbort.java               generic-all
+
+############################################################################
+
 # jdk_swing
 
 ############################################################################
@@ -404,3 +410,10 @@ sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    generic-all
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 
 ############################################################################
+
+# jdk_other
+
+############################################################################
+
+# 8141370
+com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java			linux-i586,macosx-all

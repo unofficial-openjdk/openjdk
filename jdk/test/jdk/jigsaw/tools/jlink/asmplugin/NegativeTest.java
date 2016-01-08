@@ -34,21 +34,25 @@
  */
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.UncheckedIOException;
 import java.nio.ByteOrder;
-
+import java.util.Map;
+import java.util.Set;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.internal.plugins.asm.AsmGlobalPool;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
 
 public class NegativeTest extends AsmPluginTestBase {
     public static void main(String[] args) throws Exception {
@@ -68,31 +72,56 @@ public class NegativeTest extends AsmPluginTestBase {
     private void testUnknownPackage() throws Exception {
         AsmPlugin t = new AsmPlugin() {
             @Override
-            public void visit(AsmPools pools, StringTable strings) throws IOException {
-                AsmGlobalPool globalPool = pools.getGlobalPool();
-                AsmModulePool javabase = pools.getModulePool("java.base");
-                ClassReader cr = new ClassReader(NegativeTest.class.getResourceAsStream("NegativeTest.class"));
-                ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
-                cr.accept(new RenameClassVisitor(cw), ClassReader.EXPAND_FRAMES);
-                action(() -> globalPool.getTransformedClasses().addClass(cw),
-                        "Unknown package", IOException.class);
-                action(() -> javabase.getTransformedClasses().addClass(cw),
-                        "Unknown package", IOException.class);
+            public void visit(AsmPools pools) {
+                try {
+                    AsmGlobalPool globalPool = pools.getGlobalPool();
+                    AsmModulePool javabase = pools.getModulePool("java.base");
+                    ClassReader cr = new ClassReader(NegativeTest.class.getResourceAsStream("NegativeTest.class"));
+                    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
+                    cr.accept(new RenameClassVisitor(cw), ClassReader.EXPAND_FRAMES);
+                    action(() -> globalPool.getTransformedClasses().addClass(cw),
+                            "Unknown package", PluginException.class);
+                    action(() -> javabase.getTransformedClasses().addClass(cw),
+                            "Unknown package", PluginException.class);
 
-                ResourceFile newResFile = new ResourceFile("java/aaa/file", ByteBuffer.allocate(0));
-                action(() -> globalPool.getTransformedResourceFiles().addResourceFile(newResFile),
-                        "Unknown package", IOException.class);
-                action(() -> javabase.getTransformedResourceFiles().addResourceFile(newResFile),
-                        "Unknown package", IOException.class);
+                    ResourceFile newResFile = new ResourceFile("java/aaa/file", new byte[0]);
+                    action(() -> globalPool.getTransformedResourceFiles().addResourceFile(newResFile),
+                            "Unknown package", PluginException.class);
+                    action(() -> javabase.getTransformedResourceFiles().addResourceFile(newResFile),
+                            "Unknown package", PluginException.class);
 
-                action(() -> globalPool.getTransformedClasses().forgetClass("java/aaa/file"),
-                        "Unknown package", IOException.class);
-                action(() -> javabase.getTransformedClasses().forgetClass("java/aaa/file"),
-                        "Unknown package", IOException.class);
-                action(() -> globalPool.getTransformedResourceFiles().forgetResourceFile("java/aaa/file"),
-                        "Unknown package", IOException.class);
-                action(() -> javabase.getTransformedResourceFiles().forgetResourceFile("java/aaa/file"),
-                        "Unknown package", IOException.class);
+                    action(() -> globalPool.getTransformedClasses().forgetClass("java/aaa/file"),
+                            "Unknown package", PluginException.class);
+                    action(() -> javabase.getTransformedClasses().forgetClass("java/aaa/file"),
+                            "Unknown package", PluginException.class);
+                    action(() -> globalPool.getTransformedResourceFiles().forgetResourceFile("java/aaa/file"),
+                            "Unknown package", PluginException.class);
+                    action(() -> javabase.getTransformedResourceFiles().forgetResourceFile("java/aaa/file"),
+                            "Unknown package", PluginException.class);
+                } catch (IOException ex) {
+                   throw new UncheckedIOException(ex);
+                }
+            }
+
+
+            @Override
+            public Set<Plugin.PluginType> getType() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return "";
+            }
+
+            @Override
+            public PluginOption getOption() {
+                return null;
+            }
+
+            @Override
+            public void configure(Map<PluginOption, String> config) {
+
             }
 
             @Override
@@ -100,8 +129,7 @@ public class NegativeTest extends AsmPluginTestBase {
                 return null;
             }
         };
-        ResourcePool resources = new ResourcePoolImpl(ByteOrder.BIG_ENDIAN);
-        StringTable table = new StringTable() {
+        Pool resources = new PoolImpl(ByteOrder.BIG_ENDIAN, new StringTable() {
             @Override
             public int addString(String str) {
                 return -1;
@@ -111,8 +139,8 @@ public class NegativeTest extends AsmPluginTestBase {
             public String getString(int id) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
-        };
-        t.visit(getPool(), resources, table);
+        });
+        t.visit(getPool(), resources);
     }
 
     private static class RenameClassVisitor extends ClassVisitor {
@@ -130,7 +158,7 @@ public class NegativeTest extends AsmPluginTestBase {
     private void testNull() throws Exception {
         AsmPlugin t = new AsmPlugin() {
             @Override
-            public void visit(AsmPools pools, StringTable strings) throws IOException {
+            public void visit(AsmPools pools) {
                 action(() -> pools.getModulePool(null), "Module name is null", NullPointerException.class);
                 action(() -> pools.fillOutputResources(null), "Output resource is null", NullPointerException.class);
             }
@@ -139,9 +167,28 @@ public class NegativeTest extends AsmPluginTestBase {
             public String getName() {
                 return null;
             }
+
+            @Override
+            public Set<Plugin.PluginType> getType() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return "";
+            }
+
+            @Override
+            public PluginOption getOption() {
+                return null;
+            }
+
+            @Override
+            public void configure(Map<PluginOption, String> config) {
+
+            }
         };
-        ResourcePool resources = new ResourcePoolImpl(ByteOrder.BIG_ENDIAN);
-        StringTable table = new StringTable() {
+        Pool resources = new PoolImpl(ByteOrder.BIG_ENDIAN, new StringTable() {
             @Override
             public int addString(String str) {
                 return -1;
@@ -151,11 +198,10 @@ public class NegativeTest extends AsmPluginTestBase {
             public String getString(int id) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
-        };
-        action(() -> t.visit(null, resources, table), "Input resource is null", NullPointerException.class);
-        action(() -> t.visit(resources, null, table), "Output resource is null", NullPointerException.class);
-        action(() -> t.visit(resources, resources, null), "Table is null", NullPointerException.class);
-        t.visit(resources, resources, table);
+        });
+        action(() -> t.visit(null, resources), "Input resource is null", NullPointerException.class);
+        action(() -> t.visit(resources, null), "Output resource is null", NullPointerException.class);
+        t.visit(resources, resources);
     }
 
     private void action(Action action, String message, Class<? extends Exception> expected) {

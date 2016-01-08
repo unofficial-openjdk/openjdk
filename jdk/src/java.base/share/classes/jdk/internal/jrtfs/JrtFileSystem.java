@@ -36,12 +36,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReader.Node;
-import jdk.internal.jimage.UTF8String;
+
 
 /**
  * jrt file system implementation built on System jimage files.
@@ -119,7 +118,7 @@ class JrtFileSystem extends AbstractJrtFileSystem {
         Node node = checkNode(jrtPath);
         if (node.isLink()) {
             node = node.resolveLink();
-            return toJrtPath(node.getName().getBytesCopy());
+            return toJrtPath(getBytes(node.getName()));
         }
 
         return jrtPath;
@@ -197,7 +196,7 @@ class JrtFileSystem extends AbstractJrtFileSystem {
     private Node lookup(byte[] path) {
         Node node = null;
         try {
-            node = bootImage.findNode(path);
+            node = bootImage.findNode(getString(path));
         } catch (RuntimeException re) {
             throw new InvalidPathException(getString(path), re.toString());
         }
@@ -216,8 +215,8 @@ class JrtFileSystem extends AbstractJrtFileSystem {
                 if (node.isLink()) {
                     Node link = node.resolveLink(true);
                     // resolved symbolic path concatenated to the rest of the path
-                    UTF8String resPath = link.getName().concat(new UTF8String(path, i));
-                    byte[] resPathBytes = resPath.getBytesCopy();
+                    String resPath = link.getName() + getString(path).substring(i);
+                    byte[] resPathBytes = getBytes(resPath);
                     node = lookup(resPathBytes);
                     return node != null ? node : lookupSymbolic(resPathBytes);
                 }

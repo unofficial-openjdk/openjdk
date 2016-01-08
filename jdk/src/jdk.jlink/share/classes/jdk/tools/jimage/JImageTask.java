@@ -46,12 +46,12 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.tools.jlink.internal.ImageResourcesTree;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.TaskHelper;
-import jdk.tools.jlink.TaskHelper.BadArgs;
-import jdk.tools.jlink.TaskHelper.HiddenOption;
-import static jdk.tools.jlink.TaskHelper.JIMAGE_BUNDLE;
-import jdk.tools.jlink.TaskHelper.Option;
-import jdk.tools.jlink.TaskHelper.OptionsHelper;
+import jdk.tools.jlink.internal.TaskHelper;
+import jdk.tools.jlink.internal.TaskHelper.BadArgs;
+import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
+import static jdk.tools.jlink.internal.TaskHelper.JIMAGE_BUNDLE;
+import jdk.tools.jlink.internal.TaskHelper.Option;
+import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
 
 class JImageTask {
 
@@ -65,6 +65,9 @@ class JImageTask {
         new Option<JImageTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
+        new Option<JImageTask>(false, (task, opt, arg) -> {
+            task.options.xhelp = true;
+        }, "--xhelp"),
         new Option<JImageTask>(true, (task, opt, arg) -> {
             task.options.flags = arg;
         }, "--flags"),
@@ -85,6 +88,7 @@ class JImageTask {
         String directory = ".";
         boolean fullVersion;
         boolean help;
+        boolean xhelp;
         String flags;
         boolean verbose;
         boolean version;
@@ -162,13 +166,17 @@ class JImageTask {
                 }
             }
             if (options.help) {
-                optionsHelper.showHelp(PROGNAME, "recreate only options:", false);
+                optionsHelper.showHelp(PROGNAME);
+            }
+            if (options.xhelp) {
+                optionsHelper.showXHelp(PROGNAME, false);
+            }
+            if(optionsHelper.listPlugins()) {
+                optionsHelper.listPlugins(true);
+                return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
                 taskHelper.showVersion(options.fullVersion);
-            }
-            if(optionsHelper.listPlugins()) {
-                optionsHelper.showPlugins(log, false);
             }
             boolean ok = run();
             return ok ? EXIT_OK : EXIT_ERROR;
@@ -201,7 +209,8 @@ class JImageTask {
         Path jimage = options.jimages.get(0).toPath();
 
         if (jimage.toFile().createNewFile()) {
-            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.getPluginsConfig());
+            ImagePluginStack pc = ImagePluginConfiguration.parseConfiguration(taskHelper.
+                    getPluginsConfig(null, false));
             ExtractedImage img = new ExtractedImage(dirPath, pc, log, options.verbose);
             img.recreateJImage(jimage);
         } else {

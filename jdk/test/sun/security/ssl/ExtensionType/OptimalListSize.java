@@ -37,6 +37,6 @@ public class OptimalListSize {
     public static void main(String[] args) throws Throwable {
         OptimalCapacity.ofArrayList(
                 Class.forName("sun.security.ssl.ExtensionType"),
-                "knownExtensions", 14);
+                "knownExtensions", 15);
     }
 }

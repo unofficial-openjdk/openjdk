@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jdk.internal.jimage.ImageHeader;
 import jdk.internal.jimage.ImageStream;
-import jdk.internal.jimage.UTF8String;
+import jdk.internal.jimage.ImageStringsReader;
 
 public final class BasicImageWriter {
 
@@ -72,21 +72,17 @@ public final class BasicImageWriter {
     }
 
     public int addString(String string) {
-        return addString(new UTF8String(string));
-    }
-
-    public int addString(UTF8String string) {
         return strings.add(string);
     }
 
     public String getString(int offset) {
-        return strings.get(offset).toString();
+        return strings.get(offset);
     }
 
     public void addLocation(String fullname, long contentOffset,
             long compressedSize, long uncompressedSize) {
         ImageLocationWriter location =
-                ImageLocationWriter.newLocation(new UTF8String(fullname), strings,
+                ImageLocationWriter.newLocation(fullname, strings,
                         contentOffset, compressedSize, uncompressedSize);
         input.add(location);
         length++;
@@ -183,13 +179,13 @@ public final class BasicImageWriter {
         return allIndexStream.toArray();
     }
 
-    ImageLocationWriter find(UTF8String key) {
-        int index = redirect[(key.hashCode() & 0x7FFFFFFF) % length];
+    ImageLocationWriter find(String key) {
+        int index = redirect[ImageStringsReader.hashCode(key) % length];
 
         if (index < 0) {
             index = -index - 1;
         } else {
-            index = key.hashCode(index) % length;
+            index = ImageStringsReader.hashCode(key, index) % length;
         }
 
         return locations[index];

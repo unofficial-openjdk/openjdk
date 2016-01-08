@@ -84,7 +84,7 @@ class ImageBufferCache {
     static void releaseBuffer(ByteBuffer buffer) {
         ArrayList<ImageBufferCache> buffers = threadLocal.get();
 
-        if (buffers == null ) {
+        if (buffers == null) {
             return;
         }
 

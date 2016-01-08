@@ -420,7 +420,6 @@ mh.invokeExact(System.out, "Hello, world.");
  * @author John Rose, JSR 292 EG
  */
 public abstract class MethodHandle {
-    static { MethodHandleImpl.initStatics(); }
 
     /**
      * Internal marker interface which distinguishes (to the Java compiler)
@@ -938,7 +937,7 @@ assertEquals("[A, B, C]", (String) caToString2.invokeExact('A', "BC".toCharArray
         Class<?> arrayElement = arrayType.getComponentType();
         MethodType mtype = type();
         boolean match = true, fail = false;
-        for (int i = pos; i < arrayLength; i++) {
+        for (int i = pos; i < pos + arrayLength; i++) {
             Class<?> ptype = mtype.parameterType(i);
             if (ptype != arrayElement) {
                 match = false;

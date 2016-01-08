@@ -29,7 +29,7 @@
  */
 
 import java.security.AccessControlException;
-import jdk.tools.jlink.plugins.Jlink;
+import jdk.tools.jlink.Jlink;
 
 public class SecurityTest {
 

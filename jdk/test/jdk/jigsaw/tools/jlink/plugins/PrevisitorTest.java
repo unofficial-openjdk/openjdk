@@ -21,35 +21,36 @@
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test previsitor
  * @author Andrei Eremeev
  * @modules jdk.jlink/jdk.tools.jlink.internal
  * @run main/othervm PrevisitorTest
  */
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.Jlink;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePrevisitor;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.internal.ResourcePrevisitor;
+import jdk.tools.jlink.internal.StringTable;
+import jdk.tools.jlink.Jlink;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 public class PrevisitorTest {
 
@@ -57,38 +58,38 @@ public class PrevisitorTest {
         new PrevisitorTest().test();
     }
 
-    private static Jlink.StackedPluginConfiguration createConfig(String name, int index) {
-        return new Jlink.StackedPluginConfiguration(name, index, true, Collections.emptyMap());
+    private static Plugin createPlugin(String name) {
+        return Jlink.newPlugin(name, Collections.emptyMap(), null);
     }
 
     public void test() throws Exception {
-        CustomProvider provider = new CustomProvider("plugin");
-        ImagePluginProviderRepository.registerPluginProvider(provider);
-        List<Jlink.StackedPluginConfiguration> plugins = new ArrayList<>();
-        plugins.add(createConfig("plugin", 0));
+        CustomPlugin plugin = new CustomPlugin();
+        PluginRepository.registerPlugin(plugin);
+        List<Plugin> plugins = new ArrayList<>();
+        plugins.add(createPlugin(CustomPlugin.NAME));
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(new Jlink.PluginsConfiguration(plugins,
-                Collections.emptyList(), null));
-        ResourcePoolImpl inResources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res1.class", ByteBuffer.allocate(90)));
-        inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res2.class", ByteBuffer.allocate(90)));
-        inResources.addResource(new ResourcePool.Resource("/aaa/bbb/res3.class", ByteBuffer.allocate(90)));
-        inResources.addResource(new ResourcePool.Resource("/aaa/ddd/res1.class", ByteBuffer.allocate(90)));
-        inResources.addResource(new ResourcePool.Resource("/aaa/res1.class", ByteBuffer.allocate(90)));
-        CustomStringTable stringTable = new CustomStringTable();
-        ResourcePool outResources = stack.visitResources(inResources, stringTable);
-        Collection<String> input = inResources.getResources().stream()
+                null, null));
+        PoolImpl inResources = new PoolImpl(ByteOrder.nativeOrder(), new CustomStringTable());
+        inResources.add(Pool.newResource("/aaa/bbb/res1.class", new byte[90]));
+        inResources.add(Pool.newResource("/aaa/bbb/res2.class", new byte[90]));
+        inResources.add(Pool.newResource("/aaa/bbb/res3.class", new byte[90]));
+        inResources.add(Pool.newResource("/aaa/ddd/res1.class", new byte[90]));
+        inResources.add(Pool.newResource("/aaa/res1.class", new byte[90]));
+        Pool outResources = stack.visitResources(inResources);
+        Collection<String> input = inResources.getContent().stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
-        Collection<String> output = outResources.getResources().stream()
+        Collection<String> output = outResources.getContent().stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
         if (!input.equals(output)) {
-            throw new AssertionError("Input and output resources differ: input: " +
-                    input + ", output: " + output);
+            throw new AssertionError("Input and output resources differ: input: "
+                    + input + ", output: " + output);
         }
     }
 
     private static class CustomStringTable implements StringTable {
+
         private final List<String> strings = new ArrayList<>();
 
         @Override
@@ -107,23 +108,26 @@ public class PrevisitorTest {
         }
     }
 
-    private static class CustomPlugin implements ResourcePlugin, ResourcePrevisitor {
+    private static class CustomPlugin implements TransformerPlugin, ResourcePrevisitor {
+
+        private static String NAME = "plugin";
 
         private boolean isPrevisitCalled = false;
 
         @Override
-        public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
+        public void visit(Pool inResources, Pool outResources) {
             if (!isPrevisitCalled) {
                 throw new AssertionError("Previsit was not called");
             }
-            CustomStringTable table = (CustomStringTable) strings;
+            CustomStringTable table = (CustomStringTable)
+                    ((PoolImpl) inResources).getStringTable();
             if (table.size() == 0) {
                 throw new AssertionError("Table is empty");
             }
             Map<String, Integer> count = new HashMap<>();
             for (int i = 0; i < table.size(); ++i) {
                 String s = table.getString(i);
-                if (inResources.getResource(s) != null) {
+                if (inResources.get(s) != null) {
                     throw new AssertionError();
                 }
                 count.compute(s, (k, c) -> 1 + (c == null ? 0 : c));
@@ -133,20 +137,20 @@ public class PrevisitorTest {
                     throw new AssertionError("Expected one entry in the table, got: " + v + " for " + k);
                 }
             });
-            for (ResourcePool.Resource r : inResources.getResources()) {
-                outResources.addResource(r);
+            for (ModuleData r : inResources.getContent()) {
+                outResources.add(r);
             }
         }
 
         @Override
         public String getName() {
-            return "custom-plugin";
+            return NAME;
         }
 
         @Override
-        public void previsit(ResourcePool resources, StringTable strings) throws Exception {
+        public void previsit(Pool resources, StringTable strings) {
             isPrevisitCalled = true;
-            for (ResourcePool.Resource r : resources.getResources()) {
+            for (ModuleData r : resources.getContent()) {
                 String s = r.getPath();
                 int lastIndexOf = s.lastIndexOf('/');
                 if (lastIndexOf >= 0) {
@@ -154,40 +158,26 @@ public class PrevisitorTest {
                 }
             }
         }
-    }
 
-    public static class CustomProvider extends CmdResourcePluginProvider {
-
-        CustomProvider(String name) {
-            super(name, "");
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> options)
-                throws IOException {
-            CustomPlugin customPlugin = new CustomPlugin();
-            return new ResourcePlugin[]{customPlugin};
+        public String getDescription() {
+            return "";
         }
 
-
         @Override
-        public String getCategory() {
+        public PluginOption getOption() {
             return null;
         }
 
         @Override
-        public String getToolOption() {
-            return null;
-        }
-
-        @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
-            return null;
+        public void configure(Map<PluginOption, String> config) {
         }
     }
 }

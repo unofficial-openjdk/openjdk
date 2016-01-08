@@ -25,38 +25,71 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
  * Exclude resources plugin
  */
-final class ExcludePlugin implements ResourcePlugin {
+public final class ExcludePlugin implements TransformerPlugin {
 
-    private final Predicate<String> predicate;
+    public static final String NAME = "exclude-resources";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
 
-    ExcludePlugin(String[] patterns) throws IOException {
-        this(new ResourceFilter(patterns, true));
-    }
-
-    ExcludePlugin(Predicate<String> predicate) {
-        this.predicate = predicate;
-    }
+    private Predicate<String> predicate;
 
     @Override
     public String getName() {
-        return ExcludeProvider.NAME;
+        return NAME;
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources,
-            StringTable strings)
-            throws Exception {
-        inResources.visit((resource, order,  str) -> {
-            return predicate.test(resource.getPath()) ? resource : null;
-        }, outResources, strings);
+    public void visit(Pool in, Pool out) {
+        in.visit((resource) -> {
+            if (resource.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
+                resource = predicate.test(resource.getPath()) ? resource : null;
+            }
+            return resource;
+        }, out);
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.FILTER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        try {
+            String val = config.get(NAME_OPTION);
+            predicate = new ResourceFilter(Utils.listParser.apply(val), true);
+        } catch (IOException ex) {
+            throw new PluginException(ex);
+        }
     }
 }

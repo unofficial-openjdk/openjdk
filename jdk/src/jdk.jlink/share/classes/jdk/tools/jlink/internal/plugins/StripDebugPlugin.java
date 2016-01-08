@@ -24,35 +24,94 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.plugins.StringTable;
-import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
+import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  *
  * Strip debug attributes plugin
  */
-final class StripDebugPlugin extends AsmPlugin {
+public final class StripDebugPlugin implements TransformerPlugin {
+    private static final String[] PATTERNS = {"*.diz"};
+    public static final String NAME = "strip-debug";
+    public static final PluginOption NAME_OPTION =
+        new Builder(NAME)
+            .description(PluginsResourceBundle.getDescription(NAME))
+            .showHelp(true)
+            .build();
 
-    @Override
-    public String getName() {
-        return StripDebugProvider.NAME;
+    private final Predicate<String> predicate;
+    public StripDebugPlugin() {
+        try {
+            predicate = new ResourceFilter(PATTERNS);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     @Override
-    public void visit(AsmPools pools, StringTable strings) throws IOException {
-        pools.getGlobalPool().visitClassReaders((reader) -> {
-            ClassWriter writer = null;
-            if (reader.getClassName().contains("module-info")) {//eg: java.base/module-info
-                // XXX. Do we have debug info? Is Asm ready for module-info?
-            } else {
-                writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                reader.accept(writer, ClassReader.SKIP_DEBUG);
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
+    }
+
+    @Override
+    public void visit(Pool in, Pool out) {
+        //remove *.diz files as well as debug attributes.
+        in.visit((resource) -> {
+            ModuleData res = resource;
+            if (resource.getType().equals(ModuleDataType.CLASS_OR_RESOURCE)) {
+                String path = resource.getPath();
+                if (path.endsWith(".class")) {
+                    if (path.endsWith("module-info.class")) {
+                        // XXX. Do we have debug info? Is Asm ready for module-info?
+                    } else {
+                        ClassReader reader = new ClassReader(resource.getBytes());
+                        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                        reader.accept(writer, ClassReader.SKIP_DEBUG);
+                        byte[] content = writer.toByteArray();
+                        res = Pool.newResource(path, new ByteArrayInputStream(content), content.length);
+                    }
+                }
+            } else if (predicate.test(res.getPath())) {
+                res = null;
             }
-            return writer;
-        });
+            return res;
+        }, out);
     }
 }

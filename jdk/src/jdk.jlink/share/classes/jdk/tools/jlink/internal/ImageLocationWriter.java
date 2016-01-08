@@ -28,7 +28,7 @@ package jdk.tools.jlink.internal;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageLocationBase;
 import jdk.internal.jimage.ImageStream;
-import jdk.internal.jimage.UTF8String;
+import jdk.internal.jimage.ImageStringsReader;
 
 public final class ImageLocationWriter extends ImageLocationBase {
     private int locationOffset;
@@ -50,26 +50,26 @@ public final class ImageLocationWriter extends ImageLocationBase {
         return this;
     }
 
-    private ImageLocationWriter addAttribute(int kind, UTF8String value) {
+    private ImageLocationWriter addAttribute(int kind, String value) {
         return addAttribute(kind, strings.add(value));
     }
 
-    static ImageLocationWriter newLocation(UTF8String fullName,
+    static ImageLocationWriter newLocation(String fullName,
             ImageStringsWriter strings,
             long contentOffset, long compressedSize, long uncompressedSize) {
-        UTF8String moduleName = UTF8String.EMPTY_STRING;
-        UTF8String parentName = UTF8String.EMPTY_STRING;
-        UTF8String baseName;
-        UTF8String extensionName = UTF8String.EMPTY_STRING;
+        String moduleName = "";
+        String parentName = "";
+        String baseName;
+        String extensionName = "";
 
         int offset = fullName.indexOf('/', 1);
         if (fullName.length() >= 2 && fullName.charAt(0) == '/' && offset != -1) {
-            moduleName = fullName.substring(1, offset - 1);
+            moduleName = fullName.substring(1, offset);
             fullName = fullName.substring(offset + 1);
         }
 
         offset = fullName.lastIndexOf('/');
-        if (offset != -1) {
+        if (1 < offset) {
             parentName = fullName.substring(0, offset);
             fullName = fullName.substring(offset + 1);
         }
@@ -94,28 +94,28 @@ public final class ImageLocationWriter extends ImageLocationBase {
 
     @Override
     public int hashCode() {
-        return hashCode(UTF8String.HASH_MULTIPLIER);
+        return hashCode(ImageStringsReader.HASH_MULTIPLIER);
     }
 
     int hashCode(int seed) {
         int hash = seed;
 
         if (getModuleOffset() != 0) {
-            hash = UTF8String.SLASH_STRING.hashCode(hash);
-            hash = getModule().hashCode(hash);
-            hash = UTF8String.SLASH_STRING.hashCode(hash);
+            hash = ImageStringsReader.hashCode("/", hash);
+            hash = ImageStringsReader.hashCode(getModule(), hash);
+            hash = ImageStringsReader.hashCode("/", hash);
         }
 
         if (getParentOffset() != 0) {
-            hash = getParent().hashCode(hash);
-            hash = UTF8String.SLASH_STRING.hashCode(hash);
+            hash = ImageStringsReader.hashCode(getParent(), hash);
+            hash = ImageStringsReader.hashCode("/", hash);
         }
 
-        hash = getBase().hashCode(hash);
+        hash = ImageStringsReader.hashCode(getBase(), hash);
 
         if (getExtensionOffset() != 0) {
-            hash = UTF8String.DOT_STRING.hashCode(hash);
-            hash = getExtension().hashCode(hash);
+            hash = ImageStringsReader.hashCode(".", hash);
+            hash = ImageStringsReader.hashCode(getExtension(), hash);
         }
 
         return hash;

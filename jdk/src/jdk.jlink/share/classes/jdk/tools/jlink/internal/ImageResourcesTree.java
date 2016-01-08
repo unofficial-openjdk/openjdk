@@ -36,8 +36,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import jdk.internal.jimage.ImageModuleData;
-import jdk.internal.jimage.UTF8String;
 
 /**
  * A class to build a sorted tree of Resource paths as a tree of ImageLocation.
@@ -45,13 +43,8 @@ import jdk.internal.jimage.UTF8String;
  */
 // XXX Public only due to the JImageTask / JImageTask code duplication
 public final class ImageResourcesTree {
-
-    private static final String MODULES = "modules";
-    private static final String PACKAGES = "packages";
-    public static final String PACKAGES_STRING = UTF8String.PACKAGES_STRING.toString();
-
     public static boolean isTreeInfoResource(String path) {
-        return path.startsWith(PACKAGES_STRING) || path.startsWith(ImageModuleData.MODULES_STRING);
+        return path.startsWith("/packages") || path.startsWith("/modules");
     }
 
     /**
@@ -181,7 +174,7 @@ public final class ImageResourcesTree {
         }
 
         private void buildTree() {
-            modules = new Node(MODULES, root);
+            modules = new Node("modules", root);
             directAccess.put(modules.getPath(), modules);
 
             Map<String, Set<String>> moduleToPackage = new TreeMap<>();
@@ -248,7 +241,7 @@ public final class ImageResourcesTree {
                     }
                 }
             }
-            packages = new Node(PACKAGES, root);
+            packages = new Node("packages", root);
             directAccess.put(packages.getPath(), packages);
             // The subset of package nodes that have some content.
             // These packages exist only in a single module.
@@ -288,8 +281,8 @@ public final class ImageResourcesTree {
         }
 
         public String getModule(Node node) {
-            if (node.parent == null || node.getName().equals(MODULES)
-                    || node.getName().startsWith(PACKAGES)) {
+            if (node.parent == null || node.getName().equals("modules")
+                    || node.getName().startsWith("packages")) {
                 return null;
             }
             String path = removeRadical(node);
@@ -307,7 +300,7 @@ public final class ImageResourcesTree {
             if (node.parent == null) {
                 return null;
             }
-            String path = removeRadical(node.getPath(), "/" + MODULES + "/");
+            String path = removeRadical(node.getPath(), "/modules/");
             String module = getModule(node);
             if (path.equals(module)) {
                 return null;
@@ -317,7 +310,7 @@ public final class ImageResourcesTree {
         }
 
         public String removeRadical(Node node) {
-            return removeRadical(node.getPath(), "/" + MODULES);
+            return removeRadical(node.getPath(), "/modules");
         }
 
         private String removeRadical(String path, String str) {
@@ -376,7 +369,7 @@ public final class ImageResourcesTree {
             // Map used to associate Tree item with locations offset.
             Map<String, ImageLocationWriter> outLocations = new HashMap<>();
             for (ImageLocationWriter wr : writer.getLocations()) {
-                outLocations.put(wr.getFullNameString(), wr);
+                outLocations.put(wr.getFullName(), wr);
             }
             // Attach location to node
             for (Map.Entry<String, ImageLocationWriter> entry : outLocations.entrySet()) {

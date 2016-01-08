@@ -24,23 +24,58 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  *
  * Strip Native Commands plugin
  */
-final class StripNativeCommandsPlugin implements ImageFilePlugin {
+public final class StripNativeCommandsPlugin implements TransformerPlugin {
+
+    public static final String NAME = "strip-native-commands";
+
+    private static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).build();
 
     @Override
     public String getName() {
-        return StripNativeCommandsProvider.NAME;
+        return NAME;
     }
 
     @Override
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception {
-        inFiles.visit((file) -> file.getType() == ImageFilePool.ImageFile.ImageFileType.NATIVE_CMD ? null : file, outFiles);
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.FILTER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public void visit(Pool in, Pool out) {
+        in.visit((file) -> {
+            return file.getType() == Pool.ModuleDataType.NATIVE_CMD ? null : file;
+        }, out);
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
     }
 }

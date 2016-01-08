@@ -20,12 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.CmdResourcePluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+
 import tests.Helper;
 
 /*
@@ -35,7 +38,6 @@ import tests.Helper;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -45,43 +47,52 @@ import tests.Helper;
  */
 public class JLinkOptionsTest {
 
-    private static class TestProvider extends CmdResourcePluginProvider {
+    private static class TestPlugin implements TransformerPlugin {
 
-        private final String option;
-        private final Map<String, String> options;
+        private final PluginOption option;
+        private final List<PluginOption> options;
+        private final String name;
 
-        private TestProvider(String name, String option,
-                Map<String, String> options) {
-            super(name, "");
+        private TestPlugin(String name, PluginOption option,
+                List<PluginOption> options) {
+            this.name = name;
             this.option = option;
             this.options = options;
         }
 
         @Override
-        public ResourcePlugin[] newPlugins(String[] arguments,
-                Map<String, String> otherOptions) throws IOException {
-            return null;
-        }
-
-        @Override
-        public String getCategory() {
-            return null;
-        }
-
-        @Override
-        public String getToolArgument() {
-            return null;
-        }
-
-        @Override
-        public String getToolOption() {
-            return option;
-
-        }
-
-        @Override
-        public Map<String, String> getAdditionalOptions() {
+        public List<PluginOption> getAdditionalOptions() {
             return options;
+        }
+
+        @Override
+        public PluginOption getOption() {
+            return option;
+        }
+
+        @Override
+        public void visit(Pool in, Pool out) {
+
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getDescription() {
+            return name;
+        }
+
+        @Override
+        public void configure(Map<PluginOption, String> config) {
+
+        }
+
+        @Override
+        public Set<PluginType> getType() {
+            return null;
         }
     }
 
@@ -92,30 +103,33 @@ public class JLinkOptionsTest {
             return;
         }
         helper.generateDefaultModules();
+        String optionName = "test1";
+        PluginOption option = new PluginOption.Builder(optionName).build();
+        PluginOption option2 = new PluginOption.Builder("test2").build();
         {
             // multiple plugins with same option
-            String option = "test1";
-            ImagePluginProviderRepository.
-                    registerPluginProvider(new TestProvider("test1", option, null));
-            ImagePluginProviderRepository.
-                    registerPluginProvider(new TestProvider("test2", option, null));
+
+            PluginRepository.
+                    registerPlugin(new TestPlugin("test1", option, null));
+            PluginRepository.
+                    registerPlugin(new TestPlugin("test2", option, null));
             helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
-            ImagePluginProviderRepository.unregisterPluginProvider("test1");
-            ImagePluginProviderRepository.unregisterPluginProvider("test2");
+            PluginRepository.unregisterPlugin("test1");
+            PluginRepository.unregisterPlugin("test2");
         }
 
         {
             // option and optional options collision
-            Map<String, String> options = new HashMap<>();
-            options.put("test1", "");
-            ImagePluginProviderRepository.
-                    registerPluginProvider(new TestProvider("test1", "test1", null));
-            ImagePluginProviderRepository.
-                    registerPluginProvider(new TestProvider("test2", "test2", options));
+            List<PluginOption> options = new ArrayList<>();
+            options.add(option);
+            PluginRepository.
+                    registerPlugin(new TestPlugin("test1", option, null));
+            PluginRepository.
+                    registerPlugin(new TestPlugin("test2", option2, options));
 
             helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
-            ImagePluginProviderRepository.unregisterPluginProvider("test1");
-            ImagePluginProviderRepository.unregisterPluginProvider("test2");
+            PluginRepository.unregisterPlugin("test1");
+            PluginRepository.unregisterPlugin("test2");
         }
     }
 }

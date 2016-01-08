@@ -23,30 +23,68 @@
 package plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
-import jdk.tools.jlink.plugins.StringTable;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePool;
-import jdk.tools.jlink.plugins.ResourcePool.Resource;
 /**
- *
- * Strip debug attributes plugin
+ * Custom plugin
  */
-final class HelloPlugin implements ResourcePlugin {
+public final class HelloPlugin implements TransformerPlugin {
 
     private static final String OUTPUT_FILE = "customplugin.txt";
+    public static final String NAME = "hello";
+    private final static PluginOption NAME_OPTION
+            = new PluginOption.Builder(NAME).
+            description(NAME + "-description").build();
+
+    public static boolean called;
+
     @Override
-    public String getName() {
-        return HelloProvider.NAME;
+    public PluginOption getOption() {
+        return NAME_OPTION;
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings) throws Exception {
-        System.out.println("Hello!!!!!!!!!!");
-        File f = new File(OUTPUT_FILE);
-        f.createNewFile();
-        for (Resource res : inResources.getResources()) {
-            outResources.addResource(res);
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public void visit(Pool inResources, Pool outResources) {
+        try {
+            System.out.println("Hello!!!!!!!!!!");
+            File f = new File(OUTPUT_FILE);
+            f.createNewFile();
+            for (ModuleData res : inResources.getContent()) {
+                outResources.add(res);
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.TRANSFORMER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public String getDescription() {
+        return NAME + "-description";
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+
     }
 }

@@ -31,24 +31,19 @@
  */
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Properties;
-import java.util.Set;
-import jdk.tools.jlink.plugins.DefaultImageBuilder;
-import jdk.tools.jlink.internal.ImageFilePoolImpl;
-import jdk.tools.jlink.internal.ResourcePoolImpl;
+import java.util.Map;
+import jdk.tools.jlink.internal.PoolImpl;
+import jdk.tools.jlink.builder.DefaultImageBuilder;
+import jdk.tools.jlink.plugin.PluginOption;
 
-import jdk.tools.jlink.internal.plugins.FileCopierProvider;
-import jdk.tools.jlink.plugins.ImageBuilder;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
-import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
-import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleData;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
 
 public class FileCopierPluginTest {
 
@@ -64,7 +59,7 @@ public class FileCopierPluginTest {
      * @throws Exception
      */
     public void test() throws Exception {
-        FileCopierProvider prov = new FileCopierProvider();
+        FileCopierPlugin plug = new FileCopierPlugin();
         String content = "You \n should \n be \bthere.\n";
         String name = "sample.txt";
         File src = new File("src");
@@ -79,48 +74,37 @@ public class FileCopierPluginTest {
         String target = "target" + File.separator + name;
         Files.write(txt.toPath(), content.getBytes());
         File lic = new File(System.getProperty("java.home"), "LICENSE");
-        String[] args = new String[lic.exists() ? 4 : 3];
-        int i = 0;
+        StringBuilder builder = new StringBuilder();
+        int expected = lic.exists() ? 4 : 3;
         if (lic.exists()) {
-            args[i] = "LICENSE";
-            i += 1;
+            builder.append("LICENSE,");
         }
-        args[i++] = txt.getAbsolutePath();
-        args[i++] = txt.getAbsolutePath() + "=" + target;
-        args[i++] = src.getAbsolutePath() + "=src2";
+        builder.append(txt.getAbsolutePath()+",");
+        builder.append(txt.getAbsolutePath() + "=" + target+",");
+        builder.append(src.getAbsolutePath() + "=src2");
 
-        ImageFilePlugin plug = prov.newPlugins(args, null)[0];
-        ImageFilePool pool = new ImageFilePoolImpl();
-        plug.visit(new ImageFilePoolImpl(), pool);
-        if (pool.getFiles().size() != args.length) {
+        Map<PluginOption, String> conf = new HashMap<>();
+        conf.put(FileCopierPlugin.NAME_OPTION, builder.toString());
+        plug.configure(conf);
+        Pool pool = new PoolImpl();
+        plug.visit(new PoolImpl(), pool);
+        if (pool.getContent().size() != expected) {
             throw new AssertionError("Wrong number of added files");
         }
-        for (ImageFile f : pool.getFiles()) {
-            if (!f.getType().equals(ImageFile.ImageFileType.OTHER)) {
+        for (ModuleData f : pool.getContent()) {
+            if (!f.getType().equals(ModuleDataType.OTHER)) {
                 throw new AssertionError("Invalid type " + f.getType()
-                        + " for file " + f.getName());
+                        + " for file " + f.getPath());
             }
             if (f.stream() == null) {
-                throw new AssertionError("Null stream for file " + f.getName());
+                throw new AssertionError("Null stream for file " + f.getPath());
             }
 
         }
         Path root = new File(".").toPath();
-        DefaultImageBuilder builder = new DefaultImageBuilder(new HashMap<String, Object>(),
+        DefaultImageBuilder imgbuilder = new DefaultImageBuilder(false,
                 root);
-        builder.storeFiles(pool, Collections.EMPTY_LIST,
-                "", new ImageBuilder.ResourceRetriever() {
-
-                    @Override
-                    public ResourcePool.Resource retrieves(String path) throws IOException {
-                        return null;
-                    }
-
-                    @Override
-                    public Set<String> getModules() {
-                        return Collections.emptySet();
-                    }
-                });
+        imgbuilder.storeFiles(pool, "");
 
         if (lic.exists()) {
             File license = new File(root.toFile(), "LICENSE");

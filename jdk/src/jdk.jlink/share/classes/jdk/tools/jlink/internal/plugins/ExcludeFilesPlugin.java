@@ -25,36 +25,71 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.ImageFilePool;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.PluginOption.Builder;
+import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.Pool.ModuleDataType;
+import jdk.tools.jlink.internal.Utils;
 
 /**
  *
  * Exclude files plugin
  */
-final class ExcludeFilesPlugin implements ImageFilePlugin {
+public final class ExcludeFilesPlugin implements TransformerPlugin {
 
-    private final Predicate<String> predicate;
-
-    ExcludeFilesPlugin(String[] patterns) throws IOException {
-        this(new ResourceFilter(patterns, true));
-    }
-
-    ExcludeFilesPlugin(Predicate<String> predicate) {
-        this.predicate = predicate;
-    }
+    public static final String NAME = "exclude-files";
+    public static final PluginOption NAME_OPTION
+            = new Builder(NAME).
+            description(PluginsResourceBundle.getDescription(NAME)).
+            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
+    private Predicate<String> predicate;
 
     @Override
     public String getName() {
-        return ExcludeFilesProvider.NAME;
+        return NAME;
     }
 
     @Override
-    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
-            throws Exception {
-        inFiles.visit((file) -> {
-            return predicate.test("/" + file.getModule() + "/" + file.getPath()) ? file : null;
-        }, outFiles);
+    public void visit(Pool in, Pool out) {
+        in.visit((file) -> {
+            if (!file.getType().equals(ModuleDataType.CLASS_OR_RESOURCE)) {
+                file = predicate.test(file.getPath()) ? file : null;
+            }
+            return file;
+        }, out);
+    }
+
+    @Override
+    public PluginOption getOption() {
+        return NAME_OPTION;
+    }
+
+    @Override
+    public Set<PluginType> getType() {
+        Set<PluginType> set = new HashSet<>();
+        set.add(CATEGORY.FILTER);
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public String getDescription() {
+        return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public void configure(Map<PluginOption, String> config) {
+        try {
+            String value = config.get(NAME_OPTION);
+            predicate = new ResourceFilter(Utils.listParser.apply(value), true);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 }

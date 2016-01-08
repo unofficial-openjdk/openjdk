@@ -94,8 +94,8 @@ public class ProxyClassAccessTest {
                 .resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder, modules).bind();
 
         ClassLoader parent = this.getClass().getClassLoader();
-        ClassLoader loader = new ModuleClassLoader(parent, cf);
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), parent);
+        ClassLoader loader = layer.findLoader("m1");
         Class<?>[] interfaces = new Class<?>[] {
                 Class.forName("p.one.I", false, loader),
                 Class.forName("q.NP", false, loader)     // non-public interface in unnamed module

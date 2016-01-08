@@ -21,14 +21,13 @@
  * questions.
  */
 
-/*
+ /*
  * @test
  * @summary Test image creation
  * @author Jean-Francois Denise
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -36,10 +35,10 @@
  * @build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JLink2Test
  */
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Layer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -48,9 +47,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginOption;
 
-import jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import tests.Helper;
 import tests.JImageGenerator;
 import tests.JImageValidator;
@@ -60,15 +60,18 @@ public class JLink2Test {
     public static void main(String[] args) throws Exception {
         Helper helper = Helper.newHelper();
         if (helper == null) {
-           System.err.println("Test not run");
+            System.err.println("Test not run");
             return;
         }
         helper.generateDefaultModules();
 
-        testSameNames(helper);
+        // This test case must be first one, the JlinkTask is clean
+        // and reveals possible bug related to plugin options in defaults
+        // e. g.: --genbom
         testBomFile(helper);
-        testFileReplacement(helper);
+        testSameNames(helper);
         testModulePath(helper);
+        testOptions();
     }
 
     private static void testModulePath(Helper helper) throws IOException {
@@ -77,16 +80,16 @@ public class JLink2Test {
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(unknownDir)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NoSuchFileException: .*jar.image(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*jar.image(\n|\r|.)*");
         Files.createFile(jar);
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: java.nio.file.NotDirectoryException: .*bad.jar(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*bad.jar(\n|\r|.)*");
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar.getParent())
                 .option("--help")
-                .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+                .call().assertFailure("Error: Invalid modules in the plugins path: .*zip file is empty(\n|\r|.)*");
         try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
             JarEntry entry = new JarEntry("class");
             out.putNextEntry(entry);
@@ -99,7 +102,7 @@ public class JLink2Test {
                 .addJmods(helper.getStdJmodsDir())
                 .addJmods(jar.getParent())
                 .addMods("bad")
-                .call().assertFailure("Error: java.io.IOException: module-info not found for bad");
+                .call().assertFailure("Error: jdk.tools.jlink.plugin.PluginException: module-info not found for bad");
         try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
             JarEntry entry = new JarEntry("classes");
             out.putNextEntry(entry);
@@ -116,7 +119,7 @@ public class JLink2Test {
                 .addJmods(jar.getParent())
                 .addJars(helper.getStdJmodsDir())
                 .addMods("bad")
-                .call().assertFailure("Error: java.io.IOException: module-info not found for bad");
+                .call().assertFailure("Error: jdk.tools.jlink.plugin.PluginException: module-info not found for bad");
     }
 
     private static void testSameNames(Helper helper) throws Exception {
@@ -130,17 +133,20 @@ public class JLink2Test {
         okLocations.addAll(Helper.toLocation("amodule", Arrays.asList(jmodsClasses)));
         Path image = helper.generateDefaultImage(new String[0], "amodule").assertSuccess();
         JImageValidator validator = new JImageValidator("amodule", okLocations,
-                 image.toFile(), Collections.emptyList(), Collections.emptyList());
+                image.toFile(), Collections.emptyList(), Collections.emptyList());
         validator.validate();
     }
 
     private static void testBomFile(Helper helper) throws Exception {
-        File defaults = new File("embedded.properties");
-        Files.write(defaults.toPath(), ("jdk.jlink.defaults=--genbom --exclude-resources *.jcov,*/META-INF/*" +
-                " --addmods UNKNOWN\n").getBytes());
-        String[] userOptions = {"--zip",
-            "*",                "--strip-java-debug", "on",
-                "--configuration", defaults.getAbsolutePath()};
+        String[] userOptions = {
+            "--compress",
+            "2",
+            "--addmods",
+            "bomzip",
+            "--strip-debug",
+            "--genbom",
+            "--exclude-resources",
+            "*.jcov,*/META-INF/*"};
         String moduleName = "bomzip";
         helper.generateDefaultJModule(moduleName, "composite2");
         Path imgDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
@@ -150,68 +156,37 @@ public class JLink2Test {
             throw new RuntimeException(bom.getAbsolutePath() + " not generated");
         }
         String bomcontent = new String(Files.readAllBytes(bom.toPath()));
-        if (!bomcontent.contains("--strip-java-debug")
-                || !bomcontent.contains("--zip")
-                || !bomcontent.contains("*")
+        if (!bomcontent.contains("--strip-debug")
+                || !bomcontent.contains("--compress")
                 || !bomcontent.contains("--genbom")
-                || !bomcontent.contains("zip")
                 || !bomcontent.contains("--exclude-resources *.jcov,"
                         + "*/META-INF/*")
-                || !bomcontent.contains("--configuration")
-                || !bomcontent.contains(defaults.getAbsolutePath())
-                || !bomcontent.contains("--addmods UNKNOWN")) {
+                || !bomcontent.contains("--addmods bomzip")) {
             throw new Exception("Not expected content in " + bom);
         }
     }
 
-    private static void testFileReplacement(Helper helper) throws Exception {
-        // Replace jvm.cfg and jvm.hprof.txt with some content
-        // having an header to check against
-        String header = "# YOU SHOULD FIND ME\n";
-        File jvmcfg = new File(System.getProperty("java.home")
-                + File.separator + "lib" + File.separator + "jvm.cfg");
-        File jvmhprof = new File(System.getProperty("java.home")
-                + File.separator + "lib" + File.separator + "jvm.hprof.txt");
-        if (jvmcfg.exists() && jvmhprof.exists()) {
-            String cfgcontent = header + new String(Files.readAllBytes(jvmcfg.toPath()));
-            File cfgNewContent = File.createTempFile("jvmcfgtest", null);
-            cfgNewContent.deleteOnExit();
-            Files.write(cfgNewContent.toPath(), cfgcontent.getBytes());
-
-            String hprofcontent = header + new String(Files.readAllBytes(jvmhprof.toPath()));
-            File hprofNewContent = File.createTempFile("hproftest", null);
-            hprofNewContent.deleteOnExit();
-            Files.write(hprofNewContent.toPath(), hprofcontent.getBytes());
-
-            String[] userOptions = {"--replace-file",
-                "/java.base/native/jvm.cfg,"
-                + cfgNewContent.getAbsolutePath()
-                + ",/jdk.hprof.agent/native/jvm.hprof.txt,"
-                + hprofNewContent.getAbsolutePath()};
-            String moduleName = "jvmcfg";
-            helper.generateDefaultJModule(moduleName, "composite2", "jdk.hprof.agent");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
-            Path jvmcfg2 = imageDir.resolve("lib").resolve("jvm.cfg");
-            checkFile(header, jvmcfg2);
-
-            Path hprof2 = imageDir.resolve("lib").resolve("jvm.hprof.txt");
-            checkFile(header, hprof2);
-        } else {
-            System.err.println("Warning, jvm.cfg or jvm.hprof.txt files not found, "
-                    + "file replacement not checked");
+    private static void testOptions() throws Exception {
+        List<Plugin> builtInPlugins = new ArrayList<>();
+        builtInPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+        if(builtInPlugins.isEmpty()) {
+            throw new Exception("No builtin plugins");
+        }
+        List<String> options = new ArrayList<>();
+        for (Plugin p : builtInPlugins) {
+            if (p.getOption() == null) {
+                throw new Exception("Null option for " + p.getName());
+            }
+            if (options.contains(p.getOption().getName())) {
+                throw new Exception("Option " + p.getOption() + " used more than once");
+            }
+            options.add(p.getOption().getName());
+            for (PluginOption po : p.getAdditionalOptions()) {
+                if (options.contains(po.getName())) {
+                    throw new Exception("Option " + po.getName() + " used more than once");
+                }
+                options.add(po.getName());
+            }
         }
     }
-
-    private static void checkFile(String header, Path file) throws IOException {
-        if (!Files.exists(file)) {
-            throw new RuntimeException(file.toAbsolutePath() +" not generated");
-        }
-        String content = new String(Files.readAllBytes(file));
-        if (!content.startsWith(header)) {
-            throw new AssertionError("jvm.cfg not replaced with "
-                    + "expected content");
-        }
-    }
-
 }

@@ -24,28 +24,25 @@
  */
 
 module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
+    exports jdk.tools.jlink;
+    exports jdk.tools.jlink.plugin;
+    exports jdk.tools.jlink.builder;
 
     requires jdk.compiler;
     requires jdk.internal.opt;
     requires jdk.jdeps;
 
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    uses jdk.tools.jlink.plugins.ImageBuilderProvider;
+    uses jdk.tools.jlink.plugin.TransformerPlugin;
+    uses jdk.tools.jlink.plugin.PostProcessorPlugin;
 
-    provides jdk.tools.jlink.plugins.ImageBuilderProvider with jdk.tools.jlink.plugins.DefaultImageBuilderProvider;
-
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileCopierProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileReplacerProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StringSharingProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.InstalledModuleDescriptorProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripNativeCommandsProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.SortResourcesProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.OptimizationProvider;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.FileCopierPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludePlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.InstalledModuleDescriptorPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.StripNativeCommandsPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.SortResourcesPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.OptimizationPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludeVMPlugin;
 }
-

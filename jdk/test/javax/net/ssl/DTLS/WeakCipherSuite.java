@@ -28,7 +28,7 @@
  * @test
  * @bug 8043758
  * @summary Datagram Transport Layer Security (DTLS)
- * @modules java.base/sun.misc
+ * @modules java.base/sun.security.util
  * @build DTLSOverDatagram
  * @run main/othervm WeakCipherSuite TLS_DH_anon_WITH_AES_128_GCM_SHA256
  * @run main/othervm WeakCipherSuite SSL_DH_anon_WITH_DES_CBC_SHA

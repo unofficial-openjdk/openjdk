@@ -21,16 +21,21 @@
  * questions.
  */
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import jdk.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.tools.jlink.plugins.ImageFilePlugin;
-import jdk.tools.jlink.plugins.OnOffImageFilePluginProvider;
-import jdk.tools.jlink.plugins.OnOffResourcePluginProvider;
-import jdk.tools.jlink.plugins.PluginProvider;
-import jdk.tools.jlink.plugins.ResourcePlugin;
+import java.util.Set;
+import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.internal.PluginRepository;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 import tests.Helper;
 
 /*
@@ -40,7 +45,6 @@ import tests.Helper;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
@@ -48,91 +52,89 @@ import tests.Helper;
  * @build tests.*
  * @run main/othervm DefaultProviderTest
  */
-
 public class DefaultProviderTest {
 
-    private final static Map<String, String> additionalOptions;
+    private final static List<PluginOption> options;
+    private static final String NAME = "disable-toto";
+    private static final PluginOption NAME_OPTION
+            = new PluginOption.Builder(NAME).build();
+    private final static Map<PluginOption, Object> expectedOptions = new HashMap<>();
 
     static {
-        additionalOptions = new HashMap<>();
-        additionalOptions.put("option1", "value1");
-        additionalOptions.put("option2", "value2");
+        options = new ArrayList<>();
+        options.add(new PluginOption.Builder("option1").description("value1").build());
+        options.add(new PluginOption.Builder("option2").description("value2").build());
+
+        expectedOptions.put(new PluginOption.Builder("option1").
+                description("value1").build(), "value1");
+        expectedOptions.put(new PluginOption.Builder("option2").
+                description("value2").build(), "value2");
+
     }
 
-    private static class CustomProvider extends OnOffResourcePluginProvider {
+    private static class Custom implements TransformerPlugin {
+        private boolean enabled = true;
 
-        public CustomProvider() {
-            super(NAME, NAME);
+        @Override
+        public Set<PluginType> getType() {
+            Set<PluginType> set = new HashSet<>();
+            set.add(CATEGORY.TRANSFORMER);
+            return Collections.unmodifiableSet(set);
         }
 
         @Override
-        public ResourcePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
+        public PluginOption getOption() {
+            return NAME_OPTION;
+        }
+
+        @Override
+        public Set<STATE> getState() {
+             return enabled ? EnumSet.of(STATE.AUTO_ENABLED, STATE.FUNCTIONAL)
+                : EnumSet.of(STATE.DISABLED);
+        }
+
+        @Override
+        public List<PluginOption> getAdditionalOptions() {
+            return options;
+        }
+
+        @Override
+        public void visit(Pool in, Pool out) {
+            if (!enabled) {
+                throw new PluginException(NAME_OPTION + " was set");
+            }
             DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return null;
+            in.visit((Pool.ModuleData content) -> {
+                return content;
+            }, out);
         }
 
         @Override
-        public boolean isEnabledByDefault() {
-            return true;
-        }
-
-        @Override
-        public String getCategory() {
-            return PluginProvider.TRANSFORMER;
-        }
-
-        @Override
-        public String getToolOption() {
+        public String getName() {
             return NAME;
         }
 
         @Override
-        public Map<String, String> getAdditionalOptions() {
-            return additionalOptions;
-        }
-    }
-
-    private static class CustomProvider2 extends OnOffImageFilePluginProvider {
-        public CustomProvider2() {
-            super(NAME, NAME);
-        }
-
-        @Override
-        public ImageFilePlugin[] createPlugins(Map<String, String> otherOptions) throws IOException {
-            DefaultProviderTest.isNewPluginsCalled = true;
-            DefaultProviderTest.otherOptions = otherOptions;
-            return null;
-        }
-
-        @Override
-        public boolean isEnabledByDefault() {
-            return true;
-        }
-
-        @Override
-        public String getCategory() {
-            return PluginProvider.TRANSFORMER;
-        }
-
-        @Override
-        public String getToolOption() {
+        public String getDescription() {
             return NAME;
         }
 
         @Override
-        public Map<String, String> getAdditionalOptions() {
-            return additionalOptions;
+        public void configure(Map<PluginOption, String> config) {
+            if (config.containsKey(NAME_OPTION)) {
+                enabled = false;
+            } else {
+                DefaultProviderTest.receivedOptions = config;
+            }
         }
     }
-    private static final String NAME = "toto";
 
     private static boolean isNewPluginsCalled;
-    private static Map<String, String> otherOptions;
+    private static Map<PluginOption, String> receivedOptions;
 
     private static void reset() {
         isNewPluginsCalled = false;
-        otherOptions = null;
+        receivedOptions = null;
     }
 
     public static void main(String[] args) throws Exception {
@@ -142,12 +144,11 @@ public class DefaultProviderTest {
             return;
         }
         helper.generateDefaultModules();
-        test(helper, new CustomProvider());
-        test(helper, new CustomProvider2());
+        test(helper, new Custom());
     }
 
-    private static void test(Helper helper, PluginProvider provider) throws Exception {
-        ImagePluginProviderRepository.registerPluginProvider(provider);
+    private static void test(Helper helper, Plugin plugin) throws Exception {
+        PluginRepository.registerPlugin(plugin);
 
         {
             String[] userOptions = {};
@@ -166,22 +167,22 @@ public class DefaultProviderTest {
             if (!isNewPluginsCalled) {
                 throw new Exception("Should have been called");
             }
-            if (!otherOptions.equals(additionalOptions)) {
-                throw new Exception("Optional options are not expected one "
-                        + otherOptions);
+            if (!receivedOptions.equals(expectedOptions)) {
+                throw new Exception("Optional options " + receivedOptions + " are not expected one "
+                        + expectedOptions);
             }
-            System.err.println("OPTIONS " + otherOptions);
+            System.err.println("OPTIONS " + receivedOptions);
             reset();
         }
 
         {
-            String[] userOptions = {"--toto", "off", "--option1", "value1"};
+            String[] userOptions = {"--disable-toto", "--option1", "value1"};
             Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
             helper.checkImage(imageDir, "composite2", null, null);
             if (isNewPluginsCalled) {
                 throw new Exception("Should not have been called");
             }
-            if (otherOptions != null) {
+            if (receivedOptions != null) {
                 throw new Exception("Optional options are not expected");
             }
             reset();

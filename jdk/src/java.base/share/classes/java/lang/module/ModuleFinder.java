@@ -176,7 +176,7 @@ public interface ModuleFinder {
      * references using {@code second}.
      *
      * <p> The {@link #findAll() findAll} method of the resulting module finder
-     * will locates all modules located by the first module finder. It will
+     * will locate all modules located by the first module finder. It will
      * also locate all modules located by the second module finder that are not
      * located by the first module finder. </p>
      *

@@ -31,7 +31,7 @@ $(eval $(call SetupBuildLauncher, jimage,\
 ))
 
 $(eval $(call SetupBuildLauncher, jlink,\
-    MAIN_CLASS := jdk.tools.jlink.Main, \
+    MAIN_CLASS := jdk.tools.jlink.internal.Main, \
     CFLAGS := -DENABLE_ARG_FILES \
         -DEXPAND_CLASSPATH_WILDCARDS \
         -DNEVER_ACT_AS_SERVER_CLASS_MACHINE, \

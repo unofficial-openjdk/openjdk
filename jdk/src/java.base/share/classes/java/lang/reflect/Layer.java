@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jdk.internal.misc.Loader;
+import jdk.internal.misc.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
 import sun.security.util.SecurityConstants;
 
@@ -58,9 +60,10 @@ import sun.security.util.SecurityConstants;
  *                                 ModuleFinder.empty(),
  *                                 "myapp");
  *
- *     ClassLoader loader = new ModuleClassLoader(cf);
- *
- *     Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+ *     Layer layer
+ *         = Layer.createWithOneLoader(cf,
+ *                                     Layer.boot(),
+ *                                     ClassLoader.getSystemClassLoader());
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
@@ -69,6 +72,7 @@ import sun.security.util.SecurityConstants;
  * need to follow the convention in this package.
  *
  * @since 9
+ * @see Module#getLayer()
  */
 
 public final class Layer {
@@ -82,6 +86,7 @@ public final class Layer {
      */
     @FunctionalInterface
     public static interface ClassLoaderFinder {
+
         /**
          * Returns the class loader for the given module.
          *
@@ -90,9 +95,13 @@ public final class Layer {
          * Failure to do so will lead to unspecified behavior when creating
          * a Layer. </p>
          *
+         * @param  moduleName
+         *         The module name
+         *
          * @return The class loader for the given module
          */
         ClassLoader loaderForModule(String moduleName);
+
     }
 
 
@@ -156,18 +165,13 @@ public final class Layer {
      *
      * </ul>
      *
-     * <p> If there is a security manager then its {@code checkPermission}
-     * method if first called with a {@code RuntimePermission("getClassLoader")}
-     * permission to check that the caller is allowed to get access to the
-     * class loaders that the {@code ClassLoaderFinder} returns. </p>
-     *
      * @implNote Some of the failure reasons listed cannot be detected in
      * advance, hence it is possible for Layer.create to fail with some of the
      * modules in the configuration defined to the run-time.
      *
      * @param  cf
      *         The configuration to instantiate as a layer
-     * @param  parent
+     * @param  parentLayer
      *         The parent layer
      * @param  clf
      *         The {@code ClassLoaderFinder} to map modules to class loaders
@@ -181,26 +185,20 @@ public final class Layer {
      *         If creating the {@code Layer} fails for any of the reasons
      *         listed above
      * @throws SecurityException
-     *         If denied by the security manager
+     *         If {@code RuntimePermission("getClassLoader")} is denied by
+     *         the security manager
      */
-    public static Layer create(Configuration cf, Layer parent, ClassLoaderFinder clf) {
-        Objects.requireNonNull(cf);
-        Objects.requireNonNull(parent);
+    public static Layer create(Configuration cf,
+                               Layer parentLayer,
+                               ClassLoaderFinder clf)
+    {
+        checkConfiguration(cf, parentLayer);
         Objects.requireNonNull(clf);
-
-        // The configuration parent and the configuration for the parent layer
-        // must be the same
-        Optional<Configuration> oparent = cf.parent();
-        if (!oparent.isPresent() || oparent.get() != parent.configuration()) {
-            throw new IllegalArgumentException(
-                    "Parent of configuration != configuration of parent Layer");
-        }
 
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
         }
-
 
         // For now, no two modules in the boot Layer may contain the same
         // package so we use a simple check for the boot Layer to keep
@@ -212,12 +210,138 @@ public final class Layer {
         }
 
         try {
-            return new Layer(cf, parent, clf);
+            return new Layer(cf, parentLayer, clf);
         } catch (IllegalArgumentException iae) {
             // IAE is thrown by VM when defining the module fails
             throw new LayerInstantiationException(iae.getMessage());
         }
     }
+
+
+    /**
+     * Creates a {@code Layer} by defining the modules in the given {@code
+     * Configuration} to the Java virtual machine. Each module is defined to
+     * its own {@link ClassLoader} created by this method. The {@link
+     * ClassLoader#getParent() parent} of each class loader is the given
+     * parent class loader.
+     *
+     * <p> If there is a security manager then the class loaders created by
+     * this method will load classes and resources with privileges that are
+     * restricted by the calling context of this method. </p>
+     *
+     * @param  cf
+     *         The configuration to instantiate as a layer
+     * @param  parentLayer
+     *         The parent layer
+     * @param  parentLoader
+     *         The parent class loader for each of the class loaders created
+     *         by this method
+     *
+     * @return The newly created layer
+     *
+     * @throws IllegalArgumentException
+     *         If the parent of the given configuration is not the configuration
+     *         of the parent {@code Layer}
+     * @throws SecurityException
+     *         If {@code RuntimePermission("createClassLoader")} or
+     *         {@code RuntimePermission("getClassLoader")} is denied by
+     *         the security manager
+     *
+     * @see #findLoader
+     */
+    public static Layer createWithManyLoaders(Configuration cf,
+                                              Layer parentLayer,
+                                              ClassLoader parentLoader)
+    {
+        checkConfiguration(cf, parentLayer);
+        checkCreateClassLoaderPermission();
+
+        LoaderPool pool = new LoaderPool(cf, parentLayer, parentLoader);
+        return new Layer(cf, parentLayer, pool::loaderFor);
+    }
+
+
+    /**
+     * Creates a {@code Layer} by defining the modules in the given {@code
+     * Configuration} to the Java virtual machine. This method creates one
+     * class loader and defines all modules to that class loader.
+     *
+     * <p> Attempting to define all modules to the same class loader may fail
+     * for the following reasons:
+     *
+     * <ul>
+     *
+     *     <li> Overlapping packages: Two or more modules in the configuration
+     *          have the same package (exported or concealed). </li>
+     *
+     *     <li> Split delegation: The resulting class loader would need to
+     *          delegate to more than one class loader in order to load types
+     *          in a specific package. </li>
+     *
+     * </ul>
+     *
+     * <p> If there is a security manager then the class loader created by
+     * this method will load classes and resources with privileges that are
+     * restricted by the calling context of this method. </p>
+     *
+     * @param  cf
+     *         The configuration to instantiate as a layer
+     * @param  parentLayer
+     *         The parent layer
+     * @param  parentLoader
+     *         The parent class loader for the class loader created by this
+     *         method
+     *
+     * @return The newly created layer
+     *
+     * @throws IllegalArgumentException
+     *         If the parent of the given configuration is not the configuration
+     *         of the parent {@code Layer}
+     * @throws LayerInstantiationException
+     *         If all modules cannot be defined to the same class loader for any
+     *         of the reasons listed above
+     * @throws SecurityException
+     *         If {@code RuntimePermission("createClassLoader")} or
+     *         {@code RuntimePermission("getClassLoader")} is denied by
+     *         the security manager
+     *
+     * @see #findLoader
+     */
+    public static Layer createWithOneLoader(Configuration cf,
+                                            Layer parentLayer,
+                                            ClassLoader parentLoader)
+    {
+        checkConfiguration(cf, parentLayer);
+        checkCreateClassLoaderPermission();
+
+        Loader loader;
+        try {
+            loader = new Loader(cf.modules(), parentLoader)
+                .initRemotePackageMap(cf, parentLayer);
+        } catch (IllegalArgumentException e) {
+            throw new LayerInstantiationException(e.getMessage());
+        }
+        return new Layer(cf, parentLayer, mn -> loader);
+    }
+
+
+    private static void checkConfiguration(Configuration cf, Layer parentLayer) {
+        Objects.requireNonNull(cf);
+        Objects.requireNonNull(parentLayer);
+
+        Optional<Configuration> oparent = cf.parent();
+        if (!oparent.isPresent() || oparent.get() != parentLayer.configuration()) {
+            throw new IllegalArgumentException(
+                    "Parent of configuration != configuration of parent Layer");
+        }
+    }
+
+    private static void checkCreateClassLoaderPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkPermission(SecurityConstants.CREATE_CLASSLOADER_PERMISSION);
+    }
+
 
     /**
      * Checks a configuration for the boot Layer to ensure that no two modules

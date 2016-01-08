@@ -27,7 +27,7 @@ sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 
 ############################################################################
 
 # 8134916
-sun/text/resources/LocaleDataTest.java                                   generic-all
+sun/text/resources/LocaleDataTest.java                          generic-all
 
 ############################################################################
 
@@ -74,3 +74,4 @@ sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 javax/naming/module/basic.sh					generic-all
 
 ############################################################################
+

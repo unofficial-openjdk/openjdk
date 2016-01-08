@@ -36,7 +36,6 @@ import java.util.Set;
  *
  */
 public final class ImageModuleData {
-    public static final String MODULES_STRING = UTF8String.MODULES_STRING.toString();
     private final BasicImageReader reader;
     private static final int SIZE_OF_OFFSET = 4;
     public ImageModuleData(BasicImageReader reader) {
@@ -45,7 +44,7 @@ public final class ImageModuleData {
 
     public Set<String> allModuleNames() {
         Set<String> modules = new HashSet<>();
-        ImageLocation loc = reader.findLocation(MODULES_STRING);
+        ImageLocation loc = reader.findLocation("/modules");
         byte[] content = reader.getResource(loc);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(reader.getByteOrder());
@@ -54,7 +53,7 @@ public final class ImageModuleData {
         for (int i = 0; i < content.length / SIZE_OF_OFFSET; i++) {
             int offset = intBuffer.get(i);
             ImageLocation moduleLoc = reader.getLocation(offset);
-            String path = moduleLoc.getFullNameString();
+            String path = moduleLoc.getFullName();
             int index = path.lastIndexOf("/");
             String module = path.substring(index + 1);
             modules.add(module);
