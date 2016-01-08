@@ -212,13 +212,12 @@ SUPPORT_HEADLESS:=@SUPPORT_HEADLESS@
 
 # These are the libjvms that we want to build.
 # The java launcher uses the default.
-# The others can be selected by specifying -client -server -minimal1 -kernel -zero or -zeroshark
+# The others can be selected by specifying -client -server -minimal1 -zero or -zeroshark
 # on the java launcher command line.
 JVM_VARIANTS:=@JVM_VARIANTS@
 JVM_VARIANT_SERVER:=@JVM_VARIANT_SERVER@
 JVM_VARIANT_CLIENT:=@JVM_VARIANT_CLIENT@
 JVM_VARIANT_MINIMAL1:=@JVM_VARIANT_MINIMAL1@
-JVM_VARIANT_KERNEL:=@JVM_VARIANT_KERNEL@
 JVM_VARIANT_ZERO:=@JVM_VARIANT_ZERO@
 JVM_VARIANT_ZEROSHARK:=@JVM_VARIANT_ZEROSHARK@
 JVM_VARIANT_CORE:=@JVM_VARIANT_CORE@
@@ -282,6 +281,10 @@ SJAVAC_SERVER_DIR=$(MAKESUPPORT_OUTPUTDIR)/javacservers
 
 # Number of parallel jobs to use for compilation
 JOBS?=@JOBS@
+TEST_JOBS?=@TEST_JOBS@
+
+# Default make target
+DEFAULT_MAKE_TARGET:=@DEFAULT_MAKE_TARGET@
 
 FREETYPE_LIBS:=@FREETYPE_LIBS@
 FREETYPE_CFLAGS:=@FREETYPE_CFLAGS@
@@ -289,6 +292,8 @@ FREETYPE_BUNDLE_LIB_PATH=@FREETYPE_BUNDLE_LIB_PATH@
 CUPS_CFLAGS:=@CUPS_CFLAGS@
 ALSA_LIBS:=@ALSA_LIBS@
 ALSA_CFLAGS:=@ALSA_CFLAGS@
+LIBFFI_LIBS:=@LIBFFI_LIBS@
+LIBFFI_CFLAGS:=@LIBFFI_CFLAGS@
 
 PACKAGE_PATH=@PACKAGE_PATH@
 
@@ -309,10 +314,14 @@ MACOSX_VERSION_MIN=@MACOSX_VERSION_MIN@
 
 # Toolchain type: gcc, clang, solstudio, lxc, microsoft...
 TOOLCHAIN_TYPE:=@TOOLCHAIN_TYPE@
+TOOLCHAIN_VERSION := @TOOLCHAIN_VERSION@
 
 # Option used to tell the compiler whether to create 32- or 64-bit executables
 COMPILER_TARGET_BITS_FLAG:=@COMPILER_TARGET_BITS_FLAG@
 COMPILER_SUPPORTS_TARGET_BITS_FLAG=@COMPILER_SUPPORTS_TARGET_BITS_FLAG@
+
+# Option used to pass a command file to the compiler
+COMPILER_COMMAND_FILE_FLAG:=@COMPILER_COMMAND_FILE_FLAG@
 
 CC_OUT_OPTION:=@CC_OUT_OPTION@
 EXE_OUT_OPTION:=@EXE_OUT_OPTION@
@@ -341,7 +350,7 @@ WARNINGS_AS_ERRORS := @WARNINGS_AS_ERRORS@
 CFLAGS_CCACHE:=@CFLAGS_CCACHE@
 
 # Tools that potentially need to be cross compilation aware.
-CC:=@FIXPATH@ @CCACHE@ @CC@
+CC:=@FIXPATH@ @CCACHE@ @ICECC@ @CC@
 
 # CFLAGS used to compile the jdk native libraries (C-code)
 CFLAGS_JDKLIB:=@CFLAGS_JDKLIB@
@@ -351,7 +360,7 @@ CXXFLAGS_JDKLIB:=@CXXFLAGS_JDKLIB@
 CFLAGS_JDKEXE:=@CFLAGS_JDKEXE@
 CXXFLAGS_JDKEXE:=@CXXFLAGS_JDKEXE@
 
-CXX:=@FIXPATH@ @CCACHE@ @CXX@
+CXX:=@FIXPATH@ @CCACHE@ @ICECC@ @CXX@
 #CXXFLAGS:=@CXXFLAGS@
 
 CPP:=@FIXPATH@ @CPP@
@@ -394,9 +403,10 @@ LDFLAGS_TESTEXE:=@LDFLAGS_TESTEXE@
 
 # BUILD_CC/BUILD_LD is a compiler/linker that generates code that is runnable on the
 # build platform.
-BUILD_CC:=@FIXPATH@ @BUILD_CC@
-BUILD_CXX:=@FIXPATH@ @BUILD_CXX@
+BUILD_CC:=@FIXPATH@ @BUILD_ICECC@ @BUILD_CC@
+BUILD_CXX:=@FIXPATH@ @BUILD_ICECC@ @BUILD_CXX@
 BUILD_LD:=@FIXPATH@ @BUILD_LD@
+BUILD_LDCXX:=@FIXPATH@ @BUILD_LDCXX@
 BUILD_AS:=@FIXPATH@ @BUILD_AS@
 BUILD_AR:=@FIXPATH@ @BUILD_AR@
 BUILD_NM:=@FIXPATH@ @BUILD_NM@
@@ -430,6 +440,9 @@ ENABLE_DEBUG_SYMBOLS:=@ENABLE_DEBUG_SYMBOLS@
 CFLAGS_DEBUG_SYMBOLS:=@CFLAGS_DEBUG_SYMBOLS@
 CXXFLAGS_DEBUG_SYMBOLS:=@CXXFLAGS_DEBUG_SYMBOLS@
 ZIP_DEBUGINFO_FILES:=@ZIP_DEBUGINFO_FILES@
+NATIVE_DEBUG_SYMBOLS:=@NATIVE_DEBUG_SYMBOLS@
+DEBUG_BINARIES:=@DEBUG_BINARIES@
+STRIP_POLICY:=@STRIP_POLICY@
 
 #
 # Compress (or not) jars
@@ -438,6 +451,8 @@ COMPRESS_JARS=@COMPRESS_JARS@
 # Options to linker to specify the library name.
 # (Note absence of := assignment, because we do not want to evaluate the macro body here)
 SET_SHARED_LIBRARY_NAME=@SET_SHARED_LIBRARY_NAME@
+
+SHARED_LIBRARY_FLAGS=@SHARED_LIBRARY_FLAGS@
 
 # Set origin using the linker, ie use the relative path to the dependent library to find the dependees.
 # (Note absence of := assignment, because we do not want to evaluate the macro body here)
@@ -462,6 +477,7 @@ STRIPFLAGS:=@STRIPFLAGS@
 JAVA_FLAGS:=@JAVA_FLAGS@
 JAVA_FLAGS_BIG:=@JAVA_FLAGS_BIG@
 JAVA_FLAGS_SMALL:=@JAVA_FLAGS_SMALL@
+JAVA_FLAGS_JAVAC:=@JAVA_FLAGS_JAVAC@
 JAVA_TOOL_FLAGS_SMALL:=@JAVA_TOOL_FLAGS_SMALL@
 SJAVAC_SERVER_JAVA_FLAGS:=@SJAVAC_SERVER_JAVA_FLAGS@
 
@@ -478,13 +494,15 @@ SJAVAC_SERVER_JAVA_CMD:=@SJAVAC_SERVER_JAVA@
 # it possible to override only the *_CMD variables.
 JAVA=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_BIG) $(JAVA_FLAGS)
 JAVA_SMALL=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_SMALL) $(JAVA_FLAGS)
+JAVA_JAVAC=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_JAVAC) $(JAVA_FLAGS)
 JAVAC=@FIXPATH@ $(JAVAC_CMD)
 JAVAH=@FIXPATH@ $(JAVAH_CMD)
 JAR=@FIXPATH@ $(JAR_CMD)
 JARSIGNER=@FIXPATH@ $(JARSIGNER_CMD)
 # A specific java binary with specific options can be used to run
 # the long running background sjavac servers and other long running tasks.
-SJAVAC_SERVER_JAVA=@FIXPATH@ $(SJAVAC_SERVER_JAVA_CMD) $(SJAVAC_SERVER_JAVA_FLAGS)
+SJAVAC_SERVER_JAVA=@FIXPATH@ @FIXPATH_DETACH_FLAG@ $(SJAVAC_SERVER_JAVA_CMD) \
+    $(SJAVAC_SERVER_JAVA_FLAGS)
 
 # Hotspot sets this variable before reading the SPEC when compiling sa-jdi.jar. Avoid
 # overriding that value by using ?=.
@@ -677,9 +695,6 @@ PNG_CFLAGS:=@PNG_CFLAGS@
 #
 # Misc
 #
-
-# Name of Service Agent library
-SALIB_NAME=@SALIB_NAME@
 
 INCLUDE_SA=@INCLUDE_SA@
 

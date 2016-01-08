@@ -32,6 +32,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.security.BasicPermission;
 import java.util.Objects;
+//import jdk.internal.HotSpotIntrinsicCandidate;
 
 import sun.hotspot.parser.DiagnosticCommand;
 
@@ -170,6 +171,10 @@ public class WhiteBox {
   public native boolean shouldPrintAssembly(Executable method);
   public native int     deoptimizeFrames(boolean makeNotEntrant);
   public native void    deoptimizeAll();
+
+  // temporarily comment out until dependency can be fulfilled
+  //@HotSpotIntrinsicCandidate
+  public        void    deoptimize() {}
   public        boolean isMethodCompiled(Executable method) {
     return isMethodCompiled(method, false /*not osr*/);
   }
@@ -303,6 +308,8 @@ public class WhiteBox {
     return getMethodData0(method);
   }
   public native Object[] getCodeBlob(long addr);
+
+  public native void clearInlineCaches();
 
   // Intered strings
   public native boolean isInStringTable(String str);

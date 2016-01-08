@@ -33,6 +33,12 @@ include SetupJavaCompilers.gmk
 $(eval $(call IncludeCustomExtension, , common/Modules.gmk))
 
 ################################################################################
+# Some platforms don't have the serviceability agent
+ifeq ($(INCLUDE_SA), false)
+  MODULES_FILTER += jdk.hotspot.agent
+endif
+
+################################################################################
 # Module list macros
 
 # Use append so that the custom extension may add to this variable
