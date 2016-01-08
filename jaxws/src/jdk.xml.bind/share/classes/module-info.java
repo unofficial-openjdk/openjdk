@@ -46,8 +46,6 @@ module jdk.xml.bind {
         jdk.xml.ws;
     exports com.sun.tools.internal.xjc.api to
         jdk.xml.ws;
-    exports com.sun.tools.internal.xjc.api.util to
-        jdk.xml.ws;
     exports com.sun.tools.internal.xjc.reader to
         jdk.xml.ws;
     exports com.sun.tools.internal.xjc.reader.internalizer to

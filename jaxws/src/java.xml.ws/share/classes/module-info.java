@@ -35,6 +35,10 @@ module java.xml.ws {
     requires jdk.httpserver;
 
     uses javax.xml.ws.spi.Provider;
+    uses javax.xml.soap.MessageFactory;
+    uses javax.xml.soap.SAAJMetaFactory;
+    uses javax.xml.soap.SOAPConnectionFactory;
+    uses javax.xml.soap.SOAPFactory;
 
     exports javax.jws;
     exports javax.jws.soap;
