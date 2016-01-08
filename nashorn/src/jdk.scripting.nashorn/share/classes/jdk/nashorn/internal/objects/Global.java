@@ -47,10 +47,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import jdk.internal.dynalink.CallSiteDescriptor;
-import jdk.internal.dynalink.StandardOperation;
-import jdk.internal.dynalink.linker.GuardedInvocation;
-import jdk.internal.dynalink.linker.LinkRequest;
+import jdk.dynalink.CallSiteDescriptor;
+import jdk.dynalink.StandardOperation;
+import jdk.dynalink.linker.GuardedInvocation;
+import jdk.dynalink.linker.LinkRequest;
 import jdk.nashorn.api.scripting.ClassFilter;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.lookup.Lookup;
@@ -1106,8 +1106,6 @@ public final class Global extends Scope {
             return new NativeArray(ArrayData.allocate((Object[])obj), this);
         } else if (obj instanceof double[]) { // extension
             return new NativeArray(ArrayData.allocate((double[])obj), this);
-        } else if (obj instanceof long[]) {
-            return new NativeArray(ArrayData.allocate((long[])obj), this);
         } else if (obj instanceof int[]) {
             return new NativeArray(ArrayData.allocate((int[]) obj), this);
         } else if (obj instanceof ArrayData) {
@@ -1994,16 +1992,6 @@ public final class Global extends Scope {
     }
 
     /**
-     * Allocate a new long array.
-     *
-     * @param initial number values.
-     * @return the new array
-     */
-    public static NativeArray allocate(final long[] initial) {
-        return new NativeArray(ArrayData.allocate(initial));
-    }
-
-    /**
      * Allocate a new integer array.
      *
      * @param initial number values.
@@ -2291,7 +2279,6 @@ public final class Global extends Scope {
                     new Specialization[] {
                     new Specialization(GlobalFunctions.PARSEINT_Z),
                     new Specialization(GlobalFunctions.PARSEINT_I),
-                    new Specialization(GlobalFunctions.PARSEINT_J),
                     new Specialization(GlobalFunctions.PARSEINT_OI),
                     new Specialization(GlobalFunctions.PARSEINT_O) });
         this.parseFloat = ScriptFunction.createBuiltin("parseFloat", GlobalFunctions.PARSEFLOAT);

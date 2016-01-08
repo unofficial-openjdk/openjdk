@@ -32,7 +32,8 @@ import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
-import jdk.internal.dynalink.linker.support.TypeUtilities;
+import jdk.dynalink.linker.support.TypeUtilities;
+import jdk.nashorn.internal.runtime.JSType;
 
 /**
  * Implementation of {@link ArrayData} as soon as a double has been
@@ -178,13 +179,6 @@ final class NumberArrayData extends ContinuousArrayData implements NumericElemen
     }
 
     @Override
-    public ArrayData set(final int index, final long value, final boolean strict) {
-        array[index] = value;
-        setLength(Math.max(index + 1, length()));
-        return this;
-    }
-
-    @Override
     public ArrayData set(final int index, final double value, final boolean strict) {
         array[index] = value;
         setLength(Math.max(index + 1, length()));
@@ -213,7 +207,7 @@ final class NumberArrayData extends ContinuousArrayData implements NumericElemen
 
     @Override
     public MethodHandle getElementGetter(final Class<?> returnType, final int programPoint) {
-        if (returnType == int.class || returnType == long.class) {
+        if (returnType == int.class) {
             return null;
         }
         return getContinuousElementGetter(HAS_GET_ELEM, returnType, programPoint);
@@ -226,12 +220,7 @@ final class NumberArrayData extends ContinuousArrayData implements NumericElemen
 
     @Override
     public int getInt(final int index) {
-        return (int)array[index];
-    }
-
-    @Override
-    public long getLong(final int index) {
-        return (long)array[index];
+        return JSType.toInt32(array[index]);
     }
 
     @Override
