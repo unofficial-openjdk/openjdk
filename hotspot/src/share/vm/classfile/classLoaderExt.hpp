@@ -29,6 +29,8 @@
 #include "oops/instanceKlass.hpp"
 #include "runtime/handles.hpp"
 
+class ClassListParser;
+
 class ClassLoaderExt: public ClassLoader { // AllStatic
 public:
 
@@ -82,6 +84,10 @@ public:
     }
   }
   static void setup_search_paths() {}
+  static bool is_boot_classpath(int classpath_index) {
+   return true;
+ }
+  static Klass* load_one_class(ClassListParser* parser, TRAPS);
 };
 
 #endif // SHARE_VM_CLASSFILE_CLASSLOADEREXT_HPP

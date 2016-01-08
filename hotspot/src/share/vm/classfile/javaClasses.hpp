@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -261,7 +261,7 @@ class java_lang_Class : AllStatic {
   static int classRedefinedCount_offset;
 
   static GrowableArray<Klass*>* _fixup_mirror_list;
-  static GrowableArray<Klass*>* _fixup_jlrM_list;
+  static GrowableArray<Klass*>* _fixup_modulefield_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
@@ -277,7 +277,7 @@ class java_lang_Class : AllStatic {
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
 
-  static void fixup_jlrM(KlassHandle k, Handle module, TRAPS);
+  static void fixup_modulefield(KlassHandle k, Handle module);
 
   // Conversion
   static Klass* as_Klass(oop java_class);
@@ -332,11 +332,11 @@ class java_lang_Class : AllStatic {
     _fixup_mirror_list = v;
   }
 
-  static GrowableArray<Klass*>* fixup_jlrM_list() {
-    return _fixup_jlrM_list;
+  static GrowableArray<Klass*>* fixup_modulefield_list() {
+    return _fixup_modulefield_list;
   }
-  static void set_fixup_jlrM_list(GrowableArray<Klass*>* v) {
-    _fixup_jlrM_list = v;
+  static void set_fixup_modulefield_list(GrowableArray<Klass*>* v) {
+    _fixup_modulefield_list = v;
   }
 
   // Debugging
@@ -1261,6 +1261,8 @@ public:
 #define CALLSITECONTEXT_INJECTED_FIELDS(macro) \
   macro(java_lang_invoke_MethodHandleNatives_CallSiteContext, vmdependencies, intptr_signature, false)
 
+class DependencyContext;
+
 class java_lang_invoke_MethodHandleNatives_CallSiteContext : AllStatic {
   friend class JavaClasses;
 
@@ -1271,8 +1273,7 @@ private:
 
 public:
   // Accessors
-  static nmethodBucket* vmdependencies(oop context);
-  static void       set_vmdependencies(oop context, nmethodBucket* bucket);
+  static DependencyContext vmdependencies(oop context);
 
   // Testers
   static bool is_subclass(Klass* klass) {
@@ -1417,6 +1418,85 @@ class java_lang_StackTraceElement: AllStatic {
 };
 
 
+class Backtrace: AllStatic {
+ public:
+  // Helper backtrace functions to store bci|version together.
+  static int merge_bci_and_version(int bci, int version);
+  static int merge_mid_and_cpref(int mid, int cpref);
+  static int bci_at(unsigned int merged);
+  static int version_at(unsigned int merged);
+  static int mid_at(unsigned int merged);
+  static int cpref_at(unsigned int merged);
+  static int get_line_number(const methodHandle& method, int bci);
+  static Symbol* get_source_file_name(InstanceKlass* holder, int version);
+
+  // Debugging
+  friend class JavaClasses;
+};
+
+// Interface to java.lang.StackFrameInfo objects
+
+#define STACKFRAMEINFO_INJECTED_FIELDS(macro)                      \
+  macro(java_lang_StackFrameInfo, mid,     short_signature, false) \
+  macro(java_lang_StackFrameInfo, version, short_signature, false) \
+  macro(java_lang_StackFrameInfo, cpref,   short_signature, false)
+
+class java_lang_StackFrameInfo: AllStatic {
+private:
+  static int _declaringClass_offset;
+  static int _memberName_offset;
+  static int _bci_offset;
+  static int _methodName_offset;
+  static int _fileName_offset;
+  static int _lineNumber_offset;
+
+  static int _mid_offset;
+  static int _version_offset;
+  static int _cpref_offset;
+
+  static Method* get_method(Handle stackFrame, InstanceKlass* holder, TRAPS);
+  static Symbol* get_file_name(Handle stackFrame, InstanceKlass* holder);
+
+public:
+  // Setters
+  static void set_declaringClass(oop info, oop value);
+  static void set_method_and_bci(Handle stackFrame, const methodHandle& method, int bci);
+  static void set_bci(oop info, int value);
+
+  // set method info in an instance of StackFrameInfo
+  static void fill_methodInfo(Handle info, TRAPS);
+  static void set_methodName(oop info, oop value);
+  static void set_fileName(oop info, oop value);
+  static void set_lineNumber(oop info, int value);
+
+  // these injected fields are only used if -XX:-MemberNameInStackFrame set
+  static void set_mid(oop info, short value);
+  static void set_version(oop info, short value);
+  static void set_cpref(oop info, short value);
+
+  static void compute_offsets();
+
+  // Debugging
+  friend class JavaClasses;
+};
+
+class java_lang_LiveStackFrameInfo: AllStatic {
+ private:
+  static int _monitors_offset;
+  static int _locals_offset;
+  static int _operands_offset;
+
+ public:
+  static void set_monitors(oop info, oop value);
+  static void set_locals(oop info, oop value);
+  static void set_operands(oop info, oop value);
+
+  static void compute_offsets();
+
+  // Debugging
+  friend class JavaClasses;
+};
+
 // Interface to java.lang.AssertionStatusDirectives objects
 
 class java_lang_AssertionStatusDirectives: AllStatic {
@@ -1501,6 +1581,7 @@ class InjectedField {
   CLASSLOADER_INJECTED_FIELDS(macro)        \
   MEMBERNAME_INJECTED_FIELDS(macro)         \
   CALLSITECONTEXT_INJECTED_FIELDS(macro)    \
+  STACKFRAMEINFO_INJECTED_FIELDS(macro)     \
   MODULE_INJECTED_FIELDS(macro)
 
 // Interface to hard-coded offset checking

@@ -27,10 +27,12 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management
+ * @build jdk.test.lib.OutputAnalyzer jdk.test.lib.ProcessTools
  * @run main ModulesTest
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.ProcessTools;
 
 public class ModulesTest {
     public static void main(String[] args) throws Exception {

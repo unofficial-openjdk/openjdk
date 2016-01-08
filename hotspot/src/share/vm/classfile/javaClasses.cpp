@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "classfile/stringTable.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/debugInfo.hpp"
+#include "code/dependencyContext.hpp"
 #include "code/pcDesc.hpp"
 #include "interpreter/interpreter.hpp"
 #include "memory/oopFactory.hpp"
@@ -862,12 +863,12 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
 
     // Keep list of classes needing java.base module fixup.
     if (!ModuleEntryTable::javabase_defined()) {
-      if (fixup_jlrM_list() == NULL) {
+      if (fixup_modulefield_list() == NULL) {
         GrowableArray<Klass*>* list =
           new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(500, true);
-        set_fixup_jlrM_list(list);
+        set_fixup_modulefield_list(list);
       }
-      fixup_jlrM_list()->push(k());
+      fixup_modulefield_list()->push(k());
     }
   } else {
     if (fixup_mirror_list() == NULL) {
@@ -879,7 +880,7 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
   }
 }
 
-void java_lang_Class::fixup_jlrM(KlassHandle k, Handle module, TRAPS) {
+void java_lang_Class::fixup_modulefield(KlassHandle k, Handle module) {
   assert(_module_offset != 0, "must have been computed already");
   java_lang_Class::set_module(k->java_mirror(), module());
 }
@@ -955,9 +956,9 @@ oop java_lang_Class::module(oop java_class) {
   return java_class->obj_field(_module_offset);
 }
 
-void java_lang_Class::set_module(oop java_class, oop md) {
+void java_lang_Class::set_module(oop java_class, oop module) {
   assert(_module_offset != 0, "must be set");
-  java_class->obj_field_put(_module_offset, md);
+  java_class->obj_field_put(_module_offset, module);
 }
 
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
@@ -1552,41 +1553,9 @@ void java_lang_Throwable::print(Handle throwable, outputStream* st) {
 // After this many redefines, the stack trace is unreliable.
 const int MAX_VERSION = USHRT_MAX;
 
-// Helper backtrace functions to store bci|version together.
-static inline int merge_bci_and_version(int bci, int version) {
-  // only store u2 for version, checking for overflow.
-  if (version > USHRT_MAX || version < 0) version = MAX_VERSION;
-  assert((jushort)bci == bci, "bci should be short");
-  return build_int_from_shorts(version, bci);
-}
-
-static inline int bci_at(unsigned int merged) {
-  return extract_high_short_from_int(merged);
-}
-static inline int version_at(unsigned int merged) {
-  return extract_low_short_from_int(merged);
-}
-
 static inline bool version_matches(Method* method, int version) {
   assert(version < MAX_VERSION, "version is too big");
   return method != NULL && (method->constants()->version() == version);
-}
-
-static inline int get_line_number(Method* method, int bci) {
-  int line_number = 0;
-  if (method->is_native()) {
-    // Negative value different from -1 below, enabling Java code in
-    // class java.lang.StackTraceElement to distinguish "native" from
-    // "no LineNumberTable".  JDK tests for -2.
-    line_number = -2;
-  } else {
-    // Returns -1 if no LineNumberTable, and otherwise actual line number
-    line_number = method->line_number_from_bci(bci);
-    if (line_number == -1 && ShowHiddenFrames) {
-      line_number = bci + 1000000;
-    }
-  }
-  return line_number;
 }
 
 // This class provides a simple wrapper over the internal structure of
@@ -1710,7 +1679,7 @@ class BacktraceBuilder: public StackObj {
     }
 
     _methods->short_at_put(_index, method->orig_method_idnum());
-    _bcis->int_at_put(_index, merge_bci_and_version(bci, method->constants()->version()));
+    _bcis->int_at_put(_index, Backtrace::merge_bci_and_version(bci, method->constants()->version()));
     _cprefs->short_at_put(_index, method->name_index());
 
     // We need to save the mirrors in the backtrace to keep the class
@@ -1721,19 +1690,6 @@ class BacktraceBuilder: public StackObj {
   }
 
 };
-
-Symbol* get_source_file_name(InstanceKlass* holder, int version) {
-  // Find the specific ik version that contains this source_file_name_index
-  // via the previous versions list, but use the current version's
-  // constant pool to look it up.  The previous version's index has been
-  // merged for the current constant pool.
-  InstanceKlass* ik = holder->get_klass_version(version);
-  // This version has been cleaned up.
-  if (ik == NULL) return NULL;
-  int source_file_name_index = ik->source_file_name_index();
-  return (source_file_name_index == 0) ?
-      (Symbol*)NULL : holder->constants()->symbol_at(source_file_name_index);
-}
 
 // Print stack trace element to resource allocated buffer
 char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
@@ -1752,7 +1708,7 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
   buf_len += (int)strlen(method_name);
 
   char* source_file_name = NULL;
-  Symbol* source = get_source_file_name(holder, version);
+  Symbol* source = Backtrace::get_source_file_name(holder, version);
   if (source != NULL) {
     source_file_name = source->as_C_string();
     buf_len += (int)strlen(source_file_name);
@@ -1787,7 +1743,7 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
   if (!version_matches(method, version)) {
     strcat(buf, "Redefined)");
   } else {
-    int line_number = get_line_number(method, bci);
+    int line_number = Backtrace::get_line_number(method, bci);
     if (line_number == -2) {
       strcat(buf, "Native Method)");
     } else {
@@ -1856,8 +1812,8 @@ void java_lang_Throwable::print_stack_trace(oop throwable, outputStream* st) {
         // NULL mirror means end of stack trace
         if (mirror.is_null()) goto handle_cause;
         int method = methods->short_at(index);
-        int version = version_at(bcis->int_at(index));
-        int bci = bci_at(bcis->int_at(index));
+        int version = Backtrace::version_at(bcis->int_at(index));
+        int bci = Backtrace::bci_at(bcis->int_at(index));
         int cpref = cprefs->short_at(index);
         print_stack_element(st, mirror, method, version, bci, cpref);
       }
@@ -2144,8 +2100,8 @@ oop java_lang_Throwable::get_stack_trace_element(oop throwable, int index, TRAPS
   assert(methods != NULL && bcis != NULL && mirrors != NULL, "sanity check");
 
   int method = methods->short_at(chunk_index);
-  int version = version_at(bcis->int_at(chunk_index));
-  int bci = bci_at(bcis->int_at(chunk_index));
+  int version = Backtrace::version_at(bcis->int_at(chunk_index));
+  int bci = Backtrace::bci_at(bcis->int_at(chunk_index));
   int cpref = cprefs->short_at(chunk_index);
   Handle mirror(THREAD, mirrors->obj_at(chunk_index));
 
@@ -2168,6 +2124,7 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   }
 
   Handle element = ik->allocate_instance_handle(CHECK_0);
+
   // Fill in class name
   ResourceMark rm(THREAD);
   InstanceKlass* holder = InstanceKlass::cast(java_lang_Class::as_Klass(mirror()));
@@ -2187,11 +2144,11 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   // Fill in module name and version
   ModuleEntry* module = holder->module();
   if (module->is_named()) {
-    oop module_name = StringTable::intern(module->name()->as_utf8(), CHECK_0);
+    oop module_name = StringTable::intern(module->name(), CHECK_0);
     java_lang_StackTraceElement::set_moduleName(element(), module_name);
     oop module_version;
     if (module->version() != NULL) {
-      module_version = StringTable::intern(module->version()->as_utf8(), CHECK_0);
+      module_version = StringTable::intern(module->version(), CHECK_0);
     } else {
       module_version = NULL;
     }
@@ -2204,13 +2161,13 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
     java_lang_StackTraceElement::set_lineNumber(element(), -1);
   } else {
     // Fill in source file name and line number.
-    Symbol* source = get_source_file_name(holder, version);
+    Symbol* source = Backtrace::get_source_file_name(holder, version);
     if (ShowHiddenFrames && source == NULL)
       source = vmSymbols::unknown_class_name();
     oop filename = StringTable::intern(source, CHECK_0);
     java_lang_StackTraceElement::set_fileName(element(), filename);
 
-    int line_number = get_line_number(method, bci);
+    int line_number = Backtrace::get_line_number(method, bci);
     java_lang_StackTraceElement::set_lineNumber(element(), line_number);
   }
   return element();
@@ -2221,6 +2178,108 @@ oop java_lang_StackTraceElement::create(const methodHandle& method, int bci, TRA
   int method_id = method->orig_method_idnum();
   int cpref = method->name_index();
   return create(mirror, method_id, method->constants()->version(), bci, cpref, THREAD);
+}
+
+Method* java_lang_StackFrameInfo::get_method(Handle stackFrame, InstanceKlass* holder, TRAPS) {
+  if (MemberNameInStackFrame) {
+    Handle mname(THREAD, stackFrame->obj_field(_memberName_offset));
+    Method* method = (Method*)java_lang_invoke_MemberName::vmtarget(mname());
+    // we should expand MemberName::name when Throwable uses StackTrace
+    // MethodHandles::expand_MemberName(mname, MethodHandles::_suppress_defc|MethodHandles::_suppress_type, CHECK_NULL);
+    return method;
+  } else {
+    short mid       = stackFrame->short_field(_mid_offset);
+    short version   = stackFrame->short_field(_version_offset);
+    return holder->method_with_orig_idnum(mid, version);
+  }
+}
+
+Symbol* java_lang_StackFrameInfo::get_file_name(Handle stackFrame, InstanceKlass* holder) {
+  if (MemberNameInStackFrame) {
+    return holder->source_file_name();
+  } else {
+    short version = stackFrame->short_field(_version_offset);
+    return Backtrace::get_source_file_name(holder, version);
+  }
+}
+
+void java_lang_StackFrameInfo::set_method_and_bci(Handle stackFrame, const methodHandle& method, int bci) {
+  // set Method* or mid/cpref
+  if (MemberNameInStackFrame) {
+    oop mname = stackFrame->obj_field(_memberName_offset);
+    InstanceKlass* ik = method->method_holder();
+    CallInfo info(method(), ik);
+    MethodHandles::init_method_MemberName(mname, info);
+  } else {
+    int mid = method->orig_method_idnum();
+    int cpref = method->name_index();
+    assert((jushort)mid == mid,        "mid should be short");
+    assert((jushort)cpref == cpref,    "cpref should be short");
+    java_lang_StackFrameInfo::set_mid(stackFrame(),     (short)mid);
+    java_lang_StackFrameInfo::set_cpref(stackFrame(),   (short)cpref);
+  }
+  // set bci
+  java_lang_StackFrameInfo::set_bci(stackFrame(), bci);
+  // method may be redefined; store the version
+  int version = method->constants()->version();
+  assert((jushort)version == version, "version should be short");
+  java_lang_StackFrameInfo::set_version(stackFrame(), (short)version);
+}
+
+void java_lang_StackFrameInfo::fill_methodInfo(Handle stackFrame, TRAPS) {
+  ResourceMark rm(THREAD);
+  oop k = stackFrame->obj_field(_declaringClass_offset);
+  InstanceKlass* holder = InstanceKlass::cast(java_lang_Class::as_Klass(k));
+  Method* method = java_lang_StackFrameInfo::get_method(stackFrame, holder, CHECK);
+  int bci = stackFrame->int_field(_bci_offset);
+
+  // The method can be NULL if the requested class version is gone
+  Symbol* sym = (method != NULL) ? method->name() : NULL;
+  if (MemberNameInStackFrame) {
+    assert(sym != NULL, "MemberName must have method name");
+  } else {
+      // The method can be NULL if the requested class version is gone
+    if (sym == NULL) {
+      short cpref   = stackFrame->short_field(_cpref_offset);
+      sym = holder->constants()->symbol_at(cpref);
+    }
+  }
+
+  // set method name
+  oop methodname = StringTable::intern(sym, CHECK);
+  java_lang_StackFrameInfo::set_methodName(stackFrame(), methodname);
+
+  // set file name and line number
+  Symbol* source = get_file_name(stackFrame, holder);
+  if (source != NULL) {
+    oop filename = StringTable::intern(source, CHECK);
+    java_lang_StackFrameInfo::set_fileName(stackFrame(), filename);
+  }
+
+  // if the method has been redefined, the bci is no longer applicable
+  short version = stackFrame->short_field(_version_offset);
+  if (version_matches(method, version)) {
+    int line_number = Backtrace::get_line_number(method, bci);
+    java_lang_StackFrameInfo::set_lineNumber(stackFrame(), line_number);
+  }
+}
+
+void java_lang_StackFrameInfo::compute_offsets() {
+  Klass* k = SystemDictionary::StackFrameInfo_klass();
+  compute_offset(_declaringClass_offset, k, vmSymbols::declaringClass_name(),  vmSymbols::class_signature());
+  compute_offset(_memberName_offset,     k, vmSymbols::memberName_name(),  vmSymbols::object_signature());
+  compute_offset(_bci_offset,            k, vmSymbols::bci_name(),         vmSymbols::int_signature());
+  compute_offset(_methodName_offset,     k, vmSymbols::methodName_name(),  vmSymbols::string_signature());
+  compute_offset(_fileName_offset,       k, vmSymbols::fileName_name(),    vmSymbols::string_signature());
+  compute_offset(_lineNumber_offset,     k, vmSymbols::lineNumber_name(),  vmSymbols::int_signature());
+  STACKFRAMEINFO_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
+}
+
+void java_lang_LiveStackFrameInfo::compute_offsets() {
+  Klass* k = SystemDictionary::LiveStackFrameInfo_klass();
+  compute_offset(_monitors_offset,   k, vmSymbols::monitors_name(),    vmSymbols::object_array_signature());
+  compute_offset(_locals_offset,     k, vmSymbols::locals_name(),      vmSymbols::object_array_signature());
+  compute_offset(_operands_offset,   k, vmSymbols::operands_name(),    vmSymbols::object_array_signature());
 }
 
 void java_lang_reflect_AccessibleObject::compute_offsets() {
@@ -3358,14 +3417,11 @@ void java_lang_invoke_MethodHandleNatives_CallSiteContext::compute_offsets() {
   }
 }
 
-nmethodBucket* java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(oop call_site) {
+DependencyContext java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(oop call_site) {
   assert(java_lang_invoke_MethodHandleNatives_CallSiteContext::is_instance(call_site), "");
-  return (nmethodBucket*) (address) call_site->long_field(_vmdependencies_offset);
-}
-
-void java_lang_invoke_MethodHandleNatives_CallSiteContext::set_vmdependencies(oop call_site, nmethodBucket* context) {
-  assert(java_lang_invoke_MethodHandleNatives_CallSiteContext::is_instance(call_site), "");
-  call_site->long_field_put(_vmdependencies_offset, (jlong) (address) context);
+  intptr_t* vmdeps_addr = (intptr_t*)call_site->address_field_addr(_vmdependencies_offset);
+  DependencyContext dep_ctx(vmdeps_addr);
+  return dep_ctx;
 }
 
 // Support for java_security_AccessControlContext
@@ -3563,7 +3619,7 @@ int java_lang_Class::_component_mirror_offset;
 int java_lang_Class::_init_lock_offset;
 int java_lang_Class::_signers_offset;
 GrowableArray<Klass*>* java_lang_Class::_fixup_mirror_list = NULL;
-GrowableArray<Klass*>* java_lang_Class::_fixup_jlrM_list = NULL;
+GrowableArray<Klass*>* java_lang_Class::_fixup_modulefield_list = NULL;
 int java_lang_Throwable::backtrace_offset;
 int java_lang_Throwable::detailMessage_offset;
 int java_lang_Throwable::cause_offset;
@@ -3625,6 +3681,18 @@ int java_lang_StackTraceElement::fileName_offset;
 int java_lang_StackTraceElement::lineNumber_offset;
 int java_lang_StackTraceElement::moduleName_offset;
 int java_lang_StackTraceElement::moduleVersion_offset;
+int java_lang_StackFrameInfo::_declaringClass_offset;
+int java_lang_StackFrameInfo::_memberName_offset;
+int java_lang_StackFrameInfo::_bci_offset;
+int java_lang_StackFrameInfo::_methodName_offset;
+int java_lang_StackFrameInfo::_fileName_offset;
+int java_lang_StackFrameInfo::_lineNumber_offset;
+int java_lang_StackFrameInfo::_mid_offset;
+int java_lang_StackFrameInfo::_version_offset;
+int java_lang_StackFrameInfo::_cpref_offset;
+int java_lang_LiveStackFrameInfo::_monitors_offset;
+int java_lang_LiveStackFrameInfo::_locals_offset;
+int java_lang_LiveStackFrameInfo::_operands_offset;
 int java_lang_AssertionStatusDirectives::classes_offset;
 int java_lang_AssertionStatusDirectives::classEnabled_offset;
 int java_lang_AssertionStatusDirectives::packages_offset;
@@ -3662,6 +3730,50 @@ void java_lang_StackTraceElement::set_moduleVersion(oop element, oop value) {
   element->obj_field_put(moduleVersion_offset, value);
 }
 
+// Support for java_lang_StackFrameInfo
+void java_lang_StackFrameInfo::set_declaringClass(oop element, oop value) {
+  element->obj_field_put(_declaringClass_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_mid(oop element, short value) {
+  element->short_field_put(_mid_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_version(oop element, short value) {
+  element->short_field_put(_version_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_cpref(oop element, short value) {
+  element->short_field_put(_cpref_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_bci(oop element, int value) {
+  element->int_field_put(_bci_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_fileName(oop element, oop value) {
+  element->obj_field_put(_fileName_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_methodName(oop element, oop value) {
+  element->obj_field_put(_methodName_offset, value);
+}
+
+void java_lang_StackFrameInfo::set_lineNumber(oop element, int value) {
+  element->int_field_put(_lineNumber_offset, value);
+}
+
+void java_lang_LiveStackFrameInfo::set_monitors(oop element, oop value) {
+  element->obj_field_put(_monitors_offset, value);
+}
+
+void java_lang_LiveStackFrameInfo::set_locals(oop element, oop value) {
+  element->obj_field_put(_locals_offset, value);
+}
+
+void java_lang_LiveStackFrameInfo::set_operands(oop element, oop value) {
+  element->obj_field_put(_operands_offset, value);
+}
 
 // Support for java Assertions - java_lang_AssertionStatusDirectives.
 
@@ -3798,6 +3910,8 @@ void JavaClasses::compute_offsets() {
   sun_reflect_UnsafeStaticFieldAccessorImpl::compute_offsets();
   java_lang_reflect_Parameter::compute_offsets();
   java_lang_reflect_Module::compute_offsets();
+  java_lang_StackFrameInfo::compute_offsets();
+  java_lang_LiveStackFrameInfo::compute_offsets();
 
   // generated interpreter code wants to know about the offsets we just computed:
   AbstractAssembler::update_delayed_values();

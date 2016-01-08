@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_anonymous, Depen
   _metaspace(NULL), _unloading(false), _klasses(NULL),
   _modules(NULL), _packages(NULL),
   _claimed(0), _jmethod_ids(NULL), _handles(NULL), _deallocate_list(NULL),
-  _next(NULL), _dependencies(dependencies),
+  _next(NULL), _dependencies(dependencies), _shared_class_loader_id(-1),
   _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true,
                             Monitor::_safepoint_check_never)) {
     // empty
@@ -886,10 +886,10 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure,
   data = _head;
   while (data != NULL) {
     if (data->is_alive(is_alive_closure)) {
-      if (!data->packageTable_is_null()) {
+      if (data->packages_defined()) {
         data->packages()->purge_all_package_exports();
       }
-      if (!data->moduleTable_is_null()) {
+      if (data->modules_defined()) {
         data->modules()->purge_all_module_reads();
       }
       // clean metaspace

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -211,16 +211,9 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, 
   }
 
   entry->set_loader(loader_data);
+  entry->set_version(version);
+  entry->set_location(location);
 
-  if (version != NULL) {
-    entry->set_version(version);
-    version->increment_refcount();
-  }
-
-  if (location != NULL) {
-    entry->set_location(location);
-    location->increment_refcount();
-  }
   TRACE_INIT_MODULE_ID(entry);
 
   return entry;
@@ -298,7 +291,7 @@ void ModuleEntryTable::finalize_javabase(Handle jlrM_module, Symbol* version, Sy
   java_lang_reflect_Module::set_module_entry(jlrM_module(), jb_module);
 }
 
-void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
+void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle) {
   if (jlrM_handle.is_null()) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
@@ -315,18 +308,18 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle, TRAPS) {
   java_lang_Class::set_module(Universe::void_mirror(), jlrM_handle());
 
   // Do the fixups for classes that have already been created.
-  GrowableArray <Klass*>* list = java_lang_Class::fixup_jlrM_list();
+  GrowableArray <Klass*>* list = java_lang_Class::fixup_modulefield_list();
   int list_length = list->length();
   for (int i = 0; i < list_length; i++) {
     Klass* k = list->at(i);
     assert(k->is_klass(), "List should only hold classes");
-    EXCEPTION_MARK;
+    Thread* THREAD = Thread::current();
     KlassHandle kh(THREAD, k);
-    java_lang_Class::fixup_jlrM(kh, jlrM_handle, CATCH);
+    java_lang_Class::fixup_modulefield(kh, jlrM_handle);
   }
 
-  delete java_lang_Class::fixup_jlrM_list();
-  java_lang_Class::set_fixup_jlrM_list(NULL);
+  delete java_lang_Class::fixup_modulefield_list();
+  java_lang_Class::set_fixup_modulefield_list(NULL);
 }
 
 #ifndef PRODUCT
@@ -372,4 +365,28 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(loader() != NULL, "A module entry must be associated with a loader.");
+}
+
+void ModuleEntry::set_version(Symbol* version) {
+  if (_version != NULL) {
+    _version->decrement_refcount();
+  }
+
+  _version = version;
+
+  if (version != NULL) {
+    version->increment_refcount();
+  }
+}
+
+void ModuleEntry::set_location(Symbol* location) {
+  if (_location != NULL) {
+    _location->decrement_refcount();
+  }
+
+  _location = location;
+
+  if (location != NULL) {
+    location->increment_refcount();
+  }
 }

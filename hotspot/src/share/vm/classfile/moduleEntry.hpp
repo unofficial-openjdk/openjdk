@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,10 +88,10 @@ public:
   void               set_loader(ClassLoaderData* l) { _loader = l; }
 
   Symbol*            version() const                { return _version; }
-  void               set_version(Symbol* version)   { _version = version; }
+  void               set_version(Symbol* version);
 
   Symbol*            location() const               { return _location; }
-  void               set_location(Symbol* location) { _location = location; }
+  void               set_location(Symbol* location);
 
   bool               can_read(ModuleEntry* m) const;
   bool               has_reads() const;
@@ -203,7 +203,7 @@ public:
   static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
                                                                     (_javabase_module->jlrM_module() != NULL)); }
   static void finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location);
-  static void patch_javabase_entries(Handle jlrM_handle, TRAPS);
+  static void patch_javabase_entries(Handle jlrM_handle);
 
   void print() PRODUCT_RETURN;
   void verify();

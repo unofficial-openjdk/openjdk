@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,6 +198,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   // Support for walking class loader data objects
   ClassLoaderData* _next; /// Next loader_datas created
 
+  // CDS
+  int _shared_class_loader_id;
+
   // ReadOnly and ReadWrite metaspaces (static because only on the null
   // class loader for now).
   static Metaspace* _ro_metaspace;
@@ -311,9 +314,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   void record_dependency(Klass* to, TRAPS);
   void init_dependencies(TRAPS);
   PackageEntryTable* packages();
-  bool packageTable_is_null() { return (_packages == NULL); }
+  bool packages_defined() { return (_packages != NULL); }
   ModuleEntryTable* modules();
-  bool moduleTable_is_null() { return (_modules == NULL); }
+  bool modules_defined() { return (_modules != NULL); }
 
   void add_to_deallocate_list(Metadata* m);
 
@@ -326,6 +329,15 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   Metaspace* ro_metaspace();
   Metaspace* rw_metaspace();
   void initialize_shared_metaspaces();
+
+  int shared_class_loader_id() {
+    return _shared_class_loader_id;
+  }
+  void set_shared_class_loader_id(int id) {
+    assert(id >= 0, "sanity");
+    assert(_shared_class_loader_id <0, "cannot be assigned more than once");
+    _shared_class_loader_id = id;
+  }
 };
 
 // An iterator that distributes Klasses to parallel worker threads.

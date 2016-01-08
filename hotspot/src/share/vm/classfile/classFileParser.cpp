@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1694,7 +1694,7 @@ void ClassFileParser::parse_annotations(u1* buffer, int limit,
     if (id == AnnotationCollector::_unknown)  continue;
     coll->set_annotation(id);
 
-    if (id == AnnotationCollector::_sun_misc_Contended) {
+    if (id == AnnotationCollector::_jdk_internal_vm_annotation_Contended) {
       // @Contended can optionally specify the contention group.
       //
       // Contended group defines the equivalence class over the fields:
@@ -1768,10 +1768,10 @@ ClassFileParser::AnnotationCollector::annotation_index(ClassLoaderData* loader_d
     if (_location != _in_field)   break;  // only allow for fields
     if (!privileged)              break;  // only allow in privileged code
     return _field_Stable;
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(sun_misc_Contended_signature):
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_internal_vm_annotation_Contended_signature):
     if (_location != _in_field && _location != _in_class)          break;  // only allow for fields and classes
     if (!EnableContended || (RestrictContended && !privileged))    break;  // honor privileges
-    return _sun_misc_Contended;
+    return _jdk_internal_vm_annotation_Contended;
   default: break;
   }
   return AnnotationCollector::_unknown;
@@ -4151,13 +4151,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       this_klass->set_host_klass(host_klass());
     }
 
-    // After the majority of the set up for this_klass has occurred,
-    // set its PackageEntry.  Critical to be done after set_name
-    // and set_host_klass in order to handle anonymous classes
-    // properly.
-    oop cl = this_klass->is_anonymous() ? this_klass->host_klass()->class_loader() :
-                                          this_klass->class_loader();
-
+    // Set PackageEntry for this_klass
+    oop cl = this_klass->class_loader();
     Handle clh = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(cl));
     ClassLoaderData* cld = ClassLoaderData::class_loader_data_or_null(clh());
     this_klass->set_package(this_klass->name(), cld, CHECK_NULL);
@@ -4877,7 +4872,8 @@ void ClassFileParser::verify_legal_class_modifiers(jint flags, TRAPS) {
   if ((is_abstract && is_final) ||
       (is_interface && !is_abstract) ||
       (is_interface && major_gte_15 && (is_super || is_enum)) ||
-      (!is_interface && major_gte_15 && is_annotation) || is_module_info) {
+      (!is_interface && major_gte_15 && is_annotation) ||
+      is_module_info) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
       THREAD_AND_LOCATION,
@@ -5223,7 +5219,8 @@ int ClassFileParser::verify_legal_method_signature(Symbol* name, Symbol* signatu
 // method.  Because these names have been checked as special cases before
 // calling this method in verify_legal_method_name.
 //
-// This method is also called from jvm.cpp. Be careful about changing it.
+// This method is also called from the modular system APIs in modules.cpp
+// to verify the validity of module and package names.
 bool ClassFileParser::verify_unqualified_name(
     char* name, unsigned int length, int type) {
   jchar ch;

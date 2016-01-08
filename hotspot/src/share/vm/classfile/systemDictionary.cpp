@@ -324,6 +324,17 @@ Klass* SystemDictionary::resolve_super_or_fail(Symbol* child_name,
                                                  Handle protection_domain,
                                                  bool is_superclass,
                                                  TRAPS) {
+#if INCLUDE_CDS
+  if (DumpSharedSpaces) {
+    // Special processing for CDS dump time.
+    Klass* k = SystemDictionaryShared::dump_time_resolve_super_or_fail(child_name,
+        class_name, class_loader, protection_domain, is_superclass, CHECK_NULL);
+    if (k) {
+      return k;
+    }
+  }
+#endif // INCLUDE_CDS
+
   // Double-check, if child class is already loaded, just return super-class,interface
   // Don't add a placedholder if already loaded, i.e. already in system dictionary
   // Make sure there's a placeholder for the *child* before resolving.
@@ -1081,12 +1092,30 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
   //
   // Note: "name" is updated.
 
-  instanceKlassHandle k = ClassFileParser(st).parseClassFile(class_name,
-                                                             loader_data,
-                                                             protection_domain,
-                                                             parsed_name,
-                                                             verify,
-                                                             THREAD);
+  instanceKlassHandle k;
+
+#if INCLUDE_CDS
+  k = SystemDictionaryShared::lookup_from_stream(class_name,
+                                                 class_loader,
+                                                 protection_domain,
+                                                 st,
+                                                 verify,
+                                                 CHECK_NULL);
+#endif
+
+  if (k.not_null()) {
+    parsed_name = k->name();
+  } else {
+    if (st->buffer() == NULL) {
+      return NULL;
+    }
+    k = ClassFileParser(st).parseClassFile(class_name,
+                                           loader_data,
+                                           protection_domain,
+                                           parsed_name,
+                                           verify,
+                                           THREAD);
+  }
 
   const char* pkg = "java/";
   if (!HAS_PENDING_EXCEPTION &&
@@ -1190,6 +1219,81 @@ instanceKlassHandle SystemDictionary::load_shared_class(
   return instanceKlassHandle();
 }
 
+// Check if a shared class can be loaded by the specific classloader:
+//
+// NULL classloader:
+//   - Module class from boot jimage. ModuleEntry must be defined in the classloader.
+//   - Class from -Xbootclasspath/a. The class has no defined PackageEntry, or must
+//     be defined in an unnamed module.
+bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
+                                               instanceKlassHandle ik,
+                                               Handle class_loader, TRAPS) {
+  int path_index = ik->shared_classpath_index();
+  SharedClassPathEntry* ent =
+            (SharedClassPathEntry*)FileMapInfo::shared_classpath(path_index);
+  if (!Universe::is_module_initialized()) {
+    assert(ent->is_jrt(),
+           "Loading non-bootstrap classes before the module system is initialized");
+    assert(class_loader.is_null(), "sanity");
+    return true;
+  }
+  // Get the pkg_entry from the classloader
+  TempNewSymbol pkg_name = NULL;
+  PackageEntry* pkg_entry = NULL;
+  ModuleEntry* mod_entry = NULL;
+  int length;
+  ClassLoaderData* loader_data = class_loader_data(class_loader);
+  const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+  if (pkg_string != NULL) {
+    pkg_name = SymbolTable::new_symbol((const char*)pkg_string,
+                                       length, CHECK_(false));
+    if (loader_data != NULL) {
+      pkg_entry = loader_data->packages()->lookup_only(pkg_name);
+    }
+    if (pkg_entry != NULL) {
+      mod_entry = pkg_entry->module();
+    }
+  }
+
+  if (class_loader.is_null()) {
+    // The NULL classloader can load archived class originated from the
+    // bootmodules.jimage and the -Xbootclasspath/a. For class from the
+    // bootmodules.jimage, the PackageEntry/ModuleEntry must be defined
+    // by the NULL classloader.
+    if (mod_entry != NULL) {
+      // PackageEntry/ModuleEntry is found in the classloader. Check if the
+      // ModuleEntry's location agrees with the archived class' origination.
+      if (ent->is_jrt() && mod_entry->location()->starts_with("jrt:")) {
+        return true; // Module class from the boot jimage
+      }
+    }
+
+    // If the archived class is not from the jimage, the class can be loaded
+    // by the NULL classloader if
+    //
+    // 1. the class is from the unamed package
+    // 2. or, the class is not from a module defined in the NULL classloader
+    // 3. or, the class is from an unamed module
+    if (!ent->is_jrt() && ik->is_shared_boot_class()) {
+      // the class is from the -Xbootclasspath/a
+      if (pkg_string == NULL ||
+          pkg_entry == NULL ||
+          pkg_entry->in_unnamed_module()) {
+        assert(mod_entry == NULL ||
+               mod_entry == loader_data->modules()->unnamed_module(),
+               "the unnamed module is not defined in the classloader");
+        return true;
+      }
+    }
+    return false;
+  } else {
+    bool res = SystemDictionaryShared::is_shared_class_visible_for_classloader(
+              ik, class_loader, pkg_string, pkg_name,
+              pkg_entry, mod_entry, CHECK_(false));
+    return res;
+  }
+}
+
 instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
                                                         Handle class_loader,
                                                         Handle protection_domain, TRAPS) {
@@ -1197,7 +1301,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     instanceKlassHandle nh = instanceKlassHandle(); // null Handle
     Symbol* class_name = ik->name();
 
-    bool visible = SystemDictionaryShared::is_shared_class_visible_for_classloader(
+    bool visible = is_shared_class_visible(
                             class_name, ik, class_loader, CHECK_(nh));
     if (!visible) {
       return nh;
@@ -1209,8 +1313,13 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
 
     if (ik->super() != NULL) {
       Symbol*  cn = ik->super()->name();
-      resolve_super_or_fail(class_name, cn,
-                            class_loader, protection_domain, true, CHECK_(nh));
+      Klass *s = resolve_super_or_fail(class_name, cn,
+                                       class_loader, protection_domain, true, CHECK_(nh));
+      if (s != ik->super()) {
+        // The dynamically resolved super class is not the same as the one we used during dump time,
+        // so we cannot use ik.
+        return nh;
+      }
     }
 
     Array<Klass*>* interfaces = ik->local_interfaces();
@@ -1223,7 +1332,12 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
       // reinitialized yet (they will be once the interface classes
       // are loaded)
       Symbol*  name  = k->name();
-      resolve_super_or_fail(class_name, name, class_loader, protection_domain, false, CHECK_(nh));
+      Klass* i = resolve_super_or_fail(class_name, name, class_loader, protection_domain, false, CHECK_(nh));
+      if (k != i) {
+        // The dynamically resolved interface class is not the same as the one we used during dump time,
+        // so we cannot use ik.
+        return nh;
+      }
     }
 
     // Adjust methods to recover missing data.  They need addresses for
@@ -1342,10 +1456,8 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
     instanceKlassHandle k;
     {
 #if INCLUDE_CDS
-      if (!search_only_bootloader_append) {
-        PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
-        k = load_shared_class(class_name, class_loader, THREAD);
-      }
+      PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
+      k = load_shared_class(class_name, class_loader, THREAD);
 #endif
     }
 
@@ -2362,7 +2474,7 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
       // Check if have the compiled code.
       if (!m->has_compiled_code()) {
         THROW_MSG_(vmSymbols::java_lang_VirtualMachineError(),
-                   "out of space in CodeCache for method handle intrinsic", empty);
+                   "Out of space in CodeCache for method handle intrinsic", empty);
       }
     }
     // Now grab the lock.  We might have to throw away the new method,
