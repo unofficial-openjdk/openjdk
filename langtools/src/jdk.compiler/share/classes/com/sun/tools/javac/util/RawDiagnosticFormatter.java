@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.tools.javac.util;
 
 import java.util.Collection;
@@ -31,7 +32,7 @@ import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.api.DiagnosticFormatter.Configuration.*;
 import com.sun.tools.javac.api.Formattable;
-import com.sun.tools.javac.file.BaseFileObject;
+import com.sun.tools.javac.file.PathFileObject;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.AbstractDiagnosticFormatter.SimpleConfiguration;
 
@@ -123,8 +124,8 @@ public final class RawDiagnosticFormatter extends AbstractDiagnosticFormatter {
         } else if (arg instanceof JCExpression) {
             JCExpression tree = (JCExpression)arg;
             s = "@" + tree.getStartPosition();
-        } else if (arg instanceof BaseFileObject) {
-            s = ((BaseFileObject) arg).getShortName();
+        } else if (arg instanceof PathFileObject) {
+            s = ((PathFileObject) arg).getShortName();
         } else {
             s = super.formatArgument(diag, arg, null);
         }

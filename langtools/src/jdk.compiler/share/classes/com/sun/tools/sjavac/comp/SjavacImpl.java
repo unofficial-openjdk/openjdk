@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.tools.sjavac.comp;
 
 import java.io.IOException;
@@ -115,7 +116,11 @@ public class SjavacImpl implements Sjavac {
             // Clean up
             JavaFileManager fileManager = context.get(JavaFileManager.class);
             if (fileManager instanceof JavacFileManager) {
-                ((JavacFileManager) fileManager).close();
+                try {
+                    ((JavacFileManager) fileManager).close();
+                } catch (IOException e) {
+                    return RC_FATAL;
+                }
             }
             return result.exitCode;
 

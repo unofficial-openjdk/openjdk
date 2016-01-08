@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.tools.javac.comp;
 
 import com.sun.tools.javac.tree.*;
@@ -2037,7 +2038,7 @@ public class LambdaToMethod extends TreeTranslator {
                         };
                         break;
                     case CAPTURED_OUTER_THIS:
-                        Name name = names.fromString(new String(sym.flatName().toString() + names.dollarThis));
+                        Name name = names.fromString(new String(sym.flatName().toString().replace('.', '$') + names.dollarThis));
                         ret = new VarSymbol(SYNTHETIC | FINAL | PARAMETER, name, types.erasure(sym.type), translatedSym) {
                             @Override
                             public Symbol baseSymbol() {
