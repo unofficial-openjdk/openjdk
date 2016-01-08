@@ -142,6 +142,20 @@ public abstract class Directive implements ModuleElement.Directive {
         public String toString() {
             return "Provides[" + service + "," + impl + "]";
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof ProvidesDirective)) {
+                return false;
+            }
+            ProvidesDirective other = (ProvidesDirective)obj;
+            return service == other.service && impl == other.impl;
+        }
+
+        @Override
+        public int hashCode() {
+            return service.hashCode() * 31 + impl.hashCode() * 37;
+        }
     }
 
     /**
@@ -206,6 +220,20 @@ public abstract class Directive implements ModuleElement.Directive {
         @Override
         public String toString() {
             return "Uses[" + service + "]";
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof UsesDirective)) {
+                return false;
+            }
+            UsesDirective other = (UsesDirective)obj;
+            return service == other.service;
+        }
+
+        @Override
+        public int hashCode() {
+            return service.hashCode() * 31;
         }
     }
 }

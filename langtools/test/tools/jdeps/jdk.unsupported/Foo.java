@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,11 @@
  * questions.
  */
 
-// key: compiler.warn.diamond.redundant.args.1
-// options: -XDfind=diamond
+import sun.misc.Unsafe;
 
-class DiamondRedundantArgs1<X> {
-   DiamondRedundantArgs1<?> fs = new DiamondRedundantArgs1<String>();
+public class Foo {
+    public void run() {
+        Unsafe unsafe = Unsafe.getUnsafe();
+    }
+
 }

@@ -34,8 +34,6 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 public class DuplicateClassTest extends ModuleTestBase {
 
@@ -57,18 +55,18 @@ public class DuplicateClassTest extends ModuleTestBase {
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
-        List<String> log = tb.new JavacTask()
+        String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", base.toString())
                 .outdir(classes)
                 .files(findJavaFiles(base))
                 .run()
                 .writeAll()
-                .getOutputLines(ToolBox.OutputKind.DIRECT);
+                .getOutput(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("Impl.java:1:1: compiler.warn.package.in.other.module.1: m1",
-                                              "1 warning");
+        String expected = "";
+
         if (!log.equals(expected))
-            throw new Exception("expected output not found");
+            throw new Exception("expected output not found; output: " + log);
     }
 
 }

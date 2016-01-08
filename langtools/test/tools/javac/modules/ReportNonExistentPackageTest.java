@@ -22,56 +22,60 @@
  */
 
 /**
- * @test
- * @summary Verify modules can contain packages of the same name, unless these meet.
+ * @test 8144342
+ * @summary javac doesn't report errors if module exports non-existent package
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
  * @build ToolBox ModuleTestBase
- * @run main PackageMultipleModules
+ * @run main ReportNonExistentPackageTest
  */
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
-public class PackageMultipleModules extends ModuleTestBase {
-
+public class ReportNonExistentPackageTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
-        PackageMultipleModules t = new PackageMultipleModules();
+        ReportNonExistentPackageTest t = new ReportNonExistentPackageTest();
         t.runTests();
     }
 
     @Test
-    void testSimple(Path base) throws Exception {
-        Path m1 = base.resolve("m1");
-        Path m2 = base.resolve("m2");
-        tb.writeJavaFiles(m1,
-                          "module m1 {}",
-                          "package test; import test.B; public class A {}",
-                          "package test; public class A1 extends A {}");
-        tb.writeJavaFiles(m2,
-                          "module m2 {}",
-                          "package test; import test.A; public class B {}",
-                          "package test; public class B1 extends B {}");
+    void testExportUnknownPackage(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "module m { exports p1; }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
-        List<String> log = tb.new JavacTask()
-                .options("-XDrawDiagnostics", "-modulesourcepath", base.toString())
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
                 .outdir(classes)
-                .files(findJavaFiles(base))
+                .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
-                .getOutputLines(ToolBox.OutputKind.DIRECT);
-
-        List<String> expected = Arrays.asList("A.java:1:26: compiler.err.not.def.access.package.cant.access: test.B, test",
-                                              "B.java:1:26: compiler.err.not.def.access.package.cant.access: test.A, test",
-                                              "2 errors");
-        if (!log.equals(expected))
+                .getOutput(ToolBox.OutputKind.DIRECT);
+        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.doesnt.exists: p1"))
             throw new Exception("expected output not found");
     }
 
+    @Test
+    void testExportEmptyPackage(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { exports p1; }",
+                "package p1;");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.doesnt.exists: p1"))
+            throw new Exception("expected output not found");
+    }
 }

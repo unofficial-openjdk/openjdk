@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.lang.model.SourceVersion;
@@ -75,6 +76,7 @@ import com.sun.tools.javac.tree.JCTree.JCUses;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
@@ -84,8 +86,11 @@ import com.sun.tools.javac.util.Options;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
+
 import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.Tag;
+
+import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -241,6 +246,10 @@ public class Modules extends JCTree.Visitor {
                 log.error(toplevel.pos(), "too.many.modules");
             }
 
+            Env<AttrContext> provisionalEnv = new Env<>(decl, null);
+
+            provisionalEnv.toplevel = toplevel;
+            typeEnvs.put(sym, provisionalEnv);
         } else if (isModuleInfo) {
             if (multiModuleMode) {
                 JCTree tree = toplevel.defs.isEmpty() ? toplevel : toplevel.defs.head;
@@ -572,6 +581,9 @@ public class Modules extends JCTree.Visitor {
         private final ModuleSymbol msym;
         private final Env<AttrContext> env;
 
+        private final Set<Directive> allUses = new HashSet<>();
+        private final Set<Directive> allProvides = new HashSet<>();
+
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
             this.msym = msym;
             this.env = env;
@@ -587,6 +599,8 @@ public class Modules extends JCTree.Visitor {
             msym.directives = List.nil();
             msym.provides = List.nil();
             msym.uses = List.nil();
+            allUses.clear();
+            allProvides.clear();
             acceptAll(tree.directives);
             msym.directives = msym.directives.reverse();
             msym.provides = msym.provides.reverse();
@@ -599,16 +613,25 @@ public class Modules extends JCTree.Visitor {
         }
 
         public void visitExports(JCExports tree) {
+            if (tree.directive.packge.members().isEmpty()) {
+                log.error(tree.qualid.pos(), "package.empty.or.doesnt.exists", tree.directive.packge);
+            }
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
             Type it = attr.attribType(tree.implName, env, st);
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            ClassSymbol impl = (ClassSymbol) it.tsym;
+            if ((impl.flags() & ABSTRACT) != 0 || impl.isInner()) {
+                log.error(tree.implName.pos(), "bad.service.implementation", impl);
+            }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
-                ClassSymbol service = (ClassSymbol) st.tsym;
-                ClassSymbol impl = (ClassSymbol) it.tsym;
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+                if (!allProvides.add(d)) {
+                    log.error(tree.pos(), "duplicate.provides", d);
+                }
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
             }
@@ -623,6 +646,9 @@ public class Modules extends JCTree.Visitor {
             if (st.hasTag(CLASS)) {
                 ClassSymbol service = (ClassSymbol) st.tsym;
                 Directive.UsesDirective d = new Directive.UsesDirective(service);
+                if (!allUses.add(d)) {
+                    log.error(tree.pos(), "duplicate.uses", d);
+                }
                 msym.uses = msym.uses.prepend(d);
                 msym.directives = msym.directives.prepend(d);
             }
@@ -658,7 +684,7 @@ public class Modules extends JCTree.Visitor {
 
         msym.requires = msym.requires.appendList(List.from(addReads.getOrDefault(msym, Collections.emptySet())));
 
-        Set<ModuleSymbol> readable = new HashSet<>();
+        Set<ModuleSymbol> readable = new LinkedHashSet<>();
         Set<ModuleSymbol> requiresPublic = new HashSet<>();
         if ((msym.flags() & Flags.AUTOMATIC_MODULE) == 0) {
             for (RequiresDirective d: msym.requires) {
@@ -735,20 +761,45 @@ public class Modules extends JCTree.Visitor {
         msym.visiblePackages = new LinkedHashSet<>();
         msym.visiblePackages.add(syms.rootPackage);
 
+        Map<Name, ModuleSymbol> seen = new HashMap<>();
+
         for (ModuleSymbol rm : readable) {
             if (rm == syms.unnamedModule)
                 continue;
-            addVisiblePackages(msym, rm.exports);
+            addVisiblePackages(msym, seen, rm, rm.exports);
         }
 
-        for (Set<ExportsDirective> exports: addExports.values())
-            addVisiblePackages(msym, exports);
+        for (Entry<ModuleSymbol, Set<ExportsDirective>> addExportsEntry : addExports.entrySet())
+            addVisiblePackages(msym, seen, addExportsEntry.getKey(), addExportsEntry.getValue());
     }
 
-    private void addVisiblePackages(ModuleSymbol msym, Collection<ExportsDirective> directives) {
-        for (ExportsDirective d: directives) {
-            if (d.modules == null || d.modules.contains(msym))
+    private void addVisiblePackages(ModuleSymbol msym,
+                                    Map<Name, ModuleSymbol> seenPackages,
+                                    ModuleSymbol exportsFrom,
+                                    Collection<ExportsDirective> exports) {
+        for (ExportsDirective d : exports) {
+            if (d.modules == null || d.modules.contains(msym)) {
+                Name packageName = d.packge.fullname;
+                ModuleSymbol previousModule = seenPackages.get(packageName);
+
+                if (previousModule != null && previousModule != exportsFrom) {
+                    Env<AttrContext> env = typeEnvs.get(msym);
+                    JavaFileObject origSource = env != null ? log.useSource(env.toplevel.sourcefile)
+                                                            : null;
+                    DiagnosticPosition pos = env != null ? env.tree.pos() : null;
+                    try {
+                        log.error(pos, "package.clash.from.requires", msym, packageName,
+                                                                      previousModule, exportsFrom);
+                    } finally {
+                        if (env != null)
+                            log.useSource(origSource);
+                    }
+                    continue;
+                }
+
+                seenPackages.put(packageName, exportsFrom);
                 msym.visiblePackages.add(d.packge);
+            }
         }
     }
 

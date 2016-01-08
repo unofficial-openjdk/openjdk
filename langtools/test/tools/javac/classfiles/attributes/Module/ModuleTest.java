@@ -67,6 +67,10 @@ public class ModuleTest extends ModuleTestBase {
                 .exports("pack2")
                 .exports("pack3")
                 .write(base);
+        tb.writeJavaFiles(base,
+                "package pack; public class A {}",
+                "package pack2; public class B {}",
+                "package pack3; public class C {}");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }
@@ -76,6 +80,7 @@ public class ModuleTest extends ModuleTestBase {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exportsTo("pack", "jdk.compiler")
                 .write(base);
+        tb.writeJavaFiles(base, "package pack; public class A {}");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }
@@ -87,6 +92,10 @@ public class ModuleTest extends ModuleTestBase {
                 .exportsTo("pack2", "java.xml")
                 .exportsTo("pack3", "jdk.compiler")
                 .write(base);
+        tb.writeJavaFiles(base,
+                "package pack; public class A {}",
+                "package pack2; public class B {}",
+                "package pack3; public class C {}");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }
@@ -187,6 +196,9 @@ public class ModuleTest extends ModuleTestBase {
                 .write(base);
         tb.writeJavaFiles(base, "package pack1; public class C extends java.util.ArrayList{}",
                 "package pack2; public class D extends java.util.ArrayList{}");
+        tb.writeJavaFiles(base,
+                "package packTo1; public class T1 {}",
+                "package packTo2; public class T2 {}");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }

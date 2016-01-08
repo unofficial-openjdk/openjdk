@@ -25,6 +25,9 @@
 
 package com.sun.tools.javac.comp;
 
+import java.util.Optional;
+import java.util.Set;
+
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileManager;
 
@@ -326,17 +329,16 @@ public class Enter extends JCTree.Visitor {
                 tree.packge = tree.modle.unnamedPackage;
             }
 
-            List<ModuleSymbol> modulesWithPackage = syms.listPackageModules(tree.packge.fullname)
-                                                        .stream()
-                                                        .filter(m -> m != tree.modle)
-                                                        .reduce(List.nil(), (l, m) -> l.prepend(m), (l1, l2) -> l1.prependList(l2));
+            Set<PackageSymbol> visiblePackages = tree.modle.visiblePackages;
+            Optional<ModuleSymbol> dependencyWithPackage =
+                syms.listPackageModules(tree.packge.fullname)
+                    .stream()
+                    .filter(m -> m != tree.modle)
+                    .filter(cand -> visiblePackages.contains(syms.getPackage(cand, tree.packge.fullname)))
+                    .findAny();
 
-            if (modulesWithPackage.nonEmpty()) {
-                if (modulesWithPackage.size() == 1) {
-                    log.warning(pd, "package.in.other.module.1", modulesWithPackage.head);
-                } else {
-                    log.warning(pd, "package.in.other.module", modulesWithPackage);
-                }
+            if (dependencyWithPackage.isPresent()) {
+                log.error(pd, "package.in.other.module", dependencyWithPackage.get());
             }
 
             tree.packge.complete(); // Find all classes in package.
