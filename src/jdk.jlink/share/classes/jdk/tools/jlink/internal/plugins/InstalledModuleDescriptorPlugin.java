@@ -24,6 +24,10 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.ModuleDescriptor.*;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
@@ -31,20 +35,22 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jdk.internal.module.Checks;
+import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
-import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.plugin.Pool;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  * Jlink plugin to reconstitute module descriptors for installed modules.
@@ -53,16 +59,12 @@ import jdk.tools.jlink.plugin.PluginOption;
  * This plugin will override jdk.internal.module.InstalledModules class
  *
  * This plugin is enabled by default. This can be disabled via
- * jlink --gen-installed-modules off option.
- *
- * TODO: module-info.class may not have the ConcealedPackages attribute.
- * This plugin or a new plugin should add to module-info.class, if not present.
+ * jlink --disable-installed-modules off option.
  *
  * @see java.lang.module.InstalledModuleFinder
  * @see jdk.internal.module.InstalledModules
  */
-public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
-
+public final class InstalledModuleDescriptorPlugin implements TransformerPlugin {
     private static final String OPTION_NAME = "disable-installed-modules";
     private static final String DESCRIPTION = PluginsResourceBundle.getDescription(OPTION_NAME);
     private final PluginOption option;
@@ -70,8 +72,8 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
 
     public InstalledModuleDescriptorPlugin() {
         this.option = new PluginOption.Builder(OPTION_NAME)
-                .description(DESCRIPTION)
-                .build();
+                                      .description(DESCRIPTION)
+                                      .build();
         this.enabled = true;
     }
 
@@ -98,7 +100,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
     @Override
     public Set<STATE> getState() {
         return enabled ? EnumSet.of(STATE.AUTO_ENABLED, STATE.FUNCTIONAL)
-                : EnumSet.of(STATE.DISABLED);
+                       : EnumSet.of(STATE.DISABLED);
     }
 
     @Override
@@ -109,35 +111,80 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
     }
 
     @Override
-    public void visit(AsmPools pools) {
+    public void visit(Pool in, Pool out) {
         if (!enabled) {
             throw new PluginException(OPTION_NAME + " was set");
         }
 
         Set<String> moduleNames = new HashSet<>();
         int numPackages = 0;
-        for (AsmModulePool module : pools.getModulePools()) {
-            // validate names
-            validateNames(module.getDescriptor());
-            moduleNames.add(module.getModuleName());
+        for (Pool.Module module : in.getModules()) {
+            moduleNames.add(module.getName());
             numPackages += module.getAllPackages().size();
         }
 
         Builder builder = new Builder(moduleNames, numPackages);
 
         // generate the byte code to create ModuleDescriptors
-        for (AsmModulePool module : pools.getModulePools()) {
-            // ModuleDescriptor created at runtime skips the name checks.
-            builder.module(module.getDescriptor(), module.getAllPackages());
+        // skip parsing module-info.class and skip name check
+        for (Pool.Module module : in.getModules()) {
+            ModuleDescriptor md = module.getDescriptor();
+            validateNames(md);
+            builder.module(md, module.getAllPackages());
+
+            /*
+             * TODO: The following doesn't work.  Pool::Module and Pool::ModuleData API
+             * should also be reworked.
+             *
+            Pool.ModuleData data = module.get(module.getName() + "/module-info.class");
+            assert module.getName().equals(data.getModule());
+            try {
+                ModuleDescriptor md = ModuleDescriptor.read(data.stream());
+                Builder.ModuleDescriptorBuilder mbuilder = builder.module(md, module.getAllPackages());
+                if (md.conceals().isEmpty() &&
+                        (md.exports().size() + md.conceals().size()) != module.getAllPackages().size()) {
+                    // add ConcealedPackages attribute if not exist
+                    ModuleInfoRewriter minfoWriter = new ModuleInfoRewriter(data.stream(), mbuilder.conceals());
+                    // replace with the overridden version
+                    data = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),
+                            minfoWriter.stream(), minfoWriter.size());
+                }
+                out.add(data);
+            } catch (IOException e) {
+                throw new PluginException(e);
+            }
+            */
         }
+
         // Generate the new class
         ClassWriter cwriter = builder.build();
+        for (Pool.ModuleData data : in.getContent()) {
+            if (builder.isOverriddenClass(data.getPath())) {
+                byte[] bytes = cwriter.toByteArray();
+                Pool.ModuleData ndata = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),
+                                                            new ByteArrayInputStream(bytes), bytes.length);
+                out.add(ndata);
+            } else {
+                out.add(data);
+            }
+        }
+    }
 
-        // Retrieve java.base module
-        AsmModulePool javaBase = pools.getModulePool("java.base");
-        // Add the new class in the pool of transformed class
-        // will override the existing one
-        javaBase.getTransformedClasses().addClass(cwriter);
+    /*
+     * Add ConcealedPackages attribute
+     */
+    class ModuleInfoRewriter extends ByteArrayOutputStream {
+        final ModuleInfoExtender extender;
+        ModuleInfoRewriter(InputStream in, Set<String> conceals) throws IOException {
+            this.extender = ModuleInfoExtender.newExtender(in);
+            // Add ConcealedPackages attribute
+            this.extender.conceals(conceals);
+            this.extender.write(this);
+        }
+
+        InputStream stream() {
+            return new ByteArrayInputStream(buf);
+        }
     }
 
     void validateNames(ModuleDescriptor md) {
@@ -184,7 +231,6 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
      * to reconstitute ModuleDescriptor of the installed modules.
      */
     static class Builder {
-
         private static final String CLASSNAME =
             "jdk/internal/module/InstalledModules";
         private static final String MODULE_DESCRIPTOR_BUILDER =
@@ -208,7 +254,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
         private int nextLocalVar = 3;
 
         // list of all ModuleDescriptorBuilders, invoked in turn when building.
-        private final ArrayList<ModuleDescriptorBuilder> builders = new ArrayList<>();
+        private final List<ModuleDescriptorBuilder> builders = new ArrayList<>();
 
         // map Set<String> to a specialized builder to allow them to be
         // deduplicated as they are requested
@@ -275,7 +321,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
          * prepares mapping from Set<String> to StringSetBuilders to emit an
          * optimized number of string sets during build.
          */
-        public Builder module(ModuleDescriptor md, Set<String> packages) {
+        public ModuleDescriptorBuilder module(ModuleDescriptor md, Set<String> packages) {
             ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages, mv);
             builders.add(builder);
 
@@ -296,7 +342,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             // uses
             stringSets.computeIfAbsent(md.uses(), s -> new StringSetBuilder(s))
                       .increment();
-            return this;
+            return builder;
         }
 
         /*
@@ -313,8 +359,12 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             return cw;
         }
 
+        public boolean isOverriddenClass(String path) {
+            return path.equals("/java.base/" + CLASSNAME + ".class");
+        }
+
         private static void newArray(ClassWriter cw, MethodVisitor mv,
-                Set<String> names, int size) {
+                                     Set<String> names, int size) {
             mv.visitIntInsn(size < Byte.MAX_VALUE ? BIPUSH : SIPUSH, size);
             mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
             int index=0;
@@ -372,14 +422,14 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
             final Set<String> packages;
 
             ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages,
-                    MethodVisitor mv) {
+                                    MethodVisitor mv) {
                 this.md = md;
                 this.packages = packages;
                 this.mv = mv;
             }
 
             void newBuilder(String name, int reqs, int exports, int provides,
-                    int conceals, int packages) {
+                            int conceals, int packages) {
                 mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
                 mv.visitInsn(DUP);
                 mv.visitLdcInsn(name);
@@ -394,13 +444,35 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
             }
 
+            /*
+             * Returns the set of concealed packages from ModuleDescriptor, if present
+             * or compute it if the module oes not have ConcealedPackages attribute
+             */
+            Set<String> conceals() {
+                Set<String> conceals = md.conceals();
+                if (md.conceals().isEmpty() &&
+                        (md.exports().size() + md.conceals().size()) != packages.size()) {
+                    Set<String> exports = md.exports().stream()
+                                            .map(Exports::source)
+                                            .collect(Collectors.toSet());
+                    conceals = packages.stream()
+                                       .filter(pn -> !exports.contains(pn))
+                                       .collect(Collectors.toSet());
+                }
+
+                if (conceals.size() + md.exports().size() != packages.size()) {
+                    throw new AssertionError(md.name() + ": conceals=" + conceals.size() +
+                            ", exports=" + md.exports().size() + ", packages=" + packages.size());
+                }
+                return conceals;
+            }
+
             void build() {
-                // ## handle if module-info.class doesn't have concealed attribute
                 newBuilder(md.name(), md.requires().size(),
                            md.exports().size(),
                            md.provides().size(),
-                           md.conceals().size(),
-                           md.conceals().size() + md.exports().size());
+                           conceals().size(),
+                           conceals().size() + md.exports().size());
 
                 // requires
                 for (ModuleDescriptor.Requires req : md.requires()) {
@@ -436,7 +508,7 @@ public final class InstalledModuleDescriptorPlugin extends AsmPlugin {
                 }
 
                 // concealed packages
-                for (String pn : md.conceals()) {
+                for (String pn : conceals()) {
                     conceals(pn);
                 }
 

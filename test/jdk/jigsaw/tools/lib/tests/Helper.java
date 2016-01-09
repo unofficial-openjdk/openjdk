@@ -97,7 +97,7 @@ public class Helper {
         Files.createDirectories(jmods);
         this.jars = Paths.get("jars").toAbsolutePath();
         Files.createDirectories(jars);
-        this.explodedmods = Paths.get("exlodedmods").toAbsolutePath();
+        this.explodedmods = Paths.get("explodedmods").toAbsolutePath();
         Files.createDirectories(explodedmods);
         this.explodedmodssrc = explodedmods.resolve("src");
         Files.createDirectories(explodedmodssrc);
