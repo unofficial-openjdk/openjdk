@@ -188,7 +188,6 @@
         <fail unless="jtreg.tests">Must set property 'jtreg.tests'</fail>
         <start-debugger/>
         <jtreg-tool name="debug"
-                    samevm="false"
                     tests="${jtreg.tests}"
                     jpda.jvmargs="${jpda.jvmargs}"
                     langtools.classes="${with_bootclasspath}"/>
@@ -265,7 +264,7 @@
 
             <sequential>
                 <java fork="true" jvm="${target.java.home}/bin/java" classname="@{mainclass}">
-                    <jvmarg line="-Xbootclasspath/p:@{bcp}"/>
+                    <jvmarg line="-Xoverride:@{bcp}"/>
                     <jvmarg line="@{jpda.jvmargs}"/>
                     <arg line="@{args}"/>
                 </java>

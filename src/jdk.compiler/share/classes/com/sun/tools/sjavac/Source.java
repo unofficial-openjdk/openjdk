@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -314,16 +314,6 @@ public class Source implements Comparable<Source> {
             String pkg = "";
             if (sp != -1) {
                 pkg = fn.substring(0,sp).replace(File.separatorChar,'.');
-            }
-            // Is this a module-info.java file?
-            if (fn.endsWith("module-info.java")) {
-                // Aha! We have recursed into a module!
-                if (!currentModule.name().equals("")) {
-                    throw new ProblemException("You have an extra module-info.java inside a module! Please remove "+fn);
-                }
-                String module_name = fn.substring(0,fn.length()-16);
-                currentModule = new Module(module_name, f.getPath());
-                foundModules.put(module_name, currentModule);
             }
             // Extract the suffix.
             int dp = fn.lastIndexOf(".");
