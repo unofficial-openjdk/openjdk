@@ -448,7 +448,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             return;
         }
 
-        if  (fsInfo.isDirectory(container)) {
+        if  (Files.isDirectory(container)) {
             listDirectory(container, null,
                           subdirectory,
                           fileKinds,
