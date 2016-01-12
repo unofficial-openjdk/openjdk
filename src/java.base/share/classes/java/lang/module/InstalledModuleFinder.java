@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.InstalledModules;
@@ -67,9 +66,8 @@ class InstalledModuleFinder implements ModuleFinder {
     private static final PerfCounter exportsCount
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
     private static final String MODULE_INFO = "module-info.class";
-
     // ImageReader used to access all modules in the image
-    static final ImageReader imageReader;
+    private static final ImageReader imageReader;
 
     // the set of modules in the run-time image
     private static final Set<ModuleReference> modules;
@@ -77,28 +75,20 @@ class InstalledModuleFinder implements ModuleFinder {
     // maps module name to module reference
     private static final Map<String, ModuleReference> nameToModule;
 
-
     /**
      * For now, the module references are created eagerly on the assumption
      * that service binding will require all modules to be located.
      */
     static {
         long t0 = System.nanoTime();
-
         imageReader = ImageReaderFactory.getImageReader();
-        String[] moduleNames;
-        boolean haveModuleDescriptors;
-        Map<String, ModuleDescriptor> descriptors = InstalledModules.modules();
-        if (descriptors.isEmpty()) {
-            // InstalledModules.MODULE_NAMES is generated at link time and
-            // it's intended to replace ImageModuleData when it is enabled
-            // when building jdk image.
-            ImageModuleData mdata = new ImageModuleData(imageReader);
-            moduleNames = mdata.allModuleNames().toArray(new String[0]);
-            haveModuleDescriptors = false;
-        } else {
-            moduleNames = InstalledModules.MODULE_NAMES;
-            haveModuleDescriptors = true;
+
+        String[] moduleNames = InstalledModules.MODULE_NAMES;
+        Map<String, ModuleDescriptor> descriptors = null;
+        boolean fastLoad = System.getProperty("jdk.installed.modules.disable") == null;
+        if (fastLoad) {
+            // fast loading of ModuleDescriptor of installed modules
+            descriptors = InstalledModules.modules();
         }
 
         int n = moduleNames.length;
@@ -108,48 +98,42 @@ class InstalledModuleFinder implements ModuleFinder {
         Map<String, ModuleReference> map = new HashMap<>(n);
 
         for (String mn : moduleNames) {
-            ByteBuffer bb = null;
-            try {
-                // parse the module-info.class file
-                final ModuleDescriptor md;
-                if (haveModuleDescriptors) {
-                    md = descriptors.get(mn);
-                } else {
-                    ImageLocation loc = imageReader.findLocation(mn, MODULE_INFO);
-                    bb = imageReader.getResourceBuffer(loc);
-                    md = ModuleInfo.readIgnoringHashes(bb, null);
-                }
-                if (!md.name().equals(mn))
-                    throw new InternalError();
-
-                // replace ModuleDescriptor if new packages added by -Xpatch
-                ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
-
-                // create the ModuleReference
-
-                URI uri = URI.create("jrt:/" + mn);
-
-                Supplier<ModuleReader> readerSupplier = new Supplier<>() {
-                    @Override
-                    public ModuleReader get() {
-                        return new ImageModuleReader(mn, uri);
-                    }
-                };
-
-                ModuleReference mref
-                    = new ModuleReference(descriptor, uri, readerSupplier);
-
-                mods.add(mref);
-                map.put(mn, mref);
-
-                // counters
-                packageCount.add(md.packages().size());
-                exportsCount.add(md.exports().size());
-
-            } finally {
-                if (bb != null)
-                    ImageReader.releaseByteBuffer(bb);
+            // parse the module-info.class file
+            final ModuleDescriptor md;
+            if (fastLoad) {
+                md = descriptors.get(mn);
+            } else {
+                // fallback to read module-info.class
+                // if fast loading of ModuleDescriptors is disabled
+                ImageLocation location = imageReader.findLocation(mn, "module-info.class");
+                md = ModuleDescriptor.read(imageReader.getResourceBuffer(location));
             }
+            if (!md.name().equals(mn))
+                throw new InternalError();
+
+            // replace ModuleDescriptor if new packages added by -Xpatch
+            ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
+
+            // create the ModuleReference
+
+            URI uri = URI.create("jrt:/" + mn);
+
+            Supplier<ModuleReader> readerSupplier = new Supplier<>() {
+                @Override
+                public ModuleReader get() {
+                    return new ImageModuleReader(mn, uri);
+                }
+            };
+
+            ModuleReference mref
+                = new ModuleReference(descriptor, uri, readerSupplier);
+
+            mods.add(mref);
+            map.put(mn, mref);
+
+            // counters
+            packageCount.add(md.packages().size());
+            exportsCount.add(md.exports().size());
         }
 
         modules = Collections.unmodifiableSet(mods);
@@ -177,7 +161,6 @@ class InstalledModuleFinder implements ModuleFinder {
      * run-time image.
      */
     static class ImageModuleReader implements ModuleReader {
-
         private final String module;
         private volatile boolean closed;
 

@@ -54,18 +54,17 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  * Jlink plugin to reconstitute module descriptors for installed modules.
- * It also determines the number of packages of the boot layer at link time.
+ * It will extend module-info.class with ConcealedPackages attribute,
+ * if not present. It also determines the number of packages of
+ * the boot layer at link time.
  *
  * This plugin will override jdk.internal.module.InstalledModules class
- *
- * This plugin is enabled by default. This can be disabled via
- * jlink --disable-installed-modules off option.
  *
  * @see java.lang.module.InstalledModuleFinder
  * @see jdk.internal.module.InstalledModules
  */
 public final class InstalledModuleDescriptorPlugin implements TransformerPlugin {
-    private static final String OPTION_NAME = "disable-installed-modules";
+    private static final String OPTION_NAME = "installed-modules";
     private static final String DESCRIPTION = PluginsResourceBundle.getDescription(OPTION_NAME);
     private final PluginOption option;
     private boolean enabled;
@@ -89,7 +88,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
 
     @Override
     public String getName() {
-        return "installed-modules";
+        return OPTION_NAME;
     }
 
     @Override
@@ -128,37 +127,36 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
         for (Pool.Module module : in.getModules()) {
-            ModuleDescriptor md = module.getDescriptor();
-            validateNames(md);
-            builder.module(md, module.getAllPackages());
-
-            /*
-             * TODO: The following doesn't work.  Pool::Module and Pool::ModuleData API
-             * should also be reworked.
-             *
             Pool.ModuleData data = module.get(module.getName() + "/module-info.class");
             assert module.getName().equals(data.getModule());
             try {
-                ModuleDescriptor md = ModuleDescriptor.read(data.stream());
+                ByteArrayInputStream bain = new ByteArrayInputStream(data.getBytes());
+                ModuleDescriptor md = ModuleDescriptor.read(bain);
+                validateNames(md);
+
                 Builder.ModuleDescriptorBuilder mbuilder = builder.module(md, module.getAllPackages());
                 if (md.conceals().isEmpty() &&
                         (md.exports().size() + md.conceals().size()) != module.getAllPackages().size()) {
                     // add ConcealedPackages attribute if not exist
-                    ModuleInfoRewriter minfoWriter = new ModuleInfoRewriter(data.stream(), mbuilder.conceals());
+                    bain.reset();
+                    ModuleInfoRewriter minfoWriter = new ModuleInfoRewriter(bain, mbuilder.conceals());
                     // replace with the overridden version
                     data = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),
-                            minfoWriter.stream(), minfoWriter.size());
+                                               minfoWriter.stream(), minfoWriter.size());
                 }
                 out.add(data);
             } catch (IOException e) {
                 throw new PluginException(e);
             }
-            */
+
         }
 
         // Generate the new class
         ClassWriter cwriter = builder.build();
         for (Pool.ModuleData data : in.getContent()) {
+            if (data.getPath().endsWith("module-info.class"))
+                continue;
+
             if (builder.isOverriddenClass(data.getPath())) {
                 byte[] bytes = cwriter.toByteArray();
                 Pool.ModuleData ndata = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),

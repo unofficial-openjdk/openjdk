@@ -24,15 +24,28 @@
 package p1;
 
 import java.lang.module.ModuleDescriptor;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class Main {
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception {
         // load another package
         p2.T.test();
 
         // check the module descriptor of an installed module
-        ModuleDescriptor md = Main.class.getModule().getDescriptor();
+        validate(Main.class.getModule().getDescriptor());
+
+        // read m1/module-info.class
+        FileSystem fs = FileSystems.newFileSystem(URI.create("jrt:/"), null);
+        Path path = fs.getPath("/", "modules", "m1", "module-info.class");
+        validate(ModuleDescriptor.read(Files.newInputStream(path)));
+    }
+
+    static void validate(ModuleDescriptor md) {
         checkPackages(md.conceals(), "p1", "p2");
         checkPackages(md.packages(), "p1", "p2");
     }

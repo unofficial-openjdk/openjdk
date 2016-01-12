@@ -66,7 +66,7 @@ public class UserModuleTest {
      * Compiles all modules used by the test
      */
     @BeforeTest
-    public void compileAll() throws Exception {
+    public void compileAll() throws Throwable {
         if (!hasJmods()) return;
 
         for (String mn : modules) {
@@ -77,28 +77,47 @@ public class UserModuleTest {
         if (Files.exists(IMAGE)) {
             FileUtils.deleteFileTreeUnchecked(IMAGE);
         }
-    }
-
-    /*
-     * Test linking a module with no ConcealedPackages attribute
-     */
-    @Test
-    public void test() throws Throwable {
-        if (!hasJmods()) return;
 
         Path jlink = Paths.get(JAVA_HOME, "bin", "jlink");
         String mp = JMODS.toString() + File.pathSeparator + MODS_DIR.toString();
         assertTrue(executeProcess(jlink.toString(), "--output", IMAGE.toString(),
-                                       "--addmods", "java.base,m1",
-                                       "--modulepath", mp)
+                        "--addmods", "java.base,m1",
+                        "--modulepath", mp)
                         .outputTo(System.out)
                         .errorTo(System.out)
                         .getExitValue() == 0);
+    }
+
+    /*
+     * Test the image created when linking with a module with
+     * no ConcealedPackages attribute
+     */
+    @Test
+    public void test() throws Throwable {
+        if (!hasJmods()) return;
 
         Path java = IMAGE.resolve("bin").resolve("java");
         assertTrue(executeProcess(java.toString(), "-m", "m1/p1.Main")
                         .outputTo(System.out)
                         .errorTo(System.out)
                         .getExitValue() == 0);
+    }
+
+
+    /*
+     * Disable the fast loading of installed modules.
+     * Parsing module-info.class
+     */
+    @Test
+    public void disableInstalledModules() throws Throwable {
+        if (!hasJmods()) return;
+
+        Path java = IMAGE.resolve("bin").resolve("java");
+        assertTrue(executeProcess(java.toString(),
+                                  "-Djdk.installed.modules.disable",
+                                  "-m", "m1/p1.Main")
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue() == 0);
     }
 }
