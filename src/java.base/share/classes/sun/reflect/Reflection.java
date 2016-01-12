@@ -95,44 +95,7 @@ public class Reflection {
         }
 
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
-            String currentSuffix = "";
-            String memberSuffix = "";
-            Module m1 = currentClass.getModule();
-            if (m1.isNamed())
-                currentSuffix = " (in " + m1 + ")";
-            Module m2 = memberClass.getModule();
-            if (m2.isNamed())
-                memberSuffix = " (in " + m2 + ")";
-
-            Class<?> c = memberClass;
-            while (c.isArray()) {
-                c = c.getComponentType();
-            }
-            String memberPackageName = c.getPackageName();
-
-            boolean canRead = m1.canRead(m2);
-
-            String msg = currentClass + currentSuffix + " cannot access ";
-            if (canRead && m2.isExported(memberPackageName, m1)) {
-
-                // module access okay so include the modifiers in the message
-                msg += "a member of " + memberClass + memberSuffix +
-                        " with modifiers \"" + Modifier.toString(modifiers) + "\"";
-
-            } else {
-
-                // module access failed
-                msg += memberClass + memberSuffix + " because ";
-                if (!canRead) {
-                    msg += m1 + " does not read " + m2;
-                } else {
-                    msg += m2 + " does not export " + memberPackageName;
-                    if (m2.isNamed()) msg += " to " + m1;
-                }
-
-            }
-
-            throwIllegalAccessException(msg);
+            throwIllegalAccessException(currentClass, memberClass, target, modifiers);
         }
     }
 
@@ -441,6 +404,56 @@ public class Reflection {
         if (printStackWhenAccessFails) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Throws IllegalAccessException with the an exception message based on
+     * the access that is denied.
+     */
+    private static void throwIllegalAccessException(Class<?> currentClass,
+                                                    Class<?> memberClass,
+                                                    Object target,
+                                                    int modifiers)
+        throws IllegalAccessException
+    {
+        String currentSuffix = "";
+        String memberSuffix = "";
+        Module m1 = currentClass.getModule();
+        if (m1.isNamed())
+            currentSuffix = " (in " + m1 + ")";
+        Module m2 = memberClass.getModule();
+        if (m2.isNamed())
+            memberSuffix = " (in " + m2 + ")";
+
+        Class<?> c = memberClass;
+        while (c.isArray()) {
+            c = c.getComponentType();
+        }
+        String memberPackageName = c.getPackageName();
+
+        boolean canRead = m1.canRead(m2);
+
+        String msg = currentClass + currentSuffix + " cannot access ";
+        if (canRead && m2.isExported(memberPackageName, m1)) {
+
+            // module access okay so include the modifiers in the message
+            msg += "a member of " + memberClass + memberSuffix +
+                    " with modifiers \"" + Modifier.toString(modifiers) + "\"";
+
+        } else {
+
+            // module access failed
+            msg += memberClass + memberSuffix + " because ";
+            if (!canRead) {
+                msg += m1 + " does not read " + m2;
+            } else {
+                msg += m2 + " does not export " + memberPackageName;
+                if (m2.isNamed()) msg += " to " + m1;
+            }
+
+        }
+
+        throwIllegalAccessException(msg);
     }
 
     /**
