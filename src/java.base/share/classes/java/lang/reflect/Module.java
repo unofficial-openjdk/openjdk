@@ -524,13 +524,16 @@ public final class Module {
             if (targets.containsKey(EVERYONE_MODULE))
                 return true;
 
-            // exported to target
-            if (targets.containsKey(target))
-                return true;
+            if (target != EVERYONE_MODULE) {
 
-            // target is an unnamed module && exported to all unnamed modules
-            if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
-                return true;
+                // exported to target
+                if (targets.containsKey(target))
+                    return true;
+
+                // target is an unnamed module && exported to all unnamed modules
+                if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
+                    return true;
+            }
 
         }
 
