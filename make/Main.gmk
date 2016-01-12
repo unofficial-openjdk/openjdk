@@ -294,7 +294,6 @@ ALL_TARGETS += $(JMOD_TARGETS)
 source-tips: $(SUPPORT_OUTPUTDIR)/source_tips
 $(SUPPORT_OUTPUTDIR)/source_tips: FRC
 	@$(MKDIR) -p $(@D)
-	@$(RM) $@
 	@$(call GetSourceTips)
 
 BOOTCYCLE_TARGET := product-images
