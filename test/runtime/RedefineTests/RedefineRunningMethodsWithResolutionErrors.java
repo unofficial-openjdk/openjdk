@@ -26,8 +26,9 @@
  * @bug 8076110
  * @summary Redefine running methods that have cached resolution errors
  * @library /testlibrary
- * @modules java.instrument
- *          java.base/jdk.internal.org.objectweb.asm
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ *          java.instrument
+ *          jdk.jartool/sun.tools.jar
  * @build RedefineClassHelper
  * @run main RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar -XX:TraceRedefineClasses=0x600 RedefineRunningMethodsWithResolutionErrors
