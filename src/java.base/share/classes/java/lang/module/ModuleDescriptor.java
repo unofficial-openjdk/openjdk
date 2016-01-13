@@ -587,10 +587,7 @@ public class ModuleDescriptor
         assert !exports.keySet().stream().anyMatch(conceals::contains)
             : "Module " + name + ": Package sets overlap";
         this.conceals = emptyOrUnmodifiableSet(conceals);
-        Set<String> pkgs = new HashSet<>(conceals);
-        pkgs.addAll(exports.keySet());
-        this.packages = emptyOrUnmodifiableSet(pkgs);
-
+        this.packages = computePackages(this.exports, this.conceals);
     }
 
     /**
@@ -609,12 +606,8 @@ public class ModuleDescriptor
         this.mainClass = md.mainClass;
         this.hashes = Optional.empty(); // need to ignore
 
-        // compute new set of concealed packages
-        Set<String> conceals = new HashSet<>(pkgs);
-        exports.stream().map(Exports::source).forEach(conceals::remove);
-
-        this.conceals = emptyOrUnmodifiableSet(conceals);
         this.packages = emptyOrUnmodifiableSet(pkgs);
+        this.conceals = computeConcealedPackages(this.exports, this.packages);
     }
 
     /*
@@ -642,6 +635,32 @@ public class ModuleDescriptor
         this.version = Optional.ofNullable(version);
         this.mainClass = Optional.ofNullable(mainClass);
         this.hashes = Optional.empty();
+    }
+
+    /*
+     * Computes the set of packages from exports and concealed packages.
+     * It returns the concealed packages set if there is no exported package.
+     */
+    private static Set<String> computePackages(Set<Exports> exports, Set<String> conceals) {
+        if (exports.isEmpty())
+            return conceals;
+
+        Set<String> pkgs = new HashSet<>(conceals);
+        exports.stream().map(Exports::source).forEach(pkgs::add);
+        return emptyOrUnmodifiableSet(pkgs);
+    }
+
+    /*
+     * Computes the set of concealed packages from exports and all packages.
+     * It returns the packages set if there is no exported package.
+     */
+    private static Set<String> computeConcealedPackages(Set<Exports> exports, Set<String> pkgs) {
+        if (exports.isEmpty())
+            return pkgs;
+
+        Set<String> conceals = new HashSet<>(pkgs);
+        exports.stream().map(Exports::source).forEach(conceals::remove);
+        return emptyOrUnmodifiableSet(conceals);
     }
 
     /**

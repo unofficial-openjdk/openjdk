@@ -59,7 +59,7 @@ final class Builder {
     final Set<Exports> exports;
     final Map<String, Provides> provides;
     final Set<String> conceals;
-    final Set<String> packages;
+    final int numPackages;
     Set<String> uses;
     Version version;
     String mainClass;
@@ -71,8 +71,8 @@ final class Builder {
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
         this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
         this.conceals = conceals > 0 ? new HashSet<>(conceals) : Collections.emptySet();
-        this.packages = packages > 0 ? new HashSet<>(packages) : Collections.emptySet();
         this.uses = Collections.emptySet();
+        this.numPackages = packages;
     }
 
     /**
@@ -111,7 +111,6 @@ final class Builder {
      */
     public Builder exports(String pn, Set<String> targets) {
         exports.add(jlma.newExports(pn, targets));
-        packages.add(pn);
         return this;
     }
 
@@ -127,7 +126,6 @@ final class Builder {
      */
     public Builder exports(String pn) {
         exports.add(jlma.newExports(pn));
-        packages.add(pn);
         return this;
     }
 
@@ -154,7 +152,6 @@ final class Builder {
      */
     public Builder conceals(Set<String> packages) {
         conceals.addAll(packages);
-        packages.addAll(packages);
         return this;
     }
 
@@ -163,7 +160,6 @@ final class Builder {
      */
     public Builder conceals(String pn) {
         conceals.add(pn);
-        packages.add(pn);
         return this;
     }
 
@@ -196,11 +192,25 @@ final class Builder {
         return this;
     }
 
+    private Set<String> computePackages(Set<Exports> exports, Set<String> conceals) {
+        if (exports.isEmpty())
+            return conceals;
+
+        Set<String> pkgs = new HashSet<>(numPackages);
+        pkgs.addAll(conceals);
+        for (Exports e : exports) {
+            pkgs.add(e.source());
+        }
+        return pkgs;
+    }
+
     /**
      * Builds a {@code ModuleDescriptor} from the components.
      */
     public ModuleDescriptor build() {
         assert name != null;
+
+
         return jlma.newModuleDescriptor(name,
                                         false,
                                         requires,
@@ -210,6 +220,6 @@ final class Builder {
                                         version,
                                         mainClass,
                                         conceals,
-                                        packages);
+                                        computePackages(exports, conceals));
     }
 }
