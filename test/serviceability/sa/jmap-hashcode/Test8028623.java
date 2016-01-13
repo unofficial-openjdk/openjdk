@@ -37,6 +37,7 @@ import java.io.File;
  *          java.compiler
  *          java.management
  *          jdk.jvmstat/sun.jvmstat.monitor
+ * @ignore 8134071
  * @build jdk.test.lib.*
  * @compile -encoding utf8 Test8028623.java
  * @run main/othervm -XX:+UsePerfData Test8028623
@@ -56,6 +57,7 @@ public class Test8028623 {
             return;
         }
         int pid = ProcessTools.getProcessId();
+        System.out.println("PID = " + pid);
         JDKToolLauncher jmap = JDKToolLauncher.create("jmap")
                                               .addToolArg("-F")
                                               .addToolArg("-dump:live,format=b,file=" + dumpFile)

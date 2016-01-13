@@ -26,6 +26,7 @@
  * @test
  * @bug 8087342
  * @summary Test linkresolver search static, instance and overpass duplicates
+ * @modules java.base/jdk.internal.org.objectweb.asm
  * @run main/othervm -Xverify:none TestStaticandInstance
  */
 
