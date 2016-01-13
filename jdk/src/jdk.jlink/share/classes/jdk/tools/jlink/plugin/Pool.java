@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import jdk.tools.jlink.internal.ImageFileCreator;
+import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
 
 /**
  * Pool of module data.
@@ -344,6 +345,7 @@ public abstract class Pool {
 
     private final Map<String, ModuleData> resources = new LinkedHashMap<>();
     private final Map<String, ModuleImpl> modules = new LinkedHashMap<>();
+    private final ModuleImpl fileCopierModule = new ModuleImpl(FileCopierPlugin.FAKE_MODULE);
 
     private final ByteOrder order;
 
@@ -377,10 +379,16 @@ public abstract class Pool {
             throw new PluginException("Resource " + data.getPath()
                     + " already present");
         }
-        ModuleImpl m = modules.get(data.getModule());
+        String modulename = data.getModule();
+        ModuleImpl m = modules.get(modulename);
+        // ## TODO: FileCopierPlugin should not add content to a module
+        // FAKE_MODULE is not really a module to be added in the image
+        if (FileCopierPlugin.FAKE_MODULE.equals(modulename)) {
+            m = fileCopierModule;
+        }
         if (m == null) {
-            m = new ModuleImpl(data.getModule());
-            modules.put(data.getModule(), m);
+            m = new ModuleImpl(modulename);
+            modules.put(modulename, m);
         }
         resources.put(data.getPath(), data);
         m.moduleContent.put(data.getPath(), data);

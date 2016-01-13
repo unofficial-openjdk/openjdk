@@ -28,7 +28,7 @@
             after calling Win32ShellFolder:listFiles
             multiple times on some directory with
             large number of files/folders
- * @modules java.desktop/sun.awt
+ * @modules java.desktop/sun.awt.shell
  * @requires (os.family == "windows")
  * @run main/timeout=1000 ShellFolderMemoryLeak
  */
@@ -93,6 +93,7 @@ public class ShellFolderMemoryLeak {
         String command = javaPath + File.separator + "bin" + File.separator
                 + "java -Xmx256M" + arg1 + " -cp "
                 + classPathDir
+                + " -XaddExports:java.desktop/sun.awt.shell=ALL-UNNAMED"
                 + " ShellFolderMemoryLeak " + arg2;
         process = Runtime.getRuntime().exec(command);
         BufferedReader input = null;

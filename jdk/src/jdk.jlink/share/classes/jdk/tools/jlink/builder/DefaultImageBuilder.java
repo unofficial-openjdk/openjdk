@@ -217,7 +217,7 @@ public class DefaultImageBuilder implements ImageBuilder {
             String path = "/" + module + "/module-info.class";
             ModuleData res = imageContent.get(path);
             if (res == null) {
-                throw new IOException("module-info not found for " + module);
+                throw new IOException("module-info.class not found for " + module + " module");
             }
             Optional<String> mainClass;
             ByteArrayInputStream stream = new ByteArrayInputStream(res.getBytes());
