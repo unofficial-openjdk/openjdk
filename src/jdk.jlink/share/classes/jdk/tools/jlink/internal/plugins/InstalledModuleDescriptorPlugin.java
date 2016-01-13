@@ -127,7 +127,11 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
         for (Pool.Module module : in.getModules()) {
-            Pool.ModuleData data = module.get(module.getName() + "/module-info.class");
+            Pool.ModuleData data = module.get("module-info.class");
+            if (data == null) {
+                // automatic module not supported yet
+                throw new PluginException("module-info.class not found for " + module.getName() + " module");
+            }
             assert module.getName().equals(data.getModule());
             try {
                 ByteArrayInputStream bain = new ByteArrayInputStream(data.getBytes());
