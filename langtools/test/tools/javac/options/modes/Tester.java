@@ -154,6 +154,7 @@ public class Tester {
     class TestResult {
         final List<String> args;
         Throwable thrown;
+        List<Throwable> suppressed = new ArrayList<>();
         Object rc; // Number or Boolean
         Map<Log, String> logs;
         Context context;
@@ -175,6 +176,10 @@ public class Tester {
 
         void setResult(boolean ok) {
             this.rc = ok ? 0 : 1;
+        }
+
+        void setSuppressed(Throwable thrown) {
+            this.suppressed.add(thrown);
         }
 
         void setThrown(Throwable thrown) {
@@ -202,6 +207,11 @@ public class Tester {
             if (thrown != null) {
                 if (needSep) out.print("; ");
                 out.print("thrown:" + thrown);
+                needSep = true;
+            }
+            if (!suppressed.isEmpty()) {
+                if (needSep) out.print("; ");
+                out.print("suppressed:" + suppressed);
                 needSep = true;
             }
             if (needSep)

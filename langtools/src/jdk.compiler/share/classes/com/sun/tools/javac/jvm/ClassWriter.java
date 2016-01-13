@@ -42,7 +42,7 @@ import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.UniqueType;
-import com.sun.tools.javac.file.BaseFileObject;
+import com.sun.tools.javac.file.PathFileObject;
 import com.sun.tools.javac.jvm.Pool.DynamicMethod;
 import com.sun.tools.javac.jvm.Pool.Method;
 import com.sun.tools.javac.jvm.Pool.MethodHandle;
@@ -1774,7 +1774,7 @@ public class ClassWriter extends ClassFile {
             // the last possible moment because the sourcefile may be used
             // elsewhere in error diagnostics. Fixes 4241573.
             //databuf.appendChar(c.pool.put(c.sourcefile));
-            String simpleName = BaseFileObject.getSimpleName(c.sourcefile);
+            String simpleName = PathFileObject.getSimpleName(c.sourcefile);
             databuf.appendChar(c.pool.put(names.fromString(simpleName)));
             endAttr(alenIdx);
             acount++;

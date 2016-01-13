@@ -124,9 +124,6 @@ public class ToolBox {
     /** The stream used for logging output. */
     public PrintStream out = System.err;
 
-    JavaCompiler compiler;
-    StandardJavaFileManager standardJavaFileManager;
-
     /**
      * Checks if the host OS is some version of Windows.
      * @return true if the host OS is some version of Windows
@@ -881,6 +878,9 @@ public class ToolBox {
         private List<JavaFileObject> fileObjects;
         private JavaFileManager fileManager;
 
+        private JavaCompiler compiler;
+        private StandardJavaFileManager internalFileManager;
+
         /**
          * Creates a task to execute {@code javac} using API mode.
          */
@@ -1079,38 +1079,37 @@ public class ToolBox {
         }
 
         private int runAPI(PrintWriter pw) throws IOException {
-//            if (compiler == null) {
-                // TODO: allow this to be set externally
-//                compiler = ToolProvider.getSystemJavaCompiler();
-                compiler = JavacTool.create();
-//            }
+            try {
+//                if (compiler == null) {
+                    // TODO: allow this to be set externally
+//                    compiler = ToolProvider.getSystemJavaCompiler();
+                    compiler = JavacTool.create();
+//                }
 
-            if (fileManager == null)
-                fileManager = compiler.getStandardFileManager(null, null, null);
-            if (outdir != null)
-                setLocationFromPaths(StandardLocation.CLASS_OUTPUT, Collections.singletonList(outdir));
-            if (classpath != null)
-                setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
-            if (sourcepath != null)
-                setLocationFromPaths(StandardLocation.SOURCE_PATH, sourcepath);
-            List<String> allOpts = new ArrayList<>();
-            if (options != null)
-                allOpts.addAll(options);
+                if (fileManager == null)
+                    fileManager = internalFileManager = compiler.getStandardFileManager(null, null, null);
+                if (outdir != null)
+                    setLocationFromPaths(StandardLocation.CLASS_OUTPUT, Collections.singletonList(outdir));
+                if (classpath != null)
+                    setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
+                if (sourcepath != null)
+                    setLocationFromPaths(StandardLocation.SOURCE_PATH, sourcepath);
+                List<String> allOpts = new ArrayList<>();
+                if (options != null)
+                    allOpts.addAll(options);
 
-            Iterable<? extends JavaFileObject> allFiles = joinFiles(files, fileObjects);
-            JavaCompiler.CompilationTask task = compiler.getTask(pw,
-                    fileManager,
-                    null,  // diagnostic listener; should optionally collect diags
-                    allOpts,
-                    classes,
-                    allFiles);
-            return ((JavacTaskImpl) task).doCall().exitCode;
-        }
-
-        private void setLocation(StandardLocation location, List<File> files) throws IOException {
-            if (!(fileManager instanceof StandardJavaFileManager))
-                throw new IllegalStateException("not a StandardJavaFileManager");
-            ((StandardJavaFileManager) fileManager).setLocation(location, files);
+                Iterable<? extends JavaFileObject> allFiles = joinFiles(files, fileObjects);
+                JavaCompiler.CompilationTask task = compiler.getTask(pw,
+                        fileManager,
+                        null,  // diagnostic listener; should optionally collect diags
+                        allOpts,
+                        classes,
+                        allFiles);
+                return ((JavacTaskImpl) task).doCall().exitCode;
+            } finally {
+                if (internalFileManager != null)
+                    internalFileManager.close();
+            }
         }
 
         private void setLocationFromPaths(StandardLocation location, List<Path> files) throws IOException {
@@ -1170,17 +1169,19 @@ public class ToolBox {
         }
 
         private String toSearchPath(List<Path> files) {
-            return files.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+            return files.stream()
+                .map(Path::toString)
+                .collect(Collectors.joining(File.pathSeparator));
         }
 
         private Iterable<? extends JavaFileObject> joinFiles(
                 List<String> files, List<JavaFileObject> fileObjects) {
             if (files == null)
                 return fileObjects;
-            if (standardJavaFileManager == null)
-                standardJavaFileManager = compiler.getStandardFileManager(null, null, null);
+            if (internalFileManager == null)
+                internalFileManager = compiler.getStandardFileManager(null, null, null);
             Iterable<? extends JavaFileObject> filesAsFileObjects =
-                    standardJavaFileManager.getJavaFileObjectsFromStrings(files);
+                    internalFileManager.getJavaFileObjectsFromStrings(files);
             if (fileObjects == null)
                 return filesAsFileObjects;
             List<JavaFileObject> combinedList = new ArrayList<>();

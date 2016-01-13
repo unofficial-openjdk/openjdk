@@ -246,7 +246,7 @@ public class ClassFinder {
      * available from the module system.
      */
     long getSupplementaryFlags(ClassSymbol c) {
-        if (jrtIndex == null || !jrtIndex.isInJRT(c.classfile)) {
+        if (jrtIndex == null || !jrtIndex.isInJRT(c.classfile) || c.name == names.module_info) {
             return 0;
         }
 

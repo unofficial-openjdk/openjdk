@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.tools.javac.file;
 
 import java.io.IOException;
@@ -202,7 +203,7 @@ public class JRTIndex {
                     for (Path module: modules) {
                         if (Files.isSymbolicLink(module))
                             module = Files.readSymbolicLink(module);
-                        Path p = rd.getFile(module);
+                        Path p = rd.resolveAgainst(module);
                         if (!Files.exists(p))
                             continue;
                         try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
