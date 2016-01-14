@@ -427,7 +427,9 @@ public final class Class<T> implements java.io.Serializable,
         Objects.requireNonNull(name);
 
         Class<?> caller = Reflection.getCallerClass();
-        if (caller == null || caller.getModule() != module) {
+        if (caller != null && caller.getModule() != module) {
+            // if caller is null, Class.forName is the last java frame on the stack.
+            // java.base has all permissions
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
