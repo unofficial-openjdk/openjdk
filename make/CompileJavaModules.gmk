@@ -382,9 +382,9 @@ ifeq ($(MODULE), jdk.hotspot.agent)
   # These can't be handled by COPY to SetupJavaCompilation since they chop off
   # one directory level.
   $(eval $(call SetupCopyFiles, COPY_SA_IMAGES, \
-      SRC := $(HOTSPOT_TOPDIR)/agent/src/share/classes/images, \
+      SRC := $(HOTSPOT_TOPDIR)/src/jdk.hotspot.agent/share/classes/images, \
       DEST := $(JDK_OUTPUTDIR)/modules/$(MODULE), \
-      FILES := $(wildcard $(HOTSPOT_TOPDIR)/agent/src/share/classes/images/*/*/*.gif), \
+      FILES := $(wildcard $(HOTSPOT_TOPDIR)/src/jdk.hotspot.agent/share/classes/images/*/*/*.gif), \
   ))
   jdk.hotspot.agent: $(COPY_SA_IMAGES)
 endif
