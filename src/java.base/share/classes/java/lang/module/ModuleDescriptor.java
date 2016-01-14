@@ -637,32 +637,6 @@ public class ModuleDescriptor
         this.hashes = Optional.empty();
     }
 
-    /*
-     * Computes the set of packages from exports and concealed packages.
-     * It returns the concealed packages set if there is no exported package.
-     */
-    private static Set<String> computePackages(Set<Exports> exports, Set<String> conceals) {
-        if (exports.isEmpty())
-            return conceals;
-
-        Set<String> pkgs = new HashSet<>(conceals);
-        exports.stream().map(Exports::source).forEach(pkgs::add);
-        return emptyOrUnmodifiableSet(pkgs);
-    }
-
-    /*
-     * Computes the set of concealed packages from exports and all packages.
-     * It returns the packages set if there is no exported package.
-     */
-    private static Set<String> computeConcealedPackages(Set<Exports> exports, Set<String> pkgs) {
-        if (exports.isEmpty())
-            return pkgs;
-
-        Set<String> conceals = new HashSet<>(pkgs);
-        exports.stream().map(Exports::source).forEach(conceals::remove);
-        return emptyOrUnmodifiableSet(conceals);
-    }
-
     /**
      * <p> The module name </p>
      *
@@ -1347,6 +1321,37 @@ public class ModuleDescriptor
      */
     public static ModuleDescriptor read(ByteBuffer bb) {
         return ModuleInfo.read(bb, null);
+    }
+
+
+    /**
+     * Computes the set of packages from exports and concealed packages.
+     * It returns the concealed packages set if there is no exported package.
+     */
+    private static Set<String> computePackages(Set<Exports> exports,
+                                               Set<String> conceals)
+    {
+        if (exports.isEmpty())
+            return conceals;
+
+        Set<String> pkgs = new HashSet<>(conceals);
+        exports.stream().map(Exports::source).forEach(pkgs::add);
+        return emptyOrUnmodifiableSet(pkgs);
+    }
+
+    /**
+     * Computes the set of concealed packages from exports and all packages.
+     * It returns the packages set if there are no exported packages.
+     */
+    private static Set<String> computeConcealedPackages(Set<Exports> exports,
+                                                        Set<String> pkgs)
+    {
+        if (exports.isEmpty())
+            return pkgs;
+
+        Set<String> conceals = new HashSet<>(pkgs);
+        exports.stream().map(Exports::source).forEach(conceals::remove);
+        return emptyOrUnmodifiableSet(conceals);
     }
 
     private static <K,V> Map<K,V> emptyOrUnmodifiableMap(Map<K,V> map) {

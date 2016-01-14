@@ -789,7 +789,7 @@ public abstract class ClassLoader {
         return pd;
     }
 
-    /*
+    /**
      * Define a Package of the given name if not present.
      *
      * If the given class represents an array type, a primitive type or void,
@@ -800,13 +800,11 @@ public abstract class ClassLoader {
             return null;
         }
 
+        String pn = c.getPackageName();
         Module m = c.getModule();
-        String cn = c.getName();
-        int pos = cn.lastIndexOf('.');
-        if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package in named module " + m.getName());
+        if (pn.isEmpty() && m.isNamed()) {
+            throw new InternalError("unnamed package in  " + m);
         }
-        String pn = pos != -1 ? cn.substring(0, pos) : "";
         Package p = getDefinedPackage(pn);
         if (p == null) {
             URL url = null;

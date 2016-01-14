@@ -131,7 +131,7 @@ public interface ModuleFinder {
      * boot layer. In that context, should this method be renamed to systemModules?
      * Also need to decide if this method needs a permission check.
      *
-     * @return A {@code ModuleFinder} that locate all modules in the
+     * @return A {@code ModuleFinder} that locates all modules in the
      *         run-time image
      */
     public static ModuleFinder ofInstalled() {

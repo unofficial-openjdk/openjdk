@@ -1013,9 +1013,7 @@ public final class Module {
         }
 
         // register the modules in the service catalog if they provide services
-        // ## FIXME: Need to decide whether to skip this if the configuration is
-        //           not the result of service binding
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
+        for (ModuleDescriptor descriptor : cf.descriptors()) {
             Map<String, Provides> services = descriptor.provides();
             if (!services.isEmpty()) {
                 String name = descriptor.name();
