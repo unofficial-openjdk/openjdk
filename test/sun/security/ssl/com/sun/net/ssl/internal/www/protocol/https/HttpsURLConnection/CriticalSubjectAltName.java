@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,9 @@
  *          fail trusted checks
  * @run main/othervm CriticalSubjectAltName
  * @author Xuelei Fan
- *
+ */
+
+/*
  * This test depends on binary keystore, crisubn.jks and trusted.jks. Because
  * JAVA keytool cannot generate X509 certificate with SubjectAltName extension,
  * the certificates are generated with openssl toolkits and then imported into
@@ -48,6 +50,7 @@
 import java.io.*;
 import java.net.*;
 import javax.net.ssl.*;
+import java.security.Security;
 import java.security.cert.Certificate;
 
 public class CriticalSubjectAltName implements HostnameVerifier {
@@ -155,6 +158,10 @@ public class CriticalSubjectAltName implements HostnameVerifier {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
+        // MD5 is used in this test case, don't disable MD5 algorithm.
+        Security.setProperty(
+                "jdk.certpath.disabledAlgorithms", "MD2, RSA keySize < 1024");
+
         String keyFilename =
             System.getProperty("test.src", "./") + "/" + pathToStores +
                 "/" + keyStoreFile;
