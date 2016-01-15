@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,21 +19,19 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
-package jdk.vm.ci.service;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Annotates a service provider than can be loaded via {@linkplain Services#load(Class)} or
- * {@link Services#loadSingle(Class, boolean)}.
+/*
+ * @test
+ * @bug 8086053
+ * @run main/othervm -Xcomp -XX:+UseTLAB -XX:+ZeroTLAB ZeroTLABTest
+ * @run main/othervm -Xcomp -XX:+UseTLAB -XX:-ZeroTLAB ZeroTLABTest
+ * @run main/othervm -Xcomp -XX:-UseTLAB -XX:+ZeroTLAB ZeroTLABTest
+ * @run main/othervm -Xcomp -XX:-UseTLAB -XX:-ZeroTLAB ZeroTLABTest
  */
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-public @interface ServiceProvider {
-
-    Class<?> value();
+public class ZeroTLABTest {
+    public static void main(String args[]) {
+        System.out.println("Test PASSED");
+    }
 }
