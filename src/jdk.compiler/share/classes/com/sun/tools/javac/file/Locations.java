@@ -1336,20 +1336,28 @@ public class Locations {
 
             if (modules == null) {
                 try {
+                    URI jrtURI = URI.create("jrt:/");
                     FileSystem jrtfs;
 
                     if (isCurrentPlatform(javaHome)) {
-                        jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+                        jrtfs = FileSystems.getFileSystem(jrtURI);
                     } else {
-                        URL javaHomeURL = javaHome.resolve("jrt-fs.jar").toUri().toURL();
-                        ClassLoader currentLoader = Locations.class.getClassLoader();
-                        URLClassLoader fsLoader =
-                                new URLClassLoader(new URL[] {javaHomeURL}, currentLoader);
+                        try {
+                            Map<String, String> attrMap =
+                                    Collections.singletonMap("java.home", javaHome.toString());
+                            jrtfs = FileSystems.newFileSystem(jrtURI, attrMap);
+                        } catch (ProviderNotFoundException ex) {
+                            URL javaHomeURL = javaHome.resolve("jrt-fs.jar").toUri().toURL();
+                            ClassLoader currentLoader = Locations.class.getClassLoader();
+                            URLClassLoader fsLoader =
+                                    new URLClassLoader(new URL[] {javaHomeURL}, currentLoader);
 
-                        jrtfs = FileSystems.newFileSystem(URI.create("jrt:/"), Collections.emptyMap(), fsLoader);
+                            jrtfs = FileSystems.newFileSystem(jrtURI, Collections.emptyMap(), fsLoader);
+
+                            closeables.add(fsLoader);
+                        }
 
                         closeables.add(jrtfs);
-                        closeables.add(fsLoader);
                     }
 
                     modules = jrtfs.getPath("/modules");
