@@ -3889,6 +3889,7 @@ void Test_linked_list();
 void TestResourcehash_test();
 void TestChunkedList_test();
 void Test_log_length();
+void Test_TempNewSymbol();
 #if INCLUDE_ALL_GCS
 void TestOldFreeSpaceCalculation_test();
 void TestG1BiasedArray_test();
@@ -3932,6 +3933,7 @@ void execute_internal_vm_tests() {
     run_unit_test(JSONTest::test());
     run_unit_test(Test_log_length());
     run_unit_test(DirectivesParser::test());
+    run_unit_test(Test_TempNewSymbol());
 #if INCLUDE_VM_STRUCTS
     run_unit_test(VMStructs::test());
 #endif
