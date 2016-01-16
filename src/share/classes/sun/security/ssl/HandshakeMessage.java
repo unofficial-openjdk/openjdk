@@ -1528,7 +1528,7 @@ static final class CertificateVerify extends HandshakeMessage {
     // the signature bytes
     private byte[] signature;
 
-    // protocol version being established using this ServerKeyExchange message
+    // protocol version being established using this CertificateVerify message
     ProtocolVersion protocolVersion;
 
     // the preferable signature algorithm used by this CertificateVerify message
@@ -1581,7 +1581,7 @@ static final class CertificateVerify extends HandshakeMessage {
                     preferableSignatureAlgorithm)) {
                 throw new SSLHandshakeException(
                         "Unsupported SignatureAndHashAlgorithm in " +
-                        "ServerKeyExchange message");
+                        "CertificateVerify message");
             }
         }
 
