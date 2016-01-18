@@ -31,6 +31,9 @@ sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          
 sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
 sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
+# 8137314
+java/security/Policy/SignedJar/SignedJarTest.java		solaris-all
+
 ############################################################################
 
 # 8134916
