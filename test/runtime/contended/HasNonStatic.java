@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.Contended;
  * @bug     8015270
  * @summary \@Contended: fix multiple issues in the layout code
  *
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended HasNonStatic
  */
 public class HasNonStatic {
