@@ -60,7 +60,6 @@ public class ModuleFinderTest {
      * Test ModuleFinder.ofInstalled
      */
     public void testOfInstalled() {
-
         ModuleFinder finder = ModuleFinder.ofInstalled();
 
         assertTrue(finder.find("java.se").isPresent());
@@ -78,10 +77,9 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.of with zero directories
+     * Test ModuleFinder.of with zero entries
      */
-    public void testZeroDirectories() {
-
+    public void testOfZeroEntries() {
         ModuleFinder finder = ModuleFinder.of();
         assertTrue(finder.findAll().isEmpty());
         assertFalse(finder.find("java.rhubarb").isPresent());
@@ -89,13 +87,12 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.of with one directory
+     * Test ModuleFinder.of with one directory of modules
      */
-    public void testOneDirectory() throws Exception {
-
+    public void testOfOneDirectory() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createExplodedModule(dir.resolve("m1"), "m1");
-        createExplodedModule(dir.resolve("m2"), "m2");
+        createModularJar(dir.resolve("m2.jar"), "m2");
 
         ModuleFinder finder = ModuleFinder.of(dir);
         assertTrue(finder.findAll().size() == 2);
@@ -108,17 +105,16 @@ public class ModuleFinderTest {
     /**
      * Test ModuleFinder.of with two directories
      */
-    public void testTwoDirectories() throws Exception {
-
+    public void testOfTwoDirectories() throws Exception {
         Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
         createExplodedModule(dir1.resolve("m1"), "m1@1.0");
-        createExplodedModule(dir1.resolve("m2"), "m2@1.0");
+        createModularJar(dir1.resolve("m2.jar"), "m2@1.0");
 
         Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
         createExplodedModule(dir2.resolve("m1"), "m1@2.0");
-        createExplodedModule(dir2.resolve("m2"), "m2@2.0");
+        createModularJar(dir2.resolve("m2.jar"), "m2@2.0");
         createExplodedModule(dir2.resolve("m3"), "m3");
-        createExplodedModule(dir2.resolve("m4"), "m4");
+        createModularJar(dir2.resolve("m4.jar"), "m4");
 
         ModuleFinder finder = ModuleFinder.of(dir1, dir2);
         assertTrue(finder.findAll().size() == 4);
@@ -139,11 +135,174 @@ public class ModuleFinderTest {
 
 
     /**
+     * Test ModuleFinder.of with one JAR file
+     */
+    public void testOfOneJarFile() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Path jar1 = createModularJar(dir.resolve("m1.jar"), "m1");
+
+        ModuleFinder finder = ModuleFinder.of(jar1);
+        assertTrue(finder.findAll().size() == 1);
+        assertTrue(finder.find("m1").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+    }
+
+
+    /**
+     * Test ModuleFinder.of with two JAR files
+     */
+    public void testOfTwoJarFiles() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+
+        Path jar1 = createModularJar(dir.resolve("m1.jar"), "m1");
+        Path jar2 = createModularJar(dir.resolve("m2.jar"), "m2");
+
+        ModuleFinder finder = ModuleFinder.of(jar1, jar2);
+        assertTrue(finder.findAll().size() == 2);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+    }
+
+
+    /**
+     * Test ModuleFinder.of with many JAR files
+     */
+    public void testOfManyJarFiles() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+
+        Path jar1 = createModularJar(dir.resolve("m1@1.0.jar"), "m1@1.0");
+        Path jar2 = createModularJar(dir.resolve("m2@1.0.jar"), "m2");
+        Path jar3 = createModularJar(dir.resolve("m1@2.0.jar"), "m1@2.0"); // shadowed
+        Path jar4 = createModularJar(dir.resolve("m3@1.0.jar"), "m3");
+
+        ModuleFinder finder = ModuleFinder.of(jar1, jar2, jar3, jar4);
+        assertTrue(finder.findAll().size() == 3);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.find("m3").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        // check that m1@1.0 (and not m1@2.0) is found
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+        assertEquals(m1.version().get().toString(), "1.0");
+    }
+
+
+    /**
+     * Test ModuleFinder.of with a mix of directories and JAR files.
+     */
+    public void testOfMixDirectoriesAndJars() throws Exception {
+
+        // directory with m1@1.0 and m2@1.0
+        Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
+        createExplodedModule(dir1.resolve("m1"), "m1@1.0");
+        createModularJar(dir1.resolve("m2.jar"), "m2@1.0");
+
+        // JAR files: m1@2.0, m2@2.0, m3@2.0, m4@2.0
+        Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
+        Path jar1 = createModularJar(dir2.resolve("m1.jar"), "m1@2.0");
+        Path jar2 = createModularJar(dir2.resolve("m2.jar"), "m2@2.0");
+        Path jar3 = createModularJar(dir2.resolve("m3.jar"), "m3@2.0");
+        Path jar4 = createModularJar(dir2.resolve("m4.jar"), "m4@2.0");
+
+        // directory with m3@3.0 and m4@3.0
+        Path dir3 = Files.createTempDirectory(USER_DIR, "mods3");
+        createExplodedModule(dir3.resolve("m3"), "m3@3.0");
+        createModularJar(dir3.resolve("m4.jar"), "m4@3.0");
+
+        // JAR files: m5 and m6
+        Path dir4 = Files.createTempDirectory(USER_DIR, "mods4");
+        Path jar5 = createModularJar(dir4.resolve("m5.jar"), "m5@4.0");
+        Path jar6 = createModularJar(dir4.resolve("m6.jar"), "m6@4.0");
+
+
+        ModuleFinder finder
+            = ModuleFinder.of(dir1, jar1, jar2, jar3, jar4, dir3, jar5, jar6);
+        assertTrue(finder.findAll().size() == 6);
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.find("m3").isPresent());
+        assertTrue(finder.find("m4").isPresent());
+        assertTrue(finder.find("m5").isPresent());
+        assertTrue(finder.find("m6").isPresent());
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        // m1 and m2 should be located in dir1
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+        assertEquals(m1.version().get().toString(), "1.0");
+        ModuleDescriptor m2 = finder.find("m2").get().descriptor();
+        assertEquals(m2.version().get().toString(), "1.0");
+
+        // m3 and m4 should be located in JAR files
+        ModuleDescriptor m3 = finder.find("m3").get().descriptor();
+        assertEquals(m3.version().get().toString(), "2.0");
+        ModuleDescriptor m4 = finder.find("m4").get().descriptor();
+        assertEquals(m4.version().get().toString(), "2.0");
+
+        // m5 and m6 should be located in JAR files
+        ModuleDescriptor m5 = finder.find("m5").get().descriptor();
+        assertEquals(m5.version().get().toString(), "4.0");
+        ModuleDescriptor m6 = finder.find("m6").get().descriptor();
+        assertEquals(m6.version().get().toString(), "4.0");
+    }
+
+
+    /**
+     * Test ModuleFinder.of with file path to a module that does not exist.
+     */
+    public void testOfWithDoesNotExistEntry() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Files.delete(dir);
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        try {
+            finder.find("java.rhubarb");
+            assertTrue(false);
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof IOException);
+        }
+
+        finder = ModuleFinder.of(dir);
+        try {
+            finder.findAll();
+            assertTrue(false);
+        } catch (FindException e) {
+            assertTrue(e.getCause() instanceof IOException);
+        }
+    }
+
+
+    /**
+     * Test ModuleFinder.of with a file path to an unrecognized file type.
+     */
+    public void testOfWithUnrecognizedEntry() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Path mod = Files.createTempFile(dir, "m", "mod");
+
+        ModuleFinder finder = ModuleFinder.of(mod);
+        try {
+            finder.find("java.rhubarb");
+            assertTrue(false);
+        } catch (FindException e) {
+            // expected
+        }
+
+        finder = ModuleFinder.of(mod);
+        try {
+            finder.findAll();
+            assertTrue(false);
+        } catch (FindException e) {
+            // expected
+        }
+    }
+
+
+    /**
      * Test ModuleFinder.of with a directory that contains two
      * versions of the same module
      */
-    public void testDuplicateModules() throws Exception {
-
+    public void testOfDuplicateModulesInDirectory() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createModularJar(dir.resolve("m1@1.0.jar"), "m1");
         createModularJar(dir.resolve("m1@2.0.jar"), "m1");
@@ -163,35 +322,9 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.of with a bad (does not exist) directory
-     */
-    public void testWithBadDirectory() throws Exception {
-        Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        Files.delete(dir);
-
-        ModuleFinder finder = ModuleFinder.of(dir);
-        try {
-            finder.find("java.rhubarb");
-            assertTrue(false);
-        } catch (FindException e) {
-            assertTrue(e.getCause() instanceof IOException);
-        }
-
-        finder = ModuleFinder.of(dir);
-        try {
-            finder.findAll();
-            assertTrue(false);
-        } catch (FindException e) {
-            assertTrue(e.getCause() instanceof IOException);
-        }
-
-    }
-
-
-    /**
      * Test ModuleFinder.of with a truncated module-info.class
      */
-    public void testWithTruncateModuleInfo() throws Exception {
+    public void testOfWithTruncatedModuleInfo() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
 
         // create an empty <dir>/rhubarb/module-info.class
@@ -220,7 +353,6 @@ public class ModuleFinderTest {
      * Test ModuleFinder.concat
      */
     public void testConcat() throws Exception {
-
         Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
         createExplodedModule(dir1.resolve("m1"), "m1@1.0");
         createExplodedModule(dir1.resolve("m2"), "m2@1.0");
@@ -333,20 +465,21 @@ public class ModuleFinderTest {
      * Creates an exploded module in the given directory and containing a
      * module descriptor with the given module name/version.
      */
-    static void createExplodedModule(Path dir, String mid) throws Exception {
+    static Path createExplodedModule(Path dir, String mid) throws Exception {
         ModuleDescriptor descriptor = newModuleDescriptor(mid);
         Files.createDirectories(dir);
         Path mi = dir.resolve("module-info.class");
         try (OutputStream out = Files.newOutputStream(mi)) {
             ModuleInfoWriter.write(descriptor, out);
         }
+        return dir;
     }
 
     /**
      * Creates a JAR file with the given file path and containing a module
      * descriptor with the given module name/version.
      */
-    static void createModularJar(Path file, String mid, String ... entries)
+    static Path createModularJar(Path file, String mid, String ... entries)
         throws Exception
     {
         ModuleDescriptor descriptor = newModuleDescriptor(mid);
@@ -366,6 +499,7 @@ public class ModuleFinderTest {
             }
 
         }
+        return file;
     }
 
 }

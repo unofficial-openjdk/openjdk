@@ -150,29 +150,41 @@ public interface ModuleFinder {
     }
 
     /**
-     * Creates a finder that locates modules on the file system by searching a
-     * sequence of zero or more directories for module references. This method
-     * will locate modules that are packaged as modular JAR files or modules
-     * that are exploded on the file system. It may also locate modules that
-     * are packaged in other implementation specific formats.
+     * Creates a module finder that locates modules on the file system by
+     * searching a sequence of directories and/or packaged modules.
+     *
+     * Each entry in the given array is a path to a directory of modules or
+     * a path to a packaged module. A directory of modules contains zero or
+     * more modules that are packaged modules or modules that are exploded on
+     * the file system.
+     *
+     * Modules are located by the resulting {@code ModuleFinder} by searching
+     * the module directories or packaged modules in array index order.
+     *
+     * This method supports modules that are packaged as modular JAR files.
+     * It may also support modules that are packaged in other implementation
+     * specific formats.
      *
      * <p> Finders created by this method are lazy and do not eagerly check
-     * that the given file paths are directories. A call to the {@code find}
-     * or {@code findAll} methods may fail as a result. </p>
+     * that the given file paths are to directories or packaged modules. A call
+     * to the {@code find} or {@code findAll} methods may fail as a result. </p>
      *
-     * @param dirs
-     *        The possibly-empty array of directories
+     * @apiNote This method is not required to be thread safe.
+     *
+     * @param entries
+     *        A possibly-empty array of paths to directories of modules
+     *        or paths to packaged modules
      *
      * @return A {@code ModuleFinder} that locates modules on the file system
      */
-    public static ModuleFinder of(Path... dirs) {
-        return new ModulePath(dirs);
+    public static ModuleFinder of(Path... entries) {
+        return new ModulePath(entries);
     }
 
     /**
-     * Returns a finder that is the equivalent to concatenating the given
-     * finders. The resulting finder will locate modules references using
-     * {@code first}; if not found then it will attempt to locate module
+     * Returns a module finder that is the equivalent to concatenating two
+     * module finders. The resulting finder will locate modules references
+     * using {@code first}; if not found then it will attempt to locate module
      * references using {@code second}.
      *
      * <p> The {@link #findAll() findAll} method of the resulting module finder
@@ -218,7 +230,8 @@ public interface ModuleFinder {
     }
 
     /**
-     * Returns an empty finder.  The empty finder does not find any modules.
+     * Returns an empty module finder.  The empty finder does not find any
+     * modules.
      *
      * @apiNote This is useful when using methods such as {@link
      * Configuration#resolve resolve} where two finders are specified.

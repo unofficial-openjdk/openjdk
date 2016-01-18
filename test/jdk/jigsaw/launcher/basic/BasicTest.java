@@ -97,10 +97,10 @@ public class BasicTest {
      */
     public void testRunWithModularJar() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
+        Path jar = dir.resolve("m.jar");
 
         // jar --create ...
         String classes = MODS_DIR.resolve(TEST_MODULE).toString();
-        String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
             "--file=" + jar,
@@ -112,14 +112,22 @@ public class BasicTest {
                 .run(args);
         assertTrue(success);
 
-        // java -mp mods -m $TESTMODULE
+        // java -mp mlib -m $TESTMODULE
         int exitValue
             = executeTestJava("-mp", dir.toString(),
                               "-m", TEST_MODULE)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
+        assertTrue(exitValue == 0);
 
+        // java -mp mlib/m.jar -m $TESTMODULE
+        exitValue
+            = executeTestJava("-mp", jar.toString(),
+                              "-m", TEST_MODULE)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
         assertTrue(exitValue == 0);
     }
 
