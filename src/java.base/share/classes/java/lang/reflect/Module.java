@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -251,9 +252,9 @@ public final class Module {
 
     // the modules that this module permanently reads
     // (will be final when the modules are defined in reverse topology order)
-    private volatile Set<Module> reads = Collections.emptySet();
+    private volatile Set<Module> reads;
 
-    // created lazily, additional modules that this module temporarily reads
+    // created lazily, additional modules that this module reflectively reads
     private volatile WeakSet<Module> transientReads;
 
 
@@ -287,7 +288,7 @@ public final class Module {
         if (source.isNamed()) {
 
             Set<Module> reads = this.reads; // volatile read
-            if (reads.contains(source))
+            if (reads != null && reads.contains(source))
                 return true;
 
         } else {
@@ -298,7 +299,7 @@ public final class Module {
 
         }
 
-        // check if this module reads the source module temporarily
+        // check if this module reads the source module reflectively
         WeakSet<Module> tr = this.transientReads; // volatile read
         if (tr != null && tr.contains(source))
             return true;
@@ -385,14 +386,14 @@ public final class Module {
 
         // check if we already read this module
         Set<Module> reads = this.reads;
-        if (reads.contains(source))
+        if (reads != null && reads.contains(source))
             return;
 
         // update VM first, just in case it fails
         if (syncVM)
             addReads0(this, source);
 
-        // add temporary read.
+        // add reflective read
         WeakSet<Module> tr = this.transientReads;
         if (tr == null) {
             synchronized (this) {
@@ -406,60 +407,21 @@ public final class Module {
         tr.add(source);
     }
 
-    /**
-     * A "not-a-Set" set of weakly referenced objects that supports concurrent
-     * access.
-     */
-    private static class WeakSet<E> {
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        private final Lock readLock = lock.readLock();
-        private final Lock writeLock = lock.writeLock();
-
-        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
-
-        /**
-         * Adds the specified element to the set.
-         */
-        void add(E e) {
-            writeLock.lock();
-            try {
-                map.put(e, Boolean.TRUE);
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        /**
-         * Returns {@code true} if this set contains the specified element.
-         */
-        boolean contains(E e) {
-            readLock.lock();
-            try {
-                return map.containsKey(e);
-            } finally {
-                readLock.unlock();
-            }
-        }
-    }
-
 
     // -- exports --
 
-    // Module exports. The key is the package name; The value is a map of
-    // the modules that the package is exported to. When exports are
-    // changed at run-time then the value is a WeakHashMap to allow for
-    // target Modules to be GC'ed.
-    private volatile Map<String, Map<Module, Boolean>> exports = Collections.emptyMap();
+    // the packages that are permanently exported
+    // (will be final when the modules are defined in reverse topology order)
+    private volatile Map<String, Set<Module>> exports;
 
-    // Placeholder module: if a package is exported to this Module then it
-    // means the package is exported to all modules
+    // created lazily, additional exports added at run-time
+    private volatile Map<String, WeakSet<Module>> transientExports;
+
+    // the special Module to mean exported to all modules
     private static final Module EVERYONE_MODULE = new Module(null);
+    private static final Set<Module> EVERYONE = Collections.singleton(EVERYONE_MODULE);
 
-    private static final Map<Module, Boolean> EVERYONE
-        = Collections.singletonMap(EVERYONE_MODULE, Boolean.TRUE);
-
-    // Placeholder module: if a package is exported to this Module then it
-    // means the package is exported to all unnamed modules
+    // the special Module to mean exported to all unnamed modules
     private static final Module ALL_UNNAMED_MODULE = new Module(null);
 
 
@@ -515,31 +477,79 @@ public final class Module {
         if (!isNamed())
             return true;
 
-        Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
-        Map<Module, Boolean> targets = exports.get(pn);
+        // exported via module declaration/descriptor
+        if (isExportedPermanently(pn, target))
+            return true;
 
-        if (targets != null) {
-
-            // exported to all
-            if (targets.containsKey(EVERYONE_MODULE))
-                return true;
-
-            if (target != EVERYONE_MODULE) {
-
-                // exported to target
-                if (targets.containsKey(target))
-                    return true;
-
-                // target is an unnamed module && exported to all unnamed modules
-                if (!target.isNamed() && targets.containsKey(ALL_UNNAMED_MODULE))
-                    return true;
-            }
-
-        }
+        // exported via addExports
+        if (isExportedReflectively(pn, target))
+            return true;
 
         // not exported or not exported to target
         return false;
     }
+
+    /**
+     * Returns {@code true} if this module permanently exports the given
+     * package package to the given module.
+     */
+    private boolean isExportedPermanently(String pn, Module target) {
+        Map<String, Set<Module>> exports = this.exports;
+        if (exports != null) {
+            Set<Module> targets = exports.get(pn);
+
+            if (targets != null) {
+
+                // exported to all modules
+                if (targets.contains(EVERYONE_MODULE))
+                    return true;
+
+                if (target != EVERYONE_MODULE) {
+                    // exported to target
+                    if (targets.contains(target))
+                        return true;
+
+                    // target is an unnamed module && exported to all unnamed
+                    if (!target.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                        return true;
+                }
+
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if this module reflectively exports the given
+     * package package to the given module.
+     */
+    private boolean isExportedReflectively(String pn, Module target) {
+        Map<String, WeakSet<Module>> te = this.transientExports;
+        if (te != null) {
+            WeakSet<Module> targets = te.get(pn);
+
+            if (targets != null) {
+
+                // exported to all modules
+                if (targets.contains(EVERYONE_MODULE))
+                    return true;
+
+                if (target != EVERYONE_MODULE) {
+
+                    // exported to target
+                    if (targets.contains(target))
+                        return true;
+
+                    // target is an unnamed module && exported to all unnamed
+                    if (!target.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                        return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
 
     /**
      * If the caller's module is this module then update this module to export
@@ -622,57 +632,49 @@ public final class Module {
         if (!isNamed())
             return;
 
+        // nothing to do if already exported to target
+        if (implIsExported(pn, target))
+            return;
+
+        // can only export a package in the module
         if (!containsPackage(pn)) {
             throw new IllegalArgumentException("package " + pn
                                                + " not in contents");
         }
 
-        synchronized (this) {
-
-            // nothing to do if already exported to target
-            if (implIsExported(pn, target))
-                return;
-
-            // update VM first, just in case it fails
-            if (syncVM) {
-                String pkgInternalForm = pn.replace('.', '/');
-                if (target == EVERYONE_MODULE) {
-                    addExportsToAll0(this, pkgInternalForm);
-                } else if (target == ALL_UNNAMED_MODULE) {
-                    addExportsToAllUnnamed0(this, pkgInternalForm);
-                } else {
-                    addExports0(this, pkgInternalForm, target);
-                }
-            }
-
-            // copy existing map
-            Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
-
+        // update VM first, just in case it fails
+        if (syncVM) {
+            String pkgInternalForm = pn.replace('.', '/');
             if (target == EVERYONE_MODULE) {
-
-                // export to everyone
-                exports.put(pn, EVERYONE);
-
+                addExportsToAll0(this, pkgInternalForm);
+            } else if (target == ALL_UNNAMED_MODULE) {
+                addExportsToAllUnnamed0(this, pkgInternalForm);
             } else {
-
-                // the package may or may not be exported already
-                Map<Module, Boolean> targets = exports.get(pn);
-                if (targets == null) {
-                    // not already exported
-                    targets = new WeakHashMap<>();
-                } else {
-                    // already exported, need to copy
-                    targets = new WeakHashMap<>(targets);
-                }
-
-                targets.put(target, Boolean.TRUE);
-                exports.put(pn, targets);
-
+                addExports0(this, pkgInternalForm, target);
             }
-
-            // volatile write
-            this.exports = exports;
         }
+
+        // create transientExports if needed
+        Map<String, WeakSet<Module>> te = this.transientExports; // read
+        if (te == null) {
+            synchronized (this) {
+                te = this.transientExports;
+                if (te == null) {
+                    te = new ConcurrentHashMap<>();
+                    this.transientExports = te;  // volatile write
+                }
+            }
+        }
+
+        // add package name to transientExports if absent
+        WeakSet<Module> s = te.get(pn);
+        if (s == null) {
+            s = new WeakSet<>();
+            WeakSet<Module> prev = te.putIfAbsent(pn, s);
+            if (prev != null)
+                s = prev;
+        }
+        s.add(target);
     }
 
 
@@ -980,8 +982,8 @@ public final class Module {
             }
 
             // exports
-            Map<String, Map<Module, Boolean>> exports = new HashMap<>();
-            for (Exports export: descriptor.exports()) {
+            Map<String, Set<Module>> exports = new HashMap<>();
+            for (Exports export : descriptor.exports()) {
                 String source = export.source();
                 String sourceInternalForm = source.replace('.', '/');
 
@@ -994,12 +996,12 @@ public final class Module {
                 } else {
 
                     // qualified export
-                    Map<Module, Boolean> targets = new HashMap<>();
+                    Set<Module> targets = new HashSet<>();
                     for (String target : export.targets().get()) {
                         // only export to modules that are in this configuration
                         Module m2 = modules.get(target);
                         if (m2 != null) {
-                            targets.put(m2, Boolean.TRUE);
+                            targets.add(m2);
                             addExports0(m, sourceInternalForm, m2);
                         }
                     }
@@ -1109,6 +1111,46 @@ public final class Module {
         } else {
             String id = Integer.toHexString(System.identityHashCode(this));
             return "unnamed module @" + id;
+        }
+    }
+
+
+    // -- supporting classes --
+
+
+    /**
+     * A "not-a-Set" set of weakly referenced objects that supports concurrent
+     * access.
+     */
+    private static class WeakSet<E> {
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        private final Lock readLock = lock.readLock();
+        private final Lock writeLock = lock.writeLock();
+
+        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
+
+        /**
+         * Adds the specified element to the set.
+         */
+        void add(E e) {
+            writeLock.lock();
+            try {
+                map.put(e, Boolean.TRUE);
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        /**
+         * Returns {@code true} if this set contains the specified element.
+         */
+        boolean contains(E e) {
+            readLock.lock();
+            try {
+                return map.containsKey(e);
+            } finally {
+                readLock.unlock();
+            }
         }
     }
 
