@@ -741,7 +741,8 @@ public class Resolve {
                                     Warner warn) {
             //should we expand formals?
             boolean useVarargs = deferredAttrContext.phase.isVarargsRequired();
-            List<JCExpression> trees = TreeInfo.args(env.tree);
+            JCTree callTree = treeForDiagnostics(env);
+            List<JCExpression> trees = TreeInfo.args(callTree);
 
             //inference context used during this method check
             InferenceContext inferenceContext = deferredAttrContext.inferenceContext;
@@ -750,7 +751,7 @@ public class Resolve {
 
             if (varargsFormal == null &&
                     argtypes.size() != formals.size()) {
-                reportMC(env.tree, MethodCheckDiag.ARITY_MISMATCH, inferenceContext); // not enough args
+                reportMC(callTree, MethodCheckDiag.ARITY_MISMATCH, inferenceContext); // not enough args
             }
 
             while (argtypes.nonEmpty() && formals.head != varargsFormal) {
@@ -762,7 +763,7 @@ public class Resolve {
             }
 
             if (formals.head != varargsFormal) {
-                reportMC(env.tree, MethodCheckDiag.ARITY_MISMATCH, inferenceContext); // not enough args
+                reportMC(callTree, MethodCheckDiag.ARITY_MISMATCH, inferenceContext); // not enough args
             }
 
             if (useVarargs) {
@@ -777,6 +778,11 @@ public class Resolve {
                 }
             }
         }
+
+            // where
+            private JCTree treeForDiagnostics(Env<AttrContext> env) {
+                return env.info.preferredTreeForDiagnostics != null ? env.info.preferredTreeForDiagnostics : env.tree;
+            }
 
         /**
          * Does the actual argument conforms to the corresponding formal?
@@ -1866,17 +1872,23 @@ public class Resolve {
         boolean staticOnly = false;
         while (env1.outer != null) {
             if (isStatic(env1)) staticOnly = true;
-            Symbol sym = findMethod(
-                env1, env1.enclClass.sym.type, name, argtypes, typeargtypes,
-                allowBoxing, useVarargs);
-            if (sym.exists()) {
-                if (staticOnly &&
-                    sym.kind == MTH &&
-                    sym.owner.kind == TYP &&
-                    (sym.flags() & STATIC) == 0) return new StaticError(sym);
-                else return sym;
-            } else {
-                bestSoFar = bestOf(bestSoFar, sym);
+            Assert.check(env1.info.preferredTreeForDiagnostics == null);
+            env1.info.preferredTreeForDiagnostics = env.tree;
+            try {
+                Symbol sym = findMethod(
+                    env1, env1.enclClass.sym.type, name, argtypes, typeargtypes,
+                    allowBoxing, useVarargs);
+                if (sym.exists()) {
+                    if (staticOnly &&
+                        sym.kind == MTH &&
+                        sym.owner.kind == TYP &&
+                        (sym.flags() & STATIC) == 0) return new StaticError(sym);
+                    else return sym;
+                } else {
+                    bestSoFar = bestOf(bestSoFar, sym);
+                }
+            } finally {
+                env1.info.preferredTreeForDiagnostics = null;
             }
             if ((env1.enclClass.sym.flags() & STATIC) != 0) staticOnly = true;
             env1 = env1.outer;
@@ -4232,7 +4244,11 @@ public class Resolve {
                     DiagnosticPosition preferedPos, DiagnosticSource preferredSource,
                     DiagnosticType preferredKind, JCDiagnostic d) {
                 JCDiagnostic cause = (JCDiagnostic)d.getArgs()[causeIndex];
-                return diags.create(preferredKind, preferredSource, d.getDiagnosticPosition(),
+                DiagnosticPosition pos = d.getDiagnosticPosition();
+                if (pos == null) {
+                    pos = preferedPos;
+                }
+                return diags.create(preferredKind, preferredSource, pos,
                         "prob.found.req", cause);
             }
         }
