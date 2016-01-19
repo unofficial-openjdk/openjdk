@@ -113,7 +113,6 @@ typedef struct {
     char* property_java_vm_name;          /* UTF8 java.vm.name */
     char* property_java_vm_info;          /* UTF8 java.vm.info */
     char* property_java_class_path;       /* UTF8 java.class.path */
-    char* property_sun_boot_class_path;   /* UTF8 sun.boot.class.path */
     char* property_sun_boot_library_path; /* UTF8 sun.boot.library.path */
     char* property_path_separator;        /* UTF8 path.separator */
     char* property_user_dir;              /* UTF8 user.dir */

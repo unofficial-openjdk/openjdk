@@ -1093,6 +1093,7 @@ public final class JarSigner {
         try {
             // attempt to find signer
             Class<?> signerClass = appClassLoader.loadClass(signerClassName);
+            JarSigner.class.getModule().addReads(signerClass.getModule());
             Object signer = signerClass.newInstance();
             return (ContentSigner) signer;
         } catch (ClassNotFoundException|InstantiationException|

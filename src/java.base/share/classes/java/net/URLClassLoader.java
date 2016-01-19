@@ -42,7 +42,6 @@ import java.security.SecureClassLoader;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.jar.Attributes;
@@ -393,7 +392,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      */
     private Package getAndVerifyPackage(String pkgname,
                                         Manifest man, URL url) {
-        Package pkg = getPackage(pkgname);
+        Package pkg = getDefinedPackage(pkgname);
         if (pkg != null) {
             // Package found, so check package sealing.
             if (pkg.isSealed()) {
@@ -415,29 +414,6 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
         return pkg;
     }
 
-    // Also called by VM to define Package for classes loaded from the CDS
-    // archive
-    private void definePackageInternal(String pkgname, Manifest man, URL url)
-    {
-        if (getAndVerifyPackage(pkgname, man, url) == null) {
-            try {
-                if (man != null) {
-                    definePackage(pkgname, man, url);
-                } else {
-                    definePackage(pkgname, null, null, null, null, null, null, null);
-                }
-            } catch (IllegalArgumentException iae) {
-                // parallel-capable class loaders: re-verify in case of a
-                // race condition
-                if (getAndVerifyPackage(pkgname, man, url) == null) {
-                    // Should never happen
-                    throw new AssertionError("Cannot find package " +
-                                             pkgname);
-                }
-            }
-        }
-    }
-
     /*
      * Defines a Class using the class bytes obtained from the specified
      * Resource. The resulting Class must be resolved before it can be
@@ -451,7 +427,23 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
             String pkgname = name.substring(0, i);
             // Check if package already loaded.
             Manifest man = res.getManifest();
-            definePackageInternal(pkgname, man, url);
+            if (getAndVerifyPackage(pkgname, man, url) == null) {
+                try {
+                    if (man != null) {
+                        definePackage(pkgname, man, url);
+                    } else {
+                        definePackage(pkgname, null, null, null, null, null, null, null);
+                    }
+                } catch (IllegalArgumentException iae) {
+                    // parallel-capable class loaders: re-verify in case of a
+                    // race condition
+                    if (getAndVerifyPackage(pkgname, man, url) == null) {
+                        // Should never happen
+                        throw new AssertionError("Cannot find package " +
+                                                 pkgname);
+                    }
+                }
+            }
         }
         // Now read the class bytes and define the class
         java.nio.ByteBuffer bb = res.getByteBuffer();
@@ -573,7 +565,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
                 }
             }, acc);
 
-        return url != null ? ucp.checkURL(url) : null;
+        return url != null ? URLClassPath.checkURL(url) : null;
     }
 
     /**
@@ -608,7 +600,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
                         }, acc);
                     if (u == null)
                         break;
-                    url = ucp.checkURL(u);
+                    url = URLClassPath.checkURL(u);
                 } while (url == null);
                 return url != null;
             }

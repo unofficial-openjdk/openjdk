@@ -250,8 +250,6 @@ util_initialize(JNIEnv *env)
                         = getPropertyUTF8(env, "java.vm.info");
         gdata->property_java_class_path
                         = getPropertyUTF8(env, "java.class.path");
-        gdata->property_sun_boot_class_path
-                        = getPropertyUTF8(env, "sun.boot.class.path");
         gdata->property_sun_boot_library_path
                         = getPropertyUTF8(env, "sun.boot.library.path");
         gdata->property_path_separator
