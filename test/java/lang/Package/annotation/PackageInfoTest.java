@@ -68,8 +68,8 @@ public class PackageInfoTest {
             { java.awt.Button.class,                        null },
             { java.lang.Object.class,                       null },
             { java.lang.management.ManagementFactory.class, null },
-            { com.sun.tools.attach.VirtualMachine.class,    jdk.Exported.class },
-            { com.sun.jdi.Accessible.class,                 jdk.Exported.class },
+            { com.sun.tools.attach.VirtualMachine.class,    null },
+            { com.sun.jdi.Accessible.class,                 null },
             { org.w3c.dom.css.CSSRule.class,                null },
         };
     }
