@@ -206,16 +206,18 @@ implements CertAttrSet<String> {
      */
     public void valid(Date now)
     throws CertificateNotYetValidException, CertificateExpiredException {
+	if (now == null)
+	    throw new NullPointerException();
         /*
          * we use the internal Dates rather than the passed in Date
          * because someone could override the Date methods after()
          * and before() to do something entirely different.
          */
-        if (notBefore.after(now)) {
+        if (notBefore != null && notBefore.after(now)) {
             throw new CertificateNotYetValidException("NotBefore: " +
                                                       notBefore.toString());
         }
-        if (notAfter.before(now)) {
+        if (notAfter != null && notAfter.before(now)) {
             throw new CertificateExpiredException("NotAfter: " +
                                                   notAfter.toString());
         }

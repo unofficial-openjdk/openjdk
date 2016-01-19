@@ -31,7 +31,12 @@ import java.io.StringReader;
 import java.security.PrivilegedExceptionAction;
 import java.security.AccessController;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 import sun.security.util.*;
 import sun.security.pkcs.PKCS9Attribute;
@@ -448,31 +453,20 @@ public class RDN {
                                assertion[0].toRFC2253String(oidMap);
         }
 
-        StringBuilder relname = new StringBuilder();
-        if (!canonical) {
-            for (int i = 0; i < assertion.length; i++) {
-                if (i > 0) {
-                    relname.append('+');
-                }
-                relname.append(assertion[i].toRFC2253String(oidMap));
-            }
-        } else {
+        AVA[] toOutput = assertion;
+        if (canonical) {
             // order the string type AVA's alphabetically,
             // followed by the oid type AVA's numerically
-            List<AVA> avaList = new ArrayList<AVA>(assertion.length);
-            for (int i = 0; i < assertion.length; i++) {
-                avaList.add(assertion[i]);
-            }
-            java.util.Collections.sort(avaList, AVAComparator.getInstance());
-
-            for (int i = 0; i < avaList.size(); i++) {
-                if (i > 0) {
-                    relname.append('+');
-                }
-                relname.append(avaList.get(i).toRFC2253CanonicalString());
-            }
+            toOutput = assertion.clone();
+            Arrays.sort(toOutput, AVAComparator.getInstance());
         }
-        return relname.toString();
+        StringBuilder sb = new StringBuilder();
+        for (int a = 0; a < toOutput.length; ++a) {
+            if (a > 0) sb.append("+");
+            sb.append(canonical ? toOutput[a].toRFC2253CanonicalString()
+                                : toOutput[a].toRFC2253String(oidMap));
+        }
+        return sb.toString();
     }
 
 }

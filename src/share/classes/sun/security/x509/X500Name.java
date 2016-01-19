@@ -347,6 +347,8 @@ public class X500Name implements GeneralNameInterface, Principal {
             for (int i = 0; i < names.length; i++) {
                 list.addAll(names[i].avas());
             }
+            list = Collections.unmodifiableList(list);
+            allAvaList = list;
         }
         return list;
     }
@@ -365,9 +367,6 @@ public class X500Name implements GeneralNameInterface, Principal {
      */
     public boolean isEmpty() {
         int n = names.length;
-        if (n == 0) {
-            return true;
-        }
         for (int i = 0; i < n; i++) {
             if (names[i].assertion.length != 0) {
                 return false;
