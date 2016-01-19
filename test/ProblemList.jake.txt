@@ -85,3 +85,9 @@ javax/naming/module/basic.sh					generic-all
 
 ############################################################################
 
+# jdk_jmx
+
+#8147610
+javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
+
+############################################################################
