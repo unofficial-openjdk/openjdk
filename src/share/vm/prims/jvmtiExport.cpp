@@ -46,6 +46,7 @@
 #include "runtime/arguments.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/interfaceSupport.hpp"
+#include "runtime/javaCalls.hpp"
 #include "runtime/objectMonitor.hpp"
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/os.inline.hpp"
@@ -397,6 +398,28 @@ JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
   }
 }
 
+void
+JvmtiExport::add_default_read_edges(Handle h_module, TRAPS) {
+  if (!Universe::is_module_initialized()) {
+    return; // extra safety
+  }
+  assert(!h_module.is_null(), "module should always be set");
+
+  // Invoke the transformedByAgent method
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result,
+                         SystemDictionary::module_Modules_klass(),
+                         vmSymbols::transformedByAgent_name(),
+                         vmSymbols::transformedByAgent_signature(),
+                         h_module,
+                         THREAD);
+
+  if (HAS_PENDING_EXCEPTION) {
+    java_lang_Throwable::print(PENDING_EXCEPTION, tty);
+    CLEAR_PENDING_EXCEPTION;
+    return;
+  }
+}
 
 void
 JvmtiExport::decode_version_values(jint version, int * major, int * minor,
@@ -544,6 +567,17 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
     if (_state != NULL) {
       _h_class_being_redefined = _state->get_class_being_redefined();
       _load_kind = _state->get_class_load_kind();
+      Klass* klass = (_h_class_being_redefined == NULL) ? NULL : (*_h_class_being_redefined)();
+      if (_load_kind != jvmti_class_load_kind_load && klass != NULL) {
+        ModuleEntry* module_entry = InstanceKlass::cast(klass)->module();
+        assert(module_entry != NULL, "module_entry should always be set");
+        if (module_entry->is_named() &&
+            module_entry->jlrM_module() != NULL) {
+          // Add read edges to the unnamed modules of the bootstrap and app class loaders
+          Handle class_module(_thread, JNIHandles::resolve(module_entry->jlrM_module())); // Obtain j.l.r.Module
+          JvmtiExport::add_default_read_edges(class_module, _thread);
+        }
+      }
       // Clear class_being_redefined flag here. The action
       // from agent handler could generate a new class file load
       // hook event and if it is not cleared the new event generated
@@ -668,6 +702,10 @@ void JvmtiExport::post_class_file_load_hook(Symbol* h_name,
                                             unsigned char **data_ptr,
                                             unsigned char **end_ptr,
                                             JvmtiCachedClassFileData **cache_ptr) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+
   JvmtiClassFileLoadHookPoster poster(h_name, class_loader,
                                       h_protection_domain,
                                       data_ptr, end_ptr,
@@ -912,6 +950,9 @@ bool JvmtiExport::hide_single_stepping(JavaThread *thread) {
 }
 
 void JvmtiExport::post_class_load(JavaThread *thread, Klass* klass) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   HandleMark hm(thread);
   KlassHandle kh(thread, klass);
 
@@ -941,6 +982,9 @@ void JvmtiExport::post_class_load(JavaThread *thread, Klass* klass) {
 
 
 void JvmtiExport::post_class_prepare(JavaThread *thread, Klass* klass) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   HandleMark hm(thread);
   KlassHandle kh(thread, klass);
 
@@ -969,6 +1013,9 @@ void JvmtiExport::post_class_prepare(JavaThread *thread, Klass* klass) {
 }
 
 void JvmtiExport::post_class_unload(Klass* klass) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   Thread *thread = Thread::current();
   HandleMark hm(thread);
   KlassHandle kh(thread, klass);
@@ -1018,6 +1065,9 @@ void JvmtiExport::post_class_unload(Klass* klass) {
 
 
 void JvmtiExport::post_thread_start(JavaThread *thread) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   assert(thread->thread_state() == _thread_in_vm, "must be in vm state");
 
   EVT_TRIG_TRACE(JVMTI_EVENT_THREAD_START, ("JVMTI [%s] Trg Thread Start event triggered",
@@ -1048,6 +1098,9 @@ void JvmtiExport::post_thread_start(JavaThread *thread) {
 
 
 void JvmtiExport::post_thread_end(JavaThread *thread) {
+  if (JvmtiEnv::get_phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   EVT_TRIG_TRACE(JVMTI_EVENT_THREAD_END, ("JVMTI [%s] Trg Thread End event triggered",
                       JvmtiTrace::safe_get_thread_name(thread)));
 

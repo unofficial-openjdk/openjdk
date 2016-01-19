@@ -28,6 +28,7 @@
  * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @summary Testing compiler.jvmci.CompilerToVM.resolveTypeInPool method
  * @library /testlibrary /test/lib /
+ * @ignore 8143238
  * @compile ../common/CompilerToVMHelper.java
  * @build compiler.jvmci.common.testcases.MultipleImplementersInterface
  *        compiler.jvmci.common.testcases.MultipleImplementer2
