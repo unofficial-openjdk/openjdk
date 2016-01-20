@@ -598,9 +598,8 @@ public final class TaskHelper {
                     StringBuilder builder = new StringBuilder();
                     for (PluginOption o : plugin.getAdditionalOptions()) {
                         builder.append("\n--").append(o.getName()).append(" ").
-                                append(o.getArgumentDescription().isEmpty()
-                                        ? bundleHelper.getMessage("main.plugin.no.value")
-                                        : o.getArgumentDescription());
+                                append(o.getArgumentDescription()).
+                                append(" ").append(o.getDescription());
                     }
                     log.println(bundleHelper.getMessage("main.plugin.additional.options")
                             + ":" + builder.toString());
