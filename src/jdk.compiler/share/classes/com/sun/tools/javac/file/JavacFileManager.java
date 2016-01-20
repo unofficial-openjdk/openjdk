@@ -651,7 +651,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                 Path p = e.files.get(name.basename());
                 if (p != null)
                     return PathFileObject.forJRTPath(this, p);
-            } else if (fsInfo.isDirectory(file)) {
+            } else if (Files.isDirectory(file)) {
                 try {
                     Path f = name.resolveAgainst(file);
                     if (Files.exists(f))
