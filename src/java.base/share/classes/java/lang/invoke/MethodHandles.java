@@ -103,11 +103,11 @@ public class MethodHandles {
 
     /**
      * Returns a {@link Lookup lookup object} which is trusted minimally.
-     * It can only be used to create method handles to
-     * public members in public classes of exported packages.
+     * It can only be used to create method handles to public members in
+     * public classes in packages that are exported unconditionally.
      * <p>
-     * As a matter of pure convention, the {@linkplain Lookup#lookupClass lookup class}
-     * of this lookup object will be in an unnamed module.
+     * For now, the {@linkplain Lookup#lookupClass lookup class} of this lookup
+     * object is in an unnamed module.
      *
      * <p style="font-size:smaller;">
      * <em>Discussion:</em>
@@ -122,7 +122,7 @@ public class MethodHandles {
     public static Lookup publicLookup() {
         // During VM startup then only classes in the java.base module can be
         // loaded and linked. This is because java.base exports aren't setup until
-        // the module system is initialized, hence types in the unmamed module
+        // the module system is initialized, hence types in the unnamed module
         // (or any named module) can't link to java/lang/Object.
         if (!jdk.internal.misc.VM.isModuleSystemInited()) {
             return new Lookup(Object.class, Lookup.PUBLIC);

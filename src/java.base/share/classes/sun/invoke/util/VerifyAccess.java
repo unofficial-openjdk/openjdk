@@ -159,7 +159,7 @@ public class VerifyAccess {
      * Evaluate the JVM linkage rules for access to the given class on behalf of caller.
      * <h3>JVM Specification, 5.4.4 "Access Control"</h3>
      * A class or interface C is accessible to a class or interface D
-     * if and only if either of the following conditions are true:<ul>
+     * if and only if any of the following conditions are true:<ul>
      * <li>C is public and in the same module as D.
      * <li>D is in a module that reads the module containing C, C is public and in a
      * package that is exported to the module that contains D.
