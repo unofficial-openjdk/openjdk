@@ -576,7 +576,7 @@ $(eval $(call SetupJavaCompilation, $(MODULE), \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
         $(if $(MODULECLASSPATH), -modulepath "$(MODULECLASSPATH)") \
-        -systemmodulepath none, \
+        -system none, \
 ))
 
 TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)
