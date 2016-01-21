@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
  * @test
  * @bug 8146368
  * @summary Test Smashing Error when user language is Japanese
+ * @modules jdk.jshell/jdk.internal.jshell.tool
  * @library /tools/lib /jdk/jshell
  * @build ReplToolTesting
  * @run testng/othervm -Duser.language=ja JShellToolTest8146368
