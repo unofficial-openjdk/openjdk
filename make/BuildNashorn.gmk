@@ -44,8 +44,8 @@ MODULESOURCEPATH := $(NASHORN_TOPDIR)/src/*/share/classes
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -g -source 9 -target 9 -upgrademodulepath "$(JDK_OUTPUTDIR)/modules/" -systemmodulepath none \
-         -modulesourcepath "$(MODULESOURCEPATH)", \
+    FLAGS := -g -source 9 -target 9 -upgrademodulepath "$(JDK_OUTPUTDIR)/modules/" \
+         -system none -modulesourcepath "$(MODULESOURCEPATH)", \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
