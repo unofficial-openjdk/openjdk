@@ -170,6 +170,10 @@ module java.base {
         java.xml,
         jdk.charsets,
         jdk.scripting.nashorn;
+    exports jdk.internal.perf to
+        java.desktop,
+        java.management,
+        jdk.jvmstat;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;

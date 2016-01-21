@@ -60,7 +60,7 @@ import jdk.internal.module.Checks;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.Hasher.HashSupplier;
 import jdk.internal.module.Hasher;
-import sun.misc.PerfCounter;
+import jdk.internal.perf.PerfCounter;
 
 
 /**

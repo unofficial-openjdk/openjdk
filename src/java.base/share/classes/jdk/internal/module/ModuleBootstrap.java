@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.BuiltinClassLoader;
-import sun.misc.PerfCounter;
+import jdk.internal.perf.PerfCounter;
 
 /**
  * Initializes/boots the module system.

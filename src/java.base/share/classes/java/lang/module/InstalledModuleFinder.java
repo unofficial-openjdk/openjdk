@@ -45,7 +45,7 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.InstalledModules;
-import sun.misc.PerfCounter;
+import jdk.internal.perf.PerfCounter;
 
 /**
  * A {@code ModuleFinder} that finds modules that are linked into the
