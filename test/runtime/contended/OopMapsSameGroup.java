@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.Contended;
  * @bug     8015272
  * @summary \@Contended within the same group to use the same oop map
  *
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended -XX:ContendedPaddingWidth=128 -Xmx128m OopMapsSameGroup
  */
 public class OopMapsSameGroup {
