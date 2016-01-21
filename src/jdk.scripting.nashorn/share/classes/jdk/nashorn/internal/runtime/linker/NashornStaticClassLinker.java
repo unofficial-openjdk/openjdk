@@ -55,7 +55,11 @@ import jdk.nashorn.internal.runtime.ECMAErrors;
  * </pre>
  */
 final class NashornStaticClassLinker implements TypeBasedGuardingDynamicLinker {
-    private static final GuardingDynamicLinker staticClassLinker = BeansLinker.getLinkerForClass(StaticClass.class);
+    private final GuardingDynamicLinker staticClassLinker;
+
+    NashornStaticClassLinker(final BeansLinker beansLinker) {
+        this.staticClassLinker = beansLinker.getLinkerForClass(StaticClass.class);
+    }
 
     @Override
     public boolean canLinkType(final Class<?> type) {
@@ -105,7 +109,7 @@ final class NashornStaticClassLinker implements TypeBasedGuardingDynamicLinker {
         return delegate(linkerServices, request);
     }
 
-    private static GuardedInvocation delegate(final LinkerServices linkerServices, final LinkRequest request) throws Exception {
+    private GuardedInvocation delegate(final LinkerServices linkerServices, final LinkRequest request) throws Exception {
         return NashornBeansLinker.getGuardedInvocation(staticClassLinker, request, linkerServices);
     }
 
