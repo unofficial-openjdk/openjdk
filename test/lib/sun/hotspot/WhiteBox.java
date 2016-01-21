@@ -32,7 +32,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.security.BasicPermission;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
+//import jdk.internal.HotSpotIntrinsicCandidate;
 
 import sun.hotspot.parser.DiagnosticCommand;
 
@@ -172,7 +172,8 @@ public class WhiteBox {
   public native int     deoptimizeFrames(boolean makeNotEntrant);
   public native void    deoptimizeAll();
 
-  @HotSpotIntrinsicCandidate
+  // temporarily comment out until dependency can be fulfilled
+  //@HotSpotIntrinsicCandidate
   public        void    deoptimize() {}
   public        boolean isMethodCompiled(Executable method) {
     return isMethodCompiled(method, false /*not osr*/);
@@ -383,6 +384,18 @@ public class WhiteBox {
                        .findAny()
                        .orElse(null);
   }
+
+  // Jigsaw
+  public native void DefineModule(Object module, String version, String location,
+                                  Object[] packages);
+  public native void AddModuleExports(Object from_module, String pkg, Object to_module);
+  public native void AddReadsModule(Object from_module, Object source_module);
+  public native boolean CanReadModule(Object asking_module, Object source_module);
+  public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
+  public native void AddModulePackage(Object module, String pkg);
+  public native void AddModuleExportsToAllUnnamed(Object module, String pkg);
+  public native void AddModuleExportsToAll(Object module, String pkg);
+
   public native int getOffsetForName0(String name);
   public int getOffsetForName(String name) throws Exception {
     int offset = getOffsetForName0(name);
@@ -413,7 +426,7 @@ public class WhiteBox {
   public native void assertMatchingSafepointCalls(boolean mutexSafepointValue, boolean attemptedNoSafepointValue);
 
   // Sharing
-  public native boolean isSharedClass(Class<?> c);
   public native boolean isShared(Object o);
+  public native boolean isSharedClass(Class<?> c);
   public native boolean areSharedStringsIgnored();
 }

@@ -303,7 +303,7 @@ compare_general_files() {
         ! -name "*.zip" ! -name "*.debuginfo" ! -name "*.dylib" ! -name "jexec" \
         ! -name "*.jimage" ! -name "ct.sym" ! -name "*.diz" ! -name "*.dll" \
         ! -name "*.cpl" ! -name "*.pdb" ! -name "*.exp" ! -name "*.ilk" \
-        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" \
+        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" ! -name "*.jmod" \
         ! -name "*.obj" ! -name "*.o" ! -name "JavaControlPanelHelper" \
         ! -name "JavaUpdater" ! -name "JavaWSApplicationStub" \
         ! -name "jspawnhelper" \
@@ -537,7 +537,7 @@ compare_all_jar_files() {
 
     # TODO filter?
     ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" \
-        -o -name "*.jimage" | $SORT | $FILTER)
+        -o -name "*.jimage" -o -name "*.jmod" | $SORT | $FILTER)
 
     if [ -n "$ZIPS" ]; then
         echo Jar files...

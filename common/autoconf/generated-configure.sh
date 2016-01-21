@@ -694,6 +694,7 @@ STRIP_POLICY
 DEBUG_BINARIES
 NATIVE_DEBUG_SYMBOLS
 CFLAGS_WARNINGS_ARE_ERRORS
+BUILD_CC_DISABLE_WARNING_PREFIX
 DISABLE_WARNING_PREFIX
 HOTSPOT_SET_WARNINGS_AS_ERRORS
 WARNINGS_AS_ERRORS
@@ -704,12 +705,18 @@ LDFLAGS_TESTLIB
 LDFLAGS_CXX_JDK
 JDKEXE_LIBS
 JDKLIB_LIBS
+OPENJDK_BUILD_LDFLAGS_JDKEXE
+OPENJDK_BUILD_LDFLAGS_JDKLIB
 LDFLAGS_JDKEXE
 LDFLAGS_JDKLIB
 CXXFLAGS_TESTEXE
 CXXFLAGS_TESTLIB
 CFLAGS_TESTEXE
 CFLAGS_TESTLIB
+OPENJDK_BUILD_CXXFLAGS_JDKEXE
+OPENJDK_BUILD_CXXFLAGS_JDKLIB
+OPENJDK_BUILD_CFLAGS_JDKEXE
+OPENJDK_BUILD_CFLAGS_JDKLIB
 CXXFLAGS_JDKEXE
 CXXFLAGS_JDKLIB
 CFLAGS_JDKEXE
@@ -821,6 +828,12 @@ SHARED_LIBRARY_SUFFIX
 LIBRARY_PREFIX
 TOOLCHAIN_TYPE
 STATIC_BUILD
+IMPORT_MODULES_MAKE
+IMPORT_MODULES_SRC
+IMPORT_MODULES_CONF
+IMPORT_MODULES_LIBS
+IMPORT_MODULES_CMDS
+IMPORT_MODULES_CLASSES
 BUILD_HOTSPOT
 HOTSPOT_DIST
 BUILD_OUTPUT
@@ -831,8 +844,11 @@ JAXWS_TOPDIR
 JAXP_TOPDIR
 CORBA_TOPDIR
 LANGTOOLS_TOPDIR
+BUILD_JDK
+CREATE_BUILDJDK
 BOOT_JDK_BITS
 JAVAC_FLAGS
+BOOT_JDK_MODULAR
 BOOT_JDK_SOURCETARGET
 JARSIGNER
 JAR
@@ -929,9 +945,13 @@ ZERO_ARCHDEF
 DEFINE_CROSS_COMPILE_ARCH
 LP64
 OPENJDK_TARGET_OS_EXPORT_DIR
+OPENJDK_BUILD_CPU_JLI_CFLAGS
 OPENJDK_TARGET_CPU_JLI_CFLAGS
 OPENJDK_TARGET_CPU_OSARCH
 OPENJDK_TARGET_CPU_ISADIR
+OPENJDK_BUILD_CPU_LIBDIR
+OPENJDK_BUILD_CPU_LEGACY_LIB
+OPENJDK_BUILD_CPU_LEGACY
 OPENJDK_TARGET_CPU_LIBDIR
 OPENJDK_TARGET_CPU_LEGACY_LIB
 OPENJDK_TARGET_CPU_LEGACY
@@ -1093,6 +1113,7 @@ with_version_minor
 with_version_security
 with_version_patch
 with_boot_jdk
+with_build_jdk
 with_add_source_root
 with_override_source_root
 with_adds_and_overrides
@@ -1104,6 +1125,7 @@ with_override_hotspot
 with_override_nashorn
 with_override_jdk
 with_import_hotspot
+with_import_modules
 enable_static_build
 with_toolchain_type
 with_extra_cflags
@@ -1972,6 +1994,8 @@ Optional Packages:
   --with-version-patch    Set version 'PATCH' field (fourth number) [not
                           specified]
   --with-boot-jdk         path to Boot JDK (used to bootstrap build) [probed]
+  --with-build-jdk        path to JDK of same version as is being built[the
+                          newly built JDK]
   --with-add-source-root  Deprecated. Option is kept for backwards
                           compatibility and is ignored
   --with-override-source-root
@@ -1998,6 +2022,8 @@ Optional Packages:
   --with-import-hotspot   import hotspot binaries from this jdk image or
                           hotspot build dist dir instead of building from
                           source
+  --with-import-modules   import a set of prebuilt modules either as a zip
+                          file or an exploded directory
   --with-toolchain-type   the toolchain type (or family) to use, use '--help'
                           to show possible values [platform dependent]
   --with-extra-cflags     extra flags to be used when compiling jdk c-files
@@ -3776,6 +3802,22 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+# BUILD_JDK: the location of the latest JDK that can run
+#   on the host system and supports the target class file version
+#   generated in this JDK build.  This variable should only be
+#   used after the launchers are built.
+#
+
+# Execute the check given as argument, and verify the result
+# If the JDK was previously found, do nothing
+# $1 A command line (typically autoconf macro) to execute
+
+
+# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# is different than the host system doing the build (e.g. cross-compilation),
+# it needs to be set properly but will try to fall back on the BOOT_JDK.
+
+
 #
 # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4627,6 +4669,12 @@ pkgadd_help() {
 
 
 
+################################################################################
+# Define a mechanism for importing extra prebuilt modules
+#
+
+
+
 #
 # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4839,7 +4887,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1452780299
+DATE_WHEN_GENERATED=1453375430
 
 ###############################################################################
 #
@@ -15128,6 +15176,37 @@ $as_echo "$COMPILE_TYPE" >&6; }
   fi
 
 
+  # Now do the same for OPENJDK_BUILD_CPU...
+  # Also store the legacy naming of the cpu.
+  # Ie i586 and amd64 instead of x86 and x86_64
+  OPENJDK_BUILD_CPU_LEGACY="$OPENJDK_BUILD_CPU"
+  if test "x$OPENJDK_BUILD_CPU" = xx86; then
+    OPENJDK_BUILD_CPU_LEGACY="i586"
+  elif test "x$OPENJDK_BUILD_OS" != xmacosx && test "x$OPENJDK_BUILD_CPU" = xx86_64; then
+    # On all platforms except MacOSX replace x86_64 with amd64.
+    OPENJDK_BUILD_CPU_LEGACY="amd64"
+  fi
+
+
+  # And the second legacy naming of the cpu.
+  # Ie i386 and amd64 instead of x86 and x86_64.
+  OPENJDK_BUILD_CPU_LEGACY_LIB="$OPENJDK_BUILD_CPU"
+  if test "x$OPENJDK_BUILD_CPU" = xx86; then
+    OPENJDK_BUILD_CPU_LEGACY_LIB="i386"
+  elif test "x$OPENJDK_BUILD_CPU" = xx86_64; then
+    OPENJDK_BUILD_CPU_LEGACY_LIB="amd64"
+  fi
+
+
+  # This is the name of the cpu (but using i386 and amd64 instead of
+  # x86 and x86_64, respectively), preceeded by a /, to be used when
+  # locating libraries. On macosx, it's empty, though.
+  OPENJDK_BUILD_CPU_LIBDIR="/$OPENJDK_BUILD_CPU_LEGACY_LIB"
+  if test "x$OPENJDK_BUILD_OS" = xmacosx; then
+    OPENJDK_BUILD_CPU_LIBDIR=""
+  fi
+
+
   # OPENJDK_TARGET_CPU_ISADIR is normally empty. On 64-bit Solaris systems, it is set to
   # /amd64 or /sparcv9. This string is appended to some library paths, like this:
   # /usr/lib${OPENJDK_TARGET_CPU_ISADIR}/libexample.so
@@ -15170,6 +15249,24 @@ $as_echo "$COMPILE_TYPE" >&6; }
   fi
 
 
+  OPENJDK_BUILD_CPU_JLI="$OPENJDK_BUILD_CPU"
+  if test "x$OPENJDK_BUILD_CPU" = xx86; then
+    OPENJDK_BUILD_CPU_JLI="i386"
+  elif test "x$OPENJDK_BUILD_OS" != xmacosx && test "x$OPENJDK_BUILD_CPU" = xx86_64; then
+    # On all platforms except macosx, we replace x86_64 with amd64.
+    OPENJDK_BUILD_CPU_JLI="amd64"
+  fi
+  # Now setup the -D flags for building libjli.
+  OPENJDK_BUILD_CPU_JLI_CFLAGS="-DLIBARCHNAME='\"$OPENJDK_BUILD_CPU_JLI\"'"
+  if test "x$OPENJDK_BUILD_OS" = xsolaris; then
+    if test "x$OPENJDK_BUILD_CPU_ARCH" = xsparc; then
+      OPENJDK_BUILD_CPU_JLI_CFLAGS="$OPENJDK_BUILD_CPU_JLI_CFLAGS -DLIBARCH32NAME='\"sparc\"' -DLIBARCH64NAME='\"sparcv9\"'"
+    elif test "x$OPENJDK_BUILD_CPU_ARCH" = xx86; then
+      OPENJDK_BUILD_CPU_JLI_CFLAGS="$OPENJDK_BUILD_CPU_JLI_CFLAGS -DLIBARCH32NAME='\"i386\"' -DLIBARCH64NAME='\"amd64\"'"
+    fi
+  fi
+
+
   if test "x$OPENJDK_TARGET_OS" = xmacosx; then
       OPENJDK_TARGET_OS_EXPORT_DIR=macosx
   else
@@ -15187,6 +15284,11 @@ $as_echo "$COMPILE_TYPE" >&6; }
   fi
   LP64=$A_LP64
 
+  if test "x$OPENJDK_BUILD_CPU_BITS" = x64; then
+    if test "x$OPENJDK_BUILD_OS" = xlinux || test "x$OPENJDK_BUILD_OS" = xmacosx; then
+      OPENJDK_BUILD_ADD_LP64="-D_LP64=1"
+    fi
+  fi
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
@@ -16681,6 +16783,9 @@ $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is inval
 
   # The bootcycle-spec.gmk file contains support for boot cycle builds.
   ac_config_files="$ac_config_files $OUTPUT_ROOT/bootcycle-spec.gmk:$AUTOCONF_DIR/bootcycle-spec.gmk.in"
+
+  # The buildjdk-spec.gmk file contains support for building a buildjdk when cross compiling.
+  ac_config_files="$ac_config_files $OUTPUT_ROOT/buildjdk-spec.gmk:$AUTOCONF_DIR/buildjdk-spec.gmk.in"
 
   # The compare.sh is used to compare the build output to other builds.
   ac_config_files="$ac_config_files $OUTPUT_ROOT/compare.sh:$AUTOCONF_DIR/compare.sh.in"
@@ -29562,6 +29667,35 @@ $as_echo "$tool_specified" >&6; }
 
 
 
+  $ECHO "Check if jvm arg is ok: -Xpatch:" >&5
+  $ECHO "Command: $JAVA -Xpatch: -version" >&5
+  OUTPUT=`$JAVA -Xpatch: -version 2>&1`
+  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+    dummy="$dummy -Xpatch:"
+    JVM_ARG_OK=true
+  else
+    $ECHO "Arg failed:" >&5
+    $ECHO "$OUTPUT" >&5
+    JVM_ARG_OK=false
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Boot JDK supports modules" >&5
+$as_echo_n "checking if Boot JDK supports modules... " >&6; }
+  if test "x$JVM_ARG_OK" = "xtrue"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    BOOT_JDK_MODULAR="true"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    BOOT_JDK_MODULAR="false"
+  fi
+
+
+
+
   # Check if the boot jdk is 32 or 64 bit
   if "$JAVA" -d64 -version > /dev/null 2>&1; then
     BOOT_JDK_BITS="64"
@@ -29572,6 +29706,237 @@ $as_echo "$tool_specified" >&6; }
 $as_echo_n "checking if Boot JDK is 32 or 64 bits... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BOOT_JDK_BITS" >&5
 $as_echo "$BOOT_JDK_BITS" >&6; }
+
+
+
+
+# Check whether --with-build-jdk was given.
+if test "${with_build_jdk+set}" = set; then :
+  withval=$with_build_jdk;
+fi
+
+
+  CREATE_BUILDJDK_FOR_HOST=false
+  BUILD_JDK_FOUND="no"
+  if test "x$with_build_jdk" != "x"; then
+
+  if test "x$BUILD_JDK_FOUND" = xno; then
+    # Now execute the test
+
+       if test "x$with_build_jdk" != x; then
+         BUILD_JDK=$with_build_jdk
+         BUILD_JDK_FOUND=maybe
+         { $as_echo "$as_me:${as_lineno-$LINENO}: Found potential Build JDK using configure arguments" >&5
+$as_echo "$as_me: Found potential Build JDK using configure arguments" >&6;}
+       fi
+
+    # If previous step claimed to have found a JDK, check it to see if it seems to be valid.
+    if test "x$BUILD_JDK_FOUND" = xmaybe; then
+      # Do we have a bin/java?
+      if test ! -x "$BUILD_JDK/bin/java"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Build JDK found at $BUILD_JDK did not contain bin/java; ignoring" >&5
+$as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/java; ignoring" >&6;}
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/jlink"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring" >&5
+$as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring" >&6;}
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/javac"; then
+        # Do we have a bin/javac?
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Build JDK found at $BUILD_JDK did not contain bin/javac; ignoring" >&5
+$as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/javac; ignoring" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: (This might be a JRE instead of an JDK)" >&5
+$as_echo "$as_me: (This might be a JRE instead of an JDK)" >&6;}
+        BUILD_JDK_FOUND=no
+      else
+        # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
+        BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | head -n 1`
+
+        # Extra M4 quote needed to protect [] in grep expression.
+        FOUND_CORRECT_VERSION=`echo $BUILD_JDK_VERSION | grep  '\"1\.[9]\.'`
+        if test "x$FOUND_CORRECT_VERSION" = x; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Boot JDK found at $BUILD_JDK is incorrect JDK version ($BUILD_JDK_VERSION); ignoring" >&5
+$as_echo "$as_me: Potential Boot JDK found at $BUILD_JDK is incorrect JDK version ($BUILD_JDK_VERSION); ignoring" >&6;}
+          { $as_echo "$as_me:${as_lineno-$LINENO}: (Your Build JDK must be version 9)" >&5
+$as_echo "$as_me: (Your Build JDK must be version 9)" >&6;}
+          BUILD_JDK_FOUND=no
+        else
+          # We're done!
+          BUILD_JDK_FOUND=yes
+
+  # Only process if variable expands to non-empty
+
+  if test "x$BUILD_JDK" != x; then
+    if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$BUILD_JDK"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BUILD_JDK, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of BUILD_JDK, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of BUILD_JDK" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-style (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    BUILD_JDK="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting BUILD_JDK to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting BUILD_JDK to \"$new_path\"" >&6;}
+  fi
+
+    elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$BUILD_JDK"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    BUILD_JDK="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting BUILD_JDK to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting BUILD_JDK to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+    else
+      # We're on a unix platform. Hooray! :)
+      path="$BUILD_JDK"
+      has_space=`$ECHO "$path" | $GREP " "`
+      if test "x$has_space" != x; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BUILD_JDK, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of BUILD_JDK, which resolves as \"$path\", is invalid." >&6;}
+        as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+      fi
+
+      # Use eval to expand a potential ~
+      eval path="$path"
+      if test ! -f "$path" && test ! -d "$path"; then
+        as_fn_error $? "The path of BUILD_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+      if test -d "$path"; then
+        BUILD_JDK="`cd "$path"; $THEPWDCMD -L`"
+      else
+        dir="`$DIRNAME "$path"`"
+        base="`$BASENAME "$path"`"
+        BUILD_JDK="`cd "$dir"; $THEPWDCMD -L`/$base"
+      fi
+    fi
+  fi
+
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Build JDK" >&5
+$as_echo_n "checking for Build JDK... " >&6; }
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_JDK" >&5
+$as_echo "$BUILD_JDK" >&6; }
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking Build JDK version" >&5
+$as_echo_n "checking Build JDK version... " >&6; }
+          BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | $TR '\n\r' '  '`
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_JDK_VERSION" >&5
+$as_echo "$BUILD_JDK_VERSION" >&6; }
+        fi # end check jdk version
+      fi # end check java
+    fi # end check boot jdk found
+  fi
+
+  else
+    if test "x$COMPILE_TYPE" = "xcross"; then
+      BUILD_JDK="\$(BUILDJDK_OUTPUTDIR)/jdk"
+      BUILD_JDK_FOUND=yes
+      CREATE_BUILDJDK=true
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Build JDK" >&5
+$as_echo_n "checking for Build JDK... " >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, will build it for the host platform" >&5
+$as_echo "yes, will build it for the host platform" >&6; }
+    else
+      BUILD_JDK="\$(JDK_OUTPUTDIR)"
+      BUILD_JDK_FOUND=yes
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Build JDK" >&5
+$as_echo_n "checking for Build JDK... " >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, will use output dir" >&5
+$as_echo "yes, will use output dir" >&6; }
+    fi
+  fi
+
+  if test "x$BUILD_JDK_FOUND" != "xyes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Build JDK" >&5
+$as_echo_n "checking for Build JDK... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "Could not find a suitable Build JDK" "$LINENO" 5
+  fi
+
+
 
 
 
@@ -29722,6 +30087,188 @@ $as_echo "yes from $HOTSPOT_DIST" >&6; }
   fi
 
   JDK_OUTPUTDIR="$OUTPUT_ROOT/jdk"
+
+
+
+
+# Check whether --with-import-modules was given.
+if test "${with_import_modules+set}" = set; then :
+  withval=$with_import_modules;
+fi
+
+
+  if test "x$with_import_modules" != x; then
+    if test -d "$with_import_modules"; then
+      IMPORT_MODULES_TOPDIR="$with_import_modules"
+
+  # Only process if variable expands to non-empty
+
+  if test "x$IMPORT_MODULES_TOPDIR" != x; then
+    if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$IMPORT_MODULES_TOPDIR"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of IMPORT_MODULES_TOPDIR" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-style (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    IMPORT_MODULES_TOPDIR="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&6;}
+  fi
+
+    elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$IMPORT_MODULES_TOPDIR"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    IMPORT_MODULES_TOPDIR="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+    else
+      # We're on a unix platform. Hooray! :)
+      path="$IMPORT_MODULES_TOPDIR"
+      has_space=`$ECHO "$path" | $GREP " "`
+      if test "x$has_space" != x; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&6;}
+        as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+      fi
+
+      # Use eval to expand a potential ~
+      eval path="$path"
+      if test ! -f "$path" && test ! -d "$path"; then
+        as_fn_error $? "The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+      if test -d "$path"; then
+        IMPORT_MODULES_TOPDIR="`cd "$path"; $THEPWDCMD -L`"
+      else
+        dir="`$DIRNAME "$path"`"
+        base="`$BASENAME "$path"`"
+        IMPORT_MODULES_TOPDIR="`cd "$dir"; $THEPWDCMD -L`/$base"
+      fi
+    fi
+  fi
+
+    elif test -e "$with_import_modules"; then
+      IMPORT_MODULES_TOPDIR="$CONFIGURESUPPORT_OUTPUTDIR/import-modules"
+      $RM -rf "$IMPORT_MODULES_TOPDIR"
+      $MKDIR -p "$IMPORT_MODULES_TOPDIR"
+      if ! $UNZIP -q "$with_import_modules" -d "$IMPORT_MODULES_TOPDIR"; then
+        as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
+      fi
+    else
+      as_fn_error $? "--with-import-modules=\"$with_import_modules\" must point to a dir or a zip file" "$LINENO" 5
+    fi
+  fi
+
+  if test -d "$IMPORT_MODULES_TOPDIR/modules"; then
+    IMPORT_MODULES_CLASSES="$IMPORT_MODULES_TOPDIR/modules"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_cmds"; then
+    IMPORT_MODULES_CMDS="$IMPORT_MODULES_TOPDIR/modules_cmds"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_libs"; then
+    IMPORT_MODULES_LIBS="$IMPORT_MODULES_TOPDIR/modules_libs"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_conf"; then
+    IMPORT_MODULES_CONF="$IMPORT_MODULES_TOPDIR/modules_conf"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
+    IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/make"; then
+    IMPORT_MODULES_MAKE="$IMPORT_MODULES_TOPDIR/make"
+  fi
+
+
+
+
+
+
+
 
 
 ###############################################################################
@@ -47412,9 +47959,6 @@ $as_echo "$supports" >&6; }
       ;;
   esac
 
-  # Setup LP64
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK $ADD_LP64"
-
   # Set some common defines. These works for all compilers, but assume
   # -D is universally accepted.
 
@@ -47445,7 +47989,12 @@ $as_echo "$supports" >&6; }
   COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D$OPENJDK_TARGET_OS_UPPERCASE"
 
   # Setup target CPU
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DARCH='\"$OPENJDK_TARGET_CPU_LEGACY\"' -D$OPENJDK_TARGET_CPU_LEGACY"
+  OPENJDK_TARGET_CCXXFLAGS_JDK="$OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $ADD_LP64 \
+      -DARCH='\"$OPENJDK_TARGET_CPU_LEGACY\"' -D$OPENJDK_TARGET_CPU_LEGACY"
+  OPENJDK_BUILD_CCXXFLAGS_JDK="$OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $OPENJDK_BUILD_ADD_LP64 \
+      -DARCH='\"$OPENJDK_BUILD_CPU_LEGACY\"' -D$OPENJDK_BUILD_CPU_LEGACY"
 
   # Setup debug/release defines
   if test "x$DEBUG_LEVEL" = xrelease; then
@@ -47492,12 +48041,30 @@ $as_echo "$supports" >&6; }
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava"
 
   # The shared libraries are compiled using the picflag.
-  CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $CFLAGS_JDK $PICFLAG $CFLAGS_JDKLIB_EXTRA"
-  CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $CXXFLAGS_JDK $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
+  CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CFLAGS_JDK $EXTRA_CFLAGS_JDK $PICFLAG $CFLAGS_JDKLIB_EXTRA"
+  CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CXXFLAGS_JDK $EXTRA_CXXFLAGS_JDK $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
 
   # Executable flags
-  CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $CFLAGS_JDK"
-  CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $CXXFLAGS_JDK"
+  CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CFLAGS_JDK $EXTRA_CFLAGS_JDK"
+  CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CXXFLAGS_JDK $EXTRA_CXXFLAGS_JDK"
+
+  # The corresponding flags for building for the build platform. This is still an
+  # approximation, we only need something that runs on this machine when cross
+  # compiling the product.
+  OPENJDK_BUILD_CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $PICFLAG $CFLAGS_JDKLIB_EXTRA"
+  OPENJDK_BUILD_CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
+  OPENJDK_BUILD_CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK"
+  OPENJDK_BUILD_CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK"
+
+
+
+
 
 
 
@@ -47597,6 +48164,9 @@ $as_echo "$supports" >&6; }
     LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -Wl,--allow-shlib-undefined"
   fi
 
+  OPENJDK_BUILD_LDFLAGS_JDKEXE="${LDFLAGS_JDKEXE}"
+  LDFLAGS_JDKEXE="${LDFLAGS_JDKEXE} ${EXTRA_LDFLAGS_JDK}"
+
   # Customize LDFLAGS for libs
   LDFLAGS_JDKLIB="${LDFLAGS_JDK}"
 
@@ -47607,27 +48177,36 @@ $as_echo "$supports" >&6; }
     JDKLIB_LIBS=""
   else
     LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
-        -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}"
+        -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)"
 
     # On some platforms (mac) the linker warns about non existing -L dirs.
     # Add server first if available. Linking aginst client does not always produce the same results.
     # Only add client dir if client is being built. Add minimal (note not minimal1) if only building minimal1.
     # Default to server for other variants.
     if test "x$JVM_VARIANT_SERVER" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/server"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     elif test "x$JVM_VARIANT_CLIENT" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/client"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
     elif test "x$JVM_VARIANT_MINIMAL1" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/minimal"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
     else
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/server"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
 
     JDKLIB_LIBS="-ljava -ljvm"
     if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
       JDKLIB_LIBS="$JDKLIB_LIBS -lc"
     fi
+
+    # When building a buildjdk, it's always only the server variant
+    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+        -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
   fi
+
+  OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${LDFLAGS_JDKLIB}"
+  LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${EXTRA_LDFLAGS_JDK}"
+
+
 
 
 
@@ -48224,6 +48803,7 @@ $as_echo "$supports" >&6; }
       CFLAGS_WARNINGS_ARE_ERRORS="-Werror"
       ;;
   esac
+
 
 
 
@@ -61560,6 +62140,7 @@ do
     "$OUTPUT_ROOT/spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/spec.gmk:$AUTOCONF_DIR/spec.gmk.in" ;;
     "$OUTPUT_ROOT/hotspot-spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/hotspot-spec.gmk:$AUTOCONF_DIR/hotspot-spec.gmk.in" ;;
     "$OUTPUT_ROOT/bootcycle-spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/bootcycle-spec.gmk:$AUTOCONF_DIR/bootcycle-spec.gmk.in" ;;
+    "$OUTPUT_ROOT/buildjdk-spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/buildjdk-spec.gmk:$AUTOCONF_DIR/buildjdk-spec.gmk.in" ;;
     "$OUTPUT_ROOT/compare.sh") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/compare.sh:$AUTOCONF_DIR/compare.sh.in" ;;
     "$OUTPUT_ROOT/Makefile") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/Makefile:$AUTOCONF_DIR/Makefile.in" ;;
 
