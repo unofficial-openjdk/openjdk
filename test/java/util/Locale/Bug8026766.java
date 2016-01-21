@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,15 +21,25 @@
  * questions.
  */
 
-package java.lang.invoke;
-
-import java.lang.annotation.*;
-
-/**
- * Internal marker for some methods in the JSR 292 implementation.
+/*
+ * @test
+ * @bug 8026766
+ * @summary Confirm that LanguageRange.toString() returns an expected result.
+ * @run main Bug8026766
  */
-/*non-public*/
-@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
-@Retention(RetentionPolicy.RUNTIME)
-@interface DontInline {
+
+import java.util.Locale.LanguageRange;
+
+public class Bug8026766 {
+
+    public static void main(String[] args) {
+        LanguageRange lr1 = new LanguageRange("ja", 1.0);
+        LanguageRange lr2 = new LanguageRange("fr", 0.0);
+
+        if (!lr1.toString().equals("ja") ||
+            !lr2.toString().equals("fr;q=0.0")) {
+            throw new RuntimeException("LanguageRange.toString() returned an unexpected result.");
+        }
+    }
+
 }

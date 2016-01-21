@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,29 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.internal.vm.annotation;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.lang.annotation.*;
 
 /**
- * This class checks that only jar and zip files are included in the file list.
- * This class is used in extension installation support (ExtensionDependency).
+ * A method or constructor may be annotated as "force inline" if the standard
+ * inlining metrics are to be ignored when the HotSpot VM inlines the method
+ * or constructor.
+ * <p>
+ * This annotation must be used sparingly.  It is useful when the only
+ * reasonable alternative is to bind the name of a specific method or
+ * constructor into the HotSpot VM for special handling by the inlining policy.
+ * This annotation must not be relied on as an alternative to avoid tuning the
+ * VM's inlining policy.  In a few cases, it may act as a temporary workaround
+ * until the profiling and inlining performed by the HotSpot VM is sufficiently
+ * improved.
  *
- * @deprecated this class will be removed in a future release.
- * @author  Michael Colburn
+ * @implNote
+ * This annotation only takes effect for methods or constructors of classes
+ * loaded by the boot loader.  Annotations on methods or constructors of classes
+ * loaded outside of the boot loader are ignored.
  */
-@Deprecated
-public class JarFilter implements FilenameFilter {
-
-    public boolean accept(File dir, String name) {
-        String lower = name.toLowerCase();
-        return lower.endsWith(".jar") || lower.endsWith(".zip");
-    }
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ForceInline {
 }
