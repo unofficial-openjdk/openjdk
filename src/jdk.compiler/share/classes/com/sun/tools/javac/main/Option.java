@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -195,7 +195,15 @@ public enum Option {
 
     UPGRADEMODULEPATH("-upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
 
-    SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
+    SYSTEM("-system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
+
+    // Temporary alias until old usages are eliminated
+    _SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return SYSTEM.process(helper, "-system", arg);
+        }
+    },
 
     XPATCH("-Xpatch:", "opt.arg.path", "opt.Xpatch", EXTENDED, FILEMANAGER),
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,20 +99,20 @@ enum Profile {
     }
 
     private final static Set<Module> JDK = new HashSet<>();
-    private static ModulePath systemModulePath;
+    private static ModulePath systemModules;
     static synchronized void ensureInitialized(ModulePath mpath) {
-        if (systemModulePath != null) {
+        if (systemModules != null) {
             return;
         }
-        systemModulePath = mpath;
+        systemModules = mpath;
 
         // add all modules into  JDK
-        JDK.addAll(systemModulePath.getModules());
+        JDK.addAll(systemModules.getModules());
 
         for (Profile p : Profile.values()) {
             for (String mn : p.mnames) {
                 // this includes platform-dependent module that may not exist
-                Module m = systemModulePath.findModule(mn);
+                Module m = systemModules.findModule(mn);
                 if (m != null) {
                     p.addModule(m);
                 }
@@ -123,7 +123,7 @@ enum Profile {
     private void addModule(Module m) {
         modules.add(m);
         for (String n : m.requires().keySet()) {
-            Module d = systemModulePath.findModule(n);
+            Module d = systemModules.findModule(n);
             if (d == null) {
                 throw new InternalError("module " + n + " required by " +
                         m.name() + " doesn't exist");

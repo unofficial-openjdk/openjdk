@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.jdeps.ClassFileReader.ModuleClassReader;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -42,7 +43,6 @@ import java.nio.file.ProviderNotFoundException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * ModulePath for Java SE and JDK
@@ -162,7 +162,7 @@ class ModulePath {
         }
     }
 
-    private static class SystemModulePath extends ModulePath {
+    private static class SystemModules extends ModulePath {
         private static final ModulePath INSTANCE = getInstance();
         private static boolean isJrtAvailable() {
             try {
@@ -178,7 +178,7 @@ class ModulePath {
                 try {
                     // jrt file system
                     FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-                    return new SystemModulePath(fs, fs.getPath("/modules"));
+                    return new SystemModules(fs, fs.getPath("/modules"));
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -187,7 +187,7 @@ class ModulePath {
             }
         }
 
-        private SystemModulePath(FileSystem fs, Path path) throws IOException {
+        private SystemModules(FileSystem fs, Path path) throws IOException {
             super(fs, path);
         }
     }
@@ -200,8 +200,8 @@ class ModulePath {
     }
 
     static List<Module> getSystemModules() {
-        List<Module> mods = SystemModulePath.INSTANCE.getModules();
-        Profile.ensureInitialized(SystemModulePath.INSTANCE);
+        List<Module> mods = SystemModules.INSTANCE.getModules();
+        Profile.ensureInitialized(SystemModules.INSTANCE);
         return mods;
     }
 }

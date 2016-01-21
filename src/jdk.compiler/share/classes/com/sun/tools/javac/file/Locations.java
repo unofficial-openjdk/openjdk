@@ -819,7 +819,7 @@ public class Locations {
     /**
      * A LocationHander to represent modules found from a module-oriented
      * location such as MODULE_SOURCE_PATH, UPGRADE_MODULE_PATH,
-     * SYSTEM_MODULE_PATH and MODULE_PATH.
+     * SYSTEM_MODULES and MODULE_PATH.
      *
      * The Location can be specified to accept overriding classes from the
      * -Xpatch:dir parameter.
@@ -1271,12 +1271,12 @@ public class Locations {
 
     }
 
-    private class SystemModulePathLocationHandler extends BasicLocationHandler {
+    private class SystemModulesLocationHandler extends BasicLocationHandler {
         private Path javaHome;
         private Path modules;
 
-        SystemModulePathLocationHandler() {
-            super(StandardLocation.SYSTEM_MODULE_PATH, Option.SYSTEMMODULEPATH);
+        SystemModulesLocationHandler() {
+            super(StandardLocation.SYSTEM_MODULES, Option.SYSTEM);
             javaHome = Paths.get(System.getProperty("java.home"));
         }
 
@@ -1412,10 +1412,10 @@ public class Locations {
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
             new ModuleSourcePathLocationHandler(),
-            // TODO: should UPGRADE_MODULE_PATH be merged with SystemModulePath?
+            // TODO: should UPGRADE_MODULE_PATH be merged with SYSTEM_MODULES?
             new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
             new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
-            new SystemModulePathLocationHandler(),
+            new SystemModulesLocationHandler(),
         };
 
         for (BasicLocationHandler h : handlers) {
