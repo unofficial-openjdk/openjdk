@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -952,7 +952,7 @@ public class Locations {
                                 for (Path entry : stream) {
                                     Pair<String,Path> module = inferModuleName(entry);
                                     if (module == null) {
-                                        // could add diagnostic here about bad item in directory
+                                        // could add diagnostic here about bad item on path
                                         continue;
                                     }
                                     String moduleName = module.fst;
@@ -969,7 +969,19 @@ public class Locations {
                             next = result;
                             pathIndex++;
                         } else {
-                            // could add diagnostic here about bad item on path
+                            Pair<String,Path> module = inferModuleName(path);
+                            if (module == null) {
+                                // could add diagnostic here about bad item in directory
+                                continue;
+                            }
+                            String moduleName = module.fst;
+                            Path modulePath = module.snd;
+                            String name = location.getName()
+                                    + "[" + pathIndex + ":" + moduleName + "]";
+                            ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                                    Collections.singleton(modulePath), false, true);
+                            next = Collections.singleton(l);
+                            pathIndex++;
                         }
                     } else
                         return false;
