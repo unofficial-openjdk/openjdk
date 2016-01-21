@@ -57,6 +57,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.perf.PerfCounter;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.ClassLoaders;
@@ -440,9 +441,9 @@ public abstract class ClassLoader {
                     c = findClass(name);
 
                     // this is the defining class loader; record the stats
-                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
-                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
-                    sun.misc.PerfCounter.getFindClasses().increment();
+                    PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    PerfCounter.getFindClasses().increment();
                 }
             }
             if (resolve) {
