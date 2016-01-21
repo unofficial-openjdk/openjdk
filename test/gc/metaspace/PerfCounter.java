@@ -21,8 +21,6 @@
  * questions.
  */
 
-package jdk.test.lib;
-
 import sun.jvmstat.monitor.Monitor;
 
 /**

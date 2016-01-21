@@ -23,15 +23,36 @@
  * questions.
  */
 
-package java.lang;
-
-/**
- * This is a fake java.lang.Object class.
+/*
+ * @test
+ * @summary class p3.c3 defined in a named package in an unnamed module tries to access c4
+ *          defined in an unnamed package in an unnamed module.  Access allowed since
+ *          any class in an unnamed module can read an unnamed module.
+ * @compile myloaders/MyDiffClassLoader.java
+ * @compile c4.java
+ * @compile p3/c3.jcod
+ * @build UmodNpkgDiffCL_UmodUpkg
+ * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_UmodUpkg
  */
-public class Object {
 
-    // Add some methods
-    void dummy1() { return; }
-    void dummy2() { return; }
-    void dummy3() { return; }
+import myloaders.MyDiffClassLoader;
+
+public class UmodNpkgDiffCL_UmodUpkg {
+
+    public void testAccess() throws Throwable {
+
+        Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3");
+        try {
+            p3_c3_class.newInstance();
+        } catch (IllegalAccessError e) {
+          System.out.println(e.getMessage());
+              throw new RuntimeException("Test Failed, public type c3 defined in an unnamed module " +
+                                         "should be able to access public type c4 defined in an unnamed module");
+        }
+    }
+
+    public static void main(String args[]) throws Throwable {
+      UmodNpkgDiffCL_UmodUpkg test = new UmodNpkgDiffCL_UmodUpkg();
+      test.testAccess();
+    }
 }

@@ -42,7 +42,7 @@ import jdk.internal.vm.annotation.Contended;
  * @test
  * @bug     8003985
  * @summary Support Contended Annotation - JEP 142
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended Basic
  */
 public class Basic {
