@@ -514,7 +514,8 @@ void ClassLoader::setup_bootstrap_search_path() {
     // Don't print sys_class_path - this is the bootcp of this current VM process, not necessarily
     // the same as the bootcp of the shared archive.
   } else {
-    trace_class_path(tty, "[Bootstrap loader class path=", sys_class_path);
+    trace_class_path(tty, "[Bootstrap loader class path=",
+                     Arguments::get_property("jdk.boot.class.path.append"));
   }
 #if INCLUDE_CDS
   if (DumpSharedSpaces) {
