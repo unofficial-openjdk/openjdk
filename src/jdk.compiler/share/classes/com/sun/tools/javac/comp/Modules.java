@@ -231,7 +231,7 @@ public class Modules extends JCTree.Visitor {
                }
             } else {
                 sym = syms.enterModule(name);
-                if (sym.module_info.sourcefile != null) {
+                if (sym.module_info.sourcefile != null && sym.module_info.sourcefile != toplevel.sourcefile) {
                     log.error(decl.pos(), "duplicate.module", name);
                     return;
                 }
@@ -346,6 +346,9 @@ public class Modules extends JCTree.Visitor {
                     defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
                     defaultModule.classLocation = StandardLocation.CLASS_PATH;
                 }
+            } else if (rootModules.size() == 1 && defaultModule == rootModules.iterator().next()) {
+                defaultModule.complete();
+                defaultModule.completer = sym -> completeModule((ModuleSymbol) sym);
             } else {
                 Assert.check(rootModules.isEmpty());
             }
@@ -945,8 +948,5 @@ public class Modules extends JCTree.Visitor {
     }
 
     public void newRound() {
-        //TODO: should always clean the defaultModule:
-        if (defaultModule != syms.unnamedModule)
-            defaultModule = null;
     }
 }

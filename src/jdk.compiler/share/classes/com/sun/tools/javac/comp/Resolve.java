@@ -326,6 +326,7 @@ public class Resolve {
                 isAccessible = true;
                 if (allowModules && checkModuleAccess) {
                     ModuleSymbol currModule = env.toplevel.modle;
+                    currModule.complete();
                     PackageSymbol p = c.packge();
                     isAccessible =
                         (currModule == p.modle) || currModule.visiblePackages.contains(p);

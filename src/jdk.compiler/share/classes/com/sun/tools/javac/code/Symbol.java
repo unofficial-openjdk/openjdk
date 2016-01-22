@@ -971,8 +971,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
         public void reset() {
-            this.sourceLocation = null;
-            this.classLocation = null;
             this.directives = null;
             this.requires = null;
             this.exports = null;
