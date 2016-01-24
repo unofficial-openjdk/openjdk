@@ -122,7 +122,6 @@ public class BuiltinClassLoader
         private final BuiltinClassLoader loader;
         private final ModuleReference mref;
         private final URL url;          // may be null
-        private final CodeSource cs;
 
         LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
@@ -134,14 +133,12 @@ public class BuiltinClassLoader
             this.loader = loader;
             this.mref = mref;
             this.url = url;
-            this.cs = new CodeSource(url, (CodeSigner[]) null);
         }
 
         BuiltinClassLoader loader() { return loader; }
         ModuleReference mref() { return mref; }
         String name() { return mref.descriptor().name(); }
         URL location() { return url; }
-        CodeSource codeSource() { return cs; }
     }
 
 
@@ -519,7 +516,7 @@ public class BuiltinClassLoader
                 cs = new CodeSource(r.getCodeSourceURL(), (CodeSigner[]) null);
             } else {
                 bb = reader.read(rn).orElse(null);
-                cs = loadedModule.codeSource();
+                cs = new CodeSource(loadedModule.location(), (CodeSigner[]) null);
             }
 
             if (bb == null) {
