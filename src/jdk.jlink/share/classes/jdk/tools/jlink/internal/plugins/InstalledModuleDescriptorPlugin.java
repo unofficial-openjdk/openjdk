@@ -726,9 +726,10 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
             int build() {
                 int index = localVarIndex;
                 if (localVarIndex == 0) {
-                    // if more than one set reference this builder, emit to a
-                    // unique local
-                    index = refCount == 1 ? STRING_SET_VAR : nextLocalVar++;
+                    // if non-empty and more than one set reference this builder,
+                    // emit to a unique local
+                    index = (names.isEmpty() || refCount == 1) ? STRING_SET_VAR
+                                                               : nextLocalVar++;
                     if (index < MAX_LOCAL_VARS) {
                         localVarIndex = index;
                     } else {
@@ -736,7 +737,11 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                         index = STRING_SET_VAR;
                     }
 
-                    if (names.size() == 1) {
+                    if (names.isEmpty()) {
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                                "emptySet", "()Ljava/util/Set;", false);
+                        mv.visitVarInsn(ASTORE, index);
+                    } else if (names.size() == 1) {
                         mv.visitLdcInsn(names.iterator().next());
                         mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
                                 "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
