@@ -1886,6 +1886,8 @@ public class ObjectInputStream
                 if (obj == null || handles.lookupException(passHandle) != null) {
                     defaultReadFields(null, slotDesc); // skip field values
                 } else if (slotDesc.hasReadObjectMethod()) {
+                    ThreadDeath t = null;
+                    boolean reset = false;
                     SerialCallbackContext oldContext = curContext;
                     if (oldContext != null)
                         oldContext.check();
@@ -1904,10 +1906,19 @@ public class ObjectInputStream
                          */
                         handles.markException(passHandle, ex);
                     } finally {
-                        curContext.setUsed();
-                        if (oldContext!= null)
-                            oldContext.check();
-                        curContext = oldContext;
+                        do {
+                            try {
+                                curContext.setUsed();
+                                if (oldContext!= null)
+                                    oldContext.check();
+                                curContext = oldContext;
+                                reset = true;
+                            } catch (ThreadDeath x) {
+                                t = x;  // defer until reset is true
+                            }
+                        } while (!reset);
+                        if (t != null)
+                            throw t;
                     }
 
                     /*
