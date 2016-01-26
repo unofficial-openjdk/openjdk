@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -366,6 +366,14 @@ JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
         case 2:  // version 1.2.<micro> is recognized
           break;
 
+        default:
+          return JNI_EVERSION;  // unsupported minor version number
+      }
+      break;
+    case 9:
+      switch (minor) {
+        case 0:  // version 9.0.<micro> is recognized
+          break;
         default:
           return JNI_EVERSION;  // unsupported minor version number
       }
