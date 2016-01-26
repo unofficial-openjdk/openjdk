@@ -26,6 +26,7 @@
  * @test
  * @bug 8136473
  * @summary Mismatched stores on same slice possible with Unsafe.Put*Unaligned methods
+ * @ignore 8147870
  * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation TestUnsafeUnalignedMismatchedAccesses
  * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:+UnlockDiagnosticVMOptions -XX:-UseUnalignedAccesses TestUnsafeUnalignedMismatchedAccesses
  *

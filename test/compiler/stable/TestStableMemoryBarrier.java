@@ -29,6 +29,7 @@
  * @summary tests memory barrier correctly inserted for stable fields
  * @library /testlibrary /../../test/lib
  *
+ * ignore 8147873
  * @run main/bootclasspath -Xcomp -XX:CompileOnly=::testCompile
  *                   java.lang.invoke.TestStableMemoryBarrier
  *
