@@ -462,7 +462,7 @@ public final class Configuration {
 
         @Override
         public int hashCode() {
-            return Objects.hash(cf, descriptor);
+            return cf.hashCode() ^ descriptor.hashCode();
         }
 
         @Override
