@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,10 @@ import java.security.PrivilegedAction;
 import javax.print.*;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.standard.Media;
+import javax.print.attribute.standard.MediaPrintableArea;
+import javax.print.attribute.standard.MediaSize;
+import javax.print.attribute.standard.MediaSizeName;
 import javax.print.attribute.standard.PageRanges;
 
 import sun.java2d.*;
@@ -230,6 +234,11 @@ public final class CPrinterJob extends RasterPrinterJob {
         // this will not work if the user clicks on the "Preview" button
         // However if the printer is a StreamPrintService, its the right path.
         PrintService psvc = getPrintService();
+
+        if (psvc == null) {
+            throw new PrinterException("No print service found.");
+        }
+
         if (psvc instanceof StreamPrintService) {
             spoolToService(psvc, attributes);
             return;
@@ -740,5 +749,35 @@ public final class CPrinterJob extends RasterPrinterJob {
     @Override
     protected void startPage(PageFormat arg0, Printable arg1, int arg2, boolean arg3) throws PrinterException {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    protected MediaSize getMediaSize(Media media, PrintService service,
+            PageFormat page) {
+        if (media == null || !(media instanceof MediaSizeName)) {
+            return getDefaultMediaSize(page);
+}
+        MediaSize size = MediaSize.getMediaSizeForName((MediaSizeName) media);
+        return size != null ? size : getDefaultMediaSize(page);
+    }
+
+    private MediaSize getDefaultMediaSize(PageFormat page){
+            final int inch = 72;
+            Paper paper = page.getPaper();
+            float width = (float) (paper.getWidth() / inch);
+            float height = (float) (paper.getHeight() / inch);
+            return new MediaSize(width, height, MediaSize.INCH);
+    }
+
+    @Override
+    protected MediaPrintableArea getDefaultPrintableArea(PageFormat page, double w, double h) {
+        final float dpi = 72.0f;
+        Paper paper = page.getPaper();
+        return new MediaPrintableArea(
+                (float) (paper.getImageableX() / dpi),
+                (float) (paper.getImageableY() / dpi),
+                (float) (paper.getImageableWidth() / dpi),
+                (float) (paper.getImageableHeight() / dpi),
+                MediaPrintableArea.INCH);
     }
 }

@@ -175,7 +175,7 @@ LookupProcessor::LookupProcessor(const LETableReference &baseAddress,
   LEReferenceTo<LangSysTable> langSysTable;
     le_uint16 featureCount = 0;
     le_uint16 lookupListCount = 0;
-    le_uint16 requiredFeatureIndex;
+    le_uint16 requiredFeatureIndex = 0xFFFF;
 
     if (LE_FAILURE(success)) {
         return;
@@ -255,6 +255,7 @@ LookupProcessor::LookupProcessor(const LETableReference &baseAddress,
 
     if (requiredFeatureIndex != 0xFFFF) {
       requiredFeatureTable = featureListTable->getFeatureTable(featureListTable, requiredFeatureIndex, &requiredFeatureTag, success);
+      if (LE_FAILURE(success)) return;
       featureReferences += SWAPW(requiredFeatureTable->lookupCount);
     }
 
@@ -292,7 +293,7 @@ LookupProcessor::LookupProcessor(const LETableReference &baseAddress,
                 }
 
                 featureTable = featureListTable->getFeatureTable(featureListTable, featureIndex, &featureTag, success);
-
+                if (LE_FAILURE(success)) continue;
                 if (featureTag == fm.tag) {
                   count += selectLookups(featureTable, fm.mask, order + count, success);
                 }
@@ -319,7 +320,7 @@ LookupProcessor::LookupProcessor(const LETableReference &baseAddress,
 #endif
 
                 featureTable = featureListTable->getFeatureTable(featureListTable, featureIndex, &featureTag, success);
-
+                if (LE_FAILURE(success)) continue;
                 if (featureTag == fm.tag) {
                   order += selectLookups(featureTable, fm.mask, order, success);
                 }

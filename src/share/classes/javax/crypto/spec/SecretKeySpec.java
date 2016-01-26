@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@
 
 package javax.crypto.spec;
 
+import java.security.MessageDigest;
 import java.security.spec.KeySpec;
+import java.util.Locale;
 import javax.crypto.SecretKey;
 
 /**
@@ -194,7 +196,8 @@ public class SecretKeySpec implements KeySpec, SecretKey {
         if (this.algorithm.equalsIgnoreCase("TripleDES"))
             return (retval ^= "desede".hashCode());
         else
-            return (retval ^= this.algorithm.toLowerCase().hashCode());
+            return (retval ^=
+                    this.algorithm.toLowerCase(Locale.ENGLISH).hashCode());
     }
 
    /**
@@ -226,6 +229,6 @@ public class SecretKeySpec implements KeySpec, SecretKey {
 
         byte[] thatKey = ((SecretKey)obj).getEncoded();
 
-        return java.util.Arrays.equals(this.key, thatKey);
+        return MessageDigest.isEqual(this.key, thatKey);
     }
 }

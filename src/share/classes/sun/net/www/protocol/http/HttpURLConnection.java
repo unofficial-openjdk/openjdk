@@ -484,7 +484,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     private void checkMessageHeader(String key, String value) {
         char LF = '\n';
         int index = key.indexOf(LF);
-        if (index != -1) {
+        int index1 = key.indexOf(':');
+        if (index != -1 || index1 != -1) {
             throw new IllegalArgumentException(
                 "Illegal character(s) in message header field: " + key);
         }
@@ -982,7 +983,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         SocketPermission p = URLtoSocketPermission(this.url);
         if (p != null) {
             try {
-                AccessController.doPrivileged(
+                AccessController.doPrivilegedWithCombiner(
                     new PrivilegedExceptionAction<Void>() {
                         public Void run() throws IOException {
                             plainConnect0();
@@ -1243,7 +1244,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
         if (p != null) {
             try {
-                return AccessController.doPrivileged(
+                return AccessController.doPrivilegedWithCombiner(
                     new PrivilegedExceptionAction<OutputStream>() {
                         public OutputStream run() throws IOException {
                             return getOutputStream0();
@@ -1426,7 +1427,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
         if (p != null) {
             try {
-                return AccessController.doPrivileged(
+                return AccessController.doPrivilegedWithCombiner(
                     new PrivilegedExceptionAction<InputStream>() {
                         public InputStream run() throws IOException {
                             return getInputStream0();
@@ -2568,7 +2569,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
         if (p != null) {
             try {
-                return AccessController.doPrivileged(
+                return AccessController.doPrivilegedWithCombiner(
                     new PrivilegedExceptionAction<Boolean>() {
                         public Boolean run() throws IOException {
                             return followRedirect0(loc, stat, locUrl0);

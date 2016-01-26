@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,6 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
 
 import sun.security.util.DerValue;
 import sun.security.util.Length;
-import sun.security.util.ECUtil;
 
 /**
  * Key implementation classes.
@@ -165,7 +164,7 @@ abstract class P11Key implements Key, Length {
         } else {
             otherEnc = other.getEncoded();
         }
-        return Arrays.equals(thisEnc, otherEnc);
+        return MessageDigest.isEqual(thisEnc, otherEnc);
     }
 
     public int hashCode() {
@@ -993,7 +992,7 @@ abstract class P11Key implements Key, Length {
             if (encoded == null) {
                 fetchValues();
                 try {
-                    Key key = ECUtil.generateECPrivateKey(s, params);
+                    Key key = P11ECUtil.generateECPrivateKey(s, params);
                     encoded = key.getEncoded();
                 } catch (InvalidKeySpecException e) {
                     throw new ProviderException(e);
@@ -1067,7 +1066,7 @@ abstract class P11Key implements Key, Length {
             if (encoded == null) {
                 fetchValues();
                 try {
-                    return ECUtil.x509EncodeECPublicKey(w, params);
+                    return P11ECUtil.x509EncodeECPublicKey(w, params);
                 } catch (InvalidKeySpecException e) {
                     throw new ProviderException(e);
                 }

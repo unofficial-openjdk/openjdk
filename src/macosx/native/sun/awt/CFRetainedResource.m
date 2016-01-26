@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  * questions.
  */
 
+#import <Cocoa/Cocoa.h>
 #import <JavaNativeFoundation/JavaNativeFoundation.h>
 
 #import "sun_lwawt_macosx_CFRetainedResource.h"
@@ -37,9 +38,19 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CFRetainedResource_nativeCFRelease
 (JNIEnv *env, jclass clazz, jlong ptr, jboolean releaseOnAppKitThread)
 {
     if (releaseOnAppKitThread) {
-        [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
-            CFRelease(jlong_to_ptr(ptr));
-        }];
+        // Releasing resources on the main AppKit message loop only
+        // Releasing resources on the nested loops may cause dangling 
+        // pointers after the nested loop is exited
+        if ([NSApp respondsToSelector:@selector(postRunnableEvent:)]) {
+            [NSApp postRunnableEvent:^() {
+                CFRelease(jlong_to_ptr(ptr));
+            }];
+        } else {
+            // could happen if we are embedded inside SWT/FX application,
+            [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^() {
+                CFRelease(jlong_to_ptr(ptr));
+            }];
+        }
     } else {
 
 JNF_COCOA_ENTER(env);

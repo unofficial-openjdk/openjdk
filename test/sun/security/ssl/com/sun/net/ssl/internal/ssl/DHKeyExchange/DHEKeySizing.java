@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,34 +31,34 @@
  * @bug 6956398
  * @summary make ephemeral DH key match the length of the certificate key
  * @run main/othervm
- *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1318 75
+ *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1255 75
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=matched
- *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1318 75
+ *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1255 75
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=legacy
- *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1318 75
+ *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1255 75
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=1024
- *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1318 75
+ *      DHEKeySizing SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA true 1255 75
  *
  * @run main/othervm
- *      DHEKeySizing SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA true 292 75
+ *      DHEKeySizing SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA true 229 75
  *
  * @run main/othervm
- *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1510 139
+ *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1383 139
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=legacy
- *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1414 107
+ *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1319 107
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=matched
- *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1894 267
+ *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1639 267
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=1024
- *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1510 139
+ *      DHEKeySizing TLS_DHE_RSA_WITH_AES_128_CBC_SHA  false 1383 139
  *
  * @run main/othervm
- *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 484 139
+ *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 357 139
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=legacy
- *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 388 107
+ *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 293 107
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=matched
- *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 484 139
+ *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 357 139
  * @run main/othervm -Djdk.tls.ephemeralDHKeySize=1024
- *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 484 139
+ *      DHEKeySizing SSL_DH_anon_WITH_RC4_128_MD5  false 357 139
  */
 
 /*
@@ -90,22 +90,23 @@
  * Here is a summary of the record length in the test case.
  *
  *            |  ServerHello Series  |  ClientKeyExchange | ServerHello Anon
- *   512-bit  |          1318 bytes  |           75 bytes |        292 bytes
- *   768-bit  |          1414 bytes  |          107 bytes |        388 bytes
- *  1024-bit  |          1510 bytes  |          139 bytes |        484 bytes
- *  2048-bit  |          1894 bytes  |          267 bytes |        484 bytes
+ *   512-bit  |          1255 bytes  |           75 bytes |        229 bytes
+ *   768-bit  |          1319 bytes  |          107 bytes |        293 bytes
+ *  1024-bit  |          1383 bytes  |          139 bytes |        357 bytes
+ *  2048-bit  |          1639 bytes  |          267 bytes |        357 bytes
  */
 
 import javax.net.ssl.*;
 import javax.net.ssl.SSLEngineResult.*;
 import java.io.*;
 import java.nio.*;
+import java.security.Security;
 import java.security.KeyStore;
 import java.security.KeyFactory;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.*;
 import java.security.interfaces.*;
 import java.util.Base64;
 
@@ -377,6 +378,11 @@ public class DHEKeySizing {
     }
 
     public static void main(String args[]) throws Exception {
+        // reset security properties to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+        Security.setProperty("jdk.certpath.disabledAlgorithms", "");
+
         if (args.length != 4) {
             System.out.println(
                 "Usage: java DHEKeySizing cipher-suite " +

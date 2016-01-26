@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -530,7 +530,7 @@ public final class Instant
     /**
      * Gets the value of the specified field from this instant as an {@code int}.
      * <p>
-     * This queries this instant for the value for the specified field.
+     * This queries this instant for the value of the specified field.
      * The returned value will always be within the valid range of values for the field.
      * If it is not possible to return the value, because the field is not supported
      * or for some other reason, an exception is thrown.
@@ -571,7 +571,7 @@ public final class Instant
     /**
      * Gets the value of the specified field from this instant as a {@code long}.
      * <p>
-     * This queries this instant for the value for the specified field.
+     * This queries this instant for the value of the specified field.
      * If it is not possible to return the value, because the field is not supported
      * or for some other reason, an exception is thrown.
      * <p>
@@ -1229,8 +1229,14 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     public long toEpochMilli() {
-        long millis = Math.multiplyExact(seconds, 1000);
-        return millis + nanos / 1000_000;
+        if (seconds < 0 && nanos > 0) {
+            long millis = Math.multiplyExact(seconds+1, 1000);
+            long adjustment = nanos / 1000_000 - 1000;
+            return Math.addExact(millis, adjustment);
+        } else {
+            long millis = Math.multiplyExact(seconds, 1000);
+            return Math.addExact(millis, nanos / 1000_000);
+        }
     }
 
     //-----------------------------------------------------------------------

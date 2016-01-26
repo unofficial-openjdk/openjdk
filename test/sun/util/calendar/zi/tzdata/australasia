@@ -358,10 +358,17 @@ Zone	Indian/Cocos	6:27:40	-	LMT	1900
 # DST will start Nov. 2 this year.
 # http://www.fiji.gov.fj/Media-Center/Press-Releases/DAYLIGHT-SAVING-STARTS-ON-SUNDAY,-NOVEMBER-2ND.aspx
 
-# From Paul Eggert (2014-10-20):
+# From a government order dated 2015-08-26 and published as Legal Notice No. 77
+# in the Government of Fiji Gazette Supplement No. 24 (2015-08-28),
+# via Ken Rylander (2015-09-02):
+# the daylight saving period is 1 hour in advance of the standard time
+# commencing at 2.00 am on Sunday 1st November, 2015 and ending at
+# 3.00 am on Sunday 17th January, 2016.
+
+# From Paul Eggert (2015-09-01):
 # For now, guess DST from 02:00 the first Sunday in November to
-# 03:00 the first Sunday on or after January 18.  Although ad hoc, it
-# matches this year's plan and seems more likely to match future
+# 03:00 the third Sunday in January.  Although ad hoc, it matches
+# transitions since late 2014 and seems more likely to match future
 # practice than guessing no DST.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -374,7 +381,7 @@ Rule	Fiji	2011	only	-	Mar	Sun>=1	3:00	0	-
 Rule	Fiji	2012	2013	-	Jan	Sun>=18	3:00	0	-
 Rule	Fiji	2014	only	-	Jan	Sun>=18	2:00	0	-
 Rule	Fiji	2014	max	-	Nov	Sun>=1	2:00	1:00	S
-Rule	Fiji	2015	max	-	Jan	Sun>=18	3:00	0	-
+Rule	Fiji	2015	max	-	Jan	Sun>=15	3:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Pacific/Fiji	11:55:44 -	LMT	1915 Oct 26 # Suva
 			12:00	Fiji	FJ%sT	# Fiji Time
@@ -396,6 +403,7 @@ Zone	Pacific/Guam	-14:21:00 -	LMT	1844 Dec 31
 			 9:39:00 -	LMT	1901        # Agana
 			10:00	-	GST	2000 Dec 23 # Guam
 			10:00	-	ChST	# Chamorro Standard Time
+Link Pacific/Guam Pacific/Saipan # N Mariana Is
 
 # Kiribati
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -411,12 +419,7 @@ Zone Pacific/Kiritimati	-10:29:20 -	LMT	1901
 			 14:00	-	LINT
 
 # N Mariana Is
-# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone Pacific/Saipan	-14:17:00 -	LMT	1844 Dec 31
-			 9:43:00 -	LMT	1901
-			 9:00	-	MPT	1969 Oct    # N Mariana Is Time
-			10:00	-	MPT	2000 Dec 23
-			10:00	-	ChST	# Chamorro Standard Time
+# See Pacific/Guam.
 
 # Marshall Is
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -537,7 +540,10 @@ Zone	Pacific/Niue	-11:19:40 -	LMT	1901        # Alofi
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Pacific/Norfolk	11:11:52 -	LMT	1901 # Kingston
 			11:12	-	NMT	1951 # Norfolk Mean Time
-			11:30	-	NFT	# Norfolk Time
+			11:30	-	NFT	1974 Oct 27 02:00 # Norfolk T.
+			11:30	1:00	NFST	1975 Mar  2 02:00
+			11:30	-	NFT	2015 Oct  4 02:00
+			11:00	-	NFT
 
 # Palau (Belau)
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -586,6 +592,7 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 			-11:00	-	NST	1967 Apr    # N=Nome
 			-11:00	-	BST	1983 Nov 30 # B=Bering
 			-11:00	-	SST	            # S=Samoa
+Link Pacific/Pago_Pago Pacific/Midway # in US minor outlying islands
 
 # Samoa (formerly and also known as Western Samoa)
 
@@ -767,23 +774,7 @@ Zone Pacific/Funafuti	11:56:52 -	LMT	1901
 # uninhabited
 
 # Midway
-#
-# From Mark Brader (2005-01-23):
-# [Fallacies and Fantasies of Air Transport History, by R.E.G. Davies,
-# published 1994 by Paladwr Press, McLean, VA, USA; ISBN 0-9626483-5-3]
-# reproduced a Pan American Airways timetable from 1936, for their weekly
-# "Orient Express" flights between San Francisco and Manila, and connecting
-# flights to Chicago and the US East Coast.  As it uses some time zone
-# designations that I've never seen before:....
-# Fri. 6:30A Lv. HONOLOLU (Pearl Harbor), H.I.   H.L.T. Ar. 5:30P Sun.
-#  "   3:00P Ar. MIDWAY ISLAND . . . . . . . . . M.L.T. Lv. 6:00A  "
-#
-Zone Pacific/Midway	-11:49:28 -	LMT	1901
-			-11:00	-	NST	1956 Jun  3
-			-11:00	1:00	NDT	1956 Sep  2
-			-11:00	-	NST	1967 Apr    # N=Nome
-			-11:00	-	BST	1983 Nov 30 # B=Bering
-			-11:00	-	SST	            # S=Samoa
+# See Pacific/Pago_Pago.
 
 # Palmyra
 # uninhabited since World War II; was probably like Pacific/Kiritimati
@@ -1592,6 +1583,20 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # started DST on June 3.  Possibly DST was observed other years
 # in Midway, but we have no record of it.
 
+# Norfolk
+
+# From Alexander Krivenyshev (2015-09-23):
+# Norfolk Island will change ... from +1130 to +1100:
+# https://www.comlaw.gov.au/Details/F2015L01483/Explanatory%20Statement/Text
+# ... at 12.30 am (by legal time in New South Wales) on 4 October 2015.
+# http://www.norfolkisland.gov.nf/nia/MediaRelease/Media%20Release%20Norfolk%20Island%20Standard%20Time%20Change.pdf
+
+# From Paul Eggert (2015-09-23):
+# Transitions before 2015 are from timeanddate.com, which consulted
+# the Norfolk Island Museum and the Australian Bureau of Meteorology's
+# Norfolk Island station, and found no record of Norfolk observing DST
+# other than in 1974/5.  See:
+# http://www.timeanddate.com/time/australia/norfolk-island.html
 
 # Pitcairn
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 
 /*
  * @test
- * @bug 6405536
+ * @bug 6405536 8080102
  * @summary Verify that all ciphersuites work (incl. ECC using NSS crypto)
  * @author Andreas Sterbenz
  * @library ..
@@ -43,19 +43,36 @@ public class ClientJSSEServerJSSE extends PKCS11Test {
     private static String[] cmdArgs;
 
     public static void main(String[] args) throws Exception {
-        // reset the security property to make sure that the algorithms
+        // reset security properties to make sure that the algorithms
         // and keys used in this test are not disabled.
         Security.setProperty("jdk.tls.disabledAlgorithms", "");
+        Security.setProperty("jdk.certpath.disabledAlgorithms", "");
 
         cmdArgs = args;
         main(new ClientJSSEServerJSSE());
+        // now test without SunEC Provider
+        System.setProperty("testWithoutSunEC", "true");
+        main(new ClientJSSEServerJSSE());
+
     }
 
     public void main(Provider p) throws Exception {
+        String testWithoutSunEC = System.getProperty("testWithoutSunEC");
+
         if (p.getService("KeyFactory", "EC") == null) {
             System.out.println("Provider does not support EC, skipping");
             return;
         }
+
+        if (testWithoutSunEC != null) {
+            Provider sunec = Security.getProvider("SunEC");
+            if (sunec == null) {
+                System.out.println("SunEC provider not present. Skipping test");
+                 return;
+            }
+            Security.removeProvider(sunec.getName());
+        }
+
         Providers.setAt(p, 1);
         CipherTest.main(new JSSEFactory(), cmdArgs);
         Security.removeProvider(p.getName());

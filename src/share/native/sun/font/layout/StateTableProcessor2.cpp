@@ -60,6 +60,7 @@ StateTableProcessor2::StateTableProcessor2(const LEReferenceTo<MorphSubtableHead
   entryTableOffset = SWAPL(stHeader->entryTableOffset);
 
   classTable = LEReferenceTo<LookupTable>(stHeader, success, classTableOffset);
+  if (LE_FAILURE(success)) return;
   format = SWAPW(classTable->format);
 
   stateArray = LEReferenceToArrayOf<EntryTableIndex2>(stHeader, success, stateArrayOffset, LE_UNBOUNDED_ARRAY);
@@ -103,6 +104,7 @@ void StateTableProcessor2::process(LEGlyphStorage &glyphStorage, LEErrorCode &su
                 if (currGlyph == glyphCount || currGlyph == -1) {
                     // XXX: How do we handle EOT vs. EOL?
                     classCode = classCodeEOT;
+                    break;
                 } else {
                     LEGlyphID gid = glyphStorage[currGlyph];
                     TTGlyphID glyphCode = (TTGlyphID) LE_GET_GLYPH(gid);
@@ -134,6 +136,7 @@ void StateTableProcessor2::process(LEGlyphStorage &glyphStorage, LEErrorCode &su
                 if (currGlyph == glyphCount || currGlyph == -1) {
                     // XXX: How do we handle EOT vs. EOL?
                     classCode = classCodeEOT;
+                    break;
                 } else {
                     LEGlyphID gid = glyphStorage[currGlyph];
                     TTGlyphID glyphCode = (TTGlyphID) LE_GET_GLYPH(gid);
@@ -171,6 +174,7 @@ void StateTableProcessor2::process(LEGlyphStorage &glyphStorage, LEErrorCode &su
                 if (currGlyph == glyphCount || currGlyph == -1) {
                     // XXX: How do we handle EOT vs. EOL?
                     classCode = classCodeEOT;
+                    break;
                 } else if(currGlyph > glyphCount) {
                   // note if > glyphCount, we've run off the end (bad font)
                   currGlyph = glyphCount;
@@ -211,6 +215,7 @@ void StateTableProcessor2::process(LEGlyphStorage &glyphStorage, LEErrorCode &su
                 if (currGlyph == glyphCount || currGlyph == -1) {
                     // XXX: How do we handle EOT vs. EOL?
                     classCode = classCodeEOT;
+                    break;
                 } else {
                     TTGlyphID glyphCode = (TTGlyphID) LE_GET_GLYPH(glyphStorage[currGlyph]);
                     if (glyphCode == 0xFFFF) {

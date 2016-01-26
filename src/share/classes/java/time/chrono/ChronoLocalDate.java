@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -249,8 +249,8 @@ public interface ChronoLocalDate
      * This allows dates in different calendar systems to be compared based
      * on the position of the date on the local time-line.
      * The underlying comparison is equivalent to comparing the epoch-day.
-     * @return a comparator that compares in time-line order ignoring the chronology
      *
+     * @return a comparator that compares in time-line order ignoring the chronology
      * @see #isAfter
      * @see #isBefore
      * @see #isEqual
@@ -715,7 +715,7 @@ public interface ChronoLocalDate
      * only compares the underlying date and not the chronology.
      * This allows dates in different calendar systems to be compared based
      * on the time-line position.
-     * This is equivalent to using {@code date1.toEpochDay() &gt; date2.toEpochDay()}.
+     * This is equivalent to using {@code date1.toEpochDay() > date2.toEpochDay()}.
      * <p>
      * This default implementation performs the comparison based on the epoch-day.
      *
@@ -733,7 +733,7 @@ public interface ChronoLocalDate
      * only compares the underlying date and not the chronology.
      * This allows dates in different calendar systems to be compared based
      * on the time-line position.
-     * This is equivalent to using {@code date1.toEpochDay() &lt; date2.toEpochDay()}.
+     * This is equivalent to using {@code date1.toEpochDay() < date2.toEpochDay()}.
      * <p>
      * This default implementation performs the comparison based on the epoch-day.
      *

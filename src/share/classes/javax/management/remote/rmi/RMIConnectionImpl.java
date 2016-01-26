@@ -32,7 +32,6 @@ import java.rmi.server.Unreferenced;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Permission;
-import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -59,6 +58,7 @@ import com.sun.jmx.remote.util.ClassLoaderWithRepository;
 import com.sun.jmx.remote.util.ClassLogger;
 import com.sun.jmx.remote.util.EnvHelp;
 import com.sun.jmx.remote.util.OrderClassLoaders;
+import javax.management.loading.ClassLoaderRepository;
 
 /**
  * <p>Implementation of the {@link RMIConnection} interface.  User
@@ -131,20 +131,24 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
 
         final ClassLoader dcl = defaultClassLoader;
 
-        this.classLoaderWithRepository =
-            AccessController.doPrivileged(
-                new PrivilegedAction<ClassLoaderWithRepository>() {
-                    public ClassLoaderWithRepository run() {
-                        return new ClassLoaderWithRepository(
-                                      mbeanServer.getClassLoaderRepository(),
-                                      dcl);
-                    }
-                },
-
-                withPermissions( new MBeanPermission("*", "getClassLoaderRepository"),
-                                 new RuntimePermission("createClassLoader"))
-            );
-
+        ClassLoaderRepository repository = AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoaderRepository>() {
+                public ClassLoaderRepository run() {
+                    return mbeanServer.getClassLoaderRepository();
+                }
+            },
+            withPermissions(new MBeanPermission("*", "getClassLoaderRepository"))
+        );
+        this.classLoaderWithRepository = AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoaderWithRepository>() {
+                public ClassLoaderWithRepository run() {
+                    return new ClassLoaderWithRepository(
+                        repository,
+                        dcl);
+                }
+            },
+            withPermissions(new RuntimePermission("createClassLoader"))
+        );
 
         this.defaultContextClassLoader =
             AccessController.doPrivileged(
@@ -357,7 +361,6 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                              "connectionId=" + connectionId
                              +", className=" + className
                              +", name=" + name
-                             +", params=" + objects(values)
                              +", signature=" + strings(signature));
 
             return (ObjectInstance)
@@ -423,7 +426,6 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                  +", className=" + className
                  +", name=" + name
                  +", loaderName=" + loaderName
-                 +", params=" + objects(values)
                  +", signature=" + strings(signature));
 
             return (ObjectInstance)
@@ -715,7 +717,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
             if (debug) logger.debug("setAttribute",
                              "connectionId=" + connectionId
                              +", name="+name
-                             +", attribute="+attr);
+                             +", attribute name="+attr.getName());
 
             doPrivilegedOperation(
               SET_ATTRIBUTE,
@@ -766,7 +768,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
             if (debug) logger.debug("setAttributes",
                              "connectionId=" + connectionId
                              +", name="+name
-                             +", attributes="+attrlist);
+                             +", attribute names="+RMIConnector.getAttributesNames(attrlist));
 
             return (AttributeList)
                 doPrivilegedOperation(
@@ -821,7 +823,6 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                              "connectionId=" + connectionId
                              +", name="+name
                              +", operationName="+operationName
-                             +", params="+objects(values)
                              +", signature="+strings(signature));
 
             return
@@ -1254,10 +1255,11 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
             if (serverTerminated) {
                 // we must not call fetchNotifs() if the server is
                 // terminated (timeout elapsed).
-                //
-                return new NotificationResult(0L, 0L,
-                                              new TargetedNotification[0]);
-
+                // returns null to force the client to stop fetching
+                if (logger.debugOn()) logger.debug("fetchNotifications",
+                               "The notification server has been closed, "
+                                       + "returns null to force the client to stop fetching");
+                return null;
             }
             final long csn = clientSequenceNumber;
             final int mn = maxNotifications;

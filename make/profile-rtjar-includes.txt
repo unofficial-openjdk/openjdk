@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -162,6 +162,8 @@ PROFILE_3_RTJAR_EXCLUDE_TYPES := \
     javax/management/remote/rmi/_RMIServer_Stub.class
 
 FULL_JRE_RTJAR_INCLUDE_PACKAGES := \
+    apple \
+    com/apple \
     com/oracle \
     com/sun/accessibility/internal/resources \
     com/sun/activation/registries \
@@ -205,6 +207,8 @@ FULL_JRE_RTJAR_INCLUDE_PACKAGES := \
     javax/xml/bind \
     javax/xml/soap \
     javax/xml/ws \
+    jdk/internal/instrumentation \
+    jdk/management/resource \
     org/omg \
     sun/applet \
     sun/audio \
@@ -213,6 +217,7 @@ FULL_JRE_RTJAR_INCLUDE_PACKAGES := \
     sun/dc \
     sun/font \
     sun/java2d \
+    sun/lwawt \
     sun/net/ftp \
     sun/net/smtp \
     sun/net/www/content/audio \

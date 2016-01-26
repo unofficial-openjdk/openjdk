@@ -353,7 +353,7 @@ static const char* PredefinedSampleID[] = {
         "XYZ_X",          // X component of tristimulus data
         "XYZ_Y",          // Y component of tristimulus data
         "XYZ_Z",          // Z component of tristimulus data
-        "XYY_X"           // x component of chromaticity data
+        "XYY_X",          // x component of chromaticity data
         "XYY_Y",          // y component of chromaticity data
         "XYY_CAPY",       // Y component of tristimulus data
         "LAB_L",          // L* component of Lab data
@@ -2545,8 +2545,10 @@ int LocateSample(cmsIT8* it8, const char* cSample)
     for (i=0; i < t->nSamples; i++) {
 
         fld = GetDataFormat(it8, i);
+        if (fld != NULL) {
         if (cmsstrcasecmp(fld, cSample) == 0)
             return i;
+    }
     }
 
     return -1;

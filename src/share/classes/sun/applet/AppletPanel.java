@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -682,7 +682,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
         if (toFocus != null) {
             if (parent instanceof EmbeddedFrame) {
-                ((EmbeddedFrame)parent).synthesizeWindowActivation(true);
+                ((EmbeddedFrame) parent).synthesizeWindowActivation(true);
             }
             // EmbeddedFrame might have focus before the applet was added.
             // Thus after its activation the most recent focus owner will be

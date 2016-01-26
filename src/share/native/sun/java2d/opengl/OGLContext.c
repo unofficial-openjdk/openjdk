@@ -748,7 +748,7 @@ OGLContext_IsLCDShaderSupportAvailable(JNIEnv *env,
     // finally, check to see if the hardware supports the required number
     // of texture units
     j2d_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &maxTexUnits);
-    if (maxTexUnits < 4) {
+    if (maxTexUnits < 2) {
         J2dRlsTraceLn1(J2D_TRACE_INFO,
           "OGLContext_IsLCDShaderSupportAvailable: not enough tex units (%d)",
           maxTexUnits);
@@ -911,6 +911,10 @@ OGLContext_GetExtensionInfo(JNIEnv *env, jint *caps)
             }
         }
     }
+    if (OGLContext_IsExtensionAvailable(e, "GL_NV_texture_barrier")) {
+        *caps |= CAPS_EXT_TEXBARRIER;
+    }
+
     // stuff vendor descriptor in the upper bits of the caps
     if (vendor != NULL) {
         if (strncmp(vendor, "ATI", 3) == 0) {

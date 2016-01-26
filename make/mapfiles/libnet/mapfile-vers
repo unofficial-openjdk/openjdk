@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,7 @@
 SUNWprivate_1.1 {
 	global:
 		JNI_OnLoad;
-		Java_java_net_AbstractPlainDatagramSocketImpl_init;
-		Java_java_net_AbstractPlainDatagramSocketImpl_dataAvailable;
+		Java_java_net_PlainDatagramSocketImpl_dataAvailable;
 		Java_java_net_PlainSocketImpl_socketListen;
 		Java_java_net_PlainDatagramSocketImpl_getTTL;
 		Java_java_net_PlainDatagramSocketImpl_init;
@@ -42,7 +41,7 @@ SUNWprivate_1.1 {
 		Java_java_net_Inet4Address_init;
 		Java_java_net_Inet6Address_init;
 		Java_java_net_PlainDatagramSocketImpl_setTTL;
-		Java_java_net_PlainDatagramSocketImpl_socketSetOption;
+		Java_java_net_PlainDatagramSocketImpl_socketSetOption0;
 		Java_java_net_PlainDatagramSocketImpl_bind0;
 		Java_java_net_PlainSocketImpl_socketAccept;
 		Java_java_net_DatagramPacket_init;
@@ -73,7 +72,7 @@ SUNWprivate_1.1 {
 		Java_java_net_SocketOutputStream_init;
 		Java_java_net_PlainDatagramSocketImpl_peek;
 		Java_java_net_PlainDatagramSocketImpl_peekData;
-		Java_java_net_PlainSocketImpl_socketSetOption;
+		Java_java_net_PlainSocketImpl_socketSetOption0;
 		Java_java_net_PlainSocketImpl_socketSendUrgentData;
 		Java_java_net_PlainDatagramSocketImpl_datagramSocketCreate;
 		Java_java_net_PlainSocketImpl_socketGetOption;
@@ -110,6 +109,8 @@ SUNWprivate_1.1 {
 		NET_Bind;
 		NET_MapSocketOption;
 		NET_Wait;
+		NET_EnableFastTcpLoopback;
+		NET_ThrowNew;
                 ipv6_available;
 
 	local:
