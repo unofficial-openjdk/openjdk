@@ -108,7 +108,7 @@ public class ModuleDescriptor
                 mods = Collections.emptySet();
             } else {
                 mods = check ? Collections.unmodifiableSet(EnumSet.copyOf(ms))
-                             : Collections.unmodifiableSet(ms);
+                             : ms;
             }
             this.name = check ? requireModuleName(mn) : mn;
         }

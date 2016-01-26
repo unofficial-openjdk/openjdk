@@ -33,7 +33,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,6 +52,11 @@ import java.util.Set;
 final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
+
+    private static final Set<Requires.Modifier> MANDATED =
+        Collections.singleton(Requires.Modifier.MANDATED);
+    private static final Set<Requires.Modifier> PUBLIC =
+        Collections.singleton(Requires.Modifier.PUBLIC);
 
     final String name;
     final Set<Requires> requires;
@@ -80,7 +84,7 @@ final class Builder {
      * of modifiers.
      */
     public Builder requires(Set<Requires.Modifier> mods, String mn) {
-        requires.add(jlma.newRequires(mods, mn));
+        requires.add(jlma.newRequires(Collections.unmodifiableSet(mods), mn));
         return this;
     }
 
@@ -88,14 +92,22 @@ final class Builder {
      * Adds a module dependence with an empty set of modifiers.
      */
     public Builder requires(String mn) {
-        return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
+        requires.add(jlma.newRequires(Collections.emptySet(), mn));
+        return this;
     }
 
     /**
      * Adds a module dependence with the given modifier.
      */
     public Builder requires(Requires.Modifier mod, String mn) {
-        return requires(EnumSet.of(mod), mn);
+        if (mod == Requires.Modifier.MANDATED) {
+            requires.add(jlma.newRequires(MANDATED, mn));
+        } else if (mod == Requires.Modifier.PUBLIC) {
+            requires.add(jlma.newRequires(PUBLIC, mn));
+        } else {
+            requires.add(jlma.newRequires(Collections.singleton(mod), mn));
+        }
+        return this;
     }
 
     /**
