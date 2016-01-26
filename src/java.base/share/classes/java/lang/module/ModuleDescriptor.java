@@ -196,7 +196,7 @@ public class ModuleDescriptor
     public final static class Exports {
 
         private final String source;
-        private final Optional<Set<String>> targets;
+        private final Set<String> targets;
 
         private Exports(String source, Set<String> targets) {
             this(source, targets, true);
@@ -210,7 +210,7 @@ public class ModuleDescriptor
                 throw new IllegalArgumentException("Empty target set");
             if (check)
                 targets.stream().forEach(Checks::requireModuleName);
-            this.targets = Optional.of(targets);
+            this.targets = targets;
         }
 
         /**
@@ -222,7 +222,7 @@ public class ModuleDescriptor
         }
         private Exports(String source, boolean check) {
             this.source = check ? requirePackageName(source) : source;
-            this.targets = Optional.empty();
+            this.targets = null;
         }
 
         /**
@@ -243,7 +243,7 @@ public class ModuleDescriptor
          *         export, an empty {@code Optional}
          */
         public Optional<Set<String>> targets() {
-            return targets;
+            return Optional.ofNullable(targets);
         }
 
         public int hashCode() {
@@ -259,8 +259,8 @@ public class ModuleDescriptor
         }
 
         public String toString() {
-            if (targets.isPresent())
-                return source + " to " + targets.get().toString();
+            if (targets != null)
+                return source + " to " + targets;
             return source;
         }
 
@@ -544,11 +544,11 @@ public class ModuleDescriptor
     private final boolean automatic;
 
     // "Extended" information, added post-compilation
-    private final Optional<Version> version;
-    private final Optional<String> mainClass;
+    private final Version version;
+    private final String mainClass;
     private final Set<String> conceals;
     private final Set<String> packages;
-    private final Optional<DependencyHashes> hashes;
+    private final DependencyHashes hashes;
 
     private ModuleDescriptor(String name,
                              boolean automatic,
@@ -580,9 +580,9 @@ public class ModuleDescriptor
         this.uses = emptyOrUnmodifiableSet(uses);
         this.provides = emptyOrUnmodifiableMap(provides);
 
-        this.version = Optional.ofNullable(version);
-        this.mainClass = Optional.ofNullable(mainClass);
-        this.hashes = Optional.ofNullable(hashes);
+        this.version = version;
+        this.mainClass = mainClass;
+        this.hashes = hashes;
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
             : "Module " + name + ": Package sets overlap";
@@ -604,7 +604,7 @@ public class ModuleDescriptor
 
         this.version = md.version;
         this.mainClass = md.mainClass;
-        this.hashes = Optional.empty(); // need to ignore
+        this.hashes = null; // need to ignore
 
         this.packages = emptyOrUnmodifiableSet(pkgs);
         this.conceals = computeConcealedPackages(this.exports, this.packages);
@@ -632,9 +632,9 @@ public class ModuleDescriptor
         this.conceals = Collections.unmodifiableSet(conceals);
         this.packages = Collections.unmodifiableSet(packages);
 
-        this.version = Optional.ofNullable(version);
-        this.mainClass = Optional.ofNullable(mainClass);
-        this.hashes = Optional.empty();
+        this.version = version;
+        this.mainClass = mainClass;
+        this.hashes = null;
     }
 
     /**
@@ -696,7 +696,7 @@ public class ModuleDescriptor
      * @return This module's version
      */
     public Optional<Version> version() {
-        return version;
+        return Optional.ofNullable(version);
     }
 
     /**
@@ -707,7 +707,11 @@ public class ModuleDescriptor
      *         version.
      */
     public String toNameAndVersion() {
-        return version.map(v -> name() + "@" + v.toString()).orElse(name());
+        if (version != null) {
+            return name() + "@" + version;
+        } else {
+            return name();
+        }
     }
 
     /**
@@ -716,7 +720,7 @@ public class ModuleDescriptor
      * @return This module's main class
      */
     public Optional<String> mainClass() {
-        return mainClass;
+        return Optional.ofNullable(mainClass);
     }
 
     /**
@@ -743,7 +747,7 @@ public class ModuleDescriptor
      * Returns the object with the hashes of the dependences.
      */
     Optional<DependencyHashes> hashes() {
-        return hashes;
+        return Optional.ofNullable(hashes);
     }
 
     /**
@@ -1135,14 +1139,14 @@ public class ModuleDescriptor
     public int compareTo(ModuleDescriptor that) {
         int c = this.name().compareTo(that.name());
         if (c != 0) return c;
-        if (!version.isPresent()) {
-            if (!that.version.isPresent())
+        if (version == null) {
+            if (that.version == null)
                 return 0;
             return -1;
         }
-        if (!that.version.isPresent())
+        if (that.version == null)
             return +1;
-        return version.get().compareTo(that.version.get());
+        return version.compareTo(that.version);
     }
 
     @Override
