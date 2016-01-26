@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -193,6 +193,7 @@ typedef enum {
 #define AGENT_ERROR_INVALID_EVENT_TYPE          _AGENT_ERROR(24)
 #define AGENT_ERROR_INVALID_OBJECT              _AGENT_ERROR(25)
 #define AGENT_ERROR_NO_MORE_FRAMES              _AGENT_ERROR(26)
+#define AGENT_ERROR_INVALID_MODULE              _AGENT_ERROR(27)
 
 /* Combined event information */
 
@@ -353,6 +354,9 @@ jthread *allThreads(jint *count);
 
 void threadGroupInfo(jthreadGroup, jvmtiThreadGroupInfo *info);
 
+jclass findClass(JNIEnv *env, const char * name);
+jmethodID getMethod(JNIEnv *env, jclass clazz, const char * name, const char *signature);
+char *getModuleName(jclass);
 char *getClassname(jclass);
 jvmtiError classSignature(jclass, char**, char**);
 jint classStatus(jclass);
