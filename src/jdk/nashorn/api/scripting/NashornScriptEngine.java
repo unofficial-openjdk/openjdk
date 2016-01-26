@@ -39,6 +39,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -65,8 +66,10 @@ import jdk.nashorn.internal.runtime.options.Options;
  * {@link NashornScriptEngineFactory#getScriptEngine()}. Note that this engine implements the {@link Compilable} and
  * {@link Invocable} interfaces, allowing for efficient precompilation and repeated execution of scripts.
  * @see NashornScriptEngineFactory
+ *
+ * @since 1.8u40
  */
-
+@jdk.Exported
 public final class NashornScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
     /**
      * Key used to associate Nashorn global object mirror with arbitrary Bindings instance.
@@ -137,7 +140,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         this._global_per_engine = nashornContext.getEnv()._global_per_engine;
 
         // create new global object
-        this.global = createNashornGlobal(context);
+        this.global = createNashornGlobal();
         // set the default ENGINE_SCOPE object for the default context
         context.setBindings(new ScriptObjectMirror(global, global), ScriptContext.ENGINE_SCOPE);
     }
@@ -164,7 +167,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
             // We use same 'global' for all Bindings.
             return new SimpleBindings();
         }
-        return createGlobalMirror(null);
+        return createGlobalMirror();
     }
 
     // Compilable methods
@@ -314,7 +317,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
 
         // We didn't find associated nashorn global mirror in the Bindings given!
         // Create new global instance mirror and associate with the Bindings.
-        final ScriptObjectMirror mirror = createGlobalMirror(ctxt);
+        final ScriptObjectMirror mirror = createGlobalMirror();
         bindings.put(NASHORN_GLOBAL, mirror);
         return mirror.getHomeGlobal();
     }
@@ -330,13 +333,13 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
     }
 
     // Create a new ScriptObjectMirror wrapping a newly created Nashorn Global object
-    private ScriptObjectMirror createGlobalMirror(final ScriptContext ctxt) {
-        final Global newGlobal = createNashornGlobal(ctxt);
+    private ScriptObjectMirror createGlobalMirror() {
+        final Global newGlobal = createNashornGlobal();
         return new ScriptObjectMirror(newGlobal, newGlobal);
     }
 
     // Create a new Nashorn Global object
-    private Global createNashornGlobal(final ScriptContext ctxt) {
+    private Global createNashornGlobal() {
         final Global newGlobal = AccessController.doPrivileged(new PrivilegedAction<Global>() {
             @Override
             public Global run() {
@@ -352,13 +355,12 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         }, CREATE_GLOBAL_ACC_CTXT);
 
         nashornContext.initGlobal(newGlobal, this);
-        newGlobal.setScriptContext(ctxt);
 
         return newGlobal;
     }
 
     private Object invokeImpl(final Object selfObject, final String name, final Object... args) throws ScriptException, NoSuchMethodException {
-        name.getClass(); // null check
+        Objects.requireNonNull(name);
         assert !(selfObject instanceof ScriptObject) : "raw ScriptObject not expected here";
 
         Global invokeGlobal = null;
@@ -401,7 +403,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         return evalImpl(script, ctxt, getNashornGlobalFrom(ctxt));
     }
 
-    private static Object evalImpl(final Context.MultiGlobalCompiledScript mgcs, final ScriptContext ctxt, final Global ctxtGlobal) throws ScriptException {
+    private Object evalImpl(final Context.MultiGlobalCompiledScript mgcs, final ScriptContext ctxt, final Global ctxtGlobal) throws ScriptException {
         final Global oldGlobal = Context.getGlobal();
         final boolean globalChanged = (oldGlobal != ctxtGlobal);
         try {
@@ -410,8 +412,13 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
             }
 
             final ScriptFunction script = mgcs.getFunction(ctxtGlobal);
+            final ScriptContext oldCtxt = ctxtGlobal.getScriptContext();
             ctxtGlobal.setScriptContext(ctxt);
-            return ScriptObjectMirror.translateUndefined(ScriptObjectMirror.wrap(ScriptRuntime.apply(script, ctxtGlobal), ctxtGlobal));
+            try {
+                return ScriptObjectMirror.translateUndefined(ScriptObjectMirror.wrap(ScriptRuntime.apply(script, ctxtGlobal), ctxtGlobal));
+            } finally {
+                ctxtGlobal.setScriptContext(oldCtxt);
+            }
         } catch (final Exception e) {
             throwAsScriptException(e, ctxtGlobal);
             throw new AssertionError("should not reach here");
@@ -422,7 +429,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         }
     }
 
-    private static Object evalImpl(final ScriptFunction script, final ScriptContext ctxt, final Global ctxtGlobal) throws ScriptException {
+    private Object evalImpl(final ScriptFunction script, final ScriptContext ctxt, final Global ctxtGlobal) throws ScriptException {
         if (script == null) {
             return null;
         }
@@ -433,8 +440,13 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
                 Context.setGlobal(ctxtGlobal);
             }
 
+            final ScriptContext oldCtxt = ctxtGlobal.getScriptContext();
             ctxtGlobal.setScriptContext(ctxt);
-            return ScriptObjectMirror.translateUndefined(ScriptObjectMirror.wrap(ScriptRuntime.apply(script, ctxtGlobal), ctxtGlobal));
+            try {
+                return ScriptObjectMirror.translateUndefined(ScriptObjectMirror.wrap(ScriptRuntime.apply(script, ctxtGlobal), ctxtGlobal));
+            } finally {
+                ctxtGlobal.setScriptContext(oldCtxt);
+            }
         } catch (final Exception e) {
             throwAsScriptException(e, ctxtGlobal);
             throw new AssertionError("should not reach here");

@@ -34,7 +34,6 @@ import static jdk.nashorn.internal.codegen.ObjectClassGenerator.getPaddedFieldCo
 import static jdk.nashorn.internal.runtime.arrays.ArrayIndex.getArrayIndex;
 import static jdk.nashorn.internal.runtime.arrays.ArrayIndex.isValidArrayIndex;
 
-import java.util.Iterator;
 import java.util.List;
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.Symbol;
@@ -91,27 +90,20 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
         findClass();
     }
 
-    /**
-     * Construct an object.
-     *
-     * @param method the method emitter
-     */
     @Override
-    protected void makeObject(final MethodEmitter method) {
+    public void createObject(final MethodEmitter method) {
         makeMap();
         final String className = getClassName();
-        try {
-            // NOTE: we must load the actual structure class here, because the API operates with Nashorn Type objects,
-            // and Type objects need a loaded class, for better or worse. We also have to be specific and use the type
-            // of the actual structure class, we can't generalize it to e.g. Type.typeFor(ScriptObject.class) as the
-            // exact type information is needed for generating continuations in rest-of methods. If we didn't do this,
-            // object initializers like { x: arr[i] } would fail during deoptimizing compilation on arr[i], as the
-            // values restored from the RewriteException would be cast to "ScriptObject" instead of to e.g. "JO4", and
-            // subsequently the "PUTFIELD J04.L0" instruction in the continuation code would fail bytecode verification.
-            method._new(Context.forStructureClass(className.replace('/', '.'))).dup();
-        } catch (final ClassNotFoundException e) {
-            throw new AssertionError(e);
-        }
+        // NOTE: we must load the actual structure class here, because the API operates with Nashorn Type objects,
+        // and Type objects need a loaded class, for better or worse. We also have to be specific and use the type
+        // of the actual structure class, we can't generalize it to e.g. Type.typeFor(ScriptObject.class) as the
+        // exact type information is needed for generating continuations in rest-of methods. If we didn't do this,
+        // object initializers like { x: arr[i] } would fail during deoptimizing compilation on arr[i], as the
+        // values restored from the RewriteException would be cast to "ScriptObject" instead of to e.g. "JO4", and
+        // subsequently the "PUTFIELD J04.L0" instruction in the continuation code would fail bytecode verification.
+        assert fieldObjectClass != null;
+        method._new(fieldObjectClass).dup();
+
         loadMap(method); //load the map
 
         if (isScope()) {
@@ -126,16 +118,19 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
         } else {
             method.invoke(constructorNoLookup(className, PropertyMap.class));
         }
+    }
 
+    @Override
+    public void populateRange(final MethodEmitter method, final Type objectType, final int objectSlot, final int start, final int end) {
+        method.load(objectType, objectSlot);
         // Set values.
-        final Iterator<MapTuple<T>> iter = tuples.iterator();
-
-        while (iter.hasNext()) {
-            final MapTuple<T> tuple = iter.next();
+        for (int i = start; i < end; i++) {
+            final MapTuple<T> tuple = tuples.get(i);
             //we only load when we have both symbols and values (which can be == the symbol)
             //if we didn't load, we need an array property
             if (tuple.symbol != null && tuple.value != null) {
                 final int index = getArrayIndex(tuple.key);
+                method.dup();
                 if (!isValidArrayIndex(index)) {
                     putField(method, tuple.key, tuple.symbol.getFieldIndex(), tuple);
                 } else {
@@ -151,7 +146,7 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
     @Override
     protected PropertyMap makeMap() {
         assert propertyMap == null : "property map already initialized";
-        propertyMap = newMapCreator(fieldObjectClass).makeFieldMap(hasArguments(), fieldCount, paddedFieldCount, evalCode);
+        propertyMap = newMapCreator(fieldObjectClass).makeFieldMap(hasArguments(), codegen.useDualFields(), fieldCount, paddedFieldCount, evalCode);
         return propertyMap;
     }
 
@@ -164,9 +159,7 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
      * @param tuple       Tuple to store.
      */
     private void putField(final MethodEmitter method, final String key, final int fieldIndex, final MapTuple<T> tuple) {
-        method.dup();
-
-        final Type    fieldType   = tuple.isPrimitive() ? PRIMITIVE_FIELD_TYPE : Type.OBJECT;
+        final Type    fieldType   = codegen.useDualFields() && tuple.isPrimitive() ? PRIMITIVE_FIELD_TYPE : Type.OBJECT;
         final String  fieldClass  = getClassName();
         final String  fieldName   = getFieldName(fieldIndex, fieldType);
         final String  fieldDesc   = typeDescriptor(fieldType.getTypeClass());
@@ -187,7 +180,6 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
      * @param tuple  Tuple to store.
      */
     private void putSlot(final MethodEmitter method, final long index, final MapTuple<T> tuple) {
-        method.dup();
         if (JSType.isRepresentableAsInt(index)) {
             method.load((int)index);
         } else {
@@ -202,14 +194,19 @@ public abstract class FieldObjectCreator<T> extends ObjectCreator<T> {
      */
     private void findClass() {
         fieldObjectClassName = isScope() ?
-                ObjectClassGenerator.getClassName(fieldCount, paramCount) :
-                ObjectClassGenerator.getClassName(paddedFieldCount);
+                ObjectClassGenerator.getClassName(fieldCount, paramCount, codegen.useDualFields()) :
+                ObjectClassGenerator.getClassName(paddedFieldCount, codegen.useDualFields());
 
         try {
             this.fieldObjectClass = Context.forStructureClass(Compiler.binaryName(fieldObjectClassName));
         } catch (final ClassNotFoundException e) {
             throw new AssertionError("Nashorn has encountered an internal error.  Structure can not be created.");
         }
+    }
+
+    @Override
+    protected Class<? extends ScriptObject> getAllocatorClass() {
+        return fieldObjectClass;
     }
 
     /**

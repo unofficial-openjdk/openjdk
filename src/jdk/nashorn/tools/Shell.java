@@ -54,7 +54,6 @@ import jdk.nashorn.internal.runtime.Property;
 import jdk.nashorn.internal.runtime.ScriptEnvironment;
 import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
-import jdk.nashorn.internal.runtime.Source;
 import jdk.nashorn.internal.runtime.options.Options;
 
 /**
@@ -109,7 +108,10 @@ public class Shell {
      */
     public static void main(final String[] args) {
         try {
-            System.exit(main(System.in, System.out, System.err, args));
+            final int exitCode = main(System.in, System.out, System.err, args);
+            if (exitCode != SUCCESS) {
+                System.exit(exitCode);
+            }
         } catch (final IOException e) {
             System.err.println(e); //bootstrapping, Context.err may not exist
             System.exit(IO_ERROR);
@@ -252,12 +254,9 @@ public class Shell {
                     return COMPILATION_ERROR;
                 }
 
-                new Compiler(
+                Compiler.forNoInstallerCompilation(
                        context,
-                       env,
-                       null, //null - pass no code installer - this is compile only
                        functionNode.getSource(),
-                       context.getErrorManager(),
                        env._strict | functionNode.isStrict()).
                        compile(functionNode, CompilationPhases.COMPILE_ALL_NO_INSTALL);
 
@@ -414,18 +413,7 @@ public class Shell {
                 Context.setGlobal(global);
             }
 
-            // initialize with "shell.js" script
-            try {
-                final Source source = sourceFor("<shell.js>", Shell.class.getResource("resources/shell.js"));
-                context.eval(global, source.getString(), global, "<shell.js>", false);
-            } catch (final Exception e) {
-                err.println(e);
-                if (env._dump_on_error) {
-                    e.printStackTrace(err);
-                }
-
-                return INTERNAL_ERROR;
-            }
+            global.addShellBuiltins();
 
             while (true) {
                 err.print(prompt);
@@ -447,7 +435,7 @@ public class Shell {
                 }
 
                 try {
-                    final Object res = context.eval(global, source, global, "<shell>", env._strict);
+                    final Object res = context.eval(global, source, global, "<shell>");
                     if (res != ScriptRuntime.UNDEFINED) {
                         err.println(JSType.toString(res));
                     }

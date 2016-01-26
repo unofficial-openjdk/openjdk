@@ -26,17 +26,17 @@
 package jdk.nashorn.internal.runtime;
 
 import static jdk.nashorn.internal.codegen.CompilerConstants.staticCall;
-import static jdk.nashorn.internal.codegen.ObjectClassGenerator.OBJECT_FIELDS_ONLY;
 import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 import jdk.internal.dynalink.beans.StaticClass;
+import jdk.nashorn.api.scripting.AbstractJSObject;
 import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.codegen.CompilerConstants.Call;
 import jdk.nashorn.internal.codegen.types.Type;
@@ -180,10 +180,10 @@ public enum JSType {
     /** Div exact wrapper for potentially integer division that turns into float point */
     public static final Call DIV_EXACT_LONG       = staticCall(JSTYPE_LOOKUP, JSType.class, "divExact", long.class, long.class, long.class, int.class);
 
-    /** Div zero wrapper for long division that handles (0/0) >>> 0 == 0 */
+    /** Div zero wrapper for long division that handles (0/0) &gt;&gt;&gt; 0 == 0 */
     public static final Call DIV_ZERO_LONG        = staticCall(JSTYPE_LOOKUP, JSType.class, "divZero", long.class, long.class, long.class);
 
-    /** Mod zero wrapper for long division that handles (0%0) >>> 0 == 0 */
+    /** Mod zero wrapper for long division that handles (0%0) &gt;&gt;&gt; 0 == 0 */
     public static final Call REM_ZERO_LONG       = staticCall(JSTYPE_LOOKUP, JSType.class, "remZero", long.class, long.class, long.class);
 
     /** Mod exact wrapper for potentially integer remainders that turns into float point */
@@ -201,15 +201,8 @@ public enum JSType {
     /** Method handle to convert a JS Object to a Java array. */
     public static final Call TO_JAVA_ARRAY = staticCall(JSTYPE_LOOKUP, JSType.class, "toJavaArray", Object.class, Object.class, Class.class);
 
-    /** Method handle to convert a JS Object to a Java List. */
-    public static final Call TO_JAVA_LIST = staticCall(JSTYPE_LOOKUP, JSType.class, "toJavaList", List.class, Object.class);
-
-    /** Method handle to convert a JS Object to a Java deque. */
-    public static final Call TO_JAVA_DEQUE = staticCall(JSTYPE_LOOKUP, JSType.class, "toJavaDeque", Deque.class, Object.class);
-
     /** Method handle for void returns. */
     public static final Call VOID_RETURN = staticCall(JSTYPE_LOOKUP, JSType.class, "voidReturn", void.class);
-
 
     /**
      * The list of available accessor types in width order. This order is used for type guesses narrow{@literal ->} wide
@@ -311,7 +304,7 @@ public enum JSType {
             return JSType.BOOLEAN;
         }
 
-        if (obj instanceof String || obj instanceof ConsString) {
+        if (isString(obj)) {
             return JSType.STRING;
         }
 
@@ -349,7 +342,7 @@ public enum JSType {
             return JSType.BOOLEAN;
         }
 
-        if (obj instanceof String || obj instanceof ConsString) {
+        if (isString(obj)) {
             return JSType.STRING;
         }
 
@@ -384,8 +377,8 @@ public enum JSType {
     }
 
     /**
-     * Returns true if double number can be represented as an int. Note that it returns true for negative zero. If you
-     * need to exclude negative zero, combine this check with {@link #isNegativeZero(double)}.
+     * Returns true if double number can be represented as an int. Note that it returns true for negative
+     * zero. If you need to exclude negative zero, use {@link #isStrictlyRepresentableAsInt(double)}.
      *
      * @param number a double to inspect
      *
@@ -393,6 +386,18 @@ public enum JSType {
      */
     public static boolean isRepresentableAsInt(final double number) {
         return (int)number == number;
+    }
+
+    /**
+     * Returns true if double number can be represented as an int. Note that it returns false for negative
+     * zero. If you don't need to distinguish negative zero, use {@link #isRepresentableAsInt(double)}.
+     *
+     * @param number a double to inspect
+     *
+     * @return true for int representable doubles
+     */
+    public static boolean isStrictlyRepresentableAsInt(final double number) {
+        return isRepresentableAsInt(number) && isNotNegativeZero(number);
     }
 
     /**
@@ -410,14 +415,26 @@ public enum JSType {
     }
 
     /**
-     * Returns true if double number can be represented as a long. Note that it returns true for negative zero. If you
-     * need to exclude negative zero, combine this check with {@link #isNegativeZero(double)}.
+     * Returns true if double number can be represented as a long. Note that it returns true for negative
+     * zero. If you need to exclude negative zero, use {@link #isStrictlyRepresentableAsLong(double)}.
      *
      * @param number a double to inspect
      * @return true for long representable doubles
      */
     public static boolean isRepresentableAsLong(final double number) {
         return (long)number == number;
+    }
+
+    /**
+     * Returns true if double number can be represented as a long. Note that it returns false for negative
+     * zero. If you don't need to distinguish negative zero, use {@link #isRepresentableAsLong(double)}.
+     *
+     * @param number a double to inspect
+     *
+     * @return true for long representable doubles
+     */
+    public static boolean isStrictlyRepresentableAsLong(final double number) {
+        return isRepresentableAsLong(number) && isNotNegativeZero(number);
     }
 
     /**
@@ -435,12 +452,12 @@ public enum JSType {
     }
 
     /**
-     * Returns true if the number is the negative zero ({@code -0.0d}).
+     * Returns true if the number is not the negative zero ({@code -0.0d}).
      * @param number the number to test
-     * @return true if it is the negative zero, false otherwise.
+     * @return true if it is not the negative zero, false otherwise.
      */
-    public static boolean isNegativeZero(final double number) {
-        return number == 0.0d && Double.doubleToRawLongBits(number) == 0x8000000000000000L;
+    private static boolean isNotNegativeZero(final double number) {
+        return Double.doubleToRawLongBits(number) != 0x8000000000000000L;
     }
 
     /**
@@ -455,8 +472,7 @@ public enum JSType {
                obj == ScriptRuntime.UNDEFINED ||
                obj instanceof Boolean ||
                obj instanceof Number ||
-               obj instanceof String ||
-               obj instanceof ConsString;
+               isString(obj);
     }
 
    /**
@@ -480,17 +496,47 @@ public enum JSType {
      * @return the primitive form of the object
      */
     public static Object toPrimitive(final Object obj, final Class<?> hint) {
-        return obj instanceof ScriptObject ? toPrimitive((ScriptObject)obj, hint) : obj;
+        if (obj instanceof ScriptObject) {
+            return toPrimitive((ScriptObject)obj, hint);
+        } else if (isPrimitive(obj)) {
+            return obj;
+        } else if (obj instanceof JSObject) {
+            return toPrimitive((JSObject)obj, hint);
+        } else if (obj instanceof StaticClass) {
+            final String name = ((StaticClass)obj).getRepresentedClass().getName();
+            return new StringBuilder(12 + name.length()).append("[JavaClass ").append(name).append(']').toString();
+        }
+        return obj.toString();
     }
 
     private static Object toPrimitive(final ScriptObject sobj, final Class<?> hint) {
-        final Object result = sobj.getDefaultValue(hint);
+        return requirePrimitive(sobj.getDefaultValue(hint));
+    }
 
+    private static Object requirePrimitive(final Object result) {
         if (!isPrimitive(result)) {
             throw typeError("bad.default.value", result.toString());
         }
-
         return result;
+    }
+
+    /**
+     * Primitive converter for a {@link JSObject} including type hint. Invokes
+     * {@link AbstractJSObject#getDefaultValue(JSObject, Class)} and translates any thrown
+     * {@link UnsupportedOperationException} to an ECMAScript {@code TypeError}.
+     * See ECMA 9.1 ToPrimitive
+     *
+     * @param jsobj  a JSObject
+     * @param hint a type hint
+     *
+     * @return the primitive form of the JSObject
+     */
+    public static Object toPrimitive(final JSObject jsobj, final Class<?> hint) {
+        try {
+            return requirePrimitive(AbstractJSObject.getDefaultValue(jsobj, hint));
+        } catch (final UnsupportedOperationException e) {
+            throw new ECMAException(Context.getGlobal().newTypeError(e.getMessage()), e);
+        }
     }
 
     /**
@@ -547,7 +593,7 @@ public enum JSType {
             return num != 0 && !Double.isNaN(num);
         }
 
-        if (obj instanceof String || obj instanceof ConsString) {
+        if (isString(obj)) {
             return ((CharSequence)obj).length() > 0;
         }
 
@@ -595,6 +641,15 @@ public enum JSType {
         } catch (final NumberFormatException e) {
             return false;
         }
+    }
+
+    /**
+     * Returns true if object represents a primitive JavaScript string value.
+     * @param obj the object
+     * @return true if the object represents a primitive JavaScript string value.
+     */
+    public static boolean isString(final Object obj) {
+        return obj instanceof String || obj instanceof ConsString;
     }
 
     /**
@@ -723,6 +778,48 @@ public enum JSType {
         return toNumberGeneric(obj);
     }
 
+    /**
+     * Converts an object for a comparison with a number. Almost identical to {@link #toNumber(Object)} but
+     * converts {@code null} to {@code NaN} instead of zero, so it won't compare equal to zero.
+     *
+     * @param obj  an object
+     *
+     * @return a number
+     */
+    public static double toNumberForEq(final Object obj) {
+        return obj == null ? Double.NaN : toNumber(obj);
+    }
+
+    /**
+     * Converts an object for strict comparison with a number. Returns {@code NaN} for any object that is not
+     * a {@link Number}, so only boxed numerics can compare strictly equal to numbers.
+     *
+     * @param obj  an object
+     *
+     * @return a number
+     */
+    public static double toNumberForStrictEq(final Object obj) {
+        if (obj instanceof Double) {
+            return (Double)obj;
+        }
+        if (obj instanceof Number) {
+            return ((Number)obj).doubleValue();
+        }
+        return Double.NaN;
+    }
+
+
+    /**
+     * JavaScript compliant conversion of Boolean to number
+     * See ECMA 9.3 ToNumber
+     *
+     * @param b a boolean
+     *
+     * @return JS numeric value of the boolean: 1.0 or 0.0
+     */
+    public static double toNumber(final Boolean b) {
+        return b ? 1d : +0d;
+    }
 
     /**
      * JavaScript compliant conversion of Object to number
@@ -853,11 +950,15 @@ public enum JSType {
         if (start + 1 < end && f == '0' && Character.toLowerCase(str.charAt(start + 1)) == 'x') {
             //decode hex string
             value = parseRadix(str.toCharArray(), start + 2, end, 16);
+        } else if (f == 'I' && end - start == 8 && str.regionMatches(start, "Infinity", 0, 8)) {
+            return negative ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         } else {
-            // Fast (no NumberFormatException) path to NaN for non-numeric strings. We allow those starting with "I" or
-            // "N" to allow for parsing "NaN" and "Infinity" correctly.
-            if ((f < '0' || f > '9') && f != '.' && f != 'I' && f != 'N') {
-                return Double.NaN;
+            // Fast (no NumberFormatException) path to NaN for non-numeric strings.
+            for (int i = start; i < end; i++) {
+                f = str.charAt(i);
+                if ((f < '0' || f > '9') && f != '.' && f != 'e' && f != 'E' && f != '+' && f != '-') {
+                    return Double.NaN;
+                }
             }
             try {
                 value = Double.parseDouble(str.substring(start, end));
@@ -1268,24 +1369,6 @@ public enum JSType {
     }
 
     /**
-     * Converts a JavaScript object to a Java List. See {@link ListAdapter} for details.
-     * @param obj the object to convert. Can be any array-like object.
-     * @return a List that is live-backed by the JavaScript object.
-     */
-    public static List<?> toJavaList(final Object obj) {
-        return ListAdapter.create(obj);
-    }
-
-    /**
-     * Converts a JavaScript object to a Java Deque. See {@link ListAdapter} for details.
-     * @param obj the object to convert. Can be any array-like object.
-     * @return a Deque that is live-backed by the JavaScript object.
-     */
-    public static Deque<?> toJavaDeque(final Object obj) {
-        return ListAdapter.create(obj);
-    }
-
-    /**
      * Check if an object is null or undefined
      *
      * @param obj object to check
@@ -1301,6 +1384,10 @@ public enum JSType {
             return (String)obj;
         }
 
+        if (obj instanceof ConsString) {
+            return obj.toString();
+        }
+
         if (obj instanceof Number) {
             return toString(((Number)obj).doubleValue());
         }
@@ -1313,23 +1400,19 @@ public enum JSType {
             return "null";
         }
 
-        if (obj instanceof ScriptObject) {
-            if (safe) {
-                final ScriptObject sobj = (ScriptObject)obj;
-                final Global gobj = Context.getGlobal();
-                return gobj.isError(sobj) ?
-                    ECMAException.safeToString(sobj) :
-                    sobj.safeToString();
-            }
-
-            return toString(toPrimitive(obj, String.class));
+        if (obj instanceof Boolean) {
+            return obj.toString();
         }
 
-        if (obj instanceof StaticClass) {
-            return "[JavaClass " + ((StaticClass)obj).getRepresentedClass().getName() + "]";
+        if (safe && obj instanceof ScriptObject) {
+            final ScriptObject sobj = (ScriptObject)obj;
+            final Global gobj = Context.getGlobal();
+            return gobj.isError(sobj) ?
+                ECMAException.safeToString(sobj) :
+                sobj.safeToString();
         }
 
-        return obj.toString();
+        return toString(toPrimitive(obj, String.class));
     }
 
     // trim from left for JS whitespaces.
@@ -1822,18 +1905,18 @@ public enum JSType {
         }
 
         if (obj instanceof Boolean) {
-            return (Boolean)obj ? 1 : +0.0;
+            return toNumber((Boolean)obj);
         }
 
         if (obj instanceof ScriptObject) {
             return toNumber((ScriptObject)obj);
         }
 
-        if (obj instanceof JSObject) {
-            return ((JSObject)obj).toNumber();
+        if (obj instanceof Undefined) {
+            return Double.NaN;
         }
 
-        return Double.NaN;
+        return toNumber(toPrimitive(obj, Number.class));
     }
 
     private static Object invoke(final MethodHandle mh, final Object arg) {
@@ -1885,13 +1968,9 @@ public enum JSType {
     /**
      * Get the unboxed (primitive) type for an object
      * @param o object
-     * @return primive type or Object.class if not primitive
+     * @return primitive type or Object.class if not primitive
      */
     public static Class<?> unboxedFieldType(final Object o) {
-        if (OBJECT_FIELDS_ONLY) {
-            return Object.class;
-        }
-
         if (o == null) {
             return Object.class;
         } else if (o.getClass() == Integer.class) {

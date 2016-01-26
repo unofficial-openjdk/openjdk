@@ -186,10 +186,7 @@ final class SetMethodCreator {
 
     private SetMethod createNewPropertySetter(final SwitchPoint builtinSwitchPoint) {
         final SetMethod sm = map.getFreeFieldSlot() > -1 ? createNewFieldSetter(builtinSwitchPoint) : createNewSpillPropertySetter(builtinSwitchPoint);
-        final PropertyListeners listeners = map.getListeners();
-        if (listeners != null) {
-            listeners.propertyAdded(sm.property);
-        }
+        map.propertyAdded(sm.property, true);
         return sm;
     }
 
@@ -204,7 +201,7 @@ final class SetMethodCreator {
         //fast type specific setter
         final MethodHandle fastSetter = property.getSetter(type, newMap); //0 sobj, 1 value, slot folded for spill property already
 
-        //slow setter, that calls ScriptObject.set with appropraite type and key name
+        //slow setter, that calls ScriptObject.set with appropriate type and key name
         MethodHandle slowSetter = ScriptObject.SET_SLOW[getAccessorTypeIndex(type)];
         slowSetter = MH.insertArguments(slowSetter, 3, NashornCallSiteDescriptor.getFlags(desc));
         slowSetter = MH.insertArguments(slowSetter, 1, name);
@@ -232,14 +229,18 @@ final class SetMethodCreator {
     }
 
     private SetMethod createNewFieldSetter(final SwitchPoint builtinSwitchPoint) {
-        return createNewSetter(new AccessorProperty(getName(), 0, sobj.getClass(), getMap().getFreeFieldSlot(), type), builtinSwitchPoint);
+        return createNewSetter(new AccessorProperty(getName(), getFlags(sobj), sobj.getClass(), getMap().getFreeFieldSlot(), type), builtinSwitchPoint);
     }
 
     private SetMethod createNewSpillPropertySetter(final SwitchPoint builtinSwitchPoint) {
-        return createNewSetter(new SpillProperty(getName(), 0, getMap().getFreeSpillSlot(), type), builtinSwitchPoint);
+        return createNewSetter(new SpillProperty(getName(), getFlags(sobj), getMap().getFreeSpillSlot(), type), builtinSwitchPoint);
     }
 
     private PropertyMap getNewMap(final Property property) {
         return getMap().addProperty(property);
+    }
+
+    private static int getFlags(final ScriptObject scriptObject) {
+        return scriptObject.useDualFields() ? Property.DUAL_FIELDS : 0;
     }
 }

@@ -26,6 +26,7 @@
 package jdk.nashorn.internal.runtime;
 
 import static jdk.nashorn.internal.lookup.Lookup.MH;
+import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -44,8 +45,8 @@ import jdk.nashorn.internal.runtime.linker.NashornGuards;
  * This class supports the handling of scope in a with body.
  *
  */
-public final class WithObject extends ScriptObject implements Scope {
-    private static final MethodHandle WITHEXPRESSIONGUARD    = findOwnMH("withExpressionGuard",  boolean.class, Object.class, PropertyMap.class, SwitchPoint.class);
+public final class WithObject extends Scope {
+    private static final MethodHandle WITHEXPRESSIONGUARD    = findOwnMH("withExpressionGuard",  boolean.class, Object.class, PropertyMap.class, SwitchPoint[].class);
     private static final MethodHandle WITHEXPRESSIONFILTER   = findOwnMH("withFilterExpression", Object.class, Object.class);
     private static final MethodHandle WITHSCOPEFILTER        = findOwnMH("withFilterScope",      Object.class, Object.class);
     private static final MethodHandle BIND_TO_EXPRESSION_OBJ = findOwnMH("bindToExpression",     Object.class, Object.class, Object.class);
@@ -62,7 +63,6 @@ public final class WithObject extends ScriptObject implements Scope {
      */
     WithObject(final ScriptObject scope, final ScriptObject expression) {
         super(scope, null);
-        setIsScope();
         this.expression = expression;
     }
 
@@ -198,7 +198,7 @@ public final class WithObject extends ScriptObject implements Scope {
      * @return FindPropertyData or null if not found.
      */
     @Override
-    FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
+    protected FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
         // We call findProperty on 'expression' with 'expression' itself as start parameter.
         // This way in ScriptObject.setObject we can tell the property is from a 'with' expression
         // (as opposed from another non-scope object in the proto chain such as Object.prototype).
@@ -210,42 +210,48 @@ public final class WithObject extends ScriptObject implements Scope {
     }
 
     @Override
-    protected Object invokeNoSuchProperty(final String name, final int programPoint) {
+    protected Object invokeNoSuchProperty(final String name, final boolean isScope, final int programPoint) {
         FindProperty find = expression.findProperty(NO_SUCH_PROPERTY_NAME, true);
         if (find != null) {
             final Object func = find.getObjectValue();
             if (func instanceof ScriptFunction) {
-                return ScriptRuntime.apply((ScriptFunction)func, expression, name);
+                final ScriptFunction sfunc = (ScriptFunction)func;
+                final Object self = isScope && sfunc.isStrict()? UNDEFINED : expression;
+                return ScriptRuntime.apply(sfunc, self, name);
             }
         }
 
-        return getProto().invokeNoSuchProperty(name, programPoint);
+        return getProto().invokeNoSuchProperty(name, isScope, programPoint);
     }
 
     @Override
     public void setSplitState(final int state) {
-        getNonWithParent().setSplitState(state);
+        ((Scope) getNonWithParent()).setSplitState(state);
     }
 
     @Override
     public int getSplitState() {
-        return getNonWithParent().getSplitState();
+        return ((Scope) getNonWithParent()).getSplitState();
+    }
+
+    @Override
+    public void addBoundProperties(final ScriptObject source, final Property[] properties) {
+        // Declared variables in nested eval go to first normal (non-with) parent scope.
+        getNonWithParent().addBoundProperties(source, properties);
     }
 
     /**
      * Get first parent scope that is not an instance of WithObject.
      */
-    private Scope getNonWithParent() {
-        ScriptObject proto = getParentScope();
+    private ScriptObject getNonWithParent() {
+        ScriptObject proto = getProto();
 
         while (proto != null && proto instanceof WithObject) {
-            proto = ((WithObject)proto).getParentScope();
+            proto = proto.getProto();
         }
 
-        assert proto instanceof Scope : "with scope without parent scope";
-        return (Scope) proto;
+        return proto;
     }
-
 
     private static GuardedInvocation fixReceiverType(final GuardedInvocation link, final MethodHandle filter) {
         // The receiver may be an Object or a ScriptObject.
@@ -349,18 +355,29 @@ public final class WithObject extends ScriptObject implements Scope {
     }
 
     private static Object bindToExpression(final ScriptFunction fn, final Object receiver) {
-        return fn.makeBoundFunction(withFilterExpression(receiver), ScriptRuntime.EMPTY_ARRAY);
+        return fn.createBound(withFilterExpression(receiver), ScriptRuntime.EMPTY_ARRAY);
     }
 
     private MethodHandle expressionGuard(final String name, final ScriptObject owner) {
         final PropertyMap map = expression.getMap();
-        final SwitchPoint sp = expression.getProtoSwitchPoint(name, owner);
+        final SwitchPoint[] sp = expression.getProtoSwitchPoints(name, owner);
         return MH.insertArguments(WITHEXPRESSIONGUARD, 1, map, sp);
     }
 
     @SuppressWarnings("unused")
-    private static boolean withExpressionGuard(final Object receiver, final PropertyMap map, final SwitchPoint sp) {
-        return ((WithObject)receiver).expression.getMap() == map && (sp == null || !sp.hasBeenInvalidated());
+    private static boolean withExpressionGuard(final Object receiver, final PropertyMap map, final SwitchPoint[] sp) {
+        return ((WithObject)receiver).expression.getMap() == map && !hasBeenInvalidated(sp);
+    }
+
+    private static boolean hasBeenInvalidated(final SwitchPoint[] switchPoints) {
+        if (switchPoints != null) {
+            for (final SwitchPoint switchPoint : switchPoints) {
+                if (switchPoint.hasBeenInvalidated()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -378,14 +395,6 @@ public final class WithObject extends ScriptObject implements Scope {
      */
     public ScriptObject getExpression() {
         return expression;
-    }
-
-    /**
-     * Get the parent scope for this {@code WithObject}
-     * @return the parent scope
-     */
-    public ScriptObject getParentScope() {
-        return getProto();
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {

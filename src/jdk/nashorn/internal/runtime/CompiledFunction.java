@@ -27,6 +27,7 @@ package jdk.nashorn.internal.runtime;
 import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.UnwarrantedOptimismException.INVALID_PROGRAM_POINT;
 import static jdk.nashorn.internal.runtime.UnwarrantedOptimismException.isValid;
+
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -101,7 +102,7 @@ final class CompiledFunction {
             /*
              * An optimistic builtin with isOptimistic=true works like any optimistic generated function, i.e. it
              * can throw unwarranted optimism exceptions. As native functions trivially can't have parts of them
-             * regenerated as restof methods, this only works if the methods are atomic/functional in their behavior
+             * regenerated as "restOf" methods, this only works if the methods are atomic/functional in their behavior
              * and doesn't modify state before an UOE can be thrown. If they aren't, we can reexecute a wider version
              * of the same builtin in a recompilation handler for FinalScriptFunctionData. There are several
              * candidate methods in Native* that would benefit from this, but I haven't had time to implement any
@@ -528,8 +529,9 @@ final class CompiledFunction {
 
         final int fnParamCountNoCallee = fnParamCount - thisThisIndex;
         final int minParams = Math.min(csParamCount - 1, fnParamCountNoCallee); // callSiteType always has callee, so subtract 1
-        // We must match all incoming parameters, except "this". Starting from 1 to skip "this".
-        for(int i = 1; i < minParams; ++i) {
+        // We must match all incoming parameters, including "this". "this" will usually be Object, but there
+        // are exceptions, e.g. when calling functions with primitive "this" in strict mode or through call/apply.
+        for(int i = 0; i < minParams; ++i) {
             final Type fnType = Type.typeFor(type.parameterType(i + thisThisIndex));
             final Type csType = csIsVarArg ? Type.OBJECT : Type.typeFor(other.parameterType(i + 1));
             if(!fnType.isEquivalentTo(csType)) {
@@ -565,7 +567,7 @@ final class CompiledFunction {
             return handle;
         }
 
-        // Otherwise, we need a new level of indirection; need to introduce a mutable call site that can relink itslef
+        // Otherwise, we need a new level of indirection; need to introduce a mutable call site that can relink itself
         // to the compiled function's changed target whenever the optimistic assumptions are invalidated.
         final CallSite cs = new MutableCallSite(handle.type());
         relinkComposableInvoker(cs, this, isConstructor);
@@ -819,7 +821,7 @@ final class CompiledFunction {
         // isn't available, we'll use the old one bound into the call site.
         final OptimismInfo effectiveOptInfo = currentOptInfo != null ? currentOptInfo : oldOptInfo;
         FunctionNode fn = effectiveOptInfo.reparse();
-        final boolean serialized = effectiveOptInfo.isSerialized();
+        final boolean cached = fn.isCached();
         final Compiler compiler = effectiveOptInfo.getCompiler(fn, ct, re); //set to non rest-of
 
         if (!shouldRecompile) {
@@ -827,11 +829,11 @@ final class CompiledFunction {
             // recompiled a deoptimized version for an inner invocation.
             // We still need to do the rest of from the beginning
             logRecompile("Rest-of compilation [STANDALONE] ", fn, ct, effectiveOptInfo.invalidatedProgramPoints);
-            return restOfHandle(effectiveOptInfo, compiler.compile(fn, serialized ? CompilationPhases.COMPILE_SERIALIZED_RESTOF : CompilationPhases.COMPILE_ALL_RESTOF), currentOptInfo != null);
+            return restOfHandle(effectiveOptInfo, compiler.compile(fn, cached ? CompilationPhases.COMPILE_CACHED_RESTOF : CompilationPhases.COMPILE_ALL_RESTOF), currentOptInfo != null);
         }
 
         logRecompile("Deoptimizing recompilation (up to bytecode) ", fn, ct, effectiveOptInfo.invalidatedProgramPoints);
-        fn = compiler.compile(fn, serialized ? CompilationPhases.RECOMPILE_SERIALIZED_UPTO_BYTECODE : CompilationPhases.COMPILE_UPTO_BYTECODE);
+        fn = compiler.compile(fn, cached ? CompilationPhases.RECOMPILE_CACHED_UPTO_BYTECODE : CompilationPhases.COMPILE_UPTO_BYTECODE);
         log.fine("Reusable IR generated");
 
         // compile the rest of the function, and install it
@@ -954,10 +956,6 @@ final class CompiledFunction {
 
         FunctionNode reparse() {
             return data.reparse();
-        }
-
-        boolean isSerialized() {
-            return data.isSerialized();
         }
     }
 

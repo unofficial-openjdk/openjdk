@@ -28,7 +28,6 @@ package jdk.nashorn.internal.ir.debug;
 import static jdk.nashorn.internal.runtime.Source.sourceFor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import jdk.nashorn.internal.ir.AccessNode;
 import jdk.nashorn.internal.ir.BinaryNode;
@@ -49,7 +48,6 @@ import jdk.nashorn.internal.ir.IfNode;
 import jdk.nashorn.internal.ir.IndexNode;
 import jdk.nashorn.internal.ir.JoinPredecessorExpression;
 import jdk.nashorn.internal.ir.LabelNode;
-import jdk.nashorn.internal.ir.LexicalContext;
 import jdk.nashorn.internal.ir.LiteralNode;
 import jdk.nashorn.internal.ir.Node;
 import jdk.nashorn.internal.ir.ObjectNode;
@@ -66,7 +64,7 @@ import jdk.nashorn.internal.ir.UnaryNode;
 import jdk.nashorn.internal.ir.VarNode;
 import jdk.nashorn.internal.ir.WhileNode;
 import jdk.nashorn.internal.ir.WithNode;
-import jdk.nashorn.internal.ir.visitor.NodeVisitor;
+import jdk.nashorn.internal.ir.visitor.SimpleNodeVisitor;
 import jdk.nashorn.internal.parser.JSONParser;
 import jdk.nashorn.internal.parser.Lexer.RegexToken;
 import jdk.nashorn.internal.parser.Parser;
@@ -78,7 +76,7 @@ import jdk.nashorn.internal.runtime.Source;
 /**
  * This IR writer produces a JSON string that represents AST as a JSON string.
  */
-public final class JSONWriter extends NodeVisitor<LexicalContext> {
+public final class JSONWriter extends SimpleNodeVisitor {
 
     /**
      * Returns AST as JSON compatible string.
@@ -553,8 +551,7 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
             type("ArrayExpression");
             comma();
 
-            final Node[] value = literalNode.getArray();
-            array("elements", Arrays.asList(value));
+            array("elements", ((LiteralNode.ArrayLiteralNode)literalNode).getElementExpressions());
         } else {
             type("Literal");
             comma();
@@ -941,7 +938,6 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
     // Internals below
 
     private JSONWriter(final boolean includeLocation) {
-        super(new LexicalContext());
         this.buf             = new StringBuilder();
         this.includeLocation = includeLocation;
     }

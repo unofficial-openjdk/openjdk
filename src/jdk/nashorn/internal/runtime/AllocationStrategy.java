@@ -29,55 +29,99 @@ import static jdk.nashorn.internal.lookup.Lookup.MH;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.ref.WeakReference;
+import jdk.nashorn.internal.codegen.Compiler;
 import jdk.nashorn.internal.codegen.CompilerConstants;
-import jdk.nashorn.internal.codegen.ObjectClassGenerator.AllocatorDescriptor;
+import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 
 /**
- * Encapsulates the allocation strategy for a function when used as a constructor. Basically the same as
- * {@link AllocatorDescriptor}, but with an additionally cached resolved method handle. There is also a
- * canonical default allocation strategy for functions that don't assign any "this" properties (vast majority
- * of all functions), therefore saving some storage space in {@link RecompilableScriptFunctionData} that would
- * otherwise be lost to identical tuples of (map, className, handle) fields.
+ * Encapsulates the allocation strategy for a function when used as a constructor.
  */
-final class AllocationStrategy implements Serializable {
+final public class AllocationStrategy implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
-    private static final AllocationStrategy DEFAULT_STRATEGY = new AllocationStrategy(new AllocatorDescriptor(0));
+    /** Number of fields in the allocated object */
+    private final int fieldCount;
 
-    /** Allocator map from allocator descriptor */
-    private final PropertyMap allocatorMap;
+    /** Whether to use dual field representation */
+    private final boolean dualFields;
 
     /** Name of class where allocator function resides */
-    private final String allocatorClassName;
+    private transient String allocatorClassName;
 
     /** lazily generated allocator */
     private transient MethodHandle allocator;
 
-    private AllocationStrategy(final AllocatorDescriptor desc) {
-        this.allocatorMap = desc.getAllocatorMap();
-        // These classes get loaded, so an interned variant of their name is most likely around anyway.
-        this.allocatorClassName = desc.getAllocatorClassName().intern();
+    /** Last used allocator map */
+    private transient AllocatorMap lastMap;
+
+    /**
+     * Construct an allocation strategy with the given map and class name.
+     * @param fieldCount number of fields in the allocated object
+     * @param dualFields whether to use dual field representation
+     */
+    public AllocationStrategy(final int fieldCount, final boolean dualFields) {
+        this.fieldCount = fieldCount;
+        this.dualFields = dualFields;
     }
 
-    private boolean matches(final AllocatorDescriptor desc) {
-        return desc.getAllocatorMap().size() == allocatorMap.size() &&
-                desc.getAllocatorClassName().equals(allocatorClassName);
+    private String getAllocatorClassName() {
+        if (allocatorClassName == null) {
+            // These classes get loaded, so an interned variant of their name is most likely around anyway.
+            allocatorClassName = Compiler.binaryName(ObjectClassGenerator.getClassName(fieldCount, dualFields)).intern();
+        }
+        return allocatorClassName;
     }
 
-    static AllocationStrategy get(final AllocatorDescriptor desc) {
-        return DEFAULT_STRATEGY.matches(desc) ? DEFAULT_STRATEGY : new AllocationStrategy(desc);
-    }
+    /**
+     * Get the property map for the allocated object.
+     * @param prototype the prototype object
+     * @return the property map
+     */
+    synchronized PropertyMap getAllocatorMap(final ScriptObject prototype) {
+        assert prototype != null;
+        final PropertyMap protoMap = prototype.getMap();
 
-    PropertyMap getAllocatorMap() {
+        if (lastMap != null) {
+            if (!lastMap.hasSharedProtoMap()) {
+                if (lastMap.hasSamePrototype(prototype)) {
+                    return lastMap.allocatorMap;
+                }
+                if (lastMap.hasSameProtoMap(protoMap) && lastMap.hasUnchangedProtoMap()) {
+                    // Convert to shared prototype map. Allocated objects will use the same property map
+                    // that can be used as long as none of the prototypes modify the shared proto map.
+                    final PropertyMap allocatorMap = PropertyMap.newMap(null, getAllocatorClassName(), 0, fieldCount, 0);
+                    final SharedPropertyMap sharedProtoMap = new SharedPropertyMap(protoMap);
+                    allocatorMap.setSharedProtoMap(sharedProtoMap);
+                    prototype.setMap(sharedProtoMap);
+                    lastMap = new AllocatorMap(prototype, protoMap, allocatorMap);
+                    return allocatorMap;
+                }
+            }
+
+            if (lastMap.hasValidSharedProtoMap() && lastMap.hasSameProtoMap(protoMap)) {
+                prototype.setMap(lastMap.getSharedProtoMap());
+                return lastMap.allocatorMap;
+            }
+        }
+
+        final PropertyMap allocatorMap = PropertyMap.newMap(null, getAllocatorClassName(), 0, fieldCount, 0);
+        lastMap = new AllocatorMap(prototype, protoMap, allocatorMap);
+
         return allocatorMap;
     }
 
+    /**
+     * Allocate an object with the given property map
+     * @param map the property map
+     * @return the allocated object
+     */
     ScriptObject allocate(final PropertyMap map) {
         try {
             if (allocator == null) {
-                allocator = MH.findStatic(LOOKUP, Context.forStructureClass(allocatorClassName),
+                allocator = MH.findStatic(LOOKUP, Context.forStructureClass(getAllocatorClassName()),
                         CompilerConstants.ALLOCATE.symbolName(), MH.type(ScriptObject.class, PropertyMap.class));
             }
             return (ScriptObject)allocator.invokeExact(map);
@@ -88,17 +132,47 @@ final class AllocationStrategy implements Serializable {
         }
     }
 
-    private Object readResolve() {
-        if(allocatorMap.size() == DEFAULT_STRATEGY.allocatorMap.size() &&
-                allocatorClassName.equals(DEFAULT_STRATEGY.allocatorClassName)) {
-            return DEFAULT_STRATEGY;
-        }
-        return this;
-    }
-
     @Override
     public String toString() {
-        return "AllocationStrategy[allocatorClassName=" + allocatorClassName + ", allocatorMap.size=" +
-                allocatorMap.size() + "]";
+        return "AllocationStrategy[fieldCount=" + fieldCount + "]";
+    }
+
+    static class AllocatorMap {
+        final private WeakReference<ScriptObject> prototype;
+        final private WeakReference<PropertyMap> prototypeMap;
+
+        private PropertyMap allocatorMap;
+
+        AllocatorMap(final ScriptObject prototype, final PropertyMap protoMap, final PropertyMap allocMap) {
+            this.prototype = new WeakReference<>(prototype);
+            this.prototypeMap = new WeakReference<>(protoMap);
+            this.allocatorMap = allocMap;
+        }
+
+        boolean hasSamePrototype(final ScriptObject proto) {
+            return prototype.get() == proto;
+        }
+
+        boolean hasSameProtoMap(final PropertyMap protoMap) {
+            return prototypeMap.get() == protoMap || allocatorMap.getSharedProtoMap() == protoMap;
+        }
+
+        boolean hasUnchangedProtoMap() {
+            final ScriptObject proto = prototype.get();
+            return proto != null && proto.getMap() == prototypeMap.get();
+        }
+
+        boolean hasSharedProtoMap() {
+            return getSharedProtoMap() != null;
+        }
+
+        boolean hasValidSharedProtoMap() {
+            return hasSharedProtoMap() && getSharedProtoMap().isValidSharedProtoMap();
+        }
+
+        PropertyMap getSharedProtoMap() {
+            return allocatorMap.getSharedProtoMap();
+        }
+
     }
 }

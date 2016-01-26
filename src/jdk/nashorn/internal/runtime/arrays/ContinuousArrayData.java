@@ -57,7 +57,7 @@ public abstract class ContinuousArrayData extends ArrayData {
     }
 
     /**
-     * Check if we can put one more element at the end of this continous
+     * Check if we can put one more element at the end of this continuous
      * array without reallocating, or if we are overwriting an already
      * allocated element
      *
@@ -191,7 +191,7 @@ public abstract class ContinuousArrayData extends ArrayData {
 
     /**
      * Return element setter for a {@link ContinuousArrayData}
-     * @param clazz        clazz for exact type guard
+     * @param clazz        class for exact type guard
      * @param setHas       set has guard
      * @param elementType  element type
      * @return method handle for element setter

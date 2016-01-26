@@ -36,7 +36,7 @@ import jdk.nashorn.internal.runtime.ScriptObject;
  * Base class for object creation code generation.
  * @param <T> value type
  */
-public abstract class ObjectCreator<T> {
+public abstract class ObjectCreator<T> implements CodeGenerator.SplitLiteralCreator {
 
     /** List of keys & symbols to initiate in this ObjectCreator */
     final List<MapTuple<T>> tuples;
@@ -69,7 +69,23 @@ public abstract class ObjectCreator<T> {
      * Generate code for making the object.
      * @param method Script method.
      */
-    protected abstract void makeObject(final MethodEmitter method);
+    public void makeObject(final MethodEmitter method) {
+        createObject(method);
+        // We need to store the object in a temporary slot as populateRange expects to load the
+        // object from a slot (as it is also invoked within split methods). Note that this also
+        // helps optimistic continuations to handle the stack in case an optimistic assumption
+        // fails during initialization (see JDK-8079269).
+        final int objectSlot = method.getUsedSlotsWithLiveTemporaries();
+        final Type objectType = method.peekType();
+        method.storeTemp(objectType, objectSlot);
+        populateRange(method, objectType, objectSlot, 0, tuples.size());
+    }
+
+    /**
+     * Generate code for creating and initializing the object.
+     * @param method the method emitter
+     */
+    protected abstract void createObject(final MethodEmitter method);
 
     /**
      * Construct the property map appropriate for the object.
@@ -125,6 +141,12 @@ public abstract class ObjectCreator<T> {
     }
 
     /**
+     * Get the class of objects created by this ObjectCreator
+     * @return class of created object
+     */
+    abstract protected Class<? extends ScriptObject> getAllocatorClass();
+
+    /**
      * Technique for loading an initial value. Defined by anonymous subclasses in code gen.
      *
      * @param value Value to load.
@@ -134,7 +156,7 @@ public abstract class ObjectCreator<T> {
 
     MethodEmitter loadTuple(final MethodEmitter method, final MapTuple<T> tuple, final boolean pack) {
         loadValue(tuple.value, tuple.type);
-        if (pack && tuple.isPrimitive()) {
+        if (pack && codegen.useDualFields() && tuple.isPrimitive()) {
             method.pack();
         } else {
             method.convert(Type.OBJECT);
@@ -145,5 +167,4 @@ public abstract class ObjectCreator<T> {
     MethodEmitter loadTuple(final MethodEmitter method, final MapTuple<T> tuple) {
         return loadTuple(method, tuple, true);
     }
-
 }

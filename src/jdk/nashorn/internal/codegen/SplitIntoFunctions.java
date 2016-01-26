@@ -51,6 +51,7 @@ import jdk.nashorn.internal.ir.GetSplitState;
 import jdk.nashorn.internal.ir.IdentNode;
 import jdk.nashorn.internal.ir.IfNode;
 import jdk.nashorn.internal.ir.JumpStatement;
+import jdk.nashorn.internal.ir.JumpToInlinedFinally;
 import jdk.nashorn.internal.ir.LiteralNode;
 import jdk.nashorn.internal.ir.Node;
 import jdk.nashorn.internal.ir.ReturnNode;
@@ -100,7 +101,7 @@ final class SplitIntoFunctions extends NodeVisitor<BlockLexicalContext> {
     public SplitIntoFunctions(final Compiler compiler) {
         super(new BlockLexicalContext() {
             @Override
-            protected Block afterSetStatements(Block block) {
+            protected Block afterSetStatements(final Block block) {
                 for(Statement stmt: block.getStatements()) {
                     assert !(stmt instanceof SplitNode);
                 }
@@ -174,8 +175,7 @@ final class SplitIntoFunctions extends NodeVisitor<BlockLexicalContext> {
                 FunctionNode.IS_ANONYMOUS | FunctionNode.USES_ANCESTOR_SCOPE | FunctionNode.IS_SPLIT
         )
         .setBody(lc, body)
-        .setCompileUnit(lc, splitNode.getCompileUnit())
-        .copyCompilationState(lc, originalFn);
+        .setCompileUnit(lc, splitNode.getCompileUnit());
 
         // Call the function:
         //     either "(function () { ... }).call(this)"
@@ -300,17 +300,13 @@ final class SplitIntoFunctions extends NodeVisitor<BlockLexicalContext> {
     }
 
     @Override
-    public boolean enterVarNode(VarNode varNode) {
+    public boolean enterVarNode(final VarNode varNode) {
         if (!inSplitNode()) {
             return super.enterVarNode(varNode);
         }
         assert !varNode.isBlockScoped(); //TODO: we must handle these too, but we currently don't
 
         final Expression init = varNode.getInit();
-        if (varNode.isAnonymousFunctionDeclaration()) {
-            // We ain't moving anonymous function declarations.
-            return super.enterVarNode(varNode);
-        }
 
         // Move a declaration-only var statement to the top of the outermost function.
         getCurrentFunctionState().varStatements.add(varNode.setInit(null));
@@ -353,6 +349,11 @@ final class SplitIntoFunctions extends NodeVisitor<BlockLexicalContext> {
     @Override
     public Node leaveContinueNode(final ContinueNode continueNode) {
         return leaveJumpNode(continueNode);
+    }
+
+    @Override
+    public Node leaveJumpToInlinedFinally(final JumpToInlinedFinally jumpToInlinedFinally) {
+        return leaveJumpNode(jumpToInlinedFinally);
     }
 
     private JumpStatement leaveJumpNode(final JumpStatement jump) {

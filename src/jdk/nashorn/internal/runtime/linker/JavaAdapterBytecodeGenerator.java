@@ -106,7 +106,9 @@ import sun.reflect.CallerSensitive;
  * <li>
  * If the adapter being generated can have class-level overrides, constructors taking same arguments as the superclass
  * constructors are created. These constructors simply delegate to the superclass constructor. They are simply used to
- * create instances of the adapter class, with no instance-level overrides, as they don't have them.
+ * create instances of the adapter class, with no instance-level overrides, as they don't have them. If the original
+ * class' constructor was variable arity, the adapter constructor will also be variable arity. Protected constructors
+ * are exposed as public.
  * </li>
  * </ul>
  * </p><p>
@@ -190,7 +192,6 @@ final class JavaAdapterBytecodeGenerator {
     private static final int MAX_GENERATED_TYPE_NAME_LENGTH = 255;
 
     private static final String CLASS_INIT = "<clinit>";
-    static final String CONVERTER_INIT = "<converter-init>";
 
     // Method name prefix for invoking super-methods
     static final String SUPER_PREFIX = "super$";
@@ -202,6 +203,8 @@ final class JavaAdapterBytecodeGenerator {
 
     // This is the superclass for our generated adapter.
     private final Class<?> superClass;
+    // Interfaces implemented by our generated adapter.
+    private final List<Class<?>> interfaces;
     // Class loader used as the parent for the class loader we'll create to load the generated class. It will be a class
     // loader that has the visibility of all original types (class to extend and interfaces to implement) and of the
     // Nashorn classes.
@@ -253,6 +256,7 @@ final class JavaAdapterBytecodeGenerator {
         assert interfaces != null;
 
         this.superClass = superClass;
+        this.interfaces = interfaces;
         this.classOverride = classOverride;
         this.commonLoader = commonLoader;
         cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS) {
@@ -494,7 +498,8 @@ final class JavaAdapterBytecodeGenerator {
         final Type[] argTypes = originalCtorType.getArgumentTypes();
 
         // All constructors must be public, even if in the superclass they were protected.
-        final InstructionAdapter mv = new InstructionAdapter(cw.visitMethod(ACC_PUBLIC, INIT,
+        final InstructionAdapter mv = new InstructionAdapter(cw.visitMethod(ACC_PUBLIC |
+                (ctor.isVarArgs() ? ACC_VARARGS : 0), INIT,
                 Type.getMethodDescriptor(originalCtorType.getReturnType(), argTypes), null, null));
 
         mv.visitCode();
@@ -543,7 +548,8 @@ final class JavaAdapterBytecodeGenerator {
         System.arraycopy(originalArgTypes, 0, newArgTypes, 0, argLen);
 
         // All constructors must be public, even if in the superclass they were protected.
-        // Existing super constructor <init>(this, args...) triggers generating <init>(this, scriptObj, args...).
+        // Existing super constructor <init>(this, args...) triggers generating <init>(this, args..., scriptObj).
+        // Any variable arity constructors become fixed-arity with explicit array arguments.
         final InstructionAdapter mv = new InstructionAdapter(cw.visitMethod(ACC_PUBLIC, INIT,
                 Type.getMethodDescriptor(originalCtorType.getReturnType(), newArgTypes), null, null));
 
@@ -568,7 +574,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.visitVarInsn(ALOAD, 0);
             if (fromFunction && !mi.getName().equals(samName)) {
                 // Constructors initializing from a ScriptFunction only initialize methods with the SAM name.
-                // NOTE: if there's a concrete overloaded method sharing the SAM name, it'll be overriden too. This
+                // NOTE: if there's a concrete overloaded method sharing the SAM name, it'll be overridden too. This
                 // is a deliberate design choice. All other method handles are initialized to null.
                 mv.visitInsn(ACONST_NULL);
             } else {
@@ -593,7 +599,7 @@ final class JavaAdapterBytecodeGenerator {
         if (! fromFunction) {
             newArgTypes[argLen] = OBJECT_TYPE;
             final InstructionAdapter mv2 = new InstructionAdapter(cw.visitMethod(ACC_PUBLIC, INIT,
-                Type.getMethodDescriptor(originalCtorType.getReturnType(), newArgTypes), null, null));
+                    Type.getMethodDescriptor(originalCtorType.getReturnType(), newArgTypes), null, null));
             generateOverridingConstructorWithObjectParam(mv2, ctor, originalCtorType.getDescriptor());
         }
     }
@@ -1028,6 +1034,24 @@ final class JavaAdapterBytecodeGenerator {
         endMethod(mv);
     }
 
+    // find the appropriate super type to use for invokespecial on the given interface
+    private Class<?> findInvokespecialOwnerFor(final Class<?> cl) {
+        assert Modifier.isInterface(cl.getModifiers()) : cl + " is not an interface";
+
+        if (cl.isAssignableFrom(superClass)) {
+            return superClass;
+        }
+
+        for (final Class<?> iface : interfaces) {
+             if (cl.isAssignableFrom(iface)) {
+                 return iface;
+             }
+        }
+
+        // we better that interface that extends the given interface!
+        throw new AssertionError("can't find the class/interface that extends " + cl);
+    }
+
     private void emitSuperCall(final InstructionAdapter mv, final Class<?> owner, final String name, final String methodDesc) {
         mv.visitVarInsn(ALOAD, 0);
         int nextParam = 1;
@@ -1039,7 +1063,9 @@ final class JavaAdapterBytecodeGenerator {
 
         // default method - non-abstract, interface method
         if (Modifier.isInterface(owner.getModifiers())) {
-            mv.invokespecial(Type.getInternalName(owner), name, methodDesc, false);
+            // we should call default method on the immediate "super" type - not on (possibly)
+            // the indirectly inherited interface class!
+            mv.invokespecial(Type.getInternalName(findInvokespecialOwnerFor(owner)), name, methodDesc, false);
         } else {
             mv.invokespecial(superClassName, name, methodDesc, false);
         }

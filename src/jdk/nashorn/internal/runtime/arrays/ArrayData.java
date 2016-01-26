@@ -26,6 +26,7 @@
 package jdk.nashorn.internal.runtime.arrays;
 
 import static jdk.nashorn.internal.codegen.CompilerConstants.staticCall;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
@@ -117,7 +118,7 @@ public abstract class ArrayData {
                     return new SparseArrayData(this, safeIndex + 1);
                 }
                 //known to fit in int
-                return toRealArrayData((int)safeIndex).ensure(safeIndex);
+                return toRealArrayData((int)safeIndex);
            }
            return this;
         }
@@ -257,7 +258,7 @@ public abstract class ArrayData {
      * Factory method for unspecified array - start as int
      * @return ArrayData
      */
-    public final static ArrayData initialArray() {
+    public static ArrayData initialArray() {
         return new IntArrayData();
     }
 
@@ -275,9 +276,9 @@ public abstract class ArrayData {
     /**
      * Align an array size up to the nearest array chunk size
      * @param size size required
-     * @return size given, always >= size
+     * @return size given, always &gt;= size
      */
-    protected final static int alignUp(final int size) {
+    protected static int alignUp(final int size) {
         return size + CHUNK_SIZE - 1 & ~(CHUNK_SIZE - 1);
     }
 
@@ -287,7 +288,7 @@ public abstract class ArrayData {
      * @param length the initial length
      * @return ArrayData
      */
-    public static final ArrayData allocate(final int length) {
+    public static ArrayData allocate(final int length) {
         if (length == 0) {
             return new IntArrayData();
         } else if (length >= SparseArrayData.MAX_DENSE_LENGTH) {
@@ -303,7 +304,7 @@ public abstract class ArrayData {
      * @param  array the array
      * @return ArrayData wrapping this array
      */
-    public static final ArrayData allocate(final Object array) {
+    public static ArrayData allocate(final Object array) {
         final Class<?> clazz = array.getClass();
 
         if (clazz == int[].class) {
@@ -323,7 +324,7 @@ public abstract class ArrayData {
      * @param array the array to use for initial elements
      * @return the ArrayData
      */
-    public static final ArrayData allocate(final int[] array) {
+    public static ArrayData allocate(final int[] array) {
          return new IntArrayData(array, array.length);
     }
 
@@ -333,7 +334,7 @@ public abstract class ArrayData {
      * @param array the array to use for initial elements
      * @return the ArrayData
      */
-    public static final ArrayData allocate(final long[] array) {
+    public static ArrayData allocate(final long[] array) {
         return new LongArrayData(array, array.length);
     }
 
@@ -343,7 +344,7 @@ public abstract class ArrayData {
      * @param array the array to use for initial elements
      * @return the ArrayData
      */
-    public static final ArrayData allocate(final double[] array) {
+    public static ArrayData allocate(final double[] array) {
         return new NumberArrayData(array, array.length);
     }
 
@@ -353,7 +354,7 @@ public abstract class ArrayData {
      * @param array the array to use for initial elements
      * @return the ArrayData
      */
-    public static final ArrayData allocate(final Object[] array) {
+    public static ArrayData allocate(final Object[] array) {
         return new ObjectArrayData(array, array.length);
     }
 
@@ -363,7 +364,7 @@ public abstract class ArrayData {
      * @param buf the nio ByteBuffer to wrap
      * @return the ArrayData
      */
-    public static final ArrayData allocate(final ByteBuffer buf) {
+    public static ArrayData allocate(final ByteBuffer buf) {
         return new ByteBufferArrayData(buf);
     }
 
@@ -373,7 +374,7 @@ public abstract class ArrayData {
      * @param underlying  the underlying ArrayData to wrap in the freeze filter
      * @return the frozen ArrayData
      */
-    public static final ArrayData freeze(final ArrayData underlying) {
+    public static ArrayData freeze(final ArrayData underlying) {
         return new FrozenArrayFilter(underlying);
     }
 
@@ -383,7 +384,7 @@ public abstract class ArrayData {
      * @param underlying  the underlying ArrayData to wrap in the seal filter
      * @return the sealed ArrayData
      */
-    public static final ArrayData seal(final ArrayData underlying) {
+    public static ArrayData seal(final ArrayData underlying) {
         return new SealedArrayFilter(underlying);
     }
 
@@ -393,7 +394,7 @@ public abstract class ArrayData {
      * @param  underlying the underlying ArrayData to wrap in the non extensible filter
      * @return new array data, filtered
      */
-    public static final ArrayData preventExtension(final ArrayData underlying) {
+    public static ArrayData preventExtension(final ArrayData underlying) {
         return new NonExtensibleArrayFilter(underlying);
     }
 
@@ -403,7 +404,7 @@ public abstract class ArrayData {
      * @param underlying the underlying ArrayDAta to wrap in the non extensible filter
      * @return new array data, filtered
      */
-    public static final ArrayData setIsLengthNotWritable(final ArrayData underlying) {
+    public static ArrayData setIsLengthNotWritable(final ArrayData underlying) {
         return new LengthNotWritableFilter(underlying);
     }
 
@@ -496,7 +497,9 @@ public abstract class ArrayData {
     public abstract ArrayData shiftRight(final int by);
 
     /**
-     * Ensure that the given index exists and won't fail subsequent
+     * Ensure that the given index exists and won't fail in a subsequent access.
+     * If {@code safeIndex} is equal or greater than the current length the length is
+     * updated to {@code safeIndex + 1}.
      *
      * @param safeIndex the index to ensure wont go out of bounds
      * @return new array data (or same)
@@ -673,16 +676,31 @@ public abstract class ArrayData {
     }
 
     /**
-     * Returns if element at specific index range can be deleted or not.
+     * Returns if element at specific index can be deleted or not.
      *
-     * @param fromIndex  the start index
-     * @param toIndex    the end index
+     * @param longIndex  the index
      * @param strict     are we in strict mode
      *
      * @return true if range can be deleted
      */
-    public boolean canDelete(final long fromIndex, final long toIndex, final boolean strict) {
+    public boolean canDelete(final long longIndex, final boolean strict) {
         return true;
+    }
+
+    /**
+     * Delete a range from the array if {@code fromIndex} is less than or equal to {@code toIndex}
+     * and the array supports deletion.
+     *
+     * @param fromIndex  the start index (inclusive)
+     * @param toIndex    the end index (inclusive)
+     * @param strict     are we in strict mode
+     * @return an array with the range deleted, or this array if no deletion took place
+     */
+    public final ArrayData safeDelete(final long fromIndex, final long toIndex, final boolean strict) {
+        if (fromIndex <= toIndex && canDelete(fromIndex, strict)) {
+            return delete(fromIndex, toIndex);
+        }
+        return this;
     }
 
     /**
@@ -758,39 +776,6 @@ public abstract class ArrayData {
      */
     public ArrayData push(final boolean strict, final Object item) {
         return push(strict, new Object[] { item });
-    }
-
-    /**
-     * Push an array of items to the end of the array
-     *
-     * @param strict are we in strict mode
-     * @param item   the item
-     * @return new array data (or same)
-     */
-    public ArrayData push(final boolean strict, final double item) {
-        return push(strict, item);
-    }
-
-    /**
-     * Push an array of items to the end of the array
-     *
-     * @param strict are we in strict mode
-     * @param item   the item
-     * @return new array data (or same)
-     */
-    public ArrayData push(final boolean strict, final long item) {
-        return push(strict, item);
-    }
-
-    /**
-     * Push an array of items to the end of the array
-     *
-     * @param strict are we in strict mode
-     * @param item   the item
-     * @return new array data (or same)
-     */
-    public ArrayData push(final boolean strict, final int item) {
-        return push(strict, item);
     }
 
     /**

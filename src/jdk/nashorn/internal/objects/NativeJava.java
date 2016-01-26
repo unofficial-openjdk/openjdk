@@ -33,10 +33,12 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.support.TypeUtilities;
 import jdk.nashorn.api.scripting.JSObject;
-import jdk.nashorn.api.scripting.ScriptUtils;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Function;
 import jdk.nashorn.internal.objects.annotations.ScriptClass;
@@ -91,7 +93,7 @@ public final class NativeJava {
     @Function(name="synchronized", attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object synchronizedFunc(final Object self, final Object func, final Object obj) {
         if (func instanceof ScriptFunction) {
-            return ((ScriptFunction)func).makeSynchronizedFunction(obj);
+            return ((ScriptFunction)func).createSynchronized(obj);
         }
 
         throw typeError("not.a.function", ScriptRuntime.safeToString(func));
@@ -339,7 +341,9 @@ public final class NativeJava {
 
     /**
      * Given a script object and a Java type, converts the script object into the desired Java type. Currently it
-     * performs shallow creation of Java arrays, as well as wrapping of objects in Lists and Dequeues. Example:
+     * performs shallow creation of Java arrays, as well as wrapping of objects in Lists, Dequeues, Queues,
+     * and Collections. If conversion is not possible or fails for some reason, TypeError is thrown.
+     * Example:
      * <pre>
      * var anArray = [1, "13", false]
      * var javaIntArray = Java.to(anArray, "int[]")
@@ -353,9 +357,10 @@ public final class NativeJava {
      * object to create. Can not be null. If undefined, a "default" conversion is presumed (allowing the argument to be
      * omitted).
      * @return a Java object whose value corresponds to the original script object's value. Specifically, for array
-     * target types, returns a Java array of the same type with contents converted to the array's component type. Does
-     * not recursively convert for multidimensional arrays. For {@link List} or {@link Deque}, returns a live wrapper
-     * around the object, see {@link ListAdapter} for details. Returns null if obj is null.
+     * target types, returns a Java array of the same type with contents converted to the array's component type.
+     * Converts recursively when the target type is multidimensional array. For {@link List}, {@link Deque},
+     * {@link Queue}, or {@link Collection}, returns a live wrapper around the object, see {@link ListAdapter} for
+     * details. Returns null if obj is null.
      * @throws ClassNotFoundException if the class described by objType is not found
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
@@ -382,10 +387,14 @@ public final class NativeJava {
         }
 
         if(targetClass.isArray()) {
-            return JSType.toJavaArray(obj, targetClass.getComponentType());
+            try {
+                return JSType.toJavaArray(obj, targetClass.getComponentType());
+            } catch (final Exception exp) {
+                throw typeError(exp, "java.array.conversion.failed", targetClass.getName());
+            }
         }
 
-        if(targetClass == List.class || targetClass == Deque.class) {
+        if (targetClass == List.class || targetClass == Deque.class || targetClass == Queue.class || targetClass == Collection.class) {
             return ListAdapter.create(obj);
         }
 
@@ -653,5 +662,21 @@ public final class NativeJava {
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR, name="super")
     public static Object _super(final Object self, final Object adapter) {
         return Bootstrap.createSuperAdapter(adapter);
+    }
+
+    /**
+     * Returns an object that is compatible with Java JSON libraries expectations; namely, that if it itself, or any
+     * object transitively reachable through it is a JavaScript array, then such objects will be exposed as
+     * {@link JSObject} that also implements the {@link List} interface for exposing the array elements. An explicit
+     * API is required as otherwise Nashorn exposes all objects externally as {@link JSObject}s that also implement the
+     * {@link Map} interface instead. By using this method, arrays will be exposed as {@link List}s and all other
+     * objects as {@link Map}s.
+     * @param self not used
+     * @param obj the object to be exposed in a Java JSON library compatible manner.
+     * @return a wrapper around the object that will enforce Java JSON library compatible exposure.
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static Object asJSONCompatible(final Object self, final Object obj) {
+        return ScriptObjectMirror.wrapAsJSONCompatible(obj, Context.getGlobal());
     }
 }

@@ -28,6 +28,7 @@ package jdk.nashorn.api.scripting;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import jdk.nashorn.internal.runtime.Context;
@@ -44,7 +45,10 @@ import jdk.nashorn.internal.runtime.Version;
  * </ul>
  * Programs executing in engines created using {@link #getScriptEngine(String[])} will have the passed arguments
  * accessible as a global variable named {@code "arguments"}.
+ *
+ * @since 1.8u40
  */
+@jdk.Exported
 public final class NashornScriptEngineFactory implements ScriptEngineFactory {
     @Override
     public String getEngineName() {
@@ -120,7 +124,7 @@ public final class NashornScriptEngineFactory implements ScriptEngineFactory {
             // used to execute scripts concurrently on multiple threads.
             return null;
         default:
-            throw new IllegalArgumentException("Invalid key");
+            return null;
         }
     }
 
@@ -174,8 +178,7 @@ public final class NashornScriptEngineFactory implements ScriptEngineFactory {
      *         denies {@code RuntimePermission("nashorn.setConfig")}
      */
     public ScriptEngine getScriptEngine(final ClassFilter classFilter) {
-        classFilter.getClass(); // null check
-        return newEngine(DEFAULT_OPTIONS, getAppClassLoader(), classFilter);
+        return newEngine(DEFAULT_OPTIONS, getAppClassLoader(), Objects.requireNonNull(classFilter));
     }
 
     /**
@@ -189,8 +192,7 @@ public final class NashornScriptEngineFactory implements ScriptEngineFactory {
      *         denies {@code RuntimePermission("nashorn.setConfig")}
      */
     public ScriptEngine getScriptEngine(final String... args) {
-        args.getClass(); // null check
-        return newEngine(args, getAppClassLoader(), null);
+        return newEngine(Objects.requireNonNull(args), getAppClassLoader(), null);
     }
 
     /**
@@ -205,8 +207,7 @@ public final class NashornScriptEngineFactory implements ScriptEngineFactory {
      *         denies {@code RuntimePermission("nashorn.setConfig")}
      */
     public ScriptEngine getScriptEngine(final String[] args, final ClassLoader appLoader) {
-        args.getClass(); // null check
-        return newEngine(args, appLoader, null);
+        return newEngine(Objects.requireNonNull(args), appLoader, null);
     }
 
     /**
@@ -222,9 +223,7 @@ public final class NashornScriptEngineFactory implements ScriptEngineFactory {
      *         denies {@code RuntimePermission("nashorn.setConfig")}
      */
     public ScriptEngine getScriptEngine(final String[] args, final ClassLoader appLoader, final ClassFilter classFilter) {
-        args.getClass(); // null check
-        classFilter.getClass(); // null check
-        return newEngine(args, appLoader, classFilter);
+        return newEngine(Objects.requireNonNull(args), appLoader, Objects.requireNonNull(classFilter));
     }
 
     private ScriptEngine newEngine(final String[] args, final ClassLoader appLoader, final ClassFilter classFilter) {

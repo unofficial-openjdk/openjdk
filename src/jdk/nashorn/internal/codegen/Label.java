@@ -333,7 +333,7 @@ public final class Label implements Serializable {
          * @param slot the slot written to
          * @param onlySymbolLiveValue if true, this is the symbol's only live value, and other values of the symbol
          * should be marked dead
-         * @param Type the type written to the slot
+         * @param type the type written to the slot
          */
         void onLocalStore(final Type type, final int slot, final boolean onlySymbolLiveValue) {
             if(onlySymbolLiveValue) {
@@ -447,7 +447,7 @@ public final class Label implements Serializable {
             undefineLocalVariables(liveLocalCount, true);
             // Temporaries are promoted
             firstTemp = liveLocalCount;
-            // No trailing undefineds
+            // No trailing undefined values
             localVariableTypes.subList(firstTemp, localVariableTypes.size()).clear();
             assert symbolBoundary.length() == firstTemp;
             // Generalize all reference types to Object, and promote boolean to int
@@ -497,7 +497,7 @@ public final class Label implements Serializable {
     private transient Label.Stack stack;
 
     /** ASM representation of this label */
-    private jdk.internal.org.objectweb.asm.Label label;
+    private transient jdk.internal.org.objectweb.asm.Label label;
 
     /** Id for debugging purposes, remove if footprint becomes unmanageable */
     private final int id;

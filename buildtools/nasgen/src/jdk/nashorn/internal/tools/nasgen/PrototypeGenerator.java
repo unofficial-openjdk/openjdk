@@ -42,7 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
- * This class generates prototype class for a @ClassInfo annotated class.
+ * This class generates prototype class for a @ScriptClass annotated class.
  *
  */
 public class PrototypeGenerator extends ClassGenerator {
@@ -57,7 +57,7 @@ public class PrototypeGenerator extends ClassGenerator {
     }
 
     byte[] getClassBytes() {
-        // new class extensing from ScriptObject
+        // new class extending from ScriptObject
         cw.visit(V1_7, ACC_FINAL | ACC_SUPER, className, null, PROTOTYPEOBJECT_TYPE, null);
         if (memberCount > 0) {
             // add fields
@@ -124,8 +124,6 @@ public class PrototypeGenerator extends ClassGenerator {
         if (memberCount > 0) {
             // call "super(map$)"
             mi.getStatic(className, PROPERTYMAP_FIELD_NAME, PROPERTYMAP_DESC);
-            // make sure we use duplicated PropertyMap so that original map
-            // stays intact and so can be used for many global.
             mi.invokeSpecial(PROTOTYPEOBJECT_TYPE, INIT, SCRIPTOBJECT_INIT_DESC);
             // initialize Function type fields
             initFunctionFields(mi);
@@ -157,7 +155,7 @@ public class PrototypeGenerator extends ClassGenerator {
      */
     public static void main(final String[] args) throws IOException {
         if (args.length != 1) {
-            System.err.println("Usage: " + ConstructorGenerator.class.getName() + " <class>");
+            System.err.println("Usage: " + PrototypeGenerator.class.getName() + " <class>");
             System.exit(1);
         }
 

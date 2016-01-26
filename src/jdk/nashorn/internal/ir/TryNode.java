@@ -27,7 +27,9 @@ package jdk.nashorn.internal.ir;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 
@@ -35,7 +37,7 @@ import jdk.nashorn.internal.ir.visitor.NodeVisitor;
  * IR representation of a TRY statement.
  */
 @Immutable
-public final class TryNode extends Statement implements JoinPredecessor {
+public final class TryNode extends LexicalContextStatement implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 
     /** Try statements. */
@@ -47,11 +49,23 @@ public final class TryNode extends Statement implements JoinPredecessor {
     /** Finally clause. */
     private final Block finallyBody;
 
-    /** Exception symbol. */
-    private Symbol exception;
+    /**
+     * List of inlined finally blocks. The structure of every inlined finally is:
+     * Block(LabelNode(label, Block(finally-statements, (JumpStatement|ReturnNode)?))).
+     * That is, the block has a single LabelNode statement with the label and a block containing the
+     * statements of the inlined finally block with the jump or return statement appended (if the finally
+     * block was not terminal; the original jump/return is simply ignored if the finally block itself
+     * terminates). The reason for this somewhat strange arrangement is that we didn't want to create a
+     * separate class for the (label, BlockStatement pair) but rather reused the already available LabelNode.
+     * However, if we simply used List&lt;LabelNode&gt; without wrapping the label nodes in an additional Block,
+     * that would've thrown off visitors relying on BlockLexicalContext -- same reason why we never use
+     * Statement as the type of bodies of e.g. IfNode, WhileNode etc. but rather blockify them even when they're
+     * single statements.
+     */
+    private final List<Block> inlinedFinallies;
 
-    /** Catchall exception for finally expansion, where applicable */
-    private Symbol finallyCatchAll;
+    /** Exception symbol. */
+    private final Symbol exception;
 
     private final LocalVariableConversion conversion;
 
@@ -71,21 +85,24 @@ public final class TryNode extends Statement implements JoinPredecessor {
         this.catchBlocks = catchBlocks;
         this.finallyBody = finallyBody;
         this.conversion  = null;
+        this.inlinedFinallies = Collections.emptyList();
+        this.exception = null;
     }
 
-    private TryNode(final TryNode tryNode, final Block body, final List<Block> catchBlocks, final Block finallyBody, final LocalVariableConversion conversion) {
+    private TryNode(final TryNode tryNode, final Block body, final List<Block> catchBlocks, final Block finallyBody, final LocalVariableConversion conversion, final List<Block> inlinedFinallies, final Symbol exception) {
         super(tryNode);
         this.body        = body;
         this.catchBlocks = catchBlocks;
         this.finallyBody = finallyBody;
         this.conversion  = conversion;
-        this.exception = tryNode.exception;
+        this.inlinedFinallies = inlinedFinallies;
+        this.exception = exception;
     }
 
     @Override
     public Node ensureUniqueLabels(final LexicalContext lc) {
         //try nodes are never in lex context
-        return new TryNode(this, body, catchBlocks, finallyBody, conversion);
+        return new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception);
     }
 
     @Override
@@ -106,16 +123,16 @@ public final class TryNode extends Statement implements JoinPredecessor {
      * @param visitor IR navigating visitor.
      */
     @Override
-    public Node accept(final NodeVisitor<? extends LexicalContext> visitor) {
+    public Node accept(final LexicalContext lc, final NodeVisitor<? extends LexicalContext> visitor) {
         if (visitor.enterTryNode(this)) {
             // Need to do finallybody first for termination analysis. TODO still necessary?
             final Block newFinallyBody = finallyBody == null ? null : (Block)finallyBody.accept(visitor);
             final Block newBody        = (Block)body.accept(visitor);
             return visitor.leaveTryNode(
-                setBody(newBody).
-                setFinallyBody(newFinallyBody).
-                setCatchBlocks(Node.accept(visitor, catchBlocks)).
-                setFinallyCatchAll(finallyCatchAll));
+                setBody(lc, newBody).
+                setFinallyBody(lc, newFinallyBody).
+                setCatchBlocks(lc, Node.accept(visitor, catchBlocks)).
+                setInlinedFinallies(lc, Node.accept(visitor, inlinedFinallies)));
         }
 
         return this;
@@ -136,14 +153,15 @@ public final class TryNode extends Statement implements JoinPredecessor {
 
     /**
      * Reset the body of this try block
+     * @param lc current lexical context
      * @param body new body
      * @return new TryNode or same if unchanged
      */
-    public TryNode setBody(final Block body) {
+    public TryNode setBody(final LexicalContext lc, final Block body) {
         if (this.body == body) {
             return this;
         }
-        return new TryNode(this,  body, catchBlocks, finallyBody, conversion);
+        return Node.replaceInLexicalContext(lc, this, new TryNode(this,  body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception));
     }
 
     /**
@@ -172,14 +190,15 @@ public final class TryNode extends Statement implements JoinPredecessor {
 
     /**
      * Set the catch blocks of this try
+     * @param lc current lexical context
      * @param catchBlocks list of catch blocks
      * @return new TryNode or same if unchanged
      */
-    public TryNode setCatchBlocks(final List<Block> catchBlocks) {
+    public TryNode setCatchBlocks(final LexicalContext lc, final List<Block> catchBlocks) {
         if (this.catchBlocks == catchBlocks) {
             return this;
         }
-        return new TryNode(this, body, catchBlocks, finallyBody, conversion);
+        return Node.replaceInLexicalContext(lc, this, new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception));
     }
 
     /**
@@ -191,33 +210,15 @@ public final class TryNode extends Statement implements JoinPredecessor {
     }
     /**
      * Set the exception symbol for this try block
+     * @param lc lexical context
      * @param exception a symbol for the compiler to store the exception in
      * @return new TryNode or same if unchanged
      */
-    public TryNode setException(final Symbol exception) {
-        this.exception = exception;
-        return this;
-    }
-
-    /**
-     * Get the catch all symbol for this try block
-     * @return catch all symbol
-     */
-    public Symbol getFinallyCatchAll() {
-        return this.finallyCatchAll;
-    }
-
-    /**
-     * If a finally block exists, the synthetic catchall needs another symbol to
-     * store its throwable
-     * @param finallyCatchAll a symbol for the finally catch all exception
-     * @return new TryNode or same if unchanged
-     *
-     * TODO can this still be stateful?
-     */
-    public TryNode setFinallyCatchAll(final Symbol finallyCatchAll) {
-        this.finallyCatchAll = finallyCatchAll;
-        return this;
+    public TryNode setException(final LexicalContext lc, final Symbol exception) {
+        if (this.exception == exception) {
+            return this;
+        }
+        return Node.replaceInLexicalContext(lc, this, new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception));
     }
 
     /**
@@ -229,15 +230,87 @@ public final class TryNode extends Statement implements JoinPredecessor {
     }
 
     /**
+     * Get the inlined finally block with the given label name. This returns the actual finally block in the
+     * {@link LabelNode}, not the outer wrapper block for the {@link LabelNode}.
+     * @param labelName the name of the inlined finally's label
+     * @return the requested finally block, or null if no finally block's label matches the name.
+     */
+    public Block getInlinedFinally(final String labelName) {
+        for(final Block inlinedFinally: inlinedFinallies) {
+            final LabelNode labelNode = getInlinedFinallyLabelNode(inlinedFinally);
+            if (labelNode.getLabelName().equals(labelName)) {
+                return labelNode.getBody();
+            }
+        }
+        return null;
+    }
+
+    private static LabelNode getInlinedFinallyLabelNode(final Block inlinedFinally) {
+        return (LabelNode)inlinedFinally.getStatements().get(0);
+    }
+
+    /**
+     * Given an outer wrapper block for the {@link LabelNode} as returned by {@link #getInlinedFinallies()},
+     * returns its actual inlined finally block.
+     * @param inlinedFinally the outer block for inlined finally, as returned as an element of
+     * {@link #getInlinedFinallies()}.
+     * @return the block contained in the {@link LabelNode} contained in the passed block.
+     */
+    public static Block getLabelledInlinedFinallyBlock(final Block inlinedFinally) {
+        return getInlinedFinallyLabelNode(inlinedFinally).getBody();
+    }
+
+    /**
+     * Returns a list of inlined finally blocks. Note that this returns a list of {@link Block}s such that each one of
+     * them has a single {@link LabelNode}, which in turn contains the label name for the finally block and the
+     * actual finally block. To safely extract the actual finally block, use
+     * {@link #getLabelledInlinedFinallyBlock(Block)}.
+     * @return a list of inlined finally blocks.
+     */
+    public List<Block> getInlinedFinallies() {
+        return Collections.unmodifiableList(inlinedFinallies);
+    }
+
+    /**
      * Set the finally body of this try
+     * @param lc current lexical context
      * @param finallyBody new finally body
      * @return new TryNode or same if unchanged
      */
-    public TryNode setFinallyBody(final Block finallyBody) {
+    public TryNode setFinallyBody(final LexicalContext lc, final Block finallyBody) {
         if (this.finallyBody == finallyBody) {
             return this;
         }
-        return new TryNode(this, body, catchBlocks, finallyBody, conversion);
+        return Node.replaceInLexicalContext(lc, this, new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception));
+    }
+
+    /**
+     * Set the inlined finally blocks of this try. Each element should be a block with a single statement that is a
+     * {@link LabelNode} with a unique label, and the block within the label node should contain the actual inlined
+     * finally block.
+     * @param lc current lexical context
+     * @param inlinedFinallies list of inlined finally blocks
+     * @return new TryNode or same if unchanged
+     */
+    public TryNode setInlinedFinallies(final LexicalContext lc, final List<Block> inlinedFinallies) {
+        if (this.inlinedFinallies == inlinedFinallies) {
+            return this;
+        }
+        assert checkInlinedFinallies(inlinedFinallies);
+        return Node.replaceInLexicalContext(lc, this, new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception));
+    }
+
+    private static boolean checkInlinedFinallies(final List<Block> inlinedFinallies) {
+        if (!inlinedFinallies.isEmpty()) {
+            final Set<String> labels = new HashSet<>();
+            for (final Block inlinedFinally : inlinedFinallies) {
+                final List<Statement> stmts = inlinedFinally.getStatements();
+                assert stmts.size() == 1;
+                final LabelNode ln = getInlinedFinallyLabelNode(inlinedFinally);
+                assert labels.add(ln.getLabelName()); // unique label
+            }
+        }
+        return true;
     }
 
     @Override
@@ -245,7 +318,7 @@ public final class TryNode extends Statement implements JoinPredecessor {
         if(this.conversion == conversion) {
             return this;
         }
-        return new TryNode(this, body, catchBlocks, finallyBody, conversion);
+        return new TryNode(this, body, catchBlocks, finallyBody, conversion, inlinedFinallies, exception);
     }
 
     @Override

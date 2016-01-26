@@ -108,7 +108,7 @@ public final class NativeFunction {
         throw new AssertionError("Should not reach here");
     }
 
-     /**
+    /**
      * Given an array-like object, converts it into a Java object array suitable for invocation of ScriptRuntime.apply
      * or for direct invocation of the applied function.
      * @param array the array-like object. Can be null in which case a zero-length array is created.
@@ -279,8 +279,8 @@ public final class NativeFunction {
         sb.append("})");
 
         final Global global = Global.instance();
-
-        return (ScriptFunction)Global.directEval(global, sb.toString(), global, "<function>", global.isStrictContext());
+        final Context context = global.getContext();
+        return (ScriptFunction)context.eval(global, sb.toString(), global, "<function>");
     }
 
     private static void checkFunctionParameters(final String params) {

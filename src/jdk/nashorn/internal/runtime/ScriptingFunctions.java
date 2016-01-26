@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package jdk.nashorn.internal.runtime;
 
 import static jdk.nashorn.internal.lookup.Lookup.MH;
+import static jdk.nashorn.internal.runtime.ECMAErrors.rangeError;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
 import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 
@@ -34,10 +35,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StreamTokenizer;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
+import jdk.nashorn.internal.objects.NativeArray;
 
 /**
  * Global functions supported only in scripting mode.
@@ -51,7 +57,7 @@ public final class ScriptingFunctions {
     public static final MethodHandle READFULLY = findOwnMH("readFully",     Object.class, Object.class, Object.class);
 
     /** Handle to implementation of {@link ScriptingFunctions#exec} - Nashorn extension */
-    public static final MethodHandle EXEC = findOwnMH("exec",     Object.class, Object.class, Object.class, Object.class);
+    public static final MethodHandle EXEC = findOwnMH("exec",     Object.class, Object.class, Object[].class);
 
     /** EXEC name - special property used by $EXEC API. */
     public static final String EXEC_NAME = "$EXEC";
@@ -65,10 +71,14 @@ public final class ScriptingFunctions {
     /** EXIT name - special property used by $EXEC API. */
     public static final String EXIT_NAME = "$EXIT";
 
+    /** THROW_ON_ERROR name - special property of the $EXEC function used by $EXEC API. */
+    public static final String THROW_ON_ERROR_NAME = "throwOnError";
+
     /** Names of special properties used by $ENV API. */
     public  static final String ENV_NAME  = "$ENV";
 
-    private static final String PWD_NAME  = "PWD";
+    /** Name of the environment variable for the current working directory. */
+    public static final String PWD_NAME  = "PWD";
 
     private ScriptingFunctions() {
     }
@@ -107,7 +117,7 @@ public final class ScriptingFunctions {
 
         if (file instanceof File) {
             f = (File)file;
-        } else if (file instanceof String || file instanceof ConsString) {
+        } else if (JSType.isString(file)) {
             f = new java.io.File(((CharSequence)file).toString());
         }
 
@@ -122,26 +132,32 @@ public final class ScriptingFunctions {
      * Nashorn extension: exec a string in a separate process.
      *
      * @param self   self reference
-     * @param string string to execute
-     * @param input  input
+     * @param args   string to execute, input and additional arguments, to be appended to {@code string}. Additional arguments can be passed as
+     *               either one JavaScript array, whose elements will be converted to strings; or as a sequence of
+     *               varargs, each of which will be converted to a string.
      *
      * @return output string from the request
+     *
      * @throws IOException           if any stream access fails
      * @throws InterruptedException  if execution is interrupted
      */
-    public static Object exec(final Object self, final Object string, final Object input) throws IOException, InterruptedException {
+    public static Object exec(final Object self, final Object... args) throws IOException, InterruptedException {
         // Current global is need to fetch additional inputs and for additional results.
         final ScriptObject global = Context.getGlobal();
-
-        // Break exec string into tokens.
-        final StringTokenizer tokenizer = new StringTokenizer(JSType.toString(string));
-        final String[] cmdArray = new String[tokenizer.countTokens()];
-        for (int i = 0; tokenizer.hasMoreTokens(); i++) {
-            cmdArray[i] = tokenizer.nextToken();
+        final Object string = args.length > 0? args[0] : UNDEFINED;
+        final Object input = args.length > 1? args[1] : UNDEFINED;
+        final Object[] argv = (args.length > 2)? Arrays.copyOfRange(args, 2, args.length) : ScriptRuntime.EMPTY_ARRAY;
+        // Assemble command line, process additional arguments.
+        final List<String> cmdLine = tokenizeString(JSType.toString(string));
+        final Object[] additionalArgs = argv.length == 1 && argv[0] instanceof NativeArray ?
+                ((NativeArray) argv[0]).asObjectArray() :
+                argv;
+        for (Object arg : additionalArgs) {
+            cmdLine.add(JSType.toString(arg));
         }
 
         // Set up initial process.
-        final ProcessBuilder processBuilder = new ProcessBuilder(cmdArray);
+        final ProcessBuilder processBuilder = new ProcessBuilder(cmdLine);
 
         // Current ENV property state.
         final Object env = global.get(ENV_NAME);
@@ -232,11 +248,62 @@ public final class ScriptingFunctions {
             }
         }
 
+        // if we got a non-zero exit code ("failure"), then we have to decide to throw error or not
+        if (exit != 0) {
+            // get the $EXEC function object from the global object
+            final Object exec = global.get(EXEC_NAME);
+            assert exec instanceof ScriptObject : EXEC_NAME + " is not a script object!";
+
+            // Check if the user has set $EXEC.throwOnError property to true. If so, throw RangeError
+            // If that property is not set or set to false, then silently proceed with the rest.
+            if (JSType.toBoolean(((ScriptObject)exec).get(THROW_ON_ERROR_NAME))) {
+                throw rangeError("exec.returned.non.zero", ScriptRuntime.safeToString(exit));
+            }
+        }
+
         // Return the result from stdout.
         return out;
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {
         return MH.findStatic(MethodHandles.lookup(), ScriptingFunctions.class, name, MH.type(rtype, types));
+    }
+
+    /**
+     * Break a string into tokens, honoring quoted arguments and escaped spaces.
+     *
+     * @param str a {@link String} to tokenize.
+     * @return a {@link List} of {@link String}s representing the tokens that
+     * constitute the string.
+     * @throws IOException in case {@link StreamTokenizer#nextToken()} raises it.
+     */
+    public static List<String> tokenizeString(final String str) throws IOException {
+        final StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(str));
+        tokenizer.resetSyntax();
+        tokenizer.wordChars(0, 255);
+        tokenizer.whitespaceChars(0, ' ');
+        tokenizer.commentChar('#');
+        tokenizer.quoteChar('"');
+        tokenizer.quoteChar('\'');
+        final List<String> tokenList = new ArrayList<>();
+        final StringBuilder toAppend = new StringBuilder();
+        while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+            final String s = tokenizer.sval;
+            // The tokenizer understands about honoring quoted strings and recognizes
+            // them as one token that possibly contains multiple space-separated words.
+            // It does not recognize quoted spaces, though, and will split after the
+            // escaping \ character. This is handled here.
+            if (s.endsWith("\\")) {
+                // omit trailing \, append space instead
+                toAppend.append(s.substring(0, s.length() - 1)).append(' ');
+            } else {
+                tokenList.add(toAppend.append(s).toString());
+                toAppend.setLength(0);
+            }
+        }
+        if (toAppend.length() != 0) {
+            tokenList.add(toAppend.toString());
+        }
+        return tokenList;
     }
 }
