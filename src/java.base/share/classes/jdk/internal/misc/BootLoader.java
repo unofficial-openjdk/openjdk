@@ -47,7 +47,7 @@ public class BootLoader {
     private static final Module UNNAMED_MODULE;
     static {
         UNNAMED_MODULE
-                = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
+            = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
         setBootLoaderUnnamedModule0(UNNAMED_MODULE);
     }
 
@@ -134,10 +134,9 @@ public class BootLoader {
         Package pkg = ClassLoaders.bootLoader().getDefinedPackage(pn);
         if (pkg == null) {
             String location = getSystemPackageLocation(pn.replace('.', '/'));
-            if (location == null) {
-                return null;
+            if (location != null) {
+                pkg = ClassLoaders.bootLoader().defineSystemPackage(pn, location);
             }
-            pkg = ClassLoaders.bootLoader().defineSystemPackage(pn, location);
         }
         return pkg;
     }

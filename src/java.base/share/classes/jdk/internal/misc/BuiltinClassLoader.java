@@ -26,7 +26,6 @@
 package jdk.internal.misc;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FilePermission;
 import java.io.IOError;
 import java.io.IOException;
@@ -62,7 +61,6 @@ import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
 import sun.misc.Resource;
-import sun.net.www.ParseUtil;
 
 
 /**
@@ -95,6 +93,7 @@ import sun.net.www.ParseUtil;
 public class BuiltinClassLoader
     extends SecureClassLoader
 {
+    private static final String JAVA_HOME = System.getProperty("java.home");
 
     static {
         if (!ClassLoader.registerAsParallelCapable())
@@ -605,10 +604,10 @@ public class BuiltinClassLoader
         }
     }
 
-    /*
-     * Define a system package of the given name.  The specified location is either
-     * the location of a named module (from jimage or exploded module) or
-     * legacy boot class paths set via Boot-Class-Path attribute for java agent
+    /**
+     * Define a system package of the given name. The specified location is
+     * either the location of a named module from the run-time image or from
+     * the legacy boot class path set via java agent Boot-Class-Path attribute
      * or -Xbootclasspath/a.
      *
      * If the given location is a JAR file containing a manifest,
@@ -616,20 +615,24 @@ public class BuiltinClassLoader
      * the manifest, if present.
      *
      * @param pn package name
-     * @param location location where the package is from
+     * @param location location where the package is (jrt URL or file path)
      */
     Package defineSystemPackage(String pn, String location) {
         String moduleName = null;
         if (location.startsWith("jrt:/")) {
-            // named module in runtime image
-            moduleName = location.substring(5, location.length()); // "jrt:/".length() == 5
+
+            // named module in runtime image ("jrt:/".length() == 5)
+            moduleName = location.substring(5, location.length());
+
         } else {
+
             // named module in exploded image
-            Path path = new File(location).toPath();
-            Path modulesDir = Paths.get(javaHome, "modules");
+            Path path = Paths.get(location);
+            Path modulesDir = Paths.get(JAVA_HOME, "modules");
             if (path.startsWith(modulesDir)) {
                 moduleName = path.getFileName().toString();
             }
+
         }
 
         if (moduleName != null) {
@@ -655,26 +658,26 @@ public class BuiltinClassLoader
             }
         }
 
-        // package in unnamed module (bootclasspath append)
+        // package in unnamed module (-Xbootclasspath/a)
         URL url = AccessController.doPrivileged(new PrivilegedAction<>() {
             public URL run() {
-                File file = new File(location);
-                if (file.isFile()) {
+                Path path = Paths.get(location);
+                if (Files.isRegularFile(path)) {
                     try {
-                        return ParseUtil.fileToEncodedURL(file);
-                    } catch (MalformedURLException e) {
-                    }
+                        return path.toUri().toURL();
+                    } catch (MalformedURLException e) { }
                 }
                 return null;
             }
         });
 
-        Manifest manifest = null;
+        Manifest man = null;
         if (url != null) {
-            manifest = AccessController.doPrivileged(new PrivilegedAction<>() {
+            man = AccessController.doPrivileged(new PrivilegedAction<>() {
                 public Manifest run() {
-                    try (FileInputStream fis = new FileInputStream(location);
-                         JarInputStream jis = new JarInputStream(fis, false)) {
+                    Path jar = Paths.get(location);
+                    try (InputStream in = Files.newInputStream(jar);
+                         JarInputStream jis = new JarInputStream(in, false)) {
                         return jis.getManifest();
                     } catch (IOException e) {
                         return null;
@@ -682,10 +685,9 @@ public class BuiltinClassLoader
                 }
             });
         }
-        return defineOrCheckPackage(pn, manifest, url);
+        return defineOrCheckPackage(pn, man, url);
     }
 
-    private static final String javaHome = System.getProperty("java.home");
 
     /**
      * Defines a package in this ClassLoader. If the package is already defined
