@@ -1351,6 +1351,65 @@ $(JDKNET_PACKAGES_FILE): $(call PackageDependencies,$(JDKNET_PKGS))
 	$(prep-target)
 	$(call PackageFilter,$(JDKNET_PKGS))
 
+#############################################################
+#
+# jlink plugin API docs
+#
+# TODO: Need to decide when the plugin API is ready to publish as experimental API.
+# This target is temporarily added for internal use for now.
+#        
+
+ALL_OTHER_TARGETS += jlinkdocs
+
+JLINK_PLUGIN_FIRST_COPYRIGHT_YEAR = 2015
+JLINK_PLUGIN_DOCDIR := $(JRE_API_DOCSDIR)/jlink
+JLINK_PLUGIN2COREAPI := ../$(JDKJRE2COREAPI)
+JLINK_PLUGIN_DOCTITLE := JLink Plugin API - EXPERIMENTAL
+JLINK_PLUGIN_WINDOWTITLE := JLink Plugin API - EXPERIMENTAL
+JLINK_PLUGIN_HEADER := <strong>JLink Plugin API - EXPERIMENTAL</strong>
+JLINK_PLUGIN_BOTTOM := $(call CommonBottom,$(JLINK_PLUGIN_FIRST_COPYRIGHT_YEAR))
+JLINK_PLUGIN_PKGS = jdk.tools.jlink \
+    jdk.tools.jlink.builder \
+    jdk.tools.jlink.plugin
+
+JLINK_PLUGIN_INDEX_HTML = $(JLINK_PLUGIN_DOCDIR)/index.html
+JLINK_PLUGIN_OPTIONS_FILE = $(DOCSTMPDIR)/jlinkplugins.options
+JLINK_PLUGIN_PACKAGES_FILE = $(DOCSTMPDIR)/jlinkplugins.packages
+
+jlinkdocs: $(JLINK_PLUGIN_INDEX_HTML)
+
+# Set relative location to core api document root
+$(JLINK_PLUGIN_INDEX_HTML): GET2DOCSDIR=$(JLINK_PLUGIN2COREAPI)/..
+
+# Run javadoc if the index file is out of date or missing
+$(JLINK_PLUGIN_INDEX_HTML): $(JLINK_PLUGIN_OPTIONS_FILE) $(JLINK_PLUGIN_PACKAGES_FILE) $(COREAPI_INDEX_FILE)
+	$(prep-javadoc)
+	$(call JavadocSummary,$(JLINK_PLUGIN_OPTIONS_FILE),$(JLINK_PLUGIN_PACKAGES_FILE))
+	$(JAVADOC_CMD_SMALL) -d $(@D) \
+	    @$(JLINK_PLUGIN_OPTIONS_FILE) @$(JLINK_PLUGIN_PACKAGES_FILE)
+
+# Create file with javadoc options in it
+$(JLINK_PLUGIN_OPTIONS_FILE):
+	$(prep-target)
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+	  $(call OptionOnly,-Xdoclint:none) ; \
+          $(call OptionPair,-system,none) ; \
+	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,-encoding,ascii) ; \
+	  $(call OptionOnly,-nodeprecatedlist) ; \
+	  $(call OptionPair,-doctitle,$(JLINK_PLUGIN_DOCTITLE)) ; \
+	  $(call OptionPair,-windowtitle,$(JLINK_PLUGIN_WINDOWTITLE) $(DRAFT_WINTITLE)); \
+	  $(call OptionPair,-header,$(JLINK_PLUGIN_HEADER)$(DRAFT_HEADER)); \
+	  $(call OptionPair,-bottom,$(JLINK_PLUGIN_BOTTOM)$(DRAFT_BOTTOM)); \
+	  $(call OptionTrip,-linkoffline,$(JLINK_PLUGIN2COREAPI),$(COREAPI_DOCSDIR)/); \
+	) >> $@
+
+# Create a file with the package names in it
+$(JLINK_PLUGIN_PACKAGES_FILE): $(call PackageDependencies,$(JLINK_PLUGIN_PKGS))
+	$(prep-target)
+	$(call PackageFilter,$(JLINK_PLUGIN_PKGS))
+
 
 otherdocs: $(ALL_OTHER_TARGETS)
 
