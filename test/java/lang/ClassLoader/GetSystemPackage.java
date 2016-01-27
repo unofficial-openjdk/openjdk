@@ -126,7 +126,8 @@ public class GetSystemPackage {
     }
 
     private static void verifyPackage(boolean hasManifest,
-            boolean isSystemPackage) throws Exception
+                                      boolean isSystemPackage)
+            throws Exception
     {
         Class<?> c = Class.forName("package2.Class2");
         Package pkg = c.getPackage();
@@ -142,15 +143,11 @@ public class GetSystemPackage {
 
         if (hasManifest && (specificationTitle == null
                 || !manifestTitle.equals(specificationTitle))) {
-            if (!isSystemPackage) {
-                fail("Invalid manifest for package " + pkg.getName());
-            }
+            fail("Invalid manifest for package " + pkg.getName());
         }
         if (!hasManifest && specificationTitle != null) {
-            if (!isSystemPackage) {
-                fail("Invalid manifest for package " + pkg.getName() + ": was " +
-                     specificationTitle + " expected: null");
-            }
+            fail("Invalid manifest for package " + pkg.getName() + ": was " +
+                    specificationTitle + " expected: null");
         }
 
         ClassLoader ld = c.getClassLoader();

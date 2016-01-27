@@ -47,7 +47,7 @@ public class BootLoader {
     private static final Module UNNAMED_MODULE;
     static {
         UNNAMED_MODULE
-            = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
+                = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
         setBootLoaderUnnamedModule0(UNNAMED_MODULE);
     }
 
@@ -123,7 +123,7 @@ public class BootLoader {
      * defined.
      */
     public static Package definePackage(Class<?> c) {
-        return ClassLoaders.bootLoader().definePackage(c);
+        return getDefinedPackage(c.getPackageName());
     }
 
     /**
@@ -131,11 +131,15 @@ public class BootLoader {
      * if the package has not been defined.
      */
     public static Package getDefinedPackage(String pn) {
-        String pkg = getSystemPackageLocation(pn.replace('.', '/'));
+        Package pkg = ClassLoaders.bootLoader().getDefinedPackage(pn);
         if (pkg == null) {
-            return null;
+            String location = getSystemPackageLocation(pn.replace('.', '/'));
+            if (location == null) {
+                return null;
+            }
+            pkg = ClassLoaders.bootLoader().defineSystemPackage(pn, location);
         }
-        return ClassLoaders.bootLoader().definePackage(pn);
+        return pkg;
     }
 
     /**
@@ -143,10 +147,7 @@ public class BootLoader {
      */
     public static Stream<Package> packages() {
         return Arrays.stream(getSystemPackageNames())
-            .map(name -> {
-                String pn = name.replace('/', '.');
-                return ClassLoaders.bootLoader().definePackage(pn);
-            });
+                     .map(name -> getDefinedPackage(name.replace('/', '.')));
     }
 
     private static native String getSystemPackageLocation(String name);
