@@ -124,6 +124,9 @@ public interface ReferenceType
      * Use {@link VirtualMachine#canGetModuleInfo()}
      * to determine if the operation is supported.
      *
+     * @implSpec
+     * The default implementation throws {@code UnsupportedOperationException}.
+     *
      * @return a {@link ModuleReference} which mirrors the module in the target VM.
      *
      * @throws java.lang.UnsupportedOperationException if

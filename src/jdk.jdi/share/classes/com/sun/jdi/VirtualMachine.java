@@ -82,6 +82,9 @@ public interface VirtualMachine extends Mirror {
      * Use {@link VirtualMachine#canGetModuleInfo()}
      * to determine if the operation is supported.
      *
+     * @implSpec
+     * The default implementation throws {@code UnsupportedOperationException}.
+     *
      * @return a list of {@link ModuleReference} objects, each mirroring
      * a module in the target VM.
      *
@@ -758,6 +761,8 @@ public interface VirtualMachine extends Mirror {
 
     /**
      * Determines if the target VM supports getting information about modules.
+     * @implSpec
+     * The default implementation throws {@code UnsupportedOperationException}.
      *
      * @return <code>true</code> if the feature is supported,
      * <code>false</code> otherwise.
