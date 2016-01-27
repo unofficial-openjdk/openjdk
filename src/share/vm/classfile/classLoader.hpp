@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,11 +217,13 @@ class ClassLoader: AllStatic {
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
   // If the package for the fully qualified class name is in the boot
-  // loader's package entry table then add_package() sets the has_loaded_class
-  // flag so that get_system_package() will know to return a non-null (but unread)
-  // value for the package's location.  And, so that the package will be added to
+  // loader's package entry table then add_package() sets the classpath_index
+  // field so that get_system_package() will know to return a non-null value
+  // for the package's location.  And, so that the package will be added to
   // the list of packages returned by get_system_packages().
-  static bool add_package(const char *fullq_class_name, TRAPS);
+  // For packages whose classes are loaded from the boot loader class path, the
+  // classpath_index indicates which entry on the boot loader class path.
+  static bool add_package(const char *fullq_class_name, s2 classpath_index, TRAPS);
 
   // Initialization
   static void setup_bootstrap_search_path();

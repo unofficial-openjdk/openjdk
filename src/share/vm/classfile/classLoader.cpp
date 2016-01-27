@@ -911,13 +911,14 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
 
 // Function add_package extracts the package from the fully qualified class name
 // and checks if the package is in the boot loader's package entry table.  If so,
-// then it sets the has_loaded_class flag in the package entry record.
+// then it sets the classpath_index in the package entry record.
 //
-// The has_loaded_class flag is used by get_system_package() to know whether or
-// not to return a non-null value for the package's location.
-// The has_loaded_class flag is used by get_system_packages() when compiling the
-// list of boot loader defined classes.
-bool ClassLoader::add_package(const char *fullq_class_name, TRAPS) {
+// The classpath_index field is used to find the entry on the boot loader class
+// path for packages with classes loaded by the boot loader from -Xbootclasspath/a
+// in an unnamed module.  It is also used to indicate (for all packages whose
+// classes are loaded by the boot loader) that at least one of the package's
+// classes has been loaded.
+bool ClassLoader::add_package(const char *fullq_class_name, s2 classpath_index, TRAPS) {
   assert(fullq_class_name != NULL, "just checking");
 
   // Get package name from fully qualified class name.
@@ -930,7 +931,8 @@ bool ClassLoader::add_package(const char *fullq_class_name, TRAPS) {
       SymbolTable::new_symbol(fullq_class_name, len, CHECK_false);
     PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
     if (pkg_entry != NULL) {
-      pkg_entry->set_has_loaded_class(true);
+      assert(classpath_index != -1, "Unexpected classpath_index");
+      pkg_entry->set_classpath_index(classpath_index);
     } else {
       return false;
     }
@@ -956,9 +958,10 @@ oop ClassLoader::get_system_package(const char* name, TRAPS) {
           module->location()->as_C_string(), THREAD);
         return ml();
       }
-      // Otherwise, use dummy non-null value for -Xbootclasspath/a packages.
-      Handle p = java_lang_String::create_from_str("Dummy", THREAD);
-      return p();
+      // Return entry on boot loader class path.
+      Handle cph = java_lang_String::create_from_str(
+        ClassLoader::classpath_entry(package->classpath_index())->name(), THREAD);
+      return cph();
     }
   }
   return NULL;
@@ -974,7 +977,7 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
     PackageEntryTable* pe_table =
       ClassLoaderData::the_null_class_loader_data()->packages();
 
-    // Collect the packages that have has_loaded_class set.
+    // Collect the packages that have at least one loaded class.
     for (int x = 0; x < pe_table->table_size(); x++) {
       for (PackageEntry* package_entry = pe_table->bucket(x);
            package_entry != NULL;
@@ -1095,7 +1098,7 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
 
   // Lookup stream for parsing .class file
   ClassFileStream* stream = NULL;
-  int classpath_index = 0;
+  s2 classpath_index = 0;
 
   // If DumpSharedSpaces is true, boot loader visibility boundaries are set
   // to be _first_entry to the end (all path entries).

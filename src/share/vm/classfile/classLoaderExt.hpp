@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,11 +49,11 @@ public:
       return false;
     }
 
-    instanceKlassHandle record_result(const int classpath_index,
+    instanceKlassHandle record_result(const s2 classpath_index,
                                       const jshort classloader_type,
                                       const ClassPathEntry* e,
                                       instanceKlassHandle result, TRAPS) {
-      if (ClassLoader::add_package(_file_name, THREAD)) {
+      if (ClassLoader::add_package(_file_name, classpath_index, THREAD)) {
         if (DumpSharedSpaces) {
           result->set_shared_classpath_index(classpath_index);
           result->set_class_loader_type(classloader_type);
