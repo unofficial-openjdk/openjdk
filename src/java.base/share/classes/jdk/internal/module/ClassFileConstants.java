@@ -34,6 +34,7 @@ public class ClassFileConstants {
 
     // Attribute names
     public static final String MODULE             = "Module";
+    public static final String SOURCE_FILE        = "SourceFile";
     public static final String SYNTHETIC          = "Synthetic";
     public static final String CONCEALED_PACKAGES = "ConcealedPackages";
     public static final String MAIN_CLASS         = "MainClass";

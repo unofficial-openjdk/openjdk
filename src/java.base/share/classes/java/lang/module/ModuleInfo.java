@@ -40,6 +40,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.internal.module.Hasher.DependencyHashes;
 
@@ -144,10 +146,8 @@ final class ModuleInfo {
      *         because an identifier is not a legal Java identifier, duplicate
      *         exports, and many other reasons
      */
-    @SuppressWarnings("fallthrough")
-    private ModuleDescriptor doRead(DataInput in)
-        throws IOException
-    {
+    private ModuleDescriptor doRead(DataInput in) throws IOException {
+
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
             throw invalidModuleDescriptor("Bad magic number");
@@ -190,7 +190,6 @@ final class ModuleInfo {
 
         int attributes_count = in.readUnsignedShort();
 
-
         // the names of the attributes found in the class file
         Set<String> attributes = new HashSet<>();
 
@@ -200,7 +199,7 @@ final class ModuleInfo {
             int length = in.readInt();
 
             boolean added = attributes.add(attribute_name);
-            if (!added) {
+            if (!added && isAttributeAtMostOnce(attribute_name)) {
                 throw invalidModuleDescriptor("More than one "
                                               + attribute_name + " attribute");
             }
@@ -223,22 +222,21 @@ final class ModuleInfo {
                     readMainClassAttribute(in, cpool);
                     break;
 
-                case SYNTHETIC :
-                    if (length != 0) {
-                        throw invalidModuleDescriptor(SYNTHETIC + " attribute"
-                                                      + " length should be zero");
-                    }
-                    break;
-
                 case HASHES :
                     if (parseHashes) {
                         readHashesAttribute(in, cpool);
-                        break;
+                    } else {
+                        in.skipBytes(length);
                     }
-                    // fallthrough to skip
+                    break;
 
                 default:
-                    in.skipBytes(length);
+                    if (isAttributeDisallowed(attribute_name)) {
+                        throw invalidModuleDescriptor(attribute_name
+                                                      + " attribute not allowed");
+                    } else {
+                        in.skipBytes(length);
+                    }
 
             }
         }
@@ -403,6 +401,70 @@ final class ModuleInfo {
 
         builder.hashes(new DependencyHashes(algorithm, map));
     }
+
+
+    /**
+     * Returns true if the given attribute can be present at most once
+     * in the class file. Returns false otherwise.
+     */
+    private static boolean isAttributeAtMostOnce(String name) {
+
+        if (name.equals(MODULE) ||
+                name.equals(SOURCE_FILE) ||
+                name.equals("SourceDebugExtension") ||
+                name.equals(CONCEALED_PACKAGES) ||
+                name.equals(MAIN_CLASS) ||
+                name.equals(VERSION) ||
+                name.equals(HASHES))
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Return true if the given attribute name is the name of a pre-defined
+     * attribute that is not allowed in the class file.
+     *
+     * Except for Module, InnerClasses, Synthetic, SourceFile, SourceDebugExtension,
+     * and Deprecated, none of the pre-defined attributes in JVMS 4.7 may appear.
+     */
+    private static boolean isAttributeDisallowed(String name) {
+        Set<String> notAllowed = predefinedNotAllowed;
+        if (notAllowed == null) {
+            notAllowed = Stream.of(
+                    "ConstantValue",
+                    "Code",
+                    "StackMapTable",
+                    "Exceptions",
+                    "EnclosingMethod",
+                    "Signature",
+                    "LineNumberTable",
+                    "LocalVariableTable",
+                    "LocalVariableTypeTable",
+                    "RuntimeVisibleAnnotations",
+                    "RuntimeInvisibleAnnotations",
+                    "RuntimeVisibleParameterAnnotations",
+                    "RuntimeInvisibleParameterAnnotations",
+                    "RuntimeVisibleTypeAnnotations",
+                    "RuntimeInvisibleTypeAnnotations",
+                    "AnnotationDefault",
+                    "BootstrapMethods",
+                    "MethodParameters")
+                    .collect(Collectors.toSet());
+            predefinedNotAllowed = notAllowed;
+        }
+
+        if (notAllowed.contains(name)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // lazily created set the pre-defined attributes that are not allowed
+    private static volatile Set<String> predefinedNotAllowed;
+
+
 
     /**
      * The constant pool in a class file.
