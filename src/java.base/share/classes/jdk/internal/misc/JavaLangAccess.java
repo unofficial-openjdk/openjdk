@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Map;
@@ -159,6 +160,11 @@ public interface JavaLangAccess {
      * Returns the Packages for the given class loader.
      */
     Stream<Package> packages(ClassLoader cl);
+
+    /**
+     * Define a Package of the given name and module by the given class loader.
+     */
+    Package definePackage(ClassLoader cl, String name, Module module);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

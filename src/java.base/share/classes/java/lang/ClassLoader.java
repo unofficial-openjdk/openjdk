@@ -790,44 +790,6 @@ public abstract class ClassLoader {
         return pd;
     }
 
-    /**
-     * Define a Package of the given name if not present.
-     *
-     * If the given class represents an array type, a primitive type or void,
-     * this method returns {@code null}.
-     */
-    Package definePackage(Class<?> c) {
-        if (c.isPrimitive() || c.isArray()) {
-            return null;
-        }
-
-        String pn = c.getPackageName();
-        Module m = c.getModule();
-        if (pn.isEmpty() && m.isNamed()) {
-            throw new InternalError("unnamed package in  " + m);
-        }
-        Package p = getDefinedPackage(pn);
-        if (p == null) {
-            URL url = null;
-            if (m.isNamed() && m.getLayer() != null) {
-                Configuration cf = m.getLayer().configuration();
-                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
-                URI uri = mref != null ? mref.location().orElse(null) : null;
-                try {
-                    url = uri != null ? uri.toURL() : null;
-                } catch (MalformedURLException e) {
-                }
-            }
-            try {
-                p = definePackage(pn, null, null, null, null, null, null, url);
-            } catch (IllegalArgumentException e) {
-                // this class loader already defines a package
-                p = getDefinedPackage(pn);
-            }
-        }
-        return p;
-    }
-
     private String defineClassSourceLocation(ProtectionDomain pd) {
         CodeSource cs = pd.getCodeSource();
         String source = null;
@@ -1758,6 +1720,56 @@ public abstract class ClassLoader {
     private static volatile ClassLoader scl;
 
     // -- Package --
+
+    /**
+     * Defines the package by name for the given module
+     *
+     * This method does not throw IllegalArgumentException.
+     *
+     * @param name package nmae
+     * @param m    module
+     */
+    Package definePackage(String name, Module m) {
+        if (name.isEmpty() && m.isNamed()) {
+            throw new InternalError("unnamed package in  " + m);
+        }
+        Package p = getDefinedPackage(name);
+        if (p == null) {
+            URL url = null;
+            if (m.isNamed() && m.getLayer() != null) {
+                Configuration cf = m.getLayer().configuration();
+                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
+                URI uri = mref != null ? mref.location().orElse(null) : null;
+                try {
+                    url = uri != null ? uri.toURL() : null;
+                } catch (MalformedURLException e) {
+                }
+            }
+            try {
+                p = definePackage(name, null, null, null, null, null, null, url);
+            } catch (IllegalArgumentException e) {
+                // this class loader already defines a package
+                p = getDefinedPackage(name);
+            }
+        }
+        return p;
+    }
+
+    /**
+     * Define a Package of the given Class object.
+     *
+     * If the given class represents an array type, a primitive type or void,
+     * this method returns {@code null}.
+     *
+     * This method does not throw IllegalArgumentException.
+     */
+    Package definePackage(Class<?> c) {
+        if (c.isPrimitive() || c.isArray()) {
+            return null;
+        }
+
+        return definePackage(c.getPackageName(), c.getModule());
+    }
 
     /**
      * Defines a package by <a href="#name">name</a> in this {@code ClassLoader}.

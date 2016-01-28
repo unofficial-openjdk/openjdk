@@ -2038,6 +2038,9 @@ public final class System {
             public Stream<Package> packages(ClassLoader cl) {
                 return cl.packages();
             }
+            public Package definePackage(ClassLoader cl, String name, Module module) {
+                return cl.definePackage(name, module);
+            }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);
             }

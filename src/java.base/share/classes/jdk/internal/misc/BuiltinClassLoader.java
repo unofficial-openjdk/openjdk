@@ -56,7 +56,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
-import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
@@ -93,8 +92,6 @@ import sun.misc.Resource;
 public class BuiltinClassLoader
     extends SecureClassLoader
 {
-    private static final String JAVA_HOME = System.getProperty("java.home");
-
     static {
         if (!ClassLoader.registerAsParallelCapable())
             throw new InternalError();
@@ -603,91 +600,6 @@ public class BuiltinClassLoader
             throw new InternalError(e);
         }
     }
-
-    /**
-     * Define a system package of the given name. The specified location is
-     * either the location of a named module from the run-time image or from
-     * the legacy boot class path set via java agent Boot-Class-Path attribute
-     * or -Xbootclasspath/a.
-     *
-     * If the given location is a JAR file containing a manifest,
-     * the defined Package contains the versioning information from
-     * the manifest, if present.
-     *
-     * @param pn package name
-     * @param location location where the package is (jrt URL or file path)
-     */
-    Package defineSystemPackage(String pn, String location) {
-        String moduleName = null;
-        if (location.startsWith("jrt:/")) {
-
-            // named module in runtime image ("jrt:/".length() == 5)
-            moduleName = location.substring(5, location.length());
-
-        } else {
-
-            // named module in exploded image
-            Path path = Paths.get(location);
-            Path modulesDir = Paths.get(JAVA_HOME, "modules");
-            if (path.startsWith(modulesDir)) {
-                moduleName = path.getFileName().toString();
-            }
-
-        }
-
-        if (moduleName != null) {
-            // named module from runtime image or exploded module
-            if (pn.isEmpty())
-                throw new InternalError("empty package in " + location);
-
-            // The given class may be dynamically generated and
-            // its package is not in packageToModule map.
-            ModuleReference mref = nameToModule.get(moduleName);
-            URL url = null;
-            if (mref.location().isPresent()) {
-                try {
-                    url = mref.location().get().toURL();
-                } catch (MalformedURLException e) {}
-            }
-            try {
-                return definePackage(pn, null, null, null, null, null, null, url);
-            } catch (IllegalArgumentException e) {
-                // Package being defined should always have the same location
-                // either location of a named module or null.
-                throw new InternalError(e);
-            }
-        }
-
-        // package in unnamed module (-Xbootclasspath/a)
-        URL url = AccessController.doPrivileged(new PrivilegedAction<>() {
-            public URL run() {
-                Path path = Paths.get(location);
-                if (Files.isRegularFile(path)) {
-                    try {
-                        return path.toUri().toURL();
-                    } catch (MalformedURLException e) { }
-                }
-                return null;
-            }
-        });
-
-        Manifest man = null;
-        if (url != null) {
-            man = AccessController.doPrivileged(new PrivilegedAction<>() {
-                public Manifest run() {
-                    Path jar = Paths.get(location);
-                    try (InputStream in = Files.newInputStream(jar);
-                         JarInputStream jis = new JarInputStream(in, false)) {
-                        return jis.getManifest();
-                    } catch (IOException e) {
-                        return null;
-                    }
-                }
-            });
-        }
-        return defineOrCheckPackage(pn, man, url);
-    }
-
 
     /**
      * Defines a package in this ClassLoader. If the package is already defined
