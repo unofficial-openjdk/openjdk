@@ -290,7 +290,7 @@ public class CheckResourceKeys {
             "ct.sym",
             "rt.jar",
             "jfxrt.jar",
-            "bootmodules.jimage",
+            "modules",
             "module-info.class",
             "jrt-fs.jar",
             // -XD option names

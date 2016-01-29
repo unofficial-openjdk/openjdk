@@ -303,7 +303,7 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file) && !file.getFileName().toString().endsWith(".jimage")) {
+                if (!isArchive(file) && !file.endsWith("modules")) {
                     /* Not a recognized extension; open it to see if
                      it looks like a valid zip file. */
                     try {
@@ -329,7 +329,7 @@ public class Locations {
             super.add(file);
             canonicalValues.add(canonFile);
 
-            if (expandJarClassPaths && fsInfo.isFile(file) && !file.getFileName().toString().endsWith(".jimage")) {
+            if (expandJarClassPaths && fsInfo.isFile(file) && !file.endsWith("modules")) {
                 addJarClassPath(file, warn);
             }
         }
@@ -758,16 +758,10 @@ public class Locations {
          * @throws UncheckedIOException if an I/O errors occurs
          */
         private Collection<Path> systemClasses(String java_home) throws IOException {
-            // Return .jimage files if available
+            // Return "modules" jimage file if available
             Path libModules = Paths.get(java_home, "lib", "modules");
-            if (Files.exists(libModules)) {
-                try (Stream<Path> files = Files.list(libModules)) {
-                    boolean haveJImageFiles =
-                            files.anyMatch(f -> f.getFileName().toString().endsWith(".jimage"));
-                    if (haveJImageFiles) {
-                        return addAdditionalBootEntries(Collections.singleton(JRT_MARKER_FILE));
-                    }
-                }
+            if (Files.isRegularFile(libModules)) {
+                return addAdditionalBootEntries(Collections.singleton(JRT_MARKER_FILE));
             }
 
             // Exploded module image
@@ -796,9 +790,7 @@ public class Locations {
             paths.addAll(modules);
 
             for (String s : files.split(Pattern.quote(File.pathSeparator))) {
-                if (!s.isEmpty() && !s.endsWith(".jimage")) {
-                    paths.add(Paths.get(s));
-                }
+                paths.add(Paths.get(s));
             }
 
             return paths;

@@ -427,12 +427,9 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                                ListBuffer<JavaFileObject> resultList)
             throws IOException {
         // Very temporary and obnoxious interim hack
-        if (container.endsWith("bootmodules.jimage")) {
-            System.err.println("Warning: reference to bootmodules.jimage replaced by jrt:");
+        if (container.endsWith("modules")) {
+            System.err.println("Warning: reference to modules jimage replaced by jrt:");
             container = Locations.JRT_MARKER_FILE;
-        } else if (container.getFileName().toString().endsWith(".jimage")) {
-            System.err.println("Warning: reference to " + container + " ignored");
-            return;
         }
 
         if (container == Locations.JRT_MARKER_FILE) {
