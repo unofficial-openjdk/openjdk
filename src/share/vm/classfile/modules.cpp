@@ -173,10 +173,10 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     }
   }
 
-  // If bootmodules.jimage does not exist then assume exploded form
+  // If "modules" jimage does not exist then assume exploded form
   // ${java.home}/modules/<module-name>
   char* path = NULL;
-  if (!ClassLoader::has_bootmodules_jimage()) {
+  if (!ClassLoader::has_jimage()) {
     const char* home = Arguments::get_java_home();
     size_t len = strlen(home) + module_len + 32;
     path = NEW_C_HEAP_ARRAY(char, len, mtInternal);

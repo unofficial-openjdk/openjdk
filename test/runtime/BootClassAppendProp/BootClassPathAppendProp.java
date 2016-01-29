@@ -32,7 +32,7 @@ import java.io.File;
  */
 
 // Test that property jdk.boot.class.path.append contains only the bootclasspath
-// info following the .jimage file.
+// info following the "modules" jimage file.
 public class BootClassPathAppendProp {
 
     public static void test_prop(String expected_val) {

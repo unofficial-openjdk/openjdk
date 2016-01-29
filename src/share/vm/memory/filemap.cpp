@@ -230,7 +230,7 @@ void FileMapInfo::allocate_classpath_entry_table() {
           struct stat st;
           if (os::stat(name, &st) == 0) {
             if (cpe->is_jrt()) {
-              // it's the bootmodules.jimage
+              // it's the "modules" jimage
               ent->_timestamp = st.st_mtime;
               ent->_filesize = st.st_size;
             } else if ((st.st_mode & S_IFDIR) == S_IFDIR) {
