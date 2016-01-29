@@ -561,8 +561,7 @@ class Utils {
 
     static File createRtJar() throws IOException {
         File LibDir = new File(JavaHome, "lib");
-        File ModuleDir = new File(LibDir, "modules");
-        File BootModules = new File(ModuleDir, "bootmodules.jimage");
+        File BootModules = new File(LibDir, "modules");
         List<String> cmdList = new ArrayList<>();
         cmdList.add(getJimageCmd());
         cmdList.add("extract");

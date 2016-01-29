@@ -102,7 +102,7 @@ public class JImageValidator {
         List<String> seenImages = new ArrayList<>();
         seenImages.addAll(EXPECTED_JIMAGES);
         for (File f : modules.listFiles()) {
-            if (f.getName().endsWith(".jimage")) {
+            if (f.getName().endsWith("modules")) {
                 if (!EXPECTED_JIMAGES.contains(f.getName())) {
                     throw new IOException("Unexpected image " + f.getName());
                 }

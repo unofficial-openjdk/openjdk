@@ -106,10 +106,9 @@ public class JImageTest {
         helper.generateDefaultJModule(module, Arrays.asList(classes), "java.management");
 
         Path image = helper.generateDefaultImage(module).assertSuccess();
-        String imgName = "bootmodules.jimage";
         Path extractedDir = JImageGenerator.getJImageTask()
-                .dir(helper.createNewExtractedDir(imgName))
-                .image(image.resolve("lib").resolve("modules").resolve(imgName))
+                .dir(helper.createNewExtractedDir("modules"))
+                .image(image.resolve("lib").resolve("modules"))
                 .extract().assertSuccess();
 
         Path recreatedImage = JImageGenerator.getJImageTask()
@@ -119,7 +118,7 @@ public class JImageTest {
         JImageValidator.validate(recreatedImage.toFile(), bootClasses, Collections.emptyList());
 
         // Check replacing the boot image by recreated one
-        Path destFile = image.resolve("lib").resolve("modules").resolve(imgName);
+        Path destFile = image.resolve("lib").resolve("modules");
         Files.copy(recreatedImage, destFile, REPLACE_EXISTING);
         JImageValidator validator = new JImageValidator(module, Collections.emptyList(),
                 image.toFile(), Collections.emptyList(), Collections.emptyList());

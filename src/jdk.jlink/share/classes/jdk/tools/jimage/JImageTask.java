@@ -352,8 +352,7 @@ class JImageTask {
                 throw taskHelper.newBadArgs("err.not.a.jimage", file.getName());
             }
 
-            String path = file.getCanonicalPath();
-            BasicImageReader reader = BasicImageReader.open(path);
+            BasicImageReader reader = BasicImageReader.open(file.toPath());
 
             if (jimageAction != null) {
                 jimageAction.apply(file, reader);

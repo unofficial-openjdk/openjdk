@@ -48,8 +48,7 @@ public class ModuleAttributes {
 
     File createModuleJar() throws IOException {
         File LibDir = new File(Utils.JavaHome, "lib");
-        File ModuleDir = new File(LibDir, "modules");
-        File BootModules = new File(ModuleDir, "bootmodules.jimage");
+        File BootModules = new File(LibDir, "modules");
         File outDir = new File("out");
 
         List<String> cmdList = new ArrayList<>();

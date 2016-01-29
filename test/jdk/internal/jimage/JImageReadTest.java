@@ -32,6 +32,9 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import jdk.internal.jimage.BasicImageReader;
@@ -48,9 +51,7 @@ import org.testng.TestNG;
 public class JImageReadTest {
 
     static String javaHome = System.getProperty("java.home");
-    static String imageFile = javaHome + File.separator + "lib"
-            + File.separator + "modules" + File.separator
-            + "bootmodules.jimage";
+    static Path imageFile = Paths.get(javaHome, "lib", "modules");
 
     @DataProvider(name="classes")
     static Object[][] loadClasses() {
@@ -77,7 +78,7 @@ public class JImageReadTest {
         final int classMagic = 0xCAFEBABE;
         final long NOT_FOUND = 0L;
 
-        if (!(new File(imageFile)).exists()) {
+        if (!Files.exists(imageFile)) {
             System.out.printf("Test skipped; no jimage file");
             return;
         }
@@ -125,7 +126,7 @@ public class JImageReadTest {
      */
     @Test
     static void test2_ImageResources() throws IOException {
-        if (!(new File(imageFile)).exists()) {
+        if (!Files.exists(imageFile)) {
             System.out.printf("Test skipped; no jimage file");
             return;
         }
@@ -192,7 +193,7 @@ public class JImageReadTest {
      */
     @Test
     static void test3_verifyNames() {
-        if (!(new File(imageFile)).exists()) {
+        if (!Files.exists(imageFile)) {
             System.out.printf("Test skipped; no jimage file");
             return;
         }

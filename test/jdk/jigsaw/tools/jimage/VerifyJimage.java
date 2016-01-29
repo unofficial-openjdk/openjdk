@@ -67,7 +67,7 @@ public class VerifyJimage {
     public static void main(String... args) throws Exception {
 
         String home = System.getProperty("java.home");
-        Path bootimagePath = Paths.get(home, "lib", "modules", "bootmodules.jimage");
+        Path bootimagePath = Paths.get(home, "lib", "modules");
         if (Files.notExists(bootimagePath)) {
              System.out.println("Test skipped, not an images build");
              return;
@@ -166,14 +166,7 @@ public class VerifyJimage {
             return;
         }
 
-        String jimage;
-        if (BOOT_RESOURCES.contains(file)) {
-            jimage = "bootmodules.jimage";
-        } else if (EXT_RESOURCES.contains(file)) {
-            jimage = "extmodules.jimage";
-        } else {
-            jimage = "";
-        }
+        String jimage = "modules";
         JImageReader reader = readers.stream()
                 .filter(r -> r.findLocation(entry) != null)
                 .filter(r -> jimage.isEmpty() || r.imageName().equals(jimage))
@@ -209,17 +202,12 @@ public class VerifyJimage {
 
     private static List<JImageReader> newJImageReaders() throws IOException {
         String home = System.getProperty("java.home");
-        Path mlib = Paths.get(home, "lib", "modules");
-        try (Stream<Path> paths = Files.list(mlib)) {
-            Set<Path> jimages = paths.filter(p -> p.toString().endsWith(".jimage"))
-                                     .collect(Collectors.toSet());
-            List<JImageReader> result = new ArrayList<>();
-            for (Path jimage: jimages) {
-                result.add(new JImageReader(jimage));
-                System.out.println("opened " + jimage);
-            }
-            return result;
-        }
+        Path jimage = Paths.get(home, "lib", "modules");
+        JImageReader reader = new JImageReader(jimage);
+        List<JImageReader> result = new ArrayList<>();
+        System.out.println("opened " + jimage);
+        result.add(reader);
+        return result;
     }
 
     static class JImageReader extends BasicImageReader {

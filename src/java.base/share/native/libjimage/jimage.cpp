@@ -42,7 +42,7 @@
  *
  *  Ex.
  *   jint error;
- *   JImageFile* jimage = (*JImageOpen)(JAVA_HOME "lib/modules/bootmodules.jimage", &error);
+ *   JImageFile* jimage = (*JImageOpen)(JAVA_HOME "lib/modules", &error);
  *   if (image == NULL) {
  *     tty->print_cr("JImage failed to open: %d", error);
  *     ...
