@@ -117,11 +117,8 @@ public class Locations {
 
     private ModuleNameReader moduleNameReader;
 
-    // Used by Locations(for now) to indicate that the PLATFORM_CLASS_PATH
-    // should use the jrt: file system.
-    // When Locations has been converted to use java.nio.file.Path,
-    // Locations can use Paths.get(URI.create("jrt:"))
-    static final Path JRT_MARKER_FILE = Paths.get("JRT_MARKER_FILE");
+    static final Path javaHome = Paths.get(System.getProperty("java.home"));
+    static final Path thisSystemModules = javaHome.resolve("lib/modules");
 
     Map<Path, FileSystem> fileSystems = new LinkedHashMap<>();
     List<Closeable> closeables = new ArrayList<>();
@@ -696,8 +693,6 @@ public class Locations {
         }
 
         SearchPath computePath() throws IOException {
-            String java_home = System.getProperty("java.home");
-
             SearchPath path = new SearchPath();
 
             String bootclasspathOpt = optionValues.get(BOOTCLASSPATH);
@@ -717,7 +712,7 @@ public class Locations {
                 path.addFiles(bootclasspathOpt);
             } else {
                 // Standard system classes for this compiler's release.
-                Collection<Path> systemClasses = systemClasses(java_home);
+                Collection<Path> systemClasses = systemClasses();
                 if (systemClasses != null) {
                     path.addFiles(systemClasses, false);
                 } else {
@@ -736,7 +731,7 @@ public class Locations {
                 path.addDirectories(extdirsOpt);
             } else {
                 // Add lib/jfxrt.jar to the search path
-               Path jfxrt = Paths.get(java_home, "lib", "jfxrt.jar");
+               Path jfxrt = javaHome.resolve("lib/jfxrt.jar");
                 if (Files.exists(jfxrt)) {
                     path.addFile(jfxrt, false);
                 }
@@ -757,15 +752,14 @@ public class Locations {
          *
          * @throws UncheckedIOException if an I/O errors occurs
          */
-        private Collection<Path> systemClasses(String java_home) throws IOException {
+        private Collection<Path> systemClasses() throws IOException {
             // Return "modules" jimage file if available
-            Path libModules = Paths.get(java_home, "lib", "modules");
-            if (Files.isRegularFile(libModules)) {
-                return addAdditionalBootEntries(Collections.singleton(JRT_MARKER_FILE));
+            if (Files.isRegularFile(thisSystemModules)) {
+                return addAdditionalBootEntries(Collections.singleton(thisSystemModules));
             }
 
             // Exploded module image
-            Path modules = Paths.get(java_home, "modules");
+            Path modules = javaHome.resolve("modules");
             if (Files.isDirectory(modules.resolve("java.base"))) {
                 try (Stream<Path> listedModules = Files.list(modules)) {
                     return addAdditionalBootEntries(listedModules.collect(Collectors.toList()));

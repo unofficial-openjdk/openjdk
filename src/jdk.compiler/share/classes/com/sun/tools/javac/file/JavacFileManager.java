@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -426,13 +426,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                                boolean recurse,
                                ListBuffer<JavaFileObject> resultList)
             throws IOException {
-        // Very temporary and obnoxious interim hack
-        if (container.endsWith("modules")) {
-            System.err.println("Warning: reference to modules jimage replaced by jrt:");
-            container = Locations.JRT_MARKER_FILE;
-        }
-
-        if (container == Locations.JRT_MARKER_FILE) {
+        if (Files.isRegularFile(container) && container.equals(Locations.thisSystemModules)) {
             try {
                 listJRTImage(subdirectory,
                         fileKinds,
@@ -641,7 +635,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             return null;
 
         for (Path file: path) {
-            if (file == Locations.JRT_MARKER_FILE) {
+            if (file.equals(Locations.thisSystemModules)) {
                 JRTIndex.Entry e = getJRTIndex().getEntry(name.dirname());
                 if (symbolFileEnabled && e.ctSym.hidden)
                     continue;
