@@ -4,6 +4,8 @@
 #
 ############################################################################
 
+# jdk_lang
+
 # 8134485
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
@@ -35,6 +37,8 @@ sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 
 java/security/Policy/SignedJar/SignedJarTest.java		solaris-all
 
 ############################################################################
+
+# jdk_text
 
 # 8134916
 sun/text/resources/LocaleDataTest.java                          generic-all
@@ -68,7 +72,6 @@ sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
 # 8059035
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 
-
 ############################################################################
 
 # jdk_rmi
@@ -78,16 +81,9 @@ sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 
 ############################################################################
 
-# jdk_other
-
-# 8130054, needs to be changed to headless
-javax/naming/module/basic.sh					generic-all
-
-############################################################################
-
 # jdk_jmx
 
-#8147610
+# 8147610
 javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
 
 ############################################################################

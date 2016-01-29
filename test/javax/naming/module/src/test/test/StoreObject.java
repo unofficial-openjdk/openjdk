@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,13 @@
 
 /**
  * Demonstrate Java object storage and retrieval using an LDAP directory.
- * The AWT object is serializable and is supplied by the java.desktop module.
+ * The ActionEvent object is serializable and is supplied by the java.desktop
+ * module.
  */
 
 package test;
 
-import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.net.*;
 import java.util.*;
 import javax.naming.*;
@@ -77,7 +78,7 @@ public class StoreObject {
         }).start();
 
         /*
-         * Store AWT objects in the LDAP directory
+         * Store objects in the LDAP directory
          */
 
         Hashtable<String,Object> env = new Hashtable<>();
@@ -95,11 +96,11 @@ public class StoreObject {
 
         System.out.println("StoreObject: connecting to " + ldapUri);
         DirContext ctx = new InitialDirContext(env);
-        String dn = "cn=mybutton";
-        String dn2 = "cn=mybutton2";
+        String dn = "cn=myevent";
+        String dn2 = "cn=myevent2";
 
         try {
-            ctx.bind(dn, new Button("Hello") );
+            ctx.bind(dn, new ActionEvent("", 1, "Hello1"));
             System.out.println("StoreObject: created entry '" + dn + "'");
         } catch (NameAlreadyBoundException e) {
             System.err.println("StoreObject: entry '" + dn +
@@ -109,7 +110,7 @@ public class StoreObject {
         }
 
         try {
-            ctx.bind(dn2, new Button("Hello2"));
+            ctx.bind(dn2, new ActionEvent("", 2, "Hello2"));
             System.out.println("StoreObject: created entry '" + dn2 + "'");
         } catch (NameAlreadyBoundException e) {
             System.err.println("StoreObject: entry '" + dn2 +
@@ -119,11 +120,11 @@ public class StoreObject {
         }
 
         /*
-         * Retrieve AWT objects from the LDAP directory
+         * Retrieve objects from the LDAP directory
          */
 
         try {
-            Button b = (Button) ctx.lookup(dn);
+            ActionEvent b = (ActionEvent) ctx.lookup(dn);
             System.out.println("StoreObject: retrieved object: " + b);
         } catch (NamingException e) {
             System.err.println("StoreObject: error retrieving entry '" +
@@ -134,7 +135,7 @@ public class StoreObject {
         }
 
         try {
-            Button t = (Button) ctx.lookup(dn2);
+            ActionEvent t = (ActionEvent) ctx.lookup(dn2);
             System.out.println("StoreObject: retrieved object: " + t);
         } catch (NamingException e) {
             System.err.println("StoreObject: error retrieving entry '" +
