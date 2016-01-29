@@ -560,12 +560,12 @@ class Utils {
     }
 
     static File createRtJar() throws IOException {
-        File LibDir = new File(JavaHome, "lib");
-        File BootModules = new File(LibDir, "modules");
+        File libDir = new File(JavaHome, "lib");
+        File modules = new File(libDir, "modules");
         List<String> cmdList = new ArrayList<>();
         cmdList.add(getJimageCmd());
         cmdList.add("extract");
-        cmdList.add(BootModules.getAbsolutePath());
+        cmdList.add(modules.getAbsolutePath());
         cmdList.add("--dir");
         cmdList.add("out");
         runExec(cmdList);

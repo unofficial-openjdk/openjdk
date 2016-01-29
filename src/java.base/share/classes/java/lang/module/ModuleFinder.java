@@ -136,8 +136,8 @@ public interface ModuleFinder {
      */
     public static ModuleFinder ofInstalled() {
         String home = System.getProperty("java.home");
-        Path libModules = Paths.get(home, "lib", "modules");
-        if (Files.isRegularFile(libModules)) {
+        Path modules = Paths.get(home, "lib", "modules");
+        if (Files.isRegularFile(modules)) {
             return new InstalledModuleFinder();
         } else {
             Path mlib = Paths.get(home, "modules");

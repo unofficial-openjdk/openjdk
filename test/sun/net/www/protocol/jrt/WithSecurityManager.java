@@ -38,8 +38,8 @@ import java.nio.file.Paths;
 public class WithSecurityManager {
     public static void main(String[] args) throws Exception {
         String home = System.getProperty("java.home");
-        Path bootmodules = Paths.get(home, "lib", "modules");
-        if (Files.notExists(bootmodules)) {
+        Path modules = Paths.get(home, "lib", "modules");
+        if (!Files.isRegularFile(modules)) {
             System.out.println("This runtime is not jimage, test skipped");
             return;
         }
