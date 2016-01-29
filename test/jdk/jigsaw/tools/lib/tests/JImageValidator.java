@@ -36,7 +36,6 @@ import java.util.Properties;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import jdk.internal.jimage.BasicImageReader;
-import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.internal.jimage.ImageLocation;
 
 /**
@@ -46,12 +45,6 @@ import jdk.internal.jimage.ImageLocation;
 public class JImageValidator {
 
     private static final String[] dirs = {"bin", "lib"};
-
-    private static final List<String> EXPECTED_JIMAGES = new ArrayList<>();
-
-    static {
-        EXPECTED_JIMAGES.add(BasicImageWriter.BOOT_IMAGE_NAME);
-    }
 
     private final File rootDir;
     private final List<String> expectedLocations;
@@ -94,25 +87,12 @@ public class JImageValidator {
             }
         }
 
-        //check all jimages
-        File modules = new File(rootDir, "lib" + File.separator + "modules");
-        if (modules.list() == null || modules.list().length == 0) {
-            throw new IOException("No jimage files generated");
+        //check jimage file
+        Path path = rootDir.toPath().resolve("lib").resolve("modules");
+        if (!Files.isRegularFile(path)) {
+            throw new IOException(path + " No jimage file generated");
         }
-        List<String> seenImages = new ArrayList<>();
-        seenImages.addAll(EXPECTED_JIMAGES);
-        for (File f : modules.listFiles()) {
-            if (f.getName().endsWith("modules")) {
-                if (!EXPECTED_JIMAGES.contains(f.getName())) {
-                    throw new IOException("Unexpected image " + f.getName());
-                }
-                seenImages.remove(f.getName());
-                validate(f, expectedLocations, unexpectedPaths);
-            }
-        }
-        if (!seenImages.isEmpty()) {
-            throw new IOException("Some images not seen " + seenImages);
-        }
+
         // Check binary file
         File launcher = new File(rootDir, "bin" + File.separator + module);
         if (launcher.exists()) {
@@ -192,9 +172,9 @@ public class JImageValidator {
         return System.getProperty("os.name").startsWith("Windows");
     }
 
-    public static void validate(File jimage, List<String> expectedLocations,
+    public static void validate(Path jimage, List<String> expectedLocations,
             List<String> unexpectedPaths) throws IOException {
-        BasicImageReader reader = BasicImageReader.open(jimage.getAbsolutePath());
+        BasicImageReader reader = BasicImageReader.open(jimage);
         // Validate expected locations
         List<String> seenLocations = new ArrayList<>();
         for (String loc : expectedLocations) {

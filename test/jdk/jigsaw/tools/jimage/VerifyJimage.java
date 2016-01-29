@@ -213,7 +213,7 @@ public class VerifyJimage {
     static class JImageReader extends BasicImageReader {
         final Path jimage;
         JImageReader(Path p) throws IOException {
-            super(p.toString());
+            super(p);
             this.jimage = p;
         }
 
