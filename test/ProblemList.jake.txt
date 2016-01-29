@@ -45,15 +45,6 @@ sun/text/resources/LocaleDataTest.java                          generic-all
 
 ############################################################################
 
-# jdk_jdi
-
-# 8130683
-com/sun/jdi/cds/CDSBreakpointTest.java				generic-all
-com/sun/jdi/cds/CDSDeleteAllBkptsTest.java			generic-all
-com/sun/jdi/cds/CDSFieldWatchpoints.java			generic-all
-
-############################################################################
-
 # core_tools
 
 # 8048100
