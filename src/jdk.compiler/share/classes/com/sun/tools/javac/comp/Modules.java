@@ -57,6 +57,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symtab;
@@ -91,6 +92,7 @@ import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.Tag;
 
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
+import static com.sun.tools.javac.code.Kinds.Kind.MTH;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -622,13 +624,27 @@ public class Modules extends JCTree.Visitor {
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
+        boolean hasNoArgsConstructor(ClassSymbol tsym) {
+            for (Symbol sym : tsym.members().getSymbolsByName(names.init)) {
+                MethodSymbol mSym = (MethodSymbol)sym;
+                if (mSym.params().isEmpty()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
             Type it = attr.attribType(tree.implName, env, st);
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
-            if ((impl.flags() & ABSTRACT) != 0 || impl.isInner()) {
-                log.error(tree.implName.pos(), "bad.service.implementation", impl);
+            if ((impl.flags() & ABSTRACT) != 0) {
+                log.error(tree.implName.pos(), "service.implementation.is.abstract", impl);
+            } else if (impl.isInner()) {
+                log.error(tree.implName.pos(), "service.implementation.is.inner", impl);
+            } else if (!hasNoArgsConstructor(impl)) {
+                log.error(tree.implName.pos(), "service.implementation.doesnt.have.a.no.args.constructor", impl);
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);

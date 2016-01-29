@@ -138,7 +138,8 @@ public class ProvidesTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList("C.java:1:36: compiler.err.cant.resolve.location: kindname.class, Missing, , , (compiler.misc.location: kindname.package, p, null)",
                 "module-info.java:1:22: compiler.err.cant.resolve.location: kindname.class, Missing, , , (compiler.misc.location: kindname.package, p, null)",
-                "2 errors");
+                "module-info.java:1:37: compiler.err.service.implementation.doesnt.have.a.no.args.constructor: <any>",
+                "3 errors");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -253,7 +254,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList(
-                "module-info.java:1:34: compiler.err.bad.service.implementation: p2.C2");
+                "module-info.java:1:34: compiler.err.service.implementation.is.abstract: p2.C2");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -276,7 +277,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList(
-                "module-info.java:1:39: compiler.err.bad.service.implementation: p2.Impl");
+                "module-info.java:1:39: compiler.err.service.implementation.is.abstract: p2.Impl");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
