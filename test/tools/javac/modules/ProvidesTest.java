@@ -318,14 +318,13 @@ public class ProvidesTest extends ModuleTestBase {
         }
     }
 
-    //@ignore JDK-8145016
-    //@Test
+    @Test
     void testNoNoArgConstructor(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { provides p1.C1 with p2.C2; }",
+                "module m { uses p1.C1; provides p1.C1 with p2.C2; }",
                 "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { public C2(String str){} }");
+                "package p2; public class C2 extends p1.C1 { public C2(String str) { } }");
 
         List<String> output = tb.new JavacTask()
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -334,7 +333,8 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("#");
+        List<String> expected = Arrays.asList(
+                "testNoNoArgConstructor/src/module-info.java:1: error: the service implementation does not have a default constructor: C2");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -345,9 +345,9 @@ public class ProvidesTest extends ModuleTestBase {
     void testPrivateNoArgConstructor(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { provides p1.C1 with p2.C2; }",
+                "module m { uses p1.C1; provides p1.C1 with p2.C2; }",
                 "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { private C2(){} }");
+                "package p2; public class C2 extends p1.C1 { private C2() { } }");
 
         List<String> output = tb.new JavacTask()
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -378,8 +378,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll();
     }
 
-    //@ignore JDK-8145016
-    //@Test
+    @Test
     void testInnerClass(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
@@ -395,7 +394,9 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        if (!output.containsAll(Arrays.asList("#"))) {
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:37: compiler.err.service.implementation.is.inner: p2.C2.Inner");
+        if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
     }
