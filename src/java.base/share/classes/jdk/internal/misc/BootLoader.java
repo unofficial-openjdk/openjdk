@@ -38,6 +38,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
@@ -146,7 +147,7 @@ public class BootLoader {
         if (pkg == null) {
             String location = getSystemPackageLocation(pn.replace('.', '/'));
             if (location != null) {
-                pkg = SystemPackage.definePackage(pn, location);
+                pkg = PackageHelper.definePackage(pn, location);
             }
         }
         return pkg;
@@ -161,23 +162,25 @@ public class BootLoader {
     }
 
     /**
-     * Helper class to define system packages
+     * Helper class to define {@code Package} objects for packages in modules
+     * defined to the boot loader.
      */
-    static class SystemPackage {
+    static class PackageHelper {
         private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
         private static final Layer BOOT_LAYER = getBootLayer();
 
         /**
-         * Define a system package of the given name. The specified location is
-         * either the location of a named module from the run-time image or from
-         * the legacy boot class path set via java agent Boot-Class-Path attribute
+         * Define the {@code Package} with the given name. The specified
+         * location is a jrt URL to a named module in the run-time image, a
+         * file path to a module in an exploded run-time image, or the file
+         * path to an enty on the boot class path (java agent Boot-Class-Path
          * or -Xbootclasspath/a.
-         * <p>
-         * If the given location is a JAR file containing a manifest,
+         *
+         * <p> If the given location is a JAR file containing a manifest,
          * the defined Package contains the versioning information from
          * the manifest, if present.
          *
-         * @param name       package name
+         * @param name     package name
          * @param location location where the package is (jrt URL or file path)
          */
         static Package definePackage(String name, String location) {
@@ -193,17 +196,16 @@ public class BootLoader {
             URL url = toFileURL(location);
             Manifest man = url != null ? getManifest(location) : null;
 
-            return ClassLoaders.bootLoader()
-                               .defineOrCheckPackage(name, man, url);
+            return ClassLoaders.bootLoader().defineOrCheckPackage(name, man, url);
         }
 
         /**
-         * Finds the module of the given location defined to the boot loader
+         * Finds the module at the given location defined to the boot loader.
          * The module is either in runtime image or exploded image.
          * Otherwise this method returns null.
          */
-        static Module findModule(String location) {
-            String moduleName;
+        private static Module findModule(String location) {
+            String moduleName = null;
             if (location.startsWith("jrt:/")) {
                 // named module in runtime image ("jrt:/".length() == 5)
                 moduleName = location.substring(5, location.length());
@@ -213,17 +215,15 @@ public class BootLoader {
                 Path modulesDir = Paths.get(JAVA_HOME, "modules");
                 if (path.startsWith(modulesDir)) {
                     moduleName = path.getFileName().toString();
-                } else {
-                    moduleName = null;
                 }
             }
 
             if (moduleName != null) {
                 // named module from runtime image or exploded module
-                return BOOT_LAYER.modules()
-                                 .stream()
-                                 .filter(m -> moduleName.equals(m.getName()))
-                                 .findFirst().orElseThrow(InternalError::new);
+                Optional<Module> om = BOOT_LAYER.findModule(moduleName);
+                if (!om.isPresent())
+                    throw new InternalError();
+                return om.get();
             }
 
             return null;
@@ -232,7 +232,7 @@ public class BootLoader {
         /**
          * Returns URL if the given location is a regular file path.
          */
-        static URL toFileURL(String location) {
+        private static URL toFileURL(String location) {
             return AccessController.doPrivileged(new PrivilegedAction<>() {
                 public URL run() {
                     Path path = Paths.get(location);
@@ -250,7 +250,7 @@ public class BootLoader {
          * Returns the Manifest if the given location is a JAR file
          * containing a manifest.
          */
-        static Manifest getManifest(String location) {
+        private static Manifest getManifest(String location) {
             return AccessController.doPrivileged(new PrivilegedAction<>() {
                 public Manifest run() {
                     Path jar = Paths.get(location);
