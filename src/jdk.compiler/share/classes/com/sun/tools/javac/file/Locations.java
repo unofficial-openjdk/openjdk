@@ -118,7 +118,7 @@ public class Locations {
     private ModuleNameReader moduleNameReader;
 
     static final Path javaHome = Paths.get(System.getProperty("java.home"));
-    static final Path thisSystemModules = javaHome.resolve("lib/modules");
+    static final Path thisSystemModules = javaHome.resolve("lib").resolve("modules");
 
     Map<Path, FileSystem> fileSystems = new LinkedHashMap<>();
     List<Closeable> closeables = new ArrayList<>();
