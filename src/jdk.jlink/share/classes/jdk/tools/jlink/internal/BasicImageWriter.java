@@ -33,10 +33,7 @@ import jdk.internal.jimage.ImageStream;
 import jdk.internal.jimage.ImageStringsReader;
 
 public final class BasicImageWriter {
-
-    public static final String IMAGE_EXT = ".jimage";
-    public static final String BOOT_NAME = "bootmodules";
-    public static final String BOOT_IMAGE_NAME = BOOT_NAME + IMAGE_EXT;
+    public static final String MODULES_IMAGE_NAME = "modules";
 
     private final static int RETRY_LIMIT = 1000;
 

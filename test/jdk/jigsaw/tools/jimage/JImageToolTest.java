@@ -57,14 +57,14 @@ public class JImageToolTest {
     public static void main(String[] args) throws Exception {
         String home = System.getProperty("java.home");
         Path jimagePath = Paths.get(home, "bin", "jimage");
-        Path bootimagePath = Paths.get(home, "lib", "modules", "bootmodules.jimage");
+        Path modulesimagePath = Paths.get(home, "lib", "modules");
 
-        if (Files.exists(jimagePath) && Files.exists(bootimagePath)) {
+        if (Files.exists(jimagePath) && Files.exists(modulesimagePath)) {
             String jimage = jimagePath.toAbsolutePath().toString();
-            String bootimage = bootimagePath.toAbsolutePath().toString();
+            String bootimage = modulesimagePath.toAbsolutePath().toString();
             String extractDir = Paths.get(".", "extract").toAbsolutePath().toString();
-            String recreateImage = Paths.get(".", "recreate.jimage").toAbsolutePath().toString();
-            String relativeRecreateImage = Paths.get(".", "recreate2.jimage").toString();
+            String recreateImage = Paths.get(".", "recreate").toAbsolutePath().toString();
+            String relativeRecreateImage = Paths.get(".", "recreate2").toString();
             jimage("extract", "--dir", extractDir, bootimage);
             jimage("recreate", "--dir", extractDir, recreateImage);
             jimage("recreate", "--dir", extractDir, relativeRecreateImage);

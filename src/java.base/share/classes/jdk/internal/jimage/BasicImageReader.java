@@ -32,7 +32,6 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -73,11 +72,12 @@ public class BasicImageReader implements AutoCloseable {
     private final ImageStringsReader stringsReader;
     private final Decompressor decompressor;
 
-    protected BasicImageReader(String name, ByteOrder byteOrder)
+    protected BasicImageReader(Path path, ByteOrder byteOrder)
             throws IOException {
-        this.name = name;
+        this.name = path.toString();
         this.byteOrder = byteOrder;
-        imagePath = Paths.get(name);
+        imagePath = path;
+
         ByteBuffer map;
 
         if (useJVMMap && BasicImageReader.class.getClassLoader() == null) {
@@ -130,11 +130,11 @@ public class BasicImageReader implements AutoCloseable {
         decompressor = new Decompressor();
     }
 
-    protected BasicImageReader(String imagePath) throws IOException {
+    protected BasicImageReader(Path imagePath) throws IOException {
         this(imagePath, ByteOrder.nativeOrder());
     }
 
-    public static BasicImageReader open(String imagePath) throws IOException {
+    public static BasicImageReader open(Path imagePath) throws IOException {
         return new BasicImageReader(imagePath, ByteOrder.nativeOrder());
     }
 

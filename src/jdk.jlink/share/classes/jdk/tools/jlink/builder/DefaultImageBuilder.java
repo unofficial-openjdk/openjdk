@@ -111,7 +111,7 @@ public class DefaultImageBuilder implements ImageBuilder {
         this.genBom = genBom;
 
         this.root = root;
-        this.mdir = root.resolve("lib").resolve("modules");
+        this.mdir = root.resolve("lib");
         Files.createDirectories(mdir);
     }
 
@@ -254,7 +254,7 @@ public class DefaultImageBuilder implements ImageBuilder {
     @Override
     public DataOutputStream getJImageOutputStream() {
         try {
-            Path jimageFile = mdir.resolve(BasicImageWriter.BOOT_IMAGE_NAME);
+            Path jimageFile = mdir.resolve(BasicImageWriter.MODULES_IMAGE_NAME);
             OutputStream fos = Files.newOutputStream(jimageFile);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             return new DataOutputStream(bos);
