@@ -688,7 +688,7 @@ public class Modules extends JCTree.Visitor {
                  */
                 PackageSymbol implementationDefiningPackage = (PackageSymbol)provides.impl.owner;
                 if (implementationDefiningPackage.modle != msym) {
-                    log.error(tree.pos(), "service.implementation.not.in.right.module", provides);
+                    log.error(tree.pos(), "service.implementation.not.in.right.module");
                 }
 
                 /** There is no inherent requirement that module that provides a service should actually
@@ -716,7 +716,7 @@ public class Modules extends JCTree.Visitor {
                         }
                     }
                     if (warn) {
-                        log.warning(tree.pos(), "service.provided.but.not.exported.or.used", provides);
+                        log.warning(tree.pos(), "service.provided.but.not.exported.or.used");
                     }
                 }
             }

@@ -164,7 +164,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
         List<String> expected = Arrays.asList(
-                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module: Provides[p.Service,p.Service]",
+                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module",
                 "1 error");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
