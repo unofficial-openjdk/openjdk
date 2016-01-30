@@ -246,7 +246,7 @@ class TaskFactory {
 
         AnalyzeTask(final Collection<Unit> units) {
             this(units.stream(), new UnitSourceHandler(),
-                    "-XDshouldStopPolicy=FLOW", "-Xlint:unchecked", "-proc:none");
+                    "-XDshouldStopPolicy=FLOW", "-Xlint:unchecked", "-XaddExports:jdk.jshell/jdk.internal.jshell.remote=ALL-UNNAMED", "-proc:none");
         }
 
         <T>AnalyzeTask(final Stream<T> stream, SourceHandler<T> sourceHandler,
@@ -288,7 +288,7 @@ class TaskFactory {
 
         CompileTask(Collection<Unit> units) {
             super(units.stream(), new UnitSourceHandler(),
-                    "-Xlint:unchecked", "-proc:none");
+                    "-Xlint:unchecked", "-XaddExports:jdk.jshell/jdk.internal.jshell.remote=ALL-UNNAMED", "-proc:none");
         }
 
         boolean compile() {
