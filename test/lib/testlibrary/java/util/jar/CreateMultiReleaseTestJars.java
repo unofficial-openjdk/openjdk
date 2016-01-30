@@ -126,8 +126,11 @@ public class CreateMultiReleaseTestJars {
                 "-signedJar", "signed-multi-release.jar",
                 "multi-release.jar", "b"
         };
-        sun.security.tools.jarsigner.Main.main(jsArgs);
 
+        // 8147607. Temporarily comment out this dependency, on a
+        // non-exported API, from the test library. Failing tests
+        // that depend on this should be added to the exclude list.
+        //sun.security.tools.jarsigner.Main.main(jsArgs);
     }
 
     String findTestDir(String dir) throws IOException {

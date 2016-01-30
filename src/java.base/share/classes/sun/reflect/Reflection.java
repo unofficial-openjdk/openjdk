@@ -25,7 +25,10 @@
 
 package sun.reflect;
 
+
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 import jdk.internal.HotSpotIntrinsicCandidate;
@@ -80,13 +83,6 @@ public class Reflection {
     @HotSpotIntrinsicCandidate
     public static native int getClassAccessFlags(Class<?> c);
 
-    /** A quick "fast-path" check to try to avoid getCallerClass()
-        calls. */
-    public static boolean quickCheckMemberAccess(Class<?> memberClass,
-                                                 int modifiers)
-    {
-        return Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers);
-    }
 
     public static void ensureMemberAccess(Class<?> currentClass,
                                           Class<?> memberClass,
@@ -99,12 +95,7 @@ public class Reflection {
         }
 
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
-            throw new IllegalAccessException("Class " + currentClass.getName() +
-                                             " can not access a member of class " +
-                                             memberClass.getName() +
-                                             " with modifiers \"" +
-                                             Modifier.toString(modifiers) +
-                                             "\"");
+            throwIllegalAccessException(currentClass, memberClass, target, modifiers);
         }
     }
 
@@ -126,6 +117,10 @@ public class Reflection {
         if (currentClass == memberClass) {
             // Always succeeds
             return true;
+        }
+
+        if (!verifyModuleAccess(currentClass, memberClass)) {
+            return false;
         }
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
@@ -186,9 +181,42 @@ public class Reflection {
         return true;
     }
 
+    /**
+     * Returns {@code true} if memberClass's module is readable by currentClass's
+     * module and memberClass's's module exports memberClass's package to
+     * currentClass's module.
+     */
+    public static boolean verifyModuleAccess(Class<?> currentClass,
+                                             Class<?> memberClass) {
+        return verifyModuleAccess(currentClass.getModule(), memberClass);
+    }
+
+    public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
+        Module memberModule = memberClass.getModule();
+
+        // module may be null during startup (initLevel 0)
+        if (currentModule == memberModule)
+           return true;  // same module (named or unnamed)
+
+        // check readability
+        if (!currentModule.canRead(memberModule))
+            return false;
+
+        // memberClass may be primitive or array class
+        Class<?> c = memberClass;
+        while (c.isArray()) {
+            c = c.getComponentType();
+        }
+        if (c.isPrimitive())
+            return true;
+
+        // check that memberModule exports the package to currentModule
+        return memberModule.isExported(c.getPackageName(), currentModule);
+    }
+
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {
         return isSameClassPackage(c1.getClassLoader(), c1.getName(),
-                                  c2.getClassLoader(), c2.getName());
+                c2.getClassLoader(), c2.getName());
     }
 
     /** Returns true if two classes are in the same package; classloader
@@ -352,4 +380,100 @@ public class Reflection {
         }
         return false;
     }
+
+
+    // true to print a stack trace when IAE is thrown
+    private static volatile boolean printStackWhenAccessFails;
+
+    // true if printStackWhenAccessFails has been initialized
+    private static volatile boolean printStackWhenAccessFailsSet;
+
+    private static void printStackTraceIfNeeded(Throwable e) {
+        if (!printStackWhenAccessFailsSet && VM.initLevel() >= 1) {
+            // can't use method reference here, might be too early in startup
+            PrivilegedAction<Boolean> pa = new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    String s;
+                    s = System.getProperty("sun.reflect.debugModuleAccessChecks");
+                    return (s != null && !s.equalsIgnoreCase("false"));
+                }
+            };
+            printStackWhenAccessFails = AccessController.doPrivileged(pa);
+            printStackWhenAccessFailsSet = true;
+        }
+        if (printStackWhenAccessFails) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Throws IllegalAccessException with the an exception message based on
+     * the access that is denied.
+     */
+    private static void throwIllegalAccessException(Class<?> currentClass,
+                                                    Class<?> memberClass,
+                                                    Object target,
+                                                    int modifiers)
+        throws IllegalAccessException
+    {
+        String currentSuffix = "";
+        String memberSuffix = "";
+        Module m1 = currentClass.getModule();
+        if (m1.isNamed())
+            currentSuffix = " (in " + m1 + ")";
+        Module m2 = memberClass.getModule();
+        if (m2.isNamed())
+            memberSuffix = " (in " + m2 + ")";
+
+        Class<?> c = memberClass;
+        while (c.isArray()) {
+            c = c.getComponentType();
+        }
+        String memberPackageName = c.getPackageName();
+
+        boolean canRead = m1.canRead(m2);
+
+        String msg = currentClass + currentSuffix + " cannot access ";
+        if (canRead && m2.isExported(memberPackageName, m1)) {
+
+            // module access okay so include the modifiers in the message
+            msg += "a member of " + memberClass + memberSuffix +
+                    " with modifiers \"" + Modifier.toString(modifiers) + "\"";
+
+        } else {
+
+            // module access failed
+            msg += memberClass + memberSuffix + " because ";
+            if (!canRead) {
+                msg += m1 + " does not read " + m2;
+            } else {
+                msg += m2 + " does not export " + memberPackageName;
+                if (m2.isNamed()) msg += " to " + m1;
+            }
+
+        }
+
+        throwIllegalAccessException(msg);
+    }
+
+    /**
+     * Throws IllegalAccessException with the given exception message.
+     */
+    public static void throwIllegalAccessException(String msg)
+        throws IllegalAccessException
+    {
+        IllegalAccessException e = new IllegalAccessException(msg);
+        printStackTraceIfNeeded(e);
+        throw e;
+    }
+
+    /**
+     * Throws InaccessibleObjectException with the given exception message.
+     */
+    public static void throwInaccessibleObjectException(String msg) {
+        InaccessibleObjectException e = new InaccessibleObjectException(msg);
+        printStackTraceIfNeeded(e);
+        throw e;
+    }
+
 }
