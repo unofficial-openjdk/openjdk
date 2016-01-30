@@ -311,8 +311,6 @@ public class SjavacImpl implements Sjavac {
             err = "Please specify output directory.";
         } else if (options.isJavaFilesAmongJavacArgs()) {
             err = "Sjavac does not handle explicit compilation of single .java files.";
-        } else if (options.getServerConf() == null) {
-            err = "No server configuration provided.";
         } else if (!options.getImplicitPolicy().equals("none")) {
             err = "The only allowed setting for sjavac is -implicit:none";
         } else if (options.getSources().isEmpty() && options.getStateDir() != null) {
