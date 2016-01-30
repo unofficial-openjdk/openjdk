@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -854,7 +854,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             boolean isCurrentSymbolsAnnotation(Attribute.TypeCompound anno, int index) {
                 return (anno.position.type == TargetType.CLASS_TYPE_PARAMETER ||
                         anno.position.type == TargetType.METHOD_TYPE_PARAMETER) &&
-                       anno.position.parameter_index == index;
+                        anno.position.parameter_index == index;
             }
 
 

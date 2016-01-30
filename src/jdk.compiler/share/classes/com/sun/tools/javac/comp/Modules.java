@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
+import com.sun.tools.javac.code.Directive.UsesDirective;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.ModuleFinder;
@@ -92,7 +93,6 @@ import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.Tag;
 
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
-import static com.sun.tools.javac.code.Kinds.Kind.MTH;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -576,6 +576,7 @@ public class Modules extends JCTree.Visitor {
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
             try {
                 env.toplevel.defs.head.accept(v);
+                v.checkForCorrectness();
             } finally {
                 log.useSource(prev);
             }
@@ -586,8 +587,9 @@ public class Modules extends JCTree.Visitor {
         private final ModuleSymbol msym;
         private final Env<AttrContext> env;
 
-        private final Set<Directive> allUses = new HashSet<>();
-        private final Set<Directive> allProvides = new HashSet<>();
+        private final Set<Directive.UsesDirective> allUses = new HashSet<>();
+        private final Set<PackageSymbol> allExportedPackages = new HashSet<>();
+        private final Set<Directive.ProvidesDirective> allProvides = new HashSet<>();
 
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
             this.msym = msym;
@@ -621,6 +623,7 @@ public class Modules extends JCTree.Visitor {
             if (tree.directive.packge.members().isEmpty()) {
                 log.error(tree.qualid.pos(), "package.empty.or.doesnt.exists", tree.directive.packge);
             }
+            allExportedPackages.add(tree.directive.packge);
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
@@ -633,6 +636,8 @@ public class Modules extends JCTree.Visitor {
             }
             return false;
         }
+
+        Map<Directive.ProvidesDirective, JCProvides> directiveToTreeMap = new HashMap<>();
 
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
@@ -653,6 +658,7 @@ public class Modules extends JCTree.Visitor {
                 }
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
+                directiveToTreeMap.put(d, tree);
             }
         }
 
@@ -673,6 +679,48 @@ public class Modules extends JCTree.Visitor {
             }
         }
 
+        public void checkForCorrectness() {
+
+            for (Directive.ProvidesDirective provides : allProvides) {
+                JCProvides tree = directiveToTreeMap.get(provides);
+                /** The implementation must be defined in the same module as the provides directive
+                 *  (else, error)
+                 */
+                PackageSymbol implementationDefiningPackage = (PackageSymbol)provides.impl.owner;
+                if (implementationDefiningPackage.modle != msym) {
+                    log.error(tree.pos(), "service.implementation.not.in.right.module", provides);
+                }
+
+                /** There is no inherent requirement that module that provides a service should actually
+                 *  use it itself. However, it is a pointless declaration if the service package is not
+                 *  exported and there is no uses for the service.
+                 */
+                PackageSymbol interfaceDeclaringPackage = provides.service.packge();
+                boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
+                boolean isInterfaceExportedFromAReadableModule = msym.visiblePackages.contains(interfaceDeclaringPackage);
+                if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
+                    // ok the interface is declared in this module. Let's check if it's exported
+                    boolean warn = true;
+                    for (ExportsDirective export : msym.exports) {
+                        if (interfaceDeclaringPackage == export.packge) {
+                            warn = false;
+                            break;
+                        }
+                    }
+                    if (warn) {
+                        for (UsesDirective uses : msym.uses) {
+                            if (provides.service == uses.service) {
+                                warn = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (warn) {
+                        log.warning(tree.pos(), "service.provided.but.not.exported.or.used", provides);
+                    }
+                }
+            }
+        }
     }
 
     private Completer getUnnamedModuleCompleter() {

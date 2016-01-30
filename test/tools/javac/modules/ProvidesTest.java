@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,7 +136,8 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("C.java:1:36: compiler.err.cant.resolve.location: kindname.class, Missing, , , (compiler.misc.location: kindname.package, p, null)",
+        List<String> expected = Arrays.asList(
+                "C.java:1:36: compiler.err.cant.resolve.location: kindname.class, Missing, , , (compiler.misc.location: kindname.package, p, null)",
                 "module-info.java:1:22: compiler.err.cant.resolve.location: kindname.class, Missing, , , (compiler.misc.location: kindname.package, p, null)",
                 "module-info.java:1:37: compiler.err.service.implementation.doesnt.have.a.no.args.constructor: <any>",
                 "3 errors");
@@ -148,16 +149,27 @@ public class ProvidesTest extends ModuleTestBase {
     @Test
     void testProvidesFromAnotherModule(Path base) throws Exception {
         Path modules = base.resolve("modules");
-        new ModuleBuilder("M")
-                .exports("pack")
-                .classes("package pack; public enum Singleton { One; } ")
-                .build(modules);
+        tb.writeJavaFiles(modules.resolve("M"),
+                "module M { exports p; }",
+                "package p; public class Service { }");
+        tb.writeJavaFiles(modules.resolve("L"),
+                "module L { requires M; provides p.Service with p.Service; }");
 
-        new ModuleBuilder("L")
-                .requires("M", modules)
-                .provides("pack.Singleton", "pack.Singleton")
-                .classes("package p; public class A { } ")
-                .build(modules);
+        List<String> output = tb.new JavacTask()
+                .options("-XDrawDiagnostics",
+                        "-modulesourcepath", modules.toString())
+                .outdir(Files.createDirectories(base.resolve("classes")))
+                .files(findJavaFiles(modules))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(ToolBox.OutputKind.DIRECT);
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module: Provides[p.Service,p.Service]",
+                "1 error");
+        if (!output.containsAll(expected)) {
+            throw new Exception("Expected output not found");
+        }
+
     }
 
     @Test
@@ -365,6 +377,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .run(ToolBox.Expect.SUCCESS)
                 .writeAll();
     }
+
     //@ignore JDK-8145016
     //@Test
     void testInnerClass(Path base) throws Exception {
@@ -387,4 +400,3 @@ public class ProvidesTest extends ModuleTestBase {
         }
     }
 }
-
