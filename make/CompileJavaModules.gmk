@@ -512,7 +512,6 @@ jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 #
 GENERATED_SRC_DIRS += \
     $(SUPPORT_OUTPUTDIR)/gensrc \
-    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
     #
 
 TOP_SRC_DIRS += \

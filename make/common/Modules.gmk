@@ -26,9 +26,6 @@
 ifndef _MODULES_GMK
 _MODULES_GMK := 1
 
-include JavaCompilation.gmk
-include SetupJavaCompilers.gmk
-
 # Hook to include the corresponding custom file, if present.
 $(eval $(call IncludeCustomExtension, , common/Modules.gmk))
 
@@ -110,7 +107,7 @@ $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
 
 # Param 1: Module to find deps for
 FindDepsForModule = \
-    $(DEPS_$(strip $1))
+  $(DEPS_$(strip $1))
 
 # Finds transitive dependencies in 3 levels.
 # Param 1: Module to find transitive deps for
