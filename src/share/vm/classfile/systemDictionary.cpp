@@ -1248,7 +1248,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(
 // Check if a shared class can be loaded by the specific classloader:
 //
 // NULL classloader:
-//   - Module class from boot jimage. ModuleEntry must be defined in the classloader.
+//   - Module class from "modules" jimage. ModuleEntry must be defined in the classloader.
 //   - Class from -Xbootclasspath/a. The class has no defined PackageEntry, or must
 //     be defined in an unnamed module.
 bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
@@ -1283,19 +1283,19 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
 
   if (class_loader.is_null()) {
     // The NULL classloader can load archived class originated from the
-    // bootmodules.jimage and the -Xbootclasspath/a. For class from the
-    // bootmodules.jimage, the PackageEntry/ModuleEntry must be defined
+    // "modules" jimage and the -Xbootclasspath/a. For class from the
+    // "modules" jimage, the PackageEntry/ModuleEntry must be defined
     // by the NULL classloader.
     if (mod_entry != NULL) {
       // PackageEntry/ModuleEntry is found in the classloader. Check if the
       // ModuleEntry's location agrees with the archived class' origination.
       if (ent->is_jrt() && mod_entry->location()->starts_with("jrt:")) {
-        return true; // Module class from the boot jimage
+        return true; // Module class from the "module" jimage
       }
     }
 
-    // If the archived class is not from the jimage, the class can be loaded
-    // by the NULL classloader if
+    // If the archived class is not from the "module" jimage, the class can be
+    // loaded by the NULL classloader if
     //
     // 1. the class is from the unamed package
     // 2. or, the class is not from a module defined in the NULL classloader

@@ -33,8 +33,8 @@
 // The VM class loader.
 #include <sys/stat.h>
 
-// Name of boot module image
-#define  BOOT_IMAGE_NAME "bootmodules.jimage"
+// Name of boot "modules" image
+#define  MODULES_IMAGE_NAME "modules"
 
 // Name of the resource containing mapping from module names to defining class loader type
 #define MODULE_LOADER_MAP "jdk/internal/module/ModuleLoaderMap.dat"
@@ -188,7 +188,7 @@ class ClassLoader: AllStatic {
   // First entry in linked list of ClassPathEntry instances.
   // This consists of entries made up by:
   //   - boot loader modules
-  //     [-Xpatch]; exploded build | bootmodules.jimage;
+  //     [-Xpatch]; exploded build | modules;
   //   - boot loader append path
   //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_entry;
@@ -204,8 +204,8 @@ class ClassLoader: AllStatic {
 
   static const char* _shared_archive;
 
-  // True if the boot path has a bootmodules.jimage
-  static bool _has_bootmodules_jimage;
+  // True if the boot path has a "modules" jimage
+  static bool _has_jimage;
 
   // Array of module names associated with the boot class loader
   static GrowableArray<char*>* _boot_modules_array;
@@ -312,12 +312,12 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
-  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists
-  static void set_has_bootmodules_jimage(bool val) {
-    _has_bootmodules_jimage = val;
+  // Sets _has_jimage to TRUE if "modules" jimage file exists
+  static void set_has_jimage(bool val) {
+    _has_jimage = val;
   }
 
-  static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
+  static bool has_jimage() { return _has_jimage; }
 
   // Create the ModuleEntry for java.base
   static void create_javabase();
@@ -402,7 +402,7 @@ class ClassLoader: AllStatic {
 
   static bool string_ends_with(const char* str, const char* str_to_find);
 
-  static bool is_jrt(const char* name) { return string_ends_with(name, BOOT_IMAGE_NAME); }
+  static bool is_jrt(const char* name) { return string_ends_with(name, MODULES_IMAGE_NAME); }
 
   static void initialize_module_loader_map(JImageFile* jimage);
 

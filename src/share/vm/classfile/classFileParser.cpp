@@ -5352,12 +5352,12 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
       ResourceMark rm;
       // print in a single call to reduce interleaving of output
       if (_stream->source() != NULL) {
-        static const size_t boot_image_name_len = strlen(BOOT_IMAGE_NAME);
+        static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
         size_t stream_len = strlen(_stream->source());
-        // See if _stream->source() ends in "bootmodules.jimage"
-        if (module_entry->is_named() && boot_image_name_len < stream_len &&
-          (strncmp(_stream->source() + stream_len - boot_image_name_len,
-                   BOOT_IMAGE_NAME, boot_image_name_len) == 0)) {
+        // See if _stream->source() ends in "modules"
+        if (module_entry->is_named() && modules_image_name_len < stream_len &&
+          (strncmp(_stream->source() + stream_len - modules_image_name_len,
+                   MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
           tty->print_cr("[Loaded %s from jrt:/%s]", ik->external_name(),
                      module_entry->name()->as_C_string());
         } else {

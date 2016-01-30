@@ -140,7 +140,7 @@ ClassPathEntry* ClassLoader::_first_entry         = NULL;
 ClassPathEntry* ClassLoader::_last_entry          = NULL;
 int             ClassLoader::_num_entries         = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
-bool            ClassLoader::_has_bootmodules_jimage = false;
+bool            ClassLoader::_has_jimage = false;
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
 GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
 
@@ -373,7 +373,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
 #if INCLUDE_CDS
         // CDS uses the boot class loader to load classes whose packages are in
         // modules defined for other class loaders.  So, for now, get their module
-        // names from the .jimage file.
+        // names from the "modules" jimage file.
         if (DumpSharedSpaces && location == 0) {
           const char* module_name = (*JImagePackageToModule)(_jimage, package);
           if (module_name != NULL) {
@@ -866,13 +866,13 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   JImageLocationRef location = (*JImageFindResource)(jimage, "java.base", get_jimage_version_string(), MODULE_LOADER_MAP, &size);
   if (location == 0) {
     vm_exit_during_initialization(
-      "Cannot find ModuleLoaderMap location from bootmodules.jimage.", NULL);
+      "Cannot find ModuleLoaderMap location from modules jimage.", NULL);
   }
   char* buffer = NEW_RESOURCE_ARRAY(char, size);
   jlong read = (*JImageGetResource)(jimage, location, buffer, size);
   if (read != size) {
     vm_exit_during_initialization(
-      "Cannot find ModuleLoaderMap resource from bootmodules.jimage.", NULL);
+      "Cannot find ModuleLoaderMap resource from modules jimage.", NULL);
   }
   char* char_buf = (char*)buffer;
   int buflen = (int)strlen(char_buf);
@@ -1110,7 +1110,7 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
   // If both DumpSharedSpaces and search_append_only are false, boot loader
   // visibility boundaries are set to be _first_entry to the entry before
   // the _first_append_entry.  This would include:
-  //   [-Xpatch:<dirs>];  [exploded build | bootmodules.jimage]
+  //   [-Xpatch:<dirs>];  [exploded build | modules]
   //
   // DumpSharedSpaces and search_append_only are mutually exclusive and cannot
   // be true at the same time.
@@ -1131,7 +1131,7 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
     }
 
     // Attempt to load the classfile from either:
-    //   - [-Xpatch:dir]; exploded build | bootmodules.jimage
+    //   - [-Xpatch:dir]; exploded build | modules
     //     or
     //   - [-Xbootclasspath/a]; [jvmti appended entries]
     while ((e != NULL) && (e != last_e)) {
@@ -1355,14 +1355,14 @@ void ClassLoader::create_javabase() {
 
   // When looking for the jimage file, only
   // search the boot loader's module path which
-  // can consist of [-Xpatch]; exploded build | bootmodules.jimage
+  // can consist of [-Xpatch]; exploded build | modules
   // Do not search the boot loader's append path.
   ClassPathEntry* e = _first_entry;
   ClassPathEntry* last_e = _first_append_entry;
   while ((e != NULL) && (e != last_e)) {
     JImageFile *jimage = e->jimage();
     if (jimage != NULL && e->is_jrt()) {
-      set_has_bootmodules_jimage(true);
+      set_has_jimage(true);
       ClassLoader::initialize_module_loader_map(jimage);
       return;
     }
@@ -1465,7 +1465,7 @@ void ClassLoader::compile_the_world() {
   ClassPathEntry* e = _first_entry;
   jlong start = os::javaTimeMillis();
   while (e != NULL) {
-    // We stop at bootmodules.jimage, unless it is the first bootstrap path entry
+    // We stop at "modules" jimage, unless it is the first bootstrap path entry
     if (e->is_jrt() && e != _first_entry) break;
     e->compile_the_world(system_class_loader, CATCH);
     e = e->next();
