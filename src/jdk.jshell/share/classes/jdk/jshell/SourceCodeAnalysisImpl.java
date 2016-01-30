@@ -638,7 +638,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
 
     private void listPackages(Path path, String enclosing, Set<String> packages) {
         try {
-            if (path.equals(Paths.get("JRT_MARKER_FILE"))) {
+            if (path.equals(Paths.get(System.getProperty("java.home"), "lib", "modules"))) {
                 FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
                 Path modules = jrtfs.getPath("modules");
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(modules)) {
