@@ -563,9 +563,6 @@ public final class Module {
      * then this method could be static and the IllegalStateException would
      * not be needed.
      *
-     * @implNote Augmenting the exports is potentially an expensive operation,
-     * it is not expected to be used very often.
-     *
      * @param  pn
      *         The package name
      * @param  target
