@@ -147,7 +147,7 @@ public class JLinkTest {
             StringWriter writer = new StringWriter();
             jdk.tools.jlink.internal.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
             String output = writer.toString();
-            long number = Stream.of(output.split("\n"))
+            long number = Stream.of(output.split("\\R"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
                     .count();
             if (number != numPlugins) {
