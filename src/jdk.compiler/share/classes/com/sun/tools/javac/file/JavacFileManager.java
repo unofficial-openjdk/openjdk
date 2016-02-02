@@ -521,9 +521,17 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
      */
     @Override @DefinedBy(Api.COMPILER)
     public void close() throws IOException {
+        if (deferredCloseTimeout > 0) {
+            deferredClose();
+            return;
+        }
+
         locations.close();
-        for (FileSystem fs: fileSystems.values())
+        for (FileSystem fs: fileSystems.values()) {
             fs.close();
+        }
+        fileSystems.clear();
+        contentCache.clear();
     }
 
     @Override @DefinedBy(Api.COMPILER)

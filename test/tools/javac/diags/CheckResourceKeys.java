@@ -295,6 +295,7 @@ public class CheckResourceKeys {
             // -XD option names
             "process.packages",
             "ignore.symbol.file",
+            "fileManager.deferClose",
             // prefix/embedded strings
             "compiler.",
             "compiler.misc.",
