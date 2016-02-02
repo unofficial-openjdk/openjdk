@@ -25,6 +25,7 @@
  * @test
  * @bug 8072008
  * @library /testlibrary /test/lib
+ * @ignore 8148905
  * @compile -XDignore.symbol.file RedefineTest.java Agent.java
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
