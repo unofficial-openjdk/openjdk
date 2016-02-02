@@ -32,7 +32,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.security.BasicPermission;
 import java.util.Objects;
-//import jdk.internal.HotSpotIntrinsicCandidate;
 
 import sun.hotspot.parser.DiagnosticCommand;
 
@@ -189,9 +188,6 @@ public class WhiteBox {
   public native int     deoptimizeFrames(boolean makeNotEntrant);
   public native void    deoptimizeAll();
 
-  // temporarily comment out until dependency can be fulfilled
-  //@HotSpotIntrinsicCandidate
-  public        void    deoptimize() {}
   public        boolean isMethodCompiled(Executable method) {
     return isMethodCompiled(method, false /*not osr*/);
   }
