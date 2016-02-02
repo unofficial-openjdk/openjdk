@@ -24,6 +24,7 @@
 /*
  * @test
  * @library /test/lib /testlibrary /
+ * @modules java.base/jdk.internal.org.objectweb.asm
  * @build compiler.calls.common.InvokeDynamic
  * @build compiler.calls.common.InvokeDynamicPatcher
  * @run driver compiler.calls.common.InvokeDynamicPatcher
