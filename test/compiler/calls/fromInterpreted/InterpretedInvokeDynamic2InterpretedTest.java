@@ -27,7 +27,7 @@
  * @modules java.base/jdk.internal.org.objectweb.asm
  * @build compiler.calls.common.InvokeDynamic
  * @build compiler.calls.common.InvokeDynamicPatcher
- * @run driver compiler.calls.common.InvokeDynamicPatcher
+ * @run main compiler.calls.common.InvokeDynamicPatcher
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *    sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
