@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Red Hat Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,24 +21,11 @@
  * questions.
  */
 
-//
+public interface NameMBean {
 
-import sun.misc.*;
+    String getFirstName();
+    void setFirstName(String firstName);
 
-
-public class ExitOnThrow {
-
-    public static void main(String[] args) throws Exception {
-        Cleaner.create(new Object(),
-                       new Runnable() {
-                               public void run() {
-                                   throw new RuntimeException("Foo!");
-                               }
-                           });
-        while (true) {
-            System.gc();
-            Thread.sleep(100);
-        }
-    }
-
+    String getLastName();
+    void setLastName(String lastName);
 }
