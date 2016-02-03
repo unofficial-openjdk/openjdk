@@ -22,10 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.lang.invoke;
+
+package compiler.stable;
+
+import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
-import sun.hotspot.WhiteBox;
 
 public class StableConfiguration {
     static final WhiteBox WB = WhiteBox.getWhiteBox();

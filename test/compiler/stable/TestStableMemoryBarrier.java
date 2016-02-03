@@ -28,13 +28,44 @@
  * @bug 8139758
  * @summary tests memory barrier correctly inserted for stable fields
  * @library /testlibrary /test/lib
- * @build java.base/java.lang.invoke.StableMemoryBarrier
+ * @modules java.base/jdk.internal.vm.annotation
  *
- * @run main/othervm -Xcomp -XX:CompileOnly=::testCompile
- *                   java.base/java.lang.invoke.StableMemoryBarrier
+ * @run main/bootclasspath -Xcomp -XX:CompileOnly=::testCompile
+ *                         compiler.stable.TestStableMemoryBarrier
  *
  * @author hui.shi@linaro.org
  */
 
-// actual source code is located in ./java.base/java/lang/invoke/StableMemoryBarrier.java
+package compiler.stable;
+
+import jdk.internal.vm.annotation.Stable;
+
+public class TestStableMemoryBarrier {
+    public static void main(String[] args) throws Exception {
+        for (int i = 0; i < 1000000; i++) {
+            NotDominate.testCompile(i);
+        }
+    }
+    /* ====================================================
+     * Stable field initialized in method, but its allocation
+     * doesn't dominate MemBar Release at the end of method.
+     */
+    private static class NotDominate {
+        public @Stable int v;
+        public static int[] array = new int[100];
+
+        public static NotDominate testCompile(int n) {
+            if ((n % 2) == 0) return null;
+            // add a loop here, trigger PhaseIdealLoop::verify_dominance
+            for (int i = 0; i < 100; i++) {
+                array[i] = n;
+            }
+            NotDominate nm = new NotDominate();
+            nm.v = n;
+            return nm;
+        }
+
+
+    }
+}
 
