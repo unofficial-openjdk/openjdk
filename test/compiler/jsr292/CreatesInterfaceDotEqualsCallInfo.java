@@ -24,7 +24,6 @@
 
 /**
  * @test
- * @ignore 8072479
  * @bug 8026124
  * @summary Javascript file provoked assertion failure in linkResolver.cpp
  * @modules jdk.scripting.nashorn/jdk.nashorn.tools
