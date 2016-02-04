@@ -731,6 +731,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_BUILD_COMPILERS],
     BASIC_FIXUP_EXECUTABLE(BUILD_NM)
     BASIC_PATH_PROGS(BUILD_AR, ar gcc-ar)
     BASIC_FIXUP_EXECUTABLE(BUILD_AR)
+    BASIC_PATH_PROGS(BUILD_OBJCOPY, objcopy)
+    BASIC_FIXUP_EXECUTABLE(BUILD_OBJCOPY)
+    BASIC_PATH_PROGS(BUILD_STRIP, strip)
+    BASIC_FIXUP_EXECUTABLE(BUILD_STRIP)
     # Assume the C compiler is the assembler
     BUILD_AS="$BUILD_CC -c"
     # Just like for the target compiler, use the compiler as linker
