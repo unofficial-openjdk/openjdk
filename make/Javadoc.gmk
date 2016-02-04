@@ -490,7 +490,7 @@ $(DOCLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(DOCLETAPI_PKGS))
 # old docletapidocs
 #
 
-# ALL_OTHER_TARGETS += olddocletapidocs
+ALL_OTHER_TARGETS += olddocletapidocs
 
 OLD_DOCLET_DIR := $(JDK_API_DOCSDIR)/javadoc/old
 OLD_DOCLETAPI_DOCDIR := $(OLD_DOCLET_DIR)/doclet
@@ -526,7 +526,8 @@ $(OLD_DOCLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
+          $(call OptionPair,-system,none) ; \
+	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-breakiterator) ; \
 	  $(call OptionPair,-doctitle,$(OLD_DOCLETAPI_DOCTITLE)) ; \
@@ -1255,7 +1256,7 @@ $(NASHORNAPI_PACKAGES_FILE): $(call PackageDependencies,$(NASHORNAPI_PKGS))
 # dynalinkapidocs
 #
 
-# ALL_OTHER_TARGETS += dynalinkapidocs
+ALL_OTHER_TARGETS += dynalinkapidocs
 
 DYNALINKAPI_DOCDIR := $(JDK_API_DOCSDIR)/dynalink
 DYNALINKAPI2COREAPI := ../$(JDKJRE2COREAPI)
@@ -1289,7 +1290,8 @@ $(DYNALINKAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
+          $(call OptionPair,-system,none) ; \
+	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-doctitle,$(DYNALINKAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(DYNALINKAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
