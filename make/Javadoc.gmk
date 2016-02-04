@@ -1,4 +1,4 @@
-# Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -433,7 +433,7 @@ $(COREAPI_PACKAGES_FILE): $(call PackageDependencies,$(CORE_PKGS))
 # docletapidocs
 #
 
-ALL_OTHER_TARGETS += docletapidocs
+# ALL_OTHER_TARGETS += docletapidocs
 
 DOCLETAPI_DOCDIR := $(JDK_API_DOCSDIR)/javadoc/doclet
 DOCLETAPI2COREAPI := ../../$(JDKJRE2COREAPI)
@@ -490,7 +490,7 @@ $(DOCLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(DOCLETAPI_PKGS))
 # old docletapidocs
 #
 
-ALL_OTHER_TARGETS += olddocletapidocs
+# ALL_OTHER_TARGETS += olddocletapidocs
 
 OLD_DOCLET_DIR := $(JDK_API_DOCSDIR)/javadoc/old
 OLD_DOCLETAPI_DOCDIR := $(OLD_DOCLET_DIR)/doclet
@@ -1255,7 +1255,7 @@ $(NASHORNAPI_PACKAGES_FILE): $(call PackageDependencies,$(NASHORNAPI_PKGS))
 # dynalinkapidocs
 #
 
-ALL_OTHER_TARGETS += dynalinkapidocs
+# ALL_OTHER_TARGETS += dynalinkapidocs
 
 DYNALINKAPI_DOCDIR := $(JDK_API_DOCSDIR)/dynalink
 DYNALINKAPI2COREAPI := ../$(JDKJRE2COREAPI)
