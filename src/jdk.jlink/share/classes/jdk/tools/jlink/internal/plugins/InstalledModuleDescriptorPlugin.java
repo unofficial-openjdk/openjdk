@@ -728,8 +728,8 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                 if (localVarIndex == 0) {
                     // if non-empty and more than one set reference this builder,
                     // emit to a unique local
-                    index = (names.isEmpty() || refCount == 1) ? STRING_SET_VAR
-                                                               : nextLocalVar++;
+                    index = refCount == 1 ? STRING_SET_VAR
+                                          : nextLocalVar++;
                     if (index < MAX_LOCAL_VARS) {
                         localVarIndex = index;
                     } else {
