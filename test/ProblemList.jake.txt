@@ -9,6 +9,10 @@
 # 8134485
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
+# Temporarily exclude until langtools repos is sync'ed up
+java/lang/invoke/InvokeDynamicPrintArgs.java                     generic-all
+java/lang/String/concat/StringConcatFactoryInvariants.javai      generic-all
+
 ############################################################################
 
 # jdk_security
