@@ -24,7 +24,7 @@
 
 /* @test
  * @summary Test MergeSort
- *
+ * @ignore 7095992
  * @library ../../../src/sample/share/forkjoin/mergesort
  * @build MergeSortTest MergeDemo MergeSort
  * @run main MergeSortTest
