@@ -50,6 +50,7 @@ import com.sun.tools.javac.code.Type.JCVoidType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Type.UnknownType;
 import com.sun.tools.javac.comp.Modules;
+import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Convert;
@@ -205,6 +206,7 @@ public class Symtab {
     public final Type autoCloseableType;
     public final Type trustMeType;
     public final Type lambdaMetafactory;
+    public final Type stringConcatFactory;
     public final Type repeatableType;
     public final Type documentedType;
     public final Type elementTypeType;
@@ -517,6 +519,7 @@ public class Symtab {
         trustMeType = enterClass("java.lang.SafeVarargs");
         nativeHeaderType = enterClass("java.lang.annotation.Native");
         lambdaMetafactory = enterClass("java.lang.invoke.LambdaMetafactory");
+        stringConcatFactory = enterClass("java.lang.invoke.StringConcatFactory");
         functionalInterfaceType = enterClass("java.lang.FunctionalInterface");
 
         synthesizeEmptyInterfaceIfMissing(autoCloseableType);
@@ -524,6 +527,7 @@ public class Symtab {
         synthesizeEmptyInterfaceIfMissing(serializableType);
         synthesizeEmptyInterfaceIfMissing(lambdaMetafactory);
         synthesizeEmptyInterfaceIfMissing(serializedLambdaType);
+        synthesizeEmptyInterfaceIfMissing(stringConcatFactory);
         synthesizeBoxTypeIfMissing(doubleType);
         synthesizeBoxTypeIfMissing(floatType);
         synthesizeBoxTypeIfMissing(voidType);
