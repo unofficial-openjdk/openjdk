@@ -1654,7 +1654,7 @@ public final class StringConcatFactory {
         private static final Function<Class<?>, MethodHandle> MOST = new Function<Class<?>, MethodHandle>() {
             @Override
             public MethodHandle apply(Class<?> cl) {
-                MethodHandle mhObject = lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, Object.class);
+                MethodHandle mhObject = lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, Object.class);
 
                 // We need the additional conversion here, because String.valueOf(Object) may return null.
                 // String conversion rules in Java state we need to produce "null" String in this case.
@@ -1665,9 +1665,9 @@ public final class StringConcatFactory {
                 if (cl == String.class) {
                     return mhObject;
                 } else if (cl == float.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, float.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, float.class);
                 } else if (cl == double.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, double.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, double.class);
                 } else if (!cl.isPrimitive()) {
                     return mhObjectNoNulls;
                 }
@@ -1686,13 +1686,13 @@ public final class StringConcatFactory {
                 }
 
                 if (cl == byte.class || cl == short.class || cl == int.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, int.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, int.class);
                 } else if (cl == boolean.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, boolean.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, boolean.class);
                 } else if (cl == char.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, char.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, char.class);
                 } else if (cl == long.class) {
-                    return lookupStatic(Lookup.PUBLIC_LOOKUP, String.class, "valueOf", String.class, long.class);
+                    return lookupStatic(MethodHandles.publicLookup(), String.class, "valueOf", String.class, long.class);
                 } else {
                     throw new IllegalStateException("Unknown class: " + cl);
                 }
