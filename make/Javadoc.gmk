@@ -433,7 +433,7 @@ $(COREAPI_PACKAGES_FILE): $(call PackageDependencies,$(CORE_PKGS))
 # docletapidocs
 #
 
-# ALL_OTHER_TARGETS += docletapidocs
+ALL_OTHER_TARGETS += docletapidocs
 
 DOCLETAPI_DOCDIR := $(JDK_API_DOCSDIR)/javadoc/doclet
 DOCLETAPI2COREAPI := ../../$(JDKJRE2COREAPI)
