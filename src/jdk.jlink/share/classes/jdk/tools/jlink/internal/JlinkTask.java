@@ -95,9 +95,6 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
-        new Option<JlinkTask>(false, (task, opt, arg) -> {
-            task.options.xhelp = true;
-        }, "--xhelp"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             String[] dirs = arg.split(File.pathSeparator);
             task.options.modulePath = new Path[dirs.length];
@@ -140,7 +137,7 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
-        new Option<JlinkTask>(false, (task, opt, arg) -> {
+        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
             task.options.genbom = true;
         }, "--genbom"),
         new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
@@ -170,7 +167,6 @@ public class JlinkTask {
 
     static class OptionsValues {
         boolean help;
-        boolean xhelp;
         boolean genbom;
         boolean version;
         boolean fullVersion;
@@ -189,10 +185,6 @@ public class JlinkTask {
             optionsHelper.handleOptions(this, args);
             if (options.help) {
                 optionsHelper.showHelp(PROGNAME);
-                return EXIT_OK;
-            }
-            if (options.xhelp) {
-                optionsHelper.showXHelp(PROGNAME, true);
                 return EXIT_OK;
             }
             if(optionsHelper.listPlugins()) {

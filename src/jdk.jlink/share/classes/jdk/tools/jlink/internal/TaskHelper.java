@@ -550,10 +550,6 @@ public final class TaskHelper {
                     });
         }
 
-        public void showXHelp(String progName, boolean showsImageBuilder) {
-            showHelp(progName, true, showsImageBuilder);
-        }
-
         public void listPlugins(boolean showsImageBuilder) {
             log.println("\n" + bundleHelper.getMessage("main.extended.help"));
             List<Plugin> pluginList = PluginRepository.
