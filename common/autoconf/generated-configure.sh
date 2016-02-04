@@ -4904,7 +4904,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1454577452
+DATE_WHEN_GENERATED=1454582810
 
 ###############################################################################
 #
@@ -46808,6 +46808,8 @@ $as_echo "$as_me: Rewriting BUILD_STRIP to \"$new_complete\"" >&6;}
     BUILD_LDCXX="$LDCXX"
     BUILD_NM="$NM"
     BUILD_AS="$AS"
+    BUILD_OBJCOPY="$OBJCOPY"
+    BUILD_STRIP="$STRIP"
     BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
     BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
     BUILD_AR="$AR"
