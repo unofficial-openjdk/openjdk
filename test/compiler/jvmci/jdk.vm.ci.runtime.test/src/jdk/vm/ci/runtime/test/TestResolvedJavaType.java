@@ -28,7 +28,6 @@
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.common
- * @ignore 8148810
  * @build jdk.vm.ci.runtime.test.TestResolvedJavaType
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestResolvedJavaType
  */
@@ -850,23 +849,6 @@ public class TestResolvedJavaType extends TypeUniverse {
             assertFalse(enclc == null ^ enclt == null);
             if (enclc != null) {
                 assertEquals(enclt, metaAccess.lookupJavaType(enclc));
-            }
-        }
-    }
-
-    @Test
-    public void classFilePathTest() {
-        for (Class<?> c : classes) {
-            ResolvedJavaType type = metaAccess.lookupJavaType(c);
-            URL path = type.getClassFilePath();
-            if (type.isPrimitive() || type.isArray()) {
-                assertEquals(null, path);
-            } else {
-                assertNotNull(path);
-                String pathString = path.getPath();
-                if (type.isLocal() || type.isMember()) {
-                    assertTrue(pathString.indexOf('$') > 0);
-                }
             }
         }
     }
