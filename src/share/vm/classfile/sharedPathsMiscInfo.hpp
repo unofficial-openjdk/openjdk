@@ -147,7 +147,7 @@ public:
   virtual void print_path(outputStream* out, int type, const char* path) {
     switch (type) {
     case BOOT:
-      out->print("Expecting -Dsun.boot.class.path=%s", path);
+      out->print("Expecting BOOT path %s", path);
       break;
     case NON_EXIST:
       out->print("Expecting that %s does not exist", path);

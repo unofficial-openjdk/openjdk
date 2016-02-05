@@ -20,29 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.lang.invoke;
 
-class NonInlinedReinvoker extends DelegatingMethodHandle {
-    private final MethodHandle target;
+// Small class used by multiple hotspot/runtime/modules/AccessCheck/* tests.
+import p6.c6;
 
-    private NonInlinedReinvoker(MethodHandle target, LambdaForm lf) {
-        super(target.type(), lf);
-        this.target = target;
-    }
-    @Override
-    protected MethodHandle getTarget() {
-        return target;
-    }
+public class c5 {
 
-    @Override
-    MethodHandle asTypeUncached(MethodType newType) {
-        return asTypeCache = target.asType(newType);
-    }
-
-    static MethodHandle make(MethodHandle target) {
-        LambdaForm lform = DelegatingMethodHandle.makeReinvokerForm(
-                target, -1, DelegatingMethodHandle.class, "reinvoker.dontInline",
-                /*forceInline=*/false, DelegatingMethodHandle.NF_getTarget, null);
-        return new NonInlinedReinvoker(target, lform);
+    public c5 () {
+        p6.c6 c6_obj = new p6.c6();
+        c6_obj.method6();
     }
 }

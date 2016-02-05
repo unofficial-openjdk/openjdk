@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -184,6 +184,20 @@ JvmtiEnv::GetThreadLocalStorage(jthread thread, void** data_ptr) {
   }
   return JVMTI_ERROR_NONE;
 } /* end GetThreadLocalStorage */
+
+  //
+  // Module functions
+  //
+
+// module_count_ptr - pre-checked for NULL
+// modules_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetAllModules(jint* module_count_ptr, jobject** modules_ptr) {
+    JvmtiModuleClosure jmc;
+
+    return jmc.get_all_modules(this, module_count_ptr, modules_ptr);
+} /* end GetAllModules */
+
 
   //
   // Class functions

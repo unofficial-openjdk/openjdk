@@ -28,11 +28,12 @@
  * @library /testlibrary /test/lib
  * @modules java.base/sun.misc
  *          java.management/sun.management
+ * @ignore 8133499
  * @build TestRemsetLoggingTools TestRemsetLoggingPerRegion
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @summary Verify output of -Xlog:gc+remset*=trace in regards to per-region type output
- * @run main TestRemsetLoggingPerRegion
+ * @run main/othervm TestRemsetLoggingPerRegion
  */
 
 public class TestRemsetLoggingPerRegion {
