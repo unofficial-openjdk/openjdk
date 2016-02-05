@@ -349,6 +349,34 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         return getHyperLink(pathString(pkg, DocPaths.PACKAGE_SUMMARY), label, "", target);
     }
 
+    /**
+     * Get Module Package link, with target frame.
+     *
+     * @param pkg the PackageElement
+     * @param target name of the target frame
+     * @param label tag for the link
+     * @param moduleName the name of the module being documented
+     * @return a content for the target module packages link
+     */
+    public Content getTargetModulePackageLink(PackageElement pkg, String target,
+            Content label, String moduleName) {
+        return getHyperLink(pathString(pkg, DocPaths.PACKAGE_SUMMARY),
+                label, "", target);
+    }
+
+    /**
+     * Get Module link, with target frame.
+     *
+     * @param target name of the target frame
+     * @param label tag for the link
+     * @param moduleName the name of the module being documented
+     * @return a content for the target module link
+     */
+    public Content getTargetModuleLink(String target, Content label,
+            String moduleName) {
+        return getHyperLink(pathToRoot.resolve(
+                DocPaths.moduleSummary(moduleName)), label, "", target);
+    }
 
     public void addClassesSummary(SortedSet<TypeElement> classes, String label,
             String tableSummary, List<String> tableHeader, Content summaryContentTree) {

@@ -28,12 +28,15 @@ package com.sun.tools.javac.api;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.BreakIterator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -68,12 +71,16 @@ import com.sun.source.util.DocTrees;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Scope.NamedImportScope;
+import com.sun.tools.javac.code.Scope.StarImportScope;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
+import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.ClassType;
@@ -163,6 +170,8 @@ public class JavacTrees extends DocTrees {
     private BreakIterator breakIterator;
     private JavaFileManager fileManager;
     private ParserFactory parser;
+    private Symtab syms;
+    private Map<JavaFileObject, PackageSymbol> javaFileObjectToPackageMap;
 
     // called reflectively from Trees.instance(CompilationTask task)
     public static JavacTrees instance(JavaCompiler.CompilationTask task) {
@@ -186,6 +195,7 @@ public class JavacTrees extends DocTrees {
     }
 
     protected JavacTrees(Context context) {
+        javaFileObjectToPackageMap = new HashMap<>();
         this.breakIterator = null;
         context.put(JavacTrees.class, this);
         init(context);
@@ -207,6 +217,7 @@ public class JavacTrees extends DocTrees {
         types = Types.instance(context);
         docTreeMaker = DocTreeMaker.instance(context);
         parser = ParserFactory.instance(context);
+        syms = Symtab.instance(context);
         fileManager = context.get(JavaFileManager.class);
         JavacTask t = context.get(JavacTask.class);
         if (t instanceof JavacTaskImpl)
@@ -425,11 +436,28 @@ public class JavacTrees extends DocTrees {
                 if (t.isErroneous()) {
                     if (ref.memberName == null) {
                         // Attr/Resolve assume packages exist and create symbols as needed
-                        // so use getPackageElement to restrict search to existing packages
-                        PackageSymbol pck = elements.getPackageElement(ref.qualifierExpression.toString());
-                        if (pck != null) {
-                            return pck;
-                        } else if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
+                        // so restrict the search to existing packages only:
+                        if (SourceVersion.isName(ref.qualifierExpression.toString())) { //XXX: avoid querying packages with a wrong name - see TestSupplementary.
+                            //XXX: avoid Elements.getPackageElement for now, as that could resolve packages/classes from different module, which may be incompilable with the current javac settings
+                            Symbol pck;
+                            PackageSymbol origPackge = env.toplevel.packge;
+                            ClassSymbol origEnclClass = env.enclClass.sym;
+
+                            try {
+                                pck = attr.attribIdent(ref.qualifierExpression, env);
+                            } finally {
+                                env.toplevel.packge = origPackge;
+                                env.enclClass.sym = origEnclClass;
+                            }
+
+                            pck.complete();
+
+                            if (pck.kind == PCK && pck.exists()) {
+                                return pck;
+                            }
+                        }
+
+                        if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
                             // fixup:  allow "identifier" instead of "#identifier"
                             // for compatibility with javadoc
                             tsym = env.enclClass.sym;
@@ -1136,6 +1164,10 @@ public class JavacTrees extends DocTrees {
         }
     }
 
+    public void putJavaFileObject(PackageSymbol psym, JavaFileObject jfo) {
+        javaFileObjectToPackageMap.putIfAbsent(jfo, psym);
+    }
+
     private TreePath makeTreePath(final JavaFileObject jfo) {
         JCCompilationUnit jcCompilationUnit = new JCCompilationUnit(List.nil()) {
             public int getPos() {
@@ -1157,7 +1189,15 @@ public class JavacTrees extends DocTrees {
             }
         };
         jcCompilationUnit.sourcefile = jfo;
-        enter.main(List.of(jcCompilationUnit));
+        PackageSymbol psym = javaFileObjectToPackageMap.getOrDefault(jfo,
+                syms.unnamedModule.unnamedPackage);
+        jcCompilationUnit.lineMap = jcCompilationUnit.getLineMap();
+        jcCompilationUnit.modle = syms.unnamedModule;
+        jcCompilationUnit.namedImportScope = new NamedImportScope(psym, jcCompilationUnit.toplevelScope);
+        jcCompilationUnit.packge = psym;
+        jcCompilationUnit.sourcefile = jfo;
+        jcCompilationUnit.starImportScope = new StarImportScope(psym);
+        jcCompilationUnit.toplevelScope = WriteableScope.create(psym);
         return new TreePath(jcCompilationUnit);
     }
 }

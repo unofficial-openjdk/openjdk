@@ -143,6 +143,19 @@ public class DocPaths {
     /** The name of the file for the package usage info. */
     public static final DocPath PACKAGE_USE = DocPath.create("package-use.html");
 
+    /** The name of the file for the module frame. */
+    public static DocPath moduleFrame(String moduleName) {
+        return DocPath.create(moduleName + "-frame.html");
+    }
+
+    /** The name of the file for the module summary. */
+    public static DocPath moduleSummary(String moduleName) {
+        return DocPath.create(moduleName + "-summary.html");
+    }
+
+    /** The name of the file for the overview frame. */
+    public static final DocPath MODULE_OVERVIEW_FRAME = DocPath.create("module-overview-frame.html");
+
     /** The name of the sub-package from which resources are read. */
     public static final DocPath RESOURCES = DocPath.create("resources");
 

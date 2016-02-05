@@ -109,6 +109,19 @@ public class MetaKeywords {
     }
 
     /**
+     * Get the module keywords.
+     *
+     * @param moduleName the module being documented
+     */
+    public List<String> getMetaKeywordsForModule(String moduleName) {
+        if (config.keywords) {
+            return Arrays.asList(moduleName + " " + "module");
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Get the overview keywords.
      */
     public List<String> getOverviewMetaKeywords(String title, String docTitle) {

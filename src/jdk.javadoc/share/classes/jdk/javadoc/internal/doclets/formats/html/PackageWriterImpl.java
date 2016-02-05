@@ -124,6 +124,15 @@ public class PackageWriterImpl extends HtmlDocletWriter
         }
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
+        String moduleName = configuration.getModule(packageElement);
+        if (moduleName != null && !moduleName.isEmpty()) {
+            Content moduleNameContent = new HtmlTree(HtmlTag.P);
+            moduleNameContent.addContent(moduleLabel);
+            moduleNameContent.addContent(getSpace());
+            moduleNameContent.addContent(getTargetModuleLink("classFrame",
+                    new StringContent(moduleName), moduleName));
+            div.addContent(moduleNameContent);
+        }
         Content annotationContent = new HtmlTree(HtmlTag.P);
         addAnnotationInfo(packageElement, annotationContent);
         div.addContent(annotationContent);

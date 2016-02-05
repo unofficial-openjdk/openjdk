@@ -60,6 +60,7 @@ import javax.lang.model.util.SimpleTypeVisitor9;
 import javax.lang.model.util.TypeKindVisitor9;
 import javax.lang.model.util.Types;
 import javax.tools.FileObject;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.StandardLocation;
 
 import com.sun.source.doctree.DocCommentTree;
@@ -1539,6 +1540,45 @@ public class Utils {
         return secondaryCollator.compare(s1, s2);
     }
 
+    public void copyDocFiles(Configuration configuration, Location locn, DocPath dir) {
+        try {
+            boolean first = true;
+            for (DocFile f : DocFile.list(configuration, locn, dir)) {
+                if (!f.isDirectory()) {
+                    continue;
+                }
+                DocFile srcdir = f;
+                DocFile destdir = DocFile.createFileForOutput(configuration, dir);
+                if (srcdir.isSameFile(destdir)) {
+                    continue;
+                }
+
+                for (DocFile srcfile: srcdir.list()) {
+                    DocFile destfile = destdir.resolve(srcfile.getName());
+                    if (srcfile.isFile()) {
+                        if (destfile.exists() && !first) {
+                            configuration.message.warning("doclet.Copy_Overwrite_warning",
+                                    srcfile.getPath(), destdir.getPath());
+                        } else {
+                            configuration.message.notice(
+                                    "doclet.Copying_File_0_To_Dir_1",
+                                    srcfile.getPath(), destdir.getPath());
+                            destfile.copyFile(srcfile);
+                        }
+                    } else if (srcfile.isDirectory()) {
+                        if (configuration.copydocfilesubdirs
+                                && !configuration.shouldExcludeDocFileDir(srcfile.getName())) {
+                            copyDocFiles(configuration, locn, dir.resolve(srcfile.getName()));
+                        }
+                    }
+                }
+
+                first = false;
+            }
+        } catch (SecurityException | IOException exc) {
+            throw new com.sun.tools.doclets.internal.toolkit.util.DocletAbortException(exc);
+        }
+    }
 
     private static class DocCollator {
         private final Map<String, CollationKey> keys;

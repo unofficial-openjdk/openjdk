@@ -102,6 +102,20 @@ public class BuilderFactory {
     }
 
     /**
+     * Return the builder that builds the module summary.
+     *
+     * @param module the module being documented.
+     * @param prevModule the previous module being documented.
+     * @param nextModule the next module being documented.
+     * @return the builder that builds the module summary.
+     */
+    public AbstractBuilder getModuleSummaryBuilder(String moduleName, String prevModuleName,
+            String nextModuleName) throws Exception {
+        return ModuleSummaryBuilder.getInstance(context, moduleName,
+            writerFactory.getModuleSummaryWriter(moduleName, prevModuleName, nextModuleName));
+    }
+
+    /**
      * Return the builder for the class.
      *
      * @param typeElement the class being documented.

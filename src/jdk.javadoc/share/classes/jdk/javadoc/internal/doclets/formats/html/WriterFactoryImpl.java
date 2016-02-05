@@ -38,6 +38,7 @@ import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.ClassWriter;
 import jdk.javadoc.internal.doclets.toolkit.ConstantsSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.MemberSummaryWriter;
+import jdk.javadoc.internal.doclets.toolkit.ModuleSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.PackageSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.SerializedFormWriter;
 import jdk.javadoc.internal.doclets.toolkit.WriterFactory;
@@ -79,6 +80,25 @@ public class WriterFactoryImpl implements WriterFactory {
             PackageElement prevPkg, PackageElement nextPkg) throws Exception {
         return new PackageWriterImpl(configuration, packageElement, prevPkg, nextPkg);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ModuleSummaryWriter getModuleSummaryWriter(String moduleName,
+        String prevModuleName, String nextModuleName) throws Exception {
+        return new ModuleWriterImpl(configuration, moduleName,
+            prevModuleName, nextModuleName);
+    }
+
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public ModulePackageSummaryWriter getModulePackageSummaryWriter(PackageDoc packageDoc,
+//        PackageDoc prevPkg, PackageDoc nextPkg, String moduleName) throws Exception {
+//        System.err.println("WriterFactoryImpl.getModulePackageSummaryWriter");
+//        return new ModulePackageWriterImpl(configuration, packageDoc,
+//            prevPkg, nextPkg, moduleName);
+//    }
 
     /**
      * {@inheritDoc}

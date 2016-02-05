@@ -68,6 +68,19 @@ public interface WriterFactory {
     throws Exception;
 
     /**
+     * Return the writer for the module summary.
+     *
+     * @param module the module being documented.
+     * @param prevModule the previous module that was documented.
+     * @param nextModule the next module being documented.
+     * @return the writer for the module summary.  Return null if this
+     * writer is not supported by the doclet.
+     */
+    public abstract ModuleSummaryWriter getModuleSummaryWriter(
+        String moduleName, String prevModuleName, String nextModuleName)
+    throws Exception;
+
+    /**
      * Return the writer for a class.
      *
      * @param typeElement the class being documented.
