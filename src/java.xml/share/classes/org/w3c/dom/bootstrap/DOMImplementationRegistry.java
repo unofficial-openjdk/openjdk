@@ -183,6 +183,7 @@ public final class DOMImplementationRegistry {
                 } else {
                     sourceClass = Class.forName(sourceName);
                 }
+                DOMImplementationRegistry.class.getModule().addReads(sourceClass.getModule());
                 DOMImplementationSource source =
                     (DOMImplementationSource) sourceClass.newInstance();
                 sources.addElement(source);
@@ -361,11 +362,11 @@ public final class DOMImplementationRegistry {
      */
     private static String getSystemProperty(final String name) {
         return AccessController.doPrivileged(new PrivilegedAction<>() {
-                    @Override
-                    public String run() {
-                        return System.getProperty(name);
-                    }
-                });
+                @Override
+                public String run() {
+                    return System.getProperty(name);
+                }
+            });
     }
 
     /**
