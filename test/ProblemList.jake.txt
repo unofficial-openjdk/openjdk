@@ -9,9 +9,16 @@
 # 8134485
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
-# Temporarily exclude until langtools repos is sync'ed up
+# 8149165 until indy string concat is enabled
 java/lang/invoke/InvokeDynamicPrintArgs.java                     generic-all
+java/lang/String/concat/ImplicitStringConcat.java                generic-all
+java/lang/String/concat/ImplicitStringConcatArgCount.java        generic-all
+java/lang/String/concat/ImplicitStringConcatBoundaries.java      generic-all
+java/lang/String/concat/ImplicitStringConcatMany.java            generic-all
+java/lang/String/concat/ImplicitStringConcatManyLongs.java       generic-all
+java/lang/String/concat/ImplicitStringConcatShapes.java          generic-all
 java/lang/String/concat/StringConcatFactoryInvariants.java       generic-all
+
 
 ############################################################################
 
