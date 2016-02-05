@@ -31,7 +31,6 @@
 
 package com.sun.corba.se.impl.util;
 
-import java.util.StringTokenizer;
 import java.util.Hashtable;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -796,6 +795,7 @@ public class RepositoryId {
             Class helperClazz = Utility.loadClassForClass(clazz.getName()+"Helper", null,
                                     clazz.getClassLoader(), clazz, clazz.getClassLoader());
             Method idMethod = helperClazz.getDeclaredMethod("id", kNoParamTypes);
+            Modules.ensureReadable(helperClazz);
             return (String)idMethod.invoke(null, kNoArgs);
         }
         catch(java.lang.ClassNotFoundException cnfe)
