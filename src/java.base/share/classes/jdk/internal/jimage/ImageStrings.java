@@ -25,8 +25,8 @@
 
 package jdk.internal.jimage;
 
-interface ImageStrings {
-    public UTF8String get(int offset);
+public interface ImageStrings {
+    public String get(int offset);
 
-    public int add(final UTF8String string);
+    public int add(final String string);
 }
