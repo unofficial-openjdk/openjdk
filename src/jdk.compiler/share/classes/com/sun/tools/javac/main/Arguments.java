@@ -28,8 +28,11 @@ package com.sun.tools.javac.main;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -38,7 +41,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.tools.JavaFileManager;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
@@ -247,14 +252,12 @@ public class Arguments {
      */
     public Set<JavaFileObject> getFileObjects() {
         if (fileObjects == null) {
-            if (files == null) {
-                fileObjects = Collections.emptySet();
-            } else {
-                fileObjects = new LinkedHashSet<>();
-                JavacFileManager jfm = (JavacFileManager) getFileManager();
-                for (JavaFileObject fo: jfm.getJavaFileObjectsFromFiles(files))
-                    fileObjects.add(fo);
-            }
+            fileObjects = new LinkedHashSet<>();
+        }
+        if (files != null) {
+            JavacFileManager jfm = (JavacFileManager) getFileManager();
+            for (JavaFileObject fo: jfm.getJavaFileObjectsFromFiles(files))
+                fileObjects.add(fo);
         }
         return fileObjects;
     }
@@ -397,13 +400,50 @@ public class Arguments {
      *      ILLEGAL_STATE
      */
     public boolean validate() {
+        if (options.isSet(Option.M)) {
+            if (!options.isSet(Option.MODULESOURCEPATH)) {
+                log.error("dash.modulesourcepath.option.must.be.used.with.dash.m.option");
+            } else if (!options.isSet(Option.D)) {
+                log.error("dash.d.option.must.be.used.with.dash.m.option");
+            } else {
+                java.util.List<String> modules = Arrays.asList(options.get(Option.M).split(","));
+                try {
+                    JavaFileManager fm = getFileManager();
+                    for (String module : modules) {
+                        Location sourceLoc = fm.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH, module);
+                        if (sourceLoc == null) {
+                            log.error("module.not.found.in.module.source.path", module);
+                        } else {
+                            Location classLoc = fm.getModuleLocation(StandardLocation.CLASS_OUTPUT, module);
+
+                            for (JavaFileObject file : fm.list(sourceLoc, "", EnumSet.of(JavaFileObject.Kind.SOURCE), true)) {
+                                String className = fm.inferBinaryName(sourceLoc, file);
+                                JavaFileObject classFile = fm.getJavaFileForInput(classLoc, className, Kind.CLASS);
+
+                                if (classFile == null || classFile.getLastModified() < file.getLastModified()) {
+                                    if (fileObjects == null)
+                                        fileObjects = new HashSet<>();
+                                    fileObjects.add(file);
+                                }
+                            }
+                        }
+                    }
+                } catch (IOException ex) {
+                    log.printLines(PrefixKind.JAVAC, "msg.io");
+                    ex.printStackTrace(log.getWriter(WriterKind.NOTICE));
+                    return false;
+                }
+            }
+        }
+
         if (isEmpty()) {
             // It is allowed to compile nothing if just asking for help or version info.
             // But also note that none of these options are supported in API mode.
             if (options.isSet(Option.HELP)
                 || options.isSet(Option.X)
                 || options.isSet(Option.VERSION)
-                || options.isSet(Option.FULLVERSION))
+                || options.isSet(Option.FULLVERSION)
+                || options.isSet(Option.M))
                 return true;
 
             if (JavaCompiler.explicitAnnotationProcessingRequested(options)) {
