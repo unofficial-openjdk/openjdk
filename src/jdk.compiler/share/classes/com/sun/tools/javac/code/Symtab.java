@@ -749,7 +749,7 @@ public class Symtab {
     }
 
     public void enterModule(ModuleSymbol msym, Name name) {
-        Assert.checkNull(modules.get(name));
+        Assert.checkNull(modules.get(name), () -> "module: " + msym + ", name:" + name);
         Assert.checkNull(msym.name);
         msym.name = name;
         addRootPackageFor(msym);

@@ -50,7 +50,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * module, an empty name is returned.
      *
      * @return the simple name of this module or an empty name if
-     * this is an unnamed package
+     * this is an unnamed module
      */
     @Override
     Name getSimpleName();
