@@ -84,7 +84,8 @@ class InstalledModuleFinder implements ModuleFinder {
         imageReader = ImageReaderFactory.getImageReader();
 
         String[] moduleNames = InstalledModules.MODULE_NAMES;
-        Map<String, ModuleDescriptor> descriptors = null;
+        ModuleDescriptor[] descriptors = null;
+
         boolean fastLoad = System.getProperty("jdk.installed.modules.disable") == null;
         if (fastLoad) {
             // fast loading of ModuleDescriptor of installed modules
@@ -97,11 +98,11 @@ class InstalledModuleFinder implements ModuleFinder {
         Set<ModuleReference> mods = new HashSet<>(n);
         Map<String, ModuleReference> map = new HashMap<>(n);
 
-        for (String mn : moduleNames) {
-            // parse the module-info.class file
-            final ModuleDescriptor md;
+        for (int i = 0; i < n; i++) {
+            String mn = moduleNames[i];
+            ModuleDescriptor md;
             if (fastLoad) {
-                md = descriptors.get(mn);
+                md = descriptors[i];
             } else {
                 // fallback to read module-info.class
                 // if fast loading of ModuleDescriptors is disabled

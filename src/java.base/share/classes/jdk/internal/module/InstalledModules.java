@@ -26,10 +26,6 @@
 package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /*
  * InstalledModules class will be generated at link time to create
@@ -44,9 +40,13 @@ import java.util.Set;
  */
 public final class InstalledModules {
     /**
-     * Name of the installed modules
+     * Name of the installed modules.
+     *
+     * This array provides a way for InstalledModuleFinder to fallback
+     * and read module-info.class from the run-time image instead of
+     * the fastpath.
      */
-    public final static String[] MODULE_NAMES = new String[1];
+    public static final String[] MODULE_NAMES = new String[1];
 
     /**
      * Number of packages in the boot layer from the installed modules.
@@ -54,24 +54,14 @@ public final class InstalledModules {
      * Don't make it final to avoid inlining during compile time as
      * the value will be changed at jlink time.
      */
-    public static int PACKAGES_IN_BOOT_LAYER = 1024;
+    public static final int PACKAGES_IN_BOOT_LAYER = 1024;
 
     /**
-     * Map of module name to a fast loaded ModuleDescriptor
-     * of all installed modules.
+     * Returns a non-empty array of ModuleDescriptors in the run-time image.
      *
-     * Empty if this fastpath is not used.
+     * When running an exploded image it returns an empty array.
      */
-    private final static Map<String, ModuleDescriptor> MAP = new HashMap<>();
-
-    /**
-     * Initialize the map of module name to ModuleDescriptor of the installed
-     * modules.
-     *
-     * * It must be a non-empty map if running on an image.  For exploded image,
-     * this map is empty.
-     */
-    public static Map<String, ModuleDescriptor> modules() {
-        return MAP;
+    public static ModuleDescriptor[] modules() {
+        return new ModuleDescriptor[0];
     }
 }
