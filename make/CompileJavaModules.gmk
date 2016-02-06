@@ -365,6 +365,7 @@ jdk.charsets_COPY := .dat
 
 # TODO: This needs to be reenabled before integration into jdk9
 #jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' -XDstringConcat=inline
+jdk.compiler_ADD_JAVAC_FLAGS := -XDstringConcat=inline
 jdk.compiler_COPY := javax.tools.JavaCompilerTool
 jdk.compiler_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
