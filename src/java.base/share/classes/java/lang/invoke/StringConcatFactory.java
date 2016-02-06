@@ -733,7 +733,7 @@ public final class StringConcatFactory {
         static final Unsafe UNSAFE = Unsafe.getUnsafe();
         static final int CLASSFILE_VERSION = 52;
         static final String NAME_FACTORY = "concat";
-        static final String CLASS_NAME = "java/lang/String$Concat";
+        static final String CLASS_NAME_SUFFIX = "$StringConcat";
 
         private BytecodeStringBuilderStrategy() {
             // no instantiation
@@ -742,9 +742,14 @@ public final class StringConcatFactory {
         private static MethodHandle generate(MethodHandles.Lookup lookup, MethodType args, Recipe recipe, Mode mode) throws Exception {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
 
+            Class<?> hostClass = lookup.lookupClass();
+
+            String prefix = hostClass.getName().replace('.', '/');
+            String cn = prefix + CLASS_NAME_SUFFIX;
+
             cw.visit(CLASSFILE_VERSION,
                     ACC_SUPER + ACC_PUBLIC + ACC_FINAL + ACC_SYNTHETIC,
-                    CLASS_NAME,
+                    cn,
                     null,
                     "java/lang/Object",
                     null
@@ -1019,9 +1024,8 @@ public final class StringConcatFactory {
             mv.visitEnd();
             cw.visitEnd();
 
-            Class<?> targetClass = lookup.lookupClass();
             final byte[] classBytes = cw.toByteArray();
-            final Class<?> innerClass = UNSAFE.defineAnonymousClass(targetClass, classBytes, null);
+            final Class<?> innerClass = UNSAFE.defineAnonymousClass(hostClass, classBytes, null);
 
             try {
                 UNSAFE.ensureClassInitialized(innerClass);
