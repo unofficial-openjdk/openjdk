@@ -138,8 +138,7 @@ public enum Target {
     /** Does the target JDK contain StringConcatFactory class?
      */
     public boolean hasStringConcatFactory() {
-        return false;
-        // return compareTo(JDK1_9) >= 0; TODO: Indy, enable this
+        return compareTo(JDK1_9) >= 0;
     }
 
 }
