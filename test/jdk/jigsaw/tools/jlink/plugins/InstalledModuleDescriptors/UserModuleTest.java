@@ -132,6 +132,8 @@ public class UserModuleTest {
      */
     @Test
     public void testDedupSet() throws Throwable {
+        if (!hasJmods()) return;
+
         Path dir = Paths.get("newImage");
         createImage(dir, "java.base", "m1", "m2", "m3");
         Path java = dir.resolve("bin").resolve("java");
