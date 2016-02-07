@@ -85,7 +85,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package impl; public class Impl { public void e(api.Api api) { api.actionPerformed(null); } }");
 
         tb.new JavacTask()
-                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString())
+                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString(), "-addmods", "java.desktop")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()

@@ -182,6 +182,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
             // Parse file objects provide via the DocumentationTool API
             parse(fileObjects, classTrees, true);
+            modules.enableAllModules();
             modules.enter(classTrees.toList(), null);
 
             syms.unnamedModule.complete(); // TEMP to force reading all named modules

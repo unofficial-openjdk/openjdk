@@ -182,7 +182,7 @@ public class ModulePathTest extends ModuleTestBase {
 
         tb.new JavacTask(ToolBox.Mode.CMDLINE)
                 .outdir(classes)
-                .options("-modulepath", moduleJar.toString())
+                .options("-modulepath", moduleJar.toString(), "-addmods", "m1")
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
