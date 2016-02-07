@@ -77,17 +77,24 @@ public class BasicTest {
      * The initial module is loaded from an exploded module
      */
     public void testRunWithExplodedModule() throws Exception {
-        String modulepath = MODS_DIR.toString();
+        String dir = MODS_DIR.toString();
+        String subdir = MODS_DIR.resolve(TEST_MODULE).toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
         // java -mp mods -m $TESTMODULE/$MAINCLASS
         int exitValue
-            = executeTestJava("-mp", modulepath,
-                              "-m", mid)
+            = executeTestJava("-mp", dir, "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
+        assertTrue(exitValue == 0);
 
+        // java -mp mods/$TESTMODULE -m $TESTMODULE/$MAINCLASS
+        exitValue
+            = executeTestJava("-mp", subdir, "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
         assertTrue(exitValue == 0);
     }
 

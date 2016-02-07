@@ -153,13 +153,17 @@ public interface ModuleFinder {
      * Creates a module finder that locates modules on the file system by
      * searching a sequence of directories and/or packaged modules.
      *
-     * Each entry in the given array is a path to a directory of modules or
-     * a path to a packaged module. A directory of modules contains zero or
-     * more modules that are packaged modules or modules that are exploded on
-     * the file system.
+     * Each element in the given array is a path to a directory of modules, a
+     * directory containing an <em>exploded module</em>, or a path to a packaged
+     * module. Each entry in a directory of modules is a packaged module or
+     * the <em>top-level</em> directory of an exploded module.
+     *
+     * If an element in the array is a path to a directory, and that directory
+     * contains a file named {@code module-info.class}, then the directory
+     * is treated as an exploded module rather than a directory of modules.
      *
      * Modules are located by the resulting {@code ModuleFinder} by searching
-     * the module directories or packaged modules in array index order.
+     * the module directories or packaged/exploded modules in array index order.
      *
      * This method supports modules that are packaged as modular JAR files.
      * It may also support modules that are packaged in other implementation

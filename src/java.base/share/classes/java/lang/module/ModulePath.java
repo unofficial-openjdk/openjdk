@@ -165,8 +165,8 @@ class ModulePath implements ConfigurableModuleFinder {
 
     /**
      * Scan the given module path entry. If the entry is a directory then it is
-     * a directory of modules. If the entry is a regular file then it is assumed
-     * to be a packaged module.
+     * a directory of modules or an exploded module. If the entry is a regular
+     * file then it is assumed to be a packaged module.
      *
      * @throws FindException if an error occurs scanning the entry
      */
@@ -175,20 +175,21 @@ class ModulePath implements ConfigurableModuleFinder {
             BasicFileAttributes attrs
                 = Files.readAttributes(entry, BasicFileAttributes.class);
 
-            // directory of modules
-            if (attrs.isDirectory())
-                return scanDirectory(entry);
+            if (attrs.isDirectory()) {
+                Path mi = entry.resolve(MODULE_INFO);
+                if (!Files.exists(mi)) {
+                    // does not exist or unable to determine so assume a
+                    // directory of modules
+                    return scanDirectory(entry);
+                }
+            }
 
-            // packaged module
-            if (attrs.isRegularFile()) {
-                try {
-                    ModuleReference mref = readPackagedModule(entry);
-                    if (mref != null) {
-                        String name = mref.descriptor().name();
-                        return Collections.singletonMap(name, mref);
-                    }
-                } catch (InvalidModuleDescriptorException e) {
-                    throw new FindException("Error reading module: " + entry, e);
+            if (attrs.isRegularFile() || attrs.isDirectory()) {
+                // packaged or exploded module
+                ModuleReference mref = readModule(entry, attrs);
+                if (mref != null) {
+                    String name = mref.descriptor().name();
+                    return Collections.singletonMap(name, mref);
                 }
             }
 
@@ -227,16 +228,7 @@ class ModulePath implements ConfigurableModuleFinder {
                     continue;
                 }
 
-                ModuleReference mref = null;
-                try {
-                    if (attrs.isRegularFile()) {
-                        mref = readPackagedModule(entry);
-                    } else if (attrs.isDirectory()) {
-                        mref = readExplodedModule(entry);
-                    }
-                } catch (InvalidModuleDescriptorException e) {
-                    throw new FindException("Error reading module: " + entry, e);
-                }
+                ModuleReference mref = readModule(entry, attrs);
 
                 // module found
                 if (mref != null) {
@@ -249,28 +241,41 @@ class ModulePath implements ConfigurableModuleFinder {
                     }
 
                 }
+
             }
         }
 
-        // return the map of modules found
         return nameToReference;
     }
 
+
     /**
-     * Reads a packaged module. Returns {@code null} if the module is not
-     * recognized as a packaged module.
+     * Locates a packaged or exploded module, returning a {@code ModuleReference}
+     * to the module. Returns {@code null} if the module is not recognized
+     * as a packaged or exploded module.
      *
-     * @throws IOException
-     * @throws FindException
-     * @throws InvalidModuleDescriptorException
+     * @throws IOException if an I/O error occurs
+     * @throws FindException if an error occurs parsing the module descriptor
      */
-    private ModuleReference readPackagedModule(Path entry) throws IOException {
-        if (entry.toString().endsWith(".jar")) {
-            return readJar(entry);
-        } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
-            return readJMod(entry);
-        } else {
-            return null;
+    private ModuleReference readModule(Path entry, BasicFileAttributes attrs)
+        throws IOException
+    {
+        try {
+
+            ModuleReference mref = null;
+            if (attrs.isDirectory()) {
+                mref = readExplodedModule(entry);
+            } if (attrs.isRegularFile()) {
+                if (entry.toString().endsWith(".jar")) {
+                    mref = readJar(entry);
+                } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
+                    mref = readJMod(entry);
+                }
+            }
+            return mref;
+
+        } catch (InvalidModuleDescriptorException e) {
+            throw new FindException("Error reading module: " + entry, e);
         }
     }
 
@@ -523,19 +528,18 @@ class ModulePath implements ConfigurableModuleFinder {
 
     /**
      * Returns a {@code ModuleReference} to an exploded module on the file
-     * system.
+     * system or {@code null} if {@code module-info.class} not found.
      */
     private ModuleReference readExplodedModule(Path dir) throws IOException {
         Path mi = dir.resolve(MODULE_INFO);
-        if (Files.notExists(mi)) {
-            // no module-info in directory
-            return null;
-        }
         URI location = dir.toUri();
         ModuleDescriptor md;
         try (InputStream in = Files.newInputStream(mi)) {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
+        } catch (NoSuchFileException e) {
+            // for now
+            return null;
         }
         return ModuleReferences.newModuleReference(md, location, null);
     }
