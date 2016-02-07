@@ -76,8 +76,7 @@ public class AddModsTest {
         compiled = CompilerUtils.compile(
             SRC_DIR.resolve(APP_SRC),
             CLASSES_DIR,
-            "-mp", MODS_DIR.toString(),
-            "-addmods", LIB_MODULE
+            "-mp", MODS_DIR.toString()
         );
         assertTrue(compiled, "app did not compile");
     }
