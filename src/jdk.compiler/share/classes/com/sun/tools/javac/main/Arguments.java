@@ -27,6 +27,7 @@ package com.sun.tools.javac.main;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -400,6 +401,7 @@ public class Arguments {
      *      ILLEGAL_STATE
      */
     public boolean validate() {
+        JavaFileManager fm = getFileManager();
         if (options.isSet(Option.M)) {
             if (!options.isSet(Option.MODULESOURCEPATH)) {
                 log.error("dash.modulesourcepath.option.must.be.used.with.dash.m.option");
@@ -408,7 +410,6 @@ public class Arguments {
             } else {
                 java.util.List<String> modules = Arrays.asList(options.get(Option.M).split(","));
                 try {
-                    JavaFileManager fm = getFileManager();
                     for (String module : modules) {
                         Location sourceLoc = fm.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH, module);
                         if (sourceLoc == null) {
@@ -464,6 +465,32 @@ public class Arguments {
             return false;
         }
 
+        // The following checks are to help avoid accidental confusion between
+        // directories of modules and exploded module directories.
+        if (fm instanceof StandardJavaFileManager) {
+            StandardJavaFileManager sfm = (StandardJavaFileManager) fileManager;
+            if (sfm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
+                Path outDir = sfm.getLocationAsPaths(StandardLocation.CLASS_OUTPUT).iterator().next();
+                if (sfm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
+                    // multi-module mode
+                    if (Files.exists(outDir.resolve("module-info.class"))) {
+                        log.error("multi-module.outdir.cannot.be.exploded.module", outDir);
+                    }
+                } else {
+                    // single-module or legacy mode
+                    boolean lintPaths = options.isUnset(Option.XLINT_CUSTOM,
+                            "-" + LintCategory.PATH.option);
+                    if (lintPaths) {
+                        Path outDirParent = outDir.getParent();
+                        if (outDirParent != null && Files.exists(outDirParent.resolve("module-info.class"))) {
+                            log.warning(LintCategory.PATH, "outdir.is.in.exploded.module", outDir);
+                        }
+                    }
+                }
+            }
+        }
+
+
         String sourceString = options.get(Option.SOURCE);
         Source source = (sourceString != null)
                 ? Source.lookup(sourceString)
@@ -515,7 +542,6 @@ public class Arguments {
         boolean lintOptions = options.isUnset(Option.XLINT_CUSTOM, "-" + LintCategory.OPTIONS.option);
 
         if (lintOptions && source.compareTo(Source.DEFAULT) < 0 && !options.isSet(Option.RELEASE)) {
-            JavaFileManager fm = getFileManager();
             if (fm instanceof BaseFileManager) {
                 if (((BaseFileManager) fm).isDefaultBootClassPath())
                     log.warning(LintCategory.OPTIONS, "source.no.bootclasspath", source.name);
@@ -551,8 +577,6 @@ public class Arguments {
                 Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
                 Option.SYSTEM, Option.MODULEPATH,
                 Option.XPATCH);
-
-        JavaFileManager fm = getFileManager();
 
         if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
             if (!options.isSet(Option.PROC, "only")
@@ -698,6 +722,7 @@ public class Arguments {
     }
 
     private void report(String key, Object... args) {
+        // Would be good to have support for -XDrawDiagnostics here
         log.printRawLines(ownName + ": " + log.localize(PrefixKind.JAVAC, key, args));
     }
 

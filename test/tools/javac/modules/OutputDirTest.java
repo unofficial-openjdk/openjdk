@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
  */
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -89,5 +90,76 @@ public class OutputDirTest extends ModuleTestBase {
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.SUCCESS)
                 .writeAll();
+    }
+
+    @Test
+    void testExplodedOutDir(Path base) throws Exception {
+        Path modSrc = base.resolve("modSrc");
+        tb.writeJavaFiles(modSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path modClasses = base.resolve("modClasses");
+        Files.createDirectories(modClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(modClasses)
+                .files(findJavaFiles(modSrc))
+                .run()
+                .writeAll();
+
+        Path src = base.resolve("src");
+        Path src_m = src.resolve("m");
+        tb.writeJavaFiles(src_m,
+                "module m { requires m1 ; }",
+                "class C { }");
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(modClasses) // an exploded module
+                .options("-XDrawDiagnostics",
+                        "-modulesourcepath", src.toString())
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("- compiler.err.multi-module.outdir.cannot.be.exploded.module: testExplodedOutDir/modClasses"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testInExplodedOutDir(Path base) throws Exception {
+        Path modSrc = base.resolve("modSrc");
+        tb.writeJavaFiles(modSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path modClasses = base.resolve("modClasses");
+        Files.createDirectories(modClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(modClasses)
+                .files(findJavaFiles(modSrc))
+                .run()
+                .writeAll();
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+
+        Path classes = modClasses.resolve("m");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes) // within an exploded module
+                .options("-XDrawDiagnostics",
+                        "-Xlint", "-Werror",
+                        "-modulepath", modClasses.toString())
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("- compiler.warn.outdir.is.in.exploded.module: testInExplodedOutDir/modClasses/m"))
+            throw new Exception("expected output not found");
     }
 }
