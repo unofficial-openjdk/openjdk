@@ -101,6 +101,61 @@ public class ModulePathTest extends ModuleTestBase {
     }
 
     @Test
+    void testExplodedModuleOnPath(Path base) throws Exception {
+        Path modSrc = base.resolve("modSrc");
+        tb.writeJavaFiles(modSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path modClasses = base.resolve("modClasses");
+        Files.createDirectories(modClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(modClasses)
+                .files(findJavaFiles(modSrc))
+                .run()
+                .writeAll();
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-modulepath", modClasses.toString())
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testBadExplodedModuleOnPath(Path base) throws Exception {
+        Path modClasses = base.resolve("modClasses");
+        tb.writeFile(modClasses.resolve("module-info.class"), "module m1 { }");
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-XDrawDiagnostics",
+                        "-modulepath", modClasses.toString())
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("- compiler.err.locn.bad.module-info: testBadExplodedModuleOnPath/modClasses"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
     void testAutoJarOnPath(Path base) throws Exception {
         Path jarSrc = base.resolve("jarSrc");
         tb.writeJavaFiles(jarSrc,

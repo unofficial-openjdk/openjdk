@@ -902,12 +902,7 @@ public class Locations {
             if (searchPath == null)
                 return Collections.emptyList();
 
-            return new Iterable<Set<Location>>() {
-                @Override
-                public Iterator<Set<Location>> iterator() {
-                    return new ModulePathIterator();
-                }
-            };
+            return () -> new ModulePathIterator();
         }
 
         @Override
@@ -952,44 +947,11 @@ public class Locations {
                     if (pathIter.hasNext()) {
                         Path path = pathIter.next();
                         if (Files.isDirectory(path)) {
-                            Set<Location> result = new LinkedHashSet<>();
-                            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-                                int index = 0;
-                                for (Path entry : stream) {
-                                    Pair<String,Path> module = inferModuleName(entry);
-                                    if (module == null) {
-                                        // diagnostic reported if necessary; skip to next
-                                        continue;
-                                    }
-                                    String moduleName = module.fst;
-                                    Path modulePath = module.snd;
-                                    String name = location.getName()
-                                            + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
-                                    ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
-                                            Collections.singleton(modulePath), false, true);
-                                    result.add(l);
-                                }
-                            } catch (DirectoryIteratorException | IOException ignore) {
-                                log.error("locn.cant.read.directory", path);
-                                // skip reading further files; return what we have so far, possibly none
-                            }
-                            next = result;
-                            pathIndex++;
+                            next = scanDirectory(path);
                         } else {
-                            Pair<String,Path> module = inferModuleName(path);
-                            if (module == null) {
-                                // diagnostic reported if necessary; skip to next
-                                continue;
-                            }
-                            String moduleName = module.fst;
-                            Path modulePath = module.snd;
-                            String name = location.getName()
-                                    + "[" + pathIndex + ":" + moduleName + "]";
-                            ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
-                                    Collections.singleton(modulePath), false, true);
-                            next = Collections.singleton(l);
-                            pathIndex++;
+                            next = scanFile(path);
                         }
+                        pathIndex++;
                     } else
                         return false;
                 }
@@ -1005,6 +967,77 @@ public class Locations {
                     return result;
                 }
                 throw new NoSuchElementException();
+            }
+
+            private Set<Location> scanDirectory(Path path) {
+                Set<Path> paths = new LinkedHashSet<>();
+                Path moduleInfoClass = null;
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+                    for (Path entry: stream) {
+                        if (entry.endsWith("module-info.class")) {
+                            moduleInfoClass = entry;
+                            break;  // no need to continue scanning
+                        }
+                        paths.add(entry);
+                    }
+                } catch (DirectoryIteratorException | IOException ignore) {
+                    log.error("locn.cant.read.directory", path);
+                    return Collections.emptySet();
+                }
+
+                if (moduleInfoClass != null) {
+                    // It's an exploded module directly on the module path.
+                    // We can't infer module name from the directory name, so have to
+                    // read module-info.class.
+                    try {
+                        String moduleName = readModuleName(moduleInfoClass);
+                        String name = location.getName()
+                                + "[" + pathIndex + ":" + moduleName + "]";
+                        ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                                Collections.singleton(path), false, true);
+                        return Collections.singleton(l);
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", path);
+                        return Collections.emptySet();
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", path);
+                        return Collections.emptySet();
+                    }
+                }
+
+                // A directory of modules
+                Set<Location> result = new LinkedHashSet<>();
+                int index = 0;
+                for (Path entry : paths) {
+                    Pair<String,Path> module = inferModuleName(entry);
+                    if (module == null) {
+                        // diagnostic reported if necessary; skip to next
+                        continue;
+                    }
+                    String moduleName = module.fst;
+                    Path modulePath = module.snd;
+                    String name = location.getName()
+                            + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
+                    ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                            Collections.singleton(modulePath), false, true);
+                    result.add(l);
+                }
+                return result;
+            }
+
+            private Set<Location> scanFile(Path path) {
+                Pair<String,Path> module = inferModuleName(path);
+                if (module == null) {
+                    // diagnostic reported if necessary
+                    return Collections.emptySet();
+                }
+                String moduleName = module.fst;
+                Path modulePath = module.snd;
+                String name = location.getName()
+                        + "[" + pathIndex + ":" + moduleName + "]";
+                ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                        Collections.singleton(modulePath), false, true);
+                return Collections.singleton(l);
             }
 
             private Pair<String,Path> inferModuleName(Path p) {
