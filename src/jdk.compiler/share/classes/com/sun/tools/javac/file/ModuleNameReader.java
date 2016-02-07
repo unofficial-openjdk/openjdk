@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,7 +179,6 @@ public class ModuleNameReader {
     }
 
     private boolean endsWith(byte[] buf, int start, int len, String suffix) {
-        System.err.println("checking " + new String(buf, start, len));
         if (len <= suffix.length())
             return false;
         for (int i = 0; i < suffix.length(); i++) {

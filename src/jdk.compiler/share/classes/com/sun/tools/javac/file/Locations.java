@@ -300,10 +300,13 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file) && !file.endsWith("modules")) {
+                if (!isArchive(file)
+                        && !file.getFileName().toString().endsWith(".jmod")
+                        && !file.endsWith("modules")) {
                     /* Not a recognized extension; open it to see if
                      it looks like a valid zip file. */
                     try {
+                        // TODO: use of ZipFile should be updated
                         ZipFile z = new ZipFile(file.toFile());
                         z.close();
                         if (warn) {
@@ -911,11 +914,28 @@ public class Locations {
         void setPaths(Iterable<? extends Path> paths) {
             if (paths != null) {
                 for (Path p: paths) {
-                    if (!Files.isDirectory(p))
-                        throw new IllegalArgumentException(p.toString());
+                    checkValidModulePathEntry(p);
                 }
             }
             super.setPaths(paths);
+        }
+
+        private void checkValidModulePathEntry(Path p) {
+            if (Files.isDirectory(p)) {
+                // either an exploded module or a directory of modules
+                return;
+            }
+
+            String name = p.getFileName().toString();
+            int lastDot = name.lastIndexOf(".");
+            if (lastDot > 0) {
+                switch (name.substring(lastDot)) {
+                    case ".jar":
+                    case ".jmod":
+                        return;
+                }
+            }
+            throw new IllegalArgumentException(p.toString());
         }
 
         class ModulePathIterator implements Iterator<Set<Location>> {
@@ -938,7 +958,7 @@ public class Locations {
                                 for (Path entry : stream) {
                                     Pair<String,Path> module = inferModuleName(entry);
                                     if (module == null) {
-                                        // could add diagnostic here about bad item on path
+                                        // diagnostic reported if necessary; skip to next
                                         continue;
                                     }
                                     String moduleName = module.fst;
@@ -950,14 +970,15 @@ public class Locations {
                                     result.add(l);
                                 }
                             } catch (DirectoryIteratorException | IOException ignore) {
-                                // report diagnostic?
+                                log.error("locn.cant.read.directory", path);
+                                // skip reading further files; return what we have so far, possibly none
                             }
                             next = result;
                             pathIndex++;
                         } else {
                             Pair<String,Path> module = inferModuleName(path);
                             if (module == null) {
-                                // could add diagnostic here about bad item in directory
+                                // diagnostic reported if necessary; skip to next
                                 continue;
                             }
                             String moduleName = module.fst;
@@ -998,11 +1019,19 @@ public class Locations {
 
                 if (p.getFileName().toString().endsWith(".jar")) {
                     try (FileSystem fs = FileSystems.newFileSystem(p, null)) {
-                        String moduleName = readModuleName(fs.getPath("module-info.class"));
-                        return new Pair<>(moduleName, p);
-                    } catch (IOException ignore) {
-                    } catch (ModuleNameReader.BadClassFile ignore) {
+                        Path moduleInfoClass = fs.getPath("module-info.class");
+                        if (Files.exists(moduleInfoClass)) {
+                            String moduleName = readModuleName(moduleInfoClass);
+                            return new Pair<>(moduleName, p);
+                        }
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", p);
+                        return null;
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
                     }
+
                     //automatic module:
                     String fn = p.getFileName().toString();
                     //from ModulePath.deriveModuleDescriptor:
@@ -1029,6 +1058,7 @@ public class Locations {
                         return new Pair<>(mn, p);
                     }
 
+                    log.error("locn.cant.get.module.name.for.jar", p);
                     return null;
                 }
 
@@ -1039,7 +1069,8 @@ public class Locations {
                             URI uri = URI.create("jar:" + p.toUri());
                             fs = FileSystems.newFileSystem(uri, Collections.emptyMap(), null);
                             try {
-                                String moduleName = readModuleName(fs.getPath("classes/module-info.class"));
+                                Path moduleInfoClass = fs.getPath("classes/module-info.class");
+                                String moduleName = readModuleName(moduleInfoClass);
                                 Path modulePath = fs.getPath("classes");
                                 fileSystems.put(p, fs);
                                 closeables.add(fs);
@@ -1050,13 +1081,22 @@ public class Locations {
                                     fs.close();
                             }
                         }
-                    } catch (UnsupportedOperationException ignore) {
+                    } catch (ProviderNotFoundException e) {
                         // will be thrown if the file is not a valid zip file
-                    } catch (IOException ignore) {
-                    } catch (ModuleNameReader.BadClassFile ignore) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", p);
+                        return null;
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
                     }
                 }
 
+                if (warn && false) {  // temp disable
+                    log.warning("locn.unknown.file.on.module.path", p);
+                }
                 return null;
             }
 
