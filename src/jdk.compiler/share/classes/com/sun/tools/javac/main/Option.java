@@ -579,6 +579,9 @@ public enum Option {
 
     M("-m", "opt.arg.m", "opt.m", STANDARD, BASIC),
 
+    ADDMODS("-addmods", "opt.arg.addmods", "opt.addmods", EXTENDED, BASIC),
+    LIMITMODS("-limitmods", "opt.arg.limitmods", "opt.limitmods", EXTENDED, BASIC),
+
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
     AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true) {
