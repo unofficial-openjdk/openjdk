@@ -290,11 +290,6 @@ public class Flags {
     //TODO: can this be 1L << 0 or alike?
     public static final long AUTOMATIC_MODULE = 1L<<52;
 
-    /**
-     * Flag to indicate the given ModuleSymbol is a system module.
-     */
-    public static final long SYSTEM_MODULE = 1L<<53;
-
     /** Modifier masks.
      */
     public static final int
