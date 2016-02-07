@@ -44,7 +44,7 @@ public class MOptionTest extends ModuleTestBase {
         new MOptionTest().runTests();
     }
 
-//    @Test
+    @Test
     void testOneModule(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");
@@ -109,8 +109,8 @@ public class MOptionTest extends ModuleTestBase {
         }
     }
 
-//    @Test
-    void testNoDashDOption(Path base) throws Exception {
+    @Test
+    void testNoOutputDir(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");
         Path build = base.resolve("build");
@@ -121,17 +121,19 @@ public class MOptionTest extends ModuleTestBase {
                 "package test; public class Test {}");
 
         String log = tb.new JavacTask()
-                .options("-m", "m1", "-modulesourcepath", src.toString())
+                .options("-XDrawDiagnostics",
+                    "-m", "m1",
+                    "-modulesourcepath", src.toString())
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("error: -d option must be used if -m option is provided"))
+        if (!log.contains("- compiler.err.output.dir.must.be.specified.with.dash.m.option"))
             throw new Exception("expected output not found");
     }
 
     @Test
-    void testNoDashModuleSourcePathOption(Path base) throws Exception {
+    void testNoModuleSourcePath(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");
         Path build = base.resolve("build");
@@ -142,16 +144,18 @@ public class MOptionTest extends ModuleTestBase {
                 "package test; public class Test {}");
 
         String log = tb.new JavacTask()
-                .options("-m", "m1", "-d", build.toString())
+                .options("-XDrawDiagnostics",
+                        "-m", "m1",
+                        "-d", build.toString())
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("error: -modulesourcepath option must be used if -m option is provided"))
+        if (!log.contains("- compiler.err.modulesourcepath.must.be.specified.with.dash.m.option"))
             throw new Exception("expected output not found");
     }
 
-//    @Test
+    @Test
     void testMultiModule(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");

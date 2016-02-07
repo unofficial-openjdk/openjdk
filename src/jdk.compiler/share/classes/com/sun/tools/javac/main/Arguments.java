@@ -403,10 +403,10 @@ public class Arguments {
     public boolean validate() {
         JavaFileManager fm = getFileManager();
         if (options.isSet(Option.M)) {
-            if (!options.isSet(Option.MODULESOURCEPATH)) {
-                log.error("dash.modulesourcepath.option.must.be.used.with.dash.m.option");
-            } else if (!options.isSet(Option.D)) {
-                log.error("dash.d.option.must.be.used.with.dash.m.option");
+            if (!fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
+                log.error("output.dir.must.be.specified.with.dash.m.option");
+            } else if (!fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
+                log.error("modulesourcepath.must.be.specified.with.dash.m.option");
             } else {
                 java.util.List<String> modules = Arrays.asList(options.get(Option.M).split(","));
                 try {
