@@ -67,7 +67,8 @@ public class ResourcesTest {
         compiled = CompilerUtils
             .compile(Paths.get(TEST_SRC, "Main.java"),
                      CLASSES_DIR,
-                     "-mp", MODS_DIR.toString());
+                     "-mp", MODS_DIR.toString(),
+                     "-addmods", "m1,m2,m3");
         assertTrue(compiled);
     }
 
