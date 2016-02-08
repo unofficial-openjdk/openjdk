@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,9 +97,14 @@ public class Main
         args.add("empty");
 
         if (!stdBootClassPath) {
-            args.add("-bootclasspath");
-            args.add("empty");
+            args.add("-system");
+            args.add("none");
         }
+
+        args.add("-XDaccessInternalAPI");
+        args.add("-XaddReads:java.base=ALL-UNNAMED");
+        args.add("-Xmodule:java.base");
+
         args.add("-d");
         args.add(".");
         for (String f: files)

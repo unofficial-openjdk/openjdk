@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,7 +131,11 @@ public class TestClose implements TaskListener {
                 List<? extends JavaFileObject> files = Arrays.asList(
                         new MemFile("AnnoProc.java", annoProc),
                         new MemFile("Callback.java", callback));
-                List<String> options = Arrays.asList("-XDaccessInternalAPI");
+                List<String> options = Arrays.asList(
+                        "-XaddExports:"
+                        + "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED,"
+                        + "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+                        "-XDaccessInternalAPI");
                 JavacTask task = tool.getTask(null, fm, null, options, null, files);
                 check(task.call());
             }
