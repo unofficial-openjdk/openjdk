@@ -116,6 +116,20 @@ public enum ToolOption {
         }
     },
 
+    ADDMODS("-addmods", true) {
+        @Override
+        public void process(Helper helper, String arg) {
+            helper.setCompilerOpt(opt, arg);
+        }
+    },
+
+    LIMITMODS("-limitmods", true) {
+        @Override
+        public void process(Helper helper, String arg) {
+            helper.setCompilerOpt(opt, arg);
+        }
+    },
+
     ENCODING("-encoding", true) {
         @Override
         public void process(Helper helper, String arg) {
