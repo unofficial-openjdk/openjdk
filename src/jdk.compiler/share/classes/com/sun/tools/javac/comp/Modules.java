@@ -308,7 +308,7 @@ public class Modules extends JCTree.Visitor {
                         tree.modle = msym;
                         rootModules.add(msym);
                     } else {
-                        log.error(tree.pos(), "cant.determine.module");
+                        log.error(tree.pos(), "unnamed.pkg.not.allowed.named.modules");
                         tree.modle = syms.errModule;
                     }
                 } catch (IOException e) {
