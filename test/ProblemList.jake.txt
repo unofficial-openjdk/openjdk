@@ -42,12 +42,6 @@ tools/javac/tree/ScopeTest.java                                                 
 tools/javac/diags/MessageInfo.java                                              0 generic-all   addExports
 tools/javac/diags/RunExamples.java                                              0 generic-all   addExports
 
-#####javac Indy/String Concat###################################################
-tools/javac/TestIndyStringConcat.java                                           
-0 generic-all Indy/Concat enabled in Target.java
-
-test/tools/javac/T5024091/T5024091.java                                         0 generic-all Indy/Concat enabled in Target.java
-
 ##### javah ####################################################################
 
 tools/javah/T7185778.java                                                       0 generic-all   Can't find class file, maybe similar to tools/javac/processing/options/testCommandLineClasses/Test.java

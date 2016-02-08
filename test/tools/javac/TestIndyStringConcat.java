@@ -60,7 +60,8 @@ public class TestIndyStringConcat {
             boolean indifiedStringConcat = false;
             ex.printStackTrace();
             for (StackTraceElement e : ex.getStackTrace()) {
-                if (e.getClassName().startsWith("java.lang.String$Concat") &&
+                System.err.println(">> " + e + ": " + e.getClassName());
+                if (e.getClassName().startsWith("TestIndyStringConcat$StringConcat") &&
                         e.getMethodName().equals("concat")) {
                     indifiedStringConcat = true;
                     break;
