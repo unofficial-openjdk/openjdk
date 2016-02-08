@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,9 +101,9 @@ public class VisibleMemberMap {
     private final Configuration configuration;
     private final Utils utils;
 
-    private static final Map<ClassDoc, ProgramElementDoc[]> propertiesCache = new HashMap<>();
-    private static final Map<ProgramElementDoc, ProgramElementDoc> classPropertiesMap = new HashMap<>();
-    private static final Map<ProgramElementDoc, GetterSetter> getterSetterMap = new HashMap<>();
+    private final Map<ClassDoc, ProgramElementDoc[]> propertiesCache;
+    private final Map<ProgramElementDoc, ProgramElementDoc> classPropertiesMap;
+    private final Map<ProgramElementDoc, GetterSetter> getterSetterMap;
 
     /**
      * Construct a VisibleMemberMap of the given type for the given
@@ -123,6 +123,9 @@ public class VisibleMemberMap {
         this.kind = kind;
         this.configuration = configuration;
         this.utils = configuration.utils;
+        propertiesCache = configuration.propertiesCache;
+        classPropertiesMap = configuration.classPropertiesMap;
+        getterSetterMap = configuration.getterSetterMap;
         new ClassMembers(classdoc, STARTLEVEL).build();
     }
 
@@ -248,7 +251,7 @@ public class VisibleMemberMap {
         for (ProgramElementDoc element : list) {
             Object key = getMemberKey(element);
             Map<ProgramElementDoc, String> memberLevelMap = memberNameMap.get(key);
-            if (level.equals(memberLevelMap.get(element)))
+            if (memberLevelMap != null && level.equals(memberLevelMap.get(element)))
                 memberLevelMap.remove(element);
         }
     }
@@ -713,7 +716,7 @@ public class VisibleMemberMap {
         }
     }
 
-    private class GetterSetter {
+    public class GetterSetter {
         private final ProgramElementDoc getter;
         private final ProgramElementDoc setter;
 

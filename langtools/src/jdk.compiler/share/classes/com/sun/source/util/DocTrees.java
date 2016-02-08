@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ import com.sun.source.doctree.DocTree;
  *
  * @since 1.8
  */
-@jdk.Exported
 public abstract class DocTrees extends Trees {
     /**
      * Returns a DocTrees object for a given CompilationTask.
@@ -73,7 +72,7 @@ public abstract class DocTrees extends Trees {
      * Returns {@code null} if none has been specified.
      * @return the break iterator
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract BreakIterator getBreakIterator();
 
@@ -91,7 +90,7 @@ public abstract class DocTrees extends Trees {
      * @param e an element whose documentation is required
      * @return the doc comment tree
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract DocCommentTree getDocCommentTree(Element e);
 
@@ -105,7 +104,7 @@ public abstract class DocTrees extends Trees {
      * @param fileObject the content container
      * @return the doc comment tree
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract DocCommentTree getDocCommentTree(FileObject fileObject);
 
@@ -122,9 +121,23 @@ public abstract class DocTrees extends Trees {
      * @return the doc comment tree
      * @throws java.io.IOException if an exception occurs
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract DocCommentTree getDocCommentTree(Element e, String relativePath) throws IOException;
+
+    /**
+     * Returns a doc tree path containing the doc comment tree of the given file.
+     * The file must be an HTML file, in which case the doc comment tree represents the
+     * contents of the &lt;body&gt; tag, and any enclosing tags are ignored.
+     * Returns {@code null} if no doc comment was found.
+     * Future releases may support additional file types.
+     *
+     * @param fileObject the content container
+     * @return a doc tree path containing the doc comment read from the given file.
+     *
+     * @since 9
+     */
+    public abstract DocTreePath getDocTreePath(FileObject fileObject);
 
     /**
      * Returns the language model element referred to by the leaf node of the given
@@ -141,7 +154,7 @@ public abstract class DocTrees extends Trees {
      * @param list the DocTree list to interrogate
      * @return the first sentence
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract List<DocTree> getFirstSentence(List<? extends DocTree> list);
 
@@ -173,7 +186,15 @@ public abstract class DocTrees extends Trees {
      * @param breakiterator a break iterator or {@code null} to specify the default
      *                      sentence breaker
      *
-     * @since 1.9
+     * @since 9
      */
     public abstract void setBreakIterator(BreakIterator breakiterator);
+
+    /**
+     * Returns a utility object for creating {@code DocTree} objects.
+     * @return  a utility object for creating {@code DocTree} objects
+     *
+     * @since 9
+     */
+    public abstract DocTreeFactory getDocTreeFactory();
 }
