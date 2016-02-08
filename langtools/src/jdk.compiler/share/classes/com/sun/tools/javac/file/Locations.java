@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,11 +117,8 @@ public class Locations {
 
     private ModuleNameReader moduleNameReader;
 
-    // Used by Locations(for now) to indicate that the PLATFORM_CLASS_PATH
-    // should use the jrt: file system.
-    // When Locations has been converted to use java.nio.file.Path,
-    // Locations can use Paths.get(URI.create("jrt:"))
-    static final Path JRT_MARKER_FILE = Paths.get("JRT_MARKER_FILE");
+    static final Path javaHome = Paths.get(System.getProperty("java.home"));
+    static final Path thisSystemModules = javaHome.resolve("lib").resolve("modules");
 
     Map<Path, FileSystem> fileSystems = new LinkedHashMap<>();
     List<Closeable> closeables = new ArrayList<>();
@@ -303,10 +300,13 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file) && !file.getFileName().toString().endsWith(".jimage")) {
+                if (!isArchive(file)
+                        && !file.getFileName().toString().endsWith(".jmod")
+                        && !file.endsWith("modules")) {
                     /* Not a recognized extension; open it to see if
                      it looks like a valid zip file. */
                     try {
+                        // TODO: use of ZipFile should be updated
                         ZipFile z = new ZipFile(file.toFile());
                         z.close();
                         if (warn) {
@@ -329,7 +329,7 @@ public class Locations {
             super.add(file);
             canonicalValues.add(canonFile);
 
-            if (expandJarClassPaths && fsInfo.isFile(file) && !file.getFileName().toString().endsWith(".jimage")) {
+            if (expandJarClassPaths && fsInfo.isFile(file) && !file.endsWith("modules")) {
                 addJarClassPath(file, warn);
             }
         }
@@ -696,8 +696,6 @@ public class Locations {
         }
 
         SearchPath computePath() throws IOException {
-            String java_home = System.getProperty("java.home");
-
             SearchPath path = new SearchPath();
 
             String bootclasspathOpt = optionValues.get(BOOTCLASSPATH);
@@ -717,7 +715,7 @@ public class Locations {
                 path.addFiles(bootclasspathOpt);
             } else {
                 // Standard system classes for this compiler's release.
-                Collection<Path> systemClasses = systemClasses(java_home);
+                Collection<Path> systemClasses = systemClasses();
                 if (systemClasses != null) {
                     path.addFiles(systemClasses, false);
                 } else {
@@ -736,7 +734,7 @@ public class Locations {
                 path.addDirectories(extdirsOpt);
             } else {
                 // Add lib/jfxrt.jar to the search path
-               Path jfxrt = Paths.get(java_home, "lib", "jfxrt.jar");
+               Path jfxrt = javaHome.resolve("lib/jfxrt.jar");
                 if (Files.exists(jfxrt)) {
                     path.addFile(jfxrt, false);
                 }
@@ -757,21 +755,14 @@ public class Locations {
          *
          * @throws UncheckedIOException if an I/O errors occurs
          */
-        private Collection<Path> systemClasses(String java_home) throws IOException {
-            // Return .jimage files if available
-            Path libModules = Paths.get(java_home, "lib", "modules");
-            if (Files.exists(libModules)) {
-                try (Stream<Path> files = Files.list(libModules)) {
-                    boolean haveJImageFiles =
-                            files.anyMatch(f -> f.getFileName().toString().endsWith(".jimage"));
-                    if (haveJImageFiles) {
-                        return addAdditionalBootEntries(Collections.singleton(JRT_MARKER_FILE));
-                    }
-                }
+        private Collection<Path> systemClasses() throws IOException {
+            // Return "modules" jimage file if available
+            if (Files.isRegularFile(thisSystemModules)) {
+                return addAdditionalBootEntries(Collections.singleton(thisSystemModules));
             }
 
             // Exploded module image
-            Path modules = Paths.get(java_home, "modules");
+            Path modules = javaHome.resolve("modules");
             if (Files.isDirectory(modules.resolve("java.base"))) {
                 try (Stream<Path> listedModules = Files.list(modules)) {
                     return addAdditionalBootEntries(listedModules.collect(Collectors.toList()));
@@ -796,9 +787,7 @@ public class Locations {
             paths.addAll(modules);
 
             for (String s : files.split(Pattern.quote(File.pathSeparator))) {
-                if (!s.isEmpty() && !s.endsWith(".jimage")) {
-                    paths.add(Paths.get(s));
-                }
+                paths.add(Paths.get(s));
             }
 
             return paths;
@@ -819,7 +808,7 @@ public class Locations {
     /**
      * A LocationHander to represent modules found from a module-oriented
      * location such as MODULE_SOURCE_PATH, UPGRADE_MODULE_PATH,
-     * SYSTEM_MODULE_PATH and MODULE_PATH.
+     * SYSTEM_MODULES and MODULE_PATH.
      *
      * The Location can be specified to accept overriding classes from the
      * -Xpatch:dir parameter.
@@ -913,23 +902,35 @@ public class Locations {
             if (searchPath == null)
                 return Collections.emptyList();
 
-            return new Iterable<Set<Location>>() {
-                @Override
-                public Iterator<Set<Location>> iterator() {
-                    return new ModulePathIterator();
-                }
-            };
+            return () -> new ModulePathIterator();
         }
 
         @Override
         void setPaths(Iterable<? extends Path> paths) {
             if (paths != null) {
                 for (Path p: paths) {
-                    if (!Files.isDirectory(p))
-                        throw new IllegalArgumentException(p.toString());
+                    checkValidModulePathEntry(p);
                 }
             }
             super.setPaths(paths);
+        }
+
+        private void checkValidModulePathEntry(Path p) {
+            if (Files.isDirectory(p)) {
+                // either an exploded module or a directory of modules
+                return;
+            }
+
+            String name = p.getFileName().toString();
+            int lastDot = name.lastIndexOf(".");
+            if (lastDot > 0) {
+                switch (name.substring(lastDot)) {
+                    case ".jar":
+                    case ".jmod":
+                        return;
+                }
+            }
+            throw new IllegalArgumentException(p.toString());
         }
 
         class ModulePathIterator implements Iterator<Set<Location>> {
@@ -946,31 +947,11 @@ public class Locations {
                     if (pathIter.hasNext()) {
                         Path path = pathIter.next();
                         if (Files.isDirectory(path)) {
-                            Set<Location> result = new LinkedHashSet<>();
-                            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-                                int index = 0;
-                                for (Path entry : stream) {
-                                    Pair<String,Path> module = inferModuleName(entry);
-                                    if (module == null) {
-                                        // could add diagnostic here about bad item in directory
-                                        continue;
-                                    }
-                                    String moduleName = module.fst;
-                                    Path modulePath = module.snd;
-                                    String name = location.getName()
-                                            + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
-                                    ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
-                                            Collections.singleton(modulePath), false, true);
-                                    result.add(l);
-                                }
-                            } catch (DirectoryIteratorException | IOException ignore) {
-                                // report diagnostic?
-                            }
-                            next = result;
-                            pathIndex++;
+                            next = scanDirectory(path);
                         } else {
-                            // could add diagnostic here about bad item on path
+                            next = scanFile(path);
                         }
+                        pathIndex++;
                     } else
                         return false;
                 }
@@ -988,6 +969,77 @@ public class Locations {
                 throw new NoSuchElementException();
             }
 
+            private Set<Location> scanDirectory(Path path) {
+                Set<Path> paths = new LinkedHashSet<>();
+                Path moduleInfoClass = null;
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+                    for (Path entry: stream) {
+                        if (entry.endsWith("module-info.class")) {
+                            moduleInfoClass = entry;
+                            break;  // no need to continue scanning
+                        }
+                        paths.add(entry);
+                    }
+                } catch (DirectoryIteratorException | IOException ignore) {
+                    log.error("locn.cant.read.directory", path);
+                    return Collections.emptySet();
+                }
+
+                if (moduleInfoClass != null) {
+                    // It's an exploded module directly on the module path.
+                    // We can't infer module name from the directory name, so have to
+                    // read module-info.class.
+                    try {
+                        String moduleName = readModuleName(moduleInfoClass);
+                        String name = location.getName()
+                                + "[" + pathIndex + ":" + moduleName + "]";
+                        ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                                Collections.singleton(path), false, true);
+                        return Collections.singleton(l);
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", path);
+                        return Collections.emptySet();
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", path);
+                        return Collections.emptySet();
+                    }
+                }
+
+                // A directory of modules
+                Set<Location> result = new LinkedHashSet<>();
+                int index = 0;
+                for (Path entry : paths) {
+                    Pair<String,Path> module = inferModuleName(entry);
+                    if (module == null) {
+                        // diagnostic reported if necessary; skip to next
+                        continue;
+                    }
+                    String moduleName = module.fst;
+                    Path modulePath = module.snd;
+                    String name = location.getName()
+                            + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
+                    ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                            Collections.singleton(modulePath), false, true);
+                    result.add(l);
+                }
+                return result;
+            }
+
+            private Set<Location> scanFile(Path path) {
+                Pair<String,Path> module = inferModuleName(path);
+                if (module == null) {
+                    // diagnostic reported if necessary
+                    return Collections.emptySet();
+                }
+                String moduleName = module.fst;
+                Path modulePath = module.snd;
+                String name = location.getName()
+                        + "[" + pathIndex + ":" + moduleName + "]";
+                ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                        Collections.singleton(modulePath), false, true);
+                return Collections.singleton(l);
+            }
+
             private Pair<String,Path> inferModuleName(Path p) {
                 if (Files.isDirectory(p)) {
                     if (Files.exists(p.resolve("module-info.class"))) {
@@ -1000,11 +1052,19 @@ public class Locations {
 
                 if (p.getFileName().toString().endsWith(".jar")) {
                     try (FileSystem fs = FileSystems.newFileSystem(p, null)) {
-                        String moduleName = readModuleName(fs.getPath("module-info.class"));
-                        return new Pair<>(moduleName, p);
-                    } catch (IOException ignore) {
-                    } catch (ModuleNameReader.BadClassFile ignore) {
+                        Path moduleInfoClass = fs.getPath("module-info.class");
+                        if (Files.exists(moduleInfoClass)) {
+                            String moduleName = readModuleName(moduleInfoClass);
+                            return new Pair<>(moduleName, p);
+                        }
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", p);
+                        return null;
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
                     }
+
                     //automatic module:
                     String fn = p.getFileName().toString();
                     //from ModulePath.deriveModuleDescriptor:
@@ -1031,6 +1091,7 @@ public class Locations {
                         return new Pair<>(mn, p);
                     }
 
+                    log.error("locn.cant.get.module.name.for.jar", p);
                     return null;
                 }
 
@@ -1041,7 +1102,8 @@ public class Locations {
                             URI uri = URI.create("jar:" + p.toUri());
                             fs = FileSystems.newFileSystem(uri, Collections.emptyMap(), null);
                             try {
-                                String moduleName = readModuleName(fs.getPath("classes/module-info.class"));
+                                Path moduleInfoClass = fs.getPath("classes/module-info.class");
+                                String moduleName = readModuleName(moduleInfoClass);
                                 Path modulePath = fs.getPath("classes");
                                 fileSystems.put(p, fs);
                                 closeables.add(fs);
@@ -1052,13 +1114,22 @@ public class Locations {
                                     fs.close();
                             }
                         }
-                    } catch (UnsupportedOperationException ignore) {
+                    } catch (ProviderNotFoundException e) {
                         // will be thrown if the file is not a valid zip file
-                    } catch (IOException ignore) {
-                    } catch (ModuleNameReader.BadClassFile ignore) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
+                    } catch (ModuleNameReader.BadClassFile e) {
+                        log.error("locn.bad.module-info", p);
+                        return null;
+                    } catch (IOException e) {
+                        log.error("locn.cant.read.file", p);
+                        return null;
                     }
                 }
 
+                if (warn && false) {  // temp disable
+                    log.warning("locn.unknown.file.on.module.path", p);
+                }
                 return null;
             }
 
@@ -1259,12 +1330,12 @@ public class Locations {
 
     }
 
-    private class SystemModulePathLocationHandler extends BasicLocationHandler {
+    private class SystemModulesLocationHandler extends BasicLocationHandler {
         private Path javaHome;
         private Path modules;
 
-        SystemModulePathLocationHandler() {
-            super(StandardLocation.SYSTEM_MODULE_PATH, Option.SYSTEMMODULEPATH);
+        SystemModulesLocationHandler() {
+            super(StandardLocation.SYSTEM_MODULES, Option.SYSTEM);
             javaHome = Paths.get(System.getProperty("java.home"));
         }
 
@@ -1336,20 +1407,28 @@ public class Locations {
 
             if (modules == null) {
                 try {
+                    URI jrtURI = URI.create("jrt:/");
                     FileSystem jrtfs;
 
                     if (isCurrentPlatform(javaHome)) {
-                        jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+                        jrtfs = FileSystems.getFileSystem(jrtURI);
                     } else {
-                        URL javaHomeURL = javaHome.resolve("jrt-fs.jar").toUri().toURL();
-                        ClassLoader currentLoader = Locations.class.getClassLoader();
-                        URLClassLoader fsLoader =
-                                new URLClassLoader(new URL[] {javaHomeURL}, currentLoader);
+                        try {
+                            Map<String, String> attrMap =
+                                    Collections.singletonMap("java.home", javaHome.toString());
+                            jrtfs = FileSystems.newFileSystem(jrtURI, attrMap);
+                        } catch (ProviderNotFoundException ex) {
+                            URL javaHomeURL = javaHome.resolve("jrt-fs.jar").toUri().toURL();
+                            ClassLoader currentLoader = Locations.class.getClassLoader();
+                            URLClassLoader fsLoader =
+                                    new URLClassLoader(new URL[] {javaHomeURL}, currentLoader);
 
-                        jrtfs = FileSystems.newFileSystem(URI.create("jrt:/"), Collections.emptyMap(), fsLoader);
+                            jrtfs = FileSystems.newFileSystem(jrtURI, Collections.emptyMap(), fsLoader);
+
+                            closeables.add(fsLoader);
+                        }
 
                         closeables.add(jrtfs);
-                        closeables.add(fsLoader);
                     }
 
                     modules = jrtfs.getPath("/modules");
@@ -1392,10 +1471,10 @@ public class Locations {
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
             new ModuleSourcePathLocationHandler(),
-            // TODO: should UPGRADE_MODULE_PATH be merged with SystemModulePath?
+            // TODO: should UPGRADE_MODULE_PATH be merged with SYSTEM_MODULES?
             new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
             new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
-            new SystemModulePathLocationHandler(),
+            new SystemModulesLocationHandler(),
         };
 
         for (BasicLocationHandler h : handlers) {

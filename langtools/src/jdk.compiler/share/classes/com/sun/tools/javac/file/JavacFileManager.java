@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -426,16 +426,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                                boolean recurse,
                                ListBuffer<JavaFileObject> resultList)
             throws IOException {
-        // Very temporary and obnoxious interim hack
-        if (container.endsWith("bootmodules.jimage")) {
-            System.err.println("Warning: reference to bootmodules.jimage replaced by jrt:");
-            container = Locations.JRT_MARKER_FILE;
-        } else if (container.getFileName().toString().endsWith(".jimage")) {
-            System.err.println("Warning: reference to " + container + " ignored");
-            return;
-        }
-
-        if (container == Locations.JRT_MARKER_FILE) {
+        if (Files.isRegularFile(container) && container.equals(Locations.thisSystemModules)) {
             try {
                 listJRTImage(subdirectory,
                         fileKinds,
@@ -530,9 +521,17 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
      */
     @Override @DefinedBy(Api.COMPILER)
     public void close() throws IOException {
+        if (deferredCloseTimeout > 0) {
+            deferredClose();
+            return;
+        }
+
         locations.close();
-        for (FileSystem fs: fileSystems.values())
+        for (FileSystem fs: fileSystems.values()) {
             fs.close();
+        }
+        fileSystems.clear();
+        contentCache.clear();
     }
 
     @Override @DefinedBy(Api.COMPILER)
@@ -644,14 +643,14 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             return null;
 
         for (Path file: path) {
-            if (file == Locations.JRT_MARKER_FILE) {
+            if (file.equals(Locations.thisSystemModules)) {
                 JRTIndex.Entry e = getJRTIndex().getEntry(name.dirname());
                 if (symbolFileEnabled && e.ctSym.hidden)
                     continue;
                 Path p = e.files.get(name.basename());
                 if (p != null)
                     return PathFileObject.forJRTPath(this, p);
-            } else if (fsInfo.isDirectory(file)) {
+            } else if (Files.isDirectory(file)) {
                 try {
                     Path f = name.resolveAgainst(file);
                     if (Files.exists(f))

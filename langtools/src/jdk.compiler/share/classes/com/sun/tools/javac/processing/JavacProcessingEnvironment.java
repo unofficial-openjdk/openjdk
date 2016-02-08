@@ -1491,9 +1491,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 boolean isModuleInfo = node.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
                 if (isModuleInfo) {
                     node.modle.reset();
+                    node.modle.completer = sym -> modules.enter(List.of(node), node.modle.module_info);
                     node.modle.module_info.reset();
-                    node.modle.module_info.classfile = null;
-                    node.modle.module_info.sourcefile = null;
                     node.modle.module_info.members_field = WriteableScope.create(node.modle.module_info);
                 }
                 node.packge = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ModulePathTest extends ModuleTestBase {
@@ -67,24 +68,6 @@ public class ModulePathTest extends ModuleTestBase {
     void testNotADirOnPath_1(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "class C { }");
-        tb.writeFile("dummy.jar", "");
-
-        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
-                .options("-XDrawDiagnostics",
-                        "-modulepath", "dummy.jar")
-                .files(findJavaFiles(src))
-                .run(ToolBox.Expect.FAIL)
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
-
-        if (!log.contains("- compiler.err.illegal.argument.for.option: -modulepath, dummy.jar"))
-            throw new Exception("expected output not found");
-    }
-
-    @Test
-    void testNotADirOnPath_2(Path base) throws Exception {
-        Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "class C { }");
         tb.writeFile("dummy.txt", "");
 
         String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
@@ -100,7 +83,7 @@ public class ModulePathTest extends ModuleTestBase {
     }
 
     @Test
-    void testNotADirOnPath_3(Path base) throws Exception {
+    void testNotADirOnPath_2(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "class C { }");
         tb.writeFile("dummy.jimage", "");
@@ -118,7 +101,182 @@ public class ModulePathTest extends ModuleTestBase {
     }
 
     @Test
-    void testNotADirOnPath_4(Path base) throws Exception {
+    void testExplodedModuleOnPath(Path base) throws Exception {
+        Path modSrc = base.resolve("modSrc");
+        tb.writeJavaFiles(modSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path modClasses = base.resolve("modClasses");
+        Files.createDirectories(modClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(modClasses)
+                .files(findJavaFiles(modSrc))
+                .run()
+                .writeAll();
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-modulepath", modClasses.toString())
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testBadExplodedModuleOnPath(Path base) throws Exception {
+        Path modClasses = base.resolve("modClasses");
+        tb.writeFile(modClasses.resolve("module-info.class"), "module m1 { }");
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-XDrawDiagnostics",
+                        "-modulepath", modClasses.toString())
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("- compiler.err.locn.bad.module-info: testBadExplodedModuleOnPath/modClasses"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testAutoJarOnPath(Path base) throws Exception {
+        Path jarSrc = base.resolve("jarSrc");
+        tb.writeJavaFiles(jarSrc,
+                "package p; public class CC { }");
+        Path jarClasses = base.resolve("jarClasses");
+        Files.createDirectories(jarClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(jarClasses)
+                .files(findJavaFiles(jarSrc))
+                .run()
+                .writeAll();
+
+        Path moduleJar = base.resolve("m1.jar");
+        tb.new JarTask(moduleJar)
+          .baseDir(jarClasses)
+          .files("p/CC.class")
+          .run();
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "class C { p.CC cc; }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-modulepath", moduleJar.toString(), "-addmods", "m1")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testModJarOnPath(Path base) throws Exception {
+        Path jarSrc = base.resolve("jarSrc");
+        tb.writeJavaFiles(jarSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path jarClasses = base.resolve("jarClasses");
+        Files.createDirectories(jarClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(jarClasses)
+                .files(findJavaFiles(jarSrc))
+                .run()
+                .writeAll();
+
+        Path moduleJar = base.resolve("myModule.jar"); // deliberately not m1
+        tb.new JarTask(moduleJar)
+          .baseDir(jarClasses)
+          .files("module-info.class", "p/CC.class")
+          .run();
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-modulepath", moduleJar.toString())
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testBadJarOnPath(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "class C { }");
+        tb.writeFile("dummy.jar", "");
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-XDrawDiagnostics",
+                        "-modulepath", "dummy.jar")
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("- compiler.err.locn.cant.read.file: dummy.jar"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testJModOnPath(Path base) throws Exception {
+        Path jmodSrc = base.resolve("jmodSrc");
+        tb.writeJavaFiles(jmodSrc,
+                "module m1 { exports p; }",
+                "package p; public class CC { }");
+        Path jmodClasses = base.resolve("jmodClasses");
+        Files.createDirectories(jmodClasses);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(jmodClasses)
+                .files(findJavaFiles(jmodSrc))
+                .run()
+                .writeAll();
+
+        Path jmod = base.resolve("myModule.jmod"); // deliberately not m1
+        jmod(jmodClasses, jmod);
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { requires m1 ; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .outdir(classes)
+                .options("-modulepath", jmod.toString())
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testBadJModOnPath(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "class C { }");
         tb.writeFile("dummy.jmod", "");
@@ -131,7 +289,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.illegal.argument.for.option: -modulepath, dummy.jmod"))
+        if (!log.contains("- compiler.err.locn.cant.read.file: dummy.jmod"))
             throw new Exception("expected output not found");
     }
 
@@ -248,6 +406,11 @@ public class ModulePathTest extends ModuleTestBase {
     }
 
     private void jmod(Path dir, Path jmod) throws Exception {
-        jdk.tools.jmod.Main.run(new String[]{"--create", "--class-path", dir.toString(), jmod.toString()}, System.out);
+        String[] args = {
+                "--create",
+                "--class-path", dir.toString(),
+                jmod.toString()
+        };
+        jdk.tools.jmod.Main.run(args, System.out);
     }
 }

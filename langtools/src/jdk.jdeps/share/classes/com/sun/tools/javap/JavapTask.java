@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -904,7 +904,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     private Location findModule(String moduleName) throws IOException {
         Location[] locns = {
             StandardLocation.UPGRADE_MODULE_PATH,
-            StandardLocation.SYSTEM_MODULE_PATH,
+            StandardLocation.SYSTEM_MODULES,
             StandardLocation.MODULE_PATH
         };
         for (Location segment: locns) {
@@ -936,7 +936,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         }
         String[] fmOptions = {
             "-classpath", "-cp", "-bootclasspath",
-            "-upgrademodulepath", "-systemmodulepath", "-modulepath" };
+            "-upgrademodulepath", "-system", "-modulepath" };
         for (String o: fmOptions) {
             if (fileManager.isSupportedOption(o) == -1)
                 continue;

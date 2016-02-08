@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public class RepeatedUsesAndProvidesTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:39: compiler.err.duplicate.provides: Provides[p1.C1,p2.C2]"))
+        if (!log.contains("module-info.java:1:39: compiler.err.duplicate.provides"))
             throw new Exception("expected output not found");
     }
 }

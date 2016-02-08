@@ -1,5 +1,7 @@
 ##### doclets ##################################################################
 
+tools/javadoc/api/basic/TagletPathTest.java                                     0 generic-all   addExports
+
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 generic-all   javadoc can't find {@link java.math}
 com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 generic-all   test includes code that adds class into java.lang
 
@@ -10,6 +12,14 @@ com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java                    
 com/sun/javadoc/testProfiles/TestProfiles.java                                  0 generic-all   rewrite for modules instead of profiles
 com/sun/javadoc/testProfiles/TestProfilesConfiguration.java                     0 generic-all   rewrite for modules instead of profiles
 com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            0 generic-all   update for modules instead of profiles
+
+##### new doclet ###############################################################
+
+jdk/javadoc/tool/6964914/TestUserDoclet.java                                    0 generic-all   jdk launcher must use new doclet main class
+
+jdk/javadoc/tool/EnsureNewOldDoclet.java                                        0 generic-all   jdk launcher must use new doclet main class
+
+jdk/javadoc/doclet/testLinkOption/TestLinkOption.java                           0 generic-all   test includes code that adds class into java.lang
 
 ##### javac ####################################################################
 
@@ -46,6 +56,12 @@ tools/javac/processing/loader/testClose/TestClose.java                          
 tools/javac/diags/MessageInfo.java                                              0 generic-all   addExports
 tools/javac/diags/RunExamples.java                                              0 generic-all   addExports
 tools/javac/api/taskListeners/CompileEvent.java                                 0 generic-all   addExports
+
+#####javac Indy/String Concat###################################################
+tools/javac/TestIndyStringConcat.java                                           
+0 generic-all Indy/Concat enabled in Target.java
+
+test/tools/javac/T5024091/T5024091.java                                         0 generic-all Indy/Concat enabled in Target.java
 
 ##### javah ####################################################################
 

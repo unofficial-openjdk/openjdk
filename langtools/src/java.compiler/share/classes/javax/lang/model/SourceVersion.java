@@ -55,7 +55,7 @@ public enum SourceVersion {
      * 1.6: no changes
      * 1.7: diamond syntax, try-with-resources, etc.
      * 1.8: lambda expressions and default methods
-     * 1.9: To be determined
+     * 9: To be determined
      */
 
     /**
@@ -145,7 +145,7 @@ public enum SourceVersion {
      * The version recognized by the Java Platform, Standard Edition
      * 9.
      *
-     * @since 1.9
+     * @since 9
      */
      RELEASE_9;
 

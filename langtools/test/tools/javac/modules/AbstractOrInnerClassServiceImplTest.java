@@ -58,7 +58,7 @@ public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:39: compiler.err.bad.service.implementation: p2.Impl"))
+        if (!log.contains("module-info.java:1:39: compiler.err.service.implementation.is.abstract: p2.Impl"))
             throw new Exception("expected output not found");
     }
 
@@ -79,7 +79,7 @@ public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:45: compiler.err.bad.service.implementation: p2.Outer.Inner"))
+        if (!log.contains("module-info.java:1:45: compiler.err.service.implementation.is.inner: p2.Outer.Inner"))
             throw new Exception("expected output not found");
     }
 
@@ -100,7 +100,7 @@ public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:45: compiler.err.bad.service.implementation: p2.Outer.Inner"))
+        if (!log.contains("module-info.java:1:45: compiler.err.service.implementation.is.abstract: p2.Outer.Inner"))
             throw new Exception("expected output not found");
     }
 }

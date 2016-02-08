@@ -89,6 +89,15 @@ public abstract class BaseFileManager implements JavaFileManager {
         options = Options.instance(context);
         classLoaderClass = options.get("procloader");
         locations.update(log, Lint.instance(context), FSInfo.instance(context));
+
+        String s = options.get("fileManager.deferClose");
+        if (s != null) {
+            try {
+                deferredCloseTimeout = (int) (Float.parseFloat(s) * 1000);
+            } catch (NumberFormatException e) {
+                deferredCloseTimeout = 60 * 1000;  // default: one minute, in millis
+            }
+        }
     }
 
     protected Locations createLocations() {
@@ -116,6 +125,38 @@ public abstract class BaseFileManager implements JavaFileManager {
      * be closed when it is no longer required.
      */
     public boolean autoClose;
+
+    protected void deferredClose() {
+        Thread t = new Thread(getClass().getName() + " DeferredClose") {
+            @Override
+            public void run() {
+                try {
+                    synchronized (BaseFileManager.this) {
+                        long now = System.currentTimeMillis();
+                        while (now < lastUsedTime + deferredCloseTimeout) {
+                            BaseFileManager.this.wait(lastUsedTime + deferredCloseTimeout - now);
+                            now = System.currentTimeMillis();
+                        }
+                        deferredCloseTimeout = 0;
+                        close();
+                    }
+                } catch (InterruptedException e) {
+                } catch (IOException e) {
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
+
+    synchronized void updateLastUsedTime() {
+        if (deferredCloseTimeout > 0) { // avoid updating the time unnecessarily
+            lastUsedTime = System.currentTimeMillis();
+        }
+    }
+
+    private long lastUsedTime = System.currentTimeMillis();
+    protected long deferredCloseTimeout = 0;
 
     protected Source getSource() {
         String sourceName = options.get(Option.SOURCE);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015-2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,13 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
+
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.TypeElement;
 
 public class SingleModuleModeTest extends ModuleTestBase{
 
@@ -98,5 +105,69 @@ public class SingleModuleModeTest extends ModuleTestBase{
                 .files(src.resolve("C.java"))
                 .run()
                 .writeAll();
+    }
+
+    @Test
+    void testImplicitModuleClassAP(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { uses java.lang.Runnable; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask()
+                .outdir(classes)
+                .files(src.resolve("module-info.java"))
+                .run()
+                .writeAll();
+
+        tb.new JavacTask()
+                .options("-processor", VerifyUsesProvides.class.getName(),
+                         "-processorpath", System.getProperty("test.classes"))
+                .outdir(classes)
+                .classpath(classes)
+                .files(src.resolve("C.java"))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testImplicitModuleSourceAP(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { uses java.lang.Runnable; }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask()
+                .options("-processor", VerifyUsesProvides.class.getName(),
+                         "-processorpath", System.getProperty("test.classes"))
+                .outdir(classes)
+                .sourcepath(src)
+                .classpath(classes)
+                .files(src.resolve("C.java"))
+                .run()
+                .writeAll();
+    }
+
+    @SupportedAnnotationTypes("*")
+    public static final class VerifyUsesProvides extends AbstractProcessor {
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            if (processingEnv.getElementUtils().getModuleElement("m") == null) {
+                throw new AssertionError();
+            }
+
+            return false;
+        }
+
+        @Override
+        public SourceVersion getSupportedSourceVersion() {
+            return SourceVersion.latest();
+        }
+
     }
 }

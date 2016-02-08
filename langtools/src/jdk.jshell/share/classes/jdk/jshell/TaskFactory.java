@@ -33,7 +33,6 @@ import com.sun.tools.javac.api.JavacTool;
 import com.sun.tools.javac.util.Context;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -56,6 +55,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import java.util.stream.Stream;
 import javax.lang.model.util.Elements;
 import javax.tools.FileObject;
@@ -196,7 +196,7 @@ class TaskFactory {
      */
     class ParseTask extends BaseTask {
 
-        private final CompilationUnitTree cut;
+        private final Iterable<? extends CompilationUnitTree> cuts;
         private final List<? extends Tree> units;
 
         ParseTask(final String source) {
@@ -204,16 +204,13 @@ class TaskFactory {
                     new StringSourceHandler(),
                     "-XDallowStringFolding=false", "-proc:none");
             ReplParserFactory.instance(getContext());
-            Iterable<? extends CompilationUnitTree> asts = parse();
-            Iterator<? extends CompilationUnitTree> it = asts.iterator();
-            if (it.hasNext()) {
-                this.cut = it.next();
-                List<? extends ImportTree> imps = cut.getImports();
-                this.units = !imps.isEmpty() ? imps : cut.getTypeDecls();
-            } else {
-                this.cut = null;
-                this.units = Collections.emptyList();
-            }
+            cuts = parse();
+            units = Util.stream(cuts)
+                    .flatMap(cut -> {
+                        List<? extends ImportTree> imps = cut.getImports();
+                        return (!imps.isEmpty() ? imps : cut.getTypeDecls()).stream();
+                    })
+                    .collect(toList());
         }
 
         private Iterable<? extends CompilationUnitTree> parse() {
@@ -229,8 +226,8 @@ class TaskFactory {
         }
 
         @Override
-        CompilationUnitTree cuTree() {
-            return cut;
+        Iterable<? extends CompilationUnitTree> cuTrees() {
+            return cuts;
         }
     }
 
@@ -239,7 +236,7 @@ class TaskFactory {
      */
     class AnalyzeTask extends BaseTask {
 
-        private final CompilationUnitTree cut;
+        private final Iterable<? extends CompilationUnitTree> cuts;
 
         AnalyzeTask(final OuterWrap wrap) {
             this(Stream.of(wrap),
@@ -255,14 +252,7 @@ class TaskFactory {
         <T>AnalyzeTask(final Stream<T> stream, SourceHandler<T> sourceHandler,
                 String... extraOptions) {
             super(stream, sourceHandler, extraOptions);
-            Iterator<? extends CompilationUnitTree> cuts = analyze().iterator();
-            if (cuts.hasNext()) {
-                this.cut = cuts.next();
-                //proc.debug("AnalyzeTask element=%s  cutp=%s  cut=%s\n", e, cutp, cut);
-            } else {
-                this.cut = null;
-                //proc.debug("AnalyzeTask -- no elements -- %s\n", getDiagnostics());
-            }
+            cuts = analyze();
         }
 
         private Iterable<? extends CompilationUnitTree> analyze() {
@@ -276,8 +266,8 @@ class TaskFactory {
         }
 
         @Override
-        CompilationUnitTree cuTree() {
-            return cut;
+        Iterable<? extends CompilationUnitTree> cuTrees() {
+            return cuts;
         }
 
         Elements getElements() {
@@ -332,7 +322,7 @@ class TaskFactory {
         }
 
         @Override
-        CompilationUnitTree cuTree() {
+        Iterable<? extends CompilationUnitTree> cuTrees() {
             throw new UnsupportedOperationException("Not supported.");
         }
     }
@@ -362,7 +352,11 @@ class TaskFactory {
                     compilationUnits, context);
         }
 
-        abstract CompilationUnitTree cuTree();
+        abstract Iterable<? extends CompilationUnitTree> cuTrees();
+
+        CompilationUnitTree firstCuTree() {
+            return cuTrees().iterator().next();
+        }
 
         Diag diag(Diagnostic<? extends JavaFileObject> diag) {
             return sourceHandler.diag(diag);
@@ -400,7 +394,7 @@ class TaskFactory {
                 LinkedHashMap<String, Diag> diagMap = new LinkedHashMap<>();
                 for (Diagnostic<? extends JavaFileObject> in : diagnostics.getDiagnostics()) {
                     Diag d = diag(in);
-                    String uniqueKey = d.getCode() + ":" + d.getPosition() + ":" + d.getMessage(null);
+                    String uniqueKey = d.getCode() + ":" + d.getPosition() + ":" + d.getMessage(PARSED_LOCALE);
                     diagMap.put(uniqueKey, d);
                 }
                 diags = new DiagList(diagMap.values());
@@ -415,7 +409,7 @@ class TaskFactory {
         String shortErrorMessage() {
             StringBuilder sb = new StringBuilder();
             for (Diag diag : getDiagnostics()) {
-                for (String line : diag.getMessage(null).split("\\r?\\n")) {
+                for (String line : diag.getMessage(PARSED_LOCALE).split("\\r?\\n")) {
                     if (!line.trim().startsWith("location:")) {
                         sb.append(line);
                     }
@@ -427,7 +421,7 @@ class TaskFactory {
         void debugPrintDiagnostics(String src) {
             for (Diag diag : getDiagnostics()) {
                 state.debug(DBG_GEN, "ERROR --\n");
-                for (String line : diag.getMessage(null).split("\\r?\\n")) {
+                for (String line : diag.getMessage(PARSED_LOCALE).split("\\r?\\n")) {
                     if (!line.trim().startsWith("location:")) {
                         state.debug(DBG_GEN, "%s\n", line);
                     }

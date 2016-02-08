@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ public enum StandardLocation implements Location {
      * Location to search for system modules.
      * @since 9
      */
-    SYSTEM_MODULE_PATH,
+    SYSTEM_MODULES,
 
     /**
      * Location to search for precompiled user modules.
@@ -153,7 +153,7 @@ public enum StandardLocation implements Location {
         switch (this) {
             case ANNOTATION_PROCESSOR_MODULE_PATH:
             case UPGRADE_MODULE_PATH:
-            case SYSTEM_MODULE_PATH:
+            case SYSTEM_MODULES:
             case MODULE_PATH:
                 return true;
             default:

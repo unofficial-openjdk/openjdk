@@ -239,7 +239,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
     private List<Suggestion> computeSuggestions(OuterWrap code, int cursor, int[] anchor) {
         AnalyzeTask at = proc.taskFactory.new AnalyzeTask(code);
         SourcePositions sp = at.trees().getSourcePositions();
-        CompilationUnitTree topLevel = at.cuTree();
+        CompilationUnitTree topLevel = at.firstCuTree();
         List<Suggestion> result = new ArrayList<>();
         TreePath tp = pathFor(topLevel, sp, code.snippetIndexToWrapIndex(cursor));
         if (tp != null) {
@@ -638,7 +638,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
 
     private void listPackages(Path path, String enclosing, Set<String> packages) {
         try {
-            if (path.equals(Paths.get("JRT_MARKER_FILE"))) {
+            if (path.equals(Paths.get(System.getProperty("java.home"), "lib", "modules"))) {
                 FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
                 Path modules = jrtfs.getPath("modules");
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(modules)) {
@@ -976,7 +976,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         OuterWrap codeWrap = wrapInClass(Wrap.methodWrap(code));
         AnalyzeTask at = proc.taskFactory.new AnalyzeTask(codeWrap);
         SourcePositions sp = at.trees().getSourcePositions();
-        CompilationUnitTree topLevel = at.cuTree();
+        CompilationUnitTree topLevel = at.firstCuTree();
         TreePath tp = pathFor(topLevel, sp, codeWrap.snippetIndexToWrapIndex(cursor));
 
         if (tp == null)
