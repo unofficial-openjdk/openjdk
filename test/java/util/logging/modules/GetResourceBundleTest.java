@@ -68,7 +68,7 @@ public class GetResourceBundleTest {
                     "-modulesourcepath", MOD_SRC_DIR.toString()));
         }
         assertTrue(CompilerUtils.compile(PKG_SRC_DIR, PKG_DEST_DIR,
-                "-modulepath", MOD_DEST_DIR.toString()));
+                "-modulepath", MOD_DEST_DIR.toString(), "-addmods", String.join(",", modules)));
 
         // copy resource files
         String[] files = { "m1/p1/resource/p.properties", "m2/p2/resource/p.properties" };
