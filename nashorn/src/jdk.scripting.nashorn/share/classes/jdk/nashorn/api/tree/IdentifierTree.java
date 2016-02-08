@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>name</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface IdentifierTree extends ExpressionTree {
     /**
      * Returns the name of this identifier.

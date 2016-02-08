@@ -124,6 +124,7 @@ var contextCls = java.lang.Class.forName("jdk.nashorn.internal.runtime.Context")
 var sourceCls = Source.class;
 var errorMgrCls = Java.type("jdk.nashorn.internal.runtime.ErrorManager").class;
 var booleanCls = Java.type("java.lang.Boolean").TYPE;
+var stringCls = Java.type("java.lang.String").class;
 
 // private compile method of Context class
 var compileMethod = contextCls.getDeclaredMethod("compile",
@@ -133,9 +134,10 @@ compileMethod.accessible = true;
 var getContextMethod = contextCls.getMethod("getContext");
 getContextMethod.accessible = true;
 
+var sourceForMethod = sourceCls.getMethod("sourceFor", stringCls, stringCls);
 var scriptCls = compileMethod.invoke(getContextMethod.invoke(null),
-    Source.sourceFor("test", "print('hello')"),
-    new Context.ThrowErrorManager(), false, false);
+    sourceForMethod.invoke(null, "test", "print('hello')"),
+    ThrowErrorManager.class.newInstance(), false, false);
 
 var SCRIPT_CLASS_NAME_PREFIX = "jdk.nashorn.internal.scripts.Script$";
 print("script class name pattern satisfied? " +

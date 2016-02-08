@@ -31,15 +31,13 @@ package jdk.nashorn.api.tree;
  * <p><b>WARNING:</b> This interface and its sub-interfaces are
  * subject to change as the ECMAScript  programming language evolves.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface Tree {
 
     /**
      * Enumerates all kinds of trees.
      */
-    @jdk.Exported
     public enum Kind {
         /**
          * Used for instances of {@link ArrayAccessTree}.

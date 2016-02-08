@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   throw <em>expression</em>;
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ThrowTree extends StatementTree {
     /**
      * Returns the expression being thrown.

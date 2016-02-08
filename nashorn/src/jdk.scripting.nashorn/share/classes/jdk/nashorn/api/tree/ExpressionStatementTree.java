@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>expression</em> ;
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ExpressionStatementTree extends StatementTree {
     /**
      * Returns the expression of this expression statement.

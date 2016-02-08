@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>label</em> : <em>statement</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface LabeledStatementTree extends StatementTree {
     /**
      * Returns the label associated with this statement.

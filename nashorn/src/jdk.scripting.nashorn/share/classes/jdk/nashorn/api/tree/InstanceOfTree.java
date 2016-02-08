@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>expression</em> instanceof <em>type</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface InstanceOfTree extends ExpressionTree {
     /**
      * Returns the expression whose type is being checked.

@@ -37,9 +37,8 @@ import java.util.List;
  *   this . <em>identifier</em> ( <em>arguments</em> )
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface FunctionCallTree extends ExpressionTree {
     /**
      * Returns the function being called.

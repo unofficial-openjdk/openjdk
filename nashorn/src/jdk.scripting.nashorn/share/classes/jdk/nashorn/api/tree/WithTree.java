@@ -34,9 +34,8 @@ package jdk.nashorn.api.tree;
  *     <em>statement</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface WithTree extends StatementTree {
     /**
      * The scope object expression for this 'with' statement.

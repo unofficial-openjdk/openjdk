@@ -28,8 +28,7 @@ package jdk.nashorn.api.tree;
 /**
  * A tree node to stand in for a malformed expression.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ErroneousTree extends ExpressionTree {
 }

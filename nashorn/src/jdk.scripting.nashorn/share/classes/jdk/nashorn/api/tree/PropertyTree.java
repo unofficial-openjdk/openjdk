@@ -28,9 +28,8 @@ package jdk.nashorn.api.tree;
 /**
  * To represent property setting in an object literal tree.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface PropertyTree extends Tree {
     /**
      * Returns the name of this property.

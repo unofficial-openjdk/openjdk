@@ -36,9 +36,8 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 /**
  * Represents nashorn ECMAScript parser instance.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface Parser {
     /**
      * Parses the source file and returns compilation unit tree

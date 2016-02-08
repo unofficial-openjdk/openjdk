@@ -30,9 +30,8 @@ import java.util.List;
 /**
  * Represents ECMAScript object literal expression.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ObjectLiteralTree extends ExpressionTree {
     /**
      * Returns the list of properties of this object literal.

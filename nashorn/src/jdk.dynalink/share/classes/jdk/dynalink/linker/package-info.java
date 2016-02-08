@@ -111,7 +111,6 @@
  * implement the {@link jdk.dynalink.linker.GuardingTypeConverterFactory}
  * interface to provide the logic for these conversions.
  * </p>
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 package jdk.dynalink.linker;

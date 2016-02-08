@@ -29,9 +29,8 @@ package jdk.nashorn.api.tree;
  * Provides methods to convert between character positions and line numbers
  * for a compilation unit.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface LineMap {
     /**
      * Find the line containing a position; a line termination

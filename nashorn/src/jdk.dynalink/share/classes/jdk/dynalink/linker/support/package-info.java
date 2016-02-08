@@ -87,7 +87,6 @@
  * by providing basic implementations of some classes as well as various
  * utilities.
  * </p>
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 package jdk.dynalink.linker.support;

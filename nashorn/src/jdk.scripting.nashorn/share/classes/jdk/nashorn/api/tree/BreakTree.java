@@ -35,9 +35,8 @@ package jdk.nashorn.api.tree;
  *   break <em>label</em> ;
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface BreakTree extends GotoTree {
     /**
      * Label associated with this break statement. This is null
