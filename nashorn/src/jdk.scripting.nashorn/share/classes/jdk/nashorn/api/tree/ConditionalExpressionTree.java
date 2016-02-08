@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>condition</em> ? <em>trueExpression</em> : <em>falseExpression</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ConditionalExpressionTree extends ExpressionTree {
     /**
      * Returns the condition expression of this ternary expression.

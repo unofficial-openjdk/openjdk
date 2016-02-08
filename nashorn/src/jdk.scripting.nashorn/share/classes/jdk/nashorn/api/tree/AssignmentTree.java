@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>variable</em> = <em>expression</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface AssignmentTree extends ExpressionTree {
     /**
      * Returns the left hand side (LHS) of this assignment.

@@ -39,9 +39,8 @@ package jdk.nashorn.api.tree;
  *       <em>elseStatement</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface IfTree extends StatementTree {
     /**
      * Returns the condition expression of this 'if' statement.

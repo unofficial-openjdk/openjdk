@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>expression</em> [ <em>index</em> ]
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ArrayAccessTree extends ExpressionTree {
     /**
      * Returns the array that is accessed.

@@ -37,9 +37,8 @@ import java.util.List;
  *   }
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface SwitchTree extends StatementTree {
     /**
      * Returns the expression on which this statement switches.

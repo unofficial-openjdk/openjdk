@@ -30,9 +30,8 @@ import java.util.List;
 /**
  * Represents ECMAScript array literal expression.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface ArrayLiteralTree extends ExpressionTree {
     /**
      * Returns the list of Array element expressions.

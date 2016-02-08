@@ -35,9 +35,8 @@ package jdk.nashorn.api.tree;
  *   while ( <em>expression</em> );
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface DoWhileLoopTree extends ConditionalLoopTree {
     /**
      * Returns the condition expression of this do-while statement.

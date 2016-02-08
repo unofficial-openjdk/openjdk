@@ -31,9 +31,8 @@ package jdk.nashorn.api.tree;
  * type serves as a super interface for {@link BreakTree} and
  * {@link ContinueTree}.
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface GotoTree extends StatementTree {
     /**
      * Label associated with this goto statement. This is null

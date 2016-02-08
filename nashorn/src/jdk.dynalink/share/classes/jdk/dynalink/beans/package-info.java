@@ -83,7 +83,6 @@
 
 /**
  * Contains the linker for ordinary Java objects.
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 package jdk.dynalink.beans;

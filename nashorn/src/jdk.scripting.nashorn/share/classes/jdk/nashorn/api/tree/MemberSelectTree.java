@@ -33,9 +33,8 @@ package jdk.nashorn.api.tree;
  *   <em>expression</em> . <em>identifier</em>
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public interface MemberSelectTree extends ExpressionTree {
     /**
      * The object expression whose member is being selected.
