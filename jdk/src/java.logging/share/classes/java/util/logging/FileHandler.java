@@ -423,7 +423,7 @@ public class FileHandler extends StreamHandler {
      * @exception  IllegalArgumentException if {@code limit < 0}, or {@code count < 1}.
      * @exception  IllegalArgumentException if pattern is an empty string
      *
-     * @since 1.9
+     * @since 9
      *
      */
     public FileHandler(String pattern, long limit, int count, boolean append)
@@ -639,7 +639,7 @@ public class FileHandler extends StreamHandler {
                     continue;
                 } else if (ch2 == 'h') {
                     file = new File(System.getProperty("user.home"));
-                    if (sun.misc.VM.isSetUID()) {
+                    if (jdk.internal.misc.VM.isSetUID()) {
                         // Ok, we are in a set UID program.  For safety's sake
                         // we disallow attempts to open files relative to %h.
                         throw new IOException("can't use %h in set UID program");

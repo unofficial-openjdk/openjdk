@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,16 +30,20 @@
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
  * @run main/othervm TestKeyPairGenerator
+ * @run main/othervm TestKeyPairGenerator sm TestKeyPairGenerator.policy
  * @key intermittent randomness
  */
 
-import java.io.*;
-import java.util.*;
 import java.math.BigInteger;
-
-import java.security.*;
-import java.security.interfaces.*;
-import java.security.spec.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.RSAKeyGenParameterSpec;
 import jdk.testlibrary.RandomFactory;
 
 public class TestKeyPairGenerator extends PKCS11Test {
@@ -48,7 +52,8 @@ public class TestKeyPairGenerator extends PKCS11Test {
 
     private static byte[] data;
 
-    private static void testSignature(String algorithm, PrivateKey privateKey, PublicKey publicKey) throws Exception {
+    private static void testSignature(String algorithm, PrivateKey privateKey,
+            PublicKey publicKey) throws Exception {
         System.out.println("Testing " + algorithm + "...");
         Signature s = Signature.getInstance(algorithm, provider);
         s.initSign(privateKey);
@@ -98,16 +103,17 @@ public class TestKeyPairGenerator extends PKCS11Test {
     }
 
     public static void main(String[] args) throws Exception {
-        main(new TestKeyPairGenerator());
+        main(new TestKeyPairGenerator(), args);
     }
 
+    @Override
     public void main(Provider p) throws Exception {
         long start = System.currentTimeMillis();
         provider = p;
         data = new byte[2048];
         // keypair generation is very slow, test only a few short keys
         int[] keyLengths = {512, 512, 1024};
-        BigInteger[] pubExps = {null, BigInteger.valueOf(3), null};
+        BigInteger[] pubExps = {null, RSAKeyGenParameterSpec.F4, null};
         KeyPair[] keyPairs = new KeyPair[3];
         RandomFactory.getRandom().nextBytes(data);
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", provider);

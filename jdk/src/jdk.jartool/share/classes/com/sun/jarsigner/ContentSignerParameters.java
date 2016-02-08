@@ -36,7 +36,6 @@ import java.util.zip.ZipFile;
  * @author Vincent Ryan
  * @deprecated This class has been deprecated.
  */
-@jdk.Exported
 @Deprecated
 public interface ContentSignerParameters {
 
@@ -74,7 +73,7 @@ public interface ContentSignerParameters {
      * Retreives the message digest algorithm that is used to generate
      * the message imprint to be sent to the TSA server.
      *
-     * @since 1.9
+     * @since 9
      * @return The non-null string of the message digest algorithm name.
      */
     public default String getTSADigestAlg() {
