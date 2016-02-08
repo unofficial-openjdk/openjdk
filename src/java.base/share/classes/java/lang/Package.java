@@ -27,7 +27,12 @@ package java.lang;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Module;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Objects;
 
 import jdk.internal.misc.BootLoader;
@@ -107,7 +112,7 @@ import sun.reflect.Reflection;
  *
  * @since 1.2
  */
-public class Package implements java.lang.reflect.AnnotatedElement {
+public class Package extends NamedPackage implements java.lang.reflect.AnnotatedElement {
     /**
      * Return the name of this package.
      *
@@ -116,16 +121,15 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      *          for example, {@code java.lang}
      */
     public String getName() {
-        return pkgName;
+        return packageName();
     }
-
 
     /**
      * Return the title of the specification that this package implements.
      * @return the specification title, {@code null} is returned if it is not known.
      */
     public String getSpecificationTitle() {
-        return specTitle;
+        return versionInfo.specTitle;
     }
 
     /**
@@ -164,7 +168,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return the specification version, {@code null} is returned if it is not known.
      */
     public String getSpecificationVersion() {
-        return specVersion;
+        return versionInfo.specVersion;
     }
 
     /**
@@ -174,7 +178,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return the specification vendor, {@code null} is returned if it is not known.
      */
     public String getSpecificationVendor() {
-        return specVendor;
+        return versionInfo.specVendor;
     }
 
     /**
@@ -182,7 +186,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return the title of the implementation, {@code null} is returned if it is not known.
      */
     public String getImplementationTitle() {
-        return implTitle;
+        return versionInfo.implTitle;
     }
 
     /**
@@ -195,7 +199,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return the version of the implementation, {@code null} is returned if it is not known.
      */
     public String getImplementationVersion() {
-        return implVersion;
+        return versionInfo.implVersion;
     }
 
     /**
@@ -205,7 +209,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * is returned if it is not known.
      */
     public String getImplementationVendor() {
-        return implVendor;
+        return versionInfo.implVendor;
     }
 
     /**
@@ -214,7 +218,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return true if the package is sealed, false otherwise
      */
     public boolean isSealed() {
-        return sealBase != null;
+        return module().isNamed() || versionInfo.sealBase != null;
     }
 
     /**
@@ -225,6 +229,18 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return true if this package is sealed with respect to the given {@code url}
      */
     public boolean isSealed(URL url) {
+        Objects.requireNonNull(url);
+
+        URL sealBase = null;
+        if (versionInfo != VersionInfo.NULL_VERSION_INFO) {
+            sealBase = versionInfo.sealBase;
+        } else {
+            try {
+                URI uri = location();
+                sealBase = uri != null ? uri.toURL() : null;
+            } catch (MalformedURLException e) {
+            }
+        }
         return url.equals(sealBase);
     }
 
@@ -253,11 +269,11 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     public boolean isCompatibleWith(String desired)
         throws NumberFormatException
     {
-        if (specVersion == null || specVersion.length() < 1) {
+        if (versionInfo.specVersion == null || versionInfo.specVersion.length() < 1) {
             throw new NumberFormatException("Empty version string");
         }
 
-        String [] sa = specVersion.split("\\.", -1);
+        String [] sa = versionInfo.specVersion.split("\\.", -1);
         int [] si = new int[sa.length];
         for (int i = 0; i < sa.length; i++) {
             si[i] = Integer.parseInt(sa[i]);
@@ -348,8 +364,9 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * Return the hash code computed from the package name.
      * @return the hash code computed from the package name.
      */
+    @Override
     public int hashCode(){
-        return pkgName.hashCode();
+        return packageName().hashCode();
     }
 
     /**
@@ -359,9 +376,10 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * If the package version is defined it is appended.
      * @return the string representation of the package.
      */
+    @Override
     public String toString() {
-        String spec = specTitle;
-        String ver =  specVersion;
+        String spec = versionInfo.specTitle;
+        String ver =  versionInfo.specVersion;
         if (spec != null && spec.length() > 0)
             spec = ", " + spec;
         else
@@ -370,13 +388,15 @@ public class Package implements java.lang.reflect.AnnotatedElement {
             ver = ", version " + ver;
         else
             ver = "";
-        return "package " + pkgName + spec + ver;
+        return "package " + packageName() + spec + ver;
     }
 
     private Class<?> getPackageInfo() {
         if (packageInfo == null) {
             // find package-info.class defined by loader
-            String cn = pkgName + ".package-info";
+            String cn = packageName() + ".package-info";
+            PrivilegedAction<ClassLoader> pa = module()::getClassLoader;
+            ClassLoader loader = AccessController.doPrivileged(pa);
             Class<?> c = loader != null ? loader.loadLocalClass(cn)
                                         : BootLoader.loadClassOrNull(cn);
             if (c != null) {
@@ -450,8 +470,11 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     }
 
     /**
-     * Construct a package instance with the specified version
-     * information.
+     * Construct a package instance for an unnamed module
+     * with the specified version information.
+     *
+     * @apiNote
+     * This method should not be called to define a Package for named module.
      *
      * @param name the name of the package
      * @param spectitle the title of the specification
@@ -461,49 +484,72 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @param implversion the version of the implementation
      * @param implvendor the organization that maintains the implementation
      * @param sealbase code source where this Package comes from
-     * @param loader the class loader defining this Package
+     * @param loader defining class loader
      */
     Package(String name,
             String spectitle, String specversion, String specvendor,
             String impltitle, String implversion, String implvendor,
             URL sealbase, ClassLoader loader)
     {
-        Objects.requireNonNull(name);
+        super(Objects.requireNonNull(name),
+              loader != null ? loader.getUnnamedModule()
+                             : BootLoader.getUnnamedModule());
 
-        this.pkgName = name;
-        this.implTitle = impltitle;
-        this.implVersion = implversion;
-        this.implVendor = implvendor;
-        this.specTitle = spectitle;
-        this.specVersion = specversion;
-        this.specVendor = specvendor;
-        this.sealBase = sealbase;
-        this.loader = loader;
+        this.versionInfo = VersionInfo.getInstance(spectitle, specversion,
+                                                   specvendor, impltitle,
+                                                   implversion, implvendor,
+                                                   sealbase);
     }
 
-    static boolean equals(Package p1, Package p2) {
-        return Objects.equals(p1.pkgName, p2.pkgName) &&
-               Objects.equals(p1.specTitle, p2.specTitle) &&
-               Objects.equals(p1.specVersion, p2.specVersion) &&
-               Objects.equals(p1.specVendor, p2.specVendor) &&
-               Objects.equals(p1.implTitle, p2.implTitle) &&
-               Objects.equals(p1.implVersion, p2.implVersion) &&
-               Objects.equals(p1.implVendor, p2.implVendor) &&
-               Objects.equals(p1.sealBase, p2.sealBase) &&
-               p1.loader == p2.loader;
+    Package(String name, Module module) {
+        super(name, module);
+        this.versionInfo = VersionInfo.NULL_VERSION_INFO;
     }
 
     /*
-     * Private storage for the package name and attributes.
+     * Versioning information.  Only for packages in unnamed modules.
      */
-    private final String pkgName;
-    private final String specTitle;
-    private final String specVersion;
-    private final String specVendor;
-    private final String implTitle;
-    private final String implVersion;
-    private final String implVendor;
-    private final URL sealBase;
-    private final transient ClassLoader loader;
-    private transient Class<?> packageInfo;
+    static class VersionInfo {
+        static final VersionInfo NULL_VERSION_INFO
+            = new VersionInfo(null, null, null, null, null, null, null);
+
+        private final String specTitle;
+        private final String specVersion;
+        private final String specVendor;
+        private final String implTitle;
+        private final String implVersion;
+        private final String implVendor;
+        private final URL sealBase;
+
+        static VersionInfo getInstance(String spectitle, String specversion,
+                                       String specvendor, String impltitle,
+                                       String implversion, String implvendor,
+                                       URL sealbase) {
+            if (spectitle == null && specversion == null &&
+                    specvendor == null && impltitle == null &&
+                    implvendor == null && sealbase == null) {
+                return NULL_VERSION_INFO;
+            }
+            return new VersionInfo(spectitle, specversion, specvendor,
+                    impltitle, implversion, implvendor,
+                    sealbase);
+        }
+
+        private VersionInfo(String spectitle, String specversion,
+                            String specvendor, String impltitle,
+                            String implversion, String implvendor,
+                            URL sealbase)
+        {
+            this.implTitle = impltitle;
+            this.implVersion = implversion;
+            this.implVendor = implvendor;
+            this.specTitle = spectitle;
+            this.specVersion = specversion;
+            this.specVendor = specvendor;
+            this.sealBase = sealbase;
+        }
+    }
+
+    private final VersionInfo versionInfo;
+    private Class<?> packageInfo;
 }

@@ -147,7 +147,7 @@ public class BootLoader {
         if (pkg == null) {
             String location = getSystemPackageLocation(pn.replace('.', '/'));
             if (location != null) {
-                pkg = PackageHelper.definePackage(pn, location);
+                pkg = PackageHelper.definePackage(pn.intern(), location);
             }
         }
         return pkg;

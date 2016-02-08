@@ -131,7 +131,7 @@ public class ProxyLayerTest {
         Class<?> proxyClass = o.getClass();
         Package pkg = proxyClass.getPackage();
         assertTrue(proxyClass.getModule().isNamed());
-        assertFalse(pkg.isSealed());   // not sealed since no module location
+        assertTrue(pkg.isSealed());
         assertEquals(proxyClass.getModule().getLayer(), null);
     }
 
