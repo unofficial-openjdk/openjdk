@@ -271,7 +271,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                         der = new DerValue(decstream.toByteArray());
                         break;
                     } else {
-                        decstream.write(Base64.getMimeDecoder().decode(line));
+                        decstream.write(Pem.decode(line));
                     }
                 }
             } catch (IOException ioe2) {
@@ -1008,9 +1008,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     public byte[] getSignature() {
         if (signature == null)
             return null;
-        byte[] dup = new byte[signature.length];
-        System.arraycopy(signature, 0, dup, 0, dup.length);
-        return dup;
+        return signature.clone();
     }
 
     /**
