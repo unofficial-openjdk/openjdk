@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,8 +131,9 @@ bool NativeInstruction::is_load_store_with_small_offset(Register reg) {
 void NativeCall::verify() {
   NativeInstruction::verify();
   // make sure code pattern is actually a call instruction
-  if (!is_op(long_at(0), Assembler::call_op)) {
-    fatal("not a call");
+  int x = long_at(0);
+  if (!is_op(x, Assembler::call_op)) {
+    fatal("not a call: 0x%x @ " INTPTR_FORMAT, x, p2i(instruction_address()));
   }
 }
 
@@ -433,7 +434,7 @@ void NativeMovConstReg32::verify() {
 
 
 void NativeMovConstReg32::print() {
-  tty->print_cr(INTPTR_FORMAT ": mov reg, " INTPTR_FORMAT, instruction_address(), data());
+  tty->print_cr(INTPTR_FORMAT ": mov reg, " INTPTR_FORMAT, p2i(instruction_address()), data());
 }
 
 

@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/defaultMethods.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
@@ -1461,6 +1462,33 @@ void LinkResolver::resolve_invoke(CallInfo& result, Handle recv, const constantP
     case Bytecodes::_invokeinterface: resolve_invokeinterface(result, recv, pool, index, CHECK); break;
   }
   return;
+}
+
+void LinkResolver::resolve_invoke(CallInfo& result, Handle& recv,
+                             const methodHandle& attached_method,
+                             Bytecodes::Code byte, TRAPS) {
+  KlassHandle defc = attached_method->method_holder();
+  Symbol* name = attached_method->name();
+  Symbol* type = attached_method->signature();
+  LinkInfo link_info(defc, name, type, KlassHandle(), /*check_access=*/false);
+  switch(byte) {
+    case Bytecodes::_invokevirtual:
+      resolve_virtual_call(result, recv, recv->klass(), link_info,
+                           /*check_null_and_abstract=*/true, CHECK);
+      break;
+    case Bytecodes::_invokeinterface:
+      resolve_interface_call(result, recv, recv->klass(), link_info,
+                             /*check_null_and_abstract=*/true, CHECK);
+      break;
+    case Bytecodes::_invokestatic:
+      resolve_static_call(result, link_info, /*initialize_class=*/false, CHECK);
+      break;
+    case Bytecodes::_invokespecial:
+      resolve_special_call(result, link_info, CHECK);
+      break;
+    default:
+      fatal("bad call: %s", Bytecodes::name(byte));
+  }
 }
 
 void LinkResolver::resolve_invokestatic(CallInfo& result, const constantPoolHandle& pool, int index, TRAPS) {

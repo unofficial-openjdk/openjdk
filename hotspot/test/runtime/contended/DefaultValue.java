@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.Contended;
  * @bug     8014509
  * @summary \@Contended: explicit default value behaves differently from the implicit value
  *
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended DefaultValue
  */
 public class DefaultValue {

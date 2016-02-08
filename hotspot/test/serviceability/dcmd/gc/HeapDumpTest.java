@@ -49,9 +49,9 @@ import jdk.test.lib.dcmd.PidJcmdExecutor;
  * @build jdk.test.lib.*
  * @build jdk.test.lib.dcmd.*
  * @build jdk.test.lib.hprof.*
- * @build jdk.test.lib.hprof.module.*
+ * @build jdk.test.lib.hprof.model.*
  * @build jdk.test.lib.hprof.parser.*
- * @build jdk.test.lib.hprof.utils.*
+ * @build jdk.test.lib.hprof.util.*
  * @run testng HeapDumpTest
  */
 public class HeapDumpTest {

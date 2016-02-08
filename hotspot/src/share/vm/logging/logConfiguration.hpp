@@ -42,7 +42,7 @@ class LogConfiguration : public AllStatic {
   static size_t       _n_outputs;
 
   // Create a new output. Returns NULL if failed.
-  static LogOutput* new_output(char* name, const char* options = NULL);
+  static LogOutput* new_output(char* name, const char* options, outputStream* errstream);
 
   // Add an output to the list of configured outputs. Returns the assigned index.
   static size_t add_output(LogOutput* out);
@@ -94,6 +94,9 @@ class LogConfiguration : public AllStatic {
 
   // Prints usage help for command line log configuration.
   static void print_command_line_help(FILE* out);
+
+  // Rotates all LogOutput
+  static void rotate_all_outputs();
 };
 
 #endif // SHARE_VM_LOGGING_LOGCONFIGURATION_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -279,11 +279,11 @@ void PackageEntryTable::print() {
 
 void PackageEntry::print() {
   ResourceMark rm;
-  tty->print_cr("package entry "PTR_FORMAT" name %s module %s is_exported %d "
-                "is_exported_allUnnamed %d has_loaded_class %d next "PTR_FORMAT,
+  tty->print_cr("package entry "PTR_FORMAT" name %s module %s classpath_index "
+                INT32_FORMAT " is_exported %d is_exported_allUnnamed %d " "next "PTR_FORMAT,
                 p2i(this), name()->as_C_string(),
                 (module()->is_named() ? module()->name()->as_C_string() : UNNAMED_MODULE),
-                _is_exported, _is_exported_allUnnamed, _has_loaded_class, p2i(next()));
+                _classpath_index, _is_exported, _is_exported_allUnnamed, p2i(next()));
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,9 +47,13 @@
 class PackageEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   ModuleEntry* _module;
+  // Used to indicate for packages with classes loaded by the boot loader that
+  // a class in that package has been loaded.  And, for packages with classes
+  // loaded by the boot loader from -Xbootclasspath/a in an unnamed module, it
+  // indicates from which class path entry.
+  s2 _classpath_index;
   bool _is_exported;
   bool _is_exported_allUnnamed;
-  bool _has_loaded_class;  // Only apply to packages in the boot loader.
   GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
   GrowableArray<ModuleEntry*>* _qualified_exports;
   TRACE_DEFINE_TRACE_ID_FIELD;
@@ -57,9 +61,9 @@ private:
 public:
   void init() {
     _module = NULL;
+    _classpath_index = -1;
     _is_exported = false;
     _is_exported_allUnnamed = false;
-    _has_loaded_class = false;
     _exported_pending_delete = NULL;
     _qualified_exports = NULL;
   }
@@ -102,10 +106,12 @@ public:
     return _is_exported_allUnnamed;
   }
 
-  void set_has_loaded_class(bool has_loaded_class) {
-    _has_loaded_class = has_loaded_class;
+  void set_classpath_index(s2 classpath_index) {
+    _classpath_index = classpath_index;
   }
-  bool has_loaded_class() const { return _has_loaded_class; }
+  s2 classpath_index() const { return _classpath_index; }
+
+  bool has_loaded_class() const { return _classpath_index != -1; }
 
   // returns true if the package is defined in the unnamed module
   bool in_unnamed_module() const  { return !_module->is_named(); }

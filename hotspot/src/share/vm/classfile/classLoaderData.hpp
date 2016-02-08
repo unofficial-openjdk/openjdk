@@ -288,7 +288,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   // Used to make sure that this CLD is not unloaded.
   void set_keep_alive(bool value) { _keep_alive = value; }
 
-  unsigned int identity_hash() {
+  unsigned int identity_hash() const {
     return _class_loader == NULL ? 0 : _class_loader->identity_hash();
   }
 
@@ -308,10 +308,10 @@ class ClassLoaderData : public CHeapObj<mtClass> {
 
   jobject add_handle(Handle h);
   void remove_handle(jobject h);
-  void add_class(Klass* k);
+  void add_class(Klass* k, bool publicize = true);
   void remove_class(Klass* k);
   bool contains_klass(Klass* k);
-  void record_dependency(Klass* to, TRAPS);
+  void record_dependency(const Klass* to, TRAPS);
   void init_dependencies(TRAPS);
   PackageEntryTable* packages();
   bool packages_defined() { return (_packages != NULL); }
@@ -330,7 +330,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   Metaspace* rw_metaspace();
   void initialize_shared_metaspaces();
 
-  int shared_class_loader_id() {
+  int shared_class_loader_id() const {
     return _shared_class_loader_id;
   }
   void set_shared_class_loader_id(int id) {

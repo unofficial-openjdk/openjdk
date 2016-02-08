@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1475,3 +1475,35 @@ JvmtiMonitorClosure::do_monitor(ObjectMonitor* mon) {
     }
   }
 }
+
+GrowableArray<jobject>* JvmtiModuleClosure::_tbl = NULL;
+
+jvmtiError
+JvmtiModuleClosure::get_all_modules(JvmtiEnv* env, jint* module_count_ptr, jobject** modules_ptr) {
+  ResourceMark rm;
+  MutexLocker ml(Module_lock);
+
+  _tbl = new GrowableArray<jobject>(77);
+  if (_tbl == NULL) {
+    return JVMTI_ERROR_OUT_OF_MEMORY;
+  }
+
+  // Iterate over all the modules loaded to the system.
+  ClassLoaderDataGraph::modules_do(&do_module);
+
+  jint len = _tbl->length();
+  guarantee(len > 0, "at least one module must be present");
+
+  jobject* array = (jobject*)env->jvmtiMalloc((jlong)(len * sizeof(jobject)));
+  if (array == NULL) {
+    return JVMTI_ERROR_OUT_OF_MEMORY;
+  }
+  for (jint idx = 0; idx < len; idx++) {
+    array[idx] = _tbl->at(idx);
+  }
+  _tbl = NULL;
+  *modules_ptr = array;
+  *module_count_ptr = len;
+  return JVMTI_ERROR_NONE;
+}
+

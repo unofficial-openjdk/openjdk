@@ -23,9 +23,11 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
- * @ignore 8143238
- * @compile TestResolvedJavaMethod.java MethodUniverse.java TypeUniverse.java TestMetaAccessProvider.java
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @library ../../../../../
+ * @modules jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
+ * @build jdk.vm.ci.runtime.test.TestResolvedJavaMethod
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestResolvedJavaMethod
  */
 

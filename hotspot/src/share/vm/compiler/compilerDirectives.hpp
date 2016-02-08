@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@
 #include "ci/ciUtilities.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "compiler/compilerOracle.hpp"
-#include "oops/oop.inline.hpp"
 #include "utilities/exceptions.hpp"
 
   //      Directives flag name,    type, default value, compile command name
@@ -39,7 +38,7 @@
     cflags(Exclude,                 bool, false, X) \
     cflags(BreakAtExecute,          bool, false, X) \
     cflags(BreakAtCompile,          bool, false, X) \
-    cflags(Log,                     bool, false, X) \
+    cflags(Log,                     bool, LogCompilation, X) \
     cflags(PrintAssembly,           bool, PrintAssembly, PrintAssembly) \
     cflags(PrintInlining,           bool, PrintInlining, PrintInlining) \
     cflags(PrintNMethods,           bool, PrintNMethods, PrintNMethods) \
@@ -89,6 +88,7 @@ public:
   static DirectiveSet* getDefaultDirective(AbstractCompiler* comp);
   static void push(CompilerDirectives* directive);
   static void pop();
+  static bool check_capacity(int request_size, outputStream* st);
   static void clear();
   static void print(outputStream* st);
   static void release(DirectiveSet* set);
@@ -116,7 +116,7 @@ public:
   bool matches_inline(methodHandle method, int inline_action);
   static DirectiveSet* clone(DirectiveSet const* src);
   bool is_intrinsic_disabled(methodHandle method);
-  void finalize();
+  void finalize(outputStream* st);
 
   typedef enum {
 #define enum_of_flags(name, type, dvalue, cc_flag) name##Index,
@@ -176,7 +176,7 @@ public:
   DirectiveSet* get_for(AbstractCompiler *comp);
   void print(outputStream* st);
   bool is_default_directive() { return _next == NULL; }
-  void finalize();
+  void finalize(outputStream* st);
 
   void inc_refcount();
   void dec_refcount();

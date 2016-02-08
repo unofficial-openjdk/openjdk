@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,8 +26,8 @@
 #include "precompiled.hpp"
 #include "asm/assembler.hpp"
 #include "interpreter/bytecodeHistogram.hpp"
+#include "interpreter/cppInterpreterGenerator.hpp"
 #include "interpreter/interpreter.hpp"
-#include "interpreter/interpreterGenerator.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "interpreter/templateTable.hpp"
 #include "oops/arrayOop.hpp"
@@ -38,7 +38,6 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
@@ -58,7 +57,7 @@ address AbstractInterpreterGenerator::generate_slow_signature_handler() {
   return (address) InterpreterRuntime::slow_signature_handler;
 }
 
-address InterpreterGenerator::generate_math_entry(
+address CppInterpreterGenerator::generate_math_entry(
     AbstractInterpreter::MethodKind kind) {
   if (!InlineIntrinsics)
     return NULL;
@@ -67,14 +66,10 @@ address InterpreterGenerator::generate_math_entry(
   return NULL;
 }
 
-address InterpreterGenerator::generate_abstract_entry() {
+address CppInterpreterGenerator::generate_abstract_entry() {
   return generate_entry((address) ShouldNotCallThisEntry());
 }
 
 bool AbstractInterpreter::can_be_compiled(methodHandle m) {
   return true;
-}
-
-void Deoptimization::unwind_callee_save_values(frame* f,
-                                               vframeArray* vframe_array) {
 }

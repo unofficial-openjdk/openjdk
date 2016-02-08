@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
+#include "classfile/compactHashtable.inline.hpp"
 #include "classfile/sharedClassUtil.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionaryShared.hpp"
@@ -229,7 +230,7 @@ void FileMapInfo::allocate_classpath_entry_table() {
           struct stat st;
           if (os::stat(name, &st) == 0) {
             if (cpe->is_jrt()) {
-              // it's the bootmodules.jimage
+              // it's the "modules" jimage
               ent->_timestamp = st.st_mtime;
               ent->_filesize = st.st_size;
             } else if ((st.st_mode & S_IFDIR) == S_IFDIR) {
@@ -967,11 +968,11 @@ bool FileMapInfo::is_in_shared_space(const void* p) {
 }
 
 void FileMapInfo::print_shared_spaces() {
-  gclog_or_tty->print_cr("Shared Spaces:");
+  tty->print_cr("Shared Spaces:");
   for (int i = 0; i < MetaspaceShared::n_regions; i++) {
     struct FileMapInfo::FileMapHeader::space_info* si = &_header->_space[i];
     char *base = _header->region_addr(i);
-    gclog_or_tty->print("  %s " INTPTR_FORMAT "-" INTPTR_FORMAT,
+    tty->print("  %s " INTPTR_FORMAT "-" INTPTR_FORMAT,
                         shared_region_name[i],
                         p2i(base), p2i(base + si->_used));
   }

@@ -25,19 +25,21 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
  * @summary Testing compiler.jvmci.CompilerToVM.resolveTypeInPool method
  * @library /testlibrary /test/lib /
- * @ignore 8143238
- * @compile ../common/CompilerToVMHelper.java
+ * @library ../common/patches
+ * @modules java.base/jdk.internal.misc
+ *          jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.meta
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build compiler.jvmci.common.testcases.MultipleImplementersInterface
  *        compiler.jvmci.common.testcases.MultipleImplementer2
  *        compiler.jvmci.compilerToVM.ConstantPoolTestsHelper
  *        compiler.jvmci.compilerToVM.ConstantPoolTestCase
  *        compiler.jvmci.compilerToVM.ResolveTypeInPoolTest
- * @run main ClassFileInstaller jdk.vm.ci.hotspot.CompilerToVMHelper
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockExperimentalVMOptions
- *                   -XX:+EnableJVMCI compiler.jvmci.compilerToVM.ResolveTypeInPoolTest
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ *                   compiler.jvmci.compilerToVM.ResolveTypeInPoolTest
  */
 
 package compiler.jvmci.compilerToVM;

@@ -39,8 +39,6 @@
 #include "runtime/stubRoutines.hpp"
 #include "runtime/synchronizer.hpp"
 
-#ifndef CC_INTERP
-
 #define __ _masm->
 
 // Platform-dependent initialization
@@ -386,7 +384,8 @@ void TemplateTable::ldc(bool wide)
 
   // get type
   __ add(r3, r1, tags_offset);
-  __ ldrb(r3, Address(r0, r3));
+  __ lea(r3, Address(r0, r3));
+  __ ldarb(r3, r3);
 
   // unresolved class - get the resolved class
   __ cmp(r3, JVM_CONSTANT_UnresolvedClass);
@@ -3316,7 +3315,8 @@ void TemplateTable::_new() {
   // how Constant Pool is updated (see ConstantPool::klass_at_put)
   const int tags_offset = Array<u1>::base_offset_in_bytes();
   __ lea(rscratch1, Address(r0, r3, Address::lsl(0)));
-  __ ldrb(rscratch1, Address(rscratch1, tags_offset));
+  __ lea(rscratch1, Address(rscratch1, tags_offset));
+  __ ldarb(rscratch1, rscratch1);
   __ cmp(rscratch1, JVM_CONSTANT_Class);
   __ br(Assembler::NE, slow_case);
 
@@ -3460,7 +3460,8 @@ void TemplateTable::checkcast()
   __ get_unsigned_2_byte_index_at_bcp(r19, 1); // r19=index
   // See if bytecode has already been quicked
   __ add(rscratch1, r3, Array<u1>::base_offset_in_bytes());
-  __ ldrb(r1, Address(rscratch1, r19));
+  __ lea(r1, Address(rscratch1, r19));
+  __ ldarb(r1, r1);
   __ cmp(r1, JVM_CONSTANT_Class);
   __ br(Assembler::EQ, quicked);
 
@@ -3514,7 +3515,8 @@ void TemplateTable::instanceof() {
   __ get_unsigned_2_byte_index_at_bcp(r19, 1); // r19=index
   // See if bytecode has already been quicked
   __ add(rscratch1, r3, Array<u1>::base_offset_in_bytes());
-  __ ldrb(r1, Address(rscratch1, r19));
+  __ lea(r1, Address(rscratch1, r19));
+  __ ldarb(r1, r1);
   __ cmp(r1, JVM_CONSTANT_Class);
   __ br(Assembler::EQ, quicked);
 
@@ -3791,4 +3793,3 @@ void TemplateTable::multianewarray() {
   __ load_unsigned_byte(r1, at_bcp(3));
   __ lea(esp, Address(esp, r1, Address::uxtw(3)));
 }
-#endif // !CC_INTERP

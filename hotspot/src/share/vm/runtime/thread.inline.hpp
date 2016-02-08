@@ -30,21 +30,6 @@
 #include "runtime/atomic.inline.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/thread.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "thread_aix.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 
 #undef SHARE_VM_RUNTIME_THREAD_INLINE_HPP_SCOPE
 
@@ -141,22 +126,26 @@ inline bool JavaThread::stack_guard_zone_unused() {
   return _stack_guard_state == stack_guard_unused;
 }
 
-inline bool JavaThread::stack_yellow_zone_disabled() {
-  return _stack_guard_state == stack_guard_yellow_disabled;
+inline bool JavaThread::stack_yellow_reserved_zone_disabled() {
+  return _stack_guard_state == stack_guard_yellow_reserved_disabled;
+}
+
+inline bool JavaThread::stack_reserved_zone_disabled() {
+  return _stack_guard_state == stack_guard_reserved_disabled;
 }
 
 inline size_t JavaThread::stack_available(address cur_sp) {
   // This code assumes java stacks grow down
   address low_addr; // Limit on the address for deepest stack depth
   if (_stack_guard_state == stack_guard_unused) {
-    low_addr =  stack_base() - stack_size();
+    low_addr = stack_end();
   } else {
-    low_addr = stack_yellow_zone_base();
+    low_addr = stack_reserved_zone_base();
   }
   return cur_sp > low_addr ? cur_sp - low_addr : 0;
 }
 
-inline bool JavaThread::stack_yellow_zone_enabled() {
+inline bool JavaThread::stack_guards_enabled() {
 #ifdef ASSERT
   if (os::uses_stack_guard_pages()) {
     assert(_stack_guard_state != stack_guard_unused, "guard pages must be in use");

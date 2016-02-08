@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.Contended;
  * @bug     8012939
  * @summary \@Contended doesn't work correctly with inheritance
  *
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended Inheritance1
  */
 public class Inheritance1 {

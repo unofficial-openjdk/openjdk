@@ -672,7 +672,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _print_inlining_idx(0),
                   _print_inlining_output(NULL),
                   _interpreter_frame_size(0),
-                  _max_node_limit(MaxNodeLimit) {
+                  _max_node_limit(MaxNodeLimit),
+                  _has_reserved_stack_access(target->has_reserved_stack_access()) {
   C = this;
 #ifndef PRODUCT
   if (_printer != NULL) {
@@ -2155,6 +2156,20 @@ void Compile::Optimize() {
   // No more new expensive nodes will be added to the list from here
   // so keep only the actual candidates for optimizations.
   cleanup_expensive_nodes(igvn);
+
+  if (!failing() && RenumberLiveNodes && live_nodes() + NodeLimitFudgeFactor < unique()) {
+    Compile::TracePhase tp("", &timers[_t_renumberLive]);
+    initial_gvn()->replace_with(&igvn);
+    for_igvn()->clear();
+    Unique_Node_List new_worklist(C->comp_arena());
+    {
+      ResourceMark rm;
+      PhaseRenumberLive prl = PhaseRenumberLive(initial_gvn(), for_igvn(), &new_worklist);
+    }
+    set_for_igvn(&new_worklist);
+    igvn = PhaseIterGVN(initial_gvn());
+    igvn.optimize();
+  }
 
   // Perform escape analysis
   if (_do_escape_analysis && ConnectionGraph::has_candidates(this)) {

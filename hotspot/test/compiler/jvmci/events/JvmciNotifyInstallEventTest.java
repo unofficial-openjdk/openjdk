@@ -24,10 +24,17 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
  * @library / /testlibrary
- * @ignore 8143238
- * @compile ../common/CompilerToVMHelper.java
+ * @library ../common/patches
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ *          java.base/jdk.internal.org.objectweb.asm.tree
+ *          jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
+ * @ignore 8144964
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build compiler.jvmci.common.JVMCIHelpers
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  * @run main jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
@@ -39,7 +46,6 @@
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  *     compiler.jvmci.common.CTVMUtilities
  *     compiler.jvmci.common.testcases.SimpleClass
- *     jdk.vm.ci.hotspot.CompilerToVMHelper
  *     jdk.test.lib.Asserts
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *     -Djvmci.compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
@@ -107,13 +113,12 @@ public class JvmciNotifyInstallEventTest implements HotSpotVMEventListener {
         HotSpotCompilationRequest compRequest = new HotSpotCompilationRequest(method, -1, 0L);
         // to pass sanity check of default -1
         compResult.setTotalFrameSize(0);
+        compResult.close();
         codeCache.installCode(compRequest, compResult, /* installedCode = */ null, /* speculationLog = */ null,
                 /* isDefault = */ false);
         Asserts.assertEQ(gotInstallNotification, 1,
                 "Got unexpected event count after 1st install attempt");
         // since "empty" compilation result is ok, a second attempt should be ok
-        compResult = new CompilationResult(METHOD_NAME); // create another instance with fresh state
-        compResult.setTotalFrameSize(0);
         codeCache.installCode(compRequest, compResult, /* installedCode = */ null, /* speculationLog = */ null,
                 /* isDefault = */ false);
         Asserts.assertEQ(gotInstallNotification, 2,

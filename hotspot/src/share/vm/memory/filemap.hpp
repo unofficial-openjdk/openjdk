@@ -44,10 +44,10 @@ class Metaspace;
 class SharedClassPathEntry VALUE_OBJ_CLASS_SPEC {
 public:
   const char *_name;
-  time_t _timestamp;          // jar/bootimage timestamp,  0 if is directory or other
-  long   _filesize;           // jar/bootimage file size, -1 if is directory, -2 if other
+  time_t _timestamp;          // jar/jimage timestamp,  0 if is directory or other
+  long   _filesize;           // jar/jimage file size, -1 if is directory, -2 if other
 
-  // The _timestamp only gets set for jar files and bootmodules.jimage.
+  // The _timestamp only gets set for jar files and "modules" jimage.
   bool is_jar_or_bootimage() {
     return _timestamp != 0;
   }
@@ -106,6 +106,7 @@ public:
     Universe::NARROW_OOP_MODE _narrow_oop_mode; // compressed oop encoding mode
     int     _narrow_klass_shift;      // save narrow klass base and shift
     address _narrow_klass_base;
+    char*   _misc_data_patching_start;
 
     struct space_info {
       int    _crc;           // crc checksum of the current space
@@ -191,6 +192,8 @@ public:
   int     narrow_klass_shift() const  { return _header->_narrow_klass_shift; }
   size_t space_capacity(int i)        { return _header->_space[i]._capacity; }
   struct FileMapHeader* header()      { return _header; }
+  char* misc_data_patching_start()            { return _header->_misc_data_patching_start; }
+  void set_misc_data_patching_start(char* p)  { _header->_misc_data_patching_start = p; }
 
   static FileMapInfo* current_info() {
     CDS_ONLY(return _current_info;)

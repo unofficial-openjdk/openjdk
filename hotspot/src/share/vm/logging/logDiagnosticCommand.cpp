@@ -25,7 +25,6 @@
 #include "logging/logConfiguration.hpp"
 #include "logging/logDiagnosticCommand.hpp"
 #include "memory/resourceArea.hpp"
-#include "runtime/mutexLocker.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 LogDiagnosticCommand::LogDiagnosticCommand(outputStream* output, bool heap_allocated)
@@ -35,13 +34,15 @@ LogDiagnosticCommand::LogDiagnosticCommand(outputStream* output, bool heap_alloc
     _what("what", "Configures what tags to log.", "STRING", false),
     _decorators("decorators", "Configures which decorators to use. Use 'none' or an empty value to remove all.", "STRING", false),
     _disable("disable", "Turns off all logging and clears the log configuration.", "BOOLEAN", false),
-    _list("list", "Lists current log configuration.", "BOOLEAN", false) {
+    _list("list", "Lists current log configuration.", "BOOLEAN", false),
+    _rotate("rotate", "Rotates all logs.", "BOOLEAN", false) {
   _dcmdparser.add_dcmd_option(&_output);
   _dcmdparser.add_dcmd_option(&_output_options);
   _dcmdparser.add_dcmd_option(&_what);
   _dcmdparser.add_dcmd_option(&_decorators);
   _dcmdparser.add_dcmd_option(&_disable);
   _dcmdparser.add_dcmd_option(&_list);
+  _dcmdparser.add_dcmd_option(&_rotate);
 }
 
 int LogDiagnosticCommand::num_arguments() {
@@ -63,13 +64,11 @@ void LogDiagnosticCommand::registerCommand() {
 void LogDiagnosticCommand::execute(DCmdSource source, TRAPS) {
   bool any_command = false;
   if (_disable.has_value()) {
-    MutexLocker ml(LogConfiguration_lock);
     LogConfiguration::disable_logging();
     any_command = true;
   }
 
   if (_output.has_value() || _what.has_value() || _decorators.has_value()) {
-    MutexLocker ml(LogConfiguration_lock);
     if (!LogConfiguration::parse_log_arguments(_output.value(),
                                                _what.value(),
                                                _decorators.value(),
@@ -81,8 +80,12 @@ void LogDiagnosticCommand::execute(DCmdSource source, TRAPS) {
   }
 
   if (_list.has_value()) {
-    MutexLocker ml(LogConfiguration_lock);
     LogConfiguration::describe(output());
+    any_command = true;
+  }
+
+  if (_rotate.has_value()) {
+    LogConfiguration::rotate_all_outputs();
     any_command = true;
   }
 

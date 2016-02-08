@@ -24,9 +24,12 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
  * @library /testlibrary /
- * @ignore 8143238
+ * @modules jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
  * @build compiler.jvmci.common.JVMCIHelpers
  *        compiler.jvmci.events.JvmciShutdownEventListener
  *        compiler.jvmci.events.JvmciShutdownEventTest
@@ -37,9 +40,10 @@
  *     compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
  *     compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
  *     compiler.jvmci.events.JvmciShutdownEventListener
- * @run driver
- *     compiler.jvmci.events.JvmciShutdownEventTest
+ * @run main/othervm compiler.jvmci.events.JvmciShutdownEventTest
  */
+
+ // as soon as CODETOOLS-7901589 fixed, '@run main/othervm' at L43 should be replaced w/ '@run driver'
 
 package compiler.jvmci.events;
 

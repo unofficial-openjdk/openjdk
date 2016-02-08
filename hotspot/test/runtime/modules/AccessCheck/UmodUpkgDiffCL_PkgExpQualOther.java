@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
  * @summary class c5 defined in an unnamed module tries to access p6.c6 defined in m2.
  *          Access is denied, since an unnamed module can read all modules but p6 in module
  *          m2 is exported specifically to module m1, not to all modules.
- * @library /testlibrary /../../test/lib
+ * @library /testlibrary /test/lib
  * @compile myloaders/MyDiffClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java

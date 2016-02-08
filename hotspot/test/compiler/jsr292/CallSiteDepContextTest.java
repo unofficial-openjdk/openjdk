@@ -25,14 +25,24 @@
  * @test
  * @bug 8057967
  * @modules java.base/jdk.internal.org.objectweb.asm
- * @ignore 8134101
+ * @library patches
+ * @build java.base/java.lang.invoke.MethodHandleHelper
  * @run main/bootclasspath -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:+TraceClassUnloading
  *                         -XX:+PrintCompilation -XX:+TraceDependencies -XX:+TraceReferenceGC
- *                         -verbose:gc java.lang.invoke.CallSiteDepContextTest
+ *                         -verbose:gc compiler.jsr292.CallSiteDepContextTest
  */
-package java.lang.invoke;
 
-import java.lang.ref.*;
+package compiler.jsr292;
+
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleHelper;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.MutableCallSite;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
 
 import jdk.internal.org.objectweb.asm.*;
@@ -42,10 +52,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 public class CallSiteDepContextTest {
     static final Unsafe               UNSAFE = Unsafe.getUnsafe();
-    static final MethodHandles.Lookup LOOKUP = MethodHandles.Lookup.IMPL_LOOKUP;
+    static final MethodHandles.Lookup LOOKUP = MethodHandleHelper.IMPL_LOOKUP;
     static final String           CLASS_NAME = "java/lang/invoke/Test";
     static final String          METHOD_NAME = "m";
-    static final MethodType             TYPE = MethodType.methodType(int.class);
+    static final MethodType TYPE = MethodType.methodType(int.class);
 
     static MutableCallSite mcs;
     static MethodHandle bsmMH;
@@ -79,7 +89,8 @@ public class CallSiteDepContextTest {
             mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, METHOD_NAME, TYPE.toMethodDescriptorString(), null, null);
             mv.visitCode();
             Handle bsm = new Handle(H_INVOKESTATIC,
-                    "java/lang/invoke/CallSiteDepContextTest", "bootstrap",
+                    CallSiteDepContextTest.class.getName().replace(".", "/"),
+                    "bootstrap",
                     bsmMH.type().toMethodDescriptorString());
             mv.visitInvokeDynamicInsn("methodName", TYPE.toMethodDescriptorString(), bsm);
             mv.visitInsn(IRETURN);
@@ -101,9 +112,9 @@ public class CallSiteDepContextTest {
         }
     }
 
-    public static void testHiddenDepField() throws Exception {
+    public static void testHiddenDepField() {
         try {
-            Field f = MethodHandleNatives.CallSiteContext.class.getDeclaredField("vmdependencies");
+            Field f = MethodHandleHelper.MHN_CALL_SITE_CONTEXT_CLASS.getDeclaredField("vmdependencies");
             throw new AssertionError("Context.dependencies field should be hidden");
         } catch(NoSuchFieldException e) { /* expected */ }
     }
@@ -113,8 +124,8 @@ public class CallSiteDepContextTest {
         Class<?> cls2 = UNSAFE.defineAnonymousClass(Object.class, getClassFile("CS_2"), null);
 
         MethodHandle[] mhs = new MethodHandle[] {
-            LOOKUP.findStatic(cls1, METHOD_NAME, TYPE),
-            LOOKUP.findStatic(cls2, METHOD_NAME, TYPE)
+                LOOKUP.findStatic(cls1, METHOD_NAME, TYPE),
+                LOOKUP.findStatic(cls2, METHOD_NAME, TYPE)
         };
 
         mcs = new MutableCallSite(LOOKUP.findStatic(T.class, "f1", TYPE));
@@ -200,3 +211,4 @@ public class CallSiteDepContextTest {
         System.out.println("TEST PASSED");
     }
 }
+

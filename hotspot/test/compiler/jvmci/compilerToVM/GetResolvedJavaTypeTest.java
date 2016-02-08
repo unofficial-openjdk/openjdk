@@ -24,25 +24,28 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
  * @library / /testlibrary /test/lib
- * @ignore 8143238
- * @compile ../common/CompilerToVMHelper.java
- *          ../common/PublicMetaspaceWrapperObject.java
+ * @library ../common/patches
+ * @modules jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.meta
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
+ *        jdk.vm.ci/jdk.vm.ci.hotspot.PublicMetaspaceWrapperObject
  * @build compiler.jvmci.compilerToVM.GetResolvedJavaTypeTest
+ * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller
  *      sun.hotspot.WhiteBox
  *      sun.hotspot.WhiteBox$WhiteBoxPermission
- *      jdk.vm.ci.hotspot.CompilerToVMHelper
- *      jdk.vm.ci.hotspot.PublicMetaspaceWrapperObject
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockExperimentalVMOptions
- *      -XX:+EnableJVMCI -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
- *      -XX:+UseCompressedOops
- *      compiler.jvmci.compilerToVM.GetResolvedJavaTypeTest
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockExperimentalVMOptions
- *      -XX:+EnableJVMCI -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
- *      -XX:-UseCompressedOops
- *      compiler.jvmci.compilerToVM.GetResolvedJavaTypeTest
+ * @run main/othervm -Xbootclasspath/a:.
+ *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ *                   -XX:+UseCompressedOops
+ *                   compiler.jvmci.compilerToVM.GetResolvedJavaTypeTest
+ * @run main/othervm -Xbootclasspath/a:.
+ *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ *                   -XX:-UseCompressedOops
+ *                   compiler.jvmci.compilerToVM.GetResolvedJavaTypeTest
  */
 
 package compiler.jvmci.compilerToVM;

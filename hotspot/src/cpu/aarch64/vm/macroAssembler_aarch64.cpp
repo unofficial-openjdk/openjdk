@@ -41,6 +41,7 @@
 #include "runtime/icache.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/thread.hpp"
 
 #if INCLUDE_ALL_GCS
 #include "gc/g1/g1CollectedHeap.inline.hpp"
@@ -677,7 +678,7 @@ address MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
 
   if (cbuf) cbuf->set_insts_mark();
   relocate(entry.rspec());
-  if (Assembler::reachable_from_branch_at(pc(), entry.target())) {
+  if (!far_branches()) {
     bl(entry.target());
   } else {
     bl(pc());
@@ -732,8 +733,8 @@ address MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
   return stub;
 }
 
-address MacroAssembler::ic_call(address entry) {
-  RelocationHolder rh = virtual_call_Relocation::spec(pc());
+address MacroAssembler::ic_call(address entry, jint method_index) {
+  RelocationHolder rh = virtual_call_Relocation::spec(pc(), method_index);
   // address const_ptr = long_constant((jlong)Universe::non_oop_word());
   // unsigned long offset;
   // ldr_constant(rscratch2, const_ptr);
@@ -3937,7 +3938,7 @@ void MacroAssembler::bang_stack_size(Register size, Register tmp) {
   // was post-decremented.)  Skip this address by starting at i=1, and
   // touch a few more pages below.  N.B.  It is important to touch all
   // the way down to and including i=StackShadowPages.
-  for (int i = 0; i< StackShadowPages-1; i++) {
+  for (int i = 0; i < (JavaThread::stack_shadow_zone_size() / os::vm_page_size()) - 1; i++) {
     // this could be any sized move but this is can be a debugging crumb
     // so the bigger the better.
     lea(tmp, Address(tmp, -os::vm_page_size()));
@@ -4652,4 +4653,24 @@ void MacroAssembler::encode_iso_array(Register src, Register dst,
 
     BIND(DONE);
       sub(result, result, len); // Return index where we stopped
+}
+
+// get_thread() can be called anywhere inside generated code so we
+// need to save whatever non-callee save context might get clobbered
+// by the call to JavaThread::aarch64_get_thread_helper() or, indeed,
+// the call setup code.
+//
+// aarch64_get_thread_helper() clobbers only r0, r1, and flags.
+//
+void MacroAssembler::get_thread(Register dst) {
+  RegSet saved_regs = RegSet::range(r0, r1) + lr - dst;
+  push(saved_regs, sp);
+
+  mov(lr, CAST_FROM_FN_PTR(address, JavaThread::aarch64_get_thread_helper));
+  blrt(lr, 1, 0, 1);
+  if (dst != c_rarg0) {
+    mov(dst, c_rarg0);
+  }
+
+  pop(saved_regs, sp);
 }

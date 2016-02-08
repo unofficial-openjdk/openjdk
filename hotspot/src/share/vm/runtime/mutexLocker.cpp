@@ -27,7 +27,6 @@
 #include "runtime/os.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.inline.hpp"
-#include "runtime/threadLocalStorage.hpp"
 #include "runtime/vmThread.hpp"
 
 // Mutexes used in the VM (see comment in mutexLocker.hpp):
@@ -128,7 +127,6 @@ Monitor* GCTaskManager_lock           = NULL;
 Mutex*   Management_lock              = NULL;
 Monitor* Service_lock                 = NULL;
 Monitor* PeriodicTask_lock            = NULL;
-Mutex*   LogConfiguration_lock        = NULL;
 
 #ifdef INCLUDE_TRACE
 Mutex*   JfrStacktrace_lock           = NULL;
@@ -285,7 +283,6 @@ void mutex_init() {
   if (WhiteBoxAPI) {
     def(Compilation_lock           , Monitor, leaf,        false, Monitor::_safepoint_check_never);
   }
-  def(LogConfiguration_lock        , Mutex,   nonleaf,     false, Monitor::_safepoint_check_always);
 
 #ifdef INCLUDE_TRACE
   def(JfrMsg_lock                  , Monitor, leaf,        true,  Monitor::_safepoint_check_always);

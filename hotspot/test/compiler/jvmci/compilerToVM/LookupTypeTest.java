@@ -24,15 +24,14 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
  * @library / /testlibrary
- * @ignore 8143238
- * @compile ../common/CompilerToVMHelper.java
+ * @library ../common/patches
+ * @modules jdk.vm.ci/jdk.vm.ci.hotspot
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build compiler.jvmci.compilerToVM.LookupTypeTest
- * @run main ClassFileInstaller
- *      jdk.vm.ci.hotspot.CompilerToVMHelper
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockExperimentalVMOptions
- *     -XX:+EnableJVMCI compiler.jvmci.compilerToVM.LookupTypeTest
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ *                   compiler.jvmci.compilerToVM.LookupTypeTest
  */
 
 package compiler.jvmci.compilerToVM;

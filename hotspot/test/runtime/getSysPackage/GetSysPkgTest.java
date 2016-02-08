@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,7 +144,10 @@ public class GetSysPkgTest {
             throw new RuntimeException("Could not find class BootLdr_package.BootLdrPkg");
         String bootldrPkg = (String)invoke(findMethod("getSystemPackageLocation"), null, "BootLdr_package");
         if (bootldrPkg == null) {
-            throw new RuntimeException("Expected BootLdr_package/ to return non-null value");
+            throw new RuntimeException("Expected BootLdr_package to return non-null value");
+        }
+        if (!bootldrPkg.equals("bl_dir")) {
+            throw new RuntimeException("Expected BootLdr_package to return bl_dir, got: " + bootldrPkg);
         }
 
         // Test when package's class reference is an array.

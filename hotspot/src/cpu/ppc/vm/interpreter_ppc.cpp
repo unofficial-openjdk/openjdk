@@ -27,9 +27,9 @@
 #include "asm/macroAssembler.inline.hpp"
 #include "interpreter/bytecodeHistogram.hpp"
 #include "interpreter/interpreter.hpp"
-#include "interpreter/interpreterGenerator.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "interpreter/templateInterpreterGenerator.hpp"
 #include "interpreter/templateTable.hpp"
 #include "oops/arrayOop.hpp"
 #include "oops/methodData.hpp"
@@ -39,7 +39,6 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
@@ -60,26 +59,6 @@
 #endif
 
 #define BIND(label) bind(label); BLOCK_COMMENT(#label ":")
-
-int AbstractInterpreter::BasicType_as_index(BasicType type) {
-  int i = 0;
-  switch (type) {
-    case T_BOOLEAN: i = 0; break;
-    case T_CHAR   : i = 1; break;
-    case T_BYTE   : i = 2; break;
-    case T_SHORT  : i = 3; break;
-    case T_INT    : i = 4; break;
-    case T_LONG   : i = 5; break;
-    case T_VOID   : i = 6; break;
-    case T_FLOAT  : i = 7; break;
-    case T_DOUBLE : i = 8; break;
-    case T_OBJECT : i = 9; break;
-    case T_ARRAY  : i = 9; break;
-    default       : ShouldNotReachHere();
-  }
-  assert(0 <= i && i < AbstractInterpreter::number_of_result_handlers, "index out of bounds");
-  return i;
-}
 
 address AbstractInterpreterGenerator::generate_slow_signature_handler() {
   // Slow_signature handler that respects the PPC C calling conventions.
@@ -437,7 +416,7 @@ address AbstractInterpreterGenerator::generate_result_handler_for(BasicType type
 
 // Abstract method entry.
 //
-address InterpreterGenerator::generate_abstract_entry(void) {
+address TemplateInterpreterGenerator::generate_abstract_entry(void) {
   address entry = __ pc();
 
   //
@@ -478,17 +457,12 @@ address InterpreterGenerator::generate_abstract_entry(void) {
   // Reset JavaFrameAnchor from call_VM_leaf above.
   __ reset_last_Java_frame();
 
-#ifdef CC_INTERP
-  // Return to frame manager, it will handle the pending exception.
-  __ blr();
-#else
   // We don't know our caller, so jump to the general forward exception stub,
   // which will also pop our full frame off. Satisfy the interface of
   // SharedRuntime::generate_forward_exception()
   __ load_const_optimized(R11_scratch1, StubRoutines::forward_exception_entry(), R0);
   __ mtctr(R11_scratch1);
   __ bctr();
-#endif
 
   return entry;
 }
@@ -500,7 +474,7 @@ address InterpreterGenerator::generate_abstract_entry(void) {
 //    It contains a GC barrier which puts the reference into the satb buffer
 //    to indicate that someone holds a strong reference to the object the
 //    weak ref points to!
-address InterpreterGenerator::generate_Reference_get_entry(void) {
+address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
   // Code: _aload_0, _getfield, _areturn
   // parameter size = 1
   //
@@ -539,7 +513,7 @@ address InterpreterGenerator::generate_Reference_get_entry(void) {
     // continue and the thread will safepoint at the next bytecode dispatch.
 
     // If the receiver is null then it is OK to jump to the slow path.
-    __ ld(R3_RET, Interpreter::stackElementSize, CC_INTERP_ONLY(R17_tos) NOT_CC_INTERP(R15_esp)); // get receiver
+    __ ld(R3_RET, Interpreter::stackElementSize, R15_esp); // get receiver
 
     // Check if receiver == NULL and go the slow path.
     __ cmpdi(CCR0, R3_RET, 0);
@@ -578,19 +552,4 @@ address InterpreterGenerator::generate_Reference_get_entry(void) {
   }
 
   return NULL;
-}
-
-void Deoptimization::unwind_callee_save_values(frame* f, vframeArray* vframe_array) {
-  // This code is sort of the equivalent of C2IAdapter::setup_stack_frame back in
-  // the days we had adapter frames. When we deoptimize a situation where a
-  // compiled caller calls a compiled caller will have registers it expects
-  // to survive the call to the callee. If we deoptimize the callee the only
-  // way we can restore these registers is to have the oldest interpreter
-  // frame that we create restore these values. That is what this routine
-  // will accomplish.
-
-  // At the moment we have modified c2 to not have any callee save registers
-  // so this problem does not exist and this routine is just a place holder.
-
-  assert(f->is_interpreted_frame(), "must be interpreted");
 }

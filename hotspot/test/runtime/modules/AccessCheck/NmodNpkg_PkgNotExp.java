@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
  * @test
  * @summary Test that if module m1 can read module m2, but package p2 in m2 is not
  *          exported, then class p1.c1 in m1 can not read p2.c2 in m2.
- * @library /testlibrary /../../test/lib
+ * @library /testlibrary /test/lib
  * @compile myloaders/MySameClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java

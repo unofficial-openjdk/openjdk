@@ -36,7 +36,7 @@ void LIR_Assembler::patching_epilog(PatchingStub* patch, LIR_PatchCode patch_cod
   // We must have enough patching space so that call can be inserted.
   // We cannot use fat nops here, since the concurrent code rewrite may transiently
   // create the illegal instruction sequence.
-  while ((intx) _masm->pc() - (intx) patch->pc_start() < NativeCall::instruction_size) {
+  while ((intx) _masm->pc() - (intx) patch->pc_start() < NativeGeneralJump::instruction_size) {
     _masm->nop();
   }
   patch->install(_masm, patch_code, obj, info);
@@ -740,7 +740,6 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
     case lir_tan:
     case lir_cos:
     case lir_log10:
-    case lir_pow:
       intrinsic_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op);
       break;
 

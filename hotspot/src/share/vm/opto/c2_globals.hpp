@@ -213,6 +213,9 @@
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
                                                                             \
+  product(bool, UseCountedLoopSafepoints, false,                            \
+          "Force counted loops to keep a safepoint")                        \
+                                                                            \
   product(bool, UseLoopPredicate, true,                                     \
           "Generate a predicate to select fast/slow loop versions")         \
                                                                             \
@@ -744,7 +747,10 @@
           range(0, max_intx)                                                \
                                                                             \
   develop(bool, StressArrayCopyMacroNode, false,                            \
-          "Perform ArrayCopy load/store replacement during IGVN only")
+          "Perform ArrayCopy load/store replacement during IGVN only")      \
+                                                                            \
+  develop(bool, RenumberLiveNodes, true,                                    \
+          "Renumber live nodes")                                            \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, \
          DECLARE_PD_DEVELOPER_FLAG, \

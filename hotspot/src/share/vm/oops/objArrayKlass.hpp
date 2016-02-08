@@ -33,6 +33,7 @@
 
 class ObjArrayKlass : public ArrayKlass {
   friend class VMStructs;
+  friend class JVMCIVMStructs;
  private:
   Klass* _element_klass;            // The klass of the elements of this array type
   Klass* _bottom_klass;             // The one-dimensional type (InstanceKlass or TypeArrayKlass)
@@ -89,10 +90,14 @@ class ObjArrayKlass : public ArrayKlass {
   virtual Klass* array_klass_impl(bool or_null, TRAPS);
 
  public:
-  // Casting from Klass*
+
   static ObjArrayKlass* cast(Klass* k) {
+    return const_cast<ObjArrayKlass*>(cast(const_cast<const Klass*>(k)));
+  }
+
+  static const ObjArrayKlass* cast(const Klass* k) {
     assert(k->is_objArray_klass(), "cast to ObjArrayKlass");
-    return static_cast<ObjArrayKlass*>(k);
+    return static_cast<const ObjArrayKlass*>(k);
   }
 
   // Sizing

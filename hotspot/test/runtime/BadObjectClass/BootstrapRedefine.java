@@ -26,7 +26,6 @@
  * @bug 6583051
  * @summary Give error if java.lang.Object has been incompatibly overridden on the bootpath
  * @library /testlibrary
- * @ignore 8132924
  * @modules java.base/sun.misc
  *          java.management
  * @run main BootstrapRedefine
@@ -45,7 +44,8 @@ public class BootstrapRedefine {
                         "}";
 
         ClassFileInstaller.writeClassToDisk("java/lang/Object",
-                                        InMemoryJavaCompiler.compile("java.lang.Object", source),
+                                        InMemoryJavaCompiler.compile("java.lang.Object", source,
+                                        "-Xmodule:java.base"),
                                         "mods/java.base");
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:mods", "-version");

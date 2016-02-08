@@ -23,9 +23,14 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classFileParser.hpp"
+#include "classfile/classFileStream.hpp"
+#include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
+#include "classfile/classLoaderExt.hpp"
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/klassFactory.hpp"
 #include "classfile/loaderConstraints.hpp"
 #include "classfile/packageEntry.hpp"
 #include "classfile/placeholders.hpp"
@@ -618,6 +623,25 @@ instanceKlassHandle SystemDictionary::handle_parallel_super_load(
   return (nh);
 }
 
+// utility function for class load event
+static void post_class_load_event(const Ticks& start_time,
+                                  instanceKlassHandle k,
+                                  Handle initiating_loader) {
+#if INCLUDE_TRACE
+  EventClassLoad event(UNTIMED);
+  if (event.should_commit()) {
+    event.set_starttime(start_time);
+    event.set_loadedClass(k());
+    oop defining_class_loader = k->class_loader();
+    event.set_definingClassLoader(defining_class_loader != NULL ?
+      defining_class_loader->klass() : (Klass*)NULL);
+    oop class_loader = initiating_loader.is_null() ? (oop)NULL : initiating_loader();
+    event.set_initiatingClassLoader(class_loader != NULL ?
+      class_loader->klass() : (Klass*)NULL);
+    event.commit();
+  }
+#endif // INCLUDE_TRACE
+}
 
 Klass* SystemDictionary::resolve_instance_class_or_null(Symbol* name,
                                                         Handle class_loader,
@@ -986,42 +1010,42 @@ Klass* SystemDictionary::parse_stream(Symbol* class_name,
                                       Handle class_loader,
                                       Handle protection_domain,
                                       ClassFileStream* st,
-                                      KlassHandle host_klass,
+                                      const Klass* host_klass,
                                       GrowableArray<Handle>* cp_patches,
                                       TRAPS) {
-  TempNewSymbol parsed_name = NULL;
 
   Ticks class_load_start_time = Ticks::now();
 
   ClassLoaderData* loader_data;
-  if (host_klass.not_null()) {
+  if (host_klass != NULL) {
     // Create a new CLD for anonymous class, that uses the same class loader
     // as the host_klass
     guarantee(host_klass->class_loader() == class_loader(), "should be the same");
     guarantee(!DumpSharedSpaces, "must not create anonymous classes when dumping");
     loader_data = ClassLoaderData::anonymous_class_loader_data(class_loader(), CHECK_NULL);
-    loader_data->record_dependency(host_klass(), CHECK_NULL);
+    loader_data->record_dependency(host_klass, CHECK_NULL);
   } else {
     loader_data = ClassLoaderData::class_loader_data(class_loader());
   }
 
-  // Parse the stream. Note that we do this even though this klass might
+  assert(st != NULL, "invariant");
+  assert(st->need_verify(), "invariant");
+
+  // Parse stream and create a klass.
+  // Note that we do this even though this klass might
   // already be present in the SystemDictionary, otherwise we would not
   // throw potential ClassFormatErrors.
-  //
-  // Note: "name" is updated.
 
-  instanceKlassHandle k = ClassFileParser(st).parseClassFile(class_name,
-                                                             loader_data,
-                                                             protection_domain,
-                                                             host_klass,
-                                                             cp_patches,
-                                                             parsed_name,
-                                                             true,
-                                                             THREAD);
+  instanceKlassHandle k = KlassFactory::create_from_stream(st,
+                                                           class_name,
+                                                           loader_data,
+                                                           protection_domain,
+                                                           host_klass,
+                                                           cp_patches,
+                                                           NULL, // parsed_name
+                                                           THREAD);
 
-
-  if (host_klass.not_null() && k.not_null()) {
+  if (host_klass != NULL && k.not_null()) {
     // If it's anonymous, initialize it now, since nobody else will.
 
     {
@@ -1052,7 +1076,7 @@ Klass* SystemDictionary::parse_stream(Symbol* class_name,
 
     post_class_load_event(class_load_start_time, k, class_loader);
   }
-  assert(host_klass.not_null() || cp_patches == NULL,
+  assert(host_klass != NULL || NULL == cp_patches,
          "cp_patches only found with host_klass");
 
   return k();
@@ -1067,7 +1091,6 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
                                              Handle class_loader,
                                              Handle protection_domain,
                                              ClassFileStream* st,
-                                             bool verify,
                                              TRAPS) {
 
   // Classloaders that support parallelism, e.g. bootstrap classloader,
@@ -1084,22 +1107,23 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
   check_loader_lock_contention(lockObject, THREAD);
   ObjectLocker ol(lockObject, THREAD, DoObjectLock);
 
-  TempNewSymbol parsed_name = NULL;
+  assert(st != NULL, "invariant");
 
-  // Parse the stream. Note that we do this even though this klass might
+  // Parse the stream and create a klass.
+  // Note that we do this even though this klass might
   // already be present in the SystemDictionary, otherwise we would not
   // throw potential ClassFormatErrors.
   //
-  // Note: "name" is updated.
+  // Note: "parsed_name" is updated.
+  TempNewSymbol parsed_name = NULL;
 
-  instanceKlassHandle k;
+ instanceKlassHandle k;
 
 #if INCLUDE_CDS
   k = SystemDictionaryShared::lookup_from_stream(class_name,
                                                  class_loader,
                                                  protection_domain,
                                                  st,
-                                                 verify,
                                                  CHECK_NULL);
 #endif
 
@@ -1109,12 +1133,14 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
     if (st->buffer() == NULL) {
       return NULL;
     }
-    k = ClassFileParser(st).parseClassFile(class_name,
-                                           loader_data,
-                                           protection_domain,
-                                           parsed_name,
-                                           verify,
-                                           THREAD);
+    k = KlassFactory::create_from_stream(st,
+                                         class_name,
+                                         loader_data,
+                                         protection_domain,
+                                         NULL, // host_klass
+                                         NULL, // cp_patches
+                                         &parsed_name,
+                                         THREAD);
   }
 
   const char* pkg = "java/";
@@ -1222,7 +1248,7 @@ instanceKlassHandle SystemDictionary::load_shared_class(
 // Check if a shared class can be loaded by the specific classloader:
 //
 // NULL classloader:
-//   - Module class from boot jimage. ModuleEntry must be defined in the classloader.
+//   - Module class from "modules" jimage. ModuleEntry must be defined in the classloader.
 //   - Class from -Xbootclasspath/a. The class has no defined PackageEntry, or must
 //     be defined in an unnamed module.
 bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
@@ -1257,19 +1283,19 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
 
   if (class_loader.is_null()) {
     // The NULL classloader can load archived class originated from the
-    // bootmodules.jimage and the -Xbootclasspath/a. For class from the
-    // bootmodules.jimage, the PackageEntry/ModuleEntry must be defined
+    // "modules" jimage and the -Xbootclasspath/a. For class from the
+    // "modules" jimage, the PackageEntry/ModuleEntry must be defined
     // by the NULL classloader.
     if (mod_entry != NULL) {
       // PackageEntry/ModuleEntry is found in the classloader. Check if the
       // ModuleEntry's location agrees with the archived class' origination.
       if (ent->is_jrt() && mod_entry->location()->starts_with("jrt:")) {
-        return true; // Module class from the boot jimage
+        return true; // Module class from the "module" jimage
       }
     }
 
-    // If the archived class is not from the jimage, the class can be loaded
-    // by the NULL classloader if
+    // If the archived class is not from the "module" jimage, the class can be
+    // loaded by the NULL classloader if
     //
     // 1. the class is from the unamed package
     // 2. or, the class is not from a module defined in the NULL classloader
@@ -1464,7 +1490,7 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
     if (k.is_null()) {
       // Use VM class loader
       PerfTraceTime vmtimer(ClassLoader::perf_sys_classload_time());
-      k = ClassLoader::load_classfile(class_name, search_only_bootloader_append, CHECK_(nh));
+      k = ClassLoader::load_class(class_name, search_only_bootloader_append, CHECK_(nh));
     }
 
     // find_or_define_instance_class may return a different InstanceKlass
@@ -2854,23 +2880,14 @@ void SystemDictionary::verify() {
   constraints()->verify(dictionary(), placeholders());
 }
 
-// utility function for class load event
-void SystemDictionary::post_class_load_event(const Ticks& start_time,
-                                             instanceKlassHandle k,
-                                             Handle initiating_loader) {
-#if INCLUDE_TRACE
-  EventClassLoad event(UNTIMED);
-  if (event.should_commit()) {
-    event.set_starttime(start_time);
-    event.set_loadedClass(k());
-    oop defining_class_loader = k->class_loader();
-    event.set_definingClassLoader(defining_class_loader !=  NULL ?
-                                    defining_class_loader->klass() : (Klass*)NULL);
-    oop class_loader = initiating_loader.is_null() ? (oop)NULL : initiating_loader();
-    event.set_initiatingClassLoader(class_loader != NULL ?
-                                      class_loader->klass() : (Klass*)NULL);
-    event.commit();
-  }
-#endif // INCLUDE_TRACE
+// caller needs ResourceMark
+const char* SystemDictionary::loader_name(const oop loader) {
+  return ((loader) == NULL ? "<bootloader>" :
+    InstanceKlass::cast((loader)->klass())->name()->as_C_string());
 }
 
+// caller needs ResourceMark
+const char* SystemDictionary::loader_name(const ClassLoaderData* loader_data) {
+  return (loader_data->class_loader() == NULL ? "<bootloader>" :
+    InstanceKlass::cast((loader_data->class_loader())->klass())->name()->as_C_string());
+}

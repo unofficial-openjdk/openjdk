@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
  * @test
  * @summary Test that if class c5 in an unnamed module can read package p6 in module m2, but package p6 in module m2 is
  *          exported qualifiedly to module m3, then class c5 in an unnamed module can not read p6.c6 in module m2.
- * @library /testlibrary /../../test/lib
+ * @library /testlibrary /test/lib
  * @compile myloaders/MySameClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java

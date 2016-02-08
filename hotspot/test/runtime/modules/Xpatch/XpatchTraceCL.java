@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8069469
- * @summary Make sure -XX:+TraceClassLoading works properly with bootmodules.jimage,
+ * @summary Make sure -XX:+TraceClassLoading works properly with "modules" jimage,
             -Xpatch, and with -Xbootclasspath/a
  * @library /testlibrary
  * @compile XpatchMain.java
@@ -53,7 +53,7 @@ public class XpatchTraceCL {
              "-XX:+TraceClassLoading", "XpatchMain", "javax.naming.spi.NamingManager");
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        // bootmodules.jimage case.
+        // "modules" jimage case.
         output.shouldContain("Loaded java.lang.Thread from jrt:/java.base");
         // -Xpatch case.
         output.shouldContain("Loaded javax.naming.spi.NamingManager from mods" +
