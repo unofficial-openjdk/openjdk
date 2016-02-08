@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ interim-cldrconverter:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
 
 buildtools-jdk:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk java-tools)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileTools.gmk)
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
     interim-rmic interim-cldrconverter buildtools-jdk
@@ -293,7 +293,8 @@ ALL_TARGETS += $(JMOD_TARGETS)
 # used to track the exact sources used to build that image.
 source-tips: $(SUPPORT_OUTPUTDIR)/source_tips
 $(SUPPORT_OUTPUTDIR)/source_tips: FRC
-	@$(MKDIR) -p $(@D)
+	$(call MakeDir, $(@D))
+	@$(RM) $@
 	@$(call GetSourceTips)
 
 BOOTCYCLE_TARGET := product-images
@@ -493,7 +494,7 @@ else
   # Skip modules that do not have java source. When creating a BUILD_JDK, the
   # java compilation has already been done by the normal build and copied in.
   ifneq ($(CREATING_BUILDJDK), true)
-    $(foreach m, $(filter $(JAVA_MODULES), $(LIBS_MODULES)), $(eval $m-libs: $m-java))
+  $(foreach m, $(filter $(JAVA_MODULES), $(LIBS_MODULES)), $(eval $m-libs: $m-java))
   endif
 
   # Declare dependencies from all other <module>-lib to java.base-lib
@@ -519,6 +520,10 @@ else
   # The swing beans need to have java base properly generated to avoid errors
   # in javadoc.
   java.desktop-gensrc-jdk: java.base-gensrc
+
+  # The annotation processing for jdk.vm.ci needs java.base classes from the
+  # current JDK.
+  jdk.vm.ci-gensrc-hotspot: java.base-java 
 
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
@@ -789,7 +794,7 @@ print-modules:
 	  @$(ECHO) $(sort $(ALL_MODULES))
 
 create-main-targets-include:
-	  @$(ECHO) $(LOG_INFO) Generating main target list
+	  $(call LogInfo, Generating main target list)
 	  @$(ECHO) ALL_MAIN_TARGETS := $(sort $(ALL_TARGETS)) > \
 	      $(MAKESUPPORT_OUTPUTDIR)/main-targets.gmk
 
