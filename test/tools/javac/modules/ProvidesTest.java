@@ -379,7 +379,7 @@ public class ProvidesTest extends ModuleTestBase {
     }
 
     @Test
-    void testInnerClass(Path base) throws Exception {
+    void testServiceImplementationInnerClass(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2.Inner; }",
@@ -396,6 +396,33 @@ public class ProvidesTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList(
                 "module-info.java:1:37: compiler.err.service.implementation.is.inner: p2.C2.Inner");
+        if (!output.containsAll(expected)) {
+            throw new Exception("Expected output not found");
+        }
+    }
+
+    @Test
+    void testServiceDefinitionInnerClass(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { provides p1.C1.InnerDefinition with p2.C2; }",
+                "package p1; public class C1 { public class InnerDefinition { } }",
+                "package p2; public class C2 extends p1.C1.InnerDefinition { }");
+
+        List<String> output = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
+                .outdir(Files.createDirectories(base.resolve("classes")))
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:26: compiler.err.service.definition.is.inner: p1.C1.InnerDefinition",
+                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used",
+                "C2.java:1:20: compiler.err.encl.class.required: p1.C1.InnerDefinition",
+                "2 errors",
+                "1 warning");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
