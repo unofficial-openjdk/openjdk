@@ -75,8 +75,8 @@ AC_DEFUN([TOOLCHAIN_SETUP_FILENAME_PATTERNS],
       # For full static builds, we're overloading the SHARED_LIBRARY
       # variables in order to limit the amount of changes required.
       # It would be better to remove SHARED and just use LIBRARY and
-      # LIBRARY_SUFFIX for libraries that can be built either 
-      # shared or static and use STATIC_* for libraries that are 
+      # LIBRARY_SUFFIX for libraries that can be built either
+      # shared or static and use STATIC_* for libraries that are
       # always built statically.
       if test "x$STATIC_BUILD" = xtrue; then
         SHARED_LIBRARY='lib[$]1.a'
@@ -433,39 +433,22 @@ AC_DEFUN([TOOLCHAIN_FIND_COMPILER],
   # Now we have a compiler binary in $1. Make sure it's okay.
   BASIC_FIXUP_EXECUTABLE($1)
   TEST_COMPILER="[$]$1"
-  # Don't remove symbolic links on AIX because 'xlc_r' and 'xlC_r' may all be links
-  # to 'xlc' but it is crucial that we invoke the compiler with the right name!
-  if test "x$OPENJDK_BUILD_OS" != xaix; then
-    # FIXME: This test should not be needed anymore; we don't do that for any platform.
-    AC_MSG_CHECKING([resolved symbolic links for $1])
-    BASIC_REMOVE_SYMBOLIC_LINKS(TEST_COMPILER)
-    AC_MSG_RESULT([$TEST_COMPILER])
-  fi
-  AC_MSG_CHECKING([if $1 is disguised ccache])
 
-  COMPILER_BASENAME=`$BASENAME "$TEST_COMPILER"`
-  if test "x$COMPILER_BASENAME" = "xccache"; then
-    AC_MSG_RESULT([yes, trying to find proper $COMPILER_NAME compiler])
-    # We /usr/lib/ccache in the path, so cc is a symlink to /usr/bin/ccache.
-    # We want to control ccache invocation ourselves, so ignore this cc and try
-    # searching again.
-
-    # Remove the path to the fake ccache cc from the PATH
-    RETRY_COMPILER_SAVED_PATH="$PATH"
-    COMPILER_DIRNAME=`$DIRNAME [$]$1`
-    PATH="`$ECHO $PATH | $SED -e "s,$COMPILER_DIRNAME,,g" -e "s,::,:,g" -e "s,^:,,g"`"
-
-    # Try again looking for our compiler
-    AC_CHECK_TOOLS(PROPER_COMPILER_$1, $3)
-    BASIC_FIXUP_EXECUTABLE(PROPER_COMPILER_$1)
-    PATH="$RETRY_COMPILER_SAVED_PATH"
-
-    AC_MSG_CHECKING([for resolved symbolic links for $1])
-    BASIC_REMOVE_SYMBOLIC_LINKS(PROPER_COMPILER_$1)
-    AC_MSG_RESULT([$PROPER_COMPILER_$1])
-    $1="$PROPER_COMPILER_$1"
+  AC_MSG_CHECKING([resolved symbolic links for $1])
+  SYMLINK_ORIGINAL="$TEST_COMPILER"
+  BASIC_REMOVE_SYMBOLIC_LINKS(SYMLINK_ORIGINAL)
+  if test "x$TEST_COMPILER" = "x$SYMLINK_ORIGINAL"; then
+    AC_MSG_RESULT([no symlink])
   else
-    AC_MSG_RESULT([no, keeping $1])
+    AC_MSG_RESULT([$SYMLINK_ORIGINAL])
+
+    # We can't handle ccache by gcc wrappers, since we need to know if we're
+    # using ccache. Instead ccache usage must be controlled by a configure option.
+    COMPILER_BASENAME=`$BASENAME "$SYMLINK_ORIGINAL"`
+    if test "x$COMPILER_BASENAME" = "xccache"; then
+      AC_MSG_NOTICE([Please use --enable-ccache instead of providing a wrapped compiler.])
+      AC_MSG_ERROR([$TEST_COMPILER is a symbolic link to ccache. This is not supported.])
+    fi
   fi
 
   TOOLCHAIN_CHECK_COMPILER_VERSION([$1], [$COMPILER_NAME])
@@ -824,21 +807,21 @@ AC_DEFUN_ONCE([TOOLCHAIN_MISC_CHECKS],
 
     # "-Og" suppported for GCC 4.8 and later
     CFLAG_OPTIMIZE_DEBUG_FLAG="-Og"
-    FLAGS_COMPILER_CHECK_ARGUMENTS([$CFLAG_OPTIMIZE_DEBUG_FLAG],
-      [HAS_CFLAG_OPTIMIZE_DEBUG=true],
-      [HAS_CFLAG_OPTIMIZE_DEBUG=false])
+    FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$CFLAG_OPTIMIZE_DEBUG_FLAG],
+      IF_TRUE: [HAS_CFLAG_OPTIMIZE_DEBUG=true],
+      IF_FALSE: [HAS_CFLAG_OPTIMIZE_DEBUG=false])
 
     # "-z relro" supported in GNU binutils 2.17 and later
     LINKER_RELRO_FLAG="-Wl,-z,relro"
-    FLAGS_LINKER_CHECK_ARGUMENTS([$LINKER_RELRO_FLAG],
-      [HAS_LINKER_RELRO=true],
-      [HAS_LINKER_RELRO=false])
+    FLAGS_LINKER_CHECK_ARGUMENTS(ARGUMENT: [$LINKER_RELRO_FLAG],
+      IF_TRUE: [HAS_LINKER_RELRO=true],
+      IF_FALSE: [HAS_LINKER_RELRO=false])
 
     # "-z now" supported in GNU binutils 2.11 and later
     LINKER_NOW_FLAG="-Wl,-z,now"
-    FLAGS_LINKER_CHECK_ARGUMENTS([$LINKER_NOW_FLAG],
-      [HAS_LINKER_NOW=true],
-      [HAS_LINKER_NOW=false])
+    FLAGS_LINKER_CHECK_ARGUMENTS(ARGUMENT: [$LINKER_NOW_FLAG],
+      IF_TRUE: [HAS_LINKER_NOW=true],
+      IF_FALSE: [HAS_LINKER_NOW=false])
   fi
 
   # Check for broken SuSE 'ld' for which 'Only anonymous version tag is allowed
