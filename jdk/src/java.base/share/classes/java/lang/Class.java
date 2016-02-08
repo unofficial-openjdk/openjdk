@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
 import jdk.internal.misc.BootLoader;
+import jdk.internal.misc.VM;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.BuiltinClassLoader;
 import jdk.internal.misc.Unsafe;
@@ -365,9 +366,9 @@ public final class Class<T> implements java.io.Serializable,
             // Reflective call to get caller class is only needed if a security manager
             // is present.  Avoid the overhead of making this call otherwise.
             caller = Reflection.getCallerClass();
-            if (sun.misc.VM.isSystemDomainLoader(loader)) {
+            if (VM.isSystemDomainLoader(loader)) {
                 ClassLoader ccl = ClassLoader.getClassLoader(caller);
-                if (!sun.misc.VM.isSystemDomainLoader(ccl)) {
+                if (!VM.isSystemDomainLoader(ccl)) {
                     sm.checkPermission(
                         SecurityConstants.GET_CLASSLOADER_PERMISSION);
                 }
@@ -427,7 +428,9 @@ public final class Class<T> implements java.io.Serializable,
         Objects.requireNonNull(name);
 
         Class<?> caller = Reflection.getCallerClass();
-        if (caller == null || caller.getModule() != module) {
+        if (caller != null && caller.getModule() != module) {
+            // if caller is null, Class.forName is the last java frame on the stack.
+            // java.base has all permissions
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -2712,7 +2715,7 @@ public final class Class<T> implements java.io.Serializable,
 
     // Incremented by the VM on each call to JVM TI RedefineClasses()
     // that redefines this class or a superclass.
-    private transient volatile int classRedefinedCount = 0;
+    private transient volatile int classRedefinedCount;
 
     // Lazily create and cache ReflectionData
     private ReflectionData<T> reflectionData() {
@@ -3525,7 +3528,8 @@ public final class Class<T> implements java.io.Serializable,
      * uncloned, cached, and shared by all callers.
      */
     T[] getEnumConstantsShared() {
-        if (enumConstants == null) {
+        T[] constants = enumConstants;
+        if (constants == null) {
             if (!isEnum()) return null;
             try {
                 final Method values = getMethod("values");
@@ -3538,16 +3542,16 @@ public final class Class<T> implements java.io.Serializable,
                         });
                 @SuppressWarnings("unchecked")
                 T[] temporaryConstants = (T[])values.invoke(null);
-                enumConstants = temporaryConstants;
+                enumConstants = constants = temporaryConstants;
             }
             // These can happen when users concoct enum-like classes
             // that don't comply with the enum spec.
             catch (InvocationTargetException | NoSuchMethodException |
                    IllegalAccessException ex) { return null; }
         }
-        return enumConstants;
+        return constants;
     }
-    private transient volatile T[] enumConstants = null;
+    private transient volatile T[] enumConstants;
 
     /**
      * Returns a map from simple name to enum constant.  This package-private
@@ -3557,19 +3561,21 @@ public final class Class<T> implements java.io.Serializable,
      * created lazily on first use.  Typically it won't ever get created.
      */
     Map<String, T> enumConstantDirectory() {
-        if (enumConstantDirectory == null) {
+        Map<String, T> directory = enumConstantDirectory;
+        if (directory == null) {
             T[] universe = getEnumConstantsShared();
             if (universe == null)
                 throw new IllegalArgumentException(
                     getName() + " is not an enum type");
-            Map<String, T> m = new HashMap<>(2 * universe.length);
-            for (T constant : universe)
-                m.put(((Enum<?>)constant).name(), constant);
-            enumConstantDirectory = m;
+            directory = new HashMap<>(2 * universe.length);
+            for (T constant : universe) {
+                directory.put(((Enum<?>)constant).name(), constant);
+            }
+            enumConstantDirectory = directory;
         }
-        return enumConstantDirectory;
+        return directory;
     }
-    private transient volatile Map<String, T> enumConstantDirectory = null;
+    private transient volatile Map<String, T> enumConstantDirectory;
 
     /**
      * Casts an object to the class or interface represented

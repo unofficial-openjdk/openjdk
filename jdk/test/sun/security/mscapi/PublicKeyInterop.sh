@@ -25,7 +25,6 @@
 
 # @test
 # @bug 6888925
-# @modules java.base/sun.security.util
 # @requires os.family == "windows"
 # @run shell PublicKeyInterop.sh
 # @summary SunMSCAPI's Cipher can't use RSA public keys obtained from other
@@ -63,9 +62,9 @@ case "$OS" in
 
         echo
         echo "Running the test..."
-        ${TESTJAVA}/bin/javac -XaddExports:java.base/sun.misc=ALL-UNNAMED \
+        ${TESTJAVA}/bin/javac -XaddExports:java.base/sun.security.util=ALL-UNNAMED \
             ${TESTTOOLVMOPTS} ${TESTJAVACOPTS} -d . ${TESTSRC}\\PublicKeyInterop.java
-        ${TESTJAVA}/bin/java -XaddExports:java.base/sun.misc=ALL-UNNAMED \
+        ${TESTJAVA}/bin/java -XaddExports:java.base/sun.security.util=ALL-UNNAMED \
             ${TESTVMOPTS} PublicKeyInterop
 
         rc=$?

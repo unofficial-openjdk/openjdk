@@ -62,6 +62,7 @@ import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.JavaLangAccess;;
 import jdk.internal.misc.SharedSecrets;;
+import jdk.internal.misc.VM;
 import jdk.internal.logger.LoggerFinderLoader;
 import jdk.internal.logger.LazyLoggers;
 import jdk.internal.logger.LocalizedLoggerWrapper;
@@ -151,7 +152,7 @@ public final class System {
 
     /* The security manager for the system.
      */
-    private static volatile SecurityManager security = null;
+    private static volatile SecurityManager security;
 
     /**
      * Reassigns the "standard" input stream.
@@ -225,7 +226,7 @@ public final class System {
         setErr0(err);
     }
 
-    private static volatile Console cons = null;
+    private static volatile Console cons;
     /**
      * Returns the unique {@link java.io.Console Console} object associated
      * with the current Java virtual machine, if any.
@@ -235,12 +236,13 @@ public final class System {
      * @since   1.6
      */
      public static Console console() {
-         if (cons == null) {
+         Console c = cons;
+         if (c == null) {
              synchronized (System.class) {
-                 cons = SharedSecrets.getJavaIOAccess().console();
+                 cons = c = SharedSecrets.getJavaIOAccess().console();
              }
          }
-         return cons;
+         return c;
      }
 
     /**
@@ -1570,6 +1572,8 @@ public final class System {
      * @return an instance of {@link Logger} that can be used by the calling
      *         class.
      * @throws NullPointerException if {@code name} is {@code null}.
+     *
+     * @since 9
      */
     @CallerSensitive
     public static Logger getLogger(String name) {
@@ -1607,6 +1611,8 @@ public final class System {
      * resource bundle for message localization.
      * @throws NullPointerException if {@code name} is {@code null} or
      *         {@code bundle} is {@code null}.
+     *
+     * @since 9
      */
     @CallerSensitive
     public static Logger getLogger(String name, ResourceBundle bundle) {
@@ -1852,12 +1858,12 @@ public final class System {
         // removed from the system properties.
         //
         // See java.lang.Integer.IntegerCache and the
-        // sun.misc.VM.saveAndRemoveProperties method for example.
+        // VM.saveAndRemoveProperties method for example.
         //
         // Save a private copy of the system properties object that
         // can only be accessed by the internal implementation.  Remove
         // certain system properties that are not intended for public access.
-        sun.misc.VM.saveAndRemoveProperties(props);
+        VM.saveAndRemoveProperties(props);
 
         lineSeparator = props.getProperty("line.separator");
         sun.misc.Version.init();
@@ -1880,7 +1886,7 @@ public final class System {
         // set for the class libraries. Currently this is no-op everywhere except
         // for Windows where the process-wide error mode is set before the java.io
         // classes are used.
-        sun.misc.VM.initializeOSEnvironment();
+        VM.initializeOSEnvironment();
 
         // The main thread is not added to its thread group in the same
         // way as other threads; we must do it ourselves here.
@@ -1891,12 +1897,12 @@ public final class System {
         setJavaLangAccess();
 
         // Subsystems that are invoked during initialization can invoke
-        // sun.misc.VM.isBooted() in order to avoid doing things that should
+        // VM.isBooted() in order to avoid doing things that should
         // wait until the VM is fully initialized. The initialization level
         // is incremented from 0 to 1 here to indicate the first phase of
         // initialization has completed.
         // IMPORTANT: Ensure that this remains the last initialization action!
-        sun.misc.VM.initLevel(1);
+        VM.initLevel(1);
     }
 
     // @see #initPhase2()
@@ -1917,7 +1923,7 @@ public final class System {
         Modules.addReads(base, null);
 
         // module system initialized
-        sun.misc.VM.initLevel(2);
+        VM.initLevel(2);
     }
 
     /*
@@ -1959,7 +1965,7 @@ public final class System {
         }
 
         // initializing the system class loader
-        sun.misc.VM.initLevel(3);
+        VM.initLevel(3);
 
         // system class loader initialized
         ClassLoader scl = ClassLoader.initSystemClassLoader();
@@ -1968,7 +1974,7 @@ public final class System {
         Thread.currentThread().setContextClassLoader(scl);
 
         // system is fully initialized
-        sun.misc.VM.initLevel(4);
+        VM.initLevel(4);
     }
 
     private static void setJavaLangAccess() {
@@ -2031,6 +2037,9 @@ public final class System {
             }
             public Stream<Package> packages(ClassLoader cl) {
                 return cl.packages();
+            }
+            public Package definePackage(ClassLoader cl, String name, Module module) {
+                return cl.definePackage(name, module);
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

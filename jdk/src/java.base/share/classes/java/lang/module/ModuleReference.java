@@ -51,7 +51,7 @@ import jdk.internal.module.Hasher.HashSupplier;
 public final class ModuleReference {
 
     private final ModuleDescriptor descriptor;
-    private final Optional<URI> location;
+    private final URI location;
     private final Supplier<ModuleReader> readerSupplier;
 
     // the function that computes the hash of this module reference
@@ -69,7 +69,7 @@ public final class ModuleReference {
                     HashSupplier hasher)
     {
         this.descriptor = Objects.requireNonNull(descriptor);
-        this.location = Optional.ofNullable(location);
+        this.location = location;
         this.readerSupplier = Objects.requireNonNull(readerSupplier);
         this.hasher = hasher;
     }
@@ -122,7 +122,7 @@ public final class ModuleReference {
      * @return The location or an empty {@code Optional} if not known
      */
     public Optional<URI> location() {
-        return location;
+        return Optional.ofNullable(location);
     }
 
 
@@ -194,7 +194,7 @@ public final class ModuleReference {
     @Override
     public String toString() {
         return ("[module " + descriptor().name()
-                + ", location=" + location.orElse(null) + "]");
+                + ", location=" + location + "]");
     }
 
 }

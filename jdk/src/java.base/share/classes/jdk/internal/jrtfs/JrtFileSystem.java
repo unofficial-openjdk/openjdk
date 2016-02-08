@@ -55,7 +55,7 @@ class JrtFileSystem extends AbstractJrtFileSystem {
 
     // open a .jimage and build directory structure
     private static ImageReader openImage(Path path) throws IOException {
-        ImageReader image = ImageReader.open(path.toString());
+        ImageReader image = ImageReader.open(path);
         image.getRootDirectory();
         return image;
     }
@@ -64,10 +64,10 @@ class JrtFileSystem extends AbstractJrtFileSystem {
             Map<String, ?> env)
             throws IOException {
         super(provider, env);
-        checkExists(SystemImages.bootImagePath);
+        checkExists(SystemImages.moduleImageFile());
 
         // open image file
-        this.bootImage = openImage(SystemImages.bootImagePath);
+        this.bootImage = openImage(SystemImages.moduleImageFile());
 
         byte[] root = new byte[]{'/'};
         rootPath = new JrtPath(this, root);

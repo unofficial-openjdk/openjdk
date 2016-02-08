@@ -77,17 +77,24 @@ public class BasicTest {
      * The initial module is loaded from an exploded module
      */
     public void testRunWithExplodedModule() throws Exception {
-        String modulepath = MODS_DIR.toString();
+        String dir = MODS_DIR.toString();
+        String subdir = MODS_DIR.resolve(TEST_MODULE).toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
         // java -mp mods -m $TESTMODULE/$MAINCLASS
         int exitValue
-            = executeTestJava("-mp", modulepath,
-                              "-m", mid)
+            = executeTestJava("-mp", dir, "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
+        assertTrue(exitValue == 0);
 
+        // java -mp mods/$TESTMODULE -m $TESTMODULE/$MAINCLASS
+        exitValue
+            = executeTestJava("-mp", subdir, "-m", mid)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
         assertTrue(exitValue == 0);
     }
 
@@ -97,10 +104,10 @@ public class BasicTest {
      */
     public void testRunWithModularJar() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
+        Path jar = dir.resolve("m.jar");
 
         // jar --create ...
         String classes = MODS_DIR.resolve(TEST_MODULE).toString();
-        String jar = dir.resolve("m.jar").toString();
         String[] args = {
             "--create",
             "--file=" + jar,
@@ -112,14 +119,22 @@ public class BasicTest {
                 .run(args);
         assertTrue(success);
 
-        // java -mp mods -m $TESTMODULE
+        // java -mp mlib -m $TESTMODULE
         int exitValue
             = executeTestJava("-mp", dir.toString(),
                               "-m", TEST_MODULE)
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
+        assertTrue(exitValue == 0);
 
+        // java -mp mlib/m.jar -m $TESTMODULE
+        exitValue
+            = executeTestJava("-mp", jar.toString(),
+                              "-m", TEST_MODULE)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
         assertTrue(exitValue == 0);
     }
 

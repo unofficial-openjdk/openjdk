@@ -25,7 +25,6 @@
 
 package sun.reflect;
 
-import sun.misc.VM;
 
 import java.lang.reflect.*;
 import java.security.AccessController;
@@ -33,6 +32,7 @@ import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.VM;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -364,7 +364,7 @@ public class Reflection {
      */
     public static boolean isCallerSensitive(Method m) {
         final ClassLoader loader = m.getDeclaringClass().getClassLoader();
-        if (sun.misc.VM.isSystemDomainLoader(loader) || isExtClassLoader(loader))  {
+        if (VM.isSystemDomainLoader(loader) || isExtClassLoader(loader))  {
             return m.isAnnotationPresent(CallerSensitive.class);
         }
         return false;

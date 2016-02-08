@@ -25,7 +25,7 @@
 
 package java.lang;
 
-import sun.misc.FloatingDecimal;
+import jdk.internal.math.FloatingDecimal;
 import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.stream.IntStream;
@@ -1526,7 +1526,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
 
     /**
      * {@inheritDoc}
-     * @since 1.9
+     * @since 9
      */
     @Override
     public IntStream chars() {
@@ -1543,7 +1543,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
 
     /**
      * {@inheritDoc}
-     * @since 1.9
+     * @since 9
      */
     @Override
     public IntStream codePoints() {

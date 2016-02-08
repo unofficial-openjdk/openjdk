@@ -25,15 +25,13 @@
 
 package java.nio;
 
-import java.security.AccessController;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 import jdk.internal.misc.JavaNioAccess;
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
-import sun.misc.VM;
+import jdk.internal.misc.VM;
 
 /**
  * Access to bits, native and otherwise.
@@ -603,7 +601,8 @@ class Bits {                            // package-private
     private static final AtomicLong reservedMemory = new AtomicLong();
     private static final AtomicLong totalCapacity = new AtomicLong();
     private static final AtomicLong count = new AtomicLong();
-    private static volatile boolean memoryLimitSet = false;
+    private static volatile boolean memoryLimitSet;
+
     // max. number of sleeps during try-reserving with exponentially
     // increasing delay before throwing OutOfMemoryError:
     // 1, 2, 4, 8, 16, 32, 64, 128, 256 (total 511 ms ~ 0.5 s)

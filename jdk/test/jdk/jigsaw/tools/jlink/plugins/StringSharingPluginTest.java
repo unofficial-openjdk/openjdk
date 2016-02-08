@@ -102,7 +102,7 @@ public class StringSharingPluginTest {
                     && !p.toString().endsWith("module-info.class")) {
                 try {
                     byte[] content = Files.readAllBytes(p);
-                    String path = p.toString();
+                    String path = p.toString().replace('\\', '/');
                     path = path.substring("/modules".length());
                     ModuleData res = Pool.newResource(path, content);
                     resources.add(res);

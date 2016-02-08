@@ -4,15 +4,13 @@
 #
 ############################################################################
 
+# jdk_lang
+
 # 8134485
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
-############################################################################
-
-# jdk_nio
-
-# 8146869
-java/nio/file/spi/SetDefaultProvider.java			generic-all
+# 8148787
+java/lang/String/concat/StringConcatFactoryInvariants.java	generic-all
 
 ############################################################################
 
@@ -31,19 +29,8 @@ sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          
 sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
 sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
-############################################################################
-
-# 8134916
-sun/text/resources/LocaleDataTest.java                          generic-all
-
-############################################################################
-
-# jdk_jdi
-
-# 8130683
-com/sun/jdi/cds/CDSBreakpointTest.java				generic-all
-com/sun/jdi/cds/CDSDeleteAllBkptsTest.java			generic-all
-com/sun/jdi/cds/CDSFieldWatchpoints.java			generic-all
+# 8137314
+java/security/Policy/SignedJar/SignedJarTest.java		solaris-all
 
 ############################################################################
 
@@ -56,15 +43,8 @@ tools/pack200/Pack200Test.java					generic-all
 
 # svc_tools
 
-# 8132452
-sun/tools/jmap/heapconfig/JMapHeapConfigTest.java		generic-all
-
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
-
-# 8059035
-sun/tools/jinfo/JInfoSanityTest.java                           generic-all
-
 
 ############################################################################
 
@@ -75,10 +55,9 @@ sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 
 ############################################################################
 
-# jdk_other
+# jdk_jmx
 
-# 8130054, needs to be changed to headless
-javax/naming/module/basic.sh					generic-all
+# 8147610
+javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
 
 ############################################################################
-

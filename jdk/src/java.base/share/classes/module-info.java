@@ -81,9 +81,6 @@ module java.base {
     exports javax.security.auth.x500;
     exports javax.security.cert;
 
-    // see JDK-8049422
-    exports jdk;
-
     // see JDK-8044773
     exports jdk.net;
 
@@ -152,6 +149,8 @@ module java.base {
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
+    exports jdk.internal.math to
+        java.desktop;
     exports jdk.internal.module to
         java.management,
         java.xml,
@@ -165,10 +164,17 @@ module java.base {
         java.logging,
         java.management,
         java.naming,
+        java.rmi,
         java.security.jgss,
         java.sql,
         java.xml,
-        jdk.scripting.nashorn;
+        jdk.charsets,
+        jdk.scripting.nashorn,
+        jdk.vm.ci;
+    exports jdk.internal.perf to
+        java.desktop,
+        java.management,
+        jdk.jvmstat;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;

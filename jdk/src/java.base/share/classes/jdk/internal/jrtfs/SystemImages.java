@@ -40,24 +40,41 @@ final class SystemImages {
 
 
     static final String RUNTIME_HOME;
-    // bootmodules.jimage file Path
-    static final Path bootImagePath;
+    // "modules" jimage file Path
+    private static final Path moduleImageFile;
+    // "modules" jimage exists or not?
+    private static final boolean modulesImageExists;
     // <JAVA_HOME>/modules directory Path
-    static final Path modulesDirPath;
-    // bootmodules.jimage exists or not?
-    static final boolean bootImageExists;
+    private static final Path explodedModulesDir;
 
     static {
         PrivilegedAction<String> pa = SystemImages::findHome;
         RUNTIME_HOME = AccessController.doPrivileged(pa);
 
         FileSystem fs = FileSystems.getDefault();
-        bootImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "bootmodules.jimage");
-        modulesDirPath = fs.getPath(RUNTIME_HOME, "modules");
+        moduleImageFile = fs.getPath(RUNTIME_HOME, "lib", "modules");
+        explodedModulesDir = fs.getPath(RUNTIME_HOME, "modules");
 
-        bootImageExists = AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> Files.exists(bootImagePath));
+        modulesImageExists = AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                @Override
+                public Boolean run() {
+                    return Files.isRegularFile(moduleImageFile);
+                }
+            });
     }
 
+    static boolean hasModulesImage() {
+        return modulesImageExists;
+    }
+
+    static Path moduleImageFile() {
+        return moduleImageFile;
+    }
+
+    static Path explodedModulesDir() {
+        return explodedModulesDir;
+    }
 
     /**
      * Returns the appropriate JDK home for this usage of the FileSystemProvider.

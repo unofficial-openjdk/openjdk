@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class ImageReader extends BasicImageReader {
-    private static HashMap<String, ImageReader> openFiles = new HashMap<>();
+    private static HashMap<Path, ImageReader> openFiles = new HashMap<>();
     private int openCount;
 
     // attributes of the .jimage file. jimage file does not contain
@@ -57,17 +57,17 @@ public class ImageReader extends BasicImageReader {
     private Directory packagesDir;
     private Directory modulesDir;
 
-    private ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
+    private ImageReader(Path imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
         this.openCount = 0;
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
-    private ImageReader(String imagePath) throws IOException {
+    private ImageReader(Path imagePath) throws IOException {
         this(imagePath, ByteOrder.nativeOrder());
     }
 
-    public synchronized static ImageReader open(String imagePath, ByteOrder byteOrder) throws IOException {
+    public synchronized static ImageReader open(Path imagePath, ByteOrder byteOrder) throws IOException {
         ImageReader reader = openFiles.get(imagePath);
 
         if (reader == null) {
@@ -83,7 +83,7 @@ public class ImageReader extends BasicImageReader {
     /**
      * Opens the given file path as an image file, returning an {@code ImageReader}.
      */
-    public static ImageReader open(String imagePath) throws IOException {
+    public static ImageReader open(Path imagePath) throws IOException {
         return open(imagePath, ByteOrder.nativeOrder());
     }
 

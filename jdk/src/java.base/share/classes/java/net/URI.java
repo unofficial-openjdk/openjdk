@@ -33,7 +33,6 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.CharacterCodingException;
@@ -490,17 +489,17 @@ public final class URI
     private transient String path;              // null ==> opaque
     private transient String query;
 
-    // The remaining fields may be computed on demand
+    // The remaining fields may be computed on demand, which is safe even in
+    // the face of multiple threads racing to initialize them
+    private transient String schemeSpecificPart;
+    private transient int hash;        // Zero ==> undefined
 
-    private transient volatile String schemeSpecificPart;
-    private transient volatile int hash;        // Zero ==> undefined
-
-    private transient volatile String decodedUserInfo = null;
-    private transient volatile String decodedAuthority = null;
-    private transient volatile String decodedPath = null;
-    private transient volatile String decodedQuery = null;
-    private transient volatile String decodedFragment = null;
-    private transient volatile String decodedSchemeSpecificPart = null;
+    private transient String decodedUserInfo;
+    private transient String decodedAuthority;
+    private transient String decodedPath;
+    private transient String decodedQuery;
+    private transient String decodedFragment;
+    private transient String decodedSchemeSpecificPart;
 
     /**
      * The string form of this URI.
@@ -911,8 +910,7 @@ public final class URI
         // either more fields or a more-obscure representation.
         if ((host != null) || (authority == null))
             return this;
-        defineString();
-        new Parser(string).parse(true);
+        new Parser(toString()).parse(true);
         return this;
     }
 
@@ -1082,11 +1080,8 @@ public final class URI
      *          If a protocol handler for the URL could not be found,
      *          or if some other error occurred while constructing the URL
      */
-    public URL toURL()
-        throws MalformedURLException {
-        if (!isAbsolute())
-            throw new IllegalArgumentException("URI is not absolute");
-        return new URL(toString());
+    public URL toURL() throws MalformedURLException {
+        return URL.fromURI(this);
     }
 
     // -- Component access methods --
@@ -1144,8 +1139,34 @@ public final class URI
      *          (never {@code null})
      */
     public String getRawSchemeSpecificPart() {
-        defineSchemeSpecificPart();
-        return schemeSpecificPart;
+        String part = schemeSpecificPart;
+        if (part != null) {
+            return part;
+        }
+
+        String s = string;
+        if (s != null) {
+            // if string is defined, components will have been parsed
+            int start = 0;
+            int end = s.length();
+            if (scheme != null) {
+                start = scheme.length() + 1;
+            }
+            if (fragment != null) {
+                end -= fragment.length() + 1;
+            }
+            if (path != null && path.length() == end - start) {
+                part = path;
+            } else {
+                part = s.substring(start, end);
+            }
+        } else {
+            StringBuilder sb = new StringBuilder();
+            appendSchemeSpecificPart(sb, null, getAuthority(), getUserInfo(),
+                                 host, port, getPath(), getQuery());
+            part = sb.toString();
+        }
+        return schemeSpecificPart = part;
     }
 
     /**
@@ -1160,9 +1181,11 @@ public final class URI
      *          (never {@code null})
      */
     public String getSchemeSpecificPart() {
-        if (decodedSchemeSpecificPart == null)
-            decodedSchemeSpecificPart = decode(getRawSchemeSpecificPart());
-        return decodedSchemeSpecificPart;
+        String part = decodedSchemeSpecificPart;
+        if (part == null) {
+            decodedSchemeSpecificPart = part = decode(getRawSchemeSpecificPart());
+        }
+        return part;
     }
 
     /**
@@ -1193,9 +1216,11 @@ public final class URI
      *          or {@code null} if the authority is undefined
      */
     public String getAuthority() {
-        if (decodedAuthority == null)
-            decodedAuthority = decode(authority);
-        return decodedAuthority;
+        String auth = decodedAuthority;
+        if ((auth == null) && (authority != null)) {
+            decodedAuthority = auth = decode(authority);
+        }
+        return auth;
     }
 
     /**
@@ -1223,9 +1248,11 @@ public final class URI
      *          or {@code null} if the user information is undefined
      */
     public String getUserInfo() {
-        if ((decodedUserInfo == null) && (userInfo != null))
-            decodedUserInfo = decode(userInfo);
-        return decodedUserInfo;
+        String user = decodedUserInfo;
+        if ((user == null) && (userInfo != null)) {
+            decodedUserInfo = user = decode(userInfo);
+        }
+        return user;
     }
 
     /**
@@ -1307,9 +1334,11 @@ public final class URI
      *          or {@code null} if the path is undefined
      */
     public String getPath() {
-        if ((decodedPath == null) && (path != null))
-            decodedPath = decode(path);
-        return decodedPath;
+        String decoded = decodedPath;
+        if ((decoded == null) && (path != null)) {
+            decodedPath = decoded = decode(path);
+        }
+        return decoded;
     }
 
     /**
@@ -1336,9 +1365,11 @@ public final class URI
      *          or {@code null} if the query is undefined
      */
     public String getQuery() {
-        if ((decodedQuery == null) && (query != null))
-            decodedQuery = decode(query, false);
-        return decodedQuery;
+        String decoded = decodedQuery;
+        if ((decoded == null) && (query != null)) {
+            decodedQuery = decoded = decode(query, false);
+        }
+        return decoded;
     }
 
     /**
@@ -1365,9 +1396,11 @@ public final class URI
      *          or {@code null} if the fragment is undefined
      */
     public String getFragment() {
-        if ((decodedFragment == null) && (fragment != null))
-            decodedFragment = decode(fragment, false);
-        return decodedFragment;
+        String decoded = decodedFragment;
+        if ((decoded == null) && (fragment != null)) {
+            decodedFragment = decoded = decode(fragment, false);
+        }
+        return decoded;
     }
 
 
@@ -1453,24 +1486,27 @@ public final class URI
      * @return  A hash-code value for this URI
      */
     public int hashCode() {
-        if (hash != 0)
-            return hash;
-        int h = hashIgnoringCase(0, scheme);
-        h = hash(h, fragment);
-        if (isOpaque()) {
-            h = hash(h, schemeSpecificPart);
-        } else {
-            h = hash(h, path);
-            h = hash(h, query);
-            if (host != null) {
-                h = hash(h, userInfo);
-                h = hashIgnoringCase(h, host);
-                h += 1949 * port;
+        int h = hash;
+        if (h == 0) {
+            h = hashIgnoringCase(0, scheme);
+            h = hash(h, fragment);
+            if (isOpaque()) {
+                h = hash(h, schemeSpecificPart);
             } else {
-                h = hash(h, authority);
+                h = hash(h, path);
+                h = hash(h, query);
+                if (host != null) {
+                    h = hash(h, userInfo);
+                    h = hashIgnoringCase(h, host);
+                    h += 1949 * port;
+                } else {
+                    h = hash(h, authority);
+                }
+            }
+            if (h != 0) {
+                hash = h;
             }
         }
-        hash = h;
         return h;
     }
 
@@ -1600,8 +1636,59 @@ public final class URI
      * @return  The string form of this URI
      */
     public String toString() {
-        defineString();
-        return string;
+        String s = string;
+        if (s == null) {
+            s = defineString();
+        }
+        return s;
+    }
+
+    private String defineString() {
+        String s = string;
+        if (s != null) {
+            return s;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (scheme != null) {
+            sb.append(scheme);
+            sb.append(':');
+        }
+        if (isOpaque()) {
+            sb.append(schemeSpecificPart);
+        } else {
+            if (host != null) {
+                sb.append("//");
+                if (userInfo != null) {
+                    sb.append(userInfo);
+                    sb.append('@');
+                }
+                boolean needBrackets = ((host.indexOf(':') >= 0)
+                        && !host.startsWith("[")
+                        && !host.endsWith("]"));
+                if (needBrackets) sb.append('[');
+                sb.append(host);
+                if (needBrackets) sb.append(']');
+                if (port != -1) {
+                    sb.append(':');
+                    sb.append(port);
+                }
+            } else if (authority != null) {
+                sb.append("//");
+                sb.append(authority);
+            }
+            if (path != null)
+                sb.append(path);
+            if (query != null) {
+                sb.append('?');
+                sb.append(query);
+            }
+        }
+        if (fragment != null) {
+            sb.append('#');
+            sb.append(fragment);
+        }
+        return string = sb.toString();
     }
 
     /**
@@ -1618,8 +1705,7 @@ public final class URI
      *          charset
      */
     public String toASCIIString() {
-        defineString();
-        return encode(string);
+        return encode(toString());
     }
 
 
@@ -1825,7 +1911,7 @@ public final class URI
         }
     }
 
-    private void appendAuthority(StringBuffer sb,
+    private void appendAuthority(StringBuilder sb,
                                  String authority,
                                  String userInfo,
                                  String host,
@@ -1875,7 +1961,7 @@ public final class URI
         }
     }
 
-    private void appendSchemeSpecificPart(StringBuffer sb,
+    private void appendSchemeSpecificPart(StringBuilder sb,
                                           String opaquePart,
                                           String authority,
                                           String userInfo,
@@ -1916,7 +2002,7 @@ public final class URI
         }
     }
 
-    private void appendFragment(StringBuffer sb, String fragment) {
+    private void appendFragment(StringBuilder sb, String fragment) {
         if (fragment != null) {
             sb.append('#');
             sb.append(quote(fragment, L_URIC, H_URIC));
@@ -1933,7 +2019,7 @@ public final class URI
                             String query,
                             String fragment)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (scheme != null) {
             sb.append(scheme);
             sb.append(':');
@@ -1944,61 +2030,6 @@ public final class URI
         appendFragment(sb, fragment);
         return sb.toString();
     }
-
-    private void defineSchemeSpecificPart() {
-        if (schemeSpecificPart != null) return;
-        StringBuffer sb = new StringBuffer();
-        appendSchemeSpecificPart(sb, null, getAuthority(), getUserInfo(),
-                                 host, port, getPath(), getQuery());
-        if (sb.length() == 0) return;
-        schemeSpecificPart = sb.toString();
-    }
-
-    private void defineString() {
-        if (string != null) return;
-
-        StringBuilder sb = new StringBuilder();
-        if (scheme != null) {
-            sb.append(scheme);
-            sb.append(':');
-        }
-        if (isOpaque()) {
-            sb.append(schemeSpecificPart);
-        } else {
-            if (host != null) {
-                sb.append("//");
-                if (userInfo != null) {
-                    sb.append(userInfo);
-                    sb.append('@');
-                }
-                boolean needBrackets = ((host.indexOf(':') >= 0)
-                                    && !host.startsWith("[")
-                                    && !host.endsWith("]"));
-                if (needBrackets) sb.append('[');
-                sb.append(host);
-                if (needBrackets) sb.append(']');
-                if (port != -1) {
-                    sb.append(':');
-                    sb.append(port);
-                }
-            } else if (authority != null) {
-                sb.append("//");
-                sb.append(authority);
-            }
-            if (path != null)
-                sb.append(path);
-            if (query != null) {
-                sb.append('?');
-                sb.append(query);
-            }
-        }
-        if (fragment != null) {
-            sb.append('#');
-            sb.append(fragment);
-        }
-        string = sb.toString();
-    }
-
 
     // -- Normalization, resolution, and relativization --
 
@@ -2042,7 +2073,7 @@ public final class URI
 
         // 5.2 (2): Reference to current document (lone fragment)
         if ((child.scheme == null) && (child.authority == null)
-            && child.path.equals("") && (child.fragment != null)
+            && child.path.isEmpty() && (child.fragment != null)
             && (child.query == null)) {
             if ((base.fragment != null)
                 && child.fragment.equals(base.fragment)) {
@@ -2630,13 +2661,6 @@ public final class URI
     private static final long L_SCHEME = L_ALPHA | L_DIGIT | lowMask("+-.");
     private static final long H_SCHEME = H_ALPHA | H_DIGIT | highMask("+-.");
 
-    // uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
-    //                 "&" | "=" | "+" | "$" | ","
-    private static final long L_URIC_NO_SLASH
-        = L_UNRESERVED | L_ESCAPED | lowMask(";?:@&=+$,");
-    private static final long H_URIC_NO_SLASH
-        = H_UNRESERVED | H_ESCAPED | highMask(";?:@&=+$,");
-
     // scope_id = alpha | digit | "_" | "."
     private static final long L_SCOPE_ID
         = L_ALPHANUM | lowMask("_.");
@@ -2650,13 +2674,13 @@ public final class URI
         '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
 
-    private static void appendEscape(StringBuffer sb, byte b) {
+    private static void appendEscape(StringBuilder sb, byte b) {
         sb.append('%');
         sb.append(hexDigits[(b >> 4) & 0x0f]);
         sb.append(hexDigits[(b >> 0) & 0x0f]);
     }
 
-    private static void appendEncoded(StringBuffer sb, char c) {
+    private static void appendEncoded(StringBuilder sb, char c) {
         ByteBuffer bb = null;
         try {
             bb = ThreadLocalCoders.encoderFor("UTF-8")
@@ -2677,15 +2701,14 @@ public final class URI
     // by the given mask pair
     //
     private static String quote(String s, long lowMask, long highMask) {
-        int n = s.length();
-        StringBuffer sb = null;
+        StringBuilder sb = null;
         boolean allowNonASCII = ((lowMask & L_ESCAPED) != 0);
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             if (c < '\u0080') {
                 if (!match(c, lowMask, highMask)) {
                     if (sb == null) {
-                        sb = new StringBuffer();
+                        sb = new StringBuilder();
                         sb.append(s, 0, i);
                     }
                     appendEscape(sb, (byte)c);
@@ -2697,7 +2720,7 @@ public final class URI
                        && (Character.isSpaceChar(c)
                            || Character.isISOControl(c))) {
                 if (sb == null) {
-                    sb = new StringBuffer();
+                    sb = new StringBuilder();
                     sb.append(s, 0, i);
                 }
                 appendEncoded(sb, c);
@@ -2734,7 +2757,7 @@ public final class URI
             assert false;
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (bb.hasRemaining()) {
             int b = bb.get() & 0xff;
             if (b >= 0x80)
@@ -2865,32 +2888,13 @@ public final class URI
             fail("Expected " + expected, p);
         }
 
-        private void failExpecting(String expected, String prior, int p)
-            throws URISyntaxException
-        {
-            fail("Expected " + expected + " following " + prior, p);
-        }
-
 
         // -- Simple access to the input string --
-
-        // Return a substring of the input string
-        //
-        private String substring(int start, int end) {
-            return input.substring(start, end);
-        }
-
-        // Return the char at position p,
-        // assuming that p < input.length()
-        //
-        private char charAt(int p) {
-            return input.charAt(p);
-        }
 
         // Tells whether start < end and, if so, whether charAt(start) == c
         //
         private boolean at(int start, int end, char c) {
-            return (start < end) && (charAt(start) == c);
+            return (start < end) && (input.charAt(start) == c);
         }
 
         // Tells whether start + s.length() < end and, if so,
@@ -2903,7 +2907,7 @@ public final class URI
                 return false;
             int i = 0;
             while (i < sn) {
-                if (charAt(p++) != s.charAt(i)) {
+                if (input.charAt(p++) != s.charAt(i)) {
                     break;
                 }
                 i++;
@@ -2943,7 +2947,7 @@ public final class URI
         // start position.
         //
         private int scan(int start, int end, char c) {
-            if ((start < end) && (charAt(start) == c))
+            if ((start < end) && (input.charAt(start) == c))
                 return start + 1;
             return start;
         }
@@ -2958,9 +2962,26 @@ public final class URI
         private int scan(int start, int end, String err, String stop) {
             int p = start;
             while (p < end) {
-                char c = charAt(p);
+                char c = input.charAt(p);
                 if (err.indexOf(c) >= 0)
                     return -1;
+                if (stop.indexOf(c) >= 0)
+                    break;
+                p++;
+            }
+            return p;
+        }
+
+        // Scan forward from the given start position.  Stop at the first char
+        // in the stop string (in which case the index of the preceding char is
+        // returned), or the end of the input string (in which case the length
+        // of the input string is returned).  May return the start position if
+        // nothing matches.
+        //
+        private int scan(int start, int end, String stop) {
+            int p = start;
+            while (p < end) {
+                char c = input.charAt(p);
                 if (stop.indexOf(c) >= 0)
                     break;
                 p++;
@@ -2982,8 +3003,8 @@ public final class URI
             if (c == '%') {
                 // Process escape pair
                 if ((p + 3 <= n)
-                    && match(charAt(p + 1), L_HEX, H_HEX)
-                    && match(charAt(p + 2), L_HEX, H_HEX)) {
+                    && match(input.charAt(p + 1), L_HEX, H_HEX)
+                    && match(input.charAt(p + 2), L_HEX, H_HEX)) {
                     return p + 3;
                 }
                 fail("Malformed escape pair", p);
@@ -3003,7 +3024,7 @@ public final class URI
         {
             int p = start;
             while (p < n) {
-                char c = charAt(p);
+                char c = input.charAt(p);
                 if (match(c, lowMask, highMask)) {
                     p++;
                     continue;
@@ -3049,7 +3070,6 @@ public final class URI
         //
         void parse(boolean rsa) throws URISyntaxException {
             requireServerAuthority = rsa;
-            int ssp;                    // Start of scheme-specific part
             int n = input.length();
             int p = scan(0, n, "/?#", ":");
             if ((p >= 0) && at(p, n, ':')) {
@@ -3057,26 +3077,25 @@ public final class URI
                     failExpecting("scheme name", 0);
                 checkChar(0, L_ALPHA, H_ALPHA, "scheme name");
                 checkChars(1, p, L_SCHEME, H_SCHEME, "scheme name");
-                scheme = substring(0, p);
+                scheme = input.substring(0, p);
                 p++;                    // Skip ':'
-                ssp = p;
                 if (at(p, n, '/')) {
                     p = parseHierarchical(p, n);
                 } else {
-                    int q = scan(p, n, "", "#");
+                    // opaque; need to create the schemeSpecificPart
+                    int q = scan(p, n, "#");
                     if (q <= p)
                         failExpecting("scheme-specific part", p);
                     checkChars(p, q, L_URIC, H_URIC, "opaque part");
+                    schemeSpecificPart = input.substring(p, q);
                     p = q;
                 }
             } else {
-                ssp = 0;
                 p = parseHierarchical(0, n);
             }
-            schemeSpecificPart = substring(ssp, p);
             if (at(p, n, '#')) {
                 checkChars(p + 1, n, L_URIC, H_URIC, "fragment");
-                fragment = substring(p + 1, n);
+                fragment = input.substring(p + 1, n);
                 p = n;
             }
             if (p < n)
@@ -3103,7 +3122,7 @@ public final class URI
             int p = start;
             if (at(p, n, '/') && at(p + 1, n, '/')) {
                 p += 2;
-                int q = scan(p, n, "", "/?#");
+                int q = scan(p, n, "/?#");
                 if (q > p) {
                     p = parseAuthority(p, q);
                 } else if (q < n) {
@@ -3112,15 +3131,15 @@ public final class URI
                 } else
                     failExpecting("authority", p);
             }
-            int q = scan(p, n, "", "?#"); // DEVIATION: May be empty
+            int q = scan(p, n, "?#"); // DEVIATION: May be empty
             checkChars(p, q, L_PATH, H_PATH, "path");
-            path = substring(p, q);
+            path = input.substring(p, q);
             p = q;
             if (at(p, n, '?')) {
                 p++;
-                q = scan(p, n, "", "#");
+                q = scan(p, n, "#");
                 checkChars(p, q, L_URIC, H_URIC, "query");
-                query = substring(p, q);
+                query = input.substring(p, q);
                 p = q;
             }
             return p;
@@ -3144,7 +3163,7 @@ public final class URI
             boolean serverChars;
             boolean regChars;
 
-            if (scan(p, n, "", "]") > p) {
+            if (scan(p, n, "]") > p) {
                 // contains a literal IPv6 address, therefore % is allowed
                 serverChars = (scan(p, n, L_SERVER_PERCENT, H_SERVER_PERCENT) == n);
             } else {
@@ -3154,7 +3173,7 @@ public final class URI
 
             if (regChars && !serverChars) {
                 // Must be a registry-based authority
-                authority = substring(p, n);
+                authority = input.substring(p, n);
                 return n;
             }
 
@@ -3166,7 +3185,7 @@ public final class URI
                     q = parseServer(p, n);
                     if (q < n)
                         failExpecting("end of authority", q);
-                    authority = substring(p, n);
+                    authority = input.substring(p, n);
                 } catch (URISyntaxException x) {
                     // Undo results of failed parse
                     userInfo = null;
@@ -3188,7 +3207,7 @@ public final class URI
             if (q < n) {
                 if (regChars) {
                     // Registry-based authority
-                    authority = substring(p, n);
+                    authority = input.substring(p, n);
                 } else if (ex != null) {
                     // Re-throw exception; it was probably due to
                     // a malformed IPv6 address
@@ -3214,7 +3233,7 @@ public final class URI
             q = scan(p, n, "/?#", "@");
             if ((q >= p) && at(q, n, '@')) {
                 checkChars(p, q, L_USERINFO, H_USERINFO, "user info");
-                userInfo = substring(p, q);
+                userInfo = input.substring(p, q);
                 p = q + 1;              // Skip '@'
             }
 
@@ -3225,7 +3244,7 @@ public final class URI
                 q = scan(p, n, "/?#", "]");
                 if ((q > p) && at(q, n, ']')) {
                     // look for a "%" scope id
-                    int r = scan (p, q, "", "%");
+                    int r = scan (p, q, "%");
                     if (r > p) {
                         parseIPv6Reference(p, r);
                         if (r+1 == q) {
@@ -3236,7 +3255,7 @@ public final class URI
                     } else {
                         parseIPv6Reference(p, q);
                     }
-                    host = substring(p-1, q+1);
+                    host = input.substring(p-1, q+1);
                     p = q + 1;
                 } else {
                     failExpecting("closing bracket for IPv6 address", q);
@@ -3251,7 +3270,7 @@ public final class URI
             // port
             if (at(p, n, ':')) {
                 p++;
-                q = scan(p, n, "", "/");
+                q = scan(p, n, "/");
                 if (q > p) {
                     checkChars(p, q, L_DIGIT, H_DIGIT, "port number");
                     try {
@@ -3351,13 +3370,13 @@ public final class URI
                 // IPv4 address is followed by something - check that
                 // it's a ":" as this is the only valid character to
                 // follow an address.
-                if (charAt(p) != ':') {
+                if (input.charAt(p) != ':') {
                     p = -1;
                 }
             }
 
             if (p > start)
-                host = substring(start, p);
+                host = input.substring(start, p);
 
             return p;
         }
@@ -3383,7 +3402,7 @@ public final class URI
                     p = q;
                     q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
                     if (q > p) {
-                        if (charAt(q - 1) == '-')
+                        if (input.charAt(q - 1) == '-')
                             fail("Illegal character in hostname", q - 1);
                         p = q;
                     }
@@ -3402,11 +3421,11 @@ public final class URI
 
             // for a fully qualified hostname check that the rightmost
             // label starts with an alpha character.
-            if (l > start && !match(charAt(l), L_ALPHA, H_ALPHA)) {
+            if (l > start && !match(input.charAt(l), L_ALPHA, H_ALPHA)) {
                 fail("Illegal character in hostname", l);
             }
 
-            host = substring(start, p);
+            host = input.substring(start, p);
             return p;
         }
 

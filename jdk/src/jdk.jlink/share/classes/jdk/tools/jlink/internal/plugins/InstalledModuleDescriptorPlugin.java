@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -109,20 +108,14 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         }
     }
 
+
     @Override
     public void visit(Pool in, Pool out) {
         if (!enabled) {
             throw new PluginException(OPTION_NAME + " was set");
         }
 
-        Set<String> moduleNames = new HashSet<>();
-        int numPackages = 0;
-        for (Pool.Module module : in.getModules()) {
-            moduleNames.add(module.getName());
-            numPackages += module.getAllPackages().size();
-        }
-
-        Builder builder = new Builder(moduleNames, numPackages);
+        Builder builder = new Builder();
 
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
@@ -237,23 +230,23 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
             "jdk/internal/module/InstalledModules";
         private static final String MODULE_DESCRIPTOR_BUILDER =
             "jdk/internal/module/Builder";
-        private static final String MODULES_MAP_SIGNATURE =
-            "Ljava/util/Map<Ljava/lang/String;Ljava/lang/module/ModuleDescriptor;>;";
+        private static final String MODULE_DESCRIPTOR_ARRAY_SIGNATURE =
+            "[Ljava/lang/module/ModuleDescriptor;";
 
         // static variables in InstalledModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
         private static final String PACKAGE_COUNT = "PACKAGES_IN_BOOT_LAYER";
-        private static final String DESCRIPTOR_MAP = "MAP";
-        private static final String MAP_TYPE = "Ljava/util/Map;";
 
         private static final int BUILDER_VAR    = 0;
-        private static final int MODS_VAR       = 1;
-        private static final int STRING_SET_VAR = 2;
+        private static final int MD_VAR         = 1;   // variable for ModuleDescriptor
+        private static final int MODS_VAR       = 2;   // variable for Set<Modifier>
+        private static final int STRING_SET_VAR = 3;   // variable for Set<String>
         private static final int MAX_LOCAL_VARS = 256;
 
         private final ClassWriter cw;
-        private final MethodVisitor mv;
-        private int nextLocalVar = 3;
+        private MethodVisitor mv;
+        private int nextLocalVar = 4;
+        private int nextModulesIndex = 0;
 
         // list of all ModuleDescriptorBuilders, invoked in turn when building.
         private final List<ModuleDescriptorBuilder> builders = new ArrayList<>();
@@ -262,13 +255,8 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         // deduplicated as they are requested
         private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
 
-        public Builder(Set<String> moduleNames, int numPackages) {
+        public Builder() {
             this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
-            this.clinit(moduleNames, numPackages);
-            this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                    "modules", "()Ljava/util/Map;",
-                    "()" + MODULES_MAP_SIGNATURE, null);
-            mv.visitCode();
         }
 
         /*
@@ -276,7 +264,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
          *
          * static Map<String, ModuleDescriptor> map = new HashMap<>();
          */
-        private void clinit(Set<String> moduleNames, int numPackages) {
+        private void clinit(int numModules, int numPackages) {
             cw.visit(Opcodes.V1_8, ACC_PUBLIC+ACC_FINAL+ACC_SUPER, CLASSNAME,
                     null, "java/lang/Object", null);
 
@@ -290,32 +278,29 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                     "I", null, numPackages)
                     .visitEnd();
 
-            // static Map<String, ModuleDescriptor> map = new HashMap<>();
-            cw.visitField(ACC_FINAL+ACC_STATIC, DESCRIPTOR_MAP, MAP_TYPE,
-                    MODULES_MAP_SIGNATURE, null)
-                    .visitEnd();
-
-            MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V",
+            this.mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V",
                     null, null);
             mv.visitCode();
 
             // create the MODULE_NAMES array
-            int numModules = moduleNames.size();
-            newArray(cw, mv, moduleNames, numModules);
+            pushInt(numModules);
+            mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+
+            int index = 0;
+            for (ModuleDescriptorBuilder builder : builders) {
+                mv.visitInsn(DUP);       // arrayref
+                pushInt(index++);
+                mv.visitLdcInsn(builder.md.name());      // value
+                mv.visitInsn(AASTORE);
+            }
+
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULE_NAMES,
                     "[Ljava/lang/String;");
-            mv.visitIntInsn(numModules < Byte.MAX_VALUE ? BIPUSH : SIPUSH, numModules);
-            mv.visitTypeInsn(ANEWARRAY, "[Ljava/lang/String;");
 
-
-            mv.visitTypeInsn(NEW, "java/util/HashMap");
-            mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap",
-                    "<init>", "()V", false);
-            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
+
         }
 
         /*
@@ -324,7 +309,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
          * optimized number of string sets during build.
          */
         public ModuleDescriptorBuilder module(ModuleDescriptor md, Set<String> packages) {
-            ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages, mv);
+            ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages);
             builders.add(builder);
 
             // exports
@@ -348,13 +333,28 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         }
 
         /*
-         * Finish up to generate bytecode for the return value of the modules method
+         * Generate bytecode for InstalledModules
          */
         public ClassWriter build() {
+            int numModules = builders.size();
+            int numPackages = 0;
+            for (ModuleDescriptorBuilder builder : builders) {
+                numPackages += builder.md.packages().size();
+            }
+
+            this.clinit(numModules, numPackages);
+            this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
+                                     "modules", "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE,
+                                     "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE, null);
+            mv.visitCode();
+            pushInt(numModules);
+            mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor");
+            mv.visitVarInsn(ASTORE, MD_VAR);
+
             for (ModuleDescriptorBuilder builder : builders) {
                 builder.build();
             }
-            mv.visitFieldInsn(GETSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
+            mv.visitVarInsn(ALOAD, MD_VAR);
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -363,31 +363,6 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
 
         public boolean isOverriddenClass(String path) {
             return path.equals("/java.base/" + CLASSNAME + ".class");
-        }
-
-        private static void newArray(ClassWriter cw, MethodVisitor mv,
-                                     Set<String> names, int size) {
-            mv.visitIntInsn(size < Byte.MAX_VALUE ? BIPUSH : SIPUSH, size);
-            mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
-            int index=0;
-            for (String n : names) {
-                addElement(cw, mv, index++);
-                mv.visitLdcInsn(n);      // value
-                mv.visitInsn(AASTORE);
-            }
-        }
-
-        private static void addElement(ClassWriter cw, MethodVisitor mv, int index) {
-            mv.visitInsn(DUP);           // arrayref
-            if (index <= 5) {            // index
-                mv.visitInsn(ICONST_0 + index);
-            } else if (index < Byte.MAX_VALUE) {
-                mv.visitIntInsn(BIPUSH, index);
-            } else if (index < Short.MAX_VALUE) {
-                mv.visitIntInsn(SIPUSH, index);
-            } else {
-                throw new IllegalArgumentException("exceed limit: " + index);
-            }
         }
 
         void pushInt(int num) {
@@ -419,15 +394,13 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
             static final String STRING_STRING_SIG =
                 "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
-            final MethodVisitor mv;
+
             final ModuleDescriptor md;
             final Set<String> packages;
 
-            ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages,
-                                    MethodVisitor mv) {
+            ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages) {
                 this.md = md;
                 this.packages = packages;
-                this.mv = mv;
             }
 
             void newBuilder(String name, int reqs, int exports, int provides,
@@ -522,32 +495,19 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                     mainClass(md.mainClass().get());
                 }
 
-                // map.put(mn. builder.build());
-                putModuleDescriptor(md.name());
-
-                mv.visitFieldInsn(GETSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
-                mv.visitLdcInsn(md.name());
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                    "build", "()Ljava/lang/module/ModuleDescriptor;", false);
-                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put",
-                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-                mv.visitInsn(POP);
+                putModuleDescriptor();
             }
 
             /*
-             * Invoke Map::put to put the ModuleDescriptor to InstalledModules.map
+             * Put ModuleDescriptor into the modules array
              */
-            void putModuleDescriptor(String mn) {
-                // map.put(mn, builder.build());
-                mv.visitFieldInsn(GETSTATIC, CLASSNAME, DESCRIPTOR_MAP, MAP_TYPE);
-                mv.visitLdcInsn(mn);
+            void putModuleDescriptor() {
+                mv.visitVarInsn(ALOAD, MD_VAR);
+                pushInt(nextModulesIndex++);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                     "build", "()Ljava/lang/module/ModuleDescriptor;", false);
-                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map",
-                    "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-                mv.visitInsn(POP);
+                mv.visitInsn(AASTORE);
             }
 
             /*
@@ -726,9 +686,10 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
             int build() {
                 int index = localVarIndex;
                 if (localVarIndex == 0) {
-                    // if more than one set reference this builder, emit to a
-                    // unique local
-                    index = refCount == 1 ? STRING_SET_VAR : nextLocalVar++;
+                    // if non-empty and more than one set reference this builder,
+                    // emit to a unique local
+                    index = refCount == 1 ? STRING_SET_VAR
+                                          : nextLocalVar++;
                     if (index < MAX_LOCAL_VARS) {
                         localVarIndex = index;
                     } else {
@@ -736,7 +697,11 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                         index = STRING_SET_VAR;
                     }
 
-                    if (names.size() == 1) {
+                    if (names.isEmpty()) {
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                                "emptySet", "()Ljava/util/Set;", false);
+                        mv.visitVarInsn(ASTORE, index);
+                    } else if (names.size() == 1) {
                         mv.visitLdcInsn(names.iterator().next());
                         mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
                                 "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);

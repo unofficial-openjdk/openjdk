@@ -77,18 +77,16 @@ import java.util.zip.ZipOutputStream;
  * }
  * </pre>
  *
- * @since 1.9
+ * @since 9
  */
-@jdk.Exported
 public final class JarSigner {
 
     /**
      * A mutable builder class that can create an immutable {@code JarSigner}
      * from various signing-related parameters.
      *
-     * @since 1.9
+     * @since 9
      */
-    @jdk.Exported
     public static class Builder {
 
         // Signer materials:

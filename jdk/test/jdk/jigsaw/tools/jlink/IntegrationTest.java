@@ -262,8 +262,7 @@ public class IntegrationTest {
         if (!Files.exists(output)) {
             throw new AssertionError("Directory not created");
         }
-        File jimage = new File(output.toString(), "lib" + File.separator
-                + "modules" + File.separator + "bootmodules.jimage");
+        File jimage = new File(output.toString(), "lib" + File.separator + "modules");
         if (!jimage.exists()) {
             throw new AssertionError("jimage not generated");
         }

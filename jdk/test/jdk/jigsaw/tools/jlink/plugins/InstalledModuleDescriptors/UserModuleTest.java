@@ -25,6 +25,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import jdk.testlibrary.FileUtils;
 import static jdk.testlibrary.ProcessTools.*;
@@ -52,7 +54,7 @@ public class UserModuleTest {
     private static final Path JMODS = Paths.get(JAVA_HOME, "..", "jmods");
 
     // the names of the modules in this test
-    private static String[] modules = new String[] {"m1"};
+    private static String[] modules = new String[] {"m1", "m2", "m3"};
 
     private static boolean hasJmods() {
         if (!Files.exists(JMODS)) {
@@ -78,10 +80,14 @@ public class UserModuleTest {
             FileUtils.deleteFileTreeUnchecked(IMAGE);
         }
 
+        createImage(IMAGE, "java.base", "m1");
+    }
+
+    private void createImage(Path outputDir, String... modules) throws Throwable {
         Path jlink = Paths.get(JAVA_HOME, "bin", "jlink");
         String mp = JMODS.toString() + File.pathSeparator + MODS_DIR.toString();
-        assertTrue(executeProcess(jlink.toString(), "--output", IMAGE.toString(),
-                        "--addmods", "java.base,m1",
+        assertTrue(executeProcess(jlink.toString(), "--output", outputDir.toString(),
+                        "--addmods", Arrays.stream(modules).collect(Collectors.joining(",")),
                         "--modulepath", mp)
                         .outputTo(System.out)
                         .errorTo(System.out)
@@ -103,7 +109,6 @@ public class UserModuleTest {
                         .getExitValue() == 0);
     }
 
-
     /*
      * Disable the fast loading of installed modules.
      * Parsing module-info.class
@@ -116,8 +121,25 @@ public class UserModuleTest {
         assertTrue(executeProcess(java.toString(),
                                   "-Djdk.installed.modules.disable",
                                   "-m", "m1/p1.Main")
-                .outputTo(System.out)
-                .errorTo(System.out)
-                .getExitValue() == 0);
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
+    }
+
+    /*
+     * Test the optimization that deduplicates Set<String> on targets of exports,
+     * uses, provides.
+     */
+    @Test
+    public void testDedupSet() throws Throwable {
+        if (!hasJmods()) return;
+
+        Path dir = Paths.get("newImage");
+        createImage(dir, "java.base", "m1", "m2", "m3");
+        Path java = dir.resolve("bin").resolve("java");
+        assertTrue(executeProcess(java.toString(), "-m", "m1/p1.Main")
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
     }
 }

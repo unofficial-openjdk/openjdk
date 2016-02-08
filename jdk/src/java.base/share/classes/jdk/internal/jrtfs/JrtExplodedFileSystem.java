@@ -68,14 +68,14 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
             throws IOException {
 
         super(provider, env);
-        checkExists(SystemImages.modulesDirPath);
+        checkExists(SystemImages.explodedModulesDir());
         byte[] root = new byte[]{'/'};
         rootPath = new JrtExplodedPath(this, root);
         isOpen = true;
         defaultFS = FileSystems.getDefault();
         String str = defaultFS.getSeparator();
         separator = str.equals(getSeparator()) ? null : str;
-        modulesDirAttrs = Files.readAttributes(SystemImages.modulesDirPath, BasicFileAttributes.class);
+        modulesDirAttrs = Files.readAttributes(SystemImages.explodedModulesDir(), BasicFileAttributes.class);
         initNodes();
     }
 
@@ -221,7 +221,7 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
             List<Node> children = new ArrayList<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path cp : stream) {
-                    cp = SystemImages.modulesDirPath.relativize(cp);
+                    cp = SystemImages.explodedModulesDir().relativize(cp);
                     String cpName = MODULES + nativeSlashToFrontSlash(cp.toString());
                     try {
                         children.add(findNode(cpName));
@@ -435,7 +435,7 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
     Path underlyingPath(String str) {
         if (str.startsWith(MODULES)) {
             str = frontSlashToNativeSlash(str.substring("/modules".length()));
-            return defaultFS.getPath(SystemImages.modulesDirPath.toString(), str);
+            return defaultFS.getPath(SystemImages.explodedModulesDir().toString(), str);
         }
         return null;
     }
@@ -461,7 +461,7 @@ class JrtExplodedFileSystem extends AbstractJrtFileSystem {
         // is filled by walking "jdk modules" directory recursively!
         Map<String, List<String>> packageToModules = new HashMap<>();
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(SystemImages.modulesDirPath)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(SystemImages.explodedModulesDir())) {
             for (Path module : stream) {
                 if (Files.isDirectory(module)) {
                     String moduleName = module.getFileName().toString();

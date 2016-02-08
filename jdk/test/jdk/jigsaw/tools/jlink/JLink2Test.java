@@ -85,7 +85,7 @@ public class JLink2Test {
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*bad.jar(\n|\r|.)*");
+                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: (\n|\r|.)*");
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar.getParent())
                 .option("--help")

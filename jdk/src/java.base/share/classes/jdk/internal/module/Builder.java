@@ -33,7 +33,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -54,12 +53,17 @@ final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
 
+    private static final Set<Requires.Modifier> MANDATED =
+        Collections.singleton(Requires.Modifier.MANDATED);
+    private static final Set<Requires.Modifier> PUBLIC =
+        Collections.singleton(Requires.Modifier.PUBLIC);
+
     final String name;
     final Set<Requires> requires;
     final Set<Exports> exports;
     final Map<String, Provides> provides;
     final Set<String> conceals;
-    final Set<String> packages;
+    final int numPackages;
     Set<String> uses;
     Version version;
     String mainClass;
@@ -71,8 +75,8 @@ final class Builder {
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
         this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
         this.conceals = conceals > 0 ? new HashSet<>(conceals) : Collections.emptySet();
-        this.packages = packages > 0 ? new HashSet<>(packages) : Collections.emptySet();
         this.uses = Collections.emptySet();
+        this.numPackages = packages;
     }
 
     /**
@@ -80,7 +84,7 @@ final class Builder {
      * of modifiers.
      */
     public Builder requires(Set<Requires.Modifier> mods, String mn) {
-        requires.add(jlma.newRequires(mods, mn));
+        requires.add(jlma.newRequires(Collections.unmodifiableSet(mods), mn));
         return this;
     }
 
@@ -88,14 +92,22 @@ final class Builder {
      * Adds a module dependence with an empty set of modifiers.
      */
     public Builder requires(String mn) {
-        return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
+        requires.add(jlma.newRequires(Collections.emptySet(), mn));
+        return this;
     }
 
     /**
      * Adds a module dependence with the given modifier.
      */
     public Builder requires(Requires.Modifier mod, String mn) {
-        return requires(EnumSet.of(mod), mn);
+        if (mod == Requires.Modifier.MANDATED) {
+            requires.add(jlma.newRequires(MANDATED, mn));
+        } else if (mod == Requires.Modifier.PUBLIC) {
+            requires.add(jlma.newRequires(PUBLIC, mn));
+        } else {
+            requires.add(jlma.newRequires(Collections.singleton(mod), mn));
+        }
+        return this;
     }
 
     /**
@@ -111,7 +123,6 @@ final class Builder {
      */
     public Builder exports(String pn, Set<String> targets) {
         exports.add(jlma.newExports(pn, targets));
-        packages.add(pn);
         return this;
     }
 
@@ -127,7 +138,6 @@ final class Builder {
      */
     public Builder exports(String pn) {
         exports.add(jlma.newExports(pn));
-        packages.add(pn);
         return this;
     }
 
@@ -154,7 +164,6 @@ final class Builder {
      */
     public Builder conceals(Set<String> packages) {
         conceals.addAll(packages);
-        packages.addAll(packages);
         return this;
     }
 
@@ -163,7 +172,6 @@ final class Builder {
      */
     public Builder conceals(String pn) {
         conceals.add(pn);
-        packages.add(pn);
         return this;
     }
 
@@ -196,11 +204,25 @@ final class Builder {
         return this;
     }
 
+    private Set<String> computePackages(Set<Exports> exports, Set<String> conceals) {
+        if (exports.isEmpty())
+            return conceals;
+
+        Set<String> pkgs = new HashSet<>(numPackages);
+        pkgs.addAll(conceals);
+        for (Exports e : exports) {
+            pkgs.add(e.source());
+        }
+        return pkgs;
+    }
+
     /**
      * Builds a {@code ModuleDescriptor} from the components.
      */
     public ModuleDescriptor build() {
         assert name != null;
+
+
         return jlma.newModuleDescriptor(name,
                                         false,
                                         requires,
@@ -210,6 +232,6 @@ final class Builder {
                                         version,
                                         mainClass,
                                         conceals,
-                                        packages);
+                                        computePackages(exports, conceals));
     }
 }

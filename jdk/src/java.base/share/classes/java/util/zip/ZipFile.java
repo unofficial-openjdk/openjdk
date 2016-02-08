@@ -54,6 +54,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import jdk.internal.misc.JavaUtilZipFileAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.perf.PerfCounter;
 
 import static java.util.zip.ZipConstants.*;
 import static java.util.zip.ZipConstants64.*;
@@ -72,7 +73,7 @@ public
 class ZipFile implements ZipConstants, Closeable {
 
     private final String name;     // zip file name
-    private volatile boolean closeRequested = false;
+    private volatile boolean closeRequested;
     private Source zsrc;
     private ZipCoder zc;
 
@@ -210,8 +211,8 @@ class ZipFile implements ZipConstants, Closeable {
         this.name = name;
         long t0 = System.nanoTime();
         this.zsrc = Source.get(file, (mode & OPEN_DELETE) != 0);
-        sun.misc.PerfCounter.getZipFileOpenTime().addElapsedTimeFrom(t0);
-        sun.misc.PerfCounter.getZipFileCount().increment();
+        PerfCounter.getZipFileOpenTime().addElapsedTimeFrom(t0);
+        PerfCounter.getZipFileCount().increment();
     }
 
     /**
@@ -366,7 +367,7 @@ class ZipFile implements ZipConstants, Closeable {
     }
 
     private class ZipFileInflaterInputStream extends InflaterInputStream {
-        private volatile boolean closeRequested = false;
+        private volatile boolean closeRequested;
         private boolean eof = false;
         private final ZipFileInputStream zfin;
 
@@ -653,7 +654,7 @@ class ZipFile implements ZipConstants, Closeable {
      * (possibly compressed) zip file entry.
      */
    private class ZipFileInputStream extends InputStream {
-        private volatile boolean closeRequested = false;
+        private volatile boolean closeRequested;
         private   long pos;     // current position within entry data
         protected long rem;     // number of remaining bytes within entry
         protected long size;    // uncompressed size of this entry
@@ -1251,7 +1252,7 @@ class ZipFile implements ZipConstants, Closeable {
                     idx = getEntryNext(idx);
                 }
                 /* If not addSlash, or slash is already there, we are done */
-                if (!addSlash  || name[name.length - 1] == '/') {
+                if (!addSlash  || name.length == 0 || name[name.length - 1] == '/') {
                      return -1;
                 }
                 /* Add slash and try once more */

@@ -51,18 +51,19 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.NoSuchElementException;
 import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.perf.PerfCounter;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.misc.BootLoader;
 import jdk.internal.misc.ClassLoaders;
 import jdk.internal.misc.SharedSecrets;
-import sun.misc.CompoundEnumeration;
-import sun.misc.Unsafe;
-import sun.misc.VM;
+import jdk.internal.misc.Unsafe;
+import jdk.internal.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -440,9 +441,9 @@ public abstract class ClassLoader {
                     c = findClass(name);
 
                     // this is the defining class loader; record the stats
-                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
-                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
-                    sun.misc.PerfCounter.getFindClasses().increment();
+                    PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    PerfCounter.getFindClasses().increment();
                 }
             }
             if (resolve) {
@@ -787,46 +788,6 @@ public abstract class ClassLoader {
         }
 
         return pd;
-    }
-
-    /*
-     * Define a Package of the given name if not present.
-     *
-     * If the given class represents an array type, a primitive type or void,
-     * this method returns {@code null}.
-     */
-    Package definePackage(Class<?> c) {
-        if (c.isPrimitive() || c.isArray()) {
-            return null;
-        }
-
-        Module m = c.getModule();
-        String cn = c.getName();
-        int pos = cn.lastIndexOf('.');
-        if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package in named module " + m.getName());
-        }
-        String pn = pos != -1 ? cn.substring(0, pos) : "";
-        Package p = getDefinedPackage(pn);
-        if (p == null) {
-            URL url = null;
-            if (m.isNamed() && m.getLayer() != null) {
-                Configuration cf = m.getLayer().configuration();
-                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
-                URI uri = mref != null ? mref.location().orElse(null) : null;
-                try {
-                    url = uri != null ? uri.toURL() : null;
-                } catch (MalformedURLException e) {
-                }
-            }
-            try {
-                p = definePackage(pn, null, null, null, null, null, null, url);
-            } catch (IllegalArgumentException e) {
-                // this class loader already defines a package
-                p = getDefinedPackage(pn);
-            }
-        }
-        return p;
     }
 
     private String defineClassSourceLocation(ProtectionDomain pd) {
@@ -1761,6 +1722,56 @@ public abstract class ClassLoader {
     // -- Package --
 
     /**
+     * Defines the package by name for the given module
+     *
+     * This method does not throw IllegalArgumentException.
+     *
+     * @param name package nmae
+     * @param m    module
+     */
+    Package definePackage(String name, Module m) {
+        if (name.isEmpty() && m.isNamed()) {
+            throw new InternalError("unnamed package in  " + m);
+        }
+        Package p = getDefinedPackage(name);
+        if (p == null) {
+            URL url = null;
+            if (m.isNamed() && m.getLayer() != null) {
+                Configuration cf = m.getLayer().configuration();
+                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
+                URI uri = mref != null ? mref.location().orElse(null) : null;
+                try {
+                    url = uri != null ? uri.toURL() : null;
+                } catch (MalformedURLException e) {
+                }
+            }
+            try {
+                p = definePackage(name, null, null, null, null, null, null, url);
+            } catch (IllegalArgumentException e) {
+                // this class loader already defines a package
+                p = getDefinedPackage(name);
+            }
+        }
+        return p;
+    }
+
+    /**
+     * Define a Package of the given Class object.
+     *
+     * If the given class represents an array type, a primitive type or void,
+     * this method returns {@code null}.
+     *
+     * This method does not throw IllegalArgumentException.
+     */
+    Package definePackage(Class<?> c) {
+        if (c.isPrimitive() || c.isArray()) {
+            return null;
+        }
+
+        return definePackage(c.getPackageName(), c.getModule());
+    }
+
+    /**
      * Defines a package by <a href="#name">name</a> in this {@code ClassLoader}.
      * <p>
      * <a href="#name">Package names</a> must be unique within a class loader and
@@ -2528,5 +2539,38 @@ public abstract class ClassLoader {
             throw new InternalError(e);
         }
         return unsafe.compareAndSwapObject(this, offset, null, obj);
+    }
+}
+
+/*
+ * A utility class that will enumerate over an array of enumerations.
+ */
+final class CompoundEnumeration<E> implements Enumeration<E> {
+    private final Enumeration<E>[] enums;
+    private int index;
+
+    public CompoundEnumeration(Enumeration<E>[] enums) {
+        this.enums = enums;
+    }
+
+    private boolean next() {
+        while (index < enums.length) {
+            if (enums[index] != null && enums[index].hasMoreElements()) {
+                return true;
+            }
+            index++;
+        }
+        return false;
+    }
+
+    public boolean hasMoreElements() {
+        return next();
+    }
+
+    public E nextElement() {
+        if (!next()) {
+            throw new NoSuchElementException();
+        }
+        return enums[index].nextElement();
     }
 }

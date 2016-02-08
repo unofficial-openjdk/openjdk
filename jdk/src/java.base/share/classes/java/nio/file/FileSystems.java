@@ -185,7 +185,7 @@ public final class FileSystems {
      * @return  the default file system
      */
     public static FileSystem getDefault() {
-        if (sun.misc.VM.isBooted()) {
+        if (jdk.internal.misc.VM.isBooted()) {
             return DefaultFileSystemHolder.defaultFileSystem;
         } else {
             return BuiltinFileSystemHolder.builtinFileSystem;

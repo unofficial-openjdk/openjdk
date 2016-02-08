@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,6 +147,10 @@ public final class LocalDate
      * This could be used by an application as a "far future" date.
      */
     public static final LocalDate MAX = LocalDate.of(Year.MAX_VALUE, 12, 31);
+    /**
+     * The epoch year {@code LocalDate}, '1970-01-01'.
+     */
+    public static final LocalDate EPOCH = LocalDate.of(1970, 1, 1);
 
     /**
      * Serialization version.
@@ -1365,6 +1369,23 @@ public final class LocalDate
         if (daysToAdd == 0) {
             return this;
         }
+        long dom = day + daysToAdd;
+        if (dom > 0) {
+            if (dom <= 28) {
+                return new LocalDate(year, month, (int) dom);
+            } else if (dom <= 59) { // 59th Jan is 28th Feb, 59th Feb is 31st Mar
+                long monthLen = lengthOfMonth();
+                if (dom <= monthLen) {
+                    return new LocalDate(year, month, (int) dom);
+                } else if (month < 12) {
+                    return new LocalDate(year, month + 1, (int) (dom - monthLen));
+                } else {
+                    YEAR.checkValidValue(year + 1);
+                    return new LocalDate(year + 1, 1, (int) (dom - monthLen));
+                }
+            }
+        }
+
         long mjDay = Math.addExact(toEpochDay(), daysToAdd);
         return LocalDate.ofEpochDay(mjDay);
     }
@@ -1862,6 +1883,29 @@ public final class LocalDate
             }
         }
         return total - DAYS_0000_TO_1970;
+    }
+
+    /**
+     * Converts this {@code LocalDate} to the number of seconds since the epoch
+     * of 1970-01-01T00:00:00Z.
+     * <p>
+     * This combines this local date with the specified time and
+     * offset to calculate the epoch-second value, which is the
+     * number of elapsed seconds from 1970-01-01T00:00:00Z.
+     * Instants on the time-line after the epoch are positive, earlier
+     * are negative.
+     *
+     * @param time the local time, not null
+     * @param offset the zone offset, not null
+     * @return the number of seconds since the epoch of 1970-01-01T00:00:00Z, may be negative
+     * @since 9
+     */
+    public long toEpochSecond(LocalTime time, ZoneOffset offset) {
+        Objects.requireNonNull(time, "time");
+        Objects.requireNonNull(offset, "offset");
+        long secs = toEpochDay() * SECONDS_PER_DAY + time.toSecondOfDay();
+        secs -= offset.getTotalSeconds();
+        return secs;
     }
 
     //-----------------------------------------------------------------------

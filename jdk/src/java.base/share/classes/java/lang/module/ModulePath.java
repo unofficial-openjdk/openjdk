@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,12 +60,12 @@ import jdk.internal.module.Checks;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.Hasher.HashSupplier;
 import jdk.internal.module.Hasher;
-import sun.misc.PerfCounter;
+import jdk.internal.perf.PerfCounter;
 
 
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
- * a sequence of directories for modules.
+ * a sequence of directories or packaged modules.
  *
  * The {@code ModuleFinder} can be configured to work in either the run-time
  * or link-time phases. In both cases it locates modular JAR and exploded
@@ -75,8 +76,8 @@ import sun.misc.PerfCounter;
 class ModulePath implements ConfigurableModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
 
-    // the directories on this module path
-    private final Path[] dirs;
+    // the entries on this module path
+    private final Path[] entries;
     private int next;
 
     // true if in the link phase
@@ -85,10 +86,10 @@ class ModulePath implements ConfigurableModuleFinder {
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
-    ModulePath(Path... dirs) {
-        this.dirs = dirs.clone();
-        for (Path dir : this.dirs) {
-            Objects.requireNonNull(dir);
+    ModulePath(Path... entries) {
+        this.entries = entries.clone();
+        for (Path entry : this.entries) {
+            Objects.requireNonNull(entry);
         }
     }
 
@@ -106,9 +107,9 @@ class ModulePath implements ConfigurableModuleFinder {
         if (m != null)
             return Optional.of(m);
 
-        // the module may be in directories that we haven't scanned yet
-        while (hasNextDirectory()) {
-            scanNextDirectory();
+        // the module may not have been encountered yet
+        while (hasNextEntry()) {
+            scanNextEntry();
             m = cachedModules.get(name);
             if (m != null)
                 return Optional.of(m);
@@ -118,54 +119,107 @@ class ModulePath implements ConfigurableModuleFinder {
 
     @Override
     public Set<ModuleReference> findAll() {
-        // need to ensure that all directories have been scanned
-        while (hasNextDirectory()) {
-            scanNextDirectory();
+        // need to ensure that all entries have been scanned
+        while (hasNextEntry()) {
+            scanNextEntry();
         }
         return cachedModules.values().stream().collect(Collectors.toSet());
     }
 
     /**
-     * Returns {@code true} if there are additional directories to scan
+     * Returns {@code true} if there are additional entries to scan
      */
-    private boolean hasNextDirectory() {
-        return next < dirs.length;
+    private boolean hasNextEntry() {
+        return next < entries.length;
     }
 
     /**
-     * Scans the next directory on the module path. A no-op if all
-     * directories have already been scanned.
+     * Scans the next entry on the module path. A no-op if all entries have
+     * already been scanned.
+     *
+     * @throws FindException if an error occurs scanning the next entry
      */
-    private void scanNextDirectory() {
-        if (hasNextDirectory()) {
-            Path dir = dirs[next];
-            Map<String, ModuleReference> modules = scan(dir);
+    private void scanNextEntry() {
+        if (hasNextEntry()) {
+
+            long t0 = System.nanoTime();
+
+            Path entry = entries[next];
+            Map<String, ModuleReference> modules = scan(entry);
+            next++;
+
             // update cache, ignoring duplicates
+            int initialSize = cachedModules.size();
             for (Map.Entry<String, ModuleReference> e : modules.entrySet()) {
                 cachedModules.putIfAbsent(e.getKey(), e.getValue());
             }
-            next++;
+
+            // update counters
+            int added = cachedModules.size() - initialSize;
+            moduleCount.add(added);
+
+            scanTime.addElapsedTimeFrom(t0);
         }
     }
 
+
     /**
-     * Scans the given directory for modular JAR, JMOD or exploded modules.
+     * Scan the given module path entry. If the entry is a directory then it is
+     * a directory of modules or an exploded module. If the entry is a regular
+     * file then it is assumed to be a packaged module.
+     *
+     * @throws FindException if an error occurs scanning the entry
+     */
+    private Map<String, ModuleReference> scan(Path entry) {
+        try {
+            BasicFileAttributes attrs
+                = Files.readAttributes(entry, BasicFileAttributes.class);
+
+            if (attrs.isDirectory()) {
+                Path mi = entry.resolve(MODULE_INFO);
+                if (!Files.exists(mi)) {
+                    // does not exist or unable to determine so assume a
+                    // directory of modules
+                    return scanDirectory(entry);
+                }
+            }
+
+            if (attrs.isRegularFile() || attrs.isDirectory()) {
+                // packaged or exploded module
+                ModuleReference mref = readModule(entry, attrs);
+                if (mref != null) {
+                    String name = mref.descriptor().name();
+                    return Collections.singletonMap(name, mref);
+                }
+            }
+
+            // not recognized
+            throw new FindException("Unrecognized module: " + entry);
+
+        } catch (IOException ioe) {
+            throw new FindException(ioe);
+        }
+    }
+
+
+    /**
+     * Scans the given directory for packaged or exploded modules.
      *
      * @return a map of module name to ModuleReference for the modules found
      *         in the directory
      *
-     * @throws FindException
+     * @throws IOException if an I/O error occurs
+     * @throws FindException if an error occurs scanning the entry or the
+     *         directory contains two or more modules with the same name
      */
-    private Map<String, ModuleReference> scan(Path dir) {
-        long t0 = System.nanoTime();
-
+    private Map<String, ModuleReference> scanDirectory(Path dir)
+        throws IOException
+    {
         // The map of name -> mref of modules found in this directory.
         Map<String, ModuleReference> nameToReference = new HashMap<>();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry : stream) {
-                ModuleReference mref = null;
-
                 BasicFileAttributes attrs;
                 try {
                     attrs = Files.readAttributes(entry, BasicFileAttributes.class);
@@ -174,42 +228,55 @@ class ModulePath implements ConfigurableModuleFinder {
                     continue;
                 }
 
-                try {
-
-                    if (attrs.isRegularFile()) {
-                        if (entry.toString().endsWith(".jar")) {
-                            mref = readJar(entry);
-                        } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
-                            mref = readJMod(entry);
-                        }
-                    } else if (attrs.isDirectory()) {
-                        mref = readExploded(entry);
-                    }
-
-                } catch (InvalidModuleDescriptorException e) {
-                    throw new FindException("Error reading module: " + entry, e);
-                }
+                ModuleReference mref = readModule(entry, attrs);
 
                 // module found
                 if (mref != null) {
-                    moduleCount.increment();
 
                     // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
                     if (nameToReference.put(name, mref) != null) {
                         throw new FindException("Two versions of module "
-                                                + name + " found in " + dir);
+                                + name + " found in " + dir);
                     }
+
                 }
+
             }
-        } catch (IOException ioe) {
-            throw new FindException(ioe);
         }
 
-        scanTime.addElapsedTimeFrom(t0);
-
-        // return the map of modules found
         return nameToReference;
+    }
+
+
+    /**
+     * Locates a packaged or exploded module, returning a {@code ModuleReference}
+     * to the module. Returns {@code null} if the module is not recognized
+     * as a packaged or exploded module.
+     *
+     * @throws IOException if an I/O error occurs
+     * @throws FindException if an error occurs parsing the module descriptor
+     */
+    private ModuleReference readModule(Path entry, BasicFileAttributes attrs)
+        throws IOException
+    {
+        try {
+
+            ModuleReference mref = null;
+            if (attrs.isDirectory()) {
+                mref = readExplodedModule(entry);
+            } if (attrs.isRegularFile()) {
+                if (entry.toString().endsWith(".jar")) {
+                    mref = readJar(entry);
+                } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
+                    mref = readJMod(entry);
+                }
+            }
+            return mref;
+
+        } catch (InvalidModuleDescriptorException e) {
+            throw new FindException("Error reading module: " + entry, e);
+        }
     }
 
 
@@ -461,19 +528,18 @@ class ModulePath implements ConfigurableModuleFinder {
 
     /**
      * Returns a {@code ModuleReference} to an exploded module on the file
-     * system.
+     * system or {@code null} if {@code module-info.class} not found.
      */
-    private ModuleReference readExploded(Path dir) throws IOException {
+    private ModuleReference readExplodedModule(Path dir) throws IOException {
         Path mi = dir.resolve(MODULE_INFO);
-        if (Files.notExists(mi)) {
-            // no module-info in directory
-            return null;
-        }
         URI location = dir.toUri();
         ModuleDescriptor md;
         try (InputStream in = Files.newInputStream(mi)) {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
+        } catch (NoSuchFileException e) {
+            // for now
+            return null;
         }
         return ModuleReferences.newModuleReference(md, location, null);
     }

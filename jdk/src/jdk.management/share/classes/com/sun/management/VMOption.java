@@ -52,7 +52,6 @@ import javax.management.openmbean.CompositeData;
  * @author Mandy Chung
  * @since 1.6
  */
-@jdk.Exported
 public class VMOption {
     private String name;
     private String value;
@@ -65,7 +64,6 @@ public class VMOption {
      *
      * @since 1.6
      */
-    @jdk.Exported
     public enum Origin {
         /**
          * The VM option has not been set and its value
@@ -98,7 +96,7 @@ public class VMOption {
         ERGONOMIC,
         /**
          * The VM option was set using the attach framework.
-         * @since 1.9
+         * @since 9
          */
         ATTACH_ON_DEMAND,
         /**

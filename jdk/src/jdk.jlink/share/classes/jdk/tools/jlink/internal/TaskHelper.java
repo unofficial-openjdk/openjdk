@@ -550,10 +550,6 @@ public final class TaskHelper {
                     });
         }
 
-        public void showXHelp(String progName, boolean showsImageBuilder) {
-            showHelp(progName, true, showsImageBuilder);
-        }
-
         public void listPlugins(boolean showsImageBuilder) {
             log.println("\n" + bundleHelper.getMessage("main.extended.help"));
             List<Plugin> pluginList = PluginRepository.
@@ -598,9 +594,8 @@ public final class TaskHelper {
                     StringBuilder builder = new StringBuilder();
                     for (PluginOption o : plugin.getAdditionalOptions()) {
                         builder.append("\n--").append(o.getName()).append(" ").
-                                append(o.getArgumentDescription().isEmpty()
-                                        ? bundleHelper.getMessage("main.plugin.no.value")
-                                        : o.getArgumentDescription());
+                                append(o.getArgumentDescription()).
+                                append(" ").append(o.getDescription());
                     }
                     log.println(bundleHelper.getMessage("main.plugin.additional.options")
                             + ":" + builder.toString());

@@ -48,10 +48,10 @@ import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.Loader;
 import jdk.internal.misc.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.VM;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.ServicesCatalog.ServiceProvider;
 
-import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 

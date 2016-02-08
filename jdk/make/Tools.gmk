@@ -26,29 +26,14 @@
 ifndef _TOOLS_GMK
 _TOOLS_GMK := 1
 
-default: all
-
-include $(SPEC)
-include MakeBase.gmk
 include JavaCompilation.gmk
-include NativeCompilation.gmk
-include SetupJavaCompilers.gmk
 
 ################################################################################
-
-$(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
-    SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/make/src/classes $(BUILDTOOLS_OUTPUTDIR)/interim_cldrconverter_classes, \
-    EXCLUDES := build/tools/deps \
-                build/tools/jigsaw, \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes))
-
-$(eval $(call SetupCopyFiles,COPY_NIMBUS_TEMPLATES, \
-    SRC := $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus, \
-    DEST := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes/build/tools/generatenimbus/resources, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/*.template)))
-
-BUILD_TOOLS_JDK += $(COPY_NIMBUS_TEMPLATES)
+# To avoid reevaluating the compilation setup for the tools each time this file
+# is included, the actual compilation is handled by CompileTools.gmk. The
+# following trick is used to be able to declare a dependency on the built tools.
+BUILD_TOOLS_JDK := $(call SetupJavaCompilationCompileTarget, \
+    BUILD_TOOLS_JDK, $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes)
 
 ################################################################################
 
@@ -143,10 +128,5 @@ TOOL_GENCLASSLOADERMAP = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
     build.tools.module.GenModuleLoaderMap
 
 ##########################################################################################
-
-
-java-tools: $(BUILD_TOOLS_JDK)
-
-all: java-tools
 
 endif # _TOOLS_GMK

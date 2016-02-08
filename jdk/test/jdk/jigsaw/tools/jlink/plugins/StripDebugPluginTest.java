@@ -104,6 +104,7 @@ public class StripDebugPluginTest {
     }
 
     private void check(String path, byte[] content, String infoPath, byte[] moduleInfo) throws Exception {
+        path = path.replace('\\', '/');
         StripDebugPlugin debug = new StripDebugPlugin();
         debug.configure(new HashMap<>());
         ModuleData result1 = stripDebug(debug, Pool.newResource(path,content), path, infoPath, moduleInfo);

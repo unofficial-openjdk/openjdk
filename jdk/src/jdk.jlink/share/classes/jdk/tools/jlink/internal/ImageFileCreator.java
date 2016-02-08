@@ -96,9 +96,17 @@ public final class ImageFileCreator {
             throws IOException
     {
         ImageFileCreator image = new ImageFileCreator(plugins);
-        image.readAllEntries(archives);
-        // write to modular image
-        image.writeImage(archives, byteOrder);
+        try {
+            image.readAllEntries(archives);
+            // write to modular image
+            image.writeImage(archives, byteOrder);
+        } finally {
+            //Close all archives
+            for (Archive a : archives) {
+                a.close();
+            }
+        }
+
         return plugins.getExecutableImage();
     }
 
@@ -153,24 +161,17 @@ public final class ImageFileCreator {
     private void writeImage(Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
-        try {
-            BasicImageWriter writer = new BasicImageWriter(byteOrder);
-            PoolImpl allContent = createPools(archives,
-                    entriesForModule, byteOrder, writer);
-            PoolImpl result = generateJImage(allContent,
-                 writer, plugins, plugins.getJImageFileOutputStream());
+        BasicImageWriter writer = new BasicImageWriter(byteOrder);
+        PoolImpl allContent = createPools(archives,
+                entriesForModule, byteOrder, writer);
+        PoolImpl result = generateJImage(allContent,
+             writer, plugins, plugins.getJImageFileOutputStream());
 
-            //Handle files.
-            try {
-                plugins.storeFiles(allContent, result, writer);
-            } catch (Exception ex) {
-                throw new IOException(ex);
-            }
-        } finally {
-            //Close all archives
-            for (Archive a : archives) {
-                a.close();
-            }
+        //Handle files.
+        try {
+            plugins.storeFiles(allContent, result, writer);
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
     }
 

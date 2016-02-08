@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public class HttpClient extends NetworkClient {
     // from previous releases.
     private static boolean retryPostProp = true;
 
-    volatile boolean keepingAlive = false;     /* this is a keep-alive connection */
+    volatile boolean keepingAlive;    /* this is a keep-alive connection */
     int keepAliveConnections = -1;    /* number of keep-alives left */
 
     /**Idle timeout value, in milliseconds. Zero means infinity,
@@ -965,12 +965,6 @@ public class HttpClient extends NetworkClient {
             }
         }
         return "";
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        // This should do nothing.  The stream finalizer will
-        // close the fd.
     }
 
     public void setDoNotRetry(boolean value) {

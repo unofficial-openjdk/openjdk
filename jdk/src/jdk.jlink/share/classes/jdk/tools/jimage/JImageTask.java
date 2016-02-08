@@ -65,9 +65,6 @@ class JImageTask {
         new Option<JImageTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
-        new Option<JImageTask>(false, (task, opt, arg) -> {
-            task.options.xhelp = true;
-        }, "--xhelp"),
         new Option<JImageTask>(true, (task, opt, arg) -> {
             task.options.flags = arg;
         }, "--flags"),
@@ -88,7 +85,6 @@ class JImageTask {
         String directory = ".";
         boolean fullVersion;
         boolean help;
-        boolean xhelp;
         String flags;
         boolean verbose;
         boolean version;
@@ -167,9 +163,6 @@ class JImageTask {
             }
             if (options.help) {
                 optionsHelper.showHelp(PROGNAME);
-            }
-            if (options.xhelp) {
-                optionsHelper.showXHelp(PROGNAME, false);
             }
             if(optionsHelper.listPlugins()) {
                 optionsHelper.listPlugins(true);
@@ -352,8 +345,7 @@ class JImageTask {
                 throw taskHelper.newBadArgs("err.not.a.jimage", file.getName());
             }
 
-            String path = file.getCanonicalPath();
-            BasicImageReader reader = BasicImageReader.open(path);
+            BasicImageReader reader = BasicImageReader.open(file.toPath());
 
             if (jimageAction != null) {
                 jimageAction.apply(file, reader);

@@ -27,10 +27,20 @@ package jdk.internal.misc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleReference;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Optional;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
@@ -45,6 +55,8 @@ public class BootLoader {
 
     // The unnamed module for the boot loader
     private static final Module UNNAMED_MODULE;
+    private static final String JAVA_HOME = System.getProperty("java.home");
+
     static {
         UNNAMED_MODULE
             = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(null);
@@ -123,7 +135,7 @@ public class BootLoader {
      * defined.
      */
     public static Package definePackage(Class<?> c) {
-        return ClassLoaders.bootLoader().definePackage(c);
+        return getDefinedPackage(c.getPackageName());
     }
 
     /**
@@ -131,11 +143,14 @@ public class BootLoader {
      * if the package has not been defined.
      */
     public static Package getDefinedPackage(String pn) {
-        String pkg = getSystemPackageLocation(pn.replace('.', '/'));
+        Package pkg = ClassLoaders.bootLoader().getDefinedPackage(pn);
         if (pkg == null) {
-            return null;
+            String location = getSystemPackageLocation(pn.replace('.', '/'));
+            if (location != null) {
+                pkg = PackageHelper.definePackage(pn, location);
+            }
         }
-        return ClassLoaders.bootLoader().definePackage(pn);
+        return pkg;
     }
 
     /**
@@ -143,13 +158,132 @@ public class BootLoader {
      */
     public static Stream<Package> packages() {
         return Arrays.stream(getSystemPackageNames())
-            .map(name -> {
-                String pn = name.replace('/', '.');
-                return ClassLoaders.bootLoader().definePackage(pn);
-            });
+                     .map(name -> getDefinedPackage(name.replace('/', '.')));
     }
 
-    private static native String getSystemPackageLocation(String name);
+    /**
+     * Helper class to define {@code Package} objects for packages in modules
+     * defined to the boot loader.
+     */
+    static class PackageHelper {
+        private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+        private static final Layer BOOT_LAYER = getBootLayer();
+
+        /**
+         * Define the {@code Package} with the given name. The specified
+         * location is a jrt URL to a named module in the run-time image, a
+         * file path to a module in an exploded run-time image, or the file
+         * path to an enty on the boot class path (java agent Boot-Class-Path
+         * or -Xbootclasspath/a.
+         *
+         * <p> If the given location is a JAR file containing a manifest,
+         * the defined Package contains the versioning information from
+         * the manifest, if present.
+         *
+         * @param name     package name
+         * @param location location where the package is (jrt URL or file path)
+         */
+        static Package definePackage(String name, String location) {
+            Module module = findModule(location);
+            if (module != null) {
+                // named module from runtime image or exploded module
+                if (name.isEmpty())
+                    throw new InternalError("empty package in " + location);
+                return JLA.definePackage(ClassLoaders.bootLoader(), name, module);
+            }
+
+            // package in unnamed module (-Xbootclasspath/a)
+            URL url = toFileURL(location);
+            Manifest man = url != null ? getManifest(location) : null;
+
+            return ClassLoaders.bootLoader().defineOrCheckPackage(name, man, url);
+        }
+
+        /**
+         * Finds the module at the given location defined to the boot loader.
+         * The module is either in runtime image or exploded image.
+         * Otherwise this method returns null.
+         */
+        private static Module findModule(String location) {
+            String moduleName = null;
+            if (location.startsWith("jrt:/")) {
+                // named module in runtime image ("jrt:/".length() == 5)
+                moduleName = location.substring(5, location.length());
+            } else {
+                // named module in exploded image
+                Path path = Paths.get(location);
+                Path modulesDir = Paths.get(JAVA_HOME, "modules");
+                if (path.startsWith(modulesDir)) {
+                    moduleName = path.getFileName().toString();
+                }
+            }
+
+            if (moduleName != null) {
+                // named module from runtime image or exploded module
+                Optional<Module> om = BOOT_LAYER.findModule(moduleName);
+                if (!om.isPresent())
+                    throw new InternalError();
+                return om.get();
+            }
+
+            return null;
+        }
+
+        /**
+         * Returns URL if the given location is a regular file path.
+         */
+        private static URL toFileURL(String location) {
+            return AccessController.doPrivileged(new PrivilegedAction<>() {
+                public URL run() {
+                    Path path = Paths.get(location);
+                    if (Files.isRegularFile(path)) {
+                        try {
+                            return path.toUri().toURL();
+                        } catch (MalformedURLException e) {}
+                    }
+                    return null;
+                }
+            });
+        }
+
+        /**
+         * Returns the Manifest if the given location is a JAR file
+         * containing a manifest.
+         */
+        private static Manifest getManifest(String location) {
+            return AccessController.doPrivileged(new PrivilegedAction<>() {
+                public Manifest run() {
+                    Path jar = Paths.get(location);
+                    try (InputStream in = Files.newInputStream(jar);
+                         JarInputStream jis = new JarInputStream(in, false)) {
+                        return jis.getManifest();
+                    } catch (IOException e) {
+                        return null;
+                    }
+                }
+            });
+        }
+
+        private static Layer getBootLayer() {
+            PrivilegedAction<Layer> pa = () -> Layer.boot();
+            return AccessController.doPrivileged(pa);
+        }
+    };
+
+    /**
+     * Returns an array of the binary name of the packages defined by
+     * the boot loader, in VM internal form (forward slashes instead of dot).
+     */
     private static native String[] getSystemPackageNames();
+
+    /**
+     * Returns the location of the package of the given name, if
+     * defined by the boot loader; otherwise {@code null} is returned.
+     *
+     * The location may be a module from the runtime image or exploded image,
+     * or from the boot class append path (i.e. -Xbootclasspath/a or
+     * BOOT-CLASS-PATH attribute specified in java agent).
+     */
+    private static native String getSystemPackageLocation(String name);
     private static native void setBootLoaderUnnamedModule0(Module module);
 }

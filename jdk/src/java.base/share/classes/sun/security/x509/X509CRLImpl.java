@@ -762,9 +762,7 @@ public class X509CRLImpl extends X509CRL implements DerEncoder {
     public byte[] getTBSCertList() throws CRLException {
         if (tbsCertList == null)
             throw new CRLException("Uninitialized CRL");
-        byte[] dup = new byte[tbsCertList.length];
-        System.arraycopy(tbsCertList, 0, dup, 0, dup.length);
-        return dup;
+        return tbsCertList.clone();
     }
 
     /**
@@ -775,9 +773,7 @@ public class X509CRLImpl extends X509CRL implements DerEncoder {
     public byte[] getSignature() {
         if (signature == null)
             return null;
-        byte[] dup = new byte[signature.length];
-        System.arraycopy(signature, 0, dup, 0, dup.length);
-        return dup;
+        return signature.clone();
     }
 
     /**
@@ -1290,7 +1286,7 @@ public class X509CRLImpl extends X509CRL implements DerEncoder {
             implements Comparable<X509IssuerSerial> {
         final X500Principal issuer;
         final BigInteger serial;
-        volatile int hashcode = 0;
+        volatile int hashcode;
 
         /**
          * Create an X509IssuerSerial.
@@ -1358,13 +1354,16 @@ public class X509CRLImpl extends X509CRL implements DerEncoder {
          * @return the hash code value
          */
         public int hashCode() {
-            if (hashcode == 0) {
-                int result = 17;
-                result = 37*result + issuer.hashCode();
-                result = 37*result + serial.hashCode();
-                hashcode = result;
+            int h = hashcode;
+            if (h == 0) {
+                h = 17;
+                h = 37*h + issuer.hashCode();
+                h = 37*h + serial.hashCode();
+                if (h != 0) {
+                    hashcode = h;
+                }
             }
-            return hashcode;
+            return h;
         }
 
         @Override

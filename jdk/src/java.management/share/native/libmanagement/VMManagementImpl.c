@@ -109,7 +109,7 @@ JNIEXPORT jobjectArray JNICALL
 Java_sun_management_VMManagementImpl_getVmArguments0
   (JNIEnv *env, jobject dummy)
 {
-    return jmm_interface->GetInputArgumentArray(env);
+    return JVM_GetVmArguments(env);
 }
 
 JNIEXPORT jlong JNICALL

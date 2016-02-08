@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
-import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -61,7 +60,6 @@ import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
 import sun.misc.Resource;
-import sun.misc.VM;
 
 
 /**
@@ -94,7 +92,6 @@ import sun.misc.VM;
 public class BuiltinClassLoader
     extends SecureClassLoader
 {
-
     static {
         if (!ClassLoader.registerAsParallelCapable())
             throw new InternalError();
@@ -122,7 +119,6 @@ public class BuiltinClassLoader
         private final BuiltinClassLoader loader;
         private final ModuleReference mref;
         private final URL url;          // may be null
-        private final CodeSource cs;
 
         LoadedModule(BuiltinClassLoader loader, ModuleReference mref) {
             URL url = null;
@@ -134,14 +130,12 @@ public class BuiltinClassLoader
             this.loader = loader;
             this.mref = mref;
             this.url = url;
-            this.cs = new CodeSource(url, (CodeSigner[]) null);
         }
 
         BuiltinClassLoader loader() { return loader; }
         ModuleReference mref() { return mref; }
         String name() { return mref.descriptor().name(); }
         URL location() { return url; }
-        CodeSource codeSource() { return cs; }
     }
 
 
@@ -519,7 +513,7 @@ public class BuiltinClassLoader
                 cs = new CodeSource(r.getCodeSourceURL(), (CodeSigner[]) null);
             } else {
                 bb = reader.read(rn).orElse(null);
-                cs = loadedModule.codeSource();
+                cs = new CodeSource(loadedModule.location(), (CodeSigner[]) null);
             }
 
             if (bb == null) {
@@ -587,54 +581,6 @@ public class BuiltinClassLoader
     // -- packages
 
     /**
-     * Define a package for the given class to this class loader, if not
-     * already defined.
-     *
-     * @param c a Class defined by this class loader
-     */
-    Package definePackage(Class<?> c) {
-        if (c.isPrimitive() || c.isArray())
-            return null;
-
-        Module m = c.getModule();
-        String cn = c.getName();
-        int pos = cn.lastIndexOf('.');
-        if (pos < 0 && m.isNamed()) {
-            throw new InternalError("unnamed package of class " + cn +
-                " defined in named module " + m.getName());
-        }
-        String pn = (pos != -1) ? cn.substring(0, pos) : "";
-
-        Package p = getDefinedPackage(pn);
-        if (p == null) {
-            URL url = null;
-
-            // The given class may be dynamically generated and
-            // its package is not in packageToModule map.
-            if (m.isNamed()) {
-                ModuleReference mref = nameToModule.get(m.getName());
-                if (mref != null) {
-                    URI uri = mref.location().orElse(null);
-                    if (uri != null) {
-                        try {
-                            url = uri.toURL();
-                        } catch (MalformedURLException e) { }
-                    }
-                }
-            }
-
-            try {
-                p = definePackage(pn, null, null, null, null, null, null, url);
-            } catch (IllegalArgumentException e) {
-                // Package being defined should always have the same location
-                // either location of a named module or null.
-                throw new InternalError(e);
-            }
-        }
-        return p;
-    }
-
-    /**
      * Define a Package this to this class loader. The resulting Package
      * is sealed with the code source that is the module location.
      */
@@ -653,24 +599,6 @@ public class BuiltinClassLoader
             // either location of a named module or null.
             throw new InternalError(e);
         }
-    }
-
-    /**
-     * Define a Package this to this class loader if not already defined.
-     * If the package name is in a module defined to this class loader then
-     * the resulting Package is sealed with the code source that is the
-     * module location.
-     *
-     * This method is used to define Package objects for the boot loader.
-     *
-     * @param pn package name
-     */
-    Package definePackage(String pn) {
-        Package pkg = getDefinedPackage(pn);
-        if (pkg == null) {
-            pkg = definePackage(pn, packageToModule.get(pn));
-        }
-        return pkg;
     }
 
     /**

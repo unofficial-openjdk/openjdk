@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,11 +103,11 @@ public class MethodHandles {
 
     /**
      * Returns a {@link Lookup lookup object} which is trusted minimally.
-     * It can only be used to create method handles to
-     * public members in public classes of exported packages.
+     * It can only be used to create method handles to public members in
+     * public classes in packages that are exported unconditionally.
      * <p>
-     * As a matter of pure convention, the {@linkplain Lookup#lookupClass lookup class}
-     * of this lookup object will be in an unnamed module.
+     * For now, the {@linkplain Lookup#lookupClass lookup class} of this lookup
+     * object is in an unnamed module.
      *
      * <p style="font-size:smaller;">
      * <em>Discussion:</em>
@@ -122,9 +122,9 @@ public class MethodHandles {
     public static Lookup publicLookup() {
         // During VM startup then only classes in the java.base module can be
         // loaded and linked. This is because java.base exports aren't setup until
-        // the module system is initialized, hence types in the unmamed module
+        // the module system is initialized, hence types in the unnamed module
         // (or any named module) can't link to java/lang/Object.
-        if (!sun.misc.VM.isModuleSystemInited()) {
+        if (!jdk.internal.misc.VM.isModuleSystemInited()) {
             return new Lookup(Object.class, Lookup.PUBLIC);
         } else {
             return LookupHelper.PUBLIC_LOOKUP;
@@ -1872,7 +1872,7 @@ return mh1;
                 return false;
             }
             ClassLoader loader = defc.getClassLoader();
-            if (!sun.misc.VM.isSystemDomainLoader(loader)) {
+            if (!jdk.internal.misc.VM.isSystemDomainLoader(loader)) {
                 ClassLoader sysl = ClassLoader.getSystemClassLoader();
                 boolean found = false;
                 while (sysl != null) {
@@ -3211,6 +3211,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
                                 MethodHandle handler) {
         MethodType ttype = target.type();
         MethodType htype = handler.type();
+        if (!Throwable.class.isAssignableFrom(exType))
+            throw new ClassCastException(exType.getName());
         if (htype.parameterCount() < 1 ||
             !htype.parameterType(0).isAssignableFrom(exType))
             throw newIllegalArgumentException("handler does not accept exception type "+exType);

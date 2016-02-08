@@ -101,7 +101,7 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
         if (env != null && env.containsKey("java.home")) {
             return newFileSystem((String)env.get("java.home"), uri, env);
         } else {
-            return SystemImages.bootImageExists
+            return SystemImages.hasModulesImage()
                     ? new JrtFileSystem(this, env)
                     : new JrtExplodedFileSystem(this, env);
         }
@@ -202,7 +202,7 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
                 fs = this.theFileSystem;
                 if (fs == null) {
                     try {
-                        if (SystemImages.bootImageExists) {
+                        if (SystemImages.hasModulesImage()) {
                             this.theFileSystem = fs = new JrtFileSystem(this, null) {
                                 @Override
                                 public void close() {

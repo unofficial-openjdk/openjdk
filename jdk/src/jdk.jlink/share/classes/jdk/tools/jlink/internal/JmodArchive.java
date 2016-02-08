@@ -52,7 +52,7 @@ public class JmodArchive extends JarArchive {
 
     @Override
     EntryType toEntryType(String entryName) {
-        String section = getSection(entryName);
+        String section = getSection(entryName.replace('\\', '/'));
         switch (section) {
             case CLASSES:
                 return EntryType.CLASS_OR_RESOURCE;
@@ -82,6 +82,7 @@ public class JmodArchive extends JarArchive {
 
     @Override
     String getFileName(String entryName) {
+        entryName = entryName.replace('\\', '/');
         return entryName.substring(entryName.indexOf('/') + 1);
     }
 }

@@ -21,11 +21,10 @@
  * questions.
  */
 
-import java.io.File;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.ProcessBuilder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,18 +39,18 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import jdk.testlibrary.Platform;
-import jdk.testlibrary.Utils;
-
+import jdk.test.lib.Platform;
+import jdk.test.lib.Utils;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 import org.testng.TestNG;
+import org.testng.annotations.Test;
 
 /*
  * @test
- * @bug 8077350 8081566 8081567 8098852
- * @build jdk.testlibrary.*
- * @library /lib/testlibrary
+ * @bug 8077350 8081566 8081567 8098852 8136597
+ * @library /test/lib/share/classes
+ * @build jdk.test.lib.Platform jdk.test.lib.Utils
+ * @run testng InfoTest
  * @summary Functions of ProcessHandle.Info
  * @author Roger Riggs
  * @key intermittent
@@ -210,10 +209,12 @@ public class InfoTest {
                             Assert.assertTrue(commandLine.contains(allArgs.get(i)),
                                               "commandLine() must contain argument: " + allArgs.get(i));
                         }
-                    } else if (info.commandLine().isPresent()) {
+                    } else if (info.commandLine().isPresent() &&
+                            command.isPresent() &&
+                            command.get().length() < info.commandLine().get().length()) {
                         // If we only have the commandLine() we can only do some basic checks...
                         String commandLine = info.commandLine().get();
-                        String javaExe = "java" + (Platform.isWindows() ? ".exe": "");
+                        String javaExe = "java" + (Platform.isWindows() ? ".exe" : "");
                         int pos = commandLine.indexOf(javaExe);
                         Assert.assertTrue(pos > 0, "commandLine() should at least contain 'java'");
 

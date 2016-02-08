@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1285,12 +1285,36 @@ public class TCKLocalDate extends AbstractDateTimeTest {
     public void test_plusWeeks_invalidMaxMinusMin() {
         LocalDate.of(Year.MAX_VALUE, 12, 25).plusWeeks(Long.MIN_VALUE);
     }
-
-    @Test
-    public void test_plusDays_normal() {
-        LocalDate t = TEST_2007_07_15.plusDays(1);
-        assertEquals(t, LocalDate.of(2007, 7, 16));
+    //-----------------------------------------------------------------------
+    @DataProvider(name="PlusDays")
+    Object[][] provider_plusDays() {
+        return new Object[][] {
+                {LocalDate.of(2007, 7, 15), 1, LocalDate.of(2007, 7, 16)},
+                {LocalDate.of(2007, 7, 15), 17, LocalDate.of(2007, 8, 1)},
+                {LocalDate.of(2007, 12, 31), 1, LocalDate.of(2008, 1, 1)},
+                {LocalDate.of(2007, 1, 1), 58, LocalDate.of(2007, 2, 28)},
+                {LocalDate.of(2007, 1, 1), 59, LocalDate.of(2007, 3, 1)},
+                {LocalDate.of(2008, 1, 1), 60, LocalDate.of(2008, 3, 1)},
+                {LocalDate.of(2007, 2, 1), 27, LocalDate.of(2007, 2, 28)},
+                {LocalDate.of(2007, 2, 1), 28, LocalDate.of(2007, 3, 1)},
+                {LocalDate.of(2007, 1, 1), 29, LocalDate.of(2007, 1, 30)},
+                {LocalDate.of(2007, 1, 1), 30, LocalDate.of(2007, 1, 31)},
+                {LocalDate.of(2007, 1, 15), 13, LocalDate.of(2007, 1, 28)},
+                {LocalDate.of(2007, 1, 15), 14, LocalDate.of(2007, 1, 29)},
+                {LocalDate.of(2007, 1, 15), 15, LocalDate.of(2007, 1, 30)},
+                {LocalDate.of(2007, 1, 15), 16, LocalDate.of(2007, 1, 31)},
+                {LocalDate.of(2007, 2, 15), 13, LocalDate.of(2007, 2, 28)},
+                {LocalDate.of(2007, 2, 15), 14, LocalDate.of(2007, 3, 1)},
+                {LocalDate.of(2007, 2, 15), 15, LocalDate.of(2007, 3, 2)},
+                {LocalDate.of(2007, 2, 15), 16, LocalDate.of(2007, 3, 3)},
+        };
     }
+
+    @Test(dataProvider="PlusDays")
+    public void test_plusDays_normal(LocalDate input, int amountsToAdd, LocalDate expected) {
+        LocalDate actual = input.plusDays(amountsToAdd);
+        assertEquals(actual, expected);
+     }
 
     @Test
     public void test_plusDays_overMonths() {
@@ -2154,6 +2178,31 @@ public class TCKLocalDate extends AbstractDateTimeTest {
         assertEquals(LocalDate.of(1995, 9, 27).toEpochDay(), 49987 - 40587);
         assertEquals(LocalDate.of(1970, 1, 1).toEpochDay(), 0);
         assertEquals(LocalDate.of(-1, 12, 31).toEpochDay(), -678942 - 40587);
+    }
+
+    //-----------------------------------------------------------------------
+    // toEpochSecond
+    //-----------------------------------------------------------------------
+    @DataProvider(name="epochSecond")
+    Object[][] provider_toEpochSecond() {
+        return new Object[][] {
+            {LocalDate.of(1858, 11, 17).toEpochSecond(LocalTime.MIDNIGHT, OFFSET_PONE), -3506720400L},
+            {LocalDate.of(1, 1, 1).toEpochSecond(LocalTime.NOON, OFFSET_PONE), -62135557200L},
+            {LocalDate.of(1995, 9, 27).toEpochSecond(LocalTime.of(5, 30), OFFSET_PTWO), 812172600L},
+            {LocalDate.of(1970, 1, 1).toEpochSecond(LocalTime.MIDNIGHT, OFFSET_MTWO), 7200L},
+            {LocalDate.of(-1, 12, 31).toEpochSecond(LocalTime.NOON, OFFSET_PONE), -62167266000L},
+            {LocalDate.of(1, 1, 1).toEpochSecond(LocalTime.MIDNIGHT, OFFSET_PONE),
+                    Instant.ofEpochSecond(-62135600400L).getEpochSecond()},
+            {LocalDate.of(1995, 9, 27).toEpochSecond(LocalTime.NOON, OFFSET_PTWO),
+                    Instant.ofEpochSecond(812196000L).getEpochSecond()},
+            {LocalDate.of(1995, 9, 27).toEpochSecond(LocalTime.of(5, 30), OFFSET_MTWO),
+                    LocalDateTime.of(1995, 9, 27, 5, 30).toEpochSecond(OFFSET_MTWO)},
+        };
+    }
+
+    @Test(dataProvider="epochSecond")
+    public void test_toEpochSecond(long actual, long expected) {
+        assertEquals(actual, expected);
     }
 
     //-----------------------------------------------------------------------

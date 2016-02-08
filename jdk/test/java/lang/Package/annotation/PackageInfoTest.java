@@ -27,17 +27,17 @@
  *          package-info in unnamed module
  * @modules java.compiler
  *          java.desktop
- *          java.management
- *          jdk.attach
- *          jdk.jdi
+ *          jdk.compiler
  *          jdk.xml.dom
+ * @build jdk.xml.dom/org.w3c.dom.css.Fake
+ *        jdk.xml.dom/org.w3c.dom.css.FakePackage
+ * @compile/module=jdk.xml.dom org/w3c/dom/css/package-info.java
  * @compile package-info.java PackageInfoTest.java
  * @run testng p.PackageInfoTest
  */
 
 package p;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.annotation.Annotation;
@@ -46,13 +46,13 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.w3c.dom.css.CSSRule;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -65,12 +65,10 @@ public class PackageInfoTest {
     @DataProvider(name = "jdkClasses")
     public Object[][] jdkClasses() {
         return new Object[][] {
-            { java.awt.Button.class,                        null },
-            { java.lang.Object.class,                       null },
-            { java.lang.management.ManagementFactory.class, null },
-            { com.sun.tools.attach.VirtualMachine.class,    jdk.Exported.class },
-            { com.sun.jdi.Accessible.class,                 jdk.Exported.class },
-            { org.w3c.dom.css.CSSRule.class,                null },
+            { java.awt.Button.class,             null },
+            { java.lang.Object.class,            null },
+            { org.w3c.dom.css.CSSRule.class,     null },
+            { loadClass("org.w3c.dom.css.Fake"), loadClass("org.w3c.dom.css.FakePackage") },
         };
     }
 
@@ -84,30 +82,16 @@ public class PackageInfoTest {
         }
     }
 
-    private Class<?> loadClass(String name) throws ClassNotFoundException {
-        ClassLoader loader = PackageInfoTest.class.getClassLoader();
-        Class<?> c = Class.forName(name, true, loader);
-        assertFalse(c.getModule().isNamed());
-        return c;
+    private Class<?> loadClass(String name) {
+        return Class.forName(CSSRule.class.getModule(), name);
     }
 
     @DataProvider(name = "classpathClasses")
     public Object[][] cpClasses() throws IOException, ClassNotFoundException {
-        Path classes = Paths.get(System.getProperty("test.classes", "."));
-        Path src = Paths.get(System.getProperty("test.src", "."), "org/w3c/dom/css");
-
-        // compile with -Xmodule:jdk.xml.dom since it's a package in a named module
-        compile("-Xmodule:jdk.xml.dom",
-                classes,
-                src.resolve("Fake.java"),
-                src.resolve("FakePackage.java"),
-                src.resolve("package-info.java"));
-
         // these classes will be loaded from classpath in unnamed module
-        return new Object[][] {
-                { p.PackageInfoTest.class, Deprecated.class },
-                { loadClass("org.w3c.dom.css.Fake"),
-                  loadClass("org.w3c.dom.css.FakePackage") }, };
+        return new Object[][]{
+                { p.PackageInfoTest.class, Deprecated.class }
+        };
     }
 
     @Test(dataProvider = "classpathClasses")

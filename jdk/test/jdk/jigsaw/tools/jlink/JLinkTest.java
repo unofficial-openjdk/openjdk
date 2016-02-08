@@ -121,17 +121,6 @@ public class JLinkTest {
         }
 
         {
-            // XHelp
-            StringWriter writer = new StringWriter();
-            jdk.tools.jlink.internal.Main.run(new String[]{"--xhelp"}, new PrintWriter(writer));
-            String output = writer.toString();
-            if (output.split("\n").length < 20) {
-                System.err.println(output);
-                throw new AssertionError("XHelp");
-            }
-        }
-
-        {
             // License files
             String copied = "LICENSE";
             String[] arr = copied.split(",");
@@ -147,7 +136,7 @@ public class JLinkTest {
             StringWriter writer = new StringWriter();
             jdk.tools.jlink.internal.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
             String output = writer.toString();
-            long number = Stream.of(output.split("\n"))
+            long number = Stream.of(output.split("\\R"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
                     .count();
             if (number != numPlugins) {

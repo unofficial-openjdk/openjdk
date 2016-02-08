@@ -2555,7 +2555,7 @@ public class LogManager {
      * caller does not have LoggingPermission("control").
      * @throws NullPointerException if the listener is null.
      *
-     * @since 1.9
+     * @since 9
      */
     public LogManager addConfigurationListener(Runnable listener) {
         final Runnable r = Objects.requireNonNull(listener);
@@ -2582,7 +2582,7 @@ public class LogManager {
      * @throws SecurityException if a security manager exists and if the
      * caller does not have LoggingPermission("control").
      *
-     * @since 1.9
+     * @since 9
      */
     public void removeConfigurationListener(Runnable listener) {
         final Runnable key = Objects.requireNonNull(listener);

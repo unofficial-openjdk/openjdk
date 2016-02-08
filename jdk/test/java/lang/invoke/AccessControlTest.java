@@ -23,9 +23,7 @@
 
 /* @test
  * @summary test access checking by java.lang.invoke.MethodHandles.Lookup
- * @library ../../../..
- * @build test.java.lang.invoke.AccessControlTest
- * @build test.java.lang.invoke.AccessControlTest_subpkg.Acquaintance_remote
+ * @compile AccessControlTest.java AccessControlTest_subpkg/Acquaintance_remote.java
  * @run testng/othervm test.java.lang.invoke.AccessControlTest
  */
 
@@ -263,8 +261,8 @@ public class AccessControlTest {
             if (load && c2.getClassLoader() != null) {
                 if (c1.getClassLoader() == null) {
                     // not visible
-                    return false;
-                }
+                return false;
+            }
                 if (c1 == publicLookup().lookupClass()) {
                     // not visible as lookup class is defined by child of the boot loader
                     return false;
