@@ -208,10 +208,10 @@ class ClassLoader: AllStatic {
   static bool _has_jimage;
 
   // Array of module names associated with the boot class loader
-  static GrowableArray<char*>* _boot_modules_array;
+  CDS_ONLY(static GrowableArray<char*>* _boot_modules_array;)
 
   // Array of module names associated with the ext class loader
-  static GrowableArray<char*>* _ext_modules_array;
+  CDS_ONLY(static GrowableArray<char*>* _ext_modules_array;)
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
@@ -365,6 +365,7 @@ class ClassLoader: AllStatic {
   static void  exit_with_path_failure(const char* error, const char* message);
 
   static jshort module_to_classloader(const char* module_name);
+  static void initialize_module_loader_map(JImageFile* jimage);
 #endif
   static jshort classloader_type(Symbol* class_name, ClassPathEntry* e,
                                  int classpath_index, TRAPS);
@@ -403,8 +404,6 @@ class ClassLoader: AllStatic {
   static bool string_ends_with(const char* str, const char* str_to_find);
 
   static bool is_jrt(const char* name) { return string_ends_with(name, MODULES_IMAGE_NAME); }
-
-  static void initialize_module_loader_map(JImageFile* jimage);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

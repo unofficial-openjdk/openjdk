@@ -141,13 +141,12 @@ ClassPathEntry* ClassLoader::_last_entry          = NULL;
 int             ClassLoader::_num_entries         = 0;
 ClassPathEntry* ClassLoader::_first_append_entry = NULL;
 bool            ClassLoader::_has_jimage = false;
+#if INCLUDE_CDS
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
 GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
-
-
-#if INCLUDE_CDS
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
+
 // helper routines
 bool string_starts_with(const char* str, const char* str_to_find) {
   size_t str_len = strlen(str);
@@ -861,6 +860,7 @@ int ClassLoader::crc32(int crc, const char* buf, int len) {
   return (*Crc32)(crc, (const jbyte*)buf, len);
 }
 
+#if INCLUDE_CDS
 void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   jlong size;
   JImageLocationRef location = (*JImageFindResource)(jimage, "java.base", get_jimage_version_string(), MODULE_LOADER_MAP, &size);
@@ -908,6 +908,7 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   }
   FREE_RESOURCE_ARRAY(u1, buffer, size);
 }
+#endif
 
 // Function add_package extracts the package from the fully qualified class name
 // and checks if the package is in the boot loader's package entry table.  If so,
@@ -1363,7 +1364,9 @@ void ClassLoader::create_javabase() {
     JImageFile *jimage = e->jimage();
     if (jimage != NULL && e->is_jrt()) {
       set_has_jimage(true);
+#if INCLUDE_CDS
       ClassLoader::initialize_module_loader_map(jimage);
+#endif
       return;
     }
     e = e->next();

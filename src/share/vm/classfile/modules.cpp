@@ -599,17 +599,8 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                       to_module_entry->is_named() ?
                         to_module_entry->name()->as_C_string() : UNNAMED_MODULE);
 
-  // If this is a qualified export, make sure the entry has not already been exported
-  // unqualifiedly.
-  if (to_module_entry != NULL && package_entry->is_unqual_exported()) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              err_msg("Bad qualifed export, package %s in module %s is already unqualifiedly exported",
-                      package_entry->name()->as_C_string(),
-                      from_module_entry->name()->as_C_string()));
-  }
-
-  // Do nothing if modules are the same.
-  if (from_module_entry != to_module_entry) {
+  // Do nothing if modules are the same or if package is already exported unqualifiedly.
+  if (from_module_entry != to_module_entry && !package_entry->is_unqual_exported()) {
     package_entry->set_exported(to_module_entry);
   }
 }
@@ -677,9 +668,9 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
                "asking_module is invalid", JNI_FALSE);
   }
 
-  // Calling can_read_unnamed() with NULL tests if a module is loose.
+  // Calling can_read_all_unnamed() with NULL tests if a module is loose.
   if (target_module == NULL) {
-    return asking_module_entry->can_read_unnamed();
+    return asking_module_entry->can_read_all_unnamed();
   }
 
   ModuleEntry* target_module_entry = get_module_entry(target_module, CHECK_false);
@@ -695,7 +686,7 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
                      target_module_entry->is_named() ?
                        target_module_entry->name()->as_C_string() : UNNAMED_MODULE,
                      BOOL_TO_STR(asking_module_entry == target_module_entry ||
-                                 (asking_module_entry->can_read_unnamed() &&
+                                 (asking_module_entry->can_read_all_unnamed() &&
                                   !target_module_entry->is_named()) ||
                                   asking_module_entry->can_read(target_module_entry)));
 
@@ -705,7 +696,7 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
   // 3. the asking_module is loose and the target module is unnamed, or
   // 4. if can_read() returns true.
   if (asking_module_entry == target_module_entry ||
-      (asking_module_entry->can_read_unnamed() && !target_module_entry->is_named())) {
+      (asking_module_entry->can_read_all_unnamed() && !target_module_entry->is_named())) {
     return true;
   }
   return asking_module_entry->can_read(target_module_entry);

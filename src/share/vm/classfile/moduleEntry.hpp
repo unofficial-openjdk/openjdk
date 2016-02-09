@@ -55,8 +55,9 @@ private:
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   Symbol* _version;                    // module version number
   Symbol* _location;                   // module location
-  bool _can_read_unnamed;
+  bool _can_read_all_unnamed;
   TRACE_DEFINE_TRACE_ID_FIELD;
+  enum {MODULE_READS_SIZE = 101};      // Initial size of list of modules that the module can read.
 
 public:
   void init() {
@@ -66,7 +67,7 @@ public:
     _reads = NULL;
     _version = NULL;
     _location = NULL;
-    _can_read_unnamed = false;
+    _can_read_all_unnamed = false;
   }
 
   Symbol*            name() const                   { return literal(); }
@@ -99,14 +100,14 @@ public:
 
   bool               is_named() const               { return (literal() != NULL); }
 
-  bool can_read_unnamed() const {
-    assert(is_named() || _can_read_unnamed == true,
+  bool can_read_all_unnamed() const {
+    assert(is_named() || _can_read_all_unnamed == true,
            "unnamed modules can always read all unnamed modules");
-    return _can_read_unnamed;
+    return _can_read_all_unnamed;
   }
 
   // Modules can only go from strict to loose.
-  void set_can_read_unnamed() { _can_read_unnamed = true; }
+  void set_can_read_all_unnamed() { _can_read_all_unnamed = true; }
 
   ModuleEntry* next() const {
     return (ModuleEntry*)HashtableEntry<Symbol*, mtClass>::next();
@@ -177,7 +178,7 @@ public:
                                            Symbol* module_location,
                                            ClassLoaderData* loader_data);
 
-  // only lookup module within loader's module entry table
+  // Only lookup module within loader's module entry table.  The table read is lock-free.
   ModuleEntry* lookup_only(Symbol* name);
 
   ModuleEntry* bucket(int i) {
