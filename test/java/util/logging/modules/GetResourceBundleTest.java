@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,8 @@ import static org.testng.Assert.*;
  * @test
  * @bug 8129126 8136802 8137316 8137317 8136804 8139350
  * @library /lib/testlibrary /jdk/jigsaw/lib
+ * @modules jdk.compiler
+ *          jdk.zipfs
  * @build GetResourceBundleTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng GetResourceBundleTest
  * @summary Tests Logger.getLogger + logger.getResourceBundle in an named/unnamed module,
