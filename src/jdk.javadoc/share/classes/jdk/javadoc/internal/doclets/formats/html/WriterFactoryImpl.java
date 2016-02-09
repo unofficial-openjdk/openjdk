@@ -27,6 +27,7 @@ package jdk.javadoc.internal.doclets.formats.html;
 
 import java.io.IOException;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -84,10 +85,10 @@ public class WriterFactoryImpl implements WriterFactory {
     /**
      * {@inheritDoc}
      */
-    public ModuleSummaryWriter getModuleSummaryWriter(String moduleName,
-        String prevModuleName, String nextModuleName) throws Exception {
-        return new ModuleWriterImpl(configuration, moduleName,
-            prevModuleName, nextModuleName);
+    public ModuleSummaryWriter getModuleSummaryWriter(ModuleElement mdle,
+        ModuleElement prevModule, ModuleElement nextModule) throws Exception {
+        return new ModuleWriterImpl(configuration, mdle,
+            prevModule, nextModule);
     }
 
 //    /**

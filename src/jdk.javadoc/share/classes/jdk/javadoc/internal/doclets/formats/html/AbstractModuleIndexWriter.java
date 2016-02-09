@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
@@ -56,7 +57,7 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
     /**
      * Modules to be documented.
      */
-    protected Map<String, Set<PackageElement>> modules;
+    protected Map<ModuleElement, Set<PackageElement>> modules;
 
     /**
      * Constructor. Also initializes the modules variable.
@@ -99,7 +100,7 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * @param tableSummary summary for the table
      * @param body the document tree to which the modules list will be added
      */
-    protected abstract void addModulesList(Map<String, Set<PackageElement>> modules, String text,
+    protected abstract void addModulesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
             String tableSummary, Content body);
 
     /**
@@ -109,10 +110,10 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * @param text caption for the table
      * @param tableSummary summary for the table
      * @param body the document tree to which the modules list will be added
-     * @param moduleName the name for the module being documented
+     * @param mdle the module being documented
      */
-    protected abstract void addModulePackagesList(Map<String, Set<PackageElement>> modules, String text,
-            String tableSummary, Content body, String moduleName);
+    protected abstract void addModulePackagesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
+            String tableSummary, Content body, ModuleElement mdle);
 
     /**
      * Generate and prints the contents in the module index file. Call appropriate
@@ -144,12 +145,12 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * @param moduleName the name of the module being documented
      */
     protected void buildModulePackagesIndexFile(String title,
-            boolean includeScript, String moduleName) throws IOException {
+            boolean includeScript, ModuleElement mdle) throws IOException {
         String windowOverview = configuration.getText(title);
         Content body = getBody(includeScript, getWindowTitle(windowOverview));
         addNavigationBarHeader(body);
         addOverviewHeader(body);
-        addModulePackagesIndex(body, moduleName);
+        addModulePackagesIndex(body, mdle);
         addOverview(body);
         addNavigationBarFooter(body);
         printHtmlDocument(configuration.metakeywords.getOverviewMetaKeywords(title,
@@ -180,13 +181,13 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * Adds the frame or non-frame module packages index to the documentation tree.
      *
      * @param body the document tree to which the index will be added
-     * @param moduleName  the name of the module being documented
+     * @param mdle the module being documented
      */
-    protected void addModulePackagesIndex(Content body, String moduleName) {
+    protected void addModulePackagesIndex(Content body, ModuleElement mdle) {
         addModulePackagesIndexContents("doclet.Module_Summary",
                 configuration.getText("doclet.Member_Table_Summary",
                 configuration.getText("doclet.Module_Summary"),
-                configuration.getText("doclet.modules")), body, moduleName);
+                configuration.getText("doclet.modules")), body, mdle);
     }
 
     /**
@@ -198,7 +199,7 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * @param tableSummary summary for the table
      * @param body the document tree to which the index contents will be added
      */
-    protected void addIndexContents(Map<String, Set<PackageElement>> modules, String text,
+    protected void addIndexContents(Map<ModuleElement, Set<PackageElement>> modules, String text,
             String tableSummary, Content body) {
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.NAV))
                 ? HtmlTree.NAV()
@@ -216,14 +217,13 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
      * Adds module packages index contents. Call appropriate methods from
      * the sub-classes. Adds it to the body HtmlTree
      *
-     * @param modules modules to be documented
      * @param text string which will be used as the heading
      * @param tableSummary summary for the table
      * @param body the document tree to which the index contents will be added
-     * @param moduleName the name of the module being documented
+     * @param mdle the module being documented
      */
     protected void addModulePackagesIndexContents(String text,
-            String tableSummary, Content body, String moduleName) {
+            String tableSummary, Content body, ModuleElement mdle) {
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.NAV))
                 ? HtmlTree.NAV()
                 : new HtmlTree(HtmlTag.DIV);
@@ -234,7 +234,7 @@ public abstract class AbstractModuleIndexWriter extends HtmlDocletWriter {
         addAllModulesLink(ul);
         htmlTree.addContent(ul);
         body.addContent(htmlTree);
-        addModulePackagesList(modules, text, tableSummary, body, moduleName);
+        addModulePackagesList(modules, text, tableSummary, body, mdle);
     }
 
     /**

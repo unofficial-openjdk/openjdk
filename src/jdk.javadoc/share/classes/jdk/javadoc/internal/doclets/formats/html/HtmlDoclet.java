@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.formats.html;
 import java.io.*;
 import java.util.*;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
@@ -264,17 +265,17 @@ public class HtmlDoclet extends AbstractDoclet {
     protected void generateModuleFiles() throws Exception {
         if (configuration.showModules) {
             ModuleIndexFrameWriter.generate(configuration);
-            String prevModuleName = null, nextModuleName;
-            List<String> moduleNames = new ArrayList<>(configuration.modulePackages.keySet());
+            ModuleElement prevModule = null, nextModule;
+            List<ModuleElement> mdles = new ArrayList<>(configuration.modulePackages.keySet());
             int i = 0;
-            for (String moduleName: moduleNames) {
-                ModulePackageIndexFrameWriter.generate(configuration, moduleName);
-                nextModuleName = (i + 1 < moduleNames.size()) ? moduleNames.get(i + 1) : null;
+            for (ModuleElement mdle : mdles) {
+                ModulePackageIndexFrameWriter.generate(configuration, mdle);
+                nextModule = (i + 1 < mdles.size()) ? mdles.get(i + 1) : null;
                 AbstractBuilder moduleSummaryBuilder =
                         configuration.getBuilderFactory().getModuleSummaryBuilder(
-                        moduleName, prevModuleName, nextModuleName);
+                        mdle, prevModule, nextModule);
                 moduleSummaryBuilder.build();
-                prevModuleName = moduleName;
+                prevModule = mdle;
                 i++;
             }
         }

@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.toolkit.builders;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -109,10 +110,10 @@ public class BuilderFactory {
      * @param nextModule the next module being documented.
      * @return the builder that builds the module summary.
      */
-    public AbstractBuilder getModuleSummaryBuilder(String moduleName, String prevModuleName,
-            String nextModuleName) throws Exception {
-        return ModuleSummaryBuilder.getInstance(context, moduleName,
-            writerFactory.getModuleSummaryWriter(moduleName, prevModuleName, nextModuleName));
+    public AbstractBuilder getModuleSummaryBuilder(ModuleElement mdle, ModuleElement prevModule,
+            ModuleElement nextModule) throws Exception {
+        return ModuleSummaryBuilder.getInstance(context, mdle,
+            writerFactory.getModuleSummaryWriter(mdle, prevModule, nextModule));
     }
 
     /**

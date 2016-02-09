@@ -35,6 +35,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -355,11 +356,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param pkg the PackageElement
      * @param target name of the target frame
      * @param label tag for the link
-     * @param moduleName the name of the module being documented
+     * @param mdle the module being documented
      * @return a content for the target module packages link
      */
     public Content getTargetModulePackageLink(PackageElement pkg, String target,
-            Content label, String moduleName) {
+            Content label, ModuleElement mdle) {
         return getHyperLink(pathString(pkg, DocPaths.PACKAGE_SUMMARY),
                 label, "", target);
     }
@@ -369,13 +370,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      *
      * @param target name of the target frame
      * @param label tag for the link
-     * @param moduleName the name of the module being documented
+     * @param mdle the module being documented
      * @return a content for the target module link
      */
-    public Content getTargetModuleLink(String target, Content label,
-            String moduleName) {
+    public Content getTargetModuleLink(String target, Content label, ModuleElement mdle) {
         return getHyperLink(pathToRoot.resolve(
-                DocPaths.moduleSummary(moduleName)), label, "", target);
+                DocPaths.moduleSummary(mdle)), label, "", target);
     }
 
     public void addClassesSummary(SortedSet<TypeElement> classes, String label,

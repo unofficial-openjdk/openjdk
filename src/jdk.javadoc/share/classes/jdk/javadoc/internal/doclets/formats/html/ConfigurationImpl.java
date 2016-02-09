@@ -528,20 +528,6 @@ public class ConfigurationImpl extends Configuration {
         return StandardLocation.SOURCE_PATH;
     }
 
-    @Override
-    public String getModule(TypeElement typeElement) {
-        if (!(typeElement instanceof ClassSymbol))
-            return null;
-        return ((ClassSymbol) typeElement).name.toString();
-    }
-
-    @Override
-    public String getModule(PackageElement packageElement) {
-        if (!(packageElement instanceof PackageSymbol))
-            return null;
-        return ((PackageSymbol) packageElement).name.toString();
-    }
-
     protected void buildSearchTagIndex() {
         for (SearchIndexItem sii : tagSearchIndex) {
             String tagLabel = sii.getLabel();

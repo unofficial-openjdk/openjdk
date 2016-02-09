@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.toolkit.builders;
 import java.io.IOException;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.tools.StandardLocation;
 
@@ -55,7 +56,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
     /**
      * The module being documented.
      */
-    private final String moduleName;
+    private final ModuleElement mdle;
 
     /**
      * The doclet specific writer that will output the result.
@@ -81,9 +82,9 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      *        result.
      */
     private ModuleSummaryBuilder(Context context,
-            String moduleName, ModuleSummaryWriter moduleWriter) {
+            ModuleElement mdle, ModuleSummaryWriter moduleWriter) {
         super(context);
-        this.moduleName = moduleName;
+        this.mdle = mdle;
         this.moduleWriter = moduleWriter;
     }
 
@@ -98,8 +99,8 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * @return an instance of a ModuleSummaryBuilder.
      */
     public static ModuleSummaryBuilder getInstance(Context context,
-            String moduleName, ModuleSummaryWriter moduleWriter) {
-        return new ModuleSummaryBuilder(context, moduleName, moduleWriter);
+            ModuleElement mdle, ModuleSummaryWriter moduleWriter) {
+        return new ModuleSummaryBuilder(context, mdle, moduleWriter);
     }
 
     /**
@@ -127,7 +128,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * @param contentTree the content tree to which the documentation will be added
      */
     public void buildModuleDoc(XMLNode node, Content contentTree) throws Exception {
-        contentTree = moduleWriter.getModuleHeader(moduleName);
+        contentTree = moduleWriter.getModuleHeader(mdle.getSimpleName().toString());
         buildChildren(node, contentTree);
         moduleWriter.addModuleFooter(contentTree);
         moduleWriter.printDocument(contentTree);
@@ -136,7 +137,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
         // The use of SOURCE_PATH on the next line is temporary. As we transition into the
         // modules world, this should migrate into using a location for the appropriate module
         // on the MODULE_SOURCE_PATH, or (in the old doclet) simply deleted.
-        utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.moduleSummary(moduleName));
+        utils.copyDocFiles(configuration, StandardLocation.SOURCE_PATH, DocPaths.moduleSummary(mdle));
     }
 
     /**
@@ -173,7 +174,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      *                           be added
      */
     public void buildPackageSummary(XMLNode node, Content summaryContentTree) {
-        Set<PackageElement> packages = configuration.modulePackages.get(moduleName);
+        Set<PackageElement> packages = configuration.modulePackages.get(mdle);
         if (!packages.isEmpty()) {
             String packageTableSummary
                     = configuration.getText("doclet.Member_Table_Summary",

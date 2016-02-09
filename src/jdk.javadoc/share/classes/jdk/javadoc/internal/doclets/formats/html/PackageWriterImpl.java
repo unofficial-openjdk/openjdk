@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.formats.html;
 import java.io.*;
 import java.util.*;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
@@ -124,13 +125,13 @@ public class PackageWriterImpl extends HtmlDocletWriter
         }
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
-        String moduleName = configuration.getModule(packageElement);
-        if (moduleName != null && !moduleName.isEmpty()) {
+        ModuleElement mdle = configuration.root.getElementUtils().getModuleOf(packageElement);
+        if (mdle.isUnnamed()) {
             Content moduleNameContent = new HtmlTree(HtmlTag.P);
             moduleNameContent.addContent(moduleLabel);
             moduleNameContent.addContent(getSpace());
             moduleNameContent.addContent(getTargetModuleLink("classFrame",
-                    new StringContent(moduleName), moduleName));
+                    new StringContent(mdle.getQualifiedName().toString()), mdle));
             div.addContent(moduleNameContent);
         }
         Content annotationContent = new HtmlTree(HtmlTag.P);
