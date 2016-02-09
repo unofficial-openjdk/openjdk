@@ -127,8 +127,8 @@ public class JavacElements implements Elements {
         Name name = names.fromString(nameStr);
         // First check cache.
         Symbol sym = (clazz == ClassSymbol.class)
-                    ? syms.getClass(syms.java_base, name)     //TODO: hardcoded java_base reference
-                    : syms.getPackage(syms.java_base, name);  //TODO: hardcoded java_base reference
+                    ? syms.getClass(module, name)
+                    : syms.lookupPackage(module, name);
 
         try {
             if (sym == null)
