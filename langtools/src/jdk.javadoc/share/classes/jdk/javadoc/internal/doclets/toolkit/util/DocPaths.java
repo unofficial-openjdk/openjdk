@@ -25,6 +25,8 @@
 
 package jdk.javadoc.internal.doclets.toolkit.util;
 
+import javax.lang.model.element.ModuleElement;
+
 /**
  * Standard DocPath objects.
  *
@@ -144,13 +146,13 @@ public class DocPaths {
     public static final DocPath PACKAGE_USE = DocPath.create("package-use.html");
 
     /** The name of the file for the module frame. */
-    public static DocPath moduleFrame(String moduleName) {
-        return DocPath.create(moduleName + "-frame.html");
+    public static DocPath moduleFrame(ModuleElement mdle) {
+        return DocPath.create(mdle.getQualifiedName() + "-frame.html");
     }
 
     /** The name of the file for the module summary. */
-    public static DocPath moduleSummary(String moduleName) {
-        return DocPath.create(moduleName + "-summary.html");
+    public static DocPath moduleSummary(ModuleElement mdle) {
+        return DocPath.create(mdle.getQualifiedName() + "-summary.html");
     }
 
     /** The name of the file for the overview frame. */

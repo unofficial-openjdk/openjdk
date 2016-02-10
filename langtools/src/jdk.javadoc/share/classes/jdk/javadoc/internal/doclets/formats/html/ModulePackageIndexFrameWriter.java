@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
@@ -73,14 +74,14 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      * Generate the module package index file.
      * @throws DocletAbortException
      * @param configuration the configuration object
-     * @param moduleName the name of the module being documented
+     * @param mdle the module being documented
      */
-    public static void generate(ConfigurationImpl configuration, String moduleName) {
+    public static void generate(ConfigurationImpl configuration, ModuleElement mdle) {
         ModulePackageIndexFrameWriter modpackgen;
-        DocPath filename = DocPaths.moduleFrame(moduleName);
+        DocPath filename = DocPaths.moduleFrame(mdle);
         try {
             modpackgen = new ModulePackageIndexFrameWriter(configuration, filename);
-            modpackgen.buildModulePackagesIndexFile("doclet.Window_Overview", false, moduleName);
+            modpackgen.buildModulePackagesIndexFile("doclet.Window_Overview", false, mdle);
             modpackgen.close();
         } catch (IOException exc) {
             configuration.standardmessage.error(
@@ -93,11 +94,11 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
     /**
      * {@inheritDoc}
      */
-    protected void addModulePackagesList(Map<String, Set<PackageElement>> modules, String text,
-            String tableSummary, Content body, String moduleName) {
-        Content profNameContent = new StringContent(moduleName);
+    protected void addModulePackagesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
+            String tableSummary, Content body, ModuleElement mdle) {
+        Content profNameContent = new StringContent(mdle.getQualifiedName().toString());
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
-                getTargetModuleLink("classFrame", profNameContent, moduleName));
+                getTargetModuleLink("classFrame", profNameContent, mdle));
         heading.addContent(getSpace());
         heading.addContent(packagesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
@@ -105,10 +106,10 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.setTitle(packagesLabel);
-        List<PackageElement> packages = new ArrayList<>(modules.get(moduleName));
-        for (PackageElement packageDoc : packages) {
-            if ((!(configuration.nodeprecated && utils.isDeprecated(packageDoc)))) {
-                ul.addContent(getPackage(packageDoc, moduleName));
+        List<PackageElement> packages = new ArrayList<>(modules.get(mdle));
+        for (PackageElement pkg : packages) {
+            if ((!(configuration.nodeprecated && utils.isDeprecated(pkg)))) {
+                ul.addContent(getPackage(pkg, mdle));
             }
         }
         htmlTree.addContent(ul);
@@ -118,11 +119,11 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
     /**
      * {@inheritDoc}
      */
-    protected void addModulePackagesList(Set<String> modules, String text,
-            String tableSummary, Content body, String moduleName) {
-        Content moduleNameContent = new StringContent(moduleName);
+    protected void addModulePackagesList(Set<ModuleElement> modules, String text,
+            String tableSummary, Content body, ModuleElement mdle) {
+        Content moduleNameContent = new StringContent(mdle.getQualifiedName().toString());
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
-                getTargetModuleLink("classFrame", moduleNameContent, moduleName));
+                getTargetModuleLink("classFrame", moduleNameContent, mdle));
         heading.addContent(getSpace());
         heading.addContent(packagesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
@@ -130,10 +131,10 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.setTitle(packagesLabel);
-        Set<PackageElement> modulePackages = configuration.modulePackages.get(moduleName);
+        Set<PackageElement> modulePackages = configuration.modulePackages.get(mdle);
         for (PackageElement pkg: modulePackages) {
             if ((!(configuration.nodeprecated && utils.isDeprecated(pkg)))) {
-                ul.addContent(getPackage(pkg, moduleName));
+                ul.addContent(getPackage(pkg, mdle));
             }
         }
         htmlTree.addContent(ul);
@@ -144,10 +145,10 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      * Returns each package name as a separate link.
      *
      * @param pkg PackageElement
-     * @param moduleName the name of the module being documented
+     * @param mdle the module being documented
      * @return content for the package link
      */
-    protected Content getPackage(PackageElement pkg, String moduleName) {
+    protected Content getPackage(PackageElement pkg, ModuleElement mdle) {
         Content packageLinkContent;
         Content pkgLabel;
         if (!pkg.isUnnamed()) {
@@ -185,7 +186,7 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
     protected void addOverviewHeader(Content body) {
     }
 
-    protected void addModulesList(Map<String,Set<PackageElement>> modules, String text,
+    protected void addModulesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
             String tableSummary, Content body) {
     }
 

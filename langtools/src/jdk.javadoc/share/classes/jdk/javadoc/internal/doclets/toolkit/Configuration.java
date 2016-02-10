@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileManager;
@@ -350,7 +351,7 @@ public abstract class Configuration {
     /**
      * A sorted set of modules containing the packages.
      */
-    public Map<String, Set<PackageElement>> modulePackages;
+    public Map<ModuleElement, Set<PackageElement>> modulePackages;
 
     /**
      * Constructor. Constructs the message retriever with resource file.
@@ -384,13 +385,13 @@ public abstract class Configuration {
 
     private void initModules() {
         // Build the modules structure used by the doclet
-        modulePackages = new TreeMap<String, Set<PackageElement>>();
+        modulePackages = new TreeMap<>(utils.makeModuleComparator());
         for (PackageElement p: packages) {
-            String moduleName = getModule(p);
-            if (moduleName != null && !moduleName.isEmpty()) {
-                Set<PackageElement> s = modulePackages.get(moduleName);
+            ModuleElement mdle = root.getElementUtils().getModuleOf(p);
+            if (mdle != null && !mdle.isUnnamed()) {
+                Set<PackageElement> s = modulePackages.get(mdle);
                 if (s == null)
-                    modulePackages.put(moduleName, s = new TreeSet<>(utils.makePackageComparator()));
+                    modulePackages.put(mdle, s = new TreeSet<>(utils.makePackageComparator()));
                 s.add(p);
             }
         }
@@ -1248,7 +1249,4 @@ public abstract class Configuration {
     }
 
     public abstract Location getLocationForPackage(PackageElement pd);
-
-    public abstract String getModule(TypeElement typeElement);
-    public abstract String getModule(PackageElement packageElement);
 }

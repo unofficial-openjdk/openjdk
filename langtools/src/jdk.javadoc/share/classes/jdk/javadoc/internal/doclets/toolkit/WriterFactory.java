@@ -25,6 +25,7 @@
 
 package jdk.javadoc.internal.doclets.toolkit;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -77,7 +78,7 @@ public interface WriterFactory {
      * writer is not supported by the doclet.
      */
     public abstract ModuleSummaryWriter getModuleSummaryWriter(
-        String moduleName, String prevModuleName, String nextModuleName)
+        ModuleElement mdle, ModuleElement prevModule, ModuleElement nextModule)
     throws Exception;
 
     /**

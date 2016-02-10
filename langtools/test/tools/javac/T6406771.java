@@ -45,18 +45,21 @@ public class T6406771 extends AbstractProcessor {
         String testSrc = System.getProperty("test.src");
         String testClasses = System.getProperty("test.classes");
 
-        JavacTool tool = JavacTool.create();
+        JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         try (StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null)) {
             JavaFileObject f = fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, self+".java"))).iterator().next();
 
             List<String> opts = Arrays.asList(
+                "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED,"
+                + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
                 "-XDaccessInternalAPI",
                 "-d", ".",
                 "-processorpath", testClasses,
                 "-processor", self,
                 "-proc:only");
 
-            JavacTask task = tool.getTask(null, fm, null, opts, null, Arrays.asList(f));
+            JavacTask task = (JavacTask)tool.getTask(null, fm, null, opts, null, Arrays.asList(f));
 
             if (!task.call())
                 throw new AssertionError("failed");

@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.List;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
 import com.sun.source.doctree.DocTree;
@@ -61,17 +62,17 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     /**
      * The prev module name in the alpha-order list.
      */
-    protected String prevModuleName;
+    protected ModuleElement prevModule;
 
     /**
      * The next module name in the alpha-order list.
      */
-    protected String nextModuleName;
+    protected ModuleElement nextModule;
 
     /**
      * The module being documented.
      */
-    protected String moduleName;
+    protected ModuleElement mdle;
 
     /**
      * The HTML tree for main tag.
@@ -88,19 +89,19 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      * @param nextModule   Next module in the sorted array.
      */
     public ModuleWriterImpl(ConfigurationImpl configuration,
-            String moduleName, String prevModuleName, String nextModuleName)
+            ModuleElement mdle, ModuleElement prevModule, ModuleElement nextModule)
             throws IOException {
-        super(configuration, DocPaths.moduleSummary(moduleName));
-        this.prevModuleName = prevModuleName;
-        this.nextModuleName = nextModuleName;
-        this.moduleName = moduleName;
+        super(configuration, DocPaths.moduleSummary(mdle));
+        this.prevModule = prevModule;
+        this.nextModule = nextModule;
+        this.mdle = mdle;
     }
 
     /**
      * {@inheritDoc}
      */
     public Content getModuleHeader(String heading) {
-        HtmlTree bodyTree = getBody(true, getWindowTitle(moduleName));
+        HtmlTree bodyTree = getBody(true, getWindowTitle(mdle.getQualifiedName().toString()));
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.HEADER))
                 ? HtmlTree.HEADER()
                 : bodyTree;
@@ -222,7 +223,7 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      * {@inheritDoc}
      */
     public void printDocument(Content contentTree) throws IOException {
-        printHtmlDocument(configuration.metakeywords.getMetaKeywordsForModule(moduleName),
+        printHtmlDocument(configuration.metakeywords.getMetaKeywordsForModule(mdle),
                 true, contentTree);
     }
 
@@ -258,11 +259,11 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      */
     public Content getNavLinkPrevious() {
         Content li;
-        if (prevModuleName == null) {
+        if (prevModule == null) {
             li = HtmlTree.LI(prevmoduleLabel);
         } else {
             li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
-                    prevModuleName)), prevmoduleLabel, "", ""));
+                    prevModule)), prevmoduleLabel, "", ""));
         }
         return li;
     }
@@ -274,11 +275,11 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      */
     public Content getNavLinkNext() {
         Content li;
-        if (nextModuleName == null) {
+        if (nextModule == null) {
             li = HtmlTree.LI(nextmoduleLabel);
         } else {
             li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
-                    nextModuleName)), nextmoduleLabel, "", ""));
+                    nextModule)), nextmoduleLabel, "", ""));
         }
         return li;
     }

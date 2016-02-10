@@ -93,6 +93,7 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.MemberEnter;
+import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.model.JavacElements;
@@ -156,6 +157,7 @@ import static com.sun.tools.javac.code.TypeTag.*;
 public class JavacTrees extends DocTrees {
 
     // in a world of a single context per compilation, these would all be final
+    private Modules modules;
     private Resolve resolve;
     private Enter enter;
     private Log log;
@@ -206,6 +208,7 @@ public class JavacTrees extends DocTrees {
     }
 
     private void init(Context context) {
+        modules = Modules.instance(context);
         attr = Attr.instance(context);
         enter = Enter.instance(context);
         elements = JavacElements.instance(context);
@@ -1192,7 +1195,7 @@ public class JavacTrees extends DocTrees {
         PackageSymbol psym = javaFileObjectToPackageMap.getOrDefault(jfo,
                 syms.unnamedModule.unnamedPackage);
         jcCompilationUnit.lineMap = jcCompilationUnit.getLineMap();
-        jcCompilationUnit.modle = syms.unnamedModule;
+        modules.enter(List.of(jcCompilationUnit), null);
         jcCompilationUnit.namedImportScope = new NamedImportScope(psym, jcCompilationUnit.toplevelScope);
         jcCompilationUnit.packge = psym;
         jcCompilationUnit.sourcefile = jfo;

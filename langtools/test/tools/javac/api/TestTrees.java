@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,7 @@
  * @test
  * @bug 6346249 6392177 6411385
  * @summary new Trees API
- * @modules jdk.compiler/com.sun.tools.javac.api
- *          jdk.compiler/com.sun.tools.javac.code
- *          jdk.compiler/com.sun.tools.javac.file
- *          jdk.compiler/com.sun.tools.javac.tree
+ * @modules jdk.compiler/com.sun.tools.javac.tree
  */
 
 import java.io.*;
@@ -42,7 +39,6 @@ import javax.tools.*;
 
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
-import com.sun.tools.javac.api.JavacTool;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeInfo;
 
@@ -70,7 +66,7 @@ public class TestTrees extends AbstractProcessor {
 
     void run() throws IOException {
 
-        JavacTool tool = JavacTool.create();
+        JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
 
         DiagnosticListener<JavaFileObject> dl = new DiagnosticListener<JavaFileObject>() {
                 public void report(Diagnostic d) {
@@ -83,18 +79,21 @@ public class TestTrees extends AbstractProcessor {
                 fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
 
             Iterable<String> opts = Arrays.asList(
-                "-XDaccessInternalAPI",
+                "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
                 "-d", ".",
                 "-XDcompilePolicy=simple");
 
             System.err.println("simple compilation, no processing");
-            JavacTask task = tool.getTask(out, fm, dl, opts, null, files);
+            JavacTask task = (JavacTask) tool.getTask(out, fm, dl, opts, null, files);
             task.setTaskListener(new MyTaskListener(task));
             if (!task.call())
                 throw new AssertionError("compilation failed");
 
             opts =  Arrays.asList(
-                addExports,
+                "-XaddExports:"
+                + "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+                "-XDaccessInternalAPI",
                 "-d", ".",
                 "-processorpath", testClassDir,
                 "-processor", self,
@@ -102,7 +101,7 @@ public class TestTrees extends AbstractProcessor {
 
             System.err.println();
             System.err.println("compilation with processing");
-            task = tool.getTask(out, fm, dl,opts, null, files);
+            task = (JavacTask) tool.getTask(out, fm, dl,opts, null, files);
             if (!task.call())
                 throw new AssertionError("compilation failed");
 

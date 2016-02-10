@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,7 @@
  * questions.
  */
 
-package pkg3;
-
-/**
- * A sample interface.
- *
- * @author Bhavesh Patel
- */
-public interface Interface1Pkg3 {
-
-    /**
-     * A test method.
-     *
-     * @param a blah.
-     * @param b blah.
-     */
-    void method1(int a, int b);
-
-    /**
-     * Another test method.
-     *
-     * @param c blah.
-     */
-    void method2(int c);
-
+module java.base {
+    exports java.lang;
 }
+

@@ -41,6 +41,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -1607,6 +1608,18 @@ public class Utils {
     }
 
     /**
+     * Comparator for ModuleElements, simply compares the fully qualified names
+     */
+    public Comparator<Element> makeModuleComparator() {
+        return new Utils.ElementComparator<Element>() {
+            @Override
+            public int compare(Element mod1, Element mod2) {
+                return compareFullyQualifiedNames(mod1, mod2);
+            }
+        };
+    }
+
+    /**
      * Comparator for PackageElements, simply compares the fully qualified names
      */
     public Comparator<Element> makePackageComparator() {
@@ -1980,6 +1993,11 @@ public class Utils {
          */
         private String getFullyQualifiedName(Element e) {
             return new SimpleElementVisitor9<String, Void>() {
+                @Override  @DefinedBy(Api.LANGUAGE_MODEL)
+                public String visitModule(ModuleElement e, Void p) {
+                    return e.getQualifiedName().toString();
+                }
+
                 @Override @DefinedBy(Api.LANGUAGE_MODEL)
                 public String visitPackage(PackageElement e, Void p) {
                     return e.getQualifiedName().toString();

@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
@@ -90,7 +91,7 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
     /**
      * {@inheritDoc}
      */
-    protected void addModulesList(Map<String, Set<PackageElement>> modules, String text,
+    protected void addModulesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
             String tableSummary, Content body) {
         Content heading = HtmlTree.HEADING(HtmlConstants.MODULE_HEADING, true,
                 modulesLabel);
@@ -99,8 +100,8 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.setTitle(modulesLabel);
-        for (String moduleName: modules.keySet()) {
-            ul.addContent(getModuleLink(moduleName));
+        for (ModuleElement mdle: modules.keySet()) {
+            ul.addContent(getModuleLink(mdle));
         }
         htmlTree.addContent(ul);
         body.addContent(htmlTree);
@@ -112,12 +113,12 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
      * @param moduleName the module being documented
      * @return content for the module link
      */
-    protected Content getModuleLink(String moduleName) {
+    protected Content getModuleLink(ModuleElement mdle) {
         Content moduleLinkContent;
         Content moduleLabel;
-        moduleLabel = new StringContent(moduleName);
-        moduleLinkContent = getHyperLink(DocPaths.moduleFrame(moduleName), moduleLabel, "",
-                    "packageListFrame");
+        moduleLabel = new StringContent(mdle.getQualifiedName().toString());
+        moduleLinkContent = getHyperLink(DocPaths.moduleFrame(mdle),
+                moduleLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(moduleLinkContent);
         return li;
     }
@@ -177,7 +178,7 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
         body.addContent(p);
     }
 
-    protected void addModulePackagesList(Map<String, Set<PackageElement>> modules, String text,
-            String tableSummary, Content body, String moduleName) {
+    protected void addModulePackagesList(Map<ModuleElement, Set<PackageElement>> modules, String text,
+            String tableSummary, Content body, ModuleElement mdle) {
     }
 }

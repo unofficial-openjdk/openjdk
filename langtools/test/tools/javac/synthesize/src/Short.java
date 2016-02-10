@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,5 +23,19 @@
 
 package java.lang;
 
-public interface Cloneable {
+public class Short extends Number
+{
+    public static Short valueOf(short v) {
+        return new Short(v);
+    }
+
+    public Short(short v) {
+        value = v;
+    }
+
+    public short shortValue() {
+        return value;
+    }
+
+    private short value;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,7 @@
  * questions.
  */
 
-package pkg5;
+package java.io;
 
-/**
- * A sample interface.
- *
- * @author Bhavesh Patel
- */
-public interface Interface1Pkg5 {
-
-    /**
-     * A test method.
-     *
-     * @param a blah.
-     * @param b blah.
-     */
-    void method1(int a, int b);
+public interface Serializable {
 }

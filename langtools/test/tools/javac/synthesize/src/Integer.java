@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,21 @@
  * questions.
  */
 
-package pkgDeprecated;
+package java.lang;
 
-/**
- * Simple deprecated class of deprecated package.
- *
- * @author Evgeniya Stepanova
- */
-public class Class1PkgDeprecated {
-
-    public void method(int t) {
-        return null;
+public class Integer extends Number
+{
+    public static Integer valueOf(int v) {
+        return new Integer(v);
     }
+
+    public Integer(int v) {
+        value = v;
+    }
+
+    public int integerValue() {
+        return value;
+    }
+
+    private int value;
 }

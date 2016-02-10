@@ -308,7 +308,7 @@ public class Modules extends JCTree.Visitor {
                         tree.modle = msym;
                         rootModules.add(msym);
                     } else {
-                        log.error(tree.pos(), "cant.determine.module");
+                        log.error(tree.pos(), "unnamed.pkg.not.allowed.named.modules");
                         tree.modle = syms.errModule;
                     }
                 } catch (IOException e) {
@@ -705,6 +705,8 @@ public class Modules extends JCTree.Visitor {
                 log.error(tree.implName.pos(), "service.implementation.is.abstract", impl);
             } else if (impl.isInner()) {
                 log.error(tree.implName.pos(), "service.implementation.is.inner", impl);
+            } else if (service.isInner()) {
+                log.error(tree.serviceName.pos(), "service.definition.is.inner", service);
             } else if (!hasNoArgsConstructor(impl)) {
                 log.error(tree.implName.pos(), "service.implementation.doesnt.have.a.no.args.constructor", impl);
             }

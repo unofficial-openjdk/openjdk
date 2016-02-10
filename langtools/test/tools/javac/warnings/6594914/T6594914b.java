@@ -3,7 +3,7 @@
  * @bug 6594914
  * @summary \\@SuppressWarnings("deprecation") does not not work for the type of a variable
  * @modules java.base/sun.security.x509
- * @compile/ref=T6594914b.out -XDenableSunApiLintControl -XDrawDiagnostics -Xlint:sunapi T6594914b.java
+ * @compile/ref=T6594914b.out -XDenableSunApiLintControl -XDrawDiagnostics -source 8 -target 8 -Xlint:sunapi T6594914b.java
  */
 
 
