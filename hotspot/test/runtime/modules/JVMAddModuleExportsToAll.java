@@ -42,7 +42,7 @@ public class JVMAddModuleExportsToAll {
     // and then test that a class in the unnamed module can access a package in
     // a named module that has been exported unqualifiedly.
     public static void main(String args[]) throws Throwable {
-        Object m1, m2;
+        Object m1, m2, m3;
 
         // Get the java.lang.reflect.Module object for module java.base.
         Class jlObject = Class.forName("java.lang.Object");
@@ -100,8 +100,13 @@ public class JVMAddModuleExportsToAll {
             // Expected
         }
 
-        // Export package p2 in m2 unqualifiedly.
+        // Export package p2 in m2 unqualifiedly. Then, do a qualified export
+        // of p2 in m2 to m3.  This should not affect the unqualified export.
+        m3 = ModuleHelper.ModuleObject("module3", this_cldr, new String[] { "p4" });
+        assertNotNull(m3, "Module m3 should not be null");
+        ModuleHelper.DefineModule(m3, "9.0", "m3/there", new String[] { "p4" });
         ModuleHelper.AddModuleExportsToAll(m2, "p2");
+        ModuleHelper.AddModuleExports(m2, "p2", m3);
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should succeed because
         // p1 is in an unnamed module and p2.c2 is exported unqualifiedly.

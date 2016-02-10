@@ -75,15 +75,9 @@ public class ExportTwice {
         // Make package p1 in m1 visible to everyone.
         ModuleHelper.AddModuleExportsToAll(m1, "p1");
 
-        // Try to export p1 only to m2 after it was exported unqualifiedly.
-        try {
-            ModuleHelper.AddModuleExports(m1, "p1", m2);
-            throw new RuntimeException("Failed to get IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            if (!e.getMessage().contains("package p1 in module module1 is already unqualifiedly exported")) {
-               throw new RuntimeException("Wrong message: " + e.getMessage());
-            }
-        }
+        // Try to export p1 only to m2 after it was exported unqualifiedly.  It
+        // should silently succeed.
+        ModuleHelper.AddModuleExports(m1, "p1", m2);
 
         // Export p2 to m3 then export it again unqualifiedly.
         ModuleHelper.AddModuleExports(m2, "p2", m3);

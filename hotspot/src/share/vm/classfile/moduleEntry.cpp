@@ -71,12 +71,11 @@ bool ModuleEntry::can_read(ModuleEntry* m) const {
 void ModuleEntry::add_read(ModuleEntry* m) {
   MutexLocker m1(Module_lock);
   if (m == NULL) {
-    set_can_read_unnamed();
+    set_can_read_all_unnamed();
   } else {
     if (_reads == NULL) {
       // Lazily create a module's reads list
-      // Initial size is 101.
-      _reads = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(101, true);
+      _reads = new (ResourceObj::C_HEAP, mtClass)GrowableArray<ModuleEntry*>(MODULE_READS_SIZE, true);
     }
     _reads->append_if_missing(m);
   }
@@ -203,7 +202,7 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, 
     name->increment_refcount();
   } else {
     // Unnamed modules can read all other unnamed modules.
-    entry->set_can_read_unnamed();
+    entry->set_can_read_all_unnamed();
   }
 
   if (!jlrM_handle.is_null()) {
@@ -344,7 +343,7 @@ void ModuleEntry::print() {
                 loader()->loader_name(),
                 version() != NULL ? version()->as_C_string() : "NULL",
                 location() != NULL ? location()->as_C_string() : "NULL",
-                BOOL_TO_STR(!can_read_unnamed()), p2i(next()));
+                BOOL_TO_STR(!can_read_all_unnamed()), p2i(next()));
 }
 #endif
 

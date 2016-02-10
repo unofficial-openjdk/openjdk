@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -462,8 +462,8 @@ static bool can_relax_access_check_for(const Klass* accessor,
  ------------------------------------------------------------------------------------------------
 
  Caller S in package     If MS is loose: YES      If same classloader/package (PS == PT): YES
- PS, runtime module MS                            If same runtime module: (MS == MT): YES
-
+ PS, runtime module MS   If MS can read T's       If same runtime module: (MS == MT): YES
+                         unnamed module: YES
                                                   Else if (MS can read MT (Establish readability) &&
                                                     MT exports PT to MS or to all modules): YES
 
@@ -473,6 +473,8 @@ static bool can_relax_access_check_for(const Klass* accessor,
                                                   if (MT exports PT to UM or to all modules): YES
 
  ------------------------------------------------------------------------------------------------
+
+ Note: a loose module is a module that can read all current and future unnamed modules.
 */
 Reflection::VerifyClassAccessResults Reflection::verify_class_access(
   const Klass* current_class, const Klass* new_class, bool classloader_only) {
@@ -507,6 +509,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     }
     if (!new_class->is_instance_klass()) {
       // Everyone can read a typearray.
+      assert (new_class->is_typeArray_klass(), "Unexpected klass type");
       return ACCESS_OK;
     }
     ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
@@ -519,7 +522,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     // unnamed modules can read all unnamed modules, this also handles the
     // case where module_from is also unnamed but in a different class loader.
     if (!module_to->is_named() &&
-          (module_from->can_read_unnamed() || module_from->can_read(module_to)))
+        (module_from->can_read_all_unnamed() || module_from->can_read(module_to)))
       return ACCESS_OK;
 
     // Establish readability, check if module_from is allowed to read module_to.

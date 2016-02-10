@@ -54,8 +54,9 @@ void PackageEntry::add_qexport(ModuleEntry* m) {
   assert(_is_exported == true, "Adding a qualified export to a package that is not exported");
   if (_qualified_exports == NULL) {
     // Lazily create a package's qualified exports list.
-    // Initial size is 43, do not anticipate export lists to be large.
-    _qualified_exports = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(43, true);
+    // Initial size is small, do not anticipate export lists to be large.
+    _qualified_exports =
+      new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(QUAL_EXP_SIZE, true);
   }
   _qualified_exports->append_if_missing(m);
 }

@@ -58,6 +58,9 @@ private:
   GrowableArray<ModuleEntry*>* _qualified_exports;
   TRACE_DEFINE_TRACE_ID_FIELD;
 
+  // Initial size of a package entry's list of qualified exports.
+  enum {QUAL_EXP_SIZE = 43};
+
 public:
   void init() {
     _module = NULL;
@@ -171,7 +174,7 @@ public:
   // lookup Package with loader's package entry table, if not found add
   PackageEntry* lookup(Symbol* name, ModuleEntry* module);
 
-  // only lookup Package within loader's package entry table
+  // Only lookup Package within loader's package entry table.  The table read is lock-free.
   PackageEntry* lookup_only(Symbol* Package);
 
   PackageEntry* bucket(int i) {
