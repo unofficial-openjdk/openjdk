@@ -62,7 +62,7 @@ public class DetectMutableStaticFields {
     private static final String keyResource =
             "com/sun/tools/javac/tree/JCTree.class";
 
-    private String[] packagesToSeekFor = new String[] {
+    private final String[] packagesToSeekFor = new String[] {
         "javax.tools",
         "javax.lang.model",
         "com.sun.javadoc",
@@ -119,15 +119,13 @@ public class DetectMutableStaticFields {
                     Arrays.asList("useRawMessages"));
     }
 
-    private List<String> errors = new ArrayList<>();
+    private final List<String> errors = new ArrayList<>();
 
     public static void main(String[] args) {
         try {
             new DetectMutableStaticFields().run();
         } catch (Exception ex) {
-            throw new AssertionError(
-                    "Exception during test execution with cause " + ex.getClass().toString(),
-                    ex.getCause());
+            throw new AssertionError("Exception during test execution: " + ex.getClass(), ex);
         }
     }
 
