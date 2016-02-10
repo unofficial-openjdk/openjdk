@@ -96,19 +96,23 @@ public class Main
         args.add("-classpath");
         args.add("empty");
 
-        if (!stdBootClassPath) {
+        if (stdBootClassPath) {
+            args.add("-Xmodule:java.base");
+        } else {
             args.add("-system");
             args.add("none");
+            files.add("module-info.java");
         }
 
-        args.add("-XDaccessInternalAPI");
-        args.add("-XaddReads:java.base=ALL-UNNAMED");
-        args.add("-Xmodule:java.base");
 
         args.add("-d");
         args.add(".");
+
+        // files to compile are in a separate directory from test to avoid
+        // confusing jtreg
+        File src = new File(testSrc, "src");
         for (String f: files)
-            args.add(new File(testSrc, f).getPath());
+            args.add(new File(src, f).getPath());
 
         System.out.println("Compile: " + args);
         StringWriter out = new StringWriter();

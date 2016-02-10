@@ -33,7 +33,6 @@ tools/javac/importscope/dependencies/DependenciesTest.java                      
 tools/javac/options/xprefer/XPreferTest.java                                    0 generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
 tools/javac/processing/model/testgetallmembers/Main.java                        0 generic-all   NPE in test in getPackage method
 tools/javac/profiles/ProfileOptionTest.java                                     0 generic-all   need to determine future of -profile option (JDK 8 only? JDK 9) // Jan
-tools/javac/synthesize/Main.java                                                0 generic-all   convert to use -systemmodulepath instead of -bootclasspath; also need -Xmodule to work in a jigsaw world //note still not founding java.base even after several changes, check with Jon
 tools/javac/tree/ScopeTest.java                                                 0 generic-all   ?? need more investigation
 
 tools/javac/diags/CheckExamples.java                                            0 generic-all   need to update resource files

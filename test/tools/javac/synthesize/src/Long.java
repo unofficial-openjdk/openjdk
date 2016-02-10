@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,19 +23,19 @@
 
 package java.lang;
 
-public class Byte
+public class Long extends Number
 {
-    public static Byte valueOf(byte v) {
-        return new Byte(v);
+    public static Long valueOf(long v) {
+        return new Long(v);
     }
 
-    public Byte(byte v) {
+    public Long(long v) {
         value = v;
     }
 
-    public byte byteValue() {
+    public long longValue() {
         return value;
     }
 
-    private byte value;
+    private long value;
 }
