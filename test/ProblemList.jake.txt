@@ -1,41 +1,40 @@
 ##### doclets ##################################################################
 
-tools/javadoc/api/basic/TagletPathTest.java                                     0 generic-all   addExports
+tools/javadoc/api/basic/TagletPathTest.java                                     8149598 generic-all   addExports
 
-com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 generic-all   javadoc can't find {@link java.math}
-com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 generic-all   test includes code that adds class into java.lang
+com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 	generic-all   javadoc can't find {@link java.math}
+com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 	generic-all   test includes code that adds class into java.lang
 
-com/sun/javadoc/testCustomTag/TestCustomTag.java                                0 generic-all   addExports
-com/sun/javadoc/testTaglets/TestTaglets.java                                    0 generic-all   addExports
-com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java                    0 generic-all   addExports
+com/sun/javadoc/testCustomTag/TestCustomTag.java                                8149598 generic-all   addExports
+com/sun/javadoc/testTaglets/TestTaglets.java                                    8149598 generic-all   addExports
+com/sun/javadoc/testNestedInlineTag/TestNestedInlineTag.java                    8149598 generic-all   addExports
 
-com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            0 generic-all   update for modules instead of profiles
+com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            0 	generic-all   update for modules instead of profiles
 
 ##### new doclet ###############################################################
 
-jdk/javadoc/tool/6964914/TestUserDoclet.java                                    0 generic-all   jdk launcher must use new doclet main class
+jdk/javadoc/tool/6964914/TestUserDoclet.java                                    8149597 generic-all   jdk launcher must use new doclet main class
+jdk/javadoc/tool/EnsureNewOldDoclet.java                                        8149597 generic-all   jdk launcher must use new doclet main class
 
-jdk/javadoc/tool/EnsureNewOldDoclet.java                                        0 generic-all   jdk launcher must use new doclet main class
-
-jdk/javadoc/doclet/testLinkOption/TestLinkOption.java                           0 generic-all   test includes code that adds class into java.lang
+jdk/javadoc/doclet/testLinkOption/TestLinkOption.java                           0 	generic-all   test includes code that adds class into java.lang
 
 ##### javac ####################################################################
 
-tools/javac/6330997/T6330997.java                                               0 generic-all   NPE in Resolve
-tools/javac/Paths/Diagnostics.sh                                                0 generic-all   needs rewrite
-tools/javac/Paths/MineField.sh                                                  0 generic-all   needs rewrite
-tools/javac/T8003967/DetectMutableStaticFields.java                             0 generic-all   uses URI to determine location of class files  //failing with NPE
-tools/javac/api/T6397104.java                                                   0 generic-all   need to update for new StandardLocations
-tools/javac/api/TestResolveIdent.java                                           0 generic-all   NPE in Resolve
-tools/javac/api/TestSearchPaths.java                                            0 generic-all   need to update for new StandardLocations //also uses Xbootclasspath
-tools/javac/file/ExplodedImage.java                                             0 generic-all   "Did not load java.util.List from correct place"
-tools/javac/importscope/dependencies/DependenciesTest.java                      0 generic-all   NPE in test's internal scanner
-tools/javac/options/xprefer/XPreferTest.java                                    0 generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
-tools/javac/processing/model/testgetallmembers/Main.java                        0 generic-all   NPE in test in getPackage method
-tools/javac/profiles/ProfileOptionTest.java                                     0 generic-all   need to determine future of -profile option (JDK 8 only? JDK 9) // Jan
-tools/javac/tree/ScopeTest.java                                                 0 generic-all   ?? need more investigation
+tools/javac/6330997/T6330997.java                                               0 	generic-all   NPE in Resolve
+tools/javac/Paths/Diagnostics.sh                                                0 	generic-all   needs rewrite
+tools/javac/Paths/MineField.sh                                                  8149599	generic-all   needs rewrite
+tools/javac/T8003967/DetectMutableStaticFields.java                             0 	generic-all   uses URI to determine location of class files  //failing with NPE
+tools/javac/api/T6397104.java                                                   0 	generic-all   need to update for new StandardLocations
+tools/javac/api/TestResolveIdent.java                                           0 	generic-all   NPE in Resolve
+tools/javac/api/TestSearchPaths.java                                            0 	generic-all   need to update for new StandardLocations //also uses Xbootclasspath
+tools/javac/file/ExplodedImage.java                                             0 	generic-all   "Did not load java.util.List from correct place"
+tools/javac/importscope/dependencies/DependenciesTest.java                      0 	generic-all   NPE in test's internal scanner
+tools/javac/options/xprefer/XPreferTest.java                                    0 	generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
+tools/javac/processing/model/testgetallmembers/Main.java                        0 	generic-all   NPE in test in getPackage method
+tools/javac/profiles/ProfileOptionTest.java                                     0 	generic-all   need to determine future of -profile option (JDK 8 only? JDK 9) // Jan
+tools/javac/tree/ScopeTest.java                                                 0 	generic-all   ?? need more investigation
 
-tools/javac/diags/CheckExamples.java                                            0 generic-all   need to update resource files
-tools/javac/diags/MessageInfo.java                                              0 generic-all   addExports
-tools/javac/diags/RunExamples.java                                              0 generic-all   addExports
+tools/javac/diags/CheckExamples.java                                            8149602 generic-all   need to update resource files
+tools/javac/diags/MessageInfo.java                                              8149602	generic-all   addExports
+tools/javac/diags/RunExamples.java                                              8149602	generic-all   addExports
 
