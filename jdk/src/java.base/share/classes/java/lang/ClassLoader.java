@@ -27,13 +27,9 @@ package java.lang;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.File;
-import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Module;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -48,7 +44,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.NoSuchElementException;
@@ -278,10 +273,38 @@ public abstract class ClassLoader {
         classes.addElement(c);
     }
 
-    // The packages defined in this class loader.  Each package name is mapped
-    // to its corresponding Package object.
-    private final ConcurrentHashMap<String, Package> packages
+    // The packages defined in this class loader.  Each package name is
+    // mapped to its corresponding NamedPackage object.
+    //
+    // The value is a Package object if ClassLoader::definePackage,
+    // Class::getPackage, ClassLoader::getDefinePackage(s) or
+    // Package::getPackage(s) method is called to define it.
+    // Otherwise, the value is a NamedPackage object.
+    private final ConcurrentHashMap<String, NamedPackage> packages
             = new ConcurrentHashMap<>();
+
+    /*
+     * Returns a named package for the given module.
+     */
+    private NamedPackage getNamedPackage(String pn, Module m) {
+        NamedPackage p = packages.get(pn);
+        if (p == null) {
+            p = new NamedPackage(pn, m);
+
+            NamedPackage value = packages.putIfAbsent(pn, p);
+            if (value != null) {
+                // Package object already be defined for the named package
+                p = value;
+                // if definePackage is called by this class loader to define
+                // a package in a named module, this will return Package
+                // object of the same name.  Package object may contain
+                // unexpected information but it does not impact the runtime.
+                // this assertion may be helpful for troubleshooting
+                assert value.module() == m;
+            }
+        }
+        return p;
+    }
 
     private static Void checkCreateClassLoader() {
         SecurityManager security = System.getSecurityManager();
@@ -800,7 +823,9 @@ public abstract class ClassLoader {
     }
 
     private void postDefineClass(Class<?> c, ProtectionDomain pd) {
-        definePackage(c);
+        // define a named package
+        getNamedPackage(c.getPackageName(), c.getModule());
+
         if (pd.getCodeSource() != null) {
             Certificate certs[] = pd.getCodeSource().getCertificates();
             if (certs != null)
@@ -1722,40 +1747,6 @@ public abstract class ClassLoader {
     // -- Package --
 
     /**
-     * Defines the package by name for the given module
-     *
-     * This method does not throw IllegalArgumentException.
-     *
-     * @param name package nmae
-     * @param m    module
-     */
-    Package definePackage(String name, Module m) {
-        if (name.isEmpty() && m.isNamed()) {
-            throw new InternalError("unnamed package in  " + m);
-        }
-        Package p = getDefinedPackage(name);
-        if (p == null) {
-            URL url = null;
-            if (m.isNamed() && m.getLayer() != null) {
-                Configuration cf = m.getLayer().configuration();
-                ModuleReference mref = cf.findModule(m.getName()).orElse(null);
-                URI uri = mref != null ? mref.location().orElse(null) : null;
-                try {
-                    url = uri != null ? uri.toURL() : null;
-                } catch (MalformedURLException e) {
-                }
-            }
-            try {
-                p = definePackage(name, null, null, null, null, null, null, url);
-            } catch (IllegalArgumentException e) {
-                // this class loader already defines a package
-                p = getDefinedPackage(name);
-            }
-        }
-        return p;
-    }
-
-    /**
      * Define a Package of the given Class object.
      *
      * If the given class represents an array type, a primitive type or void,
@@ -1772,6 +1763,39 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Defines a Package of the given name and module
+     *
+     * This method does not throw IllegalArgumentException.
+     *
+     * @param name package nmae
+     * @param m    module
+     */
+    Package definePackage(String name, Module m) {
+        if (name.isEmpty() && m.isNamed()) {
+            throw new InternalError("unnamed package in  " + m);
+        }
+
+        // define Package object if the named package is not yet defined
+        NamedPackage p = packages.computeIfAbsent(name,
+                                                  k -> NamedPackage.toPackage(name, m));
+        if (p instanceof Package)
+            return (Package)p;
+
+        // otherwise, replace the NamedPackage object with Package object
+        return (Package)packages.compute(name, this::toPackage);
+    }
+
+    /*
+     * Returns a Package object for the named package
+     */
+    private Package toPackage(String name, NamedPackage p) {
+        if (p instanceof Package)
+            return (Package)p;
+
+        return NamedPackage.toPackage(p.packageName(), p.module());
+    }
+
+    /**
      * Defines a package by <a href="#name">name</a> in this {@code ClassLoader}.
      * <p>
      * <a href="#name">Package names</a> must be unique within a class loader and
@@ -1785,12 +1809,25 @@ public abstract class ClassLoader {
      * method will define a package in this class loader corresponding to the package
      * of the newly defined class; the properties of this defined package are
      * specified by {@link Package}.
-     * <p>
+     *
+     * @apiNote
      * A class loader that wishes to define a package for classes in a JAR
      * typically uses the specification and implementation titles, versions, and
      * vendors from the JAR's manifest. If the package is specified as
      * {@linkplain java.util.jar.Attributes.Name#SEALED sealed} in the JAR's manifest,
      * the {@code URL} of the JAR file is typically used as the {@code sealBase}.
+     * If classes of package {@code 'p'} defined by this class loader
+     * are loaded from multiple JARs, the {@code Package} object may contain
+     * different information depending on the first class of package {@code 'p'}
+     * defined and which JAR's manifest is read first to explicitly define
+     * package {@code 'p'}.
+     *
+     * <p> It is strongly recommended that a class loader does not call this
+     * method to explicitly define packages in <em>named modules</em>.
+     * If it is desirable to define {@code Package} explicitly, it should ensure
+     * that all packages in a named module are defined with the properties
+     * specified by {@link Package}.  Otherwise, some {@code Package} objects
+     * in a named module may be for example sealed with different seal base.
      *
      * @param  name
      *         The <a href="#name">package name</a>
@@ -1825,9 +1862,7 @@ public abstract class ClassLoader {
      *
      * @throws  IllegalArgumentException
      *          if a package of the given {@code name} is already
-     *          defined by this class loader but the versioning information
-     *          or code source of the defined package is different than
-     *          the specified arguments
+     *          defined by this class loader
      *
      * @since  1.2
      *
@@ -1848,11 +1883,10 @@ public abstract class ClassLoader {
                                 implTitle, implVersion, implVendor,
                                 sealBase, this);
 
-        Package pkg = packages.putIfAbsent(name, p);
-        if (pkg != null && !Package.equals(pkg, p)) {
+        if (packages.putIfAbsent(name, p) != null)
             throw new IllegalArgumentException(name);
-        }
-        return pkg != null ? pkg : p;
+
+        return p;
     }
 
     /**
@@ -1867,7 +1901,14 @@ public abstract class ClassLoader {
      * @since  9
      */
     public final Package getDefinedPackage(String name) {
-        return packages.get(name);
+        NamedPackage p = packages.get(name);
+        if (p == null)
+            return null;
+
+        if (p instanceof Package)
+            return (Package)p;
+
+        return definePackage(name, p.module());
     }
 
     /**
@@ -1917,7 +1958,7 @@ public abstract class ClassLoader {
      */
     @Deprecated
     protected Package getPackage(String name) {
-        Package pkg = packages.get(name);
+        Package pkg = getDefinedPackage(name);
         if (pkg == null) {
             if (parent != null) {
                 pkg = parent.getPackage(name);
@@ -1950,10 +1991,16 @@ public abstract class ClassLoader {
                      .toArray(Package[]::new);
     }
 
+
+
     // package-private
 
+    /**
+     * Returns a stream of Packages defined in this class loader
+     */
     Stream<Package> packages() {
-        return packages.values().stream();
+        return packages.values().stream()
+                       .map(p -> definePackage(p.packageName(), p.module()));
     }
 
     // -- Native library access --

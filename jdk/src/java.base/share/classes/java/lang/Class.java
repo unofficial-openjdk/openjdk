@@ -814,7 +814,7 @@ public final class Class<T> implements java.io.Serializable,
         return module;
     }
 
-    // set by VM, will eventually move to a helper type with module
+    // set by VM
     private transient Module module;
 
     // Initialized in JVM not by private constructor
@@ -920,9 +920,9 @@ public final class Class<T> implements java.io.Serializable,
             return null;
         }
         ClassLoader cl = getClassLoader0();
-        return cl != null ? cl.definePackage(this) : BootLoader.definePackage(this);
+        return cl != null ? cl.definePackage(this)
+                          : BootLoader.definePackage(this);
     }
-
 
     /**
      * Returns the fully qualified package name.
@@ -954,15 +954,14 @@ public final class Class<T> implements java.io.Serializable,
         if (pn == null && !isArray() && !isPrimitive()) {
             String cn = getName();
             int dot = cn.lastIndexOf('.');
-            pn = (dot != -1) ? cn.substring(0, dot) : "";  // intern?
+            pn = (dot != -1) ? cn.substring(0, dot).intern() : "";
             this.packageName = pn;
         }
         return pn;
     }
 
-    // cached package name, this will eventually move to a helper type with module
+    // cached package name
     private String packageName;
-
 
     /**
      * Returns the interfaces directly implemented by the class or interface

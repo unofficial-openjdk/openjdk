@@ -188,6 +188,15 @@ public class BuiltinClassLoader
         }
     }
 
+    /**
+     * Returns the {@code ModuleReference} for the named module defined to
+     * this class loader; or {@code null} if not defined.
+     *
+     * @param name The name of the module to find
+     */
+    protected ModuleReference findModuleRef(String name) {
+        return nameToModule.get(name);
+    }
 
     // -- finding resources
 
@@ -522,14 +531,6 @@ public class BuiltinClassLoader
             }
 
             try {
-
-                // define a package in the named module
-                int pos = cn.lastIndexOf('.');
-                String pn = cn.substring(0, pos);
-                if (getDefinedPackage(pn) == null) {
-                    definePackage(pn, loadedModule);
-                }
-
                 // define class to VM
                 return defineClass(cn, bb, cs);
 
@@ -579,27 +580,6 @@ public class BuiltinClassLoader
 
 
     // -- packages
-
-    /**
-     * Define a Package this to this class loader. The resulting Package
-     * is sealed with the code source that is the module location.
-     */
-    private Package definePackage(String pn, LoadedModule loadedModule) {
-        final URL url;
-        if (loadedModule != null && loadedModule.loader() == this) {
-            url = loadedModule.location();
-        } else {
-            url = null;
-        }
-
-        try {
-            return definePackage(pn, null, null, null, null, null, null, url);
-        } catch (IllegalArgumentException e) {
-            // Package being defined should always have the same location
-            // either location of a named module or null.
-            throw new InternalError(e);
-        }
-    }
 
     /**
      * Defines a package in this ClassLoader. If the package is already defined

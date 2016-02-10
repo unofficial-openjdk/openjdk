@@ -431,16 +431,7 @@ public final class Loader extends SecureClassLoader {
             }
 
             try {
-
-                // define the package if not already defined
-                String pn = packageName(cn);
-                if (getDefinedPackage(pn) == null) {
-                    URL url = loadedModule.location();
-                    definePackage(pn, null, null, null, null, null, null, url);
-                }
-
                 return defineClass(cn, bb, loadedModule.codeSource());
-
             } finally {
                 reader.release(bb);
             }
