@@ -58,6 +58,10 @@ final class Builder {
     private static final Set<Requires.Modifier> PUBLIC =
         Collections.singleton(Requires.Modifier.PUBLIC);
 
+    // Static cache of the most recently seen Version to cheaply deduplicate
+    // most Version objects.  JDK modules have the same version.
+    static Version cachedVersion;
+
     final String name;
     final Set<Requires> requires;
     final Set<Exports> exports;
@@ -187,7 +191,12 @@ final class Builder {
     public Builder version(String v) {
         if (version != null)
             throw new IllegalStateException("module version already set");
-        version = Version.parse(v);
+        Version ver = cachedVersion;
+        if (ver != null && v.equals(ver.toString())) {
+            version = ver;
+        } else {
+            cachedVersion = version = Version.parse(v);
+        }
         return this;
     }
 
