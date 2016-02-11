@@ -99,11 +99,15 @@ public class JavacElements implements Elements {
 
     @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageSymbol getPackageElement(CharSequence name) {
+        return getPackageElement(modules.getDefaultModule(), name);
+    }
+
+    public PackageSymbol getPackageElement(ModuleElement module, CharSequence name) {
         String strName = name.toString();
         if (strName.equals(""))
             return syms.unnamedModule.unnamedPackage;
         return SourceVersion.isName(strName)
-            ? nameToSymbol(modules.getDefaultModule(), strName, PackageSymbol.class)
+            ? nameToSymbol((ModuleSymbol) module, strName, PackageSymbol.class)
             : null;
     }
 
