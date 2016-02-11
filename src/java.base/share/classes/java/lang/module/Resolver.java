@@ -657,28 +657,32 @@ final class Resolver {
 
             }
 
-            // if m is an automatic module then it requires public all selected
-            // modules and all modules in parent layers
+            // automatic modules reads all selected modules and all modules
+            // in parent configurations
             if (descriptor.isAutomatic()) {
                 String name = descriptor.name();
 
-                // requires public all selected modules
+                // reads all selected modules
+                // requires public` all selected automatic modules
                 for (ModuleReference mref2 : selected.modules()) {
                     ModuleDescriptor other = mref2.descriptor();
                     if (!name.equals(other.name())) {
                         ReadDependence rd = new ReadDependence(cf, other);
                         reads.add(rd);
-                        requiresPublic.add(rd);
+                        if (other.isAutomatic())
+                            requiresPublic.add(rd);
                     }
                 }
 
-                // requires public all modules in parent configurations
+                // reads all modules in parent configurations
+                // `requires public` all automatic modules in parent configurations
                 p = parent;
                 while (p != null) {
                     for (ModuleDescriptor other : p.descriptors()) {
                         ReadDependence rd = new ReadDependence(p, other);
                         reads.add(rd);
-                        requiresPublic.add(rd);
+                        if (other.isAutomatic())
+                            requiresPublic.add(rd);
                     }
                     p = p.parent().orElse(null);
                 }
