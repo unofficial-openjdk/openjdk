@@ -828,7 +828,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
     }
 
     @Override @DefinedBy(Api.COMPILER)
-    public Location getModuleLocation(Location location, String moduleName) {
+    public Location getModuleLocation(Location location, String moduleName) throws IOException {
         nullCheck(location);
         nullCheck(moduleName);
         return locations.getModuleLocation(location, moduleName);

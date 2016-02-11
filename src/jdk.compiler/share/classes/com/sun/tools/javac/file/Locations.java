@@ -387,7 +387,7 @@ public class Locations {
         /**
          * @see JavaFileManager#getModuleLocation(Location, String)
          */
-        Location getModuleLocation(String moduleName) {
+        Location getModuleLocation(String moduleName) throws IOException {
             return null;
         }
 
@@ -1333,6 +1333,7 @@ public class Locations {
     private class SystemModulesLocationHandler extends BasicLocationHandler {
         private Path javaHome;
         private Path modules;
+        private Map<String, ModuleLocationHandler> systemModules;
 
         SystemModulesLocationHandler() {
             super(StandardLocation.SYSTEM_MODULES, Option.SYSTEM);
@@ -1401,9 +1402,29 @@ public class Locations {
         }
 
         @Override
+        Location getModuleLocation(String name) throws IOException {
+            initSystemModules();
+            return systemModules.get(name);
+        }
+
+        @Override
         Iterable<Set<Location>> listModuleLocations() throws IOException {
-            if (javaHome == null)
-                return Collections.emptyList();
+            initSystemModules();
+            Set<Location> locns = new LinkedHashSet<>();
+            for (Location l: systemModules.values())
+                locns.add(l);
+            return Collections.singleton(locns);
+        }
+
+        private void initSystemModules() throws IOException {
+            if (systemModules != null) {
+                return;
+            }
+
+            if (javaHome == null) {
+                systemModules = Collections.emptyMap();
+                return;
+            }
 
             if (modules == null) {
                 try {
@@ -1439,18 +1460,16 @@ public class Locations {
                 }
             }
 
-            Set<Location> systemModules = new LinkedHashSet<>();
+            systemModules = new LinkedHashMap<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(modules, Files::isDirectory)) {
                 for (Path entry : stream) {
                     String moduleName = entry.getFileName().toString();
                     String name = location.getName() + "[" + moduleName + "]";
                     ModuleLocationHandler h = new ModuleLocationHandler(name, moduleName,
                             Collections.singleton(entry), false, true);
-                    systemModules.add(h);
+                    systemModules.put(moduleName, h);
                 }
             }
-
-            return Collections.singleton(systemModules);
         }
     }
 
@@ -1529,7 +1548,7 @@ public class Locations {
         h.setPaths(files);
     }
 
-    Location getModuleLocation(Location location, String name) {
+    Location getModuleLocation(Location location, String name) throws IOException {
         LocationHandler h = getHandler(location);
         return (h == null ? null : h.getModuleLocation(name));
     }
