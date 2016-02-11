@@ -216,15 +216,6 @@ class ClassLoader: AllStatic {
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
-  // If the package for the fully qualified class name is in the boot
-  // loader's package entry table then add_package() sets the classpath_index
-  // field so that get_system_package() will know to return a non-null value
-  // for the package's location.  And, so that the package will be added to
-  // the list of packages returned by get_system_packages().
-  // For packages whose classes are loaded from the boot loader class path, the
-  // classpath_index indicates which entry on the boot loader class path.
-  static bool add_package(const char *fullq_class_name, s2 classpath_index, TRAPS);
-
   // Initialization
   static void setup_bootstrap_search_path();
   static void setup_search_path(const char *class_path, bool setting_bootstrap);
@@ -235,6 +226,16 @@ class ClassLoader: AllStatic {
                                                  bool throw_exception, TRAPS);
 
  public:
+
+  // If the package for the fully qualified class name is in the boot
+  // loader's package entry table then add_package() sets the classpath_index
+  // field so that get_system_package() will know to return a non-null value
+  // for the package's location.  And, so that the package will be added to
+  // the list of packages returned by get_system_packages().
+  // For packages whose classes are loaded from the boot loader class path, the
+  // classpath_index indicates which entry on the boot loader class path.
+  static bool add_package(const char *fullq_class_name, s2 classpath_index, TRAPS);
+
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);

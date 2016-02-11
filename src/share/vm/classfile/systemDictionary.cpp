@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1393,6 +1393,13 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
         tty->print(" by %s", loader_data->loader_name());
       }
       tty->print_cr("]");
+    }
+
+    // For boot loader, ensure that GetSystemPackage knows that a class in this
+    // package was loaded.
+    if (class_loader.is_null()) {
+      ResourceMark rm;
+      ClassLoader::add_package(ik->name()->as_C_string(), 0, THREAD);
     }
 
     if (DumpLoadedClassList != NULL && classlist_file->is_open()) {
