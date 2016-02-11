@@ -745,7 +745,7 @@ public class Modules extends JCTree.Visitor {
                 /** The implementation must be defined in the same module as the provides directive
                  *  (else, error)
                  */
-                PackageSymbol implementationDefiningPackage = (PackageSymbol)provides.impl.owner;
+                PackageSymbol implementationDefiningPackage = provides.impl.packge();
                 if (implementationDefiningPackage.modle != msym) {
                     log.error(tree.pos(), "service.implementation.not.in.right.module");
                 }
