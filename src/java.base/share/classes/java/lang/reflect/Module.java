@@ -752,7 +752,7 @@ public final class Module {
         if (!isNamed())
             return true;
 
-        if (SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor))
+        if (descriptor.isAutomatic())
             return true;
 
         // uses was declared
@@ -974,7 +974,7 @@ public final class Module {
             m.reads = reads;
 
             // automatic modules reads all unnamed modules
-            if (SharedSecrets.getJavaLangModuleAccess().isAutomatic(descriptor)) {
+            if (descriptor.isAutomatic()) {
                 m.implAddReads(null, true);
             }
 

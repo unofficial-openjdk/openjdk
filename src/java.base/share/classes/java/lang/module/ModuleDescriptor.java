@@ -648,8 +648,10 @@ public class ModuleDescriptor
 
     /**
      * <p> Indicates if this is an automatic module. </p>
+     *
+     * @return  {@code true} if this is an automatic module
      */
-    /* package */ boolean isAutomatic() {
+    public boolean isAutomatic() {
         return automatic;
     }
 
@@ -1381,16 +1383,11 @@ public class ModuleDescriptor
 
     static {
         /**
-         * Setup the shared secret to allow code in other packages know if a
-         * module is an automatic module. If isAutomatic becomes part of the
-         * API then this setup can go away.
+         * Setup the shared secret to allow code in other packages create
+         * ModuleDescriptor and associated objects directly.
          */
         jdk.internal.misc.SharedSecrets
             .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
-                @Override
-                public boolean isAutomatic(ModuleDescriptor descriptor) {
-                    return descriptor.isAutomatic();
-                }
                 @Override
                 public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
                     return new Requires(ms, mn, false);

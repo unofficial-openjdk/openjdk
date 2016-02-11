@@ -133,6 +133,36 @@ public class AutomaticModulesTest {
 
 
     /**
+     * Test that isAutomatic returns true for automatic modules
+     */
+    public void testIsAutomatic() throws IOException {
+
+        ModuleDescriptor m1 = new ModuleDescriptor.Builder("m1").build();
+
+        // m2 and m3 are automatic modules
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createJarFile(dir.resolve("m2.jar"), "p/T.class");
+        createJarFile(dir.resolve("m3.jar"), "q/T.class");
+
+        // module finder locates m1 and the modules in the directory
+        ModuleFinder finder
+            = ModuleFinder.concat(ModuleUtils.finderOf(m1),
+                                  ModuleFinder.of(dir));
+
+        assertTrue(finder.find("m1").isPresent());
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.find("m3").isPresent());
+
+        ModuleDescriptor m2 = finder.find("m2").get().descriptor();
+        ModuleDescriptor m3 = finder.find("m3").get().descriptor();
+
+        assertFalse(m1.isAutomatic());
+        assertTrue(m2.isAutomatic());
+        assertTrue(m3.isAutomatic());
+    }
+
+
+    /**
      * Test all packages are exported
      */
     public void testExports() throws IOException {

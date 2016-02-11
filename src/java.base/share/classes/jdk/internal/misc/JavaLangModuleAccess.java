@@ -26,22 +26,18 @@
 package jdk.internal.misc;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Version;
 import java.util.Map;
 import java.util.Set;
-
-import static java.lang.module.ModuleDescriptor.*;
 
 /**
  * Provides access to non-public methods in java.lang.module.
  */
 
 public interface JavaLangModuleAccess {
-
-    /**
-     * Returns {@code true} if the module descriptor is for an
-     * automatic module.
-     */
-    boolean isAutomatic(ModuleDescriptor descriptor);
 
     /**
      * Returns {@code ModuleDescriptor.Requires} of the given modifier

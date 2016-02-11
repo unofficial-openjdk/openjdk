@@ -414,6 +414,13 @@ public class ModuleDescriptorTest {
     }
 
 
+    // isAutomatic
+    public void testIsAutomatic() {
+        ModuleDescriptor descriptor = new Builder("foo").build();
+        assertFalse(descriptor.isAutomatic());
+    }
+
+
     // mainClass
 
     public void testMainClass() {

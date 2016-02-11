@@ -129,7 +129,8 @@ public interface ModuleFinder {
      * image but are intended to be loaded by custom loaders. They are observable
      * but there should be way to restrict this so that they don't end up in the
      * boot layer. In that context, should this method be renamed to systemModules?
-     * Also need to decide if this method needs a permission check.
+     * Also need to decide if this method needs a permission check. It minimally
+     * requires access to java.home.
      *
      * @return A {@code ModuleFinder} that locates all modules in the
      *         run-time image
@@ -165,9 +166,13 @@ public interface ModuleFinder {
      * Modules are located by the resulting {@code ModuleFinder} by searching
      * the module directories or packaged/exploded modules in array index order.
      *
-     * This method supports modules that are packaged as modular JAR files.
-     * It may also support modules that are packaged in other implementation
-     * specific formats.
+     * <p> This method supports modules that are packaged as JAR files. A JAR
+     * file with a {@code module-info.class} in the top-level directory of the
+     * JAR file is a modular JAR and contains an <em>explicit module</em>.
+     * A JAR file that does not have a {@code module-info.class} in the
+     * top-level directory contains an {@link ModuleDescriptor#isAutomatic
+     * automatic} module. An implementation may also support modules that are
+     * packaged in other implementation specific formats. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are to directories or packaged modules. A call
