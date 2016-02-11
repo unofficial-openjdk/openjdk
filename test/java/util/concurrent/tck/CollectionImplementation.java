@@ -1,12 +1,9 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,22 +20,27 @@
  * questions.
  */
 
-package sun.awt;
+/*
+ * This file is available under and governed by the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
+ * However, the following notice accompanied the original version of this
+ * file:
+ *
+ * Written by Doug Lea and Martin Buchholz with assistance from
+ * members of JCP JSR-166 Expert Group and released to the public
+ * domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
 
-import java.awt.Point;
-import java.awt.Window;
-import java.awt.peer.MouseInfoPeer;
+import java.util.Collection;
 
-public final class DefaultMouseInfoPeer implements MouseInfoPeer {
-
-    /**
-     * Package-private constructor to prevent instantiation.
-     */
-    DefaultMouseInfoPeer() {
-    }
-
-    public native int fillPointWithCoords(Point point);
-
-    public native boolean isWindowUnderMouse(Window w);
-
+/** Allows tests to work with different Collection implementations. */
+public interface CollectionImplementation {
+    /** Returns the Collection class. */
+    public Class<?> klazz();
+    /** Returns an empty collection. */
+    public Collection emptyCollection();
+    public Object makeElement(int i);
+    public boolean isConcurrent();
+    public boolean permitsNulls();
 }
