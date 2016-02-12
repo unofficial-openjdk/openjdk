@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -340,7 +340,7 @@ class Example implements Comparable<Example> {
                 else if (first.equals("backdoor"))
                     return new BackdoorCompiler(verbose);
                 else if (first.equals("exec"))
-                    return new ExecCompiler(verbose);
+                    return new ExecCompiler(verbose, rest);
                 else
                     throw new IllegalArgumentException(first);
             }
@@ -524,8 +524,11 @@ class Example implements Comparable<Example> {
      * Run the test in a separate process.
      */
     static class ExecCompiler extends Compiler {
-        ExecCompiler(boolean verbose) {
+        List<String> vmOpts;
+
+        ExecCompiler(boolean verbose, String... args) {
             super(verbose);
+            vmOpts = Arrays.asList(args);
         }
 
         @Override
@@ -550,6 +553,7 @@ class Example implements Comparable<Example> {
                 args.add(toolsJar.getPath());
             }
 
+            args.addAll(vmOpts);
             addOpts(args, "test.vm.opts");
             addOpts(args, "test.java.opts");
             args.add(com.sun.tools.javac.Main.class.getName());

@@ -27,5 +27,4 @@ tools/javac/profiles/ProfileOptionTest.java                                     
 
 tools/javac/diags/CheckExamples.java                                            8149602 generic-all   need to update resource files
 tools/javac/diags/MessageInfo.java                                              8149602	generic-all   addExports
-tools/javac/diags/RunExamples.java                                              8149602	generic-all   addExports
 
