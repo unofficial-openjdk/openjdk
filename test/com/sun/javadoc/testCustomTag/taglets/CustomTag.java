@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ public class CustomTag extends BaseTaglet {
 
     public CustomTag() {
         name = "customTag";
-        addExports("jdk.javadoc", "com.sun.tools.doclets.internal.toolkit.util");
     }
 
     public static void register(Map tagletMap) {
@@ -60,17 +59,5 @@ public class CustomTag extends BaseTaglet {
         inlineTags.add(new TextTag(tag.holder(), "</dd>"));
         return writer.commentTagsToOutput(tag,
                 (Tag[]) inlineTags.toArray(new Tag[] {}));
-    }
-
-    private void addExports(String moduleName, String packageName) {
-        try {
-            Layer layer = Layer.boot();
-            Optional<Module> m = layer.findModule(moduleName);
-            if (!m.isPresent())
-                throw new Error("module not found: " + moduleName);
-            m.get().addExports(packageName, getClass().getModule());
-        } catch (Exception e) {
-            throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-        }
     }
 }

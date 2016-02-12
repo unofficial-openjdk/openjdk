@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,12 @@ public class DocletInvoker {
      */
     private final boolean apiMode;
 
+    /**
+     * Whether javadoc internal API should be exported to doclets
+     * and (indirectly) to taglets
+     */
+    private final boolean exportInternalAPI;
+
     private static class DocletInvokeException extends Exception {
         private static final long serialVersionUID = 0;
     }
@@ -88,22 +94,30 @@ public class DocletInvoker {
         }
     }
 
-    public DocletInvoker(Messager messager, Class<?> docletClass, boolean apiMode) {
+    public DocletInvoker(Messager messager, Class<?> docletClass, boolean apiMode, boolean exportInternalAPI) {
         this.messager = messager;
         this.docletClass = docletClass;
         docletClassName = docletClass.getName();
         appClassLoader = null;
         this.apiMode = apiMode;
+        this.exportInternalAPI = exportInternalAPI; // for backdoor use by standard doclet for taglets
+
         ensureReadable(docletClass);
+        // this may not be soon enough if the class has already been loaded
+        if (exportInternalAPI) {
+            exportInternalAPI(docletClass.getClassLoader());
+        }
     }
 
     public DocletInvoker(Messager messager, JavaFileManager fileManager,
                          String docletClassName, String docletPath,
                          ClassLoader docletParentClassLoader,
-                         boolean apiMode) {
+                         boolean apiMode,
+                         boolean exportInternalAPI) {
         this.messager = messager;
         this.docletClassName = docletClassName;
         this.apiMode = apiMode;
+        this.exportInternalAPI = exportInternalAPI; // for backdoor use by standard doclet for taglets
 
         if (fileManager != null && fileManager.hasLocation(DocumentationTool.Location.DOCLET_PATH)) {
             appClassLoader = fileManager.getClassLoader(DocumentationTool.Location.DOCLET_PATH);
@@ -122,6 +136,10 @@ public class DocletInvoker {
                 appClassLoader = new URLClassLoader(urls, docletParentClassLoader);
         }
 
+        if (exportInternalAPI) {
+            exportInternalAPI(appClassLoader);
+        }
+
         // attempt to find doclet
         Class<?> dc = null;
         try {
@@ -131,6 +149,7 @@ public class DocletInvoker {
             messager.exit();
         }
         docletClass = dc;
+
         ensureReadable(docletClass);
     }
 
@@ -359,6 +378,37 @@ public class DocletInvoker {
             // ignore
         } catch (Exception e) {
             throw new InternalError(e);
+        }
+    }
+
+    private void exportInternalAPI(ClassLoader cl) {
+        String[] packages = {
+            "com.sun.tools.doclets",
+            "com.sun.tools.doclets.standard",
+            "com.sun.tools.doclets.internal.toolkit",
+            "com.sun.tools.doclets.internal.toolkit.taglets",
+            "com.sun.tools.doclets.internal.toolkit.builders",
+            "com.sun.tools.doclets.internal.toolkit.util",
+            "com.sun.tools.doclets.internal.toolkit.util.links",
+            "com.sun.tools.doclets.formats.html",
+            "com.sun.tools.doclets.formats.html.markup"
+        };
+
+        try {
+            Method getModuleMethod = Class.class.getDeclaredMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(getClass());
+
+            Class<?> moduleClass = Class.forName("java.lang.reflect.Module");
+            Method addExportsMethod = moduleClass.getDeclaredMethod("addExports", String.class, moduleClass);
+
+            Method getUnnamedModuleMethod = ClassLoader.class.getDeclaredMethod("getUnnamedModule");
+            Object target = getUnnamedModuleMethod.invoke(cl);
+
+            for (String pack : packages) {
+                addExportsMethod.invoke(thisModule, pack, target);
+            }
+        } catch (Exception e) {
+            // do nothing
         }
     }
 

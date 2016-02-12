@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,6 +293,8 @@ public abstract class Configuration {
      */
     public Map<String, Set<PackageDoc>> modulePackages;
 
+    public boolean exportInternalAPI;
+
     /**
      * Constructor. Constructs the message retriever with resource file.
      */
@@ -347,6 +349,7 @@ public abstract class Configuration {
             case "-quiet":
             case "-xnodate":
             case "-version":
+            case "-xdaccessinternalapi":
                 return 1;
             case "-d":
             case "-docencoding":
@@ -484,6 +487,8 @@ public abstract class Configuration {
                 String url = os[1];
                 String pkglisturl = os[2];
                 extern.link(url, pkglisturl, root, true);
+            } else if (opt.equals("-xdaccessinternalapi")) {
+                exportInternalAPI = true;
             }
         }
         if (sourcepath.length() == 0) {
@@ -535,9 +540,9 @@ public abstract class Configuration {
      * either -tag or -taglet arguments.
      */
     private void initTagletManager(Set<String[]> customTagStrs) {
-        tagletManager = tagletManager == null ?
-            new TagletManager(nosince, showversion, showauthor, javafx, message) :
-            tagletManager;
+        tagletManager = (tagletManager == null)
+                ? new TagletManager(nosince, showversion, showauthor, javafx, exportInternalAPI, message)
+                : tagletManager;
         for (String[] args : customTagStrs) {
             if (args[0].equals("-taglet")) {
                 tagletManager.addCustomTag(args[1], getFileManager(), tagletpath);
