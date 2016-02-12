@@ -20,7 +20,6 @@ tools/javac/Paths/MineField.sh                                                  
 tools/javac/api/T6397104.java                                                   0 	generic-all   need to update for new StandardLocations
 tools/javac/api/TestResolveIdent.java                                           0 	generic-all   NPE in Resolve
 tools/javac/api/TestSearchPaths.java                                            0 	generic-all   need to update for new StandardLocations //also uses Xbootclasspath
-tools/javac/file/ExplodedImage.java                                             0 	generic-all   "Did not load java.util.List from correct place"
 tools/javac/importscope/dependencies/DependenciesTest.java                      0 	generic-all   NPE in test's internal scanner
 tools/javac/options/xprefer/XPreferTest.java                                    0 	generic-all   tests -Xprefer, -XXuserPathsFirst; need to rewrite/update
 tools/javac/processing/model/testgetallmembers/Main.java                        0 	generic-all   NPE in test in getPackage method
