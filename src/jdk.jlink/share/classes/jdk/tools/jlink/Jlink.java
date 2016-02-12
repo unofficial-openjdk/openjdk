@@ -37,7 +37,6 @@ import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.builder.ImageBuilder;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
 
 /**
@@ -54,7 +53,7 @@ public final class Jlink {
      * @return A new plugin or null if plugin is unknown.
      */
     public static Plugin newPlugin(String name,
-            Map<PluginOption, String> configuration, Layer pluginsLayer) {
+            Map<String, String> configuration, Layer pluginsLayer) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(configuration);
         pluginsLayer = pluginsLayer == null ? Layer.boot() : pluginsLayer;

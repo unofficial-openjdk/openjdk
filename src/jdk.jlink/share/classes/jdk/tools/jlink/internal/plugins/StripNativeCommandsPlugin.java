@@ -28,8 +28,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
@@ -40,10 +38,6 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
 public final class StripNativeCommandsPlugin implements TransformerPlugin {
 
     public static final String NAME = "strip-native-commands";
-
-    private static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).build();
 
     @Override
     public String getName() {
@@ -58,11 +52,6 @@ public final class StripNativeCommandsPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public void visit(Pool in, Pool out) {
         in.visit((file) -> {
             return file.getType() == Pool.ModuleDataType.NATIVE_CMD ? null : file;
@@ -72,10 +61,5 @@ public final class StripNativeCommandsPlugin implements TransformerPlugin {
     @Override
     public String getDescription() {
         return PluginsResourceBundle.getDescription(NAME);
-    }
-
-    @Override
-    public void configure(Map<PluginOption, String> config) {
-
     }
 }

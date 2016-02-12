@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.internal.Utils;
@@ -44,11 +42,6 @@ import jdk.tools.jlink.internal.Utils;
 public final class ExcludePlugin implements TransformerPlugin {
 
     public static final String NAME = "exclude-resources";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
-
     private Predicate<String> predicate;
 
     @Override
@@ -72,8 +65,13 @@ public final class ExcludePlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
     }
 
     @Override
@@ -84,9 +82,9 @@ public final class ExcludePlugin implements TransformerPlugin {
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
+    public void configure(Map<String, String> config) {
         try {
-            String val = config.get(NAME_OPTION);
+            String val = config.get(NAME);
             predicate = new ResourceFilter(Utils.listParser.apply(val), true);
         } catch (IOException ex) {
             throw new PluginException(ex);

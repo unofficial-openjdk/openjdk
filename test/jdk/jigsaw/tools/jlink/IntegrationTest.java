@@ -37,7 +37,6 @@ import java.util.Set;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.plugin.Pool;
@@ -96,17 +95,7 @@ public class IntegrationTest {
         }
 
         @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
+        public void configure(Map<String, String> config) {
             throw new UnsupportedOperationException("Shouldn't be called");
         }
     }
@@ -160,15 +149,14 @@ public class IntegrationTest {
         }
 
         @Override
-        public PluginOption getOption() {
+        public String getOption() {
             return null;
         }
         static final String NAME = "myprovider";
         static final String INDEX = "INDEX";
-        static final PluginOption INDEX_OPTION = new PluginOption.Builder(INDEX).build();
 
         @Override
-        public void configure(Map<PluginOption, String> config) {
+        public void configure(Map<String, String> config) {
             throw new UnsupportedOperationException("Shouldn't be called");
         }
     }
@@ -235,15 +223,15 @@ public class IntegrationTest {
 
         //Strip debug
         {
-            Map<PluginOption, String> config1 = new HashMap<>();
-            config1.put(StripDebugPlugin.NAME_OPTION, "");
+            Map<String, String> config1 = new HashMap<>();
+            config1.put(StripDebugPlugin.NAME, "");
             Plugin strip = Jlink.newPlugin("strip-debug", config1, null);
             lst.add(strip);
         }
         // compress
         {
-            Map<PluginOption, String> config1 = new HashMap<>();
-            config1.put(DefaultCompressPlugin.NAME_OPTION, "2");
+            Map<String, String> config1 = new HashMap<>();
+            config1.put(DefaultCompressPlugin.NAME, "2");
             Plugin compress
                     = Jlink.newPlugin("compress", config1, null);
             lst.add(compress);

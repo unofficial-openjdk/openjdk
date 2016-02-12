@@ -51,7 +51,6 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 
 public class NegativeTest extends AsmPluginTestBase {
@@ -102,32 +101,6 @@ public class NegativeTest extends AsmPluginTestBase {
                    throw new UncheckedIOException(ex);
                 }
             }
-
-
-            @Override
-            public Set<Plugin.PluginType> getType() {
-                return null;
-            }
-
-            @Override
-            public String getDescription() {
-                return "";
-            }
-
-            @Override
-            public PluginOption getOption() {
-                return null;
-            }
-
-            @Override
-            public void configure(Map<PluginOption, String> config) {
-
-            }
-
-            @Override
-            public String getName() {
-                return null;
-            }
         };
         Pool resources = new PoolImpl(ByteOrder.BIG_ENDIAN, new StringTable() {
             @Override
@@ -161,31 +134,6 @@ public class NegativeTest extends AsmPluginTestBase {
             public void visit(AsmPools pools) {
                 action(() -> pools.getModulePool(null), "Module name is null", NullPointerException.class);
                 action(() -> pools.fillOutputResources(null), "Output resource is null", NullPointerException.class);
-            }
-
-            @Override
-            public String getName() {
-                return null;
-            }
-
-            @Override
-            public Set<Plugin.PluginType> getType() {
-                return null;
-            }
-
-            @Override
-            public String getDescription() {
-                return "";
-            }
-
-            @Override
-            public PluginOption getOption() {
-                return null;
-            }
-
-            @Override
-            public void configure(Map<PluginOption, String> config) {
-
             }
         };
         Pool resources = new PoolImpl(ByteOrder.BIG_ENDIAN, new StringTable() {

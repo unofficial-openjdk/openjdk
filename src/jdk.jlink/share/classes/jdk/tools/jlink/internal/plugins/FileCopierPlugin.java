@@ -42,8 +42,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -57,10 +55,6 @@ import jdk.tools.jlink.internal.Utils;
 public class FileCopierPlugin implements TransformerPlugin {
 
     public static final String NAME = "copy-files";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
 
     private static final class CopiedFile {
 
@@ -201,13 +195,8 @@ public class FileCopierPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
-    public void configure(Map<PluginOption, String> config) {
-        String val = config.get(NAME_OPTION);
+    public void configure(Map<String, String> config) {
+        String val = config.get(NAME);
         String[] argument = Utils.listParser.apply(val);
         if (argument == null || argument.length == 0) {
             throw new RuntimeException("Invalid argument for " + NAME);
@@ -287,5 +276,15 @@ public class FileCopierPlugin implements TransformerPlugin {
     @Override
     public String getDescription() {
         return PluginsResourceBundle.getDescription(NAME);
+    }
+
+    @Override
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
     }
 }

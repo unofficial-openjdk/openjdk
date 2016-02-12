@@ -35,7 +35,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
@@ -70,8 +69,8 @@ public class ExcludeFilesPluginTest {
     }
 
     public void checkFiles(String s, String sample, String module, boolean exclude) throws Exception {
-        Map<PluginOption, String> prop = new HashMap<>();
-        prop.put(ExcludeFilesPlugin.NAME_OPTION, s);
+        Map<String, String> prop = new HashMap<>();
+        prop.put(ExcludeFilesPlugin.NAME, s);
         ExcludeFilesPlugin fplug = new ExcludeFilesPlugin();
         fplug.configure(prop);
         PoolImpl files = new PoolImpl();

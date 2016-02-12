@@ -46,8 +46,6 @@ import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.optim.ForNameFolding;
 import jdk.tools.jlink.internal.plugins.optim.ReflectionOptimizer.TypeResolver;
@@ -61,19 +59,9 @@ import jdk.tools.jlink.plugin.PluginException;
 public final class OptimizationPlugin extends AsmPlugin {
 
     public static final String NAME = "class-optim";
-    public static final String LOG_FILE = NAME + "-log-file";
+    public static final String LOG  = "log";
     public static final String ALL = "all";
     public static final String FORNAME_REMOVAL = "forName-folding";
-
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME, ALL, FORNAME_REMOVAL)).
-            build();
-    public static final PluginOption LOG_OPTION = new Builder(LOG_FILE).
-            description("").
-            argumentDescription(PluginsResourceBundle.getOption(NAME, LOG_FILE)).
-            build();
 
     /**
      * Default resolver. A resolver that retrieve types that are in an
@@ -264,8 +252,18 @@ public final class OptimizationPlugin extends AsmPlugin {
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
-        String strategies = config.get(NAME_OPTION);
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
+        String strategies = config.get(NAME);
         String[] arr = strategies.split(",");
         for (String s : arr) {
             if (s.equals(ALL)) {
@@ -278,7 +276,7 @@ public final class OptimizationPlugin extends AsmPlugin {
                 throw new PluginException("Unknown optimization");
             }
         }
-        String f = config.get(LOG_OPTION);
+        String f = config.get(LOG);
         if (f != null) {
             try {
                 stream = new FileOutputStream(f);
@@ -293,17 +291,5 @@ public final class OptimizationPlugin extends AsmPlugin {
         Set<PluginType> set = new HashSet<>();
         set.add(CATEGORY.TRANSFORMER);
         return Collections.unmodifiableSet(set);
-    }
-
-    @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
-    public List<PluginOption> getAdditionalOptions() {
-        List<PluginOption> options = new ArrayList<>();
-        options.add(LOG_OPTION);
-        return options;
     }
 }

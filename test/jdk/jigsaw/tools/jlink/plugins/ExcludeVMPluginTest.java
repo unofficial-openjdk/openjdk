@@ -36,7 +36,6 @@ import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.ExcludeVMPlugin;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -176,9 +175,9 @@ public class ExcludeVMPluginTest {
         Pool out = new PoolImpl();
 
         TransformerPlugin p = new ExcludeVMPlugin();
-        Map<PluginOption, String> config = new HashMap<>();
+        Map<String, String> config = new HashMap<>();
         if (vm != null) {
-            config.put(ExcludeVMPlugin.NAME_OPTION, vm);
+            config.put(ExcludeVMPlugin.NAME, vm);
         }
         p.configure(config);
         p.visit(pool, out);

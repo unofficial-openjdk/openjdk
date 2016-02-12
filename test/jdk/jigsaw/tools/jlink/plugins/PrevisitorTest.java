@@ -47,7 +47,6 @@ import jdk.tools.jlink.internal.ResourcePrevisitor;
 import jdk.tools.jlink.internal.StringTable;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -164,20 +163,6 @@ public class PrevisitorTest {
             Set<PluginType> set = new HashSet<>();
             set.add(CATEGORY.TRANSFORMER);
             return Collections.unmodifiableSet(set);
-        }
-
-        @Override
-        public String getDescription() {
-            return "";
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
         }
     }
 }

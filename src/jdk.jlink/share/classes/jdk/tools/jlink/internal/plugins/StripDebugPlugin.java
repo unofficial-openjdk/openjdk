@@ -34,8 +34,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -48,12 +46,6 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
 public final class StripDebugPlugin implements TransformerPlugin {
     private static final String[] PATTERNS = {"*.diz"};
     public static final String NAME = "strip-debug";
-    public static final PluginOption NAME_OPTION =
-        new Builder(NAME)
-            .description(PluginsResourceBundle.getDescription(NAME))
-            .showHelp(true)
-            .build();
-
     private final Predicate<String> predicate;
     public StripDebugPlugin() {
         try {
@@ -69,11 +61,6 @@ public final class StripDebugPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public Set<PluginType> getType() {
         Set<PluginType> set = new HashSet<>();
         set.add(CATEGORY.TRANSFORMER);
@@ -83,11 +70,6 @@ public final class StripDebugPlugin implements TransformerPlugin {
     @Override
     public String getDescription() {
         return PluginsResourceBundle.getDescription(NAME);
-    }
-
-    @Override
-    public void configure(Map<PluginOption, String> config) {
-
     }
 
     @Override

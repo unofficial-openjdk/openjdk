@@ -47,7 +47,6 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
@@ -63,21 +62,12 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
  * @see jdk.internal.module.InstalledModules
  */
 public final class InstalledModuleDescriptorPlugin implements TransformerPlugin {
-    private static final String OPTION_NAME = "installed-modules";
-    private static final String DESCRIPTION = PluginsResourceBundle.getDescription(OPTION_NAME);
-    private final PluginOption option;
+    private static final String NAME = "installed-modules";
+    private static final String DESCRIPTION = PluginsResourceBundle.getDescription(NAME);
     private boolean enabled;
 
     public InstalledModuleDescriptorPlugin() {
-        this.option = new PluginOption.Builder(OPTION_NAME)
-                                      .description(DESCRIPTION)
-                                      .build();
         this.enabled = true;
-    }
-
-    @Override
-    public PluginOption getOption() {
-        return option;
     }
 
     @Override
@@ -87,7 +77,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
 
     @Override
     public String getName() {
-        return OPTION_NAME;
+        return NAME;
     }
 
     @Override
@@ -102,8 +92,8 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
-        if (config.containsKey(option)) {
+    public void configure(Map<String, String> config) {
+        if (config.containsKey(NAME)) {
             enabled = false;
         }
     }
@@ -112,7 +102,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
     @Override
     public void visit(Pool in, Pool out) {
         if (!enabled) {
-            throw new PluginException(OPTION_NAME + " was set");
+            throw new PluginException(NAME + " was set");
         }
 
         Builder builder = new Builder();

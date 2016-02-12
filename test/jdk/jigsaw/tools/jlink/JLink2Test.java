@@ -49,7 +49,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -177,16 +176,10 @@ public class JLink2Test {
             if (p.getOption() == null) {
                 throw new Exception("Null option for " + p.getName());
             }
-            if (options.contains(p.getOption().getName())) {
+            if (options.contains(p.getName())) {
                 throw new Exception("Option " + p.getOption() + " used more than once");
             }
-            options.add(p.getOption().getName());
-            for (PluginOption po : p.getAdditionalOptions()) {
-                if (options.contains(po.getName())) {
-                    throw new Exception("Option " + po.getName() + " used more than once");
-                }
-                options.add(po.getName());
-            }
+            options.add(p.getName());
         }
     }
 }

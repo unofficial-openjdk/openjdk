@@ -32,7 +32,7 @@ import java.util.Set;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 
 /**
- * Base interface that jlink plugins are extending.
+ * Base interface that jlink plugins should implement.
  */
 public interface Plugin {
 
@@ -101,7 +101,9 @@ public interface Plugin {
      * The Plugin set of types.
      * @return The set of types.
      */
-    public abstract Set<PluginType> getType();
+    public default Set<PluginType> getType() {
+        return Collections.emptySet();
+    }
 
     /**
      * The Plugin set of states.
@@ -133,27 +135,55 @@ public interface Plugin {
      * The plugin name.
      * @return The name.
      */
-    public String getName();
+    public default String getName() {
+        return getClass().getName().replace('.', '-');
+    }
 
     /**
      * The plugin description.
      * @return  The description.
      */
-    public String getDescription();
-
-    /**
-     * The list of options that a plugin can require for configuration needs.
-     * @return
-     */
-    public default List<PluginOption> getAdditionalOptions() {
-        return Collections.emptyList();
+    public default String getDescription() {
+        return "";
     }
 
     /**
-     * The option that identifies this plugin.
+     * The option that identifies this plugin. This may be null.
+     * "--" is prefixed to the String (when non-null) when invoking
+     * this plugin from jlink command line.
+     *
      * @return The plugin option.
      */
-    public PluginOption getOption();
+    public default String getOption() {
+        return getName();
+    }
+
+    /**
+     * Has this plugin require one or more arguments?
+     * A plugin can have one or more optional arguments.
+     * <br>
+     * A plugin option with a single argument is specified as follows:
+     * <pre>
+     *     --plugin-option=arg_value
+     * </pre>
+     * If there are more than arguments, command line option looks like:
+     * <pre>
+     *     --plugin-option=arg_value:arg2=value2:arg3=value3...
+     *</pre>
+     *
+     * @return true if arguments are needed.
+     */
+    public default boolean hasArguments() {
+        return false;
+    }
+
+    /**
+     * The plugin argument(s) description.
+     * @return  The argument(s) description.
+     */
+    public default String getArgumentsDescription() {
+        return "";
+    }
 
     /**
      * Return a message indicating the status of the provider.
@@ -172,5 +202,6 @@ public interface Plugin {
      *
      * @param config The plugin configuration.
      */
-    public void configure(Map<PluginOption, String> config);
+    public default void configure(Map<String, String> config) {
+    }
 }
