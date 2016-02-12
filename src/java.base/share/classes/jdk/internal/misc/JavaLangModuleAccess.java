@@ -79,6 +79,9 @@ public interface JavaLangModuleAccess {
                                          Map<String, Provides> provides,
                                          Version version,
                                          String mainClass,
+                                         String osName,
+                                         String osArch,
+                                         String osVersion,
                                          Set<String> conceals,
                                          Set<String> packages);
 }

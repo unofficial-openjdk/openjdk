@@ -222,6 +222,10 @@ final class ModuleInfo {
                     readMainClassAttribute(in, cpool);
                     break;
 
+                case TARGET_PLATFORM :
+                    readTargetPlatformAttribute(in, cpool);
+                    break;
+
                 case HASHES :
                     if (parseHashes) {
                         readHashesAttribute(in, cpool);
@@ -377,6 +381,26 @@ final class ModuleInfo {
     }
 
     /**
+     * Reads the TargetPlatform attribute
+     */
+    private void readTargetPlatformAttribute(DataInput in, ConstantPool cpool)
+        throws IOException
+    {
+        int name_index = in.readUnsignedShort();
+        if (name_index != 0)
+            builder.osName(cpool.getUtf8(name_index));
+
+        int arch_index = in.readUnsignedShort();
+        if (arch_index != 0)
+            builder.osArch(cpool.getUtf8(arch_index));
+
+        int version_index = in.readUnsignedShort();
+        if (version_index != 0)
+            builder.osVersion(cpool.getUtf8(version_index));
+    }
+
+
+    /**
      * Reads the Hashes attribute
      *
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
@@ -411,10 +435,11 @@ final class ModuleInfo {
 
         if (name.equals(MODULE) ||
                 name.equals(SOURCE_FILE) ||
-                name.equals("SourceDebugExtension") ||
+                name.equals(SDE) ||
                 name.equals(CONCEALED_PACKAGES) ||
-                name.equals(MAIN_CLASS) ||
                 name.equals(VERSION) ||
+                name.equals(MAIN_CLASS) ||
+                name.equals(TARGET_PLATFORM) ||
                 name.equals(HASHES))
             return true;
 

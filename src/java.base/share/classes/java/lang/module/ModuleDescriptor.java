@@ -543,9 +543,12 @@ public class ModuleDescriptor
     // Indicates if synthesised for a JAR file found on the module path
     private final boolean automatic;
 
-    // "Extended" information, added post-compilation
+    // "Extended" information, added post-compilation by tools
     private final Version version;
     private final String mainClass;
+    private final String osName;
+    private final String osArch;
+    private final String osVersion;
     private final Set<String> conceals;
     private final Set<String> packages;
     private final DependencyHashes hashes;
@@ -558,6 +561,9 @@ public class ModuleDescriptor
                              Map<String, Provides> provides,
                              Version version,
                              String mainClass,
+                             String osName,
+                             String osArch,
+                             String osVersion,
                              Set<String> conceals,
                              DependencyHashes hashes)
     {
@@ -582,6 +588,9 @@ public class ModuleDescriptor
 
         this.version = version;
         this.mainClass = mainClass;
+        this.osName = osName;
+        this.osArch = osArch;
+        this.osVersion = osVersion;
         this.hashes = hashes;
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
@@ -604,6 +613,9 @@ public class ModuleDescriptor
 
         this.version = md.version;
         this.mainClass = md.mainClass;
+        this.osName = md.osName;
+        this.osArch = md.osArch;
+        this.osVersion = md.osVersion;
         this.hashes = null; // need to ignore
 
         this.packages = emptyOrUnmodifiableSet(pkgs);
@@ -621,6 +633,9 @@ public class ModuleDescriptor
                              Map<String, Provides> provides,
                              Version version,
                              String mainClass,
+                             String osName,
+                             String osArch,
+                             String osVersion,
                              Set<String> conceals,
                              Set<String> packages) {
         this.name = name;
@@ -634,6 +649,9 @@ public class ModuleDescriptor
 
         this.version = version;
         this.mainClass = mainClass;
+        this.osName = osName;
+        this.osArch = osArch;
+        this.osVersion = osVersion;
         this.hashes = null;
     }
 
@@ -726,6 +744,39 @@ public class ModuleDescriptor
     }
 
     /**
+     * Returns the operating system name if this module is operating system
+     * specific.
+     *
+     * @return The operating system name or an empty {@code Optional}
+     *         if this module is not operating system specific
+     */
+    public Optional<String> osName() {
+        return Optional.ofNullable(osName);
+    }
+
+    /**
+     * Returns the operating system architecture if this module is operating
+     * system architecture specific.
+     *
+     * @return The operating system architecture or an empty {@code Optional}
+     *         if this module is not operating system architecture specific
+     */
+    public Optional<String> osArch() {
+        return Optional.ofNullable(osArch);
+    }
+
+    /**
+     * Returns the operating system version if this module is operating
+     * system version specific.
+     *
+     * @return The operating system version or an empty {@code Optional}
+     *         if this module is not operating system version specific
+     */
+    public Optional<String> osVersion() {
+        return Optional.ofNullable(osVersion);
+    }
+
+    /**
      * Returns the names of the packages defined in, but not exported by, this
      * module.
      *
@@ -767,6 +818,9 @@ public class ModuleDescriptor
         final Map<String, Provides> provides = new HashMap<>();
         Set<String> conceals = Collections.emptySet();
         Version version;
+        String osName;
+        String osArch;
+        String osVersion;
         String mainClass;
         DependencyHashes hashes;
 
@@ -1096,6 +1150,72 @@ public class ModuleDescriptor
             return this;
         }
 
+        /**
+         * Sets the operating system name.
+         *
+         * @param  name
+         *         The operating system name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system name is already set
+         */
+        public Builder osName(String name) {
+            if (osName != null)
+                throw new IllegalStateException("OS name already set");
+            if (name == null || name.isEmpty())
+                throw new IllegalArgumentException("OS name is null or empty");
+            osName = name;
+            return this;
+        }
+
+        /**
+         * Sets the operating system architecture.
+         *
+         * @param  arch
+         *         The operating system architecture
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system architecture is already set
+         */
+        public Builder osArch(String arch) {
+            if (osArch != null)
+                throw new IllegalStateException("OS arch already set");
+            if (arch == null || arch.isEmpty())
+                throw new IllegalArgumentException("OS arch is null or empty");
+            osArch = arch;
+            return this;
+        }
+
+        /**
+         * Sets the operating system version.
+         *
+         * @param  version
+         *         The operating system version
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system version is already set
+         */
+        public Builder osVersion(String version) {
+            if (osVersion != null)
+                throw new IllegalStateException("OS version already set");
+            if (version == null || version.isEmpty())
+                throw new IllegalArgumentException("OS version is null or empty");
+            osVersion = version;
+            return this;
+        }
+
         /* package */ Builder hashes(DependencyHashes hashes) {
             this.hashes = hashes;
             return this;
@@ -1116,6 +1236,9 @@ public class ModuleDescriptor
                                         provides,
                                         version,
                                         mainClass,
+                                        osName,
+                                        osArch,
+                                        osVersion,
                                         conceals,
                                         hashes);
         }
@@ -1166,6 +1289,9 @@ public class ModuleDescriptor
                 && provides.equals(that.provides)
                 && Objects.equals(version, that.version)
                 && Objects.equals(mainClass, that.mainClass)
+                && Objects.equals(osName, that.osName)
+                && Objects.equals(osArch, that.osArch)
+                && Objects.equals(osVersion, that.osVersion)
                 && Objects.equals(conceals, that.conceals)
                 && Objects.equals(hashes, that.hashes));
     }
@@ -1184,6 +1310,9 @@ public class ModuleDescriptor
             hc = hc * 43 + provides.hashCode();
             hc = hc * 43 + Objects.hashCode(version);
             hc = hc * 43 + Objects.hashCode(mainClass);
+            hc = hc * 43 + Objects.hashCode(osName);
+            hc = hc * 43 + Objects.hashCode(osArch);
+            hc = hc * 43 + Objects.hashCode(osVersion);
             hc = hc * 43 + Objects.hashCode(conceals);
             hc = hc * 43 + Objects.hashCode(hashes);
             if (hc != 0) hash = hc;
@@ -1421,6 +1550,9 @@ public class ModuleDescriptor
                                                             Map<String, Provides> provides,
                                                             Version version,
                                                             String mainClass,
+                                                            String osName,
+                                                            String osArch,
+                                                            String osVersion,
                                                             Set<String> conceals,
                                                             Set<String> packages) {
                     return new ModuleDescriptor(name,
@@ -1431,6 +1563,9 @@ public class ModuleDescriptor
                                                 provides,
                                                 version,
                                                 mainClass,
+                                                osName,
+                                                osArch,
+                                                osVersion,
                                                 conceals,
                                                 packages);
                 }

@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.module.Configuration.empty;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
@@ -1217,6 +1218,99 @@ public class ConfigurationTest {
             assertTrue(false);
         } catch (IllegalArgumentException expected) { }
 
+    }
+
+
+    // platform specific modules
+
+    @DataProvider(name = "platformmatch")
+    public Object[][] createPlatformMatches() {
+        return new Object[][]{
+
+            { "linux-*-*",       "*-*-*" },
+            { "*-arm-*",         "*-*-*" },
+            { "*-*-2.6",         "*-*-*" },
+
+            { "linux-arm-*",     "*-*-*" },
+            { "linux-*-2.6",     "*-*-*" },
+            { "*-arm-2.6",       "*-*-*" },
+
+            { "linux-arm-2.6",   "*-*-*" },
+
+            { "linux-*-*",       "linux-*-*" },
+            { "*-arm-*",         "*-arm-*"   },
+            { "*-*-2.6",         "*-*-2.6"   },
+
+            { "linux-arm-*",     "linux-arm-*" },
+            { "linux-arm-*",     "linux-*-*"   },
+            { "linux-*-2.6",     "linux-*-2.6" },
+            { "linux-*-2.6",     "linux-arm-*" },
+
+            { "linux-arm-2.6",   "linux-arm-2.6" },
+
+        };
+
+    };
+
+    @DataProvider(name = "platformmismatch")
+    public Object[][] createBad() {
+        return new Object[][] {
+
+            { "linux-*-*",        "solaris-*-*"   },
+            { "linux-x86-*",      "linux-arm-*"   },
+            { "linux-*-2.4",      "linux-x86-2.6" },
+        };
+    }
+
+    /**
+     * Test creating a configuration containing platform specific modules.
+     */
+    @Test(dataProvider = "platformmatch")
+    public void testPlatformMatch(String s1, String s2) {
+
+        ModuleDescriptor.Builder builder
+            = new ModuleDescriptor.Builder("m1").requires("m2");
+
+        String[] s = s1.split("-");
+        if (!s[0].equals("*"))
+            builder.osName(s[0]);
+        if (!s[1].equals("*"))
+            builder.osArch(s[1]);
+        if (!s[2].equals("*"))
+            builder.osVersion(s[2]);
+
+        ModuleDescriptor descriptor1 = builder.build();
+
+        builder = new ModuleDescriptor.Builder("m2");
+
+        s = s2.split("-");
+        if (!s[0].equals("*"))
+            builder.osName(s[0]);
+        if (!s[1].equals("*"))
+            builder.osArch(s[1]);
+        if (!s[2].equals("*"))
+            builder.osVersion(s[2]);
+
+        ModuleDescriptor descriptor2 = builder.build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf
+            = Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
+
+        assertTrue(cf.descriptors().size() == 2);
+        assertTrue(cf.descriptors().contains(descriptor1));
+        assertTrue(cf.descriptors().contains(descriptor2));
+    }
+
+    /**
+     * Test attempting to create a configuration with modules for different
+     * platforms.
+     */
+    @Test(dataProvider = "platformmismatch",
+          expectedExceptions = ResolutionException.class )
+    public void testPlatformMisMatch(String s1, String s2) {
+        testPlatformMatch(s1, s2);
     }
 
 

@@ -70,6 +70,16 @@ public final class ModuleInfoWriter {
         if (omain.isPresent())
             cw.visitAttribute(new MainClassAttribute(omain.get()));
 
+        // write the TargetPlatform attribute if have any of OS name/arch/version
+        String osName = descriptor.osName().orElse(null);
+        String osArch = descriptor.osArch().orElse(null);
+        String osVersion = descriptor.osVersion().orElse(null);
+        if (osName != null || osArch != null || osVersion != null) {
+            cw.visitAttribute(new TargetPlatformAttribute(osName,
+                                                          osArch,
+                                                          osVersion));
+        }
+
         cw.visitEnd();
 
         return cw.toByteArray();

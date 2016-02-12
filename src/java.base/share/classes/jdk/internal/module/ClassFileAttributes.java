@@ -458,6 +458,102 @@ class ClassFileAttributes {
     }
 
     /**
+     * TargetPlatform attribute.
+     *
+     * <pre> {@code
+     *
+     * TargetPlatform_attribute {
+     *   // index to CONSTANT_utf8_info structure in constant pool representing
+     *   // the string "TargetPlatform"
+     *   u2 attribute_name_index;
+     *   u4 attribute_length;
+     *
+     *   // index to CONSTANT_CONSTANT_utf8_info structure with the OS name
+     *   u2 os_name_index;
+     *   // index to CONSTANT_CONSTANT_utf8_info structure with the OS arch
+     *   u2 os_arch_index
+     *   // index to CONSTANT_CONSTANT_utf8_info structure with the OS version
+     *   u2 os_version_index;
+     * }
+     *
+     * } </pre>
+     */
+    static class TargetPlatformAttribute extends Attribute {
+        private final String osName;
+        private final String osArch;
+        private final String osVersion;
+
+        TargetPlatformAttribute(String osName, String osArch, String osVersion) {
+            super(TARGET_PLATFORM);
+            this.osName = osName;
+            this.osArch = osArch;
+            this.osVersion = osVersion;
+        }
+
+        TargetPlatformAttribute() {
+            this(null, null, null);
+        }
+
+        @Override
+        protected Attribute read(ClassReader cr,
+                                 int off,
+                                 int len,
+                                 char[] buf,
+                                 int codeOff,
+                                 Label[] labels)
+        {
+
+            String osName = null;
+            String osArch = null;
+            String osVersion = null;
+
+            int name_index = cr.readUnsignedShort(off);
+            if (name_index != 0)
+                osName = cr.readUTF8(off, buf);
+            off += 2;
+
+            int arch_index = cr.readUnsignedShort(off);
+            if (arch_index != 0)
+                osArch = cr.readUTF8(off, buf);
+            off += 2;
+
+            int version_index = cr.readUnsignedShort(off);
+            if (version_index != 0)
+                osVersion = cr.readUTF8(off, buf);
+            off += 2;
+
+            return new TargetPlatformAttribute(osName, osArch, osVersion);
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter cw,
+                                   byte[] code,
+                                   int len,
+                                   int maxStack,
+                                   int maxLocals)
+        {
+            ByteVector attr = new ByteVector();
+
+            int name_index = 0;
+            if (osName != null && osName.length() > 0)
+                name_index = cw.newUTF8(osName);
+            attr.putShort(name_index);
+
+            int arch_index = 0;
+            if (osArch != null && osArch.length() > 0)
+                arch_index = cw.newUTF8(osArch);
+            attr.putShort(arch_index);
+
+            int version_index = 0;
+            if (osVersion != null && osVersion.length() > 0)
+                version_index = cw.newUTF8(osVersion);
+            attr.putShort(version_index);
+
+            return attr;
+        }
+    }
+
+    /**
      * Hashes attribute.
      *
      * <pre> {@code

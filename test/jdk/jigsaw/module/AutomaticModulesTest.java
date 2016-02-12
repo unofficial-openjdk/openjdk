@@ -133,36 +133,6 @@ public class AutomaticModulesTest {
 
 
     /**
-     * Test that isAutomatic returns true for automatic modules
-     */
-    public void testIsAutomatic() throws IOException {
-
-        ModuleDescriptor m1 = new ModuleDescriptor.Builder("m1").build();
-
-        // m2 and m3 are automatic modules
-        Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createJarFile(dir.resolve("m2.jar"), "p/T.class");
-        createJarFile(dir.resolve("m3.jar"), "q/T.class");
-
-        // module finder locates m1 and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(m1),
-                                  ModuleFinder.of(dir));
-
-        assertTrue(finder.find("m1").isPresent());
-        assertTrue(finder.find("m2").isPresent());
-        assertTrue(finder.find("m3").isPresent());
-
-        ModuleDescriptor m2 = finder.find("m2").get().descriptor();
-        ModuleDescriptor m3 = finder.find("m3").get().descriptor();
-
-        assertFalse(m1.isAutomatic());
-        assertTrue(m2.isAutomatic());
-        assertTrue(m3.isAutomatic());
-    }
-
-
-    /**
      * Test all packages are exported
      */
     public void testExports() throws IOException {
@@ -476,6 +446,27 @@ public class AutomaticModulesTest {
 
 
     /**
+     * Test miscellaneous methods.
+     */
+    public void testMisc() throws IOException {
+
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Path m1_jar = createJarFile(dir.resolve("m1.jar"), "p/T.class");
+
+        ModuleFinder finder = ModuleFinder.of(m1_jar);
+
+        assertTrue(finder.find("m1").isPresent());
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+
+        // test miscellaneous methods
+        assertTrue(m1.isAutomatic());
+        assertFalse(m1.osName().isPresent());
+        assertFalse(m1.osArch().isPresent());
+        assertFalse(m1.osVersion().isPresent());
+    }
+
+
+    /**
      * Test that a module in a configuration reads all modules in the boot
      * configuration.
      */
@@ -528,7 +519,7 @@ public class AutomaticModulesTest {
      * Creates a JAR file, optionally with a manifest, and with the given
      * entries. The entries will be empty in the resulting JAR file.
      */
-    static void createJarFile(Path file, Manifest man, String... entries)
+    static Path createJarFile(Path file, Manifest man, String... entries)
         throws IOException
     {
         try (OutputStream out = Files.newOutputStream(file)) {
@@ -546,18 +537,20 @@ public class AutomaticModulesTest {
                     jos.putNextEntry(je);
                     jos.closeEntry();
                 }
+
             }
         }
+        return file;
     }
 
     /**
      * Creates a JAR file and with the given entries. The entries will be empty
      * in the resulting JAR file.
      */
-    static void createJarFile(Path file, String... entries)
+    static Path createJarFile(Path file, String... entries)
         throws IOException
     {
-        createJarFile(file, null, entries);
+        return createJarFile(file, null, entries);
     }
 
 }

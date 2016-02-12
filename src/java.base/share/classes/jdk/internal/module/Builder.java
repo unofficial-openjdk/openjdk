@@ -24,9 +24,6 @@
  */
 package jdk.internal.module;
 
-import jdk.internal.misc.JavaLangModuleAccess;
-import jdk.internal.misc.SharedSecrets;
-
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
@@ -38,7 +35,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/*
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
+
+/**
  * This builder is optimized for reconstituting ModuleDescriptor
  * for installed modules.  The validation should be done at jlink time.
  *
@@ -71,6 +71,9 @@ final class Builder {
     Set<String> uses;
     Version version;
     String mainClass;
+    String osName;
+    String osArch;
+    String osVersion;
 
     Builder(String name, int reqs, int exports,
             int provides, int conceals, int packages) {
@@ -203,16 +206,55 @@ final class Builder {
     /**
      * Sets the module main class.
      *
-     * @throws IllegalArgumentException if {@code mainClass} is null or
-     *         is not a legal Java identifier
-     * @throws IllegalStateException if the module main class is already
-     *         set
+     * @throws IllegalStateException if already set
      */
     public Builder mainClass(String mc) {
+        if (mainClass != null)
+            throw new IllegalStateException("main class already set");
         mainClass = mc;
         return this;
     }
 
+    /**
+     * Sets the OS name.
+     *
+     * @throws IllegalStateException if already set
+     */
+    public Builder osName(String name) {
+        if (osName != null)
+            throw new IllegalStateException("OS name already set");
+        this.osName = name;
+        return this;
+    }
+
+    /**
+     * Sets the OS arch.
+     *
+     * @throws IllegalStateException if already set
+     */
+    public Builder osArch(String arch) {
+        if (osArch != null)
+            throw new IllegalStateException("OS arch already set");
+        this.osArch = arch;
+        return this;
+    }
+
+    /**
+     * Sets the OS version.
+     *
+     * @throws IllegalStateException if already set
+     */
+    public Builder osVersion(String version) {
+        if (osVersion != null)
+            throw new IllegalStateException("OS version already set");
+        this.osVersion = version;
+        return this;
+    }
+
+    /**
+     * Returns the set of packages that is the union of the exported and
+     * concealed packages.
+     */
     private Set<String> computePackages(Set<Exports> exports, Set<String> conceals) {
         if (exports.isEmpty())
             return conceals;
@@ -231,7 +273,6 @@ final class Builder {
     public ModuleDescriptor build() {
         assert name != null;
 
-
         return jlma.newModuleDescriptor(name,
                                         false,
                                         requires,
@@ -240,6 +281,9 @@ final class Builder {
                                         provides,
                                         version,
                                         mainClass,
+                                        osName,
+                                        osArch,
+                                        osVersion,
                                         conceals,
                                         computePackages(exports, conceals));
     }

@@ -209,6 +209,10 @@ public final class Configuration {
      *          where a module {@code M} containing package {@code P} reads
      *          another module that exports {@code P} to {@code M}. </li>
      *
+     *     <li> Two or more modules in the configuration are specific to
+     *          non-equal operating system names, architectures or versions.
+     *          </li>
+     *
      *     <li> Other implementation specific checks, for example referential
      *          integrity checks that fail where incompatible versions of
      *          modules may not be combined in the same configuration. </li>
