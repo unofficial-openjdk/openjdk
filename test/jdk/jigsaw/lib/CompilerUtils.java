@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,7 @@ public final class CompilerUtils {
                 .collect(Collectors.toList());
 
         Files.createDirectories(destination);
+        jfm.setLocation(StandardLocation.CLASS_PATH, Collections.EMPTY_LIST);
         jfm.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
                                  Arrays.asList(destination));
 
