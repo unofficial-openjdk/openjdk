@@ -1,16 +1,12 @@
 ##### doclets ##################################################################
 
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 	generic-all   javadoc can't find {@link java.math}
-com/sun/javadoc/testLinkOption/TestLinkOption.java                              0 	generic-all   test includes code that adds class into java.lang
-
 com/sun/javadoc/testHtmlVersion/TestHtmlVersion.java                            0 	generic-all   update for modules instead of profiles
 
 ##### new doclet ###############################################################
 
 jdk/javadoc/tool/6964914/TestUserDoclet.java                                    8149597 generic-all   jdk launcher must use new doclet main class
-jdk/javadoc/tool/EnsureNewOldDoclet.java                                        8149597 generic-all   jdk launcher must use new doclet main class
-
-jdk/javadoc/doclet/testLinkOption/TestLinkOption.java                           0 	generic-all   test includes code that adds class into java.lang
+jdk/javadoc/tool/EnsureNewOldDoclet.java                                        8149597 generic-all   jdk launcher must use new doclet main class\
 
 ##### javac ####################################################################
 
