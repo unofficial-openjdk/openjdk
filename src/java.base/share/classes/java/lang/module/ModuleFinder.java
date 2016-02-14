@@ -155,9 +155,9 @@ public interface ModuleFinder {
      * searching a sequence of directories and/or packaged modules.
      *
      * Each element in the given array is a path to a directory of modules, a
-     * directory containing an <em>exploded module</em>, or a path to a packaged
-     * module. Each entry in a directory of modules is a packaged module or
-     * the <em>top-level</em> directory of an exploded module.
+     * path to the <em>top-level</em> directory of an <em>exploded module</em>,
+     * or a path to a packaged module. Each entry in a directory of modules is
+     * is the top-level directory of an exploded module or a packaged module.
      *
      * If an element in the array is a path to a directory, and that directory
      * contains a file named {@code module-info.class}, then the directory
@@ -175,8 +175,10 @@ public interface ModuleFinder {
      * packaged in other implementation specific formats. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
-     * that the given file paths are to directories or packaged modules. A call
-     * to the {@code find} or {@code findAll} methods may fail as a result. </p>
+     * that the given file paths are directories or packaged modules.
+     * Consequently, the {@code find} method will only fail if calling it
+     * results in searching a directory or packaged module where an error is
+     * encountered. Paths to files that do not exist are ignored. </p>
      *
      * @apiNote This method is not required to be thread safe.
      *

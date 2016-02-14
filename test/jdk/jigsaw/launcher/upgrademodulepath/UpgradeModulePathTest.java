@@ -82,6 +82,7 @@ public class UpgradeModulePathTest {
 
     }
 
+
     /**
      * Run the test with an upgraded java.transaction module.
      */
@@ -102,11 +103,12 @@ public class UpgradeModulePathTest {
 
     }
 
+
     /**
-     * Attempt to run the test with an non-existent directory on the upgrade
-     * module path.
+     * Run the test with a non-existent file on the upgrade module path.
+     * It should be silently ignored.
      */
-    public void testWithBadUpgradeModulePath() throws Exception {
+    public void testRunWithNonExistentEntry() throws Exception {
 
         String upgrademodulepath
             = "DoesNotExit" + File.pathSeparator + UPGRADEDMODS_DIR.toString();
@@ -121,7 +123,7 @@ public class UpgradeModulePathTest {
             .errorTo(System.out)
             .getExitValue();
 
-        assertTrue(exitValue != 0);
+        assertTrue(exitValue == 0);
 
     }
 

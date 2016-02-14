@@ -171,9 +171,17 @@ class ModulePath implements ConfigurableModuleFinder {
      * @throws FindException if an error occurs scanning the entry
      */
     private Map<String, ModuleReference> scan(Path entry) {
+
+        BasicFileAttributes attrs;
         try {
-            BasicFileAttributes attrs
-                = Files.readAttributes(entry, BasicFileAttributes.class);
+            attrs = Files.readAttributes(entry, BasicFileAttributes.class);
+        } catch (NoSuchFileException e) {
+            return Collections.emptyMap();
+        } catch (IOException ioe) {
+            throw new FindException(ioe);
+        }
+
+        try {
 
             if (attrs.isDirectory()) {
                 Path mi = entry.resolve(MODULE_INFO);
