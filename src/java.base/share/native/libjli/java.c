@@ -958,7 +958,7 @@ static void
 SetPatchProp(const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patchdirs=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patch=%s", s);
     AddOption(prop, NULL);
 }
 

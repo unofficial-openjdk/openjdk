@@ -53,7 +53,7 @@ class ModulePatcher {
     private static final List<Path> PATH_DIRS;
 
     static {
-        String s = System.getProperty("jdk.launcher.patchdirs");
+        String s = System.getProperty("jdk.launcher.patch");
         PATH_DIRS = toPathList(s);
     }
 

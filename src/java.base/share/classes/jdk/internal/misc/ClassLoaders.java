@@ -77,7 +77,7 @@ public class ClassLoaders {
             ucp = toURLClassPath(cp);
 
         // is -Xpatch specified?
-        s = System.getProperty("jdk.launcher.patchdirs");
+        s = System.getProperty("jdk.launcher.patch");
         List<Path> patchDirs = toPathList(s);
 
         // create the class loaders
