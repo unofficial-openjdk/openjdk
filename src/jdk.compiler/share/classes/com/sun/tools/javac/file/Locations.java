@@ -827,19 +827,36 @@ public class Locations {
             this.searchPath = searchPath;
             this.output = output;
 
-            Set<Path> overrides = new LinkedHashSet<>();
-            if (allowOverrides && moduleOverrideSearchPath != null) {
-               for (Path p: moduleOverrideSearchPath) {
-                   Path o = p.resolve(moduleName);
-                   if (Files.isDirectory(o)) {
-                       overrides.add(o);
-                   }
-               }
-            }
+            if (allowOverrides) {
+                if (patchMap != null) {
+                    SearchPath mPatch = patchMap.get(moduleName);
+                    if (mPatch != null) {
+                        SearchPath sp = new SearchPath();
+                        sp.addAll(mPatch);
+                        sp.addAll(searchPath);
+                        searchPathWithOverrides = sp;
+                    } else {
+                        searchPathWithOverrides = searchPath;
+                    }
+                } else {
+                     // for old style patch option; retained for transition
+                    Set<Path> overrides = new LinkedHashSet<>();
+                    if (moduleOverrideSearchPath != null) {
+                       for (Path p: moduleOverrideSearchPath) {
+                           Path o = p.resolve(moduleName);
+                           if (Files.isDirectory(o)) {
+                               overrides.add(o);
+                           }
+                       }
+                    }
 
-            if (!overrides.isEmpty()) {
-                overrides.addAll(searchPath);
-                searchPathWithOverrides = overrides;
+                    if (!overrides.isEmpty()) {
+                        overrides.addAll(searchPath);
+                        searchPathWithOverrides = overrides;
+                    } else {
+                        searchPathWithOverrides = searchPath;
+                    }
+                }
             } else {
                 searchPathWithOverrides = searchPath;
             }
@@ -1504,12 +1521,40 @@ public class Locations {
         }
     }
 
-    private SearchPath moduleOverrideSearchPath;
+    private SearchPath moduleOverrideSearchPath; // for old style patch option; retained for transition
+    private Map<String, SearchPath> patchMap;
 
     boolean handleOption(Option option, String value) {
         switch (option) {
             case XPATCH:
-                moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                if (value.contains("=")) {
+                    Map<String, SearchPath> map = new LinkedHashMap<>();
+                    for (String entry: value.split(",")) {
+                        int eq = entry.indexOf('=');
+                        if (eq > 0) {
+                            String mName = entry.substring(0, eq);
+                            SearchPath mPatchPath = new SearchPath()
+                                    .addFiles(entry.substring(eq + 1));
+                            boolean ok = true;
+                            for (Path p: mPatchPath) {
+                                Path mi = p.resolve("module-info.class");
+                                if (Files.exists(mi)) {
+                                    log.error("locn.module-info.not.allowed.on.patch.path", mi);
+                                    ok = false;
+                                }
+                            }
+                            if (ok) {
+                                map.put(mName, mPatchPath);
+                            }
+                        } else {
+                            log.error("locn.invalid.arg.for.xpatch", entry);
+                        }
+                    }
+                    patchMap = map;
+                } else {
+                     // for old style patch option; retained for transition
+                    moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                }
                 return true;
             default:
                 LocationHandler h = handlersForOption.get(option);
