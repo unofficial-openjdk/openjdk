@@ -74,12 +74,12 @@ public class JLink2Test {
     }
 
     private static void testModulePath(Helper helper) throws IOException {
-        Path unknownDir = helper.createNewImageDir("jar");
+        Path doesNotExist = helper.createNewImageDir("doesnotexist");
         Path jar = helper.getJarDir().resolve("bad.jar");
         JImageGenerator.getJLinkTask()
-                .pluginModulePath(unknownDir)
+                .pluginModulePath(doesNotExist)
                 .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: .*jar.image(\n|\r|.)*");
+                .call().assertSuccess();
         Files.createFile(jar);
         JImageGenerator.getJLinkTask()
                 .pluginModulePath(jar)
