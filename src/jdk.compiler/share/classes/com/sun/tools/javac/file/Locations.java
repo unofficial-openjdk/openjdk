@@ -1543,8 +1543,9 @@ public class Locations {
                                     ok = false;
                                 }
                             }
-                            if (ok) {
-                                map.put(mName, mPatchPath);
+                            if (ok && !mPatchPath.isEmpty()) {
+                                map.computeIfAbsent(mName, (_x) -> new SearchPath())
+                                        .addAll(mPatchPath);
                             }
                         } else {
                             log.error("locn.invalid.arg.for.xpatch", entry);
