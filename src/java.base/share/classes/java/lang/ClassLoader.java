@@ -1597,7 +1597,7 @@ public abstract class ClassLoader {
      * @implNote The system property to override the system class loader is not
      * examined until the VM is almost fully initialized. Code that executes
      * this method during startup should take care not to cache the return
-     * value unless sun.misc.VM.isBooted returns {@code true}.
+     * value until the system is fully initialized.
      *
      * @return  The system <tt>ClassLoader</tt> for delegation, or
      *          <tt>null</tt> if none
