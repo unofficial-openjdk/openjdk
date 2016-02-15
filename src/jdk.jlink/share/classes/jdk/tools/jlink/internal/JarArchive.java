@@ -92,6 +92,11 @@ public abstract class JarArchive implements Archive {
     }
 
     @Override
+    public Path getPath() {
+        return file;
+    }
+
+    @Override
     public Stream<Entry> entries() {
         try {
             if (zipFile == null) {

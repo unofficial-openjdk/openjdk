@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
-import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
 import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
@@ -137,6 +136,13 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
+        new HiddenOption<JlinkTask>(true, (task, opt, arg) -> {
+            Path path = Paths.get(arg);
+            if (Files.exists(path)) {
+                throw taskHelper.newBadArgs("err.dir.exists", path);
+            }
+            task.options.packagedModulesPath = path;
+        }, "--keep-packaged-modules"),
         new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
             task.options.genbom = true;
         }, "--genbom"),
@@ -174,6 +180,7 @@ public class JlinkTask {
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
+        Path packagedModulesPath;
         ByteOrder endian = ByteOrder.nativeOrder();
     }
 
@@ -288,8 +295,10 @@ public class JlinkTask {
         // First create the image provider
         ImageProvider imageProvider
                 = createImageProvider(finder,
-                        checkAddMods(config.getModules()),
-                        config.getLimitmods(), config.getByteOrder());
+                                      checkAddMods(config.getModules()),
+                                      config.getLimitmods(),
+                                      config.getByteOrder(),
+                                      null);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins,
@@ -339,7 +348,8 @@ public class JlinkTask {
                 = createImageProvider(finder,
                         options.addMods,
                         options.limitMods,
-                        options.endian);
+                        options.endian,
+                        options.packagedModulesPath);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
@@ -375,10 +385,12 @@ public class JlinkTask {
     }
 
     private static ImageProvider createImageProvider(ModuleFinder finder,
-            Set<String> addMods,
-            Set<String> limitMods,
-            ByteOrder order)
-            throws IOException {
+                                                     Set<String> addMods,
+                                                     Set<String> limitMods,
+                                                     ByteOrder order,
+                                                     Path retainModulesPath)
+            throws IOException
+    {
         if (addMods.isEmpty()) {
             throw new IllegalArgumentException("empty modules and limitmods");
         }
@@ -387,7 +399,7 @@ public class JlinkTask {
                 ModuleFinder.empty(),
                 addMods);
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
-        return new ImageHelper(cf, mods, order);
+        return new ImageHelper(cf, mods, order, retainModulesPath);
     }
 
     /**
@@ -472,15 +484,17 @@ public class JlinkTask {
 
         final Set<Archive> archives;
         final ByteOrder order;
+        final Path packagedModulesPath;
 
         ImageHelper(Configuration cf,
-                Map<String, Path> modsPaths,
-                ByteOrder order)
-                throws IOException {
+                    Map<String, Path> modsPaths,
+                    ByteOrder order,
+                    Path packagedModulesPath) throws IOException {
             archives = modsPaths.entrySet().stream()
-                    .map(e -> newArchive(e.getKey(), e.getValue()))
-                    .collect(Collectors.toSet());
+                                .map(e -> newArchive(e.getKey(), e.getValue()))
+                                .collect(Collectors.toSet());
             this.order = order;
+            this.packagedModulesPath = packagedModulesPath;
         }
 
         private Archive newArchive(String module, Path path) {
@@ -501,7 +515,17 @@ public class JlinkTask {
 
         @Override
         public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
-            return ImageFileCreator.create(archives, order, stack);
+            ExecutableImage image = ImageFileCreator.create(archives, order, stack);
+            if (packagedModulesPath != null) {
+                // copy the packaged modules to the given path
+                Files.createDirectories(packagedModulesPath);
+                for (Archive a : archives) {
+                    Path file = a.getPath();
+                    Path dest = packagedModulesPath.resolve(file.getFileName());
+                    Files.copy(file, dest);
+                }
+            }
+            return image;
         }
     }
 
