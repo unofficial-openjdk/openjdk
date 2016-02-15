@@ -27,6 +27,7 @@ package jdk.internal.misc;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -50,6 +51,8 @@ import sun.misc.URLClassPath;
 public class ClassLoaders {
 
     private ClassLoaders() { }
+
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     // the built-in class loaders
     private static final BootClassLoader BOOT_LOADER;
@@ -117,15 +120,13 @@ public class ClassLoaders {
      * the boot class loader. It is not used for class loading.
      */
     private static class BootClassLoader extends BuiltinClassLoader {
-        private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-
         BootClassLoader(List<Path> patchDirs, URLClassPath bcp) {
             super(null, patchDirs, bcp);
         }
 
         @Override
         protected Class<?> loadClassOrNull(String cn) {
-            return jla.findBootstrapClassOrNull(this, cn);
+            return JLA.findBootstrapClassOrNull(this, cn);
         }
     };
 
@@ -141,6 +142,16 @@ public class ClassLoaders {
 
         ExtClassLoader(BootClassLoader parent, List<Path> patchDirs) {
             super(parent, patchDirs, null);
+        }
+
+        /**
+         * Called by the VM to support define package for AppCDS.
+         *
+         * Shared classes are returned in ClassLoader::findLoadedClass
+         * that bypass the defineClass call.
+         */
+        private Package definePackage(String pn, Module module) {
+            return JLA.definePackage(this, pn, module);
         }
     }
 
@@ -195,7 +206,17 @@ public class ClassLoaders {
         }
 
         /**
-         * Called by the VM to support define package.
+         * Called by the VM to support define package for AppCDS
+         *
+         * Shared classes are returned in ClassLoader::findLoadedClass
+         * that bypass the defineClass call.
+         */
+        private Package definePackage(String pn, Module module) {
+            return JLA.definePackage(this, pn, module);
+        }
+
+        /**
+         * Called by the VM to support define package for AppCDS
          */
         protected Package defineOrCheckPackage(String pn, Manifest man, URL url) {
             return super.defineOrCheckPackage(pn, man, url);

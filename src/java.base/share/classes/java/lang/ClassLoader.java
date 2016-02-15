@@ -1767,7 +1767,7 @@ public abstract class ClassLoader {
      *
      * This method does not throw IllegalArgumentException.
      *
-     * @param name package nmae
+     * @param name package name
      * @param m    module
      */
     Package definePackage(String name, Module m) {
