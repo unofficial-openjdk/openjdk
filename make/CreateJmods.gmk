@@ -73,8 +73,13 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(ECHO) Creating $(notdir $@)
 	$(MKDIR) -p $(@D)
 	$(RM) $@.tmp
-	$(JMOD) --create --module-version $(VERSION_SHORT) \
-	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependencies '.*' \
+	$(JMOD) --create \
+            --module-version $(VERSION_SHORT) \
+            --os-name $(REQUIRED_OS_NAME) \
+            --os-arch $(OPENJDK_TARGET_CPU_LEGACY) \
+            --os-version $(REQUIRED_OS_VERSION) \
+	    --modulepath $(IMAGES_OUTPUTDIR)/jmods\
+            --hash-dependencies '.*' \
             --exclude '**_the.*' \
 	    $(JMOD_FLAGS) $@.tmp
 	$(MV) $@.tmp $@
