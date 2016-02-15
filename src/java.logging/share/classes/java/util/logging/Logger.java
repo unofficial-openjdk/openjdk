@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -254,6 +254,9 @@ public class Logger {
     // and it will be shared by all loggers which have no resource bundle.
     private static final LoggerBundle NO_RESOURCE_BUNDLE =
             new LoggerBundle(null, null);
+
+    private static final RuntimePermission GET_BUNDLE_PERMISSION =
+            new RuntimePermission("getBundle");
 
     private volatile LogManager manager;
     private String name;
@@ -1983,7 +1986,10 @@ public class Logger {
         // We also look in the TCCL if callerModule is null or unnamed.
         if (!useCallersModule || callerModule == null || !callerModule.isNamed()) {
             try {
-                catalog = ResourceBundle.getBundle(name, currentLocale, cl.getUnnamedModule());
+                Module mod = cl.getUnnamedModule();
+                PrivilegedAction<ResourceBundle> pa = () ->
+                    ResourceBundle.getBundle(name, currentLocale, mod);
+                catalog = AccessController.doPrivileged(pa, null, GET_BUNDLE_PERMISSION);
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;
@@ -2027,8 +2033,9 @@ public class Logger {
             // Try with the caller's module
             try {
                 // Use the caller's module
-                catalog = ResourceBundle.getBundle(name, currentLocale,
-                                                   callerModule);
+                PrivilegedAction<ResourceBundle> pa = () ->
+                    ResourceBundle.getBundle(name, currentLocale, callerModule);
+                catalog = AccessController.doPrivileged(pa, null, GET_BUNDLE_PERMISSION);
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;
