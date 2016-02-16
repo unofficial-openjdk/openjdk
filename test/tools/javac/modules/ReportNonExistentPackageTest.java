@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 /**
- * @test 8144342
+ * @test 8144342 8149658
  * @summary javac doesn't report errors if module exports non-existent package
  * @library /tools/lib
  * @modules
@@ -55,7 +55,7 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.doesnt.exists: p1"))
+        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.not.found: p1"))
             throw new Exception("expected output not found");
     }
 
@@ -75,7 +75,28 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.doesnt.exists: p1"))
+        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.not.found: p1"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testPackageWithMemberWOPackageDeclaration(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "module m { exports p1; }");
+        Path p1 = src.resolve("p1");
+        Path C = p1.resolve("C.java");
+        tb.writeFile(C, "// comment");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+        if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.not.found: p1"))
             throw new Exception("expected output not found");
     }
 }

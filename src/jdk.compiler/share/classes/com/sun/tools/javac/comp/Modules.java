@@ -678,7 +678,7 @@ public class Modules extends JCTree.Visitor {
 
         public void visitExports(JCExports tree) {
             if (tree.directive.packge.members().isEmpty()) {
-                log.error(tree.qualid.pos(), "package.empty.or.doesnt.exists", tree.directive.packge);
+                log.error(tree.qualid.pos(), "package.empty.or.not.found", tree.directive.packge);
             }
             allExportedPackages.add(tree.directive.packge);
             msym.directives = msym.directives.prepend(tree.directive);
