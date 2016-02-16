@@ -57,6 +57,8 @@ import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
+import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
+import jdk.tools.jlink.internal.plugins.OptimizationPlugin;
 
 /**
  *
@@ -259,8 +261,36 @@ public final class TaskHelper {
                             "--" + option);
             pluginsOptions.add(plugOption);
 
-            if (Utils.isAutoEnabled(plugin) && Utils.isFunctional(plugin)) {
-                plugins.put(plugin, new HashMap<>());
+            if (Utils.isFunctional(plugin)) {
+                if (Utils.isAutoEnabled(plugin)) {
+                    plugins.put(plugin, new HashMap<>());
+                }
+
+                if (plugin instanceof DefaultCompressPlugin) {
+                    plugOption
+                        = new PlugOption(false,
+                            (task, opt, arg) -> {
+                                Map<String, String> m = plugins.get(plugin);
+                                if (m == null) {
+                                    m = new HashMap<>();
+                                    plugins.put(plugin, m);
+                                }
+                                m.put(DefaultCompressPlugin.NAME, DefaultCompressPlugin.LEVEL_2);
+                            }, "-c");
+                    mainOptions.add(plugOption);
+                } else if (plugin instanceof OptimizationPlugin) {
+                    plugOption
+                        = new PlugOption(false,
+                            (task, opt, arg) -> {
+                                Map<String, String> m = plugins.get(plugin);
+                                if (m == null) {
+                                    m = new HashMap<>();
+                                    plugins.put(plugin, m);
+                                }
+                                m.put(OptimizationPlugin.NAME, OptimizationPlugin.ALL);
+                            }, "-o");
+                    mainOptions.add(plugOption);
+                }
             }
         }
 
