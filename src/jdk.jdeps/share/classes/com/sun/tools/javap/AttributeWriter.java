@@ -64,6 +64,7 @@ import com.sun.tools.classfile.SourceID_attribute;
 import com.sun.tools.classfile.StackMapTable_attribute;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
+import com.sun.tools.classfile.TargetPlatform_attribute;
 import com.sun.tools.classfile.Version_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
@@ -871,6 +872,12 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitSynthetic(Synthetic_attribute attr, Void ignore) {
         println("Synthetic: true");
+        return null;
+    }
+
+    @Override
+    public Void visitTargetPlatform(TargetPlatform_attribute attr, Void ignore) {
+        // not implemented yet
         return null;
     }
 

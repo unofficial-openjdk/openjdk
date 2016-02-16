@@ -69,6 +69,7 @@ public abstract class Attribute {
     public static final String StackMap                 = "StackMap";
     public static final String StackMapTable            = "StackMapTable";
     public static final String Synthetic                = "Synthetic";
+    public static final String TargetPlatform           = "TargetPlatform";
     public static final String Version                  = "Version";
 
     public static class Factory {
@@ -140,6 +141,7 @@ public abstract class Attribute {
             standardAttributes.put(StackMap,          StackMap_attribute.class);
             standardAttributes.put(StackMapTable,     StackMapTable_attribute.class);
             standardAttributes.put(Synthetic,         Synthetic_attribute.class);
+            standardAttributes.put(TargetPlatform,    TargetPlatform_attribute.class);
             standardAttributes.put(Version,           Version_attribute.class);
         }
 
@@ -202,6 +204,7 @@ public abstract class Attribute {
         R visitStackMap(StackMap_attribute attr, P p);
         R visitStackMapTable(StackMapTable_attribute attr, P p);
         R visitSynthetic(Synthetic_attribute attr, P p);
+        R visitTargetPlatform(TargetPlatform_attribute attr, P p);
         R visitVersion(Version_attribute attr, P p);
     }
 }

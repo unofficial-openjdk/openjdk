@@ -655,6 +655,12 @@ public class ClassWriter {
             return null;
         }
 
+        @Override
+        public Void visitTargetPlatform(TargetPlatform_attribute attr, ClassOutputStream out) {
+            // not implemented yet
+            return null;
+        }
+
         protected void writeAccessFlags(AccessFlags flags, ClassOutputStream p) {
             sharedOut.writeShort(flags.flags);
         }

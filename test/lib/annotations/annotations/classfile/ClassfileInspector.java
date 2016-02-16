@@ -1343,6 +1343,11 @@ public class ClassfileInspector {
         }
 
         @Override
+        public Void visitTargetPlatform(TargetPlatform_attribute attr, T p) {
+            return null;
+        }
+
+        @Override
         public Void visitVersion(Version_attribute attr, T p) {
             return null;
         }
