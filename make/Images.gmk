@@ -172,7 +172,8 @@ $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JDK_IMAGE_DIR) \
-	    --addmods $(JDK_MODULES_LIST)
+	    --addmods $(JDK_MODULES_LIST) \
+            --keep-packaged-modules $(JDK_IMAGE_DIR)/jmods
 	$(TOUCH) $@
 
 $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
