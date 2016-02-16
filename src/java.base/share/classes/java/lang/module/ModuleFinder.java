@@ -157,7 +157,7 @@ public interface ModuleFinder {
      * Each element in the given array is a path to a directory of modules, a
      * path to the <em>top-level</em> directory of an <em>exploded module</em>,
      * or a path to a packaged module. Each entry in a directory of modules is
-     * is the top-level directory of an exploded module or a packaged module.
+     * the top-level directory of an exploded module or a packaged module.
      *
      * If an element in the array is a path to a directory, and that directory
      * contains a file named {@code module-info.class}, then the directory
@@ -171,8 +171,9 @@ public interface ModuleFinder {
      * JAR file is a modular JAR and contains an <em>explicit module</em>.
      * A JAR file that does not have a {@code module-info.class} in the
      * top-level directory contains an {@link ModuleDescriptor#isAutomatic
-     * automatic} module. An implementation may also support modules that are
-     * packaged in other implementation specific formats. </p>
+     * automatic} module. In addition to JAR files, an implementation may also
+     * support modules that are packaged in other implementation specific
+     * formats. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are directories or packaged modules.
