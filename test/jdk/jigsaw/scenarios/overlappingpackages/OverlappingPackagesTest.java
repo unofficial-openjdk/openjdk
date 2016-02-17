@@ -72,8 +72,7 @@ public class OverlappingPackagesTest {
                                          modsMisc,
                                          "-Xmodule:java.base"));
         assertTrue(CompilerUtils.compile(srcMisc.resolve("module-info.java"),
-                                         modsMisc,
-                                         "-classpath", modsMisc.toString()));
+                                         modsMisc));
     }
 
     /**
