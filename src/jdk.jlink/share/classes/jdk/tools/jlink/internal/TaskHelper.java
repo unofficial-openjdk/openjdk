@@ -58,7 +58,7 @@ import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
-import jdk.tools.jlink.internal.plugins.OptimizationPlugin;
+import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
 
 /**
  *
@@ -278,7 +278,7 @@ public final class TaskHelper {
                                 m.put(DefaultCompressPlugin.NAME, DefaultCompressPlugin.LEVEL_2);
                             }, "-c");
                     mainOptions.add(plugOption);
-                } else if (plugin instanceof OptimizationPlugin) {
+                } else if (plugin instanceof StripDebugPlugin) {
                     plugOption
                         = new PlugOption(false,
                             (task, opt, arg) -> {
@@ -287,8 +287,7 @@ public final class TaskHelper {
                                     m = new HashMap<>();
                                     plugins.put(plugin, m);
                                 }
-                                m.put(OptimizationPlugin.NAME, OptimizationPlugin.ALL);
-                            }, "-o");
+                            }, "-G");
                     mainOptions.add(plugOption);
                 }
             }
