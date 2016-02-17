@@ -274,7 +274,8 @@ final class Builder {
         assert name != null;
 
         return jlma.newModuleDescriptor(name,
-                                        false,
+                                        false,    // automatic
+                                        false,    // assume not synthetic for now
                                         requires,
                                         uses,
                                         exports,

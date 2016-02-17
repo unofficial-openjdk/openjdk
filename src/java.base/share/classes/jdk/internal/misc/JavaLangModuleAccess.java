@@ -73,6 +73,7 @@ public interface JavaLangModuleAccess {
      */
     ModuleDescriptor newModuleDescriptor(String name,
                                          boolean automatic,
+                                         boolean synthetic,
                                          Set<Requires> requires,
                                          Set<String> uses,
                                          Set<Exports> exports,

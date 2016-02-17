@@ -543,6 +543,9 @@ public class ModuleDescriptor
     // Indicates if synthesised for a JAR file found on the module path
     private final boolean automatic;
 
+    // Not generated from a module-info.java
+    private final boolean synthetic;
+
     // "Extended" information, added post-compilation by tools
     private final Version version;
     private final String mainClass;
@@ -555,6 +558,7 @@ public class ModuleDescriptor
 
     private ModuleDescriptor(String name,
                              boolean automatic,
+                             boolean synthetic,
                              Map<String, Requires> requires,
                              Set<String> uses,
                              Map<String, Exports> exports,
@@ -570,6 +574,7 @@ public class ModuleDescriptor
 
         this.name = name;
         this.automatic = automatic;
+        this.synthetic = synthetic;
 
         Set<Requires> rqs = new HashSet<>(requires.values());
         assert (rqs.stream().map(Requires::name).sorted().distinct().count()
@@ -605,6 +610,7 @@ public class ModuleDescriptor
     ModuleDescriptor(ModuleDescriptor md, Set<String> pkgs) {
         this.name = md.name;
         this.automatic = md.automatic;
+        this.synthetic = md.synthetic;
 
         this.requires = md.requires;
         this.exports = md.exports;
@@ -627,6 +633,7 @@ public class ModuleDescriptor
      */
     private ModuleDescriptor(String name,
                              boolean automatic,
+                             boolean synthetic,
                              Set<Requires> requires,
                              Set<String> uses,
                              Set<Exports> exports,
@@ -640,6 +647,7 @@ public class ModuleDescriptor
                              Set<String> packages) {
         this.name = name;
         this.automatic = automatic;
+        this.synthetic = synthetic;
         this.requires = Collections.unmodifiableSet(requires);
         this.exports = Collections.unmodifiableSet(exports);
         this.uses = Collections.unmodifiableSet(uses);
@@ -665,12 +673,29 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Indicates if this is an automatic module. </p>
+     * <p> Returns {@code true} if this is an automatic module. </p>
      *
      * @return  {@code true} if this is an automatic module
      */
     public boolean isAutomatic() {
         return automatic;
+    }
+
+    /**
+     * <p> Returns {@code true} if this module descriptor was not originally
+     * compiled from source code. </p>
+     *
+     * <p> This method always returns {@code true} for {@link #isAutomatic()
+     * automatic} modules or {@code ModuleDescriptor} objects created
+     * programmatically using a {@link Builder}. </p>
+     *
+     * @return  {@code true} if this module descriptor was not originally
+     *          compiled from source code.
+     *
+     * @jvms 4.7.8 The {@code Synthetic} Attribute
+     */
+    public boolean isSynthetic() {
+        return synthetic;
     }
 
     /**
@@ -812,6 +837,8 @@ public class ModuleDescriptor
 
         final String name;
         final boolean automatic;
+        boolean synthetic;
+        boolean syntheticSet;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
         final Map<String, Exports> exports = new HashMap<>();
@@ -823,19 +850,6 @@ public class ModuleDescriptor
         String osVersion;
         String mainClass;
         DependencyHashes hashes;
-
-        /**
-         * Ensures that the given package name has not been declared as an
-         * exported or concealed package.
-         */
-        private void ensureNotExportedOrConcealed(String pn) {
-            if (exports.containsKey(pn))
-                throw new IllegalStateException("Export of package "
-                                                + pn + " already declared");
-            if (conceals.contains(pn))
-                throw new IllegalStateException("Concealed package "
-                                                + pn + " already declared");
-        }
 
         /**
          * Initializes a new builder with the given module name.
@@ -944,6 +958,19 @@ public class ModuleDescriptor
                                                 + st + " already declared");
             uses.add(st);
             return this;
+        }
+
+        /**
+         * Ensures that the given package name has not been declared as an
+         * exported or concealed package.
+         */
+        private void ensureNotExportedOrConcealed(String pn) {
+            if (exports.containsKey(pn))
+                throw new IllegalStateException("Export of package "
+                                                + pn + " already declared");
+            if (conceals.contains(pn))
+                throw new IllegalStateException("Concealed package "
+                                                + pn + " already declared");
         }
 
         /**
@@ -1221,6 +1248,13 @@ public class ModuleDescriptor
             return this;
         }
 
+
+        /* package */ Builder synthetic(boolean v) {
+            this.synthetic = v;
+            this.syntheticSet = true;
+            return this;
+        }
+
         /**
          * Builds a {@code ModuleDescriptor} from the components.
          *
@@ -1228,8 +1262,13 @@ public class ModuleDescriptor
          */
         public ModuleDescriptor build() {
             assert name != null;
+
+            // assume synthetic if not set
+            boolean isSynthetic = (syntheticSet) ? synthetic : true;
+
             return new ModuleDescriptor(name,
                                         automatic,
+                                        isSynthetic,
                                         requires,
                                         uses,
                                         exports,
@@ -1283,6 +1322,7 @@ public class ModuleDescriptor
         ModuleDescriptor that = (ModuleDescriptor)ob;
         return (name.equals(that.name)
                 && automatic == that.automatic
+                && synthetic == that.synthetic
                 && requires.equals(that.requires)
                 && uses.equals(that.uses)
                 && exports.equals(that.exports)
@@ -1304,6 +1344,7 @@ public class ModuleDescriptor
         if (hc == 0) {
             hc = name.hashCode();
             hc = hc * 43 + Boolean.hashCode(automatic);
+            hc = hc * 43 + Boolean.hashCode(synthetic);
             hc = hc * 43 + requires.hashCode();
             hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + exports.hashCode();
@@ -1545,6 +1586,7 @@ public class ModuleDescriptor
                 @Override
                 public ModuleDescriptor newModuleDescriptor(String name,
                                                             boolean automatic,
+                                                            boolean synthetic,
                                                             Set<Requires> requires,
                                                             Set<String> uses, Set<Exports> exports,
                                                             Map<String, Provides> provides,
@@ -1556,7 +1598,8 @@ public class ModuleDescriptor
                                                             Set<String> conceals,
                                                             Set<String> packages) {
                     return new ModuleDescriptor(name,
-                                                false,
+                                                automatic,
+                                                synthetic,
                                                 requires,
                                                 uses,
                                                 exports,

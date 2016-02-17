@@ -460,6 +460,7 @@ public class AutomaticModulesTest {
 
         // test miscellaneous methods
         assertTrue(m1.isAutomatic());
+        assertTrue(m1.isSynthetic());
         assertFalse(m1.osName().isPresent());
         assertFalse(m1.osArch().isPresent());
         assertFalse(m1.osVersion().isPresent());

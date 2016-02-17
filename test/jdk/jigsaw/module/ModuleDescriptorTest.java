@@ -420,6 +420,14 @@ public class ModuleDescriptorTest {
         assertFalse(descriptor.isAutomatic());
     }
 
+    // isSynthetic
+    public void testIsSynthetic() {
+        assertFalse(Object.class.getModule().getDescriptor().isSynthetic());
+
+        ModuleDescriptor descriptor = new Builder("foo").build();
+        assertTrue(descriptor.isSynthetic());
+    }
+
 
     // mainClass
 

@@ -263,6 +263,10 @@ final class ModuleInfo {
             builder.conceals(pkgs);
         }
 
+        // Was the Synthetic attribute present?
+        boolean isSynthetic = attributes.contains(SYNTHETIC);
+        builder.synthetic(isSynthetic);
+
         return builder.build();
     }
 
