@@ -639,8 +639,10 @@ public class Symtab {
             //current module, and in the unnamed module and see if it exists in one of them
             PackageSymbol unnamedPack = getPackage(unnamedModule, flatName);
 
-            if (unnamedPack != null && unnamedPack.exists())
+            if (unnamedPack != null && unnamedPack.exists()) {
+                msym.visiblePackages.add(unnamedPack);
                 return unnamedPack;
+            }
 
             pack = enterPackage(msym, flatName);
             pack.complete();

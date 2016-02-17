@@ -143,17 +143,17 @@ public class XModuleTest extends ModuleTestBase {
     }
 
     @Test
-    void testNoModuleInfoOnClassPath(Path base) throws Exception {
+    void testNoModuleInfoInClassOutput(Path base) throws Exception {
         //note: avoiding use of java.base, as that gets special handling on some places:
         Path srcMod = base.resolve("src-mod");
         tb.writeJavaFiles(srcMod,
                           "module mod {}");
-        Path classesMod = base.resolve("classes-mod");
-        tb.createDirectories(classesMod);
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
 
         String logMod = tb.new JavacTask()
                 .options()
-                .outdir(classesMod)
+                .outdir(classes)
                 .files(findJavaFiles(srcMod))
                 .run()
                 .writeAll()
@@ -165,12 +165,10 @@ public class XModuleTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "package javax.lang.model.element; public interface Extra { }");
-        Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
         List<String> log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-Xmodule:java.compiler")
-                .classpath(classesMod)
                 .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)

@@ -335,6 +335,7 @@ public class Modules extends JCTree.Visitor {
                                 // Question: why not do findAllModules and initVisiblePackages here?
                                 // i.e. body of unnamedModuleCompleter
                                 defaultModule.completer = getUnnamedModuleCompleter();
+                                defaultModule.classLocation = StandardLocation.CLASS_PATH;
                             }
                         } else {
                             checkSpecifiedModule(trees, "module-info.with.xmodule.classpath");
@@ -351,14 +352,12 @@ public class Modules extends JCTree.Visitor {
                     case 1:
                         checkSpecifiedModule(trees, "module-info.with.xmodule.sourcepath");
                         defaultModule = rootModules.iterator().next();
+                        defaultModule.classLocation = StandardLocation.CLASS_OUTPUT;
                         break;
                     default:
                         Assert.error("too many modules");
                 }
-                if (moduleOverride == null) {
-                    defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
-                    defaultModule.classLocation = StandardLocation.CLASS_PATH;
-                }
+                defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
             } else if (rootModules.size() == 1 && defaultModule == rootModules.iterator().next()) {
                 defaultModule.complete();
                 defaultModule.completer = sym -> completeModule((ModuleSymbol) sym);
