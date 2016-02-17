@@ -711,14 +711,6 @@ public class DocEnv {
                 }
 
                 @Override @DefinedBy(Api.LANGUAGE_MODEL)
-                public Boolean defaultAction(Element e, Void p) {
-                    if (includedSet.contains(e) || shouldDocument(e)) {
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
                 public Boolean visitPackage(PackageElement e, Void p) {
                     return includedSet.contains(e);
                 }
@@ -726,6 +718,11 @@ public class DocEnv {
                 @Override @DefinedBy(Api.LANGUAGE_MODEL)
                 public Boolean visitUnknown(Element e, Void p) {
                     throw new AssertionError("got element: " + e);
+                }
+
+                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                public Boolean defaultAction(Element e, Void p) {
+                    return visit(e.getEnclosingElement()) && shouldDocument(e);
                 }
             };
         }
