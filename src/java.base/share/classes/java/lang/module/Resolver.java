@@ -493,6 +493,7 @@ final class Resolver {
             ModuleDescriptor descriptor = mref.descriptor();
             visit(selected, descriptor);
         }
+        visited.clear();
     }
 
     // the modules that were visited
