@@ -862,7 +862,7 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
     initialize_hashtable(interface_names);
     bool dup = false;
     {
-      debug_only(No_Safepoint_Verifier nsv;)
+      debug_only(NoSafepointVerifier nsv;)
       for (index = 0; index < itfs_len; index++) {
         const Klass* const k = _local_interfaces->at(index);
         const Symbol* const name = InstanceKlass::cast(k)->name();
@@ -1619,7 +1619,7 @@ void ClassFileParser::parse_fields(const ClassFileStream* const cfs,
     initialize_hashtable(names_and_sigs);
     bool dup = false;
     {
-      debug_only(No_Safepoint_Verifier nsv;)
+      debug_only(NoSafepointVerifier nsv;)
       for (AllFieldStream fs(_fields, cp); !fs.done(); fs.next()) {
         const Symbol* const name = fs.name();
         const Symbol* const sig = fs.signature();
@@ -2884,7 +2884,7 @@ void ClassFileParser::parse_methods(const ClassFileStream* const cfs,
       initialize_hashtable(names_and_sigs);
       bool dup = false;
       {
-        debug_only(No_Safepoint_Verifier nsv;)
+        debug_only(NoSafepointVerifier nsv;)
         for (int i = 0; i < length; i++) {
           const Method* const m = _methods->at(i);
           // If no duplicates, add name/signature in hashtable names_and_sigs.
