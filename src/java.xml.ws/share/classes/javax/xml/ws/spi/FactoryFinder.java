@@ -34,6 +34,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.ws.WebServiceException;
+import com.sun.xml.internal.ws.Modules;
 
 class FactoryFinder {
 
@@ -69,6 +70,9 @@ class FactoryFinder {
      */
     @SuppressWarnings("unchecked")
     static <T> T find(Class<T> factoryClass, String fallbackClassName) {
+
+        Modules.ensureReadable(FactoryFinder.class, factoryClass);
+
         ClassLoader classLoader = ServiceLoaderUtil.contextClassLoader(EXCEPTION_HANDLER);
 
         T provider = ServiceLoaderUtil.firstByServiceLoader(factoryClass, logger, EXCEPTION_HANDLER);

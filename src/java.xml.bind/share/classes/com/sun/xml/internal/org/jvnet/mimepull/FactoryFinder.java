@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.sun.xml.internal.bind.v2.Modules;
 
 class FactoryFinder {
 
@@ -55,6 +56,7 @@ class FactoryFinder {
     static Object newInstance(String className) throws ClassNotFoundException,
             InstantiationException, IllegalAccessException {
         Class providerClass = cl.loadClass(className);
+        Modules.ensureReadable(FactoryFinder.class, providerClass);
         Object instance = providerClass.newInstance();
         return instance;
     }
