@@ -51,7 +51,7 @@ public class UserModuleTest {
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
     private static final Path IMAGE = Paths.get("image");
-    private static final Path JMODS = Paths.get(JAVA_HOME, "..", "jmods");
+    private static final Path JMODS = Paths.get(JAVA_HOME, "jmods");
 
     // the names of the modules in this test
     private static String[] modules = new String[] {"m1", "m2", "m3"};

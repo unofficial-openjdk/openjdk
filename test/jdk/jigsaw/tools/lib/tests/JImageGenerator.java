@@ -124,13 +124,9 @@ public class JImageGenerator {
     }
 
     public static File getJModsDir(File jdkHome) {
-        File jdkjmods = new File(jdkHome, ".." + File.separator + "jmods");
+        File jdkjmods = new File(jdkHome, "jmods");
         if (!jdkjmods.exists()) {
-            jdkjmods = new File(jdkHome, ".." + File.separator + "images" +
-                    File.separator + "jmods");
-            if (!jdkjmods.exists()) {
-                return null;
-            }
+            return null;
         }
         return jdkjmods;
     }

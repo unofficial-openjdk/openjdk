@@ -66,7 +66,7 @@ public abstract class AsmPluginTestBase {
 
     public static boolean isImageBuild() {
         Path javaHome = Paths.get(System.getProperty("test.jdk"));
-        Path jmods = javaHome.resolve("..").resolve("jmods");
+        Path jmods = javaHome.resolve("jmods");
         return Files.exists(jmods);
     }
 

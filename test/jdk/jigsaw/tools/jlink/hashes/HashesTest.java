@@ -55,7 +55,7 @@ import jdk.testlibrary.ProcessTools;
 public class HashesTest {
 
     private final Path jdkHome = Paths.get(System.getProperty("test.jdk"));
-    private final Path stdJmods = jdkHome.resolve("..").resolve("jmods");
+    private final Path stdJmods = jdkHome.resolve("jmods");
     private final Path testSrc = Paths.get(System.getProperty("test.src"));
     private final Path modSrc = testSrc.resolve("src");
     private final Path newModSrc = testSrc.resolve("newsrc");
