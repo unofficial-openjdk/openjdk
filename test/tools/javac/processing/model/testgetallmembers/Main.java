@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,8 @@ public class Main {
             for (JavaFileObject file : fm.list(PLATFORM_CLASS_PATH, "", EnumSet.of(CLASS), true)) {
                 String type = fm.inferBinaryName(PLATFORM_CLASS_PATH, file);
                 if (type.endsWith("package-info"))
+                    continue;
+                if (type.endsWith("module-info"))
                     continue;
                 try {
                     TypeElement elem = elements.getTypeElement(type);

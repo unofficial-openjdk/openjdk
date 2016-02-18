@@ -100,12 +100,12 @@ class StandardDocFileFactory extends DocFileFactory {
 
     @Override
     Iterable<DocFile> list(Location location, DocPath path) {
-        if (location != StandardLocation.SOURCE_PATH)
-            throw new IllegalArgumentException();
+        Location l = ((location == StandardLocation.SOURCE_PATH)
+                && !fileManager.hasLocation(StandardLocation.SOURCE_PATH))
+                ? StandardLocation.CLASS_PATH
+                : location;
 
         Set<DocFile> files = new LinkedHashSet<>();
-        Location l = fileManager.hasLocation(StandardLocation.SOURCE_PATH)
-                ? StandardLocation.SOURCE_PATH : StandardLocation.CLASS_PATH;
         for (File f: fileManager.getLocation(l)) {
             if (f.isDirectory()) {
                 f = new File(f, path.getPath());

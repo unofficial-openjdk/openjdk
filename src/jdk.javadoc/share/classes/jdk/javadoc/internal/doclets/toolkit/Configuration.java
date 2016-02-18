@@ -31,9 +31,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileManager;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 
 import com.sun.source.util.DocTreePath;
@@ -246,6 +248,11 @@ public abstract class Configuration {
     public String sourcepath = "";
 
     /**
+     * Generate modules documentation if more than one module is present.
+     */
+    public boolean showModules = false;
+
+    /**
      * Don't generate deprecated API information at all, if -nodeprecated
      * option is used. <code>nodepracted</code> is set to true if
      * -nodeprecated option is used. Default is generate deprected API
@@ -342,6 +349,11 @@ public abstract class Configuration {
     public DocFileFactory docFileFactory;
 
     /**
+     * A sorted set of modules containing the packages.
+     */
+    public Map<ModuleElement, Set<PackageElement>> modulePackages;
+
+    /**
      * Constructor. Constructs the message retriever with resource file.
      */
     public Configuration() {
@@ -369,6 +381,22 @@ public abstract class Configuration {
 
     public Reporter getReporter() {
         return this.reporter;
+    }
+
+    private void initModules() {
+        // Build the modules structure used by the doclet
+        modulePackages = new TreeMap<>(utils.makeModuleComparator());
+        for (PackageElement p: packages) {
+            ModuleElement mdle = root.getElementUtils().getModuleOf(p);
+            if (mdle != null && !mdle.isUnnamed()) {
+                Set<PackageElement> s = modulePackages.get(mdle);
+                if (s == null)
+                    modulePackages.put(mdle, s = new TreeSet<>(utils.makePackageComparator()));
+                s.add(p);
+            }
+        }
+
+        showModules = (modulePackages.size() > 1);
     }
 
     private void initPackages() {
@@ -657,9 +685,10 @@ public abstract class Configuration {
      * @return
      * @throws DocletAbortException
      */
-    public boolean setOptions() {
+    public boolean setOptions() throws Fault {
         try {
             initPackages();
+            initModules();
             finishOptionSettings0();
             if (!finishOptionSettings())
                 return false;
@@ -1218,4 +1247,6 @@ public abstract class Configuration {
             this.value2 = value2;
         }
     }
+
+    public abstract Location getLocationForPackage(PackageElement pd);
 }
