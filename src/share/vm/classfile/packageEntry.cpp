@@ -154,7 +154,7 @@ PackageEntryTable::~PackageEntryTable() {
 
 PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, ModuleEntry* module) {
   assert_locked_or_safepoint(Module_lock);
-  PackageEntry* entry = (PackageEntry*) NEW_C_HEAP_ARRAY2(char, entry_size(), mtClass, CURRENT_PC);
+  PackageEntry* entry = (PackageEntry*) NEW_C_HEAP_ARRAY(char, entry_size(), mtClass);
 
   // Initialize everything BasicHashtable would
   entry->set_next(NULL);
