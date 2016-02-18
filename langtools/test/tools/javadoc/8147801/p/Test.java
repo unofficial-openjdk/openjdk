@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,25 +21,9 @@
  * questions.
  */
 
-package sun.misc;
+package p;
 
-/* A package-private class implementing a signal handler in native code. */
-
-final class NativeSignalHandler implements SignalHandler {
-
-    private final long handler;
-
-    long getHandler() {
-        return handler;
-    }
-
-    NativeSignalHandler(long handler) {
-        this.handler = handler;
-    }
-
-    public void handle(Signal sig) {
-        handle0(sig.getNumber(), handler);
-    }
-
-    private static native void handle0(int number, long handler);
+public class Test {
+    public lib.Lib1 lib1;
 }
+

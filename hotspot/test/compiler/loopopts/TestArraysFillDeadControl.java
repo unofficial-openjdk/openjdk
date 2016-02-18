@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,20 +19,35 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
 
-#include <signal.h>
-#include <stdlib.h>
+/**
+ * @test
+ * @bug 8147645
+ * @summary Array.fill intrinsification code doesn't mark replaced control as dead
+ * @run main/othervm  -XX:-TieredCompilation -XX:CompileCommand=dontinline,TestArraysFillDeadControl::dont_inline TestArraysFillDeadControl
+ *
+ */
 
-#include <jni.h>
-#include <jlong.h>
-#include "sun_misc_NativeSignalHandler.h"
+import java.util.Arrays;
 
-typedef void (*sig_handler_t)(jint, void *, void *);
+public class TestArraysFillDeadControl {
 
-JNIEXPORT void JNICALL
-Java_sun_misc_NativeSignalHandler_handle0(JNIEnv *env, jclass cls, jint sig, jlong f)
-{
-    /* We've lost the siginfo and context */
-    (*(sig_handler_t)jlong_to_ptr(f))(sig, NULL, NULL);
+    static void dont_inline() {
+    }
+
+    static int i = 1;
+
+    public static void main(String[] args) {
+        for (int j = 0; j < 200000; j++) {
+            int[] a = new int[2];
+            int b = i;
+
+            Arrays.fill(a, 1);
+            Arrays.fill(a, 1+b);
+
+            dont_inline();
+        }
+    }
 }
