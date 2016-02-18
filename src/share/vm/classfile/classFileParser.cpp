@@ -5338,8 +5338,12 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   }
 
   // Add read edges to the unnamed modules of the bootstrap and app class loaders.
-  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named()) {
-    JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named() &&
+      !module_entry->has_default_read_edges()) {
+    if (!module_entry->set_has_default_read_edges()) {
+      // We won a potential race
+      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+    }
   }
 
   // Update the loader_data graph.

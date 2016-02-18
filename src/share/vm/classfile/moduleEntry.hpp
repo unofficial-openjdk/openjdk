@@ -56,6 +56,7 @@ private:
   Symbol* _version;                    // module version number
   Symbol* _location;                   // module location
   bool _can_read_all_unnamed;
+  bool _has_default_read_edges;        // JVMTI redefine/retransform support
   TRACE_DEFINE_TRACE_ID_FIELD;
   enum {MODULE_READS_SIZE = 101};      // Initial size of list of modules that the module can read.
 
@@ -68,6 +69,7 @@ public:
     _version = NULL;
     _location = NULL;
     _can_read_all_unnamed = false;
+    _has_default_read_edges = false;
   }
 
   Symbol*            name() const                   { return literal(); }
@@ -108,6 +110,18 @@ public:
 
   // Modules can only go from strict to loose.
   void set_can_read_all_unnamed() { _can_read_all_unnamed = true; }
+
+  bool has_default_read_edges() const {
+    return _has_default_read_edges;
+  }
+
+  // Sets true and returns the previous value.
+  bool set_has_default_read_edges() {
+    MutexLocker ml(Module_lock);
+    bool prev = _has_default_read_edges;
+    _has_default_read_edges = true;
+    return prev;
+  }
 
   ModuleEntry* next() const {
     return (ModuleEntry*)HashtableEntry<Symbol*, mtClass>::next();
