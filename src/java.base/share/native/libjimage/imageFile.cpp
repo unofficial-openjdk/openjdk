@@ -189,7 +189,7 @@ const char* ImageModuleData::package_to_module(const char* package_name) {
     u1* ptr = content;
     // sequence of sizeof(8) isEmpty|offset. Use the first module that is not empty.
     u4 offset = 0;
-    for (int i = 0; i < size; i+=8) {
+    for (i = 0; i < size; i+=8) {
         u4 isEmpty = _endian->get(*((u4*)ptr));
         ptr += 4;
         if (!isEmpty) {
@@ -395,9 +395,9 @@ bool ImageFileReader::open() {
     // Compute offset of the perfect hash table redirect table.
     u4 redirect_table_offset = (u4)header_size;
     // Compute offset of index attribute offsets.
-    u4 offsets_table_offset = redirect_table_offset + length * sizeof(s4);
+    u4 offsets_table_offset = redirect_table_offset + length * (u4)sizeof(s4);
     // Compute offset of index location attribute data.
-    u4 location_bytes_offset = offsets_table_offset + length * sizeof(u4);
+    u4 location_bytes_offset = offsets_table_offset + length * (u4)sizeof(u4);
     // Compute offset of index string table.
     u4 string_bytes_offset = location_bytes_offset + locations_size();
     // Compute address of the perfect hash table redirect table.
