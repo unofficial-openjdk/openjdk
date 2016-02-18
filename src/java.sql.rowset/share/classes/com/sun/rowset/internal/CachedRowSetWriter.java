@@ -573,7 +573,9 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                         // create new instance of the class
                         SQLData obj = null;
                         try {
-                            obj = (SQLData)ReflectUtil.newInstance(c);
+                            ReflectUtil.checkPackageAccess(c);
+                            CachedRowSetImpl.class.getModule().addReads(c.getModule());
+                            obj = (SQLData)c.newInstance();
                         } catch (Exception ex) {
                             throw new SQLException("Unable to Instantiate: ", ex);
                         }
@@ -1467,4 +1469,5 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
         return isValid;
     }
+
 }

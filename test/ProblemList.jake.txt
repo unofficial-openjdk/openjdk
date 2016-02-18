@@ -1,0 +1,63 @@
+############################################################################
+#
+# A temporary problem list for issues found in jake
+#
+############################################################################
+
+# jdk_lang
+
+# 8134485
+java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
+
+# 8148787
+java/lang/String/concat/StringConcatFactoryInvariants.java	generic-all
+
+############################################################################
+
+# jdk_security
+
+# 8038079
+sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
+
+# 8130302
+sun/security/tools/keytool/autotest.sh                         generic-all
+
+# 8134487
+sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
+sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
+sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          generic-all
+sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
+sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
+
+# 8137314
+java/security/Policy/SignedJar/SignedJarTest.java		solaris-all
+
+############################################################################
+
+# core_tools
+
+# 8048100
+tools/pack200/Pack200Test.java					generic-all
+
+############################################################################
+
+# svc_tools
+
+# 8073141
+sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
+
+############################################################################
+
+# jdk_rmi
+
+# 8078484
+sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
+
+############################################################################
+
+# jdk_jmx
+
+# 8147610
+javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
+
+############################################################################
