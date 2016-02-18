@@ -61,7 +61,7 @@ ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE)), )
   # OS X stores symbol information in a .dylib file inside a .dSYM directory -
   # that file should not be stripped, so we prune the tree at the .dSYM directory.
   ALL_CMDS_SRC := $(filter-out %.bc %.debuginfo %.diz %.map %.pdb, \
-      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_cmds \( -type f -o -type l \) \
+      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE) \( -type f -o -type l \) \
       -print -o -name "*.dSYM" -prune))
   COPY_CMDS_SRC := $(filter $(NO_STRIP_CMDS_FILTER), $(ALL_CMDS_SRC))
   STRIP_CMDS_SRC := $(filter-out $(NO_STRIP_CMDS_FILTER), $(ALL_CMDS_SRC))
