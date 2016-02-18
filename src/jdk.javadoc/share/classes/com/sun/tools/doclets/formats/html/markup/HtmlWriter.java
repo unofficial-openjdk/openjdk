@@ -27,8 +27,6 @@ package com.sun.tools.doclets.formats.html.markup;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
@@ -65,9 +63,9 @@ public class HtmlWriter {
     protected boolean memberDetailsListPrinted;
 
     /**
-     * Header for table displaying profiles and description..
+     * Header for table displaying modules and description..
      */
-    protected final String[] profileTableHeader;
+    protected final String[] moduleTableHeader;
 
     /**
      * Header for tables displaying packages and description..
@@ -90,7 +88,7 @@ public class HtmlWriter {
 
     public final Content packageLabel;
 
-    public final Content profileLabel;
+    public final Content moduleLabel;
 
     public final Content useLabel;
 
@@ -122,7 +120,7 @@ public class HtmlWriter {
 
     public final Content allpackagesLabel;
 
-    public final Content allprofilesLabel;
+    public final Content allmodulesLabel;
 
     public final Content indexLabel;
 
@@ -136,13 +134,13 @@ public class HtmlWriter {
 
     public final Content nextpackageLabel;
 
-    public final Content prevprofileLabel;
+    public final Content prevmoduleLabel;
 
-    public final Content nextprofileLabel;
+    public final Content nextmoduleLabel;
 
     public final Content packagesLabel;
 
-    public final Content profilesLabel;
+    public final Content modulesLabel;
 
     public final Content methodDetailsLabel;
 
@@ -183,8 +181,8 @@ public class HtmlWriter {
         writer = DocFile.createFileForOutput(configuration, path).openWriter();
         this.configuration = configuration;
         this.memberDetailsListPrinted = false;
-        profileTableHeader = new String[] {
-            configuration.getText("doclet.Profile"),
+        moduleTableHeader = new String[] {
+            configuration.getText("doclet.Module"),
             configuration.getText("doclet.Description")
         };
         packageTableHeader = new String[] {
@@ -199,7 +197,7 @@ public class HtmlWriter {
         overviewLabel = getResource("doclet.Overview");
         defaultPackageLabel = new StringContent(DocletConstants.DEFAULT_PACKAGE_NAME);
         packageLabel = getResource("doclet.Package");
-        profileLabel = getResource("doclet.Profile");
+        moduleLabel = getResource("doclet.Module");
         useLabel = getResource("doclet.navClassUse");
         prevLabel = getResource("doclet.Prev");
         nextLabel = getResource("doclet.Next");
@@ -215,17 +213,17 @@ public class HtmlWriter {
         deprecatedPhrase = getResource("doclet.Deprecated");
         allclassesLabel = getNonBreakResource("doclet.All_Classes");
         allpackagesLabel = getNonBreakResource("doclet.All_Packages");
-        allprofilesLabel = getNonBreakResource("doclet.All_Profiles");
+        allmodulesLabel = getNonBreakResource("doclet.All_Modules");
         indexLabel = getResource("doclet.Index");
         helpLabel = getResource("doclet.Help");
         seeLabel = getResource("doclet.See");
         descriptionLabel = getResource("doclet.Description");
         prevpackageLabel = getNonBreakResource("doclet.Prev_Package");
         nextpackageLabel = getNonBreakResource("doclet.Next_Package");
-        prevprofileLabel = getNonBreakResource("doclet.Prev_Profile");
-        nextprofileLabel = getNonBreakResource("doclet.Next_Profile");
+        prevmoduleLabel = getNonBreakResource("doclet.Prev_Module");
+        nextmoduleLabel = getNonBreakResource("doclet.Next_Module");
         packagesLabel = getResource("doclet.Packages");
-        profilesLabel = getResource("doclet.Profiles");
+        modulesLabel = getResource("doclet.Modules");
         methodDetailsLabel = getResource("doclet.Method_Detail");
         annotationTypeDetailsLabel = getResource("doclet.Annotation_Type_Member_Detail");
         fieldDetailsLabel = getResource("doclet.Field_Detail");
