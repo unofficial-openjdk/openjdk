@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -460,6 +460,8 @@
   template(module_name,                               "module")                                   \
   template(getModule_name,                            "getModule")                                \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
+  template(definePackage_name,                        "definePackage")                            \
+  template(definePackage_signature,                   "(Ljava/lang/String;Ljava/lang/reflect/Module;)Ljava/lang/Package;") \
   template(defineOrCheckPackage_name,                 "defineOrCheckPackage")                     \
   template(defineOrCheckPackage_signature,            "(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)Ljava/lang/Package;") \
   template(fileToEncodedURL_name,                     "fileToEncodedURL")                         \

@@ -1398,8 +1398,9 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     // For boot loader, ensure that GetSystemPackage knows that a class in this
     // package was loaded.
     if (class_loader.is_null()) {
+      int path_index = ik->shared_classpath_index();
       ResourceMark rm;
-      ClassLoader::add_package(ik->name()->as_C_string(), 0, THREAD);
+      ClassLoader::add_package(ik->name()->as_C_string(), path_index, THREAD);
     }
 
     if (DumpLoadedClassList != NULL && classlist_file->is_open()) {
