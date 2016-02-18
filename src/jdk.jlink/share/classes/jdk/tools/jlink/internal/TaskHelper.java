@@ -98,17 +98,23 @@ public final class TaskHelper {
         }
 
         final boolean hasArg;
-        final String[] aliases;
         final Processing<T> processing;
+        final boolean hidden;
+        final String[] aliases;
 
-        public Option(boolean hasArg, Processing<T> processing, String... aliases) {
+        public Option(boolean hasArg, Processing<T> processing, boolean hidden, String... aliases) {
             this.hasArg = hasArg;
             this.processing = processing;
             this.aliases = aliases;
+            this.hidden = hidden;
+        }
+
+        public Option(boolean hasArg, Processing<T> processing, String... aliases) {
+            this(hasArg, processing, false, aliases);
         }
 
         public boolean isHidden() {
-            return false;
+            return hidden;
         }
 
         public boolean matches(String opt) {
@@ -133,6 +139,11 @@ public final class TaskHelper {
     }
 
     private static class PlugOption extends Option<PluginsOptions> {
+
+        public PlugOption(boolean hasArg,
+                Processing<PluginsOptions> processing, boolean hidden, String... aliases) {
+            super(hasArg, processing, hidden, aliases);
+        }
 
         public PlugOption(boolean hasArg,
                 Processing<PluginsOptions> processing, String... aliases) {
@@ -184,12 +195,12 @@ public final class TaskHelper {
                     throw newBadArgs("err.existing.image.must.exist");
                 }
                 existingImage = path.toAbsolutePath();
-            }, POST_PROCESS));
+            }, true, POST_PROCESS));
             mainOptions.add(new PlugOption(true,
                     (task, opt, arg) -> {
                         lastSorter = arg;
                     },
-                    "--resources-last-sorter"));
+                    true, "--resources-last-sorter"));
             mainOptions.add(new PlugOption(false,
                     (task, opt, arg) -> {
                         listPlugins = true;
@@ -334,19 +345,6 @@ public final class TaskHelper {
             }
             return new Jlink.PluginsConfiguration(pluginsList,
                     builder, lastSorter);
-        }
-    }
-
-    public static class HiddenOption<T> extends Option<T> {
-
-        public HiddenOption(boolean hasArg, Processing<T> processing,
-                String... aliases) {
-            super(hasArg, processing, aliases);
-        }
-
-        @Override
-        public boolean isHidden() {
-            return true;
         }
     }
 

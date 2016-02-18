@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
-import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
@@ -136,19 +135,19 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
-        new HiddenOption<JlinkTask>(true, (task, opt, arg) -> {
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
             Path path = Paths.get(arg);
             if (Files.exists(path)) {
                 throw taskHelper.newBadArgs("err.dir.exists", path);
             }
             task.options.packagedModulesPath = path;
-        }, "--keep-packaged-modules"),
-        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
+        }, true, "--keep-packaged-modules"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.genbom = true;
-        }, "--genbom"),
-        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
+        }, true, "--genbom"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, "--fullversion"),};
+        }, true, "--fullversion"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();

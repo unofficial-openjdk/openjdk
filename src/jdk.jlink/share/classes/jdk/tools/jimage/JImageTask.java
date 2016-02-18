@@ -48,7 +48,6 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.internal.ImagePluginStack;
 import jdk.tools.jlink.internal.TaskHelper;
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
-import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
 import static jdk.tools.jlink.internal.TaskHelper.JIMAGE_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
@@ -59,9 +58,9 @@ class JImageTask {
         new Option<JImageTask>(true, (task, opt, arg) -> {
             task.options.directory = arg;
         }, "--dir"),
-        new HiddenOption<JImageTask>(false, (task, opt, arg) -> {
+        new Option<JImageTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, "--fullversion"),
+        }, true, "--fullversion"),
         new Option<JImageTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help"),
