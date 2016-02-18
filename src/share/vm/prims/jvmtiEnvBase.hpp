@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -687,6 +687,23 @@ class JvmtiMonitorClosure: public MonitorClosure {
   }
   void do_monitor(ObjectMonitor* mon);
   jvmtiError error() { return _error;}
+};
+
+
+// Jvmti module closure to collect all modules loaded to the system.
+class JvmtiModuleClosure : public StackObj {
+private:
+  static GrowableArray<jobject> *_tbl; // Protected with Module_lock
+
+  static void do_module(ModuleEntry* entry) {
+    assert_locked_or_safepoint(Module_lock);
+    jobject module = entry->jlrM_module();
+    guarantee(module != NULL, "module object is NULL");
+    _tbl->push(module);
+  }
+
+public:
+  jvmtiError get_all_modules(JvmtiEnv* env, jint* module_count_ptr, jobject** modules_ptr);
 };
 
 #endif // SHARE_VM_PRIMS_JVMTIENVBASE_HPP

@@ -21,13 +21,12 @@
  * questions.
  */
 
-package jdk.test.lib;
-
 import sun.jvmstat.monitor.Monitor;
 import sun.jvmstat.monitor.MonitorException;
 import sun.jvmstat.monitor.MonitoredHost;
 import sun.jvmstat.monitor.MonitoredVm;
 import sun.jvmstat.monitor.VmIdentifier;
+import jdk.test.lib.ProcessTools;
 
 /**
  * PerfCounters can be used to get a performance counter from the currently

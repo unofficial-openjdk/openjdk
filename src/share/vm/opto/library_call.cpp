@@ -317,8 +317,6 @@ class LibraryCallKit : public GraphKit {
 
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
-
-  bool inline_deoptimize();
 };
 
 //---------------------------make_vm_intrinsic----------------------------
@@ -759,9 +757,6 @@ bool LibraryCallKit::try_to_inline(int predicate) {
 
   case vmIntrinsics::_hasNegatives:
     return inline_hasNegatives();
-
-  case vmIntrinsics::_deoptimize:
-    return inline_deoptimize();
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -2943,7 +2938,7 @@ bool LibraryCallKit::inline_native_classID() {
   Node* cls = null_check(argument(1), T_OBJECT);
   Node* kls = load_klass_from_mirror(cls, false, NULL, 0);
   kls = null_check(kls, T_OBJECT);
-  ByteSize offset = TRACE_ID_OFFSET;
+  ByteSize offset = TRACE_KLASS_TRACE_ID_OFFSET;
   Node* insp = basic_plus_adr(kls, in_bytes(offset));
   Node* tvalue = make_load(NULL, insp, TypeLong::LONG, T_LONG, MemNode::unordered);
   Node* bits = longcon(~0x03l); // ignore bit 0 & 1
@@ -6549,14 +6544,5 @@ bool LibraryCallKit::inline_profileBoolean() {
 bool LibraryCallKit::inline_isCompileConstant() {
   Node* n = argument(0);
   set_result(n->is_Con() ? intcon(1) : intcon(0));
-  return true;
-}
-
-bool LibraryCallKit::inline_deoptimize() {
-  assert(WhiteBoxAPI, "");
-  PreserveReexecuteState preexecs(this);
-  jvms()->set_should_reexecute(false);
-  uncommon_trap(Deoptimization::Reason_intrinsic,
-                Deoptimization::Action_none);
   return true;
 }
