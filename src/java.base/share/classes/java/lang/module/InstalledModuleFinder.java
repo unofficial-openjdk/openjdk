@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.InstalledModules;
+import jdk.internal.module.ModulePatcher;
 import jdk.internal.perf.PerfCounter;
 
 /**
@@ -112,9 +113,6 @@ class InstalledModuleFinder implements ModuleFinder {
             if (!md.name().equals(mn))
                 throw new InternalError();
 
-            // replace ModuleDescriptor if new packages added by -Xpatch
-            ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
-
             // create the ModuleReference
 
             URI uri = URI.create("jrt:/" + mn);
@@ -126,8 +124,10 @@ class InstalledModuleFinder implements ModuleFinder {
                 }
             };
 
-            ModuleReference mref
-                = new ModuleReference(descriptor, uri, readerSupplier);
+            ModuleReference mref = new ModuleReference(md, uri, readerSupplier);
+
+            // may need a reference to a patched module if -Xpatch specified
+            mref = ModulePatcher.interposeIfNeeded(mref);
 
             mods.add(mref);
             map.put(mn, mref);

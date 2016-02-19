@@ -69,6 +69,11 @@ public interface JavaLangModuleAccess {
     Version newVersion(String v);
 
     /**
+     * Clones the given module descriptor with an augmented set of packages
+     */
+    ModuleDescriptor newModuleDescriptor(ModuleDescriptor md, Set<String> pkgs);
+
+    /**
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,

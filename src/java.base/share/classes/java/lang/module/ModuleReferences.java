@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,11 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Hasher;
+import jdk.internal.module.Hasher.HashSupplier;
+import jdk.internal.module.ModulePatcher;
 import sun.net.www.ParseUtil;
 
 
@@ -58,32 +62,53 @@ import sun.net.www.ParseUtil;
 
 class ModuleReferences {
 
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
     private ModuleReferences() { }
 
     /**
-     * Creates the ModuleReference.
+     * Creates a ModuleReference to a module or to patched module when
+     * creating modules for the boot Layer and -Xpatch is specified.
      */
-    static ModuleReference newModuleReference(ModuleDescriptor md,
-                                              URI location,
-                                              Hasher.HashSupplier hasher)
-    {
-        // use new ModuleDescriptor if new packages added by -Xpatch
-        ModuleDescriptor descriptor = ModulePatcher.patchIfNeeded(md);
+    private static ModuleReference newModule(ModuleDescriptor md,
+                                             URI uri,
+                                             Supplier<ModuleReader> supplier,
+                                             HashSupplier hasher) {
 
-        String scheme = location.getScheme();
+        ModuleReference mref = new ModuleReference(md, uri, supplier, hasher);
 
-        Supplier<ModuleReader> readerSupplier;
-        if (scheme.equalsIgnoreCase("jar")) {
-            readerSupplier = () -> new JarModuleReader(location);
-        } else if (scheme.equalsIgnoreCase("jmod")) {
-            readerSupplier = () -> new JModModuleReader(location);
-        } else if (scheme.equalsIgnoreCase("file")) {
-            readerSupplier = () -> new ExplodedModuleReader(location);
-        } else {
-            throw new InternalError("Should not get here");
-        }
+        if (JLA.getBootLayer() == null)
+            mref = ModulePatcher.interposeIfNeeded(mref);
 
-        return new ModuleReference(descriptor, location, readerSupplier, hasher);
+        return mref;
+    }
+
+    /**
+     * Creates a ModuleReference to a module packaged as a modular JAR.
+     */
+    static ModuleReference newJarModule(ModuleDescriptor md, Path file) {
+        URI uri = file.toUri();
+        Supplier<ModuleReader> supplier = () -> new JarModuleReader(file, uri);
+        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+        return newModule(md, uri, supplier, hasher);
+    }
+
+    /**
+     * Creates a ModuleReference to a module packaged as a JMOD.
+     */
+    static ModuleReference newJModModule(ModuleDescriptor md, Path file) {
+        URI uri = file.toUri();
+        Supplier<ModuleReader> supplier = () -> new JModModuleReader(file, uri);
+        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+        return newModule(md, file.toUri(), supplier, hasher);
+    }
+
+    /**
+     * Creates a ModuleReference to an exploded module.
+     */
+    static ModuleReference newExplodedModule(ModuleDescriptor md, Path dir) {
+        Supplier<ModuleReader> supplier = () -> new ExplodedModuleReader(dir);
+        return newModule(md, dir.toUri(), supplier, null);
     }
 
 
@@ -168,22 +193,20 @@ class ModuleReferences {
      * A ModuleReader for a modular JAR file.
      */
     static class JarModuleReader extends SafeCloseModuleReader {
-        private final URI uri;
         private final JarFile jf;
+        private final URI uri;
 
-        static JarFile newJarFile(String name) {
+        static JarFile newJarFile(Path path) {
             try {
-                return new JarFile(name);
+                return new JarFile(path.toFile());
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
         }
 
-        JarModuleReader(URI uri) {
-            String s = uri.toString();
-            URI fileURI = URI.create(s.substring(4, s.length()-2));
+        JarModuleReader(Path path, URI uri) {
+            this.jf = newJarFile(path);
             this.uri = uri;
-            this.jf = newJarFile(Paths.get(fileURI).toString());
         }
 
         private JarEntry getEntry(String name) {
@@ -195,7 +218,8 @@ class ModuleReferences {
             JarEntry je = getEntry(name);
             if (je != null) {
                 String encodedPath = ParseUtil.encodePath(name, false);
-                return Optional.of(URI.create(uri + encodedPath));
+                String uris = "jar:" + uri + "!/" + encodedPath;
+                return Optional.of(URI.create(uris));
             } else {
                 return Optional.empty();
             }
@@ -222,22 +246,20 @@ class ModuleReferences {
      * A ModuleReader for a JMOD file.
      */
     static class JModModuleReader extends SafeCloseModuleReader {
-        private final URI uri;
         private final ZipFile zf;
+        private final URI uri;
 
-        static ZipFile newZipFile(String name) {
+        static ZipFile newZipFile(Path path) {
             try {
-                return new ZipFile(name);
+                return new ZipFile(path.toFile());
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
         }
 
-        JModModuleReader(URI uri) {
-            String s = uri.toString();
-            URI fileURI = URI.create(s.substring(5, s.length() - 2));
+        JModModuleReader(Path path, URI uri) {
+            this.zf = newZipFile(path);
             this.uri = uri;
-            this.zf = newZipFile(Paths.get(fileURI).toString());
         }
 
         private ZipEntry getEntry(String name) {
@@ -249,7 +271,8 @@ class ModuleReferences {
             ZipEntry ze = getEntry(name);
             if (ze != null) {
                 String encodedPath = ParseUtil.encodePath(name, false);
-                return Optional.of(URI.create(uri + encodedPath));
+                String uris = "jmod:" + uri + "!/" + encodedPath;
+                return Optional.of(URI.create(uris));
             } else {
                 return Optional.empty();
             }
@@ -279,8 +302,8 @@ class ModuleReferences {
         private final Path dir;
         private volatile boolean closed;
 
-        ExplodedModuleReader(URI location) {
-            dir = Paths.get(location);
+        ExplodedModuleReader(Path dir) {
+            this.dir = dir;
 
             // when running with a security manager then check that the caller
             // has access to the directory.

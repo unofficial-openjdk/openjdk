@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -628,23 +628,24 @@ public class ModuleDescriptor
         this.conceals = computeConcealedPackages(this.exports, this.packages);
     }
 
-    /*
-     * Used by installed modules
+    /**
+     * Creates a module descriptor from its components. This method is intended
+     * for use by the jlink plugin.
      */
-    private ModuleDescriptor(String name,
-                             boolean automatic,
-                             boolean synthetic,
-                             Set<Requires> requires,
-                             Set<String> uses,
-                             Set<Exports> exports,
-                             Map<String, Provides> provides,
-                             Version version,
-                             String mainClass,
-                             String osName,
-                             String osArch,
-                             String osVersion,
-                             Set<String> conceals,
-                             Set<String> packages) {
+    ModuleDescriptor(String name,
+                     boolean automatic,
+                     boolean synthetic,
+                     Set<Requires> requires,
+                     Set<String> uses,
+                     Set<Exports> exports,
+                     Map<String, Provides> provides,
+                     Version version,
+                     String mainClass,
+                     String osName,
+                     String osArch,
+                     String osVersion,
+                     Set<String> conceals,
+                     Set<String> packages) {
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
@@ -1581,6 +1582,12 @@ public class ModuleDescriptor
                 @Override
                 public Version newVersion(String v) {
                     return new Version(v);
+                }
+
+                @Override
+                public ModuleDescriptor newModuleDescriptor(ModuleDescriptor md,
+                                                            Set<String> pkgs) {
+                    return new ModuleDescriptor(md, pkgs);
                 }
 
                 @Override

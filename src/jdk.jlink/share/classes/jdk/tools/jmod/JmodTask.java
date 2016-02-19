@@ -260,28 +260,9 @@ public class JmodTask {
                      name);
             }
 
-            URI location = omref.get().location().get();
-            String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
-                fail(RuntimeException.class,
-                     "Selected module %s (%s) not in jmod or modular jar format",
-                     name,
-                     location);
-            }
+            URI uri = omref.get().location().get();
+            modPaths.put(name, Paths.get(uri));
 
-            // convert to file URIs
-            URI fileURI;
-            if (scheme.equalsIgnoreCase("jmod")) {
-                // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
-                String s = location.toString();
-                fileURI = URI.create(s.substring(5, s.length()-2));
-            } else {
-                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                String s = location.toString();
-                fileURI = URI.create(s.substring(4, s.length()-2));
-            }
-
-            modPaths.put(name, Paths.get(fileURI));
         }
         return modPaths;
     }

@@ -252,31 +252,8 @@ public class JlinkTask {
                         name);
             }
 
-            URI location = omref.get().location().get();
-            String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")
-                    && !scheme.equalsIgnoreCase("file")) {
-                fail(RuntimeException.class,
-                        "Selected module %s (%s) not in jmod, modular jar or directory format",
-                        name,
-                        location);
-            }
-
-            // convert to file URIs
-            URI fileURI;
-            if (scheme.equalsIgnoreCase("jmod")) {
-                // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
-                String s = location.toString();
-                fileURI = URI.create(s.substring(5, s.length() - 2));
-            } else if (scheme.equalsIgnoreCase("jar")) {
-                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                String s = location.toString();
-                fileURI = URI.create(s.substring(4, s.length() - 2));
-            } else {
-                fileURI = URI.create(location.toString());
-            }
-
-            modPaths.put(name, Paths.get(fileURI));
+            URI uri = omref.get().location().get();
+            modPaths.put(name, Paths.get(uri));
         }
         return modPaths;
     }

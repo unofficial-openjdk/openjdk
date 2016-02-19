@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,9 @@ import java.io.IOException;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.jar.Manifest;
 
 import sun.misc.URLClassPath;
@@ -79,14 +75,11 @@ public class ClassLoaders {
         if (cp != null && cp.length() > 0)
             ucp = toURLClassPath(cp);
 
-        // is -Xpatch specified?
-        s = System.getProperty("jdk.launcher.patch");
-        List<Path> patchDirs = toPathList(s);
 
         // create the class loaders
-        BOOT_LOADER = new BootClassLoader(patchDirs, bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, patchDirs);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, patchDirs, ucp);
+        BOOT_LOADER = new BootClassLoader(bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, ucp);
     }
 
     /**
@@ -120,8 +113,8 @@ public class ClassLoaders {
      * the boot class loader. It is not used for class loading.
      */
     private static class BootClassLoader extends BuiltinClassLoader {
-        BootClassLoader(List<Path> patchDirs, URLClassPath bcp) {
-            super(null, patchDirs, bcp);
+        BootClassLoader(URLClassPath bcp) {
+            super(null, bcp);
         }
 
         @Override
@@ -140,8 +133,8 @@ public class ClassLoaders {
                 throw new InternalError();
         }
 
-        ExtClassLoader(BootClassLoader parent, List<Path> patchDirs) {
-            super(parent, patchDirs, null);
+        ExtClassLoader(BootClassLoader parent) {
+            super(parent, null);
         }
 
         /**
@@ -167,8 +160,8 @@ public class ClassLoaders {
 
         final URLClassPath ucp;
 
-        AppClassLoader(ExtClassLoader parent, List<Path> patchDirs, URLClassPath ucp) {
-            super(parent, patchDirs, ucp);
+        AppClassLoader(ExtClassLoader parent, URLClassPath ucp) {
+            super(parent, ucp);
             this.ucp = ucp;
         }
 
@@ -251,26 +244,6 @@ public class ClassLoaders {
             } catch (InvalidPathException | IOException ignore) {
                 // malformed path string or class path element does not exist
             }
-        }
-    }
-
-    /**
-     * Parses the given string as a sequence of directories, returning a list
-     * of Path objects to represent each directory.
-     */
-    private static List<Path> toPathList(String s) {
-        if (s == null) {
-            return Collections.emptyList();
-        } else {
-            String[] dirs = s.split(File.pathSeparator);
-
-            // too early in startup to use Stream.of(dirs)
-            List<Path> result = new ArrayList<>();
-            for (String dir : dirs) {
-                if (dir.length() > 0)
-                    result.add(Paths.get(dir));
-            }
-            return result;
         }
     }
 

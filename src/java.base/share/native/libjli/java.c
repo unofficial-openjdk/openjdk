@@ -1138,6 +1138,7 @@ ParseArguments(int *pargc, char ***pargv,
     int argc = *pargc;
     char **argv = *pargv;
     int mode = LM_UNKNOWN;
+    char *patch = NULL;
     char *arg;
 
     *pret = 0;
@@ -1201,20 +1202,15 @@ ParseArguments(int *pargc, char ***pargv,
                 haveAddExports = JNI_TRUE;
             }
         } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-            static jboolean havePatchDirs = JNI_FALSE;
-            if (havePatchDirs) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
-                *pret = 1;
-                return JNI_FALSE;
+            char *value = arg + 8;
+            if (patch == NULL) {
+                patch = JLI_StringDup(value);
             } else {
-                char *value;
-                if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-                    value = arg + 8;
-                } else {
-                    value = arg + 11;
-                }
-                SetPatchProp(value);
-                havePatchDirs = JNI_TRUE;
+                size_t buf_len = JLI_StrLen(patch) + JLI_StrLen(value) + 2;
+                char *buf = JLI_MemAlloc(buf_len);
+                JLI_Snprintf(buf, buf_len, "%s;%s", patch, value);
+                JLI_MemFree(patch);
+                patch = buf;
             }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
@@ -1306,6 +1302,10 @@ ParseArguments(int *pargc, char ***pargv,
             SetClassPath(".");
         }
         mode = LM_CLASS;
+    }
+
+    if (patch != NULL) {
+        SetPatchProp(patch);
     }
 
     if (argc >= 0) {
