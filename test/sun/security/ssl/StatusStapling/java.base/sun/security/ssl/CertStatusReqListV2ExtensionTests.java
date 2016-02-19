@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,6 @@
  */
 
 package sun.security.ssl;
-
-/*
- * @test
- * @bug 8046321
- * @summary OCSP Stapling for TLS (CertStatusReqListV2Extension tests)
- * @build CertStatusReqListV2ExtensionTests TestCase TestUtils
- * @run main/othervm sun.security.ssl.CertStatusReqListV2ExtensionTests
- */
 
 import java.io.IOException;
 import java.util.*;
