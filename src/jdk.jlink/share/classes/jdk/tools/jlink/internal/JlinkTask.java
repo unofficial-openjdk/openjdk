@@ -146,6 +146,9 @@ public class JlinkTask {
             task.options.genbom = true;
         }, true, "--genbom"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.saveopts = true;
+        }, "--saveopts"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
         }, true, "--fullversion"),};
 
@@ -173,6 +176,7 @@ public class JlinkTask {
     static class OptionsValues {
         boolean help;
         boolean genbom;
+        boolean saveopts;
         boolean version;
         boolean fullVersion;
         Path[] modulePath;
@@ -208,6 +212,10 @@ public class JlinkTask {
                 createImage();
             } else {
                 postProcessOnly(taskHelper.getExistingImage());
+            }
+
+            if (options.saveopts) {
+                Files.write(Paths.get(options.output.toString(), "jlink.opts"), getSaveOpts().getBytes());
             }
 
             return EXIT_OK;
@@ -447,6 +455,16 @@ public class JlinkTask {
                 return mrefs;
             }
         };
+    }
+
+    private String getSaveOpts() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('#').append(new Date()).append("\n");
+        for (String c : optionsHelper.getInputCommand()) {
+            sb.append(c).append(" ");
+        }
+
+        return sb.toString();
     }
 
     private static String getBomHeader() {
