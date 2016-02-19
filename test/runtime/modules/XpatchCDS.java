@@ -52,8 +52,7 @@ public class XpatchCDS {
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:SharedArchiveFile=" + filename,
             "-Xshare:on",
-            "-Xpatch:.",
-            "-version");
+            "-Xpatch:.");
         output = new OutputAnalyzer(pb.start());
         output.shouldContain("The shared archive file cannot be used with -Xpatch");
 
