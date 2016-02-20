@@ -2,11 +2,6 @@
 
 com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 	generic-all   javadoc can't find {@link java.math}
 
-##### new doclet ###############################################################
-
-jdk/javadoc/tool/6964914/TestUserDoclet.java                                    8149597 generic-all   jdk launcher must use new doclet main class
-jdk/javadoc/tool/EnsureNewOldDoclet.java                                        8149597 generic-all   jdk launcher must use new doclet main class\
-
 ##### javac ####################################################################
 
 tools/javac/6330997/T6330997.java                                               8150030	generic-all   NPE in Resolve
