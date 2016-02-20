@@ -151,6 +151,7 @@ public enum StandardLocation implements Location {
     @Override
     public boolean isModuleLocation() {
         switch (this) {
+            case MODULE_SOURCE_PATH:
             case ANNOTATION_PROCESSOR_MODULE_PATH:
             case UPGRADE_MODULE_PATH:
             case SYSTEM_MODULES:
