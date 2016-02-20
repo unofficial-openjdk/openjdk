@@ -1,7 +1,6 @@
 ##### javac ####################################################################
 
 tools/javac/6330997/T6330997.java                                               8150030	generic-all   NPE in Resolve
-tools/javac/Paths/Diagnostics.sh                                                0 	generic-all   needs rewrite
 tools/javac/Paths/MineField.sh                                                  8149599	generic-all   needs rewrite
 tools/javac/api/T6397104.java                                                   0 	generic-all   need to update for new StandardLocations
 tools/javac/api/TestResolveIdent.java                                           8150030	generic-all   NPE in Resolve
