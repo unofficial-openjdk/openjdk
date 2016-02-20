@@ -1,7 +1,3 @@
-##### doclets ##################################################################
-
-com/sun/javadoc/testClassCrossReferences/TestClassCrossReferences.java          0 	generic-all   javadoc can't find {@link java.math}
-
 ##### javac ####################################################################
 
 tools/javac/6330997/T6330997.java                                               8150030	generic-all   NPE in Resolve
