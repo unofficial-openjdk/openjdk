@@ -36,7 +36,7 @@ public class AddExportsTest {
 
     public static void main(String[] args) {
 
-        String addExports = System.getProperty("jdk.launcher.addexports");
+        String addExports = System.getProperty("jdk.launcher.addexports.0");
         assertTrue(addExports != null, "Expected to be run with -XaddExports");
 
         Layer bootLayer = Layer.boot();

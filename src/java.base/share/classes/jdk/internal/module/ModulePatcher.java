@@ -38,7 +38,6 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -67,47 +66,51 @@ public final class ModulePatcher {
     private static final JavaLangModuleAccess JLMA
         = SharedSecrets.getJavaLangModuleAccess();
 
-    // the value of this property encodes the values of -Xpatch
-    private static final String PATCH_PROPERTY = "jdk.launcher.patch";
+    // the prefix of the system properties that encode the value of -Xpatch
+    private static final String PATCH_PROPERTY_PREFIX = "jdk.launcher.patch.";
 
     // module name -> sequence of patches (directories or JAR files)
-    private static final Map<String, List<Path>> PATCH_MAP = decodeXPatch();
+    private static final Map<String, List<Path>> PATCH_MAP = decodeProperties();
 
     private ModulePatcher() { }
 
 
     /**
-     * Decodes the value of -Xpatch, returning a Map of module name to list
-     * of file paths. If -Xpatch is specified multiple times then the launcher
-     * will concatenate the values using semicolon as the separator.
+     * Decodes the values of -Xpatch options, returning a Map of module name to
+     * list of file paths.
+     *
+     * @throws IllegalArgumentException if the the module name is missing or
+     *         -Xpatch is used more than once to patch the same module
      */
-    private static Map<String, List<Path>> decodeXPatch() {
-        String value = System.getProperty(PATCH_PROPERTY);
+    private static Map<String, List<Path>> decodeProperties() {
+
+        int index = 0;
+        String value = System.getProperty(PATCH_PROPERTY_PREFIX + index);
         if (value == null)
-            return Collections.emptyMap();
+            return Collections.emptyMap();  // -Xpatch not specified
 
         Map<String, List<Path>> map = new HashMap<>();
+        while (value != null) {
+            int pos = value.indexOf('=');
 
-        for (String expr : value.split(";")) {
-            int index = expr.indexOf('=');
+            if (pos == -1 && index > 0)
+                throwIAE("Unable to parse: " + value);
 
-            if (index >=0) {
+            if (pos == 0)
+                throwIAE("Missing module name: " + value);
 
-                // <module>=<file>(:<file>)*
+            if (pos > 0) {
 
-                String mn = expr.substring(0, index);
-                if (mn.isEmpty())
-                    continue;  // missing module name, skip for now
+                // new format: <module>=<file>(:<file>)*
 
+                String mn = value.substring(0, pos);
                 List<Path> list = map.get(mn);
-                if (list != null) {
-                    throw new RuntimeException("-Xpatch specified for module "
-                                               + mn + " more than once");
-                }
+                if (list != null)
+                    throwIAE("Module " + mn + " specified more than once");
                 list = new ArrayList<>();
                 map.put(mn, list);
 
-                String paths = expr.substring(index+1);
+                String paths = value.substring(pos+1);
                 for (String path : paths.split(File.pathSeparator)) {
                     if (!path.isEmpty()) {
                         list.add(Paths.get(path));
@@ -116,9 +119,11 @@ public final class ModulePatcher {
 
             } else {
 
-                // For transition purposes: <dir>(:<dir>)*
+                // old format: <dir>(:<dir>)*
 
-                String[] dirs = expr.split(File.pathSeparator);
+                assert index == 0; // old format only allowed in first -Xpatch
+
+                String[] dirs = value.split(File.pathSeparator);
                 for (String d : dirs) {
                     if (d.length() > 0) {
                         Path top = Paths.get(d);
@@ -127,18 +132,17 @@ public final class ModulePatcher {
                                 String mn = e.getFileName().toString();
                                 Path dir = top.resolve(mn);
                                 map.computeIfAbsent(mn, k -> new ArrayList<>())
-                                        .add(dir);
+                                    .add(dir);
                             });
-                        } catch (NoSuchFileException ignore) {
-                            // directory not found
-                        } catch (IOException ioe) {
-                            throw new UncheckedIOException(ioe);
-                        }
+                        } catch (IOException ignore) { }
                     }
                 }
 
             }
 
+
+            index++;
+            value = System.getProperty(PATCH_PROPERTY_PREFIX + index);
         }
 
         return map;
@@ -575,6 +579,10 @@ public final class ModulePatcher {
         }
         msg += " not allowed in patch: " + file;
         throw new RuntimeException(msg);
+    }
+
+    private static void throwIAE(String msg) {
+        throw new IllegalArgumentException(msg);
     }
 
 }
