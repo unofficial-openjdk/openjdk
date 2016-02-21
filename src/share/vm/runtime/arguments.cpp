@@ -3091,7 +3091,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         return JNI_ERR;
 #endif
       }
-      if (match_option(option, "-Djdk.launcher.patch=", &tail)) {
+      if (match_option(option, "-Djdk.launcher.patch.0=", &tail)) {
         // -Xpatch
         int dir_count;
         char** patch_dirs = os::split_path(tail, &dir_count);
