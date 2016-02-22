@@ -66,7 +66,6 @@ class InstalledModuleFinder implements ModuleFinder {
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.packages");
     private static final PerfCounter exportsCount
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
-    private static final String MODULE_INFO = "module-info.class";
     // ImageReader used to access all modules in the image
     private static final ImageReader imageReader;
 
