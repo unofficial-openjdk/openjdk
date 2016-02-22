@@ -4915,7 +4915,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1455816598
+DATE_WHEN_GENERATED=1456166250
 
 ###############################################################################
 #
@@ -30132,7 +30132,8 @@ if test "${with_import_modules+set}" = set; then :
 fi
 
 
-  if test "x$with_import_modules" != x; then
+  if test "x$with_import_modules" != x \
+      && test "x$with_import_modules" != "xno"; then
     if test -d "$with_import_modules"; then
       IMPORT_MODULES_TOPDIR="$with_import_modules"
 
