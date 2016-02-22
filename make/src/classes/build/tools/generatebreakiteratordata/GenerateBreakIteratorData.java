@@ -46,11 +46,6 @@ public class GenerateBreakIteratorData {
     private static String unicodeData = "UnicodeData.txt";
 
     /**
-     * Rules file
-     */
-    private static String rules = "sun.text.resources.BreakIteratorRules";
-
-    /**
      * Locale data
      */
     private static String language = "";
@@ -77,7 +72,7 @@ public class GenerateBreakIteratorData {
 
     private static String localizedBundleName(String pkg, String clazz) {
         if (language.length() > 0) {
-            return pkg + '.' + language + '.' + clazz + '_' + language;
+            return pkg + ".ext." + clazz + '_' + language;
         } else {
             return pkg + '.' + clazz;
         }
@@ -90,8 +85,6 @@ public class GenerateBreakIteratorData {
     private static void generateFiles() throws Exception {
         String[] classNames;
         ResourceBundle rules, info;
-
-        String languageSuffix = (language.length() > 0 ? '_' + language : "");
 
         info = (ResourceBundle) Class.forName(
             localizedBundleName("sun.text.resources", "BreakIteratorInfo")).newInstance();
