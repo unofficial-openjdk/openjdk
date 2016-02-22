@@ -458,6 +458,8 @@
   template(loader_name,                               "loader")                                   \
   template(module_name,                               "module")                                   \
   template(getModule_name,                            "getModule")                                \
+  template(addReads_name,                             "addReads")                                 \
+  template(addReads_signature,                        "(Ljava/lang/reflect/Module;Ljava/lang/reflect/Module;)V")           \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
   template(definePackage_name,                        "definePackage")                            \
   template(definePackage_signature,                   "(Ljava/lang/String;Ljava/lang/reflect/Module;)Ljava/lang/Package;") \
