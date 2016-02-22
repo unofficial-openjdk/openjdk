@@ -436,16 +436,16 @@ ClassLoaderData::~ClassLoaderData() {
     _modules = NULL;
   }
 
+  // release the metaspace
   Metaspace *m = _metaspace;
   if (m != NULL) {
     _metaspace = NULL;
-    // release the metaspace
     delete m;
-    // release the handles
-    if (_handles != NULL) {
-      JNIHandleBlock::release_block(_handles);
-      _handles = NULL;
-    }
+  }
+  // release the handles
+  if (_handles != NULL) {
+    JNIHandleBlock::release_block(_handles);
+    _handles = NULL;
   }
 
   // Clear all the JNI handles for methods
