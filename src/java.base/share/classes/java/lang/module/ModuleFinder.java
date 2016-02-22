@@ -25,9 +25,14 @@
 
 package java.lang.module;
 
+import java.io.File;
+import java.io.FilePermission;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
@@ -125,18 +130,37 @@ public interface ModuleFinder {
      * Returns a module finder for modules that are linked into the run-time
      * image.
      *
-     * @apiNote What about non-JDK modules that are linked into the run-time
-     * image but are intended to be loaded by custom loaders. They are observable
-     * but there should be way to restrict this so that they don't end up in the
-     * boot layer. In that context, should this method be renamed to systemModules?
-     * Also need to decide if this method needs a permission check. It minimally
-     * requires access to java.home.
+     * <p> If there is a security manager set then its {@link
+     * SecurityManager#checkPermission(Permission) checkPermission} method is
+     * invoked to check that the caller has been granted {@link FilePermission}
+     * to recursively read the directory that is the value of the system
+     * property {@code java.home}. </p>
+     *
+     * @implNote For now, this method returns a module finder that finds all
+     * modules in the run-time image. In the future then there may be modules
+     * in the run-time image that aren't candidates for the boot Layer. In
+     * that case then the module finder returned by this method may only find
+     * a subset of the observable modules.
      *
      * @return A {@code ModuleFinder} that locates all modules in the
      *         run-time image
+     *
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public static ModuleFinder ofInstalled() {
-        String home = System.getProperty("java.home");
+        String home;
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            PrivilegedAction<String> pa = () -> System.getProperty("java.home");
+            home = AccessController.doPrivileged(pa);
+            Permission p = new FilePermission(home + File.separator + "-", "read");
+            sm.checkPermission(p);
+        } else {
+            home = System.getProperty("java.home");
+        }
+
         Path modules = Paths.get(home, "lib", "modules");
         if (Files.isRegularFile(modules)) {
             return new InstalledModuleFinder();
