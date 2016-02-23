@@ -193,7 +193,7 @@ public final class ModuleBootstrap {
                             .bind();
 
         // time to create configuration
-        PerfCounters.configTime.addElapsedTimeFrom(t1);
+        PerfCounters.resolveTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
         ClassLoaderFinder clf = ModuleLoaderMap.classLoaderFinder(cf);
@@ -221,6 +221,10 @@ public final class ModuleBootstrap {
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, Layer.empty(), clf);
 
+        PerfCounters.layerCreateTime.addElapsedTimeFrom(t2);
+
+        long t3 = System.nanoTime();
+
         // define the module to its class loader, except java.base
         for (ModuleReference mref : cf.modules()) {
             String name = mref.descriptor().name();
@@ -232,12 +236,11 @@ public final class ModuleBootstrap {
             }
         }
 
+        PerfCounters.loadModulesTime.addElapsedTimeFrom(t3);
+
         // -XaddReads and -XaddExports
         addExtraReads(bootLayer);
         addExtraExports(bootLayer);
-
-        // time to create the boot layer
-        PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
@@ -492,11 +495,13 @@ public final class ModuleBootstrap {
     }
 
     static class PerfCounters {
+        static PerfCounter resolveTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.resolveTime");
+        static PerfCounter layerCreateTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.layerCreateTime");
+        static PerfCounter loadModulesTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.loadModulesTime");
         static PerfCounter bootstrapTime
             = PerfCounter.newPerfCounter("jdk.module.bootstrap.totalTime");
-        static PerfCounter configTime
-            = PerfCounter.newPerfCounter("jdk.module.bootstrap.configTime");
-        static PerfCounter bootLayerTime
-            = PerfCounter.newPerfCounter("jdk.module.bootstrap.createLayerTime");
     }
 }
