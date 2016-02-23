@@ -35,10 +35,10 @@ import java.util.Optional;
 
 
 /**
- * Reads resources from a module.
+ * Provides access to the content of a module.
  *
  * <p> A module reader is intended for cases where access to the resources in a
- * module are required, regardless of whether the module has been instantiated.
+ * module are required, regardless of whether the module has been loaded.
  * A framework that scans a collection of packaged modules on the file system,
  * for example, may use a module reader to access a specific resource in each
  * module. A module reader is also intended to be used by {@code ClassLoader}

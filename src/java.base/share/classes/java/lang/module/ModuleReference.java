@@ -39,7 +39,7 @@ import jdk.internal.module.Hasher.HashSupplier;
  * A reference to a module's content.
  *
  * <p> A module reference contains the module's descriptor and its location, if
- * known.  It also has the ability to open a {@link ModuleReader} in order to
+ * known.  It also has the ability to create a {@link ModuleReader} in order to
  * access the module's content, which may be inside the Java run-time system
  * itself or in an artifact such as a modular JAR file.
  *
