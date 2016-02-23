@@ -39,6 +39,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.tools.JavaFileManager;
@@ -595,6 +597,61 @@ public class Arguments {
 
         if (obsoleteOptionFound)
             log.warning(LintCategory.OPTIONS, "option.obsolete.suppression");
+
+        String addExports = options.get(Option.XADDEXPORTS);
+        if (addExports != null) {
+            // Each entry must be of the form module/package=target-list where target-list is a
+            // comma-separated list of module or ALL-UNNAMED.
+            // All module/package pairs must be unique.
+            Pattern p = Pattern.compile("([^/]+)/([^=]+)=(.*)");
+            Map<String,List<String>> map = new LinkedHashMap<>();
+            for (String e: addExports.split("\0")) {
+                Matcher m = p.matcher(e);
+                if (!m.matches()) {
+                    log.error("xaddexports.malformed.entry", e);
+                    continue;
+                }
+                String eModule = m.group(1);  // TODO: check a valid dotted identifier
+                String ePackage = m.group(2); // TODO: check a valid dotted identifier
+                String eTargets = m.group(3);  // TODO: check a valid list of dotted identifier or ALL-UNNAMED
+                String eModPkg = eModule + '/' + ePackage;
+                List<String> l = map.get(eModPkg);
+                map.put(eModPkg, (l == null) ? List.of(eTargets) : l.prepend(eTargets));
+            }
+            map.forEach((key, value) -> {
+                if (value.size() > 1) {
+                    log.error("xaddexports.too.many", key);
+                    // TODO: consider adding diag fragments for the entries
+                }
+            });
+        }
+
+        String addReads = options.get(Option.XADDREADS);
+        if (addReads != null) {
+            // Each entry must be of the form module=source-list where source-list is a
+            // comma separated list of module or ALL-UNNAMED.
+            // All target modules (i.e. on left of '=')  must be unique.
+            Pattern p = Pattern.compile("([^=]+)=(.*)");
+            Map<String,List<String>> map = new LinkedHashMap<>();
+            for (String e: addReads.split("\0")) {
+                Matcher m = p.matcher(e);
+                if (!m.matches()) {
+                    log.error("xaddreads.malformed.entry", e);
+                    continue;
+                }
+                String eModule = m.group(1);  // TODO: check a valid dotted identifier
+                String eSources = m.group(2);  // TODO: check a valid list of dotted identifier or ALL-UNNAMED
+                List<String> l = map.get(eModule);
+                map.put(eModule, (l == null) ? List.of(eSources) : l.prepend(eSources));
+            }
+            map.forEach((key, value) -> {
+                if (value.size() > 1) {
+                    log.error("xaddreads.too.many", key);
+                    // TODO: consider adding diag fragments for the entries
+                }
+            });
+        }
+
 
         return !errors;
     }

@@ -37,6 +37,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
@@ -1061,32 +1063,29 @@ public class Modules extends JCTree.Visitor {
         if (addExportsOpt == null)
             return;
 
-        for (String s: addExportsOpt.split("[ ,]+")) {
+        Pattern ep = Pattern.compile("([^/]+)/([^=]+)=(.*)");
+        for (String s: addExportsOpt.split("\0+")) {
             if (s.isEmpty())
                 continue;
-            int slash = s.indexOf('/');
-            if (slash == -1) {
-                // TODO: error: no package name
+            Matcher em = ep.matcher(s);
+            if (!em.matches()) {
                 continue;
             }
-            String moduleName = s.substring(0, slash);
-            if (!SourceVersion.isName(moduleName)) {
-                // TODO: error: invalid module name
-                continue;
-            }
+
+            // Terminology comes from
+            //  -XaddExports:module/package=target,...
+            // Compare to
+            //  module module { exports package to target, ... }
+            String moduleName = em.group(1);
+            String packageName = em.group(2);
+            String targetNames = em.group(3);
+
             ModuleSymbol msym = syms.enterModule(names.fromString(moduleName));
-            int equals = s.indexOf('=', slash + 1);
-            ExportsDirective d;
-            if (equals == -1) {
-                // TODO: error: invalid target
-                continue;
-            } else {
-                String packageName = s.substring(slash + 1, equals);
-                if (!SourceVersion.isName(packageName)) {
-                    // TODO: error: invalid package name
-                    continue;
-                }
-                String toModule = s.substring(equals + 1);
+            PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+            p.modle = msym;  // TODO: do we need this?
+
+            List<ModuleSymbol> targetModules = List.nil();
+            for (String toModule : targetNames.split("[ ,]+")) {
                 ModuleSymbol m;
                 if (toModule.equals("ALL-UNNAMED")) {
                     m = syms.unnamedModule;
@@ -1097,15 +1096,11 @@ public class Modules extends JCTree.Visitor {
                     }
                     m = syms.enterModule(names.fromString(toModule));
                 }
-                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
-                p.modle = msym;
-                d = new ExportsDirective(p, List.of(m));
+                targetModules = targetModules.prepend(m);
             }
 
-            Set<ExportsDirective> extra = addExports.get(msym);
-            if (extra == null) {
-                addExports.put(msym, extra = new LinkedHashSet<>());
-            }
+            Set<ExportsDirective> extra = addExports.computeIfAbsent(msym, _x -> new LinkedHashSet<>());
+            ExportsDirective d = new ExportsDirective(p, targetModules);
             extra.add(d);
         }
     }
@@ -1119,29 +1114,37 @@ public class Modules extends JCTree.Visitor {
         if (addReadsOpt == null)
             return;
 
-        for (String s : addReadsOpt.split(",")) {
+        Pattern rp = Pattern.compile("([^=]+)=(.*)");
+        for (String s : addReadsOpt.split("\0+")) {
             if (s.isEmpty())
                 continue;
-            int equals = s.indexOf('=');
-            if (equals == -1) {
-                // TODO: error: invalid target
+            Matcher rm = rp.matcher(s);
+            if (!rm.matches()) {
                 continue;
             }
-            String targetName = s.substring(0, equals);
+
+            // Terminology comes from
+            //  -XaddReads:target-module=source-module,...
+            // Compare to
+            //  module target-module { requires source-module; ... }
+            String targetName = rm.group(1);
+            String sources = rm.group(2);
+
             ModuleSymbol msym = syms.enterModule(names.fromString(targetName));
-            String source = s.substring(equals + 1);
-            ModuleSymbol sourceModule;
-            if (source.equals("ALL-UNNAMED")) {
-                sourceModule = syms.unnamedModule;
-            } else {
-                if (!SourceVersion.isName(source)) {
-                    // TODO: error: invalid module name
-                    continue;
+            for (String source : sources.split("[ ,]+")) {
+                ModuleSymbol sourceModule;
+                if (source.equals("ALL-UNNAMED")) {
+                    sourceModule = syms.unnamedModule;
+                } else {
+                    if (!SourceVersion.isName(source)) {
+                        // TODO: error: invalid module name
+                        continue;
+                    }
+                    sourceModule = syms.enterModule(names.fromString(source));
                 }
-                sourceModule = syms.enterModule(names.fromString(source));
+                addReads.computeIfAbsent(msym, m -> new HashSet<>())
+                        .add(new RequiresDirective(sourceModule, EnumSet.of(RequiresFlag.EXTRA)));
             }
-            addReads.computeIfAbsent(msym, m -> new HashSet<>())
-                    .add(new RequiresDirective(sourceModule, EnumSet.of(RequiresFlag.EXTRA)));
         }
     }
 
