@@ -880,14 +880,23 @@ public class AttributeWriter extends BasicWriter
         println("TargetPlatform:");
         indent(+1);
         print("os_name: #" + attr.os_name_index);
-        tab();
-        println("// " + getOSName(attr));
+        if (attr.os_name_index != 0) {
+            tab();
+            print("// " + getOSName(attr));
+        }
+        println();
         print("os_arch: #" + attr.os_arch_index);
-        tab();
-        println("// " + getOSArch(attr));
+        if (attr.os_arch_index != 0) {
+            tab();
+            print("// " + getOSArch(attr));
+        }
+        println();
         print("os_version: #" + attr.os_version_index);
-        tab();
-        println("// " + getOSVersion(attr));
+        if (attr.os_version_index != 0) {
+            tab();
+            print("// " + getOSVersion(attr));
+        }
+        println();
         indent(-1);
         return null;
     }
