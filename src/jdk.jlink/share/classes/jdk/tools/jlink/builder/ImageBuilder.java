@@ -24,8 +24,10 @@
  */
 package jdk.tools.jlink.builder;
 
-import jdk.tools.jlink.plugin.ExecutableImage;
 import java.io.DataOutputStream;
+import java.util.Properties;
+
+import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Pool;
 
@@ -41,9 +43,23 @@ public interface ImageBuilder {
      *
      * @param content Pool of module content.
      * @param bom The options used to build the image file.
+     * @param release the release properties
      * @throws PluginException
      */
-    public void storeFiles(Pool content, String bom);
+    public default void storeFiles(Pool content, String bom, Properties release) {
+        storeFiles(content, bom);
+    }
+
+    /**
+     * Store the external files.
+     *
+     * @param content Pool of module content.
+     * @param bom The options used to build the image file.
+     * @throws PluginException
+     */
+    public default void storeFiles(Pool content, String bom) {
+        throw new UnsupportedOperationException("storeFiles");
+    }
 
     /**
      * The OutputStream to store the jimage file.

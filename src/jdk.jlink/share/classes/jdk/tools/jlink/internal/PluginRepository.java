@@ -59,11 +59,17 @@ public final class PluginRepository {
      */
     public static Plugin getPlugin(String name,
             Layer pluginsLayer) {
-        Plugin p = getPlugin(TransformerPlugin.class, name, pluginsLayer);
-        if (p == null) {
-            p = getPlugin(PostProcessorPlugin.class, name, pluginsLayer);
+        Plugin tp = getPlugin(TransformerPlugin.class, name, pluginsLayer);
+        Plugin ppp = getPlugin(PostProcessorPlugin.class, name, pluginsLayer);
+
+        // We should not have a transformer plugin and a post processor plugin
+        // of the same name. That kind of duplicate is detected here.
+        if (tp != null && ppp != null) {
+            throw new PluginException("Multiple plugin "
+                        + "for the name " + name);
         }
-        return p;
+
+        return tp != null? tp : ppp;
     }
 
     /**

@@ -204,4 +204,15 @@ public interface Plugin {
      */
     public default void configure(Map<String, String> config) {
     }
+
+    /**
+     * Configure the plugin based on the passed configuration.
+     * This method is called prior to invoke the plugin.
+     *
+     * @param config The plugin configuration.
+     * @param ctx The plugin context
+     */
+    public default void configure(Map<String, String> config, PluginContext ctx) {
+        configure(config);
+    }
 }

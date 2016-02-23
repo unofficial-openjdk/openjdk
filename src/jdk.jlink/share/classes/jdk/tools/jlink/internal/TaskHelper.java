@@ -327,11 +327,12 @@ public final class TaskHelper {
                 }
             }
 
+            PluginContextImpl pluginContext = new PluginContextImpl();
             List<Plugin> pluginsList = new ArrayList<>();
             for (Entry<Plugin, Map<String, String>> entry : plugins.entrySet()) {
                 Plugin plugin = entry.getKey();
                 Map<String, String> options = entry.getValue();
-                plugin.configure(options != null? Collections.unmodifiableMap(options) : null);
+                plugin.configure(options != null? Collections.unmodifiableMap(options) : null, pluginContext);
                 if (!Utils.isDisabled(plugin)) {
                     pluginsList.add(plugin);
                 }
@@ -344,7 +345,7 @@ public final class TaskHelper {
 
             }
             return new Jlink.PluginsConfiguration(pluginsList,
-                    builder, lastSorter);
+                    builder, lastSorter, pluginContext);
         }
     }
 

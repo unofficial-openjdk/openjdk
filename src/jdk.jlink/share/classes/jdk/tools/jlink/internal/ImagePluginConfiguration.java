@@ -26,7 +26,6 @@ package jdk.tools.jlink.internal;
 
 import java.io.DataOutputStream;
 
-import jdk.tools.jlink.plugin.Plugin;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,14 +35,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Properties;
 import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginContext;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Plugin.CATEGORY;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.PostProcessorPlugin;
+import jdk.tools.jlink.plugin.TransformerPlugin;
 
 /**
  * Plugins configuration.
@@ -154,7 +156,8 @@ public final class ImagePluginConfiguration {
             };
         }
 
+        PluginContext ctxt = pluginsConfiguration.getPluginContext();
         return new ImagePluginStack(builder, transformerPlugins,
-                lastSorter, postProcessingPlugins, bom);
+                lastSorter, postProcessingPlugins, ctxt, bom);
     }
 }
