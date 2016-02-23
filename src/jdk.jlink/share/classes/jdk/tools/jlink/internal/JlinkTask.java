@@ -145,8 +145,8 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.genbom = true;
         }, true, "--genbom"),
-        new Option<JlinkTask>(false, (task, opt, arg) -> {
-            task.options.saveopts = true;
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            task.options.saveoptsfile = arg;
         }, "--saveopts"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
@@ -176,7 +176,7 @@ public class JlinkTask {
     static class OptionsValues {
         boolean help;
         boolean genbom;
-        boolean saveopts;
+        String  saveoptsfile;
         boolean version;
         boolean fullVersion;
         Path[] modulePath;
@@ -214,8 +214,8 @@ public class JlinkTask {
                 postProcessOnly(taskHelper.getExistingImage());
             }
 
-            if (options.saveopts) {
-                Files.write(Paths.get(options.output.toString(), "jlink.opts"), getSaveOpts().getBytes());
+            if (options.saveoptsfile != null) {
+                Files.write(Paths.get(options.saveoptsfile), getSaveOpts().getBytes());
             }
 
             return EXIT_OK;
