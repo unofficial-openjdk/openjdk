@@ -166,7 +166,7 @@ public final class ImagePluginStack {
     private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
 
     private final ImageBuilder imageBuilder;
-    private final PluginContext pluginContext;
+    private final Properties release;
     private final String bom;
 
     public ImagePluginStack(String bom) {
@@ -203,7 +203,7 @@ public final class ImagePluginStack {
             this.postProcessingPlugins.add(p);
         }
         this.imageBuilder = imageBuilder;
-        this.pluginContext = ctxt != null? ctxt : new PluginContextImpl();
+        this.release = ctxt != null? ctxt.getReleaseProperties() : new Properties();
         this.bom = bom;
     }
 
@@ -470,15 +470,13 @@ public final class ImagePluginStack {
             BasicImageWriter writer)
             throws Exception {
         Objects.requireNonNull(original);
-        Properties release = pluginContext.getReleaseProperties();
-        if (release != null) {
-            try {
-                // fill release information available from transformed "java.base" module!
-                ModuleDescriptor desc = transformed.getModule("java.base").getDescriptor();
-                release.put("OS_NAME", desc.osName().get());
-                release.put("OS_VERSION", desc.osVersion().get());
-                release.put("OS_ARCH", desc.osArch().get());
-            } catch (Exception ignored) {}
+        try {
+            // fill release information available from transformed "java.base" module!
+            ModuleDescriptor desc = transformed.getModule("java.base").getDescriptor();
+            desc.osName().ifPresent(s -> release.put("OS_NAME", s));
+            desc.osVersion().ifPresent(s -> release.put("OS_VERSION", s));
+            desc.osArch().ifPresent(s -> release.put("OS_ARCH", s));
+        } catch (Exception ignored) {
         }
 
         imageBuilder.storeFiles(new LastPool(transformed), bom, release);

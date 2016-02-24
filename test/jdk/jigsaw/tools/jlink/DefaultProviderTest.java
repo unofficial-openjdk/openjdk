@@ -112,6 +112,8 @@ public class DefaultProviderTest {
 
             if (enabled) {
                 DefaultProviderTest.receivedOptions = config;
+            } else {
+                DefaultProviderTest.receivedOptions = null;
             }
         }
     }

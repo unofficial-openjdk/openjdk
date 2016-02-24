@@ -160,7 +160,11 @@ public final class TaskHelper {
         private String lastSorter;
         private boolean listPlugins;
         private Path existingImage;
-        private final Map<Plugin, Map<String, String>> plugins = new HashMap<>();
+
+        // plugin to args maps. Each plugin may be used more than once in command line.
+        // Each such occurrence results in a Map of arguments. So, there could be multiple
+        // args maps per plugin instance.
+        private final Map<Plugin, List<Map<String, String>>> pluginToMaps = new HashMap<>();
         private final List<PlugOption> pluginsOptions = new ArrayList<>();
         private final List<PlugOption> mainOptions = new ArrayList<>();
 
@@ -208,6 +212,25 @@ public final class TaskHelper {
                     "--list-plugins"));
         }
 
+        private List<Map<String, String>> argListFor(Plugin plugin) {
+            List<Map<String, String>> mapList = pluginToMaps.get(plugin);
+            if (mapList == null) {
+                mapList = new ArrayList<>();
+                pluginToMaps.put(plugin, mapList);
+            }
+            return mapList;
+        }
+
+        private void addEmptyArgumentMap(Plugin plugin) {
+            argListFor(plugin).add(Collections.emptyMap());
+        }
+
+        private Map<String, String> addArgumentMap(Plugin plugin) {
+            Map<String, String> map = new HashMap<>();
+            argListFor(plugin).add(map);
+            return map;
+        }
+
         private void addOrderedPluginOptions(Plugin plugin,
             Set<String> optionsSeen) throws BadArgs {
             String option = plugin.getOption();
@@ -230,24 +253,28 @@ public final class TaskHelper {
                                             option);
                                 }
 
-                                Map<String, String> m = plugins.get(plugin);
-                                if (m == null) {
-                                    m = new HashMap<>();
-                                    plugins.put(plugin, m);
+                                if (! plugin.hasArguments()) {
+                                    addEmptyArgumentMap(plugin);
+                                    return;
                                 }
 
+                                Map<String, String> m = addArgumentMap(plugin);
                                 // handle one or more arguments
-                                if (arg == null || arg.indexOf(':') == -1) {
+                                if (arg.indexOf(':') == -1) {
                                     // single argument case
                                     m.put(option, arg);
                                 } else {
                                     // This option can accept more than one arguments
                                     // like --option_name=arg_value:arg2=value2:arg3=value3
-                                    String[] args = arg.split(":");
+
+                                    // ":" followed by word char condition takes care of args that
+                                    // like Windows absolute paths "C:\foo", "C:/foo" [cygwin] etc.
+                                    // This enforces that key names start with a word character.
+                                    String[] args = arg.split(":(?=\\w)", -1);
                                     String firstArg = args[0];
                                     if (firstArg.isEmpty()) {
                                         throw newBadArgs("err.provider.additional.arg.error",
-                                            option);
+                                            option, arg);
                                     }
                                     m.put(option, firstArg);
                                     // process the additional arguments
@@ -256,14 +283,14 @@ public final class TaskHelper {
                                         int eqIdx = addArg.indexOf('=');
                                         if (eqIdx == -1) {
                                             throw newBadArgs("err.provider.additional.arg.error",
-                                                option);
+                                                option, arg);
                                         }
 
                                         String addArgName = addArg.substring(0, eqIdx);
                                         String addArgValue = addArg.substring(eqIdx+1);
                                         if (addArgName.isEmpty() || addArgValue.isEmpty()) {
                                             throw newBadArgs("err.provider.additional.arg.error",
-                                                option);
+                                                option, arg);
                                         }
                                         m.put(addArgName, addArgValue);
                                     }
@@ -274,18 +301,14 @@ public final class TaskHelper {
 
             if (Utils.isFunctional(plugin)) {
                 if (Utils.isAutoEnabled(plugin)) {
-                    plugins.put(plugin, new HashMap<>());
+                    addEmptyArgumentMap(plugin);
                 }
 
                 if (plugin instanceof DefaultCompressPlugin) {
                     plugOption
                         = new PlugOption(false,
                             (task, opt, arg) -> {
-                                Map<String, String> m = plugins.get(plugin);
-                                if (m == null) {
-                                    m = new HashMap<>();
-                                    plugins.put(plugin, m);
-                                }
+                                Map<String, String> m = addArgumentMap(plugin);
                                 m.put(DefaultCompressPlugin.NAME, DefaultCompressPlugin.LEVEL_2);
                             }, "-c");
                     mainOptions.add(plugOption);
@@ -293,11 +316,7 @@ public final class TaskHelper {
                     plugOption
                         = new PlugOption(false,
                             (task, opt, arg) -> {
-                                Map<String, String> m = plugins.get(plugin);
-                                if (m == null) {
-                                    m = new HashMap<>();
-                                    plugins.put(plugin, m);
-                                }
+                                addArgumentMap(plugin);
                             }, "-G");
                     mainOptions.add(plugOption);
                 }
@@ -329,10 +348,17 @@ public final class TaskHelper {
 
             PluginContextImpl pluginContext = new PluginContextImpl();
             List<Plugin> pluginsList = new ArrayList<>();
-            for (Entry<Plugin, Map<String, String>> entry : plugins.entrySet()) {
+            for (Entry<Plugin, List<Map<String, String>>> entry : pluginToMaps.entrySet()) {
                 Plugin plugin = entry.getKey();
-                Map<String, String> options = entry.getValue();
-                plugin.configure(options != null? Collections.unmodifiableMap(options) : null, pluginContext);
+                List<Map<String, String>> argsMaps = entry.getValue();
+
+                // same plugin option may be used multiple times in command line.
+                // we call configure once for each occurrence. It is upto the plugin
+                // to 'merge' and/or 'override' arguments.
+                for (Map<String, String> map : argsMaps) {
+                    plugin.configure(Collections.unmodifiableMap(map), pluginContext);
+                }
+
                 if (!Utils.isDisabled(plugin)) {
                     pluginsList.add(plugin);
                 }

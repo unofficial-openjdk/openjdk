@@ -24,37 +24,14 @@
  */
 package jdk.tools.jlink.internal;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 import jdk.tools.jlink.plugin.PluginContext;
 
 public final class PluginContextImpl implements PluginContext {
-    private final Properties releaseProps;
-
-    public PluginContextImpl() {
-        releaseProps = initReleaseProperties();
-    }
+    private final Properties releaseProps = new Properties();
 
     public Properties getReleaseProperties() {
         return releaseProps;
-    }
-
-    private static final Properties initReleaseProperties() {
-        String path = System.getProperty("java.home");
-        File f = new File(path, "release");
-        Properties release = new Properties();
-        if (f.exists()) {
-            release = new Properties();
-            try (FileInputStream fi = new FileInputStream(f)) {
-                release.load(fi);
-            } catch (IOException ioExp) {
-                throw new RuntimeException(ioExp);
-            }
-        }
-
-        return release;
     }
 }

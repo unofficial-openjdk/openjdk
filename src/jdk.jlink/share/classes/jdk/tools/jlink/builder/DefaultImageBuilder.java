@@ -54,7 +54,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import jdk.tools.jlink.internal.BasicImageWriter;
-import jdk.tools.jlink.internal.PluginContextImpl;
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin.SymImageFile;
 import jdk.tools.jlink.plugin.Pool;
@@ -191,7 +190,7 @@ public class DefaultImageBuilder implements ImageBuilder {
 
     @Override
     public void storeFiles(Pool files, String bom) {
-        storeFiles(files, bom, new PluginContextImpl().getReleaseProperties());
+        storeFiles(files, bom, new Properties());
     }
 
     /**
