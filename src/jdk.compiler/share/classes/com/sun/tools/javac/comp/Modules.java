@@ -1063,6 +1063,8 @@ public class Modules extends JCTree.Visitor {
         if (addExportsOpt == null)
             return;
 
+//        System.err.println("Modules.addExports:\n   " + addExportsOpt.replace("\0", "\n   "));
+
         Pattern ep = Pattern.compile("([^/]+)/([^=]+)=(.*)");
         for (String s: addExportsOpt.split("\0+")) {
             if (s.isEmpty())
@@ -1113,6 +1115,8 @@ public class Modules extends JCTree.Visitor {
 
         if (addReadsOpt == null)
             return;
+
+//        System.err.println("Modules.addReads:\n   " + addReadsOpt.replace("\0", "\n   "));
 
         Pattern rp = Pattern.compile("([^=]+)=(.*)");
         for (String s : addReadsOpt.split("\0+")) {

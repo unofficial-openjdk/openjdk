@@ -541,7 +541,7 @@ public enum Option {
     XADDEXPORTS("-XaddExports:", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
-            if (option.contains(",")) { // temporary, for backwards compatibility
+            if (option.matches(".*,.*=.*")) { // temporary, for backwards compatibility
                 return processOldStyle(helper, option);
             }
             String p = option.substring(option.indexOf(':') + 1).trim();
@@ -582,7 +582,7 @@ public enum Option {
     XADDREADS("-XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
-            if (option.contains(",")) { // temporary, for backwards compatibility
+            if (option.matches(".*,.*=.*")) { // temporary, for backwards compatibility
                 return processOldStyle(helper, option);
             }
             String p = option.substring(option.indexOf(':') + 1).trim();
