@@ -127,8 +127,7 @@ public final class ModuleReference {
 
 
     /**
-     * Opens the module content for reading, returning a {@code ModuleReader}
-     * that may be used to locate or read classes and resources.
+     * Opens the module content for reading.
      *
      * <p> This method opens the module content by invoking the {@link
      * Supplier#get() get()} method of the {@code readSupplier} specified at

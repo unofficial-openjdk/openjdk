@@ -385,10 +385,10 @@ public final class Class<T> implements java.io.Serializable,
 
 
     /**
-     * Returns the {@code Class} of the specified  <a href="ClassLoader.html#name">
-     * binary name</a> defined in the specified module.
-     * <p>
-     * This method attempts to locate, load, and link the class or interface
+     * Returns the {@code Class} with the given <a href="ClassLoader.html#name">
+     * binary name</a> in the given module.
+     *
+     * <p> This method attempts to locate, load, and link the class or interface
      * and it does not invoke the class initializer.  If the class is not
      * found, this method returns {@code null}.
      *

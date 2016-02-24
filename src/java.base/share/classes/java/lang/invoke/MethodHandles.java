@@ -577,6 +577,10 @@ public class MethodHandles {
          *  which may contribute to the result of {@link #lookupModes lookupModes}.
          *  The value is {@code 0x10}, which does not correspond meaningfully to
          *  any particular {@linkplain java.lang.reflect.Modifier modifier bit}.
+         *  In conjunction with the {@code PUBLIC} modifier bit, a {@code Lookup}
+         *  with this lookup mode can access all public types in the module of the
+         *  lookup class and public types in packages exported by other modules
+         *  to the module of the lookup class.
          *  @since 9
          */
         public static final int MODULE = PACKAGE << 1;
@@ -617,7 +621,9 @@ public class MethodHandles {
          *  <p>
          *  A freshly-created lookup object
          *  on the {@linkplain java.lang.invoke.MethodHandles#lookup() caller's class}
-         *  has all possible bits set, since the caller class can access all its own members.
+         *  has all possible bits set, since the caller class can access all its own members,
+         *  all public types in the caller's module, and all public types in packages exported
+         *  by other modules to the caller's module.
          *  A lookup object on a new lookup class
          *  {@linkplain java.lang.invoke.MethodHandles.Lookup#in created from a previous lookup object}
          *  may have some mode bits set to zero.

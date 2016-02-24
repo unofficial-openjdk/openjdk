@@ -260,8 +260,11 @@ public final class Module {
 
     /**
      * Indicates if this module reads the given {@code Module}.
-     * If {@code source} is {@code null} then this method tests if this
-     * module reads all unnamed modules.
+     * Unnamed modules read all modules and therefore this method always
+     * returns {@code true} when invoked on an unnamed module.
+     *
+     * <p> If {@code source} is {@code null} then this method tests if this
+     * module reads all unnamed modules. </p>
      *
      * @param  source
      *         The source module
@@ -311,9 +314,9 @@ public final class Module {
      * If the caller's module is this module then update this module to read
      * the given source {@code Module}.
      *
-     * <p> This method is a no-op if {@code source} is {@code this} module (all
+     * This method is a no-op if {@code source} is {@code this} module (all
      * modules can read themselves) or this module is not a {@link #isNamed()
-     * named} module (an unnamed module reads all other modules). </p>
+     * named} module (an unnamed module reads all other modules).
      *
      * <p> If {@code source} is {@code null}, and this module does not read
      * all unnamed modules, then this method changes this module so that it
@@ -429,11 +432,13 @@ public final class Module {
      * Returns {@code true} if this module exports the given package to the
      * given target module.
      *
-     * <p> If invoked on an unnamed module then this method always returns
-     * {@code true} for any non-{@code null} package name. </p>
+     * If invoked on an unnamed module then this method always returns {@code
+     * true} (for any non-{@code null} package name).
      *
-     * <p> This method does not check if the given module reads this
-     * module. </p>
+     * This method does not check if the given module reads this module.
+     *
+     * @apiNote This method returns {@code false} if invoked on a module to
+     * test if one of its non-exported packages is exported to itself.
      *
      * @param  pn
      *         The package name
@@ -453,8 +458,10 @@ public final class Module {
      * Returns {@code true} if this module exports the given package
      * unconditionally.
      *
-     * <p> If invoked on an unnamed module then this method always returns
-     * {@code true} for any non-{@code null} package name. </p>
+     * If invoked on an unnamed module then this method always returns {@code
+     * true} (for any non-{@code null} package name).
+     *
+     * This method does not check if the given module reads this module.
      *
      * @param  pn
      *         The package name
@@ -685,7 +692,8 @@ public final class Module {
      * service dependence on the given service type. This method is intended
      * for use by frameworks that invoke {@link java.util.ServiceLoader
      * ServiceLoader} on behalf of other modules or where the framework is
-     * passed a reference to the service type by other code.
+     * passed a reference to the service type by other code. This method is
+     * a no-op when invoked on an unnamed module.
      *
      * <p> This method does not trigger {@link java.lang.module.Configuration#bind
      * service-binding}. </p>
@@ -737,7 +745,8 @@ public final class Module {
 
     /**
      * Indicates if this module has a service dependence on the given service
-     * type.
+     * type. This method always returns {@code true} when invoked on an unnamed
+     * module.
      *
      * @param  st
      *         The service type

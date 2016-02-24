@@ -483,9 +483,8 @@ public abstract class ClassLoader {
      *
      * @apiNote This method does not delegate to the parent class loader.
      *
-     * @implNote
-     * The default implementation of this method searches for classes in the
-     * following order:
+     * @implSpec The default implementation of this method searches for classes
+     * in the following order:
      *
      * <ol>
      *   <li>Invoke {@link #findLoadedClass(String)} to check if the class
@@ -640,7 +639,7 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Finds the class with the specified <a href="#name">binary name</a>
+     * Finds the class with the given <a href="#name">binary name</a>
      * in a module defined to this class loader.
      * Class loader implementations that support the loading from modules
      * should override this method.
@@ -648,7 +647,7 @@ public abstract class ClassLoader {
      * @apiNote This method returns {@code null} rather than throwing
      *          {@code ClassNotFoundException} if the class could not be found
      *
-     * @implNote The default implementation returns {@code null}.
+     * @implSpec The default implementation returns {@code null}.
      *
      * @param  moduleName
      *         The module name

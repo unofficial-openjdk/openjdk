@@ -47,7 +47,7 @@ public class InvalidModuleDescriptorException extends RuntimeException {
      * specified detail message.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      */
     public InvalidModuleDescriptorException(String msg) {
         super(msg);

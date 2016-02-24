@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,12 +41,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A finder of module references.
+ * A finder of modules. A {@code ModuleFinder} is used to find modules during
+ * {@link Configuration#resolve resolution} or {@link Configuration#bind()
+ * service binding}.
  *
- * <p> A {@code ModuleFinder} admits to at most one module with a given name.
- * A {@code ModuleFinder} that finds modules in a sequence of directories for
- * example, will locate the first occurrence of a module and ignores other
- * modules of that name that appear in directories later in the sequence. </p>
+ * <p> A {@code ModuleFinder} can only find one module with a given name. A
+ * {@code ModuleFinder} that finds modules in a sequence of directories, for
+ * example, will locate the first occurrence of a module of a given name and
+ * will ignore other modules of that name that appear directories later in the
+ * sequence. </p>
  *
  * <p> Example usage: </p>
  *
@@ -55,8 +58,8 @@ import java.util.stream.Stream;
  *
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     Optional<ModuleReference> result = finder.find("jdk.foo");
- *     if (result.isPresent()) { ... }
+ *     Optional<ModuleReference> omref = finder.find("jdk.foo");
+ *     if (omref.isPresent()) { ... }
  *
  * }</pre>
  *

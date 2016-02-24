@@ -51,7 +51,16 @@ import jdk.internal.module.Hasher.DependencyHashes;
 /**
  * A module descriptor.
  *
+ * <p> A {@code ModuleDescriptor} is typically created from the binary form
+ * of a module declaration. The associated {@link ModuleDescriptor.Builder}
+ * class can also be used to create a {@code ModuleDescriptor} from its
+ * components. </p>
+ *
+ * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
+ * multiple concurrent threads.</p>
+ *
  * @since 9
+ * @see java.lang.reflect.Module
  */
 
 public class ModuleDescriptor
@@ -239,6 +248,9 @@ public class ModuleDescriptor
          * of the module names to which the package is exported. For an
          * unqualified export, returns an empty {@code Optional}.
          *
+         * @apiNote An alternative is to introduce {@code isQualified()} and
+         * change this method to an empty set when an exported is unqualified
+         *
          * @return The set of target module names or for an unqualified
          *         export, an empty {@code Optional}
          */
@@ -296,16 +308,17 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns the service type.
+         * Returns the fully qualified class name of the service type.
          *
-         * @return The service type
+         * @return The fully qualified class name of the service type.
          */
         public String service() { return service; }
 
         /**
-         * Returns the set of provider names.
+         * Returns the set of the fully qualified class names of the providers.
          *
-         * @return A non-empty and unmodifiable set of provider names
+         * @return A non-empty and unmodifiable set of the fully qualified class
+         *         names of the providers.
          */
         public Set<String> providers() { return providers; }
 
@@ -665,7 +678,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module name </p>
+     * <p> The module name. </p>
      *
      * @return The module name
      */
@@ -675,6 +688,13 @@ public class ModuleDescriptor
 
     /**
      * <p> Returns {@code true} if this is an automatic module. </p>
+     *
+     * <p> An automatic module is defined implicitly rather than explicitly
+     * and therefore does not have a module declaration. JAR files located on
+     * the application module path, or by the {@link ModuleFinder} returned by
+     * {@link ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are
+     * treated as automatic modules if they do not have a compiled module
+     * declaration ({@code module-info.class}). </p>
      *
      * @return  {@code true} if this is an automatic module
      */
@@ -700,7 +720,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The dependences of this module </p>
+     * <p> The dependences of this module. </p>
      *
      * @return  A possibly-empty unmodifiable set of {@link Requires} objects
      */
@@ -709,26 +729,28 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The service dependences of this module </p>
+     * <p> The service dependences of this module. </p>
      *
-     * @return  A possibly-empty unmodifiable set of the service types used
+     * @return  A possibly-empty unmodifiable set of the fully qualified class
+     *          names of the service types used
      */
     public Set<String> uses() {
         return uses;
     }
 
     /**
-     * <p> The services that this module provides </p>
+     * <p> The services that this module provides. </p>
      *
      * @return The possibly-empty unmodifiable map of the services that this
-     *         module provides. The map key is the service type.
+     *         module provides. The map key is fully qualified class name of
+     *         the service type.
      */
     public Map<String, Provides> provides() {
         return provides;
     }
 
     /**
-     * <p> The module exports </p>
+     * <p> The module exports. </p>
      *
      * @return  A possibly-empty unmodifiable set of exported packages
      */
@@ -763,7 +785,7 @@ public class ModuleDescriptor
     /**
      * Returns the module's main class.
      *
-     * @return This module's main class
+     * @return The fully qualified class name of this module's main class
      */
     public Optional<String> mainClass() {
         return Optional.ofNullable(mainClass);
@@ -829,9 +851,18 @@ public class ModuleDescriptor
         return Optional.ofNullable(hashes);
     }
 
+
     /**
      * A builder used for building {@link ModuleDescriptor} objects.
      *
+     * <p> Example usage: </p>
+     *
+     * <pre>{@code
+     *     ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m1")
+     *         .requires("m2")
+     *         .exports("p")
+     *         .build();
+     * }</pre>
      * @since 9
      */
     public static final class Builder {
@@ -1257,7 +1288,7 @@ public class ModuleDescriptor
         }
 
         /**
-         * Builds a {@code ModuleDescriptor} from the components.
+         * Builds and returns a {@code ModuleDescriptor} from its components.
          *
          * @return The module descriptor
          */
