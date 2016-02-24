@@ -1099,6 +1099,11 @@ JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring packa
   Modules::add_module_package(env, module, package);
 JVM_END
 
+JVM_ENTRY (jobject, JVM_GetModuleByPackageName(JNIEnv *env, jobject loader, jstring package))
+  JVMWrapper("JVM_GetModuleByPackageName");
+  return Modules::get_module_by_package_name(env, loader, package);
+JVM_END
+
 // Reflection support //////////////////////////////////////////////////////////////////////////////
 
 JVM_ENTRY(jstring, JVM_GetClassName(JNIEnv *env, jclass cls))

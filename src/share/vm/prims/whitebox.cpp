@@ -1283,6 +1283,10 @@ WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstrin
   Modules::add_module_package(env, module, package);
 WB_END
 
+WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
+  return Modules::get_module_by_package_name(env, loader, package);
+WB_END
+
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
   if (inc < 0) {
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(),
@@ -1660,6 +1664,8 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_IsExportedToModule },
   {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
+  {CC"GetModuleByPackageName", CC"(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
+                                                      (void*)&WB_GetModuleByPackageName },
   {CC"AddModuleExportsToAllUnnamed", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModuleExportsToAllUnnamed },
   {CC"AddModuleExportsToAll", CC"(Ljava/lang/Object;Ljava/lang/String;)V",

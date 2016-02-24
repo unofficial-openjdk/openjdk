@@ -448,6 +448,9 @@ JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobjec
 JNIEXPORT void JNICALL
 JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
 
+JNIEXPORT jobject JNICALL
+JVM_GetModuleByPackageName(JNIEnv* env, jobject loader, jstring package);
+
 /*
  * Reflection support functions
  */

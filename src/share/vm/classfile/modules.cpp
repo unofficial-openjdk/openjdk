@@ -644,9 +644,9 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
   log_debug(modules)("add_reads_module(): Adding read from module %s to module %s",
                      from_module_entry->is_named() ?
                      from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
-                      to_module_entry == NULL ? "all unnamed" :
-                        (to_module_entry->is_named() ?
-                          to_module_entry->name()->as_C_string() : UNNAMED_MODULE));
+                     to_module_entry == NULL ? "all unnamed" :
+                       (to_module_entry->is_named() ?
+                        to_module_entry->name()->as_C_string() : UNNAMED_MODULE));
 
   // if modules are the same or if from_module is unnamed then no need to add the read.
   if (from_module_entry != to_module_entry && from_module_entry->is_named()) {
@@ -818,7 +818,46 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   return JNIHandles::make_local(env, module);
 }
 
-// This method is called by JFR.
+
+jobject Modules::get_module_by_package_name(JNIEnv *env, jobject loader, jstring package) {
+  ResourceMark rm;
+  assert(ModuleEntryTable::javabase_defined(),
+         "Attempt to call get_module_from_pkg before java.base is defined");
+  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+
+  if (NULL == package) {
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
+               "package is null", JNI_FALSE);
+  }
+  const char* package_str =
+    java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  if (NULL == package_str) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "Invalid package", JNI_FALSE);
+  }
+
+  Handle h_loader (THREAD, JNIHandles::resolve(loader));
+  // Check that loader is a subclass of java.lang.ClassLoader.
+  if (loader != NULL && !java_lang_ClassLoader::is_subclass(h_loader->klass())) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "Class loader is not a subclass of java.lang.ClassLoader", JNI_FALSE);
+  }
+
+  if (strlen(package_str) == 0) {
+    // Return the unnamed module
+    ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
+    if (NULL == module_table) return NULL;
+    const ModuleEntry* const unnamed_module = module_table->unnamed_module();
+    return JNIHandles::make_local(THREAD, JNIHandles::resolve(unnamed_module->jlrM_module()));
+
+  } else {
+    TempNewSymbol package_sym = SymbolTable::new_symbol(package_str, CHECK_NULL);
+    return get_module(package_sym, h_loader, CHECK_NULL);
+  }
+}
+
+
+// This method is called by JFR and the above method.
 jobject Modules::get_module(Symbol* package_name, Handle h_loader, TRAPS) {
   const PackageEntry* const pkg_entry =
     get_package_entry_by_name(package_name, h_loader, THREAD);
