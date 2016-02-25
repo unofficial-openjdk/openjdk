@@ -184,7 +184,7 @@ public interface ModuleFinder {
      * Each element in the given array is a path to a directory of modules, a
      * path to the <em>top-level</em> directory of an <em>exploded module</em>,
      * or a path to a packaged module. Each entry in a directory of modules is
-     * the top-level directory of an exploded module or a packaged module.
+     * a packaged module or the top-level directory of an exploded module.
      *
      * If an element in the array is a path to a directory, and that directory
      * contains a file named {@code module-info.class}, then the directory

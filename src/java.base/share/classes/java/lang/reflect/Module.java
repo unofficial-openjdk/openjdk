@@ -217,12 +217,13 @@ public final class Module {
      * Returns the layer that contains this module or {@code null} if this
      * module is not in a layer.
      *
-     * <p> A module {@code Layer} contains named modules and therefore this
+     * A module {@code Layer} contains named modules and therefore this
      * method always returns {@code null} when invoked on an unnamed {@code
-     * Module}. </p>
+     * Module}.
      *
-     * <p> <i>Dynamic modules</i> are named modules that are generated at
-     * runtime. A dynamic module may or may not be in a module Layer. </p>
+     * <p> <a href="Proxy.html#dynamicmodule">Dynamic modules</a> are named
+     * modules that are generated at runtime. A dynamic module may or may
+     * not be in a module Layer. </p>
      *
      * @return The layer that contains this module
      *
@@ -798,9 +799,9 @@ public final class Module {
      * Returns an array of the package names of the packages in this module.
      *
      * <p> For named modules, the returned array contains an element for each
-     * package in the module when it was initially created. It may contain
-     * elements corresponding to packages added to the module after it was
-     * created. </p>
+     * package in the module. It may contain elements corresponding to packages
+     * added to the module, <a href="Proxy.html#dynamicmodule">dynamic modules</a>
+     * for example, after it was loaded.
      *
      * <p> For unnamed modules, this method is the equivalent of invoking the
      * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
@@ -1109,6 +1110,8 @@ public final class Module {
 
     /**
      * Returns the string representation.
+     *
+     * @apiNote Would it be useful to specify the  string representation?
      */
     @Override
     public String toString() {

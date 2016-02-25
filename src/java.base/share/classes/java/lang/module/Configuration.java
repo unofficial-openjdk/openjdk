@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,13 +37,17 @@ import java.util.stream.Collectors;
 /**
  * The configuration that is the result of resolution or service binding.
  *
+ *
+ * <h2> Resolution </h2>
+ *
  * <p> Resolution is the process of computing the transitive closure of a set
  * of root modules over a set of observable modules with respect to a
  * dependence relation. Computing the transitive closure leads to a
  * <em>dependence graph</em> that is then transformed to a <em>readability
- * graph</em> by adding edges indicated by the readability relation ({@code
- * requires} or {@code requires public}). A {@code Configuration} encapsulates
- * the resulting readability graph. </p>
+ * graph</em> by adding edges to support <em>implied readability</em>.
+ * A {@code Configuration} object encapsulates the resulting readability graph
+ * and defines the {@link #reads reads} method to get read dependences of
+ * modules in the {@code Configuration}.
  *
  * <p> Suppose we have the following observable modules: </p>
  * <pre> {@code
@@ -66,7 +70,8 @@ import java.util.stream.Collectors;
  * then the dependence relation may include dependences on modules in parent
  * configurations. The result is a <em>relative configuration</em> that is
  * relative to a parent configuration and where the readability graph may have
- * read edges to modules in parent configurations. </p>
+ * an edges to represent a module in a configuration reading a module in a
+ * parent configuration. </p>
  *
  * <p> Suppose we have the following observable modules: </p>
  * <pre> {@code
@@ -85,6 +90,16 @@ import java.util.stream.Collectors;
  * where module {@code java.xml} is in the parent configuration. For
  * simplicity, this example omits the implicitly declared dependence on the
  * {@code java.base} module.
+ *
+ * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive
+ * treatment during resolution. Each automatic module is resolved as if it
+ * reads all other modules in the configuration and all parent configurations.
+ * Each automatic module is also resolved as if it {@code requires public} all
+ * other automatic modules in the configuration (and all automatic modules in
+ * parent configurations. </p>
+ *
+ *
+ * <h2> Service binding </h2>
  *
  * <p> Service binding is the process of augmenting a configuration with
  * modules from the set of observable modules induced by the service-use
@@ -120,12 +135,12 @@ import java.util.stream.Collectors;
  * iterate over implementations of {@code p.S.class}, then it will iterate over
  * an instance of {@code p2.S2} and {@code p3.S3}. </p>
  *
- * <p> {@code Configuration} defines the {@link #resolve resolve} and {@link
- * #bind bind} methods to do resolution and service binding respectively. It
- * defines the {@link #reads reads} method to examine the readability graph,
- * and the {@link #provides provides} method to get the set of modules in
- * the configuration that provide one or more implementations of a service
- * type. </p>
+ * <p> {@code Configuration} defines the {@link #provides provides} method to get
+ * the set of modules in the configuration that provide one or more
+ * implementations of a service type. </p>
+ *
+ *
+ * <h2> Example </h2>
  *
  * <p> The following example invokes the {@code resolve} method to resolve a
  * module named <em>myapp</em> with the configuration for the boot layer as
@@ -136,12 +151,11 @@ import java.util.stream.Collectors;
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     Configuration cf
- *         = Configuration.resolve(finder,
- *                                 Layer.boot().configuration(),
- *                                 ModuleFinder.empty(),
- *                                 "myapp")
- *                        .bind();
+ *     Configuration cf = Configuration.resolve(finder,
+ *                                              Layer.boot().configuration(),
+ *                                              ModuleFinder.empty(),
+ *                                             "myapp")
+ *                                     .bind();
  * }</pre>
  *
  * @since 9
@@ -321,7 +335,7 @@ public final class Configuration {
      * modules induced by the service-use relation.
      *
      * <p> Service binding works by examining all modules in the configuration
-     * and its parent configuration with {@link ModuleDescriptor#uses()
+     * and parent configurations with {@link ModuleDescriptor#uses()
      * service-dependences}. All observable modules that {@link
      * ModuleDescriptor#provides() provide} an implementation of one or more of
      * the service types are added to the configuration and resolved as if by
@@ -387,7 +401,7 @@ public final class Configuration {
     /**
      * Returns the {@code ModuleDescriptor} with the given name in this
      * configuration, or if not in this configuration, the {@linkplain #parent
-     * parent} configuration.
+     * parent} configurations.
      *
      * @param  name
      *         The name of the module to find
@@ -410,7 +424,7 @@ public final class Configuration {
     /**
      * Returns the {@code ModuleReference} for the named module in this
      * configuration, or if not in this configuration, the {@linkplain #parent
-     * parent} configuration.
+     * parent} configurations.
      *
      * @param  name
      *         The name of the module to find
@@ -431,13 +445,10 @@ public final class Configuration {
 
 
     /**
-     * Represents a vertex in a readability graph.
-     *
-     * {@link Configuration} defines the {@link Configuration#reads reads}
-     * method to obtain the set of {@code ReadDependence} that a module in the
-     * configuration reads.
+     * Represents a read dependence upon a module in a configuration.
      *
      * @since 9
+     * @see Configuration#reads(ModuleDescriptor)
      */
     public static final class ReadDependence {
         private final Configuration cf;
@@ -499,6 +510,8 @@ public final class Configuration {
      *
      * @throws IllegalArgumentException
      *         If the module is not in this configuration
+     *
+     * @see ModuleDescriptor#requires()
      */
     public Set<ReadDependence> reads(ModuleDescriptor descriptor) {
         String name = descriptor.name();
