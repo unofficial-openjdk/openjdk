@@ -620,19 +620,25 @@ final class ModuleInfo {
         String getClassName(int index) {
             checkIndex(index);
             Entry e = pool[index];
-            assert e.tag == CONSTANT_Class;
+            if (e.tag != CONSTANT_Class) {
+                throw invalidModuleDescriptor("CONSTANT_Class expected at entry: "
+                                              + index);
+            }
             return getUtf8(((IndexEntry) e).index);
         }
 
         String getUtf8(int index) {
             checkIndex(index);
             Entry e = pool[index];
-            assert e.tag == CONSTANT_Utf8;
+            if (e.tag != CONSTANT_Utf8) {
+                throw invalidModuleDescriptor("CONSTANT_Utf8 expected at entry: "
+                                              + index);
+            }
             return (String) (((ValueEntry) e).value);
         }
 
         void checkIndex(int index) {
-            if (index >= pool.length)
+            if (index < 1 || index >= pool.length)
                 throw invalidModuleDescriptor("Index into constant pool out of range");
         }
     }
