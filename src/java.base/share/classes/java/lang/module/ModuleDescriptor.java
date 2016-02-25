@@ -693,8 +693,8 @@ public class ModuleDescriptor
      * and therefore does not have a module declaration. JAR files located on
      * the application module path, or by the {@link ModuleFinder} returned by
      * {@link ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are
-     * treated as automatic modules if they do not have a compiled module
-     * declaration ({@code module-info.class}). </p>
+     * treated as automatic modules if they do have not have a module
+     * declaration. </p>
      *
      * @return  {@code true} if this is an automatic module
      */

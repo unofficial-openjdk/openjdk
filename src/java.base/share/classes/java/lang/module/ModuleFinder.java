@@ -195,18 +195,67 @@ public interface ModuleFinder {
      *
      * <p> This method supports modules that are packaged as JAR files. A JAR
      * file with a {@code module-info.class} in the top-level directory of the
-     * JAR file is a modular JAR and contains an <em>explicit module</em>.
-     * A JAR file that does not have a {@code module-info.class} in the
-     * top-level directory contains an {@link ModuleDescriptor#isAutomatic
-     * automatic} module. In addition to JAR files, an implementation may also
-     * support modules that are packaged in other implementation specific
-     * formats. </p>
+     * JAR file is a modular JAR and is an  <em>explicit module</em>. A JAR
+     * file that does not have a {@code module-info.class} in the top-level
+     * directory is an {@link ModuleDescriptor#isAutomatic automatic} module.
+     * The {@link ModuleDescriptor} for an automatic module is created as
+     * follows:
+     *
+     * <ul>
+     *
+     *     <li><p> The module {@link ModuleDescriptor#name() name}, and {@link
+     *     ModuleDescriptor#version() version} if applicable, is derived from
+     *     the file name of the JAR file as follows: </p>
+     *
+     *     <ul>
+     *
+     *         <li><p> The {@code .jar} suffix is removed. </p></li>
+     *
+     *         <li><p> If the name matches the regular expression {@code
+     *         "-(\\d+(\\.|$))"} then the subsequence that matches the pattern
+     *         is parsed as a {@link ModuleDescriptor.Version}. All characters
+     *         that follow the matching subsequence are ignored. The matching
+     *         subsequence is also ignored if it cannot be parsed as a {@code
+     *         Version}. </p></li>
+     *
+     *         <li><p> For the module name, then all non-alphanumeric
+     *         characters ({@code [^A-Za-z0-9])} are replaced with a dot
+     *         ({@code "."}), all repeating dots are replaced with one dot,
+     *         and all leading and trailing dots are removed. </p></li>
+     *
+     *     </ul></li>
+     *
+     *     <li><p> It {@link ModuleDescriptor#requires() requires} {@code
+     *     java.base}. </p></li>
+     *
+     *     <li><p> All entries in the JAR file with names ending with {@code
+     *     .class} are assumed to be class files where the name corresponds
+     *     to the fully qualified name of the class. The packages of all
+     *     classes are {@link ModuleDescriptor#exports() exported}. </p></li>
+     *
+     *     <li><p> The contents of all entries starting with {@code
+     *     META-INF/services/} are assumed to be service configuration files
+     *     (see {@link java.util.ServiceLoader}). The name of the file
+     *     (that follows {@code META-INF/services/}) is assumed to be the
+     *     fully-qualified binary name of a service type. The entries in the
+     *     file are assumed to be the fully-qualified binary names of
+     *     provider classes. </p></li>
+     *
+     *     <li><p> If the JAR file has a {@code Main-Class} attribute in its
+     *     main manifest then its value is the {@link
+     *     ModuleDescriptor#mainClass() main class}. </p></li>
+     *
+     * </ul>
+     *
+     * <p> In addition to JAR files, an implementation may also support
+     * modules that are packaged in other implementation specific formats. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are directories or packaged modules.
-     * Consequently, the {@code find} method will only fail if calling it
-     * results in searching a directory or packaged module where an error is
-     * encountered. Paths to files that do not exist are ignored. </p>
+     * Consequently, the {@code find} or {@code findAll} methods will only
+     * fail if invoking these methods results in searching a directory or
+     * packaged module and an error is encountered. Paths to files that do not
+     * exist are ignored. </p>
      *
      * @apiNote This method is not required to be thread safe.
      *
