@@ -24,12 +24,12 @@
  */
 package com.sun.tools.jdeps;
 
-import static com.sun.tools.jdeps.Module.*;
-
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +46,7 @@ public abstract class JdepsWriter {
         this.showModule = showModule;
     }
 
-    abstract void generateOutput(Iterable<Archive> archives, Analyzer analyzer) throws IOException;
+    abstract void generateOutput(Collection<Archive> archives, Analyzer analyzer) throws IOException;
 
     public static class DotFileWriter extends JdepsWriter {
         final boolean showLabel;
@@ -59,24 +59,30 @@ public abstract class JdepsWriter {
         }
 
         @Override
-        void generateOutput(Iterable<Archive> archives, Analyzer analyzer) throws IOException {
+        void generateOutput(Collection<Archive> archives, Analyzer analyzer)
+                throws IOException
+        {
             // output individual .dot file for each archive
             if (type != SUMMARY) {
-                for (Archive archive : archives) {
-                    if (analyzer.hasDependences(archive)) {
-                        Path dotfile = outputDir.resolve(archive.getName() + ".dot");
-                        try (PrintWriter pw = new PrintWriter(Files.newOutputStream(dotfile));
-                             DotFileFormatter formatter = new DotFileFormatter(pw, archive)) {
-                            analyzer.visitDependences(archive, formatter);
-                        }
-                    }
-                }
+                archives.stream()
+                        .filter(analyzer::hasDependences)
+                        .forEach(archive -> {
+                            Path dotfile = outputDir.resolve(archive.getName() + ".dot");
+                            try (PrintWriter pw = new PrintWriter(Files.newOutputStream(dotfile));
+                                 DotFileFormatter formatter = new DotFileFormatter(pw, archive)) {
+                                analyzer.visitDependences(archive, formatter);
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
             }
             // generate summary dot file
             generateSummaryDotFile(archives, analyzer);
         }
 
-        private void generateSummaryDotFile(Iterable<Archive> archives, Analyzer analyzer) throws IOException {
+        private void generateSummaryDotFile(Collection<Archive> archives, Analyzer analyzer)
+                throws IOException
+        {
             // If verbose mode (-v or -verbose option),
             // the summary.dot file shows package-level dependencies.
             Analyzer.Type summaryType =
@@ -85,15 +91,13 @@ public abstract class JdepsWriter {
             try (PrintWriter sw = new PrintWriter(Files.newOutputStream(summary));
                  SummaryDotFile dotfile = new SummaryDotFile(sw, summaryType)) {
                 for (Archive archive : archives) {
-                    if (!archive.isEmpty()) {
-                        if (type == PACKAGE || type == SUMMARY) {
-                            if (showLabel) {
-                                // build labels listing package-level dependencies
-                                analyzer.visitDependences(archive, dotfile.labelBuilder(), PACKAGE);
-                            }
+                    if (type == PACKAGE || type == SUMMARY) {
+                        if (showLabel) {
+                            // build labels listing package-level dependencies
+                            analyzer.visitDependences(archive, dotfile.labelBuilder(), PACKAGE);
                         }
-                        analyzer.visitDependences(archive, dotfile, summaryType);
                     }
+                    analyzer.visitDependences(archive, dotfile, summaryType);
                 }
             }
         }
@@ -116,7 +120,7 @@ public abstract class JdepsWriter {
             @Override
             public void visitDependence(String origin, Archive originArchive,
                                         String target, Archive targetArchive) {
-                String tag = toTag(target, targetArchive);
+                String tag = toTag(originArchive, target, targetArchive);
                 writer.format("   %-50s -> \"%s\";%n",
                               String.format("\"%s\"", origin),
                               tag.isEmpty() ? target
@@ -142,8 +146,9 @@ public abstract class JdepsWriter {
             @Override
             public void visitDependence(String origin, Archive originArchive,
                                         String target, Archive targetArchive) {
+
                 String targetName = type == PACKAGE ? target : targetArchive.getName();
-                if (isJDKModule(targetArchive)) {
+                if (targetArchive.getModule().isJDK()) {
                     Module m = (Module)targetArchive;
                     String n = showProfileOrModule(m);
                     if (!n.isEmpty()) {
@@ -175,7 +180,7 @@ public abstract class JdepsWriter {
                         edges.putIfAbsent(originArchive, new HashMap<>());
                         edges.get(originArchive).putIfAbsent(targetArchive, new StringBuilder());
                         StringBuilder sb = edges.get(originArchive).get(targetArchive);
-                        String tag = toTag(target, targetArchive);
+                        String tag = toTag(originArchive, target, targetArchive);
                         addLabel(sb, origin, target, tag);
                     }
 
@@ -193,21 +198,27 @@ public abstract class JdepsWriter {
 
     static class SimpleWriter extends JdepsWriter {
         final PrintWriter writer;
-        SimpleWriter(PrintWriter writer, Analyzer.Type type, boolean showProfile, boolean showModule) {
+        SimpleWriter(PrintWriter writer, Analyzer.Type type,
+                     boolean showProfile, boolean showModule) {
             super(type, showProfile, showModule);
             this.writer = writer;
         }
 
         @Override
-        void generateOutput(Iterable<Archive> archives, Analyzer analyzer) {
+        void generateOutput(Collection<Archive> archives, Analyzer analyzer) {
             RawOutputFormatter depFormatter = new RawOutputFormatter(writer);
             RawSummaryFormatter summaryFormatter = new RawSummaryFormatter(writer);
             for (Archive archive : archives) {
-                if (!archive.isEmpty()) {
+                // print summary
+                if (showModule && archive.getModule().isNamed()) {
+                    summaryFormatter.showModuleRequires(archive.getModule());
+                } else {
                     analyzer.visitDependences(archive, summaryFormatter, SUMMARY);
-                    if (analyzer.hasDependences(archive) && type != SUMMARY) {
-                        analyzer.visitDependences(archive, depFormatter);
-                    }
+                }
+
+                if (analyzer.hasDependences(archive) && type != SUMMARY) {
+                    // print the class-level or package-level dependences
+                    analyzer.visitDependences(archive, depFormatter);
                 }
             }
         }
@@ -223,8 +234,8 @@ public abstract class JdepsWriter {
             @Override
             public void visitDependence(String origin, Archive originArchive,
                                         String target, Archive targetArchive) {
-                String tag = toTag(target, targetArchive);
-                if (type == VERBOSE) {
+                String tag = toTag(originArchive, target, targetArchive);
+                if (showModule || type == VERBOSE) {
                     writer.format("   %-50s -> %-50s %s%n", origin, target, tag);
                 } else {
                     if (!origin.equals(pkg)) {
@@ -246,15 +257,32 @@ public abstract class JdepsWriter {
             @Override
             public void visitDependence(String origin, Archive originArchive,
                                         String target, Archive targetArchive) {
+
                 String targetName = targetArchive.getPathName();
-                if (isJDKModule(targetArchive)) {
-                    targetName = ((Module) targetArchive).name();
+                if (targetArchive.getModule().isNamed()) {
+                    targetName = targetArchive.getModule().name();
                 }
                 writer.format("%s -> %s", originArchive.getName(), targetName);
-                if (showProfile && isJDKModule(targetArchive)) {
+                if (showProfile && targetArchive.getModule().isJDK()) {
                     writer.format(" (%s)", target);
                 }
                 writer.format("%n");
+            }
+
+            public void showModuleRequires(Module module) {
+                if (!module.isNamed())
+                    return;
+
+                writer.format("module %s", module.name());
+                if (module.isAutomatic())
+                    writer.format(" (automatic)");
+                writer.println();
+                module.requires().keySet()
+                        .stream()
+                        .sorted()
+                        .forEach(req -> writer.format(" requires %s%s%n",
+                                                      module.requires.get(req) ? "public " : "",
+                                                      req));
             }
         }
     }
@@ -266,24 +294,32 @@ public abstract class JdepsWriter {
      *
      * For non-JDK archives, this method returns the file name of the archive.
      */
-    String toTag(String name, Archive source) {
-        if (!isJDKModule(source)) {
-            return source.getName();
+    String toTag(Archive source, String name, Archive target) {
+        if (source == target || !target.getModule().isNamed()) {
+            return target.getName();
         }
 
-        Module module = (Module)source;
-        boolean isExported = false;
-        if (type == CLASS || type == VERBOSE) {
-            isExported = module.isExported(name);
-        } else {
-            isExported = module.isExportedPackage(name);
+        Module module = target.getModule();
+        String pn = name;
+        if ((type == CLASS || type == VERBOSE)) {
+            int i = name.lastIndexOf('.');
+            pn = i > 0 ? name.substring(0, i) : "";
         }
-        if (isExported) {
-            // exported API
+
+        // exported API
+        boolean jdkunsupported = Module.isJDKUnsupported(module, pn);
+        if (module.isExported(pn) && !jdkunsupported) {
             return showProfileOrModule(module);
-        } else {
-            return "JDK internal API (" + source.getName() + ")";
         }
+
+        // JDK internal API
+        if (!source.getModule().isJDK() && module.isJDK()){
+            return "JDK internal API (" + module.name() + ")";
+        }
+
+        // qualified exports or inaccessible
+        boolean isExported = module.isExported(pn, source.getModule().name());
+        return module.name() + (isExported ?  " (qualified)" : " (internal)");
     }
 
     String showProfileOrModule(Module m) {

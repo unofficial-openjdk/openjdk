@@ -45,7 +45,7 @@ define SetupInterimModule
       DISABLE_SJAVAC := true, \
       SRC := $(LANGTOOLS_TOPDIR)/src/$(strip $1)/share/classes \
           $$(wildcard $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
-      EXCLUDES := sun, \
+      EXCLUDES := sun com/sun/tools/jdeps com/sun/tools/javap, \
       EXCLUDE_FILES := module-info.java, \
       COPY := .gif .png .xml .css .js javax.tools.JavaCompilerTool, \
       BIN := $(BUILDTOOLS_OUTPUTDIR)/override_modules/$(strip $1), \
@@ -60,7 +60,6 @@ endef
 
 $(eval $(call SetupInterimModule, java.compiler))
 $(eval $(call SetupInterimModule, jdk.compiler, java.compiler))
-#$(eval $(call SetupInterimModule, jdk.jdeps, jdk.compiler java.compiler java.xml))
 $(eval $(call SetupInterimModule, jdk.jdeps, jdk.compiler java.compiler))
 $(eval $(call SetupInterimModule, jdk.javadoc, java.compiler jdk.compiler))
 
