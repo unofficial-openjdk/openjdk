@@ -94,7 +94,6 @@ public class ClassFileReader {
     protected final List<String> skippedEntries = new ArrayList<>();
     protected ClassFileReader(Path path) {
         this.path = path;
-        this.entries = scan();
         this.baseFileName = path.getFileName() != null
                                 ? path.getFileName().toString()
                                 : path.toString();
@@ -165,7 +164,7 @@ public class ClassFileReader {
 
     protected Set<String> scan() {
         try {
-            ClassFile cf = ClassFile.read(path.toFile());
+            ClassFile cf = ClassFile.read(path);
             return Collections.singleton(cf.getName());
         } catch (ConstantPoolException|IOException e) {
             throw new ClassFileError(e);
