@@ -45,6 +45,8 @@ import sun.security.util.SecurityConstants;
 /**
  * Represents a layer of modules in the Java virtual machine.
  *
+ * <h2> Example </h2>
+ *
  * <p> The following example invokes the {@code resolve} method to resolve a
  * module named <em>myapp</em> with the {@link Configuration} for the boot
  * layer as the parent configuration. It then instantiates the configuration
@@ -54,22 +56,17 @@ import sun.security.util.SecurityConstants;
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     Configuration cf
- *         = Configuration.resolve(finder,
- *                                 Layer.boot().configuration(),
- *                                 ModuleFinder.empty(),
- *                                 "myapp");
+ *     Configuration cf = Configuration.resolve(finder,
+ *                                              Layer.boot().configuration(),
+ *                                              ModuleFinder.empty(),
+ *                                              "myapp");
  *
- *     Layer layer
- *         = Layer.createWithOneLoader(cf,
- *                                     Layer.boot(),
- *                                     ClassLoader.getSystemClassLoader());
+ *     ClassLoader scl = ClassLoader.getSystemClassLoader();
+ *
+ *     Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), scl);
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
- *
- * @apiNote As Layer is in java.lang.reflect then its method names may
- * need to follow the convention in this package.
  *
  * @since 9
  * @see Module#getLayer()
@@ -142,7 +139,7 @@ public final class Layer {
      * Configuration} to the Java virtual machine.
      * The {@link Configuration#parent() parent} of the given configuration is
      * the configuration that was to used to create the {@link Layer#parent()
-     * parent layer}.
+     * parentLayer}.
      *
      * <p> Modules are mapped to module-capable class loaders by means of the
      * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
@@ -150,24 +147,25 @@ public final class Layer {
      * ready to load from these modules before there are any attempts to load
      * classes or resources. </p>
      *
-     * <p> Creating a {@code Layer} may fail for several reasons: </p>
+     * <p> Creating a {@code Layer} can fail for the following reasons: </p>
      *
      * <ul>
      *
-     *     <li> Two or more modules with the same package (exported or
-     *          concealed) are mapped to the same class loader. </li>
+     *     <li><p> Two or more modules with the same package (exported or
+     *     concealed) are mapped to the same class loader. </p></li>
      *
-     *     <li> A module is mapped to a class loader that already has a module
-     *          of the same name defined to it. </li>
+     *     <li><p> A module is mapped to a class loader that already has a
+     *     module of the same name defined to it. </p></li>
      *
-     *     <li> A module is mapped to a class loader that has already defined
-     *          types in any of the packages in the module. </li>
+     *     <li><p> A module is mapped to a class loader that has already
+     *     defined types in any of the packages in the module. </p></li>
      *
      * </ul>
      *
-     * @implNote Some of the failure reasons listed cannot be detected in
-     * advance, hence it is possible for Layer.create to fail with some of the
-     * modules in the configuration defined to the run-time.
+     * @apiNote It is implementation specific as to whether creating a Layer is
+     * an atomic operation or not. Consequentially it is possible for this
+     * method to fail with some, but not all, modules defined to Java virtual
+     * machine.
      *
      * @param  cf
      *         The configuration to instantiate as a layer
@@ -225,6 +223,20 @@ public final class Layer {
      * ClassLoader#getParent() parent} of each class loader is the given
      * parent class loader.
      *
+     * <p> The class loaders created by this method implement <em>direct
+     * delegation</em> when loading types from modules. When {@link
+     * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
+     * load a class then it uses the package name of the class to map it to a
+     * module. The package may be in the module defined to the class loader.
+     * The package may be exported by a module in this layer to the module
+     * defined to this class loader. It may be in a package exported by a
+     * module in a parent layer. The class loader delegates to the class loader
+     * of the module, throwing {@code ClassNotFoundException} if not found by
+     * that class loader.
+     *
+     * When {@code loadClass} is invoked to load classes that do not map to a
+     * module then it delegates to the parent class loader. </p>
+     *
      * <p> If there is a security manager then the class loaders created by
      * this method will load classes and resources with privileges that are
      * restricted by the calling context of this method. </p>
@@ -266,17 +278,30 @@ public final class Layer {
      * Configuration} to the Java virtual machine. This method creates one
      * class loader and defines all modules to that class loader.
      *
-     * <p> Attempting to define all modules to the same class loader may fail
-     * for the following reasons:
+     * <p> The class loader created by this method implements <em>direct
+     * delegation</em> when loading types from modules. When its {@link
+     * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
+     * load a class then it uses the package name of the class to map it to a
+     * module. This may be a module in this layer and hence defined to the same
+     * class loader. It may be a package in a module in a parent layer that is
+     * exported to one or more of the modules in this layer. The class
+     * loader delegates to the class loader of the module, throwing {@code
+     * ClassNotFoundException} if not found by that class loader.
+     *
+     * When {@code loadClass} is invoked to load classes that do not map to a
+     * module then it delegates to the parent class loader. </p>
+     *
+     * <p> Attempting to create a layer with all modules defined to the same
+     * class loader can fail for the following reasons:
      *
      * <ul>
      *
-     *     <li> Overlapping packages: Two or more modules in the configuration
-     *          have the same package (exported or concealed). </li>
+     *     <li><p> <em>Overlapping packages</em>: Two or more modules in the
+     *     configuration have the same package (exported or concealed). </p></li>
      *
-     *     <li> Split delegation: The resulting class loader would need to
-     *          delegate to more than one class loader in order to load types
-     *          in a specific package. </li>
+     *     <li><p> <em>Split delegation</em>: The resulting class loader would
+     *     need to delegate to more than one class loader in order to load types
+     *     in a specific package. </p></li>
      *
      * </ul>
      *

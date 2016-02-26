@@ -205,33 +205,35 @@ public final class Configuration {
      * graph and modules exports are checked to ensure that two or more modules
      * do not export the same package to a module that reads both. </p>
      *
-     * <p> Resolution and the post-resolution consistency checks may fail for
-     * several reasons: </p>
+     * <p> Resolution and the post-resolution consistency checks can fail for
+     * following reasons: </p>
      *
      * <ul>
-     *     <li> A root module, or a direct or transitive dependency, is not
-     *          found. </li>
+     *     <li><p> A root module, or a direct or transitive dependency, is not
+     *     found. </p></li>
      *
-     *     <li> Some other error occurs when attempting to find a module.
-     *          Possible errors include I/O errors, errors detected parsing a
-     *          module descriptor ({@code module-info.class}) or two versions
-     *          of the same module are found in the same directory. </li>
+     *     <li><p> Some other error occurs when attempting to find a module.
+     *     Possible errors include I/O errors, errors detected parsing a module
+     *     descriptor ({@code module-info.class}) or two versions of the same
+     *     module are found in the same directory. </p></li>
      *
-     *     <li> A cycle is detected, say where module {@code m1} requires
-     *          module {@code m2} and {@code m2} requires {@code m1}. </li>
+     *     <li><p> A cycle is detected, say where module {@code m1} requires
+     *     module {@code m2} and {@code m2} requires {@code m1}. </p></li>
      *
-     *     <li> Two or more modules in the configuration export the same
-     *          package to a module that reads both. This includes the case
-     *          where a module {@code M} containing package {@code P} reads
-     *          another module that exports {@code P} to {@code M}. </li>
+     *     <li><p> Two or more modules in the configuration export the same
+     *     package to a module that reads both. This includes the case where a
+     *     module {@code M} containing package {@code P} reads another module
+     *     that exports {@code P} to {@code M}. </p></li>
      *
-     *     <li> Two or more modules in the configuration are specific to
-     *          non-equal operating system names, architectures or versions.
-     *          </li>
+     *     <li><p> Two or more modules in the configuration are specific to
+     *     different {@link ModuleDescriptor#osName() operating systems},
+     *     {@link ModuleDescriptor#osArch() architectures}, or {@link
+     *     ModuleDescriptor#osVersion() versions}. </p></li>
      *
-     *     <li> Other implementation specific checks, for example referential
-     *          integrity checks that fail where incompatible versions of
-     *          modules may not be combined in the same configuration. </li>
+     *     <li><p> Other implementation specific checks, for example referential
+     *     integrity checks that fail where different versions of tighly coupled
+     *     modules may not be combined in the same configuration. </p></li>
+     *
      * </ul>
      *
      * @param  beforeFinder
