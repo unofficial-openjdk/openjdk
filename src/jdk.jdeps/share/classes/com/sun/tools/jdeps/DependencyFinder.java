@@ -61,7 +61,6 @@ public class DependencyFinder {
     private final List<Module> modulepaths = new ArrayList<>();
     private final List<String> classes = new ArrayList<>();
     private final boolean compileTimeView;
-    private final ExecutorService pool = Executors.newFixedThreadPool(2);
 
     DependencyFinder(boolean compileTimeView) {
         this.compileTimeView = compileTimeView;
@@ -174,98 +173,105 @@ public class DependencyFinder {
         ConcurrentLinkedDeque<String> deque = new ConcurrentLinkedDeque<>();
         ConcurrentSkipListSet<String> doneClasses = new ConcurrentSkipListSet<>();
 
-        TaskBuilder builder = new TaskBuilder(finder, filter, apiOnly, deque, doneClasses);
-        // get the immediate dependencies of the input files
-        for (Archive source : roots) {
-            builder.task(source, deque);
-        }
-        builder.build();
+        TaskExecutor executor = new TaskExecutor(finder, filter, apiOnly, deque, doneClasses);
+        try {
+            // get the immediate dependencies of the input files
+            for (Archive source : roots) {
+                executor.task(source, deque);
+            }
+            executor.waitForTasksCompleted();
 
-        List<Archive> archives = Stream.concat(Stream.concat(roots.stream(),
-                                                             modulepaths.stream()),
-                                               classpaths.stream())
-                                       .collect(Collectors.toList());
+            List<Archive> archives = Stream.concat(Stream.concat(roots.stream(),
+                    modulepaths.stream()),
+                    classpaths.stream())
+                    .collect(Collectors.toList());
 
-        // Additional pass to find archive where dependences are identified
-        // and also any specified classes, if any.
-        // If -R is specified, perform transitive dependency analysis.
-        Deque<String> unresolved = new LinkedList<>(classes);
-        do {
-            String name;
-            while ((name = unresolved.poll()) != null) {
-                if (doneClasses.contains(name)) {
-                    continue;
-                }
-                if (compileTimeView) {
-                    final String cn = name + ".class";
-                    // parse all classes in the source archive
-                    Optional<Archive> source = archives.stream()
-                            .filter(a -> a.reader().entries().contains(cn))
-                            .findFirst();
-                    trace("%s compile time view %s%n", name, source.map(Archive::getName).orElse(" not found"));
-                    if (source.isPresent()) {
-                        builder.runTask(source.get(), deque);
+            // Additional pass to find archive where dependences are identified
+            // and also any specified classes, if any.
+            // If -R is specified, perform transitive dependency analysis.
+            Deque<String> unresolved = new LinkedList<>(classes);
+            do {
+                String name;
+                while ((name = unresolved.poll()) != null) {
+                    if (doneClasses.contains(name)) {
+                        continue;
                     }
-                }
-                ClassFile cf = null;
-                for (Archive archive : archives) {
-                    cf = archive.reader().getClassFile(name);
-
-                    if (cf != null) {
-                        String classFileName;
-                        try {
-                            classFileName = cf.getName();
-                        } catch (ConstantPoolException e) {
-                            throw new Dependencies.ClassFileError(e);
+                    if (compileTimeView) {
+                        final String cn = name + ".class";
+                        // parse all classes in the source archive
+                        Optional<Archive> source = archives.stream()
+                                .filter(a -> a.reader().entries().contains(cn))
+                                .findFirst();
+                        trace("%s compile time view %s%n", name, source.map(Archive::getName).orElse(" not found"));
+                        if (source.isPresent()) {
+                            executor.runTask(source.get(), deque);
                         }
-                        if (!doneClasses.contains(classFileName)) {
-                            // if name is a fully-qualified class name specified
-                            // from command-line, this class might already be parsed
-                            doneClasses.add(classFileName);
-                            for (Dependency d : finder.findDependencies(cf)) {
-                                if (depth == 0) {
-                                    // ignore the dependency
-                                    archive.addClass(d.getOrigin());
-                                    break;
-                                } else if (filter.accepts(d) && filter.accept(archive)) {
-                                    // continue analysis on non-JDK classes
-                                    archive.addClass(d.getOrigin(), d.getTarget());
-                                    String cn = d.getTarget().getName();
-                                    if (!doneClasses.contains(cn) && !deque.contains(cn)) {
-                                        deque.add(cn);
+                    }
+                    ClassFile cf = null;
+                    for (Archive archive : archives) {
+                        cf = archive.reader().getClassFile(name);
+
+                        if (cf != null) {
+                            String classFileName;
+                            try {
+                                classFileName = cf.getName();
+                            } catch (ConstantPoolException e) {
+                                throw new Dependencies.ClassFileError(e);
+                            }
+                            if (!doneClasses.contains(classFileName)) {
+                                // if name is a fully-qualified class name specified
+                                // from command-line, this class might already be parsed
+                                doneClasses.add(classFileName);
+                                for (Dependency d : finder.findDependencies(cf)) {
+                                    if (depth == 0) {
+                                        // ignore the dependency
+                                        archive.addClass(d.getOrigin());
+                                        break;
+                                    } else if (filter.accepts(d) && filter.accept(archive)) {
+                                        // continue analysis on non-JDK classes
+                                        archive.addClass(d.getOrigin(), d.getTarget());
+                                        String cn = d.getTarget().getName();
+                                        if (!doneClasses.contains(cn) && !deque.contains(cn)) {
+                                            deque.add(cn);
+                                        }
+                                    } else {
+                                        // ensure that the parsed class is added the archive
+                                        archive.addClass(d.getOrigin());
                                     }
-                                } else {
-                                    // ensure that the parsed class is added the archive
-                                    archive.addClass(d.getOrigin());
                                 }
                             }
+                            break;
                         }
-                        break;
+                    }
+                    if (cf == null) {
+                        doneClasses.add(name);
                     }
                 }
-                if (cf == null) {
-                    doneClasses.add(name);
-                }
-            }
-            unresolved = deque;
-            deque = new ConcurrentLinkedDeque<>();
-        } while (!unresolved.isEmpty() && depth-- > 0);
+                unresolved = deque;
+                deque = new ConcurrentLinkedDeque<>();
+            } while (!unresolved.isEmpty() && depth-- > 0);
+        } finally {
+            executor.shutdown();
+        }
      }
 
     /**
-     * TaskBuilder creates FutureTask to analyze all classes in the givne archive
+     * TaskExecutor creates FutureTask to analyze all classes in a given archive
      */
-    private class TaskBuilder {
+    private class TaskExecutor {
+        final ExecutorService pool;
         final Dependency.Finder finder;
         final JdepsFilter filter;
         final boolean apiOnly;
         final Set<String> doneClasses;
         final Map<Archive, FutureTask<Void>> tasks = new HashMap<>();
-        TaskBuilder(Dependency.Finder finder,
-                    JdepsFilter filter,
-                    boolean apiOnly,
-                    ConcurrentLinkedDeque<String> deque,
-                    Set<String> doneClasses) {
+
+        TaskExecutor(Dependency.Finder finder,
+                     JdepsFilter filter,
+                     boolean apiOnly,
+                     ConcurrentLinkedDeque<String> deque,
+                     Set<String> doneClasses) {
+            this.pool = Executors.newFixedThreadPool(2);
             this.finder = finder;
             this.filter = filter;
             this.apiOnly = apiOnly;
@@ -322,6 +328,10 @@ public class DependencyFinder {
             return task;
         }
 
+        /*
+         * This task will parse all class files of the given archive, if it's a new task.
+         * This method waits until the task is completed.
+         */
         void runTask(Archive archive, final ConcurrentLinkedDeque<String> deque) {
             if (tasks.containsKey(archive))
                 return;
@@ -334,7 +344,11 @@ public class DependencyFinder {
                 throw new Error(e);
             }
         }
-        void build() {
+
+        /*
+         * Waits until all submitted tasks are completed.
+         */
+        void waitForTasksCompleted() {
             try {
                 for (FutureTask<Void> t : tasks.values()) {
                     if (t.isDone())
@@ -346,6 +360,13 @@ public class DependencyFinder {
             } catch (InterruptedException|ExecutionException e) {
                 throw new Error(e);
             }
+        }
+
+        /*
+         * Shutdown the executor service.
+         */
+        void shutdown() {
+            pool.shutdown();
         }
 
         /**
