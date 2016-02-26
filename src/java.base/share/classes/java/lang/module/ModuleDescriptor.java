@@ -1417,26 +1417,27 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from an input stream.
+     * Reads the binary form of a module declaration from an input stream
+     * as a module descriptor.
      *
      * <p> If the descriptor encoded in the input stream does not indicate a
      * set of concealed packages then the {@code packageFinder} will be
      * invoked.  The packages it returns, except for those indicated as
      * exported in the encoded descriptor, will be considered to be concealed.
      * If the {@code packageFinder} throws an {@link UncheckedIOException} then
-     * the original {@link IOException} will be re-thrown.
-     *
-     * @apiNote The {@code packageFinder} parameter is for use when reading
-     * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
      * or reported as an {@code InvalidModuleDescriptorException}. If this
-     * method fails with a {@code InvalidModuleDescriptorException} or {@code
+     * method fails with an {@code InvalidModuleDescriptorException} or {@code
      * IOException} then it may do so after some, but not all, bytes have
      * been read from the input stream. It is strongly recommended that the
-     * stream be promptly closed and discarded if an exception occurs.
+     * stream be promptly closed and discarded if an exception occurs. </p>
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
      *
      * @param  in
      *         The input stream
@@ -1459,7 +1460,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from an input stream.
+     * Reads the binary form of a module declaration from an input stream
+     * as a module descriptor.
      *
      * @param  in
      *         The input stream
@@ -1476,29 +1478,30 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from a byte buffer.
+     * Reads the binary form of a module declaration from a byte buffer
+     * as a module descriptor.
      *
      * <p> If the descriptor encoded in the byte buffer does not indicate a
      * set of concealed packages then the {@code packageFinder} will be
      * invoked.  The packages it returns, except for those indicated as
-     * exported in the encoded descriptor, will be considered to be concealed.
+     * exported in the encoded descriptor, will be considered to be
+     * concealed. </p>
      *
      * <p> The module descriptor is read from the buffer stating at index
      * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
      * position} when this method is invoked. Upon return the buffer's position
      * will be equal to {@code p + n} where {@code n} is the number of bytes
-     * read from the buffer.
-     *
-     * @apiNote The {@code packageFinder} parameter is for use when reading
-     * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * read from the buffer. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
      * or reported as an {@code InvalidModuleDescriptorException}. If this
      * method fails with an {@code InvalidModuleDescriptorException} then it
-     * may do so after some, but not all,
-     * bytes have been read.
+     * may do so after some, but not all, bytes have been read. </p>
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
      *
      * @param  bb
      *         The byte buffer
@@ -1517,7 +1520,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from a byte buffer.
+     * Reads the binary form of a module declaration from a byte buffer
+     * as a module descriptor.
      *
      * @param  bb
      *         The byte buffer
