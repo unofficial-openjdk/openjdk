@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * The configuration that is the result of resolution or service binding.
  *
  *
- * <h2> Resolution </h2>
+ * <h2><a name="resolution">Resolution</a></h2>
  *
  * <p> Resolution is the process of computing the transitive closure of a set
  * of root modules over a set of observable modules with respect to a
@@ -99,7 +99,7 @@ import java.util.stream.Collectors;
  * parent configurations. </p>
  *
  *
- * <h2> Service binding </h2>
+ * <h2><a name="servicebinding">Service binding</a></h2>
  *
  * <p> Service binding is the process of augmenting a configuration with
  * modules from the set of observable modules induced by the service-use

@@ -42,8 +42,8 @@ import java.util.stream.Stream;
 
 /**
  * A finder of modules. A {@code ModuleFinder} is used to find modules during
- * {@link Configuration#resolve resolution} or {@link Configuration#bind()
- * service binding}.
+ * <a href="Configuration.html#resolution">resolution</a> or
+ * <a href="Configuration.html#servicebinding">service binding</a>.
  *
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
@@ -212,16 +212,20 @@ public interface ModuleFinder {
      *         <li><p> The {@code .jar} suffix is removed. </p></li>
      *
      *         <li><p> If the name matches the regular expression {@code
-     *         "-(\\d+(\\.|$))"} then the subsequence that matches the pattern
-     *         is parsed as a {@link ModuleDescriptor.Version}. All characters
-     *         that follow the matching subsequence are ignored. The matching
-     *         subsequence is also ignored if it cannot be parsed as a {@code
-     *         Version}. </p></li>
+     *         "-(\\d+(\\.|$))"} then the module name will be derived from the
+     *         subsequence proceeding the hyphen. The subsequence after the
+     *         hyphen is parsed as a {@link ModuleDescriptor.Version} and
+     *         ignored if it cannot be parsed as a {@code Version}. </p></li>
      *
      *         <li><p> For the module name, then all non-alphanumeric
      *         characters ({@code [^A-Za-z0-9])} are replaced with a dot
      *         ({@code "."}), all repeating dots are replaced with one dot,
      *         and all leading and trailing dots are removed. </p></li>
+     *
+     *         <li><p> As an example, a JAR file named {@code foo-bar.jar} will
+     *         derive a module name {@code foo.bar} and no version. A JAR file
+     *         named {@code foo-1.2.3-SNAPSHOT.jar} will derive a module name
+     *         {@code foo} and {@code 1.2.3-SNAPSHOT} as the version. </p></li>
      *
      *     </ul></li>
      *
