@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,17 @@ import sun.security.util.SecurityConstants;
  * Creating a layer informs the Java virtual machine about the classes that
  * may be loaded from modules so that the Java virtual machine knows which
  * module that each class is a member of. </p>
+ *
+ * <p> Each layer, except the {@link #empty() empty} layer, has a {@link
+ * #parent() parent}. That is, layers are arranged strictly hierarchical. </p>
+ *
+ * <p> Creating a layer creates a {@link Module} object for each {@link
+ * ModuleDescriptor} in the configuration. For each {@link
+ * java.lang.module.Configuration.ReadDependence ReadDependence}, then the
+ * {@code Module} {@link Module#canRead reads} the corresponding run-time
+ * {@code Module}, which may be in the same layer or a parent layer.
+ * Each {@code Module} exports the packages described by its {@code
+ * ModuleDescriptor}. </p>
  *
  * <p> The {@link #createWithOneLoader createWithOneLoader} and {@link
  * #createWithManyLoaders createWithManyLoaders} methods provide convenient ways
@@ -458,9 +469,9 @@ public final class Layer {
 
 
     /**
-     * Returns the {@code Configuration} used to create this layer.
+     * Returns the configuration for this layer.
      *
-     * @return The configuration used to create this layer
+     * @return The configuration for this layer
      */
     public Configuration configuration() {
         return cf;
@@ -479,7 +490,7 @@ public final class Layer {
 
 
     /**
-     * Returns a set of the {@code Module}s in this layer.
+     * Returns a set of the modules in this layer.
      *
      * @return A possibly-empty unmodifiable set of the modules in this layer
      */
@@ -490,8 +501,8 @@ public final class Layer {
 
 
     /**
-     * Returns the {@code Module} with the given name in this layer, or if not
-     * in this layer, the {@linkplain #parent parent} layer.
+     * Returns the module with the given name in this layer, or if not in this
+     * layer, the {@linkplain #parent parent} layer.
      *
      * @param  name
      *         The name of the module to find
@@ -509,9 +520,9 @@ public final class Layer {
 
 
     /**
-     * Returns the {@code ClassLoader} for the {@code Module} with the given
-     * name. If a module of the given name is not in this layer then the {@link
-     * #parent} layer is checked.
+     * Returns the {@code ClassLoader} for the module with the given name. If
+     * a module of the given name is not in this layer then the {@link #parent}
+     * layer is checked.
      *
      * <p> If there is a security manager then its {@code checkPermission}
      * method is called with a {@code RuntimePermission("getClassLoader")}

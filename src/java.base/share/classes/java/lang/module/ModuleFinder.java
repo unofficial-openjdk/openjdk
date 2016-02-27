@@ -192,7 +192,9 @@ public interface ModuleFinder {
      * </ol>
      *
      * The module finder locates modules by searching each directory, exploded
-     * module, or packaged module in array index order.
+     * module, or packaged module in array index order. It finds the first
+     * occurrence of a module with a given name and ignores other modules of
+     * that name that appear later in the sequence.
      *
      * <p> If an element is a path to a directory of modules then each entry in
      * the directory is a packaged module or the top-level directory of an
@@ -282,7 +284,7 @@ public interface ModuleFinder {
      *
      * @param entries
      *        A possibly-empty array of paths to directories of modules
-     *        or paths to packaged modules
+     *        or paths to packaged or exploded modules
      *
      * @return A {@code ModuleFinder} that locates modules on the file system
      */

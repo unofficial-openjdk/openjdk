@@ -413,7 +413,7 @@ class ModulePath implements ConfigurableModuleFinder {
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
             = new ModuleDescriptor.Builder(mn, true)
-                .requires(Requires.Modifier.SYNTHETIC, "java.base");
+                .requires(Requires.Modifier.MANDATED, "java.base");
         if (vs != null)
             builder.version(vs);
 

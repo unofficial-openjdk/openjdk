@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package java.lang;
 
 import java.io.InputStream;
@@ -1580,7 +1581,7 @@ public abstract class ClassLoader {
      * to be the system class loader. During construction, the class loader
      * should take great care to avoid calling {@code getSystemClassLoader()}.
      * If circular initialization of the system class loader is detected then
-     * an unspecified error is thrown.
+     * an unspecified error or exception is thrown.
      *
      * <p> If a security manager is present, and the invoker's class loader is
      * not <tt>null</tt> and the invoker's class loader is not the same as or
