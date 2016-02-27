@@ -66,13 +66,15 @@ import java.util.stream.Stream;
  * <p> The {@link #find(String) find} and {@link #findAll() findAll} methods
  * defined here can fail for several reasons. These include include I/O errors,
  * errors detected parsing a module descriptor ({@code module-info.class}), or
- * in the case of {@code ModuleFinder} based on a sequence of directories,
- * that two or more versions of the module are found in the same directory.
+ * in the case of {@code ModuleFinder} returned by {@link #of ModuleFinder.of},
+ * that two or more modules with the same name are found in a directory.
  * When an error is detected then these methods throw {@link FindException
- * FindException} with a {@link Throwable#getCause cause} where appropriate.
+ * FindException} with an appropriate {@link Throwable#getCause cause}.
  * The behavior of a {@code ModuleFinder} after a {@code FindException} is
- * thrown is undefined. It is recommended that the {@code ModuleFinder} be
- * discarded after an exception is thrown. </p>
+ * thrown is undefined. For example, invoking {@code find} after an exception
+ * is thrown may or may not scan the same modules that lead to the exception.
+ * It is recommended that a module finder be discarded after an exception is
+ * thrown. </p>
  *
  * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
@@ -181,25 +183,36 @@ public interface ModuleFinder {
      * Creates a module finder that locates modules on the file system by
      * searching a sequence of directories and/or packaged modules.
      *
-     * Each element in the given array is a path to a directory of modules, a
-     * path to the <em>top-level</em> directory of an <em>exploded module</em>,
-     * or a path to a packaged module. Each entry in a directory of modules is
-     * a packaged module or the top-level directory of an exploded module.
+     * Each element in the given array is one of:
+     * <ol>
+     *     <li><p> A path to a directory of modules.</p></li>
+     *     <li><p> A path to the <em>top-level</em> directory of an
+     *         <em>exploded module</em>. </p></li>
+     *     <li><p> A path to a <em>packaged module</em>. </p></li>
+     * </ol>
      *
-     * If an element in the array is a path to a directory, and that directory
-     * contains a file named {@code module-info.class}, then the directory
-     * is treated as an exploded module rather than a directory of modules.
+     * The module finder locates modules by searching each directory, exploded
+     * module, or packaged module in array index order.
      *
-     * Modules are located by the resulting {@code ModuleFinder} by searching
-     * the module directories or packaged/exploded modules in array index order.
+     * <p> If an element is a path to a directory of modules then each entry in
+     * the directory is a packaged module or the top-level directory of an
+     * exploded module. The module finder's {@link #find(String) find} or
+     * {@link #findAll() findAll} methods throw {@link FindException} if a
+     * directory containing more than one module with the same name is
+     * encountered. </p>
      *
-     * <p> This method supports modules that are packaged as JAR files. A JAR
-     * file with a {@code module-info.class} in the top-level directory of the
-     * JAR file is a modular JAR and is an  <em>explicit module</em>. A JAR
-     * file that does not have a {@code module-info.class} in the top-level
-     * directory is an {@link ModuleDescriptor#isAutomatic automatic} module.
-     * The {@link ModuleDescriptor} for an automatic module is created as
-     * follows:
+     * <p> If an element in the array is a path to a directory, and that
+     * directory contains a file named {@code module-info.class}, then the
+     * directory is treated as an exploded module rather than a directory of
+     * modules. </p>
+     *
+     * <p> The module finder returned by this method supports modules that are
+     * packaged as JAR files. A JAR file with a {@code module-info.class} in
+     * the top-level directory of the JAR file is a modular JAR and is an
+     * <em>explicit module</em>. A JAR file that does not have a {@code
+     * module-info.class} in the top-level directory is an {@link
+     * ModuleDescriptor#isAutomatic automatic} module. The {@link
+     * ModuleDescriptor} for an automatic module is created as follows:
      *
      * <ul>
      *
@@ -251,8 +264,12 @@ public interface ModuleFinder {
      *
      * </ul>
      *
-     * <p> In addition to JAR files, an implementation may also support
-     * modules that are packaged in other implementation specific formats. </p>
+     * <p> In addition to JAR files, an implementation may also support modules
+     * that are packaged in other implementation specific module formats. As
+     * with automatic modules, the contents of a packaged or exploded module
+     * may need to be <em>scanned</em> in order to determine the packages in
+     * the module. If a {@code .class} file that corresponds to a class in an
+     * unnamed package is encountered then {@code FindException} is thrown. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are directories or packaged modules.

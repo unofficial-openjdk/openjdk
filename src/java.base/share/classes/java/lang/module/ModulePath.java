@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -411,7 +412,8 @@ class ModulePath implements ConfigurableModuleFinder {
 
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn, true).requires("java.base");
+            = new ModuleDescriptor.Builder(mn, true)
+                .requires(Requires.Modifier.SYNTHETIC, "java.base");
         if (vs != null)
             builder.version(vs);
 

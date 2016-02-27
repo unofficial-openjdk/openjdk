@@ -91,12 +91,13 @@ import java.util.stream.Collectors;
  * simplicity, this example omits the implicitly declared dependence on the
  * {@code java.base} module.
  *
+ * <a name="automaticmoduleresolution"></a>
  * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive
  * treatment during resolution. Each automatic module is resolved as if it
  * reads all other modules in the configuration and all parent configurations.
  * Each automatic module is also resolved as if it {@code requires public} all
  * other automatic modules in the configuration (and all automatic modules in
- * parent configurations. </p>
+ * parent configurations). </p>
  *
  *
  * <h2><a name="servicebinding">Service binding</a></h2>
@@ -140,7 +141,7 @@ import java.util.stream.Collectors;
  * implementations of a service type. </p>
  *
  *
- * <h2> Example </h2>
+ * <h3> Example </h3>
  *
  * <p> The following example invokes the {@code resolve} method to resolve a
  * module named <em>myapp</em> with the configuration for the boot layer as

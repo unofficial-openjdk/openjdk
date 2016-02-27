@@ -43,15 +43,43 @@ import sun.security.util.SecurityConstants;
 
 
 /**
- * Represents a layer of modules in the Java virtual machine.
+ * A layer of modules in the Java virtual machine.
  *
- * <h2> Example </h2>
+ * <p> A layer is created from a graph of modules that is the {@link
+ * Configuration} and a function that maps each module to a {@link ClassLoader}.
+ * Creating a layer informs the Java virtual machine about the classes that
+ * may be loaded from modules so that the Java virtual machine knows which
+ * module that each class is a member of. </p>
  *
- * <p> The following example invokes the {@code resolve} method to resolve a
- * module named <em>myapp</em> with the {@link Configuration} for the boot
- * layer as the parent configuration. It then instantiates the configuration
- * as a {@code Layer}. In the example then all modules in the configuration
- * are defined to the same class loader. </p>
+ * <p> The {@link #createWithOneLoader createWithOneLoader} and {@link
+ * #createWithManyLoaders createWithManyLoaders} methods provide convenient ways
+ * to create a {@code Layer} where all modules are mapped to a single class
+ * loader or where each module is mapped to its own class loader. The {@link
+ * #create create} method is for more advanced cases where modules are mapped
+ * to custom class loaders by means of a function specified to the method. </p>
+ *
+ * <p> A Java virtual machine has at least one layer, the {@link #boot() boot}
+ * layer, that is created when the Java virtual machine is started. The
+ * <em>system modules</em>, including {@code java.base}, are in the boot layer.
+ * The modules in the boot layer are mapped to the bootstrap class loader and
+ * other class loaders that are built-in into the Java virtual machine.
+ * The boot layer will often be the {@link #parent() parent} when creating
+ * additional layers. </p>
+ *
+ * <p> As when creating a {@code Configuration},
+ * {@link ModuleDescriptor#isAutomatic() automatic} receive
+ * <a href="../module/Configuration.html#automaticmoduleresolution">special
+ * treatment</a> when creating a layer. Each automatic module is created in the
+ * Java virtual machine so that so it {@link Module#canRead reads} all unnamed
+ * modules (both present and future) in the Java virtual machine. </p>
+ *
+ * <h3> Example usage: </h3>
+ *
+ * <p> This example invokes the {@link Configuration#resolve
+ * Configuration.resolve} method to resolve a module named <em>myapp</em>. It
+ * uses the configuration for the boot layer as the parent configuration. It
+ * then <em>instantiates</em> the configuration as a {@code Layer}. In the
+ * example then all modules defined to the same class loader. </p>
  *
  * <pre>{@code
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
@@ -74,9 +102,11 @@ import sun.security.util.SecurityConstants;
 
 public final class Layer {
 
-
     /**
      * Finds the class loader for a module.
+     *
+     * @apiNote Should we eliminate this interface and use
+     * {@code Function<String, ClassLoader>} instead?
      *
      * @see Layer#create
      * @since 9
@@ -162,10 +192,10 @@ public final class Layer {
      *
      * </ul>
      *
-     * @apiNote It is implementation specific as to whether creating a Layer is
-     * an atomic operation or not. Consequentially it is possible for this
-     * method to fail with some, but not all, modules defined to Java virtual
-     * machine.
+     * @apiNote It is implementation specific as to whether creating a Layer
+     * with this method is an atomic operation or not. Consequentially it is
+     * possible for this method to fail with some modules, but not all, defined
+     * to Java virtual machine.
      *
      * @param  cf
      *         The configuration to instantiate as a layer
@@ -229,7 +259,7 @@ public final class Layer {
      * load a class then it uses the package name of the class to map it to a
      * module. The package may be in the module defined to the class loader.
      * The package may be exported by a module in this layer to the module
-     * defined to this class loader. It may be in a package exported by a
+     * defined to the class loader. It may be in a package exported by a
      * module in a parent layer. The class loader delegates to the class loader
      * of the module, throwing {@code ClassNotFoundException} if not found by
      * that class loader.
@@ -524,13 +554,15 @@ public final class Layer {
 
 
     /**
-     * Returns the boot layer. Returns {@code null} if the boot layer has not
-     * been set.
+     * Returns the boot layer.
      *
      * <p> If there is a security manager then its {@code checkPermission}
      * method if first called with a {@code RuntimePermission("getBootLayer")}
      * permission to check that the caller is allowed access to the boot
      * {@code Layer}. </p>
+     *
+     * @apiNote This method returns {@code null} during startup and before
+     * the boot layer is fully initialized.
      *
      * @return The boot layer
      *
