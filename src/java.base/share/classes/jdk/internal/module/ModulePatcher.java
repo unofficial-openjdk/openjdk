@@ -190,7 +190,7 @@ public final class ModulePatcher {
                     Files.find(top, Integer.MAX_VALUE,
                             ((path, attrs) -> attrs.isRegularFile() &&
                                     path.toString().endsWith(".class")))
-                            .map(path -> toPackageName(top.relativize(path)))
+                            .map(path -> toPackageName(top, path))
                             .forEach(packages::add);
 
                 }
@@ -549,12 +549,12 @@ public final class ModulePatcher {
     /**
      * Derives a package name from a file path to a .class file.
      */
-    private static String toPackageName(Path path) {
-        String name = path.toString();
-        int index = name.lastIndexOf(File.separatorChar);
-        if (index == -1)
-            failUnnamedPackage(path, name);
-        return name.substring(0, index).replace(File.separatorChar, '.');
+    private static String toPackageName(Path top, Path file) {
+        Path entry = top.relativize(file);
+        Path parent = entry.getParent();
+        if (parent == null)
+            failUnnamedPackage(file, entry.toString());
+        return parent.toString().replace(File.separatorChar, '.');
     }
 
     /**
