@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -41,16 +40,8 @@ public final class HelloPlugin implements TransformerPlugin {
 
     private static final String OUTPUT_FILE = "customplugin.txt";
     public static final String NAME = "hello";
-    private final static PluginOption NAME_OPTION
-            = new PluginOption.Builder(NAME).
-            description(NAME + "-description").build();
 
     public static boolean called;
-
-    @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
 
     @Override
     public String getName() {
@@ -81,10 +72,5 @@ public final class HelloPlugin implements TransformerPlugin {
     @Override
     public String getDescription() {
         return NAME + "-description";
-    }
-
-    @Override
-    public void configure(Map<PluginOption, String> config) {
-
     }
 }

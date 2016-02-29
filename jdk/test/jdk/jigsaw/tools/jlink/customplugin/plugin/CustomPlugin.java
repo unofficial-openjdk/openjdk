@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
@@ -34,16 +33,7 @@ public class CustomPlugin implements TransformerPlugin {
 
     private final static String NAME = "custom-plugin";
 
-    private final static PluginOption NAME_OPTION = new PluginOption.Builder(NAME + "-option").
-            description(NAME + "-description").
-            argumentDescription(NAME + "-argument").build();
-
     public CustomPlugin() {
-    }
-
-    @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
     }
 
     @Override
@@ -67,8 +57,7 @@ public class CustomPlugin implements TransformerPlugin {
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
-
+    public void configure(Map<String, String> config) {
     }
 
     @Override

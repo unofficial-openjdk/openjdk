@@ -29,7 +29,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -174,6 +173,9 @@ public class JmodTask {
         ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
+        String osName;
+        String osArch;
+        String osVersion;
         Pattern dependenciesToHash;
         List<PathMatcher> excludes;
     }
@@ -258,28 +260,9 @@ public class JmodTask {
                      name);
             }
 
-            URI location = omref.get().location().get();
-            String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
-                fail(RuntimeException.class,
-                     "Selected module %s (%s) not in jmod or modular jar format",
-                     name,
-                     location);
-            }
+            URI uri = omref.get().location().get();
+            modPaths.put(name, Paths.get(uri));
 
-            // convert to file URIs
-            URI fileURI;
-            if (scheme.equalsIgnoreCase("jmod")) {
-                // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
-                String s = location.toString();
-                fileURI = URI.create(s.substring(5, s.length()-2));
-            } else {
-                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                String s = location.toString();
-                fileURI = URI.create(s.substring(4, s.length()-2));
-            }
-
-            modPaths.put(name, Paths.get(fileURI));
         }
         return modPaths;
     }
@@ -293,8 +276,8 @@ public class JmodTask {
                 throw new IOException("error opening jmod file", x);
             }
 
-            try (FileInputStream fis = new FileInputStream(options.jmodFile.toFile())) {
-                boolean found = printModuleDescriptor(fis);
+            try (InputStream in = Files.newInputStream(options.jmodFile)) {
+                boolean found = printModuleDescriptor(in);
                 if (!found)
                     throw new CommandException("err.module.descriptor.not.found");
                 return found;
@@ -313,11 +296,11 @@ public class JmodTask {
                   .collect(joining(", ", prefix, suffix));
     }
 
-    private boolean printModuleDescriptor(FileInputStream fis)
+    private boolean printModuleDescriptor(InputStream in)
         throws IOException
     {
         final String mi = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
-        try (BufferedInputStream bis = new BufferedInputStream(fis);
+        try (BufferedInputStream bis = new BufferedInputStream(in);
              ZipInputStream zis = new ZipInputStream(bis)) {
 
             ZipEntry e;
@@ -366,6 +349,18 @@ public class JmodTask {
                         s.forEach(p -> sb.append("\n  ").append(p));
                     }
 
+                    Optional<String> osname = md.osName();
+                    if (osname.isPresent())
+                        sb.append("\nOperating system name:\n  " + osname.get());
+
+                    Optional<String> osarch = md.osArch();
+                    if (osarch.isPresent())
+                        sb.append("\nOperating system architecture:\n  " + osarch.get());
+
+                    Optional<String> osversion = md.osVersion();
+                    if (osversion.isPresent())
+                        sb.append("\nOperating system version:\n  " + osversion.get());
+
                     try {
                         Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
                         m.setAccessible(true);
@@ -384,7 +379,7 @@ public class JmodTask {
                     } catch (ReflectiveOperationException x) {
                         throw new InternalError(x);
                     }
-                    out.print(sb.toString());
+                    out.println(sb.toString());
                     return true;
                 }
             }
@@ -407,13 +402,16 @@ public class JmodTask {
     }
 
     private class JmodFileWriter {
+        final ModuleFinder moduleFinder = options.moduleFinder;
         final List<Path> cmds = options.cmds;
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
         final List<Path> classpath = options.classpath;
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
-        final ModuleFinder moduleFinder = options.moduleFinder;
+        final String osName = options.osName;
+        final String osArch = options.osArch;
+        final String osVersion = options.osVersion;
         final Pattern dependenciesToHash = options.dependenciesToHash;
         final List<PathMatcher> excludes = options.excludes;
 
@@ -512,6 +510,10 @@ public class JmodTask {
                 // --main-class
                 if (mainClass != null)
                     extender.mainClass(mainClass);
+
+                // --os-name, --os-arch, --os-version
+                if (osName != null || osArch != null || osVersion != null)
+                    extender.targetPlatform(osName, osArch, osVersion);
 
                 // --module-version
                 if (moduleVersion != null)
@@ -992,6 +994,21 @@ public class JmodTask {
                         .withRequiredArg()
                         .withValuesConvertedBy(new ModuleVersionConverter());
 
+        OptionSpec<String> osName
+                = parser.accepts("os-name", getMessage("main.opt.os-name"))
+                        .withRequiredArg()
+                        .describedAs(getMessage("main.opt.os-name.arg"));
+
+        OptionSpec<String> osArch
+                = parser.accepts("os-arch", getMessage("main.opt.os-arch"))
+                        .withRequiredArg()
+                        .describedAs(getMessage("main.opt.os-arch.arg"));
+
+        OptionSpec<String> osVersion
+                = parser.accepts("os-version", getMessage("main.opt.os-version"))
+                        .withRequiredArg()
+                        .describedAs(getMessage("main.opt.os-version.arg"));
+
         OptionSpec<Void> version
                 = parser.accepts("version", getMessage("main.opt.version"));
 
@@ -1048,6 +1065,12 @@ public class JmodTask {
                 options.moduleVersion = opts.valueOf(moduleVersion);
             if (opts.has(mainClass))
                 options.mainClass = opts.valueOf(mainClass);
+            if (opts.has(osName))
+                options.osName = opts.valueOf(osName);
+            if (opts.has(osArch))
+                options.osArch = opts.valueOf(osArch);
+            if (opts.has(osVersion))
+                options.osVersion = opts.valueOf(osVersion);
             if (opts.has(hashDependencies)) {
                 options.dependenciesToHash = opts.valueOf(hashDependencies);
                 // if storing hashes of dependencies then the module path is required

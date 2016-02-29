@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Layer;
@@ -190,34 +191,21 @@ public class AutomaticModulesTest {
 
 
     /**
-     * Returns {@code true} if the configuration contains module mn1
-     * that reads module mn2.
+     * Basic test of a configuration created with automatic modules.
+     *   m1 requires m2*
+     *   m1 requires m3*
+     *   m2*
+     *   m3*
      */
-    static boolean reads(Configuration cf, String mn1, String mn2) {
-
-        Optional<ModuleDescriptor> omd1 = cf.findDescriptor(mn1);
-        if (!omd1.isPresent())
-            return false;
-
-        ModuleDescriptor md1 = omd1.get();
-        return cf.reads(md1).stream()
-                .map(Configuration.ReadDependence::descriptor)
-                .map(ModuleDescriptor::name)
-                .anyMatch(mn2::equals);
-    }
-
-    /**
-     * Basic test of a configuration created with automatic modules
-     */
-    public void testInConfiguration() throws IOException {
+    public void testConfiguration1() throws Exception {
         ModuleDescriptor m1
-            =  new ModuleDescriptor.Builder("m1")
+            = new ModuleDescriptor.Builder("m1")
                 .requires("m2")
                 .requires("m3")
                 .requires("java.base")
                 .build();
 
-        // m2 and m3 are simple JAR files
+        // m2 and m3 are automatic modules
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createJarFile(dir.resolve("m2.jar"), "p/T.class");
         createJarFile(dir.resolve("m3.jar"), "q/T.class");
@@ -225,13 +213,13 @@ public class AutomaticModulesTest {
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.concat(ModuleUtils.finderOf(m1),
-                                  ModuleFinder.of(dir));
+                ModuleFinder.of(dir));
 
         Configuration cf
             = Configuration.resolve(finder,
-                                    BOOT_CONFIGURATION,
-                                    ModuleFinder.empty(),
-                                    "m1");
+                BOOT_CONFIGURATION,
+                ModuleFinder.empty(),
+                "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.findDescriptor("m1").isPresent());
@@ -241,26 +229,177 @@ public class AutomaticModulesTest {
         ModuleDescriptor m2 = cf.findDescriptor("m2").get();
         ModuleDescriptor m3 = cf.findDescriptor("m3").get();
 
-        // m2 && m3 only require java.base
-        assertTrue(m2.requires().size() == 1);
-        assertTrue(m3.requires().size() == 1);
-
         // the modules in the boot Layer
         Set<String> bootModules = Layer.boot().modules().stream()
                 .map(Module::getName)
                 .collect(Collectors.toSet());
 
+        // m2 && m3 only require java.base
+        assertTrue(m2.requires().size() == 1);
+        assertTrue(m3.requires().size() == 1);
+
+        // readability
+
+        assertTrue(cf.reads(m1).size() == 3);
+        assertTrue(reads(cf, "m1", "java.base"));
         assertTrue(reads(cf, "m1", "m2"));
         assertTrue(reads(cf, "m1", "m3"));
-        bootModules.forEach(mn -> assertTrue(reads(cf, "m1", mn)));
 
         assertTrue(reads(cf, "m2", "m1"));
         assertTrue(reads(cf, "m2", "m3"));
-        bootModules.forEach(mn -> assertTrue(reads(cf, "m2", mn)));
+        testReadAllBootModules(cf, "m2");  // m2 reads all modules in boot layer
 
         assertTrue(reads(cf, "m3", "m1"));
         assertTrue(reads(cf, "m3", "m2"));
-        bootModules.forEach(mn -> assertTrue(reads(cf, "m3", mn)));
+        testReadAllBootModules(cf, "m3");  // m3 reads all modules in boot layer
+
+    }
+
+    /**
+     * Basic test of a configuration created with automatic modules
+     *   m1 requires m2
+     *   m2 requires m3*
+     *   m3*
+     *   m4*
+     */
+    public void testInConfiguration2() throws IOException {
+        ModuleDescriptor m1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("java.base")
+                .build();
+
+        ModuleDescriptor m2
+            =  new ModuleDescriptor.Builder("m2")
+                .requires("m3")
+                .requires("java.base")
+                .build();
+
+        // m3 and m4 are automatic modules
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createJarFile(dir.resolve("m3.jar"), "p/T.class");
+        createJarFile(dir.resolve("m4.jar"), "q/T.class");
+
+        // module finder locates m1 and the modules in the directory
+        ModuleFinder finder
+            = ModuleFinder.concat(ModuleUtils.finderOf(m1, m2),
+                                  ModuleFinder.of(dir));
+
+        Configuration cf
+            = Configuration.resolve(finder,
+                                    BOOT_CONFIGURATION,
+                                    ModuleFinder.empty(),
+                                    "m1", "m4");
+
+        assertTrue(cf.descriptors().size() == 4);
+        assertTrue(cf.findDescriptor("m1").isPresent());
+        assertTrue(cf.findDescriptor("m2").isPresent());
+        assertTrue(cf.findDescriptor("m3").isPresent());
+        assertTrue(cf.findDescriptor("m4").isPresent());
+
+
+        ModuleDescriptor m3 = cf.findDescriptor("m3").get();
+        ModuleDescriptor m4 = cf.findDescriptor("m4").get();
+
+        // m3 && m4 should only require java.base
+        assertTrue(m3.requires().size() == 1);
+        assertTrue(m4.requires().size() == 1);
+
+        // readability
+
+        assertTrue(cf.reads(m1).size() == 2);
+        assertTrue(reads(cf, "m1", "m2"));
+        assertTrue(reads(cf, "m1", "java.base"));
+
+        assertTrue(cf.reads(m2).size() == 3);
+        assertTrue(reads(cf, "m2", "m3"));
+        assertTrue(reads(cf, "m2", "m4"));
+        assertTrue(reads(cf, "m2", "java.base"));
+
+        assertTrue(reads(cf, "m3", "m1"));
+        assertTrue(reads(cf, "m3", "m2"));
+        assertTrue(reads(cf, "m3", "m4"));
+        testReadAllBootModules(cf, "m3");  // m3 reads all modules in boot layer
+
+        assertTrue(reads(cf, "m4", "m1"));
+        assertTrue(reads(cf, "m4", "m2"));
+        assertTrue(reads(cf, "m4", "m3"));
+        testReadAllBootModules(cf, "m4");  // m4 reads all modules in boot layer
+
+    }
+
+
+    /**
+     * Basic test of a configuration created with automatic modules
+     *   m1 requires m2
+     *   m2 requires public m3*
+     *   m3*
+     *   m4*
+     */
+    public void testInConfiguration3() throws IOException {
+        ModuleDescriptor m1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("java.base")
+                .build();
+
+        ModuleDescriptor m2
+            =  new ModuleDescriptor.Builder("m2")
+                .requires(Modifier.PUBLIC, "m3")
+                .requires("java.base")
+                .build();
+
+        // m3 and m4 are automatic modules
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createJarFile(dir.resolve("m3.jar"), "p/T.class");
+        createJarFile(dir.resolve("m4.jar"), "q/T.class");
+
+        // module finder locates m1 and the modules in the directory
+        ModuleFinder finder
+                = ModuleFinder.concat(ModuleUtils.finderOf(m1, m2),
+                ModuleFinder.of(dir));
+
+        Configuration cf
+            = Configuration.resolve(finder,
+                BOOT_CONFIGURATION,
+                ModuleFinder.empty(),
+                "m1", "m4");
+
+        assertTrue(cf.descriptors().size() == 4);
+        assertTrue(cf.findDescriptor("m1").isPresent());
+        assertTrue(cf.findDescriptor("m2").isPresent());
+        assertTrue(cf.findDescriptor("m3").isPresent());
+        assertTrue(cf.findDescriptor("m4").isPresent());
+
+        ModuleDescriptor m3 = cf.findDescriptor("m3").get();
+        ModuleDescriptor m4 = cf.findDescriptor("m4").get();
+
+        // m3 && m4 should only require java.base
+        assertTrue(m3.requires().size() == 1);
+        assertTrue(m4.requires().size() == 1);
+
+        // readability
+
+        assertTrue(cf.reads(m1).size() == 4);
+        assertTrue(reads(cf, "m1", "m2"));
+        assertTrue(reads(cf, "m1", "m3"));
+        assertTrue(reads(cf, "m1", "m4"));
+        assertTrue(reads(cf, "m1", "java.base"));
+
+        assertTrue(cf.reads(m2).size() == 3);
+        assertTrue(reads(cf, "m2", "m3"));
+        assertTrue(reads(cf, "m2", "m4"));
+        assertTrue(reads(cf, "m2", "java.base"));
+
+        assertTrue(reads(cf, "m3", "m1"));
+        assertTrue(reads(cf, "m3", "m2"));
+        assertTrue(reads(cf, "m3", "m4"));
+        testReadAllBootModules(cf, "m3");  // m3 reads all modules in boot layer
+
+        assertTrue(reads(cf, "m4", "m1"));
+        assertTrue(reads(cf, "m4", "m2"));
+        assertTrue(reads(cf, "m4", "m3"));
+        testReadAllBootModules(cf, "m4");  // m4 reads all modules in boot layer
     }
 
 
@@ -297,19 +436,56 @@ public class AutomaticModulesTest {
         Module m2 = layer.findModule("m2").get();
         assertTrue(m2.isNamed());
         assertTrue(m2.canRead(null));
-        checkReadsAll(m2, layer);
+        testsReadsAll(m2, layer);
 
         Module m3 = layer.findModule("m3").get();
         assertTrue(m3.isNamed());
         assertTrue(m3.canRead(null));
-        checkReadsAll(m3, layer);
+        testsReadsAll(m3, layer);
+    }
+
+
+    /**
+     * Test miscellaneous methods.
+     */
+    public void testMisc() throws IOException {
+
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Path m1_jar = createJarFile(dir.resolve("m1.jar"), "p/T.class");
+
+        ModuleFinder finder = ModuleFinder.of(m1_jar);
+
+        assertTrue(finder.find("m1").isPresent());
+        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+
+        // test miscellaneous methods
+        assertTrue(m1.isAutomatic());
+        assertTrue(m1.isSynthetic());
+        assertFalse(m1.osName().isPresent());
+        assertFalse(m1.osArch().isPresent());
+        assertFalse(m1.osVersion().isPresent());
+    }
+
+
+    /**
+     * Test that a module in a configuration reads all modules in the boot
+     * configuration.
+     */
+    static void testReadAllBootModules(Configuration cf, String mn) {
+
+        Set<String> bootModules = Layer.boot().modules().stream()
+                .map(Module::getName)
+                .collect(Collectors.toSet());
+
+        bootModules.forEach(other -> assertTrue(reads(cf, mn, other)));
+
     }
 
     /**
-     * Checks that the given Module reads all module in the given Layer
+     * Test that the given Module reads all module in the given Layer
      * and its parent Layers.
      */
-    static void checkReadsAll(Module m, Layer layer) {
+    static void testsReadsAll(Module m, Layer layer) {
         while (layer != Layer.empty()) {
 
             // check that m reads all module in the layer
@@ -324,10 +500,27 @@ public class AutomaticModulesTest {
     }
 
     /**
+     * Returns {@code true} if the configuration contains module mn1
+     * that reads module mn2.
+     */
+    static boolean reads(Configuration cf, String mn1, String mn2) {
+
+        Optional<ModuleDescriptor> omd1 = cf.findDescriptor(mn1);
+        if (!omd1.isPresent())
+            return false;
+
+        ModuleDescriptor md1 = omd1.get();
+        return cf.reads(md1).stream()
+                .map(Configuration.ReadDependence::descriptor)
+                .map(ModuleDescriptor::name)
+                .anyMatch(mn2::equals);
+    }
+
+    /**
      * Creates a JAR file, optionally with a manifest, and with the given
      * entries. The entries will be empty in the resulting JAR file.
      */
-    static void createJarFile(Path file, Manifest man, String... entries)
+    static Path createJarFile(Path file, Manifest man, String... entries)
         throws IOException
     {
         try (OutputStream out = Files.newOutputStream(file)) {
@@ -345,18 +538,20 @@ public class AutomaticModulesTest {
                     jos.putNextEntry(je);
                     jos.closeEntry();
                 }
+
             }
         }
+        return file;
     }
 
     /**
      * Creates a JAR file and with the given entries. The entries will be empty
      * in the resulting JAR file.
      */
-    static void createJarFile(Path file, String... entries)
+    static Path createJarFile(Path file, String... entries)
         throws IOException
     {
-        createJarFile(file, null, entries);
+        return createJarFile(file, null, entries);
     }
 
 }

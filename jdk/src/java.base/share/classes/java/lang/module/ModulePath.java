@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.net.URI;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -58,8 +58,6 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.module.Checks;
 import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.Hasher.HashSupplier;
-import jdk.internal.module.Hasher;
 import jdk.internal.perf.PerfCounter;
 
 
@@ -171,9 +169,17 @@ class ModulePath implements ConfigurableModuleFinder {
      * @throws FindException if an error occurs scanning the entry
      */
     private Map<String, ModuleReference> scan(Path entry) {
+
+        BasicFileAttributes attrs;
         try {
-            BasicFileAttributes attrs
-                = Files.readAttributes(entry, BasicFileAttributes.class);
+            attrs = Files.readAttributes(entry, BasicFileAttributes.class);
+        } catch (NoSuchFileException e) {
+            return Collections.emptyMap();
+        } catch (IOException ioe) {
+            throw new FindException(ioe);
+        }
+
+        try {
 
             if (attrs.isDirectory()) {
                 Path mi = entry.resolve(MODULE_INFO);
@@ -306,10 +312,7 @@ class ModulePath implements ConfigurableModuleFinder {
             try (InputStream in = zf.getInputStream(ze)) {
                 md = ModuleDescriptor.read(in, () -> jmodPackages(zf));
             }
-            // jmod URI - syntax not defined yet
-            URI location = URI.create("jmod:" + file.toUri() + "!/");
-            HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleReferences.newModuleReference(md, location, hasher);
+            return ModuleReferences.newJModModule(md, file);
         }
     }
 
@@ -409,7 +412,8 @@ class ModulePath implements ConfigurableModuleFinder {
 
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn, true).requires("java.base");
+            = new ModuleDescriptor.Builder(mn, true)
+                .requires(Requires.Modifier.MANDATED, "java.base");
         if (vs != null)
             builder.version(vs);
 
@@ -502,10 +506,7 @@ class ModulePath implements ConfigurableModuleFinder {
                                            () -> jarPackages(jf));
             }
 
-            URI location = URI.create("jar:" + file.toUri() + "!/");
-            HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-
-            return ModuleReferences.newModuleReference(md, location, hasher);
+            return ModuleReferences.newJarModule(md, file);
         }
     }
 
@@ -532,7 +533,6 @@ class ModulePath implements ConfigurableModuleFinder {
      */
     private ModuleReference readExplodedModule(Path dir) throws IOException {
         Path mi = dir.resolve(MODULE_INFO);
-        URI location = dir.toUri();
         ModuleDescriptor md;
         try (InputStream in = Files.newInputStream(mi)) {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
@@ -541,7 +541,7 @@ class ModulePath implements ConfigurableModuleFinder {
             // for now
             return null;
         }
-        return ModuleReferences.newModuleReference(md, location, null);
+        return ModuleReferences.newExplodedModule(md, dir);
     }
 
 

@@ -63,7 +63,7 @@ extern "C" {
  *    class.
  */
 
-#define JVM_INTERFACE_VERSION 4
+#define JVM_INTERFACE_VERSION 5
 
 JNIEXPORT jint JNICALL
 JVM_GetInterfaceVersion(void);
@@ -424,6 +424,8 @@ JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobjec
 JNIEXPORT void JNICALL
 JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
 
+JNIEXPORT jobject JNICALL
+JVM_GetModuleByPackageName(JNIEnv *env, jobject cl, jstring pkg);
 
 /*
  * Reflection support functions
@@ -535,6 +537,9 @@ JNIEXPORT jclass JNICALL JVM_ConstantPoolGetClassAt
 JNIEXPORT jclass JNICALL JVM_ConstantPoolGetClassAtIfLoaded
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
 
+JNIEXPORT jint JNICALL JVM_ConstantPoolGetClassRefIndexAt
+(JNIEnv *env, jobject obj, jobject unused, jint index);
+
 JNIEXPORT jobject JNICALL JVM_ConstantPoolGetMethodAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
 
@@ -549,6 +554,12 @@ JNIEXPORT jobject JNICALL JVM_ConstantPoolGetFieldAtIfLoaded
 
 JNIEXPORT jobjectArray JNICALL JVM_ConstantPoolGetMemberRefInfoAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
+
+JNIEXPORT jint JNICALL JVM_ConstantPoolGetNameAndTypeRefIndexAt
+(JNIEnv *env, jobject obj, jobject unused, jint index);
+
+JNIEXPORT jobjectArray JNICALL JVM_ConstantPoolGetNameAndTypeRefInfoAt
+(JNIEnv *env, jobject obj, jobject unused, jint index);
 
 JNIEXPORT jint JNICALL JVM_ConstantPoolGetIntAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
@@ -566,6 +577,9 @@ JNIEXPORT jstring JNICALL JVM_ConstantPoolGetStringAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
 
 JNIEXPORT jstring JNICALL JVM_ConstantPoolGetUTF8At
+(JNIEnv *env, jobject unused, jobject jcpool, jint index);
+
+JNIEXPORT jbyte JNICALL JVM_ConstantPoolGetTagAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index);
 
 /*

@@ -1810,16 +1810,6 @@ class Main {
 
     private static Path modRefToPath(ModuleReference mref) {
         URI location = mref.location().get();
-        String scheme = location.getScheme();
-        if (!scheme.equalsIgnoreCase("jar")) {
-            throw new RuntimeException("Selected module "
-                    + mref.descriptor().name() + " (" + location
-                    + ") not a modular jar format ");
-        }
-
-        // convert to file URI, then Path
-        // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-        String s = location.toString();
-        return Paths.get(URI.create(s.substring(4, s.length() - 2)));
+        return Paths.get(location);
     }
 }

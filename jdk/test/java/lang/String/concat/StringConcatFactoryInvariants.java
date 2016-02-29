@@ -31,33 +31,33 @@ import java.util.concurrent.Callable;
  *
  * @compile StringConcatFactoryInvariants.java
  *
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB                                                                                                          StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED                                                                                                    StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED                                                                                                    StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT                                                                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT                                                                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT                                                                                          StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB                                                                                                          StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED                                                                                                    StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED                                                                                                    StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT                                                                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT                                                                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT                                                                                          StringConcatFactoryInvariants
  *
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB                  -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT  -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB                  -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT  -Djava.lang.invoke.stringConcat.debug=true                                              StringConcatFactoryInvariants
  *
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB                                                              -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED                                                        -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED                                                        -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT                                                  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT                                                  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT                                              -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB                                                              -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED                                                        -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED                                                        -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT                                                  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT                                                  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT                                              -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
  *
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB                  -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
- * @run main/othervm -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT  -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB                  -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED            -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=BC_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_SB_SIZED_EXACT      -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
+ * @run main/othervm -Xverify:all -Djava.lang.invoke.stringConcat=MH_INLINE_SIZED_EXACT  -Djava.lang.invoke.stringConcat.debug=true  -Djava.lang.invoke.stringConcat.cache=true  StringConcatFactoryInvariants
  *
 */
 public class StringConcatFactoryInvariants {
@@ -66,7 +66,7 @@ public class StringConcatFactoryInvariants {
     private static final char TAG_CONST = '\u0002';
 
     public static void main(String[] args) throws Throwable {
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
         String methodName = "foo";
         MethodType mt = MethodType.methodType(String.class, String.class, int.class);
         String recipe = "" + TAG_ARG + TAG_ARG + TAG_CONST;
@@ -236,6 +236,14 @@ public class StringConcatFactoryInvariants {
         // Advanced factory: test empty arguments
         ok("Ok to pass empty arguments",
                 () -> StringConcatFactory.makeConcatWithConstants(lookup, methodName, mtEmpty, recipeEmpty));
+
+        // Simple factory: public Lookup is rejected
+        fail("Passing public Lookup",
+                () -> StringConcatFactory.makeConcat(MethodHandles.publicLookup(), methodName, mtEmpty));
+
+        // Advanced factory: public Lookup is rejected
+        fail("Passing public Lookup",
+                () -> StringConcatFactory.makeConcatWithConstants(MethodHandles.publicLookup(), methodName, mtEmpty, recipeEmpty));
     }
 
     public static void ok(String msg, Callable runnable) {

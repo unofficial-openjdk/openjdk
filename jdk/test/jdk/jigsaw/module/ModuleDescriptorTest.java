@@ -414,6 +414,21 @@ public class ModuleDescriptorTest {
     }
 
 
+    // isAutomatic
+    public void testIsAutomatic() {
+        ModuleDescriptor descriptor = new Builder("foo").build();
+        assertFalse(descriptor.isAutomatic());
+    }
+
+    // isSynthetic
+    public void testIsSynthetic() {
+        assertFalse(Object.class.getModule().getDescriptor().isSynthetic());
+
+        ModuleDescriptor descriptor = new Builder("foo").build();
+        assertTrue(descriptor.isSynthetic());
+    }
+
+
     // mainClass
 
     public void testMainClass() {
@@ -434,6 +449,74 @@ public class ModuleDescriptorTest {
         new Builder("foo").mainClass("p.Main").mainClass("p.Main");
     }
 
+
+    // osName
+
+    public void testOsName() {
+        String osName = new Builder("foo").osName("Linux").build().osName().get();
+        assertEquals(osName, "Linux");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNullOsName() {
+        new Builder("foo").osName(null);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testEmptyOsName() {
+        new Builder("foo").osName("");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateOsName() {
+        new Builder("foo").osName("Linux").osName("Linux");
+    }
+
+
+    // osArch
+
+    public void testOsArch() {
+        String osArch = new Builder("foo").osName("arm").build().osName().get();
+        assertEquals(osArch, "arm");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNullOsArch() {
+        new Builder("foo").osArch(null);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testEmptyOsArch() {
+        new Builder("foo").osArch("");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateOsArch() {
+        new Builder("foo").osArch("arm").osArch("arm");
+    }
+
+
+    // osVersion
+
+    public void testOsVersion() {
+        String osVersion = new Builder("foo").osName("11.2").build().osName().get();
+        assertEquals(osVersion, "11.2");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNullOsVersion() {
+        new Builder("foo").osVersion(null);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testEmptyOsVersion() {
+        new Builder("foo").osVersion("");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateOsVersion() {
+        new Builder("foo").osVersion("11.2").osVersion("11.2");
+    }
 
 
     // reads

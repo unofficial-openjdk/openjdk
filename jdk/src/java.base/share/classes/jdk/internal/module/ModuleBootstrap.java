@@ -30,15 +30,16 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
-import java.lang.reflect.Layer.ClassLoaderFinder;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.BootLoader;
@@ -192,17 +193,17 @@ public final class ModuleBootstrap {
                             .bind();
 
         // time to create configuration
-        PerfCounters.configTime.addElapsedTimeFrom(t1);
+        PerfCounters.resolveTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
-        ClassLoaderFinder clf = ModuleLoaderMap.classLoaderFinder(cf);
+        Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
         if (finder != systemModulePath) {
             for (ModuleReference mref : cf.modules()) {
                 String name = mref.descriptor().name();
-                ClassLoader cl = clf.loaderForModule(name);
+                ClassLoader cl = clf.apply(name);
                 if (cl == null) {
 
                     if (upgradeModulePath != null
@@ -220,10 +221,14 @@ public final class ModuleBootstrap {
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, Layer.empty(), clf);
 
+        PerfCounters.layerCreateTime.addElapsedTimeFrom(t2);
+
+        long t3 = System.nanoTime();
+
         // define the module to its class loader, except java.base
         for (ModuleReference mref : cf.modules()) {
             String name = mref.descriptor().name();
-            ClassLoader cl = clf.loaderForModule(name);
+            ClassLoader cl = clf.apply(name);
             if (cl == null) {
                 if (!name.equals(JAVA_BASE)) BootLoader.loadModule(mref);
             } else {
@@ -231,19 +236,11 @@ public final class ModuleBootstrap {
             }
         }
 
-        // if -XaddReads is specified then may need to add more read edges
-        propValue= System.getProperty("jdk.launcher.addreads");
-        if (propValue != null)
-            addMoreReads(bootLayer, propValue);
+        PerfCounters.loadModulesTime.addElapsedTimeFrom(t3);
 
-        // if -XaddExports is specified then process the value to export
-        // additional API packages
-        propValue= System.getProperty("jdk.launcher.addexports");
-        if (propValue != null)
-            addMoreExports(bootLayer, propValue);
-
-        // time to reify modules
-        PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
+        // -XaddReads and -XaddExports
+        addExtraReads(bootLayer);
+        addExtraExports(bootLayer);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
@@ -323,33 +320,32 @@ public final class ModuleBootstrap {
 
 
     /**
-     * The value of -XaddReads is a sequence of $MODULE=$SOURCE where $SOURCE
-     * is the source module name or the token "ALL-UNNAMED".
+     * Process the -XaddReads options to add any additional read edges that
+     * are specified on the command-line.
      */
-    private static void addMoreReads(Layer bootLayer, String moreReads) {
-        for (String expr : moreReads.split(",")) {
-            if (expr.length() > 0) {
+    private static void addExtraReads(Layer bootLayer) {
 
-                String[] s = expr.split("=");
-                if (s.length == 1)
-                    fail("Missing source module: " + expr);
-                if (s.length != 2)
-                    fail("Unable to parse: " + expr);
+        // decode the command line options
+        Map<String, Set<String>> map = decode("jdk.launcher.addreads.");
 
-                String mn = s[0];
-                String sm = s[1];
+        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
-                Optional<Module> om = bootLayer.findModule(mn);
-                if (!om.isPresent())
-                    fail("Unknown module: " + mn);
+            // the key is $MODULE
+            String mn = e.getKey();
+            Optional<Module> om = bootLayer.findModule(mn);
+            if (!om.isPresent())
+                fail("Unknown module: " + mn);
+
+            // the value is the set of source modules (by name)
+            for (String sname : e.getValue()) {
 
                 Module source;
-                if (ALL_UNNAMED.equals(sm)) {
+                if (ALL_UNNAMED.equals(sname)) {
                     source = null;  // loose
                 } else {
-                    Optional<Module> osource = bootLayer.findModule(sm);
+                    Optional<Module> osource = bootLayer.findModule(sname);
                     if (!osource.isPresent())
-                        fail("Unknown module: " + sm);
+                        fail("Unknown source module: " + sname);
                     source = osource.get();
                 }
 
@@ -358,47 +354,48 @@ public final class ModuleBootstrap {
         }
     }
 
+
     /**
-     * The value of -XaddExports is a sequence of $MODULE/$PACKAGE=$TARGET
-     * where $TARGET is a module name or the token "ALL-UNNAMED".
+     * Process the -XaddExports options to add any additional read edges that
+     * are specified on the command-line.
      */
-    private static void addMoreExports(Layer bootLayer, String moreExports) {
-        for (String expr : moreExports.split(",")) {
-            if (expr.length() > 0) {
+    private static void addExtraExports(Layer bootLayer) {
 
-                String[] s = expr.split("=");
-                if (s.length == 1)
-                    fail("Missing target module: " + expr);
-                if (s.length != 2)
-                    fail("Unable to parse: " + expr);
+        // decode the command line options
+        Map<String, Set<String>> map = decode("jdk.launcher.addexports.");
 
-                // $MODULE/$PACKAGE
-                String[] moduleAndPackage = s[0].split("/");
-                if (moduleAndPackage.length != 2)
-                    fail("Unable to parse: " + expr);
+        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
-                String mn = moduleAndPackage[0];
-                String pn = moduleAndPackage[1];
+            // the key is $MODULE/$PACKAGE
+            String key = e.getKey();
+            String[] s = key.split("/");
+            if (s.length != 2)
+                fail("Unable to parse: " + key);
 
-                // source module
-                Module source;
-                Optional<Module> om = bootLayer.findModule(mn);
-                if (!om.isPresent())
-                    fail("Unknown source module: " + mn);
-                source = om.get();
+            String mn = s[0];
+            String pn = s[1];
+
+            // The source module is in the boot layer
+            Module source;
+            Optional<Module> om = bootLayer.findModule(mn);
+            if (!om.isPresent())
+                fail("Unknown source module: " + mn);
+            source = om.get();
+
+            // the value is the set of target modules (by name)
+            for (String tname : e.getValue()) {
 
                 // $TARGET
                 boolean allUnnamed = false;
-                String tn = s[1];
                 Module target = null;
-                if (ALL_UNNAMED.equals(tn)) {
+                if (ALL_UNNAMED.equals(tname)) {
                     allUnnamed = true;
                 } else {
-                    om = bootLayer.findModule(tn);
+                    om = bootLayer.findModule(tname);
                     if (om.isPresent()) {
                         target = om.get();
                     } else {
-                        fail("Unknown target module: " + tn);
+                        fail("Unknown target module: " + tname);
                     }
                 }
 
@@ -413,6 +410,84 @@ public final class ModuleBootstrap {
 
 
     /**
+     * Decodes the values of -XaddReads or -XaddExports options
+     *
+     * The format of the options is: $KEY=$MODULE(,$MODULE)*
+     *
+     * For transition purposes, this method allows the first usage to be
+     *     $KEY=$MODULE(,$KEY=$MODULE)
+     * This format will eventually be removed.
+     */
+    private static Map<String, Set<String>> decode(String prefix) {
+        int index = 0;
+        String value = System.getProperty(prefix + index);
+        if (value == null)
+            return Collections.emptyMap();
+
+        Map<String, Set<String>> map = new HashMap<>();
+
+        while (value != null) {
+
+            int pos = value.indexOf('=');
+            if (pos == -1)
+                fail("Unable to parse: " + value);
+            if (pos == 0)
+                fail("Missing module name in: " + value);
+
+            // key is <module> or <module>/<package>
+            String key = value.substring(0, pos);
+
+            String rhs = value.substring(pos+1);
+            if (rhs.isEmpty())
+                fail("Unable to parse: " + value);
+
+            // new format $MODULE(,$MODULE)* or old format $(MODULE)=...
+            pos = rhs.indexOf('=');
+
+            // old format only allowed in first -X option
+            if (pos >= 0 && index > 0)
+                fail("Unable to parse: " + value);
+
+            if (pos == -1) {
+
+                // new format: $KEY=$MODULE(,$MODULE)*
+
+                Set<String> values = map.get(key);
+                if (values != null)
+                    fail(key + " specified more than once");
+
+                values = new HashSet<>();
+                map.put(key, values);
+                for (String s : rhs.split(",")) {
+                    if (s.length() > 0) values.add(s);
+                }
+
+            } else {
+
+                // old format: $KEY=$MODULE(,$KEY=$MODULE)*
+
+                assert index == 0;  // old format only allowed in first usage
+
+                for (String expr : value.split(",")) {
+                    if (expr.length() > 0) {
+                        String[] s = expr.split("=");
+                        if (s.length != 2)
+                            fail("Unable to parse: " + expr);
+
+                        map.computeIfAbsent(s[0], k -> new HashSet<>()).add(s[1]);
+                    }
+                }
+            }
+
+            index++;
+            value = System.getProperty(prefix + index);
+        }
+
+        return map;
+    }
+
+
+    /**
      * Throws a RuntimeException with the given message
      */
     static void fail(String m) {
@@ -420,11 +495,13 @@ public final class ModuleBootstrap {
     }
 
     static class PerfCounters {
+        static PerfCounter resolveTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.resolveTime");
+        static PerfCounter layerCreateTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.layerCreateTime");
+        static PerfCounter loadModulesTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.loadModulesTime");
         static PerfCounter bootstrapTime
             = PerfCounter.newPerfCounter("jdk.module.bootstrap.totalTime");
-        static PerfCounter configTime
-            = PerfCounter.newPerfCounter("jdk.module.bootstrap.configTime");
-        static PerfCounter bootLayerTime
-            = PerfCounter.newPerfCounter("jdk.module.bootstrap.createLayerTime");
     }
 }

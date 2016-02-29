@@ -106,6 +106,11 @@ public class DirArchive implements Archive {
     }
 
     @Override
+    public Path getPath() {
+        return dirPath;
+    }
+
+    @Override
     public Stream<Entry> entries() {
         Stream<Entry> ret = null;
         try {

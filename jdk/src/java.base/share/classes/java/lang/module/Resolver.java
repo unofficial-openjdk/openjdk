@@ -39,8 +39,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.lang.module.Configuration.ReadDependence;
 
@@ -121,6 +123,8 @@ final class Resolver {
         Result finish(Configuration cf) {
 
             resolver.detectCycles(this);
+
+            resolver.checkPlatformConstraints(this);
 
             resolver.checkHashes(this);
 
@@ -489,6 +493,7 @@ final class Resolver {
             ModuleDescriptor descriptor = mref.descriptor();
             visit(selected, descriptor);
         }
+        visited.clear();
     }
 
     // the modules that were visited
@@ -529,6 +534,86 @@ final class Resolver {
                 .skip(index)
                 .map(ModuleDescriptor::name)
                 .collect(Collectors.joining(" -> "));
+    }
+
+
+    /**
+     * If there are platform specific modules then check that the OS name,
+     * architecture and version match.
+     *
+     * TBD: Need to check that it matches parent configuration.
+     */
+    private void checkPlatformConstraints(Selected selected) {
+
+        // first module encountered that is platform specific
+        String savedModuleName = null;
+        String savedOsName = null;
+        String savedOsArch = null;
+        String savedOsVersion = null;
+
+        for (ModuleReference mref : selected.modules()) {
+            ModuleDescriptor descriptor = mref.descriptor();
+
+            String osName = descriptor.osName().orElse(null);
+            String osArch = descriptor.osArch().orElse(null);
+            String osVersion = descriptor.osVersion().orElse(null);
+
+            if (osName != null || osArch != null || osVersion != null) {
+
+                if (savedModuleName == null) {
+
+                    savedModuleName = descriptor.name();
+                    savedOsName = osName;
+                    savedOsArch = osArch;
+                    savedOsVersion = osVersion;
+
+                } else {
+
+                    boolean matches = platformMatches(osName, savedOsName)
+                            && platformMatches(osArch, savedOsArch)
+                            && platformMatches(osVersion, savedOsVersion);
+
+                    if (!matches) {
+                        String s1 = platformAsString(savedOsName,
+                                                     savedOsArch,
+                                                     savedOsVersion);
+
+                        String s2 = platformAsString(osName, osArch, osVersion);
+                        fail("Mismatching constraints on target platform: "
+                            + savedModuleName + ": " + s1
+                             + ", " + descriptor.name() + ": " + s2);
+                    }
+
+                }
+
+            }
+        }
+
+    }
+
+    /**
+     * Returns true if the s1 and s2 are equal or one of them is null.
+     */
+    private boolean platformMatches(String s1, String s2) {
+        if (s1 == null || s2 == null)
+            return true;
+        else
+            return Objects.equals(s1, s2);
+    }
+
+    /**
+     * Return a string that encodes the OS name/arch/version.
+     */
+    private String platformAsString(String osName,
+                                    String osArch,
+                                    String osVersion) {
+
+        return new StringJoiner("-")
+                .add(Objects.toString(osName, "*"))
+                .add(Objects.toString(osArch, "*"))
+                .add(Objects.toString(osVersion, "*"))
+                .toString();
+
     }
 
 
@@ -657,28 +742,32 @@ final class Resolver {
 
             }
 
-            // if m is an automatic module then it requires public all selected
-            // modules and all modules in parent layers
+            // automatic modules reads all selected modules and all modules
+            // in parent configurations
             if (descriptor.isAutomatic()) {
                 String name = descriptor.name();
 
-                // requires public all selected modules
+                // reads all selected modules
+                // requires public` all selected automatic modules
                 for (ModuleReference mref2 : selected.modules()) {
                     ModuleDescriptor other = mref2.descriptor();
                     if (!name.equals(other.name())) {
                         ReadDependence rd = new ReadDependence(cf, other);
                         reads.add(rd);
-                        requiresPublic.add(rd);
+                        if (other.isAutomatic())
+                            requiresPublic.add(rd);
                     }
                 }
 
-                // requires public all modules in parent configurations
+                // reads all modules in parent configurations
+                // `requires public` all automatic modules in parent configurations
                 p = parent;
                 while (p != null) {
                     for (ModuleDescriptor other : p.descriptors()) {
                         ReadDependence rd = new ReadDependence(p, other);
                         reads.add(rd);
-                        requiresPublic.add(rd);
+                        if (other.isAutomatic())
+                            requiresPublic.add(rd);
                     }
                     p = p.parent().orElse(null);
                 }

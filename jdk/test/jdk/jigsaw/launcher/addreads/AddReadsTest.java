@@ -71,7 +71,8 @@ public class AddReadsTest {
         assertTrue(CompilerUtils
             .compile(SRC_DIR.resolve("m1"),
                     MODS_DIR.resolve("m1"),
-                    "-cp", CLASSES_DIR.toString()));
+                    "-cp", CLASSES_DIR.toString(),
+                    "-XaddReads:m1=ALL-UNNAMED"));
 
         // jar cf mods/junit.jar -C classes .
         JarUtils.createJarFile(MODS_DIR.resolve("junit.jar"), CLASSES_DIR);
@@ -153,19 +154,38 @@ public class AddReadsTest {
         assertTrue(exitValue != 0);
     }
 
+
     /**
-     * Exercise -XaddReads with a more than one module in the option value
+     * Exercise -XaddReads with a more than one source module.
      */
     public void testJUnitWithMultiValueOption() throws Exception {
 
         int exitValue
             = run("-mp", MODS_DIR.toString(),
                   "-addmods", "java.xml,junit",
-                  "-XaddReads:m1=java.xml,m1=junit",
+                  "-XaddReads:m1=java.xml,junit",
                   "-m", MAIN)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
+    }
+
+
+    /**
+     * Exercise -XaddReads where the target module is specified more than once
+     */
+    public void testWithTargetSpecifiedManyTimes() throws Exception {
+
+        int exitValue
+            = run("-mp", MODS_DIR.toString(),
+                "-addmods", "java.xml,junit",
+                "-XaddReads:m1=java.xml",
+                "-XaddReads:m1=junit",
+                "-m", MAIN)
+                .shouldContain("specified more than once")
+                .getExitValue();
+
+        assertTrue(exitValue != 0);
     }
 
 

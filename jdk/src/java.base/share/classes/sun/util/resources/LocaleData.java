@@ -200,12 +200,12 @@ public class LocaleData {
         abstract protected boolean isSupportedInModule(String baseName, Locale locale);
 
         /**
-         * Changes baseName to its per-language/country package name and
+         * Changes baseName to its module dependent package name and
          * calls the super class implementation. For example,
          * if the baseName is "sun.text.resources.FormatData" and locale is ja_JP,
-         * the baseName is changed to "sun.text.resources.ja.JP.FormatData". If
+         * the baseName is changed to "sun.text.resources.ext.FormatData". If
          * baseName contains ".cldr", such as "sun.text.resources.cldr.FormatData",
-         * the name is changed to "sun.text.resources.cldr.ja.JP.FormatData".
+         * the name is changed to "sun.text.resources.cldr.ext.FormatData".
          */
         protected String toBundleName(String baseName, Locale locale) {
             return LocaleDataStrategy.INSTANCE.toBundleName(baseName, locale);
@@ -290,15 +290,13 @@ public class LocaleData {
             return locale.equals(Locale.ROOT) ||
                 (locale.getLanguage() == "en" &&
                     (locale.getCountry().isEmpty() ||
-                     locale.getCountry() == "US" ||
-                     locale.getCountry().length() == 3)); // UN.M49
+                     locale.getCountry() == "US"));
         }
 
         @Override
         public String toBundleName(String baseName, Locale locale) {
             String newBaseName = baseName;
-            String lang = locale.getLanguage();
-            if (lang.length() > 0) {
+            if (!inJavaBaseModule(baseName, locale)) {
                 if (baseName.startsWith(JRE.getUtilResourcesPackage())
                         || baseName.startsWith(JRE.getTextResourcesPackage())) {
                     // Assume the lengths are the same.
@@ -308,9 +306,7 @@ public class LocaleData {
                     if (baseName.indexOf(DOTCLDR, index) > 0) {
                         index += DOTCLDR.length();
                     }
-                    String ctry = locale.getCountry();
-                    ctry = (ctry.length() == 2) ? ("." + ctry) : "";
-                    newBaseName = baseName.substring(0, index + 1) + lang + ctry
+                    newBaseName = baseName.substring(0, index + 1) + "ext"
                                       + baseName.substring(index);
                 }
             }

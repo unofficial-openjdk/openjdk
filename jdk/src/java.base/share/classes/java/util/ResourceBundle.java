@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -202,24 +202,26 @@ import sun.util.locale.provider.ResourceBundleProviderSupport;
  *
  * <h3><a name="bundleprovider">Resource Bundles in Named Modules</a></h3>
  *
- * When resource bundles are deployed in named modules, some modules-specific
- * requirements and restrictions are applied.
+ * When resource bundles are deployed in named modules, the following
+ * module-specific requirements and restrictions are applied.
  *
  * <ul>
- * <li>Code in a named module that calls {@code getBundle} will locate resource
- * bundles in the caller's module (<em>caller module</em>).</li>
+ * <li>Code in a named module that calls {@link #getBundle(String, Locale)}
+ * will locate resource bundles in the caller's module (<em>caller module</em>).</li>
  * <li>If you want to deploy resource bundles in separate named modules from
  * the caller module, those resource bundles need to be loaded using service
  * providers of {@link ResourceBundleProvider}. The caller module must declare
  * "{@code uses}" and the service interface name is the concatenation of the
- * base name of the bundles and the string "{@code Provider}". The modules
- * containing resource bundles must declare "{@code provides}" with the service
- * interface name and its implementation class name. For example, if the base
- * name is "{@code MyResources}", the caller module must declare "{@code
- * uses MyResourcesProvider;}" and a module containing resource bundles must
- * declare "{@code provides MyResourcesProvider with MyResourcesProviderImpl;}"
- * where {@code MyResourcesProviderImpl} is an implementation class of
- * {@code MyResourcesProvider}.</li>
+ * base name of the bundles and the string "{@code Provider}". The
+ * <em>bundle provider modules</em> containing resource bundles must
+ * declare "{@code provides}" with the service interface name and
+ * its implementation class name. For example, if the base name is
+ * "{@code p.MyResources}", the caller module must declare
+ * "{@code uses p.MyResourcesProvider;}" and a module containing resource
+ * bundles must declare
+ * "{@code provides p.MyResourcesProvider with p.internal.MyResourcesProviderImpl;}"
+ * where {@code p.internal.MyResourcesProviderImpl} is an implementation class of
+ * {@code p.MyResourcesProvider}.</li>
  * <li>If you want to use non-standard formats in named modules, such as XML,
  * {@link ResourceBundleProvider} needs to be used.</li>
  * <li>The {@code getBundle} method with a {@code ClassLoader} may not be able to
@@ -992,13 +994,14 @@ public abstract class ResourceBundle {
      * <code>getBundle(baseName, Locale.getDefault(), module)</code>
      * </blockquote>
      *
-     * @apiNote This is an experimental API. The specification of this method may change.
-     *
      * @param baseName the base name of the resource bundle,
      *                 a fully qualified class name
      * @param module   the module for which the resource bundle is searched
      * @throws NullPointerException
-     *         if {@code baseName} or {@code module} is null
+     *         if {@code baseName} or {@code module} is {@code null}
+     * @throws SecurityException
+     *         if a security manager exists and the caller is not the specified
+     *         module and doesn't have {@code RuntimePermission("getBundle")}
      * @throws MissingResourceException
      *         if no resource bundle for the specified base name can be found in the
      *         specified module
@@ -1006,8 +1009,10 @@ public abstract class ResourceBundle {
      * @since 9
      * @see ResourceBundleProvider
      */
+    @CallerSensitive
     public static ResourceBundle getBundle(String baseName, Module module) {
-        return getBundleImpl(module, baseName, Locale.getDefault(), Control.INSTANCE);
+        return getBundleFromModule(Reflection.getCallerClass(), module, baseName,
+                                   Locale.getDefault(), Control.INSTANCE);
     }
 
     /**
@@ -1029,22 +1034,26 @@ public abstract class ResourceBundle {
      * class loader of the given unnamed module.  It will not find resource
      * bundles from named modules.
      *
-     * @apiNote This is an experimental API. The specification of this method may change.
-     *
      * @param baseName the base name of the resource bundle,
      *                 a fully qualified class name
      * @param targetLocale the locale for which a resource bundle is desired
      * @param module   the module for which the resource bundle is searched
      * @throws NullPointerException
-     *         if {@code baseName}, {@code targetLocale}, or {@code module} is null
+     *         if {@code baseName}, {@code targetLocale}, or {@code module} is
+     *         {@code null}
+     * @throws SecurityException
+     *         if a security manager exists and the caller is not the specified
+     *         module and doesn't have {@code RuntimePermission("getBundle")}
      * @throws MissingResourceException
      *         if no resource bundle for the specified base name and locale can
      *         be found in the specified {@code module}
      * @return a resource bundle for the given base name and locale in the module
      * @since 9
      */
+    @CallerSensitive
     public static ResourceBundle getBundle(String baseName, Locale targetLocale, Module module) {
-        return getBundleImpl(module, baseName, targetLocale, Control.INSTANCE);
+        return getBundleFromModule(Reflection.getCallerClass(), module, baseName, targetLocale,
+                                   Control.INSTANCE);
     }
 
     /**
@@ -1582,10 +1591,20 @@ public abstract class ResourceBundle {
         return getBundleImpl(baseName, locale, loader, module, control);
     }
 
-    private static ResourceBundle getBundleImpl(Module module,
-                                                String baseName,
-                                                Locale locale,
-                                                Control control) {
+    private static final RuntimePermission GET_BUNDLE_PERMISSION
+        = new RuntimePermission("getBundle");
+    private static ResourceBundle getBundleFromModule(Class<?> caller,
+                                                      Module module,
+                                                      String baseName,
+                                                      Locale locale,
+                                                      Control control) {
+        Objects.requireNonNull(module);
+        if (caller.getModule() != module) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(GET_BUNDLE_PERMISSION);
+            }
+        }
         return getBundleImpl(baseName, locale, getLoader(module), module, control);
     }
 
@@ -1811,12 +1830,8 @@ public abstract class ResourceBundle {
                         cacheKey.setFormat(format);
                         break;
                     }
-                } catch (IllegalArgumentException | IOException e) {
-                    cacheKey.setCause(e);
                 } catch (Exception e) {
-                    // TODO: Current behavior is to silent ignore all exceptions
-                    // For now throw InternalError for better diagnosibility
-                    throw new InternalError(e);
+                    cacheKey.setCause(e);
                 }
             }
         }

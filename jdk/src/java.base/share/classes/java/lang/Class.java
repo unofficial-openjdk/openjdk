@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -385,19 +385,19 @@ public final class Class<T> implements java.io.Serializable,
 
 
     /**
-     * Returns the {@code Class} of the specified  <a href="ClassLoader.html#name">
-     * binary name</a> defined in the specified module.
-     * <p>
-     * This method attempts to locate, load, and link the class or interface
-     * and it does not invoke the class initializer.  If the class is not
-     * found, this method returns {@code null}.
+     * Returns the {@code Class} with the given <a href="ClassLoader.html#name">
+     * binary name</a> in the given module.
      *
-     * <p> If the class loader of the specified module defines other modules
-     * and the specified name is a class defined in a different module,
-     * this method returns {@code null} after the class is loaded.
+     * <p> This method attempts to locate, load, and link the class or interface.
+     * It does not run the class initializer.  If the class is not found, this
+     * method returns {@code null}. </p>
      *
-     * <p> This method does not check whether the requested class
-     * is accessible to its caller.
+     * <p> If the class loader of the given module defines other modules and
+     * the given name is a class defined in a different module, this method
+     * returns {@code null} after the class is loaded. </p>
+     *
+     * <p> This method does not check whether the requested class is
+     * accessible to its caller. </p>
      *
      * @apiNote
      * This method returns {@code null} on failure rather than
@@ -797,14 +797,14 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Returns the module that this class or interface is a member of.
      *
-     * If this class is not in a named module then the {@link
-     * ClassLoader#getUnnamedModule() unnamed} {@code Module} of the class
-     * loader for this class is returned.
-     *
-     * If this object represents an array type then this method returns the
-     * {@code Module} for the element type. If this object represents a
+     * If this class represents an array type then this method returns the
+     * {@code Module} for the element type. If this class represents a
      * primitive type or void, then the {@code Module} object for the
      * {@code java.base} module is returned.
+     *
+     * If this class is in an unnamed module then the {@link
+     * ClassLoader#getUnnamedModule() unnamed} {@code Module} of the class
+     * loader for this class is returned.
      *
      * @return the module that this class or interface is a member of
      *

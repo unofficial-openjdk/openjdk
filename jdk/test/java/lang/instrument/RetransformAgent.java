@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
  */
 
 import java.lang.instrument.*;
+import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
 import java.io.*;
 import asmlib.*;
@@ -66,12 +67,13 @@ class RetransformAgent {
             this.nname = nname;
         }
 
-        public byte[] transform(ClassLoader loader,
+        public byte[] transform(Module module,
                                 String className,
                                 Class<?> classBeingRedefined,
                                 ProtectionDomain    protectionDomain,
                                 byte[] classfileBuffer) {
             boolean redef = classBeingRedefined != null;
+
             // System.err.println("hook " + trname + ": " + className +
             //                    (redef? " REDEF" : " LOAD"));
             if ((redef? onRedef : onLoad) && className != null && className.equals(cname)) {

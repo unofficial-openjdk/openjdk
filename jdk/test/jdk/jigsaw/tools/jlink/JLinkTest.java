@@ -63,7 +63,7 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 10;
+        int numPlugins = 11;
         {
             // number of built-in plugins
             List<Plugin> builtInPlugins = new ArrayList<>();
@@ -160,8 +160,8 @@ public class JLinkTest {
 
         // filter out + Skip debug + compress with filter + sort resources
         {
-            String[] userOptions2 = {"--compress", "2", "--compress-filter",
-                "^/java.base/*", "--strip-debug", "--exclude-resources",
+            String[] userOptions2 = {"--compress=2:compress-filter=^/java.base/*",
+                "--strip-debug", "--exclude-resources",
                 "*.jcov, */META-INF/*", "--sort-resources",
                 "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
             String moduleName = "excludezipfilterskipdebugcomposite2";
@@ -178,29 +178,25 @@ public class JLinkTest {
 
         {
             testCompress(helper, "compressfiltercmdcomposite2",
-                    "--compress", "2", "--compress-filter",
-                    "^/java.base/java/lang/*");
+                    "--compress=2:filter=^/java.base/java/lang/*");
         }
 
         // compress 0
         {
             testCompress(helper, "compress0filtercmdcomposite2",
-                    "--compress", "0",
-                    "--compress-filter", "^/java.base/java/lang/*");
+                    "--compress=0:filter=^/java.base/java/lang/*");
         }
 
         // compress 1
         {
             testCompress(helper, "compress1filtercmdcomposite2",
-                    "--compress", "1",
-                    "--compress-filter", "^/java.base/java/lang/*");
+                    "--compress=1:filter=^/java.base/java/lang/*");
         }
 
         // compress 2
         {
             testCompress(helper, "compress2filtercmdcomposite2",
-                    "--compress", "2",
-                    "--compress-filter", "^/java.base/java/lang/*");
+                    "--compress=2:filter=^/java.base/java/lang/*");
         }
 
         // invalid compress level

@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.Map;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
-import jdk.tools.jlink.plugin.PluginOption;
 
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
 import jdk.tools.jlink.plugin.Pool;
@@ -83,8 +82,8 @@ public class FileCopierPluginTest {
         builder.append(txt.getAbsolutePath() + "=" + target+",");
         builder.append(src.getAbsolutePath() + "=src2");
 
-        Map<PluginOption, String> conf = new HashMap<>();
-        conf.put(FileCopierPlugin.NAME_OPTION, builder.toString());
+        Map<String, String> conf = new HashMap<>();
+        conf.put(FileCopierPlugin.NAME, builder.toString());
         plug.configure(conf);
         Pool pool = new PoolImpl();
         plug.visit(new PoolImpl(), pool);

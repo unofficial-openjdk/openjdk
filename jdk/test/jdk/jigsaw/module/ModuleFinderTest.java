@@ -318,27 +318,21 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.of with file path to a module that does not exist.
+     * Test ModuleFinder.of with a path to a file that does not exist.
      */
     public void testOfWithDoesNotExistEntry() throws Exception {
-        Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        Files.delete(dir);
+        Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
 
-        ModuleFinder finder = ModuleFinder.of(dir);
-        try {
-            finder.find("java.rhubarb");
-            assertTrue(false);
-        } catch (FindException e) {
-            assertTrue(e.getCause() instanceof IOException);
-        }
+        Path dir2 = Files.createTempDirectory(USER_DIR, "mods2");
+        createModularJar(dir2.resolve("m2.jar"), "m2@1.0");
 
-        finder = ModuleFinder.of(dir);
-        try {
-            finder.findAll();
-            assertTrue(false);
-        } catch (FindException e) {
-            assertTrue(e.getCause() instanceof IOException);
-        }
+        Files.delete(dir1);
+
+        ModuleFinder finder = ModuleFinder.of(dir1, dir2);
+
+        assertTrue(finder.find("m2").isPresent());
+        assertTrue(finder.findAll().size() == 1);
+        assertFalse(finder.find("java.rhubarb").isPresent());
     }
 
 

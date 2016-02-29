@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,16 @@ import jdk.internal.module.Hasher.DependencyHashes;
 /**
  * A module descriptor.
  *
+ * <p> A {@code ModuleDescriptor} is typically created from the binary form
+ * of a module declaration. The associated {@link ModuleDescriptor.Builder}
+ * class can also be used to create a {@code ModuleDescriptor} from its
+ * components. </p>
+ *
+ * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
+ * multiple concurrent threads.</p>
+ *
  * @since 9
+ * @see java.lang.reflect.Module
  */
 
 public class ModuleDescriptor
@@ -239,6 +248,9 @@ public class ModuleDescriptor
          * of the module names to which the package is exported. For an
          * unqualified export, returns an empty {@code Optional}.
          *
+         * @apiNote An alternative is to introduce {@code isQualified()} and
+         * change this method to an empty set when an exported is unqualified
+         *
          * @return The set of target module names or for an unqualified
          *         export, an empty {@code Optional}
          */
@@ -296,16 +308,17 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns the service type.
+         * Returns the fully qualified class name of the service type.
          *
-         * @return The service type
+         * @return The fully qualified class name of the service type.
          */
         public String service() { return service; }
 
         /**
-         * Returns the set of provider names.
+         * Returns the set of the fully qualified class names of the providers.
          *
-         * @return A non-empty and unmodifiable set of provider names
+         * @return A non-empty and unmodifiable set of the fully qualified class
+         *         names of the providers.
          */
         public Set<String> providers() { return providers; }
 
@@ -543,27 +556,38 @@ public class ModuleDescriptor
     // Indicates if synthesised for a JAR file found on the module path
     private final boolean automatic;
 
-    // "Extended" information, added post-compilation
+    // Not generated from a module-info.java
+    private final boolean synthetic;
+
+    // "Extended" information, added post-compilation by tools
     private final Version version;
     private final String mainClass;
+    private final String osName;
+    private final String osArch;
+    private final String osVersion;
     private final Set<String> conceals;
     private final Set<String> packages;
     private final DependencyHashes hashes;
 
     private ModuleDescriptor(String name,
                              boolean automatic,
+                             boolean synthetic,
                              Map<String, Requires> requires,
                              Set<String> uses,
                              Map<String, Exports> exports,
                              Map<String, Provides> provides,
                              Version version,
                              String mainClass,
+                             String osName,
+                             String osArch,
+                             String osVersion,
                              Set<String> conceals,
                              DependencyHashes hashes)
     {
 
         this.name = name;
         this.automatic = automatic;
+        this.synthetic = synthetic;
 
         Set<Requires> rqs = new HashSet<>(requires.values());
         assert (rqs.stream().map(Requires::name).sorted().distinct().count()
@@ -582,6 +606,9 @@ public class ModuleDescriptor
 
         this.version = version;
         this.mainClass = mainClass;
+        this.osName = osName;
+        this.osArch = osArch;
+        this.osVersion = osVersion;
         this.hashes = hashes;
 
         assert !exports.keySet().stream().anyMatch(conceals::contains)
@@ -596,6 +623,7 @@ public class ModuleDescriptor
     ModuleDescriptor(ModuleDescriptor md, Set<String> pkgs) {
         this.name = md.name;
         this.automatic = md.automatic;
+        this.synthetic = md.synthetic;
 
         this.requires = md.requires;
         this.exports = md.exports;
@@ -604,27 +632,36 @@ public class ModuleDescriptor
 
         this.version = md.version;
         this.mainClass = md.mainClass;
+        this.osName = md.osName;
+        this.osArch = md.osArch;
+        this.osVersion = md.osVersion;
         this.hashes = null; // need to ignore
 
         this.packages = emptyOrUnmodifiableSet(pkgs);
         this.conceals = computeConcealedPackages(this.exports, this.packages);
     }
 
-    /*
-     * Used by installed modules
+    /**
+     * Creates a module descriptor from its components. This method is intended
+     * for use by the jlink plugin.
      */
-    private ModuleDescriptor(String name,
-                             boolean automatic,
-                             Set<Requires> requires,
-                             Set<String> uses,
-                             Set<Exports> exports,
-                             Map<String, Provides> provides,
-                             Version version,
-                             String mainClass,
-                             Set<String> conceals,
-                             Set<String> packages) {
+    ModuleDescriptor(String name,
+                     boolean automatic,
+                     boolean synthetic,
+                     Set<Requires> requires,
+                     Set<String> uses,
+                     Set<Exports> exports,
+                     Map<String, Provides> provides,
+                     Version version,
+                     String mainClass,
+                     String osName,
+                     String osArch,
+                     String osVersion,
+                     Set<String> conceals,
+                     Set<String> packages) {
         this.name = name;
         this.automatic = automatic;
+        this.synthetic = synthetic;
         this.requires = Collections.unmodifiableSet(requires);
         this.exports = Collections.unmodifiableSet(exports);
         this.uses = Collections.unmodifiableSet(uses);
@@ -634,11 +671,14 @@ public class ModuleDescriptor
 
         this.version = version;
         this.mainClass = mainClass;
+        this.osName = osName;
+        this.osArch = osArch;
+        this.osVersion = osVersion;
         this.hashes = null;
     }
 
     /**
-     * <p> The module name </p>
+     * <p> The module name. </p>
      *
      * @return The module name
      */
@@ -647,14 +687,40 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Indicates if this is an automatic module. </p>
+     * <p> Returns {@code true} if this is an automatic module. </p>
+     *
+     * <p> An automatic module is defined implicitly rather than explicitly
+     * and therefore does not have a module declaration. JAR files located on
+     * the application module path, or by the {@link ModuleFinder} returned by
+     * {@link ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are
+     * treated as automatic modules if they do have not have a module
+     * declaration. </p>
+     *
+     * @return  {@code true} if this is an automatic module
      */
-    /* package */ boolean isAutomatic() {
+    public boolean isAutomatic() {
         return automatic;
     }
 
     /**
-     * <p> The dependences of this module </p>
+     * <p> Returns {@code true} if this module descriptor was not originally
+     * compiled from source code. </p>
+     *
+     * <p> This method always returns {@code true} for {@link #isAutomatic()
+     * automatic} modules or {@code ModuleDescriptor} objects created
+     * programmatically using a {@link Builder}. </p>
+     *
+     * @return  {@code true} if this module descriptor was not originally
+     *          compiled from source code.
+     *
+     * @jvms 4.7.8 The {@code Synthetic} Attribute
+     */
+    public boolean isSynthetic() {
+        return synthetic;
+    }
+
+    /**
+     * <p> The dependences of this module. </p>
      *
      * @return  A possibly-empty unmodifiable set of {@link Requires} objects
      */
@@ -663,26 +729,28 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The service dependences of this module </p>
+     * <p> The service dependences of this module. </p>
      *
-     * @return  A possibly-empty unmodifiable set of the service types used
+     * @return  A possibly-empty unmodifiable set of the fully qualified class
+     *          names of the service types used
      */
     public Set<String> uses() {
         return uses;
     }
 
     /**
-     * <p> The services that this module provides </p>
+     * <p> The services that this module provides. </p>
      *
      * @return The possibly-empty unmodifiable map of the services that this
-     *         module provides. The map key is the service type.
+     *         module provides. The map key is fully qualified class name of
+     *         the service type.
      */
     public Map<String, Provides> provides() {
         return provides;
     }
 
     /**
-     * <p> The module exports </p>
+     * <p> The module exports. </p>
      *
      * @return  A possibly-empty unmodifiable set of exported packages
      */
@@ -717,10 +785,43 @@ public class ModuleDescriptor
     /**
      * Returns the module's main class.
      *
-     * @return This module's main class
+     * @return The fully qualified class name of this module's main class
      */
     public Optional<String> mainClass() {
         return Optional.ofNullable(mainClass);
+    }
+
+    /**
+     * Returns the operating system name if this module is operating system
+     * specific.
+     *
+     * @return The operating system name or an empty {@code Optional}
+     *         if this module is not operating system specific
+     */
+    public Optional<String> osName() {
+        return Optional.ofNullable(osName);
+    }
+
+    /**
+     * Returns the operating system architecture if this module is operating
+     * system architecture specific.
+     *
+     * @return The operating system architecture or an empty {@code Optional}
+     *         if this module is not operating system architecture specific
+     */
+    public Optional<String> osArch() {
+        return Optional.ofNullable(osArch);
+    }
+
+    /**
+     * Returns the operating system version if this module is operating
+     * system version specific.
+     *
+     * @return The operating system version or an empty {@code Optional}
+     *         if this module is not operating system version specific
+     */
+    public Optional<String> osVersion() {
+        return Optional.ofNullable(osVersion);
     }
 
     /**
@@ -750,36 +851,37 @@ public class ModuleDescriptor
         return Optional.ofNullable(hashes);
     }
 
+
     /**
      * A builder used for building {@link ModuleDescriptor} objects.
      *
+     * <p> Example usage: </p>
+     *
+     * <pre>{@code
+     *     ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m1")
+     *         .requires("m2")
+     *         .exports("p")
+     *         .build();
+     * }</pre>
      * @since 9
      */
     public static final class Builder {
 
         final String name;
         final boolean automatic;
+        boolean synthetic;
+        boolean syntheticSet;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
         final Map<String, Exports> exports = new HashMap<>();
         final Map<String, Provides> provides = new HashMap<>();
         Set<String> conceals = Collections.emptySet();
         Version version;
+        String osName;
+        String osArch;
+        String osVersion;
         String mainClass;
         DependencyHashes hashes;
-
-        /**
-         * Ensures that the given package name has not been declared as an
-         * exported or concealed package.
-         */
-        private void ensureNotExportedOrConcealed(String pn) {
-            if (exports.containsKey(pn))
-                throw new IllegalStateException("Export of package "
-                                                + pn + " already declared");
-            if (conceals.contains(pn))
-                throw new IllegalStateException("Concealed package "
-                                                + pn + " already declared");
-        }
 
         /**
          * Initializes a new builder with the given module name.
@@ -888,6 +990,19 @@ public class ModuleDescriptor
                                                 + st + " already declared");
             uses.add(st);
             return this;
+        }
+
+        /**
+         * Ensures that the given package name has not been declared as an
+         * exported or concealed package.
+         */
+        private void ensureNotExportedOrConcealed(String pn) {
+            if (exports.containsKey(pn))
+                throw new IllegalStateException("Export of package "
+                                                + pn + " already declared");
+            if (conceals.contains(pn))
+                throw new IllegalStateException("Concealed package "
+                                                + pn + " already declared");
         }
 
         /**
@@ -1094,26 +1209,107 @@ public class ModuleDescriptor
             return this;
         }
 
+        /**
+         * Sets the operating system name.
+         *
+         * @param  name
+         *         The operating system name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system name is already set
+         */
+        public Builder osName(String name) {
+            if (osName != null)
+                throw new IllegalStateException("OS name already set");
+            if (name == null || name.isEmpty())
+                throw new IllegalArgumentException("OS name is null or empty");
+            osName = name;
+            return this;
+        }
+
+        /**
+         * Sets the operating system architecture.
+         *
+         * @param  arch
+         *         The operating system architecture
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system architecture is already set
+         */
+        public Builder osArch(String arch) {
+            if (osArch != null)
+                throw new IllegalStateException("OS arch already set");
+            if (arch == null || arch.isEmpty())
+                throw new IllegalArgumentException("OS arch is null or empty");
+            osArch = arch;
+            return this;
+        }
+
+        /**
+         * Sets the operating system version.
+         *
+         * @param  version
+         *         The operating system version
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If {@code name} is null or the empty String
+         * @throws IllegalStateException
+         *         If the operating system version is already set
+         */
+        public Builder osVersion(String version) {
+            if (osVersion != null)
+                throw new IllegalStateException("OS version already set");
+            if (version == null || version.isEmpty())
+                throw new IllegalArgumentException("OS version is null or empty");
+            osVersion = version;
+            return this;
+        }
+
         /* package */ Builder hashes(DependencyHashes hashes) {
             this.hashes = hashes;
             return this;
         }
 
+
+        /* package */ Builder synthetic(boolean v) {
+            this.synthetic = v;
+            this.syntheticSet = true;
+            return this;
+        }
+
         /**
-         * Builds a {@code ModuleDescriptor} from the components.
+         * Builds and returns a {@code ModuleDescriptor} from its components.
          *
          * @return The module descriptor
          */
         public ModuleDescriptor build() {
             assert name != null;
+
+            // assume synthetic if not set
+            boolean isSynthetic = (syntheticSet) ? synthetic : true;
+
             return new ModuleDescriptor(name,
                                         automatic,
+                                        isSynthetic,
                                         requires,
                                         uses,
                                         exports,
                                         provides,
                                         version,
                                         mainClass,
+                                        osName,
+                                        osArch,
+                                        osVersion,
                                         conceals,
                                         hashes);
         }
@@ -1158,12 +1354,16 @@ public class ModuleDescriptor
         ModuleDescriptor that = (ModuleDescriptor)ob;
         return (name.equals(that.name)
                 && automatic == that.automatic
+                && synthetic == that.synthetic
                 && requires.equals(that.requires)
                 && uses.equals(that.uses)
                 && exports.equals(that.exports)
                 && provides.equals(that.provides)
                 && Objects.equals(version, that.version)
                 && Objects.equals(mainClass, that.mainClass)
+                && Objects.equals(osName, that.osName)
+                && Objects.equals(osArch, that.osArch)
+                && Objects.equals(osVersion, that.osVersion)
                 && Objects.equals(conceals, that.conceals)
                 && Objects.equals(hashes, that.hashes));
     }
@@ -1176,12 +1376,16 @@ public class ModuleDescriptor
         if (hc == 0) {
             hc = name.hashCode();
             hc = hc * 43 + Boolean.hashCode(automatic);
+            hc = hc * 43 + Boolean.hashCode(synthetic);
             hc = hc * 43 + requires.hashCode();
             hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + exports.hashCode();
             hc = hc * 43 + provides.hashCode();
             hc = hc * 43 + Objects.hashCode(version);
             hc = hc * 43 + Objects.hashCode(mainClass);
+            hc = hc * 43 + Objects.hashCode(osName);
+            hc = hc * 43 + Objects.hashCode(osArch);
+            hc = hc * 43 + Objects.hashCode(osVersion);
             hc = hc * 43 + Objects.hashCode(conceals);
             hc = hc * 43 + Objects.hashCode(hashes);
             if (hc != 0) hash = hc;
@@ -1213,26 +1417,27 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from an input stream.
+     * Reads the binary form of a module declaration from an input stream
+     * as a module descriptor.
      *
      * <p> If the descriptor encoded in the input stream does not indicate a
      * set of concealed packages then the {@code packageFinder} will be
      * invoked.  The packages it returns, except for those indicated as
      * exported in the encoded descriptor, will be considered to be concealed.
      * If the {@code packageFinder} throws an {@link UncheckedIOException} then
-     * the original {@link IOException} will be re-thrown.
-     *
-     * @apiNote The {@code packageFinder} parameter is for use when reading
-     * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
      * or reported as an {@code InvalidModuleDescriptorException}. If this
-     * method fails with a {@code InvalidModuleDescriptorException} or {@code
+     * method fails with an {@code InvalidModuleDescriptorException} or {@code
      * IOException} then it may do so after some, but not all, bytes have
      * been read from the input stream. It is strongly recommended that the
-     * stream be promptly closed and discarded if an exception occurs.
+     * stream be promptly closed and discarded if an exception occurs. </p>
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
      *
      * @param  in
      *         The input stream
@@ -1255,7 +1460,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from an input stream.
+     * Reads the binary form of a module declaration from an input stream
+     * as a module descriptor.
      *
      * @param  in
      *         The input stream
@@ -1272,29 +1478,30 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from a byte buffer.
+     * Reads the binary form of a module declaration from a byte buffer
+     * as a module descriptor.
      *
      * <p> If the descriptor encoded in the byte buffer does not indicate a
      * set of concealed packages then the {@code packageFinder} will be
      * invoked.  The packages it returns, except for those indicated as
-     * exported in the encoded descriptor, will be considered to be concealed.
+     * exported in the encoded descriptor, will be considered to be
+     * concealed. </p>
      *
      * <p> The module descriptor is read from the buffer stating at index
      * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
      * position} when this method is invoked. Upon return the buffer's position
      * will be equal to {@code p + n} where {@code n} is the number of bytes
-     * read from the buffer.
-     *
-     * @apiNote The {@code packageFinder} parameter is for use when reading
-     * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * read from the buffer. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
      * or reported as an {@code InvalidModuleDescriptorException}. If this
      * method fails with an {@code InvalidModuleDescriptorException} then it
-     * may do so after some, but not all,
-     * bytes have been read.
+     * may do so after some, but not all, bytes have been read. </p>
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
      *
      * @param  bb
      *         The byte buffer
@@ -1313,7 +1520,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads a module descriptor from a byte buffer.
+     * Reads the binary form of a module declaration from a byte buffer
+     * as a module descriptor.
      *
      * @param  bb
      *         The byte buffer
@@ -1381,16 +1589,11 @@ public class ModuleDescriptor
 
     static {
         /**
-         * Setup the shared secret to allow code in other packages know if a
-         * module is an automatic module. If isAutomatic becomes part of the
-         * API then this setup can go away.
+         * Setup the shared secret to allow code in other packages create
+         * ModuleDescriptor and associated objects directly.
          */
         jdk.internal.misc.SharedSecrets
             .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
-                @Override
-                public boolean isAutomatic(ModuleDescriptor descriptor) {
-                    return descriptor.isAutomatic();
-                }
                 @Override
                 public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
                     return new Requires(ms, mn, false);
@@ -1417,23 +1620,37 @@ public class ModuleDescriptor
                 }
 
                 @Override
+                public ModuleDescriptor newModuleDescriptor(ModuleDescriptor md,
+                                                            Set<String> pkgs) {
+                    return new ModuleDescriptor(md, pkgs);
+                }
+
+                @Override
                 public ModuleDescriptor newModuleDescriptor(String name,
                                                             boolean automatic,
+                                                            boolean synthetic,
                                                             Set<Requires> requires,
                                                             Set<String> uses, Set<Exports> exports,
                                                             Map<String, Provides> provides,
                                                             Version version,
                                                             String mainClass,
+                                                            String osName,
+                                                            String osArch,
+                                                            String osVersion,
                                                             Set<String> conceals,
                                                             Set<String> packages) {
                     return new ModuleDescriptor(name,
-                                                false,
+                                                automatic,
+                                                synthetic,
                                                 requires,
                                                 uses,
                                                 exports,
                                                 provides,
                                                 version,
                                                 mainClass,
+                                                osName,
+                                                osArch,
+                                                osVersion,
                                                 conceals,
                                                 packages);
                 }

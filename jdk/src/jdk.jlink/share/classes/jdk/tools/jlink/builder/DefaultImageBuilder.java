@@ -115,24 +115,9 @@ public class DefaultImageBuilder implements ImageBuilder {
         Files.createDirectories(mdir);
     }
 
-    private void storeFiles(Set<String> modules, String bom) throws IOException {
-        // Retrieve release file from JDK home dir.
-        String path = System.getProperty("java.home");
-        File f = new File(path, "release");
-        Properties release = null;
-        if (!f.exists()) {
-            // XXX When jlink is exposed to user.
-            //System.err.println("WARNING, no release file found in " + path +
-            //     ". release file not added to generated image");
-        } else {
-            release = new Properties();
-            try (FileInputStream fi = new FileInputStream(f)) {
-                release.load(fi);
-            }
-            addModules(release, modules);
-        }
-
+    private void storeFiles(Set<String> modules, String bom, Properties release) throws IOException {
         if (release != null) {
+            addModules(release, modules);
             File r = new File(root.toFile(), "release");
             try (FileOutputStream fo = new FileOutputStream(r)) {
                 release.store(fo, null);
@@ -146,22 +131,20 @@ public class DefaultImageBuilder implements ImageBuilder {
     }
 
     private void addModules(Properties release, Set<String> modules) throws IOException {
-        if (release != null) {
-            StringBuilder builder = new StringBuilder();
-            int i = 0;
-            for (String m : modules) {
-                builder.append(m);
-                if (i < modules.size() - 1) {
-                    builder.append(",");
-                }
-                i++;
+        StringBuilder builder = new StringBuilder();
+        int i = 0;
+        for (String m : modules) {
+            builder.append(m);
+            if (i < modules.size() - 1) {
+                builder.append(",");
             }
-            release.setProperty("MODULES", builder.toString());
+            i++;
         }
+        release.setProperty("MODULES", builder.toString());
     }
 
     @Override
-    public void storeFiles(Pool files, String bom) {
+    public void storeFiles(Pool files, String bom, Properties release) {
         try {
             for (ModuleData f : files.getContent()) {
                if (!f.getType().equals(Pool.ModuleDataType.CLASS_OR_RESOURCE)) {
@@ -178,7 +161,7 @@ public class DefaultImageBuilder implements ImageBuilder {
                     modules.add(m.getName());
                 }
             }
-            storeFiles(modules, bom);
+            storeFiles(modules, bom, release);
 
             if (Files.getFileStore(root).supportsFileAttributeView(PosixFileAttributeView.class)) {
                 // launchers in the bin directory need execute permission
@@ -203,6 +186,11 @@ public class DefaultImageBuilder implements ImageBuilder {
         } catch (IOException ex) {
             throw new PluginException(ex);
         }
+    }
+
+    @Override
+    public void storeFiles(Pool files, String bom) {
+        storeFiles(files, bom, new Properties());
     }
 
     /**

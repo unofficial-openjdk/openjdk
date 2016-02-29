@@ -44,7 +44,6 @@ import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -108,8 +107,8 @@ public class LastSorterTest {
     }
 
     private static Plugin createPlugin(String name, String arg) {
-        Map<PluginOption, String> conf = new HashMap<>();
-        conf.put(new PluginOption.Builder(name).build(), arg);
+        Map<String, String> conf = new HashMap<>();
+        conf.put(name, arg);
         return Jlink.newPlugin(name, conf, null);
     }
 
@@ -207,18 +206,8 @@ public class LastSorterTest {
         }
 
         @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-            String arguments = config.get(new PluginOption.Builder(name).build());
+        public void configure(Map<String, String> config) {
+            String arguments = config.get(name);
             this.starts = arguments;
         }
     }

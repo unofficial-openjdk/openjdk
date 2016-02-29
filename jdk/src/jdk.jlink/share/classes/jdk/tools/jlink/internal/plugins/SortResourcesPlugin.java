@@ -40,8 +40,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -55,10 +53,6 @@ import jdk.tools.jlink.internal.Utils;
 public final class SortResourcesPlugin implements TransformerPlugin {
 
     public static final String NAME = "sort-resources";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
     private final List<Pattern> filters = new ArrayList<>();
     private List<String> orderedPaths;
     private boolean isFile;
@@ -155,18 +149,23 @@ public final class SortResourcesPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public String getDescription() {
         return PluginsResourceBundle.getDescription(NAME);
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
-        String val = config.get(NAME_OPTION);
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
+        String val = config.get(NAME);
         try {
             String[] patterns = Utils.listParser.apply(val);
             boolean isf = false;

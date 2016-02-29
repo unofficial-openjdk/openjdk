@@ -170,10 +170,10 @@ public class BasicTest {
 
 
     /**
-     * Attempt to run with a directory that does not exist as the first
-     * element of the module path
+     * Run the test with a non-existent file on the application module path.
+     * It should be silently ignored.
      */
-    public void testTryRunWithBadModulePath() throws Exception {
+    public void testRunWithNonExistentEntry() throws Exception {
         String mp = "DoesNotExist" + File.pathSeparator + MODS_DIR.toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
@@ -185,7 +185,7 @@ public class BasicTest {
                 .errorTo(System.out)
                 .getExitValue();
 
-        assertTrue(exitValue != 0);
+        assertTrue(exitValue == 0);
     }
 
 

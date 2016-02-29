@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginException;
@@ -53,23 +52,13 @@ import tests.Helper;
  * @run main/othervm DefaultProviderTest
  */
 public class DefaultProviderTest {
-
-    private final static List<PluginOption> options;
     private static final String NAME = "disable-toto";
-    private static final PluginOption NAME_OPTION
-            = new PluginOption.Builder(NAME).build();
-    private final static Map<PluginOption, Object> expectedOptions = new HashMap<>();
+    private final static Map<String, Object> expectedOptions = new HashMap<>();
 
     static {
-        options = new ArrayList<>();
-        options.add(new PluginOption.Builder("option1").description("value1").build());
-        options.add(new PluginOption.Builder("option2").description("value2").build());
-
-        expectedOptions.put(new PluginOption.Builder("option1").
-                description("value1").build(), "value1");
-        expectedOptions.put(new PluginOption.Builder("option2").
-                description("value2").build(), "value2");
-
+        expectedOptions.put("disable-toto", "false");
+        expectedOptions.put("option1", "value1");
+        expectedOptions.put("option2", "value2");
     }
 
     private static class Custom implements TransformerPlugin {
@@ -83,26 +72,17 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public PluginOption getOption() {
-            return NAME_OPTION;
-        }
-
-        @Override
         public Set<STATE> getState() {
              return enabled ? EnumSet.of(STATE.AUTO_ENABLED, STATE.FUNCTIONAL)
                 : EnumSet.of(STATE.DISABLED);
         }
 
         @Override
-        public List<PluginOption> getAdditionalOptions() {
-            return options;
-        }
-
-        @Override
         public void visit(Pool in, Pool out) {
             if (!enabled) {
-                throw new PluginException(NAME_OPTION + " was set");
+                throw new PluginException(NAME + " was set");
             }
+
             DefaultProviderTest.isNewPluginsCalled = true;
             in.visit((Pool.ModuleData content) -> {
                 return content;
@@ -120,17 +100,26 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public void configure(Map<PluginOption, String> config) {
-            if (config.containsKey(NAME_OPTION)) {
-                enabled = false;
-            } else {
+        public boolean hasArguments() {
+            return true;
+        }
+
+        @Override
+        public void configure(Map<String, String> config) {
+            if (config.containsKey(NAME)) {
+                enabled = !Boolean.parseBoolean(config.get(NAME));
+            }
+
+            if (enabled) {
                 DefaultProviderTest.receivedOptions = config;
+            } else {
+                DefaultProviderTest.receivedOptions = null;
             }
         }
     }
 
     private static boolean isNewPluginsCalled;
-    private static Map<PluginOption, String> receivedOptions;
+    private static Map<String, String> receivedOptions;
 
     private static void reset() {
         isNewPluginsCalled = false;
@@ -161,7 +150,7 @@ public class DefaultProviderTest {
         }
 
         {
-            String[] userOptions = {"--option1", "value1", "--option2", "value2"};
+            String[] userOptions = {"--disable-toto=false:option1=value1:option2=value2"};
             Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
             helper.checkImage(imageDir, "composite2", null, null);
             if (!isNewPluginsCalled) {
@@ -176,7 +165,7 @@ public class DefaultProviderTest {
         }
 
         {
-            String[] userOptions = {"--disable-toto", "--option1", "value1"};
+            String[] userOptions = {"--disable-toto=true:option1=value1"};
             Path imageDir = helper.generateDefaultImage(userOptions, "composite2").assertSuccess();
             helper.checkImage(imageDir, "composite2", null, null);
             if (isNewPluginsCalled) {
@@ -187,6 +176,5 @@ public class DefaultProviderTest {
             }
             reset();
         }
-
     }
 }

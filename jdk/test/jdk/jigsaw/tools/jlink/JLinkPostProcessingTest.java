@@ -33,7 +33,6 @@ import java.util.Set;
 
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.plugin.ExecutableImage;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.PostProcessorPlugin;
 import tests.Helper;
 
@@ -57,7 +56,6 @@ public class JLinkPostProcessingTest {
 
         private static ExecutableImage called;
         private static final String NAME = "pp";
-        private static final PluginOption NAME_OPTION = new PluginOption.Builder(NAME).build();
 
         @Override
         public List<String> process(ExecutableImage image) {
@@ -87,16 +85,6 @@ public class JLinkPostProcessingTest {
         public String getDescription() {
             return NAME;
         }
-
-        @Override
-        public PluginOption getOption() {
-            return NAME_OPTION;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-        }
-
     }
 
     public static void main(String[] args) throws Exception {

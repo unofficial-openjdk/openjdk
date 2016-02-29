@@ -46,7 +46,7 @@ public class FindException extends RuntimeException {
      * message.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      */
     public FindException(String msg) {
         super(msg);
@@ -56,7 +56,7 @@ public class FindException extends RuntimeException {
      * Constructs a {@code FindException} with the given cause.
      *
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public FindException(Throwable cause) {
         super(cause);
@@ -67,9 +67,9 @@ public class FindException extends RuntimeException {
      * and cause.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public FindException(String msg, Throwable cause) {
         super(msg, cause);

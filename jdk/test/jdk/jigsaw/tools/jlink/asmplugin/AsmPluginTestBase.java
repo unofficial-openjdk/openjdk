@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.StringTable;
 
@@ -67,7 +66,7 @@ public abstract class AsmPluginTestBase {
 
     public static boolean isImageBuild() {
         Path javaHome = Paths.get(System.getProperty("test.jdk"));
-        Path jmods = javaHome.resolve("..").resolve("jmods");
+        Path jmods = javaHome.resolve("jmods");
         return Files.exists(jmods);
     }
 
@@ -245,27 +244,6 @@ public abstract class AsmPluginTestBase {
         @Override
         public String getName() {
             return "test-plugin";
-        }
-
-
-        @Override
-        public Set<PluginType> getType() {
-            return null;
-        }
-
-        @Override
-        public String getDescription() {
-            return "";
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-
         }
     }
 }

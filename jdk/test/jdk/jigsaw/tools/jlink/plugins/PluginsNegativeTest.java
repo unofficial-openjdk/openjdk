@@ -43,7 +43,6 @@ import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
@@ -149,12 +148,7 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
+        public void configure(Map<String, String> config) {
 
         }
     }

@@ -212,11 +212,12 @@ public class AddExportsTest {
                                "-version")
                 .outputTo(System.out)
                 .errorTo(System.out)
-                .shouldContain("can only be specified once")
+                .shouldContain("specified more than once")
                 .getExitValue();
 
         assertTrue(exitValue != 0);
     }
+
 
     /**
      * Exercise -XaddExports with bad values

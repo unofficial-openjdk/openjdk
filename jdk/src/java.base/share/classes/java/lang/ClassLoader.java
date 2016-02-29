@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package java.lang;
 
 import java.io.InputStream;
@@ -483,9 +484,8 @@ public abstract class ClassLoader {
      *
      * @apiNote This method does not delegate to the parent class loader.
      *
-     * @implNote
-     * The default implementation of this method searches for classes in the
-     * following order:
+     * @implSpec The default implementation of this method searches for classes
+     * in the following order:
      *
      * <ol>
      *   <li>Invoke {@link #findLoadedClass(String)} to check if the class
@@ -640,7 +640,7 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Finds the class with the specified <a href="#name">binary name</a>
+     * Finds the class with the given <a href="#name">binary name</a>
      * in a module defined to this class loader.
      * Class loader implementations that support the loading from modules
      * should override this method.
@@ -648,7 +648,7 @@ public abstract class ClassLoader {
      * @apiNote This method returns {@code null} rather than throwing
      *          {@code ClassNotFoundException} if the class could not be found
      *
-     * @implNote The default implementation returns {@code null}.
+     * @implSpec The default implementation returns {@code null}.
      *
      * @param  moduleName
      *         The module name
@@ -1581,7 +1581,7 @@ public abstract class ClassLoader {
      * to be the system class loader. During construction, the class loader
      * should take great care to avoid calling {@code getSystemClassLoader()}.
      * If circular initialization of the system class loader is detected then
-     * an unspecified error is thrown.
+     * an unspecified error or exception is thrown.
      *
      * <p> If a security manager is present, and the invoker's class loader is
      * not <tt>null</tt> and the invoker's class loader is not the same as or
@@ -1597,7 +1597,7 @@ public abstract class ClassLoader {
      * @implNote The system property to override the system class loader is not
      * examined until the VM is almost fully initialized. Code that executes
      * this method during startup should take care not to cache the return
-     * value unless sun.misc.VM.isBooted returns {@code true}.
+     * value until the system is fully initialized.
      *
      * @return  The system <tt>ClassLoader</tt> for delegation, or
      *          <tt>null</tt> if none
@@ -1767,7 +1767,7 @@ public abstract class ClassLoader {
      *
      * This method does not throw IllegalArgumentException.
      *
-     * @param name package nmae
+     * @param name package name
      * @param m    module
      */
     Package definePackage(String name, Module m) {

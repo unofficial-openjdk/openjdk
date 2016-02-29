@@ -68,7 +68,7 @@ public class Helper {
     public static Helper newHelper() throws IOException {
         Path jdkHome = Paths.get(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
-        if (!Files.exists(jdkHome.resolve("..").resolve("jmods"))) {
+        if (!Files.exists(jdkHome.resolve("jmods"))) {
             System.err.println("Test not run, NO jmods directory");
             return null;
         }
@@ -76,7 +76,7 @@ public class Helper {
     }
 
     private Helper(Path jdkHome) throws IOException {
-        this.stdjmods = jdkHome.resolve("..").resolve("jmods").normalize();
+        this.stdjmods = jdkHome.resolve("jmods").normalize();
         if (!Files.exists(stdjmods)) {
             throw new IOException("Standard jMods do not exist.");
         }

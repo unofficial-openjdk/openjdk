@@ -102,6 +102,7 @@ import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_
 import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_frame_extended;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
+import com.sun.tools.classfile.TargetPlatform_attribute;
 import com.sun.tools.classfile.TypeAnnotation;
 import com.sun.tools.classfile.TypeAnnotation.Position;
 import static com.sun.tools.classfile.TypeAnnotation.TargetType.THROWS;
@@ -1485,6 +1486,16 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         return null;
     }
 
+    @Override
+    public Element visitTargetPlatform(TargetPlatform_attribute attr, Element p) {
+        Element e = new Element(x.getCpString(attr.attribute_name_index));
+        e.add(x.getCpString(attr.os_name_index));
+        e.add(x.getCpString(attr.os_arch_index));
+        e.add(x.getCpString(attr.os_version_index));
+        e.trimToSize();
+        p.add(e);
+        return null;
+    }
 
     @Override
     public Element visitVersion(Version_attribute attr, Element p) {

@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -48,25 +47,17 @@ import tests.Helper;
 public class JLinkOptionsTest {
 
     private static class TestPlugin implements TransformerPlugin {
-
-        private final PluginOption option;
-        private final List<PluginOption> options;
         private final String name;
+        private final String option;
 
-        private TestPlugin(String name, PluginOption option,
-                List<PluginOption> options) {
+        private TestPlugin(String name, String option) {
             this.name = name;
             this.option = option;
-            this.options = options;
         }
 
-        @Override
-        public List<PluginOption> getAdditionalOptions() {
-            return options;
-        }
 
         @Override
-        public PluginOption getOption() {
+        public String getOption() {
             return option;
         }
 
@@ -84,16 +75,6 @@ public class JLinkOptionsTest {
         public String getDescription() {
             return name;
         }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-
-        }
-
-        @Override
-        public Set<PluginType> getType() {
-            return null;
-        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -103,30 +84,13 @@ public class JLinkOptionsTest {
             return;
         }
         helper.generateDefaultModules();
-        String optionName = "test1";
-        PluginOption option = new PluginOption.Builder(optionName).build();
-        PluginOption option2 = new PluginOption.Builder("test2").build();
         {
             // multiple plugins with same option
 
             PluginRepository.
-                    registerPlugin(new TestPlugin("test1", option, null));
+                    registerPlugin(new TestPlugin("test1", "test1"));
             PluginRepository.
-                    registerPlugin(new TestPlugin("test2", option, null));
-            helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
-            PluginRepository.unregisterPlugin("test1");
-            PluginRepository.unregisterPlugin("test2");
-        }
-
-        {
-            // option and optional options collision
-            List<PluginOption> options = new ArrayList<>();
-            options.add(option);
-            PluginRepository.
-                    registerPlugin(new TestPlugin("test1", option, null));
-            PluginRepository.
-                    registerPlugin(new TestPlugin("test2", option2, options));
-
+                    registerPlugin(new TestPlugin("test2", "test1"));
             helper.generateDefaultImage("composite2").assertFailure("Error: More than one plugin enabled by test1 option");
             PluginRepository.unregisterPlugin("test1");
             PluginRepository.unregisterPlugin("test2");

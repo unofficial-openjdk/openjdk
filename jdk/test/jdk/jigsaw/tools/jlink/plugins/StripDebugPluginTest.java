@@ -54,7 +54,6 @@ import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
 import jdk.tools.jlink.plugin.Pool;

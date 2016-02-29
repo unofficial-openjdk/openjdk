@@ -81,6 +81,8 @@ module java.base {
     exports javax.security.auth.x500;
     exports javax.security.cert;
 
+    // see JDK-8144062
+    exports jdk;
     // see JDK-8044773
     exports jdk.net;
 
@@ -175,6 +177,8 @@ module java.base {
         java.desktop,
         java.management,
         jdk.jvmstat;
+    exports jdk.internal.ref to
+        java.desktop;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;

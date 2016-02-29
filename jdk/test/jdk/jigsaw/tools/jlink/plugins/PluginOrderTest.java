@@ -45,7 +45,6 @@ import java.util.Set;
 import jdk.tools.jlink.internal.PluginOrderingGraph;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.Plugin.CATEGORY;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 
@@ -268,21 +267,6 @@ public class PluginOrderTest {
         @Override
         public String getName() {
             return name;
-        }
-
-        @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return null;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-
         }
     }
 }

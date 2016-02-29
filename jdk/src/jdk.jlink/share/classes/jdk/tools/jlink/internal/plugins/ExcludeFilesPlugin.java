@@ -31,8 +31,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -45,10 +43,6 @@ import jdk.tools.jlink.internal.Utils;
 public final class ExcludeFilesPlugin implements TransformerPlugin {
 
     public static final String NAME = "exclude-files";
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).build();
     private Predicate<String> predicate;
 
     @Override
@@ -67,11 +61,6 @@ public final class ExcludeFilesPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public Set<PluginType> getType() {
         Set<PluginType> set = new HashSet<>();
         set.add(CATEGORY.FILTER);
@@ -84,9 +73,19 @@ public final class ExcludeFilesPlugin implements TransformerPlugin {
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
         try {
-            String value = config.get(NAME_OPTION);
+            String value = config.get(NAME);
             predicate = new ResourceFilter(Utils.listParser.apply(value), true);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

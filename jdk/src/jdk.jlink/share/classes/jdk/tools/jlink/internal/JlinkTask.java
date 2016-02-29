@@ -52,9 +52,7 @@ import java.util.stream.Collectors;
 
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
-import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
-import jdk.tools.jlink.internal.TaskHelper.HiddenOption;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
@@ -137,12 +135,22 @@ public class JlinkTask {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
-        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            Path path = Paths.get(arg);
+            if (Files.exists(path)) {
+                throw taskHelper.newBadArgs("err.dir.exists", path);
+            }
+            task.options.packagedModulesPath = path;
+        }, true, "--keep-packaged-modules"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.genbom = true;
-        }, "--genbom"),
-        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
+        }, true, "--genbom"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            task.options.saveoptsfile = arg;
+        }, "--saveopts"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, "--fullversion"),};
+        }, true, "--fullversion"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
@@ -168,12 +176,14 @@ public class JlinkTask {
     static class OptionsValues {
         boolean help;
         boolean genbom;
+        String  saveoptsfile;
         boolean version;
         boolean fullVersion;
         Path[] modulePath;
         Set<String> limitMods = new HashSet<>();
         Set<String> addMods = new HashSet<>();
         Path output;
+        Path packagedModulesPath;
         ByteOrder endian = ByteOrder.nativeOrder();
     }
 
@@ -202,6 +212,10 @@ public class JlinkTask {
                 createImage();
             } else {
                 postProcessOnly(taskHelper.getExistingImage());
+            }
+
+            if (options.saveoptsfile != null) {
+                Files.write(Paths.get(options.saveoptsfile), getSaveOpts().getBytes());
             }
 
             return EXIT_OK;
@@ -238,31 +252,8 @@ public class JlinkTask {
                         name);
             }
 
-            URI location = omref.get().location().get();
-            String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")
-                    && !scheme.equalsIgnoreCase("file")) {
-                fail(RuntimeException.class,
-                        "Selected module %s (%s) not in jmod, modular jar or directory format",
-                        name,
-                        location);
-            }
-
-            // convert to file URIs
-            URI fileURI;
-            if (scheme.equalsIgnoreCase("jmod")) {
-                // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
-                String s = location.toString();
-                fileURI = URI.create(s.substring(5, s.length() - 2));
-            } else if (scheme.equalsIgnoreCase("jar")) {
-                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
-                String s = location.toString();
-                fileURI = URI.create(s.substring(4, s.length() - 2));
-            } else {
-                fileURI = URI.create(location.toString());
-            }
-
-            modPaths.put(name, Paths.get(fileURI));
+            URI uri = omref.get().location().get();
+            modPaths.put(name, Paths.get(uri));
         }
         return modPaths;
     }
@@ -288,8 +279,10 @@ public class JlinkTask {
         // First create the image provider
         ImageProvider imageProvider
                 = createImageProvider(finder,
-                        checkAddMods(config.getModules()),
-                        config.getLimitmods(), config.getByteOrder());
+                                      checkAddMods(config.getModules()),
+                                      config.getLimitmods(),
+                                      config.getByteOrder(),
+                                      null);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins,
@@ -339,7 +332,8 @@ public class JlinkTask {
                 = createImageProvider(finder,
                         options.addMods,
                         options.limitMods,
-                        options.endian);
+                        options.endian,
+                        options.packagedModulesPath);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
@@ -375,10 +369,12 @@ public class JlinkTask {
     }
 
     private static ImageProvider createImageProvider(ModuleFinder finder,
-            Set<String> addMods,
-            Set<String> limitMods,
-            ByteOrder order)
-            throws IOException {
+                                                     Set<String> addMods,
+                                                     Set<String> limitMods,
+                                                     ByteOrder order,
+                                                     Path retainModulesPath)
+            throws IOException
+    {
         if (addMods.isEmpty()) {
             throw new IllegalArgumentException("empty modules and limitmods");
         }
@@ -387,7 +383,7 @@ public class JlinkTask {
                 ModuleFinder.empty(),
                 addMods);
         Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
-        return new ImageHelper(cf, mods, order);
+        return new ImageHelper(cf, mods, order, retainModulesPath);
     }
 
     /**
@@ -438,6 +434,16 @@ public class JlinkTask {
         };
     }
 
+    private String getSaveOpts() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('#').append(new Date()).append("\n");
+        for (String c : optionsHelper.getInputCommand()) {
+            sb.append(c).append(" ");
+        }
+
+        return sb.toString();
+    }
+
     private static String getBomHeader() {
         StringBuilder sb = new StringBuilder();
         sb.append("#").append(new Date()).append("\n");
@@ -472,15 +478,17 @@ public class JlinkTask {
 
         final Set<Archive> archives;
         final ByteOrder order;
+        final Path packagedModulesPath;
 
         ImageHelper(Configuration cf,
-                Map<String, Path> modsPaths,
-                ByteOrder order)
-                throws IOException {
+                    Map<String, Path> modsPaths,
+                    ByteOrder order,
+                    Path packagedModulesPath) throws IOException {
             archives = modsPaths.entrySet().stream()
-                    .map(e -> newArchive(e.getKey(), e.getValue()))
-                    .collect(Collectors.toSet());
+                                .map(e -> newArchive(e.getKey(), e.getValue()))
+                                .collect(Collectors.toSet());
             this.order = order;
+            this.packagedModulesPath = packagedModulesPath;
         }
 
         private Archive newArchive(String module, Path path) {
@@ -501,7 +509,17 @@ public class JlinkTask {
 
         @Override
         public ExecutableImage retrieve(ImagePluginStack stack) throws IOException {
-            return ImageFileCreator.create(archives, order, stack);
+            ExecutableImage image = ImageFileCreator.create(archives, order, stack);
+            if (packagedModulesPath != null) {
+                // copy the packaged modules to the given path
+                Files.createDirectories(packagedModulesPath);
+                for (Archive a : archives) {
+                    Path file = a.getPath();
+                    Path dest = packagedModulesPath.resolve(file.getFileName());
+                    Files.copy(file, dest);
+                }
+            }
+            return image;
         }
     }
 

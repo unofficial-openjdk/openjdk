@@ -59,7 +59,6 @@ import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StringSharingPlugin;
 import jdk.tools.jlink.internal.plugins.ZipPlugin;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -95,7 +94,7 @@ public class CompressorPluginTest {
 
         // compress == ZIP + String sharing
         Properties options = new Properties();
-        options.setProperty(ZipPlugin.NAME_OPTION.getName(), "");
+        options.setProperty(ZipPlugin.NAME, "");
         checkCompress(classes, new DefaultCompressPlugin(), options,
                 new ResourceDecompressorFactory[]{
                     new ZipDecompressorFactory(),
@@ -103,7 +102,7 @@ public class CompressorPluginTest {
                 });
 
         // compress == ZIP + String sharing + filter
-        options.setProperty(DefaultCompressPlugin.FILTER_OPTION.getName(),
+        options.setProperty(DefaultCompressPlugin.FILTER,
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressPlugin(), options,
                 new ResourceDecompressorFactory[]{
@@ -114,7 +113,7 @@ public class CompressorPluginTest {
 
         // compress level 1 == ZIP
         Properties options1 = new Properties();
-        options1.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(),
+        options1.setProperty(DefaultCompressPlugin.NAME,
                 "1");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options1,
@@ -123,7 +122,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 1 == ZIP
-        options1.setProperty(DefaultCompressPlugin.FILTER_OPTION.getName(),
+        options1.setProperty(DefaultCompressPlugin.FILTER,
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options1,
@@ -134,7 +133,7 @@ public class CompressorPluginTest {
 
         // compress level 2 == ZIP + String sharing
         Properties options2 = new Properties();
-        options2.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(),
+        options2.setProperty(DefaultCompressPlugin.NAME,
                 "2");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options2,
@@ -144,7 +143,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 2 == ZIP + String sharing + filter
-        options2.setProperty(DefaultCompressPlugin.FILTER_OPTION.getName(),
+        options2.setProperty(DefaultCompressPlugin.FILTER,
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options2,
@@ -156,7 +155,7 @@ public class CompressorPluginTest {
 
         // compress level 0 == String sharing
         Properties options0 = new Properties();
-        options0.setProperty(DefaultCompressPlugin.NAME_OPTION.getName(), "0");
+        options0.setProperty(DefaultCompressPlugin.NAME, "0");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options0,
                 new ResourceDecompressorFactory[]{
@@ -164,7 +163,7 @@ public class CompressorPluginTest {
                 });
 
         // compress level 0 == String sharing + filter
-        options0.setProperty(DefaultCompressPlugin.FILTER_OPTION.getName(),
+        options0.setProperty(DefaultCompressPlugin.FILTER,
                 "*Exception.class,^*IOException.class");
         checkCompress(classes, new DefaultCompressPlugin(),
                 options0,
@@ -245,10 +244,10 @@ public class CompressorPluginTest {
                     .map(Pattern::compile)
                     .collect(Collectors.toList());
 
-            Map<PluginOption, String> props = new HashMap<>();
+            Map<String, String> props = new HashMap<>();
             if (config != null) {
                 for (String p : config.stringPropertyNames()) {
-                    props.put(new PluginOption.Builder(p).build(), config.getProperty(p));
+                    props.put(p, config.getProperty(p));
                 }
             }
             prov.configure(props);

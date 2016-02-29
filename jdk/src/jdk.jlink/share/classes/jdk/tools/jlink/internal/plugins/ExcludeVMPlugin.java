@@ -39,8 +39,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleDataType;
@@ -89,12 +87,6 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
     private static final String SERVER = "server";
     private static final String MINIMAL = "minimal";
 
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME)
-            .description(PluginsResourceBundle.getDescription(NAME))
-            .argumentDescription(PluginsResourceBundle.getArgument(NAME))
-            .showHelp(true)
-            .build();
     private Predicate<String> predicate;
     private Jvm target;
     private boolean keepAll;
@@ -168,11 +160,6 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public Set<PluginType> getType() {
         Set<PluginType> set = new HashSet<>();
         set.add(CATEGORY.FILTER);
@@ -185,9 +172,19 @@ public final class ExcludeVMPlugin implements TransformerPlugin {
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
         try {
-            String value = config.get(NAME_OPTION);
+            String value = config.get(NAME);
             String exclude = "";
             switch (value) {
                 case ALL: {

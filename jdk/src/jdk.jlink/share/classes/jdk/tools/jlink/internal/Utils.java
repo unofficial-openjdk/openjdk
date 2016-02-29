@@ -24,6 +24,7 @@
  */
 package jdk.tools.jlink.internal;
 
+import java.lang.reflect.Module;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -36,6 +37,11 @@ import jdk.tools.jlink.plugin.Plugin.PluginType;
  * @author jdenise
  */
 public class Utils {
+
+    private Utils() {}
+
+    // current module
+    private static final Module THIS_MODULE = Utils.class.getModule();
 
     public static final Function<String, String[]> listParser = (argument) -> {
         String[] arguments = null;
@@ -149,4 +155,8 @@ public class Utils {
         return prov.getState().contains(Plugin.STATE.DISABLED);
     }
 
+    // is this a builtin (jdk.jlink) plugin?
+    public static boolean isBuiltin(Plugin prov) {
+        return THIS_MODULE.equals(prov.getClass().getModule());
+    }
 }

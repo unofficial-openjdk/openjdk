@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -49,18 +47,8 @@ import jdk.tools.jlink.internal.Utils;
  * ZIP and String Sharing compression plugin
  */
 public final class DefaultCompressPlugin implements TransformerPlugin, ResourcePrevisitor {
-    private static final String NAME = "compress";
-    public static final PluginOption NAME_OPTION =
-        new Builder(NAME).description(PluginsResourceBundle.getDescription(NAME))
-                         .showHelp(true)
-                         .argumentDescription(PluginsResourceBundle.getArgument(NAME))
-                         .build();
-
-    private static final String FILTER = "compress-filter";
-    public static final PluginOption FILTER_OPTION
-            = new Builder(FILTER).description(PluginsResourceBundle.getDescription(NAME+"."+FILTER)).
-            argumentDescription(PluginsResourceBundle.getOption(NAME, FILTER)).
-            build();
+    public static final String NAME = "compress";
+    public static final String FILTER = "filter";
     public static final String LEVEL_0 = "0";
     public static final String LEVEL_1 = "1";
     public static final String LEVEL_2 = "2";
@@ -95,18 +83,6 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
-    public List<PluginOption> getAdditionalOptions() {
-        List<PluginOption> lst = new ArrayList<>();
-        lst.add(FILTER_OPTION);
-        return lst;
-    }
-
-    @Override
     public Set<PluginType> getType() {
         Set<PluginType> set = new HashSet<>();
         set.add(CATEGORY.COMPRESSOR);
@@ -119,13 +95,23 @@ public final class DefaultCompressPlugin implements TransformerPlugin, ResourceP
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
         try {
-            String filter = config.get(FILTER_OPTION);
+            String filter = config.get(FILTER);
             String[] patterns = filter == null ? null
                     : Utils.listParser.apply(filter);
             ResourceFilter resFilter = new ResourceFilter(patterns);
-            String level = config.get(NAME_OPTION);
+            String level = config.get(NAME);
             if (level != null) {
                 switch (level) {
                     case LEVEL_0:

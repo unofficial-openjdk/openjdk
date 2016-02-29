@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.VM;
 
@@ -214,59 +215,17 @@ public class Reflection {
         return memberModule.isExported(c.getPackageName(), currentModule);
     }
 
+    /**
+     * Returns true if two classes in the same package.
+     */
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {
-        return isSameClassPackage(c1.getClassLoader(), c1.getName(),
-                c2.getClassLoader(), c2.getName());
-    }
-
-    /** Returns true if two classes are in the same package; classloader
-        and classname information is enough to determine a class's package */
-    private static boolean isSameClassPackage(ClassLoader loader1, String name1,
-                                              ClassLoader loader2, String name2)
-    {
-        if (loader1 != loader2) {
+        if (c1.getClassLoader() != c2.getClassLoader())
             return false;
-        } else {
-            int lastDot1 = name1.lastIndexOf('.');
-            int lastDot2 = name2.lastIndexOf('.');
-            if ((lastDot1 == -1) || (lastDot2 == -1)) {
-                // One of the two doesn't have a package.  Only return true
-                // if the other one also doesn't have a package.
-                return (lastDot1 == lastDot2);
-            } else {
-                int idx1 = 0;
-                int idx2 = 0;
-
-                // Skip over '['s
-                if (name1.charAt(idx1) == '[') {
-                    do {
-                        idx1++;
-                    } while (name1.charAt(idx1) == '[');
-                    if (name1.charAt(idx1) != 'L') {
-                        // Something is terribly wrong.  Shouldn't be here.
-                        throw new InternalError("Illegal class name " + name1);
-                    }
-                }
-                if (name2.charAt(idx2) == '[') {
-                    do {
-                        idx2++;
-                    } while (name2.charAt(idx2) == '[');
-                    if (name2.charAt(idx2) != 'L') {
-                        // Something is terribly wrong.  Shouldn't be here.
-                        throw new InternalError("Illegal class name " + name2);
-                    }
-                }
-
-                // Check that package part is identical
-                int length1 = lastDot1 - idx1;
-                int length2 = lastDot2 - idx2;
-
-                if (length1 != length2) {
-                    return false;
-                }
-                return name1.regionMatches(false, idx1, name2, idx2, length1);
-            }
-        }
+        while (c1.isArray())
+            c1 = c1.getComponentType();
+        while (c2.isArray())
+            c2 = c2.getComponentType();
+        return Objects.equals(c1.getPackageName(), c2.getPackageName());
     }
 
     static boolean isSubclassOf(Class<?> queryClass,

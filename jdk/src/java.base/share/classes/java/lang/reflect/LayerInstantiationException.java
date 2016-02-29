@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ package java.lang.reflect;
 /**
  * Thrown when creating a Layer fails.
  *
- * @see Layer#create
+ * @see Layer
  *
  * @since 9
  */
@@ -46,7 +46,7 @@ public class LayerInstantiationException extends RuntimeException {
      * message.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      */
     public LayerInstantiationException(String msg) {
         super(msg);
@@ -56,7 +56,7 @@ public class LayerInstantiationException extends RuntimeException {
      * Constructs a {@code LayerInstantiationException} with the given cause.
      *
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public LayerInstantiationException(Throwable cause) {
         super(cause);
@@ -67,9 +67,9 @@ public class LayerInstantiationException extends RuntimeException {
      * and cause.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public LayerInstantiationException(String msg, Throwable cause) {
         super(msg, cause);

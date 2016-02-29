@@ -59,8 +59,6 @@ import jdk.internal.jimage.decompressor.StringSharingDecompressor;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.PluginOption;
-import jdk.tools.jlink.plugin.PluginOption.Builder;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.Pool.ModuleData;
 import jdk.tools.jlink.internal.ResourcePrevisitor;
@@ -76,11 +74,6 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
 
     public static final String NAME = "compact-cp";
 
-    public static final PluginOption NAME_OPTION
-            = new Builder(NAME).
-            description(PluginsResourceBundle.getDescription(NAME)).
-            argumentDescription(PluginsResourceBundle.getArgument(NAME)).
-            build();
     private static final int[] SIZES;
 
     static {
@@ -362,11 +355,6 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
     }
 
     @Override
-    public PluginOption getOption() {
-        return NAME_OPTION;
-    }
-
-    @Override
     public void visit(Pool in, Pool result) {
         CompactCPHelper visit = new CompactCPHelper();
         in.visit((resource) -> {
@@ -397,9 +385,19 @@ public class StringSharingPlugin implements TransformerPlugin, ResourcePrevisito
     }
 
     @Override
-    public void configure(Map<PluginOption, String> config) {
+    public boolean hasArguments() {
+        return true;
+    }
+
+    @Override
+    public String getArgumentsDescription() {
+       return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
         try {
-            String val = config.get(NAME_OPTION);
+            String val = config.get(NAME);
             predicate = new ResourceFilter(Utils.listParser.apply(val));
         } catch (IOException ex) {
             throw new PluginException(ex);

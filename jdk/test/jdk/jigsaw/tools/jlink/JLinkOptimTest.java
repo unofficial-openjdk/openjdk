@@ -22,7 +22,6 @@ import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodInsnNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PluginRepository;
 import jdk.tools.jlink.internal.PoolImpl;
 import jdk.tools.jlink.internal.plugins.OptimizationPlugin;
@@ -92,8 +91,6 @@ public class JLinkOptimTest {
         private int numBlocks;
 
         private static final String NAME = "test-optim";
-        private static final PluginOption NAME_OPTION
-               = new PluginOption.Builder(NAME).build();
 
         private ControlFlowPlugin() {
         }
@@ -142,21 +139,6 @@ public class JLinkOptimTest {
             set.add(CATEGORY.TRANSFORMER);
             return Collections.unmodifiableSet(set);
         }
-
-        @Override
-        public String getDescription() {
-            return "";
-        }
-
-        @Override
-        public PluginOption getOption() {
-            return NAME_OPTION;
-        }
-
-        @Override
-        public void configure(Map<PluginOption, String> config) {
-
-        }
     }
 
     private static void testForName() throws Exception {
@@ -200,9 +182,9 @@ public class JLinkOptimTest {
         }
 
         OptimizationPlugin plugin = new OptimizationPlugin();
-        Map<PluginOption, String> optional = new HashMap<>();
-        optional.put(OptimizationPlugin.NAME_OPTION, OptimizationPlugin.FORNAME_REMOVAL);
-        optional.put(OptimizationPlugin.LOG_OPTION, "forName.log");
+        Map<String, String> optional = new HashMap<>();
+        optional.put(OptimizationPlugin.NAME, OptimizationPlugin.FORNAME_REMOVAL);
+        optional.put(OptimizationPlugin.LOG, "forName.log");
         plugin.configure(optional);
         Pool out = new PoolImpl();
         plugin.visit(pool, out);
@@ -344,8 +326,7 @@ public class JLinkOptimTest {
         helper.generateDefaultModules();
         helper.generateDefaultJModule("optim1", "java.se");
         {
-            String[] userOptions = {"--class-optim", "all",
-                "--class-optim-log-file", "./class-optim-log.txt"};
+            String[] userOptions = {"--class-optim=all:log=./class-optim-log.txt"};
 
             Path imageDir = helper.generateDefaultImage(userOptions, "optim1").assertSuccess();
             helper.checkImage(imageDir, "optim1", null, null);
@@ -354,7 +335,7 @@ public class JLinkOptimTest {
         /*{
          Path dir = Paths.get("dir.log");
          Files.createDirectory(dir);
-         String[] userOptions = {"--class-optim", "all", "--class-optim-log-file", dir.toString()};
+         String[] userOptions = {"--class-optim=all:log=" + dir.toString()};
          helper.generateDefaultImage(userOptions, "optim1")
          .assertFailure("java.io.FileNotFoundException: dir.log (Is a directory)");
          }*/
@@ -363,8 +344,7 @@ public class JLinkOptimTest {
          helper.generateDefaultImage(userOptions, "optim1").assertFailure("Unknown optimization");
          }*/
         {
-            String[] userOptions = {"--class-optim", "forName-folding",
-                "--class-optim-log-file", "./class-optim-log.txt"};
+            String[] userOptions = {"--class-optim=forName-folding:log=./class-optim-log.txt"};
             Path imageDir = helper.generateDefaultImage(userOptions, "optim1").assertSuccess();
             helper.checkImage(imageDir, "optim1", null, null);
         }

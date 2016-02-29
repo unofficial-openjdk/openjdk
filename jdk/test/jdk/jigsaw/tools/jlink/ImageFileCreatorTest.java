@@ -27,6 +27,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -71,6 +72,11 @@ public class ImageFileCreatorTest {
         @Override
         public Stream<Entry> entries() {
             return entries.stream();
+        }
+
+        @Override
+        public Path getPath() {
+            return null;
         }
 
         @Override

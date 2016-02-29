@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.SortResourcesPlugin;
@@ -90,8 +89,8 @@ public class SorterPluginTest {
 
         {
             Pool out = new PoolImpl();
-            Map<PluginOption, String> config = new HashMap<>();
-            config.put(SortResourcesPlugin.NAME_OPTION, "/zazou/*,*/module-info.class");
+            Map<String, String> config = new HashMap<>();
+            config.put(SortResourcesPlugin.NAME, "/zazou/*,*/module-info.class");
             TransformerPlugin p = new SortResourcesPlugin();
             p.configure(config);
             p.visit(resources, out);
@@ -110,8 +109,8 @@ public class SorterPluginTest {
             Files.write(order.toPath(), builder.toString().getBytes());
 
             Pool out = new PoolImpl();
-            Map<PluginOption, String> config = new HashMap<>();
-            config.put(SortResourcesPlugin.NAME_OPTION, order.getAbsolutePath());
+            Map<String, String> config = new HashMap<>();
+            config.put(SortResourcesPlugin.NAME, order.getAbsolutePath());
             TransformerPlugin p = new SortResourcesPlugin();
             p.configure(config);
             p.visit(resources, out);

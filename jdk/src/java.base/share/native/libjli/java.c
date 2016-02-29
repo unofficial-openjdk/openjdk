@@ -103,9 +103,9 @@ static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
-static void SetAddReadsProp(const char *s);
-static void SetAddExportsProp(const char *s);
-static void SetPatchProp(const char *s);
+static void SetAddReadsProp(const jint n, const char *s);
+static void SetAddExportsProp(const jint n, const char *s);
+static void SetPatchProp(const jint n, const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -939,26 +939,26 @@ SetLimitModulesProp(const char *mods) {
 }
 
 static void
-SetAddReadsProp(const char *s) {
+SetAddReadsProp(const jint n, const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads.%d=%s", n, s);
     AddOption(prop, NULL);
 }
 
 static void
-SetAddExportsProp(const char *s) {
+SetAddExportsProp(const jint n, const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports.%d=%s", n, s);
     AddOption(prop, NULL);
 }
 
 static void
-SetPatchProp(const char *s) {
+SetPatchProp(const jint n, const char *s) {
     size_t buflen = JLI_StrLen(s) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patchdirs=%s", s);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patch.%d=%s", n, s);
     AddOption(prop, NULL);
 }
 
@@ -1177,45 +1177,17 @@ ParseArguments(int *pargc, char ***pargv,
             listModules = arg;
             return JNI_TRUE;
         } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
-            static jboolean haveAddReads = JNI_FALSE;
-            /* -XaddReads only allowed once */
-            if (haveAddReads) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddReads");
-                *pret = 1;
-                return JNI_FALSE;
-            } else {
-                char *value = arg + 11;
-                SetAddReadsProp(value);
-                haveAddReads = JNI_TRUE;
-            }
+            static jint n;
+            char *value = arg + 11;
+            SetAddReadsProp(n++, value);
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
-            static jboolean haveAddExports = JNI_FALSE;
-            /* -XaddExports only allowed once */
-            if (haveAddExports) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddExports");
-                *pret = 1;
-                return JNI_FALSE;
-            } else {
-                char *value = arg + 13;
-                SetAddExportsProp(value);
-                haveAddExports = JNI_TRUE;
-            }
+            static jint n;
+            char *value = arg + 13;
+            SetAddExportsProp(n++, value);
         } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-            static jboolean havePatchDirs = JNI_FALSE;
-            if (havePatchDirs) {
-                JLI_ReportErrorMessage(ARG_ERROR7, "-Xpatch");
-                *pret = 1;
-                return JNI_FALSE;
-            } else {
-                char *value;
-                if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-                    value = arg + 8;
-                } else {
-                    value = arg + 11;
-                }
-                SetPatchProp(value);
-                havePatchDirs = JNI_TRUE;
-            }
+            static jint n;
+            char *value = arg + 8;
+            SetPatchProp(n++, value);
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {

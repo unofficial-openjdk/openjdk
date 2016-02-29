@@ -2041,11 +2041,8 @@ public final class System {
             public Package definePackage(ClassLoader cl, String name, Module module) {
                 return cl.definePackage(name, module);
             }
-            public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
-                Long.formatUnsignedLong(val, shift, buf, offset, len);
-            }
-            public void formatUnsignedInt(int val, int shift, char[] buf, int offset, int len) {
-                Integer.formatUnsignedInt(val, shift, buf, offset, len);
+            public String fastUUID(long lsb, long msb) {
+                return Long.fastUUID(lsb, msb);
             }
         });
     }

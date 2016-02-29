@@ -46,7 +46,7 @@ public class ResolutionException extends RuntimeException {
      * message.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      */
     public ResolutionException(String msg) {
         super(msg);
@@ -56,7 +56,7 @@ public class ResolutionException extends RuntimeException {
      * Constructs an instance of this exception with the given cause.
      *
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public ResolutionException(Throwable cause) {
         super(cause);
@@ -67,9 +67,9 @@ public class ResolutionException extends RuntimeException {
      * and cause.
      *
      * @param msg
-     *        The detail message
+     *        The detail message; can be {@code null}
      * @param cause
-     *        The cause
+     *        The cause; can be {@code null}
      */
     public ResolutionException(String msg, Throwable cause) {
         super(msg, cause);

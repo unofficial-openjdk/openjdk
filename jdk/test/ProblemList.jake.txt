@@ -6,11 +6,8 @@
 
 # jdk_lang
 
-# 8134485
-java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
-
-# 8148787
-java/lang/String/concat/StringConcatFactoryInvariants.java	generic-all
+# 8150195 
+jdk/jigsaw/tools/jimage/JImageTest.java                         windows-all
 
 ############################################################################
 
@@ -21,13 +18,6 @@ sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
-
-# 8134487
-sun/security/ssl/StatusStapling/CertStatusReqExtensionTests.java                generic-all
-sun/security/ssl/StatusStapling/CertStatusReqItemV2Tests.java                   generic-all
-sun/security/ssl/StatusStapling/CertStatusReqListV2ExtensionTests.java          generic-all
-sun/security/ssl/StatusStapling/OCSPStatusRequestTests.java                     generic-all
-sun/security/ssl/StatusStapling/StatusResponseManagerTests.java                 generic-all
 
 # 8137314
 java/security/Policy/SignedJar/SignedJarTest.java		solaris-all

@@ -184,9 +184,11 @@ public class Proc {
                         "java").getPath());
         }
 
-        String addexports = System.getProperty("jdk.launcher.addexports");
-        if (addexports != null) {
-            prop("jdk.launcher.addexports", addexports);
+        int n = 0;
+        String addexports;
+        while ((addexports = System.getProperty("jdk.launcher.addexports." + n)) != null) {
+            prop("jdk.launcher.addexports." + n, addexports);
+            n++;
         }
 
         Collections.addAll(cmd, splitProperty("test.vm.opts"));

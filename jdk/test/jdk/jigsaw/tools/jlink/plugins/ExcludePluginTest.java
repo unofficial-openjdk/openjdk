@@ -34,7 +34,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.plugin.PluginOption;
 import jdk.tools.jlink.internal.PoolImpl;
 
 import jdk.tools.jlink.internal.plugins.ExcludePlugin;
@@ -72,8 +71,8 @@ public class ExcludePluginTest {
     }
 
     public void check(String s, String sample, boolean exclude) throws Exception {
-        Map<PluginOption, String> prop = new HashMap<>();
-        prop.put(ExcludePlugin.NAME_OPTION, s);
+        Map<String, String> prop = new HashMap<>();
+        prop.put(ExcludePlugin.NAME, s);
         ExcludePlugin excludePlugin = new ExcludePlugin();
         excludePlugin.configure(prop);
         Pool resources = new PoolImpl();

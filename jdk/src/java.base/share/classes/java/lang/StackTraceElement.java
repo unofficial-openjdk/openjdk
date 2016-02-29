@@ -50,8 +50,8 @@ public final class StackTraceElement implements java.io.Serializable {
 
     /**
      * Creates a stack trace element representing the specified execution
-     * point. The {@link #getModuleName module-name} and {@link
-     * #getModuleVersion module-version} of the stack trace element will
+     * point. The {@link #getModuleName module name} and {@link
+     * #getModuleVersion module version} of the stack trace element will
      * be {@code null}.
      *
      * @param declaringClass the fully qualified name of the class containing

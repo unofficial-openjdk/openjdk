@@ -34,10 +34,11 @@ import java.util.Objects;
 import java.util.Set;
 import jdk.tools.jlink.internal.JlinkTask;
 import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginContext;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.builder.ImageBuilder;
-import jdk.tools.jlink.plugin.PluginOption;
+import jdk.tools.jlink.internal.PluginContextImpl;
 import jdk.tools.jlink.internal.PluginRepository;
 
 /**
@@ -54,7 +55,7 @@ public final class Jlink {
      * @return A new plugin or null if plugin is unknown.
      */
     public static Plugin newPlugin(String name,
-            Map<PluginOption, String> configuration, Layer pluginsLayer) {
+            Map<String, String> configuration, Layer pluginsLayer) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(configuration);
         pluginsLayer = pluginsLayer == null ? Layer.boot() : pluginsLayer;
@@ -70,6 +71,7 @@ public final class Jlink {
         private final List<Plugin> plugins;
         private final ImageBuilder imageBuilder;
         private final String lastSorterPluginName;
+        private final PluginContext pluginContext;
 
         /**
          * Empty plugins configuration.
@@ -84,7 +86,7 @@ public final class Jlink {
          * @param plugins List of plugins.
          */
         public PluginsConfiguration(List<Plugin> plugins) {
-            this(plugins, null, null);
+            this(plugins, null, null, null);
         }
 
         /**
@@ -99,10 +101,28 @@ public final class Jlink {
          */
         public PluginsConfiguration(List<Plugin> plugins,
                 ImageBuilder imageBuilder, String lastSorterPluginName) {
+            this(plugins, imageBuilder, lastSorterPluginName, null);
+        }
+
+        /**
+         * Plugins configuration with a last sorter and an ImageBuilder. No
+         * sorting can occur after the last sorter plugin. The ImageBuilder is
+         * in charge to layout the image content on disk.
+         *
+         * @param plugins List of transformer plugins.
+         * @param imageBuilder Image builder.
+         * @param lastSorterPluginName Name of last sorter plugin, no sorting
+         * @param ctx the plugin context
+         * can occur after it.
+         */
+        public PluginsConfiguration(List<Plugin> plugins,
+                ImageBuilder imageBuilder, String lastSorterPluginName,
+                PluginContext ctx) {
             this.plugins = plugins == null ? Collections.emptyList()
                     : plugins;
             this.imageBuilder = imageBuilder;
             this.lastSorterPluginName = lastSorterPluginName;
+            this.pluginContext = ctx != null? ctx : new PluginContextImpl();
         }
 
         /**
@@ -124,6 +144,13 @@ public final class Jlink {
          */
         public String getLastSorterPluginName() {
             return lastSorterPluginName;
+        }
+
+        /**
+         * @return the pluginContext
+         */
+        public PluginContext getPluginContext() {
+            return pluginContext;
         }
 
         @Override

@@ -51,7 +51,7 @@ import jdk.testlibrary.ProcessTools;
 public class BasicTest {
 
     private final Path jdkHome = Paths.get(System.getProperty("test.jdk"));
-    private final Path jdkMods = jdkHome.getParent().resolve("jmods");
+    private final Path jdkMods = jdkHome.resolve("jmods");
     private final Path testSrc = Paths.get(System.getProperty("test.src"));
     private final Path src = testSrc.resolve("src");
     private final Path classes = Paths.get("classes");

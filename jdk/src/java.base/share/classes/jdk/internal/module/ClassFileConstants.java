@@ -36,9 +36,12 @@ public class ClassFileConstants {
     public static final String MODULE             = "Module";
     public static final String SOURCE_FILE        = "SourceFile";
     public static final String SYNTHETIC          = "Synthetic";
+    public static final String SDE                = "SourceDebugExtension";
+
     public static final String CONCEALED_PACKAGES = "ConcealedPackages";
-    public static final String MAIN_CLASS         = "MainClass";
     public static final String VERSION            = "Version";
+    public static final String MAIN_CLASS         = "MainClass";
+    public static final String TARGET_PLATFORM    = "TargetPlatform";
     public static final String HASHES             = "Hashes";
 
     // access and requires flags

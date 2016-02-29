@@ -26,7 +26,6 @@ package jdk.tools.jlink.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
-import jdk.tools.jlink.plugin.Plugin;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteOrder;
@@ -38,10 +37,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import jdk.internal.jimage.decompressor.Decompressor;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.PluginContext;
 import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.TransformerPlugin;
@@ -163,18 +166,28 @@ public final class ImagePluginStack {
     private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
 
     private final ImageBuilder imageBuilder;
-
+    private final Properties release;
     private final String bom;
 
     public ImagePluginStack(String bom) {
         this(null, Collections.emptyList(), null,
-                Collections.emptyList(), bom);
+                Collections.emptyList(), null, bom);
     }
 
     public ImagePluginStack(ImageBuilder imageBuilder,
             List<TransformerPlugin> contentPlugins,
             Plugin lastSorter,
             List<PostProcessorPlugin> postprocessingPlugins,
+            String bom) {
+        this(imageBuilder, contentPlugins, lastSorter,
+            postprocessingPlugins, null, bom);
+    }
+
+    public ImagePluginStack(ImageBuilder imageBuilder,
+            List<TransformerPlugin> contentPlugins,
+            Plugin lastSorter,
+            List<PostProcessorPlugin> postprocessingPlugins,
+            PluginContext ctxt,
             String bom) {
         Objects.requireNonNull(contentPlugins);
         this.lastSorter = lastSorter;
@@ -190,6 +203,7 @@ public final class ImagePluginStack {
             this.postProcessingPlugins.add(p);
         }
         this.imageBuilder = imageBuilder;
+        this.release = ctxt != null? ctxt.getReleaseProperties() : new Properties();
         this.bom = bom;
     }
 
@@ -456,7 +470,16 @@ public final class ImagePluginStack {
             BasicImageWriter writer)
             throws Exception {
         Objects.requireNonNull(original);
-        imageBuilder.storeFiles(new LastPool(transformed), bom);
+        try {
+            // fill release information available from transformed "java.base" module!
+            ModuleDescriptor desc = transformed.getModule("java.base").getDescriptor();
+            desc.osName().ifPresent(s -> release.put("OS_NAME", s));
+            desc.osVersion().ifPresent(s -> release.put("OS_VERSION", s));
+            desc.osArch().ifPresent(s -> release.put("OS_ARCH", s));
+        } catch (Exception ignored) {
+        }
+
+        imageBuilder.storeFiles(new LastPool(transformed), bom, release);
     }
 
     public ExecutableImage getExecutableImage() throws IOException {

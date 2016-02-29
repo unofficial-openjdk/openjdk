@@ -26,22 +26,18 @@
 package jdk.internal.misc;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Version;
 import java.util.Map;
 import java.util.Set;
-
-import static java.lang.module.ModuleDescriptor.*;
 
 /**
  * Provides access to non-public methods in java.lang.module.
  */
 
 public interface JavaLangModuleAccess {
-
-    /**
-     * Returns {@code true} if the module descriptor is for an
-     * automatic module.
-     */
-    boolean isAutomatic(ModuleDescriptor descriptor);
 
     /**
      * Returns {@code ModuleDescriptor.Requires} of the given modifier
@@ -73,16 +69,25 @@ public interface JavaLangModuleAccess {
     Version newVersion(String v);
 
     /**
+     * Clones the given module descriptor with an augmented set of packages
+     */
+    ModuleDescriptor newModuleDescriptor(ModuleDescriptor md, Set<String> pkgs);
+
+    /**
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
                                          boolean automatic,
+                                         boolean synthetic,
                                          Set<Requires> requires,
                                          Set<String> uses,
                                          Set<Exports> exports,
                                          Map<String, Provides> provides,
                                          Version version,
                                          String mainClass,
+                                         String osName,
+                                         String osArch,
+                                         String osVersion,
                                          Set<String> conceals,
                                          Set<String> packages);
 }
