@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.Loader;
@@ -49,18 +50,16 @@ import sun.security.util.SecurityConstants;
  * Configuration} and a function that maps each module to a {@link ClassLoader}.
  * Creating a layer informs the Java virtual machine about the classes that
  * may be loaded from modules so that the Java virtual machine knows which
- * module that each class is a member of. </p>
- *
- * <p> Each layer, except the {@link #empty() empty} layer, has a {@link
- * #parent() parent}. That is, layers are arranged strictly hierarchical. </p>
+ * module that each class is a member of. Each layer, except the {@link
+ * #empty() empty} layer, has a {@link #parent() parent}.
  *
  * <p> Creating a layer creates a {@link Module} object for each {@link
  * ModuleDescriptor} in the configuration. For each {@link
  * java.lang.module.Configuration.ReadDependence ReadDependence}, then the
  * {@code Module} {@link Module#canRead reads} the corresponding run-time
  * {@code Module}, which may be in the same layer or a parent layer.
- * Each {@code Module} exports the packages described by its {@code
- * ModuleDescriptor}. </p>
+ * The {@code Module} {@link Module#isExported(String) exports} the packages
+ * described by its {@code ModuleDescriptor}. </p>
  *
  * <p> The {@link #createWithOneLoader createWithOneLoader} and {@link
  * #createWithManyLoaders createWithManyLoaders} methods provide convenient ways
@@ -78,11 +77,11 @@ import sun.security.util.SecurityConstants;
  * additional layers. </p>
  *
  * <p> As when creating a {@code Configuration},
- * {@link ModuleDescriptor#isAutomatic() automatic} receive
+ * {@link ModuleDescriptor#isAutomatic() automatic} modules receive
  * <a href="../module/Configuration.html#automaticmoduleresolution">special
- * treatment</a> when creating a layer. Each automatic module is created in the
- * Java virtual machine so that so it {@link Module#canRead reads} all unnamed
- * modules (both present and future) in the Java virtual machine. </p>
+ * treatment</a> when creating a layer. An automatic module is created in the
+ * Java virtual machine as a {@code Module} that reads every unnamed {@code
+ * Module} in the Java virtual machine. </p>
  *
  * <h3> Example usage: </h3>
  *
@@ -113,36 +112,6 @@ import sun.security.util.SecurityConstants;
 
 public final class Layer {
 
-    /**
-     * Finds the class loader for a module.
-     *
-     * @apiNote Should we eliminate this interface and use
-     * {@code Function<String, ClassLoader>} instead?
-     *
-     * @see Layer#create
-     * @since 9
-     */
-    @FunctionalInterface
-    public static interface ClassLoaderFinder {
-
-        /**
-         * Returns the class loader for the given module.
-         *
-         * <p> If this method is invoked several times to locate the same
-         * module (by name) then it will return the same result each time.
-         * Failure to do so will lead to unspecified behavior when creating
-         * a Layer. </p>
-         *
-         * @param  moduleName
-         *         The module name
-         *
-         * @return The class loader for the given module
-         */
-        ClassLoader loaderForModule(String moduleName);
-
-    }
-
-
     // the empty Layer
     private static final Layer EMPTY_LAYER
         = new Layer(Configuration.empty(), null, null);
@@ -160,8 +129,10 @@ public final class Layer {
     /**
      * Creates a new Layer from the modules in the given configuration.
      */
-    private Layer(Configuration cf, Layer parent, ClassLoaderFinder clf) {
-
+    private Layer(Configuration cf,
+                  Layer parent,
+                  Function<String, ClassLoader> clf)
+    {
         this.cf = cf;
         this.parent = parent;
 
@@ -172,145 +143,6 @@ public final class Layer {
             map = Module.defineModules(cf, clf, this);
         }
         this.nameToModule = map; // no need to do defensive copy
-    }
-
-
-    /**
-     * Creates a {@code Layer} by defining the modules in the given {@code
-     * Configuration} to the Java virtual machine.
-     * The {@link Configuration#parent() parent} of the given configuration is
-     * the configuration that was to used to create the {@link Layer#parent()
-     * parentLayer}.
-     *
-     * <p> Modules are mapped to module-capable class loaders by means of the
-     * given {@code ClassLoaderFinder} and defined to the Java virtual machine.
-     * The entity creating the layer should arrange for the class loaders to be
-     * ready to load from these modules before there are any attempts to load
-     * classes or resources. </p>
-     *
-     * <p> Creating a {@code Layer} can fail for the following reasons: </p>
-     *
-     * <ul>
-     *
-     *     <li><p> Two or more modules with the same package (exported or
-     *     concealed) are mapped to the same class loader. </p></li>
-     *
-     *     <li><p> A module is mapped to a class loader that already has a
-     *     module of the same name defined to it. </p></li>
-     *
-     *     <li><p> A module is mapped to a class loader that has already
-     *     defined types in any of the packages in the module. </p></li>
-     *
-     * </ul>
-     *
-     * @apiNote It is implementation specific as to whether creating a Layer
-     * with this method is an atomic operation or not. Consequentially it is
-     * possible for this method to fail with some modules, but not all, defined
-     * to Java virtual machine.
-     *
-     * @param  cf
-     *         The configuration to instantiate as a layer
-     * @param  parentLayer
-     *         The parent layer
-     * @param  clf
-     *         The {@code ClassLoaderFinder} to map modules to class loaders
-     *
-     * @return The newly created layer
-     *
-     * @throws IllegalArgumentException
-     *         If the parent of the given configuration is not the configuration
-     *         of the parent {@code Layer}
-     * @throws LayerInstantiationException
-     *         If creating the {@code Layer} fails for any of the reasons
-     *         listed above
-     * @throws SecurityException
-     *         If {@code RuntimePermission("getClassLoader")} is denied by
-     *         the security manager
-     */
-    public static Layer create(Configuration cf,
-                               Layer parentLayer,
-                               ClassLoaderFinder clf)
-    {
-        checkConfiguration(cf, parentLayer);
-        Objects.requireNonNull(clf);
-
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
-        }
-
-        // For now, no two modules in the boot Layer may contain the same
-        // package so we use a simple check for the boot Layer to keep
-        // the overhead at startup to a minimum
-        if (bootLayer() == null) {
-            checkBootModulesForDuplicatePkgs(cf);
-        } else {
-            checkForDuplicatePkgs(cf, clf);
-        }
-
-        try {
-            return new Layer(cf, parentLayer, clf);
-        } catch (IllegalArgumentException iae) {
-            // IAE is thrown by VM when defining the module fails
-            throw new LayerInstantiationException(iae.getMessage());
-        }
-    }
-
-
-    /**
-     * Creates a {@code Layer} by defining the modules in the given {@code
-     * Configuration} to the Java virtual machine. Each module is defined to
-     * its own {@link ClassLoader} created by this method. The {@link
-     * ClassLoader#getParent() parent} of each class loader is the given
-     * parent class loader.
-     *
-     * <p> The class loaders created by this method implement <em>direct
-     * delegation</em> when loading types from modules. When {@link
-     * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
-     * load a class then it uses the package name of the class to map it to a
-     * module. The package may be in the module defined to the class loader.
-     * The package may be exported by a module in this layer to the module
-     * defined to the class loader. It may be in a package exported by a
-     * module in a parent layer. The class loader delegates to the class loader
-     * of the module, throwing {@code ClassNotFoundException} if not found by
-     * that class loader.
-     *
-     * When {@code loadClass} is invoked to load classes that do not map to a
-     * module then it delegates to the parent class loader. </p>
-     *
-     * <p> If there is a security manager then the class loaders created by
-     * this method will load classes and resources with privileges that are
-     * restricted by the calling context of this method. </p>
-     *
-     * @param  cf
-     *         The configuration to instantiate as a layer
-     * @param  parentLayer
-     *         The parent layer
-     * @param  parentLoader
-     *         The parent class loader for each of the class loaders created
-     *         by this method
-     *
-     * @return The newly created layer
-     *
-     * @throws IllegalArgumentException
-     *         If the parent of the given configuration is not the configuration
-     *         of the parent {@code Layer}
-     * @throws SecurityException
-     *         If {@code RuntimePermission("createClassLoader")} or
-     *         {@code RuntimePermission("getClassLoader")} is denied by
-     *         the security manager
-     *
-     * @see #findLoader
-     */
-    public static Layer createWithManyLoaders(Configuration cf,
-                                              Layer parentLayer,
-                                              ClassLoader parentLoader)
-    {
-        checkConfiguration(cf, parentLayer);
-        checkCreateClassLoaderPermission();
-
-        LoaderPool pool = new LoaderPool(cf, parentLayer, parentLoader);
-        return new Layer(cf, parentLayer, pool::loaderFor);
     }
 
 
@@ -383,11 +215,146 @@ public final class Layer {
         Loader loader;
         try {
             loader = new Loader(cf.modules(), parentLoader)
-                .initRemotePackageMap(cf, parentLayer);
+                    .initRemotePackageMap(cf, parentLayer);
         } catch (IllegalArgumentException e) {
             throw new LayerInstantiationException(e.getMessage());
         }
         return new Layer(cf, parentLayer, mn -> loader);
+    }
+
+
+    /**
+     * Creates a {@code Layer} by defining the modules in the given {@code
+     * Configuration} to the Java virtual machine. Each module is defined to
+     * its own {@link ClassLoader} created by this method. The {@link
+     * ClassLoader#getParent() parent} of each class loader is the given
+     * parent class loader.
+     *
+     * <p> The class loaders created by this method implement <em>direct
+     * delegation</em> when loading types from modules. When {@link
+     * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
+     * load a class then it uses the package name of the class to map it to a
+     * module. The package may be in the module defined to the class loader.
+     * The package may be exported by a module in this layer to the module
+     * defined to the class loader. It may be in a package exported by a
+     * module in a parent layer. The class loader delegates to the class loader
+     * of the module, throwing {@code ClassNotFoundException} if not found by
+     * that class loader.
+     *
+     * When {@code loadClass} is invoked to load classes that do not map to a
+     * module then it delegates to the parent class loader. </p>
+     *
+     * <p> If there is a security manager then the class loaders created by
+     * this method will load classes and resources with privileges that are
+     * restricted by the calling context of this method. </p>
+     *
+     * @param  cf
+     *         The configuration to instantiate as a layer
+     * @param  parentLayer
+     *         The parent layer
+     * @param  parentLoader
+     *         The parent class loader for each of the class loaders created
+     *         by this method
+     *
+     * @return The newly created layer
+     *
+     * @throws IllegalArgumentException
+     *         If the parent of the given configuration is not the configuration
+     *         of the parent {@code Layer}
+     * @throws SecurityException
+     *         If {@code RuntimePermission("createClassLoader")} or
+     *         {@code RuntimePermission("getClassLoader")} is denied by
+     *         the security manager
+     *
+     * @see #findLoader
+     */
+    public static Layer createWithManyLoaders(Configuration cf,
+                                              Layer parentLayer,
+                                              ClassLoader parentLoader)
+    {
+        checkConfiguration(cf, parentLayer);
+        checkCreateClassLoaderPermission();
+
+        LoaderPool pool = new LoaderPool(cf, parentLayer, parentLoader);
+        return new Layer(cf, parentLayer, pool::loaderFor);
+    }
+
+
+    /**
+     * Creates a {@code Layer} by defining the modules in the given {@code
+     * Configuration} to the Java virtual machine. Each module is mapped, by
+     * name, to its class loader by means of the given function. The class
+     * loader delegation implemented by these class loaders must respect
+     * module readability. In addition, the caller needs to arrange that the
+     * class loaders are ready to load from these modules before there are
+     * any attempts to load classes or resources.
+     *
+     * <p> Creating a {@code Layer} can fail for the following reasons: </p>
+     *
+     * <ul>
+     *
+     *     <li><p> Two or more modules with the same package (exported or
+     *     concealed) are mapped to the same class loader. </p></li>
+     *
+     *     <li><p> A module is mapped to a class loader that already has a
+     *     module of the same name defined to it. </p></li>
+     *
+     *     <li><p> A module is mapped to a class loader that has already
+     *     defined types in any of the packages in the module. </p></li>
+     *
+     * </ul>
+     *
+     * @apiNote It is implementation specific as to whether creating a Layer
+     * with this method is an atomic operation or not. Consequentially it is
+     * possible for this method to fail with some modules, but not all, defined
+     * to Java virtual machine.
+     *
+     * @param  cf
+     *         The configuration to instantiate as a layer
+     * @param  parentLayer
+     *         The parent layer
+     * @param  clf
+     *         The function to map a module name to a class loader
+     *
+     * @return The newly created layer
+     *
+     * @throws IllegalArgumentException
+     *         If the parent of the given configuration is not the configuration
+     *         of the parent {@code Layer}
+     * @throws LayerInstantiationException
+     *         If creating the {@code Layer} fails for any of the reasons
+     *         listed above
+     * @throws SecurityException
+     *         If {@code RuntimePermission("getClassLoader")} is denied by
+     *         the security manager
+     */
+    public static Layer create(Configuration cf,
+                               Layer parentLayer,
+                               Function<String, ClassLoader> clf)
+    {
+        checkConfiguration(cf, parentLayer);
+        Objects.requireNonNull(clf);
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+        }
+
+        // For now, no two modules in the boot Layer may contain the same
+        // package so we use a simple check for the boot Layer to keep
+        // the overhead at startup to a minimum
+        if (bootLayer() == null) {
+            checkBootModulesForDuplicatePkgs(cf);
+        } else {
+            checkForDuplicatePkgs(cf, clf);
+        }
+
+        try {
+            return new Layer(cf, parentLayer, clf);
+        } catch (IllegalArgumentException iae) {
+            // IAE is thrown by VM when defining the module fails
+            throw new LayerInstantiationException(iae.getMessage());
+        }
     }
 
 
@@ -407,7 +374,6 @@ public final class Layer {
         if (sm != null)
             sm.checkPermission(SecurityConstants.CREATE_CLASSLOADER_PERMISSION);
     }
-
 
     /**
      * Checks a configuration for the boot Layer to ensure that no two modules
@@ -437,13 +403,13 @@ public final class Layer {
      * @throws LayerInstantiationException
      */
     private static void checkForDuplicatePkgs(Configuration cf,
-                                              ClassLoaderFinder clf)
+                                              Function<String, ClassLoader> clf)
     {
         // HashMap allows null keys
         Map<ClassLoader, Set<String>> loaderToPackages = new HashMap<>();
 
         for (ModuleDescriptor descriptor : cf.descriptors()) {
-            ClassLoader loader = clf.loaderForModule(descriptor.name());
+            ClassLoader loader = clf.apply(descriptor.name());
 
             Set<String> loaderPackages
                 = loaderToPackages.computeIfAbsent(loader, k -> new HashSet<>());

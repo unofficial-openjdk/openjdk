@@ -105,7 +105,7 @@ public interface ModuleFinder {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public Optional<ModuleReference> find(String name);
+    Optional<ModuleReference> find(String name);
 
     /**
      * Returns the set of all module references that this finder can locate.
@@ -129,7 +129,7 @@ public interface ModuleFinder {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public Set<ModuleReference> findAll();
+    Set<ModuleReference> findAll();
 
     /**
      * Returns a module finder for modules that are linked into the run-time
@@ -153,7 +153,7 @@ public interface ModuleFinder {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public static ModuleFinder ofInstalled() {
+    static ModuleFinder ofInstalled() {
         String home;
 
         SecurityManager sm = System.getSecurityManager();
@@ -288,7 +288,7 @@ public interface ModuleFinder {
      *
      * @return A {@code ModuleFinder} that locates modules on the file system
      */
-    public static ModuleFinder of(Path... entries) {
+    static ModuleFinder of(Path... entries) {
         return new ModulePath(entries);
     }
 
@@ -310,7 +310,7 @@ public interface ModuleFinder {
      *
      * @return A {@code ModuleFinder} that concatenates two module finders
      */
-    public static ModuleFinder concat(ModuleFinder first, ModuleFinder second) {
+    static ModuleFinder concat(ModuleFinder first, ModuleFinder second) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
 
@@ -349,7 +349,7 @@ public interface ModuleFinder {
      *
      * @return A {@code ModuleFinder} that does not find any modules
      */
-    public static ModuleFinder empty() {
+    static ModuleFinder empty() {
         // an alternative implementation of ModuleFinder.of()
         return new ModuleFinder() {
             @Override public Optional<ModuleReference> find(String name) {

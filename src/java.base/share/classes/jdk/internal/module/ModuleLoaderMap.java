@@ -25,13 +25,13 @@
 
 package jdk.internal.module;
 
-import java.lang.reflect.Layer;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import jdk.internal.misc.ClassLoaders;
 
@@ -50,10 +50,10 @@ final class ModuleLoaderMap {
         = new String[] { "@@EXT_MODULE_NAMES@@" };
 
     /**
-     * Returns the ClassLoaderFinder that maps modules in the given
-     * Configuration to a ClassLoader.
+     * Returns the function to map modules in the given configuration to the
+     * built-in class loaders.
      */
-    static Layer.ClassLoaderFinder classLoaderFinder(Configuration cf) {
+    static Function<String, ClassLoader> mappingFunction(Configuration cf) {
 
         Set<String> bootModules = new HashSet<>(BOOT_MODULES.length);
         for (String mn : BOOT_MODULES) {
@@ -81,9 +81,9 @@ final class ModuleLoaderMap {
             }
         }
 
-        return new Layer.ClassLoaderFinder() {
+        return new Function<String, ClassLoader> () {
             @Override
-            public ClassLoader loaderForModule(String mn) {
+            public ClassLoader apply(String mn) {
                 return map.get(mn);
             }
         };

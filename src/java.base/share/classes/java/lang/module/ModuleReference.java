@@ -151,7 +151,7 @@ public final class ModuleReference {
 
 
     /**
-     * Computes the MD5 hash of this module, returning it as a hex string.
+     * Computes the hash of this module, returning it as a hex string.
      * Returns {@code null} if the hash cannot be computed.
      *
      * @throws java.io.UncheckedIOException if an I/O error occurs

@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.BuiltinClassLoader;
@@ -933,7 +934,7 @@ public final class Module {
      *         If defining any of the modules to the VM fails
      */
     static Map<String, Module> defineModules(Configuration cf,
-                                             Layer.ClassLoaderFinder clf,
+                                             Function<String, ClassLoader> clf,
                                              Layer layer)
     {
         Map<String, Module> modules = new HashMap<>();
@@ -943,7 +944,7 @@ public final class Module {
         for (ModuleReference mref : cf.modules()) {
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            ClassLoader loader = clf.loaderForModule(name);
+            ClassLoader loader = clf.apply(name);
             URI uri = mref.location().orElse(null);
 
             Module m;
