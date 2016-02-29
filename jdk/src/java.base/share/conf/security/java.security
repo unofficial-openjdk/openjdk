@@ -109,7 +109,8 @@ security.provider.tbd=sun.security.pkcs11.SunPKCS11
 #   jdk.security.provider.preferred=AES/GCM/NoPadding:SunJCE, \
 #         MessageDigest.SHA-256:SUN
 #ifdef solaris-sparc
-jdk.security.provider.preferred=AES:SunJCE, SHA-256:SUN, SHA-384:SUN, SHA-512:SUN
+jdk.security.provider.preferred=AES:SunJCE, SHA1:SUN, SHA-224:SUN, \
+      SHA-256:SUN, SHA-384:SUN, SHA-512:SUN
 #endif
 #ifdef solaris-x86
 jdk.security.provider.preferred=AES:SunJCE, RSA:SunRsaSign
@@ -548,7 +549,8 @@ krb5.kdc.bad.policy = tryLast
 #   jdk.certpath.disabledAlgorithms=MD2, DSA, RSA keySize < 2048
 #
 #
-jdk.certpath.disabledAlgorithms=MD2, MD5, RSA keySize < 1024
+jdk.certpath.disabledAlgorithms=MD2, MD5, RSA keySize < 1024, \
+    DSA keySize < 1024
 
 # Algorithm restrictions for Secure Socket Layer/Transport Layer Security
 # (SSL/TLS/DTLS) processing

@@ -79,7 +79,6 @@ public class XBaseWindow {
 
     static enum InitialiseState {
         INITIALISING,
-        NOT_INITIALISED,
         INITIALISED,
         FAILED_INITIALISATION
     };
@@ -122,7 +121,6 @@ public class XBaseWindow {
      */
     void instantPreInit(XCreateWindowParams params) {
         state_lock = new StateLock();
-        initialising = InitialiseState.NOT_INITIALISED;
     }
 
     /**
@@ -131,7 +129,6 @@ public class XBaseWindow {
      */
     void preInit(XCreateWindowParams params) {
         state_lock = new StateLock();
-        initialising = InitialiseState.NOT_INITIALISED;
         embedded = Boolean.TRUE.equals(params.get(EMBEDDED));
         visible = Boolean.TRUE.equals(params.get(VISIBLE));
 
@@ -170,7 +167,7 @@ public class XBaseWindow {
     }
 
     /**
-     * Creates window using parameters <code>params</code>
+     * Creates window using parameters {@code params}
      * If params contain flag DELAYED doesn't do anything.
      * Note: Descendants can call this method to create the window
      * at the time different to instance construction.
@@ -223,7 +220,6 @@ public class XBaseWindow {
                       return false;
                   }
                   return true;
-              case NOT_INITIALISED:
               case FAILED_INITIALISATION:
                   return false;
               default:
@@ -316,7 +312,7 @@ public class XBaseWindow {
     }
 
     /**
-     * Creates window with parameters specified by <code>params</code>
+     * Creates window with parameters specified by {@code params}
      * @see #init
      */
     private final void create(XCreateWindowParams params) {
@@ -691,7 +687,7 @@ public class XBaseWindow {
         XToolkit.awtLock();
         try {
             XAtom xa = XAtom.get(XAtom.XA_WM_CLASS);
-            xa.setProperty8(getWindow(), cl[0] + '\0' + cl[1]);
+            xa.setProperty8(getWindow(), cl[0] + '\0' + cl[1] + '\0');
         } finally {
             XToolkit.awtUnlock();
         }

@@ -558,6 +558,16 @@ public final class WToolkit extends SunToolkit implements Runnable {
         return WKeyboardFocusManagerPeer.getInstance();
     }
 
+    private static WMouseInfoPeer wPeer = null;
+
+    @Override
+    public synchronized MouseInfoPeer getMouseInfoPeer() {
+        if (wPeer == null) {
+            wPeer = new WMouseInfoPeer();
+        }
+        return wPeer;
+    }
+
     private native void setDynamicLayoutNative(boolean b);
 
     @Override
@@ -587,7 +597,7 @@ public final class WToolkit extends SunToolkit implements Runnable {
     }
 
     /**
-     * Returns <code>true</code> if this frame state is supported.
+     * Returns {@code true} if this frame state is supported.
      */
     @Override
     public boolean isFrameStateSupported(int state) {
@@ -631,10 +641,21 @@ public final class WToolkit extends SunToolkit implements Runnable {
             GraphicsEnvironment.getLocalGraphicsEnvironment();
         return ge.getXResolution();
     }
+
     @Override
-    protected native int getScreenWidth();
+    protected int getScreenWidth() {
+        return GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice().getDefaultConfiguration()
+                .getBounds().width;
+    }
+
     @Override
-    protected native int getScreenHeight();
+    protected int getScreenHeight() {
+        return GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice().getDefaultConfiguration()
+                .getBounds().height;
+    }
+
     private native Insets getScreenInsets(int screen);
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,11 @@
 
 /**
  * @test
- * @bug     4413109 4418221 6607198
+ * @bug     4413109 4418221 6607198 8147448
  * @run     main BitDepth
- * @summary Checks that the PNG and JPEG writers can handle various
- * BufferedImage types.  An optional list of arguments may be used to
- * test a different format writer or writers.
+ * @summary Checks that ImageIO writers for standard formats can handle
+ *          various BufferedImage RGB types. An optional list of arguments
+ *          may be used to test the writers for a different list of formats.
  */
 
 import java.awt.Color;
@@ -35,7 +35,11 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 
 public class BitDepth {
 
@@ -81,21 +85,19 @@ public class BitDepth {
         BufferedImage.TYPE_INT_BGR,
         BufferedImage.TYPE_3BYTE_BGR,
         BufferedImage.TYPE_USHORT_565_RGB,
-        BufferedImage.TYPE_USHORT_555_RGB
-    };
-
-    private static final int[] biRGBATypes = {
+        BufferedImage.TYPE_USHORT_555_RGB,
         BufferedImage.TYPE_INT_ARGB,
         BufferedImage.TYPE_INT_ARGB_PRE,
         BufferedImage.TYPE_4BYTE_ABGR,
         BufferedImage.TYPE_4BYTE_ABGR_PRE
     };
 
-    private static final int[] biGrayTypes = {
-        BufferedImage.TYPE_BYTE_GRAY,
-        BufferedImage.TYPE_USHORT_GRAY,
-        BufferedImage.TYPE_BYTE_BINARY
-    };
+    //private static final int[] biGrayTypes = {
+    //    BufferedImage.TYPE_BYTE_GRAY,
+    //    BufferedImage.TYPE_USHORT_GRAY,
+    //    BufferedImage.TYPE_BYTE_BINARY
+    //};
+
 
     private static final String[] biTypeNames = {
         "CUSTOM",
@@ -116,26 +118,42 @@ public class BitDepth {
 
     private int width = 80;
     private int height = 80;
-    private String[] format = { "png", "jpeg" };
+    private String[] formats = { "png", "jpeg", "tiff", "bmp", "gif" };
 
     public BitDepth(String[] args) throws IOException {
         if (args.length > 0) {
-            format = args;
+            formats = args;
         }
 
-        for (int i = 0; i < format.length; i++) {
-            testFormat(format[i]);
+        for (String format : formats) {
+            testFormat(format);
         }
     }
 
     private void testFormat(String format) throws IOException {
+
         boolean allOK = true;
 
-        for (int i = 0; i < biRGBTypes.length; i++) {
-            int type = biRGBTypes[i];
+        for (int type : biRGBTypes) {
+            // TODO: remove the following 'if' block after the 8147448 fix
+            if ( format.toLowerCase().equals("bmp") && (
+                (type == BufferedImage.TYPE_INT_ARGB       ) ||
+                (type == BufferedImage.TYPE_INT_ARGB_PRE   ) ||
+                (type == BufferedImage.TYPE_4BYTE_ABGR     ) ||
+                (type == BufferedImage.TYPE_4BYTE_ABGR_PRE ))) {
+
+                System.err.println("cannot use " + biTypeNames[type] +
+                " for bmp because of JDK-8147448.\t" +
+                " please update the test after fix of this bug!");
+                continue;
+            }
+
             System.out.println("Testing " + format +
                                " writer for type " + biTypeNames[type]);
             File f = testWriteRGB(format, type);
+            if (f == null)
+                continue;
+
             boolean ok = testReadRGB(f);
             if (ok) {
                 f.delete();
@@ -154,8 +172,8 @@ public class BitDepth {
         }
     }
 
-    private File testWriteRGB(String format, int type)
-        throws IOException {
+    private File testWriteRGB(String format, int type) throws IOException {
+
         BufferedImage bi = new BufferedImage(width, height, type);
         Graphics2D g = bi.createGraphics();
 
@@ -173,13 +191,22 @@ public class BitDepth {
         g.setColor(blue);
         g.fillRect(50, 50, 20, 20);
 
+        ImageTypeSpecifier spec = new ImageTypeSpecifier(bi);
+        Iterator<ImageWriter> writers = ImageIO.getImageWriters(spec, format);
         File file = new File("BitDepth_" + biTypeNames[type] + "." + format);
-        try {
-            ImageIO.write(bi, format, file);
-        } catch (RuntimeException re) {
-            System.out.println("Can't write a type "
-                               + biTypeNames[type] +
-                               " BufferedImage!");
+        if (!writers.hasNext()) {
+            System.out.println("\tNo writers available for type " + biTypeNames[type]
+                               + " BufferedImage!");
+        } else {
+            ImageWriter writer = writers.next();
+            try (ImageOutputStream out = ImageIO.createImageOutputStream(file)) {
+                writer.setOutput(out);
+                writer.write(bi);
+            } catch (Exception e) {
+                System.out.println("\tCan't write a type " +  biTypeNames[type]
+                           + " BufferedImage!");
+                return null;
+            }
         }
 
         return file;
