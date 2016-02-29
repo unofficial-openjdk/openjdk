@@ -33,6 +33,7 @@
  * @compile org/omg/CORBA/Context.jasm
  * @compile nonjdk/myPackage/MyClass.java
  * @build jdk.test.lib.* LoadClass
+ * @run main ClassFileInstaller LoadClass
  * @run testng BootAppendTests
  */
 
@@ -84,7 +85,7 @@ public class BootAppendTests {
         fos.close();
 
         // build jar files
-        BasicJarBuilder.build("app", APP_CLASS);
+        BasicJarBuilder.build(true, "app", APP_CLASS);
         appJar = BasicJarBuilder.getTestJar("app.jar");
         BasicJarBuilder.build("bootAppend",
             BOOT_APPEND_MODULE_CLASS, BOOT_APPEND_DUPLICATE_MODULE_CLASS, BOOT_APPEND_CLASS);
