@@ -410,7 +410,7 @@ $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
 	$(prep-target)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
-          $(call OptionOnly,-Xdoclint:none) ; \
+          $(call OptionOnly,-Xdoclint:reference) ; \
           $(call OptionOnly,-Xdoclint/package:-org.omg.*) ; \
           $(call OptionPair,-system,none) ; \
 	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
@@ -474,7 +474,7 @@ $(DOCLETAPI_OPTIONS_FILE):
 	$(prep-target)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
-	  $(call OptionOnly,-Xdoclint:none) ; \
+	  $(call OptionOnly,-Xdoclint:all) ; \
           $(call OptionPair,-system,none) ; \
 	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,-addmods,$(DOCLETAPI_MODULES)) ; \

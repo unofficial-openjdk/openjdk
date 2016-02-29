@@ -523,7 +523,7 @@ else
 
   # The annotation processing for jdk.vm.ci needs java.base classes from the
   # current JDK.
-  jdk.vm.ci-gensrc-hotspot: java.base-java 
+  jdk.vm.ci-gensrc-hotspot: java.base-java
 
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec

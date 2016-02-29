@@ -94,7 +94,8 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
   AC_ARG_WITH(import-modules, [AS_HELP_STRING([--with-import-modules],
       [import a set of prebuilt modules either as a zip file or an exploded directory])])
 
-  if test "x$with_import_modules" != x; then
+  if test "x$with_import_modules" != x \
+      && test "x$with_import_modules" != "xno"; then
     if test -d "$with_import_modules"; then
       IMPORT_MODULES_TOPDIR="$with_import_modules"
       BASIC_FIXUP_PATH([IMPORT_MODULES_TOPDIR])

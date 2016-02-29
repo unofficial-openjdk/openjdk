@@ -89,8 +89,7 @@ endif
 
 ################################################################################
 
-# TODO: This needs to be reenabled before integration into jdk9
-#java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
+java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
 
 ################################################################################
 
@@ -363,8 +362,7 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-# TODO: This needs to be reenabled before integration into jdk9
-#jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' -XDstringConcat=inline
+jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' -XDstringConcat=inline
 jdk.compiler_ADD_JAVAC_FLAGS := -XDstringConcat=inline
 jdk.compiler_COPY := javax.tools.JavaCompilerTool
 jdk.compiler_CLEAN_FILES := $(wildcard \
@@ -470,18 +468,6 @@ jdk.dev_COPY := .js oqlhelp.html .txt
 ################################################################################
 
 jdk.jvmstat_COPY := aliasmap
-
-################################################################################
-
-jdk.vm.ci_EXCLUDE_FILES += \
-    jdk/vm/ci/options/processor/OptionProcessor.java \
-    jdk/vm/ci/service/processor/ServiceProviderProcessor.java \
-    #
-
-jdk.vm.ci_EXCLUDES += \
-    META-INF/jvmci.options \
-    META-INF/jvmci.providers \
-    #
 
 ################################################################################
 
