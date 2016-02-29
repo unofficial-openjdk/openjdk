@@ -864,9 +864,8 @@ transformClassFile(             JPLISAgent *            agent,
             if (classBeingRedefined == NULL) {
                 moduleObject = getModuleObject(jnienv, loaderObject, name);
             } else {
-                // Optimization:
-                //  - pass moduleObject==NULL to the InstrumentationImpl.transform() method call
-                //  - the transform() method will make a call to the classBeingRedefined.getModule()
+                // Redefine or retransform, InstrumentationImpl.transform() will use
+                // classBeingRedefined.getModule() to get the module.
             }
             jplis_assert(agent->mInstrumentationImpl != NULL);
             jplis_assert(agent->mTransform != NULL);

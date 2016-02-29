@@ -32,7 +32,6 @@
  * @run main/othervm -javaagent:RetransformAgent.jar RetransformApp
  */
 
-import com.sun.jdi.VirtualMachine;
 import java.lang.instrument.*;
 import java.lang.reflect.Module;
 import java.security.ProtectionDomain;

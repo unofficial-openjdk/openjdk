@@ -423,14 +423,12 @@ public class InstrumentationImpl implements Instrumentation {
         TransformerManager mgr = isRetransformer?
                                         mRetransfomableTransformerManager :
                                         mTransformerManager;
+        // module is null when not a class load or when loading a class in an
+        // unnamed module and this is the first type to be loaded in the package.
         if (module == null) {
             if (classBeingRedefined != null) {
-                // Optimization:
-                //   The module==null was passed by the caller intentionally
-                //   to make this Java call.
                 module = classBeingRedefined.getModule();
             } else {
-                // No classes have been loaded from this package of the unnamed module so far.
                 module = loader.getUnnamedModule();
             }
         }

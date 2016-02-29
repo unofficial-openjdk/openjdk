@@ -25,21 +25,26 @@
 
 package java.lang.instrument;
 
-import  java.lang.reflect.Module;
-import  java.security.AccessController;
-import  java.security.PrivilegedAction;
-import  java.security.ProtectionDomain;
+import java.lang.reflect.Module;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 
 /*
  * Copyright 2003 Wily Technology, Inc.
  */
 
 /**
- * An agent provides an implementation of this interface in order
- * to transform class files. It only needs to override just one of the
- * two everloaded transform methods. Otherwise, the only one with the
- * <code>module</code> parameter will be invoked.
- * The transformation occurs before the class is defined by the JVM.
+ * A transformer of class files. An agent registers an implementation of this
+ * interface using the {@link Instrumentation#addTransformer addTransformer}
+ * method so that the transformer's {@link
+ * ClassFileTransformer#transform(Module,String,Class,ProtectionDomain,byte[])
+ * transform} method is invoked when classes are loaded,
+ * {@link Instrumentation#redefineClasses redefined}, or
+ * {@link Instrumentation#retransformClasses retransformed}. The implementation
+ * should override one of the {@code transform} methods defined here.
+ * Transformers are invoked before the class is defined by the Java virtual
+ * machine.
  * <P>
  * Note the term <i>class file</i> is used as defined in section 3.1 of
  * <cite>The Java&trade; Virtual Machine Specification</cite>,
@@ -53,9 +58,9 @@ import  java.security.ProtectionDomain;
  */
 
 public interface ClassFileTransformer {
+
     /**
-     * The implementation of this method may transform the supplied class file and
-     * return a new replacement class file.
+     * Transforms the given class file and returns a new replacement class file.
      *
      * <P>
      * There are two kinds of transformers, determined by the <code>canRetransform</code>
@@ -197,16 +202,11 @@ public interface ClassFileTransformer {
 
 
     /**
-     * The implementation of this method may transform the supplied class file and
-     * return a new replacement class file.
+     * Transforms the given class file and returns a new replacement class file.
      *
-     * This method is an overloaded variation of the transform method above with
-     * the <code>module</code> instead of the <code>loader</code> parameter
-     * so that the same description applies.
-     * Only a version of this method is invoked if it has been implemented by the agent.
-     * Oservise, a version of the original overloaded method is invoked.
-     *
-     * @implSpec The default implementation transitively invokes the original overloaded method.
+     * @implSpec The default implementation of this method invokes the
+     * {@link #transform(ClassLoader,String,Class,ProtectionDomain,byte[]) transform}
+     * method with the {@link Module#getClassLoader() ClassLoader} for the module.
      *
      * @param module                the module of the class to be transformed
      * @param className             the name of the class in the internal form of fully
@@ -238,7 +238,7 @@ public interface ClassFileTransformer {
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader loader = AccessController.doPrivileged(pa);
 
-        // Call the overloaded transform method
+        // invoke the legacy transform method
         return transform(loader,
                          className,
                          classBeingRedefined,
