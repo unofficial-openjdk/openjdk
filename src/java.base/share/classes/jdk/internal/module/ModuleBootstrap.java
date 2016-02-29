@@ -30,7 +30,6 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
-import java.lang.reflect.Layer.ClassLoaderFinder;
 import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,6 +39,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.BootLoader;
@@ -196,14 +196,14 @@ public final class ModuleBootstrap {
         PerfCounters.resolveTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
-        ClassLoaderFinder clf = ModuleLoaderMap.classLoaderFinder(cf);
+        Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
         if (finder != systemModulePath) {
             for (ModuleReference mref : cf.modules()) {
                 String name = mref.descriptor().name();
-                ClassLoader cl = clf.loaderForModule(name);
+                ClassLoader cl = clf.apply(name);
                 if (cl == null) {
 
                     if (upgradeModulePath != null
@@ -228,7 +228,7 @@ public final class ModuleBootstrap {
         // define the module to its class loader, except java.base
         for (ModuleReference mref : cf.modules()) {
             String name = mref.descriptor().name();
-            ClassLoader cl = clf.loaderForModule(name);
+            ClassLoader cl = clf.apply(name);
             if (cl == null) {
                 if (!name.equals(JAVA_BASE)) BootLoader.loadModule(mref);
             } else {
