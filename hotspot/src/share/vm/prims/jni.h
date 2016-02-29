@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -770,6 +770,12 @@ struct JNINativeInterface_ {
 
     jobject (JNICALL *GetModule)
        (JNIEnv* env, jclass clazz);
+
+    void (JNICALL *AddModuleReads)
+       (JNIEnv* env, jobject fromModule, jobject sourceModule);
+
+    jboolean (JNICALL *CanReadModule)
+       (JNIEnv* env, jobject askingModule, jobject sourceModule);
 };
 
 /*
@@ -1866,6 +1872,14 @@ struct JNIEnv_ {
 
     jobject GetModule(jclass clazz) {
         return functions->GetModule(this, clazz);
+    }
+
+    void AddModuleReads(jobject fromModule, jobject sourceModule) {
+        functions->AddModuleReads(this, fromModule, sourceModule);
+    }
+
+    jboolean CanReadModule(jobject askingModule, jobject sourceModule) {
+        return functions->CanReadModule(this, askingModule, sourceModule);
     }
 
 #endif /* __cplusplus */

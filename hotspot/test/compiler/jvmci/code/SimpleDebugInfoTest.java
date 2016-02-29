@@ -28,6 +28,7 @@
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.code.site
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.amd64
  *          jdk.vm.ci/jdk.vm.ci.sparc
@@ -223,7 +224,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
     public void testConstObject() {
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
-            values[0] = type.getJavaClass();
+            values[0] = constantReflection.asJavaClass(type);
             return null;
         };
         testObjectOnStack(compiler);
@@ -234,7 +235,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
     public void testRegObject() {
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
-            Register reg = asm.emitLoadPointer((HotSpotConstant) type.getJavaClass());
+            Register reg = asm.emitLoadPointer((HotSpotConstant) constantReflection.asJavaClass(type));
             values[0] = reg.asValue(target.getLIRKind(JavaKind.Object));
             return null;
         };
@@ -246,7 +247,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
     public void testStackObject() {
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
-            Register reg = asm.emitLoadPointer((HotSpotConstant) type.getJavaClass());
+            Register reg = asm.emitLoadPointer((HotSpotConstant) constantReflection.asJavaClass(type));
             values[0] = asm.emitPointerToStack(reg);
             return null;
         };
@@ -259,7 +260,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
         Assume.assumeTrue(HotSpotVMConfig.config().useCompressedOops);
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
-            HotSpotConstant wide = (HotSpotConstant) type.getJavaClass();
+            HotSpotConstant wide = (HotSpotConstant) constantReflection.asJavaClass(type);
             Register reg = asm.emitLoadPointer((HotSpotConstant) wide.compress());
             values[0] = reg.asValue(asm.narrowOopKind);
             return null;
@@ -273,7 +274,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
         Assume.assumeTrue(HotSpotVMConfig.config().useCompressedOops);
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
-            HotSpotConstant wide = (HotSpotConstant) type.getJavaClass();
+            HotSpotConstant wide = (HotSpotConstant) constantReflection.asJavaClass(type);
             Register reg = asm.emitLoadPointer((HotSpotConstant) wide.compress());
             values[0] = asm.emitNarrowPointerToStack(reg);
             return null;

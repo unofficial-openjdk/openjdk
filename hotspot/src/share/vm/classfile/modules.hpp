@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -113,6 +113,14 @@ public:
 
   // Return the java.lang.reflect.Module object for this class object.
   static jobject get_module(JNIEnv *env, jclass clazz);
+
+  // Return the java.lang.reflect.Module object for this class loader and package.
+  // Returns NULL if the class loader has not loaded any classes in the package.
+  // The package should contain /'s, not .'s, as in java/lang, not java.lang.
+  // NullPointerException is thrown if package is null.
+  // IllegalArgumentException is thrown if loader is neither null nor a subtype of
+  // java/lang/ClassLoader.
+  static jobject get_module_by_package_name(JNIEnv *env, jobject loader, jstring package);
 
   // If package is defined by loader, return the
   // java.lang.reflect.Module object for the module in which the package is defined.

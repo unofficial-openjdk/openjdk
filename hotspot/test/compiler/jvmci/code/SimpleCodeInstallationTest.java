@@ -28,6 +28,7 @@
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.code.site
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.amd64
  *          jdk.vm.ci/jdk.vm.ci.sparc

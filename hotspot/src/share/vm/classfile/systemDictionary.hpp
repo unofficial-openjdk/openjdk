@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,7 +128,6 @@ class SymbolPropertyTable;
   do_klass(WeakReference_klass,                         java_lang_ref_WeakReference,               Pre                 ) \
   do_klass(FinalReference_klass,                        java_lang_ref_FinalReference,              Pre                 ) \
   do_klass(PhantomReference_klass,                      java_lang_ref_PhantomReference,            Pre                 ) \
-  do_klass(Cleaner_klass,                               sun_misc_Cleaner,                          Pre                 ) \
   do_klass(Finalizer_klass,                             java_lang_ref_Finalizer,                   Pre                 ) \
                                                                                                                          \
   do_klass(Thread_klass,                                java_lang_Thread,                          Pre                 ) \
@@ -177,6 +176,7 @@ class SymbolPropertyTable;
   do_klass(URL_klass,                                   java_net_URL,                              Pre                 ) \
   do_klass(Jar_Manifest_klass,                          java_util_jar_Manifest,                    Pre                 ) \
   do_klass(jdk_internal_misc_ClassLoaders_AppClassLoader_klass,  jdk_internal_misc_ClassLoaders_AppClassLoader,      Pre                 ) \
+  do_klass(jdk_internal_misc_ClassLoaders_ExtClassLoader_klass,  jdk_internal_misc_ClassLoaders_ExtClassLoader,      Pre                 ) \
   do_klass(CodeSource_klass,                            java_security_CodeSource,                  Pre                 ) \
   do_klass(ParseUtil_klass,                             sun_net_www_ParseUtil,                     Pre                 ) \
                                                                                                                          \

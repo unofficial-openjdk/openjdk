@@ -436,16 +436,16 @@ ClassLoaderData::~ClassLoaderData() {
     _modules = NULL;
   }
 
+  // release the metaspace
   Metaspace *m = _metaspace;
   if (m != NULL) {
     _metaspace = NULL;
-    // release the metaspace
     delete m;
-    // release the handles
-    if (_handles != NULL) {
-      JNIHandleBlock::release_block(_handles);
-      _handles = NULL;
-    }
+  }
+  // release the handles
+  if (_handles != NULL) {
+    JNIHandleBlock::release_block(_handles);
+    _handles = NULL;
   }
 
   // Clear all the JNI handles for methods
@@ -659,9 +659,9 @@ ClassLoaderData* ClassLoaderDataGraph::add(Handle loader, bool is_anonymous, TRA
   // actual ClassLoaderData object.
   ClassLoaderData::Dependencies dependencies(CHECK_NULL);
 
-  No_Safepoint_Verifier no_safepoints; // we mustn't GC until we've installed the
-                                       // ClassLoaderData in the graph since the CLD
-                                       // contains unhandled oops
+  NoSafepointVerifier no_safepoints; // we mustn't GC until we've installed the
+                                     // ClassLoaderData in the graph since the CLD
+                                     // contains unhandled oops
 
   ClassLoaderData* cld = new ClassLoaderData(loader, is_anonymous, dependencies);
 

@@ -29,6 +29,8 @@ module jdk.vm.ci {
     uses jdk.vm.ci.runtime.JVMCICompilerFactory;
 
     provides jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory with
+        jdk.vm.ci.hotspot.aarch64.AArch64HotSpotJVMCIBackendFactory;
+    provides jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory with
         jdk.vm.ci.hotspot.amd64.AMD64HotSpotJVMCIBackendFactory;
     provides jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory with
         jdk.vm.ci.hotspot.sparc.SPARCHotSpotJVMCIBackendFactory;

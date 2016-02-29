@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,6 @@
   template(java_lang_ref_WeakReference,               "java/lang/ref/WeakReference")              \
   template(java_lang_ref_FinalReference,              "java/lang/ref/FinalReference")             \
   template(java_lang_ref_PhantomReference,            "java/lang/ref/PhantomReference")           \
-  template(sun_misc_Cleaner,                          "sun/misc/Cleaner")                         \
   template(java_lang_ref_Finalizer,                   "java/lang/ref/Finalizer")                  \
   template(java_lang_reflect_AccessibleObject,        "java/lang/reflect/AccessibleObject")       \
   template(java_lang_reflect_Method,                  "java/lang/reflect/Method")                 \
@@ -459,7 +458,11 @@
   template(loader_name,                               "loader")                                   \
   template(module_name,                               "module")                                   \
   template(getModule_name,                            "getModule")                                \
+  template(addReads_name,                             "addReads")                                 \
+  template(addReads_signature,                        "(Ljava/lang/reflect/Module;Ljava/lang/reflect/Module;)V")           \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
+  template(definePackage_name,                        "definePackage")                            \
+  template(definePackage_signature,                   "(Ljava/lang/String;Ljava/lang/reflect/Module;)Ljava/lang/Package;") \
   template(defineOrCheckPackage_name,                 "defineOrCheckPackage")                     \
   template(defineOrCheckPackage_signature,            "(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)Ljava/lang/Package;") \
   template(fileToEncodedURL_name,                     "fileToEncodedURL")                         \

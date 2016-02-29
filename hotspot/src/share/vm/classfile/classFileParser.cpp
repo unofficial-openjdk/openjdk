@@ -862,7 +862,7 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
     initialize_hashtable(interface_names);
     bool dup = false;
     {
-      debug_only(No_Safepoint_Verifier nsv;)
+      debug_only(NoSafepointVerifier nsv;)
       for (index = 0; index < itfs_len; index++) {
         const Klass* const k = _local_interfaces->at(index);
         const Symbol* const name = InstanceKlass::cast(k)->name();
@@ -1619,7 +1619,7 @@ void ClassFileParser::parse_fields(const ClassFileStream* const cfs,
     initialize_hashtable(names_and_sigs);
     bool dup = false;
     {
-      debug_only(No_Safepoint_Verifier nsv;)
+      debug_only(NoSafepointVerifier nsv;)
       for (AllFieldStream fs(_fields, cp); !fs.done(); fs.next()) {
         const Symbol* const name = fs.name();
         const Symbol* const sig = fs.signature();
@@ -2884,7 +2884,7 @@ void ClassFileParser::parse_methods(const ClassFileStream* const cfs,
       initialize_hashtable(names_and_sigs);
       bool dup = false;
       {
-        debug_only(No_Safepoint_Verifier nsv;)
+        debug_only(NoSafepointVerifier nsv;)
         for (int i = 0; i < length; i++) {
           const Method* const m = _methods->at(i);
           // If no duplicates, add name/signature in hashtable names_and_sigs.
@@ -5338,8 +5338,12 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   }
 
   // Add read edges to the unnamed modules of the bootstrap and app class loaders.
-  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named()) {
-    JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named() &&
+      !module_entry->has_default_read_edges()) {
+    if (!module_entry->set_has_default_read_edges()) {
+      // We won a potential race
+      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+    }
   }
 
   // Update the loader_data graph.

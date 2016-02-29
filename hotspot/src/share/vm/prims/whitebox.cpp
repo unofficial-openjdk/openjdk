@@ -566,14 +566,15 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
   methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(method_id));
 
   DirectiveSet* directive;
+  AbstractCompiler* comp = CompileBroker::compiler((int)compLevel);
   if (compilation_context != NULL) {
     compilation_context_id = reflected_method_to_jmid(thread, env, compilation_context);
     CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
     methodHandle cch(THREAD, Method::checked_resolve_jmethod_id(compilation_context_id));
-    directive = DirectivesStack::getMatchingDirective(cch, CompileBroker::compiler((int)compLevel));
+    directive = DirectivesStack::getMatchingDirective(cch, comp);
   } else {
     // Calling with NULL matches default directive
-    directive = DirectivesStack::getDefaultDirective(CompileBroker::compiler((int)compLevel));
+    directive = DirectivesStack::getDefaultDirective(comp);
   }
   bool result = CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, directive);
   DirectivesStack::release(directive);
@@ -1096,6 +1097,7 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
 
   CodeBlobStub stub(code);
   jobjectArray codeBlob = codeBlob2objectArray(thread, env, &stub);
+  CHECK_JNI_EXCEPTION_(env, NULL);
   env->SetObjectArrayElement(result, 0, codeBlob);
 
   jobject level = integerBox(thread, env, code->comp_level());
@@ -1181,6 +1183,7 @@ WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_t
   for (GrowableArrayIterator<CodeBlobStub*> it = blobs.begin();
        it != blobs.end(); ++it) {
     jobjectArray obj = codeBlob2objectArray(thread, env, *it);
+    CHECK_JNI_EXCEPTION_(env, NULL);
     env->SetObjectArrayElement(result, i, obj);
     ++i;
   }
@@ -1278,6 +1281,10 @@ WB_END
 
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
   Modules::add_module_package(env, module, package);
+WB_END
+
+WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
+  return Modules::get_module_by_package_name(env, loader, package);
 WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
@@ -1657,6 +1664,8 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_IsExportedToModule },
   {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
+  {CC"GetModuleByPackageName", CC"(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
+                                                      (void*)&WB_GetModuleByPackageName },
   {CC"AddModuleExportsToAllUnnamed", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModuleExportsToAllUnnamed },
   {CC"AddModuleExportsToAll", CC"(Ljava/lang/Object;Ljava/lang/String;)V",

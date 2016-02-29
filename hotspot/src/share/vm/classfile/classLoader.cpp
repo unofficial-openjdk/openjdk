@@ -46,6 +46,7 @@
 #include "memory/universe.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/instanceRefKlass.hpp"
+#include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jvm_misc.hpp"

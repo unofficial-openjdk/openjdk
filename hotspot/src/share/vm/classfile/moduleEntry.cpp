@@ -39,6 +39,31 @@
 
 ModuleEntry* ModuleEntryTable::_javabase_module = NULL;
 
+
+void ModuleEntry::set_location(Symbol* location) {
+  if (_location != NULL) {
+    _location->decrement_refcount();
+  }
+
+  _location = location;
+
+  if (location != NULL) {
+    location->increment_refcount();
+  }
+}
+
+void ModuleEntry::set_version(Symbol* version) {
+  if (_version != NULL) {
+    _version->decrement_refcount();
+  }
+
+  _version = version;
+
+  if (version != NULL) {
+    version->increment_refcount();
+  }
+}
+
 // Returns the shared ProtectionDomain
 Handle ModuleEntry::shared_protection_domain() {
   return Handle(JNIHandles::resolve(_pd));
@@ -58,9 +83,17 @@ void ModuleEntry::set_shared_protection_domain(ClassLoaderData *loader_data,
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this module's reads list");
-  if (!this->is_named()) return true; // Unnamed modules read everyone.
+
+  // Unnamed modules read everyone and all modules
+  // read java.base.  If either of these conditions
+  // hold, readability has been established.
+  if (!this->is_named() ||
+      (m == ModuleEntryTable::javabase_module())) {
+    return true;
+  }
+
   MutexLocker m1(Module_lock);
-  if (_reads == NULL) {
+  if (!has_reads()) {
     return false;
   } else {
     return _reads->contains(m);
@@ -82,13 +115,14 @@ void ModuleEntry::add_read(ModuleEntry* m) {
 }
 
 bool ModuleEntry::has_reads() const {
-  return _reads != NULL && !_reads->is_empty();
+  assert_locked_or_safepoint(Module_lock);
+  return ((_reads != NULL) && !_reads->is_empty());
 }
 
 // Purge dead module entries out of reads list.
 void ModuleEntry::purge_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  if (_reads != NULL) {
+  if (has_reads()) {
     // Go backwards because this removes entries that are dead.
     int len = _reads->length();
     for (int idx = len - 1; idx >= 0; idx--) {
@@ -105,7 +139,7 @@ void ModuleEntry::module_reads_do(ModuleClosure* const f) {
   assert_locked_or_safepoint(Module_lock);
   assert(f != NULL, "invariant");
 
-  if (_reads != NULL) {
+  if (has_reads()) {
     int reads_len = _reads->length();
     for (int i = 0; i < reads_len; ++i) {
       f->do_module(_reads->at(i));
@@ -189,7 +223,7 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, 
                                          Symbol* version, Symbol* location,
                                          ClassLoaderData* loader_data) {
   assert_locked_or_safepoint(Module_lock);
-  ModuleEntry* entry = (ModuleEntry*) NEW_C_HEAP_ARRAY2(char, entry_size(), mtClass, CURRENT_PC);
+  ModuleEntry* entry = (ModuleEntry*) NEW_C_HEAP_ARRAY(char, entry_size(), mtClass);
 
   // Initialize everything BasicHashtable would
   entry->set_next(NULL);
@@ -364,28 +398,4 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(loader() != NULL, "A module entry must be associated with a loader.");
-}
-
-void ModuleEntry::set_version(Symbol* version) {
-  if (_version != NULL) {
-    _version->decrement_refcount();
-  }
-
-  _version = version;
-
-  if (version != NULL) {
-    version->increment_refcount();
-  }
-}
-
-void ModuleEntry::set_location(Symbol* location) {
-  if (_location != NULL) {
-    _location->decrement_refcount();
-  }
-
-  _location = location;
-
-  if (location != NULL) {
-    location->increment_refcount();
-  }
 }
