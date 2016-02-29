@@ -34,6 +34,8 @@ import javax.lang.model.util.Elements;
 import javax.tools.JavaFileObject;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
@@ -52,6 +54,8 @@ import com.sun.tools.javac.util.Name;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
+import com.sun.tools.javac.comp.CompileStates;
+import com.sun.tools.javac.comp.CompileStates.CompileState;
 import com.sun.tools.javac.comp.Modules;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
@@ -71,6 +75,8 @@ public class JavacElements implements Elements {
     private final Names names;
     private final Types types;
     private final Enter enter;
+    private final JavacTaskImpl javacTaskImpl;
+    private final CompileStates compileStates;
 
     public static JavacElements instance(Context context) {
         JavacElements instance = context.get(JavacElements.class);
@@ -87,10 +93,14 @@ public class JavacElements implements Elements {
         names = Names.instance(context);
         types = Types.instance(context);
         enter = Enter.instance(context);
+        JavacTask t = context.get(JavacTask.class);
+        javacTaskImpl = t instanceof JavacTaskImpl ? (JavacTaskImpl) t : null;
+        compileStates = CompileStates.instance(context);
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public ModuleSymbol getModuleElement(CharSequence name) {
+        ensureEntered("getModuleElement");
         String strName = name.toString();
         if (strName.equals(""))
             return syms.unnamedModule;
@@ -99,6 +109,7 @@ public class JavacElements implements Elements {
 
     @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageSymbol getPackageElement(CharSequence name) {
+        ensureEntered("getPackageElement");
         return getPackageElement(modules.getDefaultModule(), name);
     }
 
@@ -113,6 +124,7 @@ public class JavacElements implements Elements {
 
     @DefinedBy(Api.LANGUAGE_MODEL)
     public ClassSymbol getTypeElement(CharSequence name) {
+        ensureEntered("getTypeElement");
         return getTypeElement(modules.getDefaultModule(), name);
     }
 
@@ -624,6 +636,15 @@ public class JavacElements implements Elements {
         return (ts != null)
                 ? enter.getEnv(ts)
                 : null;
+    }
+
+    private void ensureEntered(String methodName) {
+        if (javacTaskImpl != null) {
+            javacTaskImpl.ensureEntered();
+        }
+        if (!javaCompiler.isEnterDone()) {
+            throw new IllegalStateException("Cannot use Elements." + methodName + " before the TaskEvent.Kind.ENTER finished event.");
+        }
     }
 
     /**

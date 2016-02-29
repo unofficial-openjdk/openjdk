@@ -84,6 +84,7 @@ public class Arguments {
     private Set<File> files;
     private Map<Option, String> deferredFileManagerOptions;
     private Set<JavaFileObject> fileObjects;
+    private boolean emptyAllowed;
     private final Options options;
 
     private JavaFileManager fileManager;
@@ -449,6 +450,9 @@ public class Arguments {
                 || options.isSet(Option.M))
                 return true;
 
+            if (emptyAllowed)
+                return true;
+
             if (JavaCompiler.explicitAnnotationProcessingRequested(options)) {
                 error("err.no.source.files.classes");
             } else {
@@ -664,6 +668,10 @@ public class Arguments {
         return ((files == null) || files.isEmpty())
                 && ((fileObjects == null) || fileObjects.isEmpty())
                 && classNames.isEmpty();
+    }
+
+    public void allowEmpty() {
+        this.emptyAllowed = true;
     }
 
     /**

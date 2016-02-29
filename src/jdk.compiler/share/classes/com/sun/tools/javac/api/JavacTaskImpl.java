@@ -276,6 +276,8 @@ public class JavacTaskImpl extends BasicJavacTask {
         if (trees == null && notYetEntered != null && notYetEntered.isEmpty())
             return List.nil();
 
+        boolean wasInitialized = compiler != null;
+
         prepareCompiler(true);
 
         ListBuffer<JCCompilationUnit> roots = null;
@@ -312,8 +314,12 @@ public class JavacTaskImpl extends BasicJavacTask {
             }
         }
 
-        if (roots == null)
+        if (roots == null) {
+            if (trees == null && !wasInitialized) {
+                compiler.initModules(List.nil());
+            }
             return List.nil();
+        }
 
         List<JCCompilationUnit> units = compiler.initModules(roots.toList());
 
@@ -469,6 +475,11 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     public Iterable<? extends Tree> pathFor(CompilationUnitTree unit, Tree node) {
         return TreeInfo.pathFor((JCTree) node, (JCTree.JCCompilationUnit) unit).reverse();
+    }
+
+    public void ensureEntered() {
+        args.allowEmpty();
+        enter(null);
     }
 
     abstract class Filter {

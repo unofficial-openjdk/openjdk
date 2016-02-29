@@ -349,6 +349,8 @@ public class JavaCompiler {
      **/
     protected boolean implicitSourceFilesRead;
 
+    protected boolean enterDone;
+
     protected CompileStates compileStates;
 
     /** Construct a new compiler using a shared context.
@@ -1028,7 +1030,11 @@ public class JavaCompiler {
     }
 
     public List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots) {
-        return initModules(roots, null);
+        List<JCCompilationUnit> result = initModules(roots, null);
+        if (roots.isEmpty()) {
+            enterDone = true;
+        }
+        return result;
     }
 
     List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots, ClassSymbol c) {
@@ -1051,6 +1057,8 @@ public class JavaCompiler {
         }
 
         enter.main(roots);
+
+        enterDone = true;
 
         if (!taskListener.isEmpty()) {
             for (JCCompilationUnit unit: roots) {
@@ -1732,6 +1740,10 @@ public class JavaCompiler {
         if (log.compressedOutput) {
             log.mandatoryNote(null, "compressed.diags");
         }
+    }
+
+    public boolean isEnterDone() {
+        return enterDone;
     }
 
     /** Close the compiler, flushing the logs
