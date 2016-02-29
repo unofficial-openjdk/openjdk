@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,9 @@
 
 package java.lang.instrument;
 
+import  java.lang.reflect.Module;
+import  java.security.AccessController;
+import  java.security.PrivilegedAction;
 import  java.security.ProtectionDomain;
 
 /*
@@ -33,7 +36,9 @@ import  java.security.ProtectionDomain;
 
 /**
  * An agent provides an implementation of this interface in order
- * to transform class files.
+ * to transform class files. It only needs to override just one of the
+ * two everloaded transform methods. Otherwise, the only one with the
+ * <code>module</code> parameter will be invoked.
  * The transformation occurs before the class is defined by the JVM.
  * <P>
  * Note the term <i>class file</i> is used as defined in section 3.1 of
@@ -161,6 +166,8 @@ public interface ClassFileTransformer {
      * while this has the same effect as returning null. it facilitates the
      * logging or debugging of format corruptions.
      *
+     * @implSpec The default implementation returns null.
+     *
      * @param loader                the defining loader of the class to be transformed,
      *                              may be <code>null</code> if the bootstrap loader
      * @param className             the name of the class in the internal form of fully
@@ -178,11 +185,64 @@ public interface ClassFileTransformer {
                 or <code>null</code> if no transform is performed.
      * @see Instrumentation#redefineClasses
      */
-    byte[]
+    default byte[]
     transform(  ClassLoader         loader,
                 String              className,
                 Class<?>            classBeingRedefined,
                 ProtectionDomain    protectionDomain,
                 byte[]              classfileBuffer)
-        throws IllegalClassFormatException;
+        throws IllegalClassFormatException {
+        return null;
+    }
+
+
+    /**
+     * The implementation of this method may transform the supplied class file and
+     * return a new replacement class file.
+     *
+     * This method is an overloaded variation of the transform method above with
+     * the <code>module</code> instead of the <code>loader</code> parameter
+     * so that the same description applies.
+     * Only a version of this method is invoked if it has been implemented by the agent.
+     * Oservise, a version of the original overloaded method is invoked.
+     *
+     * @implSpec The default implementation transitively invokes the original overloaded method.
+     *
+     * @param module                the module of the class to be transformed
+     * @param className             the name of the class in the internal form of fully
+     *                              qualified class and interface names as defined in
+     *                              <i>The Java Virtual Machine Specification</i>.
+     *                              For example, <code>"java/util/List"</code>.
+     * @param classBeingRedefined   if this is triggered by a redefine or retransform,
+     *                              the class being redefined or retransformed;
+     *                              if this is a class load, <code>null</code>
+     * @param protectionDomain      the protection domain of the class being defined or redefined
+     * @param classfileBuffer       the input byte buffer in class file format - must not be modified
+     *
+     * @throws IllegalClassFormatException if the input does not represent a well-formed class file
+     * @throws UnsupportedOperationException if the agent does not module-aware agent
+     * @return  a well-formed class file buffer (the result of the transform),
+     * or <code>null</code> if no transform is performed.
+     * @see Instrumentation#redefineClasses
+     *
+     * @since  9
+     */
+    default byte[]
+    transform(  Module              module,
+                String              className,
+                Class<?>            classBeingRedefined,
+                ProtectionDomain    protectionDomain,
+                byte[]              classfileBuffer)
+        throws IllegalClassFormatException {
+
+        PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+        ClassLoader loader = AccessController.doPrivileged(pa);
+
+        // Call the overloaded transform method
+        return transform(loader,
+                         className,
+                         classBeingRedefined,
+                         protectionDomain,
+                         classfileBuffer);
+    }
 }

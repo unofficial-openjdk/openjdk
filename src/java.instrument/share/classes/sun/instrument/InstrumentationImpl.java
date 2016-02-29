@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 package sun.instrument;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.AccessibleObject;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -413,6 +414,7 @@ public class InstrumentationImpl implements Instrumentation {
     // WARNING: the native code knows the name & signature of this method
     private byte[]
     transform(  ClassLoader         loader,
+                Module              module,
                 String              classname,
                 Class<?>            classBeingRedefined,
                 ProtectionDomain    protectionDomain,
@@ -421,10 +423,21 @@ public class InstrumentationImpl implements Instrumentation {
         TransformerManager mgr = isRetransformer?
                                         mRetransfomableTransformerManager :
                                         mTransformerManager;
+        if (module == null) {
+            if (classBeingRedefined != null) {
+                // Optimization:
+                //   The module==null was passed by the caller intentionally
+                //   to make this Java call.
+                module = classBeingRedefined.getModule();
+            } else {
+                // No classes have been loaded from this package of the unnamed module so far.
+                module = loader.getUnnamedModule();
+            }
+        }
         if (mgr == null) {
             return null; // no manager, no transform
         } else {
-            return mgr.transform(   loader,
+            return mgr.transform(   module,
                                     classname,
                                     classBeingRedefined,
                                     protectionDomain,
