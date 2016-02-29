@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,6 @@ public class GreenTaglet extends BaseInlineTaglet {
 
     public GreenTaglet() {
         name = "green";
-        addExports("jdk.javadoc", "com.sun.tools.doclets.internal.toolkit.util");
     }
 
     public static void register(Map tagletMap) {
@@ -67,17 +66,5 @@ public class GreenTaglet extends BaseInlineTaglet {
         inlineTags.addAll(Arrays.asList(tag.inlineTags()));
         inlineTags.add(new TextTag(tag.holder(), "</font>"));
         return writer.commentTagsToOutput(tag, (Tag[]) inlineTags.toArray(new Tag[] {}));
-    }
-
-    private void addExports(String moduleName, String packageName) {
-        try {
-            Layer layer = Layer.boot();
-            Optional<Module> m = layer.findModule(moduleName);
-            if (!m.isPresent())
-                throw new Error("module not found: " + moduleName);
-            m.get().addExports(packageName, getClass().getModule());
-        } catch (Exception e) {
-            throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-        }
     }
 }

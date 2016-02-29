@@ -217,6 +217,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             // Enter symbols for all files
             docenv.notice("main.Building_tree");
             javadocEnter.main(classTrees.toList().appendList(packageTrees.toList()));
+            enterDone = true;
         } catch (Abort ex) {}
 
         if (messager.nerrors() != 0)

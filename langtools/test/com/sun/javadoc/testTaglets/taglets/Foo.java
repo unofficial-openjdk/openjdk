@@ -38,7 +38,6 @@ public class Foo extends BaseTaglet {
 
     public Foo() {
         name = "foo";
-        addExports("jdk.javadoc", "com.sun.tools.doclets.internal.toolkit.util");
     }
 
     public static void register(Map tagletMap) {
@@ -60,17 +59,5 @@ public class Foo extends BaseTaglet {
         inlineTags.add(new TextTag(tag.holder(), "</dd>"));
         return writer.commentTagsToOutput(tag,
                 (Tag[]) inlineTags.toArray(new Tag[] {}));
-    }
-
-    private void addExports(String moduleName, String packageName) {
-        try {
-            Layer layer = Layer.boot();
-            Optional<Module> m = layer.findModule(moduleName);
-            if (!m.isPresent())
-                throw new Error("module not found: " + moduleName);
-            m.get().addExports(packageName, getClass().getModule());
-        } catch (Exception e) {
-            throw new Error("failed to add exports for " + moduleName + "/" + packageName);
-        }
     }
 }

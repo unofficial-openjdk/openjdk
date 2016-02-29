@@ -180,16 +180,9 @@ public class ModuleFinder {
     }
 
     public ModuleSymbol findSingleModule() {
-        Location sp = fileManager.hasLocation(StandardLocation.SOURCE_PATH)
-                ? StandardLocation.SOURCE_PATH
-                : StandardLocation.CLASS_PATH;
-        Location cp = StandardLocation.CLASS_PATH;
-
         try {
-            JavaFileObject src_fo = fileManager.getJavaFileForInput(sp,
-                    names.module_info.toString(), Kind.SOURCE);
-            JavaFileObject class_fo = fileManager.getJavaFileForInput(cp,
-                    names.module_info.toString(), Kind.CLASS);
+            JavaFileObject src_fo = getModuleInfoFromLocation(StandardLocation.SOURCE_PATH, Kind.SOURCE);
+            JavaFileObject class_fo = getModuleInfoFromLocation(StandardLocation.CLASS_OUTPUT, Kind.CLASS);
             JavaFileObject fo = (src_fo == null) ? class_fo
                     : (class_fo == null) ? src_fo
                             : classFinder.preferredFileObject(src_fo, class_fo);
@@ -221,13 +214,21 @@ public class ModuleFinder {
 //                }
             }
 
-            msym.sourceLocation = StandardLocation.SOURCE_PATH;
-            msym.classLocation = StandardLocation.CLASS_PATH;
+            msym.classLocation = StandardLocation.CLASS_OUTPUT;
             return msym;
 
         } catch (IOException e) {
             throw new Error(e); // FIXME
         }
+    }
+
+    private JavaFileObject getModuleInfoFromLocation(Location location, Kind kind) throws IOException {
+        if (!fileManager.hasLocation(location))
+            return null;
+
+        return fileManager.getJavaFileForInput(location,
+                                               names.module_info.toString(),
+                                               kind);
     }
 
     private List<ModuleSymbol> scanModulePath(ModuleSymbol toFind) {

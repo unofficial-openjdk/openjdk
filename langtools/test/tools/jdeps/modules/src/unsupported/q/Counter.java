@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,12 @@
  * questions.
  */
 
-package java.lang;
+package q;
 
-/**
- * @author Jamie Ho
- */
-public abstract class StringBuilderChild extends AbstractStringBuilder {
+import jdk.internal.perf.PerfCounter;;
+
+public class Counter {
+     public static void create(String name) {
+         PerfCounter.newPerfCounter(name);
+     }
 }

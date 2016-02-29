@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,17 @@
  * questions.
  */
 
-package java.lang;
+package p3;
 
-/**
- * @author Jamie Ho
- */
-public abstract class StringBuilderChild extends AbstractStringBuilder {
+import p2.internal.T2;
+
+public class Main {
+    public void run() {
+        T2.print();
+    }
+
+    public static void main(String... args) throws Exception {
+        Foo foo = new Foo();
+        foo.getDriver().getParentLogger().config("test");
+    }
 }

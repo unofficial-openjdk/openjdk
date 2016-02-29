@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,6 +90,18 @@ public abstract class BaseFileManager implements JavaFileManager {
         classLoaderClass = options.get("procloader");
         locations.update(log, Lint.instance(context), FSInfo.instance(context));
 
+        // Setting this option is an indication that close() should defer actually closing
+        // the file manager until after a specified period of inactivity.
+        // This is to accomodate clients which save references to Symbols created for use
+        // within doclets or annotation processors, and which then attempt to use those
+        // references after the tool exits, having closed any internally managed file manager.
+        // Ideally, such clients should run the tool via the javax.tools API, providing their
+        // own file manager, which can be closed by the client when all use of that file
+        // manager is complete.
+        // If the option has a numeric value, it will be interpreted as the duration,
+        // in seconds, of the period of inactivity to wait for, before the file manager
+        // is actually closed.
+        // See also deferredClose().
         String s = options.get("fileManager.deferClose");
         if (s != null) {
             try {
@@ -126,6 +138,10 @@ public abstract class BaseFileManager implements JavaFileManager {
      */
     public boolean autoClose;
 
+    /**
+     * Wait for a period of inactivity before calling close().
+     * The length of the period of inactivity is given by {@code deferredCloseTimeout}
+     */
     protected void deferredClose() {
         Thread t = new Thread(getClass().getName() + " DeferredClose") {
             @Override

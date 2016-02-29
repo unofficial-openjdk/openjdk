@@ -28,10 +28,8 @@ package com.sun.tools.jdeps;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Build the profile information.
@@ -43,7 +41,8 @@ enum Profile {
                             "jdk.httpserver", "jdk.security.auth",
                             "jdk.naming.dns", "jdk.naming.rmi",
                             "jdk.management"),
-    FULL_JRE("Full JRE", 4, "java.se", "jdk.deploy.osx", "jdk.charsets",
+    // need a way to determine JRE modules
+    FULL_JRE("Full JRE", 4, "java.se", "jdk.charsets",
                             "jdk.crypto.ec", "jdk.crypto.pkcs11",
                             "jdk.crypto.mscapi", "jdk.crypto.ucrypto", "jdk.jvmstat",
                             "jdk.localedata", "jdk.scripting.nashorn", "jdk.zipfs");
@@ -99,31 +98,27 @@ enum Profile {
     }
 
     private final static Set<Module> JDK = new HashSet<>();
-    private static ModulePath systemModules;
-    static synchronized void ensureInitialized(ModulePath mpath) {
-        if (systemModules != null) {
-            return;
-        }
-        systemModules = mpath;
-
-        // add all modules into  JDK
-        JDK.addAll(systemModules.getModules());
-
+    static synchronized void init(Map<String, Module> installed) {
         for (Profile p : Profile.values()) {
             for (String mn : p.mnames) {
                 // this includes platform-dependent module that may not exist
-                Module m = systemModules.findModule(mn);
+                Module m = installed.get(mn);
                 if (m != null) {
-                    p.addModule(m);
+                    p.addModule(installed, m);
                 }
             }
         }
+
+        // JDK modules should include full JRE plus other jdk.* modules
+        // Just include all installed modules.  Assume jdeps is running
+        // in JDK image
+        JDK.addAll(installed.values());
     }
 
-    private void addModule(Module m) {
+    private void addModule(Map<String, Module> installed, Module m) {
         modules.add(m);
         for (String n : m.requires().keySet()) {
-            Module d = systemModules.findModule(n);
+            Module d = installed.get(n);
             if (d == null) {
                 throw new InternalError("module " + n + " required by " +
                         m.name() + " doesn't exist");
@@ -134,7 +129,6 @@ enum Profile {
     // for debugging
     public static void main(String[] args) throws IOException {
         // find platform modules
-        ModulePath.getSystemModules();
         if (Profile.getProfileCount() == 0) {
             System.err.println("No profile is present in this JDK");
         }

@@ -387,7 +387,7 @@ public class Locations {
         /**
          * @see JavaFileManager#getModuleLocation(Location, String)
          */
-        Location getModuleLocation(String moduleName) {
+        Location getModuleLocation(String moduleName) throws IOException {
             return null;
         }
 
@@ -827,19 +827,36 @@ public class Locations {
             this.searchPath = searchPath;
             this.output = output;
 
-            Set<Path> overrides = new LinkedHashSet<>();
-            if (allowOverrides && moduleOverrideSearchPath != null) {
-               for (Path p: moduleOverrideSearchPath) {
-                   Path o = p.resolve(moduleName);
-                   if (Files.isDirectory(o)) {
-                       overrides.add(o);
-                   }
-               }
-            }
+            if (allowOverrides) {
+                if (patchMap != null) {
+                    SearchPath mPatch = patchMap.get(moduleName);
+                    if (mPatch != null) {
+                        SearchPath sp = new SearchPath();
+                        sp.addAll(mPatch);
+                        sp.addAll(searchPath);
+                        searchPathWithOverrides = sp;
+                    } else {
+                        searchPathWithOverrides = searchPath;
+                    }
+                } else {
+                     // for old style patch option; retained for transition
+                    Set<Path> overrides = new LinkedHashSet<>();
+                    if (moduleOverrideSearchPath != null) {
+                       for (Path p: moduleOverrideSearchPath) {
+                           Path o = p.resolve(moduleName);
+                           if (Files.isDirectory(o)) {
+                               overrides.add(o);
+                           }
+                       }
+                    }
 
-            if (!overrides.isEmpty()) {
-                overrides.addAll(searchPath);
-                searchPathWithOverrides = overrides;
+                    if (!overrides.isEmpty()) {
+                        overrides.addAll(searchPath);
+                        searchPathWithOverrides = overrides;
+                    } else {
+                        searchPathWithOverrides = searchPath;
+                    }
+                }
             } else {
                 searchPathWithOverrides = searchPath;
             }
@@ -1333,6 +1350,7 @@ public class Locations {
     private class SystemModulesLocationHandler extends BasicLocationHandler {
         private Path javaHome;
         private Path modules;
+        private Map<String, ModuleLocationHandler> systemModules;
 
         SystemModulesLocationHandler() {
             super(StandardLocation.SYSTEM_MODULES, Option.SYSTEM);
@@ -1401,9 +1419,29 @@ public class Locations {
         }
 
         @Override
+        Location getModuleLocation(String name) throws IOException {
+            initSystemModules();
+            return systemModules.get(name);
+        }
+
+        @Override
         Iterable<Set<Location>> listModuleLocations() throws IOException {
-            if (javaHome == null)
-                return Collections.emptyList();
+            initSystemModules();
+            Set<Location> locns = new LinkedHashSet<>();
+            for (Location l: systemModules.values())
+                locns.add(l);
+            return Collections.singleton(locns);
+        }
+
+        private void initSystemModules() throws IOException {
+            if (systemModules != null) {
+                return;
+            }
+
+            if (javaHome == null) {
+                systemModules = Collections.emptyMap();
+                return;
+            }
 
             if (modules == null) {
                 try {
@@ -1439,18 +1477,16 @@ public class Locations {
                 }
             }
 
-            Set<Location> systemModules = new LinkedHashSet<>();
+            systemModules = new LinkedHashMap<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(modules, Files::isDirectory)) {
                 for (Path entry : stream) {
                     String moduleName = entry.getFileName().toString();
                     String name = location.getName() + "[" + moduleName + "]";
                     ModuleLocationHandler h = new ModuleLocationHandler(name, moduleName,
                             Collections.singleton(entry), false, true);
-                    systemModules.add(h);
+                    systemModules.put(moduleName, h);
                 }
             }
-
-            return Collections.singleton(systemModules);
         }
     }
 
@@ -1485,12 +1521,41 @@ public class Locations {
         }
     }
 
-    private SearchPath moduleOverrideSearchPath;
+    private SearchPath moduleOverrideSearchPath; // for old style patch option; retained for transition
+    private Map<String, SearchPath> patchMap;
 
     boolean handleOption(Option option, String value) {
         switch (option) {
             case XPATCH:
-                moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                if (value.contains("=")) {
+                    Map<String, SearchPath> map = new LinkedHashMap<>();
+                    for (String entry: value.split(",")) {
+                        int eq = entry.indexOf('=');
+                        if (eq > 0) {
+                            String mName = entry.substring(0, eq);
+                            SearchPath mPatchPath = new SearchPath()
+                                    .addFiles(entry.substring(eq + 1));
+                            boolean ok = true;
+                            for (Path p: mPatchPath) {
+                                Path mi = p.resolve("module-info.class");
+                                if (Files.exists(mi)) {
+                                    log.error("locn.module-info.not.allowed.on.patch.path", mi);
+                                    ok = false;
+                                }
+                            }
+                            if (ok && !mPatchPath.isEmpty()) {
+                                map.computeIfAbsent(mName, (_x) -> new SearchPath())
+                                        .addAll(mPatchPath);
+                            }
+                        } else {
+                            log.error("locn.invalid.arg.for.xpatch", entry);
+                        }
+                    }
+                    patchMap = map;
+                } else {
+                     // for old style patch option; retained for transition
+                    moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                }
                 return true;
             default:
                 LocationHandler h = handlersForOption.get(option);
@@ -1529,7 +1594,7 @@ public class Locations {
         h.setPaths(files);
     }
 
-    Location getModuleLocation(Location location, String name) {
+    Location getModuleLocation(Location location, String name) throws IOException {
         LocationHandler h = getHandler(location);
         return (h == null ? null : h.getModuleLocation(name));
     }

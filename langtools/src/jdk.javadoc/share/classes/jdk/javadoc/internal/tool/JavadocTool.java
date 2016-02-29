@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -220,6 +221,8 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             // Enter symbols for all files
             docenv.notice("main.Building_tree");
             javadocEnter.main(classTrees.toList().appendList(packageTrees.toList()));
+
+            enterDone = true;
         } catch (Abort ex) {}
 
         if (messager.nerrors() != 0)
@@ -376,6 +379,8 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
             ListBuffer<JavaFileObject> lb = new ListBuffer<>();
             Location packageLocn = getLocation(packageName);
+            if (packageLocn == null)
+                return Collections.emptyList();
             for (JavaFileObject fo: fm.list(packageLocn, packageName, sourceKinds, false)) {
                 String binaryName = fm.inferBinaryName(packageLocn, fo);
                 String simpleName = getSimpleName(binaryName);
@@ -389,8 +394,11 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
         private Location getLocation(String packageName) throws IOException {
             if (location == StandardLocation.MODULE_SOURCE_PATH) {
-                // TODO: handle invalid results
+                // TODO: handle invalid results better.
                 ModuleSymbol msym = syms.inferModule(names.fromString(packageName));
+                if (msym == null) {
+                    return null;
+                }
                 return fm.getModuleLocation(location, msym.name.toString());
             } else {
                 return location;

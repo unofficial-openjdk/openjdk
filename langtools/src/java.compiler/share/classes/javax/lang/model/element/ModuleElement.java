@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,9 +80,19 @@ public interface ModuleElement extends Element, QualifiedNameable {
     @Override
     Element getEnclosingElement();
 
+    /**
+     * Returns the directives contained in the declaration of this module.
+     * @return  the directives in the declaration of this module
+     */
     List<? extends Directive> getDirectives();
 
     /**
+     * The {@code kind} of a directive.
+     *
+     * <p>Note that it is possible additional directive kinds will be added
+     * to accommodate new, currently unknown, language structures added to
+     * future versions of the Java&trade; programming language.
+     *
      * @since 9
      */
     enum DirectiveKind {
@@ -97,9 +107,17 @@ public interface ModuleElement extends Element, QualifiedNameable {
     };
 
     /**
+     * Represents a "module statement" within the declaration of this module.
+     *
      * @since 9
-     */
+     *
+     */ // TODO: add jls to Module Statement
     interface Directive {
+        /**
+         * Returns the {@code kind} of this directive.
+         *
+         * @return the kind of this directive
+         */
         DirectiveKind getKind();
     }
 
@@ -121,12 +139,6 @@ public interface ModuleElement extends Element, QualifiedNameable {
         ModuleElement getDependency();
     }
 
-//    /**
-//     * Returns the list of dependencies of this module.
-//     * @return the list of dependencies of this module
-//     */
-//    List<? extends RequiresDirective> getRequiresDirectives();
-
     /**
      * An exported package of a module.
      * @since 9
@@ -147,12 +159,6 @@ public interface ModuleElement extends Element, QualifiedNameable {
         List<? extends ModuleElement> getTargetModules();
     }
 
-//    /**
-//     * Returns the list of exports made available by this module.
-//     * @return the list of exports made available by this module
-//     */
-//    List<? extends ExportsDirective> getExportsDirectives();
-
     /**
      * An implementation of a service provided by a module.
      * @since 9
@@ -171,12 +177,6 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getImplementation();
     }
 
-//    /**
-//     * Returns the list of services provided by this module.
-//     * @return the list of services provided by this module
-//     */
-//    List<? extends ProvidesDirective> getProvidesDirectives();
-
     /**
      * A reference to a service used by a module.
      * @since 9
@@ -188,10 +188,4 @@ public interface ModuleElement extends Element, QualifiedNameable {
          */
         TypeElement getService();
     }
-
-//    /**
-//     * Returns the list of services used by this module.
-//     * @return the list of services used by this module
-//     */
-//    List<? extends UsesDirective> getUsesDirectives();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,6 +163,8 @@ public class TagletManager {
      */
     private boolean javafx;
 
+    private boolean exportInternalAPI;
+
     /**
      * Construct a new <code>TagletManager</code>.
      * @param nosince true if we do not want to use @since tags.
@@ -172,6 +174,7 @@ public class TagletManager {
      */
     public TagletManager(boolean nosince, boolean showversion,
                          boolean showauthor, boolean javafx,
+                         boolean exportInternalAPI,
                          MessageRetriever message) {
         overridenStandardTags = new HashSet<>();
         potentiallyConflictingTags = new HashSet<>();
@@ -183,6 +186,7 @@ public class TagletManager {
         this.showversion = showversion;
         this.showauthor = showauthor;
         this.javafx = javafx;
+        this.exportInternalAPI = exportInternalAPI;
         this.message = message;
         initStandardTaglets();
         initStandardTagsLowercase();
@@ -233,9 +237,13 @@ public class TagletManager {
                 tagClassLoader = new URLClassLoader(pathToURLs(cpString));
             }
 
-            addExports(tagClassLoader);
+            if (exportInternalAPI) {
+                exportInternalAPI(tagClassLoader);
+            }
+
             customTagClass = tagClassLoader.loadClass(classname);
             ensureReadable(customTagClass);
+
             Method meth = customTagClass.getMethod("register",
                                                    Map.class);
             Object[] list = customTags.values().toArray();
@@ -255,6 +263,7 @@ public class TagletManager {
                 }
             }
         } catch (Exception exc) {
+            exc.printStackTrace();
             message.error("doclet.Error_taglet_not_registered", exc.getClass().getName(), classname);
         }
 
@@ -280,20 +289,35 @@ public class TagletManager {
         }
     }
 
-    private void addExports(ClassLoader targetLoader) {
-        try {
-            Method getModuleMethod = Class.class.getMethod("getModule");
-            Object thisModule = getModuleMethod.invoke(this.getClass());
-            Method getUnnamedModuleMethod = ClassLoader.class.getMethod("getUnnamedModule");
-            Object targetModule = getUnnamedModuleMethod.invoke(targetLoader);
+    private void exportInternalAPI(ClassLoader cl) {
+        String[] packages = {
+            "com.sun.tools.doclets",
+            "com.sun.tools.doclets.standard",
+            "com.sun.tools.doclets.internal.toolkit",
+            "com.sun.tools.doclets.internal.toolkit.taglets",
+            "com.sun.tools.doclets.internal.toolkit.builders",
+            "com.sun.tools.doclets.internal.toolkit.util",
+            "com.sun.tools.doclets.internal.toolkit.util.links",
+            "com.sun.tools.doclets.formats.html",
+            "com.sun.tools.doclets.formats.html.markup"
+        };
 
-            Class<?> moduleClass = getModuleMethod.getReturnType();
-            Method addExportsMethod = moduleClass.getMethod("addExports", String.class, moduleClass);
-            addExportsMethod.invoke(thisModule, "com.sun.tools.doclets.internal.toolkit.taglets", targetModule);
-        } catch (NoSuchMethodException e) {
-            // ignore
+        try {
+            Method getModuleMethod = Class.class.getDeclaredMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(getClass());
+
+            Class<?> moduleClass = Class.forName("java.lang.reflect.Module");
+            Method addExportsMethod = moduleClass.getDeclaredMethod("addExports", String.class, moduleClass);
+
+            Method getUnnamedModuleMethod = ClassLoader.class.getDeclaredMethod("getUnnamedModule");
+            Object target = getUnnamedModuleMethod.invoke(cl);
+
+            for (String pack : packages) {
+                addExportsMethod.invoke(thisModule, pack, target);
+            }
         } catch (Exception e) {
-            throw new InternalError(e);
+            // do nothing
+            e.printStackTrace();
         }
     }
 

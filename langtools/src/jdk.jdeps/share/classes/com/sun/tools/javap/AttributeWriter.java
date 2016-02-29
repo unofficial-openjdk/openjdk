@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,7 @@ import com.sun.tools.classfile.SourceID_attribute;
 import com.sun.tools.classfile.StackMapTable_attribute;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
+import com.sun.tools.classfile.TargetPlatform_attribute;
 import com.sun.tools.classfile.Version_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
@@ -875,10 +876,62 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
+    public Void visitTargetPlatform(TargetPlatform_attribute attr, Void ignore) {
+        println("TargetPlatform:");
+        indent(+1);
+        print("os_name: #" + attr.os_name_index);
+        if (attr.os_name_index != 0) {
+            tab();
+            print("// " + getOSName(attr));
+        }
+        println();
+        print("os_arch: #" + attr.os_arch_index);
+        if (attr.os_arch_index != 0) {
+            tab();
+            print("// " + getOSArch(attr));
+        }
+        println();
+        print("os_version: #" + attr.os_version_index);
+        if (attr.os_version_index != 0) {
+            tab();
+            print("// " + getOSVersion(attr));
+        }
+        println();
+        indent(-1);
+        return null;
+    }
+
+    private String getOSName(TargetPlatform_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_name_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    private String getOSArch(TargetPlatform_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_arch_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    private String getOSVersion(TargetPlatform_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_version_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    @Override
     public Void visitVersion(Version_attribute attr, Void ignore) {
         print("Version: #" + attr.version_index);
+        indent(+1);
         tab();
         println("// " + getVersion(attr));
+        indent(-1);
         return null;
     }
 

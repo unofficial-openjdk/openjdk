@@ -31,135 +31,73 @@ import com.sun.tools.classfile.Dependencies;
 import com.sun.tools.classfile.Dependency;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.sun.tools.jdeps.Module.*;
+import static com.sun.tools.jdeps.ModulePaths.SystemModulePath.JAVA_BASE;
 
 public class DependencyFinder {
-    /*
-     * Dep Filter configured based on the input jdeps option
-     * 1. -p and -regex to match target dependencies
-     * 2. -filter:package to filter out same-package dependencies
-     *
-     * This filter is applied when jdeps parses the class files
-     * and filtered dependencies are not stored in the Analyzer.
-     *
-     * -filter:archive is applied later in the Analyzer as the
-     * containing archive of a target class may not be known until
-     * the entire archive
-     */
-    static class DependencyFilter implements Dependency.Filter {
-        final Dependency.Filter filter;
-        final Pattern filterPattern;
-        final boolean filterSamePackage;
-
-        DependencyFilter(boolean filterSamePackage) {
-            this((Dependency.Filter)null, null, filterSamePackage);
-        }
-        DependencyFilter(Pattern filterPattern, boolean filterSamePackage) {
-            this((Dependency.Filter)null, filterPattern, filterSamePackage);
-        }
-        DependencyFilter(Pattern regex, Pattern filterPattern, boolean filterSamePackage) {
-            this(Dependencies.getRegexFilter(regex), filterPattern, filterSamePackage);
-        }
-
-        DependencyFilter(Set<String> packageNames, Pattern filterPattern, boolean filterSamePackage) {
-            this(Dependencies.getPackageFilter(packageNames, false), filterPattern, filterSamePackage);
-        }
-        private DependencyFilter(Dependency.Filter filter, Pattern filterPattern, boolean filterSamePackage) {
-            this.filter = filter;
-            this.filterPattern = filterPattern;
-            this.filterSamePackage = filterSamePackage;
-        }
-
-        @Override
-        public boolean accepts(Dependency d) {
-            if (d.getOrigin().equals(d.getTarget())) {
-                return false;
-            }
-            String pn = d.getTarget().getPackageName();
-            if (filterSamePackage && d.getOrigin().getPackageName().equals(pn)) {
-                return false;
-            }
-
-            if (filterPattern != null && filterPattern.matcher(pn).matches()) {
-                return false;
-            }
-
-            return filter != null ? filter.accepts(d) : true;
-        }
-    }
-
-    private final Pattern includePattern;
-    private final List<String> roots = new ArrayList<>();
-    private final List<Archive> initialArchives = new ArrayList<>();
+    private final List<Archive> roots = new ArrayList<>();
     private final List<Archive> classpaths = new ArrayList<>();
-    private final List<Module> systemModules;
+    private final List<Module> modulepaths = new ArrayList<>();
+    private final List<String> classes = new ArrayList<>();
     private final boolean compileTimeView;
-    private final boolean includeSystemModules;
 
-    DependencyFinder(Pattern includePattern,
-                     boolean compileTimeView,
-                     boolean includeSystemModules) {
-        this.includePattern = includePattern;
-        this.systemModules = ModulePath.getSystemModules();
+    DependencyFinder(boolean compileTimeView) {
         this.compileTimeView = compileTimeView;
-        this.includeSystemModules = includeSystemModules;
     }
 
     /*
      * Adds a class name to the root set
      */
-    void addRoot(String cn) {
-        roots.add(cn);
+    void addClassName(String cn) {
+        classes.add(cn);
     }
 
     /*
-     * Adds an initial archive of the given path
+     * Adds the archive of the given path to the root set
      */
-    Archive addArchive(Path path) {
-        Archive archive = Archive.getInstance(path);
-        addArchive(archive);
-        return archive;
+    void addRoot(Path path) {
+        addRoot(Archive.getInstance(path));
     }
 
     /*
-     * Adds an initial archive
+     * Adds the given archive to the root set
      */
-    void addArchive(Archive archive) {
+    void addRoot(Archive archive) {
         Objects.requireNonNull(archive);
-        initialArchives.add(archive);
+        if (!roots.contains(archive))
+            roots.add(archive);
     }
 
     /**
-     * Add an archive specified in the classpath if it's not listed
-     * in the initial archive list.
+     * Add an archive specified in the classpath.
      */
-    Archive addClassPathArchive(Path path) {
-        Optional<Archive> archive = initialArchives.stream()
-                .filter(a -> isSameFile(path, a.path()))
-                .findAny();
-        if (archive.isPresent())
-            return archive.get();
-
-        Archive cpArchive = Archive.getInstance(path);
-        addClassPathArchive(cpArchive);
-        return cpArchive;
+    void addClassPathArchive(Path path) {
+        addClassPathArchive(Archive.getInstance(path));
     }
 
     /**
-     * Add an archive specified in the classpath if it's not listed
-     * in the initial archive list.
+     * Add an archive specified in the classpath.
      */
     void addClassPathArchive(Archive archive) {
         Objects.requireNonNull(archive);
@@ -169,173 +107,277 @@ public class DependencyFinder {
     /**
      * Add an archive specified in the modulepath.
      */
-    void addModuleArchive(Module m) {
+    void addModule(Module m) {
         Objects.requireNonNull(m);
-        classpaths.add(m);
+        modulepaths.add(m);
     }
 
-    List<Archive> initialArchives() {
-        return initialArchives;
+    /**
+     * Returns the root set.
+     */
+    List<Archive> roots() {
+        return roots;
     }
 
-    List<Archive> getArchives() {
-        List<Archive> archives = new ArrayList<>(initialArchives);
-        archives.addAll(classpaths);
-        archives.addAll(systemModules);
-        return Collections.unmodifiableList(archives);
+    /**
+     * Returns a stream of all archives including the root set, module paths,
+     * and classpath.
+     *
+     * This only returns the archives with classes parsed.
+     */
+    Stream<Archive> archives() {
+        Stream<Archive> archives = Stream.concat(roots.stream(), modulepaths.stream());
+        archives = Stream.concat(archives, classpaths.stream());
+        return archives.filter(a -> !a.isEmpty())
+                       .distinct();
     }
 
     /**
      * Finds dependencies
+     *
      * @param apiOnly  API only
-     * @param maxDepth    depth of transitive dependency analysis; zero indicates
+     * @param maxDepth depth of transitive dependency analysis; zero indicates
      * @throws IOException
      */
-    void findDependencies(DependencyFilter dependencyFilter, boolean apiOnly, int maxDepth)
+    void findDependencies(JdepsFilter filter, boolean apiOnly, int maxDepth)
             throws IOException
     {
         Dependency.Finder finder =
                 apiOnly ? Dependencies.getAPIFinder(AccessFlags.ACC_PROTECTED)
                         : Dependencies.getClassDependencyFinder();
 
-        int depth = compileTimeView ? 1 :
-                (maxDepth > 0 ? maxDepth : Integer.MAX_VALUE);
+        // list of archives to be analyzed
+        Set<Archive> roots = new LinkedHashSet<>(this.roots);
 
-        List<Archive> archives = new ArrayList<>(initialArchives);
-        if (includePattern != null || compileTimeView) {
-            // start with all archives
-            archives.addAll(classpaths);
-        }
+        // include java.base in root set
+        roots.add(JAVA_BASE);
 
-        if (compileTimeView && includeSystemModules) {
-            archives.addAll(systemModules);
-        }
+        // If -include pattern specified, classes may be in module path or class path.
+        // To get compile time view analysis, all classes are analyzed.
+        // add all modules except JDK modules to root set
+        modulepaths.stream()
+                   .filter(filter::matches)
+                   .forEach(roots::add);
 
-        // We should probably avoid analyzing JDK modules.  JDK classes are not analyzed.
-        // Instead, module dependences will be shown
-        // if (compileTimeView) {
-        //    archives.addAll(systemModules);
-        // }
+        // add classpath to the root set
+        classpaths.stream()
+                .filter(filter::matches)
+                .forEach(roots::add);
+
+        // transitive dependency
+        int depth = maxDepth > 0 ? maxDepth : Integer.MAX_VALUE;
 
         // Work queue of names of classfiles to be searched.
         // Entries will be unique, and for classes that do not yet have
         // dependencies in the results map.
-        Deque<String> deque = new LinkedList<>();
-        Set<String> doneClasses = new HashSet<>();
+        ConcurrentLinkedDeque<String> deque = new ConcurrentLinkedDeque<>();
+        ConcurrentSkipListSet<String> doneClasses = new ConcurrentSkipListSet<>();
 
-        // get the immediate dependencies of the input files
-        for (Archive a : archives) {
-            for (ClassFile cf : a.reader().getClassFiles()) {
-                String classFileName;
-                try {
-                    classFileName = cf.getName();
-                } catch (ConstantPoolException e) {
-                    throw new Dependencies.ClassFileError(e);
-                }
+        TaskExecutor executor = new TaskExecutor(finder, filter, apiOnly, deque, doneClasses);
+        try {
+            // get the immediate dependencies of the input files
+            for (Archive source : roots) {
+                executor.task(source, deque);
+            }
+            executor.waitForTasksCompleted();
 
-                // tests if this class matches the -include or -apiOnly option if specified
-                if (!matches(classFileName) || (apiOnly && !cf.access_flags.is(AccessFlags.ACC_PUBLIC))) {
-                    continue;
-                }
+            List<Archive> archives = Stream.concat(Stream.concat(roots.stream(),
+                    modulepaths.stream()),
+                    classpaths.stream())
+                    .collect(Collectors.toList());
 
-                if (!doneClasses.contains(classFileName)) {
-                    doneClasses.add(classFileName);
-                }
-
-                for (Dependency d : finder.findDependencies(cf)) {
-                    if (dependencyFilter.accepts(d)) {
-                        String cn = d.getTarget().getName();
-                        if (!doneClasses.contains(cn) && !deque.contains(cn)) {
-                            deque.add(cn);
+            // Additional pass to find archive where dependences are identified
+            // and also any specified classes, if any.
+            // If -R is specified, perform transitive dependency analysis.
+            Deque<String> unresolved = new LinkedList<>(classes);
+            do {
+                String name;
+                while ((name = unresolved.poll()) != null) {
+                    if (doneClasses.contains(name)) {
+                        continue;
+                    }
+                    if (compileTimeView) {
+                        final String cn = name + ".class";
+                        // parse all classes in the source archive
+                        Optional<Archive> source = archives.stream()
+                                .filter(a -> a.reader().entries().contains(cn))
+                                .findFirst();
+                        trace("%s compile time view %s%n", name, source.map(Archive::getName).orElse(" not found"));
+                        if (source.isPresent()) {
+                            executor.runTask(source.get(), deque);
                         }
-                        a.addClass(d.getOrigin(), d.getTarget());
-                    } else {
-                        // ensure that the parsed class is added the archive
-                        a.addClass(d.getOrigin());
+                    }
+                    ClassFile cf = null;
+                    for (Archive archive : archives) {
+                        cf = archive.reader().getClassFile(name);
+
+                        if (cf != null) {
+                            String classFileName;
+                            try {
+                                classFileName = cf.getName();
+                            } catch (ConstantPoolException e) {
+                                throw new Dependencies.ClassFileError(e);
+                            }
+                            if (!doneClasses.contains(classFileName)) {
+                                // if name is a fully-qualified class name specified
+                                // from command-line, this class might already be parsed
+                                doneClasses.add(classFileName);
+                                for (Dependency d : finder.findDependencies(cf)) {
+                                    if (depth == 0) {
+                                        // ignore the dependency
+                                        archive.addClass(d.getOrigin());
+                                        break;
+                                    } else if (filter.accepts(d) && filter.accept(archive)) {
+                                        // continue analysis on non-JDK classes
+                                        archive.addClass(d.getOrigin(), d.getTarget());
+                                        String cn = d.getTarget().getName();
+                                        if (!doneClasses.contains(cn) && !deque.contains(cn)) {
+                                            deque.add(cn);
+                                        }
+                                    } else {
+                                        // ensure that the parsed class is added the archive
+                                        archive.addClass(d.getOrigin());
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (cf == null) {
+                        doneClasses.add(name);
                     }
                 }
-            }
+                unresolved = deque;
+                deque = new ConcurrentLinkedDeque<>();
+            } while (!unresolved.isEmpty() && depth-- > 0);
+        } finally {
+            executor.shutdown();
+        }
+     }
+
+    /**
+     * TaskExecutor creates FutureTask to analyze all classes in a given archive
+     */
+    private class TaskExecutor {
+        final ExecutorService pool;
+        final Dependency.Finder finder;
+        final JdepsFilter filter;
+        final boolean apiOnly;
+        final Set<String> doneClasses;
+        final Map<Archive, FutureTask<Void>> tasks = new HashMap<>();
+
+        TaskExecutor(Dependency.Finder finder,
+                     JdepsFilter filter,
+                     boolean apiOnly,
+                     ConcurrentLinkedDeque<String> deque,
+                     Set<String> doneClasses) {
+            this.pool = Executors.newFixedThreadPool(2);
+            this.finder = finder;
+            this.filter = filter;
+            this.apiOnly = apiOnly;
+            this.doneClasses = doneClasses;
         }
 
-        // add Archive for looking up classes from the classpath
-        // for transitive dependency analysis
-
-        Deque<String> unresolved = new LinkedList<>(this.roots);
-        do {
-            String name;
-            while ((name = unresolved.poll()) != null) {
-                if (doneClasses.contains(name)) {
-                    continue;
-                }
-                ClassFile cf = null;
-                for (Archive a : getArchives()) {
-                    cf = a.reader().getClassFile(name);
-
-                    if (cf != null) {
+        /**
+         * Creates a new task to analyze class files in the given archive.
+         * The dependences are added to the given deque for analysis.
+         */
+        FutureTask<Void> task(Archive archive, final ConcurrentLinkedDeque<String> deque) {
+            trace("parsing %s %s%n", archive.getName(), archive.path());
+            FutureTask<Void> task = new FutureTask<Void>(new Callable<Void>() {
+                public Void call() throws Exception {
+                    for (ClassFile cf : archive.reader().getClassFiles()) {
                         String classFileName;
                         try {
                             classFileName = cf.getName();
                         } catch (ConstantPoolException e) {
                             throw new Dependencies.ClassFileError(e);
                         }
+
+                        // tests if this class matches the -include
+                        String cn = classFileName.replace('/', '.');
+                        if (!filter.matches(cn))
+                            continue;
+
+                        // if -apionly is specified, analyze only exported and public types
+                        if (apiOnly && !(isExported(archive, cn) && cf.access_flags.is(AccessFlags.ACC_PUBLIC)))
+                            continue;
+
                         if (!doneClasses.contains(classFileName)) {
-                            // if name is a fully-qualified class name specified
-                            // from command-line, this class might already be parsed
                             doneClasses.add(classFileName);
-                            for (Dependency d : finder.findDependencies(cf)) {
-                                if (depth == 0) {
-                                    // ignore the dependency
-                                    a.addClass(d.getOrigin());
-                                    break;
-                                } else if (dependencyFilter.accepts(d) &&
-                                              // skip analyze transitive dependency on JDK class if needed
-                                              (includeSystemModules || !isSystemModule(a))) {
-                                    a.addClass(d.getOrigin(), d.getTarget());
-                                    String cn = d.getTarget().getName();
-                                    if (!doneClasses.contains(cn) && !deque.contains(cn)) {
-                                        deque.add(cn);
-                                    }
-                                } else {
-                                    // ensure that the parsed class is added the archive
-                                    a.addClass(d.getOrigin());
+                        }
+
+                        for (Dependency d : finder.findDependencies(cf)) {
+                            if (filter.accepts(d) && filter.accept(archive)) {
+                                String name = d.getTarget().getName();
+                                if (!doneClasses.contains(name) && !deque.contains(name)) {
+                                    deque.add(name);
                                 }
+                                archive.addClass(d.getOrigin(), d.getTarget());
+                            } else {
+                                // ensure that the parsed class is added the archive
+                                archive.addClass(d.getOrigin());
                             }
                         }
-                        break;
                     }
+                    return null;
                 }
-                if (cf == null) {
-                    doneClasses.add(name);
-                }
+            });
+            tasks.put(archive, task);
+            pool.submit(task);
+            return task;
+        }
+
+        /*
+         * This task will parse all class files of the given archive, if it's a new task.
+         * This method waits until the task is completed.
+         */
+        void runTask(Archive archive, final ConcurrentLinkedDeque<String> deque) {
+            if (tasks.containsKey(archive))
+                return;
+
+            FutureTask<Void> task = task(archive, deque);
+            try {
+                // wait for completion
+                task.get();
+            } catch (InterruptedException|ExecutionException e) {
+                throw new Error(e);
             }
-            unresolved = deque;
-            deque = new LinkedList<>();
-        } while (!unresolved.isEmpty() && depth-- > 0);
-    }
-
-    private boolean isSystemModule(Archive archive) {
-        if (Module.class.isInstance(archive)) {
-            return systemModules.contains((Module) archive);
         }
-        return false;
-    }
 
-    /**
-     * Tests if the given class matches the pattern given in the -include option
-     */
-    private boolean matches(String classname) {
-        if (includePattern != null) {
-            return includePattern.matcher(classname.replace('/', '.')).matches();
-        } else {
-            return true;
+        /*
+         * Waits until all submitted tasks are completed.
+         */
+        void waitForTasksCompleted() {
+            try {
+                for (FutureTask<Void> t : tasks.values()) {
+                    if (t.isDone())
+                        continue;
+
+                    // wait for completion
+                    t.get();
+                }
+            } catch (InterruptedException|ExecutionException e) {
+                throw new Error(e);
+            }
         }
-    }
 
-    private boolean isSameFile(Path p1, Path p2) {
-        try {
-            return Files.isSameFile(p1, p2);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        /*
+         * Shutdown the executor service.
+         */
+        void shutdown() {
+            pool.shutdown();
+        }
+
+        /**
+         * Tests if the given class name is exported by the given archive.
+         *
+         * All packages are exported in unnamed module.
+         */
+        private boolean isExported(Archive archive, String classname) {
+            int i = classname.lastIndexOf('.');
+            String pn = i > 0 ? classname.substring(0, i) : "";
+            return archive.getModule().isExported(pn);
         }
     }
 }

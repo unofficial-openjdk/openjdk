@@ -36,7 +36,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -77,6 +76,7 @@ import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
@@ -437,38 +437,27 @@ public class JavacTrees extends DocTrees {
                 // and if not, then we check to see if it identifies a package.
                 Type t = attr.attribType(ref.qualifierExpression, env);
                 if (t.isErroneous()) {
-                    if (ref.memberName == null) {
-                        // Attr/Resolve assume packages exist and create symbols as needed
-                        // so restrict the search to existing packages only:
-                        if (SourceVersion.isName(ref.qualifierExpression.toString())) { //XXX: avoid querying packages with a wrong name - see TestSupplementary.
-                            //XXX: avoid Elements.getPackageElement for now, as that could resolve packages/classes from different module, which may be incompilable with the current javac settings
-                            Symbol pck;
-                            PackageSymbol origPackge = env.toplevel.packge;
-                            ClassSymbol origEnclClass = env.enclClass.sym;
+                    JCCompilationUnit toplevel =
+                        treeMaker.TopLevel(List.<JCTree>nil());
+                    final ModuleSymbol msym = modules.getDefaultModule();
+                    toplevel.modle = msym;
+                    toplevel.packge = msym.unnamedPackage;
+                    Symbol sym = attr.attribIdent(ref.qualifierExpression, toplevel);
 
-                            try {
-                                pck = attr.attribIdent(ref.qualifierExpression, env);
-                            } finally {
-                                env.toplevel.packge = origPackge;
-                                env.enclClass.sym = origEnclClass;
-                            }
+                    sym.complete();
 
-                            pck.complete();
-
-                            if (pck.kind == PCK && pck.exists()) {
-                                return pck;
-                            }
-                        }
-
+                    if ((sym.kind == PCK || sym.kind == TYP) && sym.exists()) {
+                        tsym = (TypeSymbol) sym;
+                        memberName = (Name) ref.memberName;
+                    } else {
                         if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
                             // fixup:  allow "identifier" instead of "#identifier"
                             // for compatibility with javadoc
                             tsym = env.enclClass.sym;
                             memberName = ((JCIdent) ref.qualifierExpression).name;
-                        } else
+                        } else {
                             return null;
-                    } else {
-                        return null;
+                        }
                     }
                 } else {
                     tsym = t.tsym;

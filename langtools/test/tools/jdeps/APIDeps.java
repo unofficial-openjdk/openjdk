@@ -114,14 +114,14 @@ public class APIDeps {
         test(new File(mDir, "Gee.class"),
              new String[] {"sun.security.x509.X509CertInfo", "com.sun.tools.classfile.ClassFile"},
              new String[] {"JDK internal API"},
-             new String[] {"-jdkinternals"});
+             new String[] {"-jdkinternals", "-quiet"});
         // -jdkinternals parses all classes on -classpath and the input arguments
         test(new File(mDir, "Gee.class"),
              new String[] {"com.sun.tools.classfile.ClassFile",
                            "sun.security.x509.X509CertInfo"},
              new String[] {"JDK internal API"},
              // use -classpath tmp/a with no use of JDK internal API
-             new String[] {"-classpath", dest.resolve("a").toString(), "-jdkinternals"});
+             new String[] {"-classpath", dest.resolve("a").toString(), "-jdkinternals", "-quiet"});
 
         // parse only APIs
         test(mDir,

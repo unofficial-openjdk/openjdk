@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,11 +91,6 @@ public class ClassReader {
     /** Switch: verbose output.
      */
     boolean verbose;
-
-    /** Switch: check class file for correct minor version, unrecognized
-     *  attributes.
-     */
-    boolean checkClassFile;
 
     /** Switch: read constant pool and code sections. This switch is initially
      *  set to false but can be turned on from outside.
@@ -242,7 +237,6 @@ public class ClassReader {
 
         Options options = Options.instance(context);
         verbose         = options.isSet(VERBOSE);
-        checkClassFile  = options.isSet("-checkclassfile");
 
         Source source = Source.instance(context);
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
@@ -1289,13 +1283,6 @@ public class ClassReader {
             attributeReaders.put(r.name, r);
     }
 
-    /** Report unrecognized attribute.
-     */
-    void unrecognized(Name attrName) {
-        if (checkClassFile)
-            printCCF("ccf.unrecognized.attribute", attrName);
-    }
-
     protected void readEnclosingMethodAttr(Symbol sym) {
         // sym is a nested class with an "Enclosing Method" attribute
         // remove sym from it's current owners scope and place it in
@@ -1418,7 +1405,6 @@ public class ClassReader {
             if (r != null && r.accepts(kind))
                 r.read(sym, attrLen);
             else  {
-                unrecognized(attrName);
                 bp = bp + attrLen;
             }
         }
@@ -2485,8 +2471,7 @@ public class ClassReader {
         int maxMinor = Version.MAX().minor;
         if (majorVersion > maxMajor ||
             majorVersion * 1000 + minorVersion <
-            Version.MIN().major * 1000 + Version.MIN().minor)
-        {
+            Version.MIN().major * 1000 + Version.MIN().minor) {
             if (majorVersion == (maxMajor + 1))
                 log.warning("big.major.version",
                             currentClassFile,
@@ -2499,13 +2484,7 @@ public class ClassReader {
                                    Integer.toString(maxMajor),
                                    Integer.toString(maxMinor));
         }
-        else if (checkClassFile &&
-                 majorVersion == maxMajor &&
-                 minorVersion > maxMinor)
-        {
-            printCCF("found.later.version",
-                     Integer.toString(minorVersion));
-        }
+
         indexPool();
         if (signatureBuffer.length < bp) {
             int ns = Integer.highestOneBit(bp) << 1;
@@ -2640,14 +2619,6 @@ public class ClassReader {
             flags |= MODULE;
         }
         return flags & ~ACC_SUPER; // SUPER and SYNCHRONIZED bits overloaded
-    }
-
-    /** Output for "-checkclassfile" option.
-     *  @param key The key to look up the correct internationalized string.
-     *  @param arg An argument for substitution into the output string.
-     */
-    private void printCCF(String key, Object arg) {
-        log.printLines(key, arg);
     }
 
     /**

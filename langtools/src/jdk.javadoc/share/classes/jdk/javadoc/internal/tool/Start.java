@@ -252,7 +252,6 @@ public class Start extends ToolOption.Helper {
             try {
                 doclet = (Doclet) docletClass.newInstance();
             } catch (InstantiationException | IllegalAccessException exc) {
-                System.out.println("KUMAR" + exc);
                 exc.printStackTrace();
                 if (!apiMode) {
                     error("main.could_not_instantiate_class", docletClass);

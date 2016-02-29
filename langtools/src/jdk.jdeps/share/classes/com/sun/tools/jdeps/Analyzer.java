@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,8 +67,8 @@ public class Analyzer {
 
     protected final Type type;
     protected final Filter filter;
-    protected final Map<Archive, ArchiveDeps> results = new HashMap<>();
-    protected final Map<Location, Archive> map = new HashMap<>();
+    protected final Map<Archive, Dependences> results = new HashMap<>();
+    protected final Map<Location, Archive> locationToArchive = new HashMap<>();
     static final Archive NOT_FOUND
         = new Archive(JdepsTask.getMessage("artifact.not.found"));
 
@@ -87,43 +86,31 @@ public class Analyzer {
     /**
      * Performs the dependency analysis on the given archives.
      */
-    public boolean run(List<Archive> archives, boolean showModuleRequires) {
+    public boolean run(Stream<? extends Archive> archives) {
+        return run(archives.collect(Collectors.toList()));
+    }
+
+    /**
+     * Performs the dependency analysis on the given archives.
+     */
+    public boolean run(Iterable<? extends Archive> archives) {
         // build a map from Location to Archive
         buildLocationArchiveMap(archives);
 
-        Map<String, Module> moduleMap = archives.stream()
-                .filter(a -> Module.class.isInstance(a))
-                .map(a -> (Module)a)
-                .collect(Collectors.toMap(Module::getName, Function.identity()));
         // traverse and analyze all dependencies
         for (Archive archive : archives) {
-            ArchiveDeps deps = new ArchiveDeps(archive, type);
+            Dependences deps = new Dependences(archive, type);
             archive.visitDependences(deps);
-
-            // If it's a module, add its requires
-            // ## TODO: should add requires for runtime view by default
-            // update the tests
-            if (showModuleRequires && Module.class.isInstance(archive)) {
-                for (String req : ((Module)archive).requires().keySet()) {
-                    Module m = moduleMap.get(req);
-                    deps.requires().add(m);
-                }
-            }
             results.put(archive, deps);
         }
         return true;
     }
 
-    protected void buildLocationArchiveMap(List<Archive> archives) {
+    protected void buildLocationArchiveMap(Iterable<? extends Archive> archives) {
         // build a map from Location to Archive
         for (Archive archive: archives) {
-            for (Location l: archive.getClasses()) {
-                if (!map.containsKey(l)) {
-                    map.put(l, archive);
-                } else {
-                    // duplicated class warning?
-                }
-            }
+            archive.getClasses()
+                   .forEach(l -> locationToArchive.putIfAbsent(l, archive));
         }
     }
 
@@ -138,33 +125,18 @@ public class Analyzer {
         if (!results.containsKey(source)) {
             return Collections.emptySet();
         }
-        ArchiveDeps result = results.get(source);
+        Dependences result = results.get(source);
         return result.dependencies().stream()
                      .map(Dep::target)
                      .collect(Collectors.toSet());
     }
-    public Set<Archive> archiveDependences(Archive source) {
-        if (!results.containsKey(source)) {
-            return Collections.emptySet();
-        }
-        ArchiveDeps result = results.get(source);
-        return result.requires();
-    }
 
-    public List<Archive> transitiveClosure(List<Archive> archives) {
-        List<Archive> transitiveDeps = new ArrayList<>(archives);
-        Deque<Archive> deque = new LinkedList<>();
-        archives.stream()
-                .map(this::archiveDependences)
-                .forEach(deque::addAll);
-        Archive source;
-        while ((source = deque.poll()) != null) {
-            if (transitiveDeps.contains(source))
-                continue;
-            transitiveDeps.add(source);
-            deque.addAll(archiveDependences(source));
+    public Stream<Archive> requires(Archive source) {
+        if (!results.containsKey(source)) {
+            return Stream.empty();
         }
-        return transitiveDeps;
+        Dependences result = results.get(source);
+        return result.requires().stream().filter(a -> !a.isEmpty());
     }
 
     public interface Visitor {
@@ -183,7 +155,7 @@ public class Analyzer {
      */
     public void visitDependences(Archive source, Visitor v, Type level) {
         if (level == Type.SUMMARY) {
-            final ArchiveDeps result = results.get(source);
+            final Dependences result = results.get(source);
             final Set<Archive> reqs = result.requires();
             Stream<Archive> stream = reqs.stream();
             if (reqs.isEmpty()) {
@@ -197,19 +169,21 @@ public class Analyzer {
                   .forEach(archive -> {
                       Profile profile = result.getTargetProfile(archive);
                       v.visitDependence(source.getName(), source,
-                                        profile != null ? profile.profileName() : archive.getName(), archive);
+                                        profile != null ? profile.profileName()
+                                                        : archive.getName(), archive);
                   });
         } else {
-            ArchiveDeps result = results.get(source);
+            Dependences result = results.get(source);
             if (level != type) {
                 // requesting different level of analysis
-                result = new ArchiveDeps(source, level);
+                result = new Dependences(source, level);
                 source.visitDependences(result);
             }
             result.dependencies().stream()
                   .sorted(Comparator.comparing(Dep::origin)
                                     .thenComparing(Dep::target))
-                  .forEach(d -> v.visitDependence(d.origin(), d.originArchive(), d.target(), d.targetArchive()));
+                  .forEach(d -> v.visitDependence(d.origin(), d.originArchive(),
+                                                  d.target(), d.targetArchive()));
         }
     }
 
@@ -218,16 +192,16 @@ public class Analyzer {
     }
 
     /**
-     * ArchiveDeps contains the dependencies for an Archive that can have one or
+     * Dependences contains the dependencies for an Archive that can have one or
      * more classes.
      */
-    class ArchiveDeps implements Archive.Visitor {
+    class Dependences implements Archive.Visitor {
         protected final Archive archive;
         protected final Set<Archive> requires;
         protected final Set<Dep> deps;
         protected final Type level;
         private Profile profile;
-        ArchiveDeps(Archive archive, Type level) {
+        Dependences(Archive archive, Type level) {
             this.archive = archive;
             this.deps = new HashSet<>();
             this.requires = new HashSet<>();
@@ -243,7 +217,7 @@ public class Analyzer {
         }
 
         Profile getTargetProfile(Archive target) {
-            if (target instanceof Module) {
+            if (target.getModule().isJDK()) {
                 return Profile.getProfile((Module) target);
             } else {
                 return null;
@@ -251,11 +225,10 @@ public class Analyzer {
         }
 
         Archive findArchive(Location t) {
-            Archive target = archive.getClasses().contains(t) ? archive : map.get(t);
-            if (target == null) {
-                map.put(t, target = NOT_FOUND);
-            }
-            return target;
+            if (archive.getClasses().contains(t))
+                return archive;
+
+            return locationToArchive.computeIfAbsent(t, _k -> NOT_FOUND);
         }
 
         // return classname or package name depedning on the level
@@ -277,7 +250,7 @@ public class Analyzer {
                     requires.add(targetArchive);
                 }
             }
-            if (targetArchive instanceof Module) {
+            if (targetArchive.getModule().isNamed()) {
                 Profile p = Profile.getProfile(t.getPackageName());
                 if (profile == null || (p != null && p.compareTo(profile) > 0)) {
                     profile = p;
@@ -373,125 +346,5 @@ public class Analyzer {
                     origin, originArchive.getName(),
                     target, targetArchive.getName());
         }
-    }
-
-    static Analyzer getExportedAPIsAnalyzer() {
-        return new ModuleAccessAnalyzer(ModuleAccessAnalyzer.reexportsFilter, true);
-    }
-
-    static Analyzer getModuleAccessAnalyzer() {
-        return new ModuleAccessAnalyzer(ModuleAccessAnalyzer.accessCheckFilter, false);
-    }
-
-    private static class ModuleAccessAnalyzer extends Analyzer {
-        private final boolean apionly;
-        ModuleAccessAnalyzer(Filter filter, boolean apionly) {
-            super(Type.VERBOSE, filter);
-            this.apionly = apionly;
-        }
-        /**
-         * Verify module access
-         */
-        public boolean run(List<Archive> archives) {
-            // build a map from Location to Archive
-            buildLocationArchiveMap(archives);
-
-            // traverse and analyze all dependencies
-            int count = 0;
-            for (Archive archive : archives) {
-                ArchiveDeps checker = new ArchiveDeps(archive, type);
-                archive.visitDependences(checker);
-                count += checker.dependencies().size();
-                // output if any error
-                Module m = (Module)archive;
-                printDependences(System.err, m, checker.dependencies());
-                results.put(archive, checker);
-            }
-            return count == 0;
-        }
-
-        private void printDependences(PrintStream out, Module m, Set<Dep> deps) {
-            if (deps.isEmpty())
-                return;
-
-            String msg = apionly ? "API reference:" : "inaccessible reference:";
-            deps.stream().sorted(Comparator.comparing(Dep::origin)
-                                           .thenComparing(Dep::target))
-                .forEach(d -> out.format("%s %s (%s) -> %s (%s)%n", msg,
-                                         d.origin(), d.originArchive().getName(),
-                                         d.target(), d.targetArchive().getName()));
-            if (apionly) {
-                out.format("Dependences missing re-exports=\"true\" attribute:%n");
-                deps.stream()
-                        .map(Dep::targetArchive)
-                        .map(Archive::getName)
-                        .distinct()
-                        .sorted()
-                        .forEach(d -> out.format("  %s -> %s%n", m.name(), d));
-            }
-        }
-
-        private static Module findModule(Archive archive) {
-            if (Module.class.isInstance(archive)) {
-                return (Module) archive;
-            } else {
-                return null;
-            }
-        }
-
-        // returns true if target is accessible by origin
-        private static boolean canAccess(Location o, Archive originArchive, Location t, Archive targetArchive) {
-            Module origin = findModule(originArchive);
-            Module target = findModule(targetArchive);
-
-            if (targetArchive == Analyzer.NOT_FOUND) {
-                return false;
-            }
-
-            // unnamed module
-            // ## should check public type?
-            if (target == null)
-                return true;
-
-            // module-private
-            if (origin == target)
-                return true;
-
-            return target.isAccessibleTo(t.getClassName(), origin);
-        }
-
-        static final Filter accessCheckFilter = new Filter() {
-            @Override
-            public boolean accepts(Location o, Archive originArchive, Location t, Archive targetArchive) {
-                return !canAccess(o, originArchive, t, targetArchive);
-            }
-        };
-
-        static final Filter reexportsFilter = new Filter() {
-            @Override
-            public boolean accepts(Location o, Archive originArchive, Location t, Archive targetArchive) {
-                Module origin = findModule(originArchive);
-                Module target = findModule(targetArchive);
-                if (!origin.isExportedPackage(o.getPackageName())) {
-                    // filter non-exported classes
-                    return false;
-                }
-
-                boolean accessible = canAccess(o, originArchive, t, targetArchive);
-                if (!accessible)
-                    return true;
-
-                String mn = target.name();
-                // skip checking re-exports for java.base
-                if (origin == target || "java.base".equals(mn))
-                    return false;
-
-                assert origin.requires().containsKey(mn);  // otherwise, should not be accessible
-                if (origin.requires().get(mn)) {
-                    return false;
-                }
-                return true;
-            }
-        };
     }
 }
