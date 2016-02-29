@@ -58,7 +58,7 @@ import sun.security.util.SecurityConstants;
  * java.lang.module.Configuration.ReadDependence ReadDependence}, then the
  * {@code Module} {@link Module#canRead reads} the corresponding run-time
  * {@code Module}, which may be in the same layer or a parent layer.
- * Each {@code Module} {@link Module#isExported(String) exports} the packages
+ * The {@code Module} {@link Module#isExported(String) exports} the packages
  * described by its {@code ModuleDescriptor}. </p>
  *
  * <p> The {@link #createWithOneLoader createWithOneLoader} and {@link
@@ -81,7 +81,7 @@ import sun.security.util.SecurityConstants;
  * <a href="../module/Configuration.html#automaticmoduleresolution">special
  * treatment</a> when creating a layer. An automatic module is created in the
  * Java virtual machine as a {@code Module} that reads every unnamed {@code
- * Module} (both present and future) in the Java virtual machine. </p>
+ * Module} in the Java virtual machine. </p>
  *
  * <h3> Example usage: </h3>
  *
@@ -283,11 +283,11 @@ public final class Layer {
     /**
      * Creates a {@code Layer} by defining the modules in the given {@code
      * Configuration} to the Java virtual machine. Each module is mapped, by
-     * name, to its class loader by means of the given function.
-     *
-     * The entity creating the layer should arrange for the class loaders to be
-     * ready to load from these modules before there are any attempts to load
-     * classes or resources.
+     * name, to its class loader by means of the given function. The class
+     * loader delegation implemented by these class loaders must respect
+     * module readability. In addition, the caller needs to arrange that the
+     * class loaders are ready to load from these modules before there are
+     * any attempts to load classes or resources.
      *
      * <p> Creating a {@code Layer} can fail for the following reasons: </p>
      *
