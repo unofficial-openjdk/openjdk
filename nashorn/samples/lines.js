@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-print("Hello World");
-var System = Java.type("java.lang.System");
-print(System.getProperty("jdk.launcher.patch.0"));
+var Files = java.nio.file.Files;
+var File = java.io.File;
+var d = arguments.length == 0? "." : arguments[0];
+
+// print total number of lines in all .java files under a
+// given directory (recursively)
+
+print(Files.walk(new File(d).toPath()).
+  filter(function(p) p.toString().endsWith(".java")).
+  mapToInt(function(p) Files.lines(p).count()).sum())

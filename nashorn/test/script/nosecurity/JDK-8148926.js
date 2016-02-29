@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,13 @@
  */
 
 /**
- * JDK-8087292: nashorn should have a "fail-fast" option for scripting, analog to bash "set -e"
+ * JDK-8148926: Call site profiling fails on braces-wrapped anonymous function
  *
  * @test
- * @option -scripting
+ * @option -pcs
  * @run
  */
 
-function tryExec() {
-    try {
-        `java`
-    } catch (e) {
-        print(e);
-    }
+(function() {})() 
 
-    // make sure we got non-zero ("failure") exit code!
-    if ($EXIT == 0) {
-        print("Error: expected $EXIT code to be non-zero");
-    }
-}
-
-// no exception now!
-tryExec();
-
-// turn on error with non-zero exit code
-$ENV.JJS_THROW_ON_EXIT = "1";
-tryExec();
-
-// no exception after this
-$ENV.JJS_THROW_ON_EXIT = "0";
-tryExec();
+var i = (function() { return 2 })()
