@@ -1099,10 +1099,7 @@ static oop invoke(instanceKlassHandle klass,
         int index = reflected_method->vtable_index();
         method = reflected_method;
         if (index != Method::nonvirtual_vtable_index) {
-          // target_klass might be an arrayKlassOop but all vtables start at
-          // the same place. The cast is to avoid virtual call and assertion.
-          InstanceKlass* inst = (InstanceKlass*)target_klass();
-          method = methodHandle(THREAD, inst->method_at_vtable(index));
+          method = methodHandle(THREAD, target_klass->method_at_vtable(index));
         }
         if (!method.is_null()) {
           // Check for abstract methods as well

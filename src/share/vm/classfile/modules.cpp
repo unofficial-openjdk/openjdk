@@ -166,7 +166,8 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
               ObjectLocker ol(loader_lock, THREAD);
               ClassLoader::prepend_to_list(prefix_path);
             }
-            if (TraceClassLoading) tty->print_cr("[Opened -Xpatch %s]", prefix_path);
+            // TODO: use unified logging
+            // if (TraceClassLoading) tty->print_cr("[Opened -Xpatch %s]", prefix_path);
           }
         }
       }
@@ -194,7 +195,8 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
     ObjectLocker ol(loader_lock, THREAD);
 
-    if (TraceClassLoading) tty->print_cr("[Opened %s]", path);
+    // TODO: use unified logging
+    // if (TraceClassLoading) tty->print_cr("[Opened %s]", path);
     ClassLoader::add_to_list(path);
   }
 }
@@ -854,6 +856,7 @@ jobject Modules::get_module_by_package_name(JNIEnv *env, jobject loader, jstring
     TempNewSymbol package_sym = SymbolTable::new_symbol(package_str, CHECK_NULL);
     return get_module(package_sym, h_loader, CHECK_NULL);
   }
+  return NULL;
 }
 
 
