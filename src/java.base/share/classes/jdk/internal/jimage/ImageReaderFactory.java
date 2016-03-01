@@ -40,7 +40,7 @@ public class ImageReaderFactory {
 
     private static final String JAVA_HOME = System.getProperty("java.home");
     private static final Path BOOT_MODULES_JIMAGE =
-        Paths.get(JAVA_HOME, "lib", "modules", "bootmodules.jimage");
+        Paths.get(JAVA_HOME, "lib", "modules");
 
     private static final Map<Path, ImageReader> readers = new ConcurrentHashMap<>();
 
@@ -52,7 +52,7 @@ public class ImageReaderFactory {
         if (reader != null) {
             return reader;
         }
-        reader = ImageReader.open(jimage.toString());
+        reader = ImageReader.open(jimage);
         // potential race with other threads opening the same URL
         ImageReader r = readers.putIfAbsent(jimage, reader);
         if (r == null) {
