@@ -174,8 +174,8 @@ class JdepsTask {
         },
         new Option(true, "-module") {
             void process(JdepsTask task, String opt, String arg) {
-                    task.options.requires.add(arg);
-                }
+                task.options.requires.add(arg);
+            }
         },
         new Option(true, "-f", "-filter") {
             void process(JdepsTask task, String opt, String arg) {
@@ -361,7 +361,12 @@ class JdepsTask {
                 showVersion(options.fullVersion);
             }
             if (options.rootModule != null && !classes.isEmpty()) {
-                throw new BadArgs("err.invalid.module.option", options.rootModule, classes);
+                reportError("err.invalid.module.option", options.rootModule, classes);
+                return EXIT_CMDERR;
+            }
+            if (options.sanitize && options.rootModule == null) {
+                reportError("err.root.module.not.set");
+                return EXIT_CMDERR;
             }
             if (classes.isEmpty() && options.rootModule == null && options.includePattern == null) {
                 if (options.help || options.version || options.fullVersion) {
@@ -391,6 +396,7 @@ class JdepsTask {
                 reportError("err.invalid.filters");
                 return EXIT_CMDERR;
             }
+
             if ((options.findJDKInternals) && (options.hasFilter() || options.showSummary)) {
                 showHelp();
                 return EXIT_CMDERR;
@@ -426,10 +432,17 @@ class JdepsTask {
 
         buildArchive(dependencyFinder);
 
+        if (options.rootModule != null &&
+                (options.sanitize || (options.dotOutputDir != null &&
+                                      options.verbose == SUMMARY))) {
+            // -dotfile -s prints the configuration of the given root
+            // -sanitize prints the suggested module-info.java
+            return analyzeModules(dependencyFinder);
+        }
+
+        // otherwise analyze the depednencies
         if (options.genModuleInfo != null) {
             return genModuleInfo(dependencyFinder);
-        } if (options.sanitize) {
-            return sanitizeModuleDescriptor(dependencyFinder);
         } else {
             return analyzeDeps(dependencyFinder);
         }
@@ -612,13 +625,22 @@ class JdepsTask {
         return result;
     }
 
-    private boolean sanitizeModuleDescriptor(DependencyFinder dependencyFinder)
+    private boolean analyzeModules(DependencyFinder dependencyFinder)
             throws IOException
     {
         ModuleAnalyzer analyzer = new ModuleAnalyzer(modulePaths,
-                                                     dependencyFinder,
-                                                     options.rootModule);
-        return analyzer.run();
+                                  dependencyFinder,
+                                  options.rootModule);
+        if (options.sanitize) {
+            return analyzer.run();
+        }
+        if (options.dotOutputDir != null && options.verbose == SUMMARY) {
+            Path dir = Paths.get(options.dotOutputDir);
+            Files.createDirectories(dir);
+            analyzer.genDotFile(dir);
+            return true;
+        }
+        return false;
     }
 
     private boolean isValidClassName(String name) {

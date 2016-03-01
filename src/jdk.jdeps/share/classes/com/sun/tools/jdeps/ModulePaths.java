@@ -82,14 +82,18 @@ public class ModulePaths {
     }
 
     Set<Module> dependences(String... roots) {
-        Configuration config = Configuration.resolve(finder,
-                                                     Configuration.empty(),
-                                                     ModuleFinder.empty(),
-                                                     roots);
+        Configuration config = configuration(roots);
         return config.descriptors().stream()
-                .map(ModuleDescriptor::name)
-                .map(modules::get)
-                .collect(Collectors.toSet());
+                     .map(ModuleDescriptor::name)
+                     .map(modules::get)
+                     .collect(Collectors.toSet());
+    }
+
+    Configuration configuration(String... roots) {
+        return Configuration.resolve(finder,
+                                     Configuration.empty(),
+                                     ModuleFinder.empty(),
+                                     roots);
     }
 
     private static ModuleFinder createModulePathFinder(String mpaths) {
@@ -139,7 +143,6 @@ public class ModulePaths {
         private final static FileSystem fs;
         private final static Path root;
         private final static Map<String, Module> installed = new HashMap<>();
-
         static {
             if (isJrtAvailable()) {
                 // jrt file system
