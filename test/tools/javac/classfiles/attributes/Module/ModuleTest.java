@@ -150,7 +150,7 @@ public class ModuleTest extends ModuleTestBase {
                 .write(base);
         tb.writeJavaFiles(base, "package pack2; public class D extends java.util.ArrayList{}",
                 "package pack2; public class C extends java.util.logging.Logger{ " +
-                        "C() { super(\"\",\"\"); } \n" +
+                        "public C() { super(\"\",\"\"); } \n" +
                         "C(String a,String b){" +
                         "    super(a,b);" +
                         "}}");

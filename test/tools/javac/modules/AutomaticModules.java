@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Verify modules can contain packages of the same name, unless these meet.
+ * @summary Test automatic modules
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -89,8 +89,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 
     @Test
@@ -148,8 +147,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 
     @Test
@@ -195,8 +193,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(depClasses)
                 .files(findJavaFiles(depSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
 
         Path moduleJar = modulePath.resolve("m1.jar");
 
@@ -220,7 +217,6 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(testClasses)
                 .files(findJavaFiles(testSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 }

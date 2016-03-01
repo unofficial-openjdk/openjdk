@@ -96,6 +96,7 @@ import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.Tag;
 
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
+import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -685,14 +686,14 @@ public class Modules extends JCTree.Visitor {
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
-        boolean hasNoArgsConstructor(ClassSymbol tsym) {
+        MethodSymbol noArgsConstructor(ClassSymbol tsym) {
             for (Symbol sym : tsym.members().getSymbolsByName(names.init)) {
                 MethodSymbol mSym = (MethodSymbol)sym;
                 if (mSym.params().isEmpty()) {
-                    return true;
+                    return mSym;
                 }
             }
-            return false;
+            return null;
         }
 
         Map<Directive.ProvidesDirective, JCProvides> directiveToTreeMap = new HashMap<>();
@@ -708,8 +709,13 @@ public class Modules extends JCTree.Visitor {
                 log.error(tree.implName.pos(), "service.implementation.is.inner", impl);
             } else if (service.isInner()) {
                 log.error(tree.serviceName.pos(), "service.definition.is.inner", service);
-            } else if (!hasNoArgsConstructor(impl)) {
-                log.error(tree.implName.pos(), "service.implementation.doesnt.have.a.no.args.constructor", impl);
+            } else {
+                MethodSymbol constr = noArgsConstructor(impl);
+                if (constr == null) {
+                    log.error(tree.implName.pos(), "service.implementation.doesnt.have.a.no.args.constructor", impl);
+                } else if ((constr.flags() & PUBLIC) == 0) {
+                    log.error(tree.implName.pos(), "service.implementation.no.args.constructor.not.public", impl);
+                }
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);

@@ -22,8 +22,6 @@
  */
 
 import java.io.*;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.*;
 import javax.annotation.processing.*;
 import javax.lang.model.*;

@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Check.compiled
+ * @summary Ensure that classes with the same FQNs are OK in unrelated modules.
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -48,24 +48,22 @@ public class DuplicateClassTest extends ModuleTestBase {
         Path m2 = base.resolve("m2");
         tb.writeJavaFiles(m1,
                           "module m1 { }",
-                          "package impl; public class Impl {}");
+                          "package impl; public class Impl { }");
         tb.writeJavaFiles(m2,
                           "module m2 { }",
-                          "package impl; public class Impl {}");
+                          "package impl; public class Impl { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
         String log = tb.new JavacTask()
-                .options("-XDrawDiagnostics", "-modulesourcepath", base.toString())
+                .options("-modulesourcepath", base.toString())
                 .outdir(classes)
                 .files(findJavaFiles(base))
                 .run()
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        String expected = "";
-
-        if (!log.equals(expected))
+        if (!log.isEmpty())
             throw new Exception("expected output not found; output: " + log);
     }
 

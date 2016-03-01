@@ -35,8 +35,6 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.sun.source.util.JavacTask;
-
 public class PluginsInModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -87,7 +85,7 @@ public class PluginsInModulesTest extends ModuleTestBase {
             "    }\n" +
             "}";
 
-    private static final String testClass = "class Test{}";
+    private static final String testClass = "class Test { }";
 
     void initialization(Path base) throws Exception {
         moduleSrc = base.resolve("plugin_mods_src");

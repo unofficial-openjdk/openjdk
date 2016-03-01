@@ -68,11 +68,11 @@ public class PackageConflictTest extends ModuleTestBase {
         Path m1 = base.resolve("m1");
         Path m2 = base.resolve("m2");
         tb.writeJavaFiles(m1,
-                          "module m1 {}",
-                          "package test; public class A {}");
+                          "module m1 { }",
+                          "package test; public class A { }");
         tb.writeJavaFiles(m2,
-                          "module m2 {}",
-                          "package test; public class B {}");
+                          "module m2 { }",
+                          "package test; public class B { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -91,13 +91,13 @@ public class PackageConflictTest extends ModuleTestBase {
         Path m3 = base.resolve("m3");
         tb.writeJavaFiles(m1,
                           "module m1 { exports test; }",
-                          "package test; public class A {}");
+                          "package test; public class A { }");
         tb.writeJavaFiles(m2,
                           "module m2 { exports test; }",
-                          "package test; public class B {}");
+                          "package test; public class B { }");
         tb.writeJavaFiles(m3,
                           "module m3 { requires m1; requires m2; }",
-                          "package impl; public class Impl {}");
+                          "package impl; public class Impl { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Verify modules can contain packages of the same name, unless these meet.
+ * @summary Test -addmods and -limitmods; also test the "enabled" modules.
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
