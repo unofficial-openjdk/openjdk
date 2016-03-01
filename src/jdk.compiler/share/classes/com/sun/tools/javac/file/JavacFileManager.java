@@ -448,7 +448,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             return;
         }
 
-        if (Files.exists(container)) {
+        if (Files.isRegularFile(container)) {
             listArchive(container,
                     subdirectory,
                     fileKinds,
@@ -658,7 +658,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                                 fsInfo.getCanonicalFile(f), f);
                 } catch (InvalidPathException ignore) {
                 }
-            } else if (Files.exists(file)) {
+            } else if (Files.isRegularFile(file)) {
                 FileSystem fs = getFileSystem(file);
                 if (fs != null) {
                     Path fsRoot = fs.getRootDirectories().iterator().next();
