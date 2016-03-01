@@ -79,10 +79,6 @@ public class GenGraphs {
         for (ModuleReference mref: finder.findAll()) {
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            switch (name) {
-            case "jdk.deploy":
-                continue;
-            }
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
                     Configuration.empty(),

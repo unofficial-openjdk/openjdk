@@ -28,6 +28,10 @@ import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A build tool to extend the module-info.java in the source tree
@@ -53,32 +57,17 @@ public class GenModuleInfoSource {
     public static void main(String... args) throws Exception {
         Path outfile = null;
         Path moduleInfoJava = null;
+        Map<String, Set<String>> options = new HashMap<>();
 
-        Module.Builder builder = new Module.Builder();
-        int i = 0;
-        for (; i < args.length; i++) {
+        // validate input arguments
+        for (int i = 0; i < args.length; i++){
             String option = args[i];
             if (option.startsWith("-")) {
                 String arg = args[++i];
-                if (option.equals("-exports")) {
-                    int index = arg.indexOf('/');
-                    if (index > 0) {
-                        String pn = arg.substring(0, index);
-                        String mn = arg.substring(index + 1, arg.length());
-                        builder.exportTo(pn, mn);
-                    } else {
-                        builder.export(arg);
-                    }
-                } else if (option.equals("-uses")) {
-                    builder.use(arg);
-                } else if (option.equals("-provides")) {
-                    int index = arg.indexOf('/');
-                    if (index <= 0) {
-                        throw new IllegalArgumentException("invalid -provide argument: " + arg);
-                    }
-                    String service = arg.substring(0, index);
-                    String impl = arg.substring(index+1, arg.length());
-                    builder.provide(service, impl);
+                if (option.equals("-exports") ||
+                        option.equals("-uses") ||
+                        option.equals("-provides")) {
+                    options.computeIfAbsent(option, _k -> new HashSet<>()).add(arg);
                 } else if (option.equals("-o")) {
                     outfile = Paths.get(arg);
                 } else {
@@ -98,15 +87,48 @@ public class GenModuleInfoSource {
             System.err.println(USAGE);
             System.exit(-1);
         }
+        // read module-info.java
+        Module.Builder builder = ModuleInfoReader.builder(moduleInfoJava);
+        augment(builder, options);
 
-        ModuleInfoReader reader = new ModuleInfoReader(moduleInfoJava, builder);
-        Module module = reader.get();
+        // generate new module-info.java
+        Module module = builder.build();
         Path parent = outfile.getParent();
         if (parent != null)
             Files.createDirectories(parent);
 
         try (BufferedWriter writer = Files.newBufferedWriter(outfile)) {
             writer.write(module.toString());
+        }
+    }
+
+    private static void augment(Module.Builder builder, Map<String, Set<String>> options) {
+        for (String opt : options.keySet()) {
+            if (opt.equals("-exports")) {
+                for (String arg : options.get(opt)) {
+                    int index = arg.indexOf('/');
+                    if (index > 0) {
+                        String pn = arg.substring(0, index);
+                        String mn = arg.substring(index + 1, arg.length());
+                        builder.exportTo(pn, mn);
+                    } else {
+                        builder.export(arg);
+                    }
+                }
+            } else if (opt.equals("-uses")) {
+                options.get(opt).stream()
+                        .forEach(builder::use);
+            } else if (opt.equals("-provides")) {
+                for (String arg : options.get(opt)) {
+                    int index = arg.indexOf('/');
+                    if (index <= 0) {
+                        throw new IllegalArgumentException("invalid -provide argument: " + arg);
+                    }
+                    String service = arg.substring(0, index);
+                    String impl = arg.substring(index + 1, arg.length());
+                    builder.provide(service, impl);
+                }
+            }
         }
     }
 }
