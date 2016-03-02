@@ -101,9 +101,9 @@ public class StubAsyncHandler extends StubHandler {
     }
 
         protected void initArgs(Object[] args) throws Exception {
-            if (asyncBeanClass != null) {
-                args[0] = asyncBeanClass.newInstance();
-            }
+        if (asyncBeanClass != null) {
+            args[0] = asyncBeanClass.newInstance();
+        }
         }
 
     ValueGetterFactory getValueGetterFactory() {

@@ -37,6 +37,7 @@ import com.sun.xml.internal.ws.message.jaxb.JAXBMessage;
 import com.sun.xml.internal.ws.message.FaultMessage;
 import com.sun.xml.internal.ws.model.CheckedExceptionImpl;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
+import com.sun.xml.internal.ws.spi.db.WrapperComposite;
 import com.sun.xml.internal.ws.spi.db.XMLBridge;
 import com.sun.xml.internal.ws.util.DOMUtil;
 import com.sun.xml.internal.ws.util.StringUtils;

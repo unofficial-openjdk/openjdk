@@ -177,7 +177,6 @@ class JAXBRIContextWrapper implements BindingContext {
     @Override
     public Object newWrapperInstace(Class<?> wrapperType)
             throws InstantiationException, IllegalAccessException {
-
         return wrapperType.newInstance();
     }
 }
