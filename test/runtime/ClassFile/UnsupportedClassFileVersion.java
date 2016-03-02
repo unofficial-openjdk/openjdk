@@ -28,7 +28,7 @@
  *          java.base/sun.misc
  *          java.management
  * @compile -XDignore.symbol.file UnsupportedClassFileVersion.java
- * @run main/othervm UnsupportedClassFileVersion
+ * @run main UnsupportedClassFileVersion
  */
 
 import java.io.File;
