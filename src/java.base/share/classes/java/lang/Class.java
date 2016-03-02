@@ -26,6 +26,7 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
+import java.lang.module.ModuleReader;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -416,9 +417,12 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @throws LinkageError if the linkage fails
      *
-     * @throws SecurityException if access to the module's content is denied; or
-     *         if the caller requests to load a class in another module,
-     *         it denies the {@code RuntimePermission("getClassLoader")} permission.
+     * @throws SecurityException
+     *         <ul>
+     *         <li> if the caller is not the specified module and
+     *         {@code RuntimePermission("getClassLoader")} permission is denied; or</li>
+     *         <li> access to {@link ModuleReader read the module's content} is denied.</li>
+     *         </ul>
      *
      * @since 9
      */
