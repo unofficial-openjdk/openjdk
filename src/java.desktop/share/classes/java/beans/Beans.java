@@ -228,7 +228,7 @@ public class Beans {
             /*
              * Try to instantiate the class.
              */
-            Beans.class.getModule().addReads(cl.getModule());
+
             try {
                 result = cl.newInstance();
             } catch (Exception ex) {

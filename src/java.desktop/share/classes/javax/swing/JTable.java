@@ -5483,8 +5483,6 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                 }
 
                 SwingUtilities2.checkAccess(constructor.getModifiers());
-                JTable.class.getModule().addReads(
-                        constructor.getDeclaringClass().getModule());
                 value = constructor.newInstance(new Object[]{s});
             }
             catch (Exception e) {

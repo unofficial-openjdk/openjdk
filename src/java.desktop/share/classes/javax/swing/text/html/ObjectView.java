@@ -92,7 +92,6 @@ public class ObjectView extends ComponentView  {
             ReflectUtil.checkPackageAccess(classname);
             Class<?> c = Class.forName(classname, true,Thread.currentThread().
                                        getContextClassLoader());
-            ObjectView.class.getModule().addReads(c.getModule());
             Object o = c.newInstance();
             if (o instanceof Component) {
                 Component comp = (Component) o;
