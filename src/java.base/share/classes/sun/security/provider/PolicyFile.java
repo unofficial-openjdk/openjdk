@@ -919,9 +919,6 @@ public class PolicyFile extends java.security.Policy {
             throw new ClassCastException(type + " is not a Permission");
         }
 
-        // base module needs to read the permission's module
-        PolicyFile.class.getModule().addReads(pc.getModule());
-
         if (name == null && actions == null) {
             try {
                 Constructor<?> c = pc.getConstructor(PARAMS0);
@@ -1328,9 +1325,6 @@ public class PolicyFile extends java.security.Policy {
                         throw new ClassCastException(pppe.principalClass +
                                                      " is not a Principal");
                     }
-
-                    // base module needs to read the principal's module
-                    PolicyFile.class.getModule().addReads(pClass.getModule());
 
                     Constructor<?> c = pClass.getConstructor(PARAMS1);
                     p = (Principal)c.newInstance(new Object[] {

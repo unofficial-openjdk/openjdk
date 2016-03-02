@@ -362,8 +362,7 @@ public final class ServiceLoader<S>
      */
     private static void checkModule(Module module, Class<?> svc) {
 
-        // Check that the service type is defined in a module that is readable
-        // to the caller and that the service type is in a package that is
+        // Check that the service type is in a package that is
         // exported to the caller.
         if (!Reflection.verifyModuleAccess(module, svc)) {
             fail(svc, "not accessible to " + module);

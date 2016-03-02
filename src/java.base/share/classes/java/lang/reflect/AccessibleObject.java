@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,14 @@ import java.lang.annotation.Annotation;
  * The AccessibleObject class is the base class for Field, Method and
  * Constructor objects.  It provides the ability to flag a reflected
  * object as suppressing default Java language access control checks
- * when it is used.  The access checks--for public, default (package)
- * access, protected, and private members--are performed when Fields,
- * Methods or Constructors are used to set or get fields, to invoke
- * methods, or to create and initialize new instances of classes,
- * respectively.
+ * when it is used. The access checks -- <em>module boundaries</em>,
+ * public, default (package) access, protected, and private members --
+ * are performed when Fields, Methods or Constructors are used to set
+ * or get fields, to invoke methods or to create and initialize new
+ * instances of classes, respectively. Unlike access control specified
+ * in the <cite>The Java&trade; Language Specification</cite> and
+ * <cite>The Java Virtual Machine Specification</cite>, access checks
+ * with reflected objects assume {@link Module#canRead readability}.
  *
  * <p>Setting the {@code accessible} flag in a reflected object
  * permits sophisticated applications with sufficient privilege, such
@@ -71,17 +74,15 @@ public class AccessibleObject implements AnnotatedElement {
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
     }
 
-
     /**
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
      *
      * <p>This method can not be used to enable access to an object that is a
-     * member of a declaring class when either the caller's module does not
-     * read the module of the declaring class, or the declaring class is in
-     * a package that is not exported to the caller's module. Additionally,
-     * this method can not be used to enable access to non-public members of
-     * {@link java.lang.reflect.Module}.
+     * {@link Member member} of a class in a different module to the caller and
+     * where the class is in a package that is not exported to the caller's
+     * module. Additionally, this method can not be used to enable access to
+     * non-public members of {@code AccessibleObject} or {@link Module}.
      *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
@@ -119,14 +120,14 @@ public class AccessibleObject implements AnnotatedElement {
      * the indicated boolean value.  A value of {@code true} indicates that
      * the reflected object should suppress Java language access
      * checking when it is used.  A value of {@code false} indicates
-     * that the reflected object should enforce Java language access checks.
+     * that the reflected object should enforce Java language access checks
+     * while assuming readability (as noted in the class description).
      *
      * <p>This method can not be used to enable access to an object that is a
-     * member of a declaring class when either the caller's module does not
-     * read the module of the declaring class, or the declaring class is in
-     * a package that is not exported to the caller's module. Additionally,
-     * this method can not be used to enable access to non-public members of
-     * {@link java.lang.reflect.Module}.
+     * {@link Member member} of a class in a different module to the caller and
+     * where the class is in a package that is not exported to the caller's
+     * module. Additionally, this method can not be used to enable access to
+     * non-public members of {@code AccessibleObject} or {@link Module}.
      *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
@@ -167,14 +168,6 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule != declaringModule
                 && callerModule != Object.class.getModule()) {
 
-            // check reads
-            if (!callerModule.canRead(declaringModule)) {
-                String msg = "Unable to make member of "
-                        + declaringClass + " accessible:  "
-                        + callerModule + " does not read " + declaringModule;
-                Reflection.throwInaccessibleObjectException(msg);
-            }
-
             // check exports to target module
             String pn = packageName(declaringClass);
             if (!declaringModule.isExported(pn, callerModule)) {
@@ -187,9 +180,8 @@ public class AccessibleObject implements AnnotatedElement {
 
         }
 
-        // TODO: This should throw IOE for AccessibleObject and other classes
-        // that can be easily abused to break encapsulation
-        if (declaringClass == Module.class) {
+        if (declaringClass == Module.class
+                || declaringClass == AccessibleObject.class) {
             int modifiers;
             if (this instanceof Executable) {
                 modifiers = ((Executable) this).getModifiers();
@@ -205,17 +197,14 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
-     * Returns the package name of the give class.
+     * Returns the package name of the given class.
      */
     private static String packageName(Class<?> c) {
-        if (c.isArray()) {
-            return packageName(c.getComponentType());
-        } else {
-            String name = c.getName();
-            int dot = name.lastIndexOf('.');
-            if (dot == -1) return "";
-            return name.substring(0, dot);
+        while (c.isArray()) {
+            c = c.getComponentType();
         }
+        String pn = c.getPackageName();
+        return (pn != null) ? pn : "";
     }
 
     /**

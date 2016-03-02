@@ -247,9 +247,6 @@ implements java.io.Serializable
         try {
             Class<?> pc = p.getClass();
 
-            // The module with the permission class must be readable
-            this.getClass().getModule().addReads(pc.getModule());
-
             if (name == null && actions == null) {
                 try {
                     Constructor<?> c = pc.getConstructor(PARAMS0);

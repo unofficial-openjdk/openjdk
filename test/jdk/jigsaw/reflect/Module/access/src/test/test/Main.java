@@ -58,7 +58,7 @@ public class Main {
 
         assertFalse(thisModule.canRead(target));
 
-        tryAccessPublicMembers("p.Exported", false);
+        tryAccessPublicMembers("p.Exported", true);
         tryAccessPublicMembers("q.Internal", false);
 
 
@@ -96,13 +96,10 @@ public class Main {
         Module thisModule = Main.class.getModule();
         Module targetModule = clazz.getModule();
 
-        // check if the target module is readable and whether the target
-        // class is in an exported package or not.
+        // check if the target class is in an exported package
         String pn = cn.substring(0, cn.lastIndexOf('.'));
-        boolean reads = thisModule.canRead(targetModule);
         boolean exported = targetModule.isExported(pn, thisModule);
-
-        assertTrue((reads && exported) == shouldSucceed);
+        assertTrue(exported == shouldSucceed);
         boolean shouldFail = !shouldSucceed;
 
 
