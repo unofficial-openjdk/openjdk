@@ -19,9 +19,6 @@ sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
 # 8130302
 sun/security/tools/keytool/autotest.sh                         generic-all
 
-# 8137314
-java/security/Policy/SignedJar/SignedJarTest.java		solaris-all
-
 ############################################################################
 
 # core_tools
