@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.misc;
+package jdk.internal.loader;
 
 import java.io.File;
 import java.io.FilePermission;

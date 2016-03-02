@@ -55,8 +55,8 @@ import java.util.stream.Stream;
 
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.module.ServicesCatalog;
-import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.ClassLoaders;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;

@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jdk.internal.misc.Loader;
-import jdk.internal.misc.LoaderPool;
+import jdk.internal.loader.Loader;
+import jdk.internal.loader.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
 import sun.security.util.SecurityConstants;
 

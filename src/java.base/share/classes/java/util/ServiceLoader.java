@@ -43,10 +43,10 @@ import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.Loader;
+import jdk.internal.loader.LoaderPool;
 import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.Loader;
-import jdk.internal.misc.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.module.ServicesCatalog;

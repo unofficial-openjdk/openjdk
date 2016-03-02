@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.misc;
+package jdk.internal.loader;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +35,8 @@ import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.util.jar.Manifest;
 
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import sun.misc.URLClassPath;
 
 

@@ -51,8 +51,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import jdk.internal.misc.BuiltinClassLoader;
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;

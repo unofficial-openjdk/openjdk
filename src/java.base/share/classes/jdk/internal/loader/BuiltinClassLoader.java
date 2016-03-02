@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.misc;
+package jdk.internal.loader;
 
 import java.io.File;
 import java.io.FilePermission;
@@ -55,6 +55,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import jdk.internal.module.ModulePatcher.PatchedModuleReader;
+import jdk.internal.misc.VM;
 import sun.misc.URLClassPath;
 import sun.misc.Resource;
 

@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.misc;
+package jdk.internal.loader;
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;

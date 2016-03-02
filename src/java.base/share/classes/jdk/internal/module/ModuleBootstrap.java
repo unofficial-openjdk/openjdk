@@ -42,8 +42,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.BuiltinClassLoader;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.perf.PerfCounter;
 
 /**

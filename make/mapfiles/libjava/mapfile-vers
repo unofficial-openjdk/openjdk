@@ -287,9 +287,9 @@ SUNWprivate_1.1 {
                 Java_java_lang_reflect_Module_addExportsToAllUnnamed0;
                 Java_java_lang_reflect_Module_addPackage0;
 
-		Java_jdk_internal_misc_BootLoader_getSystemPackageLocation;
-		Java_jdk_internal_misc_BootLoader_getSystemPackageNames;
-                Java_jdk_internal_misc_BootLoader_setBootLoaderUnnamedModule0;
+		Java_jdk_internal_loader_BootLoader_getSystemPackageLocation;
+		Java_jdk_internal_loader_BootLoader_getSystemPackageNames;
+                Java_jdk_internal_loader_BootLoader_setBootLoaderUnnamedModule0;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

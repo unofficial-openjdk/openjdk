@@ -44,11 +44,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import jdk.internal.misc.VM;
 import java.util.stream.Stream;
 
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BootLoader;
 import jdk.internal.module.Modules;
+import jdk.internal.misc.VM;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;

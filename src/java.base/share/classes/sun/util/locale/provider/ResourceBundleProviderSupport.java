@@ -37,8 +37,8 @@ import java.security.PrivilegedAction;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import jdk.internal.misc.BootLoader;
-import sun.misc.Unsafe;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.misc.Unsafe;
 
 
 /**

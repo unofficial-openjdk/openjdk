@@ -23,5 +23,5 @@
  * questions.
  */
 
-exports jdk.internal.misc to java.desktop;
+exports jdk.internal.loader to java.desktop;
 provides java.security.Provider with apple.security.AppleProvider;
