@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.xml.internal.ws.handler;
 
 import com.sun.xml.internal.ws.api.BindingID;
 import com.sun.xml.internal.ws.api.WSBinding;
-import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil;
 import com.sun.xml.internal.ws.transport.http.DeploymentDescriptorParser;
 import com.sun.xml.internal.ws.util.HandlerAnnotationInfo;
@@ -255,10 +254,8 @@ public class HandlerChainsModel {
                 // handler class
                 ensureProperName(reader, QNAME_HANDLER_CLASS);
                 try {
-                    Class<?> handlerClass =
-                        loadClass(classLoader, XMLStreamReaderUtil.getElementText(reader).trim());
-                    Modules.ensureReadable(HandlerChainsModel.class, handlerClass);
-                    handler = (Handler) handlerClass.newInstance();
+                    handler = (Handler) loadClass(classLoader,
+                            XMLStreamReaderUtil.getElementText(reader).trim()).newInstance();
                 } catch (InstantiationException ie){
                     throw new RuntimeException(ie);
                 } catch (IllegalAccessException e) {
@@ -330,10 +327,8 @@ public class HandlerChainsModel {
             if(hchainMatched) {
                 for(HandlerType handler : hchain.getHandlers()) {
                     try {
-                        Class<?> clazz = loadClass(annotatedClass.getClassLoader(),
-                                                   handler.getHandlerClass());
-                        Modules.ensureReadable(HandlerChainsModel.class, clazz);
-                        Handler handlerClass = (Handler) clazz.newInstance();
+                        Handler handlerClass = (Handler) loadClass(annotatedClass.getClassLoader(),
+                                handler.getHandlerClass()).newInstance();
                         callHandlerPostConstruct(handlerClass);
                         handlerClassList.add(handlerClass);
                     } catch (InstantiationException ie){

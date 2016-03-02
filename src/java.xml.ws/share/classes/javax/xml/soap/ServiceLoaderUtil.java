@@ -25,7 +25,6 @@
 
 package javax.xml.soap;
 
-import com.sun.xml.internal.ws.Modules;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,9 +83,7 @@ class ServiceLoaderUtil {
                                                     String defaultImplClassName, ClassLoader classLoader,
                                                     final ExceptionHandler<T> handler) throws T {
         try {
-            Class spiClass = safeLoadClass(className, defaultImplClassName, classLoader);
-            Modules.ensureReadable(ServiceLoaderUtil.class, spiClass);
-            return spiClass.newInstance();
+            return safeLoadClass(className, defaultImplClassName, classLoader).newInstance();
         } catch (ClassNotFoundException x) {
             throw handler.createException(x, "Provider " + className + " not found");
         } catch (Exception x) {
