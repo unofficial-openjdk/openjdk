@@ -27,7 +27,6 @@ module java.sql.rowset {
     requires public java.logging;
     requires public java.naming;
     requires public java.sql;
-    requires java.xml;
 
     exports javax.sql.rowset;
     exports javax.sql.rowset.serial;
