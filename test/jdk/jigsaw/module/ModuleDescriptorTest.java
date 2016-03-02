@@ -425,7 +425,7 @@ public class ModuleDescriptorTest {
         assertFalse(Object.class.getModule().getDescriptor().isSynthetic());
 
         ModuleDescriptor descriptor = new Builder("foo").build();
-        assertTrue(descriptor.isSynthetic());
+        assertFalse(descriptor.isSynthetic());
     }
 
 

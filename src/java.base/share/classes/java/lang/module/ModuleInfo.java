@@ -264,8 +264,8 @@ final class ModuleInfo {
         }
 
         // Was the Synthetic attribute present?
-        boolean isSynthetic = attributes.contains(SYNTHETIC);
-        builder.synthetic(isSynthetic);
+        if (attributes.contains(SYNTHETIC))
+            builder.synthetic(true);
 
         return builder.build();
     }
