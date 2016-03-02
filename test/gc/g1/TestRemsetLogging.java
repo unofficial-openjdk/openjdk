@@ -28,12 +28,11 @@
  * @library /testlibrary /test/lib
  * @modules java.base/sun.misc
  *          java.management/sun.management
- * @ignore 8133499
  * @build TestRemsetLoggingTools TestRemsetLogging
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @summary Verify output of -Xlog:gc+remset*=trace
- * @run main/othervm TestRemsetLogging
+ * @run main TestRemsetLogging
  *
  * Test the output of -Xlog:gc+remset*=trace in conjunction with G1SummarizeRSetStatsPeriod.
  */

@@ -24,10 +24,10 @@
 /*
  * @test
  * @library /testlibrary
- * @modules java.compiler
+ * @modules java.base/sun.misc
+ *          java.compiler
  *          java.management
  *          jdk.jvmstat/sun.jvmstat.monitor
- *          java.base/sun.misc
  * @build jdk.test.lib.*
  * @run driver CreateCoredumpOnCrash
  */
@@ -56,7 +56,7 @@ public class CreateCoredumpOnCrash {
     public static OutputAnalyzer runTest(String option) throws Exception {
         return new OutputAnalyzer(
             ProcessTools.createJavaProcessBuilder(
-            "-Xmx64m", "-XX:-TransmitErrorReport", "-XaddExports:java.base/sun.misc=ALL-UNNAMED", option, Crasher.class.getName())
+            "-Xmx64m", "-XX:-TransmitErrorReport", option, Crasher.class.getName())
             .start());
     }
 }

@@ -32,7 +32,7 @@
  *          jdk.attach/sun.tools.attach
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.* AttachSetGetFlag
- * @run main/othervm AttachSetGetFlag
+ * @run main AttachSetGetFlag
  */
 
 import java.io.BufferedReader;

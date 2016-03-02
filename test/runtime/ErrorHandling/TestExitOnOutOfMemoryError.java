@@ -25,7 +25,6 @@
  * @test TestExitOnOutOfMemoryError
  * @summary Test using -XX:ExitOnOutOfMemoryError
  * @library /testlibrary
- * @modules jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.*
  * @run driver TestExitOnOutOfMemoryError
  * @bug 8138745

@@ -29,7 +29,7 @@
  *          java.instrument
  *          jdk.jartool/sun.tools.jar
  * @build RedefineClassHelper
- * @run main/othervm RedefineClassHelper
+ * @run main RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar RedefineClassTest
  */
 
