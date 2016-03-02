@@ -32,7 +32,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Method;
-import java.lang.reflect.Module;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.StubNotFoundException;
@@ -286,16 +285,11 @@ public final class Util {
          * pickle methods
          */
         try {
-            AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                public Void run() {
-                    Module stubModule = remoteClass.getModule();
-                    Remote.class.getModule().addReads(stubModule);
-                    return null;
-                }});
             Class<?> stubcl =
                 Class.forName(stubname, false, remoteClass.getClassLoader());
             Constructor<?> cons = stubcl.getConstructor(stubConsParamTypes);
             return (RemoteStub) cons.newInstance(new Object[] { ref });
+
         } catch (ClassNotFoundException e) {
             throw new StubNotFoundException(
                 "Stub class not found: " + stubname, e);

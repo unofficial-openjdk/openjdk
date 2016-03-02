@@ -27,7 +27,6 @@ package java.rmi.activation;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Module;
 import java.rmi.MarshalledObject;
 import java.rmi.Naming;
 import java.rmi.Remote;
@@ -318,9 +317,6 @@ public abstract class ActivationGroup
                                                   cl0.getName());
                 }
             }
-
-            // Ensure module containing group class is readable
-            ActivationGroup.class.getModule().addReads(cl.getModule());
 
             // create group
             Constructor<? extends ActivationGroup> constructor =

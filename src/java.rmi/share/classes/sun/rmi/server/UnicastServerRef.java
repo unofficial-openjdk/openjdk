@@ -553,8 +553,6 @@ public class UnicastServerRef extends UnicastRef
                             AccessController.doPrivileged(
                                 new PrivilegedAction<Void>() {
                                 public Void run() {
-                                    this.getClass().getModule()
-                                        .addReads(m.getDeclaringClass().getModule());
                                     m.setAccessible(true);
                                     return null;
                                 }

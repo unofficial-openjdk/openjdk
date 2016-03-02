@@ -257,7 +257,6 @@ public class ActivationGroupImpl extends ActivationGroup {
                           Constructor<? extends Remote> constructor =
                               cl.getDeclaredConstructor(
                                   ActivationID.class, MarshalledObject.class);
-                          this.getClass().getModule().addReads(cl.getModule());
                           constructor.setAccessible(true);
                           try {
                               /*
