@@ -633,7 +633,6 @@ public abstract class MappedMXBeanType {
                         if (m != null
                                 && CompositeData.class.isAssignableFrom(m.getReturnType())
                                 && Modifier.isStatic(m.getModifiers())) {
-                            this.getClass().getModule().addReads(javaClass.getModule());
                             m.setAccessible(true);
                             return m;
                         } else {
@@ -703,8 +702,6 @@ public abstract class MappedMXBeanType {
                         nameArray, // field descriptions
                         types.toArray(new OpenType<?>[0]));
             }
-
-            MappedMXBeanType.class.getModule().addReads(c.getModule());
         }
 
         Type getJavaType() {
