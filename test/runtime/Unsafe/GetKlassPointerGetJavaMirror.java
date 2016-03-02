@@ -24,6 +24,7 @@
 /* @test
  * @bug 8022853
  * @library /testlibrary
+ * @modules java.base/sun.misc
  * @build jdk.test.lib.*
  * @run main GetKlassPointerGetJavaMirror
  */
