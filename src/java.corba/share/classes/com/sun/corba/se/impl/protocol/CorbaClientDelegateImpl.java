@@ -26,6 +26,9 @@
 package com.sun.corba.se.impl.protocol;
 
 import java.util.Iterator;
+import java.util.HashMap;
+
+import javax.rmi.CORBA.Tie;
 
 import org.omg.CORBA.CompletionStatus;
 import org.omg.CORBA.Context;
@@ -34,6 +37,7 @@ import org.omg.CORBA.ExceptionList;
 import org.omg.CORBA.NamedValue;
 import org.omg.CORBA.NVList;
 import org.omg.CORBA.Request;
+import org.omg.CORBA.TypeCode;
 
 import org.omg.CORBA.portable.ApplicationException;
 import org.omg.CORBA.portable.Delegate;
@@ -47,7 +51,9 @@ import com.sun.corba.se.pept.encoding.InputObject;
 import com.sun.corba.se.pept.encoding.OutputObject;
 import com.sun.corba.se.pept.protocol.ClientInvocationInfo;
 import com.sun.corba.se.pept.protocol.ClientRequestDispatcher;
+import com.sun.corba.se.pept.transport.ContactInfo;
 import com.sun.corba.se.pept.transport.ContactInfoList;
+import com.sun.corba.se.pept.transport.ContactInfoListIterator;
 
 import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
 import com.sun.corba.se.spi.ior.IOR;
@@ -59,9 +65,10 @@ import com.sun.corba.se.spi.transport.CorbaContactInfoList;
 import com.sun.corba.se.spi.transport.CorbaContactInfoListIterator;
 
 import com.sun.corba.se.impl.corba.RequestImpl;
+import com.sun.corba.se.impl.protocol.CorbaInvocationInfo;
+import com.sun.corba.se.impl.transport.CorbaContactInfoListImpl;
 import com.sun.corba.se.impl.util.JDKBridge;
 import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-import com.sun.corba.se.impl.util.Modules;
 
 // implements com.sun.corba.se.impl.core.ClientRequestDispatcher
 // so RMI-IIOP Util.isLocal can call ClientRequestDispatcher.useLocalInvocation.
@@ -174,10 +181,9 @@ public class CorbaClientDelegateImpl extends CorbaClientDelegate
                 throw wrapper.wrongInterfaceDef(CompletionStatus.COMPLETED_MAYBE);
 
             try {
-                Class<?> stubClass =
-                        JDKBridge.loadClass("org.omg.CORBA._InterfaceDefStub");
-                Modules.ensureReadable(stubClass);
-                stub = (org.omg.CORBA.Object) stubClass.newInstance();
+                stub = (org.omg.CORBA.Object)
+                    JDKBridge.loadClass("org.omg.CORBA._InterfaceDefStub").
+                        newInstance();
             } catch (Exception ex) {
                 throw wrapper.noInterfaceDefStub( ex ) ;
             }

@@ -25,17 +25,18 @@
 
 package com.sun.corba.se.impl.presentation.rmi;
 
-import com.sun.corba.se.impl.util.Modules;
+import java.lang.reflect.InvocationHandler ;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
 
 public class StubFactoryStaticImpl extends StubFactoryBase
 {
-    private final Class stubClass ;
+    private Class stubClass ;
 
     public StubFactoryStaticImpl(Class cls)
     {
         super( null ) ;
         this.stubClass = cls;
-        Modules.ensureReadable(stubClass);
     }
 
     public org.omg.CORBA.Object makeStub()

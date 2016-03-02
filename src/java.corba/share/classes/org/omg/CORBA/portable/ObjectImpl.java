@@ -24,7 +24,6 @@
  */
 package org.omg.CORBA.portable;
 
-import com.sun.corba.se.impl.util.Modules;
 import org.omg.CORBA.Request;
 import org.omg.CORBA.NamedValue;
 import org.omg.CORBA.NVList;
@@ -280,7 +279,6 @@ abstract public class ObjectImpl implements org.omg.CORBA.Object
                 java.lang.reflect.Method meth =
                     delegate.getClass().getMethod("get_interface", argc);
                 Object[] argx = { this };
-                Modules.ensureReadable(meth.getDeclaringClass());
                 return (org.omg.CORBA.Object)meth.invoke(delegate, argx);
             }
             catch( java.lang.reflect.InvocationTargetException exs ) {

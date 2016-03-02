@@ -114,7 +114,6 @@ import com.sun.corba.se.impl.orbutil.ORBConstants ;
 
 // XXX This needs an SPI
 import com.sun.corba.se.impl.dynamicany.DynAnyFactoryImpl ;
-import com.sun.corba.se.impl.util.Modules;
 
 public class ORBConfiguratorImpl implements ORBConfigurator {
     private ORBUtilSystemException wrapper ;
@@ -170,7 +169,6 @@ public class ORBConfiguratorImpl implements ORBConfigurator {
             for (int ctr=0; ctr<parser.userConfigurators.length; ctr++) {
                 Class cls = parser.userConfigurators[ctr] ;
                 try {
-                    Modules.ensureReadable(cls);
                     ORBConfigurator config = (ORBConfigurator)(cls.newInstance()) ;
                     config.configure( collector, orb ) ;
                 } catch (Exception exc) {
@@ -390,7 +388,6 @@ public class ORBConfiguratorImpl implements ORBConfigurator {
                                 legacySocketFactory.getClass().getMethod(
                                   "setORB", params);
                             Object[] args = { orb };
-                            Modules.ensureReadable(method.getDeclaringClass());
                             method.invoke(legacySocketFactory, args);
                         } catch (NoSuchMethodException e) {
                             // NOTE: If there is no method then it

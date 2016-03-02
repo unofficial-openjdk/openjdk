@@ -26,13 +26,29 @@
 package com.sun.corba.se.impl.orbutil;
 
 import java.lang.Character;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.rmi.NoSuchObjectException;
 import java.security.AccessController;
 import java.security.PermissionCollection;
 import java.security.Policy;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Enumeration;
+import java.util.Properties;
+import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 import java.util.NoSuchElementException;
 
@@ -46,6 +62,7 @@ import org.omg.CORBA.Any ;
 import org.omg.CORBA.TCKind ;
 import org.omg.CORBA.SystemException ;
 import org.omg.CORBA.CompletionStatus ;
+import org.omg.CORBA.DATA_CONVERSION ;
 import org.omg.CORBA.BAD_PARAM ;
 import org.omg.CORBA.BAD_OPERATION ;
 import org.omg.CORBA.INTERNAL ;
@@ -58,6 +75,7 @@ import com.sun.corba.se.pept.transport.ContactInfoList ;
 import com.sun.corba.se.spi.ior.IOR ;
 import com.sun.corba.se.spi.presentation.rmi.StubAdapter ;
 import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.orb.ORBVersion ;
 import com.sun.corba.se.spi.orb.ORBVersionFactory ;
 import com.sun.corba.se.spi.protocol.CorbaClientDelegate ;
 import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
@@ -71,7 +89,6 @@ import com.sun.corba.se.impl.corba.CORBAObjectImpl ;
 import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
 import com.sun.corba.se.impl.logging.OMGSystemException ;
 import com.sun.corba.se.impl.ior.iiop.JavaSerializationComponent;
-import com.sun.corba.se.impl.util.Modules;
 
 import sun.corba.SharedSecrets;
 
@@ -247,14 +264,8 @@ public final class ORBUtility {
     {
         try {
             String name = classNameOf(strm.read_string());
-            Class<?> type = SharedSecrets.
-                getJavaCorbaAccess().loadClass(name);
-            if (!SystemException.class.isAssignableFrom(type)) {
-                throw new ClassCastException(name + " can't be cast to "
-                        + SystemException.class.getName());
-            }
-            Modules.ensureReadable(type);
-            SystemException ex = (SystemException)type.newInstance();
+            SystemException ex = (SystemException)SharedSecrets.
+                getJavaCorbaAccess().loadClass(name).newInstance();
             ex.minor = strm.read_long();
             ex.completed = CompletionStatus.from_int(strm.read_long());
             return ex;

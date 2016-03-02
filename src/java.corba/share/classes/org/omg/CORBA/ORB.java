@@ -38,8 +38,6 @@ import java.security.PrivilegedAction;
 
 import sun.reflect.misc.ReflectUtil;
 
-import com.sun.corba.se.impl.util.Modules;
-
 /**
  * A class providing APIs for the CORBA Object Request Broker
  * features.  The {@code ORB} class also provides
@@ -317,13 +315,13 @@ abstract public class ORB {
         return singleton;
     }
 
-    private static ORB create_impl_with_systemclassloader(String className) {
+   private static ORB create_impl_with_systemclassloader(String className) {
+
         try {
             ReflectUtil.checkPackageAccess(className);
             ClassLoader cl = ClassLoader.getSystemClassLoader();
             Class<org.omg.CORBA.ORB> orbBaseClass = org.omg.CORBA.ORB.class;
             Class<?> singletonOrbClass = Class.forName(className, true, cl).asSubclass(orbBaseClass);
-            Modules.ensureReadable(singletonOrbClass);
             return (ORB)singletonOrbClass.newInstance();
         } catch (Throwable ex) {
             SystemException systemException = new INITIALIZE(
@@ -342,7 +340,6 @@ abstract public class ORB {
             ReflectUtil.checkPackageAccess(className);
             Class<org.omg.CORBA.ORB> orbBaseClass = org.omg.CORBA.ORB.class;
             Class<?> orbClass = Class.forName(className, true, cl).asSubclass(orbBaseClass);
-            Modules.ensureReadable(orbClass);
             return (ORB)orbClass.newInstance();
         } catch (Throwable ex) {
             SystemException systemException = new INITIALIZE(
@@ -636,7 +633,6 @@ abstract public class ORB {
 
             // OK, the method exists, so invoke it and be happy.
             java.lang.Object[] argx = { oper };
-            Modules.ensureReadable(meth.getDeclaringClass());
             return (org.omg.CORBA.NVList)meth.invoke(this, argx);
         }
         catch( java.lang.reflect.InvocationTargetException exs ) {

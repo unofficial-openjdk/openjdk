@@ -31,8 +31,10 @@
 
 package javax.rmi;
 
+import java.lang.reflect.Method ;
 
 import org.omg.CORBA.INITIALIZE;
+import javax.rmi.CORBA.Util;
 
 import java.rmi.RemoteException;
 import java.rmi.NoSuchObjectException;
@@ -46,7 +48,6 @@ import java.security.PrivilegedAction;
 import java.rmi.server.RMIClassLoader;
 
 import com.sun.corba.se.impl.orbutil.GetPropertyAction;
-import com.sun.corba.se.impl.util.Modules;
 
 /**
  * Server implementation objects may either inherit from
@@ -191,9 +192,7 @@ public class PortableRemoteObject {
         }
 
         try {
-            Class<?> delegateClass = loadDelegateClass(className);
-            Modules.ensureReadable(delegateClass);
-            return delegateClass.newInstance();
+            return (Object) loadDelegateClass(className).newInstance();
         } catch (ClassNotFoundException ex) {
             INITIALIZE exc = new INITIALIZE( "Cannot instantiate " + className);
             exc.initCause( ex ) ;

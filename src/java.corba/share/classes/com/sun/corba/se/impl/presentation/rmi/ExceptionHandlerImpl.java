@@ -25,6 +25,11 @@
 
 package com.sun.corba.se.impl.presentation.rmi ;
 
+import java.io.Serializable ;
+import java.io.Externalizable ;
+
+import javax.rmi.PortableRemoteObject ;
+import javax.rmi.CORBA.Util ;
 
 import java.rmi.RemoteException ;
 import java.rmi.UnexpectedException ;
@@ -39,7 +44,6 @@ import java.lang.reflect.Method ;
 
 import com.sun.corba.se.spi.logging.CORBALogDomains ;
 import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
-import com.sun.corba.se.impl.util.Modules;
 
 public class ExceptionHandlerImpl implements ExceptionHandler
 {
@@ -104,7 +108,6 @@ public class ExceptionHandlerImpl implements ExceptionHandler
 
             try {
                 helperClass = Class.forName( helperName, true, loader ) ;
-                Modules.ensureReadable(helperClass);
                 Method idMethod = helperClass.getDeclaredMethod( "id", (Class[])null ) ;
                 setId( (String)idMethod.invoke( null, (Object[])null ) ) ;
             } catch (Exception ex) {
@@ -133,7 +136,6 @@ public class ExceptionHandlerImpl implements ExceptionHandler
         {
             try {
                 Object[] args = new Object[] { os, ex } ;
-                // class made readable in constructor above
                 writeMethod.invoke( null, args ) ;
             } catch (Exception exc) {
                 throw wrapper.badHelperWriteMethod( exc,
@@ -145,7 +147,6 @@ public class ExceptionHandlerImpl implements ExceptionHandler
         {
             try {
                 Object[] args = new Object[] { is } ;
-                // class made readable in constructor above
                 return (Exception)readMethod.invoke( null, args ) ;
             } catch (Exception ex) {
                 throw wrapper.badHelperReadMethod( ex,
