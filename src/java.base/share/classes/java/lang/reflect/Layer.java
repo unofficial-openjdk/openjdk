@@ -235,8 +235,8 @@ public final class Layer {
      * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
      * load a class then it uses the package name of the class to map it to a
      * module. The package may be in the module defined to the class loader.
-     * The package may be exported by a module in this layer to the module
-     * defined to the class loader. It may be in a package exported by a
+     * The package may be exported by another module in this layer to the
+     * module defined to the class loader. It may be in a package exported by a
      * module in a parent layer. The class loader delegates to the class loader
      * of the module, throwing {@code ClassNotFoundException} if not found by
      * that class loader.
