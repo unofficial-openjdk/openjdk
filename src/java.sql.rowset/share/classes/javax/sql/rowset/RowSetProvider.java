@@ -274,7 +274,6 @@ public class RowSetProvider {
         }
 
         ReflectUtil.checkPackageAccess(factoryClass);
-        RowSetProvider.class.getModule().addReads(factoryClass.getModule());
         return factoryClass;
     }
 

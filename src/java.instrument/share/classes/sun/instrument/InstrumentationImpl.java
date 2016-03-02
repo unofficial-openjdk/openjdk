@@ -376,8 +376,6 @@ public class InstrumentationImpl implements Instrumentation {
             }
         }
 
-        this.getClass().getModule().addReads(javaAgentClass.getModule());
-
         // the premain method should not be required to be public,
         // make it accessible so we can call it
         // Note: The spec says the following:

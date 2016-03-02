@@ -1447,9 +1447,6 @@ public final class SunPKCS11 extends AuthProvider {
                             }
                             return null;
                         }
-
-                        // need to read the other module where the callback handler is in
-                        this.getClass().getModule().addReads(c.getModule());
                         return (CallbackHandler)c.newInstance();
                     }
                 });

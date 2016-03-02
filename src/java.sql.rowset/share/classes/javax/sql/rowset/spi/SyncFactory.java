@@ -582,7 +582,6 @@ public class SyncFactory {
              * there.
              **/
             c = Class.forName(providerID, true, cl);
-            SyncFactory.class.getModule().addReads(c.getModule());
             return (SyncProvider) c.newInstance();
 
         } catch (IllegalAccessException e) {

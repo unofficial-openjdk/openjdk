@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package com.sun.naming.internal;
 
-import java.lang.reflect.Module;
 import java.util.List;
 import javax.naming.NamingException;
 
@@ -86,11 +85,8 @@ public final class FactoryEnumeration {
                     Class<?> cls = Class.forName(className, true, loader);
                     answer = cls;
                 }
-                // Make the factory module readable to this module
-                Module me = ResourceManager.class.getModule();
-                me.addReads(((Class) answer).getModule());
                 // Instantiate Class to get factory
-                answer = ((Class<?>) answer).newInstance();
+                answer = ((Class) answer).newInstance();
                 ref = new NamedWeakReference<>(answer, className);
                 factories.set(posn-1, ref);  // replace Class object or null
                 return answer;

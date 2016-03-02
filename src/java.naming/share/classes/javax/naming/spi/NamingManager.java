@@ -25,7 +25,6 @@
 
 package javax.naming.spi;
 
-import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.util.*;
 
@@ -160,12 +159,7 @@ public class NamingManager {
             }
         }
 
-        if (clas != null) {
-            ensureReadable(clas.getModule());
-            return (ObjectFactory) clas.newInstance();
-        } else {
-            return null;
-        }
+        return (clas != null) ? (ObjectFactory) clas.newInstance() : null;
     }
 
 
@@ -716,9 +710,8 @@ public class NamingManager {
 
             if (factory == null) {
                 try {
-                    Class<?> clazz = helper.loadClass(className);
-                    ensureReadable(clazz.getModule());
-                    factory = (InitialContextFactory) clazz.newInstance();
+                    factory = (InitialContextFactory)
+                            helper.loadClass(className).newInstance();
                 } catch (Exception e) {
                     NoInitialContextException ne =
                             new NoInitialContextException(
@@ -924,10 +917,5 @@ public class NamingManager {
         }
 
         return (answer != null) ? answer : obj;
-    }
-
-    private static void ensureReadable(Module targetModule) {
-        Module thisModule = NamingManager.class.getModule();
-        thisModule.addReads(targetModule);
     }
 }

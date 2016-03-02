@@ -478,7 +478,6 @@ public class SQLInputImpl implements SQLInput {
                 SQLData obj = null;
                 try {
                     ReflectUtil.checkPackageAccess(c);
-                    SQLInputImpl.class.getModule().addReads(c.getModule());
                     obj = (SQLData)c.newInstance();
                 } catch (Exception ex) {
                     throw new SQLException("Unable to Instantiate: ", ex);

@@ -43,7 +43,6 @@ import javax.naming.InterruptedNamingException;
 import javax.naming.ldap.Control;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Module;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import javax.net.SocketFactory;
@@ -262,11 +261,6 @@ public final class Connection implements Runnable {
                 (Class<? extends SocketFactory>)Obj.helper.loadClass(socketFactory);
             Method getDefault =
                 socketFactoryClass.getMethod("getDefault", new Class<?>[]{});
-
-            Module thisModule = Connection.class.getModule();
-            Module targetModule = socketFactoryClass.getModule();
-            thisModule.addReads(targetModule);
-
             SocketFactory factory = (SocketFactory) getDefault.invoke(null, new Object[]{});
 
             // create the socket
