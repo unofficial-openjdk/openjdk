@@ -296,7 +296,6 @@ class XPathFactoryFinder  {
                 xPathFactory = newInstanceNoServiceLoader(clazz);
             }
             if (xPathFactory == null) {
-                XPathFactoryFinder.class.getModule().addReads(clazz.getModule());
                 xPathFactory = (XPathFactory) clazz.newInstance();
             }
         } catch (ClassCastException classCastException) {
@@ -349,8 +348,6 @@ class XPathFactoryFinder  {
             // declared to return an instance of XPathFactory.
             final Class<?> returnType = creationMethod.getReturnType();
             if (SERVICE_CLASS.isAssignableFrom(returnType)) {
-                // We actually only need to support that on our own
-                // implementation classes: XPathFactoryImpl.java
                 return SERVICE_CLASS.cast(creationMethod.invoke(null, (Object[])null));
             } else {
                 // Should not happen since

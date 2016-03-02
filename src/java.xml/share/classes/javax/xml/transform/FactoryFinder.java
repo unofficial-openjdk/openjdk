@@ -175,7 +175,6 @@ class FactoryFinder {
                 instance = newInstanceNoServiceLoader(type, providerClass);
             }
             if (instance == null) {
-                FactoryFinder.class.getModule().addReads(providerClass.getModule());
                 instance = providerClass.newInstance();
             }
             if (debug) {    // Extra check to avoid computing cl strings

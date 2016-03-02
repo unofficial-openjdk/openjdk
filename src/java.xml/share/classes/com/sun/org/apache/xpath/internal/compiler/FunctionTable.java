@@ -344,7 +344,6 @@ public class FunctionTable
                   return (Function) m_functions[which].newInstance();
               } else {
                   Class<?> c =  m_functions_customer[which-NUM_BUILT_IN_FUNCS];
-                  this.getClass().getModule().addReads(c.getModule());
                   return (Function) c.newInstance();
               }
           }catch (IllegalAccessException ex){
