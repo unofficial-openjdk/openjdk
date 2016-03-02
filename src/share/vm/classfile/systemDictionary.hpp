@@ -175,8 +175,8 @@ class SymbolPropertyTable;
   do_klass(File_klass,                                  java_io_File,                              Pre                 ) \
   do_klass(URL_klass,                                   java_net_URL,                              Pre                 ) \
   do_klass(Jar_Manifest_klass,                          java_util_jar_Manifest,                    Pre                 ) \
-  do_klass(jdk_internal_misc_ClassLoaders_AppClassLoader_klass,  jdk_internal_misc_ClassLoaders_AppClassLoader,      Pre                 ) \
-  do_klass(jdk_internal_misc_ClassLoaders_ExtClassLoader_klass,  jdk_internal_misc_ClassLoaders_ExtClassLoader,      Pre                 ) \
+  do_klass(jdk_internal_loader_ClassLoaders_AppClassLoader_klass,  jdk_internal_loader_ClassLoaders_AppClassLoader,      Pre                 ) \
+  do_klass(jdk_internal_loader_ClassLoaders_ExtClassLoader_klass,  jdk_internal_loader_ClassLoaders_ExtClassLoader,      Pre                 ) \
   do_klass(CodeSource_klass,                            java_security_CodeSource,                  Pre                 ) \
   do_klass(ParseUtil_klass,                             sun_net_www_ParseUtil,                     Pre                 ) \
                                                                                                                          \
