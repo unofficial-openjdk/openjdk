@@ -35,6 +35,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -349,6 +350,33 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         return getHyperLink(pathString(pkg, DocPaths.PACKAGE_SUMMARY), label, "", target);
     }
 
+    /**
+     * Get Module Package link, with target frame.
+     *
+     * @param pkg the PackageElement
+     * @param target name of the target frame
+     * @param label tag for the link
+     * @param mdle the module being documented
+     * @return a content for the target module packages link
+     */
+    public Content getTargetModulePackageLink(PackageElement pkg, String target,
+            Content label, ModuleElement mdle) {
+        return getHyperLink(pathString(pkg, DocPaths.PACKAGE_SUMMARY),
+                label, "", target);
+    }
+
+    /**
+     * Get Module link, with target frame.
+     *
+     * @param target name of the target frame
+     * @param label tag for the link
+     * @param mdle the module being documented
+     * @return a content for the target module link
+     */
+    public Content getTargetModuleLink(String target, Content label, ModuleElement mdle) {
+        return getHyperLink(pathToRoot.resolve(
+                DocPaths.moduleSummary(mdle)), label, "", target);
+    }
 
     public void addClassesSummary(SortedSet<TypeElement> classes, String label,
             String tableSummary, List<String> tableHeader, Content summaryContentTree) {
