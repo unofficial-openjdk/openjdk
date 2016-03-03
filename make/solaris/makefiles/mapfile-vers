@@ -35,7 +35,6 @@ SUNWprivate_1.1 {
                 jio_vfprintf;
                 jio_vsnprintf;
 
-
                 # Needed because there is no JVM interface for this.
                 sysThreadAvailableStackWithSlack;
 

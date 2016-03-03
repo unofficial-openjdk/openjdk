@@ -26,6 +26,7 @@
 # Define public interface.
                 _JVM_handle_bsd_signal
 
+		# miscellaneous functions
                 _jio_fprintf
                 _jio_printf
                 _jio_snprintf
