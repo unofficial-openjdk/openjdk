@@ -25,7 +25,7 @@
 
 module jdk.localedata {
     provides sun.util.locale.provider.LocaleDataMetaInfo with
-        sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo_jdk_localedata;
+        sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo;
     provides sun.util.locale.provider.LocaleDataMetaInfo with
         sun.util.resources.provider.NonBaseLocaleDataMetaInfo;
     provides sun.util.resources.LocaleData.CommonResourceBundleProvider with
