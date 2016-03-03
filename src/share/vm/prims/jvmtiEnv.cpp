@@ -187,6 +187,20 @@ JvmtiEnv::GetThreadLocalStorage(jthread thread, void** data_ptr) {
 } /* end GetThreadLocalStorage */
 
   //
+  // Module functions
+  //
+
+// module_count_ptr - pre-checked for NULL
+// modules_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetAllModules(jint* module_count_ptr, jobject** modules_ptr) {
+    JvmtiModuleClosure jmc;
+
+    return jmc.get_all_modules(this, module_count_ptr, modules_ptr);
+} /* end GetAllModules */
+
+
+  //
   // Class functions
   //
 

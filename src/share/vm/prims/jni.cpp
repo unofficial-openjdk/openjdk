@@ -28,7 +28,9 @@
 #include "classfile/altHashing.hpp"
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
+#include "classfile/javaClasses.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/modules.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -3448,6 +3450,47 @@ JNI_LEAF(jint, jni_GetJavaVM(JNIEnv *env, JavaVM **vm))
   return JNI_OK;
 JNI_END
 
+
+DT_RETURN_MARK_DECL(GetModule, jobject, HOTSPOT_JNI_GETMODULE_RETURN(_ret_ref));
+
+JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
+  JNIWrapper("GetModule");
+  HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
+  jobject res;
+  DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
+  res = Modules::get_module(env, clazz);
+  return res;
+JNI_END
+
+
+JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject fromModule, jobject sourceModule))
+  JNIWrapper("AddModuleReads");
+  JavaValue result(T_VOID);
+  Handle from_module_h(THREAD, JNIHandles::resolve(fromModule));
+  if (!java_lang_reflect_Module::is_instance(from_module_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad fromModule object");
+  }
+  Handle source_module_h(THREAD, JNIHandles::resolve(sourceModule));
+  if (sourceModule != NULL && !java_lang_reflect_Module::is_instance(source_module_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad sourceModule object");
+  }
+  JavaCalls::call_static(&result,
+                         KlassHandle(THREAD, SystemDictionary::module_Modules_klass()),
+                         vmSymbols::addReads_name(),
+                         vmSymbols::addReads_signature(),
+                         from_module_h,
+                         source_module_h,
+                         THREAD);
+JNI_END
+
+
+JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject askingModule, jobject targetModule))
+  JNIWrapper("CanReadModule");
+  jboolean res = Modules::can_read_module(env, askingModule, targetModule);
+  return res;
+JNI_END
+
+
 // Structure containing all jni functions
 struct JNINativeInterface_ jni_NativeInterface = {
     NULL,
@@ -3727,7 +3770,13 @@ struct JNINativeInterface_ jni_NativeInterface = {
 
     // New 1_6 features
 
-    jni_GetObjectRefType
+    jni_GetObjectRefType,
+
+    // Module features
+
+    jni_GetModule,
+    jni_AddModuleReads,
+    jni_CanReadModule
 };
 
 
